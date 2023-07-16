@@ -1,69 +1,57 @@
 import cv2
 import numpy as np
-import requests
 import tensorflow as tf
+from object_detection.utils import visualization_utils as vis_util
 
-# Charger le modèle TensorFlow
-model = tf.keras.models.load_model("chemin/vers/le/modele")
+# Charger le modèle de détection d'objets pré-entraîné
+model_path = 'chemin/vers/votre/modele'
+detection_graph = tf.Graph()
+with detection_graph.as_default():
+    od_graph_def = tf.GraphDef()
+    with tf.io.gfile.GFile(model_path, 'rb') as fid:
+        serialized_graph = fid.read()
+        od_graph_def.ParseFromString(serialized_graph)
+        tf.import_graph_def(od_graph_def, name='')
 
-# Définir les classes d'objets détectables
-classes = ["objet1", "objet2", "objet3", ...]
+# Charger les labels des classes
+label_map = 'chemin/vers/votre/label_map.pbtxt'
+categories = []
+with open(label_map, 'r') as f:
+    for line in f:
+        if 'name' in line:
+            name = line.split(':')[-1].strip().replace("'", "")
+            categories.append(name)
 
-# Fonction pour détecter les objets dans une image
-def detect_objects(image):
-    # Prétraiter l'image
-    image = cv2.resize(image, (224, 224))
-    image = image.astype("float32") / 255.0
-    image = tf.expand_dims(image, axis=0)
+# Charger l'image depuis le disque
+image_path = 'chemin/vers/votre/image.jpg'
+image = cv2.imread(image_path)
+image_expanded = np.expand_dims(image, axis=0)
 
-    # Faire la prédiction avec le modèle
-    predictions = model.predict(image)[0]
-    class_index = np.argmax(predictions)
-    class_label = classes[class_index]
+# Démarrer une session TensorFlow
+with tf.Session(graph=detection_graph) as sess:
+    # Obtenir les opérations nécessaires du modèle
+    image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
+    detection_boxes = detection_graph.get_tensor_by_name('detection_boxes:0')
+    detection_scores = detection_graph.get_tensor_by_name('detection_scores:0')
+    detection_classes = detection_graph.get_tensor_by_name('detection_classes:0')
+    num_detections = detection_graph.get_tensor_by_name('num_detections:0')
 
-    # Dessiner la boîte autour de l'objet détecté
-    if class_label == "objet1":
-        color = (0, 255, 0)
-    elif class_label == "objet2":
-        color = (0, 0, 255)
-    elif class_label == "objet3":
-        color = (255, 0, 0)
-    else:
-        color = (255, 255, 255)
+    # Effectuer la détection d'objets
+    (boxes, scores, classes, num) = sess.run(
+        [detection_boxes, detection_scores, detection_classes, num_detections],
+        feed_dict={image_tensor: image_expanded})
 
-    cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
-    cv2.putText(image, class_label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+    # Visualiser les résultats de détection
+    vis_util.visualize_boxes_and_labels_on_image_array(
+        image,
+        np.squeeze(boxes),
+        np.squeeze(classes).astype(np.int32),
+        np.squeeze(scores),
+        categories,
+        use_normalized_coordinates=True,
+        line_thickness=8)
 
-    return image
-
-# Définir l'URL du flux vidéo
-url = "http://adresse/du/flux/video"
-
-# Ouvrir le flux vidéo
-stream = requests.get(url, stream=True).raw
-
-# Boucle pour lire chaque image du flux
-while True:
-    # Lire l'image du flux
-    image_bytes = bytes()
-    while True:
-        chunk = stream.read(1024)
-        if not chunk:
-            break
-        image_bytes += chunk
-        if b'\xff\xd9' in image_bytes:
-            break
-    image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), -1)
-
-    # Détecter les objets dans l'image
-    image = detect_objects(image)
-
-    # Afficher l'image avec les objets détectés
-    cv2.imshow("Objet détecté", image)
-
-    # Attendre l'appui sur la touche "q" pour quitter
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
-
-# Fermer les fenêtres
+# Afficher l'image avec les résultats de détection
+cv2.imshow('Object Detection', image)
+cv2.waitKey(0)
 cv2.destroyAllWindows()
