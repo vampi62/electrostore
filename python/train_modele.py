@@ -8,7 +8,7 @@ batch_size = 32
 learning_rate = 0.001
 
 # Définition du répertoire contenant les images
-data_dir = '/chemin/vers/le/repertoire/contenant/les/images'
+data_dir = 'D:/GIT/electrostore/python/img'
 
 # Chargement des noms des fichiers d'images et de leurs étiquettes
 image_paths = []
@@ -21,6 +21,7 @@ for class_name in class_names:
             image_path = os.path.join(class_dir, image_name)
             image_paths.append(image_path)
             labels.append(class_name)
+
 num_images = len(image_paths)
 num_classes = len(class_names)
 
@@ -57,4 +58,4 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate),
 # Entraînement du modèle
 model.fit(data_generator(), steps_per_epoch=num_images // batch_size, epochs=num_epochs)
 # Sauvegarder le modèle
-model.save('mon_model.h5')
+model.save('D:/GIT/electrostore/python/mon_model.h5')
