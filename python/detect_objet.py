@@ -4,7 +4,7 @@ import tensorflow as tf
 from object_detection.utils import visualization_utils as vis_util
 
 # Charger le modèle de détection d'objets pré-entraîné
-model_path = 'chemin/vers/votre/modele'
+model_path = 'D:/GIT/electrostore/python/mon_model.h5'
 detection_graph = tf.Graph()
 with detection_graph.as_default():
     od_graph_def = tf.GraphDef()
@@ -14,7 +14,7 @@ with detection_graph.as_default():
         tf.import_graph_def(od_graph_def, name='')
 
 # Charger les labels des classes
-label_map = 'chemin/vers/votre/label_map.pbtxt'
+label_map = 'D:/GIT/electrostore/python/label_map.pbtxt'
 categories = []
 with open(label_map, 'r') as f:
     for line in f:
@@ -23,7 +23,7 @@ with open(label_map, 'r') as f:
             categories.append(name)
 
 # Charger l'image depuis le disque
-image_path = 'chemin/vers/votre/image.jpg'
+image_path = 'D:/GIT/electrostore/python/image.jpg'
 image = cv2.imread(image_path)
 image_expanded = np.expand_dims(image, axis=0)
 
