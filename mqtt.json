@@ -1,0 +1,20 @@
+{
+  "leds":[
+    {
+      "index" :0,
+      "red" :255,
+      "blue":0,
+      "green":0,
+      "module":0,
+      "delay":5000
+    },
+    {
+      "index" :1,
+      "red" :10,
+      "blue":100,
+      "green":80,
+      "module":0,
+      "delay":10000
+    }
+  ]
+}
