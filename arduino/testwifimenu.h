@@ -1,9 +1,15 @@
 void handleMenuWifi() {
+  if (ssid[0] == 0xFF){
+    ssid = "";
+  }
+  if (password[0] == 0xFF){
+    password = "";
+  }
   String response = "<html><body>";
   response += "<h1>Paramètres WiFi</h1>";
   response += "<form action='/savewifi' method='get'>";
-  response += "SSID: <input type='text' name='ssid'><br>";
-  response += "Mot de passe: <input type='text' name='password'><br>";
+  response += "SSID: <input type='text' name='ssid' value='" + ssid + "><br>";
+  response += "Mot de passe: <input type='text' name='password' value='" + password + "><br>";
   response += "<input type='submit' value='Enregistrer'>";
   response += "</form>";
   response += "<a href='/'>Retour</a>";
@@ -30,6 +36,24 @@ void handleSaveWifi() {
 }
 
 void handleMenuMqtt() {
+  if (mqttServer[0] == 0xFF){
+    mqttServer = "";
+  }
+  if (mqttPort[0] == 0xFF){
+    mqttPort = "";
+  }
+  if (mqttname[0] == 0xFF){
+    mqttname = "";
+  }
+  if (mqttUser[0] == 0xFF){
+    mqttUser = "";
+  }
+  if (mqttPassword[0] == 0xFF){
+    mqttPassword = "";
+  }
+  if (mqttTopic[0] == 0xFF){
+    mqttTopic = "";
+  }
   String response = "<html><body>";
   response += "<h1>Paramètres MQTT</h1>";
   response += "<form action='/savemqtt' method='get'>";

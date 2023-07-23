@@ -32,6 +32,7 @@ WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 WebServer server(80);
 
+int maxbuffer = 4096;
 #define LED_PIN 15 // Pin de données de la LED
 
 int ledCount = 100;
@@ -48,10 +49,11 @@ Adafruit_NeoPixel strip(ledCount, LED_PIN, NEO_GRB + NEO_KHZ800);
 byte variation_led = 25;
 byte min_led = 120;
 float out;
-float in = 0;
+float insinus = 0;
 bool iswificlient = false;
 unsigned long connectionTimeout = 30000; // 30 secondes
 unsigned long startTime;
+unsigned long delaytime;
 
 void writeStringToEEPROM(int startAddress, const String& data) {
   int length = data.length();
@@ -107,7 +109,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   char json[length + 1];
   strncpy(json, (char*)payload, length);
   json[length] = '\0';
-  DynamicJsonDocument doc(1024);
+  DynamicJsonDocument doc(maxbuffer);
   DeserializationError error = deserializeJson(doc, json);
   if (error) {
     Serial.print("Erreur lors de la désérialisation JSON: ");
@@ -116,23 +118,16 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   if (doc.containsKey("leds")) {
     JsonArray ledsArray = doc["leds"].as<JsonArray>();
-    // vide la table leds
-    startTime = millis();
-    for (int i = 1; i < ledCount; i++) {
-      leds[i+1].red = 0;
-      leds[i+1].green = 0;
-      leds[i+1].blue = 0;
-      leds[i+1].module = 0;
-      leds[i+1].delayTime = 0;
-    }
     for (int i = 0; i < ledsArray.size(); i++) {
       int indextab = ledsArray[i]["index"];
+      Serial.println(indextab);
       leds[indextab+1].red = ledsArray[i]["red"];
       leds[indextab+1].green = ledsArray[i]["green"];
       leds[indextab+1].blue = ledsArray[i]["blue"];
       leds[indextab+1].module = ledsArray[i]["module"];
       leds[indextab+1].delayTime = ledsArray[i]["delay"];
     }
+    startTime = millis();
   }
 }
 
@@ -148,15 +143,22 @@ bool reconnectMQTT() {
     Serial.println("connecté !");
     Serial.println(mqttTopic.c_str());
     mqttClient.subscribe(mqttTopic.c_str());
+    strip.setPixelColor(0, strip.Color(0, 20, 0));
+    strip.show();
   } else {
     Serial.print("échec, code d'erreur = ");
     Serial.print(mqttClient.state());
+    strip.setPixelColor(0, strip.Color(20, 20, 0));
+    strip.show();
   }
   delay(10);
   return mqttClient.connected();
 }
 
 void setup() {
+  strip.begin();
+  strip.setPixelColor(0, strip.Color(20, 20, 20));
+  strip.show();
   Serial.begin(115200);
   EEPROM.begin(EEPROM_SIZE);
   ssid = readStringFromEEPROM(SSID_ADDRESS);
@@ -167,10 +169,19 @@ void setup() {
   mqttTopic = readStringFromEEPROM(MQTTTOPIC_ADDRESS);
   mqttServer = readStringFromEEPROM(MQTTSERVER_ADDRESS);
   mqttPort = readStringFromEEPROM(MQTTPORT_ADDRESS);
+
   iswificlient = setupWiFi();
   if (iswificlient) {
+    strip.setPixelColor(0, strip.Color(0, 20, 20));
+    strip.show();
+    mqttClient.setBufferSize(maxbuffer);
     mqttClient.setServer(mqttServer.c_str(), mqttPort.toInt());
     mqttClient.setCallback(callback);
+    delay(500);
+    reconnectMQTT();
+  } else {
+    strip.setPixelColor(0, strip.Color(20, 0, 0));
+    strip.show();
   }
   server.on("/menuwifi", handleMenuWifi);
   server.on("/savewifi", handleSaveWifi);
@@ -178,10 +189,9 @@ void setup() {
   server.on("/savemqtt", handleSaveMqtt);
   server.on("/", handleRoot);
   server.begin();
-  strip.begin();
-  strip.setPixelColor(0, strip.Color(200, 200, 200));
-  strip.show();
   delay(4000);
+  strip.setPixelColor(0, strip.Color(0, 0, 0));
+  strip.show();
 }
 
 void loop() {
@@ -189,37 +199,46 @@ void loop() {
     if (WiFi.status() != WL_CONNECTED) {
       Serial.println("Connexion au réseau Wi-Fi perdue.");
       iswificlient = setupWiFi();
+      if (iswificlient) {
+        strip.setPixelColor(0, strip.Color(0, 20, 20));
+        strip.show();
+      } else {
+        strip.setPixelColor(0, strip.Color(20, 0, 0));
+        strip.show();
+      }
     }
     if (!mqttClient.connected()) {
       reconnectMQTT();
     } else {
-      out = variLed();
       mqttClient.loop();
     }
   }
+  insinus = insinus + 0.01;
+  if (insinus >= 1080) {
+    insinus = 0;
+  }
+  float outlent = fabs(sin(insinus / 3));
+  float outmoyen = fabs(sin(insinus / 2));
+  float outrapide = fabs(sin(insinus / 1));
   strip.clear();
+  delaytime = millis();
   for (int i = 0; i < ledCount; i++) {
     if (leds[i].delayTime > 0) {
-      if (leds[i].delayTime > startTime - millis()) {
-        leds[i].delayTime = 0;
-      }
       if (leds[i].module == 1) {
         strip.setPixelColor(i, strip.Color(leds[i].red, leds[i].green, leds[i].blue));
+      } else if (leds[i].module == 2) {
+        strip.setPixelColor(i, strip.Color(leds[i].red * outlent, leds[i].green * outlent, leds[i].blue * outlent));
+      } else if (leds[i].module == 3) {
+        strip.setPixelColor(i, strip.Color(leds[i].red * outmoyen, leds[i].green * outmoyen, leds[i].blue * outmoyen));
+      } else if (leds[i].module == 4) {
+        strip.setPixelColor(i, strip.Color(leds[i].red * outrapide, leds[i].green * outrapide, leds[i].blue * outrapide));
       } else {
         strip.setPixelColor(i, strip.Color(leds[i].red, leds[i].green, leds[i].blue));
       }
+      leds[i].delayTime = leds[i].delayTime - (delaytime - startTime);
     }
   }
+  startTime = millis();
   strip.show();
   server.handleClient();
-}
-
-float variLed() {
-  float result;
-  in = in + 0.4;
-  if (in > 360) {
-    in = 0;
-  }
-  result = (sin(in) * variation_led) + min_led;
-  return result;
 }
