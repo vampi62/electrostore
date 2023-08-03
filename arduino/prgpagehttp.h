@@ -1,4 +1,5 @@
 void handleMenuWifi() {
+  Serial.println("wifipage1");
   if (ssid[0] == 0xFF){
     ssid = "";
   }
@@ -15,6 +16,7 @@ void handleMenuWifi() {
   response += "<a href='/'>Retour</a>";
   response += "</body></html>";
   server.send(200, "text/html", response);
+  Serial.println("wifipage");
 }
 
 void handleSaveWifi() {
@@ -36,6 +38,7 @@ void handleSaveWifi() {
 }
 
 void handleMenuMqtt() {
+  Serial.println("mqttpage1");
   if (mqttServer[0] == 0xFF){
     mqttServer = "";
   }
@@ -68,6 +71,7 @@ void handleMenuMqtt() {
   response += "<a href='/'>Retour</a>";
   response += "</body></html>";
   server.send(200, "text/html", response);
+  Serial.println("mqttpage");
 }
 
 void handleSaveMqtt() {
@@ -101,6 +105,7 @@ void handleSaveMqtt() {
 }
 
 void handleRoot() {
+  Serial.println("rootpage1");
   String response = "<html><body>";
   response += "<h1>Menu</h1>";
   response += "<ul>";
@@ -109,4 +114,5 @@ void handleRoot() {
   response += "</ul>";
   response += "</body></html>";
   server.send(200, "text/html", response);
+  Serial.println("rootpage");
 }
