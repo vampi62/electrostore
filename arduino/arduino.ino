@@ -1,7 +1,19 @@
-#include <WiFi.h>
+#if defined(ESP32)
+  #include <WiFi.h> // Utilisez la bibliothèque WiFi pour ESP32
+  #include <WebServer.h>
+  WebServer server(80);
+  #define LED_PIN 15
+#elif defined(ESP8266)
+  #include <ESP8266WiFi.h> // Utilisez la bibliothèque ESP8266WiFi pour ESP8266
+  #include <WiFiClient.h>
+  #include <ESP8266WebServer.h>
+  ESP8266WebServer server(80);
+  #define LED_PIN 2
+#else
+  #error "Type de carte non pris en charge !"
+#endif
 #include <EEPROM.h>
 #include <PubSubClient.h>
-#include <WebServer.h>
 #include <Adafruit_NeoPixel.h>
 #include <ArduinoJson.h>
 
@@ -30,10 +42,9 @@ String mqttTopic;
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
-WebServer server(80);
 
 int maxbuffer = 4096;
-#define LED_PIN 15 // Pin de données de la LED
+
 
 int ledCount = 100;
 struct LEDInfo {
@@ -55,52 +66,9 @@ unsigned long connectionTimeout = 30000; // 30 secondes
 unsigned long startTime;
 unsigned long delaytime;
 
-void writeStringToEEPROM(int startAddress, const String& data) {
-  int length = data.length();
-  EEPROM.write(startAddress, length);
-  for (int i = 0; i < length; i++) {
-    EEPROM.write(startAddress + 1 + i, data[i]);
-  }
-  EEPROM.commit();
-}
-
-String readStringFromEEPROM(int startAddress) {
-  int length = EEPROM.read(startAddress);
-  String data = "";
-  for (int i = 0; i < length; i++) {
-    data += char(EEPROM.read(startAddress + 1 + i));
-  }
-  return data;
-}
-
-bool setupWiFi() {
-  Serial.println();
-  Serial.print("Connexion au réseau Wi-Fi: ");
-  Serial.println(ssid);
-  WiFi.begin(ssid.c_str(), password.c_str());
-  startTime = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - startTime < connectionTimeout) {
-    delay(500);
-    Serial.print(".");
-  }
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("");
-    Serial.println("Wi-Fi connecté !");
-    Serial.print("Adresse IP: ");
-    Serial.println(WiFi.localIP());
-    return true;
-  } else {
-    Serial.println("");
-    Serial.println("Connexion au réseau Wi-Fi échouée.");
-    ssid = "MonReseauTemp";
-    password = "MotDePasseTemp";
-    WiFi.softAP(ssid.c_str(), password.c_str());
-    IPAddress myIP = WiFi.softAPIP();
-    Serial.print("Adresse IP du réseau temporaire: ");
-    Serial.println(myIP);
-    return false;
-  }
-}
+#include "prgeeprom.h"
+#include "prgwifimqtt.h"
+#include "prgpagehttp.h"
 
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message reçu [");
@@ -129,30 +97,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
     startTime = millis();
   }
-}
-
-#include "testwifimenu.h"
-
-bool reconnectMQTT() {
-  // Connexion au serveur MQTT
-  Serial.println();
-  Serial.print("Connexion au serveur MQTT...");
-  Serial.println(mqttname);
-  startTime = millis();
-  if (mqttClient.connect(mqttname.c_str(), mqttUser.c_str(), mqttPassword.c_str())) {
-    Serial.println("connecté !");
-    Serial.println(mqttTopic.c_str());
-    mqttClient.subscribe(mqttTopic.c_str());
-    strip.setPixelColor(0, strip.Color(0, 20, 0));
-    strip.show();
-  } else {
-    Serial.print("échec, code d'erreur = ");
-    Serial.print(mqttClient.state());
-    strip.setPixelColor(0, strip.Color(20, 20, 0));
-    strip.show();
-  }
-  delay(10);
-  return mqttClient.connected();
 }
 
 void setup() {
