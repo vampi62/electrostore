@@ -1,16 +1,11 @@
 void handleMenuWifi() {
   Serial.println("wifipage1");
-  if (ssid[0] == 0xFF){
-    ssid = "";
-  }
-  if (password[0] == 0xFF){
-    password = "";
-  }
-  String response = "<html><body>";
+  // si ssid contient "�" alors ssid = ""
+  String response = "<html><head><meta charset='UTF-8'></head><body>";
   response += "<h1>Paramètres WiFi</h1>";
   response += "<form action='/savewifi' method='get'>";
-  response += "SSID: <input type='text' name='ssid' value='" + ssid + "><br>";
-  response += "Mot de passe: <input type='text' name='password' value='" + password + "><br>";
+  response += "SSID: <input type='text' name='ssid' value='" + ssid + "'><br>";
+  response += "Mot de passe: <input type='text' name='password' value='" + password + "'><br>";
   response += "<input type='submit' value='Enregistrer'>";
   response += "</form>";
   response += "<a href='/'>Retour</a>";
@@ -39,25 +34,7 @@ void handleSaveWifi() {
 
 void handleMenuMqtt() {
   Serial.println("mqttpage1");
-  if (mqttServer[0] == 0xFF){
-    mqttServer = "";
-  }
-  if (mqttPort[0] == 0xFF){
-    mqttPort = "";
-  }
-  if (mqttname[0] == 0xFF){
-    mqttname = "";
-  }
-  if (mqttUser[0] == 0xFF){
-    mqttUser = "";
-  }
-  if (mqttPassword[0] == 0xFF){
-    mqttPassword = "";
-  }
-  if (mqttTopic[0] == 0xFF){
-    mqttTopic = "";
-  }
-  String response = "<html><body>";
+  String response = "<html><head><meta charset='UTF-8'></head><body>";
   response += "<h1>Paramètres MQTT</h1>";
   response += "<form action='/savemqtt' method='get'>";
   response += "MQTT Server: <input type='text' name='mqttserver' value='" + mqttServer + "'><br>";
@@ -106,7 +83,7 @@ void handleSaveMqtt() {
 
 void handleRoot() {
   Serial.println("rootpage1");
-  String response = "<html><body>";
+  String response = "<html><head><meta charset='UTF-8'></head><body>";
   response += "<h1>Menu</h1>";
   response += "<ul>";
   response += "<li><a href='/menuwifi'>Paramètres WiFi</a></li>";

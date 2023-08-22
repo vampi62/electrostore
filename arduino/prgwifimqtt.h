@@ -2,6 +2,7 @@ bool setupWiFi() {
   Serial.println();
   Serial.print("Connexion au réseau Wi-Fi: ");
   Serial.println(ssid);
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid.c_str(), password.c_str());
   startTime = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - startTime < connectionTimeout) {
@@ -17,12 +18,10 @@ bool setupWiFi() {
   } else {
     Serial.println("");
     Serial.println("Connexion au réseau Wi-Fi échouée.");
-    ssid = "MonReseauTemp";
-    password = "MotDePasseTemp";
-    WiFi.softAP(ssid.c_str(), password.c_str());
-    IPAddress myIP = WiFi.softAPIP();
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP(ap_ssid, ap_password);
     Serial.print("Adresse IP du réseau temporaire: ");
-    Serial.println(myIP);
+    Serial.println(WiFi.softAPIP());
     return false;
   }
 }

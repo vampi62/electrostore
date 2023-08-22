@@ -5,10 +5,9 @@
   #define LED_PIN 15
 #elif defined(ESP8266)
   #include <ESP8266WiFi.h> // Utilisez la bibliothèque ESP8266WiFi pour ESP8266
-  #include <WiFiClient.h>
   #include <ESP8266WebServer.h>
   ESP8266WebServer server(80);
-  #define LED_PIN 2
+  #define LED_PIN 1
 #else
   #error "Type de carte non pris en charge !"
 #endif
@@ -39,12 +38,16 @@ String mqttname;
 String mqttUser;
 String mqttPassword;
 String mqttTopic;
+String passwordf;
+String mqttPasswordf;
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
 int maxbuffer = 4096;
 
+const char *ap_ssid = "ESP_Config"; // Nom du réseau WiFi en mode AP (point d'accès)
+const char *ap_password = "ConfigPass"; // Mot de passe du réseau WiFi en mode AP
 
 int ledCount = 100;
 struct LEDInfo {
@@ -62,7 +65,7 @@ byte min_led = 120;
 float out;
 float insinus = 0;
 bool iswificlient = false;
-unsigned long connectionTimeout = 30000; // 30 secondes
+unsigned long connectionTimeout = 10000; // 30 secondes
 unsigned long startTime;
 unsigned long delaytime;
 
@@ -127,13 +130,12 @@ void setup() {
     strip.setPixelColor(0, strip.Color(20, 0, 0));
     strip.show();
   }
-  server.on("/menuwifi", handleMenuWifi);
-  server.on("/savewifi", handleSaveWifi);
-  server.on("/menumqtt", handleMenuMqtt);
-  server.on("/savemqtt", handleSaveMqtt);
-  server.on("/", handleRoot);
+  server.on("/menuwifi", HTTP_GET, handleMenuWifi);
+  server.on("/savewifi", HTTP_GET, handleSaveWifi);
+  server.on("/menumqtt", HTTP_GET, handleMenuMqtt);
+  server.on("/savemqtt", HTTP_GET, handleSaveMqtt);
+  server.on("/", HTTP_GET, handleRoot);
   server.begin();
-  delay(4000);
   strip.setPixelColor(0, strip.Color(0, 0, 0));
   strip.show();
 }
@@ -156,33 +158,33 @@ void loop() {
     } else {
       mqttClient.loop();
     }
-  }
-  insinus = insinus + 0.01;
-  if (insinus >= 1080) {
-    insinus = 0;
-  }
-  float outlent = fabs(sin(insinus / 3));
-  float outmoyen = fabs(sin(insinus / 2));
-  float outrapide = fabs(sin(insinus / 1));
-  strip.clear();
-  delaytime = millis();
-  for (int i = 0; i < ledCount; i++) {
-    if (leds[i].delayTime > 0) {
-      if (leds[i].module == 1) {
-        strip.setPixelColor(i, strip.Color(leds[i].red, leds[i].green, leds[i].blue));
-      } else if (leds[i].module == 2) {
-        strip.setPixelColor(i, strip.Color(leds[i].red * outlent, leds[i].green * outlent, leds[i].blue * outlent));
-      } else if (leds[i].module == 3) {
-        strip.setPixelColor(i, strip.Color(leds[i].red * outmoyen, leds[i].green * outmoyen, leds[i].blue * outmoyen));
-      } else if (leds[i].module == 4) {
-        strip.setPixelColor(i, strip.Color(leds[i].red * outrapide, leds[i].green * outrapide, leds[i].blue * outrapide));
-      } else {
-        strip.setPixelColor(i, strip.Color(leds[i].red, leds[i].green, leds[i].blue));
-      }
-      leds[i].delayTime = leds[i].delayTime - (delaytime - startTime);
+    insinus = insinus + 0.01;
+    if (insinus >= 1080) {
+      insinus = 0;
     }
+    float outlent = fabs(sin(insinus / 3));
+    float outmoyen = fabs(sin(insinus / 2));
+    float outrapide = fabs(sin(insinus / 1));
+    strip.clear();
+    delaytime = millis();
+    for (int i = 0; i < ledCount; i++) {
+      if (leds[i].delayTime > 0) {
+        if (leds[i].module == 1) {
+          strip.setPixelColor(i, strip.Color(leds[i].red, leds[i].green, leds[i].blue));
+        } else if (leds[i].module == 2) {
+          strip.setPixelColor(i, strip.Color(leds[i].red * outlent, leds[i].green * outlent, leds[i].blue * outlent));
+        } else if (leds[i].module == 3) {
+          strip.setPixelColor(i, strip.Color(leds[i].red * outmoyen, leds[i].green * outmoyen, leds[i].blue * outmoyen));
+        } else if (leds[i].module == 4) {
+          strip.setPixelColor(i, strip.Color(leds[i].red * outrapide, leds[i].green * outrapide, leds[i].blue * outrapide));
+        } else {
+          strip.setPixelColor(i, strip.Color(leds[i].red, leds[i].green, leds[i].blue));
+        }
+        leds[i].delayTime = leds[i].delayTime - (delaytime - startTime);
+      }
+    }
+    startTime = millis();
+    strip.show();
   }
-  startTime = millis();
-  strip.show();
   server.handleClient();
 }
