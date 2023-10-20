@@ -7,7 +7,7 @@
   #include <ESP8266WiFi.h> // Utilisez la bibliothèque ESP8266WiFi pour ESP8266
   #include <ESP8266WebServer.h>
   ESP8266WebServer server(80);
-  #define LED_PIN 1
+  #define LED_PIN 2
 #else
   #error "Type de carte non pris en charge !"
 #endif
@@ -27,7 +27,6 @@
 #define MQTTUSER_ADDRESS 160
 #define MQTTPASSWORD_ADDRESS 192
 #define MQTTTOPIC_ADDRESS 224
-#define LED_ADDRESS 256
 
 // Variables globales
 String ssid;
@@ -49,7 +48,8 @@ int maxbuffer = 4096;
 const char *ap_ssid = "ESP_Config"; // Nom du réseau WiFi en mode AP (point d'accès)
 const char *ap_password = "ConfigPass"; // Mot de passe du réseau WiFi en mode AP
 
-int ledCount = 100;
+int ledCount = 256;
+int nbrErreurMqttConnect = 0;
 struct LEDInfo {
   int red;
   int green;
@@ -57,7 +57,8 @@ struct LEDInfo {
   int module;
   int delayTime;
 };
-LEDInfo leds[100];
+// la valeur dans leds doit être identique a "ledCount"
+LEDInfo leds[256];
 Adafruit_NeoPixel strip(ledCount, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 byte variation_led = 25;

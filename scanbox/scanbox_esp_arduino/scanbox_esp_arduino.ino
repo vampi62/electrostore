@@ -220,14 +220,18 @@ void setupWiFi() {
     Serial.println("Wi-Fi connecté !");
     Serial.print("Adresse IP: ");
     Serial.println(WiFi.localIP());
+  strip.begin();
+  strip.setPixelColor(0, strip.Color(0, 40, 0));
+  strip.show();
   }
 }
 
 
 void setup() {
   strip.begin();
-  strip.setPixelColor(0, strip.Color(20, 20, 20));
+  strip.setPixelColor(0, strip.Color(40, 40, 40));
   strip.show();
+  delay(500);
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
  
   Serial.begin(115200);
@@ -273,6 +277,7 @@ void setup() {
   }
   setupWiFi();
   startCameraServer();
+  delay(500);
   strip.setPixelColor(0, strip.Color(0, 0, 0));
   for (int i = 1; i < 64; i++) {
     strip.setPixelColor(i, strip.Color(50, 50, 50));
@@ -281,9 +286,9 @@ void setup() {
 }
 
 void loop() {
-  delay(1);
+  delay(1000);
   if (WiFi.status() != WL_CONNECTED) {
-    strip.setPixelColor(0, strip.Color(20, 0, 0));
+    strip.setPixelColor(0, strip.Color(40, 0, 0));
     strip.show();
     Serial.println("Connexion au réseau Wi-Fi perdue.");
     setupWiFi();

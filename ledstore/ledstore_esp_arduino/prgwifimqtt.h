@@ -28,6 +28,9 @@ bool setupWiFi() {
 
 bool reconnectMQTT() {
   // Connexion au serveur MQTT
+  if (nbrErreurMqttConnect > 5){
+    return false;
+  }
   Serial.println();
   Serial.print("Connexion au serveur MQTT...");
   Serial.println(mqttname);
@@ -38,11 +41,13 @@ bool reconnectMQTT() {
     mqttClient.subscribe(mqttTopic.c_str());
     strip.setPixelColor(0, strip.Color(0, 20, 0));
     strip.show();
+    nbrErreurMqttConnect = 0;
   } else {
     Serial.print("échec, code d'erreur = ");
     Serial.print(mqttClient.state());
     strip.setPixelColor(0, strip.Color(20, 20, 0));
     strip.show();
+    nbrErreurMqttConnect++;
   }
   delay(10);
   return mqttClient.connected();
