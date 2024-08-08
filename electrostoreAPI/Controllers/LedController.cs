@@ -38,6 +38,14 @@ namespace electrostore.Controllers
             return CreatedAtAction(nameof(GetLedById), new { id_led = led.id_led }, led);
         }
 
+        [HttpPost("{id_led}/show")]
+        public async Task<ActionResult<ReadBoxDto>> showLedBox([FromRoute] int id_led, [FromQuery] int red, [FromQuery] int green, [FromQuery] int blue, [FromQuery] int timeshow, [FromQuery] int animation)
+        {
+            var ledDB = await _ledService.GetLedById(id_led);
+            await _ledService.ShowLed(ledDB, red, green, blue, timeshow, animation);
+            return NoContent();
+        }
+
         [HttpPut("{id_led}")]
         public async Task<ActionResult<ReadLedDto>> UpdateLed([FromRoute] int id_led, [FromBody] UpdateLedDto ledDto)
         {

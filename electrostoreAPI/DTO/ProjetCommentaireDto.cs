@@ -6,7 +6,7 @@ public record ReadProjetCommentaireDto
 {
     public int id_projetcommentaire { get; init; }
     public int id_projet { get; init; }
-    public int id_user { get; init; }
+    public int? id_user { get; init; }
     public string contenu_projetcommentaire { get; init; }
     public DateTime date_projetcommentaire { get; init; }
     public DateTime date_modif_projetcommentaire { get; init; }

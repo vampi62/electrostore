@@ -26,8 +26,8 @@
 #include <Adafruit_NeoPixel.h>
 
 //Replace with your network credentials
-const char* ssid = "SFR_0C50";
-const char* password = "twp49njns7xbk59zict4";
+const char* ssid = "synology_2.4G";
+const char* password = "627a12cabc";
 #define LED_PIN 15
 unsigned long connectionTimeout = 30000; // 30 secondes
 unsigned long startTime;

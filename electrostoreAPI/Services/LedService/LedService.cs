@@ -1,16 +1,23 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using MQTTnet;
+using MQTTnet.Client;
+using MQTTnet.Client.Options;
+using System.Text;
+using System.Text.Json;
 
 namespace electrostore.Services.LedService;
 
 public class LedService : ILedService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IMqttClient _mqttClient;
 
-    public LedService(ApplicationDbContext context)
+    public LedService(ApplicationDbContext context, IMqttClient mqttClient)
     {
         _context = context;
+        _mqttClient = mqttClient;
     }
 
     public async Task<IEnumerable<ReadLedDto>> GetLeds(int limit = 100, int offset = 0)
@@ -35,6 +42,21 @@ public class LedService : ILedService
             .Where(led => led.id_store == storeId)
             .Skip(offset)
             .Take(limit)
+            .Select(led => new ReadLedDto
+            {
+                id_led = led.id_led,
+                x_led = led.x_led,
+                y_led = led.y_led,
+                id_store = led.id_store,
+                mqtt_led_id = led.mqtt_led_id
+            })
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<ReadLedDto>> GetLedsByStoreIdAndPosition(int storeId, int xmin, int xmax, int ymin, int ymax)
+    {
+        return await _context.Leds
+            .Where(led => led.x_led >= xmin && led.x_led <= xmax && led.y_led >= ymin && led.y_led <= ymax && led.id_store == storeId)
             .Select(led => new ReadLedDto
             {
                 id_led = led.id_led,
@@ -178,4 +200,74 @@ public class LedService : ILedService
         _context.Leds.Remove(ledToDelete);
         await _context.SaveChangesAsync();
     }
+
+    public async Task ShowLed(ReadLedDto ledDB, int redColor, int greenColor, int blueColor, int timeshow, int animation)
+    {
+        if (!_mqttClient.IsConnected)
+        {
+            throw new ArgumentException("MQTT client is not connected.");
+        }
+        var store = await _context.Stores.FindAsync(ledDB.id_store);
+        if (store == null)
+        {
+            throw new ArgumentException("Store not found");
+        }
+        var topic = store.mqtt_name_store;
+        var message = new MqttApplicationMessageBuilder()
+            .WithTopic(topic)
+            .WithPayload(JsonSerializer.Serialize(new
+            {
+                leds = new[]
+                {
+                    new
+                    {
+                        index = ledDB.mqtt_led_id,
+                        red = redColor,
+                        blue = blueColor,
+                        green = greenColor,
+                        module = animation,
+                        delay = timeshow
+                    }
+                }
+            }))
+            .WithExactlyOnceQoS()
+            .WithRetainFlag(false)
+            .Build();
+        
+
+        await _mqttClient.PublishAsync(message);
+    }
+
+    public async Task ShowLeds(IEnumerable<ReadLedDto> ledsDB, int redColor, int greenColor, int blueColor, int timeshow, int animation)
+    {
+        if (!_mqttClient.IsConnected)
+        {
+            throw new ArgumentException("MQTT client is not connected.");
+        }
+        var store = await _context.Stores.FindAsync(ledsDB.First().id_store);
+        if (store == null)
+        {
+            throw new ArgumentException("Store not found");
+        }
+        var topic = store.mqtt_name_store;
+        var message = new MqttApplicationMessageBuilder()
+            .WithTopic(topic)
+            .WithPayload(JsonSerializer.Serialize(new
+            {
+                leds = ledsDB.Select(led => new
+                {
+                    index = led.mqtt_led_id,
+                    red = redColor,
+                    blue = blueColor,
+                    green = greenColor,
+                    module = animation,
+                    delay = timeshow
+                })
+            }))
+            .WithExactlyOnceQoS()
+            .WithRetainFlag(false)
+            .Build();
+        await _mqttClient.PublishAsync(message);
+    }
+
 }

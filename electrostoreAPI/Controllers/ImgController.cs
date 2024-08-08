@@ -31,10 +31,25 @@ namespace electrostore.Controllers
             return Ok(img);
         }
 
-        [HttpPost]
-        public async Task<ActionResult<ReadImgDto>> CreateImg([FromBody] CreateImgDto imgDto)
+        [HttpGet("{id_img}/show")]
+        public async Task<ActionResult<ReadImgDto>> GetImgData([FromRoute] int id_img)
         {
-            var img = await _imgService.CreateImg(imgDto);
+            var img = await _imgService.GetImgById(id_img);
+            var result = await _imgService.GetImageFile(img.url_img); // check if img.url_img is a valid path
+            if (result.Success)
+            {
+                return PhysicalFile(result.FilePath, result.MimeType);
+            }
+            else
+            {
+                return NotFound(result.ErrorMessage);
+            }
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<ReadImgDto>> CreateImg([FromBody] CreateImgDto imgDto, [FromForm] IFormFile newFile) // 5MB max
+        {
+            var img = await _imgService.CreateImg(imgDto, newFile);
             return CreatedAtAction(nameof(GetImgById), new { id_img = img.id_img }, img);
         }
 

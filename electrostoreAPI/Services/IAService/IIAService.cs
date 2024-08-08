@@ -13,4 +13,8 @@ public interface IIAService
     Task<ReadIADto> UpdateIA(int id, UpdateIADto IADto);
 
     Task DeleteIA(int id);
+
+    Task<ReadIADto> TrainIA(int id);
+
+    Task<ReadItemDto> DetectItem(int id, IFormFile newFile);
 }
