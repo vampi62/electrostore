@@ -75,6 +75,9 @@ unsigned long delaytime;
 #include "prgpagehttp.h"
 
 void callback(char* topic, byte* payload, unsigned int length) {
+  if (length == 0) {
+    return;
+  }
   Serial.print("Message reçu [");
   Serial.print(topic);
   Serial.println("] ");

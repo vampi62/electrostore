@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using Tensorflow;
 
 namespace electrostore.Services.IAService;
 
@@ -23,7 +24,8 @@ public class IAService : IIAService
                 id_ia = ia.id_ia,
                 nom_ia = ia.nom_ia,
                 description_ia = ia.description_ia,
-                date_ia = ia.date_ia
+                date_ia = ia.date_ia,
+                trained_ia = ia.trained_ia
             }).ToListAsync();
     }
 
@@ -40,7 +42,8 @@ public class IAService : IIAService
             id_ia = ia.id_ia,
             nom_ia = ia.nom_ia,
             description_ia = ia.description_ia,
-            date_ia = ia.date_ia
+            date_ia = ia.date_ia,
+            trained_ia = ia.trained_ia
         };
     }
 
@@ -61,7 +64,8 @@ public class IAService : IIAService
             id_ia = newIA.id_ia,
             nom_ia = newIA.nom_ia,
             description_ia = newIA.description_ia,
-            date_ia = newIA.date_ia
+            date_ia = newIA.date_ia,
+            trained_ia = newIA.trained_ia
         };
     }
 
@@ -90,7 +94,8 @@ public class IAService : IIAService
             id_ia = iaToUpdata.id_ia,
             nom_ia = iaToUpdata.nom_ia,
             description_ia = iaToUpdata.description_ia,
-            date_ia = iaToUpdata.date_ia
+            date_ia = iaToUpdata.date_ia,
+            trained_ia = iaToUpdata.trained_ia
         };
     }
 
@@ -104,5 +109,15 @@ public class IAService : IIAService
 
         _context.IA.Remove(iaToDelete);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<ReadItemDto> DetectItem(int id_ia, IFormFile file)
+    {
+        //TODO
+    }
+
+    public async Task<ReadIADto> TrainIA(int id)
+    {
+        //TODO
     }
 }

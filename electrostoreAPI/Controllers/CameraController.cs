@@ -30,6 +30,16 @@ namespace electrostore.Controllers
             return Ok(camera);
         }
 
+        [HttpGet("{id_camera}/stream")]
+        public async Task<ActionResult> GetCameraStream([FromRoute] int id_camera)
+        {
+            var camera = await _cameraService.GetCameraById(id_camera);
+            var httpClient = new HttpClient();
+            var response = await httpClient.GetAsync(camera.url_camera, HttpCompletionOption.ResponseHeadersRead);
+            response.EnsureSuccessStatusCode();
+            return new FileStreamResult(await response.Content.ReadAsStreamAsync(), "video/mp4");
+        }
+
         [HttpPost]
         public async Task<ActionResult> CreateCamera([FromBody] CreateCameraDto camera)
         {

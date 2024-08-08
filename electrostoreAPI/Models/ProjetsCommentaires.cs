@@ -8,7 +8,7 @@ public class ProjetsCommentaires
     [Key]
     public int id_projetcommentaire { get; set; }
     
-    public int id_user { get; set; }
+    public int? id_user { get; set; }
     [ForeignKey("id_user")]
     public Users User { get; set; }
 

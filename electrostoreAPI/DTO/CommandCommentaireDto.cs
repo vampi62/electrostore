@@ -6,7 +6,7 @@ public record ReadCommandCommentaireDto
 {
     public int id_commandcommentaire { get; init; }
     public int id_command { get; init; }
-    public int id_user { get; init; }
+    public int? id_user { get; init; }
     public string contenu_commandcommentaire { get; init; }
     public DateTime date_commandcommentaire { get; init; }
     public DateTime date_modif_projetcommentaire { get; init; }

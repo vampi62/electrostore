@@ -1,4 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using MQTTnet;
+using MQTTnet.Client;
+using System.Net;
+using System.Net.Mail;
+
 using electrostore;
 using electrostore.Models;
 using electrostore.Services.BoxService;
@@ -30,6 +35,20 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), new MySqlServerVersion(new Version(8,0,19))));
 
+builder.Services.AddSingleton<IMqttClient>(sp =>
+{
+    var factory = new MqttFactory();
+    var mqttClient = factory.CreateMqttClient();
+    var options = new MqttClientOptionsBuilder()
+        .WithClientId("ClientID")
+        .WithTcpServer("mqtt.example.com", 1883)
+        .WithCredentials("username", "password")
+        .WithCleanSession()
+        .Build();
+    mqttClient.ConnectAsync(options);
+    return mqttClient;
+});
+
 addScopes(builder);
 
 builder.Services.AddControllers();
@@ -51,6 +70,7 @@ if (app.Environment.IsDevelopment()) {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseStaticFiles();
 
 app.UseCors("CorsPolicy");
 

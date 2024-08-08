@@ -76,7 +76,7 @@ public class ImgService : IImgService
         };
     }
 
-    public async Task<ReadImgDto> CreateImg(CreateImgDto imgDto)
+    public async Task<ReadImgDto> CreateImg(CreateImgDto imgDto, IFormFile? newFile = null)
     {
         // check if item exists
         var item = await _context.Items.FindAsync(imgDto.id_item);
@@ -84,11 +84,39 @@ public class ImgService : IImgService
         {
             throw new ArgumentException("Item not found");
         }
+        if (newFile == null || newFile.Length == 0)
+        {
+            throw new ArgumentException("Image file not found");
+        }
+        if (newFile.Length > (5 * 1024 * 1024)) // 5MB max
+        {
+            throw new ArgumentException("Image file too large");
+        }
+        var fileName = Path.GetFileNameWithoutExtension(newFile.FileName);
+        var fileExt = Path.GetExtension(newFile.FileName);
+        if (!new[] { ".png", ".jpg", ".jpeg", ".gif", ".bmp" }.Contains(fileExt)) // if extension is not allowed
+        {
+            throw new ArgumentException("Image file not allowed");
+        }
+        var i = 1;
+        // verifie si une image avec le meme nom existe deja sur le serveur dans "wwwroot/images"
+        // si oui, on ajoute un numero a la fin du nom de l'image et on recommence la verification jusqu'a trouver un nom disponible
+        var newName = newFile.FileName;
+        while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", newName)))
+        {
+            newName = $"{fileName}({i}){fileExt}";
+            i++;
+        }
+        var savePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", newName);
+        using (var fileStream = new FileStream(savePath, FileMode.Create))
+        {
+            await newFile.CopyToAsync(fileStream);
+        }
 
         var newImg = new Imgs
         {
             nom_img = imgDto.nom_img,
-            url_img = imgDto.url_img,
+            url_img = savePath,
             description_img = imgDto.description_img,
             date_img = DateTime.Now,
             id_item = imgDto.id_item
@@ -154,8 +182,39 @@ public class ImgService : IImgService
         {
             throw new ArgumentException("Img not found");
         }
-
         _context.Imgs.Remove(imgToDelete);
+        // supprimer l'image sur le disque
+        File.Delete(imgToDelete.url_img);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<GetImageFileResult> GetImageFile(string pathImg)
+    {
+        //var pathImg = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", url);
+        if (!File.Exists(pathImg))
+        {
+            return new GetImageFileResult
+            {
+                Success = false,
+                ErrorMessage = "File not found"
+            };
+        } else {
+            var ext = Path.GetExtension(pathImg);
+            var mimeType = ext switch
+            {
+                ".png" => "image/png",
+                ".jpg" => "image/jpeg",
+                ".jpeg" => "image/jpeg",
+                ".gif" => "image/gif",
+                ".bmp" => "image/bmp",
+                _ => "application/octet-stream"
+            };
+            return await Task.FromResult(new GetImageFileResult
+            {
+                Success = true,
+                FilePath = pathImg,
+                MimeType = mimeType
+            });
+        }
     }
 }

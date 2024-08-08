@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Téléchargements\\electrostoreAPI\\electrostore.csproj": {}
+    "D:\\GIT\\electrostore\\electrostoreAPI\\electrostore.csproj": {}
   },
   "projects": {
-    "D:\\Téléchargements\\electrostoreAPI\\electrostore.csproj": {
+    "D:\\GIT\\electrostore\\electrostoreAPI\\electrostore.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Téléchargements\\electrostoreAPI\\electrostore.csproj",
+        "projectUniqueName": "D:\\GIT\\electrostore\\electrostoreAPI\\electrostore.csproj",
         "projectName": "electrostore",
-        "projectPath": "D:\\Téléchargements\\electrostoreAPI\\electrostore.csproj",
+        "projectPath": "D:\\GIT\\electrostore\\electrostoreAPI\\electrostore.csproj",
         "packagesPath": "C:\\Users\\Adrien\\.nuget\\packages\\",
-        "outputPath": "D:\\Téléchargements\\electrostoreAPI\\obj\\",
+        "outputPath": "D:\\GIT\\electrostore\\electrostoreAPI\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -54,6 +54,10 @@
               "target": "Package",
               "version": "[4.0.3, )"
             },
+            "MQTTnet": {
+              "target": "Package",
+              "version": "[4.3.6.1152, )"
+            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[7.0.16, )"
@@ -89,6 +93,10 @@
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[6.5.0, )"
+            },
+            "TensorFlow.NET": {
+              "target": "Package",
+              "version": "[0.150.0, )"
             }
           },
           "imports": [

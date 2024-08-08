@@ -14,4 +14,6 @@ public class Users
     public string email_user { get; set; }
     public string mdp_user { get; set; }
     public string role_user { get; set; }
+    public string? reset_token { get; set; }
+    public DateTime? reset_token_expiration { get; set; }
 }

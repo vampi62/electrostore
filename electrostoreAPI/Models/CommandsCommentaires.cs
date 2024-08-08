@@ -8,7 +8,7 @@ public class CommandsCommentaires
     [Key]
     public int id_commandcommentaire { get; set; }
     
-    public int id_user { get; set; }
+    public int? id_user { get; set; }
     [ForeignKey("id_user")]
     public Users User { get; set; }
 

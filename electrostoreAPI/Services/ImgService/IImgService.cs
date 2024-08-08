@@ -10,9 +10,11 @@ public interface IImgService
 
     public Task<ReadImgDto> GetImgById(int id, int? itemId = null);
 
-    public Task<ReadImgDto> CreateImg(CreateImgDto ImgDto);
+    public Task<ReadImgDto> CreateImg(CreateImgDto ImgDto, IFormFile? newFile = null);
 
     public Task<ReadImgDto> UpdateImg(int id, UpdateImgDto ImgDto, int? itemId = null);
 
     public Task DeleteImg(int id, int? itemId = null);
+
+    public Task<GetImageFileResult> GetImageFile(string url);
 }
