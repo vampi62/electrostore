@@ -38,7 +38,6 @@ namespace electrostore.Controllers
             {
                 id_item = id_item,
                 nom_img = itemImgDto.nom_img,
-                url_img = itemImgDto.url_img,
                 description_img = itemImgDto.description_img
             };
             var itemImg = await _imgService.CreateImg(itemImgDtoFull);
