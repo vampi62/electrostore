@@ -47,9 +47,11 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("{id_ia}/detect")]
-        public async Task<ActionResult<ReadIADto>> DetectItem([FromRoute] int id_ia, [FromForm] IFormFile newFile) // 5MB max
+        public async Task<ActionResult<ReadItemDto>> DetectItem([FromRoute] int id_ia, [FromForm] IFormFile newFile) // 5MB max
         {
             //TODO : Detect IA
+            var item = await _iaService.DetectItem(id_ia, newFile);
+            return Ok(item);
         }
 
         [HttpPut("{id_ia}")]

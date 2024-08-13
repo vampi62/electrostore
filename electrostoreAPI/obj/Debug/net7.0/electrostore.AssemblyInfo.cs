@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("electrostore")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+86a84ec2e6d092d0920f02af7614c1aa95af8a75")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+adf4c269d42beec36fec54e842642415469f1ed7")]
 [assembly: System.Reflection.AssemblyProductAttribute("electrostore")]
 [assembly: System.Reflection.AssemblyTitleAttribute("electrostore")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

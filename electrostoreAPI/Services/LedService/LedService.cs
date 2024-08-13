@@ -3,7 +3,7 @@ using electrostore.Dto;
 using electrostore.Models;
 using MQTTnet;
 using MQTTnet.Client;
-using MQTTnet.Client.Options;
+using MQTTnet.Protocol;
 using System.Text;
 using System.Text.Json;
 
@@ -230,7 +230,7 @@ public class LedService : ILedService
                     }
                 }
             }))
-            .WithExactlyOnceQoS()
+            .WithQualityOfServiceLevel(MqttQualityOfServiceLevel.ExactlyOnce)
             .WithRetainFlag(false)
             .Build();
         
@@ -264,7 +264,7 @@ public class LedService : ILedService
                     delay = timeshow
                 })
             }))
-            .WithExactlyOnceQoS()
+            .WithQualityOfServiceLevel(MqttQualityOfServiceLevel.ExactlyOnce)
             .WithRetainFlag(false)
             .Build();
         await _mqttClient.PublishAsync(message);

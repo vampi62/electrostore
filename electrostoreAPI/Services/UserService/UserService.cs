@@ -31,6 +31,22 @@ public class UserService : IUserService
 
     public async Task<ReadUserDto> CreateUser(CreateUserDto userDto)
     {
+        // check email format
+        if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(userDto.email_user))
+        {
+            throw new ArgumentException("Invalid email format");
+        }
+        // check password length and if it contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long
+        if (!new System.ComponentModel.DataAnnotations.RegularExpressionAttribute(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8}$").IsValid(userDto.mdp_user))
+        {
+            throw new ArgumentException("Invalid password format");
+        }
+        // Check if email is already used
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user);
+        if (user != null)
+        {
+            throw new ArgumentException("Email already used");
+        }
         var newUser = new Users
         {
             nom_user = userDto.nom_user,
@@ -112,11 +128,27 @@ public class UserService : IUserService
 
         if (userDto.email_user != null)
         {
+            // check email format
+            if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(userDto.email_user))
+            {
+                throw new ArgumentException("Invalid email format");
+            }
+            // Check if email is already used
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user);
+            if (user != null)
+            {
+                throw new ArgumentException("Email already used");
+            }
             userToUpdate.email_user = userDto.email_user;
         }
 
         if (userDto.mdp_user != null)
         {
+            // check password length and if it contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long
+            if (!new System.ComponentModel.DataAnnotations.RegularExpressionAttribute(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8}$").IsValid(userDto.mdp_user))
+            {
+                throw new ArgumentException("Invalid password format");
+            }
             userToUpdate.mdp_user = BCrypt.Net.BCrypt.HashPassword(userDto.mdp_user);
         }
 

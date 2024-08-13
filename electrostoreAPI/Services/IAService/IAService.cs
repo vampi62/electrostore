@@ -114,10 +114,14 @@ public class IAService : IIAService
     public async Task<ReadItemDto> DetectItem(int id_ia, IFormFile file)
     {
         //TODO
+
+        return new ReadItemDto();
     }
 
     public async Task<ReadIADto> TrainIA(int id)
     {
         //TODO
+
+        return new ReadIADto();
     }
 }
