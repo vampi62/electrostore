@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.StoreService;
 
@@ -29,13 +30,12 @@ public class StoreService : IStoreService
             }).ToListAsync();
     }
 
-    public async Task<ReadStoreDto> GetStoreById(int id)
+    public async Task<ActionResult<ReadStoreDto>> GetStoreById(int id)
     {
         var store = await _context.Stores.FindAsync(id);
-
         if (store == null)
         {
-            throw new ArgumentException("Store not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } } });
         }
 
         return new ReadStoreDto
@@ -48,15 +48,15 @@ public class StoreService : IStoreService
         };
     }
 
-    public async Task<ReadStoreDto> CreateStore(CreateStoreDto storeDto)
+    public async Task<ActionResult<ReadStoreDto>> CreateStore(CreateStoreDto storeDto)
     {
         if (storeDto.xlength_store <= 0)
         {
-            throw new ArgumentException("xlength_store must be positive");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xlength_store = new string[] { "xlength_store must be positive" } } });
         }
         if (storeDto.ylength_store <= 0)
         {
-            throw new ArgumentException("ylength_store must be positive");
+           return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { ylength_store = new string[] { "ylength_store must be positive" } } });
         }
         var newStore = new Stores
         {
@@ -79,13 +79,12 @@ public class StoreService : IStoreService
         };
     }
 
-    public async Task<ReadStoreDto> UpdateStore(int id, UpdateStoreDto storeDto)
+    public async Task<ActionResult<ReadStoreDto>> UpdateStore(int id, UpdateStoreDto storeDto)
     {
         var storeToUpdate = await _context.Stores.FindAsync(id);
-
         if (storeToUpdate == null)
         {
-            throw new ArgumentException("Store not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } }});
         }
 
         if (storeDto.nom_store != null)
@@ -97,16 +96,15 @@ public class StoreService : IStoreService
         {
             if (storeDto.xlength_store <= 0)
             {
-                throw new ArgumentException("xlength_store must be positive");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xlength_store = new string[] { "xlength_store must be positive" } }});
             }
             storeToUpdate.xlength_store = storeDto.xlength_store.Value;
         }
-
         if (storeDto.ylength_store != null)
         {
             if (storeDto.ylength_store <= 0)
             {
-                throw new ArgumentException("ylength_store must be positive");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { ylength_store = new string[] { "ylength_store must be positive" } }});
             }
             storeToUpdate.ylength_store = storeDto.ylength_store.Value;
         }
@@ -128,16 +126,15 @@ public class StoreService : IStoreService
         };
     }
 
-    public async Task DeleteStore(int id)
+    public async Task<IActionResult> DeleteStore(int id)
     {
         var storeToDelete = await _context.Stores.FindAsync(id);
         if (storeToDelete == null)
         {
-            throw new ArgumentException("Store not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } }});
         }
-
         _context.Stores.Remove(storeToDelete);
         await _context.SaveChangesAsync();
-
+        return new OkResult();
     }
 }

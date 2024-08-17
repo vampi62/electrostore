@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.ImgService;
 
@@ -30,12 +31,12 @@ public class ImgService : IImgService
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<ReadImgDto>> GetImgsByItemId(int itemId, int limit = 100, int offset = 0)
+    public async Task<ActionResult<IEnumerable<ReadImgDto>>> GetImgsByItemId(int itemId, int limit = 100, int offset = 0)
     {
         //check if item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            throw new ArgumentException("Item not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } }});
         }
 
         return await _context.Imgs
@@ -53,16 +54,12 @@ public class ImgService : IImgService
             }).ToListAsync();
     }
 
-    public async Task<ReadImgDto> GetImgById(int id, int? itemId = null)
+    public async Task<ActionResult<ReadImgDto>> GetImgById(int id, int? itemId = null)
     {
         var img = await _context.Imgs.FindAsync(id);
-        if (img == null)
+        if ((img == null) || (itemId != null && img.id_item != itemId))
         {
-            throw new ArgumentException("Img not found");
-        }
-        if (itemId != null && img.id_item != itemId)
-        {
-            throw new ArgumentException("Img not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_img = new string[] { "Img not found" } }});
         }
 
         return new ReadImgDto
@@ -76,27 +73,27 @@ public class ImgService : IImgService
         };
     }
 
-    public async Task<ReadImgDto> CreateImg(CreateImgDto imgDto, IFormFile? newFile = null)
+    public async Task<ActionResult<ReadImgDto>> CreateImg(CreateImgDto imgDto, IFormFile? newFile = null)
     {
         // check if item exists
         var item = await _context.Items.FindAsync(imgDto.id_item);
         if (item == null)
         {
-            throw new ArgumentException("Item not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } }});
         }
         if (newFile == null || newFile.Length == 0)
         {
-            throw new ArgumentException("Image file not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { file = new string[] { "Image file required" } }});
         }
         if (newFile.Length > (5 * 1024 * 1024)) // 5MB max
         {
-            throw new ArgumentException("Image file too large");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { file = new string[] { "Image file too large" } }});
         }
         var fileName = Path.GetFileNameWithoutExtension(newFile.FileName);
         var fileExt = Path.GetExtension(newFile.FileName);
         if (!new[] { ".png", ".jpg", ".jpeg", ".gif", ".bmp" }.Contains(fileExt)) // if extension is not allowed
         {
-            throw new ArgumentException("Image file not allowed");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { file = new string[] { "Image file type not allowed" } }});
         }
         var i = 1;
         // verifie si une image avec le meme nom existe deja sur le serveur dans "wwwroot/images"
@@ -136,16 +133,12 @@ public class ImgService : IImgService
         };
     }
 
-    public async Task<ReadImgDto> UpdateImg(int id, UpdateImgDto imgDto, int? itemId = null)
+    public async Task<ActionResult<ReadImgDto>> UpdateImg(int id, UpdateImgDto imgDto, int? itemId = null)
     {
         var imgToUpdate = await _context.Imgs.FindAsync(id);
-        if (imgToUpdate == null)
+        if ((imgToUpdate == null) || (itemId != null && imgToUpdate.id_item != itemId))
         {
-            throw new ArgumentException("Img not found");
-        }
-        if (itemId != null && imgToUpdate.id_item != itemId)
-        {
-            throw new ArgumentException("Img not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_img = new string[] { "Img not found" } }});
         }
 
         if (imgDto.nom_img != null)
@@ -171,21 +164,18 @@ public class ImgService : IImgService
         };
     }
 
-    public async Task DeleteImg(int id, int? itemId = null)
+    public async Task<IActionResult> DeleteImg(int id, int? itemId = null)
     {
         var imgToDelete = await _context.Imgs.FindAsync(id);
-        if (imgToDelete == null)
+        if ((imgToDelete == null) || (itemId != null && imgToDelete.id_item != itemId))
         {
-            throw new ArgumentException("Img not found");
-        }
-        if (itemId != null && imgToDelete.id_item != itemId)
-        {
-            throw new ArgumentException("Img not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_img = new string[] { "Img not found" } }});
         }
         _context.Imgs.Remove(imgToDelete);
         // supprimer l'image sur le disque
         File.Delete(imgToDelete.url_img);
         await _context.SaveChangesAsync();
+        return new OkResult();
     }
 
     public async Task<GetImageFileResult> GetImageFile(string pathImg)
@@ -196,7 +186,9 @@ public class ImgService : IImgService
             return new GetImageFileResult
             {
                 Success = false,
-                ErrorMessage = "File not found"
+                ErrorMessage = "File not found",
+                FilePath = "",
+                MimeType = ""
             };
         } else {
             var ext = Path.GetExtension(pathImg);

@@ -21,14 +21,30 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadIAImgDto>>> GetIAImgByIAId([FromRoute] int id_ia, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var iaImgs = await _iaImgService.GetIAImgByIAId(id_ia, limit, offset);
-            return Ok(iaImgs);
+            if (iaImgs.Result is BadRequestObjectResult)
+            {
+                return iaImgs.Result;
+            }
+            if (iaImgs.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(iaImgs.Value);
         }
 
         [HttpGet("{id_img}")]
         public async Task<ActionResult<ReadIAImgDto>> GetIAImgById([FromRoute] int id_ia, [FromRoute] int id_img)
         {
             var iaImg = await _iaImgService.GetIAImgById(id_ia, id_img);
-            return Ok(iaImg);
+            if (iaImg.Result is BadRequestObjectResult)
+            {
+                return iaImg.Result;
+            }
+            if (iaImg.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(iaImg.Value);
         }
 
         [HttpPost("{id_img}")]
@@ -40,7 +56,15 @@ namespace electrostore.Controllers
                 id_img = id_img
             };
             var iaImg = await _iaImgService.CreateIAImg(iaImgDto);
-            return CreatedAtAction(nameof(GetIAImgById), new { id_ia = iaImg.id_ia, id_img = iaImg.id_img }, iaImg);
+            if (iaImg.Result is BadRequestObjectResult)
+            {
+                return iaImg.Result;
+            }
+            if (iaImg.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return CreatedAtAction(nameof(GetIAImgById), new { id_ia = iaImg.Value.id_ia, id_img = iaImg.Value.id_img }, iaImg.Value);
         }
 
         [HttpDelete("{id_img}")]

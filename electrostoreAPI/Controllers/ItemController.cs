@@ -28,21 +28,45 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadItemDto>> GetItemById([FromRoute] int id_item)
         {
             var item = await _itemService.GetItemById(id_item);
-            return Ok(item);
+            if (item.Result is BadRequestObjectResult)
+            {
+                return item.Result;
+            }
+            if (item.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(item.Value);
         }
 
         [HttpPost]
         public async Task<ActionResult<ReadItemDto>> CreateItem([FromBody] CreateItemDto itemDto)
         {
             var item = await _itemService.CreateItem(itemDto);
-            return CreatedAtAction(nameof(GetItemById), new { id_item = item.id_item }, item);
+            if (item.Result is BadRequestObjectResult)
+            {
+                return item.Result;
+            }
+            if (item.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return CreatedAtAction(nameof(GetItemById), new { id_item = item.Value.id_item }, item.Value);
         }
 
         [HttpPut("{id_item}")]
         public async Task<ActionResult<ReadItemDto>> UpdateItem([FromRoute] int id_item, [FromBody] UpdateItemDto itemDto)
         {
             var item = await _itemService.UpdateItem(id_item, itemDto);
-            return Ok(item);
+            if (item.Result is BadRequestObjectResult)
+            {
+                return item.Result;
+            }
+            if (item.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(item.Value);
         }
 
         [HttpDelete("{id_item}")]

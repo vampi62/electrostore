@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.ProjetItemService;
 
@@ -13,12 +14,12 @@ public class ProjetItemService : IProjetItemService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadProjetItemDto>> GetProjetItemsByProjetId(int ProjetId, int limit = 100, int offset = 0)
+    public async Task<ActionResult<IEnumerable<ReadProjetItemDto>>> GetProjetItemsByProjetId(int ProjetId, int limit = 100, int offset = 0)
     {
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == ProjetId))
         {
-            throw new ArgumentException("Projet not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projet = new string[] { "Projet not found" } } });
         }
 
         return await _context.ProjetsItems
@@ -34,12 +35,12 @@ public class ProjetItemService : IProjetItemService
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<ReadProjetItemDto>> GetProjetItemsByItemId(int ItemId, int limit = 100, int offset = 0)
+    public async Task<ActionResult<IEnumerable<ReadProjetItemDto>>> GetProjetItemsByItemId(int ItemId, int limit = 100, int offset = 0)
     {
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == ItemId))
         {
-            throw new ArgumentException("Item not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } } });
         }
 
         return await _context.ProjetsItems
@@ -55,12 +56,12 @@ public class ProjetItemService : IProjetItemService
             .ToListAsync();
     }
 
-    public async Task<ReadProjetItemDto> GetProjetItemById(int projetId, int itemId)
+    public async Task<ActionResult<ReadProjetItemDto>> GetProjetItemById(int projetId, int itemId)
     {
         var projetItem = await _context.ProjetsItems.FindAsync(projetId, itemId);
         if (projetItem == null)
         {
-            throw new ArgumentException("ProjetItem not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projet = new string[] { "ProjetItem not found" } } });
         }
 
         return new ReadProjetItemDto
@@ -71,24 +72,22 @@ public class ProjetItemService : IProjetItemService
         };
     }
 
-    public async Task<ReadProjetItemDto> CreateProjetItem(CreateProjetItemDto projetItemDto)
+    public async Task<ActionResult<ReadProjetItemDto>> CreateProjetItem(CreateProjetItemDto projetItemDto)
     {
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetItemDto.id_projet))
         {
-            throw new ArgumentException("Projet not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projet = new string[] { "Projet not found" } } });
         }
-
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == projetItemDto.id_item))
         {
-            throw new ArgumentException("Item not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } } });
         }
-
         // check if the projetItem already exists
         if (await _context.ProjetsItems.AnyAsync(p => p.id_projet == projetItemDto.id_projet && p.id_item == projetItemDto.id_item))
         {
-            throw new ArgumentException("ProjetItem already exists");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projet = new string[] { "ProjetItem already exists" } } });
         }
 
         var newProjetItem = new ProjetsItems
@@ -109,24 +108,24 @@ public class ProjetItemService : IProjetItemService
         };
     }
 
-    public async Task<ReadProjetItemDto> UpdateProjetItem(int projetId, int itemId, UpdateProjetItemDto projetItemDto)
+    public async Task<ActionResult<ReadProjetItemDto>> UpdateProjetItem(int projetId, int itemId, UpdateProjetItemDto projetItemDto)
     {
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
         {
-            throw new ArgumentException("Projet not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projet = new string[] { "Projet not found" } }});
         }
 
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            throw new ArgumentException("Item not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } }});
         }
 
         var projetItemToUpdate = await _context.ProjetsItems.FindAsync(projetId, itemId);
         if (projetItemToUpdate == null)
         {
-            throw new ArgumentException("ProjetItem not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projet = new string[] { "ProjetItem not found" } }});
         }
 
         if (projetItemDto.qte_projetitem != null)
@@ -144,15 +143,15 @@ public class ProjetItemService : IProjetItemService
         };
     }
 
-    public async Task DeleteProjetItem(int projetId, int itemId)
+    public async Task<IActionResult> DeleteProjetItem(int projetId, int itemId)
     {
         var projetItemToDelete = await _context.ProjetsItems.FindAsync(projetId, itemId);
         if (projetItemToDelete == null)
         {
-            throw new ArgumentException("ProjetItem not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projet = new string[] { "ProjetItem not found" } }});
         }
-
         _context.ProjetsItems.Remove(projetItemToDelete);
         await _context.SaveChangesAsync();
+        return new OkResult();
     }
 }

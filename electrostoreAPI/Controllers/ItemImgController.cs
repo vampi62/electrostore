@@ -21,14 +21,30 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadImgDto>>> GetImgsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var itemImgs = await _imgService.GetImgsByItemId(id_item, limit, offset);
-            return Ok(itemImgs);
+            if (itemImgs.Result is BadRequestObjectResult)
+            {
+                return itemImgs.Result;
+            }
+            if (itemImgs.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(itemImgs.Value);
         }
 
         [HttpGet("{id_img}")]
         public async Task<ActionResult<ReadImgDto>> GetImgById([FromRoute] int id_item, [FromRoute] int id_img)
         {
             var itemImg = await _imgService.GetImgById(id_img, id_item);
-            return Ok(itemImg);
+            if (itemImg.Result is BadRequestObjectResult)
+            {
+                return itemImg.Result;
+            }
+            if (itemImg.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(itemImg.Value);
         }
 
         [HttpPost]
@@ -41,14 +57,30 @@ namespace electrostore.Controllers
                 description_img = itemImgDto.description_img
             };
             var itemImg = await _imgService.CreateImg(itemImgDtoFull);
-            return CreatedAtAction(nameof(GetImgById), new { id_item = itemImg.id_item, id_img = itemImg.id_img }, itemImg);
+            if (itemImg.Result is BadRequestObjectResult)
+            {
+                return itemImg.Result;
+            }
+            if (itemImg.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return CreatedAtAction(nameof(GetImgById), new { id_item = itemImg.Value.id_item, id_img = itemImg.Value.id_img }, itemImg.Value);
         }
 
         [HttpPut("{id_img}")]
         public async Task<ActionResult<ReadImgDto>> UpdateImg([FromRoute] int id_item, [FromRoute] int id_img, [FromBody] UpdateImgDto itemImgDto)
         {
             var itemImg = await _imgService.UpdateImg(id_img, itemImgDto, id_item);
-            return Ok(itemImg);
+            if (itemImg.Result is BadRequestObjectResult)
+            {
+                return itemImg.Result;
+            }
+            if (itemImg.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(itemImg.Value);
         }
 
         [HttpDelete("{id_img}")]

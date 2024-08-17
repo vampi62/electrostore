@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.ItemService;
 
@@ -30,12 +31,12 @@ public class ItemService : IItemService
             .ToListAsync();
     }
 
-    public async Task<ReadItemDto> GetItemById(int itemId)
+    public async Task<ActionResult<ReadItemDto>> GetItemById(int itemId)
     {
         var item = await _context.Items.FindAsync(itemId);
         if (item == null)
         {
-            throw new ArgumentException("Item not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } } });
         }
 
         return new ReadItemDto
@@ -49,18 +50,18 @@ public class ItemService : IItemService
         };
     }
 
-    public async Task<ReadItemDto> CreateItem(CreateItemDto itemDto)
+    public async Task<ActionResult<ReadItemDto>> CreateItem(CreateItemDto itemDto)
     {
         // check if img exists
         if (itemDto.id_img != null && !await _context.Imgs.AnyAsync(i => i.id_img == itemDto.id_img))
         {
-            throw new ArgumentException("Img not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_img = new string[] { "Img not found" } } });
         }
 
         // check if item already exists
         if (await _context.Items.AnyAsync(i => i.nom_item == itemDto.nom_item))
         {
-            throw new ArgumentException("Item already exists");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { nom_item = new string[] { "Item name already exists" } } });
         }
 
         var item = new Items
@@ -86,18 +87,23 @@ public class ItemService : IItemService
         };
     }
 
-    public async Task<ReadItemDto> UpdateItem(int id, UpdateItemDto itemDto)
+    public async Task<ActionResult<ReadItemDto>> UpdateItem(int id, UpdateItemDto itemDto)
     {
         // check if img exists
 
         var itemToUpdate = await _context.Items.FindAsync(id);
         if (itemToUpdate == null)
         {
-            throw new ArgumentException("Item not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } } });
         }
 
         if (itemDto.nom_item != null)
         {
+            // check if item already exists
+            if (await _context.Items.AnyAsync(i => i.nom_item == itemDto.nom_item))
+            {
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { nom_item = new string[] { "Item name already exists" } } });
+            }
             itemToUpdate.nom_item = itemDto.nom_item;
         }
 
@@ -119,13 +125,9 @@ public class ItemService : IItemService
         if (itemDto.id_img != null)
         {
             var img = await _context.Imgs.FindAsync(itemDto.id_img);
-            if (img == null)
+            if ((img == null) || (id != img.id_item))
             {
-                throw new ArgumentException("Img not found");
-            }
-            if (id != img.id_item)
-            {
-                throw new ArgumentException("Img not found");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_img = new string[] { "Img not found" } } });
             }
             itemToUpdate.id_img = itemDto.id_img;
         }
@@ -143,15 +145,15 @@ public class ItemService : IItemService
         };
     }
 
-    public async Task DeleteItem(int itemId)
+    public async Task<IActionResult> DeleteItem(int itemId)
     {
         var itemToDelete = await _context.Items.FindAsync(itemId);
         if (itemToDelete == null)
         {
-            throw new ArgumentException("Item not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } } });
         }
-
         _context.Items.Remove(itemToDelete);
         await _context.SaveChangesAsync();
+        return new OkResult();
     }
 }

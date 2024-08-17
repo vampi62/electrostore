@@ -27,15 +27,31 @@ namespace electrostore.Controllers
         public async Task<ActionResult> GetCameraById([FromRoute] int id_camera)
         {
             var camera = await _cameraService.GetCameraById(id_camera);
-            return Ok(camera);
+            if (camera.Result is BadRequestObjectResult)
+            {
+                return camera.Result;
+            }
+            if (camera.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(camera.Value);
         }
 
         [HttpGet("{id_camera}/stream")]
         public async Task<ActionResult> GetCameraStream([FromRoute] int id_camera)
         {
             var camera = await _cameraService.GetCameraById(id_camera);
+            if (camera.Result is BadRequestObjectResult)
+            {
+                return camera.Result;
+            }
+            if (camera.Value == null)
+            {
+                return StatusCode(500);
+            }
             var httpClient = new HttpClient();
-            var response = await httpClient.GetAsync(camera.url_camera, HttpCompletionOption.ResponseHeadersRead);
+            var response = await httpClient.GetAsync(camera.Value.url_camera, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
             return new FileStreamResult(await response.Content.ReadAsStreamAsync(), "video/mp4");
         }
@@ -51,7 +67,15 @@ namespace electrostore.Controllers
         public async Task<ActionResult> UpdateCamera([FromRoute] int id_camera, [FromBody] UpdateCameraDto camera)
         {
             var cameraToUpdate = await _cameraService.UpdateCamera(id_camera, camera);
-            return Ok(cameraToUpdate);
+            if (cameraToUpdate.Result is BadRequestObjectResult)
+            {
+                return cameraToUpdate.Result;
+            }
+            if (cameraToUpdate.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(cameraToUpdate.Value);
         }
 
         [HttpDelete("{id_camera}")]

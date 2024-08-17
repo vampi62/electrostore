@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.BoxService;
 
@@ -29,12 +30,12 @@ public class BoxService : IBoxService
             }).ToListAsync();
     }
 
-    public async Task<IEnumerable<ReadBoxDto>> GetBoxsByStoreId(int storeId, int limit = 100, int offset = 0)
+    public async Task<ActionResult<IEnumerable<ReadBoxDto>>> GetBoxsByStoreId(int storeId, int limit = 100, int offset = 0)
     {
         // check if the store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
         {
-            throw new ArgumentException("Store not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { storeId = new string[] { "Store not found" } } });
         }
 
         return await _context.Boxs
@@ -52,16 +53,12 @@ public class BoxService : IBoxService
             }).ToListAsync();
     }
 
-    public async Task<ReadBoxDto> GetBoxById(int id, int? storeId = null)
+    public async Task<ActionResult<ReadBoxDto>> GetBoxById(int id, int? storeId = null)
     {
         var box = await _context.Boxs.FindAsync(id);
-        if (box == null)
+        if ((box == null) || (storeId != null && box.id_store != storeId))
         {
-            throw new ArgumentException("Box not found");
-        }
-        if (storeId != null && box.id_store != storeId)
-        {
-            throw new ArgumentException("Box not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "Box not found" } } });
         }
 
         return new ReadBoxDto
@@ -75,23 +72,23 @@ public class BoxService : IBoxService
         };
     }
 
-    public async Task<ReadBoxDto> CreateBox(CreateBoxDto boxDto)
+    public async Task<ActionResult<ReadBoxDto>> CreateBox(CreateBoxDto boxDto)
     {
         // check if all the values are greater than 0
         if (boxDto.xstart_box < 0 || boxDto.ystart_box < 0 || boxDto.yend_box < 0 || boxDto.xend_box < 0)
         {
-            throw new ArgumentException("All values must be greater than 0");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xstart_box = new string[] { "xstart_box must be greater than 0" }, ystart_box = new string[] { "ystart_box must be greater than 0" }, yend_box = new string[] { "yend_box must be greater than 0" }, xend_box = new string[] { "xend_box must be greater than 0" } }});
         }
         // end position must be greater than start position
         if (boxDto.xend_box <= boxDto.xstart_box || boxDto.yend_box <= boxDto.ystart_box)
         {
-            throw new ArgumentException("End position must be greater than start position");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xend_box = new string[] { "End position must be greater than start position" }, yend_box = new string[] { "End position must be greater than start position" } }});
         }
 
         // check if the store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == boxDto.id_store))
         {
-            throw new ArgumentException("Store not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } }});
         }
 
         // check if a box in the same store has a XY position already taken
@@ -104,7 +101,7 @@ public class BoxService : IBoxService
                                               ((boxDto.ystart_box > b.ystart_box && boxDto.ystart_box < b.yend_box) ||
                                                (boxDto.yend_box < b.yend_box && boxDto.yend_box > b.ystart_box))))
         {
-            throw new ArgumentException("XY position already taken");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xstart_box = new string[] { "XY position already taken" }, ystart_box = new string[] { "XY position already taken" }, xend_box = new string[] { "XY position already taken" }, yend_box = new string[] { "XY position already taken" } }});
         }
 
         var newBox = new Boxs
@@ -130,25 +127,21 @@ public class BoxService : IBoxService
         };
     }
 
-    public async Task<ReadBoxDto> UpdateBox(int id, UpdateBoxDto boxDto, int? storeId = null)
+    public async Task<ActionResult<ReadBoxDto>> UpdateBox(int id, UpdateBoxDto boxDto, int? storeId = null)
     {
         var boxToUpdate = await _context.Boxs.FindAsync(id);
 
         bool newXYPosition = false;
-        if (boxToUpdate == null)
+        if ((boxToUpdate == null) || (storeId != null && boxToUpdate.id_store != storeId))
         {
-            throw new ArgumentException("Box not found");
-        }
-        if (storeId != null && boxToUpdate.id_store != storeId)
-        {
-            throw new ArgumentException("Box not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "Box not found" } } });
         }
 
         if (boxDto.xstart_box != null)
         {
             if (boxDto.xstart_box < 0)
             {
-                throw new ArgumentException("xstart_box must be greater than 0");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xstart_box = new string[] { "xstart_box must be greater than 0" } } });
             }
             boxToUpdate.xstart_box = boxDto.xstart_box.Value;
             newXYPosition = true;
@@ -158,7 +151,7 @@ public class BoxService : IBoxService
         {
             if (boxDto.ystart_box < 0)
             {
-                throw new ArgumentException("ystart_box must be greater than 0");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { ystart_box = new string[] { "ystart_box must be greater than 0" } } });
             }
             boxToUpdate.ystart_box = boxDto.ystart_box.Value;
             newXYPosition = true;
@@ -168,7 +161,7 @@ public class BoxService : IBoxService
         {
             if (boxDto.yend_box < 0)
             {
-                throw new ArgumentException("yend_box must be greater than 0");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { yend_box = new string[] { "yend_box must be greater than 0" } } });
             }
             boxToUpdate.yend_box = boxDto.yend_box.Value;
             newXYPosition = true;
@@ -178,7 +171,7 @@ public class BoxService : IBoxService
         {
             if (boxDto.xend_box < 0)
             {
-                throw new ArgumentException("xend_box must be greater than 0");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xend_box = new string[] { "xend_box must be greater than 0" } } });
             }
             boxToUpdate.xend_box = boxDto.xend_box.Value;
             newXYPosition = true;
@@ -187,14 +180,14 @@ public class BoxService : IBoxService
         // end position must be greater than start position
         if (boxToUpdate.xend_box <= boxToUpdate.xstart_box || boxToUpdate.yend_box <= boxToUpdate.ystart_box)
         {
-            throw new ArgumentException("End position must be greater than start position");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xend_box = new string[] { "End position must be greater than start position" }, yend_box = new string[] { "End position must be greater than start position" } } });
         }
 
         if (boxDto.new_id_store != null)
         {
             if (!await _context.Stores.AnyAsync(s => s.id_store == boxDto.new_id_store))
             {
-                throw new ArgumentException("Store not found");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } } });
             }
             boxToUpdate.id_store = boxDto.new_id_store.Value;
             newXYPosition = true;
@@ -212,7 +205,7 @@ public class BoxService : IBoxService
                                                   ((boxToUpdate.ystart_box > b.ystart_box && boxToUpdate.ystart_box < b.yend_box) ||
                                                    (boxToUpdate.yend_box < b.yend_box && boxToUpdate.yend_box > b.ystart_box))))
             {
-                throw new ArgumentException("XY position already taken");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xstart_box = new string[] { "XY position already taken" }, ystart_box = new string[] { "XY position already taken" }, xend_box = new string[] { "XY position already taken" }, yend_box = new string[] { "XY position already taken" } }});
             }
         }
 
@@ -229,20 +222,16 @@ public class BoxService : IBoxService
         };
     }
 
-    public async Task DeleteBox(int id, int? storeId = null)
+    public async Task<IActionResult> DeleteBox(int id, int? storeId = null)
     {
         var boxToDelete = await _context.Boxs.FindAsync(id);
-        if (boxToDelete == null)
+        if ((boxToDelete == null) || (storeId != null && boxToDelete.id_store != storeId))
         {
-            throw new ArgumentException("Box not found");
-        }
-        if (storeId != null && boxToDelete.id_store != storeId)
-        {
-            throw new ArgumentException("Box not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "Box not found" } }});
         }
 
         _context.Boxs.Remove(boxToDelete);
         await _context.SaveChangesAsync();
-
+        return new OkResult();
     }
 }

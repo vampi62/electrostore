@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.CommandService;
 
@@ -28,12 +29,12 @@ public class CommandService : ICommandService
             .ToListAsync();
     }
 
-    public async Task<ReadCommandDto> GetCommandById(int id)
+    public async Task<ActionResult<ReadCommandDto>> GetCommandById(int id)
     {
         var command = await _context.Commands.FindAsync(id);
         if (command == null)
         {
-            throw new ArgumentException("Command not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_command = new string[] { "Command not found" } } });
         }
 
         return new ReadCommandDto
@@ -72,12 +73,12 @@ public class CommandService : ICommandService
         };
     }
 
-    public async Task<ReadCommandDto> UpdateCommand(int id, UpdateCommandDto commandDto)
+    public async Task<ActionResult<ReadCommandDto>> UpdateCommand(int id, UpdateCommandDto commandDto)
     {
         var commandToUpdate = await _context.Commands.FindAsync(id);
         if (commandToUpdate == null)
         {
-            throw new ArgumentException("Command not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_command = new string[] { "Command not found" } } });
         }
 
         if (commandDto.prix_command != null)
@@ -118,15 +119,16 @@ public class CommandService : ICommandService
         };
     }
 
-    public async Task DeleteCommand(int id)
+    public async Task<IActionResult> DeleteCommand(int id)
     {
         var commandToDelete = await _context.Commands.FindAsync(id);
         if (commandToDelete == null)
         {
-            throw new ArgumentException("Command not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_command = new string[] { "Command not found" } } });
         }
 
         _context.Commands.Remove(commandToDelete);
         await _context.SaveChangesAsync();
+        return new OkResult();
     }
 }

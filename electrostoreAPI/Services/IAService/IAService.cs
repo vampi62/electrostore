@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
 using Tensorflow;
+using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.IAService;
 
@@ -29,12 +30,12 @@ public class IAService : IIAService
             }).ToListAsync();
     }
 
-    public async Task<ReadIADto> GetIAById(int id)
+    public async Task<ActionResult<ReadIADto>> GetIAById(int id)
     {
         var ia = await _context.IA.FindAsync(id);
         if (ia == null)
         {
-            throw new ArgumentException("IA not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_ia = new string[] { "IA not found" } }});
         }
 
         return new ReadIADto
@@ -69,12 +70,12 @@ public class IAService : IIAService
         };
     }
 
-    public async Task<ReadIADto> UpdateIA(int id, UpdateIADto iaDto)
+    public async Task<ActionResult<ReadIADto>> UpdateIA(int id, UpdateIADto iaDto)
     {
         var iaToUpdata = await _context.IA.FindAsync(id);
         if (iaToUpdata == null)
         {
-            throw new ArgumentException("IA not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_ia = new string[] { "IA not found" } }});
         }
 
         if (iaDto.nom_ia != null)
@@ -99,16 +100,17 @@ public class IAService : IIAService
         };
     }
 
-    public async Task DeleteIA(int id)
+    public async Task<IActionResult> DeleteIA(int id)
     {
         var iaToDelete = await _context.IA.FindAsync(id);
         if (iaToDelete == null)
         {
-            throw new ArgumentException("IA not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_ia = new string[] { "IA not found" } }});
         }
 
         _context.IA.Remove(iaToDelete);
         await _context.SaveChangesAsync();
+        return new OkResult();
     }
 
     public async Task<ReadItemDto> DetectItem(int id_ia, IFormFile file)
@@ -118,7 +120,7 @@ public class IAService : IIAService
         return new ReadItemDto();
     }
 
-    public async Task<ReadIADto> TrainIA(int id)
+    public async Task<ActionResult<ReadIADto>> TrainIA(int id)
     {
         //TODO
 

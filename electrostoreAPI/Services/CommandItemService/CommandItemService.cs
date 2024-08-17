@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.CommandItemService;
 
@@ -13,14 +14,13 @@ public class CommandItemService : ICommandItemService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadCommandItemDto>> GetCommandItemsByCommandId(int commandId, int limit = 100, int offset = 0)
+    public async Task<ActionResult<IEnumerable<ReadCommandItemDto>>> GetCommandItemsByCommandId(int commandId, int limit = 100, int offset = 0)
     {
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commandId))
         {
-            throw new ArgumentException("Command not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_command = new string[] { "Command not found" } } });
         }
-
         return await _context.CommandsItems
             .Skip(offset)
             .Take(limit)
@@ -35,12 +35,12 @@ public class CommandItemService : ICommandItemService
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<ReadCommandItemDto>> GetCommandItemsByItemId(int itemId, int limit = 100, int offset = 0)
+    public async Task<ActionResult<IEnumerable<ReadCommandItemDto>>> GetCommandItemsByItemId(int itemId, int limit = 100, int offset = 0)
     {
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            throw new ArgumentException("Item not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } }});
         }
 
         return await _context.CommandsItems
@@ -57,12 +57,12 @@ public class CommandItemService : ICommandItemService
             .ToListAsync();
     }
 
-    public async Task<ReadCommandItemDto> GetCommandItemById(int commandId, int itemId)
+    public async Task<ActionResult<ReadCommandItemDto>> GetCommandItemById(int commandId, int itemId)
     {
         var commandItem = await _context.CommandsItems.FindAsync(commandId, itemId);
         if (commandItem == null)
         {
-            throw new ArgumentException("Command item not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_command = new string[] { "Command item not found" } } });
         }
 
         return new ReadCommandItemDto
@@ -74,33 +74,33 @@ public class CommandItemService : ICommandItemService
         };
     }
 
-    public async Task<ReadCommandItemDto> CreateCommandItem(CreateCommandItemDto commandItemDto)
+    public async Task<ActionResult<ReadCommandItemDto>> CreateCommandItem(CreateCommandItemDto commandItemDto)
     {
         if (commandItemDto.qte_commanditem <= 0)
         {
-            throw new ArgumentException("Quantity must be greater than 0");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { qte_commanditem = new string[] { "Quantity must be greater than 0" } }});
         }
         if (commandItemDto.prix_commanditem <= 0)
         {
-            throw new ArgumentException("Price must be greater than 0");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { prix_commanditem = new string[] { "Price must be greater than 0" } }});
         }
 
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == commandItemDto.id_item))
         {
-            throw new ArgumentException("Item not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } }});
         }
 
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commandItemDto.id_command))
         {
-            throw new ArgumentException("Command not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_command = new string[] { "Command not found" } } });
         }
 
         // check if the command item already exists
         if (await _context.CommandsItems.AnyAsync(ci => ci.id_command == commandItemDto.id_command && ci.id_item == commandItemDto.id_item))
         {
-            throw new ArgumentException("Command item already exists");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_command = new string[] { "Command item already exists" } }});
         }
 
         var newCommandItem = new CommandsItems
@@ -123,34 +123,32 @@ public class CommandItemService : ICommandItemService
         };
     }
 
-    public async Task<ReadCommandItemDto> UpdateCommandItem(int commandId, int itemId, UpdateCommandItemDto commandItemDto)
+    public async Task<ActionResult<ReadCommandItemDto>> UpdateCommandItem(int commandId, int itemId, UpdateCommandItemDto commandItemDto)
     {
         if (commandItemDto.qte_commanditem <= 0 && commandItemDto.prix_commanditem <= 0)
         {
-            throw new ArgumentException("Quantity and price must be greater than 0");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { qte_commanditem = new string[] { "Quantity must be greater than 0" }, prix_commanditem = new string[] { "Price must be greater than 0" } }});
         }
-
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            throw new ArgumentException("Item not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } }});
         }
-
         if (!await _context.Commands.AnyAsync(c => c.id_command == commandId))
         {
-            throw new ArgumentException("Command not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_command = new string[] { "Command not found" } }});
         }
 
         var commandItemToUpdate = await _context.CommandsItems.FindAsync(commandId, itemId);
         if (commandItemToUpdate == null)
         {
-            throw new ArgumentException("Command item not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_command = new string[] { "Command item not found" } }});
         }
 
         if (commandItemDto.qte_commanditem != null)
         {
             if (commandItemDto.qte_commanditem <= 0)
             {
-                throw new ArgumentException("Quantity must be greater than 0");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { qte_commanditem = new string[] { "Quantity must be greater than 0" } }});
             }
             commandItemToUpdate.qte_commanditem = commandItemDto.qte_commanditem.Value;
         }
@@ -159,7 +157,7 @@ public class CommandItemService : ICommandItemService
         {
             if (commandItemDto.prix_commanditem <= 0)
             {
-                throw new ArgumentException("Price must be greater than 0");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { prix_commanditem = new string[] { "Price must be greater than 0" } }});
             }
             commandItemToUpdate.prix_commanditem = commandItemDto.prix_commanditem.Value;
         }
@@ -175,15 +173,15 @@ public class CommandItemService : ICommandItemService
         };
     }
 
-    public async Task DeleteCommandItem(int commandId, int itemId)
+    public async Task<IActionResult> DeleteCommandItem(int commandId, int itemId)
     {
         var commandItemToDelete = await _context.CommandsItems.FindAsync(commandId, itemId);
         if (commandItemToDelete == null)
         {
-            throw new ArgumentException("Command item not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_command = new string[] { "Command item not found" } }});
         }
-
         _context.CommandsItems.Remove(commandItemToDelete);
         await _context.SaveChangesAsync();
+        return new OkResult();
     }
 }

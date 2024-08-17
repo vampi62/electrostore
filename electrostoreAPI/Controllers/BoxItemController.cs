@@ -21,14 +21,30 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadItemBoxDto>>> GetItemsBoxsByBoxId([FromRoute] int id_box, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var itemsBoxs = await _itemBoxService.GetItemsBoxsByBoxId(id_box, limit, offset);
-            return Ok(itemsBoxs);
+            if (itemsBoxs.Result is BadRequestObjectResult)
+            {
+                return itemsBoxs.Result;
+            }
+            if (itemsBoxs.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(itemsBoxs.Value);
         }
 
         [HttpGet("{id_item}")]
         public async Task<ActionResult<ReadItemBoxDto>> GetItemBoxById([FromRoute] int id_box, [FromRoute] int id_item)
         {
             var itemBox = await _itemBoxService.GetItemBoxById(id_box, id_item);
-            return Ok(itemBox);
+            if (itemBox.Result is BadRequestObjectResult)
+            {
+                return itemBox.Result;
+            }
+            if (itemBox.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(itemBox.Value);
         }
 
         [HttpPost]
@@ -42,14 +58,30 @@ namespace electrostore.Controllers
                 seuil_max_itemitembox = itemBoxDto.seuil_max_itemitembox
             };
             var itemBox = await _itemBoxService.CreateItemBox(itemBoxDtoFull);
-            return CreatedAtAction(nameof(GetItemBoxById), new { id_box = itemBox.id_box, id_item = itemBox.id_item }, itemBox);
+            if (itemBox.Result is BadRequestObjectResult)
+            {
+                return itemBox.Result;
+            }
+            if (itemBox.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return CreatedAtAction(nameof(GetItemBoxById), new { id_box = itemBox.Value.id_box, id_item = itemBox.Value.id_item }, itemBox.Value);
         }
 
         [HttpPut("{id_item}")]
         public async Task<ActionResult<ReadItemBoxDto>> UpdateItemBox([FromRoute] int id_box, [FromRoute] int id_item, [FromBody] UpdateItemBoxDto itemBoxDto)
         {
             var itemBox = await _itemBoxService.UpdateItemBox(id_box, id_item, itemBoxDto);
-            return CreatedAtAction(nameof(GetItemBoxById), new { id_box = itemBox.id_box, id_item = itemBox.id_item }, itemBox);
+            if (itemBox.Result is BadRequestObjectResult)
+            {
+                return itemBox.Result;
+            }
+            if (itemBox.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return CreatedAtAction(nameof(GetItemBoxById), new { id_box = itemBox.Value.id_box, id_item = itemBox.Value.id_item }, itemBox.Value);
         }
 
         [HttpDelete("{id_item}")]

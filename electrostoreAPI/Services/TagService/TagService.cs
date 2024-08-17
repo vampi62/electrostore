@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.TagService;
 
@@ -27,13 +28,13 @@ public class TagService : ITagService
             .ToListAsync();
     }
 
-    public async Task<ReadTagDto> GetTagById(int id)
+    public async Task<ActionResult<ReadTagDto>> GetTagById(int id)
     {
         var tag = await _context.Tags.FindAsync(id);
 
         if (tag == null)
         {
-            throw new ArgumentException("Tag not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_tag = new string[] { "Tag not found" } } });
         }
 
         return new ReadTagDto
@@ -44,8 +45,13 @@ public class TagService : ITagService
         };
     }
 
-    public async Task<ReadTagDto> CreateTag(CreateTagDto tagDto)
+    public async Task<ActionResult<ReadTagDto>> CreateTag(CreateTagDto tagDto)
     {
+        // check if tag name already exists
+        if (await _context.Tags.AnyAsync(t => t.nom_tag == tagDto.nom_tag))
+        {
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { nom_tag = new string[] { "Tag name already exists" } } });
+        }
         var newTag = new Tags
         {
             nom_tag = tagDto.nom_tag,
@@ -63,25 +69,26 @@ public class TagService : ITagService
         };
     }
 
-    public async Task<ReadTagDto> UpdateTag(int id, UpdateTagDto tagDto)
+    public async Task<ActionResult<ReadTagDto>> UpdateTag(int id, UpdateTagDto tagDto)
     {
         var tagToUpdate = await _context.Tags.FindAsync(id);
-
         if (tagToUpdate == null)
         {
-            throw new ArgumentException("Tag not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_tag = new string[] { "Tag not found" } } });
         }
-
         if (tagDto.nom_tag != null)
         {
+            // check if tag name already exists
+            if (await _context.Tags.AnyAsync(t => t.nom_tag == tagDto.nom_tag))
+            {
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { nom_tag = new string[] { "Tag name already exists" } } });
+            }
             tagToUpdate.nom_tag = tagDto.nom_tag;
         }
-
         if (tagDto.poids_tag != null)
         {
             tagToUpdate.poids_tag = tagDto.poids_tag.Value;
         }
-
         await _context.SaveChangesAsync();
 
         return new ReadTagDto
@@ -92,16 +99,17 @@ public class TagService : ITagService
         };
     }
 
-    public async Task DeleteTag(int id)
+    public async Task<IActionResult> DeleteTag(int id)
     {
         var tagToDelete = await _context.Tags.FindAsync(id);
 
         if (tagToDelete == null)
         {
-            throw new ArgumentException("Tag not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_tag = new string[] { "Tag not found" } } });
         }
 
         _context.Tags.Remove(tagToDelete);
         await _context.SaveChangesAsync();
+        return new OkResult();
     }
 }

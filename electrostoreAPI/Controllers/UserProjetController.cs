@@ -21,14 +21,30 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadProjetCommentaireDto>>> GetProjetCommentairesByUserId([FromRoute] int id_user, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var projetCommentaires = await _projetCommentaireService.GetProjetCommentairesByUserId(id_user, limit, offset);
-            return Ok(projetCommentaires);
+            if (projetCommentaires.Result is BadRequestObjectResult)
+            {
+                return projetCommentaires.Result;
+            }
+            if (projetCommentaires.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(projetCommentaires.Value);
         }
 
         [HttpGet("{id_projetcommentaire}")]
         public async Task<ActionResult<ReadProjetCommentaireDto>> GetProjetCommentairesByCommentaireId([FromRoute] int id_user, [FromRoute] int id_projetcommentaire)
         {
             var projetCommentaire = await _projetCommentaireService.GetProjetCommentairesByCommentaireId(id_projetcommentaire, id_user);
-            return Ok(projetCommentaire);
+            if (projetCommentaire.Result is BadRequestObjectResult)
+            {
+                return projetCommentaire.Result;
+            }
+            if (projetCommentaire.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(projetCommentaire.Value);
         }
 
         // no create projet commentaire in user controller
@@ -37,7 +53,15 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadProjetCommentaireDto>> UpdateProjetCommentaire([FromRoute] int id_user, [FromRoute] int id_projetcommentaire, [FromBody] UpdateProjetCommentaireDto projetCommentaireDto)
         {
             var projetCommentaire = await _projetCommentaireService.UpdateProjetCommentaire(id_projetcommentaire, projetCommentaireDto, id_user);
-            return Ok(projetCommentaire);
+            if (projetCommentaire.Result is BadRequestObjectResult)
+            {
+                return projetCommentaire.Result;
+            }
+            if (projetCommentaire.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(projetCommentaire.Value);
         }
 
         [HttpDelete("{id_projetcommentaire}")]
