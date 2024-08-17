@@ -21,14 +21,30 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadStoreTagDto>>> GetStoresTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var storeTags = await _storeTagService.GetStoresTagsByTagId(id_tag, limit, offset);
-            return Ok(storeTags);
+            if (storeTags.Result is BadRequestObjectResult)
+            {
+                return storeTags.Result;
+            }
+            if (storeTags.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(storeTags.Value);
         }
 
         [HttpGet("{id_store}")]
         public async Task<ActionResult<ReadStoreTagDto>> GetStoreTagById([FromRoute] int id_tag, [FromRoute] int id_store)
         {
             var storeTag = await _storeTagService.GetStoreTagById(id_store, id_tag);
-            return Ok(storeTag);
+            if (storeTag.Result is BadRequestObjectResult)
+            {
+                return storeTag.Result;
+            }
+            if (storeTag.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(storeTag.Value);
         }
 
         [HttpPost("{id_store}")]
@@ -40,7 +56,15 @@ namespace electrostore.Controllers
                 id_store = id_store
             };
             var storeTag = await _storeTagService.CreateStoreTag(storeTagDto);
-            return CreatedAtAction(nameof(GetStoreTagById), new { id_tag = storeTag.id_tag, id_store = storeTag.id_store }, storeTag);
+            if (storeTag.Result is BadRequestObjectResult)
+            {
+                return storeTag.Result;
+            }
+            if (storeTag.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return CreatedAtAction(nameof(GetStoreTagById), new { id_tag = storeTag.Value.id_tag, id_store = storeTag.Value.id_store }, storeTag.Value);
         }
 
         [HttpDelete("{id_store}")]

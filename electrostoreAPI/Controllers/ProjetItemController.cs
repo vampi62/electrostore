@@ -21,14 +21,30 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadProjetItemDto>>> GetProjetItemsByProjetId([FromRoute] int id_projet)
         {
             var projetItems = await _projetItemService.GetProjetItemsByProjetId(id_projet);
-            return Ok(projetItems);
+            if (projetItems.Result is BadRequestObjectResult)
+            {
+                return projetItems.Result;
+            }
+            if (projetItems.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(projetItems.Value);
         }
 
         [HttpGet("{id_item}")]
         public async Task<ActionResult<ReadProjetItemDto>> GetProjetItemById([FromRoute] int id_projet, [FromRoute] int id_item)
         {
             var projetItem = await _projetItemService.GetProjetItemById(id_projet, id_item);
-            return Ok(projetItem);
+            if (projetItem.Result is BadRequestObjectResult)
+            {
+                return projetItem.Result;
+            }
+            if (projetItem.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(projetItem.Value);
         }
 
         [HttpPost]
@@ -41,21 +57,37 @@ namespace electrostore.Controllers
                 qte_projetitem = projetItemDto.qte_projetitem
             };
             var projetItem = await _projetItemService.CreateProjetItem(projetItemDtoFull);
-            return CreatedAtAction(nameof(GetProjetItemById), new { id_projet = projetItem.id_projet, id_item = projetItem.id_item }, projetItem);
+            if (projetItem.Result is BadRequestObjectResult)
+            {
+                return projetItem.Result;
+            }
+            if (projetItem.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return CreatedAtAction(nameof(GetProjetItemById), new { id_projet = projetItem.Value.id_projet, id_item = projetItem.Value.id_item }, projetItem.Value);
         }
 
         [HttpPut("{id_item}")]
         public async Task<ActionResult<ReadProjetItemDto>> UpdateProjetItem([FromRoute] int id_projet, [FromRoute] int id_item, [FromBody] UpdateProjetItemDto projetItemDto)
         {
             var projetItem = await _projetItemService.UpdateProjetItem(id_projet, id_item, projetItemDto);
-            return Ok(projetItem);
+            if (projetItem.Result is BadRequestObjectResult)
+            {
+                return projetItem.Result;
+            }
+            if (projetItem.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(projetItem.Value);
         }
 
         [HttpDelete("{id_item}")]
         public async Task<ActionResult> DeleteProjetItem([FromRoute] int id_projet, [FromRoute] int id_item)
         {
             await _projetItemService.DeleteProjetItem(id_projet, id_item);
-            return Ok();
+            return NoContent();
         }
     }
 }

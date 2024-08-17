@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.ItemBoxService;
 
@@ -13,12 +14,12 @@ public class ItemBoxService : IItemBoxService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadItemBoxDto>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0)
+    public async Task<ActionResult<IEnumerable<ReadItemBoxDto>>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0)
     {
         // check if the box exists
         if (!await _context.Boxs.AnyAsync(box => box.id_box == boxId))
         {
-            throw new ArgumentException("Box not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_box = new string[] { "Box not found" } }});
         }
 
         return await _context.ItemsBoxs
@@ -35,12 +36,12 @@ public class ItemBoxService : IItemBoxService
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<ReadItemBoxDto>> GetItemsBoxsByItemId(int ItemId, int limit = 100, int offset = 0)
+    public async Task<ActionResult<IEnumerable<ReadItemBoxDto>>> GetItemsBoxsByItemId(int ItemId, int limit = 100, int offset = 0)
     {
         // check if the item exists
         if (!await _context.Items.AnyAsync(item => item.id_item == ItemId))
         {
-            throw new ArgumentException("Item not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } }});
         }
 
         return await _context.ItemsBoxs
@@ -57,12 +58,12 @@ public class ItemBoxService : IItemBoxService
             .ToListAsync();
     }
 
-    public async Task<ReadItemBoxDto> GetItemBoxById(int itemId, int boxId)
+    public async Task<ActionResult<ReadItemBoxDto>> GetItemBoxById(int itemId, int boxId)
     {
         var itemBox = await _context.ItemsBoxs.FindAsync(boxId, itemId);
         if (itemBox == null)
         {
-            throw new ArgumentException("ItemBox not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "ItemBox not found" } }});
         }
 
         return new ReadItemBoxDto
@@ -74,29 +75,29 @@ public class ItemBoxService : IItemBoxService
         };
     }
 
-    public async Task<ReadItemBoxDto> CreateItemBox(CreateItemBoxDto itemBoxDto)
+    public async Task<ActionResult<ReadItemBoxDto>> CreateItemBox(CreateItemBoxDto itemBoxDto)
     {
         if (itemBoxDto.qte_itembox < 0)
         {
-            throw new ArgumentException("qte_itembox must be greater than 0");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { qte_itembox = new string[] { "qte_itembox must be greater than 0" } }});
         }
 
         // check if the box exists
         if (!await _context.Boxs.AnyAsync(box => box.id_box == itemBoxDto.id_box))
         {
-            throw new ArgumentException("Box not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_box = new string[] { "Box not found" } }});
         }
 
         // check if the item exists
         if (!await _context.Items.AnyAsync(item => item.id_item == itemBoxDto.id_item))
         {
-            throw new ArgumentException("Item not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } }});
         }
 
         // check if the item is already in the box
         if (await _context.ItemsBoxs.AnyAsync(itemBox => itemBox.id_box == itemBoxDto.id_box && itemBox.id_item == itemBoxDto.id_item))
         {
-            throw new ArgumentException("ItemBox already exists");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item already in the box" } }});
         }
 
         var newItemBox = new ItemsBoxs
@@ -119,12 +120,12 @@ public class ItemBoxService : IItemBoxService
         };
     }
 
-    public async Task<ReadItemBoxDto> UpdateItemBox(int itemId, int boxId, UpdateItemBoxDto itemBoxDto)
+    public async Task<ActionResult<ReadItemBoxDto>> UpdateItemBox(int itemId, int boxId, UpdateItemBoxDto itemBoxDto)
     {
         var itemBoxToUpdate = await _context.ItemsBoxs.FindAsync(boxId, itemId);
         if (itemBoxToUpdate == null)
         {
-            throw new ArgumentException("ItemBox not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "ItemBox not found" } }});
         }
 
         if (itemBoxDto.new_id_box != null)
@@ -132,7 +133,7 @@ public class ItemBoxService : IItemBoxService
             // check if the new box exists
             if (!await _context.Boxs.AnyAsync(box => box.id_box == itemBoxDto.new_id_box))
             {
-                throw new ArgumentException("Box not found");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { new_id_box = new string[] { "New box not found" } }});
             }
             itemBoxToUpdate.id_box = itemBoxDto.new_id_box.Value;
         }
@@ -141,7 +142,7 @@ public class ItemBoxService : IItemBoxService
         {
             if (itemBoxDto.qte_itembox < 0)
             {
-                throw new ArgumentException("qte_itembox must be greater than 0");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { qte_itembox = new string[] { "qte_itembox must be greater than 0" } }});
             }
             itemBoxToUpdate.qte_itembox = itemBoxDto.qte_itembox.Value;
         }
@@ -150,7 +151,7 @@ public class ItemBoxService : IItemBoxService
         {
             if (itemBoxDto.seuil_max_itemitembox < 0)
             {
-                throw new ArgumentException("seuil_max_itemitembox must be greater than 0");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { seuil_max_itemitembox = new string[] { "seuil_max_itemitembox must be greater than 0" } }});
             }
             itemBoxToUpdate.seuil_max_itemitembox = itemBoxDto.seuil_max_itemitembox.Value;
         }
@@ -166,15 +167,15 @@ public class ItemBoxService : IItemBoxService
         };
     }
 
-    public async Task DeleteItemBox(int itemId, int boxId)
+    public async Task<IActionResult> DeleteItemBox(int itemId, int boxId)
     {
         var itemBoxToDelete = await _context.ItemsBoxs.FindAsync(boxId, itemId);
         if (itemBoxToDelete == null)
         {
-            throw new ArgumentException("ItemBox not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "ItemBox not found" } }});
         }
-
         _context.ItemsBoxs.Remove(itemBoxToDelete);
         await _context.SaveChangesAsync();
+        return new OkResult();
     }
 }

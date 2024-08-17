@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.CameraService;
 
@@ -29,12 +30,12 @@ public class CameraService : ICameraService
             }).ToListAsync();
     }
 
-    public async Task<ReadCameraDto> GetCameraById(int id)
+    public async Task<ActionResult<ReadCameraDto>> GetCameraById(int id)
     {
         var camera = await _context.Cameras.FindAsync(id);
         if (camera == null)
         {
-            throw new ArgumentException("Camera not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "Camera not found" } } });
         }
 
         return new ReadCameraDto
@@ -70,12 +71,12 @@ public class CameraService : ICameraService
         };
     }
 
-    public async Task<ReadCameraDto> UpdateCamera(int id, UpdateCameraDto cameraDto)
+    public async Task<ActionResult<ReadCameraDto>> UpdateCamera(int id, UpdateCameraDto cameraDto)
     {
         var cameraToUpdate = await _context.Cameras.FindAsync(id);
         if (cameraToUpdate == null)
         {
-            throw new ArgumentException("Camera not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "Camera not found" } }});
         }
         
         if (cameraDto.nom_camera != null)
@@ -109,16 +110,16 @@ public class CameraService : ICameraService
         };
     }
 
-    public async Task DeleteCamera(int id)
+    public async Task<IActionResult> DeleteCamera(int id)
     {
         var cameraToDelete = await _context.Cameras.FindAsync(id);
         if (cameraToDelete == null)
         {
-            throw new ArgumentException("Camera not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "Camera not found" } } });
         }
 
         _context.Cameras.Remove(cameraToDelete);
         await _context.SaveChangesAsync();
-
+        return new OkResult();
     }
 }

@@ -21,14 +21,30 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadItemTagDto>>> GetItemsTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var itemTags = await _itemTagService.GetItemsTagsByTagId(id_tag, limit, offset);
-            return Ok(itemTags);
+            if (itemTags.Result is BadRequestObjectResult)
+            {
+                return itemTags.Result;
+            }
+            if (itemTags.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(itemTags.Value);
         }
 
         [HttpGet("{id_item}")]
         public async Task<ActionResult<ReadItemTagDto>> GetItemTagById([FromRoute] int id_tag, [FromRoute] int id_item)
         {
             var itemTag = await _itemTagService.GetItemTagById(id_item, id_tag);
-            return Ok(itemTag);
+            if (itemTag.Result is BadRequestObjectResult)
+            {
+                return itemTag.Result;
+            }
+            if (itemTag.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(itemTag.Value);
         }
 
         [HttpPost("{id_item}")]
@@ -40,7 +56,15 @@ namespace electrostore.Controllers
                 id_item = id_item
             };
             var itemTag = await _itemTagService.CreateItemTag(itemTagDto);
-            return CreatedAtAction(nameof(GetItemTagById), new { id_tag = itemTag.id_tag, id_item = itemTag.id_item }, itemTag);
+            if (itemTag.Result is BadRequestObjectResult)
+            {
+                return itemTag.Result;
+            }
+            if (itemTag.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return CreatedAtAction(nameof(GetItemTagById), new { id_tag = itemTag.Value.id_tag, id_item = itemTag.Value.id_item }, itemTag.Value);
         }
 
         [HttpDelete("{id_item}")]

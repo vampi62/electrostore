@@ -28,7 +28,15 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadIADto>> GetIAById([FromRoute] int id_ia)
         {
             var ia = await _iaService.GetIAById(id_ia);
-            return Ok(ia);
+            if (ia.Result is BadRequestObjectResult)
+            {
+                return ia.Result;
+            }
+            if (ia.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(ia.Value);
         }
 
         [HttpPost]
@@ -58,7 +66,15 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadIADto>> UpdateIA([FromRoute] int id_ia, [FromBody] UpdateIADto ia)
         {
             var iaToUpdate = await _iaService.UpdateIA(id_ia, ia);
-            return Ok(iaToUpdate);
+            if (iaToUpdate.Result is BadRequestObjectResult)
+            {
+                return iaToUpdate.Result;
+            }
+            if (iaToUpdate.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(iaToUpdate.Value);
         }
 
         [HttpDelete("{id_ia}")]

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.ProjetCommentaireService;
 
@@ -13,12 +14,12 @@ public class ProjetCommentaireService : IProjetCommentaireService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadProjetCommentaireDto>> GetProjetCommentairesByProjetId(int projetId, int limit = 100, int offset = 0)
+    public async Task<ActionResult<IEnumerable<ReadProjetCommentaireDto>>> GetProjetCommentairesByProjetId(int projetId, int limit = 100, int offset = 0)
     {
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
         {
-            throw new ArgumentException("Projet not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projet = new string[] { "Projet not found" } }});
         }
 
         return await _context.ProjetsCommentaires
@@ -37,12 +38,12 @@ public class ProjetCommentaireService : IProjetCommentaireService
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<ReadProjetCommentaireDto>> GetProjetCommentairesByUserId(int userId, int limit = 100, int offset = 0)
+    public async Task<ActionResult<IEnumerable<ReadProjetCommentaireDto>>> GetProjetCommentairesByUserId(int userId, int limit = 100, int offset = 0)
     {
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
         {
-            throw new ArgumentException("User not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_user = new string[] { "User not found" } }});
         }
 
         return await _context.ProjetsCommentaires
@@ -61,20 +62,12 @@ public class ProjetCommentaireService : IProjetCommentaireService
             .ToListAsync();
     }
 
-    public async Task<ReadProjetCommentaireDto> GetProjetCommentairesByCommentaireId(int id, int? userId = null, int? projetId = null)
+    public async Task<ActionResult<ReadProjetCommentaireDto>> GetProjetCommentairesByCommentaireId(int id, int? userId = null, int? projetId = null)
     {
         var projetCommentaire = await _context.ProjetsCommentaires.FindAsync(id);
-        if (projetCommentaire == null)
+        if ((projetCommentaire == null) || (projetId != null && projetCommentaire.id_projet != projetId) || (userId != null && projetCommentaire.id_user != userId))
         {
-            throw new ArgumentException("ProjetCommentaire not found");
-        }
-        if (projetId != null && projetCommentaire.id_projet != projetId)
-        {
-            throw new ArgumentException("ProjetCommentaire not found");
-        }
-        if (userId != null && projetCommentaire.id_user != userId)
-        {
-            throw new ArgumentException("ProjetCommentaire not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projetcommentaire = new string[] { "ProjetCommentaire not found" } }});
         }
 
         return new ReadProjetCommentaireDto
@@ -88,7 +81,7 @@ public class ProjetCommentaireService : IProjetCommentaireService
         };
     }
 
-    public async Task<ReadProjetCommentaireDto> CreateProjetCommentaire(CreateProjetCommentaireDto projetCommentaireDto)
+    public async Task<ActionResult<ReadProjetCommentaireDto>> CreateProjetCommentaire(CreateProjetCommentaireDto projetCommentaireDto)
     {
         // get the UserId from the token
         // TODO
@@ -96,13 +89,13 @@ public class ProjetCommentaireService : IProjetCommentaireService
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetCommentaireDto.id_projet))
         {
-            throw new ArgumentException("Projet not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projet = new string[] { "Projet not found" } }});
         }
 
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == projetCommentaireDto.id_user))
         {
-            throw new ArgumentException("User not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_user = new string[] { "User not found" } }});
         }
 
         var newProjetCommentaire = new ProjetsCommentaires
@@ -128,23 +121,15 @@ public class ProjetCommentaireService : IProjetCommentaireService
         };
     }
 
-    public async Task<ReadProjetCommentaireDto> UpdateProjetCommentaire(int id, UpdateProjetCommentaireDto projetCommentaireDto, int? userId = null, int? projetId = null)
+    public async Task<ActionResult<ReadProjetCommentaireDto>> UpdateProjetCommentaire(int id, UpdateProjetCommentaireDto projetCommentaireDto, int? userId = null, int? projetId = null)
     {
         // get the UserId from the token
         // TODO
 
         var projetCommentaireToUpdate = await _context.ProjetsCommentaires.FindAsync(id);
-        if (projetCommentaireToUpdate == null)
+        if ((projetCommentaireToUpdate == null) || (projetId != null && projetCommentaireToUpdate.id_projet != projetId) || (userId != null && projetCommentaireToUpdate.id_user != userId))
         {
-            throw new ArgumentException("ProjetCommentaire not found");
-        }
-        if (projetId != null && projetCommentaireToUpdate.id_projet != projetId)
-        {
-            throw new ArgumentException("ProjetCommentaire not found");
-        }
-        if (userId != null && projetCommentaireToUpdate.id_user != userId)
-        {
-            throw new ArgumentException("ProjetCommentaire not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projetcommentaire = new string[] { "ProjetCommentaire not found" } }});
         }
 
         projetCommentaireToUpdate.contenu_projetcommentaire = projetCommentaireDto.contenu_projetcommentaire ?? projetCommentaireToUpdate.contenu_projetcommentaire;
@@ -162,26 +147,18 @@ public class ProjetCommentaireService : IProjetCommentaireService
         };
     }
 
-    public async Task DeleteProjetCommentaire(int id, int? userId = null, int? projetId = null)
+    public async Task<IActionResult> DeleteProjetCommentaire(int id, int? userId = null, int? projetId = null)
     {
         // get the UserId from the token
         // TODO
         
         var projetCommentaireToDelete = await _context.ProjetsCommentaires.FindAsync(id);
-        if (projetCommentaireToDelete == null)
+        if ((projetCommentaireToDelete == null) || (projetId != null && projetCommentaireToDelete.id_projet != projetId) || (userId != null && projetCommentaireToDelete.id_user != userId))
         {
-            throw new ArgumentException("ProjetCommentaire not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projetcommentaire = new string[] { "ProjetCommentaire not found" } }});
         }
-        if (projetId != null && projetCommentaireToDelete.id_projet != projetId)
-        {
-            throw new ArgumentException("ProjetCommentaire not found");
-        }
-        if (userId != null && projetCommentaireToDelete.id_user != userId)
-        {
-            throw new ArgumentException("ProjetCommentaire not found");
-        }
-
         _context.ProjetsCommentaires.Remove(projetCommentaireToDelete);
         await _context.SaveChangesAsync();
+        return new OkResult();
     }
 }

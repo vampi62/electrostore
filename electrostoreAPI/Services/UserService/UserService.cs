@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.UserService;
 
@@ -29,23 +30,23 @@ public class UserService : IUserService
             .ToListAsync();
     }
 
-    public async Task<ReadUserDto> CreateUser(CreateUserDto userDto)
+    public async Task<ActionResult<ReadUserDto>> CreateUser(CreateUserDto userDto)
     {
         // check email format
         if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(userDto.email_user))
         {
-            throw new ArgumentException("Invalid email format");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { email_user = new string[] { "Invalid email format" }}});
         }
         // check password length and if it contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long
-        if (!new System.ComponentModel.DataAnnotations.RegularExpressionAttribute(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8}$").IsValid(userDto.mdp_user))
+        if (!new System.ComponentModel.DataAnnotations.RegularExpressionAttribute(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$").IsValid(userDto.mdp_user))
         {
-            throw new ArgumentException("Invalid password format");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { mdp_user = new string[] { "password must contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long" }}});
         }
         // Check if email is already used
         var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user);
         if (user != null)
         {
-            throw new ArgumentException("Email already used");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { email_user = new string[] { "Email already used" }}});
         }
         var newUser = new Users
         {
@@ -69,13 +70,13 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<ReadUserDto> GetUserById(int id)
+    public async Task<ActionResult<ReadUserDto>> GetUserById(int id)
     {
         var user = await _context.Users.FindAsync(id);
 
         if (user == null)
         {
-            throw new ArgumentException("User not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_user = new string[] { "User not found" }}});
         }
 
         return new ReadUserDto
@@ -88,13 +89,13 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<ReadUserDto> GetUserByEmail(string email)
+    public async Task<ActionResult<ReadUserDto>> GetUserByEmail(string email)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == email);
 
         if (user == null)
         {
-            throw new ArgumentException("User not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { email_user = new string[] { "User not found" }}});
         }
 
         return new ReadUserDto
@@ -107,13 +108,13 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<ReadUserDto> UpdateUser(int id, UpdateUserDto userDto)
+    public async Task<ActionResult<ReadUserDto>> UpdateUser(int id, UpdateUserDto userDto)
     {
         var userToUpdate = await _context.Users.FindAsync(id);
 
         if (userToUpdate == null)
         {
-            throw new ArgumentException("User not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_user = new string[] { "User not found" } }});
         }
 
         if (userDto.nom_user != null)
@@ -131,13 +132,13 @@ public class UserService : IUserService
             // check email format
             if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(userDto.email_user))
             {
-                throw new ArgumentException("Invalid email format");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { email_user = new string[] { "Invalid email format" } }});
             }
             // Check if email is already used
             var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user);
             if (user != null)
             {
-                throw new ArgumentException("Email already used");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { email_user = new string[] { "Email already used" } }});
             }
             userToUpdate.email_user = userDto.email_user;
         }
@@ -145,9 +146,9 @@ public class UserService : IUserService
         if (userDto.mdp_user != null)
         {
             // check password length and if it contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long
-            if (!new System.ComponentModel.DataAnnotations.RegularExpressionAttribute(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8}$").IsValid(userDto.mdp_user))
+            if (!new System.ComponentModel.DataAnnotations.RegularExpressionAttribute(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$").IsValid(userDto.mdp_user))
             {
-                throw new ArgumentException("Invalid password format");
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { mdp_user = new string[] { "password must contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long" } }});
             }
             userToUpdate.mdp_user = BCrypt.Net.BCrypt.HashPassword(userDto.mdp_user);
         }
@@ -169,26 +170,27 @@ public class UserService : IUserService
         };
     }
 
-    public async Task DeleteUser(int id)
+    public async Task<ActionResult> DeleteUser(int id)
     {
         var userToDelete = await _context.Users.FindAsync(id);
 
         if (userToDelete == null)
         {
-            throw new ArgumentException("User not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_user = new string[] { "User not found" }}});
         }
 
         _context.Users.Remove(userToDelete);
         await _context.SaveChangesAsync();
+        return new OkResult();
     }
 
-    public async Task<bool> CheckUserPassword(string email, string password)
+    public async Task<ActionResult<bool>> CheckUserPassword(string email, string password)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == email);
 
         if (user == null)
         {
-            throw new ArgumentException("User not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { email_user = new string[] { "User not found" } }});
         }
 
         return BCrypt.Net.BCrypt.Verify(password, user.mdp_user);

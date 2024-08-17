@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.ProjetService;
 
@@ -31,13 +32,12 @@ public class ProjetService : IProjetService
             .ToListAsync();
     }
 
-    public async Task<ReadProjetDto> GetProjetById(int id)
+    public async Task<ActionResult<ReadProjetDto>> GetProjetById(int id)
     {
         var projet = await _context.Projets.FindAsync(id);
-
         if (projet == null)
         {
-            throw new ArgumentException("Projet not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projet = new string[] { "Projet not found" } }});
         }
 
         return new ReadProjetDto
@@ -79,13 +79,12 @@ public class ProjetService : IProjetService
         };
     }
 
-    public async Task<ReadProjetDto> UpdateProjet(int id, UpdateProjetDto projetDto)
+    public async Task<ActionResult<ReadProjetDto>> UpdateProjet(int id, UpdateProjetDto projetDto)
     {
         var projetToUpdate = await _context.Projets.FindAsync(id);
-
         if (projetToUpdate == null)
         {
-            throw new ArgumentException("Projet not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projet = new string[] { "Projet not found" } }});
         }
 
         if (projetDto.nom_projet != null)
@@ -132,15 +131,15 @@ public class ProjetService : IProjetService
         };
     }
 
-    public async Task DeleteProjet(int id)
+    public async Task<IActionResult> DeleteProjet(int id)
     {
         var projetToDelete = await _context.Projets.FindAsync(id);
         if (projetToDelete == null)
         {
-            throw new ArgumentException("Projet not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projet = new string[] { "Projet not found" } }});
         }
-
         _context.Projets.Remove(projetToDelete);
         await _context.SaveChangesAsync();
+        return new OkResult();
     }
 }

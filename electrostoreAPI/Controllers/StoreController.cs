@@ -27,21 +27,45 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadStoreDto>> GetStoreById([FromRoute] int id_store)
         {
             var store = await _storeService.GetStoreById(id_store);
-            return Ok(store);
+            if (store.Result is BadRequestObjectResult)
+            {
+                return store.Result;
+            }
+            if (store.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(store.Value);
         }
 
         [HttpPost]
         public async Task<ActionResult<ReadStoreDto>> CreateStore([FromBody] CreateStoreDto store)
         {
             var newStore = await _storeService.CreateStore(store);
-            return CreatedAtAction(nameof(GetStoreById), new { id_store = newStore.id_store }, newStore);
+            if (newStore.Result is BadRequestObjectResult)
+            {
+                return newStore.Result;
+            }
+            if (newStore.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return CreatedAtAction(nameof(GetStoreById), new { id_store = newStore.Value.id_store }, newStore.Value);
         }
 
         [HttpPut("{id_store}")]
         public async Task<ActionResult<ReadStoreDto>> UpdateStore([FromRoute] int id_store, [FromBody] UpdateStoreDto store)
         {
             var storeToUpdate = await _storeService.UpdateStore(id_store, store);
-            return Ok(storeToUpdate);
+            if (storeToUpdate.Result is BadRequestObjectResult)
+            {
+                return storeToUpdate.Result;
+            }
+            if (storeToUpdate.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(storeToUpdate.Value);
         }
 
         [HttpDelete("{id_store}")]

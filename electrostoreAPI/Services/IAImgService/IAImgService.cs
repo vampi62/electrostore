@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.IAImgService;
 
@@ -13,12 +14,12 @@ public class IAImgService : IIAImgService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadIAImgDto>> GetIAImgByIAId(int idIA, int limit = 100, int offset = 0)
+    public async Task<ActionResult<IEnumerable<ReadIAImgDto>>> GetIAImgByIAId(int idIA, int limit = 100, int offset = 0)
     {
         // check if IA exists
         if (!await _context.IA.AnyAsync(ia => ia.id_ia == idIA))
         {
-            throw new ArgumentException("IA not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_ia = new string[] { "IA not found" } } });
         }
 
         return await _context.IAImgs
@@ -33,12 +34,12 @@ public class IAImgService : IIAImgService
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<ReadIAImgDto>> GetIAImgByImgId(int idImg, int limit = 100, int offset = 0)
+    public async Task<ActionResult<IEnumerable<ReadIAImgDto>>> GetIAImgByImgId(int idImg, int limit = 100, int offset = 0)
     {
         // check if Img exists
         if (!await _context.Imgs.AnyAsync(img => img.id_img == idImg))
         {
-            throw new ArgumentException("Img not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_img = new string[] { "Img not found" } } });
         }
 
         return await _context.IAImgs
@@ -53,12 +54,12 @@ public class IAImgService : IIAImgService
             .ToListAsync();
     }
 
-    public async Task<ReadIAImgDto> GetIAImgById(int idIA, int idImg)
+    public async Task<ActionResult<ReadIAImgDto>> GetIAImgById(int idIA, int idImg)
     {
         var IAImg = await _context.IAImgs.FindAsync(idIA, idImg);
         if (IAImg == null)
         {
-            throw new ArgumentException("IAImg not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_ia = new string[] { "IAImg not found" } } });
         }
 
         return new ReadIAImgDto
@@ -68,24 +69,24 @@ public class IAImgService : IIAImgService
         };
     }
 
-    public async Task<ReadIAImgDto> CreateIAImg(CreateIAImgDto IAImgDto)
+    public async Task<ActionResult<ReadIAImgDto>> CreateIAImg(CreateIAImgDto IAImgDto)
     {
         // check if IA exists
         if (!await _context.IA.AnyAsync(ia => ia.id_ia == IAImgDto.id_ia))
         {
-            throw new ArgumentException("IA not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_ia = new string[] { "IA not found" } } });
         }
 
         // check if Img exists
         if (!await _context.Imgs.AnyAsync(img => img.id_img == IAImgDto.id_img))
         {
-            throw new ArgumentException("Img not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_img = new string[] { "Img not found" } } });
         }
 
         // check if IAImg already exists
         if (await _context.IAImgs.AnyAsync(iaimg => iaimg.id_ia == IAImgDto.id_ia && iaimg.id_img == IAImgDto.id_img))
         {
-            throw new ArgumentException("IAImg already exists");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_ia = new string[] { "IAImg already exists" } } });
         }
 
         var newIAImg = new IAImgs
@@ -104,16 +105,16 @@ public class IAImgService : IIAImgService
         };
     }
 
-    public async Task DeleteIAImg(int idIA, int idImg)
+    public async Task<IActionResult> DeleteIAImg(int idIA, int idImg)
     {
         // check if IAImg exists
         var IAImgToDelete = await _context.IAImgs.FindAsync(idIA, idImg);
         if (IAImgToDelete == null)
         {
-            throw new ArgumentException("IAImg not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_ia = new string[] { "IAImg not found" } } });
         }
-
         _context.IAImgs.Remove(IAImgToDelete);
         await _context.SaveChangesAsync();
+        return new OkResult();
     }
 }

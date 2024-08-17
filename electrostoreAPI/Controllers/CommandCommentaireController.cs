@@ -21,14 +21,30 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadCommandCommentaireDto>>> GetCommandsCommentairesByCommandId([FromRoute] int id_command, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var commandCommentaires = await _commandCommentaireService.GetCommandsCommentairesByCommandId(id_command, limit, offset);
-            return Ok(commandCommentaires);
+            if (commandCommentaires.Result is BadRequestObjectResult)
+            {
+                return commandCommentaires.Result;
+            }
+            if (commandCommentaires.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(commandCommentaires.Value);
         }
 
         [HttpGet("{id_commandcommentaire}")]
         public async Task<ActionResult<ReadCommandCommentaireDto>> GetCommandsCommentaireById([FromRoute] int id_command, [FromRoute] int id_commandcommentaire)
         {
             var commandCommentaire = await _commandCommentaireService.GetCommandsCommentaireById(id_commandcommentaire, null, id_command);
-            return Ok(commandCommentaire);
+            if (commandCommentaire.Result is BadRequestObjectResult)
+            {
+                return commandCommentaire.Result;
+            }
+            if (commandCommentaire.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(commandCommentaire.Value);
         }
 
         [HttpPost]
@@ -41,21 +57,37 @@ namespace electrostore.Controllers
                 contenu_commandcommentaire = commandCommentaireDto.contenu_commandcommentaire
             };
             var commandCommentaire = await _commandCommentaireService.CreateCommentaire(commandCommentaireDtoFull);
-            return CreatedAtAction(nameof(GetCommandsCommentaireById), new { id_command = commandCommentaire.id_command, id_commandcommentaire = commandCommentaire.id_commandcommentaire }, commandCommentaire);
+            if (commandCommentaire.Result is BadRequestObjectResult)
+            {
+                return commandCommentaire.Result;
+            }
+            if (commandCommentaire.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return CreatedAtAction(nameof(GetCommandsCommentaireById), new { id_command = commandCommentaire.Value.id_command, id_commandcommentaire = commandCommentaire.Value.id_commandcommentaire }, commandCommentaire.Value);
         }
 
         [HttpPut("{id_commandcommentaire}")]
         public async Task<ActionResult<ReadCommandCommentaireDto>> UpdateCommentaire([FromRoute] int id_command, [FromRoute] int id_commandcommentaire, [FromBody] UpdateCommandCommentaireDto commandCommentaireDto)
         {
             var commandCommentaire = await _commandCommentaireService.UpdateCommentaire(id_commandcommentaire, commandCommentaireDto, null, id_command);
-            return Ok(commandCommentaire);
+            if (commandCommentaire.Result is BadRequestObjectResult)
+            {
+                return commandCommentaire.Result;
+            }
+            if (commandCommentaire.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(commandCommentaire.Value);
         }
 
         [HttpDelete("{id_commandcommentaire}")]
         public async Task<ActionResult> DeleteCommentaire([FromRoute] int id_command, [FromRoute] int id_commandcommentaire)
         {
             await _commandCommentaireService.DeleteCommentaire(id_commandcommentaire, null, id_command);
-            return Ok();
+            return NoContent();
         }
     }
 }

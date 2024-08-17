@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.CommandCommentaireService;
 
@@ -13,12 +14,12 @@ public class CommandCommentaireService : ICommandCommentaireService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadCommandCommentaireDto>> GetCommandsCommentairesByCommandId(int CommandId, int limit = 100, int offset = 0)
+    public async Task<ActionResult<IEnumerable<ReadCommandCommentaireDto>>> GetCommandsCommentairesByCommandId(int CommandId, int limit = 100, int offset = 0)
     {
         // check if the command exists
         if (!await _context.Commands.AnyAsync(p => p.id_command == CommandId))
         {
-            throw new ArgumentException("Command not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { CommandId = new string[] { "Command not found" } } });
         }
 
         return await _context.CommandsCommentaires
@@ -37,12 +38,12 @@ public class CommandCommentaireService : ICommandCommentaireService
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<ReadCommandCommentaireDto>> GetCommandsCommentairesByUserId(int userId, int limit = 100, int offset = 0)
+    public async Task<ActionResult<IEnumerable<ReadCommandCommentaireDto>>> GetCommandsCommentairesByUserId(int userId, int limit = 100, int offset = 0)
     {
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
         {
-            throw new ArgumentException("User not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { userId = new string[] { "User not found" } } });
         }
 
         return await _context.CommandsCommentaires
@@ -61,20 +62,12 @@ public class CommandCommentaireService : ICommandCommentaireService
             .ToListAsync();
     }
 
-    public async Task<ReadCommandCommentaireDto> GetCommandsCommentaireById(int id, int? userId = null, int? CommandId = null)
+    public async Task<ActionResult<ReadCommandCommentaireDto>> GetCommandsCommentaireById(int id, int? userId = null, int? CommandId = null)
     {
         var commentaire = await _context.CommandsCommentaires.FindAsync(id);
-        if (commentaire == null)
+        if ((commentaire == null) || (CommandId != null && commentaire.id_command != CommandId) || (userId != null && commentaire.id_user != userId))
         {
-            throw new ArgumentException("CommandCommentaire not found");
-        }
-        if (CommandId != null && commentaire.id_command != CommandId)
-        {
-            throw new ArgumentException("CommandCommentaire not found");
-        }
-        if (userId != null && commentaire.id_user != userId)
-        {
-            throw new ArgumentException("CommandCommentaire not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "CommandCommentaire not found" } } });
         }
 
         return new ReadCommandCommentaireDto
@@ -88,7 +81,7 @@ public class CommandCommentaireService : ICommandCommentaireService
         };
     }
 
-    public async Task<ReadCommandCommentaireDto> CreateCommentaire(CreateCommandCommentaireDto commentaireDto)
+    public async Task<ActionResult<ReadCommandCommentaireDto>> CreateCommentaire(CreateCommandCommentaireDto commentaireDto)
     {
         // get the UserId from the token
         // TODO
@@ -96,13 +89,13 @@ public class CommandCommentaireService : ICommandCommentaireService
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commentaireDto.id_command))
         {
-            throw new ArgumentException("Command not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { CommandId = new string[] { "Command not found" } } });
         }
 
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == commentaireDto.id_user))
         {
-            throw new ArgumentException("User not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { UserId = new string[] { "User not found" } } });
         }
 
         var newCommentaire = new CommandsCommentaires
@@ -128,20 +121,12 @@ public class CommandCommentaireService : ICommandCommentaireService
         };
     }
 
-    public async Task<ReadCommandCommentaireDto> UpdateCommentaire(int id, UpdateCommandCommentaireDto commentaireDto, int? userId = null, int? CommandId = null)
+    public async Task<ActionResult<ReadCommandCommentaireDto>> UpdateCommentaire(int id, UpdateCommandCommentaireDto commentaireDto, int? userId = null, int? CommandId = null)
     {
         var commentaireToUpdate = await _context.CommandsCommentaires.FindAsync(id);
-        if (commentaireToUpdate == null)
+        if ((commentaireToUpdate == null) || (CommandId != null && commentaireToUpdate.id_command != CommandId) || (userId != null && commentaireToUpdate.id_user != userId))
         {
-            throw new ArgumentException("CommandCommentaire not found");
-        }
-        if (CommandId != null && commentaireToUpdate.id_command != CommandId)
-        {
-            throw new ArgumentException("CommandCommentaire not found");
-        }
-        if (userId != null && commentaireToUpdate.id_user != userId)
-        {
-            throw new ArgumentException("CommandCommentaire not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "CommandCommentaire not found" } } });
         }
 
         // check if the user is the owner of the commentaire or an admin
@@ -165,20 +150,12 @@ public class CommandCommentaireService : ICommandCommentaireService
         };
     }
 
-    public async Task DeleteCommentaire(int id, int? userId = null, int? CommandId = null)
+    public async Task<IActionResult> DeleteCommentaire(int id, int? userId = null, int? CommandId = null)
     {
         var commentaireToDelete = await _context.CommandsCommentaires.FindAsync(id);
-        if (commentaireToDelete == null)
+        if ((commentaireToDelete == null) || (CommandId != null && commentaireToDelete.id_command != CommandId) || (userId != null && commentaireToDelete.id_user != userId))
         {
-            throw new ArgumentException("CommandCommentaire not found");
-        }
-        if (CommandId != null && commentaireToDelete.id_command != CommandId)
-        {
-            throw new ArgumentException("CommandCommentaire not found");
-        }
-        if (userId != null && commentaireToDelete.id_user != userId)
-        {
-            throw new ArgumentException("CommandCommentaire not found");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "CommandCommentaire not found" } } });
         }
 
         // check if the user is the owner of the commentaire or an admin
@@ -186,5 +163,6 @@ public class CommandCommentaireService : ICommandCommentaireService
 
         _context.CommandsCommentaires.Remove(commentaireToDelete);
         await _context.SaveChangesAsync();
+        return new OkResult();
     }
 }
