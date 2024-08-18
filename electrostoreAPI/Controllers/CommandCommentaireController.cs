@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.CommandCommentaireService;
+using System.Security.Claims;
 
 namespace electrostore.Controllers
 {
@@ -53,7 +53,7 @@ namespace electrostore.Controllers
             var commandCommentaireDtoFull = new CreateCommandCommentaireDto
             {
                 id_command = id_command,
-                id_user = commandCommentaireDto.id_user,
+                id_user = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value),
                 contenu_commandcommentaire = commandCommentaireDto.contenu_commandcommentaire
             };
             var commandCommentaire = await _commandCommentaireService.CreateCommentaire(commandCommentaireDtoFull);
@@ -71,6 +71,19 @@ namespace electrostore.Controllers
         [HttpPut("{id_commandcommentaire}")]
         public async Task<ActionResult<ReadCommandCommentaireDto>> UpdateCommentaire([FromRoute] int id_command, [FromRoute] int id_commandcommentaire, [FromBody] UpdateCommandCommentaireDto commandCommentaireDto)
         {
+            var checkCommandCommentaire = await _commandCommentaireService.GetCommandsCommentaireById(id_commandcommentaire, null, id_command);
+            if (checkCommandCommentaire.Result is BadRequestObjectResult)
+            {
+                return checkCommandCommentaire.Result;
+            }
+            if (checkCommandCommentaire.Value == null)
+            {
+                return StatusCode(500);
+            }
+            if (!User.IsInRole("Admin") && checkCommandCommentaire.Value.id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
+            {
+                return Unauthorized(new { message = "You are not allowed to access this resource" });
+            }
             var commandCommentaire = await _commandCommentaireService.UpdateCommentaire(id_commandcommentaire, commandCommentaireDto, null, id_command);
             if (commandCommentaire.Result is BadRequestObjectResult)
             {
@@ -86,6 +99,19 @@ namespace electrostore.Controllers
         [HttpDelete("{id_commandcommentaire}")]
         public async Task<ActionResult> DeleteCommentaire([FromRoute] int id_command, [FromRoute] int id_commandcommentaire)
         {
+            var checkCommandCommentaire = await _commandCommentaireService.GetCommandsCommentaireById(id_commandcommentaire, null, id_command);
+            if (checkCommandCommentaire.Result is BadRequestObjectResult)
+            {
+                return checkCommandCommentaire.Result;
+            }
+            if (checkCommandCommentaire.Value == null)
+            {
+                return StatusCode(500);
+            }
+            if (!User.IsInRole("Admin") && checkCommandCommentaire.Value.id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
+            {
+                return Unauthorized(new { message = "You are not allowed to access this resource" });
+            }
             await _commandCommentaireService.DeleteCommentaire(id_commandcommentaire, null, id_command);
             return NoContent();
         }

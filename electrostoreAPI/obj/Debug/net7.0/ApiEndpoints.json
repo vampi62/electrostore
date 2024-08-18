@@ -4539,5 +4539,53 @@
       }
     ],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "electrostore.Controllers.UserController",
+    "Method": "ForgotPassword",
+    "RelativePath": "api/user/forgot-password",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "forgotPasswordRequest",
+        "Type": "electrostore.Dto.ForgotPasswordRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "electrostore.Controllers.UserController",
+    "Method": "Login",
+    "RelativePath": "api/user/login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "loginRequest",
+        "Type": "electrostore.Dto.LoginRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "electrostore.Controllers.UserController",
+    "Method": "ResetPassword",
+    "RelativePath": "api/user/reset-password",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "resetPasswordRequest",
+        "Type": "electrostore.Dto.ResetPasswordRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
   }
 ]
