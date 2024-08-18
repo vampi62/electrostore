@@ -18,7 +18,6 @@ public record CreateProjetCommentaireByUserDto
 }
 public record CreateProjetCommentaireByProjetDto
 {
-    [Required] public int id_user { get; init; }
     [Required] public string contenu_projetcommentaire { get; init; }
 }
 public record CreateProjetCommentaireDto

@@ -13,7 +13,6 @@ public record ReadCommandCommentaireDto
 }
 public record CreateCommandCommentaireByCommandDto
 {
-    [Required] public int id_user { get; init; }
     [Required] public string contenu_commandcommentaire { get; init; }
 }
 public record CreateCommandCommentaireByUserDto

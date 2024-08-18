@@ -1,11 +1,18 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text;
+
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Authorization;
+
 using MQTTnet;
 using MQTTnet.Client;
-using System.Net;
-using System.Net.Mail;
 
 using electrostore;
+
 using electrostore.Models;
+
 using electrostore.Services.BoxService;
 using electrostore.Services.BoxTagService;
 using electrostore.Services.CameraService;
@@ -26,12 +33,16 @@ using electrostore.Services.StoreService;
 using electrostore.Services.StoreTagService;
 using electrostore.Services.TagService;
 using electrostore.Services.UserService;
+using electrostore.Services.JwtService;
 
-using System.ComponentModel;
+using Microsoft.OpenApi.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
+var key = Encoding.ASCII.GetBytes(jwtSettings.Key);
 
+// Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), new MySqlServerVersion(new Version(8,0,19))));
 
@@ -40,9 +51,9 @@ builder.Services.AddSingleton<IMqttClient>(sp =>
     var factory = new MqttFactory();
     var mqttClient = factory.CreateMqttClient();
     var options = new MqttClientOptionsBuilder()
-        .WithClientId("ClientID")
-        .WithTcpServer("mqtt.example.com", 1883)
-        .WithCredentials("username", "password")
+        .WithClientId(builder.Configuration.GetSection("MQTT:ClientId").Value)
+        .WithTcpServer(builder.Configuration.GetSection("MQTT:Server").Value, builder.Configuration.GetSection("MQTT:Port").Get<int>())
+        .WithCredentials(builder.Configuration.GetSection("MQTT:Username").Value, builder.Configuration.GetSection("MQTT:Password").Value)
         .WithCleanSession()
         .Build();
     mqttClient.ConnectAsync(options);
@@ -51,9 +62,81 @@ builder.Services.AddSingleton<IMqttClient>(sp =>
 
 addScopes(builder);
 
+builder.Services.AddControllers(options => { options.Filters.Add(new AuthorizeFilter()); })
+    // Invalid model state response factory
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var modelStateErrors = context.ModelState
+                .Where(ms => ms.Value.Errors.Count > 0)
+                .SelectMany(ms => ms.Value.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+
+
+            if (modelStateErrors.Any())
+            {
+                var errorResponse = new
+                {
+                    Error = "Incorrect call",
+                };
+
+                return new BadRequestObjectResult(errorResponse);
+            }
+
+            return new BadRequestResult();
+        };
+    });
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\""
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuer = false,
+            ValidateAudience = false
+        };
+    });
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("admin", policy =>
+        policy.RequireRole("admin"));
+    options.AddPolicy("user", policy =>
+        policy.RequireRole("user"));
+});
 
 builder.Services.AddCors(options =>
 {
@@ -73,6 +156,8 @@ var app = builder.Build();
 app.UseStaticFiles();
 
 app.UseCors("CorsPolicy");
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
@@ -102,4 +187,5 @@ void addScopes(WebApplicationBuilder builder)
     builder.Services.AddScoped<IStoreTagService, StoreTagService>();
     builder.Services.AddScoped<ITagService, TagService>();
     builder.Services.AddScoped<IUserService, UserService>();
+    builder.Services.AddSingleton<JwtService>();
 }

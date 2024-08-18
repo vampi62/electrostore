@@ -2,16 +2,20 @@ using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
+using System.Net.Mail;
 
 namespace electrostore.Services.UserService;
 
 public class UserService : IUserService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IConfiguration _configuration;
 
-    public UserService(ApplicationDbContext context)
+    public UserService(ApplicationDbContext context, IConfiguration configuration)
     {
         _context = context;
+        _configuration = configuration;
     }
 
     public async Task<IEnumerable<ReadUserDto>> GetUsers(int limit = 100, int offset = 0)
@@ -184,15 +188,89 @@ public class UserService : IUserService
         return new OkResult();
     }
 
-    public async Task<ActionResult<bool>> CheckUserPassword(string email, string password)
+    public async Task<bool> CheckUserPassword(string email, string password)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == email);
-
         if (user == null)
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { email_user = new string[] { "User not found" } }});
+            return false;
+        }
+        return BCrypt.Net.BCrypt.Verify(password, user.mdp_user);
+    }
+
+    public async Task<ActionResult> ForgotPassword(ForgotPasswordRequest request)
+    {
+        //check if SMTP is Enabled
+        if (_configuration["SMTP:Enable"] != "true")
+        {
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { email_user = new string[] { "SMTP is not enabled" } }});
         }
 
-        return BCrypt.Net.BCrypt.Verify(password, user.mdp_user);
+        // check if user exists
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.Email);
+        if (user == null)
+        {
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.4", title = "One or more validation errors occurred.", status = 404, errors = new { email_user = new string[] { "User not found" } }});
+        }
+        // add reset_token
+        user.reset_token = Guid.NewGuid().ToString();
+        user.reset_token_expiration = DateTime.Now.AddHours(1);
+        await _context.SaveChangesAsync();
+
+
+        // send email with reset_token
+        var smtpClient = new SmtpClient(_configuration["SMTP:Host"])
+        {
+            Port = int.Parse(_configuration["SMTP:Port"] ?? "587"),
+            Credentials = new NetworkCredential(_configuration["SMTP:Username"], _configuration["SMTP:Password"]),
+            EnableSsl = true
+        };
+        var mailMessage = new MailMessage
+        {
+            From = new MailAddress(_configuration["SMTP:Username"]),
+            Subject = "Reset password",
+            Body = "Click on the following link to reset your password: " + _configuration["FrontendUrl"] + "/api/reset-password?token=" + user.reset_token + "&email=" + user.email_user,
+            IsBodyHtml = true
+        };
+        mailMessage.To.Add(request.Email);
+        
+        // send email
+        var sendEmailTask = smtpClient.SendMailAsync(mailMessage);
+        await sendEmailTask;
+
+        if (sendEmailTask.IsFaulted)
+        {
+            return new StatusCodeResult(500);
+        }
+
+        return new OkResult();
+    }
+
+    public async Task<ActionResult> ResetPassword(ResetPasswordRequest resetPasswordRequest)
+    {
+        //check if SMTP is Enabled
+        if (_configuration["SMTP:Enable"] != "true")
+        {
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { email_user = new string[] { "SMTP is not enabled" } }});
+        }
+        
+        // check if token is valid
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == resetPasswordRequest.Email && u.reset_token == resetPasswordRequest.Token && u.reset_token_expiration > DateTime.Now);
+        if (user == null)
+        {
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { token = new string[] { "Invalid token" } }});
+        }
+        // check password length and if it contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long
+        if (!new System.ComponentModel.DataAnnotations.RegularExpressionAttribute(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$").IsValid(resetPasswordRequest.Password))
+        {
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { mdp_user = new string[] { "password must contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long" } }});
+        }
+        // update password
+        user.mdp_user = BCrypt.Net.BCrypt.HashPassword(resetPasswordRequest.Password);
+        user.reset_token = null;
+        user.reset_token_expiration = null;
+        await _context.SaveChangesAsync();
+
+        return new OkResult();
     }
 }
