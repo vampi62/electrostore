@@ -86,7 +86,7 @@ public class LedService : ILedService
         {
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_led = new string[] { "Led not found" } }});
         }
-        if (led.id_store != storeId)
+        if ((storeId != null) && (led.id_store != storeId))
         {
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Led does not belong to this store" } }});
         }
@@ -142,7 +142,7 @@ public class LedService : ILedService
         {
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_led = new string[] { "Led not found" } }});
         }
-        if (ledToUpdate.id_store != storeId)
+        if ((storeId != null) && (ledToUpdate.id_store != storeId))
         {
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Led does not belong to this store" } }});
         }

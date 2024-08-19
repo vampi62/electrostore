@@ -29,8 +29,8 @@ public record UpdateImgDto
 }
 public record GetImageFileResult
 {
-    public string? FilePath { get; init; }
-    public string? MimeType { get; init; }
+    public string FilePath { get; init; }
+    public string MimeType { get; init; }
     public bool Success { get; init; }
     public string? ErrorMessage { get; init; }
 }

@@ -53,14 +53,6 @@ namespace electrostore.Controllers
             var result = await _imgService.GetImageFile(img.Value.url_img); // check if img.url_img is a valid path
             if (result.Success)
             {
-                if (string.IsNullOrEmpty(result.MimeType))
-                {
-                    return StatusCode(500, "MimeType is null or empty.");
-                }
-                if (string.IsNullOrEmpty(result.FilePath))
-                {
-                    return StatusCode(500, "FilePath is null or empty.");
-                }
                 return PhysicalFile(result.FilePath, result.MimeType);
             }
             else

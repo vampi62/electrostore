@@ -66,7 +66,8 @@ namespace electrostore.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     description_ia = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    date_ia = table.Column<DateTime>(type: "datetime(6)", nullable: false)
+                    date_ia = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    trained_ia = table.Column<bool>(type: "tinyint(1)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -147,7 +148,10 @@ namespace electrostore.Migrations
                     mdp_user = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     role_user = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4")
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    reset_token = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    reset_token_expiration = table.Column<DateTime>(type: "datetime(6)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -233,7 +237,7 @@ namespace electrostore.Migrations
                 {
                     id_commandcommentaire = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    id_user = table.Column<int>(type: "int", nullable: false),
+                    id_user = table.Column<int>(type: "int", nullable: true),
                     id_command = table.Column<int>(type: "int", nullable: false),
                     contenu_commandcommentaire = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -253,8 +257,7 @@ namespace electrostore.Migrations
                         name: "FK_CommandsCommentaires_Users_id_user",
                         column: x => x.id_user,
                         principalTable: "Users",
-                        principalColumn: "id_user",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "id_user");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -264,7 +267,7 @@ namespace electrostore.Migrations
                 {
                     id_projetcommentaire = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    id_user = table.Column<int>(type: "int", nullable: false),
+                    id_user = table.Column<int>(type: "int", nullable: true),
                     id_projet = table.Column<int>(type: "int", nullable: false),
                     contenu_projetcommentaire = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -284,8 +287,7 @@ namespace electrostore.Migrations
                         name: "FK_ProjetsCommentaires_Users_id_user",
                         column: x => x.id_user,
                         principalTable: "Users",
-                        principalColumn: "id_user",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "id_user");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 

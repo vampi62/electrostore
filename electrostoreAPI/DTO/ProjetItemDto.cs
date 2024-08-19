@@ -10,12 +10,10 @@ public record ReadProjetItemDto
 }
 public record CreateProjetItemByProjetDto
 {
-    [Required] public int id_item { get; init; }
     [Required] public int qte_projetitem { get; init; }
 }
 public record CreateProjetItemByItemDto
 {
-    [Required] public int id_projet { get; init; }
     [Required] public int qte_projetitem { get; init; }
 }
 public record CreateProjetItemDto
