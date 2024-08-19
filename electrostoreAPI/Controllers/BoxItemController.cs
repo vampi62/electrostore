@@ -46,13 +46,13 @@ namespace electrostore.Controllers
             return Ok(itemBox.Value);
         }
 
-        [HttpPost]
-        public async Task<ActionResult<ReadItemBoxDto>> CreateItemBox([FromRoute] int id_box, [FromBody] CreateItemBoxByBoxDto itemBoxDto)
+        [HttpPost("{id_item}")]
+        public async Task<ActionResult<ReadItemBoxDto>> CreateItemBox([FromRoute] int id_box, [FromRoute] int id_item, [FromBody] CreateItemBoxByBoxDto itemBoxDto)
         {
             var itemBoxDtoFull = new CreateItemBoxDto
             {
                 id_box = id_box,
-                id_item = itemBoxDto.id_item,
+                id_item = id_item,
                 qte_itembox = itemBoxDto.qte_itembox,
                 seuil_max_itemitembox = itemBoxDto.seuil_max_itemitembox
             };

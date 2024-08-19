@@ -11,13 +11,11 @@ public record ReadItemBoxDto
 }
 public record CreateItemBoxByBoxDto
 {
-    [Required] public int id_item { get; init; }
     [Required] public int qte_itembox { get; init; }
     [Required] public int seuil_max_itemitembox { get; init; }
 }
 public record CreateItemBoxByItemDto
 {
-    [Required] public int id_box { get; init; }
     [Required] public int qte_itembox { get; init; }
     [Required] public int seuil_max_itemitembox { get; init; }
 }

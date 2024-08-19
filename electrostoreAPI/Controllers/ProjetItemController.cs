@@ -46,13 +46,13 @@ namespace electrostore.Controllers
             return Ok(projetItem.Value);
         }
 
-        [HttpPost]
-        public async Task<ActionResult<ReadProjetItemDto>> AddProjetItem([FromRoute] int id_projet, [FromBody] CreateProjetItemByProjetDto projetItemDto)
+        [HttpPost("{id_item}")]
+        public async Task<ActionResult<ReadProjetItemDto>> AddProjetItem([FromRoute] int id_projet, [FromRoute] int id_item, [FromBody] CreateProjetItemByProjetDto projetItemDto)
         {
             var projetItemDtoFull = new CreateProjetItemDto
             {
                 id_projet = id_projet,
-                id_item = projetItemDto.id_item,
+                id_item = id_item,
                 qte_projetitem = projetItemDto.qte_projetitem
             };
             var projetItem = await _projetItemService.CreateProjetItem(projetItemDtoFull);

@@ -11,7 +11,7 @@ using electrostore;
 namespace electrostore.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240801130310_InitialCreate")]
+    [Migration("20240819163742_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -137,7 +137,7 @@ namespace electrostore.Migrations
                     b.Property<int>("id_command")
                         .HasColumnType("int");
 
-                    b.Property<int>("id_user")
+                    b.Property<int?>("id_user")
                         .HasColumnType("int");
 
                     b.HasKey("id_commandcommentaire");
@@ -186,6 +186,9 @@ namespace electrostore.Migrations
                     b.Property<string>("nom_ia")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<bool>("trained_ia")
+                        .HasColumnType("tinyint(1)");
 
                     b.HasKey("id_ia");
 
@@ -382,7 +385,7 @@ namespace electrostore.Migrations
                     b.Property<int>("id_projet")
                         .HasColumnType("int");
 
-                    b.Property<int>("id_user")
+                    b.Property<int?>("id_user")
                         .HasColumnType("int");
 
                     b.HasKey("id_projetcommentaire");
@@ -492,6 +495,12 @@ namespace electrostore.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("reset_token")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("reset_token_expiration")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("role_user")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -541,9 +550,7 @@ namespace electrostore.Migrations
 
                     b.HasOne("electrostore.Models.Users", "User")
                         .WithMany()
-                        .HasForeignKey("id_user")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("id_user");
 
                     b.Navigation("Command");
 
@@ -667,9 +674,7 @@ namespace electrostore.Migrations
 
                     b.HasOne("electrostore.Models.Users", "User")
                         .WithMany()
-                        .HasForeignKey("id_user")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("id_user");
 
                     b.Navigation("Projet");
 

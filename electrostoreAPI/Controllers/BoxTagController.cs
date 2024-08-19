@@ -46,7 +46,7 @@ namespace electrostore.Controllers
             return Ok(boxTag.Value);
         }
 
-        [HttpPost]
+        [HttpPost("{id_tag}")]
         public async Task<ActionResult<ReadBoxTagDto>> CreateBoxTag([FromRoute] int id_box, [FromRoute] int id_tag)
         {
             var boxTagDto = new CreateBoxTagDto

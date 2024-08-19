@@ -11,13 +11,11 @@ public record ReadCommandItemDto
 }
 public record CreateCommandItemByCommandDto
 {
-    [Required] public int id_item { get; init; }
     [Required] public int qte_commanditem { get; init; }
     [Required] public float prix_commanditem { get; init; }
 }
 public record CreateCommandItemByItemDto
 {
-    [Required] public int id_command { get; init; }
     [Required] public int qte_commanditem { get; init; }
     [Required] public float prix_commanditem { get; init; }
 }

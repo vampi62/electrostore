@@ -46,12 +46,12 @@ namespace electrostore.Controllers
             return Ok(commandItem.Value);
         }
 
-        [HttpPost]
-        public async Task<ActionResult<ReadCommandItemDto>> CreateCommandItem([FromRoute] int id_command, [FromBody] CreateCommandItemByCommandDto commandItemDto)
+        [HttpPost("{id_item}")]
+        public async Task<ActionResult<ReadCommandItemDto>> CreateCommandItem([FromRoute] int id_command, [FromRoute] int id_item, [FromBody] CreateCommandItemByCommandDto commandItemDto)
         {
             var commandItemDtoFull = new CreateCommandItemDto
             {
-                id_item = commandItemDto.id_item,
+                id_item = id_item,
                 id_command = id_command,
                 qte_commanditem = commandItemDto.qte_commanditem,
                 prix_commanditem = commandItemDto.prix_commanditem
