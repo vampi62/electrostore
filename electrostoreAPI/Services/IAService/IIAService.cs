@@ -17,5 +17,5 @@ public interface IIAService
 
     Task<ReadItemDto> DetectItem(int id, IFormFile newFile);
 
-    Task<ActionResult<ReadIADto>> TrainIA(int id);
+    Task<ActionResult<bool>> TrainIA(int id);
 }

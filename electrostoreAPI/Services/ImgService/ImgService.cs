@@ -73,7 +73,7 @@ public class ImgService : IImgService
         };
     }
 
-    public async Task<ActionResult<ReadImgDto>> CreateImg(CreateImgDto imgDto, IFormFile? newFile = null)
+    public async Task<ActionResult<ReadImgDto>> CreateImg(CreateImgDto imgDto)
     {
         // check if item exists
         var item = await _context.Items.FindAsync(imgDto.id_item);
@@ -81,16 +81,16 @@ public class ImgService : IImgService
         {
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } }});
         }
-        if (newFile == null || newFile.Length == 0)
+        if (imgDto.img_file == null || imgDto.img_file.Length == 0)
         {
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { file = new string[] { "Image file required" } }});
         }
-        if (newFile.Length > (5 * 1024 * 1024)) // 5MB max
+        if (imgDto.img_file.Length > (5 * 1024 * 1024)) // 5MB max
         {
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { file = new string[] { "Image file too large" } }});
         }
-        var fileName = Path.GetFileNameWithoutExtension(newFile.FileName);
-        var fileExt = Path.GetExtension(newFile.FileName);
+        var fileName = Path.GetFileNameWithoutExtension(imgDto.img_file.FileName);
+        var fileExt = Path.GetExtension(imgDto.img_file.FileName);
         if (!new[] { ".png", ".jpg", ".jpeg", ".gif", ".bmp" }.Contains(fileExt)) // if extension is not allowed
         {
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { file = new string[] { "Image file type not allowed" } }});
@@ -98,7 +98,7 @@ public class ImgService : IImgService
         var i = 1;
         // verifie si une image avec le meme nom existe deja sur le serveur dans "wwwroot/images"
         // si oui, on ajoute un numero a la fin du nom de l'image et on recommence la verification jusqu'a trouver un nom disponible
-        var newName = newFile.FileName;
+        var newName = imgDto.img_file.FileName;
         while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", newName)))
         {
             newName = $"{fileName}({i}){fileExt}";
@@ -107,7 +107,7 @@ public class ImgService : IImgService
         var savePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", newName);
         using (var fileStream = new FileStream(savePath, FileMode.Create))
         {
-            await newFile.CopyToAsync(fileStream);
+            await imgDto.img_file.CopyToAsync(fileStream);
         }
 
         var newImg = new Imgs

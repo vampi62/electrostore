@@ -20,3 +20,10 @@ public record UpdateIADto
     public string? nom_ia { get; init; }
     public string? description_ia { get; init; }
 }
+
+
+public class TrainingStatus
+{
+    public int Progress { get; set; }
+    public bool IsCompleted { get; set; }
+}

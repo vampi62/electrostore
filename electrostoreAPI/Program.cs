@@ -155,6 +155,15 @@ var app = builder.Build();
 //}
 app.UseStaticFiles();
 
+if (!Directory.Exists("wwwroot/images"))
+{
+    Directory.CreateDirectory("wwwroot/images");
+}
+if (!Directory.Exists("wwwroot/models"))
+{
+    Directory.CreateDirectory("wwwroot/models");
+}
+
 app.UseCors("CorsPolicy");
 
 app.UseAuthentication();

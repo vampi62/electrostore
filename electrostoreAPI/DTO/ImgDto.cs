@@ -15,12 +15,14 @@ public record CreateImgByItemDto
 {
     [Required] public string nom_img { get; init; }
     [Required] public string description_img { get; init; }
+    [Required] public IFormFile img_file { get; init; }
 }
 public record CreateImgDto
 {
     [Required] public string nom_img { get; init; }
     [Required] public string description_img { get; init; }
     [Required] public int id_item { get; init; }
+    [Required] public IFormFile img_file { get; init; }
 }
 public record UpdateImgDto
 {
