@@ -11,7 +11,7 @@ public interface IImgService
 
     public Task<ActionResult<ReadImgDto>> GetImgById(int id, int? itemId = null);
 
-    public Task<ActionResult<ReadImgDto>> CreateImg(CreateImgDto ImgDto, IFormFile? newFile = null);
+    public Task<ActionResult<ReadImgDto>> CreateImg(CreateImgDto ImgDto);
 
     public Task<ActionResult<ReadImgDto>> UpdateImg(int id, UpdateImgDto ImgDto, int? itemId = null);
 

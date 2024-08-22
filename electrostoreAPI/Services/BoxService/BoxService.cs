@@ -96,10 +96,10 @@ public class BoxService : IBoxService
         // N = new box, O = old box
         // X = x position, Y = y position, S = start, E = end
         if (await _context.Boxs.AnyAsync(b => b.id_store == boxDto.id_store &&
-                                              ((boxDto.xstart_box > b.xstart_box && boxDto.xstart_box < b.xend_box) ||
-                                               (boxDto.xend_box < b.xend_box && boxDto.xend_box > b.xstart_box)) &&
-                                              ((boxDto.ystart_box > b.ystart_box && boxDto.ystart_box < b.yend_box) ||
-                                               (boxDto.yend_box < b.yend_box && boxDto.yend_box > b.ystart_box))))
+                                              ((boxDto.xstart_box <= b.xstart_box && boxDto.xend_box > b.xstart_box) ||
+                                               (boxDto.xstart_box >= b.xstart_box && boxDto.xstart_box < b.xend_box)) &&
+                                              ((boxDto.ystart_box <= b.ystart_box && boxDto.yend_box > b.ystart_box) ||
+                                               (boxDto.ystart_box >= b.ystart_box && boxDto.ystart_box < b.yend_box))))
         {
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xstart_box = new string[] { "XY position already taken" }, ystart_box = new string[] { "XY position already taken" }, xend_box = new string[] { "XY position already taken" }, yend_box = new string[] { "XY position already taken" } }});
         }
@@ -200,10 +200,10 @@ public class BoxService : IBoxService
             // N = new box, O = old box
             // X = x position, Y = y position, S = start, E = end
             if (await _context.Boxs.AnyAsync(b => b.id_store == boxToUpdate.id_store && b.id_box != boxToUpdate.id_box &&
-                                                  ((boxToUpdate.xstart_box > b.xstart_box && boxToUpdate.xstart_box < b.xend_box) ||
-                                                   (boxToUpdate.xend_box < b.xend_box && boxToUpdate.xend_box > b.xstart_box)) &&
-                                                  ((boxToUpdate.ystart_box > b.ystart_box && boxToUpdate.ystart_box < b.yend_box) ||
-                                                   (boxToUpdate.yend_box < b.yend_box && boxToUpdate.yend_box > b.ystart_box))))
+                                              ((boxDto.xstart_box <= b.xstart_box && boxDto.xend_box > b.xstart_box) ||
+                                               (boxDto.xstart_box >= b.xstart_box && boxDto.xstart_box < b.xend_box)) &&
+                                              ((boxDto.ystart_box <= b.ystart_box && boxDto.yend_box > b.ystart_box) ||
+                                               (boxDto.ystart_box >= b.ystart_box && boxDto.ystart_box < b.yend_box))))
             {
                 return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xstart_box = new string[] { "XY position already taken" }, ystart_box = new string[] { "XY position already taken" }, xend_box = new string[] { "XY position already taken" }, yend_box = new string[] { "XY position already taken" } }});
             }

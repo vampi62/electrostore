@@ -116,14 +116,32 @@ public class IAService : IIAService
     public async Task<ReadItemDto> DetectItem(int id_ia, IFormFile file)
     {
         //TODO
-
+        // check if IA is trained
         return new ReadItemDto();
     }
 
-    public async Task<ActionResult<ReadIADto>> TrainIA(int id)
+    public async Task<ActionResult<bool>> TrainIA(int id)
     {
-        //TODO
+        // charge la liste des image lier a l'ia (IAImgs + Imgs)
+        var images = await _context.IAImgs
+            .Where(iaImg => iaImg.id_ia == id)
+            .ToListAsync();
+        if (images.Count == 0)
+        {
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_ia = new string[] { "No image found for this IA" } }});
+        }
 
-        return new ReadIADto();
+        // charge les images
+
+        // itialise tensorflow pour l'entrainement
+        var graph = new Graph();
+        var session = new Session(graph);
+
+
+        // entraine l'ia
+        
+
+
+        return true;
     }
 }

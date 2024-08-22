@@ -59,7 +59,7 @@ public class BoxTagService : IBoxTagService
         var boxTag = await _context.BoxsTags.FindAsync(boxId, tagId);
         if (boxTag == null)
         {
-            return new NotFoundObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.4", title = "Not Found", status = 404, detail = "BoxTag not found" });
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.4", title = "Not Found", status = 404, detail = "BoxTag not found" });
         }
 
         return new ReadBoxTagDto
