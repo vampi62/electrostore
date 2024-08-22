@@ -83,9 +83,6 @@ public class CommandCommentaireService : ICommandCommentaireService
 
     public async Task<ActionResult<ReadCommandCommentaireDto>> CreateCommentaire(CreateCommandCommentaireDto commentaireDto)
     {
-        // get the UserId from the token
-        // TODO
-
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commentaireDto.id_command))
         {
@@ -129,8 +126,6 @@ public class CommandCommentaireService : ICommandCommentaireService
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "CommandCommentaire not found" } } });
         }
 
-        // check if the user is the owner of the commentaire or an admin
-        // TODO
         if (commentaireDto.contenu_commandcommentaire != null)
         {
             commentaireToUpdate.contenu_commandcommentaire = commentaireDto.contenu_commandcommentaire;
@@ -157,9 +152,6 @@ public class CommandCommentaireService : ICommandCommentaireService
         {
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "CommandCommentaire not found" } } });
         }
-
-        // check if the user is the owner of the commentaire or an admin
-        // TODO
 
         _context.CommandsCommentaires.Remove(commentaireToDelete);
         await _context.SaveChangesAsync();

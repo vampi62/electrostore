@@ -15,7 +15,9 @@ public interface IIAService
 
     Task<IActionResult> DeleteIA(int id);
 
-    Task<ReadItemDto> DetectItem(int id, IFormFile newFile);
+    Task<TrainingStatus> GetTrainingStatus(string id);
 
-    Task<ActionResult<bool>> TrainIA(int id);
+    Task<ActionResult<ReadItemDto>> DetectItem(int id, IFormFile imgToScan);
+
+    Task<GetTrainStart> TrainIA(int id);
 }

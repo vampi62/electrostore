@@ -47,7 +47,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ReadImgDto>> CreateImg([FromRoute] int id_item, [FromBody] CreateImgByItemDto itemImgDto)
+        public async Task<ActionResult<ReadImgDto>> CreateImg([FromRoute] int id_item, [FromForm] CreateImgByItemDto itemImgDto)
         {
             var itemImgDtoFull = new CreateImgDto
             {
