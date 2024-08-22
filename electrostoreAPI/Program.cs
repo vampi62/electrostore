@@ -144,8 +144,9 @@ builder.Services.AddCors(options =>
         builder => builder.AllowAnyOrigin()
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .WithOrigins("https://store.raspberrycloudav.fr")
-            .AllowCredentials());
+            //.WithOrigins("https://store.raspberrycloudav.fr")
+            //.AllowCredentials()
+            );
 });
 
 var app = builder.Build();
