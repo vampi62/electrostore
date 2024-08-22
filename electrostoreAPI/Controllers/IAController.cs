@@ -45,19 +45,33 @@ namespace electrostore.Controllers
             return CreatedAtAction(nameof(GetIAById), new { id_ia = newIA.id_ia }, newIA);
         }
 
-        [HttpPost("{id_ia}/train")]
-        public async Task<ActionResult<ReadIADto>> TrainIA([FromRoute] int id_ia)
+        [HttpGet("{id_ia}/status")]
+        public async Task<IActionResult> GetTrainingStatus(string id_ia)
         {
-            //TODO : Train IA
-            var ia = await _iaService.TrainIA(id_ia);
-            return Ok(ia);
+            var status = await _iaService.GetTrainingStatus(id_ia);
+            if (status != null)
+            {
+                return Ok(status);
+            }
+
+            return NotFound("Aucun entraînement en cours pour cet ID.");
+        }
+
+        [HttpPost("{id_ia}/train")]
+        public async Task<ActionResult<bool>> TrainIA([FromRoute] int id_ia)
+        {
+            var result = await _iaService.TrainIA(id_ia);
+            if (!result.TrainStarted)
+            {
+                return Conflict(result.msg);
+            }
+            return Ok(result.msg);
         }
 
         [HttpPost("{id_ia}/detect")]
-        public async Task<ActionResult<ReadItemDto>> DetectItem([FromRoute] int id_ia, [FromForm] IFormFile newFile) // 5MB max
+        public async Task<ActionResult<ReadItemDto>> DetectItem([FromRoute] int id_ia, [FromForm] IFormFile img_to_scan)
         {
-            //TODO : Detect IA
-            var item = await _iaService.DetectItem(id_ia, newFile);
+            var item = await _iaService.DetectItem(id_ia, img_to_scan);
             return Ok(item);
         }
 

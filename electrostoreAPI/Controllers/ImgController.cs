@@ -62,9 +62,9 @@ namespace electrostore.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ReadImgDto>> CreateImg([FromBody] CreateImgDto imgDto, [FromForm] IFormFile newFile) // 5MB max
+        public async Task<ActionResult<ReadImgDto>> CreateImg([FromForm] CreateImgDto imgDto) // 5MB max
         {
-            var img = await _imgService.CreateImg(imgDto, newFile);
+            var img = await _imgService.CreateImg(imgDto);
             if (img.Result is BadRequestObjectResult)
             {
                 return img.Result;

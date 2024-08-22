@@ -27,3 +27,9 @@ public class TrainingStatus
     public int Progress { get; set; }
     public bool IsCompleted { get; set; }
 }
+
+public class GetTrainStart
+{
+    public bool TrainStarted { get; set; }
+    public string msg { get; set; }
+}

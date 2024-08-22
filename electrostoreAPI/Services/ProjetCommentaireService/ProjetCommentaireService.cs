@@ -83,9 +83,6 @@ public class ProjetCommentaireService : IProjetCommentaireService
 
     public async Task<ActionResult<ReadProjetCommentaireDto>> CreateProjetCommentaire(CreateProjetCommentaireDto projetCommentaireDto)
     {
-        // get the UserId from the token
-        // TODO
-
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetCommentaireDto.id_projet))
         {
@@ -123,9 +120,6 @@ public class ProjetCommentaireService : IProjetCommentaireService
 
     public async Task<ActionResult<ReadProjetCommentaireDto>> UpdateProjetCommentaire(int id, UpdateProjetCommentaireDto projetCommentaireDto, int? userId = null, int? projetId = null)
     {
-        // get the UserId from the token
-        // TODO
-
         var projetCommentaireToUpdate = await _context.ProjetsCommentaires.FindAsync(id);
         if ((projetCommentaireToUpdate == null) || (projetId != null && projetCommentaireToUpdate.id_projet != projetId) || (userId != null && projetCommentaireToUpdate.id_user != userId))
         {
@@ -149,9 +143,6 @@ public class ProjetCommentaireService : IProjetCommentaireService
 
     public async Task<IActionResult> DeleteProjetCommentaire(int id, int? userId = null, int? projetId = null)
     {
-        // get the UserId from the token
-        // TODO
-        
         var projetCommentaireToDelete = await _context.ProjetsCommentaires.FindAsync(id);
         if ((projetCommentaireToDelete == null) || (projetId != null && projetCommentaireToDelete.id_projet != projetId) || (userId != null && projetCommentaireToDelete.id_user != userId))
         {
