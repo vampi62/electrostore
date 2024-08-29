@@ -54,6 +54,10 @@
               "target": "Package",
               "version": "[4.0.3, )"
             },
+            "Keras.NET": {
+              "target": "Package",
+              "version": "[3.8.5, )"
+            },
             "MQTTnet": {
               "target": "Package",
               "version": "[4.3.6.1152, )"
@@ -81,6 +85,18 @@
               "suppressParent": "All",
               "target": "Package",
               "version": "[7.0.16, )"
+            },
+            "Microsoft.ML": {
+              "target": "Package",
+              "version": "[3.0.1, )"
+            },
+            "Microsoft.ML.ImageAnalytics": {
+              "target": "Package",
+              "version": "[3.0.1, )"
+            },
+            "Microsoft.ML.Vision": {
+              "target": "Package",
+              "version": "[3.0.1, )"
             },
             "MySqlConnector": {
               "target": "Package",

@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using Tensorflow;
-using Keras.Models;
-using Keras.Layers;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Concurrent;
+using Microsoft.ML;
+using Microsoft.ML.Vision;
+using Microsoft.ML.Data;
+
 
 namespace electrostore.Services.IAService;
 
@@ -164,28 +165,49 @@ public class IAService : IIAService
 
     public async Task<ActionResult<ReadItemDto>> DetectItem(int id, IFormFile imgToScan)
     {
+        if (imgToScan == null || imgToScan.Length == 0)
+        {
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { imgToScan = new string[] { "Image not found" } }});
+        }
         var ia = await _context.IA.FindAsync(id);
         if (ia == null || !ia.trained_ia)
         {
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_ia = new string[] { "IA not found or not trained" } }});
         }
 
-        // load model
-        
-
-        // detect item
-
-
-
-        return new ReadItemDto
+        try
         {
-            id_item = 0,
-            nom_item = "0",
-            seuil_min_item = 0,
-            datasheet_item = "0",
-            description_item = "0",
-            id_img = 0
-        };
+            // load model
+            var mlContext = new MLContext();
+            var model = mlContext.Model.Load("model" + id.ToString() + ".zip", out var schema);
+            var predictionEngine = mlContext.Model.CreatePredictionEngine<ImageData, ImagePrediction>(model);
+
+            // predict
+            var imageData = new byte[imgToScan.Length];
+            await imgToScan.OpenReadStream().ReadAsync(imageData);
+            var data = new ImageData { Image = imageData };
+            var prediction = predictionEngine.Predict(data);
+            var item = await _context.Items.FindAsync(prediction.id_item);
+            if (item == null)
+            {
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { imgToScan = new string[] { "Item not found" } }});
+            }
+            return new ReadItemDto
+            {
+                id_item = item.id_item,
+                nom_item = item.nom_item,
+                seuil_min_item = item.seuil_min_item,
+                datasheet_item = item.datasheet_item,
+                description_item = item.description_item,
+                id_img = item.id_img
+            };
+        }
+        catch (Exception ex)
+        {
+            // Log the exception details
+            Console.WriteLine($"Error during detection: {ex.Message}");
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { imgToScan = new string[] { "Error during detection" } }});
+        }
     }
 
     private async Task TrainingAsync(string id)
@@ -197,61 +219,51 @@ public class IAService : IIAService
             .Select(x => new { x.img.id_img, x.img.url_img, x.img.id_item })
             .ToListAsync();
 
-        // Préparer les données d'entraînement
-        var images = new List<float[]>();
-        var labels = new List<int>();
-        foreach (var img in listImgs)
+        try
         {
-            images.Add(LoadImage(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", img.url_img)));
-            labels.Add(img.id_item); // l'id_item représente l'objet à détecter
-        }
+            // Préparer les données d'entraînement
+            var mlContext = new MLContext();
+            var imageDataView = mlContext.Data.LoadFromEnumerable(listImgs);
+            /* var pipeline = mlContext.Transforms.Conversion.MapValueToKey(outputColumnName: "LabelKey", inputColumnName: nameof(ImageData.id_item))
+                .Append(mlContext.Transforms.LoadRawImageBytes(outputColumnName: "Image", imageFolder: "wwwroot" + Path.DirectorySeparatorChar + "images", inputColumnName: nameof(ImageData.url_img)))
+                .Append(mlContext.MulticlassClassification.Trainers.ImageClassification("LabelKey"))
+                .Append(mlContext.Transforms.Conversion.MapKeyToValue(outputColumnName: "PredictedLabel", inputColumnName: "PredictedLabel"));
+             */
+            var pipeline = mlContext.Transforms.Conversion.MapValueToKey(outputColumnName: "LabelKey", inputColumnName: nameof(ImageData.id_item))
+                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Image", imageFolder: "wwwroot" + Path.DirectorySeparatorChar + "images", inputColumnName: nameof(ImageData.url_img)))
+                .Append(mlContext.Transforms.ResizeImages(outputColumnName: "Image", imageWidth: 224, imageHeight: 224, inputColumnName: "Image"))
+                .Append(mlContext.Transforms.ExtractPixels(outputColumnName: "Image"))
+                .Append(mlContext.MulticlassClassification.Trainers.ImageClassification("LabelKey"))
+                .Append(mlContext.Transforms.Conversion.MapKeyToValue(outputColumnName: "PredictedLabel", inputColumnName: "PredictedLabel"));
 
-        var imagesTensor = new Tensor(images.ToArray());
-        var labelsTensor = new Tensor(labels.ToArray());
+            var model = pipeline.Fit(imageDataView);
+            mlContext.Model.Save(model, imageDataView.Schema, "Model" + id + ".zip");
 
-        // Créer le modèle
-        var model = new Sequential();
-        
-
-        // Sauvegarder le modèle
-        model.Save(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/models", id + ".h5"));
-        
-
-        // Mettre à jour le statut de l'IA
-        var ia = await _context.IA.FindAsync(id);
-        if (ia != null)
-        {
+            // Mettre à jour le statut de l'IA
+            var ia = await _context.IA.FindAsync(int.Parse(id));
+            if (ia == null)
+            {
+                Console.WriteLine("IA not found during training");
+                throw new Exception("IA not found during training");
+            }
             ia.trained_ia = true;
             await _context.SaveChangesAsync();
+            
+            // Mettre à jour le statut de l'entraînement
+            TrainingStatuses[id].IsCompleted = true;
+            TrainingStatuses[id].Progress = 100;
         }
-        else
+        catch (Exception ex)
         {
-            Console.WriteLine($"IA {id} not found");
+            // Log the exception details
+            Console.WriteLine($"Error during training: {ex.Message}");
+            throw;
         }
+
+        // Mettre à jour le statut de l'entraînement
         TrainingStatuses[id].IsCompleted = true;
-    }
+        TrainingStatuses[id].Progress = 100;
 
-// Fonction pour charger et prétraiter les images (à compléter selon votre besoin)
-    private float[] LoadImage(string path)
-    {
-        // Charger l'image depuis le chemin et la transformer en tableau de float normalisé (0-1)
-        var image = PhysicalFile(path);
-        image.Mutate(x => x.Resize(128, 128)); // Redimensionner si nécessaire
-        var imageData = new float[128 * 128 * 3];
-        
-        // Convertir l'image en tableau de floats (normalisé)
-        for (int y = 0; y < 128; y++)
-        {
-            for (int x = 0; x < 128; x++)
-            {
-                var pixel = image[x, y];
-                imageData[(y * 128 + x) * 3] = pixel.R / 255.0f;
-                imageData[(y * 128 + x) * 3 + 1] = pixel.G / 255.0f;
-                imageData[(y * 128 + x) * 3 + 2] = pixel.B / 255.0f;
-            }
-        }
-
-        return imageData;
     }
 
 }

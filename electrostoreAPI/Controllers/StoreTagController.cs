@@ -45,6 +45,30 @@ namespace electrostore.Controllers
             }
             return Ok(storeTag.Value);
         }
+        
+        [HttpPost]
+        public async Task<ActionResult<ReadStoreTagDto>> CreateStoreTags([FromRoute] int id_store, [FromBody] int[] tags)
+        {
+            var resultList = new List<ActionResult<ReadStoreTagDto>>();
+            for(int i = 0; i < tags.Length; i++)
+            {
+                var storeTagDto = new CreateStoreTagDto
+                {
+                    id_store = id_store,
+                    id_tag = tags[i]
+                };
+                var storeTag = await _storeTagService.CreateStoreTag(storeTagDto);
+                if (storeTag.Result is BadRequestObjectResult || storeTag.Value == null)
+                {
+                    resultList.Add(storeTag.Result);
+                }
+                else
+                {
+                    resultList.Add(storeTag.Value);
+                }
+            }
+            return Ok(resultList);
+        }
 
         [HttpPost("{id_tag}")]
         public async Task<ActionResult<ReadStoreTagDto>> CreateStoreTag([FromRoute] int id_store, [FromRoute] int id_tag)

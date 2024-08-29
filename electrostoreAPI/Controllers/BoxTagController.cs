@@ -45,6 +45,30 @@ namespace electrostore.Controllers
             }
             return Ok(boxTag.Value);
         }
+        
+        [HttpPost]
+        public async Task<ActionResult<ReadBoxTagDto>> CreateBoxTags([FromRoute] int id_box, [FromBody] int[] tags)
+        {
+            var resultList = new List<ActionResult<ReadBoxTagDto>>();
+            for(int i = 0; i < tags.Length; i++)
+            {
+                var boxTagDto = new CreateBoxTagDto
+                {
+                    id_box = id_box,
+                    id_tag = tags[i]
+                };
+                var boxTag = await _boxTagService.CreateBoxTag(boxTagDto);
+                if (boxTag.Result is BadRequestObjectResult || boxTag.Value == null)
+                {
+                    resultList.Add(boxTag.Result);
+                }
+                else
+                {
+                    resultList.Add(boxTag.Value);
+                }
+            }
+            return Ok(resultList);
+        }
 
         [HttpPost("{id_tag}")]
         public async Task<ActionResult<ReadBoxTagDto>> CreateBoxTag([FromRoute] int id_box, [FromRoute] int id_tag)

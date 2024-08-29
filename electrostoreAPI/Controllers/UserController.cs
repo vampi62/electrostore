@@ -51,7 +51,7 @@ namespace electrostore.Controllers
             // if the user is not an admin, he can only create a user with the role "user"
             if (User != null)
             {
-                if (!User.IsInRole("Admin") && userDto.role_user != "user")
+                if (!User.IsInRole("admin") && userDto.role_user != "user")
                 {
                     return Unauthorized(new { message = "You are not allowed to create a user with this role" });
                 }
@@ -72,7 +72,7 @@ namespace electrostore.Controllers
         [HttpPut("{id_user}")]
         public async Task<ActionResult<ReadUserDto>> UpdateUser([FromRoute] int id_user, [FromBody] UpdateUserDto userDto)
         {
-            if (!User.IsInRole("Admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
+            if (!User.IsInRole("admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
             {
                 return Unauthorized(new { message = "You are not allowed to update this user" });
             }
@@ -92,7 +92,7 @@ namespace electrostore.Controllers
         [HttpDelete("{id_user}")]
         public async Task<ActionResult> DeleteUser([FromRoute] int id_user)
         {
-            if (!User.IsInRole("Admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
+            if (!User.IsInRole("admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
             {
                 return Unauthorized(new { message = "You are not allowed to delete this user" });
             }

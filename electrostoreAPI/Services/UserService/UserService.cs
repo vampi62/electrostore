@@ -36,6 +36,7 @@ public class UserService : IUserService
 
     public async Task<ActionResult<ReadUserDto>> CreateUser(CreateUserDto userDto)
     {
+        var newUser = new Users();
         // check email format
         if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(userDto.email_user))
         {
@@ -46,20 +47,33 @@ public class UserService : IUserService
         {
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { mdp_user = new string[] { "password must contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long" }}});
         }
-        // Check if email is already used
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user);
-        if (user != null)
+        // check if the db is empty, if it is, create an admin user
+        if (!_context.Users.Any())
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { email_user = new string[] { "Email already used" }}});
+            newUser = new Users
+            {
+                nom_user = userDto.nom_user,
+                prenom_user = userDto.prenom_user,
+                email_user = userDto.email_user,
+                mdp_user = BCrypt.Net.BCrypt.HashPassword(userDto.mdp_user),
+                role_user = "admin"
+            };
+        } else {
+            // Check if email is already used
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user);
+            if (user != null)
+            {
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { email_user = new string[] { "Email already used" }}});
+            }
+            newUser = new Users
+            {
+                nom_user = userDto.nom_user,
+                prenom_user = userDto.prenom_user,
+                email_user = userDto.email_user,
+                mdp_user = BCrypt.Net.BCrypt.HashPassword(userDto.mdp_user),
+                role_user = userDto.role_user
+            };
         }
-        var newUser = new Users
-        {
-            nom_user = userDto.nom_user,
-            prenom_user = userDto.prenom_user,
-            email_user = userDto.email_user,
-            mdp_user = BCrypt.Net.BCrypt.HashPassword(userDto.mdp_user),
-            role_user = userDto.role_user
-        };
 
         _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
