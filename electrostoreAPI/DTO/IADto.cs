@@ -33,3 +33,17 @@ public class GetTrainStart
     public bool TrainStarted { get; set; }
     public string msg { get; set; }
 }
+
+public class ImageData
+{
+    public int? id_img { get; set; }
+    public string? url_img { get; set; }
+    public int? id_item { get; set; }
+    public byte[]? Image { get; set; }
+}
+
+public class ImagePrediction : ImageData
+{
+    public float[] Score { get; set; }
+    public string PredictedLabel { get; set; }
+}

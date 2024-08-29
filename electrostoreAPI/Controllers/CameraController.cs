@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using electrostore.Dto;
 using electrostore.Services.CameraService;
+using System.Net.Http.Headers;
+using System.Text;
 
 namespace electrostore.Controllers
 {
@@ -50,6 +52,11 @@ namespace electrostore.Controllers
                 return StatusCode(500);
             }
             var httpClient = new HttpClient();
+            if (camera.Value.user_camera != null && camera.Value.mdp_camera != null)
+            {
+                var byteArray = Encoding.ASCII.GetBytes($"{camera.Value.user_camera}:{camera.Value.mdp_camera}");
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+            }
             var response = await httpClient.GetAsync(camera.Value.url_camera, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
             return new FileStreamResult(await response.Content.ReadAsStreamAsync(), "video/mp4");

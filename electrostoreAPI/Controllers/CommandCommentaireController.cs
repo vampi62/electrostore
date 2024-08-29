@@ -80,7 +80,7 @@ namespace electrostore.Controllers
             {
                 return StatusCode(500);
             }
-            if (!User.IsInRole("Admin") && checkCommandCommentaire.Value.id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
+            if (!User.IsInRole("admin") && checkCommandCommentaire.Value.id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
             {
                 return Unauthorized(new { message = "You are not allowed to access this resource" });
             }
@@ -108,7 +108,7 @@ namespace electrostore.Controllers
             {
                 return StatusCode(500);
             }
-            if (!User.IsInRole("Admin") && checkCommandCommentaire.Value.id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
+            if (!User.IsInRole("admin") && checkCommandCommentaire.Value.id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
             {
                 return Unauthorized(new { message = "You are not allowed to access this resource" });
             }

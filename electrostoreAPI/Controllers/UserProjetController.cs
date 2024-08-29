@@ -20,7 +20,7 @@ namespace electrostore.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ReadProjetCommentaireDto>>> GetProjetCommentairesByUserId([FromRoute] int id_user, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
-            if (!User.IsInRole("Admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
+            if (!User.IsInRole("admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
             {
                 return Unauthorized(new { message = "You are not allowed to access this resource" });
             }
@@ -39,7 +39,7 @@ namespace electrostore.Controllers
         [HttpGet("{id_projetcommentaire}")]
         public async Task<ActionResult<ReadProjetCommentaireDto>> GetProjetCommentairesByCommentaireId([FromRoute] int id_user, [FromRoute] int id_projetcommentaire)
         {
-            if (!User.IsInRole("Admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
+            if (!User.IsInRole("admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
             {
                 return Unauthorized(new { message = "You are not allowed to access this resource" });
             }
@@ -60,7 +60,7 @@ namespace electrostore.Controllers
         [HttpPut("{id_projetcommentaire}")]
         public async Task<ActionResult<ReadProjetCommentaireDto>> UpdateProjetCommentaire([FromRoute] int id_user, [FromRoute] int id_projetcommentaire, [FromBody] UpdateProjetCommentaireDto projetCommentaireDto)
         {
-            if (!User.IsInRole("Admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
+            if (!User.IsInRole("admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
             {
                 return Unauthorized(new { message = "You are not allowed to access this resource" });
             }
@@ -79,7 +79,7 @@ namespace electrostore.Controllers
         [HttpDelete("{id_projetcommentaire}")]
         public async Task<ActionResult> DeleteProjetCommentaire([FromRoute] int id_user, [FromRoute] int id_projetcommentaire)
         {
-            if (!User.IsInRole("Admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
+            if (!User.IsInRole("admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
             {
                 return Unauthorized(new { message = "You are not allowed to access this resource" });
             }

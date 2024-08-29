@@ -60,6 +60,13 @@ namespace electrostore.Controllers
         [HttpPost("{id_ia}/train")]
         public async Task<ActionResult<bool>> TrainIA([FromRoute] int id_ia)
         {
+            if (User != null)
+            {
+                if (!User.IsInRole("admin"))
+                {
+                    return Unauthorized(new { message = "You are not allowed to train an IA" });
+                }
+            }
             var result = await _iaService.TrainIA(id_ia);
             if (!result.TrainStarted)
             {

@@ -45,6 +45,30 @@ namespace electrostore.Controllers
             }
             return Ok(iaImg.Value);
         }
+        
+        [HttpPost]
+        public async Task<ActionResult<ReadIAImgDto>> CreateIAsImg([FromRoute] int id_img, [FromBody] int[] ias)
+        {
+            var resultList = new List<ActionResult<ReadIAImgDto>>();
+            for(int i = 0; i < ias.Length; i++)
+            {
+                var iaImgDto = new CreateIAImgDto
+                {
+                    id_img = id_img,
+                    id_ia = ias[i]
+                };
+                var iaImg = await _iaImgService.CreateIAImg(iaImgDto);
+                if (iaImg.Result is BadRequestObjectResult || iaImg.Value == null)
+                {
+                    resultList.Add(iaImg.Result);
+                }
+                else
+                {
+                    resultList.Add(iaImg.Value);
+                }
+            }
+            return Ok(resultList);
+        }
 
         [HttpPost("{id_ia}")]
         public async Task<ActionResult<ReadIAImgDto>> CreateIAImg([FromRoute] int id_img, [FromRoute] int id_ia)
