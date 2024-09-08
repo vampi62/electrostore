@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Web avec une image provenant d'un flux vidéo</title>
+</head>
+<body>
+    <h1>Flux Vidéo avec Bearer Token</h1>
+    <img id="video-stream" alt="Image provenant d'un flux vidéo" />
+    
+    <script>
+        const token = '';// bearer token obtenue dans la requete /api/user/login
+        const idCamera = 1;// id de la camera enregistrée dans la base de données
+        const siteAPI = 'https://electrostore.local'; // url de l'API
+        const streamUrl = siteAPI + '/api/camera/' + idCamera + '/stream' + '?token=' + token;
+        document.getElementById('video-stream').src = streamUrl;
+    </script>
+</body>
+</html>

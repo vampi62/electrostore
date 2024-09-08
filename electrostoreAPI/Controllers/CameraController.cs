@@ -3,6 +3,8 @@ using electrostore.Dto;
 using electrostore.Services.CameraService;
 using System.Net.Http.Headers;
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
+using electrostore.Services.JwtService;
 
 namespace electrostore.Controllers
 {
@@ -11,10 +13,12 @@ namespace electrostore.Controllers
     public class CameraController : ControllerBase
     {
         private readonly ICameraService _cameraService;
+        private readonly JwtService _jwtService;
 
-        public CameraController(ICameraService cameraService)
+        public CameraController(ICameraService cameraService, JwtService jwtService)
         {
             _cameraService = cameraService;
+            _jwtService = jwtService;
         }
 
         [HttpGet]
@@ -40,8 +44,13 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_camera}/stream")]
-        public async Task<ActionResult> GetCameraStream([FromRoute] int id_camera)
+        [AllowAnonymous]
+        public async Task<ActionResult> GetCameraStream([FromRoute] int id_camera, [FromQuery] string token)
         {
+            if (token == null || !_jwtService.ValidateToken(token))
+            {
+                return Unauthorized();
+            }
             var camera = await _cameraService.GetCameraById(id_camera);
             if (camera.Result is BadRequestObjectResult)
             {
@@ -51,15 +60,45 @@ namespace electrostore.Controllers
             {
                 return StatusCode(500);
             }
-            var httpClient = new HttpClient();
-            if (camera.Value.user_camera != null && camera.Value.mdp_camera != null)
+            try
             {
-                var byteArray = Encoding.ASCII.GetBytes($"{camera.Value.user_camera}:{camera.Value.mdp_camera}");
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+                // ping the camera to check if it is reachable
+                var ping = new System.Net.NetworkInformation.Ping();
+                var DomainOrIP = new System.Text.RegularExpressions.Regex(@"(?<protocol>http[s]?:\/\/)?(?<domain>[a-zA-Z0-9\.\-]+)(?<port>:[0-9]+)?(?<uri>.*)").Match(camera.Value.url_camera).Groups["domain"].Value;
+                var pingReply = ping.Send(DomainOrIP, 2000);
+                if (pingReply.Status != System.Net.NetworkInformation.IPStatus.Success)
+                {
+                    return StatusCode(504, "Impossible de se connecter à la caméra.");
+                }
+                using (var httpClient = new HttpClient())
+                {
+                    if (camera.Value.user_camera != null && camera.Value.mdp_camera != null)
+                    {
+                        var byteArray = Encoding.ASCII.GetBytes($"{camera.Value.user_camera}:{camera.Value.mdp_camera}");
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+                    }
+                    var response = await httpClient.GetAsync(camera.Value.url_camera, HttpCompletionOption.ResponseHeadersRead);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        return StatusCode((int)response.StatusCode, "Erreur lors de la récupération du flux vidéo.");
+                    }
+                    if (response.Content.Headers.ContentType == null)
+                    {
+                        return StatusCode(500, "Impossible de récupérer le flux vidéo.");
+                    }
+                    var boundary = response.Content.Headers.ContentType.Parameters.FirstOrDefault(p => p.Name == "boundary")?.Value;
+                    if (boundary == null)
+                    {
+                        return StatusCode(500, "Impossible de récupérer le flux vidéo.");
+                    }
+                    var contentStream = await response.Content.ReadAsStreamAsync();
+                    return new FileStreamResult(contentStream, "multipart/x-mixed-replace; boundary=" + boundary);
+                }
             }
-            var response = await httpClient.GetAsync(camera.Value.url_camera, HttpCompletionOption.ResponseHeadersRead);
-            response.EnsureSuccessStatusCode();
-            return new FileStreamResult(await response.Content.ReadAsStreamAsync(), "video/mp4");
+            catch
+            {
+                return StatusCode(500, "Impossible de se connecter à la caméra.");
+            }
         }
 
         [HttpPost]
