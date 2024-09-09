@@ -13,12 +13,14 @@ namespace electrostore.Services.IAService;
 public class IAService : IIAService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IServiceProvider _serviceProvider;
     private static readonly ConcurrentDictionary<string, TrainingStatus> TrainingStatuses = new ConcurrentDictionary<string, TrainingStatus>();
     private static bool IsTrainingInProgress = false;
 
-    public IAService(ApplicationDbContext context)
+    public IAService(ApplicationDbContext context, IServiceProvider serviceProvider)
     {
         _context = context;
+        _serviceProvider = serviceProvider;
     }
 
     public async Task<List<ReadIADto>> GetIA(int limit = 100, int offset = 0)
@@ -146,13 +148,17 @@ public class IAService : IIAService
         }
 
         IsTrainingInProgress = true;
-        TrainingStatuses[id.ToString()] = new TrainingStatus { Progress = 0, IsCompleted = false };
+        TrainingStatuses[id.ToString()] = new TrainingStatus { Progress = 0, IsCompleted = false, IsRunning = true, Message = "Entraînement en cours" };
 
         _ = Task.Run(async () =>
         {
             try
             {
-                await TrainingAsync(id.ToString());
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    await TrainingAsync(id.ToString(), dbContext);
+                }
             }
             finally
             {
@@ -210,13 +216,18 @@ public class IAService : IIAService
         }
     }
 
-    private async Task TrainingAsync(string id)
+    private async Task TrainingAsync(string id, ApplicationDbContext _contextBackend)
     {
+        Console.WriteLine("Task Training started");
         // Charger les images depuis la table IAImgs et faire un inner join avec la table imgs
-        var listImgs = await _context.IAImgs
-            .Where(iaImg => iaImg.id_ia == int.Parse(id))
-            .Join(_context.Imgs, iaImg => iaImg.id_img, img => img.id_img, (iaImg, img) => new { iaImg, img })
-            .Select(x => new { x.img.id_img, x.img.url_img, x.img.id_item })
+        var listImgs = await _contextBackend.IAImgs
+            .Where(iaimg => iaimg.id_ia == int.Parse(id))
+            .Join(_contextBackend.Imgs, iaimg => iaimg.id_img, img => img.id_img, (iaimg, img) => new 
+            { 
+                id_item = img.id_item, 
+                url_img = img.url_img, 
+                id_img = img.id_img 
+            })
             .ToListAsync();
 
         try
@@ -233,37 +244,46 @@ public class IAService : IIAService
                 .Append(mlContext.Transforms.LoadImages(outputColumnName: "Image", imageFolder: "wwwroot" + Path.DirectorySeparatorChar + "images", inputColumnName: nameof(ImageData.url_img)))
                 .Append(mlContext.Transforms.ResizeImages(outputColumnName: "Image", imageWidth: 224, imageHeight: 224, inputColumnName: "Image"))
                 .Append(mlContext.Transforms.ExtractPixels(outputColumnName: "Image"))
-                .Append(mlContext.MulticlassClassification.Trainers.ImageClassification("LabelKey"))
+                .Append(mlContext.MulticlassClassification.Trainers.SdcaNonCalibrated(labelColumnName: "LabelKey", featureColumnName: "Image"))
                 .Append(mlContext.Transforms.Conversion.MapKeyToValue(outputColumnName: "PredictedLabel", inputColumnName: "PredictedLabel"));
-
+            foreach (var image in listImgs)
+            {
+                var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", image.url_img);
+                if (!File.Exists(imagePath))
+                {
+                    Console.WriteLine($"Image not found: {imagePath}");
+                    throw new FileNotFoundException($"Image not found: {imagePath}");
+                }
+            }
             var model = pipeline.Fit(imageDataView);
-            mlContext.Model.Save(model, imageDataView.Schema, "Model" + id + ".zip");
+            mlContext.Model.Save(model, imageDataView.Schema, Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images","Model" + id + ".zip"));
 
             // Mettre à jour le statut de l'IA
-            var ia = await _context.IA.FindAsync(int.Parse(id));
+            var ia = await _contextBackend.IA.FindAsync(int.Parse(id));
             if (ia == null)
             {
                 Console.WriteLine("IA not found during training");
                 throw new Exception("IA not found during training");
             }
             ia.trained_ia = true;
-            await _context.SaveChangesAsync();
+            await _contextBackend.SaveChangesAsync();
             
             // Mettre à jour le statut de l'entraînement
             TrainingStatuses[id].IsCompleted = true;
             TrainingStatuses[id].Progress = 100;
+            TrainingStatuses[id].IsRunning = false;
+            TrainingStatuses[id].Message = "Entraînement terminé";
         }
         catch (Exception ex)
         {
             // Log the exception details
             Console.WriteLine($"Error during training: {ex.Message}");
+            // Mettre à jour le statut de l'entraînement
+            TrainingStatuses[id].IsCompleted = false;
+            TrainingStatuses[id].Progress = 0;
+            TrainingStatuses[id].IsRunning = false;
+            TrainingStatuses[id].Message = "Erreur lors de l'entraînement " + ex.Message;
             throw;
         }
-
-        // Mettre à jour le statut de l'entraînement
-        TrainingStatuses[id].IsCompleted = true;
-        TrainingStatuses[id].Progress = 100;
-
     }
-
 }
