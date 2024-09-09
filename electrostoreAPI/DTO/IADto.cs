@@ -21,11 +21,12 @@ public record UpdateIADto
     public string? description_ia { get; init; }
 }
 
-
 public class TrainingStatus
 {
     public int Progress { get; set; }
     public bool IsCompleted { get; set; }
+    public string? Message { get; set; }
+    public bool IsRunning { get; set; }
 }
 
 public class GetTrainStart
