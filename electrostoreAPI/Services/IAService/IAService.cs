@@ -7,7 +7,6 @@ using Microsoft.ML;
 using Microsoft.ML.Vision;
 using Microsoft.ML.Data;
 
-
 namespace electrostore.Services.IAService;
 
 public class IAService : IIAService
@@ -142,9 +141,9 @@ public class IAService : IIAService
         ia.trained_ia = false; // Réinitialiser le statut de l'entraînement
         
         // remove model if exists
-        if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/models", id.ToString() + ".h5")))
+        if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models","Model" + id.ToString() + ".zip")))
         {
-            File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/models", id.ToString() + ".h5"));
+            File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models","Model" + id.ToString() + ".zip"));
         }
 
         IsTrainingInProgress = true;
@@ -183,17 +182,22 @@ public class IAService : IIAService
 
         try
         {
+            string tempFilePath = Path.GetTempFileName();
+            using (var stream = new FileStream(tempFilePath, FileMode.Create))
+            {
+                await imgToScan.CopyToAsync(stream);
+            }
+            var imageData = new PredictionInput { url_img = tempFilePath };
+
             // load model
             var mlContext = new MLContext();
-            var model = mlContext.Model.Load("model" + id.ToString() + ".zip", out var schema);
-            var predictionEngine = mlContext.Model.CreatePredictionEngine<ImageData, ImagePrediction>(model);
+            ITransformer trainedModel = mlContext.Model.Load(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models","Model" + id.ToString() + ".zip"), out var modelSchema);
+            var predictionEngine = mlContext.Model.CreatePredictionEngine<PredictionInput, PredictionOutput>(trainedModel);
+            var prediction = predictionEngine.Predict(imageData);
 
-            // predict
-            var imageData = new byte[imgToScan.Length];
-            await imgToScan.OpenReadStream().ReadAsync(imageData);
-            var data = new ImageData { Image = imageData };
-            var prediction = predictionEngine.Predict(data);
-            var item = await _context.Items.FindAsync(prediction.id_item);
+            Console.WriteLine($"Prediction: {prediction}");
+
+            var item = await _context.Items.FindAsync(prediction.PredictedLabel);
             if (item == null)
             {
                 return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { imgToScan = new string[] { "Item not found" } }});
@@ -211,7 +215,7 @@ public class IAService : IIAService
         catch (Exception ex)
         {
             // Log the exception details
-            Console.WriteLine($"Error during detection: {ex.Message}");
+        Console.WriteLine($"Error during detection: {ex.Message}, StackTrace: {ex.StackTrace}");
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { imgToScan = new string[] { "Error during detection" } }});
         }
     }
@@ -222,7 +226,7 @@ public class IAService : IIAService
         // Charger les images depuis la table IAImgs et faire un inner join avec la table imgs
         var listImgs = await _contextBackend.IAImgs
             .Where(iaimg => iaimg.id_ia == int.Parse(id))
-            .Join(_contextBackend.Imgs, iaimg => iaimg.id_img, img => img.id_img, (iaimg, img) => new 
+            .Join(_contextBackend.Imgs, iaimg => iaimg.id_img, img => img.id_img, (iaimg, img) => new TrainImageData 
             { 
                 id_item = img.id_item, 
                 url_img = img.url_img, 
@@ -234,18 +238,17 @@ public class IAService : IIAService
         {
             // Préparer les données d'entraînement
             var mlContext = new MLContext();
+            mlContext.Log += (sender, e) =>
+            {
+                Console.WriteLine($"[{e.Source}] {e.Message}");
+            };
             var imageDataView = mlContext.Data.LoadFromEnumerable(listImgs);
-            /* var pipeline = mlContext.Transforms.Conversion.MapValueToKey(outputColumnName: "LabelKey", inputColumnName: nameof(ImageData.id_item))
-                .Append(mlContext.Transforms.LoadRawImageBytes(outputColumnName: "Image", imageFolder: "wwwroot" + Path.DirectorySeparatorChar + "images", inputColumnName: nameof(ImageData.url_img)))
-                .Append(mlContext.MulticlassClassification.Trainers.ImageClassification("LabelKey"))
-                .Append(mlContext.Transforms.Conversion.MapKeyToValue(outputColumnName: "PredictedLabel", inputColumnName: "PredictedLabel"));
-             */
-            var pipeline = mlContext.Transforms.Conversion.MapValueToKey(outputColumnName: "LabelKey", inputColumnName: nameof(ImageData.id_item))
-                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Image", imageFolder: "wwwroot" + Path.DirectorySeparatorChar + "images", inputColumnName: nameof(ImageData.url_img)))
+            var pipeline = mlContext.Transforms.Conversion.MapValueToKey(outputColumnName: "Label", inputColumnName: nameof(TrainImageData.id_item))
+                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Image", inputColumnName: nameof(TrainImageData.url_img), imageFolder: Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images")))
                 .Append(mlContext.Transforms.ResizeImages(outputColumnName: "Image", imageWidth: 224, imageHeight: 224, inputColumnName: "Image"))
-                .Append(mlContext.Transforms.ExtractPixels(outputColumnName: "Image"))
-                .Append(mlContext.MulticlassClassification.Trainers.SdcaNonCalibrated(labelColumnName: "LabelKey", featureColumnName: "Image"))
-                .Append(mlContext.Transforms.Conversion.MapKeyToValue(outputColumnName: "PredictedLabel", inputColumnName: "PredictedLabel"));
+                .Append(mlContext.Transforms.ExtractPixels(outputColumnName: "Features", inputColumnName: "Image"))
+                .Append(mlContext.MulticlassClassification.Trainers.SdcaNonCalibrated(labelColumnName: "Label", featureColumnName: "Features", maximumNumberOfIterations: 100))
+                .Append(mlContext.Transforms.Conversion.MapKeyToValue("PredictedLabel"));
             foreach (var image in listImgs)
             {
                 var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", image.url_img);
@@ -256,7 +259,7 @@ public class IAService : IIAService
                 }
             }
             var model = pipeline.Fit(imageDataView);
-            mlContext.Model.Save(model, imageDataView.Schema, Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images","Model" + id + ".zip"));
+            mlContext.Model.Save(model, imageDataView.Schema, Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models","Model" + id + ".zip"));
 
             // Mettre à jour le statut de l'IA
             var ia = await _contextBackend.IA.FindAsync(int.Parse(id));
