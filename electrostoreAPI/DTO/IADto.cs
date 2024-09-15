@@ -35,16 +35,25 @@ public class GetTrainStart
     public string msg { get; set; }
 }
 
-public class ImageData
+public record DetecDto
 {
-    public int? id_img { get; set; }
-    public string? url_img { get; set; }
-    public int? id_item { get; set; }
-    public byte[]? Image { get; set; }
+    [Required] public IFormFile img_file { get; init; }
 }
 
-public class ImagePrediction : ImageData
+public class TrainImageData
 {
-    public float[] Score { get; set; }
-    public string PredictedLabel { get; set; }
+    public int id_img { get; set; }
+    public string url_img { get; set; }
+    public int id_item { get; set; }
+}
+
+public class PredictionInput
+{
+    public int id_img { get; set; }
+    public string url_img { get; set; }
+    public int id_item { get; set; }
+}
+public class PredictionOutput
+{
+    public int PredictedLabel { get; set; }
 }

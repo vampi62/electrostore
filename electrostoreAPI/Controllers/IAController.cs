@@ -76,10 +76,18 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("{id_ia}/detect")]
-        public async Task<ActionResult<ReadItemDto>> DetectItem([FromRoute] int id_ia, [FromForm] IFormFile img_to_scan)
+        public async Task<ActionResult<ReadItemDto>> DetectItem([FromRoute] int id_ia, [FromForm] DetecDto img_to_scan)
         {
-            var item = await _iaService.DetectItem(id_ia, img_to_scan);
-            return Ok(item);
+            var item = await _iaService.DetectItem(id_ia, img_to_scan.img_file);
+            if (item.Result is BadRequestObjectResult)
+            {
+                return item.Result;
+            }
+            if (item.Value == null)
+            {
+                return StatusCode(500);
+            }
+            return Ok(item.Value);
         }
 
         [HttpPut("{id_ia}")]
