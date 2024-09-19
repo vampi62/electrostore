@@ -37,8 +37,6 @@ String mqttname;
 String mqttUser;
 String mqttPassword;
 String mqttTopic;
-String passwordf;
-String mqttPasswordf;
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
@@ -50,6 +48,7 @@ const char *ap_password = "ConfigPass"; // Mot de passe du réseau WiFi en mode 
 
 int ledCount = 256;
 int nbrErreurMqttConnect = 0;
+int nbrErreurWifiConnect = 0;
 struct LEDInfo {
   int red;
   int green;
@@ -66,7 +65,7 @@ byte min_led = 120;
 float out;
 float insinus = 0;
 bool iswificlient = false;
-unsigned long connectionTimeout = 10000; // 30 secondes
+unsigned long connectionTimeout = 10000; // 10 secondes
 unsigned long startTime;
 unsigned long delaytime;
 
@@ -93,9 +92,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   if (doc.containsKey("leds")) {
     JsonArray ledsArray = doc["leds"].as<JsonArray>();
+    Serial.println(ledsArray.size() + " leds change");
     for (int i = 0; i < ledsArray.size(); i++) {
       int indextab = ledsArray[i]["index"];
-      Serial.println(indextab);
       leds[indextab+1].red = ledsArray[i]["red"];
       leds[indextab+1].green = ledsArray[i]["green"];
       leds[indextab+1].blue = ledsArray[i]["blue"];
