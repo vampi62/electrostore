@@ -1,39 +1,51 @@
 void handleMenuWifi() {
-  Serial.println("wifipage1");
+  Serial.println("wifiPageLoading");
   // si ssid contient "�" alors ssid = ""
   String response = "<html><head><meta charset='UTF-8'></head><body>";
   response += "<h1>Paramètres WiFi</h1>";
   response += "<form action='/savewifi' method='get'>";
   response += "SSID: <input type='text' name='ssid' value='" + ssid + "'><br>";
-  response += "Mot de passe: <input type='text' name='password' value='" + password + "'><br>";
+  if (password.length() > 0) {
+    response += "Mot de passe: <input type='password' name='password' placeholder='********'><br>";
+  } else {
+    response += "Mot de passe: <input type='password' name='password'><br>";
+  }
   response += "<input type='submit' value='Enregistrer'>";
   response += "</form>";
   response += "<a href='/'>Retour</a>";
   response += "</body></html>";
   server.send(200, "text/html", response);
-  Serial.println("wifipage");
+  Serial.println("wifiPageLoading");
 }
 
 void handleSaveWifi() {
   String newSSID = server.arg("ssid");
   String newPassword = server.arg("password");
-  if (newSSID.length() > 0 && newPassword.length() > 0) {
-    ssid = newSSID;
-    password = newPassword;
-
-    // Écrire les nouveaux paramètres dans l'EEPROM
-    writeStringToEEPROM(SSID_ADDRESS, ssid);
-    writeStringToEEPROM(PASSWORD_ADDRESS, password);
-
+  bool FormChange = false;
+  if (newSSID.length() > 0) {
+    if (ssid != newSSID){
+      ssid = newSSID;
+      writeStringToEEPROM(SSID_ADDRESS, ssid);
+      FormChange = true;
+    }
+  }
+  if (newPassword.length() > 0) {
+    if (password != newPassword){
+      password = newPassword;
+      writeStringToEEPROM(PASSWORD_ADDRESS, password);
+      FormChange = true;
+    }
+  }
+  if (FormChange) {
     server.send(200, "text/plain", "Paramètres enregistrés. Redémarrage du module.");
     ESP.restart();
   } else {
-    server.send(400, "text/plain", "Erreur: SSID ou mot de passe manquant.");
+    server.send(400, "text/plain", "Erreur: pas de changement.");
   }
 }
 
 void handleMenuMqtt() {
-  Serial.println("mqttpage1");
+  Serial.println("mqttPageLoading");
   String response = "<html><head><meta charset='UTF-8'></head><body>";
   response += "<h1>Paramètres MQTT</h1>";
   response += "<form action='/savemqtt' method='get'>";
@@ -41,14 +53,18 @@ void handleMenuMqtt() {
   response += "MQTT Port: <input type='text' name='mqttport' value='" + mqttPort + "'><br>";
   response += "MQTT Name: <input type='text' name='mqttname' value='" + mqttname + "'><br>";
   response += "MQTT User: <input type='text' name='mqttuser' value='" + mqttUser + "'><br>";
-  response += "MQTT Password: <input type='text' name='mqttpassword' value='" + mqttPassword + "'><br>";
+  if (mqttPassword.length() > 0) {
+    response += "MQTT Password: <input type='password' name='mqttpassword' placeholder='********'><br>";
+  } else {
+    response += "MQTT Password: <input type='password' name='mqttpassword'><br>";
+  }
   response += "MQTT Topic: <input type='text' name='mqtttopic' value='" + mqttTopic + "'><br>";
   response += "<input type='submit' value='Enregistrer'>";
   response += "</form>";
   response += "<a href='/'>Retour</a>";
   response += "</body></html>";
   server.send(200, "text/html", response);
-  Serial.println("mqttpage");
+  Serial.println("mqttPageSend");
 }
 
 void handleSaveMqtt() {
@@ -58,31 +74,59 @@ void handleSaveMqtt() {
   String newMqttUser = server.arg("mqttuser");
   String newMqttPassword = server.arg("mqttpassword");
   String newMqttTopic = server.arg("mqtttopic");
-  if (newMqttServer.length() > 0 && newMqttPort.length() > 0 && newMqttName.length() > 0 && newMqttUser.length() > 0 && newMqttPassword.length() > 0 && newMqttTopic.length() > 0) {
-    mqttServer = newMqttServer;
-    mqttPort = newMqttPort;
-    mqttname = newMqttName;
-    mqttUser = newMqttUser;
-    mqttPassword = newMqttPassword;
-    mqttTopic = newMqttTopic;
-
-    // Écrire les nouveaux paramètres dans l'EEPROM
-    writeStringToEEPROM(MQTTSERVER_ADDRESS, mqttServer);
-    writeStringToEEPROM(MQTTPORT_ADDRESS, mqttPort);
-    writeStringToEEPROM(MQTTNAME_ADDRESS, mqttname);
-    writeStringToEEPROM(MQTTUSER_ADDRESS, mqttUser);
-    writeStringToEEPROM(MQTTPASSWORD_ADDRESS, mqttPassword);
-    writeStringToEEPROM(MQTTTOPIC_ADDRESS, mqttTopic);
-
+  bool FormChange = false;
+  if (newMqttServer.length() > 0) {
+    if (mqttServer != newMqttServer){
+      mqttServer = newMqttServer;
+      writeStringToEEPROM(MQTTSERVER_ADDRESS, mqttServer);
+      FormChange = true;
+    }
+  }
+  if (newMqttPort.length() > 0) {
+    if (mqttPort != newMqttPort){
+      mqttPort = newMqttPort;
+      writeStringToEEPROM(MQTTPORT_ADDRESS, mqttPort);
+      FormChange = true;
+    }
+  }
+  if (newMqttName.length() > 0) {
+    if (mqttname != newMqttName){
+      mqttname = newMqttName;
+      writeStringToEEPROM(MQTTNAME_ADDRESS, mqttname);
+      FormChange = true;
+    }
+  }
+  if (newMqttUser.length() > 0) {
+    if (mqttUser != newMqttUser){
+      mqttUser = newMqttUser;
+      writeStringToEEPROM(MQTTUSER_ADDRESS, mqttUser);
+      FormChange = true;
+    }
+  }
+  if (newMqttPassword.length() > 0) {
+    if (mqttPassword != newMqttPassword){
+      mqttPassword = newMqttPassword;
+      writeStringToEEPROM(MQTTPASSWORD_ADDRESS, mqttPassword);
+      FormChange = true;
+    }
+  }
+  if (newMqttTopic.length() > 0) {
+    if (mqttTopic != newMqttTopic){
+      mqttTopic = newMqttTopic;
+      writeStringToEEPROM(MQTTTOPIC_ADDRESS, mqttTopic);
+      FormChange = true;
+    }
+  }
+  if (FormChange) {
     server.send(200, "text/plain", "Paramètres enregistrés. Redémarrage du module.");
     ESP.restart();
   } else {
-    server.send(400, "text/plain", "Erreur: paramètre manquant.");
+    server.send(400, "text/plain", "Erreur: pas de changement.");
   }
 }
 
 void handleRoot() {
-  Serial.println("rootpage1");
+  Serial.println("rootPageLoading");
   String response = "<html><head><meta charset='UTF-8'></head><body>";
   response += "<h1>Menu</h1>";
   response += "<ul>";
@@ -91,5 +135,5 @@ void handleRoot() {
   response += "</ul>";
   response += "</body></html>";
   server.send(200, "text/html", response);
-  Serial.println("rootpage");
+  Serial.println("rootPageSend");
 }

@@ -1066,6 +1066,14 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2182,52 +2190,19 @@
           "content": {
             "multipart/form-data": {
               "schema": {
+                "required": [
+                  "img_file"
+                ],
                 "type": "object",
                 "properties": {
-                  "ContentType": {
-                    "type": "string"
-                  },
-                  "ContentDisposition": {
-                    "type": "string"
-                  },
-                  "Headers": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "Length": {
-                    "type": "integer",
-                    "format": "int64"
-                  },
-                  "Name": {
-                    "type": "string"
-                  },
-                  "FileName": {
-                    "type": "string"
+                  "img_file": {
+                    "type": "string",
+                    "format": "binary"
                   }
                 }
               },
               "encoding": {
-                "ContentType": {
-                  "style": "form"
-                },
-                "ContentDisposition": {
-                  "style": "form"
-                },
-                "Headers": {
-                  "style": "form"
-                },
-                "Length": {
-                  "style": "form"
-                },
-                "Name": {
-                  "style": "form"
-                },
-                "FileName": {
+                "img_file": {
                   "style": "form"
                 }
               }
