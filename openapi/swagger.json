@@ -1083,6 +1083,49 @@
         }
       }
     },
+    "/api/camera/{id_camera}/light": {
+      "post": {
+        "tags": [
+          "Camera"
+        ],
+        "parameters": [
+          {
+            "name": "id_camera",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "boolean"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "boolean"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/command": {
       "get": {
         "tags": [

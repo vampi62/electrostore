@@ -1,242 +1,71 @@
-/*********
-  Rui Santos
-  Complete project details at https://RandomNerdTutorials.com/esp32-cam-video-streaming-web-server-camera-home-assistant/
-  
-  IMPORTANT!!! 
-   - Select Board "AI Thinker ESP32-CAM"
-   - GPIO 0 must be connected to GND to upload a sketch
-   - After connecting GPIO 0 to GND, press the ESP32-CAM on-board RESET button to put your board in flashing mode
-  
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files.
-
-  The above copyright notice and this permission notice shall be included in all
-  copies or substantial portions of the Software.
-*********/
-
 #include "esp_camera.h"
 #include <WiFi.h>
+#include <WebServer.h>
 #include "esp_timer.h"
 #include "img_converters.h"
 #include "Arduino.h"
 #include "fb_gfx.h"
 #include "soc/soc.h" //disable brownout problems
 #include "soc/rtc_cntl_reg.h"  //disable brownout problems
-#include "esp_http_server.h"
 #include <Adafruit_NeoPixel.h>
+#include <EEPROM.h>
 
-//Replace with your network credentials
-const char* ssid = "synology_2.4G";
-const char* password = "627a12cabc";
-#define LED_PIN 15
-unsigned long connectionTimeout = 30000; // 30 secondes
+#define EEPROM_SIZE 512
+
+// Définir les adresses de début dans l'EEPROM
+#define SSID_ADDRESS 0
+#define PASSWORD_ADDRESS 32
+#define CAMUSER_ADDRESS 160
+#define CAMPASSWORD_ADDRESS 192
+
+// Variables globales
+String ssid;
+String password;
+String camUser;
+String camPassword;
+
+WebServer server(80);
+WiFiClient wifiClient;
+
+const char *ap_ssid = "ESP_Config"; // Nom du réseau WiFi en mode AP (point d'accès)
+const char *ap_password = "ConfigPass"; // Mot de passe du réseau WiFi en mode AP
+
+bool iswificlient = false;
+unsigned long connectionTimeout = 10000; // 10 secondes
 unsigned long startTime;
 unsigned long delaytime;
 
-#define PART_BOUNDARY "123456789000000000000987654321"
-
-// This project was tested with the AI Thinker Model, M5STACK PSRAM Model and M5STACK WITHOUT PSRAM
-#define CAMERA_MODEL_AI_THINKER
-//#define CAMERA_MODEL_M5STACK_PSRAM
-//#define CAMERA_MODEL_M5STACK_WITHOUT_PSRAM
-
-// Not tested with this model
-//#define CAMERA_MODEL_WROVER_KIT
+int nbrErreurWifiConnect = 0;
+#define LED_PIN 15
 Adafruit_NeoPixel strip(64, LED_PIN, NEO_GRB + NEO_KHZ800);
-#if defined(CAMERA_MODEL_WROVER_KIT)
-  #define PWDN_GPIO_NUM    -1
-  #define RESET_GPIO_NUM   -1
-  #define XCLK_GPIO_NUM    21
-  #define SIOD_GPIO_NUM    26
-  #define SIOC_GPIO_NUM    27
-  
-  #define Y9_GPIO_NUM      35
-  #define Y8_GPIO_NUM      34
-  #define Y7_GPIO_NUM      39
-  #define Y6_GPIO_NUM      36
-  #define Y5_GPIO_NUM      19
-  #define Y4_GPIO_NUM      18
-  #define Y3_GPIO_NUM       5
-  #define Y2_GPIO_NUM       4
-  #define VSYNC_GPIO_NUM   25
-  #define HREF_GPIO_NUM    23
-  #define PCLK_GPIO_NUM    22
 
-#elif defined(CAMERA_MODEL_M5STACK_PSRAM)
-  #define PWDN_GPIO_NUM     -1
-  #define RESET_GPIO_NUM    15
-  #define XCLK_GPIO_NUM     27
-  #define SIOD_GPIO_NUM     25
-  #define SIOC_GPIO_NUM     23
-  
-  #define Y9_GPIO_NUM       19
-  #define Y8_GPIO_NUM       36
-  #define Y7_GPIO_NUM       18
-  #define Y6_GPIO_NUM       39
-  #define Y5_GPIO_NUM        5
-  #define Y4_GPIO_NUM       34
-  #define Y3_GPIO_NUM       35
-  #define Y2_GPIO_NUM       32
-  #define VSYNC_GPIO_NUM    22
-  #define HREF_GPIO_NUM     26
-  #define PCLK_GPIO_NUM     21
+#include "prgeeprom.h"
+#include "prgwifi.h"
+#include "prgpagehttp.h"
 
-#elif defined(CAMERA_MODEL_M5STACK_WITHOUT_PSRAM)
-  #define PWDN_GPIO_NUM     -1
-  #define RESET_GPIO_NUM    15
-  #define XCLK_GPIO_NUM     27
-  #define SIOD_GPIO_NUM     25
-  #define SIOC_GPIO_NUM     23
-  
-  #define Y9_GPIO_NUM       19
-  #define Y8_GPIO_NUM       36
-  #define Y7_GPIO_NUM       18
-  #define Y6_GPIO_NUM       39
-  #define Y5_GPIO_NUM        5
-  #define Y4_GPIO_NUM       34
-  #define Y3_GPIO_NUM       35
-  #define Y2_GPIO_NUM       17
-  #define VSYNC_GPIO_NUM    22
-  #define HREF_GPIO_NUM     26
-  #define PCLK_GPIO_NUM     21
 
-#elif defined(CAMERA_MODEL_AI_THINKER)
-  #define PWDN_GPIO_NUM     32
-  #define RESET_GPIO_NUM    -1
-  #define XCLK_GPIO_NUM      0
-  #define SIOD_GPIO_NUM     26
-  #define SIOC_GPIO_NUM     27
-  
-  #define Y9_GPIO_NUM       35
-  #define Y8_GPIO_NUM       34
-  #define Y7_GPIO_NUM       39
-  #define Y6_GPIO_NUM       36
-  #define Y5_GPIO_NUM       21
-  #define Y4_GPIO_NUM       19
-  #define Y3_GPIO_NUM       18
-  #define Y2_GPIO_NUM        5
-  #define VSYNC_GPIO_NUM    25
-  #define HREF_GPIO_NUM     23
-  #define PCLK_GPIO_NUM     22
-#else
-  #error "Camera model not selected"
-#endif
 
-static const char* _STREAM_CONTENT_TYPE = "multipart/x-mixed-replace;boundary=" PART_BOUNDARY;
-static const char* _STREAM_BOUNDARY = "\r\n--" PART_BOUNDARY "\r\n";
-static const char* _STREAM_PART = "Content-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n";
+#define PART_BOUNDARY "123456789000000000000987654321"
+#define CAMERA_MODEL_AI_THINKER
+#define PWDN_GPIO_NUM     32
+#define RESET_GPIO_NUM    -1
+#define XCLK_GPIO_NUM      0
+#define SIOD_GPIO_NUM     26
+#define SIOC_GPIO_NUM     27
 
-httpd_handle_t stream_httpd = NULL;
-
-static esp_err_t stream_handler(httpd_req_t *req){
-  camera_fb_t * fb = NULL;
-  esp_err_t res = ESP_OK;
-  size_t _jpg_buf_len = 0;
-  uint8_t * _jpg_buf = NULL;
-  char * part_buf[64];
-
-  res = httpd_resp_set_type(req, _STREAM_CONTENT_TYPE);
-  if(res != ESP_OK){
-    return res;
-  }
-
-  while(true){
-    fb = esp_camera_fb_get();
-    if (!fb) {
-      Serial.println("Camera capture failed");
-      res = ESP_FAIL;
-    } else {
-      if(fb->width > 400){
-        if(fb->format != PIXFORMAT_JPEG){
-          bool jpeg_converted = frame2jpg(fb, 80, &_jpg_buf, &_jpg_buf_len);
-          esp_camera_fb_return(fb);
-          fb = NULL;
-          if(!jpeg_converted){
-            Serial.println("JPEG compression failed");
-            res = ESP_FAIL;
-          }
-        } else {
-          _jpg_buf_len = fb->len;
-          _jpg_buf = fb->buf;
-        }
-      }
-    }
-    if(res == ESP_OK){
-      size_t hlen = snprintf((char *)part_buf, 64, _STREAM_PART, _jpg_buf_len);
-      res = httpd_resp_send_chunk(req, (const char *)part_buf, hlen);
-    }
-    if(res == ESP_OK){
-      res = httpd_resp_send_chunk(req, (const char *)_jpg_buf, _jpg_buf_len);
-    }
-    if(res == ESP_OK){
-      res = httpd_resp_send_chunk(req, _STREAM_BOUNDARY, strlen(_STREAM_BOUNDARY));
-    }
-    if(fb){
-      esp_camera_fb_return(fb);
-      fb = NULL;
-      _jpg_buf = NULL;
-    } else if(_jpg_buf){
-      free(_jpg_buf);
-      _jpg_buf = NULL;
-    }
-    if(res != ESP_OK){
-      break;
-    }
-    //Serial.printf("MJPG: %uB\n",(uint32_t)(_jpg_buf_len));
-  }
-  return res;
-}
-
-void startCameraServer(){
-  httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-  config.server_port = 80;
-
-  httpd_uri_t index_uri = {
-    .uri       = "/",
-    .method    = HTTP_GET,
-    .handler   = stream_handler,
-    .user_ctx  = NULL
-  };
-  
-  //Serial.printf("Starting web server on port: '%d'\n", config.server_port);
-  if (httpd_start(&stream_httpd, &config) == ESP_OK) {
-    httpd_register_uri_handler(stream_httpd, &index_uri);
-  }
-}
-
-void setupWiFi() {
-  Serial.println();
-  Serial.print("Connexion au réseau Wi-Fi: ");
-  Serial.println(ssid);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  startTime = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - startTime < connectionTimeout) {
-    delay(500);
-    Serial.print(".");
-  }
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("");
-    Serial.println("Wi-Fi connecté !");
-    Serial.print("Adresse IP: ");
-    Serial.println(WiFi.localIP());
-  strip.begin();
-  strip.setPixelColor(0, strip.Color(0, 40, 0));
-  strip.show();
-  }
-}
-
+#define Y9_GPIO_NUM       35
+#define Y8_GPIO_NUM       34
+#define Y7_GPIO_NUM       39
+#define Y6_GPIO_NUM       36
+#define Y5_GPIO_NUM       21
+#define Y4_GPIO_NUM       19
+#define Y3_GPIO_NUM       18
+#define Y2_GPIO_NUM        5
+#define VSYNC_GPIO_NUM    25
+#define HREF_GPIO_NUM     23
+#define PCLK_GPIO_NUM     22
 
 void setup() {
-  strip.begin();
-  strip.setPixelColor(0, strip.Color(40, 40, 40));
-  strip.show();
-  delay(500);
-  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
- 
-  Serial.begin(115200);
-  Serial.setDebugOutput(false);
-  
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
   config.ledc_timer = LEDC_TIMER_0;
@@ -268,16 +97,40 @@ void setup() {
     config.jpeg_quality = 12;
     config.fb_count = 1;
   }
-  
   // Camera init
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) {
     Serial.printf("Camera init failed with error 0x%x", err);
     return;
   }
-  setupWiFi();
-  startCameraServer();
-  delay(500);
+  strip.begin();
+  strip.setPixelColor(0, strip.Color(20, 20, 20));
+  strip.show();
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
+  Serial.begin(115200);
+  Serial.setDebugOutput(false);
+  EEPROM.begin(EEPROM_SIZE);
+  ssid = readStringFromEEPROM(SSID_ADDRESS);
+  password = readStringFromEEPROM(PASSWORD_ADDRESS);
+  camUser = readStringFromEEPROM(CAMUSER_ADDRESS);
+  camPassword = readStringFromEEPROM(CAMPASSWORD_ADDRESS);
+
+  iswificlient = setupWiFi();
+  if (iswificlient) {
+    strip.setPixelColor(0, strip.Color(0, 20, 20));
+    strip.show();
+  } else {
+    strip.setPixelColor(0, strip.Color(20, 0, 0));
+    strip.show();
+  }
+  server.on("/menuwifi", HTTP_GET, handleMenuWifi);
+  server.on("/savewifi", HTTP_GET, handleSaveWifi);
+  server.on("/menucam", HTTP_GET, handleMenuCam);
+  server.on("/savecam", HTTP_GET, handleSaveCam);
+  server.on("/light", HTTP_GET, handleLight);
+  server.on("/", HTTP_GET, handleRoot);
+  server.on("/stream", HTTP_GET, stream_handler);
+  server.begin();
   strip.setPixelColor(0, strip.Color(0, 0, 0));
   for (int i = 1; i < 64; i++) {
     strip.setPixelColor(i, strip.Color(50, 50, 50));
@@ -286,13 +139,18 @@ void setup() {
 }
 
 void loop() {
-  delay(1000);
-  if (WiFi.status() != WL_CONNECTED) {
-    strip.setPixelColor(0, strip.Color(40, 0, 0));
-    strip.show();
-    Serial.println("Connexion au réseau Wi-Fi perdue.");
-    setupWiFi();
-    strip.setPixelColor(0, strip.Color(0, 0, 0));
-    strip.show();
+  if (iswificlient) {
+    if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("Connexion au réseau Wi-Fi perdue.");
+      iswificlient = setupWiFi();
+      if (iswificlient) {
+        strip.setPixelColor(0, strip.Color(0, 20, 20));
+        strip.show();
+      } else {
+        strip.setPixelColor(0, strip.Color(20, 0, 0));
+        strip.show();
+      }
+    }
   }
+  server.handleClient();
 }

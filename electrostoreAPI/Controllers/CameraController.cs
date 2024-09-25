@@ -77,7 +77,9 @@ namespace electrostore.Controllers
                         var byteArray = Encoding.ASCII.GetBytes($"{camera.Value.user_camera}:{camera.Value.mdp_camera}");
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
                     }
-                    var response = await httpClient.GetAsync(camera.Value.url_camera, HttpCompletionOption.ResponseHeadersRead);
+                    // si camera.Value.url_camera termine par un /, on le supprime
+                    var urlFluxStream = camera.Value.url_camera.EndsWith("/") ? camera.Value.url_camera.Substring(0, camera.Value.url_camera.Length - 1) : camera.Value.url_camera;
+                    var response = await httpClient.GetAsync(urlFluxStream + "/stream", HttpCompletionOption.ResponseHeadersRead);
                     if (!response.IsSuccessStatusCode)
                     {
                         return StatusCode((int)response.StatusCode, "Erreur lors de la récupération du flux vidéo.");
@@ -93,6 +95,42 @@ namespace electrostore.Controllers
                     }
                     var contentStream = await response.Content.ReadAsStreamAsync();
                     return new FileStreamResult(contentStream, "multipart/x-mixed-replace; boundary=" + boundary);
+                }
+            }
+            catch
+            {
+                return StatusCode(500, "Impossible de se connecter à la caméra.");
+            }
+        }
+
+        [HttpPost("{id_camera}/light")]
+        public async Task<ActionResult> SwitchCameraLight([FromRoute] int id_camera, [FromBody] bool state)
+        {
+            var camera = await _cameraService.GetCameraById(id_camera);
+            if (camera.Result is BadRequestObjectResult)
+            {
+                return camera.Result;
+            }
+            if (camera.Value == null)
+            {
+                return StatusCode(500);
+            }
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    if (camera.Value.user_camera != null && camera.Value.mdp_camera != null)
+                    {
+                        var byteArray = Encoding.ASCII.GetBytes($"{camera.Value.user_camera}:{camera.Value.mdp_camera}");
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+                    }
+                    var urlLight = camera.Value.url_camera.EndsWith("/") ? camera.Value.url_camera.Substring(0, camera.Value.url_camera.Length - 1) : camera.Value.url_camera;
+                    var response = await httpClient.GetAsync(urlLight + "/light?state=" + (state ? "on" : "off"));
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        return StatusCode((int)response.StatusCode, "Erreur lors de la modification de l'état de la lumière.");
+                    }
+                    return Ok();
                 }
             }
             catch
