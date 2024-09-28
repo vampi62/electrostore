@@ -3,9 +3,12 @@ using electrostore.Dto;
 using electrostore.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Concurrent;
-using Microsoft.ML;
+/* using Microsoft.ML;
 using Microsoft.ML.Vision;
 using Microsoft.ML.Data;
+using Microsoft.ML.Transforms.Onnx;
+using Microsoft.ML.OnnxRuntime; */
+
 
 namespace electrostore.Services.IAService;
 
@@ -115,18 +118,25 @@ public class IAService : IIAService
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_ia = new string[] { "IA not found" } }});
         }
 
+        // remove model if exists
+        if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models","Model" + id.ToString() + ".keras")))
+        {
+            File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models","Model" + id.ToString() + ".keras"));
+            File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models","ItemList" + id.ToString() + ".txt"));
+        }
+
         _context.IA.Remove(iaToDelete);
         await _context.SaveChangesAsync();
         return new OkResult();
     }
 
-    public async Task<TrainingStatus> GetTrainingStatus(string id)
+    /* public async Task<TrainingStatus> GetTrainingStatus(string id)
     {
         TrainingStatuses.TryGetValue(id, out var status);
         return status;
-    }
+    } */
 
-    public async Task<GetTrainStart> TrainIA(int id)
+    /* public async Task<GetTrainStart> TrainIA(int id)
     {
         if (IsTrainingInProgress)
         {
@@ -166,9 +176,9 @@ public class IAService : IIAService
         });
         await _context.SaveChangesAsync();
         return new GetTrainStart { TrainStarted = true, msg = "Entraînement démarré." };
-    }
+    } */
 
-    public async Task<ActionResult<ReadItemDto>> DetectItem(int id, IFormFile imgToScan)
+    /* public async Task<ActionResult<ReadItemDto>> DetectItem(int id, IFormFile imgToScan)
     {
         if (imgToScan == null || imgToScan.Length == 0)
         {
@@ -195,7 +205,11 @@ public class IAService : IIAService
             var predictionEngine = mlContext.Model.CreatePredictionEngine<PredictionInput, PredictionOutput>(trainedModel);
             var prediction = predictionEngine.Predict(imageData);
 
-            Console.WriteLine($"Prediction: {prediction}");
+            Console.WriteLine($"id item find : {prediction.PredictedLabel}");
+            for (int i = 0; i < prediction.Score.Length; i++)
+            {
+                Console.WriteLine($"Score for item {i} : {prediction.Score[i]}");
+            }
 
             var item = await _context.Items.FindAsync(prediction.PredictedLabel);
             if (item == null)
@@ -218,9 +232,9 @@ public class IAService : IIAService
         Console.WriteLine($"Error during detection: {ex.Message}, StackTrace: {ex.StackTrace}");
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { imgToScan = new string[] { "Error during detection" } }});
         }
-    }
+    } */
 
-    private async Task TrainingAsync(string id, ApplicationDbContext _contextBackend)
+    /* private async Task TrainingAsync(string id, ApplicationDbContext _contextBackend)
     {
         Console.WriteLine("Task Training started");
         // Charger les images depuis la table IAImgs et faire un inner join avec la table imgs
@@ -288,5 +302,5 @@ public class IAService : IIAService
             TrainingStatuses[id].Message = "Erreur lors de l'entraînement " + ex.Message;
             throw;
         }
-    }
+    } */
 }

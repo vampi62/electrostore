@@ -76,6 +76,10 @@ public class ItemService : IItemService
         _context.Items.Add(item);
         await _context.SaveChangesAsync();
 
+        if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", item.id_item.ToString())))
+        {
+            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", item.id_item.ToString()));
+        }
         return new ReadItemDto
         {
             id_item = item.id_item,
@@ -154,6 +158,12 @@ public class ItemService : IItemService
         }
         _context.Items.Remove(itemToDelete);
         await _context.SaveChangesAsync();
+        //remove folder in wwwroot/images
+        if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", itemId.ToString())))
+        {
+            Directory.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", itemId.ToString()), true);
+        }
+
         return new OkResult();
     }
 }
