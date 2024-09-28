@@ -39,7 +39,7 @@ public record DetecDto
 {
     [Required] public IFormFile img_file { get; init; }
 }
-
+/* 
 public class TrainImageData
 {
     public int id_img { get; set; }
@@ -56,4 +56,5 @@ public class PredictionInput
 public class PredictionOutput
 {
     public int PredictedLabel { get; set; }
-}
+    public float[] Score { get; set; }
+} */

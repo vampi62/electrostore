@@ -99,21 +99,20 @@ public class ImgService : IImgService
         // verifie si une image avec le meme nom existe deja sur le serveur dans "wwwroot/images"
         // si oui, on ajoute un numero a la fin du nom de l'image et on recommence la verification jusqu'a trouver un nom disponible
         var newName = imgDto.img_file.FileName;
-        while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", newName)))
+        while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", imgDto.id_item.ToString(), newName)))
         {
             newName = $"{fileName}({i}){fileExt}";
             i++;
         }
-        var savePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", newName);
+        var savePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", imgDto.id_item.ToString(), newName);
         using (var fileStream = new FileStream(savePath, FileMode.Create))
         {
             await imgDto.img_file.CopyToAsync(fileStream);
         }
-
         var newImg = new Imgs
         {
             nom_img = imgDto.nom_img,
-            url_img = savePath,
+            url_img = imgDto.id_item + "/" + newName,
             description_img = imgDto.description_img,
             date_img = DateTime.Now,
             id_item = imgDto.id_item
@@ -178,9 +177,9 @@ public class ImgService : IImgService
         return new OkResult();
     }
 
-    public async Task<GetImageFileResult> GetImageFile(string pathImg)
+    public async Task<GetImageFileResult> GetImageFile(string url)
     {
-        //var pathImg = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", url);
+        var pathImg = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", url);
         if (!File.Exists(pathImg))
         {
             return new GetImageFileResult

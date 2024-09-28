@@ -107,6 +107,8 @@ void handleLight() {
     }
   }
   strip.show();
+  // Retourner un message de confirmation
+  server.send(200, "text/plain", "Lumière " + lightState + " !");
 }
 
 void stream_handler() {

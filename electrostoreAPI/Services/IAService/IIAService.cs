@@ -14,10 +14,10 @@ public interface IIAService
     Task<ActionResult<ReadIADto>> UpdateIA(int id, UpdateIADto IADto);
 
     Task<IActionResult> DeleteIA(int id);
-
+/* 
     Task<TrainingStatus> GetTrainingStatus(string id);
 
     Task<ActionResult<ReadItemDto>> DetectItem(int id, IFormFile imgToScan);
 
-    Task<GetTrainStart> TrainIA(int id);
+    Task<GetTrainStart> TrainIA(int id); */
 }

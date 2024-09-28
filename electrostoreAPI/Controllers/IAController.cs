@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using electrostore.Dto;
 using electrostore.Services.IAService;
+using System.Net;
 
 namespace electrostore.Controllers
 {
@@ -46,15 +47,17 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_ia}/status")]
-        public async Task<IActionResult> GetTrainingStatus(string id_ia)
+        public async Task<IActionResult> GetTrainingStatus(int id_ia)
         {
-            var status = await _iaService.GetTrainingStatus(id_ia);
-            if (status != null)
+            var httpClient = new HttpClient();
+            var response = await httpClient.GetAsync("http://electrostoreIA:5000/status/" + id_ia);
+            var content = await response.Content.ReadAsStringAsync();
+            if (response.StatusCode != HttpStatusCode.OK)
             {
-                return Ok(status);
+                return BadRequest(content);
+            } else {
+                return Ok(content);
             }
-
-            return NotFound("Aucun entraînement en cours pour cet ID.");
         }
 
         [HttpPost("{id_ia}/train")]
@@ -67,27 +70,35 @@ namespace electrostore.Controllers
                     return Unauthorized(new { message = "You are not allowed to train an IA" });
                 }
             }
-            var result = await _iaService.TrainIA(id_ia);
-            if (!result.TrainStarted)
+            var httpClient = new HttpClient();
+            var response = await httpClient.GetAsync("http://electrostoreIA:5000/train/" + id_ia);
+            var content = await response.Content.ReadAsStringAsync();
+            if (response.StatusCode != HttpStatusCode.OK)
             {
-                return Conflict(result.msg);
+                return BadRequest(content);
+            } else {
+                return Ok(content);
             }
-            return Ok(result.msg);
         }
 
         [HttpPost("{id_ia}/detect")]
         public async Task<ActionResult<ReadItemDto>> DetectItem([FromRoute] int id_ia, [FromForm] DetecDto img_to_scan)
         {
-            var item = await _iaService.DetectItem(id_ia, img_to_scan.img_file);
-            if (item.Result is BadRequestObjectResult)
+            var httpClient = new HttpClient();
+            // requete POST avec l'image à scanner
+            var response = await httpClient.PostAsync("http://electrostoreIA:5000/detect/" + id_ia,
+                new MultipartFormDataContent
+                {
+                    { new StreamContent(img_to_scan.img_file.OpenReadStream()), "img_file", img_to_scan.img_file.FileName }
+                }
+            );
+            var content = await response.Content.ReadAsStringAsync();
+            if (response.StatusCode != HttpStatusCode.OK)
             {
-                return item.Result;
+                return BadRequest(content);
+            } else {
+                return Ok(content);
             }
-            if (item.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(item.Value);
         }
 
         [HttpPut("{id_ia}")]
