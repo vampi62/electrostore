@@ -16,7 +16,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<electrostore.Models.CommandsCommentaires> CommandsCommentaires { get; set; }
     public DbSet<electrostore.Models.CommandsItems> CommandsItems { get; set; }
     public DbSet<electrostore.Models.IA> IA { get; set; }
-    public DbSet<electrostore.Models.IAImgs> IAImgs { get; set; }
     public DbSet<electrostore.Models.Imgs> Imgs { get; set; }
     public DbSet<electrostore.Models.Items> Items { get; set; }
     public DbSet<electrostore.Models.ItemsBoxs> ItemsBoxs { get; set; }
@@ -49,8 +48,5 @@ public class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<CommandsItems>()
             .HasKey(ci => new { ci.id_command, ci.id_item });
-
-        modelBuilder.Entity<IAImgs>()
-            .HasKey(iai => new { iai.id_ia, iai.id_img });
     }
 }
