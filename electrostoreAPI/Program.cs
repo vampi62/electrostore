@@ -19,7 +19,7 @@ using electrostore.Services.CameraService;
 using electrostore.Services.CommandCommentaireService;
 using electrostore.Services.CommandItemService;
 using electrostore.Services.CommandService;
-using electrostore.Services.IAImgService;
+//using electrostore.Services.IAImgService;
 using electrostore.Services.IAService;
 using electrostore.Services.ImgService;
 using electrostore.Services.ItemBoxService;
@@ -183,7 +183,7 @@ void addScopes(WebApplicationBuilder builder)
     builder.Services.AddScoped<ICommandCommentaireService, CommandCommentaireService>();
     builder.Services.AddScoped<ICommandItemService, CommandItemService>();
     builder.Services.AddScoped<ICommandService, CommandService>();
-    builder.Services.AddScoped<IIAImgService, IAImgService>();
+    //builder.Services.AddScoped<IIAImgService, IAImgService>();
     builder.Services.AddScoped<IIAService, IAService>();
     builder.Services.AddScoped<IImgService, ImgService>();
     builder.Services.AddScoped<IItemBoxService, ItemBoxService>();

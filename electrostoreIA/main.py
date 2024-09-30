@@ -15,6 +15,9 @@ IMAGE_DIR = '/data/images/'
 # Dictionnaire partagé pour stocker l'avancement de l'entraînement
 training_progress = {}
 
+img_height = 180
+img_width = 180
+
 class TrainingCallback(tf.keras.callbacks.Callback):
     def __init__(self, id_model):
         super().__init__()
@@ -29,6 +32,7 @@ class TrainingCallback(tf.keras.callbacks.Callback):
             val_loss = logs.get('val_loss', 0)
 
             training_progress[self.id_model] = {
+                'status': 'in progress',
                 'epoch': epoch + 1,
                 'accuracy': accuracy,
                 'val_accuracy': val_accuracy,
@@ -37,69 +41,72 @@ class TrainingCallback(tf.keras.callbacks.Callback):
             }
 
 def train_model(id_model):
-    data_dir = pathlib.Path(IMAGE_DIR)
-    batch_size = 32
-    img_height = 180
-    img_width = 180
+    try:
+        data_dir = pathlib.Path(IMAGE_DIR)
+        batch_size = 32
 
-    train_ds = tf.keras.utils.image_dataset_from_directory(
-        data_dir,
-        validation_split=0.2,
-        subset="training",
-        seed=123,
-        image_size=(img_height, img_width),
-        batch_size=batch_size)
+        train_ds = tf.keras.utils.image_dataset_from_directory(
+            data_dir,
+            validation_split=0.2,
+            subset="training",
+            seed=123,
+            image_size=(img_height, img_width),
+            batch_size=batch_size)
 
-    val_ds = tf.keras.utils.image_dataset_from_directory(
-        data_dir,
-        validation_split=0.2,
-        subset="validation",
-        seed=123,
-        image_size=(img_height, img_width),
-        batch_size=batch_size)
+        val_ds = tf.keras.utils.image_dataset_from_directory(
+            data_dir,
+            validation_split=0.2,
+            subset="validation",
+            seed=123,
+            image_size=(img_height, img_width),
+            batch_size=batch_size)
 
-    class_names = train_ds.class_names
-    AUTOTUNE = tf.data.AUTOTUNE
-    train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
-    val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
+        class_names = train_ds.class_names
+        AUTOTUNE = tf.data.AUTOTUNE
+        train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
+        val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
 
-    # Modèle simple CNN
-    model = models.Sequential([
-        layers.Rescaling(1./255, input_shape=(img_height, img_width, 3)),
-        layers.Conv2D(16, 3, padding='same', activation='relu'),
-        layers.MaxPooling2D(),
-        layers.Conv2D(32, 3, padding='same', activation='relu'),
-        layers.MaxPooling2D(),
-        layers.Conv2D(64, 3, padding='same', activation='relu'),
-        layers.MaxPooling2D(),
-        layers.Flatten(),
-        layers.Dense(128, activation='relu'),
-        layers.Dense(len(class_names))
-    ])
+        # Modèle simple CNN
+        model = models.Sequential([
+            layers.Rescaling(1./255, input_shape=(img_height, img_width, 3)),
+            layers.Conv2D(16, 3, padding='same', activation='relu'),
+            layers.MaxPooling2D(),
+            layers.Conv2D(32, 3, padding='same', activation='relu'),
+            layers.MaxPooling2D(),
+            layers.Conv2D(64, 3, padding='same', activation='relu'),
+            layers.MaxPooling2D(),
+            layers.Flatten(),
+            layers.Dense(128, activation='relu'),
+            layers.Dense(len(class_names))
+        ])
 
-    model.compile(optimizer='adam',
-                  loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-                  metrics=['accuracy'])
+        model.compile(optimizer='adam',
+                    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                    metrics=['accuracy'])
 
-    epochs = 10
-    callback = TrainingCallback(id_model)
+        epochs = 10
+        callback = TrainingCallback(id_model)
 
-    # Lancement de l'entraînement avec callback pour suivre le progrès
-    model.fit(train_ds, validation_data=val_ds, epochs=epochs, callbacks=[callback])
+        # Lancement de l'entraînement avec callback pour suivre le progrès
+        model.fit(train_ds, validation_data=val_ds, epochs=epochs, callbacks=[callback])
 
-    # Sauvegarder le modèle
-    model_path = os.path.join(MODEL_DIR, f'Model{id_model}.keras')
-    model.save(model_path)
+        # Sauvegarder le modèle
+        model_path = os.path.join(MODEL_DIR, f'Model{id_model}.keras')
+        model.save(model_path)
 
-    # Sauvegarder les noms des classes
-    class_names_path = os.path.join(MODEL_DIR, f'ItemList{id_model}.txt')
-    with open(class_names_path, 'w') as f:
-        for item in class_names:
-            f.write("%s\n" % item)
+        # Sauvegarder les noms des classes
+        class_names_path = os.path.join(MODEL_DIR, f'ItemList{id_model}.txt')
+        with open(class_names_path, 'w') as f:
+            for item in class_names:
+                f.write("%s\n" % item)
 
-    print(f"Model {id_model} trained and saved.")
-    # Marquer la fin de l'entraînement dans le dictionnaire de suivi
-    training_progress[id_model] = {'status': 'completed'}
+        print(f"Model {id_model} trained and saved.")
+        # Marquer la fin de l'entraînement dans le dictionnaire de suivi
+        training_progress[id_model] = {'status': 'completed'}
+    except Exception as e:
+        print(f"Error training model {id_model}: {str(e)}")
+        # Marquer l'erreur dans le dictionnaire de suivi
+        training_progress[id_model] = {'status': 'error', 'message': str(e)}
 
 def async_train_model(id_model):
     """Lance l'entraînement dans un thread séparé."""
@@ -107,11 +114,10 @@ def async_train_model(id_model):
     thread.start()
 
 def detect_model(id_model, imageData):
-    img_height = 180
-    img_width = 180
-
     # Charger le modèle
     model_path = os.path.join(MODEL_DIR, f'Model{id_model}.keras')
+    if not os.path.exists(model_path):
+        raise Exception(f"Model {id_model} not found or not trained yet.")
     model = tf.keras.models.load_model(model_path)
 
     # Charger les noms des classes
@@ -124,29 +130,36 @@ def detect_model(id_model, imageData):
     # Charger une image de test
     #sunflower_url = "https://storage.googleapis.com/download.tensorflow.org/example_images/592px-Red_sunflower.jpg"
     #sunflower_path = tf.keras.utils.get_file('Red_sunflower', origin=sunflower_url)
+    try:
+        #img = tf.keras.utils.load_img(sunflower_path, target_size=(img_height, img_width))
+        img = tf.keras.preprocessing.image.load_img(imageData, target_size=(img_height, img_width))
+        img_array = tf.keras.utils.img_to_array(img)
+        img_array = tf.expand_dims(img_array, 0)  # Créer un batch
 
-    #img = tf.keras.utils.load_img(sunflower_path, target_size=(img_height, img_width))
-    img = tf.keras.preprocessing.image.load_img(imageData, target_size=(img_height, img_width))
-    img_array = tf.keras.utils.img_to_array(img)
-    img_array = tf.expand_dims(img_array, 0)  # Créer un batch
+        predictions = model.predict(img_array)
+        score = tf.nn.softmax(predictions[0])
 
-    predictions = model.predict(img_array)
-    score = tf.nn.softmax(predictions[0])
+        predicted_class = class_names[np.argmax(score)]
+        confidence = 100 * np.max(score)
 
-    predicted_class = class_names[np.argmax(score)]
-    confidence = 100 * np.max(score)
-
-    return {
-        "predicted_class": predicted_class,
-        "confidence": confidence
-    }
+        return {
+            "predicted_class": predicted_class,
+            "confidence": confidence
+        }
+    except Exception as e:
+        raise Exception(f"Error detecting image: {str(e)}")
 
 @app.route('/train/<int:id_model>', methods=['POST'])
 def train(id_model):
     try:
+        # check if a training is already in progress
+        if id_model in training_progress:
+            if training_progress[id_model]['status'] == 'in progress':
+                return jsonify({"error": "Training already in progress for this model."}), 400
+        
         # Initialiser le progrès dans le dictionnaire
         training_progress[id_model] = {'status': 'in progress'}
-        
+
         # Lancer la tâche d'entraînement en arrière-plan
         async_train_model(id_model)
         return jsonify({"message": f"Training for model {id_model} started."}), 200

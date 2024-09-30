@@ -49,6 +49,15 @@ namespace electrostore.Controllers
         [HttpGet("{id_ia}/status")]
         public async Task<IActionResult> GetTrainingStatus(int id_ia)
         {
+            var ia = await _iaService.GetIAById(id_ia);
+            if (ia.Result is BadRequestObjectResult)
+            {
+                return ia.Result;
+            }
+            if (ia.Value == null)
+            {
+                return StatusCode(500);
+            }
             var httpClient = new HttpClient();
             var response = await httpClient.GetAsync("http://electrostoreIA:5000/status/" + id_ia);
             var content = await response.Content.ReadAsStringAsync();
@@ -70,6 +79,15 @@ namespace electrostore.Controllers
                     return Unauthorized(new { message = "You are not allowed to train an IA" });
                 }
             }
+            var ia = await _iaService.GetIAById(id_ia);
+            if (ia.Result is BadRequestObjectResult)
+            {
+                return ia.Result;
+            }
+            if (ia.Value == null)
+            {
+                return StatusCode(500);
+            }
             var httpClient = new HttpClient();
             var response = await httpClient.GetAsync("http://electrostoreIA:5000/train/" + id_ia);
             var content = await response.Content.ReadAsStringAsync();
@@ -84,6 +102,15 @@ namespace electrostore.Controllers
         [HttpPost("{id_ia}/detect")]
         public async Task<ActionResult<ReadItemDto>> DetectItem([FromRoute] int id_ia, [FromForm] DetecDto img_to_scan)
         {
+            var ia = await _iaService.GetIAById(id_ia);
+            if (ia.Result is BadRequestObjectResult)
+            {
+                return ia.Result;
+            }
+            if (ia.Value == null)
+            {
+                return StatusCode(500);
+            }
             var httpClient = new HttpClient();
             // requete POST avec l'image à scanner
             var response = await httpClient.PostAsync("http://electrostoreIA:5000/detect/" + id_ia,
