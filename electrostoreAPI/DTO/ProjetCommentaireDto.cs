@@ -10,6 +10,8 @@ public record ReadProjetCommentaireDto
     public string contenu_projetcommentaire { get; init; }
     public DateTime date_projetcommentaire { get; init; }
     public DateTime date_modif_projetcommentaire { get; init; }
+    public string? user_name { get; init; }
+    public ReadProjetDto? projet { get; init; }
 }
 public record CreateProjetCommentaireByUserDto
 {

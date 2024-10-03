@@ -18,6 +18,7 @@ public class CommandsCommentaires
 
     public string contenu_commandcommentaire { get; set; }
     public DateTime date_commandcommentaire { get; set; }
-    public DateTime date_modif_projetcommentaire { get; set; }
+    public DateTime date_modif_commandcommentaire { get; set; }
+    public ICollection<Commands> Commands { get; set; } = new List<Commands>();
 
 }

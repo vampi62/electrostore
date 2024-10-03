@@ -30,7 +30,16 @@ public class CommandItemService : ICommandItemService
                 id_item = ci.id_item,
                 id_command = ci.id_command,
                 qte_commanditem = ci.qte_commanditem,
-                prix_commanditem = ci.prix_commanditem
+                prix_commanditem = ci.prix_commanditem,
+                item = new ReadItemDto
+                {
+                    id_item = ci.Item.id_item,
+                    nom_item = ci.Item.nom_item,
+                    seuil_min_item = ci.Item.seuil_min_item,
+                    datasheet_item = ci.Item.datasheet_item,
+                    description_item = ci.Item.description_item,
+                    id_img = ci.Item.id_img
+                }
             })
             .ToListAsync();
     }
@@ -52,7 +61,16 @@ public class CommandItemService : ICommandItemService
                 id_item = ci.id_item,
                 id_command = ci.id_command,
                 qte_commanditem = ci.qte_commanditem,
-                prix_commanditem = ci.prix_commanditem
+                prix_commanditem = ci.prix_commanditem,
+                item = new ReadItemDto
+                {
+                    id_item = ci.Item.id_item,
+                    nom_item = ci.Item.nom_item,
+                    seuil_min_item = ci.Item.seuil_min_item,
+                    datasheet_item = ci.Item.datasheet_item,
+                    description_item = ci.Item.description_item,
+                    id_img = ci.Item.id_img
+                }
             })
             .ToListAsync();
     }
@@ -70,7 +88,16 @@ public class CommandItemService : ICommandItemService
             id_item = commandItem.id_item,
             id_command = commandItem.id_command,
             qte_commanditem = commandItem.qte_commanditem,
-            prix_commanditem = commandItem.prix_commanditem
+            prix_commanditem = commandItem.prix_commanditem,
+            item = new ReadItemDto
+            {
+                id_item = commandItem.Item.id_item,
+                nom_item = commandItem.Item.nom_item,
+                seuil_min_item = commandItem.Item.seuil_min_item,
+                datasheet_item = commandItem.Item.datasheet_item,
+                description_item = commandItem.Item.description_item,
+                id_img = commandItem.Item.id_img
+            }
         };
     }
 
@@ -119,7 +146,16 @@ public class CommandItemService : ICommandItemService
             id_item = newCommandItem.id_item,
             id_command = newCommandItem.id_command,
             qte_commanditem = newCommandItem.qte_commanditem,
-            prix_commanditem = newCommandItem.prix_commanditem
+            prix_commanditem = newCommandItem.prix_commanditem,
+            item = new ReadItemDto
+            {
+                id_item = newCommandItem.Item.id_item,
+                nom_item = newCommandItem.Item.nom_item,
+                seuil_min_item = newCommandItem.Item.seuil_min_item,
+                datasheet_item = newCommandItem.Item.datasheet_item,
+                description_item = newCommandItem.Item.description_item,
+                id_img = newCommandItem.Item.id_img
+            }
         };
     }
 
@@ -169,7 +205,16 @@ public class CommandItemService : ICommandItemService
             id_item = commandItemToUpdate.id_item,
             id_command = commandItemToUpdate.id_command,
             qte_commanditem = commandItemToUpdate.qte_commanditem,
-            prix_commanditem = commandItemToUpdate.prix_commanditem
+            prix_commanditem = commandItemToUpdate.prix_commanditem,
+            item = new ReadItemDto
+            {
+                id_item = commandItemToUpdate.Item.id_item,
+                nom_item = commandItemToUpdate.Item.nom_item,
+                seuil_min_item = commandItemToUpdate.Item.seuil_min_item,
+                datasheet_item = commandItemToUpdate.Item.datasheet_item,
+                description_item = commandItemToUpdate.Item.description_item,
+                id_img = commandItemToUpdate.Item.id_img
+            }
         };
     }
 

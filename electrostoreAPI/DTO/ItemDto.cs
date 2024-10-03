@@ -10,6 +10,7 @@ public record ReadItemDto
     public string datasheet_item { get; init; }
     public string description_item { get; init; }
     public int? id_img { get; init; }
+    public ReadItemBoxDto[]? itembox { get; init; }
 }
 public record CreateItemDto
 {

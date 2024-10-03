@@ -8,6 +8,7 @@ public record ReadCommandItemDto
     public int id_command { get; init; }
     public int qte_commanditem { get; init; }
     public float prix_commanditem { get; init; }
+    public ReadItemDto item { get; init; }
 }
 public record CreateCommandItemByCommandDto
 {

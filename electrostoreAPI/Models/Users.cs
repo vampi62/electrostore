@@ -16,4 +16,6 @@ public class Users
     public string role_user { get; set; }
     public string? reset_token { get; set; }
     public DateTime? reset_token_expiration { get; set; }
+    public ICollection<ProjetsCommentaires> ProjetsCommentaires { get; set; } = new List<ProjetsCommentaires>();
+    public ICollection<CommandsCommentaires> CommandsCommentaires { get; set; } = new List<CommandsCommentaires>();
 }

@@ -17,6 +17,7 @@ public class ItemService : IItemService
     public async Task<IEnumerable<ReadItemDto>> GetItems(int limit = 100, int offset = 0)
     {
         return await _context.Items
+            .AsNoTracking()
             .Skip(offset)
             .Take(limit)
             .Select(item => new ReadItemDto
@@ -27,6 +28,15 @@ public class ItemService : IItemService
                 seuil_min_item = item.seuil_min_item,
                 datasheet_item = item.datasheet_item,
                 description_item = item.description_item,
+                itembox = item.ItemsBoxs
+                    .Select(ib => new ReadItemBoxDto
+                    {
+                        id_item = ib.id_item,
+                        id_box = ib.id_box,
+                        qte_itembox = ib.qte_itembox,
+                        seuil_max_itemitembox = ib.seuil_max_itemitembox,
+                    })
+                    .ToArray()
             })
             .ToListAsync();
     }
@@ -47,6 +57,16 @@ public class ItemService : IItemService
             seuil_min_item = item.seuil_min_item,
             datasheet_item = item.datasheet_item,
             description_item = item.description_item,
+            itembox = _context.ItemsBoxs
+                .Where(ib => ib.id_item == item.id_item)
+                .Select(ib => new ReadItemBoxDto
+                {
+                    id_item = ib.id_item,
+                    id_box = ib.id_box,
+                    qte_itembox = ib.qte_itembox,
+                    seuil_max_itemitembox = ib.seuil_max_itemitembox,
+                })
+                .ToArray()
         };
     }
 

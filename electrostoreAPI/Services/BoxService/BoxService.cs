@@ -229,6 +229,11 @@ public class BoxService : IBoxService
         {
             return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "Box not found" } }});
         }
+        // check if the box has a item in it (ItemsBoxs) with qte_itembox > 0
+        if (await _context.ItemsBoxs.AnyAsync(ib => ib.id_box == id && ib.qte_itembox > 0))
+        {
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "Box is not empty" } }});
+        }
 
         _context.Boxs.Remove(boxToDelete);
         await _context.SaveChangesAsync();
