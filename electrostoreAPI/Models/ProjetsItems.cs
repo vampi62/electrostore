@@ -14,4 +14,5 @@ public class ProjetsItems
     public Items Item { get; set; }
 
     public int qte_projetitem { get; set; }
+    public ICollection<Projets> Projets { get; set; } = new List<Projets>();
 }

@@ -19,4 +19,5 @@ public class ProjetsCommentaires
     public string contenu_projetcommentaire { get; set; }
     public DateTime date_projetcommentaire { get; set; }
     public DateTime date_modif_projetcommentaire { get; set; }
+    public ICollection<Projets> Projets { get; set; } = new List<Projets>();
 }

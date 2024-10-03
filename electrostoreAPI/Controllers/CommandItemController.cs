@@ -46,6 +46,31 @@ namespace electrostore.Controllers
             return Ok(commandItem.Value);
         }
 
+        [HttpPost]
+        public async Task<ActionResult<ReadCommandItemDto>> AddCommandItems([FromRoute] int id_command, [FromBody] int[] Items)
+        {
+            var resultList = new List<ActionResult<ReadCommandItemDto>>();
+            for(int i = 0; i < Items.Length; i++)
+            {
+                var commandItemDto = new CreateCommandItemDto
+                {
+                    id_command = id_command,
+                    id_item = Items[i]
+                };
+                var commandItem = await _commandItemService.CreateCommandItem(commandItemDto);
+                if (commandItem.Result is BadRequestObjectResult)
+                {
+                    return commandItem.Result;
+                }
+                if (commandItem.Value == null)
+                {
+                    return StatusCode(500);
+                }
+                resultList.Add(CreatedAtAction(nameof(GetCommandItemById), new { id_command = commandItem.Value.id_command, id_item = commandItem.Value.id_item }, commandItem.Value));
+            }
+            return Ok(resultList);
+        }
+
         [HttpPost("{id_item}")]
         public async Task<ActionResult<ReadCommandItemDto>> CreateCommandItem([FromRoute] int id_command, [FromRoute] int id_item, [FromBody] CreateCommandItemByCommandDto commandItemDto)
         {

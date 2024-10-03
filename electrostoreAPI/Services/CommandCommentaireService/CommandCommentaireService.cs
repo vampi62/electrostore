@@ -33,7 +33,16 @@ public class CommandCommentaireService : ICommandCommentaireService
                 id_user = c.id_user,
                 contenu_commandcommentaire = c.contenu_commandcommentaire,
                 date_commandcommentaire = c.date_commandcommentaire,
-                date_modif_projetcommentaire = c.date_modif_projetcommentaire
+                date_modif_commandcommentaire = c.date_modif_commandcommentaire,
+                command = new ReadCommandDto
+                {
+                    id_command = c.Command.id_command,
+                    prix_command = c.Command.prix_command,
+                    url_command = c.Command.url_command,
+                    status_command = c.Command.status_command,
+                    date_command = c.Command.date_command,
+                    date_livraison_command = c.Command.date_livraison_command
+                },
             })
             .ToListAsync();
     }
@@ -57,7 +66,8 @@ public class CommandCommentaireService : ICommandCommentaireService
                 id_user = c.id_user,
                 contenu_commandcommentaire = c.contenu_commandcommentaire,
                 date_commandcommentaire = c.date_commandcommentaire,
-                date_modif_projetcommentaire = c.date_modif_projetcommentaire
+                date_modif_commandcommentaire = c.date_modif_commandcommentaire,
+                user_name = c.User.nom_user + " " + c.User.prenom_user
             })
             .ToListAsync();
     }
@@ -77,7 +87,8 @@ public class CommandCommentaireService : ICommandCommentaireService
             id_user = commentaire.id_user,
             contenu_commandcommentaire = commentaire.contenu_commandcommentaire,
             date_commandcommentaire = commentaire.date_commandcommentaire,
-            date_modif_projetcommentaire = commentaire.date_modif_projetcommentaire
+            date_modif_commandcommentaire = commentaire.date_modif_commandcommentaire,
+            user_name = commentaire.User.nom_user + " " + commentaire.User.prenom_user
         };
     }
 
@@ -101,7 +112,7 @@ public class CommandCommentaireService : ICommandCommentaireService
             id_user = commentaireDto.id_user,
             contenu_commandcommentaire = commentaireDto.contenu_commandcommentaire,
             date_commandcommentaire = DateTime.Now,
-            date_modif_projetcommentaire = DateTime.Now
+            date_modif_commandcommentaire = DateTime.Now
         };
 
         _context.CommandsCommentaires.Add(newCommentaire);
@@ -114,7 +125,8 @@ public class CommandCommentaireService : ICommandCommentaireService
             id_user = newCommentaire.id_user,
             contenu_commandcommentaire = newCommentaire.contenu_commandcommentaire,
             date_commandcommentaire = newCommentaire.date_commandcommentaire,
-            date_modif_projetcommentaire = newCommentaire.date_modif_projetcommentaire
+            date_modif_commandcommentaire = newCommentaire.date_modif_commandcommentaire,
+            user_name = newCommentaire.User.nom_user + " " + newCommentaire.User.prenom_user
         };
     }
 
@@ -130,7 +142,7 @@ public class CommandCommentaireService : ICommandCommentaireService
         {
             commentaireToUpdate.contenu_commandcommentaire = commentaireDto.contenu_commandcommentaire;
         }
-        commentaireToUpdate.date_modif_projetcommentaire = DateTime.Now;
+        commentaireToUpdate.date_modif_commandcommentaire = DateTime.Now;
 
         await _context.SaveChangesAsync();
 
@@ -141,7 +153,8 @@ public class CommandCommentaireService : ICommandCommentaireService
             id_user = commentaireToUpdate.id_user,
             contenu_commandcommentaire = commentaireToUpdate.contenu_commandcommentaire,
             date_commandcommentaire = commentaireToUpdate.date_commandcommentaire,
-            date_modif_projetcommentaire = commentaireToUpdate.date_modif_projetcommentaire
+            date_modif_commandcommentaire = commentaireToUpdate.date_modif_commandcommentaire,
+            user_name = commentaireToUpdate.User.nom_user + " " + commentaireToUpdate.User.prenom_user
         };
     }
 

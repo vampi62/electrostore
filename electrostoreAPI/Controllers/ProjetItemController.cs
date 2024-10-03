@@ -46,6 +46,31 @@ namespace electrostore.Controllers
             return Ok(projetItem.Value);
         }
 
+        [HttpPost]
+        public async Task<ActionResult<ReadProjetItemDto>> AddProjetItems([FromRoute] int id_projet, [FromBody] int[] Items)
+        {
+            var resultList = new List<ActionResult<ReadProjetItemDto>>();
+            for(int i = 0; i < Items.Length; i++)
+            {
+                var projetItemDto = new CreateProjetItemDto
+                {
+                    id_projet = id_projet,
+                    id_item = Items[i]
+                };
+                var projetItem = await _projetItemService.CreateProjetItem(projetItemDto);
+                if (projetItem.Result is BadRequestObjectResult)
+                {
+                    return projetItem.Result;
+                }
+                if (projetItem.Value == null)
+                {
+                    return StatusCode(500);
+                }
+                resultList.Add(CreatedAtAction(nameof(GetProjetItemById), new { id_projet = projetItem.Value.id_projet, id_item = projetItem.Value.id_item }, projetItem.Value));
+            }
+            return Ok(resultList);
+        }
+
         [HttpPost("{id_item}")]
         public async Task<ActionResult<ReadProjetItemDto>> AddProjetItem([FromRoute] int id_projet, [FromRoute] int id_item, [FromBody] CreateProjetItemByProjetDto projetItemDto)
         {

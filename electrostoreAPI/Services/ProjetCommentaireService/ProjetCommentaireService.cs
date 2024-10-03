@@ -33,7 +33,8 @@ public class ProjetCommentaireService : IProjetCommentaireService
                 id_user = p.id_user,
                 contenu_projetcommentaire = p.contenu_projetcommentaire,
                 date_projetcommentaire = p.date_projetcommentaire,
-                date_modif_projetcommentaire = p.date_modif_projetcommentaire
+                date_modif_projetcommentaire = p.date_modif_projetcommentaire,
+                user_name = p.User.nom_user + " " + p.User.prenom_user
             })
             .ToListAsync();
     }
@@ -57,7 +58,18 @@ public class ProjetCommentaireService : IProjetCommentaireService
                 id_user = p.id_user,
                 contenu_projetcommentaire = p.contenu_projetcommentaire,
                 date_projetcommentaire = p.date_projetcommentaire,
-                date_modif_projetcommentaire = p.date_modif_projetcommentaire
+                date_modif_projetcommentaire = p.date_modif_projetcommentaire,
+                user_name = p.User.nom_user + " " + p.User.prenom_user,
+                projet = new ReadProjetDto
+                {
+                    id_projet = p.Projet.id_projet,
+                    nom_projet = p.Projet.nom_projet,
+                    description_projet = p.Projet.description_projet,
+                    url_projet = p.Projet.url_projet,
+                    status_projet = p.Projet.status_projet,
+                    date_projet = p.Projet.date_projet,
+                    date_fin_projet = p.Projet.date_fin_projet
+                }
             })
             .ToListAsync();
     }
@@ -77,7 +89,8 @@ public class ProjetCommentaireService : IProjetCommentaireService
             id_user = projetCommentaire.id_user,
             contenu_projetcommentaire = projetCommentaire.contenu_projetcommentaire,
             date_projetcommentaire = projetCommentaire.date_projetcommentaire,
-            date_modif_projetcommentaire = projetCommentaire.date_modif_projetcommentaire
+            date_modif_projetcommentaire = projetCommentaire.date_modif_projetcommentaire,
+            user_name = projetCommentaire.User.nom_user + " " + projetCommentaire.User.prenom_user
         };
     }
 
@@ -114,7 +127,8 @@ public class ProjetCommentaireService : IProjetCommentaireService
             id_user = newProjetCommentaire.id_user,
             contenu_projetcommentaire = newProjetCommentaire.contenu_projetcommentaire,
             date_projetcommentaire = newProjetCommentaire.date_projetcommentaire,
-            date_modif_projetcommentaire = newProjetCommentaire.date_modif_projetcommentaire
+            date_modif_projetcommentaire = newProjetCommentaire.date_modif_projetcommentaire,
+            user_name = newProjetCommentaire.User.nom_user + " " + newProjetCommentaire.User.prenom_user
         };
     }
 
@@ -137,7 +151,8 @@ public class ProjetCommentaireService : IProjetCommentaireService
             id_projet = projetCommentaireToUpdate.id_projet,
             id_user = projetCommentaireToUpdate.id_user,
             contenu_projetcommentaire = projetCommentaireToUpdate.contenu_projetcommentaire,
-            date_modif_projetcommentaire = projetCommentaireToUpdate.date_modif_projetcommentaire
+            date_modif_projetcommentaire = projetCommentaireToUpdate.date_modif_projetcommentaire,
+            user_name = projetCommentaireToUpdate.User.nom_user + " " + projetCommentaireToUpdate.User.prenom_user
         };
     }
 

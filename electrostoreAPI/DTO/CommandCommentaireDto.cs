@@ -9,7 +9,9 @@ public record ReadCommandCommentaireDto
     public int? id_user { get; init; }
     public string contenu_commandcommentaire { get; init; }
     public DateTime date_commandcommentaire { get; init; }
-    public DateTime date_modif_projetcommentaire { get; init; }
+    public DateTime date_modif_commandcommentaire { get; init; }
+    public string? user_name { get; init; }
+    public ReadCommandDto? command { get; init; }
 }
 public record CreateCommandCommentaireByCommandDto
 {

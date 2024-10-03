@@ -153,9 +153,9 @@ def detect_model(id_model, imageData):
 def train(id_model):
     try:
         # check if a training is already in progress
-        if id_model in training_progress:
-            if training_progress[id_model]['status'] == 'in progress':
-                return jsonify({"error": "Training already in progress for this model."}), 400
+        for model in training_progress:
+            if training_progress[model]['status'] == 'in progress':
+                return jsonify({"error": "Training already in progress for a model."}), 400
         
         # Initialiser le progrès dans le dictionnaire
         training_progress[id_model] = {'status': 'in progress'}

@@ -15,4 +15,5 @@ public class CommandsItems
     
     public int qte_commanditem { get; set; }
     public float prix_commanditem { get; set; }
+    public ICollection<Commands> Commands { get; set; } = new List<Commands>();
 }

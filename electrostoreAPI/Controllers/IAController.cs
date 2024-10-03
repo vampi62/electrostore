@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using electrostore.Dto;
 using electrostore.Services.IAService;
 using System.Net;
+using System.Text.Json;
 
 namespace electrostore.Controllers
 {
@@ -61,11 +62,13 @@ namespace electrostore.Controllers
             var httpClient = new HttpClient();
             var response = await httpClient.GetAsync("http://electrostoreIA:5000/status/" + id_ia);
             var content = await response.Content.ReadAsStringAsync();
+            // convert the response to a json object
+            var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
             if (response.StatusCode != HttpStatusCode.OK)
             {
-                return BadRequest(content);
+                return BadRequest(json);
             } else {
-                return Ok(content);
+                return Ok(json);
             }
         }
 
@@ -91,11 +94,13 @@ namespace electrostore.Controllers
             var httpClient = new HttpClient();
             var response = await httpClient.GetAsync("http://electrostoreIA:5000/train/" + id_ia);
             var content = await response.Content.ReadAsStringAsync();
+            // convert the response to a json object
+            var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
             if (response.StatusCode != HttpStatusCode.OK)
             {
-                return BadRequest(content);
+                return BadRequest(json);
             } else {
-                return Ok(content);
+                return Ok(json);
             }
         }
 
@@ -120,11 +125,13 @@ namespace electrostore.Controllers
                 }
             );
             var content = await response.Content.ReadAsStringAsync();
+            // convert the response to a json object
+            var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
             if (response.StatusCode != HttpStatusCode.OK)
             {
-                return BadRequest(content);
+                return BadRequest(json);
             } else {
-                return Ok(content);
+                return Ok(json);
             }
         }
 
