@@ -86,9 +86,15 @@ public class BoxService : IBoxService
         }
 
         // check if the store exists
-        if (!await _context.Stores.AnyAsync(s => s.id_store == boxDto.id_store))
+        // check if the box XY position is not bigger than the store XY length
+        var store = await _context.Stores.FindAsync(boxDto.id_store);
+        if (store == null)
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } }});
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } } });
+        }
+        if (boxDto.xend_box > store.xlength_store || boxDto.yend_box > store.ylength_store)
+        {
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xend_box = new string[] { "XY position must be smaller than the store XY length" }, yend_box = new string[] { "XY position must be smaller than the store XY length" } }});
         }
 
         // check if a box in the same store has a XY position already taken
@@ -207,6 +213,17 @@ public class BoxService : IBoxService
             {
                 return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xstart_box = new string[] { "XY position already taken" }, ystart_box = new string[] { "XY position already taken" }, xend_box = new string[] { "XY position already taken" }, yend_box = new string[] { "XY position already taken" } }});
             }
+        }
+
+        // check if the box XY position is not bigger than the store XY length
+        var store = await _context.Stores.FindAsync(boxToUpdate.id_store);
+        if (store == null)
+        {
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } } });
+        }
+        if (boxToUpdate.xend_box > store.xlength_store || boxToUpdate.yend_box > store.ylength_store)
+        {
+            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xend_box = new string[] { "XY position must be smaller than the store XY length" }, yend_box = new string[] { "XY position must be smaller than the store XY length" } }});
         }
 
         await _context.SaveChangesAsync();
