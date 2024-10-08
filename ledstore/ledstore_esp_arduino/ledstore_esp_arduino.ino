@@ -60,9 +60,9 @@ struct LEDInfo {
 LEDInfo leds[256];
 Adafruit_NeoPixel strip(ledCount, LED_PIN, NEO_GRB + NEO_KHZ800);
 
-byte variation_led = 25;
-byte min_led = 120;
-float out;
+float outlent;
+float outmoyen;
+float outrapide;
 float insinus = 0;
 bool iswificlient = false;
 unsigned long connectionTimeout = 10000; // 10 secondes
@@ -95,6 +95,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.println(ledsArray.size() + " leds change");
     for (int i = 0; i < ledsArray.size(); i++) {
       int indextab = ledsArray[i]["index"];
+      if (indextab >= ledCount) {
+        continue;
+      }
       leds[indextab+1].red = ledsArray[i]["red"];
       leds[indextab+1].green = ledsArray[i]["green"];
       leds[indextab+1].blue = ledsArray[i]["blue"];
@@ -170,7 +173,7 @@ void loop() {
     float outrapide = fabs(sin(insinus / 1));
     strip.clear();
     delaytime = millis();
-    for (int i = 0; i < ledCount; i++) {
+    for (int i = 1; i < ledCount; i++) {
       if (leds[i].delayTime > 0) {
         if (leds[i].module == 1) {
           strip.setPixelColor(i, strip.Color(leds[i].red, leds[i].green, leds[i].blue));

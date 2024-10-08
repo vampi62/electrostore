@@ -98,6 +98,11 @@ public class StoreService : IStoreService
             {
                 return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xlength_store = new string[] { "xlength_store must be positive" } }});
             }
+            // check if a box in the store is bigger than the new xlength_store
+            if (await _context.Boxs.AnyAsync(b => b.id_store == id && b.xend_box > storeDto.xlength_store))
+            {
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xlength_store = new string[] { "xlength_store must be greater than the xend_box of the biggest box in the store" } }});
+            }
             storeToUpdate.xlength_store = storeDto.xlength_store.Value;
         }
         if (storeDto.ylength_store != null)
@@ -105,6 +110,11 @@ public class StoreService : IStoreService
             if (storeDto.ylength_store <= 0)
             {
                 return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { ylength_store = new string[] { "ylength_store must be positive" } }});
+            }
+            // check if a box in the store is bigger than the new ylength_store
+            if (await _context.Boxs.AnyAsync(b => b.id_store == id && b.yend_box > storeDto.ylength_store))
+            {
+                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { ylength_store = new string[] { "ylength_store must be greater than the yend_box of the biggest box in the store" } }});
             }
             storeToUpdate.ylength_store = storeDto.ylength_store.Value;
         }
