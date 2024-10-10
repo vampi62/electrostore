@@ -79,8 +79,8 @@ docker run -d \
   --label "traefik.http.routers.electrostoreFRONT.rule=Host(\`yourDNSforFRONT.net\`)" \
   --label "traefik.http.routers.electrostoreFRONT.entrypoints=websecure" \
   --label "traefik.http.routers.electrostoreFRONT.tls.certresolver=myresolver" \
-  --label "traefik.http.services.electrostoreFRONT.loadbalancer.server.port=3000" \
   electrostorefront:dev
+  --label "traefik.http.services.electrostoreFRONT.loadbalancer.server.port=80" \
 
 
 

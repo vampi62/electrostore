@@ -123,7 +123,7 @@ namespace electrostore.Controllers
             }
 
             var token = _jwtService.GenerateToken(user.Value);
-            return Ok(new { Token = token });
+            return Ok(new { Token = token, User = user.Value });
         }
 
         [HttpPost("forgot-password")]
