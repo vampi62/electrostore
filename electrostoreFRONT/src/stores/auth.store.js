@@ -13,13 +13,27 @@ export const useAuthStore = defineStore({
         returnUrl: null
     }),
     actions: {
-        async login(username, password) {
-            const user = await fetchWrapper.post(`${baseUrl}/user/login`, {"email": username, "password": password});
+        async login(email, password) {
+            const user = await fetchWrapper.post(`${baseUrl}/user/login`, {"email": email, "password": password});
             this.token = user.token;
             // store user details and jwt in local storage to keep user logged in between page refreshes
             localStorage.setItem('user', JSON.stringify(user));
             // redirect to previous url or default to home page
             router.push(this.returnUrl || '/');
+        },
+        async register(email, password, prenom, nom) {
+            const user = fetchWrapper.post(`${baseUrl}/user`, {"email_user": email, "mdp_user": password, "nom_user": nom, "prenom_user": prenom, "role_user": "user"});
+            if (user) {
+                this.login(email, password);
+            } else {
+                console.log('Error registering user', user);
+            }
+        },
+        async forgotPassword(email) {
+            return await fetchWrapper.post(`${baseUrl}/user/forgot-password`, {"email": email});
+        },
+        async resetPassword(email, token, password) {
+            await fetchWrapper.post(`${baseUrl}/user/reset-password`, {"email": email, "token": token, "password": password});
         },
         logout() {
             this.user = null;
