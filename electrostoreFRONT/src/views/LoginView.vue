@@ -4,8 +4,11 @@ import * as Yup from 'yup';
 
 import { useAuthStore } from '@/stores';
 
+import { useI18n } from 'vue-i18n';
+const { t: $t } = useI18n();
+
 const schema = Yup.object().shape({
-    email: Yup.string().email().required('Email is required'),
+    email: Yup.string().email().required($t('emailRequired')),
     password: Yup.string().required('Password is required')
 });
 
@@ -20,10 +23,10 @@ function onSubmit(values, { setErrors }) {
 
 <template>
     <div>
-        <h2>Login</h2>
+        <h2>{{ $t('login') }}</h2>
         <Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
             <div class="form-group">
-                <label>Email</label>
+                <label>{{ $t('email') }}</label>
                 <Field name="email" type="email" class="form-control" :class="{ 'is-invalid': errors.email }" />
                 <div class="invalid-feedback">{{errors.email}}</div>
             </div>            
@@ -35,10 +38,14 @@ function onSubmit(values, { setErrors }) {
             <div class="form-group">
                 <button class="btn btn-primary" :disabled="isSubmitting">
                     <span v-show="isSubmitting" class="spinner-border spinner-border-sm mr-1"></span>
-                    Login
+                    {{ $t('login') }}
                 </button>
             </div>
             <div v-if="errors.apiError" class="alert alert-danger mt-3 mb-0">{{errors.apiError}}</div>
         </Form>
+        <div>
+            <router-link to="/register">{{ $t('register') }}</router-link>
+            <router-link to="/forgot-password" class="ml-3">{{ $t('forgotPassword') }}</router-link>
+        </div>
     </div>
 </template>

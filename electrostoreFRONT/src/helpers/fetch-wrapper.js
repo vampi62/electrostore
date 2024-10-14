@@ -41,12 +41,14 @@ function handleResponse(response) {
         
         if (!response.ok) {
             const { user, logout } = useAuthStore();
-            if ([401, 403].includes(response.status) && user) {
-                // auto logout if 401 Unauthorized or 403 Forbidden response returned from api
+            if (response.status == 401 && user) {
+                // auto logout if 401 Unauthorized
+                //refresh token
+            } else if (response.status == 403 && user) {
+                // auto logout if 403 Forbidden
                 logout();
             }
-
-            const error = (data && data.message) || response.statusText;
+            const error = (data && data.errors) || response.statusText;
             return Promise.reject(error);
         }
 
