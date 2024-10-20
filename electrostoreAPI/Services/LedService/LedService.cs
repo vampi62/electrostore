@@ -37,12 +37,12 @@ public class LedService : ILedService
             .ToListAsync();
     }
 
-    public async Task<ActionResult<IEnumerable<ReadLedDto>>> GetLedsByStoreId(int storeId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadLedDto>> GetLedsByStoreId(int storeId, int limit = 100, int offset = 0)
     {
         // check if the store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } }});
+            throw new KeyNotFoundException($"Store with id {storeId} not found");
         }
         return await _context.Leds
             .Where(led => led.id_store == storeId)
@@ -59,12 +59,12 @@ public class LedService : ILedService
             .ToListAsync();
     }
 
-    public async Task<ActionResult<IEnumerable<ReadLedDto>>> GetLedsByStoreIdAndPosition(int storeId, int xmin, int xmax, int ymin, int ymax)
+    public async Task<IEnumerable<ReadLedDto>> GetLedsByStoreIdAndPosition(int storeId, int xmin, int xmax, int ymin, int ymax)
     {
         // check if the store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } }});
+            throw new KeyNotFoundException($"Store with id {storeId} not found");
         }
         return await _context.Leds
             .Where(led => led.x_led >= xmin && led.x_led <= xmax && led.y_led >= ymin && led.y_led <= ymax && led.id_store == storeId)
@@ -79,16 +79,12 @@ public class LedService : ILedService
             .ToListAsync();
     }
 
-    public async Task<ActionResult<ReadLedDto>> GetLedById(int id, int? storeId = null)
+    public async Task<ReadLedDto> GetLedById(int id, int? storeId = null)
     {
-        var led = await _context.Leds.FindAsync(id);
-        if (led == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_led = new string[] { "Led not found" } }});
-        }
+        var led = await _context.Leds.FindAsync(id) ?? throw new KeyNotFoundException($"Led with id {id} not found");
         if ((storeId != null) && (led.id_store != storeId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Led does not belong to this store" } }});
+            throw new KeyNotFoundException($"Led with id {id} not found in store with id {storeId}");
         }
 
         return new ReadLedDto
@@ -101,19 +97,17 @@ public class LedService : ILedService
         };
     }
 
-    public async Task<ActionResult<ReadLedDto>> CreateLed(CreateLedDto ledDto)
+    public async Task<ReadLedDto> CreateLed(CreateLedDto ledDto)
     {
         if (ledDto.x_led < 0 || ledDto.y_led < 0 || ledDto.mqtt_led_id < 0)
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { x_led = new string[] { "Coordinates must be positive" }, y_led = new string[] { "Coordinates must be positive" }, mqtt_led_id = new string[] { "Mqtt id must be positive" } }});
+            throw new ArgumentException("x_led, y_led and mqtt_led_id must be positive");
         }
-
         // check if store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == ledDto.id_store))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } }});
+            throw new KeyNotFoundException($"Store with id {ledDto.id_store} not found");
         }
-
         var newLed = new Leds
         {
             x_led = ledDto.x_led,
@@ -121,10 +115,8 @@ public class LedService : ILedService
             id_store = ledDto.id_store,
             mqtt_led_id = ledDto.mqtt_led_id
         };
-
         _context.Leds.Add(newLed);
         await _context.SaveChangesAsync();
-
         return new ReadLedDto
         {
             id_led = newLed.id_led,
@@ -135,57 +127,47 @@ public class LedService : ILedService
         };
     }
 
-    public async Task<ActionResult<ReadLedDto>> UpdateLed(int id, UpdateLedDto ledDto, int? storeId = null)
+    public async Task<ReadLedDto> UpdateLed(int id, UpdateLedDto ledDto, int? storeId = null)
     {
-        var ledToUpdate = await _context.Leds.FindAsync(id);
-        if (ledToUpdate == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_led = new string[] { "Led not found" } }});
-        }
+        var ledToUpdate = await _context.Leds.FindAsync(id) ?? throw new KeyNotFoundException($"Led with id {id} not found");
         if ((storeId != null) && (ledToUpdate.id_store != storeId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Led does not belong to this store" } }});
+            throw new KeyNotFoundException($"Led with id {id} not found in store with id {storeId}");
         }
-
         if (ledDto.x_led != null)
         {
             if (ledDto.x_led < 0)
             {
-                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { x_led = new string[] { "Coordinates must be positive" } }});
+                throw new ArgumentException("x_led must be positive");
             }
             ledToUpdate.x_led = ledDto.x_led.Value;
         }
-
         if (ledDto.y_led != null)
         {
             if (ledDto.y_led < 0)
             {
-                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { y_led = new string[] { "Coordinates must be positive" } }});
+                throw new ArgumentException("y_led must be positive");
             }
             ledToUpdate.y_led = ledDto.y_led.Value;
         }
-
         if (ledDto.new_id_store != null)
         {
             // check if store exists
             if (!await _context.Stores.AnyAsync(s => s.id_store == ledDto.new_id_store))
             {
-                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } }});
+                throw new KeyNotFoundException($"Store with id {ledDto.new_id_store} not found");
             }
             ledToUpdate.id_store = ledDto.new_id_store.Value;
         }
-
         if (ledDto.mqtt_led_id != null)
         {
             if (ledDto.mqtt_led_id < 0)
             {
-                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { mqtt_led_id = new string[] { "Mqtt id must be positive" } }});
+                throw new ArgumentException("mqtt_led_id must be positive");
             }
             ledToUpdate.mqtt_led_id = ledDto.mqtt_led_id.Value;
         }
-
         await _context.SaveChangesAsync();
-
         return new ReadLedDto
         {
             id_led = ledToUpdate.id_led,
@@ -196,33 +178,24 @@ public class LedService : ILedService
         };
     }
 
-    public async Task<IActionResult> DeleteLed(int id, int? storeId = null)
+    public async Task DeleteLed(int id, int? storeId = null)
     {
-        var ledToDelete = await _context.Leds.FindAsync(id);
-        if (ledToDelete == null)
+        var ledToDelete = await _context.Leds.FindAsync(id) ?? throw new KeyNotFoundException($"Led with id {id} not found");
+        if ((storeId != null) && (ledToDelete.id_store != storeId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_led = new string[] { "Led not found" } }});
-        }
-        if (ledToDelete.id_store != storeId)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Led does not belong to this store" } }});
+            throw new KeyNotFoundException($"Led with id {id} not found in store with id {storeId}");
         }
         _context.Leds.Remove(ledToDelete);
         await _context.SaveChangesAsync();
-        return new OkResult();
     }
 
-    public async Task<IActionResult> ShowLed(ReadLedDto ledDB, int redColor, int greenColor, int blueColor, int timeshow, int animation)
+    public async Task ShowLed(ReadLedDto ledDB, int redColor, int greenColor, int blueColor, int timeshow, int animation)
     {
         if (!_mqttClient.IsConnected)
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { mqtt = new string[] { "MQTT client is not connected" } }});
+            throw new NotImplementedException("MQTT client is not connected");
         }
-        var store = await _context.Stores.FindAsync(ledDB.id_store);
-        if (store == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } }});
-        }
+        var store = await _context.Stores.FindAsync(ledDB.id_store) ?? throw new KeyNotFoundException($"Store with id {ledDB.id_store} not found");
         var topic = store.mqtt_name_store;
         var message = new MqttApplicationMessageBuilder()
             .WithTopic(topic)
@@ -245,20 +218,15 @@ public class LedService : ILedService
             .WithRetainFlag(false)
             .Build();
         await _mqttClient.PublishAsync(message);
-        return new OkResult();
     }
 
-    public async Task<IActionResult> ShowLeds(IEnumerable<ReadLedDto> ledsDB, int redColor, int greenColor, int blueColor, int timeshow, int animation)
+    public async Task ShowLeds(IEnumerable<ReadLedDto> ledsDB, int redColor, int greenColor, int blueColor, int timeshow, int animation)
     {
         if (!_mqttClient.IsConnected)
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { mqtt = new string[] { "MQTT client is not connected" } }});
+            throw new NotImplementedException("MQTT client is not connected");
         }
-        var store = await _context.Stores.FindAsync(ledsDB.First().id_store);
-        if (store == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } }});
-        }
+        var store = await _context.Stores.FindAsync(ledsDB.First().id_store) ?? throw new KeyNotFoundException($"Store with id {ledsDB.First().id_store} not found");
         var topic = store.mqtt_name_store;
         var message = new MqttApplicationMessageBuilder()
             .WithTopic(topic)
@@ -278,7 +246,6 @@ public class LedService : ILedService
             .WithRetainFlag(false)
             .Build();
         await _mqttClient.PublishAsync(message);
-        return new OkResult();
     }
 
 }

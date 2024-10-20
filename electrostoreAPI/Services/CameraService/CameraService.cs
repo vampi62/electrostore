@@ -30,14 +30,9 @@ public class CameraService : ICameraService
             }).ToListAsync();
     }
 
-    public async Task<ActionResult<ReadCameraDto>> GetCameraById(int id)
+    public async Task<ReadCameraDto> GetCameraById(int id)
     {
-        var camera = await _context.Cameras.FindAsync(id);
-        if (camera == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "Camera not found" } } });
-        }
-
+        var camera = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id {id} not found");
         return new ReadCameraDto
         {
             id_camera = camera.id_camera,
@@ -57,10 +52,8 @@ public class CameraService : ICameraService
             user_camera = cameraDto.user_camera,
             mdp_camera = cameraDto.mdp_camera
         };
-
         _context.Cameras.Add(newCamera);
         await _context.SaveChangesAsync();
-
         return new ReadCameraDto
         {
             id_camera = newCamera.id_camera,
@@ -71,35 +64,26 @@ public class CameraService : ICameraService
         };
     }
 
-    public async Task<ActionResult<ReadCameraDto>> UpdateCamera(int id, UpdateCameraDto cameraDto)
+    public async Task<ReadCameraDto> UpdateCamera(int id, UpdateCameraDto cameraDto)
     {
-        var cameraToUpdate = await _context.Cameras.FindAsync(id);
-        if (cameraToUpdate == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "Camera not found" } }});
-        }
-        
+        var cameraToUpdate = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id {id} not found");
         if (cameraDto.nom_camera != null)
         {
             cameraToUpdate.nom_camera = cameraDto.nom_camera;
         }
-
         if (cameraDto.url_camera != null)
         {
             cameraToUpdate.url_camera = cameraDto.url_camera;
         }
-
         if (cameraDto.user_camera != null)
         {
             cameraToUpdate.user_camera = cameraDto.user_camera;
         }
-
         if (cameraDto.mdp_camera != null)
         {
             cameraToUpdate.mdp_camera = cameraDto.mdp_camera;
         }
         await _context.SaveChangesAsync();
-
         return new ReadCameraDto
         {
             id_camera = cameraToUpdate.id_camera,
@@ -110,16 +94,10 @@ public class CameraService : ICameraService
         };
     }
 
-    public async Task<IActionResult> DeleteCamera(int id)
+    public async Task DeleteCamera(int id)
     {
-        var cameraToDelete = await _context.Cameras.FindAsync(id);
-        if (cameraToDelete == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "Camera not found" } } });
-        }
-
+        var cameraToDelete = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id {id} not found");
         _context.Cameras.Remove(cameraToDelete);
         await _context.SaveChangesAsync();
-        return new OkResult();
     }
 }

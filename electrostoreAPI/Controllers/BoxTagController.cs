@@ -20,54 +20,21 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadBoxTagDto>>> GetBoxsTagsByBoxId([FromRoute] int id_box, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var boxsTags = await _boxTagService.GetBoxsTagsByBoxId(id_box, limit, offset);
-            if (boxsTags.Result is BadRequestObjectResult)
-            {
-                return boxsTags.Result;
-            }
-            if (boxsTags.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(boxsTags.Value);
+            return Ok(boxsTags);
         }
 
         [HttpGet("{id_tag}")]
         public async Task<ActionResult<ReadBoxTagDto>> GetBoxTagById([FromRoute] int id_box, [FromRoute] int id_tag)
         {
             var boxTag = await _boxTagService.GetBoxTagById(id_box, id_tag);
-            if (boxTag.Result is BadRequestObjectResult)
-            {
-                return boxTag.Result;
-            }
-            if (boxTag.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(boxTag.Value);
+            return Ok(boxTag);
         }
         
         [HttpPost]
         public async Task<ActionResult<ReadBoxTagDto>> CreateBoxTags([FromRoute] int id_box, [FromBody] int[] tags)
         {
-            var resultList = new List<ActionResult<ReadBoxTagDto>>();
-            for(int i = 0; i < tags.Length; i++)
-            {
-                var boxTagDto = new CreateBoxTagDto
-                {
-                    id_box = id_box,
-                    id_tag = tags[i]
-                };
-                var boxTag = await _boxTagService.CreateBoxTag(boxTagDto);
-                if (boxTag.Result is BadRequestObjectResult || boxTag.Value == null)
-                {
-                    resultList.Add(boxTag.Result);
-                }
-                else
-                {
-                    resultList.Add(boxTag.Value);
-                }
-            }
-            return Ok(resultList);
+            var boxTags = await _boxTagService.CreateBoxTags(id_box, null, tags, null);
+            return Ok(boxTags);
         }
 
         [HttpPost("{id_tag}")]
@@ -79,15 +46,7 @@ namespace electrostore.Controllers
                 id_tag = id_tag
             };
             var boxTag = await _boxTagService.CreateBoxTag(boxTagDto);
-            if (boxTag.Result is BadRequestObjectResult)
-            {
-                return boxTag.Result;
-            }
-            if (boxTag.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return CreatedAtAction(nameof(GetBoxTagById), new { id_box = boxTag.Value.id_box, id_tag = boxTag.Value.id_tag }, boxTag.Value);
+            return CreatedAtAction(nameof(GetBoxTagById), new { id_box = boxTag.id_box, id_tag = boxTag.id_tag }, boxTag);
         }
 
         [HttpDelete("{id_tag}")]

@@ -27,15 +27,7 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadProjetDto>> GetProjetById([FromRoute] int id_projet)
         {
             var projet = await _projetService.GetProjetById(id_projet);
-            if (projet.Result is BadRequestObjectResult)
-            {
-                return projet.Result;
-            }
-            if (projet.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(projet.Value);
+            return Ok(projet);
         }
 
         [HttpPost]
@@ -49,15 +41,7 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadProjetDto>> UpdateProjet([FromRoute] int id_projet, [FromBody] UpdateProjetDto projetDto)
         {
             var projet = await _projetService.UpdateProjet(id_projet, projetDto);
-            if (projet.Result is BadRequestObjectResult)
-            {
-                return projet.Result;
-            }
-            if (projet.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(projet.Value);
+            return Ok(projet);
         }
 
         [HttpDelete("{id_projet}")]

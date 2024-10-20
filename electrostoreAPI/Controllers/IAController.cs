@@ -29,15 +29,7 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadIADto>> GetIAById([FromRoute] int id_ia)
         {
             var ia = await _iaService.GetIAById(id_ia);
-            if (ia.Result is BadRequestObjectResult)
-            {
-                return ia.Result;
-            }
-            if (ia.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(ia.Value);
+            return Ok(ia);
         }
 
         [HttpPost]
@@ -51,14 +43,6 @@ namespace electrostore.Controllers
         public async Task<IActionResult> GetTrainingStatus(int id_ia)
         {
             var ia = await _iaService.GetIAById(id_ia);
-            if (ia.Result is BadRequestObjectResult)
-            {
-                return ia.Result;
-            }
-            if (ia.Value == null)
-            {
-                return StatusCode(500);
-            }
             var httpClient = new HttpClient();
             var response = await httpClient.GetAsync("http://electrostoreIA:5000/status/" + id_ia);
             var content = await response.Content.ReadAsStringAsync();
@@ -67,7 +51,9 @@ namespace electrostore.Controllers
             if (response.StatusCode != HttpStatusCode.OK)
             {
                 return BadRequest(json);
-            } else {
+            }
+            else
+            {
                 return Ok(json);
             }
         }
@@ -83,14 +69,6 @@ namespace electrostore.Controllers
                 }
             }
             var ia = await _iaService.GetIAById(id_ia);
-            if (ia.Result is BadRequestObjectResult)
-            {
-                return ia.Result;
-            }
-            if (ia.Value == null)
-            {
-                return StatusCode(500);
-            }
             var httpClient = new HttpClient();
             var response = await httpClient.GetAsync("http://electrostoreIA:5000/train/" + id_ia);
             var content = await response.Content.ReadAsStringAsync();
@@ -99,7 +77,9 @@ namespace electrostore.Controllers
             if (response.StatusCode != HttpStatusCode.OK)
             {
                 return BadRequest(json);
-            } else {
+            }
+            else
+            {
                 return Ok(json);
             }
         }
@@ -108,14 +88,6 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadItemDto>> DetectItem([FromRoute] int id_ia, [FromForm] DetecDto img_to_scan)
         {
             var ia = await _iaService.GetIAById(id_ia);
-            if (ia.Result is BadRequestObjectResult)
-            {
-                return ia.Result;
-            }
-            if (ia.Value == null)
-            {
-                return StatusCode(500);
-            }
             var httpClient = new HttpClient();
             // requete POST avec l'image à scanner
             var response = await httpClient.PostAsync("http://electrostoreIA:5000/detect/" + id_ia,
@@ -130,7 +102,9 @@ namespace electrostore.Controllers
             if (response.StatusCode != HttpStatusCode.OK)
             {
                 return BadRequest(json);
-            } else {
+            }
+            else
+            {
                 return Ok(json);
             }
         }
@@ -139,15 +113,7 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadIADto>> UpdateIA([FromRoute] int id_ia, [FromBody] UpdateIADto ia)
         {
             var iaToUpdate = await _iaService.UpdateIA(id_ia, ia);
-            if (iaToUpdate.Result is BadRequestObjectResult)
-            {
-                return iaToUpdate.Result;
-            }
-            if (iaToUpdate.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(iaToUpdate.Value);
+            return Ok(iaToUpdate);
         }
 
         [HttpDelete("{id_ia}")]

@@ -28,15 +28,9 @@ public class TagService : ITagService
             .ToListAsync();
     }
 
-    public async Task<ActionResult<ReadTagDto>> GetTagById(int id)
+    public async Task<ReadTagDto> GetTagById(int id)
     {
-        var tag = await _context.Tags.FindAsync(id);
-
-        if (tag == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_tag = new string[] { "Tag not found" } } });
-        }
-
+        var tag = await _context.Tags.FindAsync(id) ?? throw new KeyNotFoundException($"Tag with id {id} not found");
         return new ReadTagDto
         {
             id_tag = tag.id_tag,
@@ -45,22 +39,20 @@ public class TagService : ITagService
         };
     }
 
-    public async Task<ActionResult<ReadTagDto>> CreateTag(CreateTagDto tagDto)
+    public async Task<ReadTagDto> CreateTag(CreateTagDto tagDto)
     {
         // check if tag name already exists
         if (await _context.Tags.AnyAsync(t => t.nom_tag == tagDto.nom_tag))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { nom_tag = new string[] { "Tag name already exists" } } });
+            throw new InvalidOperationException($"Tag with name {tagDto.nom_tag} already exists");
         }
         var newTag = new Tags
         {
             nom_tag = tagDto.nom_tag,
             poids_tag = tagDto.poids_tag
         };
-
         _context.Tags.Add(newTag);
         await _context.SaveChangesAsync();
-
         return new ReadTagDto
         {
             id_tag = newTag.id_tag,
@@ -69,19 +61,15 @@ public class TagService : ITagService
         };
     }
 
-    public async Task<ActionResult<ReadTagDto>> UpdateTag(int id, UpdateTagDto tagDto)
+    public async Task<ReadTagDto> UpdateTag(int id, UpdateTagDto tagDto)
     {
-        var tagToUpdate = await _context.Tags.FindAsync(id);
-        if (tagToUpdate == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_tag = new string[] { "Tag not found" } } });
-        }
+        var tagToUpdate = await _context.Tags.FindAsync(id) ?? throw new KeyNotFoundException($"Tag with id {id} not found");
         if (tagDto.nom_tag != null)
         {
             // check if tag name already exists
             if (await _context.Tags.AnyAsync(t => t.nom_tag == tagDto.nom_tag))
             {
-                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { nom_tag = new string[] { "Tag name already exists" } } });
+                throw new InvalidOperationException($"Tag with name {tagDto.nom_tag} already exists");
             }
             tagToUpdate.nom_tag = tagDto.nom_tag;
         }
@@ -90,7 +78,6 @@ public class TagService : ITagService
             tagToUpdate.poids_tag = tagDto.poids_tag.Value;
         }
         await _context.SaveChangesAsync();
-
         return new ReadTagDto
         {
             id_tag = tagToUpdate.id_tag,
@@ -99,17 +86,10 @@ public class TagService : ITagService
         };
     }
 
-    public async Task<IActionResult> DeleteTag(int id)
+    public async Task DeleteTag(int id)
     {
-        var tagToDelete = await _context.Tags.FindAsync(id);
-
-        if (tagToDelete == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_tag = new string[] { "Tag not found" } } });
-        }
-
+        var tagToDelete = await _context.Tags.FindAsync(id) ?? throw new KeyNotFoundException($"Tag with id {id} not found");
         _context.Tags.Remove(tagToDelete);
         await _context.SaveChangesAsync();
-        return new OkResult();
     }
 }

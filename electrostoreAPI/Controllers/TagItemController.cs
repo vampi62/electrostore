@@ -20,54 +20,21 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadItemTagDto>>> GetItemsTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var itemTags = await _itemTagService.GetItemsTagsByTagId(id_tag, limit, offset);
-            if (itemTags.Result is BadRequestObjectResult)
-            {
-                return itemTags.Result;
-            }
-            if (itemTags.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(itemTags.Value);
+            return Ok(itemTags);
         }
 
         [HttpGet("{id_item}")]
         public async Task<ActionResult<ReadItemTagDto>> GetItemTagById([FromRoute] int id_tag, [FromRoute] int id_item)
         {
             var itemTag = await _itemTagService.GetItemTagById(id_item, id_tag);
-            if (itemTag.Result is BadRequestObjectResult)
-            {
-                return itemTag.Result;
-            }
-            if (itemTag.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(itemTag.Value);
+            return Ok(itemTag);
         }
         
         [HttpPost]
         public async Task<ActionResult<ReadItemTagDto>> CreateItemsTag([FromRoute] int id_tag, [FromBody] int[] items)
         {
-            var resultList = new List<ActionResult<ReadItemTagDto>>();
-            for(int i = 0; i < items.Length; i++)
-            {
-                var itemTagDto = new CreateItemTagDto
-                {
-                    id_tag = id_tag,
-                    id_item = items[i]
-                };
-                var itemTag = await _itemTagService.CreateItemTag(itemTagDto);
-                if (itemTag.Result is BadRequestObjectResult || itemTag.Value == null)
-                {
-                    resultList.Add(itemTag.Result);
-                }
-                else
-                {
-                    resultList.Add(itemTag.Value);
-                }
-            }
-            return Ok(resultList);
+            var itemTags = await _itemTagService.CreateItemTags(null, id_tag, null, items);
+            return Ok(itemTags);
         }
         
 
@@ -80,15 +47,7 @@ namespace electrostore.Controllers
                 id_item = id_item
             };
             var itemTag = await _itemTagService.CreateItemTag(itemTagDto);
-            if (itemTag.Result is BadRequestObjectResult)
-            {
-                return itemTag.Result;
-            }
-            if (itemTag.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return CreatedAtAction(nameof(GetItemTagById), new { id_tag = itemTag.Value.id_tag, id_item = itemTag.Value.id_item }, itemTag.Value);
+            return CreatedAtAction(nameof(GetItemTagById), new { id_tag = itemTag.id_tag, id_item = itemTag.id_item }, itemTag);
         }
 
         [HttpDelete("{id_item}")]

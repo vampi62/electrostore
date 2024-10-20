@@ -20,55 +20,14 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadCommandItemDto>>> GetCommandItemsByCommandId([FromRoute] int id_command, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var commandItems = await _commandItemService.GetCommandItemsByCommandId(id_command, limit, offset);
-            if (commandItems.Result is BadRequestObjectResult)
-            {
-                return commandItems.Result;
-            }
-            if (commandItems.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(commandItems.Value);
+            return Ok(commandItems);
         }
 
         [HttpGet("{id_item}")]
         public async Task<ActionResult<ReadCommandItemDto>> GetCommandItemById([FromRoute] int id_command, [FromRoute] int id_item)
         {
             var commandItem = await _commandItemService.GetCommandItemById(id_command, id_item);
-            if (commandItem.Result is BadRequestObjectResult)
-            {
-                return commandItem.Result;
-            }
-            if (commandItem.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(commandItem.Value);
-        }
-
-        [HttpPost]
-        public async Task<ActionResult<ReadCommandItemDto>> AddCommandItems([FromRoute] int id_command, [FromBody] int[] Items)
-        {
-            var resultList = new List<ActionResult<ReadCommandItemDto>>();
-            for(int i = 0; i < Items.Length; i++)
-            {
-                var commandItemDto = new CreateCommandItemDto
-                {
-                    id_command = id_command,
-                    id_item = Items[i]
-                };
-                var commandItem = await _commandItemService.CreateCommandItem(commandItemDto);
-                if (commandItem.Result is BadRequestObjectResult)
-                {
-                    return commandItem.Result;
-                }
-                if (commandItem.Value == null)
-                {
-                    return StatusCode(500);
-                }
-                resultList.Add(CreatedAtAction(nameof(GetCommandItemById), new { id_command = commandItem.Value.id_command, id_item = commandItem.Value.id_item }, commandItem.Value));
-            }
-            return Ok(resultList);
+            return Ok(commandItem);
         }
 
         [HttpPost("{id_item}")]
@@ -82,30 +41,14 @@ namespace electrostore.Controllers
                 prix_commanditem = commandItemDto.prix_commanditem
             };
             var commandItem = await _commandItemService.CreateCommandItem(commandItemDtoFull);
-            if (commandItem.Result is BadRequestObjectResult)
-            {
-                return commandItem.Result;
-            }
-            if (commandItem.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return CreatedAtAction(nameof(GetCommandItemById), new { id_command = commandItem.Value.id_command, id_item = commandItem.Value.id_item }, commandItem.Value);
+            return CreatedAtAction(nameof(GetCommandItemById), new { id_command = commandItem.id_command, id_item = commandItem.id_item }, commandItem);
         }
 
         [HttpPut("{id_item}")]
         public async Task<ActionResult<ReadCommandItemDto>> UpdateCommandItem([FromRoute] int id_command, [FromRoute] int id_item, [FromBody] UpdateCommandItemDto commandItemDto)
         {
             var commandItem = await _commandItemService.UpdateCommandItem(id_command, id_item, commandItemDto);
-            if (commandItem.Result is BadRequestObjectResult)
-            {
-                return commandItem.Result;
-            }
-            if (commandItem.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(commandItem.Value);
+            return Ok(commandItem);
         }
 
         [HttpDelete("{id_item}")]

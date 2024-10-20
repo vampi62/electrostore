@@ -26,6 +26,13 @@ public record CreateBoxDto
     [Required] public int yend_box { get; init; }
     [Required] public int id_store { get; init; }
 }
+public record UpdateBoxByStoreDto
+{
+    public int? xstart_box { get; init; }
+    public int? ystart_box { get; init; }
+    public int? xend_box { get; init; }
+    public int? yend_box { get; init; }
+}
 public record UpdateBoxDto
 {
     public int? xstart_box { get; init; }

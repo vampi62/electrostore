@@ -30,14 +30,9 @@ public class StoreService : IStoreService
             }).ToListAsync();
     }
 
-    public async Task<ActionResult<ReadStoreDto>> GetStoreById(int id)
+    public async Task<ReadStoreDto> GetStoreById(int id)
     {
-        var store = await _context.Stores.FindAsync(id);
-        if (store == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } } });
-        }
-
+        var store = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id {id} not found");
         return new ReadStoreDto
         {
             id_store = store.id_store,
@@ -48,15 +43,15 @@ public class StoreService : IStoreService
         };
     }
 
-    public async Task<ActionResult<ReadStoreDto>> CreateStore(CreateStoreDto storeDto)
+    public async Task<ReadStoreDto> CreateStore(CreateStoreDto storeDto)
     {
         if (storeDto.xlength_store <= 0)
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xlength_store = new string[] { "xlength_store must be positive" } } });
+            throw new ArgumentException("xlength_store must be greater than 0");
         }
         if (storeDto.ylength_store <= 0)
         {
-           return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { ylength_store = new string[] { "ylength_store must be positive" } } });
+            throw new ArgumentException("ylength_store must be greater than 0");
         }
         var newStore = new Stores
         {
@@ -65,10 +60,8 @@ public class StoreService : IStoreService
             ylength_store = storeDto.ylength_store,
             mqtt_name_store = storeDto.mqtt_name_store
         };
-
         _context.Stores.Add(newStore);
         await _context.SaveChangesAsync();
-
         return new ReadStoreDto
         {
             id_store = newStore.id_store,
@@ -79,29 +72,23 @@ public class StoreService : IStoreService
         };
     }
 
-    public async Task<ActionResult<ReadStoreDto>> UpdateStore(int id, UpdateStoreDto storeDto)
+    public async Task<ReadStoreDto> UpdateStore(int id, UpdateStoreDto storeDto)
     {
-        var storeToUpdate = await _context.Stores.FindAsync(id);
-        if (storeToUpdate == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } }});
-        }
-
+        var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id {id} not found");
         if (storeDto.nom_store != null)
         {
             storeToUpdate.nom_store = storeDto.nom_store;
         }
-
         if (storeDto.xlength_store != null)
         {
             if (storeDto.xlength_store <= 0)
             {
-                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xlength_store = new string[] { "xlength_store must be positive" } }});
+                throw new ArgumentException("xlength_store must be greater than 0");
             }
             // check if a box in the store is bigger than the new xlength_store
             if (await _context.Boxs.AnyAsync(b => b.id_store == id && b.xend_box > storeDto.xlength_store))
             {
-                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { xlength_store = new string[] { "xlength_store must be greater than the xend_box of the biggest box in the store" } }});
+                throw new ArgumentException("xlength_store is smaller than a box in the store");
             }
             storeToUpdate.xlength_store = storeDto.xlength_store.Value;
         }
@@ -109,23 +96,20 @@ public class StoreService : IStoreService
         {
             if (storeDto.ylength_store <= 0)
             {
-                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { ylength_store = new string[] { "ylength_store must be positive" } }});
+                throw new ArgumentException("ylength_store must be greater than 0");
             }
             // check if a box in the store is bigger than the new ylength_store
             if (await _context.Boxs.AnyAsync(b => b.id_store == id && b.yend_box > storeDto.ylength_store))
             {
-                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { ylength_store = new string[] { "ylength_store must be greater than the yend_box of the biggest box in the store" } }});
+                throw new ArgumentException("ylength_store is smaller than a box in the store");
             }
             storeToUpdate.ylength_store = storeDto.ylength_store.Value;
         }
-
         if (storeDto.mqtt_name_store != null)
         {
             storeToUpdate.mqtt_name_store = storeDto.mqtt_name_store;
         }
-
         await _context.SaveChangesAsync();
-
         return new ReadStoreDto
         {
             id_store = storeToUpdate.id_store,
@@ -136,15 +120,10 @@ public class StoreService : IStoreService
         };
     }
 
-    public async Task<IActionResult> DeleteStore(int id)
+    public async Task DeleteStore(int id)
     {
-        var storeToDelete = await _context.Stores.FindAsync(id);
-        if (storeToDelete == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_store = new string[] { "Store not found" } }});
-        }
+        var storeToDelete = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id {id} not found");
         _context.Stores.Remove(storeToDelete);
         await _context.SaveChangesAsync();
-        return new OkResult();
     }
 }

@@ -32,15 +32,7 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadUserDto>> GetUserById([FromRoute] int id_user)
         {
             var user = await _userService.GetUserById(id_user);
-            if (user.Result is BadRequestObjectResult)
-            {
-                return user.Result;
-            }
-            if (user.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(user.Value);
+            return Ok(user);
         }
 
         [HttpPost]
@@ -56,17 +48,8 @@ namespace electrostore.Controllers
                     return Unauthorized(new { message = "You are not allowed to create a user with this role" });
                 }
             }
-
             var user = await _userService.CreateUser(userDto);
-            if (user.Result is BadRequestObjectResult)
-            {
-                return user.Result;
-            }
-            if (user.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return CreatedAtAction(nameof(GetUserById), new { id_user = user.Value.id_user }, user.Value);
+            return CreatedAtAction(nameof(GetUserById), new { id_user = user.id_user }, user);
         }
 
         [HttpPut("{id_user}")]
@@ -76,17 +59,8 @@ namespace electrostore.Controllers
             {
                 return Unauthorized(new { message = "You are not allowed to update this user" });
             }
-
             var user = await _userService.UpdateUser(id_user, userDto);
-            if (user.Result is BadRequestObjectResult)
-            {
-                return user.Result;
-            }
-            if (user.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(user.Value);
+            return Ok(user);
         }
 
         [HttpDelete("{id_user}")]
@@ -96,11 +70,7 @@ namespace electrostore.Controllers
             {
                 return Unauthorized(new { message = "You are not allowed to delete this user" });
             }
-            var result = await _userService.DeleteUser(id_user);
-            if (result is BadRequestObjectResult)
-            {
-                return result;
-            }
+            await _userService.DeleteUser(id_user);
             return NoContent();
         }
     
@@ -108,37 +78,20 @@ namespace electrostore.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
         {
-            var user = await _userService.GetUserByEmail(loginRequest.Email);
-            if (user.Result is BadRequestObjectResult)
-            {
-                return Unauthorized(new { message = "Invalid credentials" });
-            }
             if (!await _userService.CheckUserPassword(loginRequest.Email, loginRequest.Password))
             {
-                return Unauthorized(new { message = "Invalid credentials" });
+                return Unauthorized(new { message = "Invalid email or password" });
             }
-            if (user.Value == null)
-            {
-                return StatusCode(500);
-            }
-
-            var token = _jwtService.GenerateToken(user.Value);
-            return Ok(new { Token = token, User = user.Value });
+            var user = await _userService.GetUserByEmail(loginRequest.Email);
+            var token = _jwtService.GenerateToken(user);
+            return Ok(new { Token = token, User = user });
         }
 
         [HttpPost("forgot-password")]
         [AllowAnonymous]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest forgotPasswordRequest)
         {
-            var result = await _userService.ForgotPassword(forgotPasswordRequest);
-            if (result is BadRequestObjectResult)
-            {
-                return result;
-            }
-            if (result == null)
-            {
-                return StatusCode(500);
-            }
+            await _userService.ForgotPassword(forgotPasswordRequest);
             return Ok();
         }
 
@@ -146,15 +99,7 @@ namespace electrostore.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest resetPasswordRequest)
         {
-            var result = await _userService.ResetPassword(resetPasswordRequest);
-            if (result is BadRequestObjectResult)
-            {
-                return result;
-            }
-            if (result == null)
-            {
-                return StatusCode(500);
-            }
+            await _userService.ResetPassword(resetPasswordRequest);
             return Ok();
         }
     }

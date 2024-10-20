@@ -32,15 +32,7 @@ namespace electrostore.Controllers
         public async Task<ActionResult> GetCameraById([FromRoute] int id_camera)
         {
             var camera = await _cameraService.GetCameraById(id_camera);
-            if (camera.Result is BadRequestObjectResult)
-            {
-                return camera.Result;
-            }
-            if (camera.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(camera.Value);
+            return Ok(camera);
         }
 
         [HttpGet("{id_camera}/stream")]
@@ -52,19 +44,11 @@ namespace electrostore.Controllers
                 return Unauthorized();
             }
             var camera = await _cameraService.GetCameraById(id_camera);
-            if (camera.Result is BadRequestObjectResult)
-            {
-                return camera.Result;
-            }
-            if (camera.Value == null)
-            {
-                return StatusCode(500);
-            }
             try
             {
                 // ping the camera to check if it is reachable
                 var ping = new System.Net.NetworkInformation.Ping();
-                var DomainOrIP = new System.Text.RegularExpressions.Regex(@"(?<protocol>http[s]?:\/\/)?(?<domain>[a-zA-Z0-9\.\-]+)(?<port>:[0-9]+)?(?<uri>.*)").Match(camera.Value.url_camera).Groups["domain"].Value;
+                var DomainOrIP = new System.Text.RegularExpressions.Regex(@"(?<protocol>http[s]?:\/\/)?(?<domain>[a-zA-Z0-9\.\-]+)(?<port>:[0-9]+)?(?<uri>.*)").Match(camera.url_camera).Groups["domain"].Value;
                 var pingReply = ping.Send(DomainOrIP, 2000);
                 if (pingReply.Status != System.Net.NetworkInformation.IPStatus.Success)
                 {
@@ -72,13 +56,13 @@ namespace electrostore.Controllers
                 }
                 using (var httpClient = new HttpClient())
                 {
-                    if (camera.Value.user_camera != null && camera.Value.mdp_camera != null)
+                    if (camera.user_camera != null && camera.mdp_camera != null)
                     {
-                        var byteArray = Encoding.ASCII.GetBytes($"{camera.Value.user_camera}:{camera.Value.mdp_camera}");
+                        var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.mdp_camera}");
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
                     }
-                    // si camera.Value.url_camera termine par un /, on le supprime
-                    var urlFluxStream = camera.Value.url_camera.EndsWith("/") ? camera.Value.url_camera.Substring(0, camera.Value.url_camera.Length - 1) : camera.Value.url_camera;
+                    // si camera.url_camera termine par un /, on le supprime
+                    var urlFluxStream = camera.url_camera.EndsWith("/") ? camera.url_camera.Substring(0, camera.url_camera.Length - 1) : camera.url_camera;
                     var response = await httpClient.GetAsync(urlFluxStream + "/stream", HttpCompletionOption.ResponseHeadersRead);
                     if (!response.IsSuccessStatusCode)
                     {
@@ -107,24 +91,16 @@ namespace electrostore.Controllers
         public async Task<ActionResult> SwitchCameraLight([FromRoute] int id_camera, [FromBody] bool state)
         {
             var camera = await _cameraService.GetCameraById(id_camera);
-            if (camera.Result is BadRequestObjectResult)
-            {
-                return camera.Result;
-            }
-            if (camera.Value == null)
-            {
-                return StatusCode(500);
-            }
             try
             {
                 using (var httpClient = new HttpClient())
                 {
-                    if (camera.Value.user_camera != null && camera.Value.mdp_camera != null)
+                    if (camera.user_camera != null && camera.mdp_camera != null)
                     {
-                        var byteArray = Encoding.ASCII.GetBytes($"{camera.Value.user_camera}:{camera.Value.mdp_camera}");
+                        var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.mdp_camera}");
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
                     }
-                    var urlLight = camera.Value.url_camera.EndsWith("/") ? camera.Value.url_camera.Substring(0, camera.Value.url_camera.Length - 1) : camera.Value.url_camera;
+                    var urlLight = camera.url_camera.EndsWith("/") ? camera.url_camera.Substring(0, camera.url_camera.Length - 1) : camera.url_camera;
                     var response = await httpClient.GetAsync(urlLight + "/light?state=" + (state ? "on" : "off"));
                     if (!response.IsSuccessStatusCode)
                     {
@@ -150,15 +126,7 @@ namespace electrostore.Controllers
         public async Task<ActionResult> UpdateCamera([FromRoute] int id_camera, [FromBody] UpdateCameraDto camera)
         {
             var cameraToUpdate = await _cameraService.UpdateCamera(id_camera, camera);
-            if (cameraToUpdate.Result is BadRequestObjectResult)
-            {
-                return cameraToUpdate.Result;
-            }
-            if (cameraToUpdate.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(cameraToUpdate.Value);
+            return Ok(cameraToUpdate);
         }
 
         [HttpDelete("{id_camera}")]

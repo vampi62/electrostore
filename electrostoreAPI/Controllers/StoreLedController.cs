@@ -20,30 +20,14 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadLedDto>>> GetLedsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var leds = await _ledService.GetLedsByStoreId(id_store, limit, offset);
-            if (leds.Result is BadRequestObjectResult)
-            {
-                return leds.Result;
-            }
-            if (leds.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(leds.Value);
+            return Ok(leds);
         }
 
         [HttpGet("{id_led}")]
         public async Task<ActionResult<ReadLedDto>> GetLedById([FromRoute] int id_store, [FromRoute] int id_led)
         {
             var led = await _ledService.GetLedById(id_led, id_store);
-            if (led.Result is BadRequestObjectResult)
-            {
-                return led.Result;
-            }
-            if (led.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(led.Value);
+            return Ok(led);
         }
 
         [HttpPost]
@@ -57,15 +41,7 @@ namespace electrostore.Controllers
                 mqtt_led_id = ledDto.mqtt_led_id
             };
             var led = await _ledService.CreateLed(ledDtoFull);
-            if (led.Result is BadRequestObjectResult)
-            {
-                return led.Result;
-            }
-            if (led.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return CreatedAtAction(nameof(GetLedById), new { id_store = led.Value.id_store, id_led = led.Value.id_led }, led.Value);
+            return CreatedAtAction(nameof(GetLedById), new { id_store = led.id_store, id_led = led.id_led }, led);
         }
 
         [HttpPut("{id_led}")]
@@ -78,15 +54,7 @@ namespace electrostore.Controllers
                 mqtt_led_id = ledDto.mqtt_led_id
             };
             var led = await _ledService.UpdateLed(id_led, ledDtoFull, id_store);
-            if (led.Result is BadRequestObjectResult)
-            {
-                return led.Result;
-            }
-            if (led.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(led.Value);
+            return Ok(led);
         }
 
         [HttpDelete("{id_led}")]
