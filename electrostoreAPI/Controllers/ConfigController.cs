@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using electrostore.Services.JwtService;
+using electrostore.Dto;
+using MQTTnet.Client;
+using System.Net.NetworkInformation;
 
 namespace electrostore.Controllers
 {
@@ -9,17 +13,30 @@ namespace electrostore.Controllers
     {
         private readonly JwtService _jwtService;
         private readonly IConfiguration _configuration;
+        private readonly IMqttClient _mqttClient;
 
-        public ConfigController(JwtService jwtService)
+        public ConfigController(JwtService jwtService, IConfiguration configuration, IMqttClient mqttClient)
         {
             _jwtService = jwtService;
+            _configuration = configuration;
+            _mqttClient = mqttClient;
         }
 
         [HttpGet]
-        public async Task<ActionResult> GetConfigs()
+        [AllowAnonymous]
+        public async Task<ActionResult<ReadConfig>> GetConfigs()
         {
-            // return if SMTP is enabled
-            return Ok(new { smtp = _configuration["SMTP:Enable"] });
+            using var ping = new Ping();
+            // ping juste one time in < 0.3s
+            var reply = await ping.SendPingAsync("electrostoreia", 300);
+            return Ok(new ReadConfig {
+                // get if the smtp is enabled
+                smtp_enabled = _configuration["SMTP:Enable"] == "true",
+                // check if the mqtt is connected
+                mqtt_connected = _mqttClient.IsConnected,
+                // ping the iaElectrostoreAPI
+                ia_connected = reply.Status == IPStatus.Success
+            });
         }
     }
 }

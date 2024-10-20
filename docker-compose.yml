@@ -3,6 +3,7 @@ version: '3'
 services:
   electrostoreapi:
     build: electrostoreAPI/.
+    container_name: electrostoreapi
     restart: always
     networks:
       - dockernet
@@ -17,6 +18,7 @@ services:
       - electrostoreDATA:/app/wwwroot
   electrostoreia:
     build: electrostoreIA/.
+    container_name: electrostoreia
     restart: always
     networks:
       - dockernet
@@ -29,6 +31,7 @@ services:
     cpus: 1 # limit the cpu usage for exec this container in a raspberry pi
 #  electrostorefront:
 #    build: electrostoreFRONT/.
+#    container_name: electrostorefront
 #    restart: always
 #    networks:
 #      - dockernet
