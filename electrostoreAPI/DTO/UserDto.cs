@@ -26,3 +26,9 @@ public record UpdateUserDto
     public string? mdp_user { get; init; }
     public string? role_user { get; init; }
 }
+public record ReadConfig
+{
+    public bool smtp_enabled { get; init; }
+    public bool mqtt_connected { get; init; }
+    public bool ia_connected { get; init; }
+}

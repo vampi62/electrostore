@@ -1700,76 +1700,6 @@
             }
           }
         }
-      },
-      "post": {
-        "tags": [
-          "CommandItem"
-        ],
-        "parameters": [
-          {
-            "name": "id_command",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              }
-            },
-            "text/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadCommandItemDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadCommandItemDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadCommandItemDto"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/api/command/{id_command}/item/{id_item}": {
@@ -1987,6 +1917,35 @@
         "responses": {
           "200": {
             "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/config": {
+      "get": {
+        "tags": [
+          "Config"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadConfig"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadConfig"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadConfig"
+                }
+              }
+            }
           }
         }
       }
@@ -5171,76 +5130,6 @@
             }
           }
         }
-      },
-      "post": {
-        "tags": [
-          "ProjetItem"
-        ],
-        "parameters": [
-          {
-            "name": "id_projet",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              }
-            },
-            "text/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadProjetItemDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadProjetItemDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadProjetItemDto"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/api/projet/{id_projet}/item/{id_item}": {
@@ -5670,17 +5559,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateBoxDto"
+                "$ref": "#/components/schemas/UpdateBoxByStoreDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateBoxDto"
+                "$ref": "#/components/schemas/UpdateBoxByStoreDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateBoxDto"
+                "$ref": "#/components/schemas/UpdateBoxByStoreDto"
               }
             }
           }
@@ -8959,6 +8848,21 @@
         },
         "additionalProperties": false
       },
+      "ReadConfig": {
+        "type": "object",
+        "properties": {
+          "smtp_enabled": {
+            "type": "boolean"
+          },
+          "mqtt_connected": {
+            "type": "boolean"
+          },
+          "ia_connected": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadIADto": {
         "type": "object",
         "properties": {
@@ -9311,6 +9215,32 @@
           "password": {
             "minLength": 1,
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateBoxByStoreDto": {
+        "type": "object",
+        "properties": {
+          "xstart_box": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "ystart_box": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "xend_box": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "yend_box": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false
