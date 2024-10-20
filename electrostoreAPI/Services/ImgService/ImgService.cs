@@ -31,14 +31,13 @@ public class ImgService : IImgService
             .ToListAsync();
     }
 
-    public async Task<ActionResult<IEnumerable<ReadImgDto>>> GetImgsByItemId(int itemId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadImgDto>> GetImgsByItemId(int itemId, int limit = 100, int offset = 0)
     {
         //check if item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } }});
+            throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
-
         return await _context.Imgs
             .Skip(offset)
             .Take(limit)
@@ -54,12 +53,12 @@ public class ImgService : IImgService
             }).ToListAsync();
     }
 
-    public async Task<ActionResult<ReadImgDto>> GetImgById(int id, int? itemId = null)
+    public async Task<ReadImgDto> GetImgById(int id, int? itemId = null)
     {
         var img = await _context.Imgs.FindAsync(id);
         if ((img == null) || (itemId != null && img.id_item != itemId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_img = new string[] { "Img not found" } }});
+            throw new KeyNotFoundException($"Image with id {id} not found");
         }
 
         return new ReadImgDto
@@ -73,27 +72,23 @@ public class ImgService : IImgService
         };
     }
 
-    public async Task<ActionResult<ReadImgDto>> CreateImg(CreateImgDto imgDto)
+    public async Task<ReadImgDto> CreateImg(CreateImgDto imgDto)
     {
         // check if item exists
-        var item = await _context.Items.FindAsync(imgDto.id_item);
-        if (item == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } }});
-        }
+        var item = await _context.Items.FindAsync(imgDto.id_item) ?? throw new KeyNotFoundException($"Item with id {imgDto.id_item} not found");
         if (imgDto.img_file == null || imgDto.img_file.Length == 0)
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { file = new string[] { "Image file required" } }});
+            throw new ArgumentException("Image file is required");
         }
         if (imgDto.img_file.Length > (5 * 1024 * 1024)) // 5MB max
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { file = new string[] { "Image file too large" } }});
+            throw new ArgumentException("Image file size should not exceed 5MB");
         }
         var fileName = Path.GetFileNameWithoutExtension(imgDto.img_file.FileName);
         var fileExt = Path.GetExtension(imgDto.img_file.FileName);
         if (!new[] { ".png", ".jpg", ".jpeg", ".gif", ".bmp" }.Contains(fileExt)) // if extension is not allowed
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { file = new string[] { "Image file type not allowed" } }});
+            throw new ArgumentException("Image file extension not allowed");
         }
         var i = 1;
         // verifie si une image avec le meme nom existe deja sur le serveur dans "wwwroot/images"
@@ -117,10 +112,8 @@ public class ImgService : IImgService
             date_img = DateTime.Now,
             id_item = imgDto.id_item
         };
-
         _context.Imgs.Add(newImg);
         await _context.SaveChangesAsync();
-
         return new ReadImgDto
         {
             id_img = newImg.id_img,
@@ -132,26 +125,22 @@ public class ImgService : IImgService
         };
     }
 
-    public async Task<ActionResult<ReadImgDto>> UpdateImg(int id, UpdateImgDto imgDto, int? itemId = null)
+    public async Task<ReadImgDto> UpdateImg(int id, UpdateImgDto imgDto, int? itemId = null)
     {
         var imgToUpdate = await _context.Imgs.FindAsync(id);
         if ((imgToUpdate == null) || (itemId != null && imgToUpdate.id_item != itemId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_img = new string[] { "Img not found" } }});
+            throw new KeyNotFoundException($"Image with id {id} not found");
         }
-
         if (imgDto.nom_img != null)
         {
             imgToUpdate.nom_img = imgDto.nom_img;
         }
-
         if (imgDto.description_img != null)
         {
             imgToUpdate.description_img = imgDto.description_img;
         }
-
         await _context.SaveChangesAsync();
-
         return new ReadImgDto
         {
             id_img = imgToUpdate.id_img,
@@ -163,18 +152,17 @@ public class ImgService : IImgService
         };
     }
 
-    public async Task<IActionResult> DeleteImg(int id, int? itemId = null)
+    public async Task DeleteImg(int id, int? itemId = null)
     {
         var imgToDelete = await _context.Imgs.FindAsync(id);
         if ((imgToDelete == null) || (itemId != null && imgToDelete.id_item != itemId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_img = new string[] { "Img not found" } }});
+            throw new KeyNotFoundException($"Image with id {id} not found");
         }
         _context.Imgs.Remove(imgToDelete);
         // supprimer l'image sur le disque
         File.Delete(imgToDelete.url_img);
         await _context.SaveChangesAsync();
-        return new OkResult();
     }
 
     public async Task<GetImageFileResult> GetImageFile(string url)

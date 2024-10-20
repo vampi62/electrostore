@@ -14,14 +14,13 @@ public class CommandCommentaireService : ICommandCommentaireService
         _context = context;
     }
 
-    public async Task<ActionResult<IEnumerable<ReadCommandCommentaireDto>>> GetCommandsCommentairesByCommandId(int CommandId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadCommandCommentaireDto>> GetCommandsCommentairesByCommandId(int CommandId, int limit = 100, int offset = 0)
     {
         // check if the command exists
         if (!await _context.Commands.AnyAsync(p => p.id_command == CommandId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { CommandId = new string[] { "Command not found" } } });
+            throw new KeyNotFoundException($"Command with id {CommandId} not found");
         }
-
         return await _context.CommandsCommentaires
             .Where(c => c.id_command == CommandId)
             .Skip(offset)
@@ -47,14 +46,13 @@ public class CommandCommentaireService : ICommandCommentaireService
             .ToListAsync();
     }
 
-    public async Task<ActionResult<IEnumerable<ReadCommandCommentaireDto>>> GetCommandsCommentairesByUserId(int userId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadCommandCommentaireDto>> GetCommandsCommentairesByUserId(int userId, int limit = 100, int offset = 0)
     {
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { userId = new string[] { "User not found" } } });
+            throw new KeyNotFoundException($"User with id {userId} not found");
         }
-
         return await _context.CommandsCommentaires
             .Where(c => c.id_user == userId)
             .Skip(offset)
@@ -72,12 +70,12 @@ public class CommandCommentaireService : ICommandCommentaireService
             .ToListAsync();
     }
 
-    public async Task<ActionResult<ReadCommandCommentaireDto>> GetCommandsCommentaireById(int id, int? userId = null, int? CommandId = null)
+    public async Task<ReadCommandCommentaireDto> GetCommandsCommentaireById(int id, int? userId = null, int? CommandId = null)
     {
         var commentaire = await _context.CommandsCommentaires.FindAsync(id);
         if ((commentaire == null) || (CommandId != null && commentaire.id_command != CommandId) || (userId != null && commentaire.id_user != userId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "CommandCommentaire not found" } } });
+            throw new KeyNotFoundException($"Commentaire with id {id} not found");
         }
 
         return new ReadCommandCommentaireDto
@@ -92,20 +90,18 @@ public class CommandCommentaireService : ICommandCommentaireService
         };
     }
 
-    public async Task<ActionResult<ReadCommandCommentaireDto>> CreateCommentaire(CreateCommandCommentaireDto commentaireDto)
+    public async Task<ReadCommandCommentaireDto> CreateCommentaire(CreateCommandCommentaireDto commentaireDto)
     {
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commentaireDto.id_command))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { CommandId = new string[] { "Command not found" } } });
+            throw new KeyNotFoundException($"Command with id {commentaireDto.id_command} not found");
         }
-
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == commentaireDto.id_user))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { UserId = new string[] { "User not found" } } });
+            throw new KeyNotFoundException($"User with id {commentaireDto.id_user} not found");
         }
-
         var newCommentaire = new CommandsCommentaires
         {
             id_command = commentaireDto.id_command,
@@ -114,10 +110,8 @@ public class CommandCommentaireService : ICommandCommentaireService
             date_commandcommentaire = DateTime.Now,
             date_modif_commandcommentaire = DateTime.Now
         };
-
         _context.CommandsCommentaires.Add(newCommentaire);
         await _context.SaveChangesAsync();
-
         return new ReadCommandCommentaireDto
         {
             id_commandcommentaire = newCommentaire.id_commandcommentaire,
@@ -130,22 +124,19 @@ public class CommandCommentaireService : ICommandCommentaireService
         };
     }
 
-    public async Task<ActionResult<ReadCommandCommentaireDto>> UpdateCommentaire(int id, UpdateCommandCommentaireDto commentaireDto, int? userId = null, int? CommandId = null)
+    public async Task<ReadCommandCommentaireDto> UpdateCommentaire(int id, UpdateCommandCommentaireDto commentaireDto, int? userId = null, int? CommandId = null)
     {
         var commentaireToUpdate = await _context.CommandsCommentaires.FindAsync(id);
         if ((commentaireToUpdate == null) || (CommandId != null && commentaireToUpdate.id_command != CommandId) || (userId != null && commentaireToUpdate.id_user != userId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "CommandCommentaire not found" } } });
+            throw new KeyNotFoundException($"Commentaire with id {id} not found");
         }
-
         if (commentaireDto.contenu_commandcommentaire != null)
         {
             commentaireToUpdate.contenu_commandcommentaire = commentaireDto.contenu_commandcommentaire;
         }
         commentaireToUpdate.date_modif_commandcommentaire = DateTime.Now;
-
         await _context.SaveChangesAsync();
-
         return new ReadCommandCommentaireDto
         {
             id_commandcommentaire = commentaireToUpdate.id_commandcommentaire,
@@ -158,16 +149,14 @@ public class CommandCommentaireService : ICommandCommentaireService
         };
     }
 
-    public async Task<IActionResult> DeleteCommentaire(int id, int? userId = null, int? CommandId = null)
+    public async Task DeleteCommentaire(int id, int? userId = null, int? CommandId = null)
     {
         var commentaireToDelete = await _context.CommandsCommentaires.FindAsync(id);
         if ((commentaireToDelete == null) || (CommandId != null && commentaireToDelete.id_command != CommandId) || (userId != null && commentaireToDelete.id_user != userId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id = new string[] { "CommandCommentaire not found" } } });
+            throw new KeyNotFoundException($"Commentaire with id {id} not found");
         }
-
         _context.CommandsCommentaires.Remove(commentaireToDelete);
         await _context.SaveChangesAsync();
-        return new OkResult();
     }
 }

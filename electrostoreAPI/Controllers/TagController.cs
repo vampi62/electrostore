@@ -27,45 +27,21 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadTagDto>> GetTagById([FromRoute] int id_tag)
         {
             var tag = await _tagService.GetTagById(id_tag);
-            if (tag.Result is BadRequestObjectResult)
-            {
-                return tag.Result;
-            }
-            if (tag.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(tag.Value);
+            return Ok(tag);
         }
 
         [HttpPost]
         public async Task<ActionResult<ReadTagDto>> CreateTag([FromBody] CreateTagDto tag)
         {
             var newTag = await _tagService.CreateTag(tag);
-            if (newTag.Result is BadRequestObjectResult)
-            {
-                return newTag.Result;
-            }
-            if (newTag.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return CreatedAtAction(nameof(GetTagById), new { id_tag = newTag.Value.id_tag }, newTag.Value);
+            return CreatedAtAction(nameof(GetTagById), new { id_tag = newTag.id_tag }, newTag);
         }
 
         [HttpPut("{id_tag}")]
         public async Task<ActionResult<ReadTagDto>> UpdateTag([FromRoute] int id_tag, [FromBody] UpdateTagDto tag)
         {
             var tagToUpdate = await _tagService.UpdateTag(id_tag, tag);
-            if (tagToUpdate.Result is BadRequestObjectResult)
-            {
-                return tagToUpdate.Result;
-            }
-            if (tagToUpdate.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(tagToUpdate.Value);
+            return Ok(tagToUpdate);
         }
         
         [HttpDelete("{id_tag}")]

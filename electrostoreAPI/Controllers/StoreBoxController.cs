@@ -20,30 +20,14 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadBoxDto>>> GetBoxsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var boxs = await _boxService.GetBoxsByStoreId(id_store, limit, offset);
-            if (boxs.Result is BadRequestObjectResult)
-            {
-                return boxs.Result;
-            }
-            if (boxs.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(boxs.Value);
+            return Ok(boxs);
         }
 
         [HttpGet("{id_box}")]
         public async Task<ActionResult<ReadBoxDto>> GetBoxById([FromRoute] int id_store, [FromRoute] int id_box)
         {
             var box = await _boxService.GetBoxById(id_box, id_store);
-            if (box.Result is BadRequestObjectResult)
-            {
-                return box.Result;
-            }
-            if (box.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(box.Value);
+            return Ok(box);
         }
 
         [HttpPost]
@@ -58,30 +42,21 @@ namespace electrostore.Controllers
                 id_store = id_store
             };
             var box = await _boxService.CreateBox(boxDtoFull);
-            if (box.Result is BadRequestObjectResult)
-            {
-                return box.Result;
-            }
-            if (box.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return CreatedAtAction(nameof(GetBoxById), new { id_store = box.Value.id_store, id_box = box.Value.id_box }, box.Value);
+            return CreatedAtAction(nameof(GetBoxById), new { id_store = box.id_store, id_box = box.id_box }, box);
         }
 
         [HttpPut("{id_box}")]
-        public async Task<ActionResult<ReadBoxDto>> UpdateBox([FromRoute] int id_store, [FromRoute] int id_box, [FromBody] UpdateBoxDto boxDto)
+        public async Task<ActionResult<ReadBoxDto>> UpdateBox([FromRoute] int id_store, [FromRoute] int id_box, [FromBody] UpdateBoxByStoreDto boxDto)
         {
-            var box = await _boxService.UpdateBox(id_box, boxDto, id_store);
-            if (box.Result is BadRequestObjectResult)
+            var boxDtoFull = new UpdateBoxDto
             {
-                return box.Result;
-            }
-            if (box.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return CreatedAtAction(nameof(GetBoxById), new { id_store = box.Value.id_store, id_box = box.Value.id_box }, box.Value);
+                xstart_box = boxDto.xstart_box,
+                ystart_box = boxDto.ystart_box,
+                xend_box = boxDto.xend_box,
+                yend_box = boxDto.yend_box
+            };
+            var box = await _boxService.UpdateBox(id_box, boxDtoFull, id_store);
+            return Ok(box);
         }
 
         [HttpDelete("{id_box}")]

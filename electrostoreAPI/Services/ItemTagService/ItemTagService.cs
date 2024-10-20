@@ -14,12 +14,12 @@ public class ItemTagService : IItemTagService
         _context = context;
     }
 
-    public async Task<ActionResult<IEnumerable<ReadItemTagDto>>> GetItemsTagsByItemId(int itemId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadItemTagDto>> GetItemsTagsByItemId(int itemId, int limit = 100, int offset = 0)
     {
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } } });
+            throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
 
         return await _context.ItemsTags
@@ -34,14 +34,13 @@ public class ItemTagService : IItemTagService
             .ToListAsync();
     }
 
-    public async Task<ActionResult<IEnumerable<ReadItemTagDto>>> GetItemsTagsByTagId(int tagId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadItemTagDto>> GetItemsTagsByTagId(int tagId, int limit = 100, int offset = 0)
     {
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_tag = new string[] { "Tag not found" } } });
+            throw new KeyNotFoundException($"Tag with id {tagId} not found");
         }
-
         return await _context.ItemsTags
             .Skip(offset)
             .Take(limit)
@@ -54,14 +53,9 @@ public class ItemTagService : IItemTagService
             .ToListAsync();
     }
 
-    public async Task<ActionResult<ReadItemTagDto>> GetItemTagById(int itemId, int tagId)
+    public async Task<ReadItemTagDto> GetItemTagById(int itemId, int tagId)
     {
-        var itemTag = await _context.ItemsTags.FindAsync(itemId, tagId);
-        if (itemTag == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "ItemTag not found" } } });
-        }
-
+        var itemTag = await _context.ItemsTags.FindAsync(itemId, tagId) ?? throw new KeyNotFoundException($"ItemTag with id_item {itemId} and id_tag {tagId} not found");
         return new ReadItemTagDto
         {
             id_item = itemTag.id_item,
@@ -69,32 +63,108 @@ public class ItemTagService : IItemTagService
         };
     }
 
-    public async Task<ActionResult<ReadItemTagDto>> CreateItemTag(CreateItemTagDto itemTagDto)
+    public async Task<IEnumerable<ReadItemTagDto>> CreateItemTags(int? itemId = null, int? tagId = null, int[]? tags = null, int[]? items = null)
+    {
+        var newItemTagList = new List<ItemsTags>();
+        if (itemId != null && tags != null)
+        {
+            // check if item exists
+            if (!await _context.Items.AnyAsync(i => i.id_item == itemId.Value))
+            {
+                throw new KeyNotFoundException($"Item with id {itemId} not found");
+            }
+            // check if tags exist
+            for (int i = 0; i < tags.Length; i++)
+            {
+                if (!await _context.Tags.AnyAsync(t => t.id_tag == tags[i]))
+                {
+                    throw new KeyNotFoundException($"Tag with id {tags[i]} not found");
+                }
+            }
+            // create the itemTags
+            for (int i = 0; i < tags.Length; i++)
+            {
+                if (await _context.ItemsTags.AnyAsync(it => it.id_item == itemId.Value && it.id_tag == tags[i]))
+                {
+                    throw new InvalidOperationException($"ItemTag with id_item {itemId} and id_tag {tags[i]} already exists");
+                }
+                var itemTag = new ItemsTags
+                {
+                    id_item = itemId.Value,
+                    id_tag = tags[i]
+                };
+                _context.ItemsTags.Add(itemTag);
+                newItemTagList.Add(itemTag);
+            }
+            await _context.SaveChangesAsync();
+        }
+        else if (tagId != null && items != null)
+        {
+            // check if tag exists
+            if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId.Value))
+            {
+                throw new KeyNotFoundException($"Tag with id {tagId} not found");
+            }
+            // check if all items exist
+            for (int i = 0; i < items.Length; i++)
+            {
+                if (!await _context.Items.AnyAsync(it => it.id_item == items[i]))
+                {
+                    throw new KeyNotFoundException($"Item with id {items[i]} not found");
+                }
+            }
+            // create the itemTags
+            for (int i = 0; i < items.Length; i++)
+            {
+                if (await _context.ItemsTags.AnyAsync(it => it.id_item == items[i] && it.id_tag == tagId.Value))
+                {
+                    throw new InvalidOperationException($"ItemTag with id_item {items[i]} and id_tag {tagId} already exists");
+                }
+                var itemTag = new ItemsTags
+                {
+                    id_item = items[i],
+                    id_tag = tagId.Value
+                };
+                _context.ItemsTags.Add(itemTag);
+                newItemTagList.Add(itemTag);
+            }
+            await _context.SaveChangesAsync();
+        }
+        else
+        {
+            throw new NotImplementedException();
+        }
+        return newItemTagList.Select(it => new ReadItemTagDto
+        {
+            id_item = it.id_item,
+            id_tag = it.id_tag
+        });
+    }
+
+    public async Task<ReadItemTagDto> CreateItemTag(CreateItemTagDto itemTagDto)
     {
         // check if item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemTagDto.id_item))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } } });
+            throw new KeyNotFoundException($"Item with id {itemTagDto.id_item} not found");
         }
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == itemTagDto.id_tag))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_tag = new string[] { "Tag not found" } } });
+            throw new KeyNotFoundException($"Tag with id {itemTagDto.id_tag} not found");
         }
         // check if itemTag already exists
         if (await _context.ItemsTags.AnyAsync(it => it.id_item == itemTagDto.id_item && it.id_tag == itemTagDto.id_tag))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "ItemTag already exists" } } });
+            throw new InvalidOperationException($"ItemTag with id_item {itemTagDto.id_item} and id_tag {itemTagDto.id_tag} already exists");
         }
         var itemTag = new ItemsTags
         {
             id_item = itemTagDto.id_item,
             id_tag = itemTagDto.id_tag
         };
-
         _context.ItemsTags.Add(itemTag);
         await _context.SaveChangesAsync();
-
         return new ReadItemTagDto
         {
             id_item = itemTag.id_item,
@@ -102,15 +172,10 @@ public class ItemTagService : IItemTagService
         };
     }
 
-    public async Task<IActionResult> DeleteItemTag(int itemId, int tagId)
+    public async Task DeleteItemTag(int itemId, int tagId)
     {
-        var itemTagToDelete = await _context.ItemsTags.FindAsync(itemId, tagId);
-        if (itemTagToDelete == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "ItemTag not found" } } });
-        }
+        var itemTagToDelete = await _context.ItemsTags.FindAsync(itemId, tagId) ?? throw new KeyNotFoundException($"ItemTag with id_item {itemId} and id_tag {tagId} not found");
         _context.ItemsTags.Remove(itemTagToDelete);
         await _context.SaveChangesAsync();
-        return new OkResult();
     }
 }

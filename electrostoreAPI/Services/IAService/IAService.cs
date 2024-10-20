@@ -40,14 +40,9 @@ public class IAService : IIAService
             }).ToListAsync();
     }
 
-    public async Task<ActionResult<ReadIADto>> GetIAById(int id)
+    public async Task<ReadIADto> GetIAById(int id)
     {
-        var ia = await _context.IA.FindAsync(id);
-        if (ia == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_ia = new string[] { "IA not found" } }});
-        }
-
+        var ia = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");
         return new ReadIADto
         {
             id_ia = ia.id_ia,
@@ -66,10 +61,8 @@ public class IAService : IIAService
             description_ia = iaDto.description_ia,
             date_ia = DateTime.Now
         };
-
         _context.IA.Add(newIA);
         await _context.SaveChangesAsync();
-
         return new ReadIADto
         {
             id_ia = newIA.id_ia,
@@ -80,26 +73,18 @@ public class IAService : IIAService
         };
     }
 
-    public async Task<ActionResult<ReadIADto>> UpdateIA(int id, UpdateIADto iaDto)
+    public async Task<ReadIADto> UpdateIA(int id, UpdateIADto iaDto)
     {
-        var iaToUpdata = await _context.IA.FindAsync(id);
-        if (iaToUpdata == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_ia = new string[] { "IA not found" } }});
-        }
-
+        var iaToUpdata = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");
         if (iaDto.nom_ia != null)
         {
             iaToUpdata.nom_ia = iaDto.nom_ia;
         }
-
         if (iaDto.description_ia != null)
         {
             iaToUpdata.description_ia = iaDto.description_ia;
         }
-
         await _context.SaveChangesAsync();
-
         return new ReadIADto
         {
             id_ia = iaToUpdata.id_ia,
@@ -110,14 +95,9 @@ public class IAService : IIAService
         };
     }
 
-    public async Task<IActionResult> DeleteIA(int id)
+    public async Task DeleteIA(int id)
     {
-        var iaToDelete = await _context.IA.FindAsync(id);
-        if (iaToDelete == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_ia = new string[] { "IA not found" } }});
-        }
-
+        var iaToDelete = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");
         // remove model if exists
         if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models","Model" + id.ToString() + ".keras")))
         {
@@ -127,7 +107,6 @@ public class IAService : IIAService
 
         _context.IA.Remove(iaToDelete);
         await _context.SaveChangesAsync();
-        return new OkResult();
     }
 
     /* public async Task<TrainingStatus> GetTrainingStatus(string id)
@@ -178,16 +157,16 @@ public class IAService : IIAService
         return new GetTrainStart { TrainStarted = true, msg = "Entraînement démarré." };
     } */
 
-    /* public async Task<ActionResult<ReadItemDto>> DetectItem(int id, IFormFile imgToScan)
+    /* public async Task<ReadItemDto> DetectItem(int id, IFormFile imgToScan)
     {
         if (imgToScan == null || imgToScan.Length == 0)
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { imgToScan = new string[] { "Image not found" } }});
+            
         }
         var ia = await _context.IA.FindAsync(id);
         if (ia == null || !ia.trained_ia)
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_ia = new string[] { "IA not found or not trained" } }});
+            
         }
 
         try
@@ -214,7 +193,7 @@ public class IAService : IIAService
             var item = await _context.Items.FindAsync(prediction.PredictedLabel);
             if (item == null)
             {
-                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { imgToScan = new string[] { "Item not found" } }});
+                
             }
             return new ReadItemDto
             {
@@ -230,7 +209,7 @@ public class IAService : IIAService
         {
             // Log the exception details
         Console.WriteLine($"Error during detection: {ex.Message}, StackTrace: {ex.StackTrace}");
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { imgToScan = new string[] { "Error during detection" } }});
+            
         }
     } */
 

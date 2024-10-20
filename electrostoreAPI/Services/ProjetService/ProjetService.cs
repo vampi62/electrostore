@@ -32,14 +32,9 @@ public class ProjetService : IProjetService
             .ToListAsync();
     }
 
-    public async Task<ActionResult<ReadProjetDto>> GetProjetById(int id)
+    public async Task<ReadProjetDto> GetProjetById(int id)
     {
-        var projet = await _context.Projets.FindAsync(id);
-        if (projet == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projet = new string[] { "Projet not found" } }});
-        }
-
+        var projet = await _context.Projets.FindAsync(id) ?? throw new KeyNotFoundException($"Projet with id {id} not found");
         return new ReadProjetDto
         {
             id_projet = projet.id_projet,
@@ -63,10 +58,8 @@ public class ProjetService : IProjetService
             date_projet = projetDto.date_projet,
             date_fin_projet = projetDto.date_fin_projet
         };
-
         _context.Projets.Add(newProjet);
         await _context.SaveChangesAsync();
-
         return new ReadProjetDto
         {
             id_projet = newProjet.id_projet,
@@ -79,46 +72,34 @@ public class ProjetService : IProjetService
         };
     }
 
-    public async Task<ActionResult<ReadProjetDto>> UpdateProjet(int id, UpdateProjetDto projetDto)
+    public async Task<ReadProjetDto> UpdateProjet(int id, UpdateProjetDto projetDto)
     {
-        var projetToUpdate = await _context.Projets.FindAsync(id);
-        if (projetToUpdate == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projet = new string[] { "Projet not found" } }});
-        }
-
+        var projetToUpdate = await _context.Projets.FindAsync(id) ?? throw new KeyNotFoundException($"Projet with id {id} not found");
         if (projetDto.nom_projet != null)
         {
             projetToUpdate.nom_projet = projetDto.nom_projet;
         }
-
         if (projetDto.description_projet != null)
         {
             projetToUpdate.description_projet = projetDto.description_projet;
         }
-
         if (projetDto.url_projet != null)
         {
             projetToUpdate.url_projet = projetDto.url_projet;
         }
-
         if (projetDto.status_projet != null)
         {
             projetToUpdate.status_projet = projetDto.status_projet;
         }
-
         if (projetDto.date_projet != null)
         {
             projetToUpdate.date_projet = projetDto.date_projet.Value;
         }
-
         if (projetDto.date_fin_projet != null)
         {
             projetToUpdate.date_fin_projet = projetDto.date_fin_projet;
         }
-
         await _context.SaveChangesAsync();
-
         return new ReadProjetDto
         {
             id_projet = projetToUpdate.id_projet,
@@ -131,15 +112,10 @@ public class ProjetService : IProjetService
         };
     }
 
-    public async Task<IActionResult> DeleteProjet(int id)
+    public async Task DeleteProjet(int id)
     {
-        var projetToDelete = await _context.Projets.FindAsync(id);
-        if (projetToDelete == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_projet = new string[] { "Projet not found" } }});
-        }
+        var projetToDelete = await _context.Projets.FindAsync(id) ?? throw new KeyNotFoundException($"Projet with id {id} not found");
         _context.Projets.Remove(projetToDelete);
         await _context.SaveChangesAsync();
-        return new OkResult();
     }
 }

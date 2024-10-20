@@ -25,15 +25,7 @@ namespace electrostore.Controllers
                 return Unauthorized(new { message = "You are not allowed to access this resource" });
             }
             var projetCommentaires = await _projetCommentaireService.GetProjetCommentairesByUserId(id_user, limit, offset);
-            if (projetCommentaires.Result is BadRequestObjectResult)
-            {
-                return projetCommentaires.Result;
-            }
-            if (projetCommentaires.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(projetCommentaires.Value);
+            return Ok(projetCommentaires);
         }
 
         [HttpGet("{id_projetcommentaire}")]
@@ -44,15 +36,7 @@ namespace electrostore.Controllers
                 return Unauthorized(new { message = "You are not allowed to access this resource" });
             }
             var projetCommentaire = await _projetCommentaireService.GetProjetCommentairesByCommentaireId(id_projetcommentaire, id_user);
-            if (projetCommentaire.Result is BadRequestObjectResult)
-            {
-                return projetCommentaire.Result;
-            }
-            if (projetCommentaire.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(projetCommentaire.Value);
+            return Ok(projetCommentaire);
         }
 
         // no create projet commentaire in user controller
@@ -65,15 +49,7 @@ namespace electrostore.Controllers
                 return Unauthorized(new { message = "You are not allowed to access this resource" });
             }
             var projetCommentaire = await _projetCommentaireService.UpdateProjetCommentaire(id_projetcommentaire, projetCommentaireDto, id_user);
-            if (projetCommentaire.Result is BadRequestObjectResult)
-            {
-                return projetCommentaire.Result;
-            }
-            if (projetCommentaire.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(projetCommentaire.Value);
+            return Ok(projetCommentaire);
         }
 
         [HttpDelete("{id_projetcommentaire}")]

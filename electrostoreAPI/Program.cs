@@ -34,6 +34,7 @@ using electrostore.Services.StoreTagService;
 using electrostore.Services.TagService;
 using electrostore.Services.UserService;
 using electrostore.Services.JwtService;
+using electrostore.Middleware;
 
 using Microsoft.OpenApi.Models;
 
@@ -172,6 +173,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseMiddleware<ExceptionsHandler>();
 
 app.Run();
 

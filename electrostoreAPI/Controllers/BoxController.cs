@@ -30,54 +30,22 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadBoxDto>> GetBoxById([FromRoute] int id_box)
         {
             var box = await _boxService.GetBoxById(id_box);
-            if (box.Result is BadRequestObjectResult)
-            {
-                return box.Result;
-            }
-            if (box.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(box.Value);
+            return Ok(box);
         }
 
         [HttpPost]
         public async Task<ActionResult<ReadBoxDto>> CreateBox([FromBody] CreateBoxDto boxDto)
         {
             var box = await _boxService.CreateBox(boxDto);
-            if (box.Result is BadRequestObjectResult)
-            {
-                return box.Result;
-            }
-            if (box.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return CreatedAtAction(nameof(GetBoxById), new { id_box = box.Value.id_box }, box.Value);
+            return CreatedAtAction(nameof(GetBoxById), new { id_box = box.id_box }, box);
         }
 
         [HttpPost("{id_box}/show")]
         public async Task<ActionResult<ReadBoxDto>> showLedBox([FromRoute] int id_box, [FromQuery] int red, [FromQuery] int green, [FromQuery] int blue, [FromQuery] int timeshow, [FromQuery] int animation)
         {
             var box = await _boxService.GetBoxById(id_box);
-            if (box.Result is BadRequestObjectResult)
-            {
-                return box.Result;
-            }
-            if (box.Value == null)
-            {
-                return StatusCode(500);
-            }
-            var ledsDB = await _ledService.GetLedsByStoreIdAndPosition(box.Value.id_store, box.Value.xstart_box, box.Value.xend_box, box.Value.ystart_box, box.Value.yend_box);
-            if (ledsDB.Result is BadRequestObjectResult)
-            {
-                return ledsDB.Result;
-            }
-            if (ledsDB.Value == null)
-            {
-                return StatusCode(500);
-            }
-            await _ledService.ShowLeds(ledsDB.Value, red, green, blue, timeshow, animation);
+            var ledsDB = await _ledService.GetLedsByStoreIdAndPosition(box.id_store, box.xstart_box, box.xend_box, box.ystart_box, box.yend_box);
+            await _ledService.ShowLeds(ledsDB, red, green, blue, timeshow, animation);
             return NoContent();
         }
 
@@ -85,15 +53,7 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadBoxDto>> UpdateBox([FromRoute] int id_box, [FromBody] UpdateBoxDto boxDto)
         {
             var box = await _boxService.UpdateBox(id_box,boxDto);
-            if (box.Result is BadRequestObjectResult)
-            {
-                return box.Result;
-            }
-            if (box.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(box.Value);
+            return Ok(box);
         }
 
         [HttpDelete("{id_box}")]

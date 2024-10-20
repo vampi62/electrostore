@@ -25,15 +25,7 @@ namespace electrostore.Controllers
                 return Unauthorized(new { message = "You are not allowed to access this resource" });
             }
             var commandCommentaires = await _commandCommentaireService.GetCommandsCommentairesByUserId(id_user, limit, offset);
-            if (commandCommentaires.Result is BadRequestObjectResult)
-            {
-                return commandCommentaires.Result;
-            }
-            if (commandCommentaires.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(commandCommentaires.Value);
+            return Ok(commandCommentaires);
         }
 
         [HttpGet("{id_commandcommentaire}")]
@@ -44,15 +36,7 @@ namespace electrostore.Controllers
                 return Unauthorized(new { message = "You are not allowed to access this resource" });
             }
             var commandCommentaire = await _commandCommentaireService.GetCommandsCommentaireById(id_commandcommentaire, id_user);
-            if (commandCommentaire.Result is BadRequestObjectResult)
-            {
-                return commandCommentaire.Result;
-            }
-            if (commandCommentaire.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(commandCommentaire.Value);
+            return Ok(commandCommentaire);
         }
 
         // no create command commentaire in user controller
@@ -65,15 +49,7 @@ namespace electrostore.Controllers
                 return Unauthorized(new { message = "You are not allowed to access this resource" });
             }
             var commandCommentaire = await _commandCommentaireService.UpdateCommentaire(id_commandcommentaire, commandCommentaireDto, id_user);
-            if (commandCommentaire.Result is BadRequestObjectResult)
-            {
-                return commandCommentaire.Result;
-            }
-            if (commandCommentaire.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(commandCommentaire.Value);
+            return Ok(commandCommentaire);
         }
 
         [HttpDelete("{id_commandcommentaire}")]

@@ -29,14 +29,9 @@ public class CommandService : ICommandService
             .ToListAsync();
     }
 
-    public async Task<ActionResult<ReadCommandDto>> GetCommandById(int id)
+    public async Task<ReadCommandDto> GetCommandById(int id)
     {
-        var command = await _context.Commands.FindAsync(id);
-        if (command == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_command = new string[] { "Command not found" } } });
-        }
-
+        var command = await _context.Commands.FindAsync(id) ?? throw new KeyNotFoundException($"Command with id {id} not found");
         return new ReadCommandDto
         {
             id_command = command.id_command,
@@ -58,10 +53,8 @@ public class CommandService : ICommandService
             date_command = commandDto.date_command,
             date_livraison_command = commandDto.date_livraison_command
         };
-
         _context.Commands.Add(newCommand);
         await _context.SaveChangesAsync();
-
         return new ReadCommandDto
         {
             id_command = newCommand.id_command,
@@ -73,41 +66,30 @@ public class CommandService : ICommandService
         };
     }
 
-    public async Task<ActionResult<ReadCommandDto>> UpdateCommand(int id, UpdateCommandDto commandDto)
+    public async Task<ReadCommandDto> UpdateCommand(int id, UpdateCommandDto commandDto)
     {
-        var commandToUpdate = await _context.Commands.FindAsync(id);
-        if (commandToUpdate == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_command = new string[] { "Command not found" } } });
-        }
-
+        var commandToUpdate = await _context.Commands.FindAsync(id) ?? throw new KeyNotFoundException($"Command with id {id} not found");
         if (commandDto.prix_command != null)
         {
             commandToUpdate.prix_command = commandDto.prix_command.Value;
         }
-
         if (commandDto.url_command != null)
         {
             commandToUpdate.url_command = commandDto.url_command;
         }
-
         if (commandDto.status_command != null)
         {
             commandToUpdate.status_command = commandDto.status_command;
         }
-
         if (commandDto.date_command != null)
         {
             commandToUpdate.date_command = commandDto.date_command.Value;
         }
-
         if (commandDto.date_livraison_command != null)
         {
             commandToUpdate.date_livraison_command = commandDto.date_livraison_command;
         }
-
         await _context.SaveChangesAsync();
-
         return new ReadCommandDto
         {
             id_command = commandToUpdate.id_command,
@@ -119,16 +101,10 @@ public class CommandService : ICommandService
         };
     }
 
-    public async Task<IActionResult> DeleteCommand(int id)
+    public async Task DeleteCommand(int id)
     {
-        var commandToDelete = await _context.Commands.FindAsync(id);
-        if (commandToDelete == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_command = new string[] { "Command not found" } } });
-        }
-
+        var commandToDelete = await _context.Commands.FindAsync(id) ?? throw new KeyNotFoundException($"Command with id {id} not found");
         _context.Commands.Remove(commandToDelete);
         await _context.SaveChangesAsync();
-        return new OkResult();
     }
 }

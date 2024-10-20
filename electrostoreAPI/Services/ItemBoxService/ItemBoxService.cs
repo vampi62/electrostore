@@ -14,14 +14,13 @@ public class ItemBoxService : IItemBoxService
         _context = context;
     }
 
-    public async Task<ActionResult<IEnumerable<ReadItemBoxDto>>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadItemBoxDto>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0)
     {
         // check if the box exists
         if (!await _context.Boxs.AnyAsync(box => box.id_box == boxId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_box = new string[] { "Box not found" } }});
+            throw new KeyNotFoundException($"Box with id {boxId} not found");
         }
-
         return await _context.ItemsBoxs
             .Skip(offset)
             .Take(limit)
@@ -36,14 +35,13 @@ public class ItemBoxService : IItemBoxService
             .ToListAsync();
     }
 
-    public async Task<ActionResult<IEnumerable<ReadItemBoxDto>>> GetItemsBoxsByItemId(int ItemId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadItemBoxDto>> GetItemsBoxsByItemId(int ItemId, int limit = 100, int offset = 0)
     {
         // check if the item exists
         if (!await _context.Items.AnyAsync(item => item.id_item == ItemId))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } }});
+            throw new KeyNotFoundException($"Item with id {ItemId} not found");
         }
-
         return await _context.ItemsBoxs
             .Skip(offset)
             .Take(limit)
@@ -58,14 +56,9 @@ public class ItemBoxService : IItemBoxService
             .ToListAsync();
     }
 
-    public async Task<ActionResult<ReadItemBoxDto>> GetItemBoxById(int itemId, int boxId)
+    public async Task<ReadItemBoxDto> GetItemBoxById(int itemId, int boxId)
     {
-        var itemBox = await _context.ItemsBoxs.FindAsync(boxId, itemId);
-        if (itemBox == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "ItemBox not found" } }});
-        }
-
+        var itemBox = await _context.ItemsBoxs.FindAsync(boxId, itemId) ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
         return new ReadItemBoxDto
         {
             id_box = itemBox.id_box,
@@ -75,31 +68,27 @@ public class ItemBoxService : IItemBoxService
         };
     }
 
-    public async Task<ActionResult<ReadItemBoxDto>> CreateItemBox(CreateItemBoxDto itemBoxDto)
+    public async Task<ReadItemBoxDto> CreateItemBox(CreateItemBoxDto itemBoxDto)
     {
         if (itemBoxDto.qte_itembox < 0)
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { qte_itembox = new string[] { "qte_itembox must be greater than 0" } }});
+            throw new ArgumentException("Quantity cannot be negative");
         }
-
         // check if the box exists
         if (!await _context.Boxs.AnyAsync(box => box.id_box == itemBoxDto.id_box))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_box = new string[] { "Box not found" } }});
+            throw new KeyNotFoundException($"Box with id {itemBoxDto.id_box} not found");
         }
-
         // check if the item exists
         if (!await _context.Items.AnyAsync(item => item.id_item == itemBoxDto.id_item))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item not found" } }});
+            throw new KeyNotFoundException($"Item with id {itemBoxDto.id_item} not found");
         }
-
         // check if the item is already in the box
         if (await _context.ItemsBoxs.AnyAsync(itemBox => itemBox.id_box == itemBoxDto.id_box && itemBox.id_item == itemBoxDto.id_item))
         {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "Item already in the box" } }});
+            throw new InvalidOperationException("Item is already in the box");
         }
-
         var newItemBox = new ItemsBoxs
         {
             id_box = itemBoxDto.id_box,
@@ -107,10 +96,8 @@ public class ItemBoxService : IItemBoxService
             qte_itembox = itemBoxDto.qte_itembox,
             seuil_max_itemitembox = itemBoxDto.seuil_max_itemitembox
         };
-
         _context.ItemsBoxs.Add(newItemBox);
         await _context.SaveChangesAsync();
-
         return new ReadItemBoxDto
         {
             id_box = newItemBox.id_box,
@@ -120,20 +107,15 @@ public class ItemBoxService : IItemBoxService
         };
     }
 
-    public async Task<ActionResult<ReadItemBoxDto>> UpdateItemBox(int itemId, int boxId, UpdateItemBoxDto itemBoxDto)
+    public async Task<ReadItemBoxDto> UpdateItemBox(int itemId, int boxId, UpdateItemBoxDto itemBoxDto)
     {
-        var itemBoxToUpdate = await _context.ItemsBoxs.FindAsync(boxId, itemId);
-        if (itemBoxToUpdate == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "ItemBox not found" } }});
-        }
-
+        var itemBoxToUpdate = await _context.ItemsBoxs.FindAsync(boxId, itemId) ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
         if (itemBoxDto.new_id_box != null)
         {
             // check if the new box exists
             if (!await _context.Boxs.AnyAsync(box => box.id_box == itemBoxDto.new_id_box))
             {
-                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { new_id_box = new string[] { "New box not found" } }});
+                throw new KeyNotFoundException($"Box with id {itemBoxDto.new_id_box} not found");
             }
             itemBoxToUpdate.id_box = itemBoxDto.new_id_box.Value;
         }
@@ -142,7 +124,7 @@ public class ItemBoxService : IItemBoxService
         {
             if (itemBoxDto.qte_itembox < 0)
             {
-                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { qte_itembox = new string[] { "qte_itembox must be greater than 0" } }});
+                throw new ArgumentException("Quantity cannot be negative");
             }
             itemBoxToUpdate.qte_itembox = itemBoxDto.qte_itembox.Value;
         }
@@ -151,13 +133,11 @@ public class ItemBoxService : IItemBoxService
         {
             if (itemBoxDto.seuil_max_itemitembox < 0)
             {
-                return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { seuil_max_itemitembox = new string[] { "seuil_max_itemitembox must be greater than 0" } }});
+                throw new ArgumentException("Seuil max cannot be negative");
             }
             itemBoxToUpdate.seuil_max_itemitembox = itemBoxDto.seuil_max_itemitembox.Value;
         }
-
         await _context.SaveChangesAsync();
-
         return new ReadItemBoxDto
         {
             id_box = itemBoxToUpdate.id_box,
@@ -167,15 +147,10 @@ public class ItemBoxService : IItemBoxService
         };
     }
 
-    public async Task<IActionResult> DeleteItemBox(int itemId, int boxId)
+    public async Task DeleteItemBox(int itemId, int boxId)
     {
-        var itemBoxToDelete = await _context.ItemsBoxs.FindAsync(boxId, itemId);
-        if (itemBoxToDelete == null)
-        {
-            return new BadRequestObjectResult(new { type = "https://tools.ietf.org/html/rfc7231#section-6.5.1", title = "One or more validation errors occurred.", status = 400, errors = new { id_item = new string[] { "ItemBox not found" } }});
-        }
+        var itemBoxToDelete = await _context.ItemsBoxs.FindAsync(boxId, itemId) ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
         _context.ItemsBoxs.Remove(itemBoxToDelete);
         await _context.SaveChangesAsync();
-        return new OkResult();
     }
 }

@@ -20,54 +20,21 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadStoreTagDto>>> GetStoresTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var storeTags = await _storeTagService.GetStoresTagsByTagId(id_tag, limit, offset);
-            if (storeTags.Result is BadRequestObjectResult)
-            {
-                return storeTags.Result;
-            }
-            if (storeTags.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(storeTags.Value);
+            return Ok(storeTags);
         }
 
         [HttpGet("{id_store}")]
         public async Task<ActionResult<ReadStoreTagDto>> GetStoreTagById([FromRoute] int id_tag, [FromRoute] int id_store)
         {
             var storeTag = await _storeTagService.GetStoreTagById(id_store, id_tag);
-            if (storeTag.Result is BadRequestObjectResult)
-            {
-                return storeTag.Result;
-            }
-            if (storeTag.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(storeTag.Value);
+            return Ok(storeTag);
         }
 
         [HttpPost]
         public async Task<ActionResult<ReadStoreTagDto>> CreateStoresTag([FromRoute] int id_tag, [FromBody] int[] stores)
         {
-            var resultList = new List<ActionResult<ReadStoreTagDto>>();
-            for(int i = 0; i < stores.Length; i++)
-            {
-                var storeTagDto = new CreateStoreTagDto
-                {
-                    id_tag = id_tag,
-                    id_store = stores[i]
-                };
-                var storeTag = await _storeTagService.CreateStoreTag(storeTagDto);
-                if (storeTag.Result is BadRequestObjectResult || storeTag.Value == null)
-                {
-                    resultList.Add(storeTag.Result);
-                }
-                else
-                {
-                    resultList.Add(storeTag.Value);
-                }
-            }
-            return Ok(resultList);
+            var storeTags = await _storeTagService.CreateStoreTags(null, id_tag, null, stores);
+            return Ok(storeTags);
         }
 
         [HttpPost("{id_store}")]
@@ -79,15 +46,7 @@ namespace electrostore.Controllers
                 id_store = id_store
             };
             var storeTag = await _storeTagService.CreateStoreTag(storeTagDto);
-            if (storeTag.Result is BadRequestObjectResult)
-            {
-                return storeTag.Result;
-            }
-            if (storeTag.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return CreatedAtAction(nameof(GetStoreTagById), new { id_tag = storeTag.Value.id_tag, id_store = storeTag.Value.id_store }, storeTag.Value);
+            return CreatedAtAction(nameof(GetStoreTagById), new { id_tag = storeTag.id_tag, id_store = storeTag.id_store }, storeTag);
         }
 
         [HttpDelete("{id_store}")]

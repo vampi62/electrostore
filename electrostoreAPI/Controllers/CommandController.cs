@@ -27,15 +27,7 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadCommandDto>> GetCommandById([FromRoute] int id_command)
         {
             var command = await _commandService.GetCommandById(id_command);
-            if (command.Result is BadRequestObjectResult)
-            {
-                return command.Result;
-            }
-            if (command.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(command.Value);
+            return Ok(command);
         }
 
         [HttpPost]
@@ -49,15 +41,7 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadCommandDto>> UpdateCommand([FromRoute] int id_command, [FromBody] UpdateCommandDto commandDto)
         {
             var command = await _commandService.UpdateCommand(id_command, commandDto);
-            if (command.Result is BadRequestObjectResult)
-            {
-                return command.Result;
-            }
-            if (command.Value == null)
-            {
-                return StatusCode(500);
-            }
-            return Ok(command.Value);
+            return Ok(command);
         }
 
         [HttpDelete("{id_command}")]
