@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.ItemBoxService;
 
@@ -17,6 +18,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<IEnumerable<ReadItemBoxDto>>> GetItemsBoxsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var itemBoxs = await _itemBoxService.GetItemsBoxsByItemId(id_item, limit, offset);
@@ -24,6 +26,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_box}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadItemBoxDto>> GetItemBoxById([FromRoute] int id_item, [FromRoute] int id_box)
         {
             var itemBox = await _itemBoxService.GetItemBoxById(id_item, id_box);
@@ -31,6 +34,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("{id_box}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadItemBoxDto>> CreateItemBox([FromRoute] int id_item, [FromRoute] int id_box, [FromBody] CreateItemBoxByItemDto itemBoxDto)
         {
             var itemBoxDtoFull = new CreateItemBoxDto
@@ -45,6 +49,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_box}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadItemBoxDto>> UpdateItemBox([FromRoute] int id_item, [FromRoute] int id_box, [FromBody] UpdateItemBoxDto itemBoxDto)
         {
             var itemBox = await _itemBoxService.UpdateItemBox(id_item, id_box, itemBoxDto);
@@ -56,6 +61,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_box}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> DeleteItemBox([FromRoute] int id_item, [FromRoute] int id_box)
         {
             await _itemBoxService.DeleteItemBox(id_item, id_box);

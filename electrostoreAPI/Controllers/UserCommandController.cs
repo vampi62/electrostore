@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.CommandCommentaireService;
 using System.Security.Claims;
@@ -18,6 +19,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<IEnumerable<ReadCommandCommentaireDto>>> GetCommandsCommentairesByUserId([FromRoute] int id_user, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             if (!User.IsInRole("admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
@@ -29,6 +31,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_commandcommentaire}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadCommandCommentaireDto>> GetCommandsCommentaireById([FromRoute] int id_user, [FromRoute] int id_commandcommentaire)
         {
             if (!User.IsInRole("admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
@@ -42,6 +45,7 @@ namespace electrostore.Controllers
         // no create command commentaire in user controller
 
         [HttpPut("{id_commandcommentaire}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadCommandCommentaireDto>> UpdateCommandCommentaire([FromRoute] int id_user, [FromRoute] int id_commandcommentaire, [FromBody] UpdateCommandCommentaireDto commandCommentaireDto)
         {
             if (!User.IsInRole("admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
@@ -53,6 +57,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_commandcommentaire}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> DeleteCommandCommentaire([FromRoute] int id_user, [FromRoute] int id_commandcommentaire)
         {
             if (!User.IsInRole("admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))

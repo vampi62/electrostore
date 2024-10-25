@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.ProjetItemService;
 
@@ -17,6 +18,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<IEnumerable<ReadProjetItemDto>>> GetProjetItemsByProjetId([FromRoute] int id_projet)
         {
             var projetItems = await _projetItemService.GetProjetItemsByProjetId(id_projet);
@@ -24,6 +26,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_item}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadProjetItemDto>> GetProjetItemById([FromRoute] int id_projet, [FromRoute] int id_item)
         {
             var projetItem = await _projetItemService.GetProjetItemById(id_projet, id_item);
@@ -31,6 +34,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("{id_item}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadProjetItemDto>> AddProjetItem([FromRoute] int id_projet, [FromRoute] int id_item, [FromBody] CreateProjetItemByProjetDto projetItemDto)
         {
             var projetItemDtoFull = new CreateProjetItemDto
@@ -44,6 +48,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_item}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadProjetItemDto>> UpdateProjetItem([FromRoute] int id_projet, [FromRoute] int id_item, [FromBody] UpdateProjetItemDto projetItemDto)
         {
             var projetItem = await _projetItemService.UpdateProjetItem(id_projet, id_item, projetItemDto);
@@ -51,6 +56,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_item}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> DeleteProjetItem([FromRoute] int id_projet, [FromRoute] int id_item)
         {
             await _projetItemService.DeleteProjetItem(id_projet, id_item);

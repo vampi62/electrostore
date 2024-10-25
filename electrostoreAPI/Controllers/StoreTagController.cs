@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.StoreTagService;
 
@@ -17,6 +18,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<IEnumerable<ReadStoreTagDto>>> GetStoresTagsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var storeTags = await _storeTagService.GetStoresTagsByStoreId(id_store, limit, offset);
@@ -24,6 +26,7 @@ namespace electrostore.Controllers
         }
         
         [HttpGet("{id_tag}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadStoreTagDto>> GetStoreTagById([FromRoute] int id_store, [FromRoute] int id_tag)
         {
             var storeTag = await _storeTagService.GetStoreTagById(id_store, id_tag);
@@ -31,6 +34,7 @@ namespace electrostore.Controllers
         }
         
         [HttpPost]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadStoreTagDto>> CreateStoreTags([FromRoute] int id_store, [FromBody] int[] tags)
         {
             var storeTags = await _storeTagService.CreateStoreTags(id_store, null, tags, null);
@@ -38,6 +42,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("{id_tag}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadStoreTagDto>> CreateStoreTag([FromRoute] int id_store, [FromRoute] int id_tag)
         {
             var storeTagDto = new CreateStoreTagDto
@@ -50,6 +55,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_tag}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> DeleteStoreTag([FromRoute] int id_store, [FromRoute] int id_tag)
         {
             await _storeTagService.DeleteStoreTag(id_store, id_tag);

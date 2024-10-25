@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.IAService;
 using System.Net;
@@ -19,6 +20,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<IEnumerable<ReadIADto>>> GetIA([FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var ias = await _iaService.GetIA(limit, offset);
@@ -26,6 +28,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_ia}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadIADto>> GetIAById([FromRoute] int id_ia)
         {
             var ia = await _iaService.GetIAById(id_ia);
@@ -33,6 +36,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadIADto>> CreateIA([FromBody] CreateIADto ia)
         {
             var newIA = await _iaService.CreateIA(ia);
@@ -40,6 +44,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_ia}/status")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<IActionResult> GetTrainingStatus(int id_ia)
         {
             var ia = await _iaService.GetIAById(id_ia);
@@ -59,6 +64,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("{id_ia}/train")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<bool>> TrainIA([FromRoute] int id_ia)
         {
             if (User != null)
@@ -85,6 +91,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("{id_ia}/detect")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadItemDto>> DetectItem([FromRoute] int id_ia, [FromForm] DetecDto img_to_scan)
         {
             var ia = await _iaService.GetIAById(id_ia);
@@ -110,6 +117,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_ia}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadIADto>> UpdateIA([FromRoute] int id_ia, [FromBody] UpdateIADto ia)
         {
             var iaToUpdate = await _iaService.UpdateIA(id_ia, ia);
@@ -117,6 +125,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_ia}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> DeleteIA([FromRoute] int id_ia)
         {
             await _iaService.DeleteIA(id_ia);
