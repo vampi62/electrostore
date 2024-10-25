@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.StoreService;
 
@@ -16,6 +17,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<IEnumerable<ReadStoreDto>>> GetStores([FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var stores = await _storeService.GetStores(limit, offset);
@@ -23,6 +25,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_store}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadStoreDto>> GetStoreById([FromRoute] int id_store)
         {
             var store = await _storeService.GetStoreById(id_store);
@@ -30,6 +33,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadStoreDto>> CreateStore([FromBody] CreateStoreDto store)
         {
             var newStore = await _storeService.CreateStore(store);
@@ -37,6 +41,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_store}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadStoreDto>> UpdateStore([FromRoute] int id_store, [FromBody] UpdateStoreDto store)
         {
             var storeToUpdate = await _storeService.UpdateStore(id_store, store);
@@ -44,6 +49,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_store}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> DeleteStore([FromRoute] int id_store)
         {
             await _storeService.DeleteStore(id_store);

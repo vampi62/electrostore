@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.CommandItemService;
 
@@ -17,6 +18,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<IEnumerable<ReadCommandItemDto>>> GetCommandItemsByCommandId([FromRoute] int id_command, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var commandItems = await _commandItemService.GetCommandItemsByCommandId(id_command, limit, offset);
@@ -24,6 +26,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_item}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadCommandItemDto>> GetCommandItemById([FromRoute] int id_command, [FromRoute] int id_item)
         {
             var commandItem = await _commandItemService.GetCommandItemById(id_command, id_item);
@@ -31,6 +34,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("{id_item}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadCommandItemDto>> CreateCommandItem([FromRoute] int id_command, [FromRoute] int id_item, [FromBody] CreateCommandItemByCommandDto commandItemDto)
         {
             var commandItemDtoFull = new CreateCommandItemDto
@@ -45,6 +49,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_item}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadCommandItemDto>> UpdateCommandItem([FromRoute] int id_command, [FromRoute] int id_item, [FromBody] UpdateCommandItemDto commandItemDto)
         {
             var commandItem = await _commandItemService.UpdateCommandItem(id_command, id_item, commandItemDto);
@@ -52,6 +57,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_item}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> DeleteCommandItem([FromRoute] int id_command, [FromRoute] int id_item)
         {
             await _commandItemService.DeleteCommandItem(id_command, id_item);

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.ImgService;
 
@@ -17,6 +18,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<IEnumerable<ReadImgDto>>> GetImgs([FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var imgs = await _imgService.GetImgs(limit, offset);
@@ -24,6 +26,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_img}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadImgDto>> GetImgById([FromRoute] int id_img)
         {
             var img = await _imgService.GetImgById(id_img);
@@ -31,6 +34,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_img}/show")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadImgDto>> GetImgData([FromRoute] int id_img)
         {
             var img = await _imgService.GetImgById(id_img);
@@ -46,6 +50,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadImgDto>> CreateImg([FromForm] CreateImgDto imgDto) // 5MB max
         {
             var img = await _imgService.CreateImg(imgDto);
@@ -53,6 +58,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_img}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadImgDto>> UpdateImg([FromRoute] int id_img, [FromBody] UpdateImgDto imgDto)
         {
             var img = await _imgService.UpdateImg(id_img, imgDto);
@@ -60,6 +66,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_img}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> DeleteImg([FromRoute] int id_img)
         {
             await _imgService.DeleteImg(id_img);

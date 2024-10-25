@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.CommandCommentaireService;
 using System.Security.Claims;
@@ -18,6 +19,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<IEnumerable<ReadCommandCommentaireDto>>> GetCommandsCommentairesByCommandId([FromRoute] int id_command, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var commandCommentaires = await _commandCommentaireService.GetCommandsCommentairesByCommandId(id_command, limit, offset);
@@ -25,6 +27,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_commandcommentaire}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadCommandCommentaireDto>> GetCommandsCommentaireById([FromRoute] int id_command, [FromRoute] int id_commandcommentaire)
         {
             var commandCommentaire = await _commandCommentaireService.GetCommandsCommentaireById(id_commandcommentaire, null, id_command);
@@ -32,6 +35,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadCommandCommentaireDto>> CreateCommentaire([FromRoute] int id_command, [FromBody] CreateCommandCommentaireByCommandDto commandCommentaireDto)
         {
             var commandCommentaireDtoFull = new CreateCommandCommentaireDto
@@ -45,6 +49,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_commandcommentaire}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadCommandCommentaireDto>> UpdateCommentaire([FromRoute] int id_command, [FromRoute] int id_commandcommentaire, [FromBody] UpdateCommandCommentaireDto commandCommentaireDto)
         {
             var checkCommandCommentaire = await _commandCommentaireService.GetCommandsCommentaireById(id_commandcommentaire, null, id_command);
@@ -57,6 +62,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_commandcommentaire}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> DeleteCommentaire([FromRoute] int id_command, [FromRoute] int id_commandcommentaire)
         {
             var checkCommandCommentaire = await _commandCommentaireService.GetCommandsCommentaireById(id_commandcommentaire, null, id_command);

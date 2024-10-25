@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.BoxService;
 
@@ -17,6 +18,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<IEnumerable<ReadBoxDto>>> GetBoxsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var boxs = await _boxService.GetBoxsByStoreId(id_store, limit, offset);
@@ -24,6 +26,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_box}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadBoxDto>> GetBoxById([FromRoute] int id_store, [FromRoute] int id_box)
         {
             var box = await _boxService.GetBoxById(id_box, id_store);
@@ -31,6 +34,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadBoxDto>> CreateBox([FromRoute] int id_store, [FromBody] CreateBoxByStoreDto boxDto)
         {
             var boxDtoFull = new CreateBoxDto
@@ -46,6 +50,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_box}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadBoxDto>> UpdateBox([FromRoute] int id_store, [FromRoute] int id_box, [FromBody] UpdateBoxByStoreDto boxDto)
         {
             var boxDtoFull = new UpdateBoxDto
@@ -60,6 +65,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_box}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> DeleteBox([FromRoute] int id_store, [FromRoute] int id_box)
         {
             await _boxService.DeleteBox(id_box, id_store);

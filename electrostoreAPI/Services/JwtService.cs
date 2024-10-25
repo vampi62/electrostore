@@ -17,24 +17,26 @@ public class JwtService
         _jwtSettings = jwtSettings.Value ?? throw new ArgumentNullException(nameof(jwtSettings));
     }
 
-    public string GenerateToken(ReadUserDto user)
+    public JWT GenerateToken(ReadUserDto user)
     {
         if (user == null) throw new ArgumentNullException(nameof(user));
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_jwtSettings.Key);
+
+        // Access token
         var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.id_user.ToString()),
             new Claim(ClaimTypes.NameIdentifier, user.id_user.ToString()),
             new Claim(ClaimTypes.Name, user.email_user),
+            new Claim(ClaimTypes.Role, "access")
         };
         var roles = user.role_user.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
         foreach (var role in roles)
         {
             claims.Add(new Claim(ClaimTypes.Role, role));
         }
-
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
@@ -44,8 +46,30 @@ public class JwtService
             Audience = _jwtSettings.Audience,
         };
 
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
+        // Refresh token
+        var refreshClaims = new List<Claim>
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.id_user.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, user.id_user.ToString()),
+            new Claim(ClaimTypes.Name, user.email_user),
+            new Claim(ClaimTypes.Role, "refresh")
+        };
+        var refreshTokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(refreshClaims),
+            Expires = DateTime.UtcNow.AddDays(7),
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
+            Issuer = _jwtSettings.Issuer,
+            Audience = _jwtSettings.Audience,
+        };
+
+        return new JWT
+        {
+            token = tokenHandler.WriteToken(tokenHandler.CreateToken(tokenDescriptor)),
+            expire_date_token = tokenDescriptor.Expires?.ToString("yyyy-MM-dd HH:mm:ss") ?? string.Empty,
+            refesh_token = tokenHandler.WriteToken(tokenHandler.CreateToken(refreshTokenDescriptor)),
+            expire_date_refresh_token = refreshTokenDescriptor.Expires?.ToString("yyyy-MM-dd HH:mm:ss") ?? string.Empty
+        };
     }
 
     public bool ValidateToken(string token)
@@ -74,5 +98,26 @@ public class JwtService
         }
 
         return true;
+    }
+
+
+    public bool ValidateRole(string token, string role)
+    {
+        if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(role)) return false;
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = Encoding.ASCII.GetBytes(_jwtSettings.Key);
+        try
+        {
+            // check if the token contains the role
+            var tokenS = tokenHandler.ReadToken(token) as JwtSecurityToken;
+            if (tokenS == null) return false;
+            var roleClaim = tokenS.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role && x.Value == role);
+            return roleClaim != null;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

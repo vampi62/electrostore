@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.CameraService;
 using System.Net.Http.Headers;
 using System.Text;
-using Microsoft.AspNetCore.Authorization;
 using electrostore.Services.JwtService;
 
 namespace electrostore.Controllers
@@ -22,6 +22,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> GetCameras([FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var cameras = await _cameraService.GetCameras(limit, offset);
@@ -29,6 +30,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_camera}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> GetCameraById([FromRoute] int id_camera)
         {
             var camera = await _cameraService.GetCameraById(id_camera);
@@ -39,7 +41,7 @@ namespace electrostore.Controllers
         [AllowAnonymous]
         public async Task<ActionResult> GetCameraStream([FromRoute] int id_camera, [FromQuery] string token)
         {
-            if (token == null || !_jwtService.ValidateToken(token))
+            if (token == null || !_jwtService.ValidateToken(token) || !_jwtService.ValidateRole(token, "refresh"))
             {
                 return Unauthorized();
             }
@@ -88,6 +90,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("{id_camera}/light")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> SwitchCameraLight([FromRoute] int id_camera, [FromBody] bool state)
         {
             var camera = await _cameraService.GetCameraById(id_camera);
@@ -116,6 +119,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> CreateCamera([FromBody] CreateCameraDto camera)
         {
             var newCamera = await _cameraService.CreateCamera(camera);
@@ -123,6 +127,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_camera}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> UpdateCamera([FromRoute] int id_camera, [FromBody] UpdateCameraDto camera)
         {
             var cameraToUpdate = await _cameraService.UpdateCamera(id_camera, camera);
@@ -130,6 +135,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_camera}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> DeleteCamera([FromRoute] int id_camera)
         {
             await _cameraService.DeleteCamera(id_camera);

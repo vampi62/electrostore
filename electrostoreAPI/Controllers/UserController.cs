@@ -22,6 +22,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<IEnumerable<ReadUserDto>>> GetUsers([FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var users = await _userService.GetUsers(limit, offset);
@@ -29,6 +30,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_user}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadUserDto>> GetUserById([FromRoute] int id_user)
         {
             var user = await _userService.GetUserById(id_user);
@@ -53,6 +55,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_user}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult<ReadUserDto>> UpdateUser([FromRoute] int id_user, [FromBody] UpdateUserDto userDto)
         {
             if (!User.IsInRole("admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
@@ -64,6 +67,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_user}")]
+        [Authorize(Policy = "AccessTokenPolicy")]
         public async Task<ActionResult> DeleteUser([FromRoute] int id_user)
         {
             if (!User.IsInRole("admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
@@ -76,7 +80,7 @@ namespace electrostore.Controllers
     
         [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
+        public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest loginRequest)
         {
             if (!await _userService.CheckUserPassword(loginRequest.Email, loginRequest.Password))
             {
@@ -84,7 +88,30 @@ namespace electrostore.Controllers
             }
             var user = await _userService.GetUserByEmail(loginRequest.Email);
             var token = _jwtService.GenerateToken(user);
-            return Ok(new { Token = token, User = user });
+            return Ok(new LoginResponse
+            {
+                token = token.token,
+                expire_date_token = token.expire_date_token,
+                refesh_token = token.refesh_token,
+                expire_date_refresh_token = token.expire_date_refresh_token,
+                user = user
+            });
+        }
+
+        [HttpPost("refresh-token")]
+        [Authorize(Policy = "RefreshTokenPolicy")]
+        public async Task<ActionResult<LoginResponse>> RefreshToken()
+        {
+            var user = await _userService.GetUserById(int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""));
+            var token = _jwtService.GenerateToken(user);
+            return Ok(new LoginResponse
+            {
+                token = token.token,
+                expire_date_token = token.expire_date_token,
+                refesh_token = token.refesh_token,
+                expire_date_refresh_token = token.expire_date_refresh_token,
+                user = user
+            });
         }
 
         [HttpPost("forgot-password")]

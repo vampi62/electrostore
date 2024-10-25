@@ -137,6 +137,10 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole("admin"));
     options.AddPolicy("user", policy =>
         policy.RequireRole("user"));
+    options.AddPolicy("RefreshTokenPolicy", policy =>
+        policy.RequireRole("refresh"));
+    options.AddPolicy("AccessTokenPolicy", policy =>
+        policy.RequireRole("access"));
 });
 
 builder.Services.AddCors(options =>
