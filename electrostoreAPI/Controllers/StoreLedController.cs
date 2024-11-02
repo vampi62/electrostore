@@ -18,7 +18,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<IEnumerable<ReadLedDto>>> GetLedsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var leds = await _ledService.GetLedsByStoreId(id_store, limit, offset);
@@ -26,7 +26,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_led}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadLedDto>> GetLedById([FromRoute] int id_store, [FromRoute] int id_led)
         {
             var led = await _ledService.GetLedById(id_led, id_store);
@@ -34,7 +34,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadLedDto>> CreateLed([FromRoute] int id_store, [FromBody] CreateLedByStoreDto ledDto)
         {
             var ledDtoFull = new CreateLedDto
@@ -49,7 +49,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_led}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadLedDto>> UpdateLed([FromRoute] int id_store, [FromRoute] int id_led, [FromBody] UpdateLedByStoreDto ledDto)
         {
             var ledDtoFull = new UpdateLedDto
@@ -63,7 +63,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_led}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult> DeleteLed([FromRoute] int id_store, [FromRoute] int id_led)
         {
             await _ledService.DeleteLed(id_led, id_store);

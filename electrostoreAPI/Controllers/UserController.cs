@@ -22,7 +22,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<IEnumerable<ReadUserDto>>> GetUsers([FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var users = await _userService.GetUsers(limit, offset);
@@ -30,7 +30,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_user}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadUserDto>> GetUserById([FromRoute] int id_user)
         {
             var user = await _userService.GetUserById(id_user);
@@ -55,7 +55,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_user}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadUserDto>> UpdateUser([FromRoute] int id_user, [FromBody] UpdateUserDto userDto)
         {
             if (!User.IsInRole("admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
@@ -67,7 +67,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_user}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult> DeleteUser([FromRoute] int id_user)
         {
             if (!User.IsInRole("admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
@@ -99,7 +99,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("refresh-token")]
-        [Authorize(Policy = "RefreshTokenPolicy")]
+        [Authorize(Policy = "RefreshToken")]
         public async Task<ActionResult<LoginResponse>> RefreshToken()
         {
             var user = await _userService.GetUserById(int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""));

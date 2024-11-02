@@ -21,7 +21,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<IEnumerable<ReadBoxDto>>> GetBoxs([FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var boxs = await _boxService.GetBoxs(limit, offset);
@@ -29,7 +29,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_box}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBoxDto>> GetBoxById([FromRoute] int id_box)
         {
             var box = await _boxService.GetBoxById(id_box);
@@ -37,7 +37,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBoxDto>> CreateBox([FromBody] CreateBoxDto boxDto)
         {
             var box = await _boxService.CreateBox(boxDto);
@@ -45,7 +45,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("{id_box}/show")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBoxDto>> showLedBox([FromRoute] int id_box, [FromQuery] int red, [FromQuery] int green, [FromQuery] int blue, [FromQuery] int timeshow, [FromQuery] int animation)
         {
             var box = await _boxService.GetBoxById(id_box);
@@ -55,7 +55,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_box}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBoxDto>> UpdateBox([FromRoute] int id_box, [FromBody] UpdateBoxDto boxDto)
         {
             var box = await _boxService.UpdateBox(id_box,boxDto);
@@ -63,7 +63,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_box}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult> DeleteBox([FromRoute] int id_box)
         {
             await _boxService.DeleteBox(id_box);

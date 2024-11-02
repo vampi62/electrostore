@@ -137,9 +137,9 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole("admin"));
     options.AddPolicy("user", policy =>
         policy.RequireRole("user"));
-    options.AddPolicy("RefreshTokenPolicy", policy =>
+    options.AddPolicy("RefreshToken", policy =>
         policy.RequireRole("refresh"));
-    options.AddPolicy("AccessTokenPolicy", policy =>
+    options.AddPolicy("AccessToken", policy =>
         policy.RequireRole("access"));
 });
 
