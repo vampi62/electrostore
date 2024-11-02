@@ -1,21 +1,20 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
+
+import { useAuthStore } from '@/stores';
+const authStore = useAuthStore();
+
 import { Form, Field } from 'vee-validate';
 import * as Yup from 'yup';
 
-import { useAuthStore } from '@/stores';
-
-import { useI18n } from 'vue-i18n';
-const { t: $t } = useI18n();
-
 const schema = Yup.object().shape({
-    email: Yup.string().email().required($t('emailRequired')),
+    email: Yup.string().email().required(t('emailRequired')),
     password: Yup.string().required('Password is required')
 });
 
 function onSubmit(values, { setErrors }) {
-    const authStore = useAuthStore();
     const { email, password } = values;
-
     return authStore.login(email, password)
         .catch(error => setErrors({ apiError: error }));
 }

@@ -1,14 +1,15 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
+
+import { useAuthStore } from '@/stores';
+const authStore = useAuthStore();
+
 import { Form, Field } from 'vee-validate';
 import * as Yup from 'yup';
 
-import { useAuthStore } from '@/stores';
-
-import { useI18n } from 'vue-i18n';
-const { t: $t } = useI18n();
-
 const schema = Yup.object().shape({
-    email: Yup.string().email().required($t('emailRequired')),
+    email: Yup.string().email().required(t('emailRequired')),
     firstName: Yup.string().required('First Name is required'),
     lastName: Yup.string().required('Last Name is required'),
     // 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
@@ -17,9 +18,7 @@ const schema = Yup.object().shape({
 });
 
 function onSubmit(values, { setErrors }) {
-    const authStore = useAuthStore();
     const { email, firstName, lastName, password } = values;
-
     return authStore.register(email, password, firstName, lastName)
         .catch(errors => setErrors({ apiError: errors }))
         .then(() => setErrors({ apiConfirm: 'User registered' }));
