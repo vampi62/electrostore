@@ -7,6 +7,7 @@ const messages = {
     register: 'Register',
     email: 'Email',
     emailRequired: 'Email is required',
+    smtpDisabled: 'SMTP is disabled',
   },
   fr: {
     login: 'Connexion',
@@ -14,6 +15,7 @@ const messages = {
     register: 'inscription',
     email: 'Email',
     emailRequired: 'Email est requis',
+    smtpDisabled: 'SMTP est désactivé',
   },
   es: {
     login: 'Iniciar sesión',
@@ -21,6 +23,7 @@ const messages = {
     register: 'Registrarse',
     email: 'Correo electrónico',
     emailRequired: 'Correo electrónico es obligatorio',
+    smtpDisabled: 'SMTP está desactivado',
   },
 };
 

@@ -1,9 +1,10 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router';
-
-import { useAuthStore } from '@/stores';
+import { useAuthStore, useConfigsStore } from '@/stores';
 
 const authStore = useAuthStore();
+const configsStore = useConfigsStore();
+configsStore.getConfig();
 </script>
 
 <template>

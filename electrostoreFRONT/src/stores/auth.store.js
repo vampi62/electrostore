@@ -9,6 +9,9 @@ export const useAuthStore = defineStore({
     state: () => ({
         // initialize state from local storage to enable user to stay logged in
         token: null,
+        expireDate: null,
+        refreshToken: null,
+        expireRefreshDate: null,
         user: JSON.parse(localStorage.getItem('user')),
         returnUrl: null
     }),
@@ -16,6 +19,9 @@ export const useAuthStore = defineStore({
         async login(email, password) {
             const user = await fetchWrapper.post(`${baseUrl}/user/login`, {"email": email, "password": password});
             this.token = user.token;
+            this.expireDate = user.expire_date;
+            this.refreshToken = user.refesh_token;
+            this.expireRefreshDate = user.expire_refresh_token
             // store user details and jwt in local storage to keep user logged in between page refreshes
             localStorage.setItem('user', JSON.stringify(user));
             // redirect to previous url or default to home page
@@ -38,6 +44,9 @@ export const useAuthStore = defineStore({
         logout() {
             this.user = null;
             this.token = null;
+            this.expireDate = null;
+            this.refreshToken = null;
+            this.expireRefreshDate = null;
             localStorage.removeItem('user');
             router.push('/login');
         }

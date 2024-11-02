@@ -12,7 +12,10 @@ export const useItemsStore = defineStore({
     actions: {
         async getAll(limit=100, offset=0) {
             this.items = { loading: true };
-            this.items = await fetchWrapper.get(baseUrl + '/item', {'limit': limit, 'offset': offset});
+            this.items = await fetchWrapper.get(baseUrl + '/item' + '?limit=' + limit + '&offset=' + offset);
+        },
+        async getImages(id) {
+            return await fetchWrapper.image(baseUrl + '/img/' + id + '/show');
         }
     }
 });
