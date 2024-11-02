@@ -19,7 +19,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<IEnumerable<ReadProjetCommentaireDto>>> GetProjetCommentairesByProjetId([FromRoute] int id_projet, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var projetCommentaires = await _projetCommentaireService.GetProjetCommentairesByProjetId(id_projet, limit, offset);
@@ -27,7 +27,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_projetcommentaire}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadProjetCommentaireDto>> GetProjetCommentairesByCommentaireId([FromRoute] int id_projet, [FromRoute] int id_projetcommentaire)
         {
             var projetCommentaire = await _projetCommentaireService.GetProjetCommentairesByCommentaireId(id_projetcommentaire, null, id_projet);
@@ -35,7 +35,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadProjetCommentaireDto>> AddProjetCommentaire([FromRoute] int id_projet, [FromBody] CreateProjetCommentaireByProjetDto projetCommentaireDto)
         {
             var projetCommentaireDtoFull = new CreateProjetCommentaireDto
@@ -49,7 +49,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_projetcommentaire}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadProjetCommentaireDto>> UpdateProjetCommentaire([FromRoute] int id_projet, [FromRoute] int id_projetcommentaire, [FromBody] UpdateProjetCommentaireDto projetCommentaireDto)
         {
             var checkProjetCommentaire = await _projetCommentaireService.GetProjetCommentairesByCommentaireId(id_projetcommentaire, null, id_projet);
@@ -62,7 +62,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_projetcommentaire}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult> DeleteProjetCommentaire([FromRoute] int id_projet, [FromRoute] int id_projetcommentaire)
         {
             var checkProjetCommentaire = await _projetCommentaireService.GetProjetCommentairesByCommentaireId(id_projetcommentaire, null, id_projet);

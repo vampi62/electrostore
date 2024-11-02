@@ -18,7 +18,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<IEnumerable<ReadImgDto>>> GetImgsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var itemImgs = await _imgService.GetImgsByItemId(id_item, limit, offset);
@@ -26,7 +26,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_img}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadImgDto>> GetImgById([FromRoute] int id_item, [FromRoute] int id_img)
         {
             var itemImg = await _imgService.GetImgById(id_img, id_item);
@@ -34,7 +34,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadImgDto>> CreateImg([FromRoute] int id_item, [FromForm] CreateImgByItemDto itemImgDto)
         {
             var itemImgDtoFull = new CreateImgDto
@@ -48,7 +48,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_img}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadImgDto>> UpdateImg([FromRoute] int id_item, [FromRoute] int id_img, [FromBody] UpdateImgDto itemImgDto)
         {
             var itemImg = await _imgService.UpdateImg(id_img, itemImgDto, id_item);
@@ -56,7 +56,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_img}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult> DeleteImg([FromRoute] int id_item, [FromRoute] int id_img)
         {
             await _imgService.DeleteImg(id_img, id_item);

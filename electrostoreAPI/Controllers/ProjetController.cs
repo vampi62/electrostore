@@ -18,7 +18,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<IEnumerable<ReadProjetDto>>> GetProjets([FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var projets = await _projetService.GetProjets(limit, offset);
@@ -26,7 +26,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_projet}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadProjetDto>> GetProjetById([FromRoute] int id_projet)
         {
             var projet = await _projetService.GetProjetById(id_projet);
@@ -34,7 +34,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadProjetDto>> AddProjet([FromBody] CreateProjetDto projetDto)
         {
             var projet = await _projetService.CreateProjet(projetDto);
@@ -42,7 +42,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_projet}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadProjetDto>> UpdateProjet([FromRoute] int id_projet, [FromBody] UpdateProjetDto projetDto)
         {
             var projet = await _projetService.UpdateProjet(id_projet, projetDto);
@@ -50,7 +50,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_projet}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult> DeleteProjet([FromRoute] int id_projet)
         {
             await _projetService.DeleteProjet(id_projet);

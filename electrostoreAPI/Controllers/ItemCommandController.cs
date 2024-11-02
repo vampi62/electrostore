@@ -18,7 +18,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<IEnumerable<ReadCommandItemDto>>> GetCommandItemsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var commandItems = await _commandItemService.GetCommandItemsByItemId(id_item, limit, offset);
@@ -26,7 +26,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_command}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadCommandItemDto>> GetCommandItemById([FromRoute] int id_item, [FromRoute] int id_command)
         {
             var commandItem = await _commandItemService.GetCommandItemById(id_item, id_command);
@@ -34,7 +34,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("{id_command}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadCommandItemDto>> CreateCommandItem([FromRoute] int id_item, [FromRoute] int id_command, [FromBody] CreateCommandItemByItemDto commandItemDto)
         {
             var commandItemDtoFull = new CreateCommandItemDto
@@ -49,7 +49,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_command}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadCommandItemDto>> UpdateCommandItem([FromRoute] int id_item, [FromRoute] int id_command, [FromBody] UpdateCommandItemDto commandItemDto)
         {
             var commandItem = await _commandItemService.UpdateCommandItem(id_item, id_command, commandItemDto);
@@ -57,7 +57,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_command}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult> DeleteCommandItem([FromRoute] int id_item, [FromRoute] int id_command)
         {
             await _commandItemService.DeleteCommandItem(id_item, id_command);

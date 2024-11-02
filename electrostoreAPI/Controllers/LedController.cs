@@ -18,7 +18,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<IEnumerable<ReadLedDto>>> GetLeds([FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var leds = await _ledService.GetLeds(limit, offset);
@@ -26,7 +26,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_led}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadLedDto>> GetLedById([FromRoute] int id_led)
         {
             var led = await _ledService.GetLedById(id_led);
@@ -34,7 +34,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadLedDto>> AddLed([FromBody] CreateLedDto ledDto)
         {
             var led = await _ledService.CreateLed(ledDto);
@@ -42,7 +42,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("{id_led}/show")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBoxDto>> showLedBox([FromRoute] int id_led, [FromQuery] int red, [FromQuery] int green, [FromQuery] int blue, [FromQuery] int timeshow, [FromQuery] int animation)
         {
             var ledDB = await _ledService.GetLedById(id_led);
@@ -51,7 +51,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("{id_led}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadLedDto>> UpdateLed([FromRoute] int id_led, [FromBody] UpdateLedDto ledDto)
         {
             var led = await _ledService.UpdateLed(id_led, ledDto);
@@ -59,7 +59,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_led}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult> DeleteLed([FromRoute] int id_led)
         {
             await _ledService.DeleteLed(id_led);

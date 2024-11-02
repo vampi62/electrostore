@@ -18,7 +18,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<IEnumerable<ReadBoxTagDto>>> GetBoxsTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var boxTags = await _boxTagService.GetBoxsTagsByTagId(id_tag, limit, offset);
@@ -26,7 +26,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_box}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBoxTagDto>> GetBoxTagById([FromRoute] int id_tag, [FromRoute] int id_box)
         {
             var boxTag = await _boxTagService.GetBoxTagById(id_box, id_tag);
@@ -34,7 +34,7 @@ namespace electrostore.Controllers
         }
         
         [HttpPost]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBoxTagDto>> CreateBoxsTag([FromRoute] int id_tag, [FromBody] int[] boxs)
         {
             var boxTags = await _boxTagService.CreateBoxTags(null, id_tag, null, boxs);
@@ -42,7 +42,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("{id_box}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBoxTagDto>> CreateBoxTag([FromRoute] int id_tag, [FromRoute] int id_box)
         {
             var boxTagDto = new CreateBoxTagDto
@@ -55,7 +55,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("{id_box}")]
-        [Authorize(Policy = "AccessTokenPolicy")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult> DeleteBoxTag([FromRoute] int id_tag, [FromRoute] int id_box)
         {
             await _boxTagService.DeleteBoxTag(id_box, id_tag);
