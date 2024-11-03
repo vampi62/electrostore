@@ -40,7 +40,7 @@ public class JwtService
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddDays(1),
+            Expires = DateTime.UtcNow.AddDays(_jwtSettings.ExpireDays),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
             Issuer = _jwtSettings.Issuer,
             Audience = _jwtSettings.Audience,
@@ -57,7 +57,7 @@ public class JwtService
         var refreshTokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(refreshClaims),
-            Expires = DateTime.UtcNow.AddDays(7),
+            Expires = DateTime.UtcNow.AddDays(_jwtSettings.ExpireDays + 7),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
             Issuer = _jwtSettings.Issuer,
             Audience = _jwtSettings.Audience,
