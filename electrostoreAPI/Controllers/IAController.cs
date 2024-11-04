@@ -76,7 +76,7 @@ namespace electrostore.Controllers
             }
             var ia = await _iaService.GetIAById(id_ia);
             var httpClient = new HttpClient();
-            var response = await httpClient.GetAsync("http://electrostoreia:5000/train/" + id_ia);
+            var response = await httpClient.PostAsync("http://electrostoreia:5000/train/" + id_ia, null);
             var content = await response.Content.ReadAsStringAsync();
             // convert the response to a json object
             var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);

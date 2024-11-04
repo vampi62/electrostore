@@ -75,23 +75,33 @@ public class IAService : IIAService
 
     public async Task<ReadIADto> UpdateIA(int id, UpdateIADto iaDto)
     {
-        var iaToUpdata = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");
+        var iaToUpdate = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");
         if (iaDto.nom_ia != null)
         {
-            iaToUpdata.nom_ia = iaDto.nom_ia;
+            iaToUpdate.nom_ia = iaDto.nom_ia;
         }
         if (iaDto.description_ia != null)
         {
-            iaToUpdata.description_ia = iaDto.description_ia;
+            iaToUpdate.description_ia = iaDto.description_ia;
+        }
+        // if model exists set trained_ia to true
+        if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models","Model" + id.ToString() + ".keras")) && !iaToUpdate.trained_ia)
+        {
+            iaToUpdate.trained_ia = true;
+            iaToUpdate.date_ia = DateTime.Now;
+        }
+        else if (!File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models","Model" + id.ToString() + ".keras")) && iaToUpdate.trained_ia)
+        {
+            iaToUpdate.trained_ia = false;
         }
         await _context.SaveChangesAsync();
         return new ReadIADto
         {
-            id_ia = iaToUpdata.id_ia,
-            nom_ia = iaToUpdata.nom_ia,
-            description_ia = iaToUpdata.description_ia,
-            date_ia = iaToUpdata.date_ia,
-            trained_ia = iaToUpdata.trained_ia
+            id_ia = iaToUpdate.id_ia,
+            nom_ia = iaToUpdate.nom_ia,
+            description_ia = iaToUpdate.description_ia,
+            date_ia = iaToUpdate.date_ia,
+            trained_ia = iaToUpdate.trained_ia
         };
     }
 

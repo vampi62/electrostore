@@ -5,6 +5,8 @@ from keras import layers, models
 import pathlib
 import os
 import threading
+from PIL import Image
+import io
 
 app = Flask(__name__)
 
@@ -102,11 +104,12 @@ def train_model(id_model):
 
         print(f"Model {id_model} trained and saved.")
         # Marquer la fin de l'entraînement dans le dictionnaire de suivi
-        training_progress[id_model] = {'status': 'completed'}
+        training_progress[id_model]['status'] = 'completed'
     except Exception as e:
         print(f"Error training model {id_model}: {str(e)}")
         # Marquer l'erreur dans le dictionnaire de suivi
-        training_progress[id_model] = {'status': 'error', 'message': str(e)}
+        training_progress[id_model]['status'] = 'error'
+        training_progress[id_model]['message'] = str(e)
 
 def async_train_model(id_model):
     """Lance l'entraînement dans un thread séparé."""
@@ -132,7 +135,7 @@ def detect_model(id_model, imageData):
     #sunflower_path = tf.keras.utils.get_file('Red_sunflower', origin=sunflower_url)
     try:
         #img = tf.keras.utils.load_img(sunflower_path, target_size=(img_height, img_width))
-        img = tf.keras.preprocessing.image.load_img(imageData, target_size=(img_height, img_width))
+        img = tf.keras.preprocessing.image.load_img(io.BytesIO(imageData.read()), target_size=(img_height, img_width))
         img_array = tf.keras.utils.img_to_array(img)
         img_array = tf.expand_dims(img_array, 0)  # Créer un batch
 
@@ -175,9 +178,12 @@ def status(id_model):
         return jsonify({"error": "No training in progress for this model."}), 404
 
 @app.route('/detect/<int:id_model>', methods=['POST'])
-def detect(id_model, imageData):
+def detect(id_model):
     try:
-        result = detect_model(id_model, imageData)
+        img_file = request.files.get('img_file')
+        if img_file is None:
+            return jsonify({"error": "No image file provided"}), 400
+        result = detect_model(id_model, img_file)
         return jsonify(result), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
