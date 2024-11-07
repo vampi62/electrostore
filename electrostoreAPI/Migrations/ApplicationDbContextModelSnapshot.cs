@@ -121,14 +121,14 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("contenu_commandcommentaire")
+                    b.Property<string>("contenu_command_commentaire")
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<DateTime>("date_commandcommentaire")
+                    b.Property<DateTime>("date_command_commentaire")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime>("date_modif_projetcommentaire")
+                    b.Property<DateTime>("date_modif_command_commentaire")
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("id_command")
@@ -146,6 +146,40 @@ namespace electrostore.Migrations
                     b.ToTable("CommandsCommentaires");
                 });
 
+            modelBuilder.Entity("electrostore.Models.CommandsDocuments", b =>
+                {
+                    b.Property<int>("id_command_document")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("date_command_document")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("id_command")
+                        .HasColumnType("int");
+
+                    b.Property<string>("name_command_document")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("size_command_document")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("type_command_document")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("url_command_document")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("id_command_document");
+
+                    b.HasIndex("id_command");
+
+                    b.ToTable("CommandsDocuments");
+                });
+
             modelBuilder.Entity("electrostore.Models.CommandsItems", b =>
                 {
                     b.Property<int>("id_command")
@@ -154,10 +188,10 @@ namespace electrostore.Migrations
                     b.Property<int>("id_item")
                         .HasColumnType("int");
 
-                    b.Property<float>("prix_commanditem")
+                    b.Property<float>("prix_command_item")
                         .HasColumnType("float");
 
-                    b.Property<int>("qte_commanditem")
+                    b.Property<int>("qte_command_item")
                         .HasColumnType("int");
 
                     b.HasKey("id_command", "id_item");
@@ -190,21 +224,6 @@ namespace electrostore.Migrations
                     b.HasKey("id_ia");
 
                     b.ToTable("IA");
-                });
-
-            modelBuilder.Entity("electrostore.Models.IAImgs", b =>
-                {
-                    b.Property<int>("id_ia")
-                        .HasColumnType("int");
-
-                    b.Property<int>("id_img")
-                        .HasColumnType("int");
-
-                    b.HasKey("id_ia", "id_img");
-
-                    b.HasIndex("id_img");
-
-                    b.ToTable("IAImgs");
                 });
 
             modelBuilder.Entity("electrostore.Models.Imgs", b =>
@@ -244,10 +263,6 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("datasheet_item")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
                     b.Property<string>("description_item")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -277,10 +292,10 @@ namespace electrostore.Migrations
                     b.Property<int>("id_box")
                         .HasColumnType("int");
 
-                    b.Property<int>("qte_itembox")
+                    b.Property<int>("qte_item_box")
                         .HasColumnType("int");
 
-                    b.Property<int>("seuil_max_itemitembox")
+                    b.Property<int>("seuil_max_item_item_box")
                         .HasColumnType("int");
 
                     b.HasKey("id_item", "id_box");
@@ -288,6 +303,40 @@ namespace electrostore.Migrations
                     b.HasIndex("id_box");
 
                     b.ToTable("ItemsBoxs");
+                });
+
+            modelBuilder.Entity("electrostore.Models.ItemsDocuments", b =>
+                {
+                    b.Property<int>("id_item_document")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("date_item_document")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("id_item")
+                        .HasColumnType("int");
+
+                    b.Property<string>("name_item_document")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("size_item_document")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("type_item_document")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("url_item_document")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("id_item_document");
+
+                    b.HasIndex("id_item");
+
+                    b.ToTable("ItemsDocuments");
                 });
 
             modelBuilder.Entity("electrostore.Models.ItemsTags", b =>
@@ -365,18 +414,18 @@ namespace electrostore.Migrations
 
             modelBuilder.Entity("electrostore.Models.ProjetsCommentaires", b =>
                 {
-                    b.Property<int>("id_projetcommentaire")
+                    b.Property<int>("id_projet_commentaire")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("contenu_projetcommentaire")
+                    b.Property<string>("contenu_projet_commentaire")
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<DateTime>("date_modif_projetcommentaire")
+                    b.Property<DateTime>("date_modif_projet_commentaire")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime>("date_projetcommentaire")
+                    b.Property<DateTime>("date_projet_commentaire")
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("id_projet")
@@ -385,13 +434,47 @@ namespace electrostore.Migrations
                     b.Property<int?>("id_user")
                         .HasColumnType("int");
 
-                    b.HasKey("id_projetcommentaire");
+                    b.HasKey("id_projet_commentaire");
 
                     b.HasIndex("id_projet");
 
                     b.HasIndex("id_user");
 
                     b.ToTable("ProjetsCommentaires");
+                });
+
+            modelBuilder.Entity("electrostore.Models.ProjetsDocuments", b =>
+                {
+                    b.Property<int>("id_projet_document")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("date_projet_document")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("id_projet")
+                        .HasColumnType("int");
+
+                    b.Property<string>("name_projet_document")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("size_projet_document")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("type_projet_document")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("url_projet_document")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("id_projet_document");
+
+                    b.HasIndex("id_projet");
+
+                    b.ToTable("ProjetsDocuments");
                 });
 
             modelBuilder.Entity("electrostore.Models.ProjetsItems", b =>
@@ -402,7 +485,7 @@ namespace electrostore.Migrations
                     b.Property<int>("id_item")
                         .HasColumnType("int");
 
-                    b.Property<int>("qte_projetitem")
+                    b.Property<int>("qte_projet_item")
                         .HasColumnType("int");
 
                     b.HasKey("id_projet", "id_item");
@@ -546,12 +629,23 @@ namespace electrostore.Migrations
                         .IsRequired();
 
                     b.HasOne("electrostore.Models.Users", "User")
-                        .WithMany()
+                        .WithMany("CommandsCommentaires")
                         .HasForeignKey("id_user");
 
                     b.Navigation("Command");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("electrostore.Models.CommandsDocuments", b =>
+                {
+                    b.HasOne("electrostore.Models.Commands", "Command")
+                        .WithMany()
+                        .HasForeignKey("id_command")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Command");
                 });
 
             modelBuilder.Entity("electrostore.Models.CommandsItems", b =>
@@ -571,25 +665,6 @@ namespace electrostore.Migrations
                     b.Navigation("Command");
 
                     b.Navigation("Item");
-                });
-
-            modelBuilder.Entity("electrostore.Models.IAImgs", b =>
-                {
-                    b.HasOne("electrostore.Models.IA", "IA")
-                        .WithMany()
-                        .HasForeignKey("id_ia")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("electrostore.Models.Imgs", "Imgs")
-                        .WithMany()
-                        .HasForeignKey("id_img")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("IA");
-
-                    b.Navigation("Imgs");
                 });
 
             modelBuilder.Entity("electrostore.Models.Imgs", b =>
@@ -621,12 +696,23 @@ namespace electrostore.Migrations
                         .IsRequired();
 
                     b.HasOne("electrostore.Models.Items", "Item")
-                        .WithMany()
+                        .WithMany("ItemsBoxs")
                         .HasForeignKey("id_item")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Box");
+
+                    b.Navigation("Item");
+                });
+
+            modelBuilder.Entity("electrostore.Models.ItemsDocuments", b =>
+                {
+                    b.HasOne("electrostore.Models.Items", "Item")
+                        .WithMany()
+                        .HasForeignKey("id_item")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Item");
                 });
@@ -670,12 +756,23 @@ namespace electrostore.Migrations
                         .IsRequired();
 
                     b.HasOne("electrostore.Models.Users", "User")
-                        .WithMany()
+                        .WithMany("ProjetsCommentaires")
                         .HasForeignKey("id_user");
 
                     b.Navigation("Projet");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("electrostore.Models.ProjetsDocuments", b =>
+                {
+                    b.HasOne("electrostore.Models.Projets", "Projet")
+                        .WithMany()
+                        .HasForeignKey("id_projet")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Projet");
                 });
 
             modelBuilder.Entity("electrostore.Models.ProjetsItems", b =>
@@ -714,6 +811,18 @@ namespace electrostore.Migrations
                     b.Navigation("Store");
 
                     b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("electrostore.Models.Items", b =>
+                {
+                    b.Navigation("ItemsBoxs");
+                });
+
+            modelBuilder.Entity("electrostore.Models.Users", b =>
+                {
+                    b.Navigation("CommandsCommentaires");
+
+                    b.Navigation("ProjetsCommentaires");
                 });
 #pragma warning restore 612, 618
         }

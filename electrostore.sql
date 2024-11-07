@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.0
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Hôte : 192.168.2.52
--- Généré le : lun. 19 août 2024 à 18:38
+-- Hôte : mariadb
+-- Généré le : jeu. 07 nov. 2024 à 16:30
 -- Version du serveur : 10.7.3-MariaDB-1:10.7.3+maria~focal
--- Version de PHP : 8.0.19
+-- Version de PHP : 8.2.23
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -86,9 +86,25 @@ CREATE TABLE `CommandsCommentaires` (
   `id_commandcommentaire` int(11) NOT NULL,
   `id_user` int(11) DEFAULT NULL,
   `id_command` int(11) NOT NULL,
-  `contenu_commandcommentaire` longtext NOT NULL,
-  `date_commandcommentaire` datetime(6) NOT NULL,
-  `date_modif_projetcommentaire` datetime(6) NOT NULL
+  `contenu_command_commentaire` longtext NOT NULL,
+  `date_command_commentaire` datetime(6) NOT NULL,
+  `date_modif_command_commentaire` datetime(6) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `CommandsDocuments`
+--
+
+CREATE TABLE `CommandsDocuments` (
+  `id_command_document` int(11) NOT NULL,
+  `url_command_document` longtext NOT NULL,
+  `name_command_document` longtext NOT NULL,
+  `type_command_document` longtext NOT NULL,
+  `size_command_document` decimal(65,30) NOT NULL,
+  `date_command_document` datetime(6) NOT NULL,
+  `id_command` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -100,8 +116,8 @@ CREATE TABLE `CommandsCommentaires` (
 CREATE TABLE `CommandsItems` (
   `id_item` int(11) NOT NULL,
   `id_command` int(11) NOT NULL,
-  `qte_commanditem` int(11) NOT NULL,
-  `prix_commanditem` float NOT NULL
+  `qte_command_item` int(11) NOT NULL,
+  `prix_command_item` float NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -116,17 +132,6 @@ CREATE TABLE `IA` (
   `description_ia` longtext NOT NULL,
   `date_ia` datetime(6) NOT NULL,
   `trained_ia` tinyint(4) NOT NULL DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- --------------------------------------------------------
-
---
--- Structure de la table `IAImgs`
---
-
-CREATE TABLE `IAImgs` (
-  `id_ia` int(11) NOT NULL,
-  `id_img` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -155,7 +160,6 @@ CREATE TABLE `Items` (
   `id_img` int(11) DEFAULT NULL,
   `nom_item` longtext NOT NULL,
   `seuil_min_item` int(11) NOT NULL,
-  `datasheet_item` longtext NOT NULL,
   `description_item` longtext NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -168,8 +172,24 @@ CREATE TABLE `Items` (
 CREATE TABLE `ItemsBoxs` (
   `id_box` int(11) NOT NULL,
   `id_item` int(11) NOT NULL,
-  `qte_itembox` int(11) NOT NULL,
-  `seuil_max_itemitembox` int(11) NOT NULL
+  `qte_item_box` int(11) NOT NULL,
+  `seuil_max_item_item_box` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `ItemsDocuments`
+--
+
+CREATE TABLE `ItemsDocuments` (
+  `id_item_document` int(11) NOT NULL,
+  `url_item_document` longtext NOT NULL,
+  `name_item_document` longtext NOT NULL,
+  `type_item_document` longtext NOT NULL,
+  `size_item_document` decimal(65,30) NOT NULL,
+  `date_item_document` datetime(6) NOT NULL,
+  `id_item` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -220,12 +240,28 @@ CREATE TABLE `Projets` (
 --
 
 CREATE TABLE `ProjetsCommentaires` (
-  `id_projetcommentaire` int(11) NOT NULL,
+  `id_projet_commentaire` int(11) NOT NULL,
   `id_user` int(11) DEFAULT NULL,
   `id_projet` int(11) NOT NULL,
-  `contenu_projetcommentaire` longtext NOT NULL,
-  `date_projetcommentaire` datetime(6) NOT NULL,
-  `date_modif_projetcommentaire` datetime(6) NOT NULL
+  `contenu_projet_commentaire` longtext NOT NULL,
+  `date_projet_commentaire` datetime(6) NOT NULL,
+  `date_modif_projet_commentaire` datetime(6) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `ProjetsDocuments`
+--
+
+CREATE TABLE `ProjetsDocuments` (
+  `id_projet_document` int(11) NOT NULL,
+  `url_projet_document` longtext NOT NULL,
+  `name_projet_document` longtext NOT NULL,
+  `type_projet_document` longtext NOT NULL,
+  `size_projet_document` decimal(65,30) NOT NULL,
+  `date_projet_document` datetime(6) NOT NULL,
+  `id_projet` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -237,7 +273,7 @@ CREATE TABLE `ProjetsCommentaires` (
 CREATE TABLE `ProjetsItems` (
   `id_projet` int(11) NOT NULL,
   `id_item` int(11) NOT NULL,
-  `qte_projetitem` int(11) NOT NULL
+  `qte_projet_item` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -306,13 +342,6 @@ CREATE TABLE `__EFMigrationsHistory` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
--- Déchargement des données de la table `__EFMigrationsHistory`
---
-
-INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`) VALUES
-('20240801130310_InitialCreate', '7.0.16');
-
---
 -- Index pour les tables déchargées
 --
 
@@ -351,6 +380,12 @@ ALTER TABLE `CommandsCommentaires`
   ADD KEY `IX_CommandsCommentaires_id_user` (`id_user`);
 
 --
+-- Index pour la table `CommandsDocuments`
+--
+ALTER TABLE `CommandsDocuments`
+  ADD PRIMARY KEY (`id_command_document`);
+
+--
 -- Index pour la table `CommandsItems`
 --
 ALTER TABLE `CommandsItems`
@@ -362,13 +397,6 @@ ALTER TABLE `CommandsItems`
 --
 ALTER TABLE `IA`
   ADD PRIMARY KEY (`id_ia`);
-
---
--- Index pour la table `IAImgs`
---
-ALTER TABLE `IAImgs`
-  ADD PRIMARY KEY (`id_ia`,`id_img`),
-  ADD KEY `IX_IAImgs_id_img` (`id_img`);
 
 --
 -- Index pour la table `Imgs`
@@ -390,6 +418,12 @@ ALTER TABLE `Items`
 ALTER TABLE `ItemsBoxs`
   ADD PRIMARY KEY (`id_item`,`id_box`),
   ADD KEY `IX_ItemsBoxs_id_box` (`id_box`);
+
+--
+-- Index pour la table `ItemsDocuments`
+--
+ALTER TABLE `ItemsDocuments`
+  ADD PRIMARY KEY (`id_item_document`);
 
 --
 -- Index pour la table `ItemsTags`
@@ -415,9 +449,15 @@ ALTER TABLE `Projets`
 -- Index pour la table `ProjetsCommentaires`
 --
 ALTER TABLE `ProjetsCommentaires`
-  ADD PRIMARY KEY (`id_projetcommentaire`),
+  ADD PRIMARY KEY (`id_projet_commentaire`),
   ADD KEY `IX_ProjetsCommentaires_id_projet` (`id_projet`),
   ADD KEY `IX_ProjetsCommentaires_id_user` (`id_user`);
+
+--
+-- Index pour la table `ProjetsDocuments`
+--
+ALTER TABLE `ProjetsDocuments`
+  ADD PRIMARY KEY (`id_projet_document`);
 
 --
 -- Index pour la table `ProjetsItems`
@@ -486,6 +526,12 @@ ALTER TABLE `CommandsCommentaires`
   MODIFY `id_commandcommentaire` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT pour la table `CommandsDocuments`
+--
+ALTER TABLE `CommandsDocuments`
+  MODIFY `id_command_document` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT pour la table `IA`
 --
 ALTER TABLE `IA`
@@ -504,6 +550,12 @@ ALTER TABLE `Items`
   MODIFY `id_item` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT pour la table `ItemsDocuments`
+--
+ALTER TABLE `ItemsDocuments`
+  MODIFY `id_item_document` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT pour la table `Leds`
 --
 ALTER TABLE `Leds`
@@ -519,7 +571,13 @@ ALTER TABLE `Projets`
 -- AUTO_INCREMENT pour la table `ProjetsCommentaires`
 --
 ALTER TABLE `ProjetsCommentaires`
-  MODIFY `id_projetcommentaire` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_projet_commentaire` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `ProjetsDocuments`
+--
+ALTER TABLE `ProjetsDocuments`
+  MODIFY `id_projet_document` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `Stores`
@@ -569,13 +627,6 @@ ALTER TABLE `CommandsCommentaires`
 ALTER TABLE `CommandsItems`
   ADD CONSTRAINT `FK_CommandsItems_Commands_id_command` FOREIGN KEY (`id_command`) REFERENCES `Commands` (`id_command`) ON DELETE CASCADE,
   ADD CONSTRAINT `FK_CommandsItems_Items_id_item` FOREIGN KEY (`id_item`) REFERENCES `Items` (`id_item`) ON DELETE CASCADE;
-
---
--- Contraintes pour la table `IAImgs`
---
-ALTER TABLE `IAImgs`
-  ADD CONSTRAINT `FK_IAImgs_IA_id_ia` FOREIGN KEY (`id_ia`) REFERENCES `IA` (`id_ia`) ON DELETE CASCADE,
-  ADD CONSTRAINT `FK_IAImgs_Imgs_id_img` FOREIGN KEY (`id_img`) REFERENCES `Imgs` (`id_img`) ON DELETE CASCADE;
 
 --
 -- Contraintes pour la table `Imgs`

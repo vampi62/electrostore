@@ -16,4 +16,6 @@ public interface IBoxTagService
     public Task<ReadBoxTagDto> CreateBoxTag(CreateBoxTagDto boxTag);
 
     public Task DeleteBoxTag(int boxId, int tagId);
+
+    public Task CheckIfStoreExists(int storeId);
 }

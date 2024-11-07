@@ -29,13 +29,12 @@ public class ProjetItemService : IProjetItemService
             {
                 id_item = p.id_item,
                 id_projet = p.id_projet,
-                qte_projetitem = p.qte_projetitem,
+                qte_projet_item = p.qte_projet_item,
                 item = new ReadItemDto
                 {
                     id_item = p.Item.id_item,
                     nom_item = p.Item.nom_item,
                     seuil_min_item = p.Item.seuil_min_item,
-                    datasheet_item = p.Item.datasheet_item,
                     description_item = p.Item.description_item,
                     id_img = p.Item.id_img
                 }
@@ -58,13 +57,12 @@ public class ProjetItemService : IProjetItemService
             {
                 id_item = p.id_item,
                 id_projet = p.id_projet,
-                qte_projetitem = p.qte_projetitem,
+                qte_projet_item = p.qte_projet_item,
                 item = new ReadItemDto
                 {
                     id_item = p.Item.id_item,
                     nom_item = p.Item.nom_item,
                     seuil_min_item = p.Item.seuil_min_item,
-                    datasheet_item = p.Item.datasheet_item,
                     description_item = p.Item.description_item,
                     id_img = p.Item.id_img
                 }
@@ -79,13 +77,12 @@ public class ProjetItemService : IProjetItemService
         {
             id_item = projetItem.id_item,
             id_projet = projetItem.id_projet,
-            qte_projetitem = projetItem.qte_projetitem,
+            qte_projet_item = projetItem.qte_projet_item,
             item = new ReadItemDto
             {
                 id_item = projetItem.Item.id_item,
                 nom_item = projetItem.Item.nom_item,
                 seuil_min_item = projetItem.Item.seuil_min_item,
-                datasheet_item = projetItem.Item.datasheet_item,
                 description_item = projetItem.Item.description_item,
                 id_img = projetItem.Item.id_img
             }
@@ -113,7 +110,7 @@ public class ProjetItemService : IProjetItemService
         {
             id_projet = projetItemDto.id_projet,
             id_item = projetItemDto.id_item,
-            qte_projetitem = projetItemDto.qte_projetitem
+            qte_projet_item = projetItemDto.qte_projet_item
         };
         _context.ProjetsItems.Add(newProjetItem);
         await _context.SaveChangesAsync();
@@ -121,13 +118,12 @@ public class ProjetItemService : IProjetItemService
         {
             id_item = newProjetItem.id_item,
             id_projet = newProjetItem.id_projet,
-            qte_projetitem = newProjetItem.qte_projetitem,
+            qte_projet_item = newProjetItem.qte_projet_item,
             item = new ReadItemDto
             {
                 id_item = newProjetItem.Item.id_item,
                 nom_item = newProjetItem.Item.nom_item,
                 seuil_min_item = newProjetItem.Item.seuil_min_item,
-                datasheet_item = newProjetItem.Item.datasheet_item,
                 description_item = newProjetItem.Item.description_item,
                 id_img = newProjetItem.Item.id_img
             }
@@ -147,22 +143,21 @@ public class ProjetItemService : IProjetItemService
             throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
         var projetItemToUpdate = await _context.ProjetsItems.FindAsync(projetId, itemId) ?? throw new KeyNotFoundException($"ProjetItem with id_projet {projetId} and id_item {itemId} not found");
-        if (projetItemDto.qte_projetitem != null)
+        if (projetItemDto.qte_projet_item != null)
         {
-            projetItemToUpdate.qte_projetitem = projetItemDto.qte_projetitem.Value;
+            projetItemToUpdate.qte_projet_item = projetItemDto.qte_projet_item.Value;
         }
         await _context.SaveChangesAsync();
         return new ReadProjetItemDto
         {
             id_item = projetItemToUpdate.id_item,
             id_projet = projetItemToUpdate.id_projet,
-            qte_projetitem = projetItemToUpdate.qte_projetitem,
+            qte_projet_item = projetItemToUpdate.qte_projet_item,
             item = new ReadItemDto
             {
                 id_item = projetItemToUpdate.Item.id_item,
                 nom_item = projetItemToUpdate.Item.nom_item,
                 seuil_min_item = projetItemToUpdate.Item.seuil_min_item,
-                datasheet_item = projetItemToUpdate.Item.datasheet_item,
                 description_item = projetItemToUpdate.Item.description_item,
                 id_img = projetItemToUpdate.Item.id_img
             }

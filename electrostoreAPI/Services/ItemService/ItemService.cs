@@ -17,7 +17,6 @@ public class ItemService : IItemService
     public async Task<IEnumerable<ReadItemDto>> GetItems(int limit = 100, int offset = 0)
     {
         return await _context.Items
-            .AsNoTracking()
             .Skip(offset)
             .Take(limit)
             .Select(item => new ReadItemDto
@@ -26,15 +25,14 @@ public class ItemService : IItemService
                 id_img = item.id_img,
                 nom_item = item.nom_item,
                 seuil_min_item = item.seuil_min_item,
-                datasheet_item = item.datasheet_item,
                 description_item = item.description_item,
                 itembox = item.ItemsBoxs
                     .Select(ib => new ReadItemBoxDto
                     {
                         id_item = ib.id_item,
                         id_box = ib.id_box,
-                        qte_itembox = ib.qte_itembox,
-                        seuil_max_itemitembox = ib.seuil_max_itemitembox,
+                        qte_item_box = ib.qte_item_box,
+                        seuil_max_item_item_box = ib.seuil_max_item_item_box
                     })
                     .ToArray()
             })
@@ -50,16 +48,14 @@ public class ItemService : IItemService
             id_img = item.id_img,
             nom_item = item.nom_item,
             seuil_min_item = item.seuil_min_item,
-            datasheet_item = item.datasheet_item,
             description_item = item.description_item,
-            itembox = _context.ItemsBoxs
-                .Where(ib => ib.id_item == item.id_item)
+            itembox = item.ItemsBoxs
                 .Select(ib => new ReadItemBoxDto
                 {
                     id_item = ib.id_item,
                     id_box = ib.id_box,
-                    qte_itembox = ib.qte_itembox,
-                    seuil_max_itemitembox = ib.seuil_max_itemitembox,
+                    qte_item_box = ib.qte_item_box,
+                    seuil_max_item_item_box = ib.seuil_max_item_item_box
                 })
                 .ToArray()
         };
@@ -82,7 +78,6 @@ public class ItemService : IItemService
             id_img = itemDto.id_img,
             nom_item = itemDto.nom_item,
             seuil_min_item = itemDto.seuil_min_item,
-            datasheet_item = itemDto.datasheet_item,
             description_item = itemDto.description_item,
         };
         _context.Items.Add(item);
@@ -91,13 +86,16 @@ public class ItemService : IItemService
         {
             Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", item.id_item.ToString()));
         }
+        if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", item.id_item.ToString())))
+        {
+            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", item.id_item.ToString()));
+        }
         return new ReadItemDto
         {
             id_item = item.id_item,
             id_img = item.id_img,
             nom_item = item.nom_item,
             seuil_min_item = item.seuil_min_item,
-            datasheet_item = item.datasheet_item,
             description_item = item.description_item,
         };
     }
@@ -119,10 +117,6 @@ public class ItemService : IItemService
         {
             itemToUpdate.seuil_min_item = itemDto.seuil_min_item.Value;
         }
-        if (itemDto.datasheet_item != null)
-        {
-            itemToUpdate.datasheet_item = itemDto.datasheet_item;
-        }
         if (itemDto.description_item != null)
         {
             itemToUpdate.description_item = itemDto.description_item;
@@ -143,7 +137,6 @@ public class ItemService : IItemService
             id_img = itemToUpdate.id_img,
             nom_item = itemToUpdate.nom_item,
             seuil_min_item = itemToUpdate.seuil_min_item,
-            datasheet_item = itemToUpdate.datasheet_item,
             description_item = itemToUpdate.description_item,
         };
     }
@@ -157,6 +150,11 @@ public class ItemService : IItemService
         if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", itemId.ToString())))
         {
             Directory.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", itemId.ToString()), true);
+        }
+        //remove folder in wwwroot/itemDocuments
+        if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", itemId.ToString())))
+        {
+            Directory.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", itemId.ToString()), true);
         }
     }
 }

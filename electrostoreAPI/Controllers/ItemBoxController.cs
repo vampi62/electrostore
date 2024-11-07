@@ -41,8 +41,8 @@ namespace electrostore.Controllers
             {
                 id_item = id_item,
                 id_box = id_box,
-                qte_itembox = itemBoxDto.qte_itembox,
-                seuil_max_itemitembox = itemBoxDto.seuil_max_itemitembox
+                qte_item_box = itemBoxDto.qte_item_box,
+                seuil_max_item_item_box = itemBoxDto.seuil_max_item_item_box
             };
             var itemBox = await _itemBoxService.CreateItemBox(itemBoxDtoFull);
             return CreatedAtAction(nameof(GetItemBoxById), new { id_item = itemBox.id_item, id_box = itemBox.id_box }, itemBox);

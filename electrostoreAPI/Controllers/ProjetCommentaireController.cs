@@ -26,11 +26,11 @@ namespace electrostore.Controllers
             return Ok(projetCommentaires);
         }
 
-        [HttpGet("{id_projetcommentaire}")]
+        [HttpGet("{id_projet_commentaire}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadProjetCommentaireDto>> GetProjetCommentairesByCommentaireId([FromRoute] int id_projet, [FromRoute] int id_projetcommentaire)
+        public async Task<ActionResult<ReadProjetCommentaireDto>> GetProjetCommentairesByCommentaireId([FromRoute] int id_projet, [FromRoute] int id_projet_commentaire)
         {
-            var projetCommentaire = await _projetCommentaireService.GetProjetCommentairesByCommentaireId(id_projetcommentaire, null, id_projet);
+            var projetCommentaire = await _projetCommentaireService.GetProjetCommentairesByCommentaireId(id_projet_commentaire, null, id_projet);
             return Ok(projetCommentaire);
         }
 
@@ -42,35 +42,35 @@ namespace electrostore.Controllers
             {
                 id_projet = id_projet,
                 id_user = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value),
-                contenu_projetcommentaire = projetCommentaireDto.contenu_projetcommentaire
+                contenu_projet_commentaire = projetCommentaireDto.contenu_projet_commentaire
             };
             var projetCommentaire = await _projetCommentaireService.CreateProjetCommentaire(projetCommentaireDtoFull);
-            return CreatedAtAction(nameof(GetProjetCommentairesByCommentaireId), new { id_projet = projetCommentaire.id_projet, id_projetcommentaire = projetCommentaire.id_projetcommentaire }, projetCommentaire);
+            return CreatedAtAction(nameof(GetProjetCommentairesByCommentaireId), new { id_projet = projetCommentaire.id_projet, id_projet_commentaire = projetCommentaire.id_projet_commentaire }, projetCommentaire);
         }
 
-        [HttpPut("{id_projetcommentaire}")]
+        [HttpPut("{id_projet_commentaire}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadProjetCommentaireDto>> UpdateProjetCommentaire([FromRoute] int id_projet, [FromRoute] int id_projetcommentaire, [FromBody] UpdateProjetCommentaireDto projetCommentaireDto)
+        public async Task<ActionResult<ReadProjetCommentaireDto>> UpdateProjetCommentaire([FromRoute] int id_projet, [FromRoute] int id_projet_commentaire, [FromBody] UpdateProjetCommentaireDto projetCommentaireDto)
         {
-            var checkProjetCommentaire = await _projetCommentaireService.GetProjetCommentairesByCommentaireId(id_projetcommentaire, null, id_projet);
+            var checkProjetCommentaire = await _projetCommentaireService.GetProjetCommentairesByCommentaireId(id_projet_commentaire, null, id_projet);
             if (!User.IsInRole("admin") && checkProjetCommentaire.id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
             {
                 return Unauthorized(new { message = "You are not allowed to access this resource" });
             }
-            var projetCommentaire = await _projetCommentaireService.UpdateProjetCommentaire(id_projetcommentaire, projetCommentaireDto, null, id_projet);
+            var projetCommentaire = await _projetCommentaireService.UpdateProjetCommentaire(id_projet_commentaire, projetCommentaireDto, null, id_projet);
             return Ok(projetCommentaire);
         }
 
-        [HttpDelete("{id_projetcommentaire}")]
+        [HttpDelete("{id_projet_commentaire}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> DeleteProjetCommentaire([FromRoute] int id_projet, [FromRoute] int id_projetcommentaire)
+        public async Task<ActionResult> DeleteProjetCommentaire([FromRoute] int id_projet, [FromRoute] int id_projet_commentaire)
         {
-            var checkProjetCommentaire = await _projetCommentaireService.GetProjetCommentairesByCommentaireId(id_projetcommentaire, null, id_projet);
+            var checkProjetCommentaire = await _projetCommentaireService.GetProjetCommentairesByCommentaireId(id_projet_commentaire, null, id_projet);
             if (!User.IsInRole("admin") && checkProjetCommentaire.id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
             {
                 return Unauthorized(new { message = "You are not allowed to access this resource" });
             }
-            await _projetCommentaireService.DeleteProjetCommentaire(id_projetcommentaire, null, id_projet);
+            await _projetCommentaireService.DeleteProjetCommentaire(id_projet_commentaire, null, id_projet);
             return NoContent();
         }
     }

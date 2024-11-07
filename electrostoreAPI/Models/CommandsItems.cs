@@ -13,7 +13,6 @@ public class CommandsItems
     [ForeignKey("id_command")]
     public Commands Command { get; set; }
     
-    public int qte_commanditem { get; set; }
-    public float prix_commanditem { get; set; }
-    public ICollection<Commands> Commands { get; set; } = new List<Commands>();
+    public int qte_command_item { get; set; }
+    public float prix_command_item { get; set; }
 }

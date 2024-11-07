@@ -55,6 +55,10 @@ public class CommandService : ICommandService
         };
         _context.Commands.Add(newCommand);
         await _context.SaveChangesAsync();
+        if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", newCommand.id_command.ToString())))
+        {
+            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", newCommand.id_command.ToString()));
+        }
         return new ReadCommandDto
         {
             id_command = newCommand.id_command,
@@ -106,5 +110,10 @@ public class CommandService : ICommandService
         var commandToDelete = await _context.Commands.FindAsync(id) ?? throw new KeyNotFoundException($"Command with id {id} not found");
         _context.Commands.Remove(commandToDelete);
         await _context.SaveChangesAsync();
+        //remove folder in wwwroot/commandDocuments
+        if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", id.ToString())))
+        {
+            Directory.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", id.ToString()), true);
+        }
     }
 }

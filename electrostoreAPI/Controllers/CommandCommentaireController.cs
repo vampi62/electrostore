@@ -42,7 +42,7 @@ namespace electrostore.Controllers
             {
                 id_command = id_command,
                 id_user = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value),
-                contenu_commandcommentaire = commandCommentaireDto.contenu_commandcommentaire
+                contenu_command_commentaire = commandCommentaireDto.contenu_command_commentaire
             };
             var commandCommentaire = await _commandCommentaireService.CreateCommentaire(commandCommentaireDtoFull);
             return CreatedAtAction(nameof(GetCommandsCommentaireById), new { id_command = commandCommentaire.id_command, id_commandcommentaire = commandCommentaire.id_commandcommentaire }, commandCommentaire);

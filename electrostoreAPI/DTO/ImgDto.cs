@@ -29,10 +29,3 @@ public record UpdateImgDto
     public string? nom_img { get; init; }
     public string? description_img { get; init; }
 }
-public record GetImageFileResult
-{
-    public string FilePath { get; init; }
-    public string MimeType { get; init; }
-    public bool Success { get; init; }
-    public string? ErrorMessage { get; init; }
-}

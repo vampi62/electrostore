@@ -60,6 +60,10 @@ public class ProjetService : IProjetService
         };
         _context.Projets.Add(newProjet);
         await _context.SaveChangesAsync();
+        if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", newProjet.id_projet.ToString())))
+        {
+            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", newProjet.id_projet.ToString()));
+        }
         return new ReadProjetDto
         {
             id_projet = newProjet.id_projet,
@@ -117,5 +121,10 @@ public class ProjetService : IProjetService
         var projetToDelete = await _context.Projets.FindAsync(id) ?? throw new KeyNotFoundException($"Projet with id {id} not found");
         _context.Projets.Remove(projetToDelete);
         await _context.SaveChangesAsync();
+        //remove folder in wwwroot/projetDocuments
+        if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", id.ToString())))
+        {
+            Directory.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", id.ToString()), true);
+        }
     }
 }

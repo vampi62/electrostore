@@ -41,7 +41,7 @@ namespace electrostore.Controllers
             {
                 id_projet = id_projet,
                 id_item = id_item,
-                qte_projetitem = projetItemDto.qte_projetitem
+                qte_projet_item = projetItemDto.qte_projet_item
             };
             var projetItem = await _projetItemService.CreateProjetItem(projetItemDtoFull);
             return CreatedAtAction(nameof(GetProjetItemById), new { id_projet = projetItem.id_projet, id_item = projetItem.id_item }, projetItem);

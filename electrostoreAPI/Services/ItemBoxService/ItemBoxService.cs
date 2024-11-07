@@ -29,8 +29,8 @@ public class ItemBoxService : IItemBoxService
             {
                 id_box = itemBox.id_box,
                 id_item = itemBox.id_item,
-                qte_itembox = itemBox.qte_itembox,
-                seuil_max_itemitembox = itemBox.seuil_max_itemitembox
+                qte_item_box = itemBox.qte_item_box,
+                seuil_max_item_item_box = itemBox.seuil_max_item_item_box
             })
             .ToListAsync();
     }
@@ -50,8 +50,8 @@ public class ItemBoxService : IItemBoxService
             {
                 id_box = itemBox.id_box,
                 id_item = itemBox.id_item,
-                qte_itembox = itemBox.qte_itembox,
-                seuil_max_itemitembox = itemBox.seuil_max_itemitembox
+                qte_item_box = itemBox.qte_item_box,
+                seuil_max_item_item_box = itemBox.seuil_max_item_item_box
             })
             .ToListAsync();
     }
@@ -63,14 +63,14 @@ public class ItemBoxService : IItemBoxService
         {
             id_box = itemBox.id_box,
             id_item = itemBox.id_item,
-            qte_itembox = itemBox.qte_itembox,
-            seuil_max_itemitembox = itemBox.seuil_max_itemitembox
+            qte_item_box = itemBox.qte_item_box,
+            seuil_max_item_item_box = itemBox.seuil_max_item_item_box
         };
     }
 
     public async Task<ReadItemBoxDto> CreateItemBox(CreateItemBoxDto itemBoxDto)
     {
-        if (itemBoxDto.qte_itembox < 0)
+        if (itemBoxDto.qte_item_box < 0)
         {
             throw new ArgumentException("Quantity cannot be negative");
         }
@@ -93,8 +93,8 @@ public class ItemBoxService : IItemBoxService
         {
             id_box = itemBoxDto.id_box,
             id_item = itemBoxDto.id_item,
-            qte_itembox = itemBoxDto.qte_itembox,
-            seuil_max_itemitembox = itemBoxDto.seuil_max_itemitembox
+            qte_item_box = itemBoxDto.qte_item_box,
+            seuil_max_item_item_box = itemBoxDto.seuil_max_item_item_box
         };
         _context.ItemsBoxs.Add(newItemBox);
         await _context.SaveChangesAsync();
@@ -102,8 +102,8 @@ public class ItemBoxService : IItemBoxService
         {
             id_box = newItemBox.id_box,
             id_item = newItemBox.id_item,
-            qte_itembox = newItemBox.qte_itembox,
-            seuil_max_itemitembox = newItemBox.seuil_max_itemitembox
+            qte_item_box = newItemBox.qte_item_box,
+            seuil_max_item_item_box = newItemBox.seuil_max_item_item_box
         };
     }
 
@@ -120,30 +120,30 @@ public class ItemBoxService : IItemBoxService
             itemBoxToUpdate.id_box = itemBoxDto.new_id_box.Value;
         }
 
-        if (itemBoxDto.qte_itembox != null)
+        if (itemBoxDto.qte_item_box != null)
         {
-            if (itemBoxDto.qte_itembox < 0)
+            if (itemBoxDto.qte_item_box < 0)
             {
                 throw new ArgumentException("Quantity cannot be negative");
             }
-            itemBoxToUpdate.qte_itembox = itemBoxDto.qte_itembox.Value;
+            itemBoxToUpdate.qte_item_box = itemBoxDto.qte_item_box.Value;
         }
 
-        if (itemBoxDto.seuil_max_itemitembox != null)
+        if (itemBoxDto.seuil_max_item_item_box != null)
         {
-            if (itemBoxDto.seuil_max_itemitembox < 0)
+            if (itemBoxDto.seuil_max_item_item_box < 0)
             {
                 throw new ArgumentException("Seuil max cannot be negative");
             }
-            itemBoxToUpdate.seuil_max_itemitembox = itemBoxDto.seuil_max_itemitembox.Value;
+            itemBoxToUpdate.seuil_max_item_item_box = itemBoxDto.seuil_max_item_item_box.Value;
         }
         await _context.SaveChangesAsync();
         return new ReadItemBoxDto
         {
             id_box = itemBoxToUpdate.id_box,
             id_item = itemBoxToUpdate.id_item,
-            qte_itembox = itemBoxToUpdate.qte_itembox,
-            seuil_max_itemitembox = itemBoxToUpdate.seuil_max_itemitembox
+            qte_item_box = itemBoxToUpdate.qte_item_box,
+            seuil_max_item_item_box = itemBoxToUpdate.seuil_max_item_item_box
         };
     }
 
@@ -152,5 +152,13 @@ public class ItemBoxService : IItemBoxService
         var itemBoxToDelete = await _context.ItemsBoxs.FindAsync(boxId, itemId) ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
         _context.ItemsBoxs.Remove(itemBoxToDelete);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task CheckIfStoreExists(int storeId)
+    {
+        if (!await _context.Stores.AnyAsync(store => store.id_store == storeId))
+        {
+            throw new KeyNotFoundException($"Store with id {storeId} not found");
+        }
     }
 }

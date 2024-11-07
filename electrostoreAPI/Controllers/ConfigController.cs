@@ -11,13 +11,11 @@ namespace electrostore.Controllers
     [Route("api/config")]
     public class ConfigController : ControllerBase
     {
-        private readonly JwtService _jwtService;
         private readonly IConfiguration _configuration;
         private readonly IMqttClient _mqttClient;
 
-        public ConfigController(JwtService jwtService, IConfiguration configuration, IMqttClient mqttClient)
+        public ConfigController(IConfiguration configuration, IMqttClient mqttClient)
         {
-            _jwtService = jwtService;
             _configuration = configuration;
             _mqttClient = mqttClient;
         }
