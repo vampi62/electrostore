@@ -16,9 +16,8 @@ public class CommandsCommentaires
     [ForeignKey("id_command")]
     public Commands Command { get; set; }
 
-    public string contenu_commandcommentaire { get; set; }
-    public DateTime date_commandcommentaire { get; set; }
-    public DateTime date_modif_commandcommentaire { get; set; }
-    public ICollection<Commands> Commands { get; set; } = new List<Commands>();
+    public string contenu_command_commentaire { get; set; }
+    public DateTime date_command_commentaire { get; set; }
+    public DateTime date_modif_command_commentaire { get; set; }
 
 }

@@ -210,7 +210,6 @@ public class IAService : IIAService
                 id_item = item.id_item,
                 nom_item = item.nom_item,
                 seuil_min_item = item.seuil_min_item,
-                datasheet_item = item.datasheet_item,
                 description_item = item.description_item,
                 id_img = item.id_img
             };

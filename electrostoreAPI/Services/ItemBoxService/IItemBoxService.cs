@@ -16,4 +16,6 @@ public interface IItemBoxService
     public Task<ReadItemBoxDto> UpdateItemBox(int itemId, int boxId, UpdateItemBoxDto itemBoxDto);
 
     public Task DeleteItemBox(int itemId, int boxId);
+
+    public Task CheckIfStoreExists(int storeId);
 }

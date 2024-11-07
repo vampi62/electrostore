@@ -165,12 +165,12 @@ public class ImgService : IImgService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<GetImageFileResult> GetImageFile(string url)
+    public async Task<GetFileResult> GetImageFile(string url)
     {
         var pathImg = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", url);
         if (!File.Exists(pathImg))
         {
-            return new GetImageFileResult
+            return new GetFileResult
             {
                 Success = false,
                 ErrorMessage = "File not found",
@@ -188,7 +188,7 @@ public class ImgService : IImgService
                 ".bmp" => "image/bmp",
                 _ => "application/octet-stream"
             };
-            return await Task.FromResult(new GetImageFileResult
+            return await Task.FromResult(new GetFileResult
             {
                 Success = true,
                 FilePath = pathImg,

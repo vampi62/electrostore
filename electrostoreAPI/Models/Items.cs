@@ -15,7 +15,6 @@ public class Items
 
     public string nom_item { get; set; }
     public int seuil_min_item { get; set; }
-    public string datasheet_item { get; set; }
     public string description_item { get; set; }
     public ICollection<ItemsBoxs> ItemsBoxs { get; set; } = new List<ItemsBoxs>();
 }

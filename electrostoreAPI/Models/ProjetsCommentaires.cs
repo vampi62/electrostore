@@ -6,7 +6,7 @@ namespace electrostore.Models;
 public class ProjetsCommentaires
 {
     [Key]
-    public int id_projetcommentaire { get; set; }
+    public int id_projet_commentaire { get; set; }
     
     public int? id_user { get; set; }
     [ForeignKey("id_user")]
@@ -16,8 +16,7 @@ public class ProjetsCommentaires
     [ForeignKey("id_projet")]
     public Projets Projet { get; set; }
 
-    public string contenu_projetcommentaire { get; set; }
-    public DateTime date_projetcommentaire { get; set; }
-    public DateTime date_modif_projetcommentaire { get; set; }
-    public ICollection<Projets> Projets { get; set; } = new List<Projets>();
+    public string contenu_projet_commentaire { get; set; }
+    public DateTime date_projet_commentaire { get; set; }
+    public DateTime date_modif_projet_commentaire { get; set; }
 }

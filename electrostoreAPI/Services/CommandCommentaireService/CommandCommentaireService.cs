@@ -30,9 +30,9 @@ public class CommandCommentaireService : ICommandCommentaireService
                 id_commandcommentaire = c.id_commandcommentaire,
                 id_command = c.id_command,
                 id_user = c.id_user,
-                contenu_commandcommentaire = c.contenu_commandcommentaire,
-                date_commandcommentaire = c.date_commandcommentaire,
-                date_modif_commandcommentaire = c.date_modif_commandcommentaire,
+                contenu_command_commentaire = c.contenu_command_commentaire,
+                date_command_commentaire = c.date_command_commentaire,
+                date_modif_command_commentaire = c.date_modif_command_commentaire,
                 command = new ReadCommandDto
                 {
                     id_command = c.Command.id_command,
@@ -62,9 +62,9 @@ public class CommandCommentaireService : ICommandCommentaireService
                 id_commandcommentaire = c.id_commandcommentaire,
                 id_command = c.id_command,
                 id_user = c.id_user,
-                contenu_commandcommentaire = c.contenu_commandcommentaire,
-                date_commandcommentaire = c.date_commandcommentaire,
-                date_modif_commandcommentaire = c.date_modif_commandcommentaire,
+                contenu_command_commentaire = c.contenu_command_commentaire,
+                date_command_commentaire = c.date_command_commentaire,
+                date_modif_command_commentaire = c.date_modif_command_commentaire,
                 user_name = c.User.nom_user + " " + c.User.prenom_user
             })
             .ToListAsync();
@@ -83,9 +83,9 @@ public class CommandCommentaireService : ICommandCommentaireService
             id_commandcommentaire = commentaire.id_commandcommentaire,
             id_command = commentaire.id_command,
             id_user = commentaire.id_user,
-            contenu_commandcommentaire = commentaire.contenu_commandcommentaire,
-            date_commandcommentaire = commentaire.date_commandcommentaire,
-            date_modif_commandcommentaire = commentaire.date_modif_commandcommentaire,
+            contenu_command_commentaire = commentaire.contenu_command_commentaire,
+            date_command_commentaire = commentaire.date_command_commentaire,
+            date_modif_command_commentaire = commentaire.date_modif_command_commentaire,
             user_name = commentaire.User.nom_user + " " + commentaire.User.prenom_user
         };
     }
@@ -106,9 +106,9 @@ public class CommandCommentaireService : ICommandCommentaireService
         {
             id_command = commentaireDto.id_command,
             id_user = commentaireDto.id_user,
-            contenu_commandcommentaire = commentaireDto.contenu_commandcommentaire,
-            date_commandcommentaire = DateTime.Now,
-            date_modif_commandcommentaire = DateTime.Now
+            contenu_command_commentaire = commentaireDto.contenu_command_commentaire,
+            date_command_commentaire = DateTime.Now,
+            date_modif_command_commentaire = DateTime.Now
         };
         _context.CommandsCommentaires.Add(newCommentaire);
         await _context.SaveChangesAsync();
@@ -117,9 +117,9 @@ public class CommandCommentaireService : ICommandCommentaireService
             id_commandcommentaire = newCommentaire.id_commandcommentaire,
             id_command = newCommentaire.id_command,
             id_user = newCommentaire.id_user,
-            contenu_commandcommentaire = newCommentaire.contenu_commandcommentaire,
-            date_commandcommentaire = newCommentaire.date_commandcommentaire,
-            date_modif_commandcommentaire = newCommentaire.date_modif_commandcommentaire,
+            contenu_command_commentaire = newCommentaire.contenu_command_commentaire,
+            date_command_commentaire = newCommentaire.date_command_commentaire,
+            date_modif_command_commentaire = newCommentaire.date_modif_command_commentaire,
             user_name = newCommentaire.User.nom_user + " " + newCommentaire.User.prenom_user
         };
     }
@@ -131,20 +131,20 @@ public class CommandCommentaireService : ICommandCommentaireService
         {
             throw new KeyNotFoundException($"Commentaire with id {id} not found");
         }
-        if (commentaireDto.contenu_commandcommentaire != null)
+        if (commentaireDto.contenu_command_commentaire != null)
         {
-            commentaireToUpdate.contenu_commandcommentaire = commentaireDto.contenu_commandcommentaire;
+            commentaireToUpdate.contenu_command_commentaire = commentaireDto.contenu_command_commentaire;
         }
-        commentaireToUpdate.date_modif_commandcommentaire = DateTime.Now;
+        commentaireToUpdate.date_modif_command_commentaire = DateTime.Now;
         await _context.SaveChangesAsync();
         return new ReadCommandCommentaireDto
         {
             id_commandcommentaire = commentaireToUpdate.id_commandcommentaire,
             id_command = commentaireToUpdate.id_command,
             id_user = commentaireToUpdate.id_user,
-            contenu_commandcommentaire = commentaireToUpdate.contenu_commandcommentaire,
-            date_commandcommentaire = commentaireToUpdate.date_commandcommentaire,
-            date_modif_commandcommentaire = commentaireToUpdate.date_modif_commandcommentaire,
+            contenu_command_commentaire = commentaireToUpdate.contenu_command_commentaire,
+            date_command_commentaire = commentaireToUpdate.date_command_commentaire,
+            date_modif_command_commentaire = commentaireToUpdate.date_modif_command_commentaire,
             user_name = commentaireToUpdate.User.nom_user + " " + commentaireToUpdate.User.prenom_user
         };
     }

@@ -41,8 +41,8 @@ namespace electrostore.Controllers
             {
                 id_item = id_item,
                 id_command = id_command,
-                qte_commanditem = commandItemDto.qte_commanditem,
-                prix_commanditem = commandItemDto.prix_commanditem
+                qte_command_item = commandItemDto.qte_command_item,
+                prix_command_item = commandItemDto.prix_command_item
             };
             var commandItem = await _commandItemService.CreateCommandItem(commandItemDtoFull);
             return CreatedAtAction(nameof(GetCommandItemById), new { id_command = commandItem.id_command, id_item = commandItem.id_item }, commandItem);

@@ -27,880 +27,6 @@
     "http"
   ],
   "paths": {
-    "/api/box": {
-      "get": {
-        "tags": [
-          "Box"
-        ],
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 100
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadBoxDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadBoxDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadBoxDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Box"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateBoxDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateBoxDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateBoxDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/box/{id_box}": {
-      "get": {
-        "tags": [
-          "Box"
-        ],
-        "parameters": [
-          {
-            "name": "id_box",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Box"
-        ],
-        "parameters": [
-          {
-            "name": "id_box",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateBoxDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateBoxDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateBoxDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Box"
-        ],
-        "parameters": [
-          {
-            "name": "id_box",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/box/{id_box}/show": {
-      "post": {
-        "tags": [
-          "Box"
-        ],
-        "parameters": [
-          {
-            "name": "id_box",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "red",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "green",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "blue",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "timeshow",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "animation",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/box/{id_box}/item": {
-      "get": {
-        "tags": [
-          "BoxItem"
-        ],
-        "parameters": [
-          {
-            "name": "id_box",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 100
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadItemBoxDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadItemBoxDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadItemBoxDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/box/{id_box}/item/{id_item}": {
-      "get": {
-        "tags": [
-          "BoxItem"
-        ],
-        "parameters": [
-          {
-            "name": "id_box",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "id_item",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadItemBoxDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadItemBoxDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadItemBoxDto"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "BoxItem"
-        ],
-        "parameters": [
-          {
-            "name": "id_box",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "id_item",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateItemBoxByBoxDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateItemBoxByBoxDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateItemBoxByBoxDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadItemBoxDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadItemBoxDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadItemBoxDto"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "BoxItem"
-        ],
-        "parameters": [
-          {
-            "name": "id_box",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "id_item",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateItemBoxDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateItemBoxDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateItemBoxDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadItemBoxDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadItemBoxDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadItemBoxDto"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "BoxItem"
-        ],
-        "parameters": [
-          {
-            "name": "id_box",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "id_item",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/box/{id_box}/tag": {
-      "get": {
-        "tags": [
-          "BoxTag"
-        ],
-        "parameters": [
-          {
-            "name": "id_box",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 100
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadBoxTagDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadBoxTagDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadBoxTagDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "BoxTag"
-        ],
-        "parameters": [
-          {
-            "name": "id_box",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              }
-            },
-            "text/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxTagDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxTagDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxTagDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/box/{id_box}/tag/{id_tag}": {
-      "get": {
-        "tags": [
-          "BoxTag"
-        ],
-        "parameters": [
-          {
-            "name": "id_box",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "id_tag",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxTagDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxTagDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxTagDto"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "BoxTag"
-        ],
-        "parameters": [
-          {
-            "name": "id_box",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "id_tag",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxTagDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxTagDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxTagDto"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "BoxTag"
-        ],
-        "parameters": [
-          {
-            "name": "id_box",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "id_tag",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
     "/api/camera": {
       "get": {
         "tags": [
@@ -1632,6 +758,350 @@
         }
       }
     },
+    "/api/command/{id_command}/document": {
+      "get": {
+        "tags": [
+          "CommandDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_command",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadCommandDocumentDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadCommandDocumentDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadCommandDocumentDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CommandDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_command",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "document",
+                  "name_command_document",
+                  "type_command_document"
+                ],
+                "type": "object",
+                "properties": {
+                  "name_command_document": {
+                    "type": "string"
+                  },
+                  "type_command_document": {
+                    "type": "string"
+                  },
+                  "document": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "name_command_document": {
+                  "style": "form"
+                },
+                "type_command_document": {
+                  "style": "form"
+                },
+                "document": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCommandDocumentDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCommandDocumentDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCommandDocumentDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/command/{id_command}/document/{id_commandDocument}": {
+      "get": {
+        "tags": [
+          "CommandDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_commandDocument",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_command",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCommandDocumentDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCommandDocumentDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCommandDocumentDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "CommandDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_commandDocument",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_command",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name_command_document": {
+                    "type": "string"
+                  },
+                  "type_command_document": {
+                    "type": "string"
+                  },
+                  "document": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "name_command_document": {
+                  "style": "form"
+                },
+                "type_command_document": {
+                  "style": "form"
+                },
+                "document": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCommandDocumentDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCommandDocumentDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCommandDocumentDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "CommandDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_commandDocument",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_command",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/command/{id_command}/document/{id_commandDocument}/download": {
+      "get": {
+        "tags": [
+          "CommandDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_commandDocument",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_command",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/command/{id_command}/item": {
       "get": {
         "tags": [
@@ -2299,300 +1769,6 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReadItemDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/img": {
-      "get": {
-        "tags": [
-          "Img"
-        ],
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 100
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadImgDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadImgDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadImgDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Img"
-        ],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "required": [
-                  "description_img",
-                  "id_item",
-                  "img_file",
-                  "nom_img"
-                ],
-                "type": "object",
-                "properties": {
-                  "nom_img": {
-                    "type": "string"
-                  },
-                  "description_img": {
-                    "type": "string"
-                  },
-                  "id_item": {
-                    "type": "integer",
-                    "format": "int32"
-                  },
-                  "img_file": {
-                    "type": "string",
-                    "format": "binary"
-                  }
-                }
-              },
-              "encoding": {
-                "nom_img": {
-                  "style": "form"
-                },
-                "description_img": {
-                  "style": "form"
-                },
-                "id_item": {
-                  "style": "form"
-                },
-                "img_file": {
-                  "style": "form"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadImgDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadImgDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadImgDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/img/{id_img}": {
-      "get": {
-        "tags": [
-          "Img"
-        ],
-        "parameters": [
-          {
-            "name": "id_img",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadImgDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadImgDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadImgDto"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Img"
-        ],
-        "parameters": [
-          {
-            "name": "id_img",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateImgDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateImgDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateImgDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadImgDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadImgDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadImgDto"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Img"
-        ],
-        "parameters": [
-          {
-            "name": "id_img",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/img/{id_img}/show": {
-      "get": {
-        "tags": [
-          "Img"
-        ],
-        "parameters": [
-          {
-            "name": "id_img",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadImgDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadImgDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadImgDto"
                 }
               }
             }
@@ -3405,6 +2581,350 @@
         }
       }
     },
+    "/api/item/{id_item}/document": {
+      "get": {
+        "tags": [
+          "ItemDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_item",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadItemDocumentDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadItemDocumentDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadItemDocumentDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ItemDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_item",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "document",
+                  "name_item_document",
+                  "type_item_document"
+                ],
+                "type": "object",
+                "properties": {
+                  "name_item_document": {
+                    "type": "string"
+                  },
+                  "type_item_document": {
+                    "type": "string"
+                  },
+                  "document": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "name_item_document": {
+                  "style": "form"
+                },
+                "type_item_document": {
+                  "style": "form"
+                },
+                "document": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemDocumentDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemDocumentDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemDocumentDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/item/{id_item}/document/{id_itemDocument}": {
+      "get": {
+        "tags": [
+          "ItemDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_itemDocument",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_item",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemDocumentDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemDocumentDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemDocumentDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ItemDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_itemDocument",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_item",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name_item_document": {
+                    "type": "string"
+                  },
+                  "type_item_document": {
+                    "type": "string"
+                  },
+                  "document": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "name_item_document": {
+                  "style": "form"
+                },
+                "type_item_document": {
+                  "style": "form"
+                },
+                "document": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemDocumentDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemDocumentDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemDocumentDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ItemDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_itemDocument",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_item",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/item/{id_item}/document/{id_itemDocument}/download": {
+      "get": {
+        "tags": [
+          "ItemDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_itemDocument",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_item",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/item/{id_item}/img": {
       "get": {
         "tags": [
@@ -3698,6 +3218,57 @@
         "responses": {
           "200": {
             "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/item/{id_item}/img/{id_img}/show": {
+      "get": {
+        "tags": [
+          "ItemImg"
+        ],
+        "parameters": [
+          {
+            "name": "id_img",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_item",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadImgDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadImgDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadImgDto"
+                }
+              }
+            }
           }
         }
       }
@@ -4263,319 +3834,6 @@
         }
       }
     },
-    "/api/led": {
-      "get": {
-        "tags": [
-          "Led"
-        ],
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 100
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadLedDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadLedDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadLedDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Led"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateLedDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateLedDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateLedDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadLedDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadLedDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadLedDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/led/{id_led}": {
-      "get": {
-        "tags": [
-          "Led"
-        ],
-        "parameters": [
-          {
-            "name": "id_led",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadLedDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadLedDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadLedDto"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Led"
-        ],
-        "parameters": [
-          {
-            "name": "id_led",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateLedDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateLedDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateLedDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadLedDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadLedDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadLedDto"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Led"
-        ],
-        "parameters": [
-          {
-            "name": "id_led",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/led/{id_led}/show": {
-      "post": {
-        "tags": [
-          "Led"
-        ],
-        "parameters": [
-          {
-            "name": "id_led",
-            "in": "path",
-            "required": true,
-            "style": "simple",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "red",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "green",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "blue",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "timeshow",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "animation",
-            "in": "query",
-            "style": "form",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/projet": {
       "get": {
         "tags": [
@@ -4931,7 +4189,7 @@
         }
       }
     },
-    "/api/projet/{id_projet}/commentaire/{id_projetcommentaire}": {
+    "/api/projet/{id_projet}/commentaire/{id_projet_commentaire}": {
       "get": {
         "tags": [
           "ProjetCommentaire"
@@ -4948,7 +4206,7 @@
             }
           },
           {
-            "name": "id_projetcommentaire",
+            "name": "id_projet_commentaire",
             "in": "path",
             "required": true,
             "style": "simple",
@@ -4997,7 +4255,7 @@
             }
           },
           {
-            "name": "id_projetcommentaire",
+            "name": "id_projet_commentaire",
             "in": "path",
             "required": true,
             "style": "simple",
@@ -5065,7 +4323,360 @@
             }
           },
           {
-            "name": "id_projetcommentaire",
+            "name": "id_projet_commentaire",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/projet/{id_projet}/document": {
+      "get": {
+        "tags": [
+          "ProjetDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_projet",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadProjetDocumentDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadProjetDocumentDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadProjetDocumentDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ProjetDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_projet",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "document",
+                  "name_projet_document",
+                  "type_projet_document"
+                ],
+                "type": "object",
+                "properties": {
+                  "name_projet_document": {
+                    "type": "string"
+                  },
+                  "type_projet_document": {
+                    "type": "string"
+                  },
+                  "document": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "name_projet_document": {
+                  "style": "form"
+                },
+                "type_projet_document": {
+                  "style": "form"
+                },
+                "document": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadProjetDocumentDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadProjetDocumentDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadProjetDocumentDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projet/{id_projet}/document/{id_projetDocument}": {
+      "get": {
+        "tags": [
+          "ProjetDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_projetDocument",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_projet",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadProjetDocumentDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadProjetDocumentDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadProjetDocumentDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ProjetDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_projetDocument",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_project",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_projet",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name_projet_document": {
+                    "type": "string"
+                  },
+                  "type_projet_document": {
+                    "type": "string"
+                  },
+                  "document": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "name_projet_document": {
+                  "style": "form"
+                },
+                "type_projet_document": {
+                  "style": "form"
+                },
+                "document": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadProjetDocumentDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadProjetDocumentDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadProjetDocumentDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ProjetDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_projetDocument",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_projet",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/projet/{id_projet}/document/{id_projetDocument}/download": {
+      "get": {
+        "tags": [
+          "ProjetDocument"
+        ],
+        "parameters": [
+          {
+            "name": "id_projetDocument",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_projet",
             "in": "path",
             "required": true,
             "style": "simple",
@@ -5630,6 +5241,763 @@
         }
       }
     },
+    "/api/store/{id_store}/box/{id_box}/show": {
+      "post": {
+        "tags": [
+          "StoreBox"
+        ],
+        "parameters": [
+          {
+            "name": "id_store",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_box",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "red",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "green",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "blue",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "timeshow",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "animation",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBoxDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBoxDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBoxDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/{id_store}/box/{id_box}/item": {
+      "get": {
+        "tags": [
+          "StoreBoxItem"
+        ],
+        "parameters": [
+          {
+            "name": "id_store",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_box",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadItemBoxDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadItemBoxDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadItemBoxDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/{id_store}/box/{id_box}/item/{id_item}": {
+      "get": {
+        "tags": [
+          "StoreBoxItem"
+        ],
+        "parameters": [
+          {
+            "name": "id_store",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_box",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_item",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemBoxDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemBoxDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemBoxDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "StoreBoxItem"
+        ],
+        "parameters": [
+          {
+            "name": "id_store",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_box",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_item",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateItemBoxByBoxDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateItemBoxByBoxDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateItemBoxByBoxDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemBoxDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemBoxDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemBoxDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "StoreBoxItem"
+        ],
+        "parameters": [
+          {
+            "name": "id_store",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_box",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_item",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemBoxDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemBoxDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemBoxDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemBoxDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemBoxDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadItemBoxDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "StoreBoxItem"
+        ],
+        "parameters": [
+          {
+            "name": "id_store",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_box",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_item",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/store/{id_store}/box/{id_box}/tag": {
+      "get": {
+        "tags": [
+          "StoreBoxTag"
+        ],
+        "parameters": [
+          {
+            "name": "id_store",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_box",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadBoxTagDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadBoxTagDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadBoxTagDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "StoreBoxTag"
+        ],
+        "parameters": [
+          {
+            "name": "id_store",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_box",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBoxTagDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBoxTagDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBoxTagDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/{id_store}/box/{id_box}/tag/{id_tag}": {
+      "get": {
+        "tags": [
+          "StoreBoxTag"
+        ],
+        "parameters": [
+          {
+            "name": "id_store",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_box",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_tag",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBoxTagDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBoxTagDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBoxTagDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "StoreBoxTag"
+        ],
+        "parameters": [
+          {
+            "name": "id_store",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_box",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_tag",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBoxTagDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBoxTagDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBoxTagDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "StoreBoxTag"
+        ],
+        "parameters": [
+          {
+            "name": "id_store",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_box",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_tag",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/store/{id_store}/led": {
       "get": {
         "tags": [
@@ -5905,6 +6273,102 @@
         "responses": {
           "200": {
             "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/store/{id_store}/led/{id_led}/show": {
+      "post": {
+        "tags": [
+          "StoreLed"
+        ],
+        "parameters": [
+          {
+            "name": "id_store",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_led",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "red",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "green",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "blue",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "timeshow",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "animation",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBoxDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBoxDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBoxDto"
+                }
+              }
+            }
           }
         }
       }
@@ -7704,7 +8168,53 @@
         },
         "responses": {
           "200": {
-            "description": "Success"
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/refresh-token": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -7992,10 +8502,10 @@
         }
       }
     },
-    "/api/user/{id_user}/projetcommentaire": {
+    "/api/user/{id_user}/projet_commentaire": {
       "get": {
         "tags": [
-          "UserProjet"
+          "UserProjetCommentaire"
         ],
         "parameters": [
           {
@@ -8062,10 +8572,10 @@
         }
       }
     },
-    "/api/user/{id_user}/projetcommentaire/{id_projetcommentaire}": {
+    "/api/user/{id_user}/projet_commentaire/{id_projet_commentaire}": {
       "get": {
         "tags": [
-          "UserProjet"
+          "UserProjetCommentaire"
         ],
         "parameters": [
           {
@@ -8079,7 +8589,7 @@
             }
           },
           {
-            "name": "id_projetcommentaire",
+            "name": "id_projet_commentaire",
             "in": "path",
             "required": true,
             "style": "simple",
@@ -8114,7 +8624,7 @@
       },
       "put": {
         "tags": [
-          "UserProjet"
+          "UserProjetCommentaire"
         ],
         "parameters": [
           {
@@ -8128,7 +8638,7 @@
             }
           },
           {
-            "name": "id_projetcommentaire",
+            "name": "id_projet_commentaire",
             "in": "path",
             "required": true,
             "style": "simple",
@@ -8182,7 +8692,7 @@
       },
       "delete": {
         "tags": [
-          "UserProjet"
+          "UserProjetCommentaire"
         ],
         "parameters": [
           {
@@ -8196,7 +8706,7 @@
             }
           },
           {
-            "name": "id_projetcommentaire",
+            "name": "id_projet_commentaire",
             "in": "path",
             "required": true,
             "style": "simple",
@@ -8244,39 +8754,6 @@
         },
         "additionalProperties": false
       },
-      "CreateBoxDto": {
-        "required": [
-          "id_store",
-          "xend_box",
-          "xstart_box",
-          "yend_box",
-          "ystart_box"
-        ],
-        "type": "object",
-        "properties": {
-          "xstart_box": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "ystart_box": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "xend_box": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "yend_box": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "id_store": {
-            "type": "integer",
-            "format": "int32"
-          }
-        },
-        "additionalProperties": false
-      },
       "CreateCameraDto": {
         "required": [
           "nom_camera",
@@ -8305,11 +8782,11 @@
       },
       "CreateCommandCommentaireByCommandDto": {
         "required": [
-          "contenu_commandcommentaire"
+          "contenu_command_commentaire"
         ],
         "type": "object",
         "properties": {
-          "contenu_commandcommentaire": {
+          "contenu_command_commentaire": {
             "minLength": 1,
             "type": "string"
           }
@@ -8351,16 +8828,16 @@
       },
       "CreateCommandItemByCommandDto": {
         "required": [
-          "prix_commanditem",
-          "qte_commanditem"
+          "prix_command_item",
+          "qte_command_item"
         ],
         "type": "object",
         "properties": {
-          "qte_commanditem": {
+          "qte_command_item": {
             "type": "integer",
             "format": "int32"
           },
-          "prix_commanditem": {
+          "prix_command_item": {
             "type": "number",
             "format": "float"
           }
@@ -8369,16 +8846,16 @@
       },
       "CreateCommandItemByItemDto": {
         "required": [
-          "prix_commanditem",
-          "qte_commanditem"
+          "prix_command_item",
+          "qte_command_item"
         ],
         "type": "object",
         "properties": {
-          "qte_commanditem": {
+          "qte_command_item": {
             "type": "integer",
             "format": "int32"
           },
-          "prix_commanditem": {
+          "prix_command_item": {
             "type": "number",
             "format": "float"
           }
@@ -8405,16 +8882,16 @@
       },
       "CreateItemBoxByBoxDto": {
         "required": [
-          "qte_itembox",
-          "seuil_max_itemitembox"
+          "qte_item_box",
+          "seuil_max_item_item_box"
         ],
         "type": "object",
         "properties": {
-          "qte_itembox": {
+          "qte_item_box": {
             "type": "integer",
             "format": "int32"
           },
-          "seuil_max_itemitembox": {
+          "seuil_max_item_item_box": {
             "type": "integer",
             "format": "int32"
           }
@@ -8423,16 +8900,16 @@
       },
       "CreateItemBoxByItemDto": {
         "required": [
-          "qte_itembox",
-          "seuil_max_itemitembox"
+          "qte_item_box",
+          "seuil_max_item_item_box"
         ],
         "type": "object",
         "properties": {
-          "qte_itembox": {
+          "qte_item_box": {
             "type": "integer",
             "format": "int32"
           },
-          "seuil_max_itemitembox": {
+          "seuil_max_item_item_box": {
             "type": "integer",
             "format": "int32"
           }
@@ -8441,7 +8918,6 @@
       },
       "CreateItemDto": {
         "required": [
-          "datasheet_item",
           "description_item",
           "nom_item",
           "seuil_min_item"
@@ -8455,10 +8931,6 @@
           "seuil_min_item": {
             "type": "integer",
             "format": "int32"
-          },
-          "datasheet_item": {
-            "minLength": 1,
-            "type": "string"
           },
           "description_item": {
             "minLength": 1,
@@ -8495,41 +8967,13 @@
         },
         "additionalProperties": false
       },
-      "CreateLedDto": {
-        "required": [
-          "id_store",
-          "mqtt_led_id",
-          "x_led",
-          "y_led"
-        ],
-        "type": "object",
-        "properties": {
-          "x_led": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "y_led": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "id_store": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "mqtt_led_id": {
-            "type": "integer",
-            "format": "int32"
-          }
-        },
-        "additionalProperties": false
-      },
       "CreateProjetCommentaireByProjetDto": {
         "required": [
-          "contenu_projetcommentaire"
+          "contenu_projet_commentaire"
         ],
         "type": "object",
         "properties": {
-          "contenu_projetcommentaire": {
+          "contenu_projet_commentaire": {
             "minLength": 1,
             "type": "string"
           }
@@ -8576,11 +9020,11 @@
       },
       "CreateProjetItemByItemDto": {
         "required": [
-          "qte_projetitem"
+          "qte_projet_item"
         ],
         "type": "object",
         "properties": {
-          "qte_projetitem": {
+          "qte_projet_item": {
             "type": "integer",
             "format": "int32"
           }
@@ -8589,11 +9033,11 @@
       },
       "CreateProjetItemByProjetDto": {
         "required": [
-          "qte_projetitem"
+          "qte_projet_item"
         ],
         "type": "object",
         "properties": {
-          "qte_projetitem": {
+          "qte_projet_item": {
             "type": "integer",
             "format": "int32"
           }
@@ -8710,6 +9154,31 @@
         },
         "additionalProperties": false
       },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "nullable": true
+          },
+          "expire_date_token": {
+            "type": "string",
+            "nullable": true
+          },
+          "refesh_token": {
+            "type": "string",
+            "nullable": true
+          },
+          "expire_date_refresh_token": {
+            "type": "string",
+            "nullable": true
+          },
+          "user": {
+            "$ref": "#/components/schemas/ReadUserDto"
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadBoxDto": {
         "type": "object",
         "properties": {
@@ -8770,15 +9239,15 @@
             "format": "int32",
             "nullable": true
           },
-          "contenu_commandcommentaire": {
+          "contenu_command_commentaire": {
             "type": "string",
             "nullable": true
           },
-          "date_commandcommentaire": {
+          "date_command_commentaire": {
             "type": "string",
             "format": "date-time"
           },
-          "date_modif_commandcommentaire": {
+          "date_modif_command_commentaire": {
             "type": "string",
             "format": "date-time"
           },
@@ -8788,6 +9257,40 @@
           },
           "command": {
             "$ref": "#/components/schemas/ReadCommandDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadCommandDocumentDto": {
+        "type": "object",
+        "properties": {
+          "id_command_document": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id_command": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "url_command_document": {
+            "type": "string",
+            "nullable": true
+          },
+          "name_command_document": {
+            "type": "string",
+            "nullable": true
+          },
+          "type_command_document": {
+            "type": "string",
+            "nullable": true
+          },
+          "size_command_document": {
+            "type": "number",
+            "format": "double"
+          },
+          "date_command_document": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -8834,11 +9337,11 @@
             "type": "integer",
             "format": "int32"
           },
-          "qte_commanditem": {
+          "qte_command_item": {
             "type": "integer",
             "format": "int32"
           },
-          "prix_commanditem": {
+          "prix_command_item": {
             "type": "number",
             "format": "float"
           },
@@ -8929,13 +9432,47 @@
             "type": "integer",
             "format": "int32"
           },
-          "qte_itembox": {
+          "qte_item_box": {
             "type": "integer",
             "format": "int32"
           },
-          "seuil_max_itemitembox": {
+          "seuil_max_item_item_box": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadItemDocumentDto": {
+        "type": "object",
+        "properties": {
+          "id_item_document": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id_item": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "url_item_document": {
+            "type": "string",
+            "nullable": true
+          },
+          "name_item_document": {
+            "type": "string",
+            "nullable": true
+          },
+          "type_item_document": {
+            "type": "string",
+            "nullable": true
+          },
+          "size_item_document": {
+            "type": "number",
+            "format": "double"
+          },
+          "date_item_document": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -8954,10 +9491,6 @@
           "seuil_min_item": {
             "type": "integer",
             "format": "int32"
-          },
-          "datasheet_item": {
-            "type": "string",
-            "nullable": true
           },
           "description_item": {
             "type": "string",
@@ -9021,7 +9554,7 @@
       "ReadProjetCommentaireDto": {
         "type": "object",
         "properties": {
-          "id_projetcommentaire": {
+          "id_projet_commentaire": {
             "type": "integer",
             "format": "int32"
           },
@@ -9034,15 +9567,15 @@
             "format": "int32",
             "nullable": true
           },
-          "contenu_projetcommentaire": {
+          "contenu_projet_commentaire": {
             "type": "string",
             "nullable": true
           },
-          "date_projetcommentaire": {
+          "date_projet_commentaire": {
             "type": "string",
             "format": "date-time"
           },
-          "date_modif_projetcommentaire": {
+          "date_modif_projet_commentaire": {
             "type": "string",
             "format": "date-time"
           },
@@ -9052,6 +9585,40 @@
           },
           "projet": {
             "$ref": "#/components/schemas/ReadProjetDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadProjetDocumentDto": {
+        "type": "object",
+        "properties": {
+          "id_projet_document": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id_projet": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "url_projet_document": {
+            "type": "string",
+            "nullable": true
+          },
+          "name_projet_document": {
+            "type": "string",
+            "nullable": true
+          },
+          "type_projet_document": {
+            "type": "string",
+            "nullable": true
+          },
+          "size_projet_document": {
+            "type": "number",
+            "format": "double"
+          },
+          "date_projet_document": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -9102,7 +9669,7 @@
             "type": "integer",
             "format": "int32"
           },
-          "qte_projetitem": {
+          "qte_projet_item": {
             "type": "integer",
             "format": "int32"
           },
@@ -9245,37 +9812,6 @@
         },
         "additionalProperties": false
       },
-      "UpdateBoxDto": {
-        "type": "object",
-        "properties": {
-          "xstart_box": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "ystart_box": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "xend_box": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "yend_box": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "new_id_store": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "UpdateCameraDto": {
         "type": "object",
         "properties": {
@@ -9301,7 +9837,7 @@
       "UpdateCommandCommentaireDto": {
         "type": "object",
         "properties": {
-          "contenu_commandcommentaire": {
+          "contenu_command_commentaire": {
             "type": "string",
             "nullable": true
           }
@@ -9340,12 +9876,12 @@
       "UpdateCommandItemDto": {
         "type": "object",
         "properties": {
-          "qte_commanditem": {
+          "qte_command_item": {
             "type": "integer",
             "format": "int32",
             "nullable": true
           },
-          "prix_commanditem": {
+          "prix_command_item": {
             "type": "number",
             "format": "float",
             "nullable": true
@@ -9389,12 +9925,12 @@
             "format": "int32",
             "nullable": true
           },
-          "qte_itembox": {
+          "qte_item_box": {
             "type": "integer",
             "format": "int32",
             "nullable": true
           },
-          "seuil_max_itemitembox": {
+          "seuil_max_item_item_box": {
             "type": "integer",
             "format": "int32",
             "nullable": true
@@ -9412,10 +9948,6 @@
           "seuil_min_item": {
             "type": "integer",
             "format": "int32",
-            "nullable": true
-          },
-          "datasheet_item": {
-            "type": "string",
             "nullable": true
           },
           "description_item": {
@@ -9451,36 +9983,10 @@
         },
         "additionalProperties": false
       },
-      "UpdateLedDto": {
-        "type": "object",
-        "properties": {
-          "x_led": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "y_led": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "new_id_store": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "mqtt_led_id": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "UpdateProjetCommentaireDto": {
         "type": "object",
         "properties": {
-          "contenu_projetcommentaire": {
+          "contenu_projet_commentaire": {
             "type": "string",
             "nullable": true
           }
@@ -9522,7 +10028,7 @@
       "UpdateProjetItemDto": {
         "type": "object",
         "properties": {
-          "qte_projetitem": {
+          "qte_projet_item": {
             "type": "integer",
             "format": "int32",
             "nullable": true

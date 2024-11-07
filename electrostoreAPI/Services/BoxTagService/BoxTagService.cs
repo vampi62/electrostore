@@ -177,4 +177,12 @@ public class BoxTagService : IBoxTagService
         _context.BoxsTags.Remove(boxTagToDelete);
         await _context.SaveChangesAsync();
     }
+
+    public async Task CheckIfStoreExists(int storeId)
+    {
+        if (!await _context.Stores.AnyAsync(store => store.id_store == storeId))
+        {
+            throw new KeyNotFoundException($"Store with id {storeId} not found");
+        }
+    }
 }

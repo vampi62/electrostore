@@ -17,5 +17,5 @@ public interface IImgService
 
     public Task DeleteImg(int id, int? itemId = null);
 
-    public Task<GetImageFileResult> GetImageFile(string url);
+    public Task<GetFileResult> GetImageFile(string url);
 }

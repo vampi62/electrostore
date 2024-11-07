@@ -14,15 +14,18 @@ public class ApplicationDbContext : DbContext
     public DbSet<electrostore.Models.Cameras> Cameras { get; set; }
     public DbSet<electrostore.Models.Commands> Commands { get; set; }
     public DbSet<electrostore.Models.CommandsCommentaires> CommandsCommentaires { get; set; }
+    public DbSet<electrostore.Models.CommandsDocuments> CommandsDocuments { get; set; }
     public DbSet<electrostore.Models.CommandsItems> CommandsItems { get; set; }
     public DbSet<electrostore.Models.IA> IA { get; set; }
     public DbSet<electrostore.Models.Imgs> Imgs { get; set; }
     public DbSet<electrostore.Models.Items> Items { get; set; }
     public DbSet<electrostore.Models.ItemsBoxs> ItemsBoxs { get; set; }
+    public DbSet<electrostore.Models.ItemsDocuments> ItemsDocuments { get; set; }
     public DbSet<electrostore.Models.ItemsTags> ItemsTags { get; set; }
     public DbSet<electrostore.Models.Leds> Leds { get; set; }
     public DbSet<electrostore.Models.Projets> Projets { get; set; }
     public DbSet<electrostore.Models.ProjetsCommentaires> ProjetsCommentaires { get; set; }
+    public DbSet<electrostore.Models.ProjetsDocuments> ProjetsDocuments { get; set; }
     public DbSet<electrostore.Models.ProjetsItems> ProjetsItems { get; set; }
     public DbSet<electrostore.Models.Stores> Stores { get; set; }
     public DbSet<electrostore.Models.StoresTags> StoresTags { get; set; }

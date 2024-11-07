@@ -13,6 +13,5 @@ public class ProjetsItems
     [ForeignKey("id_item")]
     public Items Item { get; set; }
 
-    public int qte_projetitem { get; set; }
-    public ICollection<Projets> Projets { get; set; } = new List<Projets>();
+    public int qte_projet_item { get; set; }
 }

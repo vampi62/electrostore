@@ -17,16 +17,19 @@ using electrostore.Services.BoxService;
 using electrostore.Services.BoxTagService;
 using electrostore.Services.CameraService;
 using electrostore.Services.CommandCommentaireService;
+using electrostore.Services.CommandDocumentService;
 using electrostore.Services.CommandItemService;
 using electrostore.Services.CommandService;
 //using electrostore.Services.IAImgService;
 using electrostore.Services.IAService;
 using electrostore.Services.ImgService;
 using electrostore.Services.ItemBoxService;
+using electrostore.Services.ItemDocumentService;
 using electrostore.Services.ItemService;
 using electrostore.Services.ItemTagService;
 using electrostore.Services.LedService;
 using electrostore.Services.ProjetCommentaireService;
+using electrostore.Services.ProjetDocumentService;
 using electrostore.Services.ProjetItemService;
 using electrostore.Services.ProjetService;
 using electrostore.Services.StoreService;
@@ -169,6 +172,18 @@ if (!Directory.Exists("wwwroot/models"))
 {
     Directory.CreateDirectory("wwwroot/models");
 }
+if (!Directory.Exists("wwwroot/projetDocuments"))
+{
+    Directory.CreateDirectory("wwwroot/projetDocuments");
+}
+if (!Directory.Exists("wwwroot/itemDocuments"))
+{
+    Directory.CreateDirectory("wwwroot/itemDocuments");
+}
+if (!Directory.Exists("wwwroot/commandDocuments"))
+{
+    Directory.CreateDirectory("wwwroot/commandDocuments");
+}
 
 app.UseCors("CorsPolicy");
 
@@ -188,16 +203,19 @@ void addScopes(WebApplicationBuilder builder)
     builder.Services.AddScoped<IBoxTagService, BoxTagService>();
     builder.Services.AddScoped<ICameraService, CameraService>();
     builder.Services.AddScoped<ICommandCommentaireService, CommandCommentaireService>();
+    builder.Services.AddScoped<ICommandDocumentService, CommandDocumentService>();
     builder.Services.AddScoped<ICommandItemService, CommandItemService>();
     builder.Services.AddScoped<ICommandService, CommandService>();
     //builder.Services.AddScoped<IIAImgService, IAImgService>();
     builder.Services.AddScoped<IIAService, IAService>();
     builder.Services.AddScoped<IImgService, ImgService>();
     builder.Services.AddScoped<IItemBoxService, ItemBoxService>();
+    builder.Services.AddScoped<IItemDocumentService, ItemDocumentService>();
     builder.Services.AddScoped<IItemService, ItemService>();
     builder.Services.AddScoped<IItemTagService, ItemTagService>();
     builder.Services.AddScoped<ILedService, LedService>();
     builder.Services.AddScoped<IProjetCommentaireService, ProjetCommentaireService>();
+    builder.Services.AddScoped<IProjetDocumentService, ProjetDocumentService>();
     builder.Services.AddScoped<IProjetItemService, ProjetItemService>();
     builder.Services.AddScoped<IProjetService, ProjetService>();
     builder.Services.AddScoped<IStoreService, StoreService>();

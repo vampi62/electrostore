@@ -13,6 +13,6 @@ public class ItemsBoxs
     [ForeignKey("id_item")]
     public Items Item { get; set; }
 
-    public int qte_itembox { get; set; }
-    public int seuil_max_itemitembox { get; set; }
+    public int qte_item_box { get; set; }
+    public int seuil_max_item_item_box { get; set; }
 }
