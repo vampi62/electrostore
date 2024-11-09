@@ -4,6 +4,7 @@ using electrostore.Dto;
 using electrostore.Services.UserService;
 using electrostore.Services.JwtService;
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace electrostore.Controllers
 {
@@ -63,6 +64,8 @@ namespace electrostore.Controllers
                 return Unauthorized(new { message = "You are not allowed to update this user" });
             }
             var user = await _userService.UpdateUser(id_user, userDto);
+            // invalidate all access token for this user
+            await _jwtService.InvalidateAllAccessTokenForUser(id_user);
             return Ok(user);
         }
 
@@ -75,6 +78,9 @@ namespace electrostore.Controllers
                 return Unauthorized(new { message = "You are not allowed to delete this user" });
             }
             await _userService.DeleteUser(id_user);
+            // invalidate all access token for this user
+            await _jwtService.InvalidateAllAccessTokenForUser(id_user);
+            await _jwtService.InvalidateAllRefreshTokenForUser(id_user);
             return NoContent();
         }
     
@@ -87,7 +93,8 @@ namespace electrostore.Controllers
                 return Unauthorized(new { message = "Invalid email or password" });
             }
             var user = await _userService.GetUserByEmail(loginRequest.Email);
-            var token = _jwtService.GenerateToken(user);
+            var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+            var token = await _jwtService.GenerateToken(user, clientIp ?? "");
             return Ok(new LoginResponse
             {
                 token = token.token,
@@ -103,7 +110,13 @@ namespace electrostore.Controllers
         public async Task<ActionResult<LoginResponse>> RefreshToken()
         {
             var user = await _userService.GetUserById(int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""));
-            var token = _jwtService.GenerateToken(user);
+            var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+            // if refresh token is revoked, return unauthorized
+            if (_jwtService.IsRevoked(User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value ?? "", "refresh"))
+            {
+                return Unauthorized(new { message = "Invalid refresh token" });
+            }
+            var token = await _jwtService.GenerateToken(user, clientIp ?? "");
             return Ok(new LoginResponse
             {
                 token = token.token,
@@ -126,7 +139,10 @@ namespace electrostore.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest resetPasswordRequest)
         {
-            await _userService.ResetPassword(resetPasswordRequest);
+            var user = await _userService.ResetPassword(resetPasswordRequest);
+            // invalidate all access token for this user
+            await _jwtService.InvalidateAllAccessTokenForUser(user.id_user);
+            await _jwtService.InvalidateAllRefreshTokenForUser(user.id_user);
             return Ok();
         }
     }

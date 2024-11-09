@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text;
-
+using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +11,7 @@ using MQTTnet.Client;
 
 using electrostore;
 
-using electrostore.Models;
+using electrostore.Dto;
 
 using electrostore.Services.BoxService;
 using electrostore.Services.BoxTagService;
@@ -40,6 +40,7 @@ using electrostore.Services.JwtService;
 using electrostore.Middleware;
 
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -133,6 +134,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = false,
             ValidateAudience = false
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                var jwtService = context.HttpContext.RequestServices.GetRequiredService<JwtService>();
+                if (context.SecurityToken is not JwtSecurityToken token)
+                {
+                    context.Fail("Token is invalid");
+                }
+                else
+                {
+                    if (jwtService.IsRevoked(token.Id, "access"))
+                    {
+                        context.Fail("Token is revoked");
+                    }
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 builder.Services.AddAuthorization(options =>
 {
@@ -185,6 +205,10 @@ if (!Directory.Exists("wwwroot/commandDocuments"))
     Directory.CreateDirectory("wwwroot/commandDocuments");
 }
 
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 app.UseCors("CorsPolicy");
 
 app.UseAuthentication();
@@ -222,5 +246,5 @@ void addScopes(WebApplicationBuilder builder)
     builder.Services.AddScoped<IStoreTagService, StoreTagService>();
     builder.Services.AddScoped<ITagService, TagService>();
     builder.Services.AddScoped<IUserService, UserService>();
-    builder.Services.AddSingleton<JwtService>();
+    builder.Services.AddScoped<JwtService>();
 }
