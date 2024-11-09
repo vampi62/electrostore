@@ -354,6 +354,76 @@ namespace electrostore.Migrations
                     b.ToTable("ItemsTags");
                 });
 
+            modelBuilder.Entity("electrostore.Models.JWIAccessToken", b =>
+                {
+                    b.Property<Guid>("id_jwi_access")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("created_by_ip")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("expires_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("id_user")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("is_revoked")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("revoked_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("revoked_by_ip")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("id_jwi_access");
+
+                    b.HasIndex("id_user");
+
+                    b.ToTable("JWIAccessToken");
+                });
+
+            modelBuilder.Entity("electrostore.Models.JWIRefreshToken", b =>
+                {
+                    b.Property<Guid>("id_jwi_refresh")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("created_by_ip")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("expires_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("id_user")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("is_revoked")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("revoked_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("revoked_by_ip")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("id_jwi_refresh");
+
+                    b.HasIndex("id_user");
+
+                    b.ToTable("JWIRefreshToken");
+                });
+
             modelBuilder.Entity("electrostore.Models.Leds", b =>
                 {
                     b.Property<int>("id_led")
@@ -629,7 +699,7 @@ namespace electrostore.Migrations
                         .IsRequired();
 
                     b.HasOne("electrostore.Models.Users", "User")
-                        .WithMany("CommandsCommentaires")
+                        .WithMany()
                         .HasForeignKey("id_user");
 
                     b.Navigation("Command");
@@ -736,6 +806,28 @@ namespace electrostore.Migrations
                     b.Navigation("Tag");
                 });
 
+            modelBuilder.Entity("electrostore.Models.JWIAccessToken", b =>
+                {
+                    b.HasOne("electrostore.Models.Users", "User")
+                        .WithMany()
+                        .HasForeignKey("id_user")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("electrostore.Models.JWIRefreshToken", b =>
+                {
+                    b.HasOne("electrostore.Models.Users", "User")
+                        .WithMany()
+                        .HasForeignKey("id_user")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("electrostore.Models.Leds", b =>
                 {
                     b.HasOne("electrostore.Models.Stores", "Store")
@@ -756,7 +848,7 @@ namespace electrostore.Migrations
                         .IsRequired();
 
                     b.HasOne("electrostore.Models.Users", "User")
-                        .WithMany("ProjetsCommentaires")
+                        .WithMany()
                         .HasForeignKey("id_user");
 
                     b.Navigation("Projet");
@@ -816,13 +908,6 @@ namespace electrostore.Migrations
             modelBuilder.Entity("electrostore.Models.Items", b =>
                 {
                     b.Navigation("ItemsBoxs");
-                });
-
-            modelBuilder.Entity("electrostore.Models.Users", b =>
-                {
-                    b.Navigation("CommandsCommentaires");
-
-                    b.Navigation("ProjetsCommentaires");
                 });
 #pragma warning restore 612, 618
         }

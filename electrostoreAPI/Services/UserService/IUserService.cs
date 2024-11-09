@@ -21,5 +21,5 @@ public interface IUserService
 
     public Task ForgotPassword(ForgotPasswordRequest request);
 
-    public Task ResetPassword(ResetPasswordRequest request);
+    public Task<ReadUserDto> ResetPassword(ResetPasswordRequest request);
 }

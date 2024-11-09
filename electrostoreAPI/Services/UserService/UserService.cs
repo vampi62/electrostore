@@ -234,7 +234,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task ResetPassword(ResetPasswordRequest resetPasswordRequest)
+    public async Task<ReadUserDto> ResetPassword(ResetPasswordRequest resetPasswordRequest)
     {
         //check if SMTP is Enabled
         if (_configuration["SMTP:Enable"] != "true")
@@ -255,5 +255,13 @@ public class UserService : IUserService
         user.reset_token = null;
         user.reset_token_expiration = null;
         await _context.SaveChangesAsync();
+        return new ReadUserDto
+        {
+            id_user = user.id_user,
+            nom_user = user.nom_user,
+            prenom_user = user.prenom_user,
+            email_user = user.email_user,
+            role_user = user.role_user
+        };
     }
 }

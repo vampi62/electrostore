@@ -41,7 +41,7 @@ namespace electrostore.Controllers
         [AllowAnonymous]
         public async Task<ActionResult> GetCameraStream([FromRoute] int id_camera, [FromQuery] string token)
         {
-            if (token == null || !_jwtService.ValidateToken(token) || !_jwtService.ValidateRole(token, "refresh"))
+            if (token == null || !_jwtService.ValidateToken(token, "access"))
             {
                 return Unauthorized();
             }
