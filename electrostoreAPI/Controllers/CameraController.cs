@@ -4,7 +4,7 @@ using electrostore.Dto;
 using electrostore.Services.CameraService;
 using System.Net.Http.Headers;
 using System.Text;
-using electrostore.Services.JwtService;
+using electrostore.Services.JwiService;
 
 namespace electrostore.Controllers
 {
@@ -13,12 +13,12 @@ namespace electrostore.Controllers
     public class CameraController : ControllerBase
     {
         private readonly ICameraService _cameraService;
-        private readonly JwtService _jwtService;
+        private readonly IJwiService _jwiService;
 
-        public CameraController(ICameraService cameraService, JwtService jwtService)
+        public CameraController(ICameraService cameraService, IJwiService jwiService)
         {
             _cameraService = cameraService;
-            _jwtService = jwtService;
+            _jwiService = jwiService;
         }
 
         [HttpGet]
@@ -41,7 +41,7 @@ namespace electrostore.Controllers
         [AllowAnonymous]
         public async Task<ActionResult> GetCameraStream([FromRoute] int id_camera, [FromQuery] string token)
         {
-            if (token == null || !_jwtService.ValidateToken(token, "access"))
+            if (token == null || !_jwiService.ValidateToken(token, "access"))
             {
                 return Unauthorized();
             }
