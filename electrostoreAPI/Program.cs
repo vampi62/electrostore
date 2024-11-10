@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Mvc;
@@ -27,6 +28,7 @@ using electrostore.Services.ItemBoxService;
 using electrostore.Services.ItemDocumentService;
 using electrostore.Services.ItemService;
 using electrostore.Services.ItemTagService;
+using electrostore.Services.JwiService;
 using electrostore.Services.LedService;
 using electrostore.Services.ProjetCommentaireService;
 using electrostore.Services.ProjetDocumentService;
@@ -138,14 +140,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             OnTokenValidated = context =>
             {
-                var jwtService = context.HttpContext.RequestServices.GetRequiredService<JwtService>();
+                var jwiService = context.HttpContext.RequestServices.GetRequiredService<IJwiService>();
                 if (context.SecurityToken is not JwtSecurityToken token)
                 {
                     context.Fail("Token is invalid");
                 }
                 else
                 {
-                    if (jwtService.IsRevoked(token.Id, "access"))
+                    var roleClaim = token.Claims.FirstOrDefault(x => x.Type == "role" && (x.Value == "access" || x.Value == "refresh"));
+                    if (roleClaim == null)
+                    {
+                        context.Fail("Token is invalid");
+                    }
+                    else if (jwiService.IsRevoked(token.Id, roleClaim.Value))
                     {
                         context.Fail("Token is revoked");
                     }
@@ -246,5 +253,6 @@ void addScopes(WebApplicationBuilder builder)
     builder.Services.AddScoped<IStoreTagService, StoreTagService>();
     builder.Services.AddScoped<ITagService, TagService>();
     builder.Services.AddScoped<IUserService, UserService>();
-    builder.Services.AddScoped<JwtService>();
+    builder.Services.AddScoped<IJwiService, JwiService>();
+    builder.Services.AddSingleton<JwtService>();
 }

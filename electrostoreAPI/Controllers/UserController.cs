@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.UserService;
 using electrostore.Services.JwtService;
+using electrostore.Services.JwiService;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 
@@ -15,11 +16,13 @@ namespace electrostore.Controllers
     {
         private readonly IUserService _userService;
         private readonly JwtService _jwtService;
+        private readonly IJwiService _jwiService;
 
-        public UserController(IUserService userService, JwtService jwtService)
+        public UserController(IUserService userService, JwtService jwtService, IJwiService jwiService)
         {
             _userService = userService;
             _jwtService = jwtService;
+            _jwiService = jwiService;
         }
 
         [HttpGet]
@@ -65,7 +68,7 @@ namespace electrostore.Controllers
             }
             var user = await _userService.UpdateUser(id_user, userDto);
             // invalidate all access token for this user
-            await _jwtService.InvalidateAllAccessTokenForUser(id_user);
+            await _jwiService.InvalidateAllAccessTokenByUser(id_user);
             return Ok(user);
         }
 
@@ -79,8 +82,8 @@ namespace electrostore.Controllers
             }
             await _userService.DeleteUser(id_user);
             // invalidate all access token for this user
-            await _jwtService.InvalidateAllAccessTokenForUser(id_user);
-            await _jwtService.InvalidateAllRefreshTokenForUser(id_user);
+            await _jwiService.InvalidateAllAccessTokenByUser(id_user);
+            await _jwiService.InvalidateAllRefreshTokenByUser(id_user);
             return NoContent();
         }
     
@@ -93,14 +96,17 @@ namespace electrostore.Controllers
                 return Unauthorized(new { message = "Invalid email or password" });
             }
             var user = await _userService.GetUserByEmail(loginRequest.Email);
-            var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-            var token = await _jwtService.GenerateToken(user, clientIp ?? "");
+            var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
+            var token = _jwtService.GenerateToken(user);
+
+            // save token in database
+            await _jwiService.SaveToken(token, user.id_user, clientIp);
             return Ok(new LoginResponse
             {
                 token = token.token,
-                expire_date_token = token.expire_date_token,
+                expire_date_token = token.expire_date_token.ToString("yyyy-MM-dd HH:mm:ss"),
                 refesh_token = token.refesh_token,
-                expire_date_refresh_token = token.expire_date_refresh_token,
+                expire_date_refresh_token = token.expire_date_refresh_token.ToString("yyyy-MM-dd HH:mm:ss"),
                 user = user
             });
         }
@@ -110,19 +116,16 @@ namespace electrostore.Controllers
         public async Task<ActionResult<LoginResponse>> RefreshToken()
         {
             var user = await _userService.GetUserById(int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""));
-            var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-            // if refresh token is revoked, return unauthorized
-            if (_jwtService.IsRevoked(User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value ?? "", "refresh"))
-            {
-                return Unauthorized(new { message = "Invalid refresh token" });
-            }
-            var token = await _jwtService.GenerateToken(user, clientIp ?? "");
+            var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
+            var token = _jwtService.GenerateToken(user);
+            // save token in database
+            await _jwiService.SaveToken(token, user.id_user, clientIp);
             return Ok(new LoginResponse
             {
                 token = token.token,
-                expire_date_token = token.expire_date_token,
+                expire_date_token = token.expire_date_token.ToString("yyyy-MM-dd HH:mm:ss"),
                 refesh_token = token.refesh_token,
-                expire_date_refresh_token = token.expire_date_refresh_token,
+                expire_date_refresh_token = token.expire_date_refresh_token.ToString("yyyy-MM-dd HH:mm:ss"),
                 user = user
             });
         }
@@ -141,8 +144,8 @@ namespace electrostore.Controllers
         {
             var user = await _userService.ResetPassword(resetPasswordRequest);
             // invalidate all access token for this user
-            await _jwtService.InvalidateAllAccessTokenForUser(user.id_user);
-            await _jwtService.InvalidateAllRefreshTokenForUser(user.id_user);
+            await _jwiService.InvalidateAllAccessTokenByUser(user.id_user);
+            await _jwiService.InvalidateAllRefreshTokenByUser(user.id_user);
             return Ok();
         }
     }

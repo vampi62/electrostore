@@ -405,6 +405,9 @@ namespace electrostore.Migrations
                     b.Property<DateTime>("expires_at")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<Guid>("id_jwi_access")
+                        .HasColumnType("char(36)");
+
                     b.Property<int>("id_user")
                         .HasColumnType("int");
 
@@ -418,6 +421,8 @@ namespace electrostore.Migrations
                         .HasColumnType("longtext");
 
                     b.HasKey("id_jwi_refresh");
+
+                    b.HasIndex("id_jwi_access");
 
                     b.HasIndex("id_user");
 
@@ -819,11 +824,19 @@ namespace electrostore.Migrations
 
             modelBuilder.Entity("electrostore.Models.JWIRefreshToken", b =>
                 {
+                    b.HasOne("electrostore.Models.JWIAccessToken", "JWIAccessToken")
+                        .WithMany()
+                        .HasForeignKey("id_jwi_access")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("electrostore.Models.Users", "User")
                         .WithMany()
                         .HasForeignKey("id_user")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("JWIAccessToken");
 
                     b.Navigation("User");
                 });

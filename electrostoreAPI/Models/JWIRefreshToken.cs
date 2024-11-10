@@ -19,4 +19,8 @@ public class JWIRefreshToken
     public int id_user { get; set; }
     [ForeignKey("id_user")]
     public Users User { get; set; }
+
+    public Guid id_jwi_access { get; set; }
+    [ForeignKey("id_jwi_access")]
+    public JWIAccessToken JWIAccessToken { get; set; }
 }
