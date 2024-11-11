@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace electrostore.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class initDB : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -160,6 +160,62 @@ namespace electrostore.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
+                name: "CommandsDocuments",
+                columns: table => new
+                {
+                    id_command_document = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    url_command_document = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    name_command_document = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    type_command_document = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    size_command_document = table.Column<decimal>(type: "decimal(65,30)", nullable: false),
+                    date_command_document = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    id_command = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CommandsDocuments", x => x.id_command_document);
+                    table.ForeignKey(
+                        name: "FK_CommandsDocuments_Commands_id_command",
+                        column: x => x.id_command,
+                        principalTable: "Commands",
+                        principalColumn: "id_command",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "ProjetsDocuments",
+                columns: table => new
+                {
+                    id_projet_document = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    url_projet_document = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    name_projet_document = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    type_projet_document = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    size_projet_document = table.Column<decimal>(type: "decimal(65,30)", nullable: false),
+                    date_projet_document = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    id_projet = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProjetsDocuments", x => x.id_projet_document);
+                    table.ForeignKey(
+                        name: "FK_ProjetsDocuments_Projets_id_projet",
+                        column: x => x.id_projet,
+                        principalTable: "Projets",
+                        principalColumn: "id_projet",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
                 name: "Boxs",
                 columns: table => new
                 {
@@ -239,10 +295,10 @@ namespace electrostore.Migrations
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     id_user = table.Column<int>(type: "int", nullable: true),
                     id_command = table.Column<int>(type: "int", nullable: false),
-                    contenu_commandcommentaire = table.Column<string>(type: "longtext", nullable: false)
+                    contenu_command_commentaire = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    date_commandcommentaire = table.Column<DateTime>(type: "datetime(6)", nullable: false),
-                    date_modif_projetcommentaire = table.Column<DateTime>(type: "datetime(6)", nullable: false)
+                    date_command_commentaire = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    date_modif_command_commentaire = table.Column<DateTime>(type: "datetime(6)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -262,21 +318,50 @@ namespace electrostore.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "ProjetsCommentaires",
+                name: "JWIAccessToken",
                 columns: table => new
                 {
-                    id_projetcommentaire = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    id_user = table.Column<int>(type: "int", nullable: true),
-                    id_projet = table.Column<int>(type: "int", nullable: false),
-                    contenu_projetcommentaire = table.Column<string>(type: "longtext", nullable: false)
+                    id_jwi_access = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    expires_at = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    is_revoked = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    created_at = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    created_by_ip = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    date_projetcommentaire = table.Column<DateTime>(type: "datetime(6)", nullable: false),
-                    date_modif_projetcommentaire = table.Column<DateTime>(type: "datetime(6)", nullable: false)
+                    revoked_at = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    revoked_by_ip = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    revoked_reason = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    id_user = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProjetsCommentaires", x => x.id_projetcommentaire);
+                    table.PrimaryKey("PK_JWIAccessToken", x => x.id_jwi_access);
+                    table.ForeignKey(
+                        name: "FK_JWIAccessToken_Users_id_user",
+                        column: x => x.id_user,
+                        principalTable: "Users",
+                        principalColumn: "id_user",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "ProjetsCommentaires",
+                columns: table => new
+                {
+                    id_projet_commentaire = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    id_user = table.Column<int>(type: "int", nullable: true),
+                    id_projet = table.Column<int>(type: "int", nullable: false),
+                    contenu_projet_commentaire = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    date_projet_commentaire = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    date_modif_projet_commentaire = table.Column<DateTime>(type: "datetime(6)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProjetsCommentaires", x => x.id_projet_commentaire);
                     table.ForeignKey(
                         name: "FK_ProjetsCommentaires_Projets_id_projet",
                         column: x => x.id_projet,
@@ -317,13 +402,49 @@ namespace electrostore.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
+                name: "JWIRefreshToken",
+                columns: table => new
+                {
+                    id_jwi_refresh = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    expires_at = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    is_revoked = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    created_at = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    created_by_ip = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    revoked_at = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    revoked_by_ip = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    revoked_reason = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    id_user = table.Column<int>(type: "int", nullable: false),
+                    id_jwi_access = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_JWIRefreshToken", x => x.id_jwi_refresh);
+                    table.ForeignKey(
+                        name: "FK_JWIRefreshToken_JWIAccessToken_id_jwi_access",
+                        column: x => x.id_jwi_access,
+                        principalTable: "JWIAccessToken",
+                        principalColumn: "id_jwi_access",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_JWIRefreshToken_Users_id_user",
+                        column: x => x.id_user,
+                        principalTable: "Users",
+                        principalColumn: "id_user",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
                 name: "CommandsItems",
                 columns: table => new
                 {
                     id_item = table.Column<int>(type: "int", nullable: false),
                     id_command = table.Column<int>(type: "int", nullable: false),
-                    qte_commanditem = table.Column<int>(type: "int", nullable: false),
-                    prix_commanditem = table.Column<float>(type: "float", nullable: false)
+                    qte_command_item = table.Column<int>(type: "int", nullable: false),
+                    prix_command_item = table.Column<float>(type: "float", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -333,25 +454,6 @@ namespace electrostore.Migrations
                         column: x => x.id_command,
                         principalTable: "Commands",
                         principalColumn: "id_command",
-                        onDelete: ReferentialAction.Cascade);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.CreateTable(
-                name: "IAImgs",
-                columns: table => new
-                {
-                    id_ia = table.Column<int>(type: "int", nullable: false),
-                    id_img = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_IAImgs", x => new { x.id_ia, x.id_img });
-                    table.ForeignKey(
-                        name: "FK_IAImgs_IA_id_ia",
-                        column: x => x.id_ia,
-                        principalTable: "IA",
-                        principalColumn: "id_ia",
                         onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
@@ -387,8 +489,6 @@ namespace electrostore.Migrations
                     nom_item = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     seuil_min_item = table.Column<int>(type: "int", nullable: false),
-                    datasheet_item = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
                     description_item = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
@@ -409,8 +509,8 @@ namespace electrostore.Migrations
                 {
                     id_box = table.Column<int>(type: "int", nullable: false),
                     id_item = table.Column<int>(type: "int", nullable: false),
-                    qte_itembox = table.Column<int>(type: "int", nullable: false),
-                    seuil_max_itemitembox = table.Column<int>(type: "int", nullable: false)
+                    qte_item_box = table.Column<int>(type: "int", nullable: false),
+                    seuil_max_item_item_box = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -423,6 +523,34 @@ namespace electrostore.Migrations
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_ItemsBoxs_Items_id_item",
+                        column: x => x.id_item,
+                        principalTable: "Items",
+                        principalColumn: "id_item",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "ItemsDocuments",
+                columns: table => new
+                {
+                    id_item_document = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    url_item_document = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    name_item_document = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    type_item_document = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    size_item_document = table.Column<decimal>(type: "decimal(65,30)", nullable: false),
+                    date_item_document = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    id_item = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ItemsDocuments", x => x.id_item_document);
+                    table.ForeignKey(
+                        name: "FK_ItemsDocuments_Items_id_item",
                         column: x => x.id_item,
                         principalTable: "Items",
                         principalColumn: "id_item",
@@ -461,7 +589,7 @@ namespace electrostore.Migrations
                 {
                     id_projet = table.Column<int>(type: "int", nullable: false),
                     id_item = table.Column<int>(type: "int", nullable: false),
-                    qte_projetitem = table.Column<int>(type: "int", nullable: false)
+                    qte_projet_item = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -502,14 +630,14 @@ namespace electrostore.Migrations
                 column: "id_user");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CommandsDocuments_id_command",
+                table: "CommandsDocuments",
+                column: "id_command");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CommandsItems_id_item",
                 table: "CommandsItems",
                 column: "id_item");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_IAImgs_id_img",
-                table: "IAImgs",
-                column: "id_img");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Imgs_id_item",
@@ -527,9 +655,29 @@ namespace electrostore.Migrations
                 column: "id_box");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ItemsDocuments_id_item",
+                table: "ItemsDocuments",
+                column: "id_item");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ItemsTags_id_tag",
                 table: "ItemsTags",
                 column: "id_tag");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JWIAccessToken_id_user",
+                table: "JWIAccessToken",
+                column: "id_user");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JWIRefreshToken_id_jwi_access",
+                table: "JWIRefreshToken",
+                column: "id_jwi_access");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JWIRefreshToken_id_user",
+                table: "JWIRefreshToken",
+                column: "id_user");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Leds_id_store",
@@ -547,6 +695,11 @@ namespace electrostore.Migrations
                 column: "id_user");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ProjetsDocuments_id_projet",
+                table: "ProjetsDocuments",
+                column: "id_projet");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ProjetsItems_id_item",
                 table: "ProjetsItems",
                 column: "id_item");
@@ -562,14 +715,6 @@ namespace electrostore.Migrations
                 column: "id_item",
                 principalTable: "Items",
                 principalColumn: "id_item",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_IAImgs_Imgs_id_img",
-                table: "IAImgs",
-                column: "id_img",
-                principalTable: "Imgs",
-                principalColumn: "id_img",
                 onDelete: ReferentialAction.Cascade);
 
             migrationBuilder.AddForeignKey(
@@ -598,22 +743,34 @@ namespace electrostore.Migrations
                 name: "CommandsCommentaires");
 
             migrationBuilder.DropTable(
+                name: "CommandsDocuments");
+
+            migrationBuilder.DropTable(
                 name: "CommandsItems");
 
             migrationBuilder.DropTable(
-                name: "IAImgs");
+                name: "IA");
 
             migrationBuilder.DropTable(
                 name: "ItemsBoxs");
 
             migrationBuilder.DropTable(
+                name: "ItemsDocuments");
+
+            migrationBuilder.DropTable(
                 name: "ItemsTags");
+
+            migrationBuilder.DropTable(
+                name: "JWIRefreshToken");
 
             migrationBuilder.DropTable(
                 name: "Leds");
 
             migrationBuilder.DropTable(
                 name: "ProjetsCommentaires");
+
+            migrationBuilder.DropTable(
+                name: "ProjetsDocuments");
 
             migrationBuilder.DropTable(
                 name: "ProjetsItems");
@@ -625,13 +782,10 @@ namespace electrostore.Migrations
                 name: "Commands");
 
             migrationBuilder.DropTable(
-                name: "IA");
-
-            migrationBuilder.DropTable(
                 name: "Boxs");
 
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "JWIAccessToken");
 
             migrationBuilder.DropTable(
                 name: "Projets");
@@ -641,6 +795,9 @@ namespace electrostore.Migrations
 
             migrationBuilder.DropTable(
                 name: "Stores");
+
+            migrationBuilder.DropTable(
+                name: "Users");
 
             migrationBuilder.DropTable(
                 name: "Items");
