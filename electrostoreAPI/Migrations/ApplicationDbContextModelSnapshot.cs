@@ -382,6 +382,9 @@ namespace electrostore.Migrations
                     b.Property<string>("revoked_by_ip")
                         .HasColumnType("longtext");
 
+                    b.Property<string>("revoked_reason")
+                        .HasColumnType("longtext");
+
                     b.HasKey("id_jwi_access");
 
                     b.HasIndex("id_user");
@@ -418,6 +421,9 @@ namespace electrostore.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("revoked_by_ip")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("revoked_reason")
                         .HasColumnType("longtext");
 
                     b.HasKey("id_jwi_refresh");

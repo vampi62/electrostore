@@ -15,6 +15,7 @@ public class JWIAccessToken
     public string created_by_ip { get; set; }
     public DateTime? revoked_at { get; set; }
     public string? revoked_by_ip { get; set; }
+    public string? revoked_reason { get; set; }
 
     public int id_user { get; set; }
     [ForeignKey("id_user")]

@@ -203,6 +203,44 @@ CREATE TABLE `ItemsTags` (
   `id_item` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `JWIAccessToken`
+--
+
+CREATE TABLE `JWIAccessToken` (
+  `id_jwi_access` char(36) CHARACTER SET ascii NOT NULL,
+  `expires_at` datetime(6) NOT NULL,
+  `is_revoked` tinyint(1) NOT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `created_by_ip` longtext NOT NULL,
+  `revoked_at` datetime(6) DEFAULT NULL,
+  `revoked_by_ip` longtext DEFAULT NULL,
+  `id_user` int(11) NOT NULL,
+  `revoked_reason` longtext DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `JWIRefreshToken`
+--
+
+CREATE TABLE `JWIRefreshToken` (
+  `id_jwi_refresh` char(36) CHARACTER SET ascii NOT NULL,
+  `expires_at` datetime(6) NOT NULL,
+  `is_revoked` tinyint(1) NOT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `created_by_ip` longtext NOT NULL,
+  `revoked_at` datetime(6) DEFAULT NULL,
+  `revoked_by_ip` longtext DEFAULT NULL,
+  `id_user` int(11) NOT NULL,
+  `id_jwi_access` char(36) CHARACTER SET ascii NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
+  `revoked_reason` longtext DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- --------------------------------------------------------
 
 --
@@ -433,6 +471,21 @@ ALTER TABLE `ItemsTags`
   ADD KEY `IX_ItemsTags_id_tag` (`id_tag`);
 
 --
+-- Index pour la table `JWIAccessToken`
+--
+ALTER TABLE `JWIAccessToken`
+  ADD PRIMARY KEY (`id_jwi_access`),
+  ADD KEY `IX_JWIAccessToken_id_user` (`id_user`);
+
+--
+-- Index pour la table `JWIRefreshToken`
+--
+ALTER TABLE `JWIRefreshToken`
+  ADD PRIMARY KEY (`id_jwi_refresh`),
+  ADD KEY `IX_JWIRefreshToken_id_user` (`id_user`),
+  ADD KEY `IX_JWIRefreshToken_id_jwi_access` (`id_jwi_access`);
+
+--
 -- Index pour la table `Leds`
 --
 ALTER TABLE `Leds`
@@ -653,6 +706,19 @@ ALTER TABLE `ItemsBoxs`
 ALTER TABLE `ItemsTags`
   ADD CONSTRAINT `FK_ItemsTags_Items_id_item` FOREIGN KEY (`id_item`) REFERENCES `Items` (`id_item`) ON DELETE CASCADE,
   ADD CONSTRAINT `FK_ItemsTags_Tags_id_tag` FOREIGN KEY (`id_tag`) REFERENCES `Tags` (`id_tag`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `JWIAccessToken`
+--
+ALTER TABLE `JWIAccessToken`
+  ADD CONSTRAINT `FK_JWIAccessToken_Users_id_user` FOREIGN KEY (`id_user`) REFERENCES `Users` (`id_user`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `JWIRefreshToken`
+--
+ALTER TABLE `JWIRefreshToken`
+  ADD CONSTRAINT `FK_JWIRefreshToken_JWIAccessToken_id_jwi_access` FOREIGN KEY (`id_jwi_access`) REFERENCES `JWIAccessToken` (`id_jwi_access`) ON DELETE CASCADE,
+  ADD CONSTRAINT `FK_JWIRefreshToken_Users_id_user` FOREIGN KEY (`id_user`) REFERENCES `Users` (`id_user`) ON DELETE CASCADE;
 
 --
 -- Contraintes pour la table `Leds`

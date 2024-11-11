@@ -67,8 +67,9 @@ namespace electrostore.Controllers
                 return Unauthorized(new { message = "You are not allowed to update this user" });
             }
             var user = await _userService.UpdateUser(id_user, userDto);
-            // invalidate all access token for this user
-            await _jwiService.InvalidateAllAccessTokenByUser(id_user);
+            var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
+            // Revoke all access token for this user
+            await _jwiService.RevokeAllAccessTokenByUser(id_user, clientIp, "User update information");
             return Ok(user);
         }
 
@@ -81,9 +82,10 @@ namespace electrostore.Controllers
                 return Unauthorized(new { message = "You are not allowed to delete this user" });
             }
             await _userService.DeleteUser(id_user);
-            // invalidate all access token for this user
-            await _jwiService.InvalidateAllAccessTokenByUser(id_user);
-            await _jwiService.InvalidateAllRefreshTokenByUser(id_user);
+            var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
+            // Revoke all access token for this user
+            await _jwiService.RevokeAllAccessTokenByUser(id_user, clientIp, "User delete account");
+            await _jwiService.RevokeAllRefreshTokenByUser(id_user, clientIp, "User delete account");
             return NoContent();
         }
     
@@ -143,9 +145,10 @@ namespace electrostore.Controllers
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest resetPasswordRequest)
         {
             var user = await _userService.ResetPassword(resetPasswordRequest);
-            // invalidate all access token for this user
-            await _jwiService.InvalidateAllAccessTokenByUser(user.id_user);
-            await _jwiService.InvalidateAllRefreshTokenByUser(user.id_user);
+            var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
+            // Revoke all access token for this user
+            await _jwiService.RevokeAllAccessTokenByUser(user.id_user, clientIp, "User reset password");
+            await _jwiService.RevokeAllRefreshTokenByUser(user.id_user, clientIp, "User reset password");
             return Ok();
         }
     }
