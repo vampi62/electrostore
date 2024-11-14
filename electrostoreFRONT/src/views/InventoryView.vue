@@ -9,7 +9,7 @@ function getTotalQuantity(itembox) {
     if (!itembox) {
         return 0;
     }
-    return itembox.reduce((total, box) => total + box.qte_itembox, 0);
+    return itembox.reduce((total, box) => total + box.qte_item_box, 0);
 }
 
 
@@ -39,7 +39,6 @@ itemsStore.getAll();
                 <td>{{ item.id_item }}</td>
                 <td>{{ item.nom_item }}</td>
                 <td>{{ item.seuil_min_item }}</td>
-                <td>{{ item.datasheet_item }}</td>
                 <td>{{ item.description_item }}</td>
                 <td>
                     <div v-if="item.id_img">
