@@ -7,7 +7,7 @@ const authStore = useAuthStore();
 const { user: authUser } = storeToRefs(authStore);
 
 const usersStore = useUsersStore();
-const { users } = storeToRefs(usersStore);
+const { users:users } = storeToRefs(usersStore);
 
 usersStore.getAll();
 </script>

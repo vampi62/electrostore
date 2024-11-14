@@ -8,19 +8,21 @@ configsStore.getConfig();
 </script>
 
 <template>
-    <div class="app-container bg-light">
-        <nav v-show="authStore.user" class="navbar navbar-expand navbar-dark bg-dark">
-            <div class="navbar-nav">
-                <RouterLink to="/" class="nav-item nav-link">Home</RouterLink>
-                <a @click="authStore.logout()" class="nav-item nav-link">Logout</a>
+    <div class="app-container bg-gray-100 min-h-screen">
+        <nav v-show="authStore.user" class="bg-gray-800 text-white p-4">
+            <div class="flex space-x-4">
+                <RouterLink to="/" class="text-white hover:text-blue-400">Home</RouterLink>
+                <a @click="authStore.logout()" class="cursor-pointer text-white hover:text-blue-400">Logout</a>
             </div>
         </nav>
-        <div class="container pt-4 pb-4">
+        <div class="container mx-auto py-4">
             <RouterView />
+        </div>
+        <!-- credits -->
+        <div class="text-center mt-4">
+            <p>
+                <a href="https://github.com/vampi62/electrostore" class="text-blue-500 hover:underline">ElectroStore</a>
+            </p>
         </div>
     </div>
 </template>
-
-<style>
-@import '@/assets/base.css';
-</style>

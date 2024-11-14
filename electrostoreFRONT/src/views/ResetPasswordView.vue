@@ -29,46 +29,84 @@ function onSubmit(values, { setErrors }) {
 </script>
 
 <template>
-    <div>
-        <h2>Reset Password</h2>
-    </div>
-    <div v-if="configsStore.configs.loading">
-        <div class="spinner-border text-primary" role="status">
-            <span class="sr-only">Loading...</span>
+    <div class="max-w-lg mx-auto bg-white p-6 rounded shadow">
+        <h2 class="text-2xl font-bold mb-4">Reset Password</h2>
+
+        <div v-if="configsStore.configs.loading" class="flex justify-center items-center">
+            <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
         </div>
-    </div>
-    <div v-else-if="configsStore.configs.smtp_enabled">
-        <Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
-            <div class="form-group">
-                <label>{{ $t('email') }}</label>
-                <Field name="email" type="email" class="form-control" :class="{ 'is-invalid': errors.email }" :value="email" disabled />
-                <div class="invalid-feedback">{{errors.email}}</div>
-            </div>
-            <Field name="token" type="hidden" :value="token" />
-            <div class="form-group">
-                <label>New Password</label>
-                <Field name="password" type="password" class="form-control" :class="{ 'is-invalid': errors.password }" />
-                <div class="invalid-feedback">{{errors.password}}</div>
-            </div>
-            <div class="form-group">
-                <label>Confirm New Password</label>
-                <Field name="confirmPassword" type="password" class="form-control" :class="{ 'is-invalid': errors.confirmPassword }" />
-                <div class="invalid-feedback">{{errors.confirmPassword}}</div>
-            </div>
-            <div class="form-group">
-                <button class="btn btn-primary" :disabled="isSubmitting">
-                    <span v-show="isSubmitting" class="spinner-border spinner-border-sm mr-1"></span>
-                    Envoyer
-                </button>
-            </div>
-            <div v-if="errors.apiError" class="alert alert-danger mt-3 mb-0">{{errors.apiError}}</div>
-            <div v-if="errors.apiConfirm" class="alert alert-success mt-3 mb-0">{{errors.apiConfirm}}</div>
-        </Form>
-    </div>
-    <div v-else>
-        <div class="alert alert-danger">{{ $t('smtpDisabled') }}</div>
-    </div>
-    <div>
-        <router-link to="/login">Login</router-link>
+
+        <div v-else-if="configsStore.configs.smtp_enabled">
+            <Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
+                <!-- Email Field -->
+                <div class="mb-4">
+                    <label class="block text-gray-700">{{ $t('email') }}</label>
+                    <Field
+                        name="email"
+                        type="email"
+                        class="border border-gray-300 rounded w-full px-3 py-2 mt-1 bg-gray-100 focus:outline-none focus:ring focus:ring-blue-300"
+                        :class="{ 'border-red-500': errors.email }"
+                        :value="email"
+                        disabled
+                    />
+                    <div v-if="errors.email" class="text-red-500 text-sm mt-1">{{ errors.email }}</div>
+                </div>
+
+                <!-- Hidden Token Field -->
+                <Field name="token" type="hidden" :value="token" />
+
+                <!-- New Password Field -->
+                <div class="mb-4">
+                    <label class="block text-gray-700">New Password</label>
+                    <Field
+                        name="password"
+                        type="password"
+                        class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
+                        :class="{ 'border-red-500': errors.password }"
+                    />
+                    <div v-if="errors.password" class="text-red-500 text-sm mt-1">{{ errors.password }}</div>
+                </div>
+
+                <!-- Confirm New Password Field -->
+                <div class="mb-4">
+                    <label class="block text-gray-700">Confirm New Password</label>
+                    <Field
+                        name="confirmPassword"
+                        type="password"
+                        class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
+                        :class="{ 'border-red-500': errors.confirmPassword }"
+                    />
+                    <div v-if="errors.confirmPassword" class="text-red-500 text-sm mt-1">{{ errors.confirmPassword }}</div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="mb-4">
+                    <button
+                        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-400"
+                        :disabled="isSubmitting"
+                    >
+                        <span
+                            v-show="isSubmitting"
+                            class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"
+                        ></span>
+                        Envoyer
+                    </button>
+                </div>
+
+                <!-- API Error/Confirmation Messages -->
+                <div v-if="errors.apiError" class="bg-red-100 text-red-600 p-3 rounded mt-3">{{ errors.apiError }}</div>
+                <div v-if="errors.apiConfirm" class="bg-green-100 text-green-600 p-3 rounded mt-3">{{ errors.apiConfirm }}</div>
+            </Form>
+        </div>
+
+        <!-- SMTP Disabled Alert -->
+        <div v-else class="bg-red-100 text-red-600 p-3 rounded">{{ $t('smtpDisabled') }}</div>
+
+        <!-- Link to Login -->
+        <div class="mt-4">
+            <router-link to="/login" class="text-blue-500 hover:underline">Login</router-link>
+        </div>
     </div>
 </template>
