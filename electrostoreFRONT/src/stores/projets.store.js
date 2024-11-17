@@ -10,9 +10,9 @@ export const useProjetsStore = defineStore({
         projets: {}
     }),
     actions: {
-        async getAll(limit=100, offset=0) {
+        async getAll(limit = 100, offset = 0) {
             this.projets = { loading: true };
-            this.projets = await fetchWrapper.get(baseUrl + '/projet', {'limit': limit, 'offset': offset});
+            this.projets = await fetchWrapper.get(baseUrl + '/projet', { 'limit': limit, 'offset': offset });
         }
     }
 });

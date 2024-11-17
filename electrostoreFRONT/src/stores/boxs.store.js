@@ -10,9 +10,9 @@ export const useBoxsStore = defineStore({
         boxs: {}
     }),
     actions: {
-        async getAll(limit=100, offset=0) {
+        async getAll(limit = 100, offset = 0) {
             this.boxs = { loading: true };
-            this.boxs = await fetchWrapper.get(baseUrl + '/box', {'limit': limit, 'offset': offset});
+            this.boxs = await fetchWrapper.get(baseUrl + '/box', { 'limit': limit, 'offset': offset });
         }
     }
 });

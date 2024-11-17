@@ -10,9 +10,9 @@ export const useTagsStore = defineStore({
         tags: {}
     }),
     actions: {
-        async getAll(limit=100, offset=0) {
+        async getAll(limit = 100, offset = 0) {
             this.tags = { loading: true };
-            this.tags = await fetchWrapper.get(baseUrl + '/tag', {'limit': limit, 'offset': offset});
+            this.tags = await fetchWrapper.get(baseUrl + '/tag', { 'limit': limit, 'offset': offset });
         }
     }
 });

@@ -10,9 +10,9 @@ export const useStoresStore = defineStore({
         stores: {}
     }),
     actions: {
-        async getAll(limit=100, offset=0) {
+        async getAll(limit = 100, offset = 0) {
             this.stores = { loading: true };
-            this.stores = await fetchWrapper.get(baseUrl + '/store', {'limit': limit, 'offset': offset});
+            this.stores = await fetchWrapper.get(baseUrl + '/store', { 'limit': limit, 'offset': offset });
         }
     }
 });
