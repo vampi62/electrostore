@@ -1,28 +1,31 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
 import { useAuthStore } from '@/stores';
-import {HomeView,
-        LoginView,
-        ResetPasswordView,
-        ForgotPasswordView,
-        RegisterView,
-        UsersView,
-        UserView, 
-        InventoryView,
-        ProjectsView,
-        ProjectView,
-        CommandsView,
-        CommandView,
-        CamerasView,
-        IAView,
-        TagsView,
-        StoresView} from '@/views';
+import {
+    HomeView,
+    LoginView,
+    ResetPasswordView,
+    ForgotPasswordView,
+    RegisterView,
+    UsersView,
+    UserView,
+    InventoryView,
+    ProjectsView,
+    ProjectView,
+    CommandsView,
+    CommandView,
+    CamerasView,
+    IAView,
+    TagsView,
+    StoresView
+} from '@/views';
 
 export const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     linkActiveClass: 'active',
     routes: [
         { path: '/', component: HomeView },
+        { path: '/profile', component: HomeView },
         { path: '/login', component: LoginView },
         { path: '/reset-password', component: ResetPasswordView },
         { path: '/forgot-password', component: ForgotPasswordView },
@@ -50,5 +53,19 @@ router.beforeEach(async (to) => {
     if (authRequired && !auth.user) {
         auth.returnUrl = to.fullPath;
         return '/login';
+    }
+    if (auth.user) {
+        switch (to.path) {
+            case '/login':
+                return '/';
+            case '/register':
+                return '/';
+            case '/forgot-password':
+                return '/';
+            case '/reset-password':
+                return '/';
+            case '/':
+                return '/inventory';
+        }
     }
 });

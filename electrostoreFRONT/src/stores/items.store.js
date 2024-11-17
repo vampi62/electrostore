@@ -10,7 +10,7 @@ export const useItemsStore = defineStore({
         items: {}
     }),
     actions: {
-        async getAll(limit=100, offset=0) {
+        async getAll(limit = 100, offset = 0) {
             this.items = { loading: true };
             this.items = await fetchWrapper.get(baseUrl + '/item' + '?limit=' + limit + '&offset=' + offset);
         },

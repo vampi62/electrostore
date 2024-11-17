@@ -10,9 +10,9 @@ export const useCommandesStore = defineStore({
         commandes: {}
     }),
     actions: {
-        async getAll(limit=100, offset=0) {
+        async getAll(limit = 100, offset = 0) {
             this.commandes = { loading: true };
-            this.commandes = await fetchWrapper.get(baseUrl + '/commande', {'limit': limit, 'offset': offset});
+            this.commandes = await fetchWrapper.get(baseUrl + '/commande', { 'limit': limit, 'offset': offset });
         }
     }
 });

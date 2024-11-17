@@ -11,7 +11,7 @@ export const useUsersStore = defineStore({
         user: {}
     }),
     actions: {
-        async getAll(limit=100, offset=0) {
+        async getAll(limit = 100, offset = 0) {
             this.users = { loading: true };
             this.users = await fetchWrapper.get(baseUrl + '/user' + '?limit=' + limit + '&offset=' + offset);
         },

@@ -10,9 +10,9 @@ export const useCamerasStore = defineStore({
         cameras: {}
     }),
     actions: {
-        async getAll(limit=100, offset=0) {
+        async getAll(limit = 100, offset = 0) {
             this.cameras = { loading: true };
-            this.cameras = await fetchWrapper.get(baseUrl + '/camera', {'limit': limit, 'offset': offset});
+            this.cameras = await fetchWrapper.get(baseUrl + '/camera', { 'limit': limit, 'offset': offset });
         }
     }
 });

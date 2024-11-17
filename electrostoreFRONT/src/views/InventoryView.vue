@@ -42,8 +42,9 @@ itemsStore.getAll();
                 <td>{{ item.description_item }}</td>
                 <td>
                     <div v-if="item.id_img">
-                        {{  getImages(item.id_img) }}
-                        <img :src="images[item.id_img]" v-if="images[item.id_img]" :alt="'Image de ' + item.name" width="100" />
+                        {{ getImages(item.id_img) }}
+                        <img :src="images[item.id_img]" v-if="images[item.id_img]" :alt="'Image de ' + item.name"
+                            width="100" />
                         <span v-else>Chargement...</span>
                     </div>
                     <div v-else>

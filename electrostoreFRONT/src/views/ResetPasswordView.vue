@@ -43,14 +43,9 @@ function onSubmit(values, { setErrors }) {
                 <!-- Email Field -->
                 <div class="mb-4">
                     <label class="block text-gray-700">{{ $t('email') }}</label>
-                    <Field
-                        name="email"
-                        type="email"
+                    <Field name="email" type="email"
                         class="border border-gray-300 rounded w-full px-3 py-2 mt-1 bg-gray-100 focus:outline-none focus:ring focus:ring-blue-300"
-                        :class="{ 'border-red-500': errors.email }"
-                        :value="email"
-                        disabled
-                    />
+                        :class="{ 'border-red-500': errors.email }" :value="email" disabled />
                     <div v-if="errors.email" class="text-red-500 text-sm mt-1">{{ errors.email }}</div>
                 </div>
 
@@ -60,44 +55,36 @@ function onSubmit(values, { setErrors }) {
                 <!-- New Password Field -->
                 <div class="mb-4">
                     <label class="block text-gray-700">New Password</label>
-                    <Field
-                        name="password"
-                        type="password"
+                    <Field name="password" type="password"
                         class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
-                        :class="{ 'border-red-500': errors.password }"
-                    />
+                        :class="{ 'border-red-500': errors.password }" />
                     <div v-if="errors.password" class="text-red-500 text-sm mt-1">{{ errors.password }}</div>
                 </div>
 
                 <!-- Confirm New Password Field -->
                 <div class="mb-4">
                     <label class="block text-gray-700">Confirm New Password</label>
-                    <Field
-                        name="confirmPassword"
-                        type="password"
+                    <Field name="confirmPassword" type="password"
                         class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
-                        :class="{ 'border-red-500': errors.confirmPassword }"
-                    />
-                    <div v-if="errors.confirmPassword" class="text-red-500 text-sm mt-1">{{ errors.confirmPassword }}</div>
+                        :class="{ 'border-red-500': errors.confirmPassword }" />
+                    <div v-if="errors.confirmPassword" class="text-red-500 text-sm mt-1">{{ errors.confirmPassword }}
+                    </div>
                 </div>
 
                 <!-- Submit Button -->
                 <div class="mb-4">
-                    <button
-                        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-400"
-                        :disabled="isSubmitting"
-                    >
-                        <span
-                            v-show="isSubmitting"
-                            class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"
-                        ></span>
+                    <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-400"
+                        :disabled="isSubmitting">
+                        <span v-show="isSubmitting"
+                            class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
                         Envoyer
                     </button>
                 </div>
 
                 <!-- API Error/Confirmation Messages -->
                 <div v-if="errors.apiError" class="bg-red-100 text-red-600 p-3 rounded mt-3">{{ errors.apiError }}</div>
-                <div v-if="errors.apiConfirm" class="bg-green-100 text-green-600 p-3 rounded mt-3">{{ errors.apiConfirm }}</div>
+                <div v-if="errors.apiConfirm" class="bg-green-100 text-green-600 p-3 rounded mt-3">{{ errors.apiConfirm
+                    }}</div>
             </Form>
         </div>
 
