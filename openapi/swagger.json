@@ -10250,6 +10250,9 @@
         "additionalProperties": false
       },
       "UpdateUserDto": {
+        "required": [
+          "current_mdp_user"
+        ],
         "type": "object",
         "properties": {
           "nom_user": {
@@ -10271,6 +10274,10 @@
           "role_user": {
             "type": "string",
             "nullable": true
+          },
+          "current_mdp_user": {
+            "minLength": 1,
+            "type": "string"
           }
         },
         "additionalProperties": false

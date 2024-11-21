@@ -183,9 +183,19 @@ public class UserService : IUserService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<bool> CheckUserPassword(string email, string password)
+    public async Task<bool> CheckUserPasswordByEmail(string email, string password)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == email);
+        if (user == null)
+        {
+            return false;
+        }
+        return BCrypt.Net.BCrypt.Verify(password, user.mdp_user);
+    }
+
+    public async Task<bool> CheckUserPasswordById(int id, string password)
+    {
+        var user = await _context.Users.FindAsync(id);
         if (user == null)
         {
             return false;
