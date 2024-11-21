@@ -17,7 +17,9 @@ public interface IUserService
 
     public Task DeleteUser(int id);
 
-    public Task<bool> CheckUserPassword(string email, string password);
+    public Task<bool> CheckUserPasswordByEmail(string email, string password);
+
+    public Task<bool> CheckUserPasswordById(int id, string password);
 
     public Task ForgotPassword(ForgotPasswordRequest request);
 

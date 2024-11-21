@@ -66,6 +66,16 @@ namespace electrostore.Controllers
             {
                 return Unauthorized(new { message = "You are not allowed to update this user" });
             }
+            // check if the password is correct
+            var userSession = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userSession == null)
+            {
+                return Unauthorized(new { message = "Invalid user session" });
+            }
+            if (!await _userService.CheckUserPasswordById(int.Parse(userSession), userDto.current_mdp_user))
+            {
+                return Unauthorized(new { message = "Invalid current password" });
+            }
             var user = await _userService.UpdateUser(id_user, userDto);
             var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
             // Revoke all access token for this user
@@ -93,7 +103,7 @@ namespace electrostore.Controllers
         [AllowAnonymous]
         public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest loginRequest)
         {
-            if (!await _userService.CheckUserPassword(loginRequest.Email, loginRequest.Password))
+            if (!await _userService.CheckUserPasswordByEmail(loginRequest.Email, loginRequest.Password))
             {
                 return Unauthorized(new { message = "Invalid email or password" });
             }

@@ -25,6 +25,7 @@ public record UpdateUserDto
     public string? email_user { get; init; }
     public string? mdp_user { get; init; }
     public string? role_user { get; init; }
+    [Required] public string current_mdp_user { get; init; }
 }
 public record ReadConfig
 {
