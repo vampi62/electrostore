@@ -4,6 +4,7 @@ export * from './camera.store';
 export * from './commandes.store';
 export * from './config.store';
 export * from './ias.store';
+export * from './images.store';
 export * from './items.store';
 export * from './projets.store';
 export * from './stores.store';

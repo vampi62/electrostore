@@ -46,7 +46,7 @@ function onSubmit(values, { setErrors }) {
                     <Field name="email" type="email"
                         class="border border-gray-300 rounded w-full px-3 py-2 mt-1 bg-gray-100 focus:outline-none focus:ring focus:ring-blue-300"
                         :class="{ 'border-red-500': errors.email }" :value="email" disabled />
-                    <div v-if="errors.email" class="text-red-500 text-sm mt-1">{{ errors.email }}</div>
+                    <div class="text-red-500 text-sm mt-1 min-h-5">{{ errors.email }}</div>
                 </div>
 
                 <!-- Hidden Token Field -->
@@ -58,7 +58,7 @@ function onSubmit(values, { setErrors }) {
                     <Field name="password" type="password"
                         class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                         :class="{ 'border-red-500': errors.password }" />
-                    <div v-if="errors.password" class="text-red-500 text-sm mt-1">{{ errors.password }}</div>
+                    <div class="text-red-500 text-sm mt-1 min-h-5">{{ errors.password }}</div>
                 </div>
 
                 <!-- Confirm New Password Field -->
@@ -67,7 +67,7 @@ function onSubmit(values, { setErrors }) {
                     <Field name="confirmPassword" type="password"
                         class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                         :class="{ 'border-red-500': errors.confirmPassword }" />
-                    <div v-if="errors.confirmPassword" class="text-red-500 text-sm mt-1">{{ errors.confirmPassword }}
+                    <div class="text-red-500 text-sm mt-1 min-h-5">{{ errors.confirmPassword }}
                     </div>
                 </div>
 

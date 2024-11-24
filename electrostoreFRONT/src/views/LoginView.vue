@@ -31,7 +31,7 @@ function onSubmit(values, { setErrors }) {
                 <Field name="email" type="email"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.email }" />
-                <div v-if="errors.email" class="text-red-500 text-sm mt-1">{{ errors.email }}</div>
+                <div class="text-red-500 text-sm mt-1 min-h-5">{{ errors.email }}</div>
             </div>
 
             <!-- Password Field -->
@@ -40,7 +40,7 @@ function onSubmit(values, { setErrors }) {
                 <Field name="password" type="password"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.password }" />
-                <div v-if="errors.password" class="text-red-500 text-sm mt-1">{{ errors.password }}</div>
+                <div class="text-red-500 text-sm mt-1 min-h-5">{{ errors.password }}</div>
             </div>
 
             <!-- Submit Button -->
@@ -60,8 +60,7 @@ function onSubmit(values, { setErrors }) {
         <!-- Links -->
         <div class="mt-4">
             <router-link to="/register" class="text-blue-500 hover:underline">{{ $t('register') }}</router-link>
-            <router-link to="/forgot-password" class="ml-4 text-blue-500 hover:underline">{{ $t('forgotPassword')
-                }}</router-link>
+            <router-link to="/forgot-password" class="ml-4 text-blue-500 hover:underline">{{ $t('forgotPassword') }}</router-link>
         </div>
     </div>
 </template>

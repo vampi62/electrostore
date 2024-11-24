@@ -56,7 +56,33 @@
         ],
         "responses": {
           "200": {
-            "description": "Success"
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadCameraDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadCameraDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadCameraDto"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -85,7 +111,24 @@
         },
         "responses": {
           "200": {
-            "description": "Success"
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCameraDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCameraDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCameraDto"
+                }
+              }
+            }
           }
         }
       }
@@ -109,7 +152,24 @@
         ],
         "responses": {
           "200": {
-            "description": "Success"
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCameraDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCameraDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCameraDto"
+                }
+              }
+            }
           }
         }
       },
@@ -150,7 +210,24 @@
         },
         "responses": {
           "200": {
-            "description": "Success"
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCameraDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCameraDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCameraDto"
+                }
+              }
+            }
           }
         }
       },
@@ -9341,6 +9418,32 @@
           "id_box": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadCameraDto": {
+        "type": "object",
+        "properties": {
+          "id_camera": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nom_camera": {
+            "type": "string",
+            "nullable": true
+          },
+          "url_camera": {
+            "type": "string",
+            "nullable": true
+          },
+          "user_camera": {
+            "type": "string",
+            "nullable": true
+          },
+          "mdp_camera": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false

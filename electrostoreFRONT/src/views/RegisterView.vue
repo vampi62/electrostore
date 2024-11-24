@@ -36,7 +36,7 @@ function onSubmit(values, { setErrors }) {
                 <Field name="email" type="email"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.email }" />
-                <div v-if="errors.email" class="text-red-500 text-sm mt-1">{{ errors.email }}</div>
+                <div class="text-red-500 text-sm mt-1 min-h-5">{{ errors.email }}</div>
             </div>
 
             <!-- First Name Field -->
@@ -45,7 +45,7 @@ function onSubmit(values, { setErrors }) {
                 <Field name="firstName" type="text"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.firstName }" />
-                <div v-if="errors.firstName" class="text-red-500 text-sm mt-1">{{ errors.firstName }}</div>
+                <div class="text-red-500 text-sm mt-1 min-h-5">{{ errors.firstName }}</div>
             </div>
 
             <!-- Last Name Field -->
@@ -54,7 +54,7 @@ function onSubmit(values, { setErrors }) {
                 <Field name="lastName" type="text"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.lastName }" />
-                <div v-if="errors.lastName" class="text-red-500 text-sm mt-1">{{ errors.lastName }}</div>
+                <div class="text-red-500 text-sm mt-1 min-h-5">{{ errors.lastName }}</div>
             </div>
 
             <!-- Password Field -->
@@ -63,7 +63,7 @@ function onSubmit(values, { setErrors }) {
                 <Field name="password" type="password"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.password }" />
-                <div v-if="errors.password" class="text-red-500 text-sm mt-1">{{ errors.password }}</div>
+                <div class="text-red-500 text-sm mt-1 min-h-5">{{ errors.password }}</div>
             </div>
 
             <!-- Confirm Password Field -->
@@ -72,7 +72,7 @@ function onSubmit(values, { setErrors }) {
                 <Field name="confirmPassword" type="password"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.confirmPassword }" />
-                <div v-if="errors.confirmPassword" class="text-red-500 text-sm mt-1">{{ errors.confirmPassword }}</div>
+                <div class="text-red-500 text-sm mt-1 min-h-5">{{ errors.confirmPassword }}</div>
             </div>
 
             <!-- Submit Button -->
