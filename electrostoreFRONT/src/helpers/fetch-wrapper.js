@@ -9,45 +9,45 @@ export const fetchWrapper = {
 };
 
 function request(method) {
-    return (url, body) => {
+    return async ({ url, body=null, token=null }) => {
         const requestOptions = {
             method,
-            headers: authHeader(url)
+            headers: authHeader(url, token)
         };
         if (body) {
             requestOptions.headers['Content-Type'] = 'application/json';
             requestOptions.body = JSON.stringify(body);
         }
-        return fetch(url, requestOptions).then(handleResponse);
+        const response = await fetch(url, requestOptions);
+        return handleResponse(response);
     }
 }
 
 function image(method) {
     // download a image
-    return (url) => {
+    return async ({ url, body=null, token=null }) => {
         const requestOptions = {
             method,
-            headers: authHeader(url)
+            headers: authHeader(url, token)
         };
-        return fetch(url, requestOptions).then(response => {
-            if (!response.ok) {
-                return Promise.reject(response.statusText);
-            }
-            return response.blob();
-        });
+        const response = await fetch(url, requestOptions);
+        if (!response.ok) {
+            return Promise.reject(response.statusText);
+        }
+        return await response.blob();
     }
 }
 
 // helper functions
 
-function authHeader(url) {
+function authHeader(url, token=null) {
     // return auth header with jwt if user is logged in and request is to the api url
     const header = {};
     const { user } = useAuthStore();
-    const isLoggedIn = !!user?.token;
+    const isLoggedIn = !!user;
     const isApiUrl = url.startsWith(import.meta.env.VITE_API_URL);
-    if (isLoggedIn && isApiUrl) {
-        header['Authorization'] = `Bearer ${user.token}`;
+    if (isLoggedIn && isApiUrl && token) {
+        header['Authorization'] = `Bearer ${token}`;
     }
     header['Access-Control-Allow-Origin'] = '*';
     return header;

@@ -7,19 +7,14 @@ const baseUrl = `${import.meta.env.VITE_API_URL}`;
 export const useConfigsStore = defineStore({
     id: 'configs',
     state: () => ({
-        configs: {},
-        sidebar: false
+        configs: {}
     }),
     actions: {
         async getConfig() {
             this.configs = { loading: true };
-            this.configs = await fetchWrapper.get(baseUrl + '/config');
-        },
-        toggleSidebar() {
-            this.sidebar = !this.sidebar;
-        },
-        reduceSidebar() {
-            this.sidebar = false;
+            this.configs = await fetchWrapper.get({
+                url: `${baseUrl}/config`
+            });
         }
     }
 });

@@ -2,6 +2,8 @@ import { defineStore } from 'pinia';
 
 import { fetchWrapper } from '@/helpers';
 
+const token = localStorage.getItem('token');
+
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export const useCamerasStore = defineStore({
@@ -12,7 +14,10 @@ export const useCamerasStore = defineStore({
     actions: {
         async getAll(limit = 100, offset = 0) {
             this.cameras = { loading: true };
-            this.cameras = await fetchWrapper.get(baseUrl + '/camera', { 'limit': limit, 'offset': offset });
+            this.cameras = await fetchWrapper.get({
+                url: `${baseUrl}/camera?limit=${limit}&offset=${offset}`,
+                token: token
+            });
         }
     }
 });

@@ -23,7 +23,7 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> GetCameras([FromQuery] int limit = 100, [FromQuery] int offset = 0)
+        public async Task<ActionResult<IEnumerable<ReadCameraDto>>> GetCameras([FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var cameras = await _cameraService.GetCameras(limit, offset);
             return Ok(cameras);
@@ -31,7 +31,7 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_camera}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> GetCameraById([FromRoute] int id_camera)
+        public async Task<ActionResult<ReadCameraDto>> GetCameraById([FromRoute] int id_camera)
         {
             var camera = await _cameraService.GetCameraById(id_camera);
             return Ok(camera);
@@ -120,7 +120,7 @@ namespace electrostore.Controllers
 
         [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> CreateCamera([FromBody] CreateCameraDto camera)
+        public async Task<ActionResult<ReadCameraDto>> CreateCamera([FromBody] CreateCameraDto camera)
         {
             var newCamera = await _cameraService.CreateCamera(camera);
             return CreatedAtAction(nameof(GetCameraById), new { id_camera = newCamera.id_camera }, newCamera);
@@ -128,7 +128,7 @@ namespace electrostore.Controllers
 
         [HttpPut("{id_camera}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> UpdateCamera([FromRoute] int id_camera, [FromBody] UpdateCameraDto camera)
+        public async Task<ActionResult<ReadCameraDto>> UpdateCamera([FromRoute] int id_camera, [FromBody] UpdateCameraDto camera)
         {
             var cameraToUpdate = await _cameraService.UpdateCamera(id_camera, camera);
             return Ok(cameraToUpdate);
