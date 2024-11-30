@@ -24,3 +24,7 @@ public record UpdateCameraDto
     public string? user_camera { get; init; }
     public string? mdp_camera { get; init; }
 }
+public record CameraLightDto
+{
+    public bool state { get; init; }
+}
