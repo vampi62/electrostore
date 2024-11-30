@@ -307,21 +307,69 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "boolean"
+                "$ref": "#/components/schemas/CameraLightDto"
               }
             },
             "text/json": {
               "schema": {
-                "type": "boolean"
+                "$ref": "#/components/schemas/CameraLightDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "type": "boolean"
+                "$ref": "#/components/schemas/CameraLightDto"
               }
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/camera/{id_camera}/capture": {
+      "get": {
+        "tags": [
+          "Camera"
+        ],
+        "parameters": [
+          {
+            "name": "id_camera",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/camera/{id_camera}/status": {
+      "get": {
+        "tags": [
+          "Camera"
+        ],
+        "parameters": [
+          {
+            "name": "id_camera",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success"
@@ -8925,6 +8973,15 @@
   },
   "components": {
     "schemas": {
+      "CameraLightDto": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "CreateBoxByStoreDto": {
         "required": [
           "xend_box",
