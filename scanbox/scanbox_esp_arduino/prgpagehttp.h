@@ -1,4 +1,4 @@
-void handleMenuWifi() {
+void handleMenuWifi(AsyncWebServerRequest *request) {
   Serial.println("wifiPageLoading");
   // si ssid contient "�" alors ssid = ""
   String response = "<html><head><meta charset='UTF-8'></head><body>";
@@ -14,13 +14,13 @@ void handleMenuWifi() {
   response += "</form>";
   response += "<a href='/'>Retour</a>";
   response += "</body></html>";
-  server.send(200, "text/html", response);
+  request->send(200, "text/html", response);
   Serial.println("wifiPageLoading");
 }
 
-void handleSaveWifi() {
-  String newSSID = server.arg("ssid");
-  String newPassword = server.arg("password");
+void handleSaveWifi(AsyncWebServerRequest *request) {
+  String newSSID = request->arg("ssid");
+  String newPassword = request->arg("password");
   bool FormChange = false;
   if (newSSID.length() > 0) {
     if (ssid != newSSID){
@@ -37,14 +37,20 @@ void handleSaveWifi() {
     }
   }
   if (FormChange) {
-    server.send(200, "text/plain", "Paramètres enregistrés. Redémarrage du module.");
+    String response = "<html><head><meta charset='UTF-8'><meta http-equiv='refresh' content='10;url=/menuwifi'></head><body>";
+    response += "Paramètres enregistrés. Redémarrage du module.";
+    response += "</body></html>";
+    request->send(200, "text/html", response);
     ESP.restart();
   } else {
-    server.send(400, "text/plain", "Erreur: pas de changement.");
+    String response = "<html><head><meta charset='UTF-8'><meta http-equiv='refresh' content='3;url=/menuwifi'></head><body>";
+    response += "Erreur: pas de changement.";
+    response += "</body></html>";
+    request->send(400, "text/html", response);
   }
 }
 
-void handleMenuCam() {
+void handleMenuCam(AsyncWebServerRequest *request) {
   Serial.println("camPageLoading");
   String response = "<html><head><meta charset='UTF-8'></head><body>";
   response += "<h1>Paramètres CAM</h1>";
@@ -59,13 +65,13 @@ void handleMenuCam() {
   response += "</form>";
   response += "<a href='/'>Retour</a>";
   response += "</body></html>";
-  server.send(200, "text/html", response);
+  request->send(200, "text/html", response);
   Serial.println("camPageSend");
 }
 
-void handleSaveCam() {
-  String newCamUser = server.arg("camuser");
-  String newCamPassword = server.arg("campassword");
+void handleSaveCam(AsyncWebServerRequest *request) {
+  String newCamUser = request->arg("camuser");
+  String newCamPassword = request->arg("campassword");
   bool FormChange = false;
   if (newCamUser.length() > 0) {
     if (camUser != newCamUser){
@@ -82,95 +88,58 @@ void handleSaveCam() {
     }
   }
   if (FormChange) {
-    server.send(200, "text/plain", "Paramètres enregistrés. Redémarrage du module.");
+    String response = "<html><head><meta charset='UTF-8'><meta http-equiv='refresh' content='10;url=/menucam'></head><body>";
+    response += "Paramètres enregistrés. Redémarrage du module.";
+    response += "</body></html>";
+    request->send(200, "text/html", response);
   } else {
-    server.send(400, "text/plain", "Erreur: pas de changement.");
+    String response = "<html><head><meta charset='UTF-8'><meta http-equiv='refresh' content='3;url=/menucam'></head><body>";
+    response += "Erreur: pas de changement.";
+    response += "</body></html>";
+    request->send(400, "text/html", response);
   }
 }
 
-void handleLight() {
+void handleLight(AsyncWebServerRequest *request) {
   // si un user et un mot de passe sont définis
-  if (camUser.length() > 0 && camPassword.length() > 0) {
-    // vérification de l'authentification
-    if (!server.authenticate(camUser.c_str(), camPassword.c_str())) {
-      return server.requestAuthentication();
-    }
+  if (!authenticate(request)) {
+    return;
   }
-  String lightState = server.arg("state");
+  String lightState = request->arg("state");
   if (lightState == "on") {
     for (int i = 1; i < 64; i++) {
       strip.setPixelColor(i, strip.Color(50, 50, 50));
     }
+    ringLightPower = 50;
   } else {
     for (int i = 1; i < 64; i++) {
       strip.setPixelColor(i, strip.Color(0, 0, 0));
     }
+    ringLightPower = 0;
   }
   strip.show();
   // Retourner un message de confirmation
-  server.send(200, "text/plain", "Lumière " + lightState + " !");
+  String response = "<html><head><meta charset='UTF-8'><meta http-equiv='refresh' content='3;url=/menucam'></head><body>";
+  response += "Lumière " + lightState;
+  response += "</body></html>";
+  request->send(200, "text/html", response);
 }
 
-void stream_handler() {
-  // Configurer les en-têtes HTTP pour indiquer un flux MJPEG
-  if (!server.client()) {
+void handleStatus(AsyncWebServerRequest *request) {
+  // si un user et un mot de passe sont définis
+  if (!authenticate(request)) {
     return;
   }
+  StaticJsonDocument<200> doc;
+  doc["uptime"] = millis() / 1000;
+  doc["ringLightPower"] = ringLightPower;
 
-  // si un user et un mot de passe sont définis
-  if (camUser.length() > 0 && camPassword.length() > 0) {
-    // vérification de l'authentification
-    if (!server.authenticate(camUser.c_str(), camPassword.c_str())) {
-      return server.requestAuthentication();
-    }
-  }
-
-
-  // Envoyer l'en-tête HTTP pour indiquer un flux MJPEG
-  String response = "HTTP/1.1 200 OK\r\n";
-  response += "Content-Type: multipart/x-mixed-replace; boundary=123456789000000000000987654321\r\n";
-  response += "Connection: close\r\n";
-  response += "\r\n";
-  server.client().print(response);
-
-  // Boucle pour envoyer des images en continu
-  while (true) {
-    // Capturer une image à partir de la caméra
-    camera_fb_t *fb = esp_camera_fb_get();
-    if (!fb) {
-      Serial.println("Échec de la capture d'image");
-      break;
-    }
-
-    // Envoyer les données MJPEG (image) au client
-    size_t jpg_len = fb->len;
-    if (fb->format != PIXFORMAT_JPEG) {
-      Serial.println("Format non supporté !");
-      esp_camera_fb_return(fb);
-      break;
-    }
-
-    // Envoyer la partie du flux MJPEG
-    server.client().printf("\r\n--123456789000000000000987654321\r\n");
-    server.client().printf("Content-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n", jpg_len);
-    server.client().write(fb->buf, fb->len);
-
-    // Libérer le buffer de la caméra
-    esp_camera_fb_return(fb);
-
-    // Si le client a arrêté la connexion, quitter la boucle
-    if (!server.client().connected()) {
-      break;
-    }
-
-    // Petite pause pour éviter une surcharge
-    delay(50);
-  }
+  String jsonResponse;
+  serializeJson(doc, jsonResponse);
+  request->send(200, "application/json", jsonResponse);
 }
 
-
-
-void handleRoot() {
+void handleRoot(AsyncWebServerRequest *request) {
   Serial.println("rootPageLoading");
   String response = "<html><head><meta charset='UTF-8'></head><body>";
   response += "<h1>Menu</h1>";
@@ -179,6 +148,6 @@ void handleRoot() {
   response += "<li><a href='/menucam'>Paramètres CAM</a></li>";
   response += "</ul>";
   response += "</body></html>";
-  server.send(200, "text/html", response);
+  request->send(200, "text/html", response);
   Serial.println("rootPageSend");
 }
