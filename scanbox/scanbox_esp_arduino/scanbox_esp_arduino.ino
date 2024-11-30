@@ -1,6 +1,6 @@
 #include "esp_camera.h"
 #include <WiFi.h>
-#include <WebServer.h>
+#include <ESPAsyncWebServer.h>
 #include "esp_timer.h"
 #include "img_converters.h"
 #include "Arduino.h"
@@ -9,6 +9,7 @@
 #include "soc/rtc_cntl_reg.h"  //disable brownout problems
 #include <Adafruit_NeoPixel.h>
 #include <EEPROM.h>
+#include <ArduinoJson.h>
 
 #define EEPROM_SIZE 512
 
@@ -24,7 +25,7 @@ String password;
 String camUser;
 String camPassword;
 
-WebServer server(80);
+AsyncWebServer server(80);
 WiFiClient wifiClient;
 
 const char *ap_ssid = "ESP_Config"; // Nom du réseau WiFi en mode AP (point d'accès)
@@ -35,17 +36,17 @@ unsigned long connectionTimeout = 10000; // 10 secondes
 unsigned long startTime;
 unsigned long delaytime;
 
+unsigned int ringLightPower = 0;
+
 int nbrErreurWifiConnect = 0;
 #define LED_PIN 15
 Adafruit_NeoPixel strip(64, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 #include "prgeeprom.h"
 #include "prgwifi.h"
+#include "prgpagecam.h"
 #include "prgpagehttp.h"
 
-
-
-#define PART_BOUNDARY "123456789000000000000987654321"
 #define CAMERA_MODEL_AI_THINKER
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1
@@ -129,12 +130,15 @@ void setup() {
   server.on("/savecam", HTTP_GET, handleSaveCam);
   server.on("/light", HTTP_GET, handleLight);
   server.on("/", HTTP_GET, handleRoot);
-  server.on("/stream", HTTP_GET, stream_handler);
+  server.on("/stream", HTTP_GET, handleStream);
+  server.on("/capture", HTTP_GET, handleCapture);
+  server.on("/status", HTTP_GET, handleStatus);
   server.begin();
   strip.setPixelColor(0, strip.Color(0, 0, 0));
   for (int i = 1; i < 64; i++) {
     strip.setPixelColor(i, strip.Color(50, 50, 50));
   }
+  ringLightPower = 50;
   strip.show();
 }
 
@@ -152,5 +156,4 @@ void loop() {
       }
     }
   }
-  server.handleClient();
 }
