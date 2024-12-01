@@ -10,14 +10,15 @@ import {
     UsersView,
     UserView,
     InventoryView,
-    ProjectsView,
-    ProjectView,
+    ProjetsView,
+    ProjetView,
     CommandsView,
     CommandView,
     CamerasView,
     IAView,
     TagsView,
-    StoresView
+    StoresView,
+    StoreView
 } from '@/views';
 
 export const router = createRouter({
@@ -33,15 +34,15 @@ export const router = createRouter({
         { path: '/users', component: UsersView },
         { path: '/users/:id', component: UserView },
         { path: '/inventory', component: InventoryView },
-        { path: '/projects', component: ProjectsView },
-        { path: '/projects/:id', component: ProjectView },
+        { path: '/projets', component: ProjetsView },
+        { path: '/projets/:id', component: ProjetView },
         { path: '/commands', component: CommandsView },
         { path: '/commands/:id', component: CommandView },
         { path: '/cameras', component: CamerasView },
         { path: '/ia', component: IAView },
         { path: '/tags', component: TagsView },
         { path: '/stores', component: StoresView },
-        { path: '/stores/:id', component: StoresView }
+        { path: '/stores/:id', component: StoreView }
     ]
 });
 

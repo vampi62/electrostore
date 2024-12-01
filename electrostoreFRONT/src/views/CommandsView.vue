@@ -23,24 +23,26 @@ commandsStore.getAll();
             </tr>
         </thead>
         <tbody>
-            <tr v-if="!commandsStore.commandes.loading" v-for="command in commandsStore.commandes" :key="command.id_command">
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ command.id_command }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ command.prix_command }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ command.url_command }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ command.status_command }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ command.date_command }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ command.date_livraison_command }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
-                        Modifier
-                    </button>
-                </td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-                    <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm ml-2">
-                        Supprimer
-                    </button>
-                </td>
-            </tr>
+            <template v-if="!commandsStore.commandes.loading">
+                <tr v-for="command in commandsStore.commandes" :key="command.id_command">
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ command.id_command }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ command.prix_command }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ command.url_command }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ command.status_command }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ command.date_command }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ command.date_livraison_command }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                            Modifier
+                        </button>
+                    </td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+                        <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm ml-2">
+                            Supprimer
+                        </button>
+                    </td>
+                </tr>
+            </template>
         </tbody>
     </table>
 </template>

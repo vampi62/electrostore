@@ -10,3 +10,4 @@ export * from './projets.store';
 export * from './stores.store';
 export * from './tags.store';
 export * from './users.store';
+export * from './sessionToken.store';

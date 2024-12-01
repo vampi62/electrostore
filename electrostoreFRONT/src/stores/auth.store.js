@@ -1,23 +1,24 @@
 import { defineStore } from 'pinia';
 
 import { fetchWrapper, router } from '@/helpers';
-import { ref } from 'vue';
+import { useSessionTokenStore } from '@/stores';
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
+
 
 export const useAuthStore = defineStore({
     id: 'auth',
     state: () => ({
         // initialize state from local storage to enable user to stay logged in
         user: JSON.parse(localStorage.getItem('user')),
-        token: localStorage.getItem('token'),
-        refeshToken: null,
+        refeshToken: localStorage.getItem('refreshToken'),
         returnUrl: null,
         refreshInterval: null
     }),
     actions: {
         checkIfLoged() {
-            if (!!this.user && !!this.token && !!this.refeshToken) {
+            const sessionTokenStore = useSessionTokenStore();
+            if (!!this.user && !!this.refeshToken && !!sessionTokenStore.token) {
                 this.startTokenRefreshCheck();
             }
         },
@@ -28,11 +29,13 @@ export const useAuthStore = defineStore({
             });
             // store user details and jwt in local storage to keep user logged in between page refreshes
             localStorage.setItem('user', JSON.stringify(request));
-            localStorage.setItem('token', request?.token);
             localStorage.setItem('refreshToken', request?.refresh_token);
             this.user = request;
-            this.token = request?.token;
             this.refeshToken = request?.refresh_token;
+
+            const sessionTokenStore = useSessionTokenStore();
+            sessionTokenStore.setToken(request?.token);
+
             // redirect to previous url or default to home page if no previous url or if previous url is login page
             router.push((this.returnUrl && this.returnUrl !== '/login') ? this.returnUrl : '/');
             this.startTokenRefreshCheck();
@@ -65,14 +68,12 @@ export const useAuthStore = defineStore({
                 const now = new Date().getTime();
                 const timeToExpire = Date.parse(this.user.expire_date_token) - now;
                 const refreshThreshold = 10 * 60 * 1000; // 10 minutes avant l'expiration
-                console.log('timeToExpire', timeToExpire);
                 if (timeToExpire < refreshThreshold) {
                     this.refreshLogin();
                 }
             }, 60 * 1000 * 5); // vérifier toutes les 5 minutes
         },
         stopTokenRefreshCheck() {
-            console.log('stopTokenRefreshCheck');
             clearInterval(this.refreshInterval);
         },
         async refreshLogin() {
@@ -81,11 +82,11 @@ export const useAuthStore = defineStore({
                 token: this.user.refesh_token
             });
             localStorage.setItem('user', JSON.stringify(request));
-            localStorage.setItem('token', request?.token);
             localStorage.setItem('refreshToken', request?.refresh_token);
             this.user = request;
-            this.token = request?.token;
             this.refeshToken = request?.refresh_token;
+            const sessionTokenStore = useSessionTokenStore();
+            sessionTokenStore.setToken(request?.token);
         },
         async forgotPassword(email) {
             return await fetchWrapper.post({
@@ -106,11 +107,12 @@ export const useAuthStore = defineStore({
         },
         logout() {
             this.user = null;
-            this.token = null;
             this.refeshToken = null;
             this.stopTokenRefreshCheck();
             localStorage.removeItem('user');
-            localStorage.removeItem('token');
+
+            const sessionTokenStore = useSessionTokenStore();
+            sessionTokenStore.clearToken()
             localStorage.removeItem('refreshToken');
             router.push('/login');
         }

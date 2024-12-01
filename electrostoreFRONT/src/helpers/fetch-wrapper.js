@@ -1,15 +1,18 @@
 import { useAuthStore } from '@/stores';
 
+import { ref } from 'vue';
+
 export const fetchWrapper = {
     get: request('GET'),
     post: request('POST'),
     put: request('PUT'),
     delete: request('DELETE'),
-    image: image('GET')
+    image: image('GET'),
+    stream: stream('GET')
 };
 
 function request(method) {
-    return async ({ url, body=null, token=null }) => {
+    return async ({ url, body = null, token = null }) => {
         const requestOptions = {
             method,
             headers: authHeader(url, token)
@@ -25,7 +28,7 @@ function request(method) {
 
 function image(method) {
     // download a image
-    return async ({ url, body=null, token=null }) => {
+    return async ({ url, token = null }) => {
         const requestOptions = {
             method,
             headers: authHeader(url, token)
@@ -38,9 +41,15 @@ function image(method) {
     }
 }
 
-// helper functions
+function stream(method) {
+    // download a stream
+    return ({ url, token = null }) => {
+        return url + '?token=' + token;
+    }
+}
 
-function authHeader(url, token=null) {
+// helper functions
+function authHeader(url, token = null) {
     // return auth header with jwt if user is logged in and request is to the api url
     const header = {};
     const { user } = useAuthStore();

@@ -1,22 +1,57 @@
 import { defineStore } from 'pinia';
 
 import { fetchWrapper } from '@/helpers';
-
-const token = localStorage.getItem('token');
+import { useSessionTokenStore } from '@/stores';
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export const useProjetsStore = defineStore({
     id: 'projets',
     state: () => ({
-        projets: {}
+        projets: {},
+        projet: {}
     }),
     actions: {
         async getAll(limit = 100, offset = 0) {
+            const sessionTokenStore = useSessionTokenStore();
             this.projets = { loading: true };
             this.projets = await fetchWrapper.get({
                 url: `${baseUrl}/projet?limit=${limit}&offset=${offset}`,
-                token: token
+                token: sessionTokenStore.token
+            });
+        },
+        async getById(id) {
+            const sessionTokenStore = useSessionTokenStore();
+            this.projet = { loading: true };
+            this.projet = await fetchWrapper.get({
+                url: `${baseUrl}/projet/${id}`,
+                token: sessionTokenStore.token
+            });
+        },
+        async create(params) {
+            const sessionTokenStore = useSessionTokenStore();
+            this.projet = { loading: true };
+            this.projet = await fetchWrapper.post({
+                url: `${baseUrl}/projet`,
+                token: sessionTokenStore.token,
+                body: params
+            });
+        },
+        async update(id, params) {
+            const sessionTokenStore = useSessionTokenStore();
+            this.projet = { loading: true };
+            this.projet = await fetchWrapper.put({
+                url: `${baseUrl}/projet/${id}`,
+                token: sessionTokenStore.token,
+                body: params
+            });
+        },
+        async delete(id) {
+            const sessionTokenStore = useSessionTokenStore();
+            this.projet = { loading: true };
+            this.projet = await fetchWrapper.delete({
+                url: `${baseUrl}/projet/${id}`,
+                token: sessionTokenStore.token
             });
         }
     }
