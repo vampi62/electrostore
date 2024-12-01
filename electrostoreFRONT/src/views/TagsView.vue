@@ -20,21 +20,23 @@ tagsStore.getAll();
             </tr>
         </thead>
         <tbody>
-            <tr v-if="!tagsStore.tags.loading" v-for="tag in tagsStore.tags" :key="tag.id_tag">
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ tag.id_tag }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ tag.nom_tag }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ tag.poids_tag }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
-                        Modifier
-                    </button>
-                </td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-                    <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm ml-2">
-                        Supprimer
-                    </button>
-                </td>
-            </tr>
+            <template v-if="!tagsStore.tags.loading">
+                <tr v-for="tag in tagsStore.tags" :key="tag.id_tag">
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ tag.id_tag }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ tag.nom_tag }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ tag.poids_tag }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                            Modifier
+                        </button>
+                    </td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+                        <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm ml-2">
+                            Supprimer
+                        </button>
+                    </td>
+                </tr>
+            </template>
         </tbody>
     </table>
 </template>

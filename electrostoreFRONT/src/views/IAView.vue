@@ -22,23 +22,25 @@ IAStore.getAll();
             </tr>
         </thead>
         <tbody>
-            <tr v-if="!IAStore.ias.loading" v-for="ia in IAStore.ias" :key="ia.id_ia">
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.id_ia }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.nom_ia }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.description_ia }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.date_ia }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.trained_ia }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
-                        Modifier
-                    </button>
-                </td>
-                <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-                    <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm ml-2">
-                        Supprimer
-                    </button>
-                </td>
-            </tr>
+            <template v-if="!IAStore.ias.loading">
+                <tr v-for="ia in IAStore.ias" :key="ia.id_ia">
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.id_ia }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.nom_ia }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.description_ia }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.date_ia }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.trained_ia }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                            Modifier
+                        </button>
+                    </td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+                        <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm ml-2">
+                            Supprimer
+                        </button>
+                    </td>
+                </tr>
+            </template>
         </tbody>
     </table>
 </template>

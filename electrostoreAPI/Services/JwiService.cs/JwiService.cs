@@ -74,7 +74,7 @@ public class JwiService : IJwiService
             var tokenOBJ = readToken(token);
             if (tokenOBJ == null) return false;
             var claims = tokenOBJ.Claims.ToList();
-            if (claims.FirstOrDefault(x => x.Type == ClaimTypes.Role && x.Value == role) == null) return false;
+            if (!claims.Any(x => x.Type == "role" && x.Value == role)) return false;
             if (IsRevoked(tokenOBJ.Id,role)) return false;
             return true;
         }

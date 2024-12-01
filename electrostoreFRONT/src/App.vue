@@ -17,7 +17,7 @@ const reduceLeftSideBar = ref(false);
 const showTopBar = ref(false);
 const listNav = [
   { name: 'inventory', path: '/inventory', roleRequired: 'user', faIcon: 'fa-solid fa-box' },
-  { name: 'projects', path: '/projects', roleRequired: 'user', faIcon: 'fa-solid fa-project-diagram' },
+  { name: 'projets', path: '/Projets', roleRequired: 'user', faIcon: 'fa-solid fa-project-diagram' },
   { name: 'commands', path: '/commands', roleRequired: 'user', faIcon: 'fa-solid fa-shopping-cart' },
   { name: 'cameras', path: '/cameras', roleRequired: 'user', faIcon: 'fa-solid fa-camera' },
   { name: 'ia', path: '/ia', roleRequired: 'user', faIcon: 'fa-solid fa-microchip' },
@@ -40,8 +40,12 @@ authStore.checkIfLoged();
     <div v-show="authStore.user && !isIframe">
       <nav class="flex justify-between p-5 bg-gray-800 border-b-2 border-blue-400 fixed w-full top-0 h-16">
         <RouterLink to="/" class="text-white hover:text-blue-400">Home</RouterLink>
-        <a href="https://github.com/vampi62/electrostore"
-          class="block sm:hidden text-white hover:text-blue-400">ElectroStore</a><!-- for mobile -->
+        <a href="https://github.com/vampi62/electrostore" class="block sm:hidden text-white hover:text-blue-400"><!-- for mobile -->
+          <p class="space-x-4">
+            <font-awesome-icon icon="fa-brands fa-github" size="lg" />
+            <span>ElectroStore</span>
+          </p>
+        </a>
         <button @click="showTopBar = !showTopBar"
           class="block sm:hidden text-white hover:text-blue-400"><!-- for mobile -->
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -69,8 +73,8 @@ authStore.checkIfLoged();
           <div class="border-t-2 border-blue-400"></div>
           <ul class="mt-6 space-y-4">
             <li v-for="nav in listNav" :key="nav.name">
-              <RouterLink :to="nav.path" :class="['flex items-center space-x-4 text-white hover:text-blue-400',
-                route.path === nav.path ? 'text-blue-400' : '']">
+              <RouterLink :to="nav.path" :class="['flex items-center space-x-4 hover:text-blue-400',
+                route.path === nav.path ? 'text-blue-400' : 'text-white']">
                 <font-awesome-icon :icon="nav.faIcon" />
                 <span>{{ nav.name }}</span>
               </RouterLink>
@@ -83,8 +87,8 @@ authStore.checkIfLoged();
         <div class="flex flex-col space-y-4">
           <ul class="mt-2 space-y-4">
             <li v-for="nav in listNav" :key="nav.name" class="min-h-6">
-              <RouterLink :to="nav.path" :class="['flex items-center space-x-4 text-white hover:text-blue-400',
-                route.path === nav.path ? 'text-blue-400' : '']">
+              <RouterLink :to="nav.path" :class="['flex items-center space-x-4 hover:text-blue-400',
+                route.path === nav.path ? 'text-blue-400' : 'text-white']">
                 <div class="flex items-center justify-center w-8 h-8">
                   <font-awesome-icon :icon="nav.faIcon" size="lg" />
                 </div>
