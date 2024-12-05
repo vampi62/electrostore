@@ -38,6 +38,18 @@ public class ItemDocumentService : IItemDocumentService
             .ToListAsync();
     }
 
+    public async Task<int> GetItemsDocumentsCountByItemId(int itemId)
+    {
+        // check if item exists
+        if (!await _context.Items.AnyAsync(item => item.id_item == itemId))
+        {
+            throw new KeyNotFoundException($"Item with id {itemId} not found");
+        }
+        return await _context.ItemsDocuments
+            .Where(id => id.id_item == itemId)
+            .CountAsync();
+    }
+
     public async Task<ReadItemDocumentDto> GetItemDocumentById(int id, int? itemId = null)
     {
         var itemDocument = await _context.ItemsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ItemDocument with id {id} not found");

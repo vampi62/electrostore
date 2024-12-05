@@ -7,7 +7,11 @@ public interface IStoreTagService
 {
     public Task<IEnumerable<ReadStoreTagDto>> GetStoresTagsByStoreId(int storeId, int limit = 100, int offset = 0);
 
+    public Task<int> GetStoresTagsCountByStoreId(int storeId);
+
     public Task<IEnumerable<ReadStoreTagDto>> GetStoresTagsByTagId(int tagId, int limit = 100, int offset = 0);
+
+    public Task<int> GetStoresTagsCountByTagId(int tagId);
 
     public Task<ReadStoreTagDto> GetStoreTagById(int storeId, int tagId);
 

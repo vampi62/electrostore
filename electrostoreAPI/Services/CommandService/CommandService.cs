@@ -29,6 +29,11 @@ public class CommandService : ICommandService
             .ToListAsync();
     }
 
+    public async Task<int> GetCommandsCount()
+    {
+        return await _context.Commands.CountAsync();
+    }
+
     public async Task<ReadCommandDto> GetCommandById(int id)
     {
         var command = await _context.Commands.FindAsync(id) ?? throw new KeyNotFoundException($"Command with id {id} not found");

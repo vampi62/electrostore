@@ -7,6 +7,8 @@ public interface IItemService
 {
     public Task<IEnumerable<ReadItemDto>> GetItems(int limit = 100, int offset = 0);
 
+    public Task<int> GetItemsCount();
+
     public Task<ReadItemDto> GetItemById(int id);
 
     public Task<ReadItemDto> CreateItem(CreateItemDto itemDto);

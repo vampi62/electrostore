@@ -32,6 +32,11 @@ public class ProjetService : IProjetService
             .ToListAsync();
     }
 
+    public async Task<int> GetProjetsCount()
+    {
+        return await _context.Projets.CountAsync();
+    }
+
     public async Task<ReadProjetDto> GetProjetById(int id)
     {
         var projet = await _context.Projets.FindAsync(id) ?? throw new KeyNotFoundException($"Projet with id {id} not found");

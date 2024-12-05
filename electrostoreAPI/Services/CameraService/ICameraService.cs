@@ -7,6 +7,8 @@ public interface ICameraService
 {
     public Task<IEnumerable<ReadCameraDto>> GetCameras(int limit = 100, int offset = 0);
 
+    public Task<int> GetCamerasCount();
+
     public Task<ReadCameraDto> GetCameraById(int id);
 
     public Task<ReadCameraDto> CreateCamera(CreateCameraDto cameraDto);

@@ -34,6 +34,11 @@ public class UserService : IUserService
             .ToListAsync();
     }
 
+    public async Task<int> GetUsersCount()
+    {
+        return await _context.Users.CountAsync();
+    }
+
     public async Task<ReadUserDto> CreateUser(CreateUserDto userDto)
     {
         var newUser = new Users();

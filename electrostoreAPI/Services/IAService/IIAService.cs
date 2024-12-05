@@ -7,6 +7,8 @@ public interface IIAService
 {
     Task<List<ReadIADto>> GetIA(int limit = 100, int offset = 0);
 
+    Task<int> GetIACount();
+
     Task<ReadIADto> GetIAById(int id);
 
     Task<ReadIADto> CreateIA(CreateIADto IADto);

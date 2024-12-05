@@ -5,9 +5,9 @@ namespace electrostore.Services.LedService;
 
 public interface ILedService
 {
-    public Task<IEnumerable<ReadLedDto>> GetLeds(int limit = 100, int offset = 0);
-
     public Task<IEnumerable<ReadLedDto>> GetLedsByStoreId(int storeId, int limit = 100, int offset = 0);
+
+    public Task<int> GetLedsCountByStoreId(int storeId);
 
     public Task<IEnumerable<ReadLedDto>> GetLedsByStoreIdAndPosition(int storeId, int xmin, int xmax, int ymin, int ymax);
 

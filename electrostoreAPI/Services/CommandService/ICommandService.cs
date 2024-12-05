@@ -7,6 +7,8 @@ public interface ICommandService
 {
     public Task<IEnumerable<ReadCommandDto>> GetCommands(int limit = 100, int offset = 0);
 
+    public Task<int> GetCommandsCount();
+
     public Task<ReadCommandDto> GetCommandById(int id);
 
     public Task<ReadCommandDto> CreateCommand(CreateCommandDto commandDto);

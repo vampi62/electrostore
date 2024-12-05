@@ -7,6 +7,8 @@ public interface IProjetService
 {
     public Task<IEnumerable<ReadProjetDto>> GetProjets(int limit = 100, int offset = 0);
 
+    public Task<int> GetProjetsCount();
+
     public Task<ReadProjetDto> GetProjetById(int id);
 
     public Task<ReadProjetDto> CreateProjet(CreateProjetDto projetDto);

@@ -38,6 +38,17 @@ public class ProjetDocumentService : IProjetDocumentService
             .ToListAsync();
     }
 
+    public async Task<int> GetProjetDocumentsCountByProjetId(int projetId)
+    {
+        // check if the projet exists
+        if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
+        {
+            throw new KeyNotFoundException($"Projet with id {projetId} not found");
+        }
+        return await _context.ProjetsDocuments
+            .CountAsync(id => id.id_projet == projetId);
+    }
+
     public async Task<ReadProjetDocumentDto> GetProjetDocumentById(int id, int? projetId = null)
     {
         var projetDocument = await _context.ProjetsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetDocument with id {id} not found");

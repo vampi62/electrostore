@@ -40,6 +40,11 @@ public class IAService : IIAService
             }).ToListAsync();
     }
 
+    public async Task<int> GetIACount()
+    {
+        return await _context.IA.CountAsync();
+    }
+
     public async Task<ReadIADto> GetIAById(int id)
     {
         var ia = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");

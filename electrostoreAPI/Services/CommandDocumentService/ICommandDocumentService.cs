@@ -7,6 +7,8 @@ public interface ICommandDocumentService
 {
     public Task<IEnumerable<ReadCommandDocumentDto>> GetCommandDocumentsByCommandId(int itemId, int limit = 100, int offset = 0);
 
+    public Task<int> GetCommandDocumentsCountByCommandId(int itemId);
+
     public Task<ReadCommandDocumentDto> GetCommandDocumentById(int id, int? itemId = null);
 
     public Task<ReadCommandDocumentDto> CreateCommandDocument(CreateCommandDocumentDto itemDocumentDto);

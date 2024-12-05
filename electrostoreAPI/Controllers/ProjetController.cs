@@ -22,6 +22,9 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadProjetDto>>> GetProjets([FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var projets = await _projetService.GetProjets(limit, offset);
+            var CountList = await _projetService.GetProjetsCount();
+            Response.Headers.Add("X-Total-Count", CountList.ToString());
+            Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
             return Ok(projets);
         }
 

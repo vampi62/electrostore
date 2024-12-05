@@ -28,6 +28,11 @@ public class TagService : ITagService
             .ToListAsync();
     }
 
+    public async Task<int> GetTagsCount()
+    {
+        return await _context.Tags.CountAsync();
+    }
+
     public async Task<ReadTagDto> GetTagById(int id)
     {
         var tag = await _context.Tags.FindAsync(id) ?? throw new KeyNotFoundException($"Tag with id {id} not found");

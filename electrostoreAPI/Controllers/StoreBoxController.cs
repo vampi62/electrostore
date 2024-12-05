@@ -25,6 +25,9 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadBoxDto>>> GetBoxsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var boxs = await _boxService.GetBoxsByStoreId(id_store, limit, offset);
+            var CountList = await _boxService.GetBoxsCountByStoreId(id_store);
+            Response.Headers.Add("X-Total-Count", CountList.ToString());
+            Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
             return Ok(boxs);
         }
 

@@ -123,6 +123,9 @@ builder.Services.AddSwaggerGen(c =>
             Array.Empty<string>()
         }
     });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "ElectroStore API", Version = "v1" });
+    // api can return in the header "X-Total-Count" the total number of items
+    c.OperationFilter<AddTotalCountHeaderFilter>();
 });
 
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));

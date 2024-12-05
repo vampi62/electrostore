@@ -39,6 +39,17 @@ public class ProjetCommentaireService : IProjetCommentaireService
             .ToListAsync();
     }
 
+    public async Task<int> GetProjetCommentairesCountByProjetId(int projetId)
+    {
+        // check if the projet exists
+        if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
+        {
+            throw new KeyNotFoundException($"Projet with id {projetId} not found");
+        }
+        return await _context.ProjetsCommentaires
+            .CountAsync(p => p.id_projet == projetId);
+    }
+
     public async Task<IEnumerable<ReadProjetCommentaireDto>> GetProjetCommentairesByUserId(int userId, int limit = 100, int offset = 0)
     {
         // check if the user exists
@@ -71,6 +82,17 @@ public class ProjetCommentaireService : IProjetCommentaireService
                 }
             })
             .ToListAsync();
+    }
+
+    public async Task<int> GetProjetCommentairesCountByUserId(int userId)
+    {
+        // check if the user exists
+        if (!await _context.Users.AnyAsync(u => u.id_user == userId))
+        {
+            throw new KeyNotFoundException($"User with id {userId} not found");
+        }
+        return await _context.ProjetsCommentaires
+            .CountAsync(p => p.id_user == userId);
     }
 
     public async Task<ReadProjetCommentaireDto> GetProjetCommentairesByCommentaireId(int id, int? userId = null, int? projetId = null)

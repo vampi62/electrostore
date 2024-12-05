@@ -7,6 +7,8 @@ public interface ITagService
 {
     public Task<IEnumerable<ReadTagDto>> GetTags(int limit = 100, int offset = 0);
 
+    public Task<int> GetTagsCount();
+
     public Task<ReadTagDto> GetTagById(int id);
 
     public Task<ReadTagDto> CreateTag(CreateTagDto tagDto);

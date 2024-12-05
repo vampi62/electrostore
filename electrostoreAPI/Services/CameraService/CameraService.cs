@@ -30,6 +30,11 @@ public class CameraService : ICameraService
             }).ToListAsync();
     }
 
+    public async Task<int> GetCamerasCount()
+    {
+        return await _context.Cameras.CountAsync();
+    }
+
     public async Task<ReadCameraDto> GetCameraById(int id)
     {
         var camera = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id {id} not found");
