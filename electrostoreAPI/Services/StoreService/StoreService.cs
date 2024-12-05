@@ -30,6 +30,11 @@ public class StoreService : IStoreService
             }).ToListAsync();
     }
 
+    public async Task<int> GetStoresCount()
+    {
+        return await _context.Stores.CountAsync();
+    }
+
     public async Task<ReadStoreDto> GetStoreById(int id)
     {
         var store = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id {id} not found");

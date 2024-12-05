@@ -7,7 +7,11 @@ public interface ICommandItemService
 {
     public Task<IEnumerable<ReadCommandItemDto>> GetCommandItemsByCommandId(int commandId, int limit = 100, int offset = 0);
 
+    public Task<int> GetCommandItemsCountByCommandId(int commandId);
+
     public Task<IEnumerable<ReadCommandItemDto>> GetCommandItemsByItemId(int itemId, int limit = 100, int offset = 0);
+
+    public Task<int> GetCommandItemsCountByItemId(int itemId);
 
     public Task<ReadCommandItemDto> GetCommandItemById(int commandId, int itemId);
 

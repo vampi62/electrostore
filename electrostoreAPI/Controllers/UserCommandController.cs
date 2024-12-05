@@ -27,6 +27,9 @@ namespace electrostore.Controllers
                 return Unauthorized(new { message = "You are not allowed to access this resource" });
             }
             var commandCommentaires = await _commandCommentaireService.GetCommandsCommentairesByUserId(id_user, limit, offset);
+            var CountList = await _commandCommentaireService.GetCommandsCommentairesCountByUserId(id_user);
+            Response.Headers.Add("X-Total-Count", CountList.ToString());
+            Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
             return Ok(commandCommentaires);
         }
 

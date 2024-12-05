@@ -24,6 +24,9 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadIADto>>> GetIA([FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var ias = await _iaService.GetIA(limit, offset);
+            var CountList = await _iaService.GetIACount();
+            Response.Headers.Add("X-Total-Count", CountList.ToString());
+            Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
             return Ok(ias);
         }
 

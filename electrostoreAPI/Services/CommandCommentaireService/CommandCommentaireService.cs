@@ -46,6 +46,18 @@ public class CommandCommentaireService : ICommandCommentaireService
             .ToListAsync();
     }
 
+    public async Task<int> GetCommandsCommentairesCountByCommandId(int CommandId)
+    {
+        // check if the command exists
+        if (!await _context.Commands.AnyAsync(p => p.id_command == CommandId))
+        {
+            throw new KeyNotFoundException($"Command with id {CommandId} not found");
+        }
+        return await _context.CommandsCommentaires
+            .Where(c => c.id_command == CommandId)
+            .CountAsync();
+    }
+
     public async Task<IEnumerable<ReadCommandCommentaireDto>> GetCommandsCommentairesByUserId(int userId, int limit = 100, int offset = 0)
     {
         // check if the user exists
@@ -68,6 +80,18 @@ public class CommandCommentaireService : ICommandCommentaireService
                 user_name = c.User.nom_user + " " + c.User.prenom_user
             })
             .ToListAsync();
+    }
+
+    public async Task<int> GetCommandsCommentairesCountByUserId(int userId)
+    {
+        // check if the user exists
+        if (!await _context.Users.AnyAsync(u => u.id_user == userId))
+        {
+            throw new KeyNotFoundException($"User with id {userId} not found");
+        }
+        return await _context.CommandsCommentaires
+            .Where(c => c.id_user == userId)
+            .CountAsync();
     }
 
     public async Task<ReadCommandCommentaireDto> GetCommandsCommentaireById(int id, int? userId = null, int? CommandId = null)

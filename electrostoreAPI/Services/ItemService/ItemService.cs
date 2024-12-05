@@ -39,6 +39,11 @@ public class ItemService : IItemService
             .ToListAsync();
     }
 
+    public async Task<int> GetItemsCount()
+    {
+        return await _context.Items.CountAsync();
+    }
+
     public async Task<ReadItemDto> GetItemById(int itemId)
     {
         var item = await _context.Items.FindAsync(itemId) ?? throw new KeyNotFoundException($"Item with id {itemId} not found");

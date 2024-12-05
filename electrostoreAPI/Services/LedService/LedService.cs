@@ -21,22 +21,6 @@ public class LedService : ILedService
         _mqttClient = mqttClient;
     }
 
-    public async Task<IEnumerable<ReadLedDto>> GetLeds(int limit = 100, int offset = 0)
-    {
-        return await _context.Leds
-            .Skip(offset)
-            .Take(limit)
-            .Select(led => new ReadLedDto
-            {
-                id_led = led.id_led,
-                x_led = led.x_led,
-                y_led = led.y_led,
-                id_store = led.id_store,
-                mqtt_led_id = led.mqtt_led_id
-            })
-            .ToListAsync();
-    }
-
     public async Task<IEnumerable<ReadLedDto>> GetLedsByStoreId(int storeId, int limit = 100, int offset = 0)
     {
         // check if the store exists
@@ -57,6 +41,18 @@ public class LedService : ILedService
                 mqtt_led_id = led.mqtt_led_id
             })
             .ToListAsync();
+    }
+
+    public async Task<int> GetLedsCountByStoreId(int storeId)
+    {
+        // check if the store exists
+        if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
+        {
+            throw new KeyNotFoundException($"Store with id {storeId} not found");
+        }
+        return await _context.Leds
+            .Where(led => led.id_store == storeId)
+            .CountAsync();
     }
 
     public async Task<IEnumerable<ReadLedDto>> GetLedsByStoreIdAndPosition(int storeId, int xmin, int xmax, int ymin, int ymax)

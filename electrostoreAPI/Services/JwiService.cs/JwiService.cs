@@ -205,6 +205,17 @@ public class JwiService : IJwiService
             .ToListAsync();
     }
 
+    public async Task<int> GetAccessTokensCountByUserId(int userId)
+    {
+        if (!_context.Users.Any(x => x.id_user == userId))
+        {
+            throw new KeyNotFoundException($"User with id {userId} not found");
+        }
+        return await _context.JWIAccessToken
+            .Where(x => x.id_user == userId)
+            .CountAsync();
+    }
+
     public async Task<IEnumerable<ReadRefreshTokenDto>> GetRefreshTokensByUserId(int userId, int limit = 100, int offset = 0)
     {
         if (!_context.Users.Any(x => x.id_user == userId))
@@ -229,5 +240,16 @@ public class JwiService : IJwiService
                 id_jwi_access = x.id_jwi_access
             })
             .ToListAsync();
+    }
+
+    public async Task<int> GetRefreshTokensCountByUserId(int userId)
+    {
+        if (!_context.Users.Any(x => x.id_user == userId))
+        {
+            throw new KeyNotFoundException($"User with id {userId} not found");
+        }
+        return await _context.JWIRefreshToken
+            .Where(x => x.id_user == userId)
+            .CountAsync();
     }
 }

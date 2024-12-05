@@ -33,6 +33,17 @@ public class StoreTagService : IStoreTagService
             .ToListAsync();
     }
 
+    public async Task<int> GetStoresTagsCountByStoreId(int storeId)
+    {
+        // check if store exists
+        if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
+        {
+            throw new KeyNotFoundException($"Store with id {storeId} not found");
+        }
+        return await _context.StoresTags
+            .CountAsync(st => st.id_store == storeId);
+    }
+
     public async Task<IEnumerable<ReadStoreTagDto>> GetStoresTagsByTagId(int tagId, int limit = 100, int offset = 0)
     {
         // check if tag exists
@@ -50,6 +61,17 @@ public class StoreTagService : IStoreTagService
                 id_tag = st.id_tag
             })
             .ToListAsync();
+    }
+
+    public async Task<int> GetStoresTagsCountByTagId(int tagId)
+    {
+        // check if tag exists
+        if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
+        {
+            throw new KeyNotFoundException($"Tag with id {tagId} not found");
+        }
+        return await _context.StoresTags
+            .CountAsync(st => st.id_tag == tagId);
     }
 
     public async Task<ReadStoreTagDto> GetStoreTagById(int storeId, int tagId)

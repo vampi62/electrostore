@@ -27,6 +27,9 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadCameraDto>>> GetCameras([FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var cameras = await _cameraService.GetCameras(limit, offset);
+            var CountList = await _cameraService.GetCamerasCount();
+            Response.Headers.Add("X-Total-Count", CountList.ToString());
+            Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
             return Ok(cameras);
         }
 

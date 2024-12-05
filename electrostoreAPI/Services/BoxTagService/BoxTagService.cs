@@ -33,6 +33,18 @@ public class BoxTagService : IBoxTagService
             .ToListAsync();
     }
 
+    public async Task<int> GetBoxsTagsCountByBoxId(int boxId)
+    {
+        // check if box exists
+        if (!await _context.Boxs.AnyAsync(s => s.id_box == boxId))
+        {
+            throw new KeyNotFoundException($"Box with id {boxId} not found");
+        }
+        return await _context.BoxsTags
+            .Where(s => s.id_box == boxId)
+            .CountAsync();
+    }
+
     public async Task<IEnumerable<ReadBoxTagDto>> GetBoxsTagsByTagId(int tagId, int limit = 100, int offset = 0)
     {
         // check if tag exists
@@ -50,6 +62,18 @@ public class BoxTagService : IBoxTagService
                 id_tag = s.id_tag
             })
             .ToListAsync();
+    }
+
+    public async Task<int> GetBoxsTagsCountByTagId(int tagId)
+    {
+        // check if tag exists
+        if (!await _context.Tags.AnyAsync(s => s.id_tag == tagId))
+        {
+            throw new KeyNotFoundException($"Tag with id {tagId} not found");
+        }
+        return await _context.BoxsTags
+            .Where(s => s.id_tag == tagId)
+            .CountAsync();
     }
 
     public async Task<ReadBoxTagDto> GetBoxTagById(int boxId, int tagId)

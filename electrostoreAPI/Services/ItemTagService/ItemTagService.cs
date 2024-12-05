@@ -34,6 +34,19 @@ public class ItemTagService : IItemTagService
             .ToListAsync();
     }
 
+    public async Task<int> GetItemsTagsCountByItemId(int itemId)
+    {
+        // check if the item exists
+        if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
+        {
+            throw new KeyNotFoundException($"Item with id {itemId} not found");
+        }
+
+        return await _context.ItemsTags
+            .Where(it => it.id_item == itemId)
+            .CountAsync();
+    }
+
     public async Task<IEnumerable<ReadItemTagDto>> GetItemsTagsByTagId(int tagId, int limit = 100, int offset = 0)
     {
         // check if tag exists
@@ -51,6 +64,18 @@ public class ItemTagService : IItemTagService
                 id_tag = it.id_tag
             })
             .ToListAsync();
+    }
+
+    public async Task<int> GetItemsTagsCountByTagId(int tagId)
+    {
+        // check if tag exists
+        if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
+        {
+            throw new KeyNotFoundException($"Tag with id {tagId} not found");
+        }
+        return await _context.ItemsTags
+            .Where(it => it.id_tag == tagId)
+            .CountAsync();
     }
 
     public async Task<ReadItemTagDto> GetItemTagById(int itemId, int tagId)

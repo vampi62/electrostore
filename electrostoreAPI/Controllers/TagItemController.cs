@@ -22,6 +22,9 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadItemTagDto>>> GetItemsTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var itemTags = await _itemTagService.GetItemsTagsByTagId(id_tag, limit, offset);
+            var CountList = await _itemTagService.GetItemsTagsCountByTagId(id_tag);
+            Response.Headers.Add("X-Total-Count", CountList.ToString());
+            Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
             return Ok(itemTags);
         }
 

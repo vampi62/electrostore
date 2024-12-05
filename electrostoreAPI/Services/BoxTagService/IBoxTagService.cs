@@ -7,7 +7,11 @@ public interface IBoxTagService
 {
     public Task<IEnumerable<ReadBoxTagDto>> GetBoxsTagsByBoxId(int boxId, int limit = 100, int offset = 0);
 
+    public Task<int> GetBoxsTagsCountByBoxId(int boxId);
+
     public Task<IEnumerable<ReadBoxTagDto>> GetBoxsTagsByTagId(int tagId, int limit = 100, int offset = 0);
+
+    public Task<int> GetBoxsTagsCountByTagId(int tagId);
 
     public Task<ReadBoxTagDto> GetBoxTagById(int boxId, int tagId);
 

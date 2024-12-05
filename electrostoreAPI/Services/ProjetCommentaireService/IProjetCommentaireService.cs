@@ -7,7 +7,11 @@ public interface IProjetCommentaireService
 {
     public Task<IEnumerable<ReadProjetCommentaireDto>> GetProjetCommentairesByProjetId(int projetId, int limit = 100, int offset = 0);
 
+    public Task<int> GetProjetCommentairesCountByProjetId(int projetId);
+
     public Task<IEnumerable<ReadProjetCommentaireDto>> GetProjetCommentairesByUserId(int userId, int limit = 100, int offset = 0);
+
+    public Task<int> GetProjetCommentairesCountByUserId(int userId);
 
     public Task<ReadProjetCommentaireDto> GetProjetCommentairesByCommentaireId(int id, int? userId = null, int? projetId = null);
 

@@ -14,23 +14,6 @@ public class ImgService : IImgService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadImgDto>> GetImgs(int limit = 100, int offset = 0)
-    {
-        return await _context.Imgs
-            .Select(img => new ReadImgDto
-            {
-                id_img = img.id_img,
-                nom_img = img.nom_img,
-                url_img = img.url_img,
-                description_img = img.description_img,
-                date_img = img.date_img,
-                id_item = img.id_item
-            })
-            .Skip(offset)
-            .Take(limit)
-            .ToListAsync();
-    }
-
     public async Task<IEnumerable<ReadImgDto>> GetImgsByItemId(int itemId, int limit = 100, int offset = 0)
     {
         //check if item exists
@@ -51,6 +34,18 @@ public class ImgService : IImgService
                 date_img = img.date_img,
                 id_item = img.id_item
             }).ToListAsync();
+    }
+
+    public async Task<int> GetImgsCountByItemId(int itemId)
+    {
+        //check if item exists
+        if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
+        {
+            throw new KeyNotFoundException($"Item with id {itemId} not found");
+        }
+        return await _context.Imgs
+            .Where(img => img.id_item == itemId)
+            .CountAsync();
     }
 
     public async Task<ReadImgDto> GetImgById(int id, int? itemId = null)

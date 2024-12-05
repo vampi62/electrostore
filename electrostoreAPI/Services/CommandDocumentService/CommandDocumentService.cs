@@ -38,6 +38,18 @@ public class CommandDocumentService : ICommandDocumentService
             .ToListAsync();
     }
 
+    public async Task<int> GetCommandDocumentsCountByCommandId(int commandId)
+    {
+        // check if command exists
+        if (!await _context.Commands.AnyAsync(command => command.id_command == commandId))
+        {
+            throw new KeyNotFoundException($"Command with id {commandId} not found");
+        }
+        return await _context.CommandsDocuments
+            .Where(id => id.id_command == commandId)
+            .CountAsync();
+    }
+
     public async Task<ReadCommandDocumentDto> GetCommandDocumentById(int id, int? commandId = null)
     {
         var commandDocument = await _context.CommandsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"CommandDocument with id {id} not found");

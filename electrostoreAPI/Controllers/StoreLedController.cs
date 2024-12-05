@@ -22,6 +22,9 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadLedDto>>> GetLedsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var leds = await _ledService.GetLedsByStoreId(id_store, limit, offset);
+            var CountList = await _ledService.GetLedsCountByStoreId(id_store);
+            Response.Headers.Add("X-Total-Count", CountList.ToString());
+            Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
             return Ok(leds);
         }
 

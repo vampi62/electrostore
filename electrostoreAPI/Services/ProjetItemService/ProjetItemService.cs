@@ -42,6 +42,17 @@ public class ProjetItemService : IProjetItemService
             .ToListAsync();
     }
 
+    public async Task<int> GetProjetItemsCountByProjetId(int ProjetId)
+    {
+        // check if the projet exists
+        if (!await _context.Projets.AnyAsync(p => p.id_projet == ProjetId))
+        {
+            throw new KeyNotFoundException($"Projet with id {ProjetId} not found");
+        }
+        return await _context.ProjetsItems
+            .CountAsync(p => p.id_projet == ProjetId);
+    }
+
     public async Task<IEnumerable<ReadProjetItemDto>> GetProjetItemsByItemId(int ItemId, int limit = 100, int offset = 0)
     {
         // check if the item exists
@@ -68,6 +79,17 @@ public class ProjetItemService : IProjetItemService
                 }
             })
             .ToListAsync();
+    }
+
+    public async Task<int> GetProjetItemsCountByItemId(int ItemId)
+    {
+        // check if the item exists
+        if (!await _context.Items.AnyAsync(i => i.id_item == ItemId))
+        {
+            throw new KeyNotFoundException($"Item with id {ItemId} not found");
+        }
+        return await _context.ProjetsItems
+            .CountAsync(p => p.id_item == ItemId);
     }
 
     public async Task<ReadProjetItemDto> GetProjetItemById(int projetId, int itemId)

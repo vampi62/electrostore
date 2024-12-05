@@ -7,7 +7,11 @@ public interface IProjetItemService
 {
     public Task<IEnumerable<ReadProjetItemDto>> GetProjetItemsByProjetId(int projetId, int limit = 100, int offset = 0);
 
+    public Task<int> GetProjetItemsCountByProjetId(int projetId);
+
     public Task<IEnumerable<ReadProjetItemDto>> GetProjetItemsByItemId(int itemId, int limit = 100, int offset = 0);
+
+    public Task<int> GetProjetItemsCountByItemId(int itemId);
 
     public Task<ReadProjetItemDto> GetProjetItemById(int projetId, int itemId);
 

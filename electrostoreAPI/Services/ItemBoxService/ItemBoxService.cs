@@ -35,6 +35,17 @@ public class ItemBoxService : IItemBoxService
             .ToListAsync();
     }
 
+    public async Task<int> GetItemsBoxsCountByBoxId(int boxId)
+    {
+        // check if the box exists
+        if (!await _context.Boxs.AnyAsync(box => box.id_box == boxId))
+        {
+            throw new KeyNotFoundException($"Box with id {boxId} not found");
+        }
+        return await _context.ItemsBoxs
+            .CountAsync(itemBox => itemBox.id_box == boxId);
+    }
+
     public async Task<IEnumerable<ReadItemBoxDto>> GetItemsBoxsByItemId(int ItemId, int limit = 100, int offset = 0)
     {
         // check if the item exists
@@ -54,6 +65,17 @@ public class ItemBoxService : IItemBoxService
                 seuil_max_item_item_box = itemBox.seuil_max_item_item_box
             })
             .ToListAsync();
+    }
+
+    public async Task<int> GetItemsBoxsCountByItemId(int ItemId)
+    {
+        // check if the item exists
+        if (!await _context.Items.AnyAsync(item => item.id_item == ItemId))
+        {
+            throw new KeyNotFoundException($"Item with id {ItemId} not found");
+        }
+        return await _context.ItemsBoxs
+            .CountAsync(itemBox => itemBox.id_item == ItemId);
     }
 
     public async Task<ReadItemBoxDto> GetItemBoxById(int itemId, int boxId)

@@ -43,6 +43,17 @@ public class CommandItemService : ICommandItemService
             .ToListAsync();
     }
 
+    public async Task<int> GetCommandItemsCountByCommandId(int commandId)
+    {
+        // check if the command exists
+        if (!await _context.Commands.AnyAsync(c => c.id_command == commandId))
+        {
+            throw new KeyNotFoundException($"Command with id {commandId} not found");
+        }
+        return await _context.CommandsItems
+            .CountAsync(ci => ci.id_command == commandId);
+    }
+
     public async Task<IEnumerable<ReadCommandItemDto>> GetCommandItemsByItemId(int itemId, int limit = 100, int offset = 0)
     {
         // check if the item exists
@@ -70,6 +81,17 @@ public class CommandItemService : ICommandItemService
                 }
             })
             .ToListAsync();
+    }
+
+    public async Task<int> GetCommandItemsCountByItemId(int itemId)
+    {
+        // check if the item exists
+        if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
+        {
+            throw new KeyNotFoundException($"Item with id {itemId} not found");
+        }
+        return await _context.CommandsItems
+            .CountAsync(ci => ci.id_item == itemId);
     }
 
     public async Task<ReadCommandItemDto> GetCommandItemById(int commandId, int itemId)

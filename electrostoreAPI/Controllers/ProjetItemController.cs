@@ -19,9 +19,12 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadProjetItemDto>>> GetProjetItemsByProjetId([FromRoute] int id_projet)
+        public async Task<ActionResult<IEnumerable<ReadProjetItemDto>>> GetProjetItemsByProjetId([FromRoute] int id_projet, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
-            var projetItems = await _projetItemService.GetProjetItemsByProjetId(id_projet);
+            var projetItems = await _projetItemService.GetProjetItemsByProjetId(id_projet, limit, offset);
+            var CountList = await _projetItemService.GetProjetItemsCountByProjetId(id_projet);
+            Response.Headers.Add("X-Total-Count", CountList.ToString());
+            Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
             return Ok(projetItems);
         }
 

@@ -23,5 +23,9 @@ public interface IJwiService
 
     public Task<IEnumerable<ReadAccessTokenDto>> GetAccessTokensByUserId(int userId, int limit = 100, int offset = 0);
 
+    public Task<int> GetAccessTokensCountByUserId(int userId);
+
     public Task<IEnumerable<ReadRefreshTokenDto>> GetRefreshTokensByUserId(int userId, int limit = 100, int offset = 0);
+
+    public Task<int> GetRefreshTokensCountByUserId(int userId);
 }

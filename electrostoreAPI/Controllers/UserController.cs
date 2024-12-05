@@ -30,6 +30,9 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadUserDto>>> GetUsers([FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var users = await _userService.GetUsers(limit, offset);
+            var CountList = await _userService.GetUsersCount();
+            Response.Headers.Add("X-Total-Count", CountList.ToString());
+            Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
             return Ok(users);
         }
 

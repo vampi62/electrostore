@@ -30,6 +30,9 @@ namespace electrostore.Controllers
                 return Unauthorized(new { message = "You are not allowed to view this user's tokens" });
             }
             var tokens = await _jwiService.GetRefreshTokensByUserId(id_user, limit, offset);
+            var CountList = await _jwiService.GetRefreshTokensCountByUserId(id_user);
+            Response.Headers.Add("X-Total-Count", CountList.ToString());
+            Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
             return Ok(tokens);
         }
 

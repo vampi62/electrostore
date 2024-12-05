@@ -22,6 +22,9 @@ namespace electrostore.Controllers
         public async Task<ActionResult<IEnumerable<ReadCommandItemDto>>> GetCommandItemsByCommandId([FromRoute] int id_command, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var commandItems = await _commandItemService.GetCommandItemsByCommandId(id_command, limit, offset);
+            var CountList = await _commandItemService.GetCommandItemsCountByCommandId(id_command);
+            Response.Headers.Add("X-Total-Count", CountList.ToString());
+            Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
             return Ok(commandItems);
         }
 
