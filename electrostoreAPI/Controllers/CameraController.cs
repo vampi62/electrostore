@@ -58,7 +58,7 @@ namespace electrostore.Controllers
                 var pingReply = ping.Send(DomainOrIP, 2000);
                 if (pingReply.Status != System.Net.NetworkInformation.IPStatus.Success)
                 {
-                    return StatusCode(504, "Impossible de se connecter à la caméra.");
+                    return StatusCode(504, "Unable to connect to the camera.");
                 }
                 using (var httpClient = new HttpClient())
                 {
@@ -72,16 +72,16 @@ namespace electrostore.Controllers
                     var response = await httpClient.GetAsync(urlFluxStream + "/stream", HttpCompletionOption.ResponseHeadersRead);
                     if (!response.IsSuccessStatusCode)
                     {
-                        return StatusCode((int)response.StatusCode, "Erreur lors de la récupération du flux vidéo.");
+                        return StatusCode((int)response.StatusCode, "Unable to retrieve video stream.");
                     }
                     if (response.Content.Headers.ContentType == null)
                     {
-                        return StatusCode(500, "Impossible de récupérer le flux vidéo.");
+                        return StatusCode(500, "Unable to retrieve video stream.");
                     }
                     var boundary = response.Content.Headers.ContentType.Parameters.FirstOrDefault(p => p.Name == "boundary")?.Value;
                     if (boundary == null)
                     {
-                        return StatusCode(500, "Impossible de récupérer le flux vidéo.");
+                        return StatusCode(500, "Unable to retrieve video stream.");
                     }
                     var contentStream = await response.Content.ReadAsStreamAsync();
                     return new FileStreamResult(contentStream, "multipart/x-mixed-replace; boundary=" + boundary);
@@ -89,13 +89,13 @@ namespace electrostore.Controllers
             }
             catch
             {
-                return StatusCode(500, "Impossible de se connecter à la caméra.");
+                return StatusCode(500, "Unable to connect to the camera.");
             }
         }
 
         [HttpPost("{id_camera}/light")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> SwitchCameraLight([FromRoute] int id_camera, [FromBody] CameraLightDto reqCamera)
+        public async Task<ActionResult<CameraLightDto>> SwitchCameraLight([FromRoute] int id_camera, [FromBody] CameraLightDto reqCamera)
         {
             var camera = await _cameraService.GetCameraById(id_camera);
             try
@@ -106,7 +106,7 @@ namespace electrostore.Controllers
                 var pingReply = ping.Send(DomainOrIP, 2000);
                 if (pingReply.Status != System.Net.NetworkInformation.IPStatus.Success)
                 {
-                    return StatusCode(504, "Impossible de se connecter à la caméra.");
+                    return StatusCode(504, "Unable to connect to the camera.");
                 }
                 using (var httpClient = new HttpClient())
                 {
@@ -119,14 +119,21 @@ namespace electrostore.Controllers
                     var response = await httpClient.GetAsync(urlLight + "/light?state=" + (reqCamera.state ? "on" : "off"));
                     if (!response.IsSuccessStatusCode)
                     {
-                        return StatusCode((int)response.StatusCode, "Erreur lors de la modification de l'état de la lumière.");
+                        return StatusCode((int)response.StatusCode, "Unable to switch camera light state.");
                     }
-                    return Ok();
+                    var content = await response.Content.ReadAsStringAsync();
+                    var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
+                    if (json == null || json.ContainsKey("ringLightPower") == false)
+                    {
+                        return StatusCode(500, "Unable to switch camera light state.");
+                    }
+                    var newLightDto = new CameraLightDto { state = (bool)json["ringLightPower"] };
+                    return Ok(newLightDto);
                 }
             }
             catch
             {
-                return StatusCode(500, "Impossible de se connecter à la caméra.");
+                return StatusCode(500, "Unable to connect to the camera.");
             }
         }
 
@@ -143,7 +150,7 @@ namespace electrostore.Controllers
                 var pingReply = ping.Send(DomainOrIP, 2000);
                 if (pingReply.Status != System.Net.NetworkInformation.IPStatus.Success)
                 {
-                    return StatusCode(504, "Impossible de se connecter à la caméra.");
+                    return StatusCode(504, "Unable to connect to the camera.");
                 }
                 using (var httpClient = new HttpClient())
                 {
@@ -157,7 +164,7 @@ namespace electrostore.Controllers
                     var response = await httpClient.GetAsync(urlFluxStream + "/capture", HttpCompletionOption.ResponseHeadersRead);
                     if (!response.IsSuccessStatusCode)
                     {
-                        return StatusCode((int)response.StatusCode, "Erreur lors de la récupération de la capture.");
+                        return StatusCode((int)response.StatusCode, "Unable to retrieve camera capture.");
                     }
                     var contentStream = await response.Content.ReadAsStreamAsync();
                     return new FileStreamResult(contentStream, "image/jpeg");
@@ -165,13 +172,13 @@ namespace electrostore.Controllers
             }
             catch
             {
-                return StatusCode(500, "Impossible de se connecter à la caméra.");
+                return StatusCode(500, "Unable to connect to the camera.");
             }
         }
 
         [HttpGet("{id_camera}/status")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> GetCameraStatus([FromRoute] int id_camera)
+        public async Task<ActionResult<CameraStatusDto>> GetCameraStatus([FromRoute] int id_camera)
         {
             var camera = await _cameraService.GetCameraById(id_camera);
             try
@@ -182,7 +189,7 @@ namespace electrostore.Controllers
                 var pingReply = ping.Send(DomainOrIP, 2000);
                 if (pingReply.Status != System.Net.NetworkInformation.IPStatus.Success)
                 {
-                    return StatusCode(504, "Impossible de se connecter à la caméra.");
+                    return StatusCode(504, "Unable to connect to the camera.");
                 }
                 using (var httpClient = new HttpClient())
                 {
@@ -196,16 +203,30 @@ namespace electrostore.Controllers
                     var response = await httpClient.GetAsync(urlFluxStream + "/status", HttpCompletionOption.ResponseHeadersRead);
                     if (!response.IsSuccessStatusCode)
                     {
-                        return StatusCode((int)response.StatusCode, "Erreur lors de la récupération du statut de la caméra.");
+                        return StatusCode((int)response.StatusCode, "Unable to retrieve camera status.");
                     }
                     var content = await response.Content.ReadAsStringAsync();
                     var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
-                    return Ok(content);
+                    if (json == null)
+                    {
+                        return StatusCode(500, "Unable to retrieve camera status.");
+                    }
+                    var newCameraStatusDto = new CameraStatusDto {
+                        uptime = (float)json["uptime"],
+                        espModel = (string)json["espModel"],
+                        espTemperature = (float)json["espTemperature"],
+                        ringLightPower = (int)json["ringLightPower"],
+                        versionScanBox = (string)json["versionScanBox"],
+                        cameraResolution = (string)json["cameraResolution"],
+                        cameraPID = (string)json["cameraPID"],
+                        wifiSignalStrength = (string)json["wifiSignalStrength"]
+                    };
+                    return Ok(newCameraStatusDto);
                 }
             }
             catch
             {
-                return StatusCode(500, "Impossible de se connecter à la caméra.");
+                return StatusCode(500, "Unable to connect to the camera.");
             }
         }
 

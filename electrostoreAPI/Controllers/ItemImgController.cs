@@ -69,7 +69,7 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_img}/show")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadImgDto>> GetImgData([FromRoute] int id_img, [FromRoute] int id_item)
+        public async Task<ActionResult> GetImgData([FromRoute] int id_img, [FromRoute] int id_item)
         {
             var img = await _imgService.GetImgById(id_img, id_item);
             var result = await _imgService.GetImageFile(img.url_img); // check if img.url_img is a valid path

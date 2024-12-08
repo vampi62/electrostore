@@ -28,3 +28,14 @@ public record CameraLightDto
 {
     public bool state { get; init; }
 }
+public record CameraStatusDto
+{
+    public float uptime { get; init; }
+    public string espModel { get; init; }
+    public float espTemperature { get; init; }
+    public int ringLightPower { get; init; }
+    public string versionScanBox { get; init; }
+    public string cameraResolution { get; init; }
+    public string cameraPID { get; init; }
+    public string wifiSignalStrength { get; init; }
+}
