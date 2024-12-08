@@ -332,7 +332,24 @@
         },
         "responses": {
           "200": {
-            "description": "Success"
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CameraLightDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CameraLightDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CameraLightDto"
+                }
+              }
+            }
           }
         }
       }
@@ -380,7 +397,24 @@
         ],
         "responses": {
           "200": {
-            "description": "Success"
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CameraStatusDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CameraStatusDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CameraStatusDto"
+                }
+              }
+            }
           }
         }
       }
@@ -3464,24 +3498,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Success",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadImgDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadImgDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadImgDto"
-                }
-              }
-            }
+            "description": "Success"
           }
         }
       }
@@ -9246,6 +9263,44 @@
         "properties": {
           "state": {
             "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CameraStatusDto": {
+        "type": "object",
+        "properties": {
+          "uptime": {
+            "type": "number",
+            "format": "float"
+          },
+          "espModel": {
+            "type": "string",
+            "nullable": true
+          },
+          "espTemperature": {
+            "type": "number",
+            "format": "float"
+          },
+          "ringLightPower": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "versionScanBox": {
+            "type": "string",
+            "nullable": true
+          },
+          "cameraResolution": {
+            "type": "string",
+            "nullable": true
+          },
+          "cameraPID": {
+            "type": "string",
+            "nullable": true
+          },
+          "wifiSignalStrength": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
