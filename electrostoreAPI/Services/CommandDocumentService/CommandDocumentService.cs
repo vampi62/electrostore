@@ -53,7 +53,7 @@ public class CommandDocumentService : ICommandDocumentService
     public async Task<ReadCommandDocumentDto> GetCommandDocumentById(int id, int? commandId = null)
     {
         var commandDocument = await _context.CommandsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"CommandDocument with id {id} not found");
-        if (commandId != null && commandDocument.id_command != commandId)
+        if (commandId is not null && commandDocument.id_command != commandId)
         {
             throw new KeyNotFoundException($"CommandDocument with id {id} not found for command with id {commandId}");
         }
@@ -76,20 +76,8 @@ public class CommandDocumentService : ICommandDocumentService
         {
             throw new KeyNotFoundException($"Command with id {commandDocumentDto.id_command} not found");
         }
-        if (commandDocumentDto.document == null || commandDocumentDto.document.Length == 0)
-        {
-            throw new ArgumentException("Image file is required");
-        }
-        if (commandDocumentDto.document.Length > (30 * 1024 * 1024)) // 30MB max
-        {
-            throw new ArgumentException("Image file size should not exceed 30MB");
-        }
         var fileName = Path.GetFileNameWithoutExtension(commandDocumentDto.document.FileName);
         var fileExt = Path.GetExtension(commandDocumentDto.document.FileName);
-        if (!new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".bmp" }.Contains(fileExt)) // if extension is not allowed
-        {
-            throw new ArgumentException("Document file extension not allowed");
-        }
         var i = 1;
         // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/commandDocuments"
         // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
@@ -130,27 +118,15 @@ public class CommandDocumentService : ICommandDocumentService
     public async Task<ReadCommandDocumentDto> UpdateCommandDocument(int id, UpdateCommandDocumentDto commandDocumentDto, int? commandId = null)
     {
         var commandDocument = await _context.CommandsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"CommandDocument with id {id} not found");
-        if (commandId != null && commandDocument.id_command != commandId)
+        if (commandId is not null && commandDocument.id_command != commandId)
         {
             throw new KeyNotFoundException($"CommandDocument with id {id} not found for command with id {commandId}");
         }
-        if (commandDocumentDto.document != null && commandDocumentDto.document.Length > 0)
+        if (commandDocumentDto.document is not null)
         {
             var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", commandDocument.id_command.ToString(), commandDocument.url_command_document);
-            if (commandDocumentDto.document.Length == 0)
-            {
-                throw new ArgumentException("Document file is required");
-            }
-            if (commandDocumentDto.document.Length > (30 * 1024 * 1024)) // 30MB max
-            {
-                throw new ArgumentException("Image file size should not exceed 30MB");
-            }
             var fileName = Path.GetFileNameWithoutExtension(commandDocumentDto.document.FileName);
             var fileExt = Path.GetExtension(commandDocumentDto.document.FileName);
-            if (!new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".bmp" }.Contains(fileExt)) // if extension is not allowed
-            {
-                throw new ArgumentException("Document file extension not allowed");
-            }
             var i = 1;
             // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/commandDocuments"
             // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
@@ -174,11 +150,11 @@ public class CommandDocumentService : ICommandDocumentService
                 File.Delete(oldPath);
             }
         }
-        if (commandDocumentDto.name_command_document != null)
+        if (commandDocumentDto.name_command_document is not null)
         {
             commandDocument.name_command_document = commandDocumentDto.name_command_document;
         }
-        if (commandDocumentDto.type_command_document != null)
+        if (commandDocumentDto.type_command_document is not null)
         {
             commandDocument.type_command_document = commandDocumentDto.type_command_document;
         }
@@ -198,7 +174,7 @@ public class CommandDocumentService : ICommandDocumentService
     public async Task DeleteCommandDocument(int id, int? commandId = null)
     {
         var commandDocument = await _context.CommandsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"CommandDocument with id {id} not found");
-        if (commandId != null && commandDocument.id_command != commandId)
+        if (commandId is not null && commandDocument.id_command != commandId)
         {
             throw new KeyNotFoundException($"CommandDocument with id {id} not found for command with id {commandId}");
         }

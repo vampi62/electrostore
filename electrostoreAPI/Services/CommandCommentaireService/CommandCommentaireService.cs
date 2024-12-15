@@ -14,7 +14,7 @@ public class CommandCommentaireService : ICommandCommentaireService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadCommandCommentaireDto>> GetCommandsCommentairesByCommandId(int CommandId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadExtendedCommandCommentaireDto>> GetCommandsCommentairesByCommandId(int CommandId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the command exists
         if (!await _context.Commands.AnyAsync(p => p.id_command == CommandId))
@@ -25,15 +25,15 @@ public class CommandCommentaireService : ICommandCommentaireService
             .Where(c => c.id_command == CommandId)
             .Skip(offset)
             .Take(limit)
-            .Select(c => new ReadCommandCommentaireDto
+            .Select(c => new ReadExtendedCommandCommentaireDto
             {
-                id_commandcommentaire = c.id_commandcommentaire,
+                id_command_commentaire = c.id_command_commentaire,
                 id_command = c.id_command,
                 id_user = c.id_user,
                 contenu_command_commentaire = c.contenu_command_commentaire,
                 date_command_commentaire = c.date_command_commentaire,
                 date_modif_command_commentaire = c.date_modif_command_commentaire,
-                command = new ReadCommandDto
+                command = expand != null && expand.Contains("command") ? new ReadCommandDto
                 {
                     id_command = c.Command.id_command,
                     prix_command = c.Command.prix_command,
@@ -41,7 +41,15 @@ public class CommandCommentaireService : ICommandCommentaireService
                     status_command = c.Command.status_command,
                     date_command = c.Command.date_command,
                     date_livraison_command = c.Command.date_livraison_command
-                },
+                } : null,
+                user = expand != null && expand.Contains("user") ? new ReadUserDto
+                {
+                    id_user = c.User.id_user,
+                    nom_user = c.User.nom_user,
+                    prenom_user = c.User.prenom_user,
+                    email_user = c.User.email_user,
+                    role_user = c.User.role_user
+                } : null
             })
             .ToListAsync();
     }
@@ -58,7 +66,7 @@ public class CommandCommentaireService : ICommandCommentaireService
             .CountAsync();
     }
 
-    public async Task<IEnumerable<ReadCommandCommentaireDto>> GetCommandsCommentairesByUserId(int userId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadExtendedCommandCommentaireDto>> GetCommandsCommentairesByUserId(int userId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
@@ -69,15 +77,31 @@ public class CommandCommentaireService : ICommandCommentaireService
             .Where(c => c.id_user == userId)
             .Skip(offset)
             .Take(limit)
-            .Select(c => new ReadCommandCommentaireDto
+            .Select(c => new ReadExtendedCommandCommentaireDto
             {
-                id_commandcommentaire = c.id_commandcommentaire,
+                id_command_commentaire = c.id_command_commentaire,
                 id_command = c.id_command,
                 id_user = c.id_user,
                 contenu_command_commentaire = c.contenu_command_commentaire,
                 date_command_commentaire = c.date_command_commentaire,
                 date_modif_command_commentaire = c.date_modif_command_commentaire,
-                user_name = c.User.nom_user + " " + c.User.prenom_user
+                command = expand != null && expand.Contains("command") ? new ReadCommandDto
+                {
+                    id_command = c.Command.id_command,
+                    prix_command = c.Command.prix_command,
+                    url_command = c.Command.url_command,
+                    status_command = c.Command.status_command,
+                    date_command = c.Command.date_command,
+                    date_livraison_command = c.Command.date_livraison_command
+                } : null,
+                user = expand != null && expand.Contains("user") ? new ReadUserDto
+                {
+                    id_user = c.User.id_user,
+                    nom_user = c.User.nom_user,
+                    prenom_user = c.User.prenom_user,
+                    email_user = c.User.email_user,
+                    role_user = c.User.role_user
+                } : null
             })
             .ToListAsync();
     }
@@ -94,23 +118,39 @@ public class CommandCommentaireService : ICommandCommentaireService
             .CountAsync();
     }
 
-    public async Task<ReadCommandCommentaireDto> GetCommandsCommentaireById(int id, int? userId = null, int? CommandId = null)
+    public async Task<ReadExtendedCommandCommentaireDto> GetCommandsCommentaireById(int id, int? userId = null, int? CommandId = null, List<string>? expand = null)
     {
         var commentaire = await _context.CommandsCommentaires.FindAsync(id);
-        if ((commentaire == null) || (CommandId != null && commentaire.id_command != CommandId) || (userId != null && commentaire.id_user != userId))
+        if ((commentaire is null) || (CommandId is not null && commentaire.id_command != CommandId) || (userId is not null && commentaire.id_user != userId))
         {
             throw new KeyNotFoundException($"Commentaire with id {id} not found");
         }
 
-        return new ReadCommandCommentaireDto
+        return new ReadExtendedCommandCommentaireDto
         {
-            id_commandcommentaire = commentaire.id_commandcommentaire,
+            id_command_commentaire = commentaire.id_command_commentaire,
             id_command = commentaire.id_command,
             id_user = commentaire.id_user,
             contenu_command_commentaire = commentaire.contenu_command_commentaire,
             date_command_commentaire = commentaire.date_command_commentaire,
             date_modif_command_commentaire = commentaire.date_modif_command_commentaire,
-            user_name = commentaire.User.nom_user + " " + commentaire.User.prenom_user
+            command = expand != null && expand.Contains("command") ? new ReadCommandDto
+            {
+                id_command = commentaire.Command.id_command,
+                prix_command = commentaire.Command.prix_command,
+                url_command = commentaire.Command.url_command,
+                status_command = commentaire.Command.status_command,
+                date_command = commentaire.Command.date_command,
+                date_livraison_command = commentaire.Command.date_livraison_command
+            } : null,
+            user = expand != null && expand.Contains("user") ? new ReadUserDto
+            {
+                id_user = commentaire.User.id_user,
+                nom_user = commentaire.User.nom_user,
+                prenom_user = commentaire.User.prenom_user,
+                email_user = commentaire.User.email_user,
+                role_user = commentaire.User.role_user
+            } : null
         };
     }
 
@@ -138,24 +178,23 @@ public class CommandCommentaireService : ICommandCommentaireService
         await _context.SaveChangesAsync();
         return new ReadCommandCommentaireDto
         {
-            id_commandcommentaire = newCommentaire.id_commandcommentaire,
+            id_command_commentaire = newCommentaire.id_command_commentaire,
             id_command = newCommentaire.id_command,
             id_user = newCommentaire.id_user,
             contenu_command_commentaire = newCommentaire.contenu_command_commentaire,
             date_command_commentaire = newCommentaire.date_command_commentaire,
-            date_modif_command_commentaire = newCommentaire.date_modif_command_commentaire,
-            user_name = newCommentaire.User.nom_user + " " + newCommentaire.User.prenom_user
+            date_modif_command_commentaire = newCommentaire.date_modif_command_commentaire
         };
     }
 
     public async Task<ReadCommandCommentaireDto> UpdateCommentaire(int id, UpdateCommandCommentaireDto commentaireDto, int? userId = null, int? CommandId = null)
     {
         var commentaireToUpdate = await _context.CommandsCommentaires.FindAsync(id);
-        if ((commentaireToUpdate == null) || (CommandId != null && commentaireToUpdate.id_command != CommandId) || (userId != null && commentaireToUpdate.id_user != userId))
+        if ((commentaireToUpdate is null) || (CommandId is not null && commentaireToUpdate.id_command != CommandId) || (userId is not null && commentaireToUpdate.id_user != userId))
         {
             throw new KeyNotFoundException($"Commentaire with id {id} not found");
         }
-        if (commentaireDto.contenu_command_commentaire != null)
+        if (commentaireDto.contenu_command_commentaire is not null)
         {
             commentaireToUpdate.contenu_command_commentaire = commentaireDto.contenu_command_commentaire;
         }
@@ -163,20 +202,19 @@ public class CommandCommentaireService : ICommandCommentaireService
         await _context.SaveChangesAsync();
         return new ReadCommandCommentaireDto
         {
-            id_commandcommentaire = commentaireToUpdate.id_commandcommentaire,
+            id_command_commentaire = commentaireToUpdate.id_command_commentaire,
             id_command = commentaireToUpdate.id_command,
             id_user = commentaireToUpdate.id_user,
             contenu_command_commentaire = commentaireToUpdate.contenu_command_commentaire,
             date_command_commentaire = commentaireToUpdate.date_command_commentaire,
-            date_modif_command_commentaire = commentaireToUpdate.date_modif_command_commentaire,
-            user_name = commentaireToUpdate.User.nom_user + " " + commentaireToUpdate.User.prenom_user
+            date_modif_command_commentaire = commentaireToUpdate.date_modif_command_commentaire
         };
     }
 
     public async Task DeleteCommentaire(int id, int? userId = null, int? CommandId = null)
     {
         var commentaireToDelete = await _context.CommandsCommentaires.FindAsync(id);
-        if ((commentaireToDelete == null) || (CommandId != null && commentaireToDelete.id_command != CommandId) || (userId != null && commentaireToDelete.id_user != userId))
+        if ((commentaireToDelete is null) || (CommandId is not null && commentaireToDelete.id_command != CommandId) || (userId is not null && commentaireToDelete.id_user != userId))
         {
             throw new KeyNotFoundException($"Commentaire with id {id} not found");
         }

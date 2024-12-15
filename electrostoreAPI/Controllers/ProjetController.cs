@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.ProjetService;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace electrostore.Controllers
 {
@@ -19,9 +20,10 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadProjetDto>>> GetProjets([FromQuery] int limit = 100, [FromQuery] int offset = 0)
+        public async Task<ActionResult<IEnumerable<ReadExtendedProjetDto>>> GetProjets([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'projets_commentaires', 'projets_documents', 'projets_items'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "", [FromQuery] string idResearch = "")
         {
-            var projets = await _projetService.GetProjets(limit, offset);
+            var idList = string.IsNullOrWhiteSpace(idResearch) ? null : idResearch.Split(',').Where(id => int.TryParse(id, out _)).Select(int.Parse).ToList();
+            var projets = await _projetService.GetProjets(limit, offset, expand.Split(',').ToList(), idList);
             var CountList = await _projetService.GetProjetsCount();
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
@@ -30,15 +32,15 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_projet}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadProjetDto>> GetProjetById([FromRoute] int id_projet)
+        public async Task<ActionResult<ReadExtendedProjetDto>> GetProjetById([FromRoute] int id_projet, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'projets_commentaires', 'projets_documents', 'projets_items'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
         {
-            var projet = await _projetService.GetProjetById(id_projet);
+            var projet = await _projetService.GetProjetById(id_projet, expand.Split(',').ToList());
             return Ok(projet);
         }
 
         [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadProjetDto>> AddProjet([FromBody] CreateProjetDto projetDto)
+        public async Task<ActionResult<ReadProjetDto>> CreateProjet([FromBody] CreateProjetDto projetDto)
         {
             var projet = await _projetService.CreateProjet(projetDto);
             return CreatedAtAction(nameof(GetProjetById), new { id_projet = projet.id_projet }, projet);

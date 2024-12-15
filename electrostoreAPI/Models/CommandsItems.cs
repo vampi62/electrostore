@@ -14,5 +14,6 @@ public class CommandsItems
     public Commands Command { get; set; }
     
     public int qte_command_item { get; set; }
+    
     public float prix_command_item { get; set; }
 }

@@ -13,8 +13,17 @@ public class Items
     [ForeignKey("id_img")]
     public Imgs Img { get; set; }
 
+    [MaxLength(50)]
     public string nom_item { get; set; }
+
     public int seuil_min_item { get; set; }
+
+    [MaxLength(500)]
     public string description_item { get; set; }
+
     public ICollection<ItemsBoxs> ItemsBoxs { get; set; } = new List<ItemsBoxs>();
+    public ICollection<ItemsTags> ItemsTags { get; set; } = new List<ItemsTags>();
+    public ICollection<ProjetsItems> ProjetsItems { get; set; } = new List<ProjetsItems>();
+    public ICollection<CommandsItems> CommandsItems { get; set; } = new List<CommandsItems>();
+    public ICollection<ItemsDocuments> ItemsDocuments { get; set; } = new List<ItemsDocuments>();
 }

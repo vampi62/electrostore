@@ -5,11 +5,11 @@ namespace electrostore.Services.ProjetService;
 
 public interface IProjetService
 {
-    public Task<IEnumerable<ReadProjetDto>> GetProjets(int limit = 100, int offset = 0);
+    public Task<IEnumerable<ReadExtendedProjetDto>> GetProjets(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null);
 
     public Task<int> GetProjetsCount();
 
-    public Task<ReadProjetDto> GetProjetById(int id);
+    public Task<ReadExtendedProjetDto> GetProjetById(int id, List<string>? expand = null);
 
     public Task<ReadProjetDto> CreateProjet(CreateProjetDto projetDto);
 

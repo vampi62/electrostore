@@ -14,7 +14,7 @@ public class ItemBoxService : IItemBoxService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadItemBoxDto>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadExtendedItemBoxDto>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the box exists
         if (!await _context.Boxs.AnyAsync(box => box.id_box == boxId))
@@ -25,12 +25,29 @@ public class ItemBoxService : IItemBoxService
             .Skip(offset)
             .Take(limit)
             .Where(itemBox => itemBox.id_box == boxId)
-            .Select(itemBox => new ReadItemBoxDto
+            .Select(itemBox => new ReadExtendedItemBoxDto
             {
                 id_box = itemBox.id_box,
                 id_item = itemBox.id_item,
                 qte_item_box = itemBox.qte_item_box,
-                seuil_max_item_item_box = itemBox.seuil_max_item_item_box
+                seuil_max_item_item_box = itemBox.seuil_max_item_item_box,
+                item = expand != null && expand.Contains("item") ? new ReadItemDto
+                {
+                    id_item = itemBox.Item.id_item,
+                    nom_item = itemBox.Item.nom_item,
+                    seuil_min_item = itemBox.Item.seuil_min_item,
+                    description_item = itemBox.Item.description_item,
+                    id_img = itemBox.Item.id_img
+                } : null,
+                box = expand != null && expand.Contains("box") ? new ReadBoxDto
+                {
+                    id_box = itemBox.Box.id_box,
+                    xstart_box = itemBox.Box.xstart_box,
+                    ystart_box = itemBox.Box.ystart_box,
+                    xend_box = itemBox.Box.xend_box,
+                    yend_box = itemBox.Box.yend_box,
+                    id_store = itemBox.Box.id_store
+                } : null
             })
             .ToListAsync();
     }
@@ -46,7 +63,7 @@ public class ItemBoxService : IItemBoxService
             .CountAsync(itemBox => itemBox.id_box == boxId);
     }
 
-    public async Task<IEnumerable<ReadItemBoxDto>> GetItemsBoxsByItemId(int ItemId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadExtendedItemBoxDto>> GetItemsBoxsByItemId(int ItemId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the item exists
         if (!await _context.Items.AnyAsync(item => item.id_item == ItemId))
@@ -57,12 +74,29 @@ public class ItemBoxService : IItemBoxService
             .Skip(offset)
             .Take(limit)
             .Where(itemBox => itemBox.id_item == ItemId)
-            .Select(itemBox => new ReadItemBoxDto
+            .Select(itemBox => new ReadExtendedItemBoxDto
             {
                 id_box = itemBox.id_box,
                 id_item = itemBox.id_item,
                 qte_item_box = itemBox.qte_item_box,
-                seuil_max_item_item_box = itemBox.seuil_max_item_item_box
+                seuil_max_item_item_box = itemBox.seuil_max_item_item_box,
+                item = expand != null && expand.Contains("item") ? new ReadItemDto
+                {
+                    id_item = itemBox.Item.id_item,
+                    nom_item = itemBox.Item.nom_item,
+                    seuil_min_item = itemBox.Item.seuil_min_item,
+                    description_item = itemBox.Item.description_item,
+                    id_img = itemBox.Item.id_img
+                } : null,
+                box = expand != null && expand.Contains("box") ? new ReadBoxDto
+                {
+                    id_box = itemBox.Box.id_box,
+                    xstart_box = itemBox.Box.xstart_box,
+                    ystart_box = itemBox.Box.ystart_box,
+                    xend_box = itemBox.Box.xend_box,
+                    yend_box = itemBox.Box.yend_box,
+                    id_store = itemBox.Box.id_store
+                } : null
             })
             .ToListAsync();
     }
@@ -78,24 +112,37 @@ public class ItemBoxService : IItemBoxService
             .CountAsync(itemBox => itemBox.id_item == ItemId);
     }
 
-    public async Task<ReadItemBoxDto> GetItemBoxById(int itemId, int boxId)
+    public async Task<ReadExtendedItemBoxDto> GetItemBoxById(int itemId, int boxId, List<string>? expand = null)
     {
         var itemBox = await _context.ItemsBoxs.FindAsync(boxId, itemId) ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
-        return new ReadItemBoxDto
+        return new ReadExtendedItemBoxDto
         {
             id_box = itemBox.id_box,
             id_item = itemBox.id_item,
             qte_item_box = itemBox.qte_item_box,
-            seuil_max_item_item_box = itemBox.seuil_max_item_item_box
+            seuil_max_item_item_box = itemBox.seuil_max_item_item_box,
+            item = expand != null && expand.Contains("item") ? new ReadItemDto
+            {
+                id_item = itemBox.Item.id_item,
+                nom_item = itemBox.Item.nom_item,
+                seuil_min_item = itemBox.Item.seuil_min_item,
+                description_item = itemBox.Item.description_item,
+                id_img = itemBox.Item.id_img
+            } : null,
+            box = expand != null && expand.Contains("box") ? new ReadBoxDto
+            {
+                id_box = itemBox.Box.id_box,
+                xstart_box = itemBox.Box.xstart_box,
+                ystart_box = itemBox.Box.ystart_box,
+                xend_box = itemBox.Box.xend_box,
+                yend_box = itemBox.Box.yend_box,
+                id_store = itemBox.Box.id_store
+            } : null
         };
     }
 
     public async Task<ReadItemBoxDto> CreateItemBox(CreateItemBoxDto itemBoxDto)
     {
-        if (itemBoxDto.qte_item_box < 0)
-        {
-            throw new ArgumentException("Quantity cannot be negative");
-        }
         // check if the box exists
         if (!await _context.Boxs.AnyAsync(box => box.id_box == itemBoxDto.id_box))
         {
@@ -132,31 +179,13 @@ public class ItemBoxService : IItemBoxService
     public async Task<ReadItemBoxDto> UpdateItemBox(int itemId, int boxId, UpdateItemBoxDto itemBoxDto)
     {
         var itemBoxToUpdate = await _context.ItemsBoxs.FindAsync(boxId, itemId) ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
-        if (itemBoxDto.new_id_box != null)
+        if (itemBoxDto.qte_item_box is not null)
         {
-            // check if the new box exists
-            if (!await _context.Boxs.AnyAsync(box => box.id_box == itemBoxDto.new_id_box))
-            {
-                throw new KeyNotFoundException($"Box with id {itemBoxDto.new_id_box} not found");
-            }
-            itemBoxToUpdate.id_box = itemBoxDto.new_id_box.Value;
-        }
-
-        if (itemBoxDto.qte_item_box != null)
-        {
-            if (itemBoxDto.qte_item_box < 0)
-            {
-                throw new ArgumentException("Quantity cannot be negative");
-            }
             itemBoxToUpdate.qte_item_box = itemBoxDto.qte_item_box.Value;
         }
 
-        if (itemBoxDto.seuil_max_item_item_box != null)
+        if (itemBoxDto.seuil_max_item_item_box is not null)
         {
-            if (itemBoxDto.seuil_max_item_item_box < 0)
-            {
-                throw new ArgumentException("Seuil max cannot be negative");
-            }
             itemBoxToUpdate.seuil_max_item_item_box = itemBoxDto.seuil_max_item_item_box.Value;
         }
         await _context.SaveChangesAsync();
@@ -176,11 +205,11 @@ public class ItemBoxService : IItemBoxService
         await _context.SaveChangesAsync();
     }
 
-    public async Task CheckIfStoreExists(int storeId)
+    public async Task CheckIfStoreExists(int storeId, int boxId)
     {
-        if (!await _context.Stores.AnyAsync(store => store.id_store == storeId))
+        if (!await _context.Boxs.AnyAsync(box => box.id_box == boxId && box.id_store == storeId))
         {
-            throw new KeyNotFoundException($"Store with id {storeId} not found");
+            throw new KeyNotFoundException($"Box with id {boxId} not found in store with id {storeId}");
         }
     }
 }

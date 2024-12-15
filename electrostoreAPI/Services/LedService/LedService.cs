@@ -78,7 +78,7 @@ public class LedService : ILedService
     public async Task<ReadLedDto> GetLedById(int id, int? storeId = null)
     {
         var led = await _context.Leds.FindAsync(id) ?? throw new KeyNotFoundException($"Led with id {id} not found");
-        if ((storeId != null) && (led.id_store != storeId))
+        if ((storeId is not null) && (led.id_store != storeId))
         {
             throw new KeyNotFoundException($"Led with id {id} not found in store with id {storeId}");
         }
@@ -95,10 +95,6 @@ public class LedService : ILedService
 
     public async Task<ReadLedDto> CreateLed(CreateLedDto ledDto)
     {
-        if (ledDto.x_led < 0 || ledDto.y_led < 0 || ledDto.mqtt_led_id < 0)
-        {
-            throw new ArgumentException("x_led, y_led and mqtt_led_id must be positive");
-        }
         // check if store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == ledDto.id_store))
         {
@@ -123,44 +119,50 @@ public class LedService : ILedService
         };
     }
 
+    public async Task<ReadBulkLedDto> CreateBulkLed(List<CreateLedDto> ledsDto)
+    {
+        var validQuery = new List<ReadLedDto>();
+        var errorQuery = new List<ErrorDetail>();
+        foreach (var ledDto in ledsDto)
+        {
+            try
+            {
+                var led = await CreateLed(ledDto);
+                validQuery.Add(led);
+            }
+            catch (Exception e)
+            {
+                errorQuery.Add(new ErrorDetail
+                {
+                    Reason = e.Message,
+                    Data = ledDto
+                });
+            }
+        }
+        return new ReadBulkLedDto
+        {
+            Valide = validQuery,
+            Error = errorQuery
+        };
+    }
+
     public async Task<ReadLedDto> UpdateLed(int id, UpdateLedDto ledDto, int? storeId = null)
     {
         var ledToUpdate = await _context.Leds.FindAsync(id) ?? throw new KeyNotFoundException($"Led with id {id} not found");
-        if ((storeId != null) && (ledToUpdate.id_store != storeId))
+        if ((storeId is not null) && (ledToUpdate.id_store != storeId))
         {
             throw new KeyNotFoundException($"Led with id {id} not found in store with id {storeId}");
         }
-        if (ledDto.x_led != null)
+        if (ledDto.x_led is not null)
         {
-            if (ledDto.x_led < 0)
-            {
-                throw new ArgumentException("x_led must be positive");
-            }
             ledToUpdate.x_led = ledDto.x_led.Value;
         }
-        if (ledDto.y_led != null)
+        if (ledDto.y_led is not null)
         {
-            if (ledDto.y_led < 0)
-            {
-                throw new ArgumentException("y_led must be positive");
-            }
             ledToUpdate.y_led = ledDto.y_led.Value;
         }
-        if (ledDto.new_id_store != null)
+        if (ledDto.mqtt_led_id is not null)
         {
-            // check if store exists
-            if (!await _context.Stores.AnyAsync(s => s.id_store == ledDto.new_id_store))
-            {
-                throw new KeyNotFoundException($"Store with id {ledDto.new_id_store} not found");
-            }
-            ledToUpdate.id_store = ledDto.new_id_store.Value;
-        }
-        if (ledDto.mqtt_led_id != null)
-        {
-            if (ledDto.mqtt_led_id < 0)
-            {
-                throw new ArgumentException("mqtt_led_id must be positive");
-            }
             ledToUpdate.mqtt_led_id = ledDto.mqtt_led_id.Value;
         }
         await _context.SaveChangesAsync();
@@ -174,15 +176,78 @@ public class LedService : ILedService
         };
     }
 
+    public async Task<ReadBulkLedDto> UpdateBulkLed(List<UpdateBulkLedStoreDto> ledsDto, int storeId)
+    {
+        var validQuery = new List<ReadLedDto>();
+        var errorQuery = new List<ErrorDetail>();
+        foreach (var ledDto in ledsDto)
+        {
+            try
+            {
+                var ledDtoFull = new UpdateLedDto
+                {
+                    x_led = ledDto.x_led,
+                    y_led = ledDto.y_led,
+                    mqtt_led_id = ledDto.mqtt_led_id
+                };
+                var led = await UpdateLed(ledDto.id_led, ledDtoFull, storeId);
+                validQuery.Add(led);
+            }
+            catch (Exception e)
+            {
+                errorQuery.Add(new ErrorDetail
+                {
+                    Reason = e.Message,
+                    Data = ledDto
+                });
+            }
+        }
+        return new ReadBulkLedDto
+        {
+            Valide = validQuery,
+            Error = errorQuery
+        };
+    }
+
     public async Task DeleteLed(int id, int? storeId = null)
     {
         var ledToDelete = await _context.Leds.FindAsync(id) ?? throw new KeyNotFoundException($"Led with id {id} not found");
-        if ((storeId != null) && (ledToDelete.id_store != storeId))
+        if ((storeId is not null) && (ledToDelete.id_store != storeId))
         {
             throw new KeyNotFoundException($"Led with id {id} not found in store with id {storeId}");
         }
         _context.Leds.Remove(ledToDelete);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<ReadBulkLedDto> DeleteBulkLed(List<int> ids, int storeId)
+    {
+        var validQuery = new List<ReadLedDto>();
+        var errorQuery = new List<ErrorDetail>();
+        foreach (var id in ids)
+        {
+            try
+            {
+                await DeleteLed(id, storeId);
+                validQuery.Add(new ReadLedDto
+                {
+                    id_led = id
+                });
+            }
+            catch (Exception e)
+            {
+                errorQuery.Add(new ErrorDetail
+                {
+                    Reason = e.Message,
+                    Data = new { id }
+                });
+            }
+        }
+        return new ReadBulkLedDto
+        {
+            Valide = validQuery,
+            Error = errorQuery
+        };
     }
 
     public async Task ShowLed(ReadLedDto ledDB, int redColor, int greenColor, int blueColor, int timeshow, int animation)

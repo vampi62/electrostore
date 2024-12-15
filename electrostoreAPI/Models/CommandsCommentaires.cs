@@ -6,7 +6,7 @@ namespace electrostore.Models;
 public class CommandsCommentaires
 {
     [Key]
-    public int id_commandcommentaire { get; set; }
+    public int id_command_commentaire { get; set; }
     
     public int? id_user { get; set; }
     [ForeignKey("id_user")]
@@ -16,8 +16,11 @@ public class CommandsCommentaires
     [ForeignKey("id_command")]
     public Commands Command { get; set; }
 
+    [MaxLength(455)]
     public string contenu_command_commentaire { get; set; }
+
     public DateTime date_command_commentaire { get; set; }
+
     public DateTime date_modif_command_commentaire { get; set; }
 
 }

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.ProjetItemService;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace electrostore.Controllers
 {
@@ -19,9 +20,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadProjetItemDto>>> GetProjetItemsByProjetId([FromRoute] int id_projet, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
+        public async Task<ActionResult<IEnumerable<ReadExtendedProjetItemDto>>> GetProjetItemsByProjetId([FromRoute] int id_projet, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
         {
-            var projetItems = await _projetItemService.GetProjetItemsByProjetId(id_projet, limit, offset);
+            var projetItems = await _projetItemService.GetProjetItemsByProjetId(id_projet, limit, offset, expand.Split(',').ToList());
             var CountList = await _projetItemService.GetProjetItemsCountByProjetId(id_projet);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
@@ -30,24 +31,38 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_item}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadProjetItemDto>> GetProjetItemById([FromRoute] int id_projet, [FromRoute] int id_item)
+        public async Task<ActionResult<ReadExtendedProjetItemDto>> GetProjetItemById([FromRoute] int id_projet, [FromRoute] int id_item, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
         {
-            var projetItem = await _projetItemService.GetProjetItemById(id_projet, id_item);
+            var projetItem = await _projetItemService.GetProjetItemById(id_projet, id_item, expand.Split(',').ToList());
             return Ok(projetItem);
         }
 
-        [HttpPost("{id_item}")]
+        [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadProjetItemDto>> AddProjetItem([FromRoute] int id_projet, [FromRoute] int id_item, [FromBody] CreateProjetItemByProjetDto projetItemDto)
+        public async Task<ActionResult<ReadProjetItemDto>> CreateProjetItem([FromRoute] int id_projet, [FromBody] CreateProjetItemByProjetDto projetItemDto)
         {
             var projetItemDtoFull = new CreateProjetItemDto
             {
                 id_projet = id_projet,
-                id_item = id_item,
+                id_item = projetItemDto.id_item,
                 qte_projet_item = projetItemDto.qte_projet_item
             };
             var projetItem = await _projetItemService.CreateProjetItem(projetItemDtoFull);
             return CreatedAtAction(nameof(GetProjetItemById), new { id_projet = projetItem.id_projet, id_item = projetItem.id_item }, projetItem);
+        }
+
+        [HttpPost("bulk")]
+		[Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult<ReadBulkProjetItemDto>> CreateBulkProjetItem([FromRoute] int id_projet, [FromBody] List<CreateProjetItemByProjetDto> projetItemDto)
+        {
+            var projetItemDtoFull = projetItemDto.Select(x => new CreateProjetItemDto
+            {
+                id_projet = id_projet,
+                id_item = x.id_item,
+                qte_projet_item = x.qte_projet_item
+            }).ToList();
+            var projetItem = await _projetItemService.CreateBulkProjetItem(projetItemDtoFull);
+            return Ok(projetItem);
         }
 
         [HttpPut("{id_item}")]

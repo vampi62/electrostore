@@ -10,15 +10,49 @@ public record ReadIADto
     public DateTime date_ia { get; init; }
     public bool trained_ia { get; init; }
 }
-public record CreateIADto
+public record CreateIADto : IValidatableObject
 {
-    [Required] public string nom_ia { get; init; }
-    [Required] public string description_ia { get; init; }
+    [Required]
+    [MinLength(1, ErrorMessage = "nom_store cannot be empty or whitespace.")]
+    [MaxLength(50, ErrorMessage = "nom_store cannot exceed 50 characters")]
+    public string nom_ia { get; init; }
+
+    [Required]
+    [MinLength(1, ErrorMessage = "nom_store cannot be empty or whitespace.")]
+    [MaxLength(500, ErrorMessage = "nom_store cannot exceed 500 characters")]
+    public string description_ia { get; init; }
+    
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (string.IsNullOrWhiteSpace(nom_ia))
+        {
+            yield return new ValidationResult("nom_ia cannot be null, empty, or whitespace.", new[] { nameof(nom_ia) });
+        }
+        if (string.IsNullOrWhiteSpace(description_ia))
+        {
+            yield return new ValidationResult("description_ia cannot be null, empty, or whitespace.", new[] { nameof(description_ia) });
+        }
+    }
 }
-public record UpdateIADto
+public record UpdateIADto : IValidatableObject
 {
+    [MaxLength(50, ErrorMessage = "nom_store cannot exceed 50 characters")]
     public string? nom_ia { get; init; }
+
+    [MaxLength(500, ErrorMessage = "nom_store cannot exceed 500 characters")]
     public string? description_ia { get; init; }
+    
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (nom_ia is not null && string.IsNullOrWhiteSpace(nom_ia))
+        {
+            yield return new ValidationResult("nom_ia cannot be null, empty, or whitespace.", new[] { nameof(nom_ia) });
+        }
+        if (description_ia is not null && string.IsNullOrWhiteSpace(description_ia))
+        {
+            yield return new ValidationResult("description_ia cannot be null, empty, or whitespace.", new[] { nameof(description_ia) });
+        }
+    }
 }
 
 public class TrainingStatus
@@ -35,9 +69,28 @@ public class GetTrainStart
     public string msg { get; set; }
 }
 
-public record DetecDto
+public record DetecDto : IValidatableObject
 {
-    [Required] public IFormFile img_file { get; init; }
+    [Required]
+    public IFormFile img_file { get; init; }
+    
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (img_file is not null)
+        {
+            const long maxFileSize = 5 * 1024 * 1024; // 5 MB
+            if (img_file.Length > maxFileSize)
+            {
+                yield return new ValidationResult($"The file size cannot exceed {maxFileSize / (1024 * 1024)} MB.", new[] { nameof(img_file) });
+            }
+            var allowedExtensions = new[] { ".png", ".jpg", ".jpeg", ".gif", ".bmp" };
+            var fileExtension = System.IO.Path.GetExtension(img_file.FileName).ToLowerInvariant();
+            if (!string.IsNullOrEmpty(fileExtension) && !allowedExtensions.Contains(fileExtension))
+            {
+                yield return new ValidationResult("The file type is not allowed. Allowed types are: .png, .jpg, .jpeg, .gif, .bmp.", new[] { nameof(img_file) });
+            }
+        }
+    }
 }
 /* 
 public class TrainImageData

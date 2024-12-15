@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.ItemBoxService;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace electrostore.Controllers
 {
@@ -19,9 +20,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadItemBoxDto>>> GetItemsBoxsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
+        public async Task<ActionResult<IEnumerable<ReadExtendedItemBoxDto>>> GetItemsBoxsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
         {
-            var itemBoxs = await _itemBoxService.GetItemsBoxsByItemId(id_item, limit, offset);
+            var itemBoxs = await _itemBoxService.GetItemsBoxsByItemId(id_item, limit, offset, expand.Split(',').ToList());
             var CountList = await _itemBoxService.GetItemsBoxsCountByItemId(id_item);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
@@ -30,20 +31,20 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_box}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadItemBoxDto>> GetItemBoxById([FromRoute] int id_item, [FromRoute] int id_box)
+        public async Task<ActionResult<ReadExtendedItemBoxDto>> GetItemBoxById([FromRoute] int id_item, [FromRoute] int id_box, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
         {
-            var itemBox = await _itemBoxService.GetItemBoxById(id_item, id_box);
+            var itemBox = await _itemBoxService.GetItemBoxById(id_item, id_box, expand.Split(',').ToList());
             return Ok(itemBox);
         }
 
-        [HttpPost("{id_box}")]
+        [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadItemBoxDto>> CreateItemBox([FromRoute] int id_item, [FromRoute] int id_box, [FromBody] CreateItemBoxByItemDto itemBoxDto)
+        public async Task<ActionResult<ReadItemBoxDto>> CreateItemBox([FromRoute] int id_item, [FromBody] CreateItemBoxByItemDto itemBoxDto)
         {
             var itemBoxDtoFull = new CreateItemBoxDto
             {
                 id_item = id_item,
-                id_box = id_box,
+                id_box = itemBoxDto.id_box,
                 qte_item_box = itemBoxDto.qte_item_box,
                 seuil_max_item_item_box = itemBoxDto.seuil_max_item_item_box
             };
@@ -56,10 +57,6 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadItemBoxDto>> UpdateItemBox([FromRoute] int id_item, [FromRoute] int id_box, [FromBody] UpdateItemBoxDto itemBoxDto)
         {
             var itemBox = await _itemBoxService.UpdateItemBox(id_item, id_box, itemBoxDto);
-            if (itemBoxDto.new_id_box != null)
-            {
-                return CreatedAtAction(nameof(GetItemBoxById), new { id_item = itemBox.id_item, id_box = itemBox.id_box }, itemBox);
-            }
             return Ok(itemBox);
         }
 

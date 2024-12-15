@@ -18,7 +18,7 @@ public class JwtService
 
     public JWT GenerateToken(ReadUserDto user)
     {
-        if (user == null) throw new ArgumentNullException(nameof(user));
+        if (user is null) throw new ArgumentNullException(nameof(user));
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_jwtSettings.Key);

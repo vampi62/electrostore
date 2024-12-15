@@ -15,18 +15,54 @@ public class StoreService : IStoreService
     }
 
     // limit the number of store to 100 and add offset and search parameters
-    public async Task<IEnumerable<ReadStoreDto>> GetStores(int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadExtendedStoreDto>> GetStores(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
     {
-        return await _context.Stores
+        var query = _context.Stores.AsQueryable();
+        if (idResearch != null && idResearch.Any())
+        {
+            query = query.Where(b => idResearch.Contains(b.id_store));
+        }
+        return await query
             .Skip(offset)
             .Take(limit)
-            .Select(s => new ReadStoreDto
+            .Select(s => new ReadExtendedStoreDto
             {
                 id_store = s.id_store,
                 nom_store = s.nom_store,
                 xlength_store = s.xlength_store,
                 ylength_store = s.ylength_store,
-                mqtt_name_store = s.mqtt_name_store
+                mqtt_name_store = s.mqtt_name_store,
+                boxs = expand != null && expand.Contains("boxs") ? s.Boxs
+                    .Select(b => new ReadBoxDto
+                    {
+                        id_box = b.id_box,
+                        xstart_box = b.xstart_box,
+                        ystart_box = b.ystart_box,
+                        xend_box = b.xend_box,
+                        yend_box = b.yend_box,
+                        id_store = b.id_store
+                    })
+                    .ToArray() : null,
+                leds = expand != null && expand.Contains("leds") ? s.Leds
+                    .Select(l => new ReadLedDto
+                    {
+                        id_led = l.id_led,
+                        x_led = l.x_led,
+                        y_led = l.y_led,
+                        mqtt_led_id = l.mqtt_led_id,
+                        id_store = l.id_store
+                    })
+                    .ToArray() : null,
+                stores_tags = expand != null && expand.Contains("stores_tags") ? s.StoresTags
+                    .Select(t => new ReadStoreTagDto
+                    {
+                        id_store = t.id_store,
+                        id_tag = t.id_tag
+                    })
+                    .ToArray() : null,
+                boxs_count = s.Boxs.Count,
+                leds_count = s.Leds.Count,
+                stores_tags_count = s.StoresTags.Count
             }).ToListAsync();
     }
 
@@ -35,29 +71,52 @@ public class StoreService : IStoreService
         return await _context.Stores.CountAsync();
     }
 
-    public async Task<ReadStoreDto> GetStoreById(int id)
+    public async Task<ReadExtendedStoreDto> GetStoreById(int id, List<string>? expand = null)
     {
         var store = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id {id} not found");
-        return new ReadStoreDto
+        return new ReadExtendedStoreDto
         {
             id_store = store.id_store,
             nom_store = store.nom_store,
             xlength_store = store.xlength_store,
             ylength_store = store.ylength_store,
-            mqtt_name_store = store.mqtt_name_store
+            mqtt_name_store = store.mqtt_name_store,
+            boxs = expand != null && expand.Contains("boxs") ? store.Boxs
+                .Select(b => new ReadBoxDto
+                {
+                    id_box = b.id_box,
+                    xstart_box = b.xstart_box,
+                    ystart_box = b.ystart_box,
+                    xend_box = b.xend_box,
+                    yend_box = b.yend_box,
+                    id_store = b.id_store
+                })
+                .ToArray() : null,
+            leds = expand != null && expand.Contains("leds") ? store.Leds
+                .Select(l => new ReadLedDto
+                {
+                    id_led = l.id_led,
+                    x_led = l.x_led,
+                    y_led = l.y_led,
+                    mqtt_led_id = l.mqtt_led_id,
+                    id_store = l.id_store
+                })
+                .ToArray() : null,
+            stores_tags = expand != null && expand.Contains("stores_tags") ? store.StoresTags
+                .Select(t => new ReadStoreTagDto
+                {
+                    id_store = t.id_store,
+                    id_tag = t.id_tag
+                })
+                .ToArray() : null,
+            boxs_count = store.Boxs.Count,
+            leds_count = store.Leds.Count,
+            stores_tags_count = store.StoresTags.Count
         };
     }
 
     public async Task<ReadStoreDto> CreateStore(CreateStoreDto storeDto)
     {
-        if (storeDto.xlength_store <= 0)
-        {
-            throw new ArgumentException("xlength_store must be greater than 0");
-        }
-        if (storeDto.ylength_store <= 0)
-        {
-            throw new ArgumentException("ylength_store must be greater than 0");
-        }
         var newStore = new Stores
         {
             nom_store = storeDto.nom_store,
@@ -80,16 +139,12 @@ public class StoreService : IStoreService
     public async Task<ReadStoreDto> UpdateStore(int id, UpdateStoreDto storeDto)
     {
         var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id {id} not found");
-        if (storeDto.nom_store != null)
+        if (storeDto.nom_store is not null)
         {
             storeToUpdate.nom_store = storeDto.nom_store;
         }
-        if (storeDto.xlength_store != null)
+        if (storeDto.xlength_store is not null)
         {
-            if (storeDto.xlength_store <= 0)
-            {
-                throw new ArgumentException("xlength_store must be greater than 0");
-            }
             // check if a box in the store is bigger than the new xlength_store
             if (await _context.Boxs.AnyAsync(b => b.id_store == id && b.xend_box > storeDto.xlength_store))
             {
@@ -97,12 +152,8 @@ public class StoreService : IStoreService
             }
             storeToUpdate.xlength_store = storeDto.xlength_store.Value;
         }
-        if (storeDto.ylength_store != null)
+        if (storeDto.ylength_store is not null)
         {
-            if (storeDto.ylength_store <= 0)
-            {
-                throw new ArgumentException("ylength_store must be greater than 0");
-            }
             // check if a box in the store is bigger than the new ylength_store
             if (await _context.Boxs.AnyAsync(b => b.id_store == id && b.yend_box > storeDto.ylength_store))
             {
@@ -110,7 +161,7 @@ public class StoreService : IStoreService
             }
             storeToUpdate.ylength_store = storeDto.ylength_store.Value;
         }
-        if (storeDto.mqtt_name_store != null)
+        if (storeDto.mqtt_name_store is not null)
         {
             storeToUpdate.mqtt_name_store = storeDto.mqtt_name_store;
         }

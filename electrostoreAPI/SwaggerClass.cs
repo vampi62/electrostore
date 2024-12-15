@@ -1,5 +1,7 @@
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using Swashbuckle.AspNetCore.Annotations;
+
 public class AddTotalCountHeaderFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
@@ -13,7 +15,7 @@ public class AddTotalCountHeaderFilter : IOperationFilter
             if (operation.Responses.ContainsKey("200"))
             {
                 var response = operation.Responses["200"];
-                if (response.Headers == null)
+                if (response.Headers is null)
                 {
                     response.Headers = new Dictionary<string, OpenApiHeader>();
                 }
@@ -26,6 +28,22 @@ public class AddTotalCountHeaderFilter : IOperationFilter
                         Type = "integer"
                     }
                 });
+            }
+        }
+        // description for query parameters
+        foreach (var parameter in operation.Parameters)
+        {
+            if (parameter.In == ParameterLocation.Query)
+            {
+                var queryParameter = parameters.FirstOrDefault(p => p.Name == parameter.Name && p.Source.Id == "Query");
+                if (queryParameter != null)
+                {
+                    var description = queryParameter.CustomAttributes().OfType<SwaggerParameterAttribute>().FirstOrDefault()?.Description;
+                    if (!string.IsNullOrEmpty(description))
+                    {
+                        parameter.Description = description;
+                    }
+                }
             }
         }
     }

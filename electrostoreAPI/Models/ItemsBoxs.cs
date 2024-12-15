@@ -14,5 +14,6 @@ public class ItemsBoxs
     public Items Item { get; set; }
 
     public int qte_item_box { get; set; }
+    
     public int seuil_max_item_item_box { get; set; }
 }

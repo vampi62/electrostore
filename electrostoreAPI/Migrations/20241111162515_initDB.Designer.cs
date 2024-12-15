@@ -120,7 +120,7 @@ namespace electrostore.Migrations
 
             modelBuilder.Entity("electrostore.Models.CommandsCommentaires", b =>
                 {
-                    b.Property<int>("id_commandcommentaire")
+                    b.Property<int>("id_command_commentaire")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
@@ -140,7 +140,7 @@ namespace electrostore.Migrations
                     b.Property<int?>("id_user")
                         .HasColumnType("int");
 
-                    b.HasKey("id_commandcommentaire");
+                    b.HasKey("id_command_commentaire");
 
                     b.HasIndex("id_command");
 

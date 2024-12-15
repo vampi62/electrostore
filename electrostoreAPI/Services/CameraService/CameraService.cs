@@ -15,9 +15,14 @@ public class CameraService : ICameraService
     }
 
     // limit the number of camera to 100 and add offset and search parameters
-    public async Task<IEnumerable<ReadCameraDto>> GetCameras(int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadCameraDto>> GetCameras(int limit = 100, int offset = 0, List<int>? idResearch = null)
     {
-        return await _context.Cameras
+        var query = _context.Cameras.AsQueryable();
+        if (idResearch != null && idResearch.Any())
+        {
+            query = query.Where(b => idResearch.Contains(b.id_camera));
+        }
+        return await query
             .Skip(offset)
             .Take(limit)
             .Select(s => new ReadCameraDto
@@ -72,19 +77,19 @@ public class CameraService : ICameraService
     public async Task<ReadCameraDto> UpdateCamera(int id, UpdateCameraDto cameraDto)
     {
         var cameraToUpdate = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id {id} not found");
-        if (cameraDto.nom_camera != null)
+        if (cameraDto.nom_camera is not null)
         {
             cameraToUpdate.nom_camera = cameraDto.nom_camera;
         }
-        if (cameraDto.url_camera != null)
+        if (cameraDto.url_camera is not null)
         {
             cameraToUpdate.url_camera = cameraDto.url_camera;
         }
-        if (cameraDto.user_camera != null)
+        if (cameraDto.user_camera is not null)
         {
             cameraToUpdate.user_camera = cameraDto.user_camera;
         }
-        if (cameraDto.mdp_camera != null)
+        if (cameraDto.mdp_camera is not null)
         {
             cameraToUpdate.mdp_camera = cameraDto.mdp_camera;
         }

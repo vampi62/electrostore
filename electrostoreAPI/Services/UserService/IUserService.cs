@@ -5,13 +5,13 @@ namespace electrostore.Services.UserService;
 
 public interface IUserService
 {
-    public Task<IEnumerable<ReadUserDto>> GetUsers(int limit = 100, int offset = 0);
+    public Task<IEnumerable<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null);
 
     public Task<int> GetUsersCount();
 
     public Task<ReadUserDto> CreateUser(CreateUserDto userDto);
 
-    public Task<ReadUserDto> GetUserById(int id);
+    public Task<ReadExtendedUserDto> GetUserById(int id, List<string>? expand = null);
 
     public Task<ReadUserDto> GetUserByEmail(string email);
 

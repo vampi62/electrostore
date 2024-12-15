@@ -5,11 +5,11 @@ namespace electrostore.Services.CommandService;
 
 public interface ICommandService
 {
-    public Task<IEnumerable<ReadCommandDto>> GetCommands(int limit = 100, int offset = 0);
+    public Task<IEnumerable<ReadExtendedCommandDto>> GetCommands(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null);
 
     public Task<int> GetCommandsCount();
 
-    public Task<ReadCommandDto> GetCommandById(int id);
+    public Task<ReadExtendedCommandDto> GetCommandById(int id, List<string>? expand = null);
 
     public Task<ReadCommandDto> CreateCommand(CreateCommandDto commandDto);
 

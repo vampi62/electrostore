@@ -8,13 +8,22 @@ public class JWIRefreshToken
 {    
     [Key]
     public Guid id_jwi_refresh { get; set; }
+
     public DateTime expires_at { get; set; }
+
     public bool is_revoked { get; set; }
 
     public DateTime created_at { get; set; }
+
+    [MaxLength(50)]
     public string created_by_ip { get; set; }
+
     public DateTime? revoked_at { get; set; }
+
+    [MaxLength(50)]
     public string? revoked_by_ip { get; set; }
+
+    [MaxLength(50)]
     public string? revoked_reason { get; set; }
 
     public int id_user { get; set; }

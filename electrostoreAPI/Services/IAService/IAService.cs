@@ -25,9 +25,14 @@ public class IAService : IIAService
         _serviceProvider = serviceProvider;
     }
 
-    public async Task<List<ReadIADto>> GetIA(int limit = 100, int offset = 0)
+    public async Task<List<ReadIADto>> GetIA(int limit = 100, int offset = 0, List<int>? idResearch = null)
     {
-        return await _context.IA
+        var query = _context.IA.AsQueryable();
+        if (idResearch != null && idResearch.Any())
+        {
+            query = query.Where(b => idResearch.Contains(b.id_ia));
+        }
+        return await query
             .Skip(offset)
             .Take(limit)
             .Select(ia => new ReadIADto
@@ -81,11 +86,11 @@ public class IAService : IIAService
     public async Task<ReadIADto> UpdateIA(int id, UpdateIADto iaDto)
     {
         var iaToUpdate = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");
-        if (iaDto.nom_ia != null)
+        if (iaDto.nom_ia is not null)
         {
             iaToUpdate.nom_ia = iaDto.nom_ia;
         }
-        if (iaDto.description_ia != null)
+        if (iaDto.description_ia is not null)
         {
             iaToUpdate.description_ia = iaDto.description_ia;
         }
@@ -138,7 +143,7 @@ public class IAService : IIAService
         }
 
         var ia = await _context.IA.FindAsync(id);
-        if (ia == null)
+        if (ia is null)
         {
             return new GetTrainStart { TrainStarted = false, msg = "IA non trouvée." };
         }
@@ -174,12 +179,12 @@ public class IAService : IIAService
 
     /* public async Task<ReadItemDto> DetectItem(int id, IFormFile imgToScan)
     {
-        if (imgToScan == null || imgToScan.Length == 0)
+        if (imgToScan is null || imgToScan.Length == 0)
         {
             
         }
         var ia = await _context.IA.FindAsync(id);
-        if (ia == null || !ia.trained_ia)
+        if (ia is null || !ia.trained_ia)
         {
             
         }
@@ -206,7 +211,7 @@ public class IAService : IIAService
             }
 
             var item = await _context.Items.FindAsync(prediction.PredictedLabel);
-            if (item == null)
+            if (item is null)
             {
                 
             }
@@ -270,7 +275,7 @@ public class IAService : IIAService
 
             // Mettre à jour le statut de l'IA
             var ia = await _contextBackend.IA.FindAsync(int.Parse(id));
-            if (ia == null)
+            if (ia is null)
             {
                 Console.WriteLine("IA not found during training");
                 throw new Exception("IA not found during training");

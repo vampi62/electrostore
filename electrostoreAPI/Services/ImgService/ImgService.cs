@@ -51,7 +51,7 @@ public class ImgService : IImgService
     public async Task<ReadImgDto> GetImgById(int id, int? itemId = null)
     {
         var img = await _context.Imgs.FindAsync(id);
-        if ((img == null) || (itemId != null && img.id_item != itemId))
+        if ((img is null) || (itemId is not null && img.id_item != itemId))
         {
             throw new KeyNotFoundException($"Image with id {id} not found");
         }
@@ -71,20 +71,8 @@ public class ImgService : IImgService
     {
         // check if item exists
         var item = await _context.Items.FindAsync(imgDto.id_item) ?? throw new KeyNotFoundException($"Item with id {imgDto.id_item} not found");
-        if (imgDto.img_file == null || imgDto.img_file.Length == 0)
-        {
-            throw new ArgumentException("Image file is required");
-        }
-        if (imgDto.img_file.Length > (5 * 1024 * 1024)) // 5MB max
-        {
-            throw new ArgumentException("Image file size should not exceed 5MB");
-        }
         var fileName = Path.GetFileNameWithoutExtension(imgDto.img_file.FileName);
         var fileExt = Path.GetExtension(imgDto.img_file.FileName);
-        if (!new[] { ".png", ".jpg", ".jpeg", ".gif", ".bmp" }.Contains(fileExt)) // if extension is not allowed
-        {
-            throw new ArgumentException("Image file extension not allowed");
-        }
         var i = 1;
         // verifie si une image avec le meme nom existe deja sur le serveur dans "wwwroot/images"
         // si oui, on ajoute un numero a la fin du nom de l'image et on recommence la verification jusqu'a trouver un nom disponible
@@ -123,15 +111,15 @@ public class ImgService : IImgService
     public async Task<ReadImgDto> UpdateImg(int id, UpdateImgDto imgDto, int? itemId = null)
     {
         var imgToUpdate = await _context.Imgs.FindAsync(id);
-        if ((imgToUpdate == null) || (itemId != null && imgToUpdate.id_item != itemId))
+        if ((imgToUpdate is null) || (itemId is not null && imgToUpdate.id_item != itemId))
         {
             throw new KeyNotFoundException($"Image with id {id} not found");
         }
-        if (imgDto.nom_img != null)
+        if (imgDto.nom_img is not null)
         {
             imgToUpdate.nom_img = imgDto.nom_img;
         }
-        if (imgDto.description_img != null)
+        if (imgDto.description_img is not null)
         {
             imgToUpdate.description_img = imgDto.description_img;
         }
@@ -150,7 +138,7 @@ public class ImgService : IImgService
     public async Task DeleteImg(int id, int? itemId = null)
     {
         var imgToDelete = await _context.Imgs.FindAsync(id);
-        if ((imgToDelete == null) || (itemId != null && imgToDelete.id_item != itemId))
+        if ((imgToDelete is null) || (itemId is not null && imgToDelete.id_item != itemId))
         {
             throw new KeyNotFoundException($"Image with id {id} not found");
         }

@@ -21,9 +21,10 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadIADto>>> GetIA([FromQuery] int limit = 100, [FromQuery] int offset = 0)
+        public async Task<ActionResult<IEnumerable<ReadIADto>>> GetIA([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery] string idResearch = "")
         {
-            var ias = await _iaService.GetIA(limit, offset);
+            var idList = string.IsNullOrWhiteSpace(idResearch) ? null : idResearch.Split(',').Where(id => int.TryParse(id, out _)).Select(int.Parse).ToList();
+            var ias = await _iaService.GetIA(limit, offset, idList);
             var CountList = await _iaService.GetIACount();
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
@@ -70,7 +71,7 @@ namespace electrostore.Controllers
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<bool>> TrainIA([FromRoute] int id_ia)
         {
-            if (User != null)
+            if (User is not null)
             {
                 if (!User.IsInRole("admin"))
                 {

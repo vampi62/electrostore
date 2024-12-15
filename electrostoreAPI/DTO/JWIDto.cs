@@ -27,7 +27,16 @@ public record ReadRefreshTokenDto
     public string? revoked_reason { get; init; }
     public Guid id_jwi_access { get; init; }
 }
-public record UpdateAccessTokenDto
+public record UpdateAccessTokenDto : IValidatableObject
 {
+    [MaxLength(50, ErrorMessage = "revoked_reason cannot exceed 50 characters")]
     public string? revoked_reason { get; init; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (revoked_reason is not null && string.IsNullOrWhiteSpace(revoked_reason))
+        {
+            yield return new ValidationResult("revoked_reason cannot be empty or whitespace.", new[] { nameof(revoked_reason) });
+        }
+    }
 }

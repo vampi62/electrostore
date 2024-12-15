@@ -14,18 +14,40 @@ public class TagService : ITagService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadTagDto>> GetTags(int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadExtendedTagDto>> GetTags(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
     {
-        return await _context.Tags
+        var query = _context.Tags.AsQueryable();
+        if (idResearch != null && idResearch.Any())
+        {
+            query = query.Where(b => idResearch.Contains(b.id_tag));
+        }
+        return await query
             .Skip(offset)
             .Take(limit)
-            .Select(t => new ReadTagDto
+            .Select(t => new ReadExtendedTagDto
             {
                 id_tag = t.id_tag,
                 nom_tag = t.nom_tag,
-                poids_tag = t.poids_tag
-            })
-            .ToListAsync();
+                poids_tag = t.poids_tag,
+                stores_tags = expand != null && expand.Contains("stores_tags") ? t.StoresTags.Select(st => new ReadStoreTagDto
+                {
+                    id_store = st.id_store,
+                    id_tag = st.id_tag
+                }).ToArray() : null,
+                items_tags = expand != null && expand.Contains("items_tags") ? t.ItemsTags.Select(it => new ReadItemTagDto
+                {
+                    id_item = it.id_item,
+                    id_tag = it.id_tag
+                }).ToArray() : null,
+                boxs_tags = expand != null && expand.Contains("boxs_tags") ? t.BoxsTags.Select(bt => new ReadBoxTagDto
+                {
+                    id_box = bt.id_box,
+                    id_tag = bt.id_tag
+                }).ToArray() : null,
+                stores_tags_count = t.StoresTags.Count,
+                items_tags_count = t.ItemsTags.Count,
+                boxs_tags_count = t.BoxsTags.Count
+            }).ToListAsync();
     }
 
     public async Task<int> GetTagsCount()
@@ -33,14 +55,32 @@ public class TagService : ITagService
         return await _context.Tags.CountAsync();
     }
 
-    public async Task<ReadTagDto> GetTagById(int id)
+    public async Task<ReadExtendedTagDto> GetTagById(int id, List<string>? expand = null)
     {
         var tag = await _context.Tags.FindAsync(id) ?? throw new KeyNotFoundException($"Tag with id {id} not found");
-        return new ReadTagDto
+        return new ReadExtendedTagDto
         {
             id_tag = tag.id_tag,
             nom_tag = tag.nom_tag,
-            poids_tag = tag.poids_tag
+            poids_tag = tag.poids_tag,
+            stores_tags = expand != null && expand.Contains("stores_tags") ? tag.StoresTags.Select(st => new ReadStoreTagDto
+            {
+                id_store = st.id_store,
+                id_tag = st.id_tag
+            }).ToArray() : null,
+            items_tags = expand != null && expand.Contains("items_tags") ? tag.ItemsTags.Select(it => new ReadItemTagDto
+            {
+                id_item = it.id_item,
+                id_tag = it.id_tag
+            }).ToArray() : null,
+            boxs_tags = expand != null && expand.Contains("boxs_tags") ? tag.BoxsTags.Select(bt => new ReadBoxTagDto
+            {
+                id_box = bt.id_box,
+                id_tag = bt.id_tag
+            }).ToArray() : null,
+            stores_tags_count = tag.StoresTags.Count,
+            items_tags_count = tag.ItemsTags.Count,
+            boxs_tags_count = tag.BoxsTags.Count
         };
     }
 
@@ -54,7 +94,7 @@ public class TagService : ITagService
         var newTag = new Tags
         {
             nom_tag = tagDto.nom_tag,
-            poids_tag = tagDto.poids_tag
+            poids_tag = tagDto.poids_tag ?? 0
         };
         _context.Tags.Add(newTag);
         await _context.SaveChangesAsync();
@@ -66,10 +106,36 @@ public class TagService : ITagService
         };
     }
 
+    public async Task<ReadBulkTagDto> CreateBulkTag(List<CreateTagDto> tagBulkDto)
+    {
+        var validQuery = new List<ReadTagDto>();
+        var errorQuery = new List<ErrorDetail>();
+        foreach (var tagDto in tagBulkDto)
+        {
+            try
+            {
+                validQuery.Add(await CreateTag(tagDto));
+            }
+            catch (Exception e)
+            {
+                errorQuery.Add(new ErrorDetail
+                {
+                    Reason = e.Message,
+                    Data = tagDto
+                });
+            }
+        }
+        return new ReadBulkTagDto
+        {
+            Valide = validQuery,
+            Error = errorQuery
+        };
+    }
+
     public async Task<ReadTagDto> UpdateTag(int id, UpdateTagDto tagDto)
     {
         var tagToUpdate = await _context.Tags.FindAsync(id) ?? throw new KeyNotFoundException($"Tag with id {id} not found");
-        if (tagDto.nom_tag != null)
+        if (tagDto.nom_tag is not null)
         {
             // check if tag name already exists
             if (await _context.Tags.AnyAsync(t => t.nom_tag == tagDto.nom_tag))
@@ -78,7 +144,7 @@ public class TagService : ITagService
             }
             tagToUpdate.nom_tag = tagDto.nom_tag;
         }
-        if (tagDto.poids_tag != null)
+        if (tagDto.poids_tag is not null)
         {
             tagToUpdate.poids_tag = tagDto.poids_tag.Value;
         }

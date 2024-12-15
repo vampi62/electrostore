@@ -72,7 +72,7 @@ public class JwiService : IJwiService
         try
         {
             var tokenOBJ = readToken(token);
-            if (tokenOBJ == null) return false;
+            if (tokenOBJ is null) return false;
             var claims = tokenOBJ.Claims.ToList();
             if (!claims.Any(x => x.Type == "role" && x.Value == role)) return false;
             if (IsRevoked(tokenOBJ.Id,role)) return false;
@@ -90,13 +90,13 @@ public class JwiService : IJwiService
         if (role == "access")
         {
             var jwi_access = _context.JWIAccessToken.FirstOrDefault(x => x.id_jwi_access == Guid.Parse(id));
-            if (jwi_access == null) return true;
+            if (jwi_access is null) return true;
             return jwi_access.is_revoked;
         }
         else if (role == "refresh")
         {
             var jwi_refresh = _context.JWIRefreshToken.FirstOrDefault(x => x.id_jwi_refresh == Guid.Parse(id));
-            if (jwi_refresh == null) return true;
+            if (jwi_refresh is null) return true;
             return jwi_refresh.is_revoked;
         }
         return true;
@@ -135,7 +135,7 @@ public class JwiService : IJwiService
     public async Task RevokeRefreshTokenById(string token, string clientIp, string reason = "User logout", int? userId = null)
     {
         var jwi_refresh = await _context.JWIRefreshToken.FindAsync(Guid.Parse(token));
-        if ((jwi_refresh == null) || (userId != null && jwi_refresh.id_user != userId))
+        if ((jwi_refresh is null) || (userId is not null && jwi_refresh.id_user != userId))
         {
             throw new KeyNotFoundException($"RefreshToken with id {token} not found");
         }
@@ -149,7 +149,7 @@ public class JwiService : IJwiService
     public async Task RevokeAccessTokenById(string token, string clientIp, string reason = "User logout", int? userId = null)
     {
         var jwi_access = await _context.JWIAccessToken.FindAsync(Guid.Parse(token));
-        if ((jwi_access == null) || (userId != null && jwi_access.id_user != userId))
+        if ((jwi_access is null) || (userId is not null && jwi_access.id_user != userId))
         {
             throw new KeyNotFoundException($"AccessToken with id {token} not found");
         }
@@ -163,7 +163,7 @@ public class JwiService : IJwiService
     public async Task RevokePairTokenByRefreshToken(string refreshToken, string clientIp, string reason = "User logout", int? userId = null)
     {
         var jwi_refresh = await _context.JWIRefreshToken.FindAsync(Guid.Parse(refreshToken));
-        if ((jwi_refresh == null) || (userId != null && jwi_refresh.id_user != userId))
+        if ((jwi_refresh is null) || (userId is not null && jwi_refresh.id_user != userId))
         {
             throw new KeyNotFoundException($"RefreshToken with id {refreshToken} not found");
         }
