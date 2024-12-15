@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.StoreTagService;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace electrostore.Controllers
 {
@@ -19,9 +20,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadStoreTagDto>>> GetStoresTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
+        public async Task<ActionResult<IEnumerable<ReadExtendedStoreTagDto>>> GetStoresTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
         {
-            var storeTags = await _storeTagService.GetStoresTagsByTagId(id_tag, limit, offset);
+            var storeTags = await _storeTagService.GetStoresTagsByTagId(id_tag, limit, offset, expand.Split(',').ToList());
             var CountList = await _storeTagService.GetStoresTagsCountByTagId(id_tag);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
@@ -30,31 +31,36 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_store}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadStoreTagDto>> GetStoreTagById([FromRoute] int id_tag, [FromRoute] int id_store)
+        public async Task<ActionResult<ReadExtendedStoreTagDto>> GetStoreTagById([FromRoute] int id_tag, [FromRoute] int id_store, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
         {
-            var storeTag = await _storeTagService.GetStoreTagById(id_store, id_tag);
+            var storeTag = await _storeTagService.GetStoreTagById(id_store, id_tag, expand.Split(',').ToList());
             return Ok(storeTag);
         }
 
         [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadStoreTagDto>> CreateStoresTag([FromRoute] int id_tag, [FromBody] int[] stores)
+        public async Task<ActionResult<ReadStoreTagDto>> CreateStoreTag([FromRoute] int id_tag, [FromBody] CreateStoreTagByTagDto storeTagDto)
         {
-            var storeTags = await _storeTagService.CreateStoreTags(null, id_tag, null, stores);
-            return Ok(storeTags);
-        }
-
-        [HttpPost("{id_store}")]
-        [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadStoreTagDto>> CreateStoreTag([FromRoute] int id_tag, [FromRoute] int id_store)
-        {
-            var storeTagDto = new CreateStoreTagDto
+            var storeTagDtoFull = new CreateStoreTagDto
             {
                 id_tag = id_tag,
-                id_store = id_store
+                id_store = storeTagDto.id_store
             };
-            var storeTag = await _storeTagService.CreateStoreTag(storeTagDto);
+            var storeTag = await _storeTagService.CreateStoreTag(storeTagDtoFull);
             return CreatedAtAction(nameof(GetStoreTagById), new { id_tag = storeTag.id_tag, id_store = storeTag.id_store }, storeTag);
+        }
+
+        [HttpPost("bulk")]
+		[Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult<ReadBulkStoreTagDto>> CreateBulkStoreTag([FromRoute] int id_tag, [FromBody] List<CreateStoreTagByTagDto> storeTagsDto)
+        {
+            var storeTagsDtoFull = storeTagsDto.Select(storeTagDto => new CreateStoreTagDto
+            {
+                id_tag = id_tag,
+                id_store = storeTagDto.id_store
+            }).ToList();
+            var storeTags = await _storeTagService.CreateBulkStoreTag(storeTagsDtoFull);
+            return Ok(storeTags);
         }
 
         [HttpDelete("{id_store}")]
@@ -63,6 +69,19 @@ namespace electrostore.Controllers
         {
             await _storeTagService.DeleteStoreTag(id_store, id_tag);
             return NoContent();
+        }
+
+        [HttpDelete("bulk")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult> DeleteBulkStoreTag([FromRoute] int id_tag, [FromBody] List<int> id_stores)
+        {
+            var itemTagsDtoFull = id_stores.Select(id_item => new CreateStoreTagDto
+            {
+                id_tag = id_tag,
+                id_store = id_item
+            }).ToList();
+            var storeTags = await _storeTagService.DeleteBulkItemTag(itemTagsDtoFull);
+            return Ok(storeTags);
         }
     }
 }

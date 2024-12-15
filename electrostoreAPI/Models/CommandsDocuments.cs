@@ -10,10 +10,13 @@ public class CommandsDocuments
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_command_document { get; set; }
 
+    [MaxLength(150)]
     public string url_command_document { get; set; }
 
+    [MaxLength(50)]
     public string name_command_document { get; set; }
 
+    [MaxLength(50)]
     public string type_command_document { get; set; }
 
     public decimal size_command_document { get; set; }

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.BoxTagService;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace electrostore.Controllers
 {
@@ -19,9 +20,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadBoxTagDto>>> GetBoxsTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
+        public async Task<ActionResult<IEnumerable<ReadExtendedBoxTagDto>>> GetBoxsTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
         {
-            var boxTags = await _boxTagService.GetBoxsTagsByTagId(id_tag, limit, offset);
+            var boxTags = await _boxTagService.GetBoxsTagsByTagId(id_tag, limit, offset, expand.Split(',').ToList());
             var CountList = await _boxTagService.GetBoxsTagsCountByTagId(id_tag);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
@@ -30,31 +31,36 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_box}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBoxTagDto>> GetBoxTagById([FromRoute] int id_tag, [FromRoute] int id_box)
+        public async Task<ActionResult<ReadExtendedBoxTagDto>> GetBoxTagById([FromRoute] int id_tag, [FromRoute] int id_box, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
         {
-            var boxTag = await _boxTagService.GetBoxTagById(id_box, id_tag);
+            var boxTag = await _boxTagService.GetBoxTagById(id_box, id_tag, expand.Split(',').ToList());
             return Ok(boxTag);
         }
-        
+
         [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBoxTagDto>> CreateBoxsTag([FromRoute] int id_tag, [FromBody] int[] boxs)
+        public async Task<ActionResult<ReadBoxTagDto>> CreateBoxTag([FromRoute] int id_tag, [FromBody] CreateBoxTagByTagDto boxTagDto)
         {
-            var boxTags = await _boxTagService.CreateBoxTags(null, id_tag, null, boxs);
-            return Ok(boxTags);
-        }
-
-        [HttpPost("{id_box}")]
-        [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBoxTagDto>> CreateBoxTag([FromRoute] int id_tag, [FromRoute] int id_box)
-        {
-            var boxTagDto = new CreateBoxTagDto
+            var boxTagDtoFull = new CreateBoxTagDto
             {
                 id_tag = id_tag,
-                id_box = id_box
+                id_box = boxTagDto.id_box
             };
-            var boxTag = await _boxTagService.CreateBoxTag(boxTagDto);
+            var boxTag = await _boxTagService.CreateBoxTag(boxTagDtoFull);
             return CreatedAtAction(nameof(GetBoxTagById), new { id_tag = boxTag.id_tag, id_box = boxTag.id_box }, boxTag);
+        }
+
+        [HttpPost("bulk")]
+		[Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult<ReadBulkTagDto>> CreateBulkBoxTag([FromRoute] int id_tag, [FromBody] List<CreateBoxTagByTagDto> boxTagsDto)
+        {
+            var boxTagsDtoFull = boxTagsDto.Select(boxTagDto => new CreateBoxTagDto
+            {
+                id_tag = id_tag,
+                id_box = boxTagDto.id_box
+            }).ToList();
+            var boxTags = await _boxTagService.CreateBulkBoxTag(boxTagsDtoFull);
+            return Ok(boxTags);
         }
 
         [HttpDelete("{id_box}")]
@@ -63,6 +69,19 @@ namespace electrostore.Controllers
         {
             await _boxTagService.DeleteBoxTag(id_box, id_tag);
             return NoContent();
+        }
+
+        [HttpDelete("bulk")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult> DeleteBulkBoxTag([FromRoute] int id_tag, [FromBody] List<int> id_boxs)
+        {
+            var itemTagsDtoFull = id_boxs.Select(id_item => new CreateBoxTagDto
+            {
+                id_box = id_item,
+                id_tag = id_tag
+            }).ToList();
+            var boxTags = await _boxTagService.DeleteBulkItemTag(itemTagsDtoFull);
+            return Ok(boxTags);
         }
     }
 }

@@ -24,9 +24,10 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadCameraDto>>> GetCameras([FromQuery] int limit = 100, [FromQuery] int offset = 0)
+        public async Task<ActionResult<IEnumerable<ReadCameraDto>>> GetCameras([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery] string idResearch = "")
         {
-            var cameras = await _cameraService.GetCameras(limit, offset);
+            var idList = string.IsNullOrWhiteSpace(idResearch) ? null : idResearch.Split(',').Where(id => int.TryParse(id, out _)).Select(int.Parse).ToList();
+            var cameras = await _cameraService.GetCameras(limit, offset, idList);
             var CountList = await _cameraService.GetCamerasCount();
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
@@ -45,7 +46,7 @@ namespace electrostore.Controllers
         [AllowAnonymous]
         public async Task<ActionResult> GetCameraStream([FromRoute] int id_camera, [FromQuery] string token)
         {
-            if (token == null || !_jwiService.ValidateToken(token, "access"))
+            if (token is null || !_jwiService.ValidateToken(token, "access"))
             {
                 return Unauthorized();
             }
@@ -62,7 +63,7 @@ namespace electrostore.Controllers
                 }
                 using (var httpClient = new HttpClient())
                 {
-                    if (camera.user_camera != null && camera.mdp_camera != null)
+                    if (!string.IsNullOrWhiteSpace(camera.user_camera) || !string.IsNullOrWhiteSpace(camera.mdp_camera))
                     {
                         var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.mdp_camera}");
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
@@ -74,12 +75,12 @@ namespace electrostore.Controllers
                     {
                         return StatusCode((int)response.StatusCode, "Unable to retrieve video stream.");
                     }
-                    if (response.Content.Headers.ContentType == null)
+                    if (response.Content.Headers.ContentType is null)
                     {
                         return StatusCode(500, "Unable to retrieve video stream.");
                     }
                     var boundary = response.Content.Headers.ContentType.Parameters.FirstOrDefault(p => p.Name == "boundary")?.Value;
-                    if (boundary == null)
+                    if (boundary is null)
                     {
                         return StatusCode(500, "Unable to retrieve video stream.");
                     }
@@ -110,7 +111,7 @@ namespace electrostore.Controllers
                 }
                 using (var httpClient = new HttpClient())
                 {
-                    if (camera.user_camera != null && camera.mdp_camera != null)
+                    if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.mdp_camera))
                     {
                         var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.mdp_camera}");
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
@@ -123,7 +124,7 @@ namespace electrostore.Controllers
                     }
                     var content = await response.Content.ReadAsStringAsync();
                     var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
-                    if (json == null || json.ContainsKey("ringLightPower") == false)
+                    if (json is null || json.ContainsKey("ringLightPower") == false)
                     {
                         return StatusCode(500, "Unable to switch camera light state.");
                     }
@@ -154,7 +155,7 @@ namespace electrostore.Controllers
                 }
                 using (var httpClient = new HttpClient())
                 {
-                    if (camera.user_camera != null && camera.mdp_camera != null)
+                    if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.mdp_camera))
                     {
                         var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.mdp_camera}");
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
@@ -193,7 +194,7 @@ namespace electrostore.Controllers
                 }
                 using (var httpClient = new HttpClient())
                 {
-                    if (camera.user_camera != null && camera.mdp_camera != null)
+                    if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.mdp_camera))
                     {
                         var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.mdp_camera}");
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
@@ -207,7 +208,7 @@ namespace electrostore.Controllers
                     }
                     var content = await response.Content.ReadAsStringAsync();
                     var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
-                    if (json == null)
+                    if (json is null)
                     {
                         return StatusCode(500, "Unable to retrieve camera status.");
                     }

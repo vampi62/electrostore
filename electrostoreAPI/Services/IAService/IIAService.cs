@@ -5,7 +5,7 @@ namespace electrostore.Services.IAService;
 
 public interface IIAService
 {
-    Task<List<ReadIADto>> GetIA(int limit = 100, int offset = 0);
+    Task<List<ReadIADto>> GetIA(int limit = 100, int offset = 0, List<int>? idResearch = null);
 
     Task<int> GetIACount();
 

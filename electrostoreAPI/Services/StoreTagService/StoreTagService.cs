@@ -14,7 +14,7 @@ public class StoreTagService : IStoreTagService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadStoreTagDto>> GetStoresTagsByStoreId(int storeId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadExtendedStoreTagDto>> GetStoresTagsByStoreId(int storeId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
@@ -25,10 +25,23 @@ public class StoreTagService : IStoreTagService
             .Skip(offset)
             .Take(limit)
             .Where(st => st.id_store == storeId)
-            .Select(st => new ReadStoreTagDto
+            .Select(st => new ReadExtendedStoreTagDto
             {
                 id_store = st.id_store,
-                id_tag = st.id_tag
+                id_tag = st.id_tag,
+                tag = expand != null && expand.Contains("tag") ? new ReadTagDto
+                {
+                    id_tag = st.Tag.id_tag,
+                    nom_tag = st.Tag.nom_tag
+                } : null,
+                store = expand != null && expand.Contains("store") ? new ReadStoreDto
+                {
+                    id_store = st.Store.id_store,
+                    nom_store = st.Store.nom_store,
+                    xlength_store = st.Store.xlength_store,
+                    ylength_store = st.Store.ylength_store,
+                    mqtt_name_store = st.Store.mqtt_name_store
+                } : null
             })
             .ToListAsync();
     }
@@ -44,7 +57,7 @@ public class StoreTagService : IStoreTagService
             .CountAsync(st => st.id_store == storeId);
     }
 
-    public async Task<IEnumerable<ReadStoreTagDto>> GetStoresTagsByTagId(int tagId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadExtendedStoreTagDto>> GetStoresTagsByTagId(int tagId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
@@ -55,10 +68,23 @@ public class StoreTagService : IStoreTagService
             .Skip(offset)
             .Take(limit)
             .Where(st => st.id_tag == tagId)
-            .Select(st => new ReadStoreTagDto
+            .Select(st => new ReadExtendedStoreTagDto
             {
                 id_store = st.id_store,
-                id_tag = st.id_tag
+                id_tag = st.id_tag,
+                tag = expand != null && expand.Contains("tag") ? new ReadTagDto
+                {
+                    id_tag = st.Tag.id_tag,
+                    nom_tag = st.Tag.nom_tag
+                } : null,
+                store = expand != null && expand.Contains("store") ? new ReadStoreDto
+                {
+                    id_store = st.Store.id_store,
+                    nom_store = st.Store.nom_store,
+                    xlength_store = st.Store.xlength_store,
+                    ylength_store = st.Store.ylength_store,
+                    mqtt_name_store = st.Store.mqtt_name_store
+                } : null
             })
             .ToListAsync();
     }
@@ -74,92 +100,27 @@ public class StoreTagService : IStoreTagService
             .CountAsync(st => st.id_tag == tagId);
     }
 
-    public async Task<ReadStoreTagDto> GetStoreTagById(int storeId, int tagId)
+    public async Task<ReadExtendedStoreTagDto> GetStoreTagById(int storeId, int tagId, List<string>? expand = null)
     {
         var storeTag = await _context.StoresTags.FindAsync(storeId, tagId) ?? throw new KeyNotFoundException($"StoreTag with storeId {storeId} and tagId {tagId} not found");
-        return new ReadStoreTagDto
+        return new ReadExtendedStoreTagDto
         {
             id_store = storeTag.id_store,
-            id_tag = storeTag.id_tag
+            id_tag = storeTag.id_tag,
+            tag = expand != null && expand.Contains("tag") ? new ReadTagDto
+            {
+                id_tag = storeTag.Tag.id_tag,
+                nom_tag = storeTag.Tag.nom_tag
+            } : null,
+            store = expand != null && expand.Contains("store") ? new ReadStoreDto
+            {
+                id_store = storeTag.Store.id_store,
+                nom_store = storeTag.Store.nom_store,
+                xlength_store = storeTag.Store.xlength_store,
+                ylength_store = storeTag.Store.ylength_store,
+                mqtt_name_store = storeTag.Store.mqtt_name_store
+            } : null
         };
-    }
-
-    public async Task<IEnumerable<ReadStoreTagDto>> CreateStoreTags(int? storeId = null, int? tagId = null, int[]? tags = null, int[]? stores = null)
-    {
-        var newStoreTagList = new List<StoresTags>();
-        if (storeId != null && tags != null)
-        {
-            // check if store exists
-            if (!await _context.Stores.AnyAsync(s => s.id_store == storeId.Value))
-            {
-                throw new KeyNotFoundException($"Store with id {storeId.Value} not found");
-            }
-            // check if all tags exists
-            for (int i = 0; i < tags.Length; i++)
-            {
-                if (!await _context.Tags.AnyAsync(t => t.id_tag == tags[i]))
-                {
-                    throw new KeyNotFoundException($"Tag with id {tags[i]} not found");
-                }
-            }
-            // create store tag
-            for (int i = 0; i < tags.Length; i++)
-            {
-                if (await _context.StoresTags.AnyAsync(st => st.id_store == storeId.Value && st.id_tag == tags[i]))
-                {
-                    throw new InvalidOperationException($"StoreTag with storeId {storeId.Value} and tagId {tags[i]} already exists");
-                }
-                var newStoreTag = new StoresTags
-                {
-                    id_store = storeId.Value,
-                    id_tag = tags[i]
-                };
-                _context.StoresTags.Add(newStoreTag);
-                newStoreTagList.Add(newStoreTag);
-            }
-            await _context.SaveChangesAsync();
-        }
-        else if (tagId != null && stores != null)
-        {
-            // check if tag exists
-            if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId.Value))
-            {
-                throw new KeyNotFoundException($"Tag with id {tagId.Value} not found");
-            }
-            // check if all stores exist
-            for (int i = 0; i < stores.Length; i++)
-            {
-                if (!await _context.Stores.AnyAsync(s => s.id_store == stores[i]))
-                {
-                    throw new KeyNotFoundException($"Store with id {stores[i]} not found");
-                }
-            }
-            // create the store tags
-            for (int i = 0; i < stores.Length; i++)
-            {
-                if (await _context.StoresTags.AnyAsync(st => st.id_store == stores[i] && st.id_tag == tagId.Value))
-                {
-                    throw new InvalidOperationException($"StoreTag with storeId {stores[i]} and tagId {tagId.Value} already exists");
-                }
-                var newStoreTag = new StoresTags
-                {
-                    id_store = stores[i],
-                    id_tag = tagId.Value
-                };
-                _context.StoresTags.Add(newStoreTag);
-                newStoreTagList.Add(newStoreTag);
-            }
-            await _context.SaveChangesAsync();
-        }
-        else
-        {
-            throw new NotImplementedException("unknown parameters");
-        }
-        return newStoreTagList.Select(st => new ReadStoreTagDto
-        {
-            id_store = st.id_store,
-            id_tag = st.id_tag
-        });
     }
 
     public async Task<ReadStoreTagDto> CreateStoreTag(CreateStoreTagDto storeTagDto)
@@ -193,10 +154,68 @@ public class StoreTagService : IStoreTagService
         };
     }
 
+    public async Task<ReadBulkStoreTagDto> CreateBulkStoreTag(List<CreateStoreTagDto> storeTagBulkDto)
+    {
+        var validQuery = new List<ReadStoreTagDto>();
+        var errorQuery = new List<ErrorDetail>();
+        foreach (var storeTagDto in storeTagBulkDto)
+        {
+            try
+            {
+                validQuery.Add(await CreateStoreTag(storeTagDto));
+            }
+            catch (Exception e)
+            {
+                errorQuery.Add(new ErrorDetail
+                {
+                    Reason = e.Message,
+                    Data = storeTagDto
+                });
+            }
+        }
+        return new ReadBulkStoreTagDto
+        {
+            Valide = validQuery,
+            Error = errorQuery
+        };
+    }
+
     public async Task DeleteStoreTag(int storeId, int tagId)
     {
         var storeTag = await _context.StoresTags.FindAsync(storeId, tagId) ?? throw new KeyNotFoundException($"StoreTag with storeId {storeId} and tagId {tagId} not found");
         _context.StoresTags.Remove(storeTag);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<ReadBulkStoreTagDto> DeleteBulkItemTag(List<CreateStoreTagDto> storeTagBulkDto)
+    {
+        var validQuery = new List<ReadStoreTagDto>();
+        var errorQuery = new List<ErrorDetail>();
+        foreach (var storeTagDto in storeTagBulkDto)
+        {
+            try
+            {
+                await DeleteStoreTag(storeTagDto.id_store, storeTagDto.id_tag);
+                validQuery.Add(new ReadStoreTagDto
+                {
+                    id_store = storeTagDto.id_store,
+                    id_tag = storeTagDto.id_tag
+                });
+            }
+            catch (Exception e)
+            {
+                errorQuery.Add(new ErrorDetail
+                {
+                    Reason = e.Message,
+                    Data = storeTagDto
+                });
+            }
+        }
+        await _context.SaveChangesAsync();
+        return new ReadBulkStoreTagDto
+        {
+            Valide = validQuery,
+            Error = errorQuery
+        };
     }
 }

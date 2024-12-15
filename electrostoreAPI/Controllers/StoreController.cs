@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.StoreService;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace electrostore.Controllers
 {
@@ -18,9 +19,10 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadStoreDto>>> GetStores([FromQuery] int limit = 100, [FromQuery] int offset = 0)
+        public async Task<ActionResult<IEnumerable<ReadExtendedStoreDto>>> GetStores([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "", [FromQuery] string idResearch = "")
         {
-            var stores = await _storeService.GetStores(limit, offset);
+            var idList = string.IsNullOrWhiteSpace(idResearch) ? null : idResearch.Split(',').Where(id => int.TryParse(id, out _)).Select(int.Parse).ToList();
+            var stores = await _storeService.GetStores(limit, offset, expand.Split(',').ToList(), idList);
             var CountList = await _storeService.GetStoresCount();
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
@@ -29,9 +31,9 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_store}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadStoreDto>> GetStoreById([FromRoute] int id_store)
+        public async Task<ActionResult<ReadExtendedStoreDto>> GetStoreById([FromRoute] int id_store, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
         {
-            var store = await _storeService.GetStoreById(id_store);
+            var store = await _storeService.GetStoreById(id_store, expand.Split(',').ToList());
             return Ok(store);
         }
 

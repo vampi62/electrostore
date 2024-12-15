@@ -10,10 +10,13 @@ public class ItemsDocuments
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_item_document { get; set; }
 
+    [MaxLength(150)]
     public string url_item_document { get; set; }
 
+    [MaxLength(50)]
     public string name_item_document { get; set; }
 
+    [MaxLength(50)]
     public string type_item_document { get; set; }
 
     public decimal size_item_document { get; set; }

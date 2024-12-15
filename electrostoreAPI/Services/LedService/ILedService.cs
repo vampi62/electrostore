@@ -15,9 +15,15 @@ public interface ILedService
 
     public Task<ReadLedDto> CreateLed(CreateLedDto ledDto);
 
+    public Task<ReadBulkLedDto> CreateBulkLed(List<CreateLedDto> ledsDto);
+
     public Task<ReadLedDto> UpdateLed(int id, UpdateLedDto ledDto, int? storeId = null);
 
+    public Task<ReadBulkLedDto> UpdateBulkLed(List<UpdateBulkLedStoreDto> ledsDto, int storeId);
+
     public Task DeleteLed(int id, int? storeId = null);
+
+    public Task<ReadBulkLedDto> DeleteBulkLed(List<int> ids, int storeId);
 
     public Task ShowLed(ReadLedDto ledDB, int red, int green, int blue, int timeshow, int animation);
     

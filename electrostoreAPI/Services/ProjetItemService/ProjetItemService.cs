@@ -14,7 +14,7 @@ public class ProjetItemService : IProjetItemService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadProjetItemDto>> GetProjetItemsByProjetId(int ProjetId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadExtendedProjetItemDto>> GetProjetItemsByProjetId(int ProjetId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == ProjetId))
@@ -25,19 +25,29 @@ public class ProjetItemService : IProjetItemService
             .Skip(offset)
             .Take(limit)
             .Where(p => p.id_projet == ProjetId)
-            .Select(p => new ReadProjetItemDto
+            .Select(p => new ReadExtendedProjetItemDto
             {
                 id_item = p.id_item,
                 id_projet = p.id_projet,
                 qte_projet_item = p.qte_projet_item,
-                item = new ReadItemDto
+                item = expand != null && expand.Contains("item") ? new ReadItemDto
                 {
                     id_item = p.Item.id_item,
                     nom_item = p.Item.nom_item,
                     seuil_min_item = p.Item.seuil_min_item,
                     description_item = p.Item.description_item,
                     id_img = p.Item.id_img
-                }
+                } : null,
+                projet = expand != null && expand.Contains("projet") ? new ReadProjetDto
+                {
+                    id_projet = p.Projet.id_projet,
+                    nom_projet = p.Projet.nom_projet,
+                    description_projet = p.Projet.description_projet,
+                    url_projet = p.Projet.url_projet,
+                    status_projet = p.Projet.status_projet,
+                    date_debut_projet = p.Projet.date_debut_projet,
+                    date_fin_projet = p.Projet.date_fin_projet
+                } : null
             })
             .ToListAsync();
     }
@@ -53,7 +63,7 @@ public class ProjetItemService : IProjetItemService
             .CountAsync(p => p.id_projet == ProjetId);
     }
 
-    public async Task<IEnumerable<ReadProjetItemDto>> GetProjetItemsByItemId(int ItemId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadExtendedProjetItemDto>> GetProjetItemsByItemId(int ItemId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == ItemId))
@@ -64,19 +74,29 @@ public class ProjetItemService : IProjetItemService
             .Skip(offset)
             .Take(limit)
             .Where(p => p.id_item == ItemId)
-            .Select(p => new ReadProjetItemDto
+            .Select(p => new ReadExtendedProjetItemDto
             {
                 id_item = p.id_item,
                 id_projet = p.id_projet,
                 qte_projet_item = p.qte_projet_item,
-                item = new ReadItemDto
+                item = expand != null && expand.Contains("item") ? new ReadItemDto
                 {
                     id_item = p.Item.id_item,
                     nom_item = p.Item.nom_item,
                     seuil_min_item = p.Item.seuil_min_item,
                     description_item = p.Item.description_item,
                     id_img = p.Item.id_img
-                }
+                } : null,
+                projet = expand != null && expand.Contains("projet") ? new ReadProjetDto
+                {
+                    id_projet = p.Projet.id_projet,
+                    nom_projet = p.Projet.nom_projet,
+                    description_projet = p.Projet.description_projet,
+                    url_projet = p.Projet.url_projet,
+                    status_projet = p.Projet.status_projet,
+                    date_debut_projet = p.Projet.date_debut_projet,
+                    date_fin_projet = p.Projet.date_fin_projet
+                } : null
             })
             .ToListAsync();
     }
@@ -92,22 +112,32 @@ public class ProjetItemService : IProjetItemService
             .CountAsync(p => p.id_item == ItemId);
     }
 
-    public async Task<ReadProjetItemDto> GetProjetItemById(int projetId, int itemId)
+    public async Task<ReadExtendedProjetItemDto> GetProjetItemById(int projetId, int itemId, List<string>? expand = null)
     {
         var projetItem = await _context.ProjetsItems.FindAsync(projetId, itemId) ?? throw new KeyNotFoundException($"ProjetItem with id {projetId} not found");
-        return new ReadProjetItemDto
+        return new ReadExtendedProjetItemDto
         {
             id_item = projetItem.id_item,
             id_projet = projetItem.id_projet,
             qte_projet_item = projetItem.qte_projet_item,
-            item = new ReadItemDto
+            item = expand != null && expand.Contains("item") ? new ReadItemDto
             {
                 id_item = projetItem.Item.id_item,
                 nom_item = projetItem.Item.nom_item,
                 seuil_min_item = projetItem.Item.seuil_min_item,
                 description_item = projetItem.Item.description_item,
                 id_img = projetItem.Item.id_img
-            }
+            } : null,
+            projet = expand != null && expand.Contains("projet") ? new ReadProjetDto
+            {
+                id_projet = projetItem.Projet.id_projet,
+                nom_projet = projetItem.Projet.nom_projet,
+                description_projet = projetItem.Projet.description_projet,
+                url_projet = projetItem.Projet.url_projet,
+                status_projet = projetItem.Projet.status_projet,
+                date_debut_projet = projetItem.Projet.date_debut_projet,
+                date_fin_projet = projetItem.Projet.date_fin_projet
+            } : null
         };
     }
 
@@ -140,15 +170,33 @@ public class ProjetItemService : IProjetItemService
         {
             id_item = newProjetItem.id_item,
             id_projet = newProjetItem.id_projet,
-            qte_projet_item = newProjetItem.qte_projet_item,
-            item = new ReadItemDto
+            qte_projet_item = newProjetItem.qte_projet_item
+        };
+    }
+
+    public async Task<ReadBulkProjetItemDto> CreateBulkProjetItem(List<CreateProjetItemDto> projetItemBulkDto)
+    {
+        var validQuery = new List<ReadProjetItemDto>();
+        var errorQuery = new List<ErrorDetail>();
+        foreach (var projetItemDto in projetItemBulkDto)
+        {
+            try
             {
-                id_item = newProjetItem.Item.id_item,
-                nom_item = newProjetItem.Item.nom_item,
-                seuil_min_item = newProjetItem.Item.seuil_min_item,
-                description_item = newProjetItem.Item.description_item,
-                id_img = newProjetItem.Item.id_img
+                validQuery.Add(await CreateProjetItem(projetItemDto));
             }
+            catch (Exception e)
+            {
+                errorQuery.Add(new ErrorDetail
+                {
+                    Reason = e.Message,
+                    Data = projetItemDto
+                });
+            }
+        }
+        return new ReadBulkProjetItemDto
+        {
+            Valide = validQuery,
+            Error = errorQuery
         };
     }
 
@@ -165,7 +213,7 @@ public class ProjetItemService : IProjetItemService
             throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
         var projetItemToUpdate = await _context.ProjetsItems.FindAsync(projetId, itemId) ?? throw new KeyNotFoundException($"ProjetItem with id_projet {projetId} and id_item {itemId} not found");
-        if (projetItemDto.qte_projet_item != null)
+        if (projetItemDto.qte_projet_item is not null)
         {
             projetItemToUpdate.qte_projet_item = projetItemDto.qte_projet_item.Value;
         }
@@ -174,15 +222,7 @@ public class ProjetItemService : IProjetItemService
         {
             id_item = projetItemToUpdate.id_item,
             id_projet = projetItemToUpdate.id_projet,
-            qte_projet_item = projetItemToUpdate.qte_projet_item,
-            item = new ReadItemDto
-            {
-                id_item = projetItemToUpdate.Item.id_item,
-                nom_item = projetItemToUpdate.Item.nom_item,
-                seuil_min_item = projetItemToUpdate.Item.seuil_min_item,
-                description_item = projetItemToUpdate.Item.description_item,
-                id_img = projetItemToUpdate.Item.id_img
-            }
+            qte_projet_item = projetItemToUpdate.qte_projet_item
         };
     }
 

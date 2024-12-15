@@ -51,6 +51,21 @@ namespace electrostore.Controllers
             return CreatedAtAction(nameof(GetLedById), new { id_store = led.id_store, id_led = led.id_led }, led);
         }
 
+        [HttpPost("bulk")]
+		[Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult<ReadBulkLedDto>> CreateBulkLed([FromRoute] int id_store, [FromBody] List<CreateLedByStoreDto> ledsDto)
+        {
+            var ledsDtoFull = ledsDto.Select(ledDto => new CreateLedDto
+            {
+                x_led = ledDto.x_led,
+                y_led = ledDto.y_led,
+                id_store = id_store,
+                mqtt_led_id = ledDto.mqtt_led_id
+            }).ToList();
+            var leds = await _ledService.CreateBulkLed(ledsDtoFull);
+            return Ok(leds);
+        }
+
         [HttpPut("{id_led}")]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadLedDto>> UpdateLed([FromRoute] int id_store, [FromRoute] int id_led, [FromBody] UpdateLedByStoreDto ledDto)
@@ -64,6 +79,14 @@ namespace electrostore.Controllers
             var led = await _ledService.UpdateLed(id_led, ledDtoFull, id_store);
             return Ok(led);
         }
+        
+        [HttpPut("bulk")]
+		[Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult<ReadBulkLedDto>> UpdateBulkLed([FromRoute] int id_store, [FromBody] List<UpdateBulkLedStoreDto> ledsDto)
+        {
+            var leds = await _ledService.UpdateBulkLed(ledsDto, id_store);
+            return Ok(leds);
+        }
 
         [HttpDelete("{id_led}")]
         [Authorize(Policy = "AccessToken")]
@@ -71,6 +94,14 @@ namespace electrostore.Controllers
         {
             await _ledService.DeleteLed(id_led, id_store);
             return NoContent();
+        }
+
+        [HttpDelete("bulk")]
+		[Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult<ReadBulkLedDto>> DeleteBulkLed([FromRoute] int id_store, [FromBody] List<int> ids)
+        {
+            var leds = await _ledService.DeleteBulkLed(ids, id_store);
+            return Ok(leds);
         }
 
         [HttpPost("{id_led}/show")]

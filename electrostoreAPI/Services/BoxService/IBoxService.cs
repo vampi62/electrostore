@@ -5,15 +5,21 @@ namespace electrostore.Services.BoxService;
 
 public interface IBoxService
 {
-    public Task<IEnumerable<ReadBoxDto>> GetBoxsByStoreId(int storeId, int limit = 100, int offset = 0);
+    public Task<IEnumerable<ReadExtendedBoxDto>> GetBoxsByStoreId(int storeId, int limit = 100, int offset = 0, List<string>? expand = null);
 
     public Task<int> GetBoxsCountByStoreId(int storeId);
 
-    public Task<ReadBoxDto> GetBoxById(int id, int? storeId = null);
+    public Task<ReadExtendedBoxDto> GetBoxById(int id, int? storeId = null, List<string>? expand = null);
 
     public Task<ReadBoxDto> CreateBox(CreateBoxDto boxDto);
 
+    public Task<ReadBulkBoxDto> CreateBulkBox(List<CreateBoxDto> boxsDto);
+
     public Task<ReadBoxDto> UpdateBox(int id, UpdateBoxDto boxDto, int? storeId = null);
 
+    public Task<ReadBulkBoxDto> UpdateBulkBox(List<UpdateBuckBoxByStoreDto> boxsDto, int? storeId = null);
+
     public Task DeleteBox(int id, int? storeId = null);
+
+    public Task<ReadBulkBoxDto> DeleteBulkBox(List<int> ids, int storeId);
 }

@@ -5,15 +5,15 @@ namespace electrostore.Services.ItemBoxService;
 
 public interface IItemBoxService
 {
-    public Task<IEnumerable<ReadItemBoxDto>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0);
+    public Task<IEnumerable<ReadExtendedItemBoxDto>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0, List<string>? expand = null);
 
     public Task<int> GetItemsBoxsCountByBoxId(int boxId);
 
-    public Task<IEnumerable<ReadItemBoxDto>> GetItemsBoxsByItemId(int itemId, int limit = 100, int offset = 0);
+    public Task<IEnumerable<ReadExtendedItemBoxDto>> GetItemsBoxsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null);
 
     public Task<int> GetItemsBoxsCountByItemId(int itemId);
 
-    public Task<ReadItemBoxDto> GetItemBoxById(int itemId, int boxId);
+    public Task<ReadExtendedItemBoxDto> GetItemBoxById(int itemId, int boxId, List<string>? expand = null);
 
     public Task<ReadItemBoxDto> CreateItemBox(CreateItemBoxDto itemBoxDto);
 
@@ -21,5 +21,5 @@ public interface IItemBoxService
 
     public Task DeleteItemBox(int itemId, int boxId);
 
-    public Task CheckIfStoreExists(int storeId);
+    public Task CheckIfStoreExists(int storeId, int boxId);
 }

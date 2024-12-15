@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.ItemTagService;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace electrostore.Controllers
 {
@@ -19,9 +20,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadItemTagDto>>> GetItemsTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
+        public async Task<ActionResult<IEnumerable<ReadExtendedItemTagDto>>> GetItemsTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
         {
-            var itemTags = await _itemTagService.GetItemsTagsByTagId(id_tag, limit, offset);
+            var itemTags = await _itemTagService.GetItemsTagsByTagId(id_tag, limit, offset, expand.Split(',').ToList());
             var CountList = await _itemTagService.GetItemsTagsCountByTagId(id_tag);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
@@ -30,32 +31,36 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_item}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadItemTagDto>> GetItemTagById([FromRoute] int id_tag, [FromRoute] int id_item)
+        public async Task<ActionResult<ReadExtendedItemTagDto>> GetItemTagById([FromRoute] int id_tag, [FromRoute] int id_item, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
         {
-            var itemTag = await _itemTagService.GetItemTagById(id_item, id_tag);
+            var itemTag = await _itemTagService.GetItemTagById(id_item, id_tag, expand.Split(',').ToList());
             return Ok(itemTag);
         }
-        
+
         [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadItemTagDto>> CreateItemsTag([FromRoute] int id_tag, [FromBody] int[] items)
+        public async Task<ActionResult<ReadItemTagDto>> CreateItemTag([FromRoute] int id_tag, [FromBody] CreateItemTagByTagDto itemTagDto)
         {
-            var itemTags = await _itemTagService.CreateItemTags(null, id_tag, null, items);
-            return Ok(itemTags);
-        }
-        
-
-        [HttpPost("{id_item}")]
-        [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadItemTagDto>> CreateItemTag([FromRoute] int id_tag, [FromRoute] int id_item)
-        {
-            var itemTagDto = new CreateItemTagDto
+            var itemTagDtoFull = new CreateItemTagDto
             {
                 id_tag = id_tag,
-                id_item = id_item
+                id_item = itemTagDto.id_item
             };
-            var itemTag = await _itemTagService.CreateItemTag(itemTagDto);
+            var itemTag = await _itemTagService.CreateItemTag(itemTagDtoFull);
             return CreatedAtAction(nameof(GetItemTagById), new { id_tag = itemTag.id_tag, id_item = itemTag.id_item }, itemTag);
+        }
+
+        [HttpPost("bulk")]
+		[Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult<ReadBulkItemTagDto>> CreateBulkItemTag([FromRoute] int id_tag, [FromBody] List<CreateItemTagByTagDto> itemTagsDto)
+        {
+            var itemTagsDtoFull = itemTagsDto.Select(itemTagDto => new CreateItemTagDto
+            {
+                id_tag = id_tag,
+                id_item = itemTagDto.id_item
+            }).ToList();
+            var itemTags = await _itemTagService.CreateBulkItemTag(itemTagsDtoFull);
+            return Ok(itemTags);
         }
 
         [HttpDelete("{id_item}")]
@@ -64,6 +69,19 @@ namespace electrostore.Controllers
         {
             await _itemTagService.DeleteItemTag(id_item, id_tag);
             return NoContent();
+        }
+
+        [HttpDelete("bulk")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult> DeleteBulkItemTag([FromRoute] int id_tag, [FromBody] List<int> id_items)
+        {
+            var itemTagsDtoFull = id_items.Select(id_item => new CreateItemTagDto
+            {
+                id_item = id_item,
+                id_tag = id_tag
+            }).ToList();
+            var itemTags = await _itemTagService.DeleteBulkItemTag(itemTagsDtoFull);
+            return Ok(itemTags);
         }
     }
 }

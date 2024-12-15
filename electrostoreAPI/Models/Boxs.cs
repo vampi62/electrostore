@@ -14,7 +14,13 @@ public class Boxs
     public Stores Store { get; set; }
 
     public int xstart_box { get; set; }
+    
     public int ystart_box { get; set; }
+
     public int xend_box { get; set; }
+
     public int yend_box { get; set; }
+
+    public ICollection<ItemsBoxs> ItemsBoxs { get; set; } = new List<ItemsBoxs>();
+    public ICollection<BoxsTags> BoxsTags { get; set; } = new List<BoxsTags>();
 }

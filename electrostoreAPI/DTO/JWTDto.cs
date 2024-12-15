@@ -29,3 +29,9 @@ public class JwtSettings
     public string Audience { get; set; }
     public int ExpireDays { get; set; }
 }
+
+public record ErrorDetail
+{
+    public string Reason { get; init; }
+    public object Data { get; init; }
+}

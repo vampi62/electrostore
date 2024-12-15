@@ -4,31 +4,88 @@ namespace electrostore.Dto;
 
 public record ReadCommandCommentaireDto
 {
-    public int id_commandcommentaire { get; init; }
+    public int id_command_commentaire { get; init; }
     public int id_command { get; init; }
     public int? id_user { get; init; }
     public string contenu_command_commentaire { get; init; }
     public DateTime date_command_commentaire { get; init; }
     public DateTime date_modif_command_commentaire { get; init; }
-    public string? user_name { get; init; }
+}
+public record ReadExtendedCommandCommentaireDto
+{
+    public int id_command_commentaire { get; init; }
+    public int id_command { get; init; }
+    public int? id_user { get; init; }
+    public string contenu_command_commentaire { get; init; }
+    public DateTime date_command_commentaire { get; init; }
+    public DateTime date_modif_command_commentaire { get; init; }
     public ReadCommandDto? command { get; init; }
+    public ReadUserDto? user { get; init; }
 }
-public record CreateCommandCommentaireByCommandDto
+public record CreateCommandCommentaireByCommandDto : IValidatableObject
 {
-    [Required] public string contenu_command_commentaire { get; init; }
+    [Required]
+    [MinLength(1, ErrorMessage = "contenu_command_commentaire cannot be empty or whitespace.")]
+    [MaxLength(455, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
+    public string contenu_command_commentaire { get; init; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (string.IsNullOrWhiteSpace(contenu_command_commentaire))
+        {
+            yield return new ValidationResult("contenu_command_commentaire cannot be null, empty, or whitespace.", new[] { nameof(contenu_command_commentaire) });
+        }
+    }
 }
-public record CreateCommandCommentaireByUserDto
+public record CreateCommandCommentaireByUserDto : IValidatableObject
 {
-    [Required] public int id_command { get; init; }
-    [Required] public string contenu_command_commentaire { get; init; }
+    [Required]
+    public int id_command { get; init; }
+
+    [Required]
+    [MinLength(1, ErrorMessage = "contenu_command_commentaire cannot be empty or whitespace.")]
+    [MaxLength(455, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
+    public string contenu_command_commentaire { get; init; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (string.IsNullOrWhiteSpace(contenu_command_commentaire))
+        {
+            yield return new ValidationResult("contenu_command_commentaire cannot be null, empty, or whitespace.", new[] { nameof(contenu_command_commentaire) });
+        }
+    }
 }
-public record CreateCommandCommentaireDto
+public record CreateCommandCommentaireDto : IValidatableObject
 {
-    [Required] public int id_command { get; init; }
-    [Required] public int id_user { get; init; }
-    [Required] public string contenu_command_commentaire { get; init; }
+    [Required]
+    public int id_command { get; init; }
+
+    [Required]
+    public int id_user { get; init; }
+
+    [Required]
+    [MinLength(1, ErrorMessage = "contenu_command_commentaire cannot be empty or whitespace.")]
+    [MaxLength(455, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
+    public string contenu_command_commentaire { get; init; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (string.IsNullOrWhiteSpace(contenu_command_commentaire))
+        {
+            yield return new ValidationResult("contenu_command_commentaire cannot be null, empty, or whitespace.", new[] { nameof(contenu_command_commentaire) });
+        }
+    }
 }
-public record UpdateCommandCommentaireDto
+public record UpdateCommandCommentaireDto : IValidatableObject
 {
+    [MaxLength(455, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
     public string? contenu_command_commentaire { get; init; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (contenu_command_commentaire is not null && string.IsNullOrWhiteSpace(contenu_command_commentaire))
+        {
+            yield return new ValidationResult("contenu_command_commentaire cannot be empty or whitespace.", new[] { nameof(contenu_command_commentaire) });
+        }
+    }
 }

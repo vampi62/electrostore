@@ -11,8 +11,8 @@ using electrostore;
 namespace electrostore.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241111162515_initDB")]
-    partial class initDB
+    [Migration("20241217193833_AddLimitColumn")]
+    partial class AddLimitColumn
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -72,18 +72,22 @@ namespace electrostore.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("mdp_camera")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("nom_camera")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("url_camera")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.Property<string>("user_camera")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.HasKey("id_camera");
 
@@ -107,11 +111,13 @@ namespace electrostore.Migrations
 
                     b.Property<string>("status_command")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("url_command")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.HasKey("id_command");
 
@@ -126,7 +132,8 @@ namespace electrostore.Migrations
 
                     b.Property<string>("contenu_command_commentaire")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(455)
+                        .HasColumnType("varchar(455)");
 
                     b.Property<DateTime>("date_command_commentaire")
                         .HasColumnType("datetime(6)");
@@ -163,18 +170,21 @@ namespace electrostore.Migrations
 
                     b.Property<string>("name_command_document")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<decimal>("size_command_document")
                         .HasColumnType("decimal(65,30)");
 
                     b.Property<string>("type_command_document")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("url_command_document")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.HasKey("id_command_document");
 
@@ -215,11 +225,13 @@ namespace electrostore.Migrations
 
                     b.Property<string>("description_ia")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
 
                     b.Property<string>("nom_ia")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<bool>("trained_ia")
                         .HasColumnType("tinyint(1)");
@@ -240,18 +252,21 @@ namespace electrostore.Migrations
 
                     b.Property<string>("description_img")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
 
                     b.Property<int>("id_item")
                         .HasColumnType("int");
 
                     b.Property<string>("nom_img")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("url_img")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.HasKey("id_img");
 
@@ -268,14 +283,16 @@ namespace electrostore.Migrations
 
                     b.Property<string>("description_item")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
 
                     b.Property<int?>("id_img")
                         .HasColumnType("int");
 
                     b.Property<string>("nom_item")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<int>("seuil_min_item")
                         .HasColumnType("int");
@@ -322,18 +339,21 @@ namespace electrostore.Migrations
 
                     b.Property<string>("name_item_document")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<decimal>("size_item_document")
                         .HasColumnType("decimal(65,30)");
 
                     b.Property<string>("type_item_document")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("url_item_document")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.HasKey("id_item_document");
 
@@ -368,7 +388,8 @@ namespace electrostore.Migrations
 
                     b.Property<string>("created_by_ip")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<DateTime>("expires_at")
                         .HasColumnType("datetime(6)");
@@ -383,10 +404,12 @@ namespace electrostore.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("revoked_by_ip")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("revoked_reason")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.HasKey("id_jwi_access");
 
@@ -406,7 +429,8 @@ namespace electrostore.Migrations
 
                     b.Property<string>("created_by_ip")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<DateTime>("expires_at")
                         .HasColumnType("datetime(6)");
@@ -424,10 +448,12 @@ namespace electrostore.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("revoked_by_ip")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("revoked_reason")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.HasKey("id_jwi_refresh");
 
@@ -469,27 +495,31 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("date_fin_projet")
+                    b.Property<DateTime>("date_debut_projet")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime>("date_projet")
+                    b.Property<DateTime?>("date_fin_projet")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("description_projet")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
 
                     b.Property<string>("nom_projet")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("status_projet")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("url_projet")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.HasKey("id_projet");
 
@@ -504,7 +534,8 @@ namespace electrostore.Migrations
 
                     b.Property<string>("contenu_projet_commentaire")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(455)
+                        .HasColumnType("varchar(455)");
 
                     b.Property<DateTime>("date_modif_projet_commentaire")
                         .HasColumnType("datetime(6)");
@@ -541,18 +572,21 @@ namespace electrostore.Migrations
 
                     b.Property<string>("name_projet_document")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<decimal>("size_projet_document")
                         .HasColumnType("decimal(65,30)");
 
                     b.Property<string>("type_projet_document")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("url_projet_document")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.HasKey("id_projet_document");
 
@@ -587,11 +621,13 @@ namespace electrostore.Migrations
 
                     b.Property<string>("mqtt_name_store")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("nom_store")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<int>("xlength_store")
                         .HasColumnType("int");
@@ -627,7 +663,8 @@ namespace electrostore.Migrations
 
                     b.Property<string>("nom_tag")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<int>("poids_tag")
                         .HasColumnType("int");
@@ -645,29 +682,34 @@ namespace electrostore.Migrations
 
                     b.Property<string>("email_user")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("mdp_user")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("nom_user")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("prenom_user")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
-                    b.Property<string>("reset_token")
-                        .HasColumnType("longtext");
+                    b.Property<Guid?>("reset_token")
+                        .HasColumnType("char(36)");
 
                     b.Property<DateTime?>("reset_token_expiration")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("role_user")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.HasKey("id_user");
 
@@ -677,7 +719,7 @@ namespace electrostore.Migrations
             modelBuilder.Entity("electrostore.Models.Boxs", b =>
                 {
                     b.HasOne("electrostore.Models.Stores", "Store")
-                        .WithMany()
+                        .WithMany("Boxs")
                         .HasForeignKey("id_store")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -688,13 +730,13 @@ namespace electrostore.Migrations
             modelBuilder.Entity("electrostore.Models.BoxsTags", b =>
                 {
                     b.HasOne("electrostore.Models.Boxs", "Box")
-                        .WithMany()
+                        .WithMany("BoxsTags")
                         .HasForeignKey("id_box")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("electrostore.Models.Tags", "Tag")
-                        .WithMany()
+                        .WithMany("BoxsTags")
                         .HasForeignKey("id_tag")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -707,13 +749,13 @@ namespace electrostore.Migrations
             modelBuilder.Entity("electrostore.Models.CommandsCommentaires", b =>
                 {
                     b.HasOne("electrostore.Models.Commands", "Command")
-                        .WithMany()
+                        .WithMany("CommandsCommentaires")
                         .HasForeignKey("id_command")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("electrostore.Models.Users", "User")
-                        .WithMany()
+                        .WithMany("CommandsCommentaires")
                         .HasForeignKey("id_user");
 
                     b.Navigation("Command");
@@ -724,7 +766,7 @@ namespace electrostore.Migrations
             modelBuilder.Entity("electrostore.Models.CommandsDocuments", b =>
                 {
                     b.HasOne("electrostore.Models.Commands", "Command")
-                        .WithMany()
+                        .WithMany("CommandsDocuments")
                         .HasForeignKey("id_command")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -735,13 +777,13 @@ namespace electrostore.Migrations
             modelBuilder.Entity("electrostore.Models.CommandsItems", b =>
                 {
                     b.HasOne("electrostore.Models.Commands", "Command")
-                        .WithMany()
+                        .WithMany("CommandsItems")
                         .HasForeignKey("id_command")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("electrostore.Models.Items", "Item")
-                        .WithMany()
+                        .WithMany("CommandsItems")
                         .HasForeignKey("id_item")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -774,7 +816,7 @@ namespace electrostore.Migrations
             modelBuilder.Entity("electrostore.Models.ItemsBoxs", b =>
                 {
                     b.HasOne("electrostore.Models.Boxs", "Box")
-                        .WithMany()
+                        .WithMany("ItemsBoxs")
                         .HasForeignKey("id_box")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -793,7 +835,7 @@ namespace electrostore.Migrations
             modelBuilder.Entity("electrostore.Models.ItemsDocuments", b =>
                 {
                     b.HasOne("electrostore.Models.Items", "Item")
-                        .WithMany()
+                        .WithMany("ItemsDocuments")
                         .HasForeignKey("id_item")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -804,13 +846,13 @@ namespace electrostore.Migrations
             modelBuilder.Entity("electrostore.Models.ItemsTags", b =>
                 {
                     b.HasOne("electrostore.Models.Items", "Item")
-                        .WithMany()
+                        .WithMany("ItemsTags")
                         .HasForeignKey("id_item")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("electrostore.Models.Tags", "Tag")
-                        .WithMany()
+                        .WithMany("ItemsTags")
                         .HasForeignKey("id_tag")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -853,7 +895,7 @@ namespace electrostore.Migrations
             modelBuilder.Entity("electrostore.Models.Leds", b =>
                 {
                     b.HasOne("electrostore.Models.Stores", "Store")
-                        .WithMany()
+                        .WithMany("Leds")
                         .HasForeignKey("id_store")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -864,13 +906,13 @@ namespace electrostore.Migrations
             modelBuilder.Entity("electrostore.Models.ProjetsCommentaires", b =>
                 {
                     b.HasOne("electrostore.Models.Projets", "Projet")
-                        .WithMany()
+                        .WithMany("ProjetsCommentaires")
                         .HasForeignKey("id_projet")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("electrostore.Models.Users", "User")
-                        .WithMany()
+                        .WithMany("ProjetsCommentaires")
                         .HasForeignKey("id_user");
 
                     b.Navigation("Projet");
@@ -881,7 +923,7 @@ namespace electrostore.Migrations
             modelBuilder.Entity("electrostore.Models.ProjetsDocuments", b =>
                 {
                     b.HasOne("electrostore.Models.Projets", "Projet")
-                        .WithMany()
+                        .WithMany("ProjetsDocuments")
                         .HasForeignKey("id_projet")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -892,13 +934,13 @@ namespace electrostore.Migrations
             modelBuilder.Entity("electrostore.Models.ProjetsItems", b =>
                 {
                     b.HasOne("electrostore.Models.Items", "Item")
-                        .WithMany()
+                        .WithMany("ProjetsItems")
                         .HasForeignKey("id_item")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("electrostore.Models.Projets", "Projet")
-                        .WithMany()
+                        .WithMany("ProjetsItems")
                         .HasForeignKey("id_projet")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -911,13 +953,13 @@ namespace electrostore.Migrations
             modelBuilder.Entity("electrostore.Models.StoresTags", b =>
                 {
                     b.HasOne("electrostore.Models.Stores", "Store")
-                        .WithMany()
+                        .WithMany("StoresTags")
                         .HasForeignKey("id_store")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("electrostore.Models.Tags", "Tag")
-                        .WithMany()
+                        .WithMany("StoresTags")
                         .HasForeignKey("id_tag")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -927,9 +969,67 @@ namespace electrostore.Migrations
                     b.Navigation("Tag");
                 });
 
+            modelBuilder.Entity("electrostore.Models.Boxs", b =>
+                {
+                    b.Navigation("BoxsTags");
+
+                    b.Navigation("ItemsBoxs");
+                });
+
+            modelBuilder.Entity("electrostore.Models.Commands", b =>
+                {
+                    b.Navigation("CommandsCommentaires");
+
+                    b.Navigation("CommandsDocuments");
+
+                    b.Navigation("CommandsItems");
+                });
+
             modelBuilder.Entity("electrostore.Models.Items", b =>
                 {
+                    b.Navigation("CommandsItems");
+
                     b.Navigation("ItemsBoxs");
+
+                    b.Navigation("ItemsDocuments");
+
+                    b.Navigation("ItemsTags");
+
+                    b.Navigation("ProjetsItems");
+                });
+
+            modelBuilder.Entity("electrostore.Models.Projets", b =>
+                {
+                    b.Navigation("ProjetsCommentaires");
+
+                    b.Navigation("ProjetsDocuments");
+
+                    b.Navigation("ProjetsItems");
+                });
+
+            modelBuilder.Entity("electrostore.Models.Stores", b =>
+                {
+                    b.Navigation("Boxs");
+
+                    b.Navigation("Leds");
+
+                    b.Navigation("StoresTags");
+                });
+
+            modelBuilder.Entity("electrostore.Models.Tags", b =>
+                {
+                    b.Navigation("BoxsTags");
+
+                    b.Navigation("ItemsTags");
+
+                    b.Navigation("StoresTags");
+                });
+
+            modelBuilder.Entity("electrostore.Models.Users", b =>
+                {
+                    b.Navigation("CommandsCommentaires");
+
+                    b.Navigation("ProjetsCommentaires");
                 });
 #pragma warning restore 612, 618
         }

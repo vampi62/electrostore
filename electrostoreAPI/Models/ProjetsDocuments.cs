@@ -10,10 +10,13 @@ public class ProjetsDocuments
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_projet_document { get; set; }
 
+    [MaxLength(150)]
     public string url_projet_document { get; set; }
 
+    [MaxLength(50)]
     public string name_projet_document { get; set; }
 
+    [MaxLength(50)]
     public string type_projet_document { get; set; }
 
     public decimal size_projet_document { get; set; }
@@ -21,6 +24,7 @@ public class ProjetsDocuments
     public DateTime date_projet_document { get; set; }
 
     public int id_projet { get; set; }
+
     [ForeignKey("id_projet")]
     public Projets Projet { get; set; }
 }

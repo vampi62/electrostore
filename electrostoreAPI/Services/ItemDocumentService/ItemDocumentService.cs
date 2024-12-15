@@ -53,7 +53,7 @@ public class ItemDocumentService : IItemDocumentService
     public async Task<ReadItemDocumentDto> GetItemDocumentById(int id, int? itemId = null)
     {
         var itemDocument = await _context.ItemsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ItemDocument with id {id} not found");
-        if (itemId != null && itemDocument.id_item != itemId)
+        if (itemId is not null && itemDocument.id_item != itemId)
         {
             throw new KeyNotFoundException($"ItemDocument with id {id} not found for item with id {itemId}");
         }
@@ -76,20 +76,8 @@ public class ItemDocumentService : IItemDocumentService
         {
             throw new KeyNotFoundException($"Item with id {itemDocumentDto.id_item} not found");
         }
-        if (itemDocumentDto.document == null || itemDocumentDto.document.Length == 0)
-        {
-            throw new ArgumentException("Image file is required");
-        }
-        if (itemDocumentDto.document.Length > (30 * 1024 * 1024)) // 30MB max
-        {
-            throw new ArgumentException("Image file size should not exceed 30MB");
-        }
         var fileName = Path.GetFileNameWithoutExtension(itemDocumentDto.document.FileName);
         var fileExt = Path.GetExtension(itemDocumentDto.document.FileName);
-        if (!new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".bmp" }.Contains(fileExt)) // if extension is not allowed
-        {
-            throw new ArgumentException("Document file extension not allowed");
-        }
         var i = 1;
         // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/itemDocuments"
         // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
@@ -130,11 +118,11 @@ public class ItemDocumentService : IItemDocumentService
     public async Task<ReadItemDocumentDto> UpdateItemDocument(int id, UpdateItemDocumentDto itemDocumentDto, int? itemId = null)
     {
         var itemDocument = await _context.ItemsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ItemDocument with id {id} not found");
-        if (itemId != null && itemDocument.id_item != itemId)
+        if (itemId is not null && itemDocument.id_item != itemId)
         {
             throw new KeyNotFoundException($"ItemDocument with id {id} not found for item with id {itemId}");
         }
-        if (itemDocumentDto.document != null)
+        if (itemDocumentDto.document is not null)
         {
             var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", itemDocument.id_item.ToString(), itemDocument.url_item_document);
             if (itemDocumentDto.document.Length == 0)
@@ -174,11 +162,11 @@ public class ItemDocumentService : IItemDocumentService
                 File.Delete(oldPath);
             }
         }
-        if (itemDocumentDto.name_item_document != null)
+        if (itemDocumentDto.name_item_document is not null)
         {
             itemDocument.name_item_document = itemDocumentDto.name_item_document;
         }
-        if (itemDocumentDto.type_item_document != null)
+        if (itemDocumentDto.type_item_document is not null)
         {
             itemDocument.type_item_document = itemDocumentDto.type_item_document;
         }
@@ -198,7 +186,7 @@ public class ItemDocumentService : IItemDocumentService
     public async Task DeleteItemDocument(int id, int? itemId = null)
     {
         var itemDocument = await _context.ItemsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ItemDocument with id {id} not found");
-        if (itemId != null && itemDocument.id_item != itemId)
+        if (itemId is not null && itemDocument.id_item != itemId)
         {
             throw new KeyNotFoundException($"ItemDocument with id {id} not found for item with id {itemId}");
         }

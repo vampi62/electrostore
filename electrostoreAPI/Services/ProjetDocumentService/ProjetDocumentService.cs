@@ -52,7 +52,7 @@ public class ProjetDocumentService : IProjetDocumentService
     public async Task<ReadProjetDocumentDto> GetProjetDocumentById(int id, int? projetId = null)
     {
         var projetDocument = await _context.ProjetsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetDocument with id {id} not found");
-        if (projetId != null && projetDocument.id_projet != projetId)
+        if (projetId is not null && projetDocument.id_projet != projetId)
         {
             throw new KeyNotFoundException($"ProjetDocument with id {id} not found for projet with id {projetId}");
         }
@@ -75,20 +75,8 @@ public class ProjetDocumentService : IProjetDocumentService
         {
             throw new KeyNotFoundException($"Projet with id {projetDocumentDto.id_projet} not found");
         }
-        if (projetDocumentDto.document == null || projetDocumentDto.document.Length == 0)
-        {
-            throw new ArgumentException("Image file is required");
-        }
-        if (projetDocumentDto.document.Length > (30 * 1024 * 1024)) // 30MB max
-        {
-            throw new ArgumentException("Image file size should not exceed 30MB");
-        }
         var fileName = Path.GetFileNameWithoutExtension(projetDocumentDto.document.FileName);
         var fileExt = Path.GetExtension(projetDocumentDto.document.FileName);
-        if (!new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".bmp" }.Contains(fileExt)) // if extension is not allowed
-        {
-            throw new ArgumentException("Document file extension not allowed");
-        }
         var i = 1;
         // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/projetDocuments"
         // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
@@ -129,11 +117,11 @@ public class ProjetDocumentService : IProjetDocumentService
     public async Task<ReadProjetDocumentDto> UpdateProjetDocument(int id, UpdateProjetDocumentDto projetDocumentDto, int? projetId = null)
     {
         var projetDocument = await _context.ProjetsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetDocument with id {id} not found");
-        if (projetId != null && projetDocument.id_projet != projetId)
+        if (projetId is not null && projetDocument.id_projet != projetId)
         {
             throw new KeyNotFoundException($"ProjetDocument with id {id} not found for projet with id {projetId}");
         }
-        if (projetDocumentDto.document != null && projetDocumentDto.document.Length > 0)
+        if (projetDocumentDto.document is not null && projetDocumentDto.document.Length > 0)
         {
             var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", projetDocument.id_projet.ToString(), projetDocument.url_projet_document);
             if (projetDocumentDto.document.Length > (30 * 1024 * 1024)) // 30MB max
@@ -169,11 +157,11 @@ public class ProjetDocumentService : IProjetDocumentService
                 File.Delete(oldPath);
             }
         }
-        if (projetDocumentDto.name_projet_document != null)
+        if (projetDocumentDto.name_projet_document is not null)
         {
             projetDocument.name_projet_document = projetDocumentDto.name_projet_document;
         }
-        if (projetDocumentDto.type_projet_document != null)
+        if (projetDocumentDto.type_projet_document is not null)
         {
             projetDocument.type_projet_document = projetDocumentDto.type_projet_document;
         }
@@ -193,7 +181,7 @@ public class ProjetDocumentService : IProjetDocumentService
     public async Task DeleteProjetDocument(int id, int? projetId = null)
     {
         var projetDocument = await _context.ProjetsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetDocument with id {id} not found");
-        if (projetId != null && projetDocument.id_projet != projetId)
+        if (projetId is not null && projetDocument.id_projet != projetId)
         {
             throw new KeyNotFoundException($"ProjetDocument with id {id} not found for projet with id {projetId}");
         }

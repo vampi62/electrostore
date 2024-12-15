@@ -291,7 +291,7 @@ namespace electrostore.Migrations
                 name: "CommandsCommentaires",
                 columns: table => new
                 {
-                    id_commandcommentaire = table.Column<int>(type: "int", nullable: false)
+                    id_command_commentaire = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     id_user = table.Column<int>(type: "int", nullable: true),
                     id_command = table.Column<int>(type: "int", nullable: false),
@@ -302,7 +302,7 @@ namespace electrostore.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CommandsCommentaires", x => x.id_commandcommentaire);
+                    table.PrimaryKey("PK_CommandsCommentaires", x => x.id_command_commentaire);
                     table.ForeignKey(
                         name: "FK_CommandsCommentaires_Commands_id_command",
                         column: x => x.id_command,

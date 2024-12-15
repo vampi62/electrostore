@@ -14,17 +14,49 @@ public class CommandService : ICommandService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadCommandDto>> GetCommands(int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadExtendedCommandDto>> GetCommands(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
     {
-        return await _context.Commands
-            .Select(c => new ReadCommandDto
+        var query = _context.Commands.AsQueryable();
+        if (idResearch != null && idResearch.Any())
+        {
+            query = query.Where(b => idResearch.Contains(b.id_command));
+        }
+        return await query
+            .Skip(offset)
+            .Take(limit)
+            .Select(c => new ReadExtendedCommandDto
             {
                 id_command = c.id_command,
                 prix_command = c.prix_command,
                 url_command = c.url_command,
                 status_command = c.status_command,
                 date_command = c.date_command,
-                date_livraison_command = c.date_livraison_command
+                date_livraison_command = c.date_livraison_command,
+                commands_commentaires = expand != null && expand.Contains("commands_commentaires") ? c.CommandsCommentaires.Select(cc => new ReadCommandCommentaireDto
+                {
+                    id_command_commentaire = cc.id_command_commentaire,
+                    id_command = cc.id_command,
+                    id_user = cc.id_user,
+                    contenu_command_commentaire = cc.contenu_command_commentaire,
+                    date_command_commentaire = cc.date_command_commentaire,
+                    date_modif_command_commentaire = cc.date_modif_command_commentaire
+                }).ToList() : null,
+                commands_documents = expand != null && expand.Contains("commands_documents") ? c.CommandsDocuments.Select(cd => new ReadCommandDocumentDto
+                {
+                    id_command_document = cd.id_command_document,
+                    id_command = cd.id_command,
+                    url_command_document = cd.url_command_document
+                }).ToList() : null,
+                commands_items = expand != null && expand.Contains("commands_items") ? c.CommandsItems.Select(ci => new ReadCommandItemDto
+                {
+                    id_item = ci.id_item,
+                    id_command = ci.id_command,
+                    qte_command_item = ci.qte_command_item,
+                    prix_command_item = ci.prix_command_item
+                }).ToList() : null,
+                commands_commentaires_count = c.CommandsCommentaires.Count,
+                commands_documents_count = c.CommandsDocuments.Count,
+                commands_items_count = c.CommandsItems.Count
             })
             .ToListAsync();
     }
@@ -34,17 +66,42 @@ public class CommandService : ICommandService
         return await _context.Commands.CountAsync();
     }
 
-    public async Task<ReadCommandDto> GetCommandById(int id)
+    public async Task<ReadExtendedCommandDto> GetCommandById(int id, List<string>? expand = null)
     {
         var command = await _context.Commands.FindAsync(id) ?? throw new KeyNotFoundException($"Command with id {id} not found");
-        return new ReadCommandDto
+        return new ReadExtendedCommandDto
         {
             id_command = command.id_command,
             prix_command = command.prix_command,
             url_command = command.url_command,
             status_command = command.status_command,
             date_command = command.date_command,
-            date_livraison_command = command.date_livraison_command
+            date_livraison_command = command.date_livraison_command,
+            commands_commentaires = expand != null && expand.Contains("commands_commentaires") ? command.CommandsCommentaires.Select(cc => new ReadCommandCommentaireDto
+            {
+                id_command_commentaire = cc.id_command_commentaire,
+                id_command = cc.id_command,
+                id_user = cc.id_user,
+                contenu_command_commentaire = cc.contenu_command_commentaire,
+                date_command_commentaire = cc.date_command_commentaire,
+                date_modif_command_commentaire = cc.date_modif_command_commentaire
+            }).ToList() : null,
+            commands_documents = expand != null && expand.Contains("commands_documents") ? command.CommandsDocuments.Select(cd => new ReadCommandDocumentDto
+            {
+                id_command_document = cd.id_command_document,
+                id_command = cd.id_command,
+                url_command_document = cd.url_command_document
+            }).ToList() : null,
+            commands_items = expand != null && expand.Contains("commands_items") ? command.CommandsItems.Select(ci => new ReadCommandItemDto
+            {
+                id_item = ci.id_item,
+                id_command = ci.id_command,
+                qte_command_item = ci.qte_command_item,
+                prix_command_item = ci.prix_command_item
+            }).ToList() : null,
+            commands_commentaires_count = command.CommandsCommentaires.Count,
+            commands_documents_count = command.CommandsDocuments.Count,
+            commands_items_count = command.CommandsItems.Count
         };
     }
 
@@ -78,23 +135,23 @@ public class CommandService : ICommandService
     public async Task<ReadCommandDto> UpdateCommand(int id, UpdateCommandDto commandDto)
     {
         var commandToUpdate = await _context.Commands.FindAsync(id) ?? throw new KeyNotFoundException($"Command with id {id} not found");
-        if (commandDto.prix_command != null)
+        if (commandDto.prix_command is not null)
         {
             commandToUpdate.prix_command = commandDto.prix_command.Value;
         }
-        if (commandDto.url_command != null)
+        if (commandDto.url_command is not null)
         {
             commandToUpdate.url_command = commandDto.url_command;
         }
-        if (commandDto.status_command != null)
+        if (commandDto.status_command is not null)
         {
             commandToUpdate.status_command = commandDto.status_command;
         }
-        if (commandDto.date_command != null)
+        if (commandDto.date_command is not null)
         {
             commandToUpdate.date_command = commandDto.date_command.Value;
         }
-        if (commandDto.date_livraison_command != null)
+        if (commandDto.date_livraison_command is not null)
         {
             commandToUpdate.date_livraison_command = commandDto.date_livraison_command;
         }

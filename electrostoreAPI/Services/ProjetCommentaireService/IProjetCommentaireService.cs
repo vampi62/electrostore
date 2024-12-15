@@ -5,15 +5,15 @@ namespace electrostore.Services.ProjetCommentaireService;
 
 public interface IProjetCommentaireService
 {
-    public Task<IEnumerable<ReadProjetCommentaireDto>> GetProjetCommentairesByProjetId(int projetId, int limit = 100, int offset = 0);
+    public Task<IEnumerable<ReadExtendedProjetCommentaireDto>> GetProjetCommentairesByProjetId(int projetId, int limit = 100, int offset = 0, List<string>? expand = null);
 
     public Task<int> GetProjetCommentairesCountByProjetId(int projetId);
 
-    public Task<IEnumerable<ReadProjetCommentaireDto>> GetProjetCommentairesByUserId(int userId, int limit = 100, int offset = 0);
+    public Task<IEnumerable<ReadExtendedProjetCommentaireDto>> GetProjetCommentairesByUserId(int userId, int limit = 100, int offset = 0, List<string>? expand = null);
 
     public Task<int> GetProjetCommentairesCountByUserId(int userId);
 
-    public Task<ReadProjetCommentaireDto> GetProjetCommentairesByCommentaireId(int id, int? userId = null, int? projetId = null);
+    public Task<ReadExtendedProjetCommentaireDto> GetProjetCommentairesByCommentaireId(int id, int? userId = null, int? projetId = null, List<string>? expand = null);
 
     public Task<ReadProjetCommentaireDto> CreateProjetCommentaire(CreateProjetCommentaireDto projetCommentaireDto);
 
