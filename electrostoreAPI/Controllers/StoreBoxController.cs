@@ -69,7 +69,11 @@ namespace electrostore.Controllers
                 id_store = id_store
             }).ToList();
             var boxs = await _boxService.CreateBulkBox(boxsDtoFull);
-            return Ok(boxs);
+            if (boxs.Error.Count == 0)
+            {
+                return Ok(boxs);
+            }
+            return BadRequest(boxs);
         }
 
         [HttpPut("{id_box}")]
@@ -92,7 +96,11 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadBulkBoxDto>> UpdateBulkBox([FromRoute] int id_store, [FromBody] List<UpdateBuckBoxByStoreDto> boxsDto)
         {
             var boxs = await _boxService.UpdateBulkBox(boxsDto, id_store);
-            return Ok(boxs);
+            if (boxs.Error.Count == 0)
+            {
+                return Ok(boxs);
+            }
+            return BadRequest(boxs);
         }
 
         [HttpDelete("{id_box}")]

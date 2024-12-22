@@ -2,11 +2,11 @@ bool setupWiFi()
 {
   Serial.println();
   Serial.print("Connexion au réseau Wi-Fi: ");
-  Serial.println(ssid);
+  Serial.println(wifiSSID);
   WiFi.mode(WIFI_STA);
   do
   {
-    WiFi.begin(ssid.c_str(), password.c_str());
+    WiFi.begin(wifiSSID.c_str(), wifiPassword.c_str());
     startTime = millis();
     while (WiFi.status() != WL_CONNECTED && millis() - startTime < connectionTimeout)
     {
@@ -27,7 +27,7 @@ bool setupWiFi()
       Serial.println("Connexion au réseau Wi-Fi échouée.");
       nbrErreurWifiConnect++;
     }
-  } while ((WiFi.status() != WL_CONNECTED) && (nbrErreurWifiConnect <= 5));
+  } while ((WiFi.status() != WL_CONNECTED) && (nbrErreurWifiConnect <= 3));
   if (WiFi.status() == WL_CONNECTED)
   {
     return true;

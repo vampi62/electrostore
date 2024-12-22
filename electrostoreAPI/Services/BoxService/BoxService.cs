@@ -221,7 +221,10 @@ public class BoxService : IBoxService
                 });
             }
         }
-        await _context.SaveChangesAsync();
+        if (errorQuery.Count == 0)
+        {
+            await _context.SaveChangesAsync();
+        }
         return new ReadBulkBoxDto
         {
             Valide = validQuery,
@@ -313,7 +316,6 @@ public class BoxService : IBoxService
             try
             {
                 var boxToUpdate = await _context.Boxs.FindAsync(boxDto.id_box);
-                bool newXYPosition = false;
                 if ((boxToUpdate is null) || (storeId is not null && boxToUpdate.id_store != storeId))
                 {
                     throw new KeyNotFoundException($"Box with id {boxDto.id_box} not found");
@@ -321,22 +323,18 @@ public class BoxService : IBoxService
                 if (boxDto.xstart_box is not null)
                 {
                     boxToUpdate.xstart_box = boxDto.xstart_box.Value;
-                    newXYPosition = true;
                 }
                 if (boxDto.ystart_box is not null)
                 {
                     boxToUpdate.ystart_box = boxDto.ystart_box.Value;
-                    newXYPosition = true;
                 }
                 if (boxDto.yend_box is not null)
                 {
                     boxToUpdate.yend_box = boxDto.yend_box.Value;
-                    newXYPosition = true;
                 }
                 if (boxDto.xend_box is not null)
                 {
                     boxToUpdate.xend_box = boxDto.xend_box.Value;
-                    newXYPosition = true;
                 }
                 // end position must be greater than start position
                 if (boxToUpdate.xend_box <= boxToUpdate.xstart_box || boxToUpdate.yend_box <= boxToUpdate.ystart_box)
@@ -350,22 +348,6 @@ public class BoxService : IBoxService
                         throw new KeyNotFoundException($"Store with id {boxDto.new_id_store} not found");
                     }
                     boxToUpdate.id_store = boxDto.new_id_store.Value;
-                    newXYPosition = true;
-                }
-                if (newXYPosition)
-                {
-                    // check if a box in the store has a XY position already taken except the box to update
-                    // (((NXS > OXS && NXS < OXE) || (NXE < OXE && NXE > OXS)) && ((NYS > OYS && NYS < OYE) || (NYE < OYE && NYE > OYS)))
-                    // N = new box, O = old box
-                    // X = x position, Y = y position, S = start, E = end
-                    if (await _context.Boxs.AnyAsync(b => b.id_store == boxToUpdate.id_store && b.id_box != boxToUpdate.id_box &&
-                                                    ((boxDto.xstart_box <= b.xstart_box && boxDto.xend_box > b.xstart_box) ||
-                                                    (boxDto.xstart_box >= b.xstart_box && boxDto.xstart_box < b.xend_box)) &&
-                                                    ((boxDto.ystart_box <= b.ystart_box && boxDto.yend_box > b.ystart_box) ||
-                                                    (boxDto.ystart_box >= b.ystart_box && boxDto.ystart_box < b.yend_box))))
-                    {
-                        throw new ArgumentException("Box XY position already taken");
-                    }
                 }
                 // check if the box XY position is not bigger than the store XY length
                 var store = await _context.Stores.FindAsync(boxToUpdate.id_store) ?? throw new KeyNotFoundException($"Store with id {boxToUpdate.id_store} not found");
@@ -392,7 +374,37 @@ public class BoxService : IBoxService
                 });
             }
         }
-        await _context.SaveChangesAsync();
+        // if there is no error, 1: check if no box as the same XY position in the same store, 2: save changes if still no error
+        if (errorQuery.Count == 0)
+        {
+            foreach (var boxDto in boxsDto)
+            {
+                try
+                {
+                    var boxToUpdate = await _context.Boxs.FindAsync(boxDto.id_box) ?? throw new KeyNotFoundException($"Box with id {boxDto.id_box} not found");
+                    if (await _context.Boxs.AnyAsync(b => b.id_store == boxToUpdate.id_store && b.id_box != boxToUpdate.id_box &&
+                                                        ((boxDto.xstart_box <= b.xstart_box && boxDto.xend_box > b.xstart_box) ||
+                                                        (boxDto.xstart_box >= b.xstart_box && boxDto.xstart_box < b.xend_box)) &&
+                                                        ((boxDto.ystart_box <= b.ystart_box && boxDto.yend_box > b.ystart_box) ||
+                                                        (boxDto.ystart_box >= b.ystart_box && boxDto.ystart_box < b.yend_box))))
+                    {
+                        throw new ArgumentException("Box XY position already taken");
+                    }
+                }
+                catch (Exception e)
+                {
+                    errorQuery.Add(new ErrorDetail
+                    {
+                        Reason = e.Message,
+                        Data = boxDto
+                    });
+                }
+            }
+            if (errorQuery.Count == 0)
+            {
+                await _context.SaveChangesAsync();
+            }
+        }
         return new ReadBulkBoxDto
         {
             Valide = validQuery,

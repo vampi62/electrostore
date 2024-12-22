@@ -11,20 +11,6 @@ static const char *STREAM_PART = "Content-Type: %s\r\nContent-Length: %u\r\n\r\n
 
 static const char *JPG_CONTENT_TYPE = "image/jpeg";
 
-bool authenticate(AsyncWebServerRequest *request)
-{
-  if (camUser.length() == 0 || camPassword.length() == 0)
-  {
-    return true;
-  }
-  if (!request->authenticate(camUser.c_str(), camPassword.c_str()))
-  {
-    request->requestAuthentication(); // Demande d'authentification si les identifiants sont incorrects
-    return false;
-  }
-  return true;
-}
-
 class AsyncBufferResponse : public AsyncAbstractResponse
 {
 private:
