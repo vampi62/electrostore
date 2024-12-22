@@ -14,16 +14,16 @@
 #define EEPROM_SIZE 512
 
 // Définir les adresses de début dans l'EEPROM
-#define SSID_ADDRESS 0
-#define PASSWORD_ADDRESS 32
-#define CAMUSER_ADDRESS 160
-#define CAMPASSWORD_ADDRESS 192
+#define WIFISSID_ADDRESS 0
+#define WIFIPASSWORD_ADDRESS 51
+#define ESPUSER_ADDRESS 102
+#define ESPPASSWORD_ADDRESS 153
 
 // Variables globales
-String ssid;
-String password;
-String camUser;
-String camPassword;
+String wifiSSID;
+String wifiPassword;
+String espUser;
+String espPassword;
 
 AsyncWebServer server(80);
 WiFiClient wifiClient;
@@ -45,10 +45,13 @@ int nbrErreurWifiConnect = 0;
 #define LED_PIN 15
 Adafruit_NeoPixel strip(64, LED_PIN, NEO_GRB + NEO_KHZ800);
 
-#include "prgeeprom.h"
-#include "prgwifi.h"
-#include "prgpagecam.h"
-#include "prgpagehttp.h"
+#include "scanbox_eeprom.h"
+#include "scanbox_wifi.h"
+#include "scanbox_pageMenu.h"
+#include "scanbox_pageWifi.h"
+#include "scanbox_pageUser.h"
+#include "scanbox_pageCam.h"
+#include "scanbox_pageCamVideoFlux.h"
 
 #define CAMERA_MODEL_AI_THINKER
 #define PWDN_GPIO_NUM 32
@@ -142,10 +145,10 @@ void setup()
   strip.show();
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); // disable brownout detector
   EEPROM.begin(EEPROM_SIZE);
-  ssid = readStringFromEEPROM(SSID_ADDRESS);
-  password = readStringFromEEPROM(PASSWORD_ADDRESS);
-  camUser = readStringFromEEPROM(CAMUSER_ADDRESS);
-  camPassword = readStringFromEEPROM(CAMPASSWORD_ADDRESS);
+  wifiSSID = readStringFromEEPROM(WIFISSID_ADDRESS);
+  wifiPassword = readStringFromEEPROM(WIFIPASSWORD_ADDRESS);
+  espUser = readStringFromEEPROM(ESPUSER_ADDRESS);
+  espPassword = readStringFromEEPROM(ESPPASSWORD_ADDRESS);
 
   iswificlient = setupWiFi();
   if (iswificlient)
@@ -158,10 +161,12 @@ void setup()
     strip.setPixelColor(0, strip.Color(20, 0, 0));
     strip.show();
   }
-  server.on("/menuwifi", HTTP_GET, handleMenuWifi);
+  server.on("/wifi", HTTP_GET, handleMenuWifi);
   server.on("/savewifi", HTTP_GET, handleSaveWifi);
-  server.on("/menucam", HTTP_GET, handleMenuCam);
-  server.on("/savecam", HTTP_GET, handleSaveCam);
+  server.on("/user", HTTP_GET, handleMenuUser);
+  server.on("/saveuser", HTTP_GET, handleSaveUser);
+  server.on("/cam", HTTP_GET, handleMenuCam);
+  //server.on("/savecam", HTTP_GET, handleSaveCam);
   server.on("/light", HTTP_GET, handleLight);
   server.on("/", HTTP_GET, handleRoot);
   server.on("/stream", HTTP_GET, handleStream);
