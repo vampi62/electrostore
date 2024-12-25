@@ -74,44 +74,41 @@ public class BoxService : IBoxService
 
     public async Task<ReadExtendedBoxDto> GetBoxById(int id, int? storeId = null, List<string>? expand = null)
     {
-        var box = await _context.Boxs.FindAsync(id) ?? throw new KeyNotFoundException($"Box with id {id} not found");
-        if (storeId is not null && box.id_store != storeId)
-        {
-            throw new KeyNotFoundException($"Box with id {id} not found in store with id {storeId}");
-        }
-        return new ReadExtendedBoxDto
-        {
-            id_box = box.id_box,
-            xstart_box = box.xstart_box,
-            ystart_box = box.ystart_box,
-            xend_box = box.xend_box,
-            yend_box = box.yend_box,
-            id_store = box.id_store,
-            store = expand != null && expand.Contains("store") ? new ReadStoreDto
+        return await _context.Boxs
+            .Where(b => b.id_box == id && (storeId == null || b.id_store == storeId))
+            .Select(s => new ReadExtendedBoxDto
             {
-                id_store = box.Store.id_store,
-                nom_store = box.Store.nom_store,
-                xlength_store = box.Store.xlength_store,
-                ylength_store = box.Store.ylength_store,
-                mqtt_name_store = box.Store.mqtt_name_store
-            } : null,
-            box_tags = expand != null && expand.Contains("box_tags") ? box.BoxsTags
-                .Select(bt => new ReadBoxTagDto
+                id_box = s.id_box,
+                xstart_box = s.xstart_box,
+                ystart_box = s.ystart_box,
+                xend_box = s.xend_box,
+                yend_box = s.yend_box,
+                id_store = s.id_store,
+                store = expand != null && expand.Contains("store") ? new ReadStoreDto
                 {
-                    id_box = bt.id_box,
-                    id_tag = bt.id_tag
-                }).ToArray() : null,
-            item_boxs = expand != null && expand.Contains("item_boxs") ? box.ItemsBoxs
-                .Select(ib => new ReadItemBoxDto
-                {
-                    id_box = ib.id_box,
-                    id_item = ib.id_item,
-                    qte_item_box = ib.qte_item_box,
-                    seuil_max_item_item_box = ib.seuil_max_item_item_box
-                }).ToArray() : null,
-            box_tags_count = box.BoxsTags.Count,
-            item_boxs_count = box.ItemsBoxs.Count
-        };
+                    id_store = s.Store.id_store,
+                    nom_store = s.Store.nom_store,
+                    xlength_store = s.Store.xlength_store,
+                    ylength_store = s.Store.ylength_store,
+                    mqtt_name_store = s.Store.mqtt_name_store
+                } : null,
+                box_tags = expand != null && expand.Contains("box_tags") ? s.BoxsTags
+                    .Select(bt => new ReadBoxTagDto
+                    {
+                        id_box = bt.id_box,
+                        id_tag = bt.id_tag
+                    }).ToArray() : null,
+                item_boxs = expand != null && expand.Contains("item_boxs") ? s.ItemsBoxs
+                    .Select(ib => new ReadItemBoxDto
+                    {
+                        id_box = ib.id_box,
+                        id_item = ib.id_item,
+                        qte_item_box = ib.qte_item_box,
+                        seuil_max_item_item_box = ib.seuil_max_item_item_box
+                    }).ToArray() : null,
+                box_tags_count = s.BoxsTags.Count,
+                item_boxs_count = s.ItemsBoxs.Count
+            }).FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Box with id {id} not found");
     }
 
     public async Task<ReadBoxDto> CreateBox(CreateBoxDto boxDto)

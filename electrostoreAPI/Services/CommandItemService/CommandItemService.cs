@@ -114,31 +114,33 @@ public class CommandItemService : ICommandItemService
 
     public async Task<ReadExtendedCommandItemDto> GetCommandItemById(int commandId, int itemId, List<string>? expand = null)
     {
-        var commandItem = await _context.CommandsItems.FindAsync(commandId, itemId) ?? throw new KeyNotFoundException($"CommandItem with commandId {commandId} and itemId {itemId} not found");
-        return new ReadExtendedCommandItemDto
-        {
-            id_item = commandItem.id_item,
-            id_command = commandItem.id_command,
-            qte_command_item = commandItem.qte_command_item,
-            prix_command_item = commandItem.prix_command_item,
-            item = expand != null && expand.Contains("item") ? new ReadItemDto
+        return await _context.CommandsItems
+            .Where(ci => ci.id_command == commandId && ci.id_item == itemId)
+            .Select(ci => new ReadExtendedCommandItemDto
             {
-                id_item = commandItem.Item.id_item,
-                nom_item = commandItem.Item.nom_item,
-                seuil_min_item = commandItem.Item.seuil_min_item,
-                description_item = commandItem.Item.description_item,
-                id_img = commandItem.Item.id_img
-            } : null,
-            command = expand != null && expand.Contains("command") ? new ReadCommandDto
-            {
-                id_command = commandItem.Command.id_command,
-                prix_command = commandItem.Command.prix_command,
-                url_command = commandItem.Command.url_command,
-                status_command = commandItem.Command.status_command,
-                date_command = commandItem.Command.date_command,
-                date_livraison_command = commandItem.Command.date_livraison_command
-            } : null
-        };
+                id_item = ci.id_item,
+                id_command = ci.id_command,
+                qte_command_item = ci.qte_command_item,
+                prix_command_item = ci.prix_command_item,
+                item = expand != null && expand.Contains("item") ? new ReadItemDto
+                {
+                    id_item = ci.Item.id_item,
+                    nom_item = ci.Item.nom_item,
+                    seuil_min_item = ci.Item.seuil_min_item,
+                    description_item = ci.Item.description_item,
+                    id_img = ci.Item.id_img
+                } : null,
+                command = expand != null && expand.Contains("command") ? new ReadCommandDto
+                {
+                    id_command = ci.Command.id_command,
+                    prix_command = ci.Command.prix_command,
+                    url_command = ci.Command.url_command,
+                    status_command = ci.Command.status_command,
+                    date_command = ci.Command.date_command,
+                    date_livraison_command = ci.Command.date_livraison_command
+                } : null
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"CommandItem with commandId {commandId} and itemId {itemId} not found");
     }
 
     public async Task<ReadCommandItemDto> CreateCommandItem(CreateCommandItemDto commandItemDto)

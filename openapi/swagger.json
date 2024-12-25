@@ -1063,17 +1063,11 @@
               "schema": {
                 "required": [
                   "document",
-                  "name_command_document",
-                  "type_command_document"
+                  "name_command_document"
                 ],
                 "type": "object",
                 "properties": {
                   "name_command_document": {
-                    "maxLength": 50,
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  "type_command_document": {
                     "maxLength": 50,
                     "minLength": 1,
                     "type": "string"
@@ -1086,9 +1080,6 @@
               },
               "encoding": {
                 "name_command_document": {
-                  "style": "form"
-                },
-                "type_command_document": {
                   "style": "form"
                 },
                 "document": {
@@ -1204,10 +1195,6 @@
                     "maxLength": 50,
                     "type": "string"
                   },
-                  "type_command_document": {
-                    "maxLength": 50,
-                    "type": "string"
-                  },
                   "document": {
                     "type": "string",
                     "format": "binary"
@@ -1216,9 +1203,6 @@
               },
               "encoding": {
                 "name_command_document": {
-                  "style": "form"
-                },
-                "type_command_document": {
                   "style": "form"
                 },
                 "document": {
@@ -3079,17 +3063,11 @@
               "schema": {
                 "required": [
                   "document",
-                  "name_item_document",
-                  "type_item_document"
+                  "name_item_document"
                 ],
                 "type": "object",
                 "properties": {
                   "name_item_document": {
-                    "maxLength": 50,
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  "type_item_document": {
                     "maxLength": 50,
                     "minLength": 1,
                     "type": "string"
@@ -3102,9 +3080,6 @@
               },
               "encoding": {
                 "name_item_document": {
-                  "style": "form"
-                },
-                "type_item_document": {
                   "style": "form"
                 },
                 "document": {
@@ -3220,10 +3195,6 @@
                     "maxLength": 50,
                     "type": "string"
                   },
-                  "type_item_document": {
-                    "maxLength": 50,
-                    "type": "string"
-                  },
                   "document": {
                     "type": "string",
                     "format": "binary"
@@ -3232,9 +3203,6 @@
               },
               "encoding": {
                 "name_item_document": {
-                  "style": "form"
-                },
-                "type_item_document": {
                   "style": "form"
                 },
                 "document": {
@@ -5019,17 +4987,11 @@
               "schema": {
                 "required": [
                   "document",
-                  "name_projet_document",
-                  "type_projet_document"
+                  "name_projet_document"
                 ],
                 "type": "object",
                 "properties": {
                   "name_projet_document": {
-                    "maxLength": 50,
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  "type_projet_document": {
                     "maxLength": 50,
                     "minLength": 1,
                     "type": "string"
@@ -5042,9 +5004,6 @@
               },
               "encoding": {
                 "name_projet_document": {
-                  "style": "form"
-                },
-                "type_projet_document": {
                   "style": "form"
                 },
                 "document": {
@@ -5168,10 +5127,6 @@
                     "maxLength": 50,
                     "type": "string"
                   },
-                  "type_projet_document": {
-                    "maxLength": 50,
-                    "type": "string"
-                  },
                   "document": {
                     "type": "string",
                     "format": "binary"
@@ -5180,9 +5135,6 @@
               },
               "encoding": {
                 "name_projet_document": {
-                  "style": "form"
-                },
-                "type_projet_document": {
                   "style": "form"
                 },
                 "document": {

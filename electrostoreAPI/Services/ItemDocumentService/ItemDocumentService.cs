@@ -95,9 +95,9 @@ public class ItemDocumentService : IItemDocumentService
         var itemDocument = new ItemsDocuments
         {
             id_item = itemDocumentDto.id_item,
-            url_item_document = itemDocumentDto.id_item + "/" + newName,
+            url_item_document = itemDocumentDto.id_item.ToString() + "/" + newName,
             name_item_document = itemDocumentDto.name_item_document,
-            type_item_document = itemDocumentDto.type_item_document,
+            type_item_document = fileExt.Replace(".", "").ToLowerInvariant(),
             size_item_document = itemDocumentDto.document.Length,
             date_item_document = DateTime.Now
         };
@@ -124,21 +124,9 @@ public class ItemDocumentService : IItemDocumentService
         }
         if (itemDocumentDto.document is not null)
         {
-            var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", itemDocument.id_item.ToString(), itemDocument.url_item_document);
-            if (itemDocumentDto.document.Length == 0)
-            {
-                throw new ArgumentException("Document file is required");
-            }
-            if (itemDocumentDto.document.Length > (30 * 1024 * 1024)) // 30MB max
-            {
-                throw new ArgumentException("Document file size should not exceed 30MB");
-            }
+            var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", itemDocument.url_item_document);
             var fileName = Path.GetFileNameWithoutExtension(itemDocumentDto.document.FileName);
             var fileExt = Path.GetExtension(itemDocumentDto.document.FileName);
-            if (!new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".bmp" }.Contains(fileExt)) // if extension is not allowed
-            {
-                throw new ArgumentException("Document file extension not allowed");
-            }
             var i = 1;
             // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/itemDocuments"
             // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
@@ -153,7 +141,8 @@ public class ItemDocumentService : IItemDocumentService
             {
                 await itemDocumentDto.document.CopyToAsync(fileStream);
             }
-            itemDocument.url_item_document = itemDocument.id_item + "/" + newName;
+            itemDocument.type_item_document = fileExt.Replace(".", "").ToLowerInvariant();
+            itemDocument.url_item_document = itemDocument.id_item.ToString() + "/" + newName;
             itemDocument.size_item_document = itemDocumentDto.document.Length;
             itemDocument.date_item_document = DateTime.Now;
             // remove old file
@@ -165,10 +154,6 @@ public class ItemDocumentService : IItemDocumentService
         if (itemDocumentDto.name_item_document is not null)
         {
             itemDocument.name_item_document = itemDocumentDto.name_item_document;
-        }
-        if (itemDocumentDto.type_item_document is not null)
-        {
-            itemDocument.type_item_document = itemDocumentDto.type_item_document;
         }
         await _context.SaveChangesAsync();
         return new ReadItemDocumentDto
@@ -190,7 +175,7 @@ public class ItemDocumentService : IItemDocumentService
         {
             throw new KeyNotFoundException($"ItemDocument with id {id} not found for item with id {itemId}");
         }
-        var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", itemDocument.id_item.ToString(), itemDocument.url_item_document);
+        var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", itemDocument.url_item_document);
         if (File.Exists(path))
         {
             File.Delete(path);

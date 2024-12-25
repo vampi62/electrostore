@@ -32,9 +32,9 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_projet_commentaire}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedProjetCommentaireDto>> GetProjetCommentairesByCommentaireId([FromRoute] int id_projet, [FromRoute] int id_projet_commentaire, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
+        public async Task<ActionResult<ReadExtendedProjetCommentaireDto>> GetProjetCommentairesById([FromRoute] int id_projet, [FromRoute] int id_projet_commentaire, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
         {
-            var projetCommentaire = await _projetCommentaireService.GetProjetCommentairesByCommentaireId(id_projet_commentaire, null, id_projet, expand.Split(',').ToList());
+            var projetCommentaire = await _projetCommentaireService.GetProjetCommentairesById(id_projet_commentaire, null, id_projet, expand.Split(',').ToList());
             return Ok(projetCommentaire);
         }
 
@@ -49,14 +49,14 @@ namespace electrostore.Controllers
                 contenu_projet_commentaire = projetCommentaireDto.contenu_projet_commentaire
             };
             var projetCommentaire = await _projetCommentaireService.CreateProjetCommentaire(projetCommentaireDtoFull);
-            return CreatedAtAction(nameof(GetProjetCommentairesByCommentaireId), new { id_projet = projetCommentaire.id_projet, id_projet_commentaire = projetCommentaire.id_projet_commentaire }, projetCommentaire);
+            return CreatedAtAction(nameof(GetProjetCommentairesById), new { id_projet = projetCommentaire.id_projet, id_projet_commentaire = projetCommentaire.id_projet_commentaire }, projetCommentaire);
         }
 
         [HttpPut("{id_projet_commentaire}")]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadProjetCommentaireDto>> UpdateProjetCommentaire([FromRoute] int id_projet, [FromRoute] int id_projet_commentaire, [FromBody] UpdateProjetCommentaireDto projetCommentaireDto)
         {
-            var checkProjetCommentaire = await _projetCommentaireService.GetProjetCommentairesByCommentaireId(id_projet_commentaire, null, id_projet);
+            var checkProjetCommentaire = await _projetCommentaireService.GetProjetCommentairesById(id_projet_commentaire, null, id_projet);
             if (!User.IsInRole("admin") && checkProjetCommentaire.id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
             {
                 return Unauthorized(new { message = "You are not allowed to access this resource" });
@@ -69,7 +69,7 @@ namespace electrostore.Controllers
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult> DeleteProjetCommentaire([FromRoute] int id_projet, [FromRoute] int id_projet_commentaire)
         {
-            var checkProjetCommentaire = await _projetCommentaireService.GetProjetCommentairesByCommentaireId(id_projet_commentaire, null, id_projet);
+            var checkProjetCommentaire = await _projetCommentaireService.GetProjetCommentairesById(id_projet_commentaire, null, id_projet);
             if (!User.IsInRole("admin") && checkProjetCommentaire.id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
             {
                 return Unauthorized(new { message = "You are not allowed to access this resource" });

@@ -114,31 +114,33 @@ public class ItemBoxService : IItemBoxService
 
     public async Task<ReadExtendedItemBoxDto> GetItemBoxById(int itemId, int boxId, List<string>? expand = null)
     {
-        var itemBox = await _context.ItemsBoxs.FindAsync(boxId, itemId) ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
-        return new ReadExtendedItemBoxDto
-        {
-            id_box = itemBox.id_box,
-            id_item = itemBox.id_item,
-            qte_item_box = itemBox.qte_item_box,
-            seuil_max_item_item_box = itemBox.seuil_max_item_item_box,
-            item = expand != null && expand.Contains("item") ? new ReadItemDto
+        return await _context.ItemsBoxs
+            .Where(itemBox => itemBox.id_box == boxId && itemBox.id_item == itemId)
+            .Select(itemBox => new ReadExtendedItemBoxDto
             {
-                id_item = itemBox.Item.id_item,
-                nom_item = itemBox.Item.nom_item,
-                seuil_min_item = itemBox.Item.seuil_min_item,
-                description_item = itemBox.Item.description_item,
-                id_img = itemBox.Item.id_img
-            } : null,
-            box = expand != null && expand.Contains("box") ? new ReadBoxDto
-            {
-                id_box = itemBox.Box.id_box,
-                xstart_box = itemBox.Box.xstart_box,
-                ystart_box = itemBox.Box.ystart_box,
-                xend_box = itemBox.Box.xend_box,
-                yend_box = itemBox.Box.yend_box,
-                id_store = itemBox.Box.id_store
-            } : null
-        };
+                id_box = itemBox.id_box,
+                id_item = itemBox.id_item,
+                qte_item_box = itemBox.qte_item_box,
+                seuil_max_item_item_box = itemBox.seuil_max_item_item_box,
+                item = expand != null && expand.Contains("item") ? new ReadItemDto
+                {
+                    id_item = itemBox.Item.id_item,
+                    nom_item = itemBox.Item.nom_item,
+                    seuil_min_item = itemBox.Item.seuil_min_item,
+                    description_item = itemBox.Item.description_item,
+                    id_img = itemBox.Item.id_img
+                } : null,
+                box = expand != null && expand.Contains("box") ? new ReadBoxDto
+                {
+                    id_box = itemBox.Box.id_box,
+                    xstart_box = itemBox.Box.xstart_box,
+                    ystart_box = itemBox.Box.ystart_box,
+                    xend_box = itemBox.Box.xend_box,
+                    yend_box = itemBox.Box.yend_box,
+                    id_store = itemBox.Box.id_store
+                } : null
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
     }
 
     public async Task<ReadItemBoxDto> CreateItemBox(CreateItemBoxDto itemBoxDto)

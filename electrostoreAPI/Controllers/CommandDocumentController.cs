@@ -60,7 +60,6 @@ namespace electrostore.Controllers
             {
                 id_command = id_command,
                 name_command_document = commandDocumentDto.name_command_document,
-                type_command_document = commandDocumentDto.type_command_document,
                 document = commandDocumentDto.document
             };
             var commandDocument = await _commandDocumentService.CreateCommandDocument(commandDocumentDtoFull);

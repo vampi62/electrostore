@@ -102,25 +102,27 @@ public class StoreTagService : IStoreTagService
 
     public async Task<ReadExtendedStoreTagDto> GetStoreTagById(int storeId, int tagId, List<string>? expand = null)
     {
-        var storeTag = await _context.StoresTags.FindAsync(storeId, tagId) ?? throw new KeyNotFoundException($"StoreTag with storeId {storeId} and tagId {tagId} not found");
-        return new ReadExtendedStoreTagDto
-        {
-            id_store = storeTag.id_store,
-            id_tag = storeTag.id_tag,
-            tag = expand != null && expand.Contains("tag") ? new ReadTagDto
+        return await _context.StoresTags
+            .Where(st => st.id_store == storeId && st.id_tag == tagId)
+            .Select(st => new ReadExtendedStoreTagDto
             {
-                id_tag = storeTag.Tag.id_tag,
-                nom_tag = storeTag.Tag.nom_tag
-            } : null,
-            store = expand != null && expand.Contains("store") ? new ReadStoreDto
-            {
-                id_store = storeTag.Store.id_store,
-                nom_store = storeTag.Store.nom_store,
-                xlength_store = storeTag.Store.xlength_store,
-                ylength_store = storeTag.Store.ylength_store,
-                mqtt_name_store = storeTag.Store.mqtt_name_store
-            } : null
-        };
+                id_store = st.id_store,
+                id_tag = st.id_tag,
+                tag = expand != null && expand.Contains("tag") ? new ReadTagDto
+                {
+                    id_tag = st.Tag.id_tag,
+                    nom_tag = st.Tag.nom_tag
+                } : null,
+                store = expand != null && expand.Contains("store") ? new ReadStoreDto
+                {
+                    id_store = st.Store.id_store,
+                    nom_store = st.Store.nom_store,
+                    xlength_store = st.Store.xlength_store,
+                    ylength_store = st.Store.ylength_store,
+                    mqtt_name_store = st.Store.mqtt_name_store
+                } : null
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"StoreTag with storeId {storeId} and tagId {tagId} not found");
     }
 
     public async Task<ReadStoreTagDto> CreateStoreTag(CreateStoreTagDto storeTagDto)

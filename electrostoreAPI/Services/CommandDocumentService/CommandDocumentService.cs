@@ -95,9 +95,9 @@ public class CommandDocumentService : ICommandDocumentService
         var commandDocument = new CommandsDocuments
         {
             id_command = commandDocumentDto.id_command,
-            url_command_document = commandDocumentDto.id_command + "/" + newName,
+            url_command_document = commandDocumentDto.id_command.ToString() + "/" + newName,
             name_command_document = commandDocumentDto.name_command_document,
-            type_command_document = commandDocumentDto.type_command_document,
+            type_command_document = fileExt.Replace(".", "").ToLowerInvariant(),
             size_command_document = commandDocumentDto.document.Length,
             date_command_document = DateTime.Now
         };
@@ -124,7 +124,7 @@ public class CommandDocumentService : ICommandDocumentService
         }
         if (commandDocumentDto.document is not null)
         {
-            var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", commandDocument.id_command.ToString(), commandDocument.url_command_document);
+            var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", commandDocument.url_command_document);
             var fileName = Path.GetFileNameWithoutExtension(commandDocumentDto.document.FileName);
             var fileExt = Path.GetExtension(commandDocumentDto.document.FileName);
             var i = 1;
@@ -141,7 +141,8 @@ public class CommandDocumentService : ICommandDocumentService
             {
                 await commandDocumentDto.document.CopyToAsync(fileStream);
             }
-            commandDocument.url_command_document = commandDocument.id_command + "/" + newName;
+            commandDocument.type_command_document = fileExt.Replace(".", "").ToLowerInvariant();
+            commandDocument.url_command_document = commandDocument.id_command.ToString() + "/" + newName;
             commandDocument.size_command_document = commandDocumentDto.document.Length;
             commandDocument.date_command_document = DateTime.Now;
             // remove old file
@@ -153,10 +154,6 @@ public class CommandDocumentService : ICommandDocumentService
         if (commandDocumentDto.name_command_document is not null)
         {
             commandDocument.name_command_document = commandDocumentDto.name_command_document;
-        }
-        if (commandDocumentDto.type_command_document is not null)
-        {
-            commandDocument.type_command_document = commandDocumentDto.type_command_document;
         }
         await _context.SaveChangesAsync();
         return new ReadCommandDocumentDto
@@ -178,7 +175,7 @@ public class CommandDocumentService : ICommandDocumentService
         {
             throw new KeyNotFoundException($"CommandDocument with id {id} not found for command with id {commandId}");
         }
-        var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", commandDocument.id_command.ToString(), commandDocument.url_command_document);
+        var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", commandDocument.url_command_document);
         if (File.Exists(path))
         {
             File.Delete(path);

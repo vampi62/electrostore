@@ -19,7 +19,7 @@ public class ProjetCommentaireService : IProjetCommentaireService
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
         {
-            
+            throw new KeyNotFoundException($"Projet with id {projetId} not found");
         }
 
         return await _context.ProjetsCommentaires
@@ -119,40 +119,38 @@ public class ProjetCommentaireService : IProjetCommentaireService
             .CountAsync(p => p.id_user == userId);
     }
 
-    public async Task<ReadExtendedProjetCommentaireDto> GetProjetCommentairesByCommentaireId(int id, int? userId = null, int? projetId = null, List<string>? expand = null)
+    public async Task<ReadExtendedProjetCommentaireDto> GetProjetCommentairesById(int id, int? userId = null, int? projetId = null, List<string>? expand = null)
     {
-        var projetCommentaire = await _context.ProjetsCommentaires.FindAsync(id);
-        if ((projetCommentaire is null) || (projetId is not null && projetCommentaire.id_projet != projetId) || (userId is not null && projetCommentaire.id_user != userId))
-        {
-            throw new KeyNotFoundException($"ProjetCommentaire with id {id} not found");
-        }
-        return new ReadExtendedProjetCommentaireDto
-        {
-            id_projet_commentaire = projetCommentaire.id_projet_commentaire,
-            id_projet = projetCommentaire.id_projet,
-            id_user = projetCommentaire.id_user,
-            contenu_projet_commentaire = projetCommentaire.contenu_projet_commentaire,
-            date_projet_commentaire = projetCommentaire.date_projet_commentaire,
-            date_modif_projet_commentaire = projetCommentaire.date_modif_projet_commentaire,
-            projet = expand != null && expand.Contains("projet") ? new ReadProjetDto
+        return await _context.ProjetsCommentaires
+            .Where(p => p.id_projet_commentaire == id && (projetId == null || p.id_projet == projetId) && (userId == null || p.id_user == userId))
+            .Select(p => new ReadExtendedProjetCommentaireDto
             {
-                id_projet = projetCommentaire.Projet.id_projet,
-                nom_projet = projetCommentaire.Projet.nom_projet,
-                description_projet = projetCommentaire.Projet.description_projet,
-                url_projet = projetCommentaire.Projet.url_projet,
-                status_projet = projetCommentaire.Projet.status_projet,
-                date_debut_projet = projetCommentaire.Projet.date_debut_projet,
-                date_fin_projet = projetCommentaire.Projet.date_fin_projet
-            } : null,
-            user = expand != null && expand.Contains("user") ? new ReadUserDto
-            {
-                id_user = projetCommentaire.User.id_user,
-                nom_user = projetCommentaire.User.nom_user,
-                prenom_user = projetCommentaire.User.prenom_user,
-                email_user = projetCommentaire.User.email_user,
-                role_user = projetCommentaire.User.role_user
-            } : null
-        };
+                id_projet_commentaire = p.id_projet_commentaire,
+                id_projet = p.id_projet,
+                id_user = p.id_user,
+                contenu_projet_commentaire = p.contenu_projet_commentaire,
+                date_projet_commentaire = p.date_projet_commentaire,
+                date_modif_projet_commentaire = p.date_modif_projet_commentaire,
+                projet = expand != null && expand.Contains("projet") ? new ReadProjetDto
+                {
+                    id_projet = p.Projet.id_projet,
+                    nom_projet = p.Projet.nom_projet,
+                    description_projet = p.Projet.description_projet,
+                    url_projet = p.Projet.url_projet,
+                    status_projet = p.Projet.status_projet,
+                    date_debut_projet = p.Projet.date_debut_projet,
+                    date_fin_projet = p.Projet.date_fin_projet
+                } : null,
+                user = expand != null && expand.Contains("user") ? new ReadUserDto
+                {
+                    id_user = p.User.id_user,
+                    nom_user = p.User.nom_user,
+                    prenom_user = p.User.prenom_user,
+                    email_user = p.User.email_user,
+                    role_user = p.User.role_user
+                } : null
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetCommentaire with id {id} not found");
     }
 
     public async Task<ReadProjetCommentaireDto> CreateProjetCommentaire(CreateProjetCommentaireDto projetCommentaireDto)

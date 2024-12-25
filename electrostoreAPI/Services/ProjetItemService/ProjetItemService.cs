@@ -114,31 +114,33 @@ public class ProjetItemService : IProjetItemService
 
     public async Task<ReadExtendedProjetItemDto> GetProjetItemById(int projetId, int itemId, List<string>? expand = null)
     {
-        var projetItem = await _context.ProjetsItems.FindAsync(projetId, itemId) ?? throw new KeyNotFoundException($"ProjetItem with id {projetId} not found");
-        return new ReadExtendedProjetItemDto
-        {
-            id_item = projetItem.id_item,
-            id_projet = projetItem.id_projet,
-            qte_projet_item = projetItem.qte_projet_item,
-            item = expand != null && expand.Contains("item") ? new ReadItemDto
+        return await _context.ProjetsItems
+            .Where(p => p.id_projet == projetId && p.id_item == itemId)
+            .Select(p => new ReadExtendedProjetItemDto
             {
-                id_item = projetItem.Item.id_item,
-                nom_item = projetItem.Item.nom_item,
-                seuil_min_item = projetItem.Item.seuil_min_item,
-                description_item = projetItem.Item.description_item,
-                id_img = projetItem.Item.id_img
-            } : null,
-            projet = expand != null && expand.Contains("projet") ? new ReadProjetDto
-            {
-                id_projet = projetItem.Projet.id_projet,
-                nom_projet = projetItem.Projet.nom_projet,
-                description_projet = projetItem.Projet.description_projet,
-                url_projet = projetItem.Projet.url_projet,
-                status_projet = projetItem.Projet.status_projet,
-                date_debut_projet = projetItem.Projet.date_debut_projet,
-                date_fin_projet = projetItem.Projet.date_fin_projet
-            } : null
-        };
+                id_item = p.id_item,
+                id_projet = p.id_projet,
+                qte_projet_item = p.qte_projet_item,
+                item = expand != null && expand.Contains("item") ? new ReadItemDto
+                {
+                    id_item = p.Item.id_item,
+                    nom_item = p.Item.nom_item,
+                    seuil_min_item = p.Item.seuil_min_item,
+                    description_item = p.Item.description_item,
+                    id_img = p.Item.id_img
+                } : null,
+                projet = expand != null && expand.Contains("projet") ? new ReadProjetDto
+                {
+                    id_projet = p.Projet.id_projet,
+                    nom_projet = p.Projet.nom_projet,
+                    description_projet = p.Projet.description_projet,
+                    url_projet = p.Projet.url_projet,
+                    status_projet = p.Projet.status_projet,
+                    date_debut_projet = p.Projet.date_debut_projet,
+                    date_fin_projet = p.Projet.date_fin_projet
+                } : null
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetItem with id_projet {projetId} and id_item {itemId} not found");
     }
 
     public async Task<ReadProjetItemDto> CreateProjetItem(CreateProjetItemDto projetItemDto)
