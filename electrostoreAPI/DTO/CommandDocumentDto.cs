@@ -23,11 +23,6 @@ public record CreateCommandDocumentDto : IValidatableObject
     public string name_command_document { get; init; }
     
     [Required]
-    [MinLength(1, ErrorMessage = "type_command_document cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "type_command_document cannot exceed 50 characters")]
-    public string type_command_document { get; init; }
-
-    [Required]
     public IFormFile document { get; init; }
     
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -35,10 +30,6 @@ public record CreateCommandDocumentDto : IValidatableObject
         if (string.IsNullOrWhiteSpace(name_command_document))
         {
             yield return new ValidationResult("name_command_document cannot be null, empty, or whitespace.", new[] { nameof(name_command_document) });
-        }
-        if (string.IsNullOrWhiteSpace(type_command_document))
-        {
-            yield return new ValidationResult("type_command_document cannot be null, empty, or whitespace.", new[] { nameof(type_command_document) });
         }
         if (document is not null)
         {
@@ -68,11 +59,6 @@ public record CreateCommandDocumentByCommandDto : IValidatableObject
     public string name_command_document { get; init; }
     
     [Required]
-    [MinLength(1, ErrorMessage = "type_command_document cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "type_command_document cannot exceed 50 characters")]
-    public string type_command_document { get; init; }
-
-    [Required]
     public IFormFile document { get; init; }
     
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -80,10 +66,6 @@ public record CreateCommandDocumentByCommandDto : IValidatableObject
         if (string.IsNullOrWhiteSpace(name_command_document))
         {
             yield return new ValidationResult("name_command_document cannot be null, empty, or whitespace.", new[] { nameof(name_command_document) });
-        }
-        if (string.IsNullOrWhiteSpace(type_command_document))
-        {
-            yield return new ValidationResult("type_command_document cannot be null, empty, or whitespace.", new[] { nameof(type_command_document) });
         }
         if (document is not null)
         {
@@ -110,9 +92,6 @@ public record UpdateCommandDocumentDto : IValidatableObject
     [MaxLength(50, ErrorMessage = "name_command_document cannot exceed 50 characters")]
     public string? name_command_document { get; init; }
 
-    [MaxLength(50, ErrorMessage = "type_command_document cannot exceed 50 characters")]
-    public string? type_command_document { get; init; }
-
     public IFormFile? document { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -120,10 +99,6 @@ public record UpdateCommandDocumentDto : IValidatableObject
         if (name_command_document is not null && string.IsNullOrWhiteSpace(name_command_document))
         {
             yield return new ValidationResult("name_command_document cannot be empty or whitespace.", new[] { nameof(name_command_document) });
-        }
-        if (type_command_document is not null && string.IsNullOrWhiteSpace(type_command_document))
-        {
-            yield return new ValidationResult("type_command_document cannot be empty or whitespace.", new[] { nameof(type_command_document) });
         }
         if (document is not null)
         {

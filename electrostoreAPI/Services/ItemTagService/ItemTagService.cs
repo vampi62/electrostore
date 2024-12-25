@@ -106,25 +106,27 @@ public class ItemTagService : IItemTagService
 
     public async Task<ReadExtendedItemTagDto> GetItemTagById(int itemId, int tagId, List<string>? expand = null)
     {
-        var itemTag = await _context.ItemsTags.FindAsync(itemId, tagId) ?? throw new KeyNotFoundException($"ItemTag with id_item {itemId} and id_tag {tagId} not found");
-        return new ReadExtendedItemTagDto
-        {
-            id_item = itemTag.id_item,
-            id_tag = itemTag.id_tag,
-            tag = expand != null && expand.Contains("tag") ? new ReadTagDto
+        return await _context.ItemsTags
+            .Where(it => it.id_item == itemId && it.id_tag == tagId)
+            .Select(it => new ReadExtendedItemTagDto
             {
-                id_tag = itemTag.Tag.id_tag,
-                nom_tag = itemTag.Tag.nom_tag
-            } : null,
-            item = expand != null && expand.Contains("item") ? new ReadItemDto
-            {
-                id_item = itemTag.Item.id_item,
-                nom_item = itemTag.Item.nom_item,
-                seuil_min_item = itemTag.Item.seuil_min_item,
-                description_item = itemTag.Item.description_item,
-                id_img = itemTag.Item.id_img
-            } : null
-        };
+                id_item = it.id_item,
+                id_tag = it.id_tag,
+                tag = expand != null && expand.Contains("tag") ? new ReadTagDto
+                {
+                    id_tag = it.Tag.id_tag,
+                    nom_tag = it.Tag.nom_tag
+                } : null,
+                item = expand != null && expand.Contains("item") ? new ReadItemDto
+                {
+                    id_item = it.Item.id_item,
+                    nom_item = it.Item.nom_item,
+                    seuil_min_item = it.Item.seuil_min_item,
+                    description_item = it.Item.description_item,
+                    id_img = it.Item.id_img
+                } : null
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ItemTag with id_item {itemId} and id_tag {tagId} not found");
     }
 
     public async Task<ReadItemTagDto> CreateItemTag(CreateItemTagDto itemTagDto)

@@ -94,9 +94,9 @@ public class ProjetDocumentService : IProjetDocumentService
         var projetDocument = new ProjetsDocuments
         {
             id_projet = projetDocumentDto.id_projet,
-            url_projet_document = projetDocumentDto.id_projet + "/" + newName,
+            url_projet_document = projetDocumentDto.id_projet.ToString() + "/" + newName,
             name_projet_document = projetDocumentDto.name_projet_document,
-            type_projet_document = projetDocumentDto.type_projet_document,
+            type_projet_document = fileExt.Replace(".", "").ToLowerInvariant(),
             size_projet_document = projetDocumentDto.document.Length,
             date_projet_document = DateTime.Now
         };
@@ -123,17 +123,9 @@ public class ProjetDocumentService : IProjetDocumentService
         }
         if (projetDocumentDto.document is not null && projetDocumentDto.document.Length > 0)
         {
-            var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", projetDocument.id_projet.ToString(), projetDocument.url_projet_document);
-            if (projetDocumentDto.document.Length > (30 * 1024 * 1024)) // 30MB max
-            {
-                throw new ArgumentException("Image file size should not exceed 30MB");
-            }
+            var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", projetDocument.url_projet_document);
             var fileName = Path.GetFileNameWithoutExtension(projetDocumentDto.document.FileName);
             var fileExt = Path.GetExtension(projetDocumentDto.document.FileName);
-            if (!new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".bmp" }.Contains(fileExt)) // if extension is not allowed
-            {
-                throw new ArgumentException("Document file extension not allowed");
-            }
             var i = 1;
             // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/projetDocuments"
             // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
@@ -148,7 +140,8 @@ public class ProjetDocumentService : IProjetDocumentService
             {
                 await projetDocumentDto.document.CopyToAsync(fileStream);
             }
-            projetDocument.url_projet_document = projetDocument.id_projet + "/" + newName;
+            projetDocument.type_projet_document = fileExt.Replace(".", "").ToLowerInvariant();
+            projetDocument.url_projet_document = projetDocument.id_projet.ToString() + "/" + newName;
             projetDocument.size_projet_document = projetDocumentDto.document.Length;
             projetDocument.date_projet_document = DateTime.Now;
             // remove old file
@@ -160,10 +153,6 @@ public class ProjetDocumentService : IProjetDocumentService
         if (projetDocumentDto.name_projet_document is not null)
         {
             projetDocument.name_projet_document = projetDocumentDto.name_projet_document;
-        }
-        if (projetDocumentDto.type_projet_document is not null)
-        {
-            projetDocument.type_projet_document = projetDocumentDto.type_projet_document;
         }
         await _context.SaveChangesAsync();
         return new ReadProjetDocumentDto
@@ -185,7 +174,7 @@ public class ProjetDocumentService : IProjetDocumentService
         {
             throw new KeyNotFoundException($"ProjetDocument with id {id} not found for projet with id {projetId}");
         }
-        var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", projetDocument.id_projet.ToString(), projetDocument.url_projet_document);
+        var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", projetDocument.url_projet_document);
         if (File.Exists(path))
         {
             File.Delete(path);

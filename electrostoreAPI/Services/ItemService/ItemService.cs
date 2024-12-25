@@ -83,55 +83,57 @@ public class ItemService : IItemService
 
     public async Task<ReadExtendedItemDto> GetItemById(int itemId, List<string>? expand = null)
     {
-        var item = await _context.Items.FindAsync(itemId) ?? throw new KeyNotFoundException($"Item with id {itemId} not found");
-        return new ReadExtendedItemDto
-        {
-            id_item = item.id_item,
-            id_img = item.id_img,
-            nom_item = item.nom_item,
-            seuil_min_item = item.seuil_min_item,
-            description_item = item.description_item,
-            item_tags_count = item.ItemsTags.Count,
-            item_boxs_count = item.ItemsBoxs.Count,
-            command_items_count = item.CommandsItems.Count,
-            projet_items_count = item.ProjetsItems.Count,
-            item_documents_count = item.ItemsDocuments.Count,
-            item_tags = expand != null && expand.Contains("item_tags") ? item.ItemsTags.Select(it => new ReadItemTagDto
+        return await _context.Items
+            .Where(item => item.id_item == itemId)
+            .Select(item => new ReadExtendedItemDto
             {
-                id_item = it.id_item,
-                id_tag = it.id_tag
-            }) : null,
-            item_boxs = expand != null && expand.Contains("item_boxs") ? item.ItemsBoxs.Select(ib => new ReadItemBoxDto
-            {
-                id_item = ib.id_item,
-                id_box = ib.id_box,
-                qte_item_box = ib.qte_item_box,
-                seuil_max_item_item_box = ib.seuil_max_item_item_box
-            }) : null,
-            command_items = expand != null && expand.Contains("command_items") ? item.CommandsItems.Select(ci => new ReadCommandItemDto
-            {
-                id_command = ci.id_command,
-                id_item = ci.id_item,
-                qte_command_item = ci.qte_command_item,
-                prix_command_item = ci.prix_command_item
-            }) : null,
-            projet_items = expand != null && expand.Contains("projet_items") ? item.ProjetsItems.Select(pi => new ReadProjetItemDto
-            {
-                id_projet = pi.id_projet,
-                id_item = pi.id_item,
-                qte_projet_item = pi.qte_projet_item
-            }) : null,
-            item_documents = expand != null && expand.Contains("item_documents") ? item.ItemsDocuments.Select(id => new ReadItemDocumentDto
-            {
-                id_item_document = id.id_item_document,
-                url_item_document = id.url_item_document,
-                name_item_document = id.name_item_document,
-                type_item_document = id.type_item_document,
-                size_item_document = id.size_item_document,
-                date_item_document = id.date_item_document,
-                id_item = id.id_item
-            }) : null
-        };
+                id_item = item.id_item,
+                id_img = item.id_img,
+                nom_item = item.nom_item,
+                seuil_min_item = item.seuil_min_item,
+                description_item = item.description_item,
+                item_tags = expand != null && expand.Contains("item_tags") ? item.ItemsTags.Select(it => new ReadItemTagDto
+                {
+                    id_item = it.id_item,
+                    id_tag = it.id_tag
+                }) : null,
+                item_boxs = expand != null && expand.Contains("item_boxs") ? item.ItemsBoxs.Select(ib => new ReadItemBoxDto
+                {
+                    id_item = ib.id_item,
+                    id_box = ib.id_box,
+                    qte_item_box = ib.qte_item_box,
+                    seuil_max_item_item_box = ib.seuil_max_item_item_box
+                }) : null,
+                command_items = expand != null && expand.Contains("command_items") ? item.CommandsItems.Select(ci => new ReadCommandItemDto
+                {
+                    id_command = ci.id_command,
+                    id_item = ci.id_item,
+                    qte_command_item = ci.qte_command_item,
+                    prix_command_item = ci.prix_command_item
+                }) : null,
+                projet_items = expand != null && expand.Contains("projet_items") ? item.ProjetsItems.Select(pi => new ReadProjetItemDto
+                {
+                    id_projet = pi.id_projet,
+                    id_item = pi.id_item,
+                    qte_projet_item = pi.qte_projet_item
+                }) : null,
+                item_documents = expand != null && expand.Contains("item_documents") ? item.ItemsDocuments.Select(id => new ReadItemDocumentDto
+                {
+                    id_item_document = id.id_item_document,
+                    url_item_document = id.url_item_document,
+                    name_item_document = id.name_item_document,
+                    type_item_document = id.type_item_document,
+                    size_item_document = id.size_item_document,
+                    date_item_document = id.date_item_document,
+                    id_item = id.id_item
+                }) : null,
+                item_tags_count = item.ItemsTags.Count,
+                item_boxs_count = item.ItemsBoxs.Count,
+                command_items_count = item.CommandsItems.Count,
+                projet_items_count = item.ProjetsItems.Count,
+                item_documents_count = item.ItemsDocuments.Count
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Item with id {itemId} not found");
     }
 
     public async Task<ReadItemDto> CreateItem(CreateItemDto itemDto)

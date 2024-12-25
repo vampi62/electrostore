@@ -108,37 +108,39 @@ public class UserService : IUserService
 
     public async Task<ReadExtendedUserDto> GetUserById(int id, List<string>? expand = null)
     {
-        var user = await _context.Users.FindAsync(id) ?? throw new KeyNotFoundException($"User with id {id} not found");
-        return new ReadExtendedUserDto
-        {
-            id_user = user.id_user,
-            nom_user = user.nom_user,
-            prenom_user = user.prenom_user,
-            email_user = user.email_user,
-            role_user = user.role_user,
-            projets_commentaires = expand != null && expand.Contains("projets_commentaires") ? user.ProjetsCommentaires
-                .Select(pc => new ReadProjetCommentaireDto
-                {
-                    id_projet_commentaire = pc.id_projet_commentaire,
-                    contenu_projet_commentaire = pc.contenu_projet_commentaire,
-                    date_projet_commentaire = pc.date_projet_commentaire,
-                    id_user = pc.id_user,
-                    id_projet = pc.id_projet
-                })
-                .ToArray() : null,
-            commands_commentaires = expand != null && expand.Contains("commands_commentaires") ? user.CommandsCommentaires
-                .Select(cc => new ReadCommandCommentaireDto
-                {
-                    id_command_commentaire = cc.id_command_commentaire,
-                    contenu_command_commentaire = cc.contenu_command_commentaire,
-                    date_command_commentaire = cc.date_command_commentaire,
-                    id_user = cc.id_user,
-                    id_command = cc.id_command
-                })
-                .ToArray() : null,
-            projets_commentaires_count = user.ProjetsCommentaires.Count,
-            commands_commentaires_count = user.CommandsCommentaires.Count
-        };
+        return await _context.Users
+            .Where(u => u.id_user == id)
+            .Select(u => new ReadExtendedUserDto
+            {
+                id_user = u.id_user,
+                nom_user = u.nom_user,
+                prenom_user = u.prenom_user,
+                email_user = u.email_user,
+                role_user = u.role_user,
+                projets_commentaires = expand != null && expand.Contains("projets_commentaires") ? u.ProjetsCommentaires
+                    .Select(pc => new ReadProjetCommentaireDto
+                    {
+                        id_projet_commentaire = pc.id_projet_commentaire,
+                        contenu_projet_commentaire = pc.contenu_projet_commentaire,
+                        date_projet_commentaire = pc.date_projet_commentaire,
+                        id_user = pc.id_user,
+                        id_projet = pc.id_projet
+                    })
+                    .ToArray() : null,
+                commands_commentaires = expand != null && expand.Contains("commands_commentaires") ? u.CommandsCommentaires
+                    .Select(cc => new ReadCommandCommentaireDto
+                    {
+                        id_command_commentaire = cc.id_command_commentaire,
+                        contenu_command_commentaire = cc.contenu_command_commentaire,
+                        date_command_commentaire = cc.date_command_commentaire,
+                        id_user = cc.id_user,
+                        id_command = cc.id_command
+                    })
+                    .ToArray() : null,
+                projets_commentaires_count = u.ProjetsCommentaires.Count,
+                commands_commentaires_count = u.CommandsCommentaires.Count
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"User with id {id} not found");
     }
 
     public async Task<ReadUserDto> GetUserByEmail(string email)

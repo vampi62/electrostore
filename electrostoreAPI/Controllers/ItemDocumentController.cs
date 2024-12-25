@@ -60,7 +60,6 @@ namespace electrostore.Controllers
             {
                 id_item = id_item,
                 name_item_document = itemDocumentDto.name_item_document,
-                type_item_document = itemDocumentDto.type_item_document,
                 document = itemDocumentDto.document
             };
             var itemDocument = await _itemDocumentService.CreateItemDocument(itemDocumentDtoFull);

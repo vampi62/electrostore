@@ -60,7 +60,6 @@ namespace electrostore.Controllers
             {
                 id_projet = id_projet,
                 name_projet_document = projetDocumentDto.name_projet_document,
-                type_projet_document = projetDocumentDto.type_projet_document,
                 document = projetDocumentDto.document
             };
             var projetDocument = await _projetDocumentService.CreateProjetDocument(projetDocumentDtoFull);

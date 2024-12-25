@@ -73,46 +73,48 @@ public class StoreService : IStoreService
 
     public async Task<ReadExtendedStoreDto> GetStoreById(int id, List<string>? expand = null)
     {
-        var store = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id {id} not found");
-        return new ReadExtendedStoreDto
-        {
-            id_store = store.id_store,
-            nom_store = store.nom_store,
-            xlength_store = store.xlength_store,
-            ylength_store = store.ylength_store,
-            mqtt_name_store = store.mqtt_name_store,
-            boxs = expand != null && expand.Contains("boxs") ? store.Boxs
-                .Select(b => new ReadBoxDto
-                {
-                    id_box = b.id_box,
-                    xstart_box = b.xstart_box,
-                    ystart_box = b.ystart_box,
-                    xend_box = b.xend_box,
-                    yend_box = b.yend_box,
-                    id_store = b.id_store
-                })
-                .ToArray() : null,
-            leds = expand != null && expand.Contains("leds") ? store.Leds
-                .Select(l => new ReadLedDto
-                {
-                    id_led = l.id_led,
-                    x_led = l.x_led,
-                    y_led = l.y_led,
-                    mqtt_led_id = l.mqtt_led_id,
-                    id_store = l.id_store
-                })
-                .ToArray() : null,
-            stores_tags = expand != null && expand.Contains("stores_tags") ? store.StoresTags
-                .Select(t => new ReadStoreTagDto
-                {
-                    id_store = t.id_store,
-                    id_tag = t.id_tag
-                })
-                .ToArray() : null,
-            boxs_count = store.Boxs.Count,
-            leds_count = store.Leds.Count,
-            stores_tags_count = store.StoresTags.Count
-        };
+        return await _context.Stores
+            .Where(s => s.id_store == id)
+            .Select(s => new ReadExtendedStoreDto
+            {
+                id_store = s.id_store,
+                nom_store = s.nom_store,
+                xlength_store = s.xlength_store,
+                ylength_store = s.ylength_store,
+                mqtt_name_store = s.mqtt_name_store,
+                boxs = expand != null && expand.Contains("boxs") ? s.Boxs
+                    .Select(b => new ReadBoxDto
+                    {
+                        id_box = b.id_box,
+                        xstart_box = b.xstart_box,
+                        ystart_box = b.ystart_box,
+                        xend_box = b.xend_box,
+                        yend_box = b.yend_box,
+                        id_store = b.id_store
+                    })
+                    .ToArray() : null,
+                leds = expand != null && expand.Contains("leds") ? s.Leds
+                    .Select(l => new ReadLedDto
+                    {
+                        id_led = l.id_led,
+                        x_led = l.x_led,
+                        y_led = l.y_led,
+                        mqtt_led_id = l.mqtt_led_id,
+                        id_store = l.id_store
+                    })
+                    .ToArray() : null,
+                stores_tags = expand != null && expand.Contains("stores_tags") ? s.StoresTags
+                    .Select(t => new ReadStoreTagDto
+                    {
+                        id_store = t.id_store,
+                        id_tag = t.id_tag
+                    })
+                    .ToArray() : null,
+                boxs_count = s.Boxs.Count,
+                leds_count = s.Leds.Count,
+                stores_tags_count = s.StoresTags.Count
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Store with id {id} not found");
     }
 
     public async Task<ReadStoreDto> CreateStore(CreateStoreDto storeDto)

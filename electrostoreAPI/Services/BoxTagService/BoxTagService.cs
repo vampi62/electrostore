@@ -106,26 +106,28 @@ public class BoxTagService : IBoxTagService
 
     public async Task<ReadExtendedBoxTagDto> GetBoxTagById(int boxId, int tagId, List<string>? expand = null)
     {
-        var boxTag = await _context.BoxsTags.FindAsync(boxId, tagId) ?? throw new KeyNotFoundException($"BoxTag with id {boxId} and {tagId} not found");
-        return new ReadExtendedBoxTagDto
-        {
-            id_box = boxTag.id_box,
-            id_tag = boxTag.id_tag,
-            tag = expand != null && expand.Contains("tag") ? new ReadTagDto
+        return await _context.BoxsTags
+            .Where(s => s.id_box == boxId && s.id_tag == tagId)
+            .Select(s => new ReadExtendedBoxTagDto
             {
-                id_tag = boxTag.Tag.id_tag,
-                nom_tag = boxTag.Tag.nom_tag
-            } : null,
-            box = expand != null && expand.Contains("box") ? new ReadBoxDto
-            {
-                id_box = boxTag.Box.id_box,
-                id_store = boxTag.Box.id_store,
-                xstart_box = boxTag.Box.xstart_box,
-                ystart_box = boxTag.Box.ystart_box,
-                xend_box = boxTag.Box.xend_box,
-                yend_box = boxTag.Box.yend_box
-            } : null
-        };
+                id_box = s.id_box,
+                id_tag = s.id_tag,
+                tag = expand != null && expand.Contains("tag") ? new ReadTagDto
+                {
+                    id_tag = s.Tag.id_tag,
+                    nom_tag = s.Tag.nom_tag
+                } : null,
+                box = expand != null && expand.Contains("box") ? new ReadBoxDto
+                {
+                    id_box = s.Box.id_box,
+                    id_store = s.Box.id_store,
+                    xstart_box = s.Box.xstart_box,
+                    ystart_box = s.Box.ystart_box,
+                    xend_box = s.Box.xend_box,
+                    yend_box = s.Box.yend_box
+                } : null
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"BoxTag with id {boxId} and {tagId} not found");
     }
 
     public async Task<ReadBoxTagDto> CreateBoxTag(CreateBoxTagDto boxTagDto)

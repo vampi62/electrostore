@@ -13,7 +13,7 @@ public interface IProjetCommentaireService
 
     public Task<int> GetProjetCommentairesCountByUserId(int userId);
 
-    public Task<ReadExtendedProjetCommentaireDto> GetProjetCommentairesByCommentaireId(int id, int? userId = null, int? projetId = null, List<string>? expand = null);
+    public Task<ReadExtendedProjetCommentaireDto> GetProjetCommentairesById(int id, int? userId = null, int? projetId = null, List<string>? expand = null);
 
     public Task<ReadProjetCommentaireDto> CreateProjetCommentaire(CreateProjetCommentaireDto projetCommentaireDto);
 

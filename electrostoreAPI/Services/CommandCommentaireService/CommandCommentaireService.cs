@@ -120,38 +120,35 @@ public class CommandCommentaireService : ICommandCommentaireService
 
     public async Task<ReadExtendedCommandCommentaireDto> GetCommandsCommentaireById(int id, int? userId = null, int? CommandId = null, List<string>? expand = null)
     {
-        var commentaire = await _context.CommandsCommentaires.FindAsync(id);
-        if ((commentaire is null) || (CommandId is not null && commentaire.id_command != CommandId) || (userId is not null && commentaire.id_user != userId))
-        {
-            throw new KeyNotFoundException($"Commentaire with id {id} not found");
-        }
-
-        return new ReadExtendedCommandCommentaireDto
-        {
-            id_command_commentaire = commentaire.id_command_commentaire,
-            id_command = commentaire.id_command,
-            id_user = commentaire.id_user,
-            contenu_command_commentaire = commentaire.contenu_command_commentaire,
-            date_command_commentaire = commentaire.date_command_commentaire,
-            date_modif_command_commentaire = commentaire.date_modif_command_commentaire,
-            command = expand != null && expand.Contains("command") ? new ReadCommandDto
+        return await _context.CommandsCommentaires
+            .Where(c => c.id_command_commentaire == id && (CommandId == null || c.id_command == CommandId) && (userId == null || c.id_user == userId))
+            .Select(c => new ReadExtendedCommandCommentaireDto
             {
-                id_command = commentaire.Command.id_command,
-                prix_command = commentaire.Command.prix_command,
-                url_command = commentaire.Command.url_command,
-                status_command = commentaire.Command.status_command,
-                date_command = commentaire.Command.date_command,
-                date_livraison_command = commentaire.Command.date_livraison_command
-            } : null,
-            user = expand != null && expand.Contains("user") ? new ReadUserDto
-            {
-                id_user = commentaire.User.id_user,
-                nom_user = commentaire.User.nom_user,
-                prenom_user = commentaire.User.prenom_user,
-                email_user = commentaire.User.email_user,
-                role_user = commentaire.User.role_user
-            } : null
-        };
+                id_command_commentaire = c.id_command_commentaire,
+                id_command = c.id_command,
+                id_user = c.id_user,
+                contenu_command_commentaire = c.contenu_command_commentaire,
+                date_command_commentaire = c.date_command_commentaire,
+                date_modif_command_commentaire = c.date_modif_command_commentaire,
+                command = expand != null && expand.Contains("command") ? new ReadCommandDto
+                {
+                    id_command = c.Command.id_command,
+                    prix_command = c.Command.prix_command,
+                    url_command = c.Command.url_command,
+                    status_command = c.Command.status_command,
+                    date_command = c.Command.date_command,
+                    date_livraison_command = c.Command.date_livraison_command
+                } : null,
+                user = expand != null && expand.Contains("user") ? new ReadUserDto
+                {
+                    id_user = c.User.id_user,
+                    nom_user = c.User.nom_user,
+                    prenom_user = c.User.prenom_user,
+                    email_user = c.User.email_user,
+                    role_user = c.User.role_user
+                } : null
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Commentaire with id {id} not found");
     }
 
     public async Task<ReadCommandCommentaireDto> CreateCommentaire(CreateCommandCommentaireDto commentaireDto)
