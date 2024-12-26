@@ -2,7 +2,7 @@
 
 import { useStoresStore } from '@/stores';
 const storesStore = useStoresStore();
-storesStore.getAll();
+storesStore.getStoreByInterval();
 </script>
 
 <template>
@@ -22,7 +22,7 @@ storesStore.getAll();
             </tr>
         </thead>
         <tbody>
-            <template v-if="!storesStore.stores.loading">
+            <template v-if="!storesStore.stores.storesLoading">
                 <tr v-for="store in storesStore.stores" :key="store.id_store">
                     <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ store.id_store }}</td>
                     <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ store.nom_store }}</td>

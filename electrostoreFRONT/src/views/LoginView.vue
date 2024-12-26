@@ -60,7 +60,8 @@ function onSubmit(values, { setErrors }) {
         <!-- Links -->
         <div class="mt-4">
             <router-link to="/register" class="text-blue-500 hover:underline">{{ $t('register') }}</router-link>
-            <router-link to="/forgot-password" class="ml-4 text-blue-500 hover:underline">{{ $t('forgotPassword') }}</router-link>
+            <router-link to="/forgot-password" class="ml-4 text-blue-500 hover:underline">{{ $t('forgotPassword')
+                }}</router-link>
         </div>
     </div>
 </template>

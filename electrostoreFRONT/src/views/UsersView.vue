@@ -6,7 +6,7 @@ import { useUsersStore } from '@/stores';
 const usersStore = useUsersStore();
 const { users: users } = storeToRefs(usersStore);
 
-usersStore.getAll();
+usersStore.getUserByInterval();
 </script>
 
 <template>
@@ -26,7 +26,7 @@ usersStore.getAll();
             </tr>
         </thead>
         <tbody>
-            <template v-if="!users.loading">
+            <template v-if="!users.usersLoading">
                 <tr v-for="user in users" :key="user.id_user">
                     <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ user.id_user }}</td>
                     <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ user.nom_user }}</td>
@@ -47,6 +47,6 @@ usersStore.getAll();
             </template>
         </tbody>
     </table>
-    <div v-if="users.loading" class="spinner-border spinner-border-sm"></div>
+    <div v-if="users.usersLoading" class="spinner-border spinner-border-sm"></div>
     <div v-if="users.error" class="text-danger">Error loading users: {{ users.error }}</div>
 </template>

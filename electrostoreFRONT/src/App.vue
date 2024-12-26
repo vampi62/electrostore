@@ -31,8 +31,6 @@ const containerClasses = computed(() => [
   !reduceLeftSideBar.value && authStore.user && !isIframe.value ? 'sm:ml-64' : '',
   authStore.user ? 'top-16' : 'top-0'
 ]);
-
-authStore.checkIfLoged();
 </script>
 
 <template>
@@ -40,7 +38,8 @@ authStore.checkIfLoged();
     <div v-show="authStore.user && !isIframe">
       <nav class="flex justify-between p-5 bg-gray-800 border-b-2 border-blue-400 fixed w-full top-0 h-16">
         <RouterLink to="/" class="text-white hover:text-blue-400">Home</RouterLink>
-        <a href="https://github.com/vampi62/electrostore" class="block sm:hidden text-white hover:text-blue-400"><!-- for mobile -->
+        <a href="https://github.com/vampi62/electrostore" class="block sm:hidden text-white hover:text-blue-400"
+          target="_blank" rel="noopener noreferrer"><!-- for mobile -->
           <p class="space-x-4">
             <font-awesome-icon icon="fa-brands fa-github" size="lg" />
             <span>ElectroStore</span>
@@ -56,8 +55,8 @@ authStore.checkIfLoged();
         <div class="hidden sm:flex"><!-- for desktop -->
           <div class="flex space-x-4 justify-end">
             <RouterLink to="/profile" class="text-white hover:text-blue-400">Profile</RouterLink>
-            <RouterLink v-if="authStore.user?.user.role_user === 'admin'" to="/users"
-              class="text-white hover:text-blue-400">Admin</RouterLink>
+            <RouterLink v-if="authStore.user?.role_user === 'admin'" to="/users" class="text-white hover:text-blue-400">
+              Admin</RouterLink>
             <a v-if="authStore.user" @click="authStore.logout()"
               class="cursor-pointer text-white hover:text-blue-400">Logout</a>
           </div>
@@ -66,8 +65,8 @@ authStore.checkIfLoged();
       <div class="fixed sm:hidden top-12 w-full z-50"><!-- for mobile -->
         <div v-show="showTopBar" class="flex flex-col space-y-4 bg-gray-800 p-4">
           <RouterLink to="/profile" class="text-white hover:text-blue-400">Profile</RouterLink>
-          <RouterLink v-if="authStore.user?.user.role_user === 'admin'" to="/users"
-            class="text-white hover:text-blue-400">Admin</RouterLink>
+          <RouterLink v-if="authStore.user?.role_user === 'admin'" to="/users" class="text-white hover:text-blue-400">
+            Admin</RouterLink>
           <a v-if="authStore.user" @click="authStore.logout()"
             class="cursor-pointer text-white hover:text-blue-400">Logout</a>
           <div class="border-t-2 border-blue-400"></div>
@@ -97,7 +96,8 @@ authStore.checkIfLoged();
             </li>
           </ul>
         </div>
-        <a href="https://github.com/vampi62/electrostore" class="block text-white hover:text-blue-400">
+        <a href="https://github.com/vampi62/electrostore" class="block text-white hover:text-blue-400" target="_blank"
+          rel="noopener noreferrer">
           <div class="text-center mt-4">
             <p class="space-x-4">
               <font-awesome-icon icon="fa-brands fa-github" size="lg" />

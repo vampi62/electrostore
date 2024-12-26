@@ -194,7 +194,7 @@ function startDragging(element, type, direction = null) {
     showMenu.value = false
 }
 
-function stopDragging(event) {
+function stopDragging() {
     if (!hasDragElement.value) {
         return
     }
@@ -533,15 +533,16 @@ document.addEventListener('click', hideMenu)
             left: (led.X * gridOrigin.cellSizeX) + gridOrigin.cellSizeX / 2 + 'px',
             top: (((storeInfo.DBLenY - 1) - led.Y) * gridOrigin.cellSizeY) + gridOrigin.cellSizeY / 2 + 'px',
             zIndex: 20
-        }" @mousedown.left="startDragging(led, 'led')"
-            @contextmenu.prevent="(event) => selectLed(led, event)" @contextmenu.stop>
+        }" @mousedown.left="startDragging(led, 'led')" @contextmenu.prevent="(event) => selectLed(led, event)"
+            @contextmenu.stop>
         </div>
         <template v-if="showLedId">
             <div v-for="led in ledInfo" :key="led.id" class="no-select" :style="{
                 left: (led.X * gridOrigin.cellSizeX) + gridOrigin.cellSizeX / 2 + 10 + 'px',
                 top: (((storeInfo.DBLenY - 1) - led.Y) * gridOrigin.cellSizeY) + gridOrigin.cellSizeY / 2 + 8 + 'px',
                 zIndex: 20,
-                position: 'absolute'}">
+                position: 'absolute'
+            }">
                 {{ led.id }}
             </div>
         </template>
@@ -551,8 +552,8 @@ document.addEventListener('click', hideMenu)
             width: ((box.XMax - box.XMin) * (gridOrigin.cellSizeX)) + 'px',
             height: ((box.YMax - box.YMin) * (gridOrigin.cellSizeY)) + 'px',
             zIndex: 10
-        }" @mousedown.left="startDragging(box, 'box')"
-            @contextmenu.prevent="(event) => selectBox(box, event)" @contextmenu.stop>
+        }" @mousedown.left="startDragging(box, 'box')" @contextmenu.prevent="(event) => selectBox(box, event)"
+            @contextmenu.stop>
             <div v-if="!showMenu && (selectedElement.type == null || selectedElement.key == box)">
                 <div class="resizer corner nw cursor-nw" @mousedown.left="startDragging(box, 'border', 'nw')"
                     @contextmenu.stop>
@@ -567,13 +568,17 @@ document.addEventListener('click', hideMenu)
                     @contextmenu.stop>
                 </div>
                 <div class="resizer edge n cursor-n" @mousedown.left="startDragging(box, 'border', 'n')"
-                    @contextmenu.stop></div>
+                    @contextmenu.stop>
+                </div>
                 <div class="resizer edge e cursor-e" @mousedown.left="startDragging(box, 'border', 'e')"
-                    @contextmenu.stop></div>
+                    @contextmenu.stop>
+                </div>
                 <div class="resizer edge s cursor-s" @mousedown.left="startDragging(box, 'border', 's')"
-                    @contextmenu.stop></div>
+                    @contextmenu.stop>
+                </div>
                 <div class="resizer edge w cursor-w" @mousedown.left="startDragging(box, 'border', 'w')"
-                    @contextmenu.stop></div>
+                    @contextmenu.stop>
+                </div>
             </div>
             <div v-else>
                 <div class="resizer corner nw"></div>

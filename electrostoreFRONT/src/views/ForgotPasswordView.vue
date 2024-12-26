@@ -51,7 +51,8 @@ function onSubmit(values, { setErrors }) {
                 </div>
                 <!-- Error/Success Messages -->
                 <div v-if="errors.apiError" class="bg-red-100 text-red-600 p-3 rounded mt-3">{{ errors.apiError }}</div>
-                <div v-if="errors.apiConfirm" class="bg-green-100 text-green-600 p-3 rounded mt-3">{{ errors.apiConfirm }}</div>
+                <div v-if="errors.apiConfirm" class="bg-green-100 text-green-600 p-3 rounded mt-3">{{ errors.apiConfirm
+                    }}</div>
             </Form>
         </div>
 
