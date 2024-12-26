@@ -1,44 +1,65 @@
 import { defineStore } from 'pinia';
 
 import { fetchWrapper, router } from '@/helpers';
-import { useSessionTokenStore } from '@/stores';
+
+
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
-
 
 export const useAuthStore = defineStore({
     id: 'auth',
     state: () => ({
         // initialize state from local storage to enable user to stay logged in
-        user: JSON.parse(localStorage.getItem('user')),
-        refeshToken: localStorage.getItem('refreshToken'),
-        returnUrl: null,
-        refreshInterval: null
+        user: JSON.parse(localStorage.getItem('user')) || null,
+        accessToken: JSON.parse(localStorage.getItem('accessToken')) || null,
+        refreshToken: JSON.parse(localStorage.getItem('refreshToken')) || null,
+        returnUrl: null
     }),
     actions: {
-        checkIfLoged() {
-            const sessionTokenStore = useSessionTokenStore();
-            if (!!this.user && !!this.refeshToken && !!sessionTokenStore.token) {
-                this.startTokenRefreshCheck();
+        setToken(user, accessToken, refreshToken) {
+            this.accessToken = accessToken;
+            this.refreshToken = refreshToken;
+            this.user = user;
+            localStorage.setItem('accessToken', JSON.stringify(accessToken));
+            localStorage.setItem('refreshToken', JSON.stringify(refreshToken));
+            localStorage.setItem('user', JSON.stringify(user));
+        },
+        clearToken() {
+            this.accessToken = null;
+            this.refreshToken = null;
+            this.user = null;
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+        },
+        TokenIsExpired() {
+            // if date expire is less than current date + 5 minutes
+            if (new Date(this.accessToken.date_expire).getTime() < new Date().getTime() + 5 * 60000) {
+                console.log('Token is expired');
+                return true;
             }
+            return false;
+        },
+        RefreshTokenIsExpired() {
+            // if date expire is less than current date
+            if (new Date(this.refreshToken.date_expire).getTime() < new Date().getTime()) {
+                console.log('Refresh Token is expired');
+                return true;
+            }
+            return false;
         },
         async login(email, password) {
             const request = await fetchWrapper.post({
                 url: `${baseUrl}/user/login`,
                 body: { "email": email, "password": password }
             });
-            // store user details and jwt in local storage to keep user logged in between page refreshes
-            localStorage.setItem('user', JSON.stringify(request));
-            localStorage.setItem('refreshToken', request?.refresh_token);
-            this.user = request;
-            this.refeshToken = request?.refresh_token;
-
-            const sessionTokenStore = useSessionTokenStore();
-            sessionTokenStore.setToken(request?.token);
-
+            this.setToken(
+                request?.user,
+                { 'token': request?.token, 'date_expire': request?.expire_date_token },
+                { 'token': request?.refresh_token, 'date_expire': request?.expire_date_refresh_token }
+            );
             // redirect to previous url or default to home page if no previous url or if previous url is login page
             router.push((this.returnUrl && this.returnUrl !== '/login') ? this.returnUrl : '/');
-            this.startTokenRefreshCheck();
         },
         async register(email, password, prenom, nom) {
             const request = fetchWrapper.post({
@@ -51,42 +72,16 @@ export const useAuthStore = defineStore({
                 console.log('Error registering user', request);
             }
         },
-        startTokenRefreshCheck() {
-            // vérifier si le token est expiré
-            const now = new Date().getTime();
-            const timeToExpire = Date.parse(this.user.expire_date_token) - now;
-            if (timeToExpire < 0) {
-                this.refreshLogin();
-            }
-            // verifier si le token de rafraichissement est expiré
-            const timeToExpireRefresh = Date.parse(this.user.expire_date_refresh_token) - now;
-            if (timeToExpireRefresh < 0) {
-                this.logout();
-            }
-            // vérifier toutes les 5 minutes si le token doit être rafraîchi
-            this.refreshInterval = setInterval(() => {
-                const now = new Date().getTime();
-                const timeToExpire = Date.parse(this.user.expire_date_token) - now;
-                const refreshThreshold = 10 * 60 * 1000; // 10 minutes avant l'expiration
-                if (timeToExpire < refreshThreshold) {
-                    this.refreshLogin();
-                }
-            }, 60 * 1000 * 5); // vérifier toutes les 5 minutes
-        },
-        stopTokenRefreshCheck() {
-            clearInterval(this.refreshInterval);
-        },
         async refreshLogin() {
             const request = await fetchWrapper.post({
                 url: `${baseUrl}/user/refresh-token`,
-                token: this.user.refesh_token
+                useToken: "refresh"
             });
-            localStorage.setItem('user', JSON.stringify(request));
-            localStorage.setItem('refreshToken', request?.refresh_token);
-            this.user = request;
-            this.refeshToken = request?.refresh_token;
-            const sessionTokenStore = useSessionTokenStore();
-            sessionTokenStore.setToken(request?.token);
+            this.setToken(
+                request?.user,
+                { 'token': request?.token, 'date_expire': request?.expire_date_token },
+                { 'token': request?.refresh_token, 'date_expire': request?.expire_date_refresh_token }
+            );
         },
         async forgotPassword(email) {
             return await fetchWrapper.post({
@@ -106,14 +101,7 @@ export const useAuthStore = defineStore({
             }
         },
         logout() {
-            this.user = null;
-            this.refeshToken = null;
-            this.stopTokenRefreshCheck();
-            localStorage.removeItem('user');
-
-            const sessionTokenStore = useSessionTokenStore();
-            sessionTokenStore.clearToken()
-            localStorage.removeItem('refreshToken');
+            this.clearToken();
             router.push('/login');
         }
     }

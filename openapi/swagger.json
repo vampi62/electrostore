@@ -4336,7 +4336,24 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkItemTagDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkItemTagDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkItemTagDto"
+                }
+              }
+            }
           }
         }
       }
@@ -6158,24 +6175,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       }
@@ -6844,17 +6844,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReadBulkTagDto"
+                  "$ref": "#/components/schemas/ReadBulkBoxTagDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReadBulkTagDto"
+                  "$ref": "#/components/schemas/ReadBulkBoxTagDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReadBulkTagDto"
+                  "$ref": "#/components/schemas/ReadBulkBoxTagDto"
                 }
               }
             }
@@ -6917,7 +6917,24 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkBoxTagDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkBoxTagDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkBoxTagDto"
+                }
+              }
+            }
           }
         }
       }
@@ -8091,7 +8108,24 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkStoreTagDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkStoreTagDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkStoreTagDto"
+                }
+              }
+            }
           }
         }
       }
@@ -8688,17 +8722,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReadBulkTagDto"
+                  "$ref": "#/components/schemas/ReadBulkBoxTagDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReadBulkTagDto"
+                  "$ref": "#/components/schemas/ReadBulkBoxTagDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReadBulkTagDto"
+                  "$ref": "#/components/schemas/ReadBulkBoxTagDto"
                 }
               }
             }
@@ -8753,7 +8787,24 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkBoxTagDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkBoxTagDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkBoxTagDto"
+                }
+              }
+            }
           }
         }
       }
@@ -9102,7 +9153,24 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkItemTagDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkItemTagDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkItemTagDto"
+                }
+              }
+            }
           }
         }
       }
@@ -9451,7 +9519,24 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkStoreTagDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkStoreTagDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadBulkStoreTagDto"
+                }
+              }
+            }
           }
         }
       }
@@ -11195,6 +11280,26 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ReadBoxDto"
+            },
+            "nullable": true
+          },
+          "error": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorDetail"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadBulkBoxTagDto": {
+        "type": "object",
+        "properties": {
+          "valide": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadBoxTagDto"
             },
             "nullable": true
           },

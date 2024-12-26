@@ -2,7 +2,7 @@
 
 import { useTagsStore } from '@/stores';
 const tagsStore = useTagsStore();
-tagsStore.getAll();
+tagsStore.getTagByInterval();
 </script>
 
 <template>
@@ -20,7 +20,7 @@ tagsStore.getAll();
             </tr>
         </thead>
         <tbody>
-            <template v-if="!tagsStore.tags.loading">
+            <template v-if="!tagsStore.tagsLoading">
                 <tr v-for="tag in tagsStore.tags" :key="tag.id_tag">
                     <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ tag.id_tag }}</td>
                     <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ tag.nom_tag }}</td>

@@ -1,100 +1,125 @@
 import { defineStore } from 'pinia';
 
 import { fetchWrapper } from '@/helpers';
-import { useSessionTokenStore } from '@/stores';
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export const useCamerasStore = defineStore({
     id: 'cameras',
     state: () => ({
+        loading: true,
+        TotalCount: 0,
         cameras: {},
-        camera: {},
+        cameraEdition: {},
         stream: {},
-        capture: {},
-        status: {}
+        capture: {}
     }),
     actions: {
-        async getAll(limit = 100, offset = 0) {
-            const sessionTokenStore = useSessionTokenStore();
-            this.cameras = { loading: true };
-            this.cameras = await fetchWrapper.get({
-                url: `${baseUrl}/camera?limit=${limit}&offset=${offset}`,
-                token: sessionTokenStore.token
+        async getCameraByList(idResearch = []) {
+            this.loading = true;
+            const idResearchString = idResearch.join(',');
+            let newCameraList = await fetchWrapper.get({
+                url: `${baseUrl}/camera?&idResearch=${idResearchString}`,
+                useToken: "access"
             });
-            for (const camera of this.cameras) {
+            for (const camera of newCameraList['data']) {
+                this.cameras[camera.id_camera] = camera;
                 this.getStatus(camera.id_camera);
+                this.getCapture(camera.id_camera);
             }
+            this.TotalCount = newCameraList['count'];
+            this.loading = false;
         },
-        async getById(id) {
-            const sessionTokenStore = useSessionTokenStore();
-            this.camera = { loading: true };
-            this.camera = await fetchWrapper.get({
+        async getCameraByInterval(limit = 100, offset = 0) {
+            this.loading = true;
+            let newCameraList = await fetchWrapper.get({
+                url: `${baseUrl}/camera?limit=${limit}&offset=${offset}`,
+                useToken: "access"
+            });
+            for (const camera of newCameraList['data']) {
+                this.cameras[camera.id_camera] = camera;
+                this.getStatus(camera.id_camera);
+                this.getCapture(camera.id_camera);
+            }
+            this.TotalCount = newCameraList['count'];
+            this.loading = false;
+        },
+        async getCameraById(id) {
+            this.cameras[id] = { loading: true };
+            this.cameras[id] = await fetchWrapper.get({
                 url: `${baseUrl}/camera/${id}`,
-                token: sessionTokenStore.token
+                useToken: "access"
             });
+            this.getStatus(id);
+            this.getCapture(id);
         },
-        async toggleLight(id, state) {
-            const sessionTokenStore = useSessionTokenStore();
+        async toggleLight(id) {
             this.camera = { loading: true };
-            this.camera = await fetchWrapper.post({
-                url: `${baseUrl}/camera/${id}/light`,
-                token: sessionTokenStore.token,
-                body: {"state": state}
-            });
+            if (this.cameras[id].status?.ringLightPower > 0) {
+                this.camera = await fetchWrapper.post({
+                    url: `${baseUrl}/camera/${id}/light`,
+                    useToken: "access",
+                    body: { "state": false }
+                });
+            } else {
+                this.camera = await fetchWrapper.post({
+                    url: `${baseUrl}/camera/${id}/light`,
+                    useToken: "access",
+                    body: { "state": true }
+                });
+            }
+            // waiting 0.5s
+            this.getStatus(this.id_camera);
         },
-        getStream(id) {
-            const sessionTokenStore = useSessionTokenStore();
-            this.stream[id] = fetchWrapper.stream({
+        async getStream(id) {
+            this.cameras[id].stream = await fetchWrapper.stream({
                 url: `${baseUrl}/camera/${id}/stream`,
-                token: sessionTokenStore.token
+                useToken: "access"
             });
         },
         stopStream(id) {
-            this.stream[id] = null;
+            this.cameras[id].stream = null;
         },
         async getStatus(id) {
-            const sessionTokenStore = useSessionTokenStore();
-            this.status[id] = { loading: true };
-            this.status[id] = await fetchWrapper.get({
+            this.cameras[id].status = { loading: true };
+            this.cameras[id].status = await fetchWrapper.get({
                 url: `${baseUrl}/camera/${id}/status`,
-                token: sessionTokenStore.token
+                useToken: "access"
             });
         },
         async getCapture(id) {
-            const sessionTokenStore = useSessionTokenStore();
             const response = await fetchWrapper.image({
                 url: `${baseUrl}/camera/${id}/capture`,
-                token: sessionTokenStore.token
+                useToken: "access"
             });
             const url = URL.createObjectURL(response);
-            this.capture[id] = url;
+            this.cameras[id].capture = url;
         },
-        async create(params) {
-            const sessionTokenStore = useSessionTokenStore();
-            this.camera = { loading: true };
-            this.camera = await fetchWrapper.post({
+        async createCamera(params) {
+            this.cameraEdition = { loading: true };
+            this.cameraEdition = await fetchWrapper.post({
                 url: `${baseUrl}/camera`,
-                token: sessionTokenStore.token,
+                useToken: "access",
                 body: params
             });
+            this.cameras[this.cameraEdition.id_camera] = this.cameraEdition;
         },
-        async update(id, params) {
-            const sessionTokenStore = useSessionTokenStore();
-            this.camera = { loading: true };
-            this.camera = await fetchWrapper.put({
+        async updateCamera(id, params) {
+            this.cameraEdition = { loading: true };
+            this.cameraEdition = await fetchWrapper.put({
                 url: `${baseUrl}/camera/${id}`,
-                token: sessionTokenStore.token,
+                useToken: "access",
                 body: params
             });
+            this.cameras[id] = this.cameraEdition;
         },
-        async delete(id) {
-            const sessionTokenStore = useSessionTokenStore();
-            this.camera = { loading: true };
-            this.camera = await fetchWrapper.delete({
+        async deleteCamera(id) {
+            this.cameraEdition = { loading: true };
+            this.cameraEdition = await fetchWrapper.delete({
                 url: `${baseUrl}/camera/${id}`,
-                token: sessionTokenStore.token
+                useToken: "access"
             });
+            delete this.cameras[id];
         }
     }
 });

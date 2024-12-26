@@ -2,7 +2,7 @@
 
 import { useProjetsStore } from '@/stores';
 const projetsStore = useProjetsStore();
-projetsStore.getAll();
+projetsStore.getProjetByInterval();
 </script>
 
 <template>
@@ -14,7 +14,8 @@ projetsStore.getAll();
             <tr>
                 <th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">id</th>
                 <th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">nom</th>
-                <th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">description</th>
+                <th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">description
+                </th>
                 <th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">url</th>
                 <th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">status</th>
                 <th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">date</th>
@@ -24,11 +25,12 @@ projetsStore.getAll();
             </tr>
         </thead>
         <tbody>
-            <template v-if="!projetsStore.projets.loading">
+            <template v-if="!projetsStore.projets.projetsLoading">
                 <tr v-for="projet in projetsStore.projets" :key="projet.id_projet">
                     <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ projet.id_projet }}</td>
                     <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ projet.nom_projet }}</td>
-                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ projet.description_projet }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ projet.description_projet }}
+                    </td>
                     <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ projet.url_projet }}</td>
                     <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ projet.status_projet }}</td>
                     <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ projet.date_projet }}</td>

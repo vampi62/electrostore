@@ -73,7 +73,7 @@ namespace electrostore.Controllers
 
         [HttpDelete("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> DeleteBulkStoreTag([FromRoute] int id_store, [FromBody] List<int> id_tags)
+        public async Task<ActionResult<ReadBulkStoreTagDto>> DeleteBulkStoreTag([FromRoute] int id_store, [FromBody] List<int> id_tags)
         {
             var itemTagsDtoFull = id_tags.Select(id_item => new CreateStoreTagDto
             {
