@@ -1,5 +1,10 @@
 <script setup>
 import { ref } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+const storeId = route.params.id;
+
 const storeInfo = ref({
     DBId: 0,
     DBLenX: 20,
@@ -519,7 +524,7 @@ document.addEventListener('click', hideMenu)
 </style>
 <template>
     <div>
-        <strong>MENU store organisation</strong>
+        <strong>MENU store organisation {{ storeId }}</strong>
     </div>
     <!--
     gridOrigin.left = left position of the grid

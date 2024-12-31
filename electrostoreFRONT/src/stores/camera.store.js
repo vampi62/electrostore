@@ -10,6 +10,7 @@ export const useCamerasStore = defineStore({
         loading: true,
         TotalCount: 0,
         cameras: {},
+        status: {},
         cameraEdition: {},
         stream: {},
         capture: {}
@@ -25,7 +26,6 @@ export const useCamerasStore = defineStore({
             for (const camera of newCameraList['data']) {
                 this.cameras[camera.id_camera] = camera;
                 this.getStatus(camera.id_camera);
-                this.getCapture(camera.id_camera);
             }
             this.TotalCount = newCameraList['count'];
             this.loading = false;
@@ -39,7 +39,6 @@ export const useCamerasStore = defineStore({
             for (const camera of newCameraList['data']) {
                 this.cameras[camera.id_camera] = camera;
                 this.getStatus(camera.id_camera);
-                this.getCapture(camera.id_camera);
             }
             this.TotalCount = newCameraList['count'];
             this.loading = false;
@@ -51,11 +50,10 @@ export const useCamerasStore = defineStore({
                 useToken: "access"
             });
             this.getStatus(id);
-            this.getCapture(id);
         },
         async toggleLight(id) {
             this.camera = { loading: true };
-            if (this.cameras[id].status?.ringLightPower > 0) {
+            if (this.status[id]?.ringLightPower > 0) {
                 this.camera = await fetchWrapper.post({
                     url: `${baseUrl}/camera/${id}/light`,
                     useToken: "access",
@@ -72,17 +70,17 @@ export const useCamerasStore = defineStore({
             this.getStatus(this.id_camera);
         },
         async getStream(id) {
-            this.cameras[id].stream = await fetchWrapper.stream({
+            this.stream[id] = await fetchWrapper.stream({
                 url: `${baseUrl}/camera/${id}/stream`,
                 useToken: "access"
             });
         },
         stopStream(id) {
-            this.cameras[id].stream = null;
+            this.stream[id] = null;
         },
         async getStatus(id) {
-            this.cameras[id].status = { loading: true };
-            this.cameras[id].status = await fetchWrapper.get({
+            this.status[id] = { loading: true };
+            this.status[id] = await fetchWrapper.get({
                 url: `${baseUrl}/camera/${id}/status`,
                 useToken: "access"
             });
@@ -93,7 +91,7 @@ export const useCamerasStore = defineStore({
                 useToken: "access"
             });
             const url = URL.createObjectURL(response);
-            this.cameras[id].capture = url;
+            this.capture[id] = url;
         },
         async createCamera(params) {
             this.cameraEdition = { loading: true };

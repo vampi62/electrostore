@@ -73,7 +73,7 @@ public class JwtService
         {
             token = tokenString,
             expire_date_token = tokenDescriptor.Expires ?? DateTime.UtcNow.AddDays(_jwtSettings.ExpireDays),
-            refesh_token = refreshTokenString,
+            refresh_token = refreshTokenString,
             expire_date_refresh_token = refreshTokenDescriptor.Expires ?? DateTime.UtcNow.AddDays(_jwtSettings.ExpireDays + 7),
             token_id = Guid.Parse(token.Id),
             refresh_token_id = Guid.Parse(refreshToken.Id),

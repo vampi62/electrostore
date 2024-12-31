@@ -73,7 +73,7 @@ const containerClasses = computed(() => [
           <ul class="mt-6 space-y-4">
             <li v-for="nav in listNav" :key="nav.name">
               <RouterLink :to="nav.path" :class="['flex items-center space-x-4 hover:text-blue-400',
-                route.path === nav.path ? 'text-blue-400' : 'text-white']">
+                route.path.includes(nav.path) ? 'text-blue-400' : 'text-white']">
                 <font-awesome-icon :icon="nav.faIcon" />
                 <span>{{ nav.name }}</span>
               </RouterLink>
@@ -87,7 +87,7 @@ const containerClasses = computed(() => [
           <ul class="mt-2 space-y-4">
             <li v-for="nav in listNav" :key="nav.name" class="min-h-6">
               <RouterLink :to="nav.path" :class="['flex items-center space-x-4 hover:text-blue-400',
-                route.path === nav.path ? 'text-blue-400' : 'text-white']">
+                route.path.includes(nav.path) ? 'text-blue-400' : 'text-white']">
                 <div class="flex items-center justify-center w-8 h-8">
                   <font-awesome-icon :icon="nav.faIcon" size="lg" />
                 </div>

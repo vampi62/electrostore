@@ -5993,7 +5993,7 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/UpdateBuckBoxByStoreDto"
+                  "$ref": "#/components/schemas/UpdateBulkBoxByStoreDto"
                 }
               }
             },
@@ -6001,7 +6001,7 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/UpdateBuckBoxByStoreDto"
+                  "$ref": "#/components/schemas/UpdateBulkBoxByStoreDto"
                 }
               }
             },
@@ -6009,7 +6009,7 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/UpdateBuckBoxByStoreDto"
+                  "$ref": "#/components/schemas/UpdateBulkBoxByStoreDto"
                 }
               }
             }
@@ -11215,7 +11215,7 @@
             "type": "string",
             "nullable": true
           },
-          "refesh_token": {
+          "refresh_token": {
             "type": "string",
             "nullable": true
           },
@@ -12725,7 +12725,7 @@
         },
         "additionalProperties": false
       },
-      "UpdateBuckBoxByStoreDto": {
+      "UpdateBulkBoxByStoreDto": {
         "type": "object",
         "properties": {
           "id_box": {

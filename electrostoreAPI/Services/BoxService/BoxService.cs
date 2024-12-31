@@ -304,7 +304,7 @@ public class BoxService : IBoxService
         };
     }
 
-    public async Task<ReadBulkBoxDto> UpdateBulkBox(List<UpdateBuckBoxByStoreDto> boxsDto, int? storeId = null)
+    public async Task<ReadBulkBoxDto> UpdateBulkBox(List<UpdateBulkBoxByStoreDto> boxsDto, int? storeId = null)
     {
         var validQuery = new List<ReadBoxDto>();
         var errorQuery = new List<ErrorDetail>();
