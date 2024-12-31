@@ -93,7 +93,7 @@ namespace electrostore.Controllers
 
         [HttpPut("bulk")]
 		[Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkBoxDto>> UpdateBulkBox([FromRoute] int id_store, [FromBody] List<UpdateBuckBoxByStoreDto> boxsDto)
+        public async Task<ActionResult<ReadBulkBoxDto>> UpdateBulkBox([FromRoute] int id_store, [FromBody] List<UpdateBulkBoxByStoreDto> boxsDto)
         {
             var boxs = await _boxService.UpdateBulkBox(boxsDto, id_store);
             if (boxs.Error.Count == 0)

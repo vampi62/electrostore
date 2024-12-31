@@ -99,7 +99,7 @@ public record UpdateBoxDto
 
     public int? new_id_store { get; init; }
 }
-public record UpdateBuckBoxByStoreDto
+public record UpdateBulkBoxByStoreDto
 {
     public int id_box { get; init; }
 

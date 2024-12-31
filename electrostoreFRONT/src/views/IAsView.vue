@@ -1,10 +1,10 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue';
-import { useTagsStore } from '@/stores';
-const tagsStore = useTagsStore();
+import { useIasStore } from '@/stores';
+const IAStore = useIasStore();
 
 async function fetchData() {
-    tagsStore.getTagByInterval(100, 0);
+    IAStore.getIaByInterval(100, 0);
 }
 onMounted(() => {
     fetchData();
@@ -20,12 +20,12 @@ function changeSort(key) {
     }
 }
 const filter = ref([
-    { key: 'nom_tag', value: '', type: 'text', label: 'nom', compareMethod: 'contain' },
-    { key: 'poids_tag', value: '', type: 'number', label: 'poids minimum', compareMethod: '>=' },
-    { key: 'poids_tag', value: '', type: 'number', label: 'poids maximum', compareMethod: '<=' }
+    { key: 'trained_ia', value: '', type: 'select', options: [[false, 'faux'], [true, 'vrai']], label: 'status', compareMethod: '=' },
+    { key: 'date_ia', value: '', type: 'date', label: 'date', compareMethod: '>=' },
+    { key: 'nom_ia', value: '', type: 'text', label: 'nom', compareMethod: 'contain' }
 ]);
-const filteredTags = computed(() => {
-    return Object.values(tagsStore.tags).filter(element => {
+const filteredIas = computed(() => {
+    return Object.values(IAStore.ias).filter(element => {
         return filter.value.every(f => {
             if (f.value) {
                 if (f.subPath) {
@@ -52,9 +52,9 @@ const filteredTags = computed(() => {
         });
     });
 });
-const sortedTags = computed(() => {
+const sortedIas = computed(() => {
     if (sort.value.key) {
-        return Object.values(filteredTags.value).sort((a, b) => {
+        return Object.values(filteredIas.value).sort((a, b) => {
             if (sort.value.order === 'asc') {
                 return a[sort.value.key] > b[sort.value.key] ? 1 : -1;
             } else {
@@ -62,13 +62,13 @@ const sortedTags = computed(() => {
             }
         });
     }
-    return filteredTags.value;
+    return filteredIas.value;
 });
 </script>
 
 <template>
     <div>
-        <h2>Tags</h2>
+        <h2>IA</h2>
     </div>
     <div>
         <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
@@ -104,10 +104,33 @@ const sortedTags = computed(() => {
         <thead class="bg-gray-100">
             <tr>
                 <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-                    @click="changeSort('nom_tag')">
+                    @click="changeSort('nom_ia')">
                     <div class="flex justify-between items-center">
                         <span class="flex-1">nom</span>
-                        <template v-if="sort.key === 'nom_tag'">
+                        <template v-if="sort.key === 'nom_ia'">
+                            <template v-if="sort.order === 'asc'">
+                                <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
+                            </template>
+                            <template v-else>
+                                <font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
+                            </template>
+                        </template>
+                        <template v-else>
+                            <font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
+                        </template>
+                    </div>
+                </th>
+                <th
+                    class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
+                    <div class="flex justify-between items-center">
+                        <span class="flex-1">description</span>
+                    </div>
+                </th>
+                <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
+                    @click="changeSort('date_ia')">
+                    <div class="flex justify-between items-center">
+                        <span class="flex-1">date</span>
+                        <template v-if="sort.key === 'date_ia'">
                             <template v-if="sort.order === 'asc'">
                                 <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
                             </template>
@@ -121,10 +144,10 @@ const sortedTags = computed(() => {
                     </div>
                 </th>
                 <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-                    @click="changeSort('poids_tag')">
+                    @click="changeSort('trained_ia')">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">poids</span>
-                        <template v-if="sort.key === 'poids_tag'">
+                        <span class="flex-1">trained</span>
+                        <template v-if="sort.key === 'trained_ia'">
                             <template v-if="sort.order === 'asc'">
                                 <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
                             </template>
@@ -146,12 +169,14 @@ const sortedTags = computed(() => {
             </tr>
         </thead>
         <tbody>
-            <template v-if="!tagsStore.tagsLoading">
-                <RouterLink v-for="tag in sortedTags" :key="tag.id_tag" :to="'/tags/' + tag.id_tag" custom
+            <template v-if="!IAStore.loading">
+                <RouterLink v-for="ia in sortedIas" :key="ia.id_ia" :to="'/ia/' + ia.id_ia" custom
                     v-slot="{ navigate }">
                     <tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
-                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ tag.nom_tag }}</td>
-                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ tag.poids_tag }}</td>
+                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.nom_ia }}</td>
+                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.description_ia }}</td>
+                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.date_ia }}</td>
+                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.trained_ia }}</td>
                         <td class="border border-gray-300 px-4 py-2 text-center text-sm text-gray-700">
                             <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
                                 Supprimer

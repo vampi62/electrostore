@@ -152,7 +152,7 @@ namespace electrostore.Controllers
             {
                 token = token.token,
                 expire_date_token = token.expire_date_token.ToString("yyyy-MM-dd HH:mm:ss"),
-                refesh_token = token.refesh_token,
+                refresh_token = token.refresh_token,
                 expire_date_refresh_token = token.expire_date_refresh_token.ToString("yyyy-MM-dd HH:mm:ss"),
                 user = user
             });
@@ -189,7 +189,7 @@ namespace electrostore.Controllers
             {
                 token = token.token,
                 expire_date_token = token.expire_date_token.ToString("yyyy-MM-dd HH:mm:ss"),
-                refesh_token = token.refesh_token,
+                refresh_token = token.refresh_token,
                 expire_date_refresh_token = token.expire_date_refresh_token.ToString("yyyy-MM-dd HH:mm:ss"),
                 user = user
             });

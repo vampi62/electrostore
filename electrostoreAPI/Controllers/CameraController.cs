@@ -59,7 +59,7 @@ namespace electrostore.Controllers
                 var pingReply = ping.Send(DomainOrIP, 2000);
                 if (pingReply.Status != System.Net.NetworkInformation.IPStatus.Success)
                 {
-                    return StatusCode(504, "Unable to connect to the camera.");
+                    return StatusCode(500, JsonSerializer.Serialize(new Dictionary<string, string> { { "errors", "Unable to connect to the camera." } }));
                 }
                 using (var httpClient = new HttpClient())
                 {
@@ -73,16 +73,16 @@ namespace electrostore.Controllers
                     var response = await httpClient.GetAsync(urlFluxStream + "/stream", HttpCompletionOption.ResponseHeadersRead);
                     if (!response.IsSuccessStatusCode)
                     {
-                        return StatusCode((int)response.StatusCode, "Unable to retrieve video stream.");
+                        return StatusCode((int)response.StatusCode, JsonSerializer.Serialize(new Dictionary<string, string> { { "errors", "Unable to retrieve video stream." } }));
                     }
                     if (response.Content.Headers.ContentType is null)
                     {
-                        return StatusCode(500, "Unable to retrieve video stream.");
+                        return StatusCode(500, JsonSerializer.Serialize(new Dictionary<string, string> { { "errors", "Unable to retrieve video stream." } }));
                     }
                     var boundary = response.Content.Headers.ContentType.Parameters.FirstOrDefault(p => p.Name == "boundary")?.Value;
                     if (boundary is null)
                     {
-                        return StatusCode(500, "Unable to retrieve video stream.");
+                        return StatusCode(500, JsonSerializer.Serialize(new Dictionary<string, string> { { "errors", "Unable to retrieve video stream." } }));
                     }
                     var contentStream = await response.Content.ReadAsStreamAsync();
                     return new FileStreamResult(contentStream, "multipart/x-mixed-replace; boundary=" + boundary);
@@ -90,7 +90,7 @@ namespace electrostore.Controllers
             }
             catch
             {
-                return StatusCode(500, "Unable to connect to the camera.");
+                return StatusCode(500, JsonSerializer.Serialize(new Dictionary<string, string> { { "errors", "Unable to connect to the camera." } }));
             }
         }
 
@@ -107,7 +107,7 @@ namespace electrostore.Controllers
                 var pingReply = ping.Send(DomainOrIP, 2000);
                 if (pingReply.Status != System.Net.NetworkInformation.IPStatus.Success)
                 {
-                    return StatusCode(504, "Unable to connect to the camera.");
+                    return StatusCode(500, JsonSerializer.Serialize(new Dictionary<string, string> { { "errors", "Unable to connect to the camera." } }));
                 }
                 using (var httpClient = new HttpClient())
                 {
@@ -120,13 +120,13 @@ namespace electrostore.Controllers
                     var response = await httpClient.GetAsync(urlLight + "/light?state=" + (reqCamera.state ? "on" : "off"));
                     if (!response.IsSuccessStatusCode)
                     {
-                        return StatusCode((int)response.StatusCode, "Unable to switch camera light state.");
+                        return StatusCode(500, JsonSerializer.Serialize(new Dictionary<string, string> { { "errors", "Unable to switch camera light state." } }));
                     }
                     var content = await response.Content.ReadAsStringAsync();
                     var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
                     if (json is null || json.ContainsKey("ringLightPower") == false)
                     {
-                        return StatusCode(500, "Unable to switch camera light state.");
+                        return StatusCode(500, JsonSerializer.Serialize(new Dictionary<string, string> { { "errors", "Unable to switch camera light state." } }));
                     }
                     var newLightDto = new CameraLightDto { state = (bool)json["ringLightPower"] };
                     return Ok(newLightDto);
@@ -134,7 +134,7 @@ namespace electrostore.Controllers
             }
             catch
             {
-                return StatusCode(500, "Unable to connect to the camera.");
+                return StatusCode(500, JsonSerializer.Serialize(new Dictionary<string, string> { { "errors", "Unable to connect to the camera." } }));
             }
         }
 
@@ -151,7 +151,7 @@ namespace electrostore.Controllers
                 var pingReply = ping.Send(DomainOrIP, 2000);
                 if (pingReply.Status != System.Net.NetworkInformation.IPStatus.Success)
                 {
-                    return StatusCode(504, "Unable to connect to the camera.");
+                    return StatusCode(500, JsonSerializer.Serialize(new Dictionary<string, string> { { "errors", "Unable to connect to the camera." } }));
                 }
                 using (var httpClient = new HttpClient())
                 {
@@ -165,7 +165,7 @@ namespace electrostore.Controllers
                     var response = await httpClient.GetAsync(urlFluxStream + "/capture", HttpCompletionOption.ResponseHeadersRead);
                     if (!response.IsSuccessStatusCode)
                     {
-                        return StatusCode((int)response.StatusCode, "Unable to retrieve camera capture.");
+                        return StatusCode((int)response.StatusCode, JsonSerializer.Serialize(new Dictionary<string, string> { { "errors", "Unable to retrieve camera capture." } }));
                     }
                     var contentStream = await response.Content.ReadAsStreamAsync();
                     return new FileStreamResult(contentStream, "image/jpeg");
@@ -173,7 +173,7 @@ namespace electrostore.Controllers
             }
             catch
             {
-                return StatusCode(500, "Unable to connect to the camera.");
+                return StatusCode(500, JsonSerializer.Serialize(new Dictionary<string, string> { { "errors", "Unable to connect to the camera." } }));
             }
         }
 
@@ -190,7 +190,7 @@ namespace electrostore.Controllers
                 var pingReply = ping.Send(DomainOrIP, 2000);
                 if (pingReply.Status != System.Net.NetworkInformation.IPStatus.Success)
                 {
-                    return StatusCode(504, "Unable to connect to the camera.");
+                    return StatusCode(504, JsonSerializer.Serialize(new Dictionary<string, string> { { "errors", "Unable to connect to the camera." } }));
                 }
                 using (var httpClient = new HttpClient())
                 {
@@ -204,13 +204,13 @@ namespace electrostore.Controllers
                     var response = await httpClient.GetAsync(urlFluxStream + "/status", HttpCompletionOption.ResponseHeadersRead);
                     if (!response.IsSuccessStatusCode)
                     {
-                        return StatusCode((int)response.StatusCode, "Unable to retrieve camera status.");
+                        return StatusCode((int)response.StatusCode, JsonSerializer.Serialize(new Dictionary<string, string> { { "errors", "Unable to retrieve camera status." } }));
                     }
                     var content = await response.Content.ReadAsStringAsync();
                     var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
                     if (json is null)
                     {
-                        return StatusCode(500, "Unable to retrieve camera status.");
+                        return StatusCode(500, JsonSerializer.Serialize(new Dictionary<string, string> { { "errors", "Unable to retrieve camera status." } }));
                     }
                     var newCameraStatusDto = new CameraStatusDto {
                         uptime = (float)json["uptime"],
@@ -227,7 +227,7 @@ namespace electrostore.Controllers
             }
             catch
             {
-                return StatusCode(500, "Unable to connect to the camera.");
+                return StatusCode(500, JsonSerializer.Serialize(new Dictionary<string, string> { { "errors", "Unable to connect to the camera." } }));
             }
         }
 

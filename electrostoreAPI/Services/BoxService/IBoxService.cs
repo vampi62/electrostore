@@ -17,7 +17,7 @@ public interface IBoxService
 
     public Task<ReadBoxDto> UpdateBox(int id, UpdateBoxDto boxDto, int? storeId = null);
 
-    public Task<ReadBulkBoxDto> UpdateBulkBox(List<UpdateBuckBoxByStoreDto> boxsDto, int? storeId = null);
+    public Task<ReadBulkBoxDto> UpdateBulkBox(List<UpdateBulkBoxByStoreDto> boxsDto, int? storeId = null);
 
     public Task DeleteBox(int id, int? storeId = null);
 

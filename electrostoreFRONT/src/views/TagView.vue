@@ -3,12 +3,12 @@
 import { useRoute } from 'vue-router';
 
 const route = useRoute();
-const projetId = route.params.id;
+const tagId = route.params.id;
 
 </script>
 
 <template>
     <div>
-        <h2>projet {{ projetId }}</h2>
+        <h2>tag {{ tagId }}</h2>
     </div>
 </template>
