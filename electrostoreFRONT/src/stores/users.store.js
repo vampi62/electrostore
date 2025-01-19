@@ -14,9 +14,9 @@ export const useUsersStore = defineStore({
         users: {},
         userEdition: {},
 
-        projectsCommentaireLoading: true,
-        projectsCommentaireTotalCount: {},
-        projectsCommentaire: {},
+        projetsCommentaireLoading: true,
+        projetsCommentaireTotalCount: {},
+        projetsCommentaire: {},
         projectCommentaireEdition: {},
 
         commandsCommentaireLoading: true,
@@ -25,7 +25,7 @@ export const useUsersStore = defineStore({
         commandCommentaireEdition: {},
 
         tokensLoading: true,
-        tokensTotalCount: 0,
+        tokensTotalCount: {},
         tokens: {},
         tokensEdition: {}
     }),
@@ -40,12 +40,12 @@ export const useUsersStore = defineStore({
             });
             for (const user of newUserList['data']) {
                 this.users[user.id_user] = user;
-                this.projectsCommentaireTotalCount[user.id_user] = user.projects_commentaires_count;
+                this.projetsCommentaireTotalCount[user.id_user] = user.projets_commentaires_count;
                 this.commandsCommentaireTotalCount[user.id_user] = user.commands_commentaires_count;
                 if (expand.indexOf("projets_commentaires") > -1) {
-                    this.projectsCommentaire[user.id_user] = {};
+                    this.projetsCommentaire[user.id_user] = {};
                     for (const projet of user.projets) {
-                        this.projectsCommentaire[user.id_user][projet.id_projet] = projet;
+                        this.projetsCommentaire[user.id_user][projet.id_projet] = projet;
                     }
                 }
                 if (expand.indexOf("commands_commentaires") > -1) {
@@ -67,12 +67,12 @@ export const useUsersStore = defineStore({
             });
             for (const user of newUserList['data']) {
                 this.users[user.id_user] = user;
-                this.projectsCommentaireTotalCount[user.id_user] = user.projects_commentaires_count;
+                this.projetsCommentaireTotalCount[user.id_user] = user.projets_commentaires_count;
                 this.commandsCommentaireTotalCount[user.id_user] = user.commands_commentaires_count;
                 if (expand.indexOf("projets_commentaires") > -1) {
-                    this.projectsCommentaire[user.id_user] = {};
+                    this.projetsCommentaire[user.id_user] = {};
                     for (const projet of user.projets) {
-                        this.projectsCommentaire[user.id_user][projet.id_projet] = projet;
+                        this.projetsCommentaire[user.id_user][projet.id_projet] = projet;
                     }
                 }
                 if (expand.indexOf("commands_commentaires") > -1) {
@@ -92,12 +92,12 @@ export const useUsersStore = defineStore({
                 url: `${baseUrl}/user/${id}?expand=${expandString}`,
                 useToken: "access"
             });
-            this.projectsCommentaireTotalCount[id] = this.users[id].projects_commentaires_count;
+            this.projetsCommentaireTotalCount[id] = this.users[id].projets_commentaires_count;
             this.commandsCommentaireTotalCount[id] = this.users[id].commands_commentaires_count;
             if (expand.indexOf("projets_commentaires") > -1) {
-                this.projectsCommentaire[id] = {};
+                this.projetsCommentaire[id] = {};
                 for (const projet of this.users[id].projets) {
-                    this.projectsCommentaire[id][projet.id_projet] = projet;
+                    this.projetsCommentaire[id][projet.id_projet] = projet;
                 }
             }
             if (expand.indexOf("commands_commentaires") > -1) {
@@ -108,7 +108,7 @@ export const useUsersStore = defineStore({
             }
         },
         async createUser(params) {
-            this.userEdition = { loading: true };
+            this.userEdition.loading = true;
             this.userEdition = await fetchWrapper.post({
                 url: `${baseUrl}/user`,
                 useToken: "access",
@@ -117,7 +117,7 @@ export const useUsersStore = defineStore({
             this.users[this.userEdition.id_user] = this.userEdition;
         },
         async updateUser(id, params) {
-            this.userEdition = { loading: true };
+            this.userEdition.loading = true;
             this.userEdition = await fetchWrapper.put({
                 url: `${baseUrl}/user/${id}`,
                 useToken: "access",
@@ -126,7 +126,7 @@ export const useUsersStore = defineStore({
             this.users[id] = this.userEdition;
         },
         async deleteUser(id) {
-            this.userEdition = { loading: true };
+            this.userEdition.loading = true;
             this.userEdition = await fetchWrapper.delete({
                 url: `${baseUrl}/user/${id}`,
                 useToken: "access"
@@ -138,41 +138,41 @@ export const useUsersStore = defineStore({
             // init store
             const projetStore = useProjetsStore();
             // init list if not exist
-            if (!this.projectsCommentaire[idUser]) {
-                this.projectsCommentaire[idUser] = {};
+            if (!this.projetsCommentaire[idUser]) {
+                this.projetsCommentaire[idUser] = {};
             }
             // query
-            this.projectsCommentaireLoading = true;
+            this.projetsCommentaireLoading = true;
             const expandString = expand.join(',');
             let newProjectCommentaireList = await fetchWrapper.get({
                 url: `${baseUrl}/user/${idUser}/projetcommentaire?limit=${limit}&offset=${offset}&expand=${expandString}`,
                 useToken: "access"
             });
             for (const projectCommentaire of newProjectCommentaireList['data']) {
-                this.projectsCommentaire[idUser][projectCommentaire.id_projet_commentaire] = projectCommentaire;
+                this.projetsCommentaire[idUser][projectCommentaire.id_projet_commentaire] = projectCommentaire;
                 if (expand.indexOf("projet") > -1) {
                     projetStore.projets[projectCommentaire.id_projet] = projectCommentaire.projets;
                 }
             }
-            this.projectsCommentaireTotalCount[idUser] = newCommentaireList['count'];
-            this.projectsCommentaireLoading = false;
+            this.projetsCommentaireTotalCount[idUser] = newCommentaireList['count'];
+            this.projetsCommentaireLoading = false;
         },
         async getProjectCommentaireById(idUser, id, expand = []) {
             // init store
             const projetStore = useProjetsStore();
             // init list if not exist
-            if (!this.projectsCommentaire[idUser]) {
-                this.projectsCommentaire[idUser] = {};
+            if (!this.projetsCommentaire[idUser]) {
+                this.projetsCommentaire[idUser] = {};
             }
             // query
-            this.projectsCommentaire[idUser][id] = { loading: true };
+            this.projetsCommentaire[idUser][id] = { loading: true };
             const expandString = expand.join(',');
-            this.projectsCommentaire[idUser][id] = await fetchWrapper.get({
+            this.projetsCommentaire[idUser][id] = await fetchWrapper.get({
                 url: `${baseUrl}/user/${idUser}/projetcommentaire/${id}?expand=${expandString}`,
                 useToken: "access"
             });
             if (expand.indexOf("projet") > -1) {
-                projetStore.projets[this.projectsCommentaire[idUser][id].id_projet] = this.projectsCommentaire[idUser][id].projets;
+                projetStore.projets[this.projetsCommentaire[idUser][id].id_projet] = this.projetsCommentaire[idUser][id].projets;
             }
         },
         async createProjectCommentaire(idUser, params) {
@@ -182,10 +182,10 @@ export const useUsersStore = defineStore({
                 useToken: "access",
                 body: params
             });
-            if (!this.projectsCommentaire[idUser]) {
-                this.projectsCommentaire[idUser] = {};
+            if (!this.projetsCommentaire[idUser]) {
+                this.projetsCommentaire[idUser] = {};
             }
-            this.projectsCommentaire[idUser][this.projectCommentaireEdition.id_projet_commentaire] = this.projectCommentaireEdition;
+            this.projetsCommentaire[idUser][this.projectCommentaireEdition.id_projet_commentaire] = this.projectCommentaireEdition;
         },
         async updateProjectCommentaire(idUser, id, params) {
             this.projectCommentaireEdition = { loading: true };
@@ -194,7 +194,7 @@ export const useUsersStore = defineStore({
                 useToken: "access",
                 body: params
             });
-            this.projectsCommentaire[idUser][id] = this.projectCommentaireEdition;
+            this.projetsCommentaire[idUser][id] = this.projectCommentaireEdition;
         },
         async deleteProjectCommentaire(idUser, id) {
             this.projectCommentaireEdition = { loading: true };
@@ -202,7 +202,7 @@ export const useUsersStore = defineStore({
                 url: `${baseUrl}/user/${idUser}/projetcommentaire/${id}`,
                 useToken: "access"
             });
-            delete this.projectsCommentaire[idUser][id];
+            delete this.projetsCommentaire[idUser][id];
         },
 
         async getCommandCommentaireByInterval(idUser, limit = 100, offset = 0, expand = []) {
@@ -287,7 +287,7 @@ export const useUsersStore = defineStore({
             for (const token of newTokenList['data']) {
                 this.tokens[idUser][token.id_token] = token;
             }
-            this.tokensTotalCount = newTokenList['count'];
+            this.tokensTotalCount[idUser] = newTokenList['count'];
             this.tokensLoading = false;
         },
         async updateToken(idUser, id, params) {

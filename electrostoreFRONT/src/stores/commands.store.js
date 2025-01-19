@@ -129,7 +129,7 @@ export const useCommandsStore = defineStore({
             }
         },
         async createCommand(params) {
-            this.commandEdition = { loading: true };
+            this.commandEdition.loading = true;
             this.commandEdition = await fetchWrapper.post({
                 url: `${baseUrl}/command`,
                 useToken: "access",
@@ -138,7 +138,7 @@ export const useCommandsStore = defineStore({
             this.commands[this.commandEdition.id_command] = this.commandEdition;
         },
         async updateCommand(id, params) {
-            this.commandEdition = { loading: true };
+            this.commandEdition.loading = true;
             this.commandEdition = await fetchWrapper.put({
                 url: `${baseUrl}/command/${id}`,
                 useToken: "access",
@@ -147,7 +147,7 @@ export const useCommandsStore = defineStore({
             this.commands[id] = params;
         },
         async deleteCommand(id) {
-            this.commandEdition = { loading: true };
+            this.commandEdition.loading = true;
             this.commandEdition = await fetchWrapper.delete({
                 url: `${baseUrl}/command/${id}`,
                 useToken: "access"

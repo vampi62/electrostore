@@ -1,23 +1,33 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref, computed, inject } from 'vue';
+
+
+const { addNotification } = inject('useNotification');
+
+
+
+
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
+
+
+
+
+
 import { useCommandsStore, useItemsStore } from '@/stores';
 const commandsStore = useCommandsStore();
 const itemsStore = useItemsStore();
 
 async function fetchData() {
     let allItems = [];
-    await commandsStore.getCommandByInterval(100, 0, ['commands_items']);
-    for (const commandId in commandsStore.items) {
-        if (commandsStore.items.hasOwnProperty(commandId)) {
-            const items = commandsStore.items[commandId];
-            for (const itemId in commandsStore.items[commandId]) {
-                allItems.push(itemId);
-            }
-        }
-    }
+    let offset = 0;
+    const limit = 100;
+    do {
+        await commandsStore.getCommandByInterval(limit, offset, ['commands_items']);
+        offset += limit;
+    } while (offset < commandsStore.commandsTotalCount)
     await itemsStore.getItemByList(allItems);
     filter.value[6].options = Object.values(itemsStore.items).map(item => [item.id_item, item.nom_item]);
-
 }
 onMounted(() => {
     fetchData();
@@ -33,13 +43,13 @@ function changeSort(key) {
     }
 }
 const filter = ref([
-    { key: 'status_command', value: '', type: 'select', options: [['en attente', 'en attente'], ['en cours', 'en cours'], ['livrée', 'livrée']], label: 'status', compareMethod: '=' },
-    { key: 'date_command', value: '', type: 'date', label: 'date', compareMethod: '>=' },
-    { key: 'url_command', value: '', type: 'text', label: 'url', compareMethod: 'contain' },
-    { key: 'prix_command', value: '', type: 'number', label: 'prix minimum', compareMethod: '>=' },
-    { key: 'prix_command', value: '', type: 'number', label: 'prix maximum', compareMethod: '<=' },
-    { key: 'date_livraison_command', value: '', type: 'date', label: 'date_livraison', compareMethod: '>=' },
-    { key: 'id_item', subPath: 'commands_items', value: '', type: 'select', options: Object.values(itemsStore.items).map(item => [item.id_item, item.nom_item]), label: 'items', compareMethod: '=' }
+    { key: 'status_command', value: '', type: 'select', options: [['En attente', t('VCommandsFilterStatus1')], ['En cours', t('VCommandsFilterStatus2')], ['Terminée', t('VCommandsFilterStatus3')], ['Annulée', t('VCommandsFilterStatus4')]], label: t('VCommandsFilterStatus'), compareMethod: '=' },
+    { key: 'date_command', value: '', type: 'date', label: t('VCommandsFilterDate'), compareMethod: '>=' },
+    { key: 'url_command', value: '', type: 'text', label: t('VCommandsFilterURL'), compareMethod: 'contain' },
+    { key: 'prix_command', value: '', type: 'number', label: t('VCommandsFilterPriceMin'), compareMethod: '>=' },
+    { key: 'prix_command', value: '', type: 'number', label: t('VCommandsFilterPriceMax'), compareMethod: '<=' },
+    { key: 'date_livraison_command', value: '', type: 'date', label: t('VCommandsFilterDateL'), compareMethod: '>=' },
+    { key: 'id_item', subPath: 'commands_items', value: '', type: 'select', options: Object.values(itemsStore.items).map(item => [item.id_item, item.nom_item]), label: t('VCommandsFilterItem'), compareMethod: '=' }
 ]);
 const filteredCommands = computed(() => {
     return Object.values(commandsStore.commands).filter(element => {
@@ -85,12 +95,15 @@ const sortedCommands = computed(() => {
 
 <template>
     <div>
-        <h2>commandes liste</h2>
+        <h2>{{ $t('VCommandsTitle') }}</h2>
     </div>
     <div>
-        <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
-            Ajouter
-        </button>
+        <div
+            class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm cursor-pointer inline-block mb-2">
+            <RouterLink :to="'/commands/new'">
+                {{ $t('VCommandsAdd') }}
+            </RouterLink>
+        </div>
         <div>
             <div class="flex flex-wrap">
                 <template v-for="f in filter">
@@ -123,7 +136,7 @@ const sortedCommands = computed(() => {
                 <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
                     @click="changeSort('status_command')">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">status</span>
+                        <span class="flex-1">{{ $t('VCommandsTabStatus') }}</span>
                         <template v-if="sort.key === 'status_command'">
                             <template v-if="sort.order === 'asc'">
                                 <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
@@ -140,7 +153,7 @@ const sortedCommands = computed(() => {
                 <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
                     @click="changeSort('date_command')">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">date</span>
+                        <span class="flex-1">{{ $t('VCommandsTabDate') }}</span>
                         <template v-if="sort.key === 'date_command'">
                             <template v-if="sort.order === 'asc'">
                                 <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
@@ -157,7 +170,7 @@ const sortedCommands = computed(() => {
                 <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
                     @click="changeSort('url_command')">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">url</span>
+                        <span class="flex-1">{{ $t('VCommandsTabURL') }}</span>
                         <template v-if="sort.key === 'url_command'">
                             <template v-if="sort.order === 'asc'">
                                 <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
@@ -174,7 +187,7 @@ const sortedCommands = computed(() => {
                 <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
                     @click="changeSort('prix_command')">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">prix</span>
+                        <span class="flex-1">{{ $t('VCommandsTabPrix') }}</span>
                         <template v-if="sort.key === 'prix_command'">
                             <template v-if="sort.order === 'asc'">
                                 <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
@@ -191,13 +204,13 @@ const sortedCommands = computed(() => {
                 <th
                     class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">item commander</span>
+                        <span class="flex-1">{{ $t('VCommandsTabItemList') }}</span>
                     </div>
                 </th>
                 <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
                     @click="changeSort('date_livraison_command')">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">date_livraison</span>
+                        <span class="flex-1">{{ $t('VCommandsTabDateL') }}</span>
                         <template v-if="sort.key === 'date_livraison_command'">
                             <template v-if="sort.order === 'asc'">
                                 <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
@@ -209,12 +222,6 @@ const sortedCommands = computed(() => {
                         <template v-else>
                             <font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
                         </template>
-                    </div>
-                </th>
-                <th
-                    class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
-                    <div class="flex justify-between items-center">
-                        <span class="flex-1"></span>
                     </div>
                 </th>
             </tr>
@@ -241,12 +248,7 @@ const sortedCommands = computed(() => {
                         </td>
                         <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{
                             command.date_livraison_command
-                            }}</td>
-                        <td class="border border-gray-300 px-4 py-2 text-center text-sm text-gray-700">
-                            <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
-                                Supprimer
-                            </button>
-                        </td>
+                        }}</td>
                     </tr>
                 </RouterLink>
             </template>

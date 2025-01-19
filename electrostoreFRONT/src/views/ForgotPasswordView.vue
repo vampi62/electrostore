@@ -1,33 +1,44 @@
 <script setup>
+import { onMounted, ref, computed, inject } from 'vue';
+
+
+const { addNotification } = inject('useNotification');
+
+import { Form, Field } from 'vee-validate';
+import * as Yup from 'yup';
+
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
+
+
+
+
 
 import { useAuthStore, useConfigsStore } from '@/stores';
 const configsStore = useConfigsStore();
 const authStore = useAuthStore();
 
-import { Form, Field } from 'vee-validate';
-import * as Yup from 'yup';
-
 const schema = Yup.object().shape({
-    email: Yup.string().email().required(t('emailRequired'))
+    email: Yup.string()
+        .email(t('VForgotPasswordEmailInvalid'))
+        .required(t('VForgotPasswordEmailRequired'))
 });
 
 function onSubmit(values, { setErrors }) {
     const { email } = values;
     return authStore.forgotPassword(email)
         .catch(error => setErrors({ apiError: error["email_user"] }))
-        .then(() => setErrors({ apiConfirm: 'Email sent' }));
+        .then(() => setErrors({ apiConfirm: t('VForgotPasswordEmailSent') }));
 }
 </script>
 
 <template>
     <div class="max-w-lg mx-auto bg-white p-6 rounded shadow">
-        <h2 class="text-2xl font-bold mb-4">{{ $t('forgotPassword') }}</h2>
+        <h2 class="text-2xl font-bold mb-4">{{ $t('VForgotPasswordTitle') }}</h2>
         <!-- Loading Spinner -->
         <div v-if="configsStore.configs.loading" class="flex items-center justify-center my-4">
             <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" role="status">
-                <span class="sr-only">Loading...</span>
+                <span class="sr-only">{{ $t('VForgotPasswordLoading') }}</span>
             </div>
         </div>
 
@@ -35,7 +46,7 @@ function onSubmit(values, { setErrors }) {
         <div v-else-if="configsStore.configs.smtp_enabled">
             <Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
                 <div class="mb-4">
-                    <label class="block text-gray-700">{{ $t('email') }}</label>
+                    <label class="block text-gray-700">{{ $t('VForgotPasswordEmail') }}</label>
                     <Field name="email" type="email"
                         class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                         :class="{ 'border-red-500': errors.email }" />
@@ -46,7 +57,7 @@ function onSubmit(values, { setErrors }) {
                         :disabled="isSubmitting">
                         <span v-show="isSubmitting"
                             class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
-                        Envoyer
+                        {{ $t('VForgotPasswordSubmit') }}
                     </button>
                 </div>
                 <!-- Error/Success Messages -->
@@ -57,12 +68,13 @@ function onSubmit(values, { setErrors }) {
         </div>
 
         <!-- SMTP Disabled Message -->
-        <div v-else class="bg-red-100 text-red-600 p-3 rounded">{{ $t('smtpDisabled') }}</div>
+        <div v-else class="bg-red-100 text-red-600 p-3 rounded">{{ $t('VForgotPasswordSmtpDisabled') }}</div>
 
         <!-- Links -->
         <div class="mt-4">
-            <router-link to="/login" class="text-blue-500 hover:underline">{{ $t('login') }}</router-link>
-            <router-link to="/register" class="ml-4 text-blue-500 hover:underline">{{ $t('register') }}</router-link>
+            <RouterLink to="/login" class="text-blue-500 hover:underline">{{ $t('VForgotPasswordLoginLink') }}</RouterLink>
+            <RouterLink to="/register" class="ml-4 text-blue-500 hover:underline">{{ $t('VForgotPasswordRegisterLink') }}
+            </RouterLink>
         </div>
     </div>
 </template>

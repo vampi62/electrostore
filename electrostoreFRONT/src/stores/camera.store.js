@@ -52,7 +52,7 @@ export const useCamerasStore = defineStore({
             this.getStatus(id);
         },
         async toggleLight(id) {
-            this.camera = { loading: true };
+            this.camera.loading = true;
             if (this.status[id]?.ringLightPower > 0) {
                 this.camera = await fetchWrapper.post({
                     url: `${baseUrl}/camera/${id}/light`,
@@ -79,7 +79,7 @@ export const useCamerasStore = defineStore({
             this.stream[id] = null;
         },
         async getStatus(id) {
-            this.status[id] = { loading: true };
+            this.status[id].loading = true;
             this.status[id] = await fetchWrapper.get({
                 url: `${baseUrl}/camera/${id}/status`,
                 useToken: "access"
@@ -94,7 +94,7 @@ export const useCamerasStore = defineStore({
             this.capture[id] = url;
         },
         async createCamera(params) {
-            this.cameraEdition = { loading: true };
+            this.cameraEdition.loading = true;
             this.cameraEdition = await fetchWrapper.post({
                 url: `${baseUrl}/camera`,
                 useToken: "access",
@@ -103,7 +103,7 @@ export const useCamerasStore = defineStore({
             this.cameras[this.cameraEdition.id_camera] = this.cameraEdition;
         },
         async updateCamera(id, params) {
-            this.cameraEdition = { loading: true };
+            this.cameraEdition.loading = true;
             this.cameraEdition = await fetchWrapper.put({
                 url: `${baseUrl}/camera/${id}`,
                 useToken: "access",
@@ -112,7 +112,7 @@ export const useCamerasStore = defineStore({
             this.cameras[id] = this.cameraEdition;
         },
         async deleteCamera(id) {
-            this.cameraEdition = { loading: true };
+            this.cameraEdition.loading = true;
             this.cameraEdition = await fetchWrapper.delete({
                 url: `${baseUrl}/camera/${id}`,
                 useToken: "access"

@@ -46,7 +46,7 @@ export const useIasStore = defineStore({
             });
         },
         async createIa(params) {
-            this.iaEdition = { loading: true };
+            this.iaEdition.loading = true;
             this.iaEdition = await fetchWrapper.post({
                 url: `${baseUrl}/ia`,
                 useToken: "access",
@@ -55,7 +55,7 @@ export const useIasStore = defineStore({
             this.ias[this.iaEdition.id_ia] = this.iaEdition;
         },
         async updateIa(id, params) {
-            this.iaEdition = { loading: true };
+            this.iaEdition.loading = true;
             this.iaEdition = await fetchWrapper.put({
                 url: `${baseUrl}/ia/${id}`,
                 useToken: "access",
@@ -64,7 +64,7 @@ export const useIasStore = defineStore({
             this.ias[id] = params;
         },
         async deleteIa(id) {
-            this.iaEdition = { loading: true };
+            this.iaEdition.loading = true;
             this.iaEdition = await fetchWrapper.delete({
                 url: `${baseUrl}/ia/${id}`,
                 useToken: "access"

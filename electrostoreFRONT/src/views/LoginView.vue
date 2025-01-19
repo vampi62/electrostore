@@ -1,16 +1,28 @@
 <script setup>
-import { useI18n } from 'vue-i18n';
-const { t } = useI18n();
+import { onMounted, ref, computed, inject } from 'vue';
 
-import { useAuthStore } from '@/stores';
-const authStore = useAuthStore();
+
+const { addNotification } = inject('useNotification');
 
 import { Form, Field } from 'vee-validate';
 import * as Yup from 'yup';
 
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
+
+
+
+
+
+import { useAuthStore } from '@/stores';
+const authStore = useAuthStore();
+
 const schema = Yup.object().shape({
-    email: Yup.string().email().required(t('emailRequired')),
-    password: Yup.string().required('Password is required')
+    email: Yup.string()
+        .email(t('VLoginEmailInvalid'))
+        .required(t('VLoginEmailRequired')),
+    password: Yup.string()
+        .required(t('VLoginPasswordRequired'))
 });
 
 function onSubmit(values, { setErrors }) {
@@ -22,12 +34,12 @@ function onSubmit(values, { setErrors }) {
 
 <template>
     <div class="max-w-md mx-auto bg-white p-6 rounded shadow">
-        <h2 class="text-2xl font-bold mb-4">{{ $t('login') }}</h2>
+        <h2 class="text-2xl font-bold mb-4">{{ $t('VLoginTitle') }}</h2>
 
         <Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
             <!-- Email Field -->
             <div class="mb-4">
-                <label class="block text-gray-700">{{ $t('email') }}</label>
+                <label class="block text-gray-700">{{ $t('VLoginEmail') }}</label>
                 <Field name="email" type="email"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.email }" />
@@ -36,7 +48,7 @@ function onSubmit(values, { setErrors }) {
 
             <!-- Password Field -->
             <div class="mb-4">
-                <label class="block text-gray-700">Password</label>
+                <label class="block text-gray-700">{{ $t('VLoginPassword') }}</label>
                 <Field name="password" type="password"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.password }" />
@@ -49,7 +61,7 @@ function onSubmit(values, { setErrors }) {
                     :disabled="isSubmitting">
                     <span v-show="isSubmitting"
                         class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
-                    {{ $t('login') }}
+                    {{ $t('VLoginSubmit') }}
                 </button>
             </div>
 
@@ -59,9 +71,9 @@ function onSubmit(values, { setErrors }) {
 
         <!-- Links -->
         <div class="mt-4">
-            <router-link to="/register" class="text-blue-500 hover:underline">{{ $t('register') }}</router-link>
-            <router-link to="/forgot-password" class="ml-4 text-blue-500 hover:underline">{{ $t('forgotPassword')
-                }}</router-link>
+            <RouterLink to="/register" class="text-blue-500 hover:underline">{{ $t('VLoginRegisterLink') }}</RouterLink>
+            <RouterLink to="/forgot-password" class="ml-4 text-blue-500 hover:underline">{{ $t('VLoginForgotPasswordLink')
+                }}</RouterLink>
         </div>
     </div>
 </template>

@@ -1,38 +1,55 @@
 <script setup>
-import { useI18n } from 'vue-i18n';
-const { t } = useI18n();
+import { onMounted, ref, computed, inject } from 'vue';
 
-import { useAuthStore } from '@/stores';
-const authStore = useAuthStore();
+
+const { addNotification } = inject('useNotification');
 
 import { Form, Field } from 'vee-validate';
 import * as Yup from 'yup';
 
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
+
+
+
+
+
+import { useAuthStore } from '@/stores';
+const authStore = useAuthStore();
+
 const schema = Yup.object().shape({
-    email: Yup.string().email().required(t('emailRequired')),
-    firstName: Yup.string().required('First Name is required'),
-    lastName: Yup.string().required('Last Name is required'),
+    email: Yup.string()
+        .email(t('VRegisterEmailInvalid'))
+        .required(t('VRegisterEmailRequired')),
+    firstName: Yup.string()
+        .required(t('VRegisterFirstNameRequired')),
+    lastName: Yup.string()
+        .required(t('VRegisterLastNameRequired')),
     // 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
-    password: Yup.string().matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, 'Password must be at least 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character').required('Password is required'),
-    confirmPassword: Yup.string().oneOf([Yup.ref('password'), null], 'Passwords must match').matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, 'Password must be at least 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character').required('Confirm Password is required')
+    password: Yup.string()
+        .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, t('VRegisterPasswordRequirements'))
+        .required(t('VRegisterPasswordRequired')),
+    confirmPassword: Yup.string().oneOf([Yup.ref('password'), null], t('VRegisterPasswordMatch'))
+        .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, t('VRegisterPasswordRequirements'))
+        .required(t('VRegisterConfirmPasswordRequired'))
 });
 
 function onSubmit(values, { setErrors }) {
     const { email, firstName, lastName, password } = values;
     return authStore.register(email, password, firstName, lastName)
         .catch(errors => setErrors({ apiError: errors }))
-        .then(() => setErrors({ apiConfirm: 'User registered' }));
+        .then(() => setErrors({ apiConfirm: t('VRegisterSuccess') }));
 }
 </script>
 
 <template>
     <div class="max-w-lg mx-auto bg-white p-6 rounded shadow">
-        <h2 class="text-2xl font-bold mb-4">{{ $t('register') }}</h2>
+        <h2 class="text-2xl font-bold mb-4">{{ $t('VRegisterTitle') }}</h2>
 
         <Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
             <!-- Email Field -->
             <div class="mb-4">
-                <label class="block text-gray-700">{{ $t('email') }}</label>
+                <label class="block text-gray-700">{{ $t('VRegisterEmail') }}</label>
                 <Field name="email" type="email"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.email }" />
@@ -41,7 +58,7 @@ function onSubmit(values, { setErrors }) {
 
             <!-- First Name Field -->
             <div class="mb-4">
-                <label class="block text-gray-700">Prénom</label>
+                <label class="block text-gray-700">{{ $t('VRegisterFirstName') }}</label>
                 <Field name="firstName" type="text"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.firstName }" />
@@ -50,7 +67,7 @@ function onSubmit(values, { setErrors }) {
 
             <!-- Last Name Field -->
             <div class="mb-4">
-                <label class="block text-gray-700">Nom</label>
+                <label class="block text-gray-700">{{ $t('VRegisterLastName') }}</label>
                 <Field name="lastName" type="text"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.lastName }" />
@@ -59,7 +76,7 @@ function onSubmit(values, { setErrors }) {
 
             <!-- Password Field -->
             <div class="mb-4">
-                <label class="block text-gray-700">Password</label>
+                <label class="block text-gray-700">{{ $t('VRegisterPassword') }}</label>
                 <Field name="password" type="password"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.password }" />
@@ -68,7 +85,7 @@ function onSubmit(values, { setErrors }) {
 
             <!-- Confirm Password Field -->
             <div class="mb-4">
-                <label class="block text-gray-700">Confirm Password</label>
+                <label class="block text-gray-700">{{ $t('VRegisterConfirmPassword') }}</label>
                 <Field name="confirmPassword" type="password"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.confirmPassword }" />
@@ -81,7 +98,7 @@ function onSubmit(values, { setErrors }) {
                     :disabled="isSubmitting">
                     <span v-show="isSubmitting"
                         class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
-                    {{ $t('register') }}
+                    {{ $t('VRegisterSubmit') }}
                 </button>
             </div>
 
@@ -93,7 +110,7 @@ function onSubmit(values, { setErrors }) {
 
         <!-- Link to Login -->
         <div class="mt-4">
-            <router-link to="/login" class="text-blue-500 hover:underline">{{ $t('login') }}</router-link>
+            <RouterLink to="/login" class="text-blue-500 hover:underline">{{ $t('VRegisterLoginLink') }}</RouterLink>
         </div>
     </div>
 </template>

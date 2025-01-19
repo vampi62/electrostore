@@ -129,7 +129,7 @@ export const useTagsStore = defineStore({
             }
         },
         async createTag(params) {
-            this.tagEdition = { loading: true };
+            this.tagEdition.loading = true;
             this.tagEdition = await fetchWrapper.post({
                 url: `${baseUrl}/tag`,
                 useToken: "access",
@@ -138,7 +138,7 @@ export const useTagsStore = defineStore({
             this.tags[this.tagEdition.id] = this.tagEdition;
         },
         async updateTag(id, params) {
-            this.tagEdition = { loading: true };
+            this.tagEdition.loading = true;
             this.tagEdition = await fetchWrapper.put({
                 url: `${baseUrl}/tag/${id}`,
                 useToken: "access",
@@ -147,7 +147,7 @@ export const useTagsStore = defineStore({
             this.tags[id] = params;
         },
         async deleteTag(id) {
-            this.tagEdition = { loading: true };
+            this.tagEdition.loading = true;
             this.tagEdition = await fetchWrapper.delete({
                 url: `${baseUrl}/tag/${id}`,
                 useToken: "access"
@@ -155,7 +155,7 @@ export const useTagsStore = defineStore({
             delete this.tags[id];
         },
         async createTagBulk(params) {
-            this.tagEdition = { loading: true };
+            this.tagEdition.loading = true;
             this.tagEdition = await fetchWrapper.post({
                 url: `${baseUrl}/tag/bulk`,
                 useToken: "access",

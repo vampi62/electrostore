@@ -139,7 +139,7 @@ export const useStoresStore = defineStore({
             }
         },
         async createStore(params) {
-            this.storeEdition = { loading: true };
+            this.storeEdition.loading = true;
             this.storeEdition = await fetchWrapper.post({
                 url: `${baseUrl}/store`,
                 useToken: "access",
@@ -148,7 +148,7 @@ export const useStoresStore = defineStore({
             this.stores[this.storeEdition.id_store] = this.storeEdition;
         },
         async updateStore(id, params) {
-            this.storeEdition = { loading: true };
+            this.storeEdition.loading = true;
             this.storeEdition = await fetchWrapper.put({
                 url: `${baseUrl}/store/${id}`,
                 useToken: "access",
@@ -157,7 +157,7 @@ export const useStoresStore = defineStore({
             this.stores[id] = this.storeEdition;
         },
         async deleteStore(id) {
-            this.storeEdition = { loading: true };
+            this.storeEdition.loading = true;
             this.storeEdition = await fetchWrapper.delete({
                 url: `${baseUrl}/store/${id}`,
                 useToken: "access"
