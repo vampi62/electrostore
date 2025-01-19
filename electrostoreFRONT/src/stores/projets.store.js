@@ -94,7 +94,7 @@ export const useProjetsStore = defineStore({
             }
         },
         async createProjet(params) {
-            this.projetEdition = { loading: true };
+            this.projetEdition.loading = true;
             this.projetEdition = await fetchWrapper.post({
                 url: `${baseUrl}/projet`,
                 useToken: "access",
@@ -103,7 +103,7 @@ export const useProjetsStore = defineStore({
             this.projets[this.projetEdition.id_projet] = this.projetEdition;
         },
         async updateProjet(id, params) {
-            this.projetEdition = { loading: true };
+            this.projetEdition.loading = true;
             this.projetEdition = await fetchWrapper.put({
                 url: `${baseUrl}/projet/${id}`,
                 useToken: "access",
@@ -112,7 +112,7 @@ export const useProjetsStore = defineStore({
             this.projets[id] = params;
         },
         async deleteProjet(id) {
-            this.projetEdition = { loading: true };
+            this.projetEdition.loading = true;
             this.projetEdition = await fetchWrapper.delete({
                 url: `${baseUrl}/projet/${id}`,
                 useToken: "access"

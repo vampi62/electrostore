@@ -31,9 +31,6 @@ function request(method) {
                 requestOptions.body = JSON.stringify(body);
             } else if (body && contentFile) {
                 requestOptions.body = body;
-                for (const [key, value] of requestOptions.body.entries()) {
-                    console.log(key, value);
-                }
             }
             const response = await fetch(url, requestOptions);
             const text = await response.text();

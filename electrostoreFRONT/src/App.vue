@@ -1,28 +1,39 @@
 <script setup>
-import { computed } from 'vue';
+import { onMounted, ref, computed, inject } from 'vue';
+
+
+const { addNotification } = inject('useNotification');
+
+
+
+
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
+
 import { RouterView, RouterLink, useRoute } from 'vue-router';
+const route = useRoute();
+
+
 import { useAuthStore, useConfigsStore } from '@/stores';
-import { ref } from 'vue';
 
 const configsStore = useConfigsStore();
 const authStore = useAuthStore();
 
 configsStore.getConfig();
 
-const route = useRoute();
 const isIframe = computed(() => route.query.iframe != null);
 
 
 const reduceLeftSideBar = ref(false);
 const showTopBar = ref(false);
 const listNav = [
-  { name: 'inventory', path: '/inventory', roleRequired: 'user', faIcon: 'fa-solid fa-box' },
-  { name: 'projets', path: '/Projets', roleRequired: 'user', faIcon: 'fa-solid fa-project-diagram' },
-  { name: 'commands', path: '/commands', roleRequired: 'user', faIcon: 'fa-solid fa-shopping-cart' },
-  { name: 'cameras', path: '/cameras', roleRequired: 'user', faIcon: 'fa-solid fa-camera' },
-  { name: 'ia', path: '/ia', roleRequired: 'user', faIcon: 'fa-solid fa-microchip' },
-  { name: 'tags', path: '/tags', roleRequired: 'user', faIcon: 'fa-solid fa-tags' },
-  { name: 'stores', path: '/stores', roleRequired: 'user', faIcon: 'fa-solid fa-store' }
+  { name: t('VAppInventory'), path: '/inventory', roleRequired: 'user', faIcon: 'fa-solid fa-box' },
+  { name: t('VAppProjet'), path: '/projets', roleRequired: 'user', faIcon: 'fa-solid fa-project-diagram' },
+  { name: t('VAppCommand'), path: '/commands', roleRequired: 'user', faIcon: 'fa-solid fa-shopping-cart' },
+  { name: t('VAppCam'), path: '/cameras', roleRequired: 'user', faIcon: 'fa-solid fa-camera' },
+  { name: t('VAppIa'), path: '/ia', roleRequired: 'user', faIcon: 'fa-solid fa-microchip' },
+  { name: t('VAppTags'), path: '/tags', roleRequired: 'user', faIcon: 'fa-solid fa-tags' },
+  { name: t('VAppStores'), path: '/stores', roleRequired: 'user', faIcon: 'fa-solid fa-store' }
 ];
 
 const containerClasses = computed(() => [
@@ -34,10 +45,10 @@ const containerClasses = computed(() => [
 </script>
 
 <template>
-  <div class="app-container bg-gray-100">
+  <div class="app-container">
     <div v-show="authStore.user && !isIframe">
       <nav class="flex justify-between p-5 bg-gray-800 border-b-2 border-blue-400 fixed w-full top-0 h-16">
-        <RouterLink to="/" class="text-white hover:text-blue-400">Home</RouterLink>
+        <RouterLink to="/" class="text-white hover:text-blue-400">{{ $t('VAppHome') }}</RouterLink>
         <a href="https://github.com/vampi62/electrostore" class="block sm:hidden text-white hover:text-blue-400"
           target="_blank" rel="noopener noreferrer"><!-- for mobile -->
           <p class="space-x-4">
@@ -54,21 +65,21 @@ const containerClasses = computed(() => [
         </button>
         <div class="hidden sm:flex"><!-- for desktop -->
           <div class="flex space-x-4 justify-end">
-            <RouterLink to="/profile" class="text-white hover:text-blue-400">Profile</RouterLink>
+            <RouterLink to="/profile" class="text-white hover:text-blue-400">{{ $t('VAppProfile') }}</RouterLink>
             <RouterLink v-if="authStore.user?.role_user === 'admin'" to="/users" class="text-white hover:text-blue-400">
-              Admin</RouterLink>
+              {{ $t('VAppAdmin') }}</RouterLink>
             <a v-if="authStore.user" @click="authStore.logout()"
-              class="cursor-pointer text-white hover:text-blue-400">Logout</a>
+              class="cursor-pointer text-white hover:text-blue-400">{{ $t('VAppLogout') }}</a>
           </div>
         </div>
       </nav>
       <div class="fixed sm:hidden top-12 w-full z-50"><!-- for mobile -->
         <div v-show="showTopBar" class="flex flex-col space-y-4 bg-gray-800 p-4">
-          <RouterLink to="/profile" class="text-white hover:text-blue-400">Profile</RouterLink>
+          <RouterLink to="/profile" class="text-white hover:text-blue-400">{{ $t('VAppProfile') }}</RouterLink>
           <RouterLink v-if="authStore.user?.role_user === 'admin'" to="/users" class="text-white hover:text-blue-400">
-            Admin</RouterLink>
+            {{ $t('VAppAdmin') }}</RouterLink>
           <a v-if="authStore.user" @click="authStore.logout()"
-            class="cursor-pointer text-white hover:text-blue-400">Logout</a>
+            class="cursor-pointer text-white hover:text-blue-400">{{ $t('VAppLogout') }}</a>
           <div class="border-t-2 border-blue-400"></div>
           <ul class="mt-6 space-y-4">
             <li v-for="nav in listNav" :key="nav.name">
@@ -115,5 +126,6 @@ const containerClasses = computed(() => [
     <div :class="containerClasses">
       <RouterView />
     </div>
+    <NotificationContainer />
   </div>
 </template>

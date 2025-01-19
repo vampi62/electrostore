@@ -1,58 +1,190 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { onMounted, ref, computed, inject } from 'vue';
+import { router } from '@/helpers';
+
+const { addNotification } = inject('useNotification');
+
+import { Form, Field } from 'vee-validate';
+import * as Yup from 'yup';
+
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
+
 import { useRoute } from 'vue-router';
-import { useCommandsStore, useUsersStore, useItemsStore, useAuthStore } from '@/stores';
-
 const route = useRoute();
-const commandId = route.params.id;
+let commandId = route.params.id;
 
-// Accès au store pour récupérer les données de la commande
+import { useCommandsStore, useUsersStore, useItemsStore, useAuthStore } from '@/stores';
 const commandsStore = useCommandsStore();
 const usersStore = useUsersStore();
 const itemStore = useItemsStore();
 const authStore = useAuthStore();
-commandsStore.getCommandById(commandId);
-commandsStore.getCommentaireByInterval(commandId, 100, 0, ['user']);
-commandsStore.getDocumentByInterval(commandId);
-commandsStore.getItemByInterval(commandId, 100, 0, ['item']);
 
-// États pour gérer l'affichage des sections
 const showDocuments = ref(true);
 const showItems = ref(true);
 const showCommentaires = ref(true);
 
-// Fonctions pour basculer l'affichage des sections
+async function fetchData() {
+    if (commandId != "new") {
+        commandsStore.commandEdition = {
+            loading: false
+        };
+        try {
+            await commandsStore.getCommandById(commandId);
+        }
+        catch {
+            delete commandsStore.commands[commandId];
+            addNotification(t('VCommandNotFound'), 'error');
+            router.push('/commands');
+            return;
+        }
+        commandsStore.getCommentaireByInterval(commandId, 100, 0, ['user']);
+        commandsStore.getDocumentByInterval(commandId);
+        commandsStore.getItemByInterval(commandId, 100, 0, ['item']);
+        commandsStore.commandEdition = {
+            prix_command: commandsStore.commands[commandId].prix_command,
+            url_command: commandsStore.commands[commandId].url_command,
+            status_command: commandsStore.commands[commandId].status_command,
+            date_command: commandsStore.commands[commandId].date_command,
+            date_livraison_command: commandsStore.commands[commandId].date_livraison_command,
+            loading: false
+        };
+    } else {
+        commandsStore.commandEdition = {
+            loading: false
+        };
+        showDocuments.value = false;
+        showItems.value = false;
+        showCommentaires.value = false;
+    }
+}
+onMounted(() => {
+    fetchData();
+});
+
 const toggleDocuments = () => {
+    if (commandId == "new") {
+        return;
+    }
     showDocuments.value = !showDocuments.value;
 };
 const toggleItems = () => {
+    if (commandId == "new") {
+        return;
+    }
     showItems.value = !showItems.value;
 };
 const toggleCommentaires = () => {
+    if (commandId == "new") {
+        return;
+    }
     showCommentaires.value = !showCommentaires.value;
 };
 
-// document 
-const documentModalShow = ref(false);
-const documentModalData = ref({ id_command_document: null, name_command_document: '', document: null, isEdit: false });
-const documentOpenAddModal = () => {
-    documentModalData.value = { name_command_document: '', document: null, isEdit: false };
-    documentModalShow.value = true;
+// commande
+const commandDeleteModalShow = ref(false);
+const commandTypeStatus = ref([['En attente', t('VCommandStatus1')], ['En cours', t('VCommandStatus2')], ['Terminée', t('VCommandStatus3')], ['Annulée', t('VCommandStatus4')]]);
+const commandDeleteOpenModal = () => {
+    commandDeleteModalShow.value = true;
 }
-const documentOpenEditModal = (doc) => {
-    documentModalData.value = { id_command_document: doc.id_command_document, name_command_document: doc.name_command_document, document: null, isEdit: true };
-    documentModalShow.value = true;
-}
-const documentSave = () => {
-    if (documentModalData.value.isEdit) {
-        commandsStore.updateDocument(commandId, documentModalData.value.id_command_document, documentModalData.value);
-    } else {
-        commandsStore.createDocument(commandId, documentModalData.value);
+const commandSave = async () => {
+    if (commandsStore.commandEdition.status_command === 'Terminée') {
+        commandsStore.commandEdition.date_livraison_command = formatDateForDatetimeLocal(new Date());
     }
-    documentModalShow.value = false;
+    try {
+        await schemaCommand.validate(commandsStore.commandEdition, { abortEarly: false });
+        await commandsStore.createCommand(commandsStore.commandEdition);
+        addNotification(t('VCommandCreated'), 'success');
+    } catch (e) {
+        e.inner.forEach(error => {
+            addNotification(error.message, 'error');
+        });
+        return;
+    }
+    commandId = commandsStore.commandEdition.id_command;
+    router.push('/commands/' + commandsStore.commandEdition.id_command);
 }
-const documentDelete = (doc) => {
-    commandsStore.deleteDocument(commandId, doc.id_command_document);
+const commandUpdate = async () => {
+    if (commandsStore.commandEdition.status_command === 'Terminée' && commandsStore.commands[commandId].status_command !== 'Terminée') {
+        commandsStore.commandEdition.date_livraison_command = formatDateForDatetimeLocal(new Date());
+    }
+    try {
+        await schemaCommand.validate(commandsStore.commandEdition, { abortEarly: false });
+        await commandsStore.updateCommand(commandId, commandsStore.commandEdition);
+        addNotification(t('VCommandUpdated'), 'success');
+    } catch (e) {
+        e.inner.forEach(error => {
+            addNotification(error.message, 'error');
+        });
+        return;
+    }
+}
+const commandDelete = async () => {
+    try {
+        await commandsStore.deleteCommand(commandId);
+        addNotification(t('VCommandDeleted'), 'success');
+        router.push('/commands');
+    } catch (e) {
+        addNotification(t('VCommandDeleteError'), 'error');
+    }
+    commandDeleteModalShow.value = false;
+}
+const formatDateForDatetimeLocal = (date) => {
+    const pad = (num) => String(num).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+// document
+const documentAddModalShow = ref(false);
+const documentEditModalShow = ref(false);
+const documentDeleteModalShow = ref(false);
+const documentModalData = ref({ id_command_document: null, name_command_document: '', document: null, isEdit: false });
+const documentAddOpenModal = () => {
+    documentModalData.value = { name_command_document: '', document: null, isEdit: false };
+    documentAddModalShow.value = true;
+}
+const documentEditOpenModal = (doc) => {
+    documentModalData.value = { id_command_document: doc.id_command_document, name_command_document: doc.name_command_document, document: null, isEdit: true };
+    documentEditModalShow.value = true;
+}
+const documentDeleteOpenModal = (doc) => {
+    documentModalData.value = doc;
+    documentDeleteModalShow.value = true;
+}
+const documentAdd = async () => {
+    try {
+        schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
+        await commandsStore.createDocument(commandId, documentModalData.value);
+        addNotification(t('VCommandDocumentAdded'), 'success');
+    } catch (e) {
+        e.inner.forEach(error => {
+            addNotification(error.message, 'error');
+        });
+        return;
+    }
+    documentAddModalShow.value = false;
+}
+const documentEdit = async () => {
+    try {
+        schemaEditDocument.validateSync(documentModalData.value, { abortEarly: false });
+        await commandsStore.updateDocument(commandId, documentModalData.value.id_command_document, documentModalData.value);
+        addNotification(t('VCommandDocumentUpdated'), 'success');
+    } catch (e) {
+        e.inner.forEach(error => {
+            addNotification(error.message, 'error');
+        });
+        return;
+    }
+    documentEditModalShow.value = false;
+}
+const documentDelete = async () => {
+    try {
+        await commandsStore.deleteDocument(commandId, documentModalData.value.id_command_document);
+        addNotification(t('VCommandDocumentDeleted'), 'success');
+    } catch (e) {
+        addNotification(t('VCommandDocumentDeleteError'), 'error');
+    }
+    documentDeleteModalShow.value = false;
 }
 const handleFileUpload = (e) => {
     documentModalData.value.document = e.target.files[0];
@@ -84,7 +216,7 @@ const documentView = async (fileContent) => {
         a.click();
         document.body.removeChild(a);
     } else {
-        alert('Type de fichier non pris en charge');
+        addNotification(t('VCommandDocumentNotSupported'), 'error');
     }
 }
 const getMimeType = (type) => {
@@ -103,29 +235,52 @@ const getMimeType = (type) => {
         'gif': 'image/gif',
         'bmp': 'image/bmp'
     };
-
     return mimeTypes[type] || 'application/octet-stream';
 }
 
 // item
 const filterText = ref('');
 const itemModalShow = ref(false);
-const itemModalData = ref({ id_item: null, qte_command_item: 1, prix_command_item: 0, isEdit: false });
 const itemOpenAddModal = () => {
     itemModalShow.value = true;
     itemStore.getItemByInterval();
 }
-const itemSave = (idItem) => {
-    if (itemModalData.value.isEdit) {
-        commandsStore.updateItem(commandId, itemModalData.value.id_item, itemModalData.value);
+const itemSave = async (item) => {
+    if (commandsStore.items[commandId][item.id_item]) {
+        try {
+            schemaItem.validateSync(item.tmp, { abortEarly: false });
+            await commandsStore.updateItem(commandId, item.tmp.id_item, item.tmp);
+            addNotification(t('VCommandItemUpdated'), 'success');
+            item.tmp = null;
+        } catch (e) {
+            e.inner.forEach(error => {
+                addNotification(error.message, 'error');
+            });
+            return;
+        }
     } else {
-        itemModalData.value.id_item = idItem;
-        commandsStore.createItem(commandId, itemModalData.value);
+        try {
+            schemaItem.validateSync(item.tmp, { abortEarly: false });
+            await commandsStore.createItem(commandId, item.tmp);
+            addNotification(t('VCommandItemAdded'), 'success');
+            item.tmp = null;
+        } catch (e) {
+            e.inner.forEach(error => {
+                addNotification(error.message, 'error');
+            });
+            return;
+        }
     }
 }
-const itemDelete = (item) => {
-    commandsStore.deleteItem(commandId, item.id_item);
+const itemDelete = async (item) => {
+    try {
+        await commandsStore.deleteItem(commandId, item.id_item);
+        addNotification(t('VCommandItemDeleted'), 'success');
+    } catch (e) {
+        addNotification(t('VCommandItemDeleteError'), 'error');
+    }
 }
+
 const filteredItems = computed(() => {
     return filterText.value
         ? Object.values(itemStore.items).filter(item => item.nom_item.toLowerCase().includes(filterText.value.toLowerCase()))
@@ -136,69 +291,194 @@ const filteredItems = computed(() => {
 const commentaireModalShow = ref(false);
 const commentaireModalData = ref({});
 const commentaireFormNew = ref('');
-const commentaireEdit = (commentaire) => {
-    commentaire.editionTmp = commentaire.contenu_command_commentaire;
-    commentaire.edition = true;
-}
 const commentaireSave = async (commentaire = null) => {
     if (commentaire === null) {
-        if (commentaireFormNew.value.trim() !== '') {
+        try {
+            schemaCommentaire.validateSync({ contenu_command_commentaire: commentaireFormNew.value }, { abortEarly: false });
             await commandsStore.createCommentaire(commandId, {
                 contenu_command_commentaire: commentaireFormNew.value
             });
+            addNotification(t('VCommandCommentAdded'), 'success');
             commentaireFormNew.value = '';
+        } catch (e) {
+            e.inner.forEach(error => {
+                addNotification(error.message, 'error');
+            });
+            return;
         }
     } else {
-        if (commentaire.editionTmp !== null && commentaire.editionTmp.trim() !== '' && commentaire.editionTmp !== commentaire.contenu_command_commentaire) {
-            await commandsStore.updateCommentaire(commandId, commentaire.id_command_commentaire, {
-                contenu_command_commentaire: commentaire.editionTmp
+        try {
+            schemaCommentaire.validateSync(commentaire.tmp, { abortEarly: false });
+            await commandsStore.updateCommentaire(commandId, commentaire.id_command_commentaire, commentaire.tmp);
+            addNotification(t('VCommandCommentUpdated'), 'success');
+            commentaire.tmp = null;
+        } catch (e) {
+            e.inner.forEach(error => {
+                addNotification(error.message, 'error');
             });
+            return;
         }
-        commentaire.edition = false;
     }
 }
-const commentaireDelete = () => {
-    commandsStore.deleteCommentaire(commandId, commentaireModalData.value.id_command_commentaire);
+const commentaireDelete = async () => {
+    try {
+        await commandsStore.deleteCommentaire(commandId, commentaireModalData.value.id_command_commentaire);
+        addNotification(t('VCommandCommentDeleted'), 'success');
+    } catch (e) {
+        addNotification(t('VCommandCommentDeleteError'), 'error');
+    }
     commentaireModalShow.value = false;
 }
 const commentaireDeleteOpenModal = (commentaire) => {
     commentaireModalData.value = commentaire;
     commentaireModalShow.value = true;
 }
+
+const schemaCommand = Yup.object().shape({
+    prix_command: Yup.number()
+        .required(t('VCommandPriceRequired')),
+    url_command: Yup.string()
+        .url(t('VCommandUrlInvalid'))
+        .required(t('VCommandUrlRequired')),
+    date_command: Yup.date()
+        .typeError(t('VCommandDateInvalid'))
+        .required(t('VCommandDateRequired')),
+    status_command: Yup.string()
+        .required(t('VCommandStatusRequired')),
+    date_livraison_command: Yup.date()
+        .typeError(t('VCommandDateInvalid'))
+        .nullable()
+});
+
+const schemaAddDocument = Yup.object().shape({
+    name_command_document: Yup.string()
+        .required(t('VCommandDocumentNameRequired')),
+    document: Yup.mixed()
+        .required(t('VCommandDocumentRequired'))
+        .test('fileSize', t('VCommandDocumentSize'), value => !value || value?.size <= 2000000)
+});
+const schemaEditDocument = Yup.object().shape({
+    name_command_document: Yup.string()
+        .required(t('VCommandDocumentNameRequired')),
+    document: Yup.mixed()
+        .nullable()
+});
+
+const schemaItem = Yup.object().shape({
+    qte_command_item: Yup.number()
+        .required(t('VCommandItemQuantityRequired'))
+        .min(1, t('VCommandItemQuantityMin')),
+    prix_command_item: Yup.number()
+        .required(t('VCommandItemPriceRequired'))
+        .min(1, t('VCommandItemPriceMin'))
+});
+
+const schemaCommentaire = Yup.object().shape({
+    contenu_command_commentaire: Yup.string()
+        .required(t('VCommandCommentRequired'))
+});
+
 </script>
 <template>
-    <h2 class="text-2xl font-bold mb-4">Commande</h2>
-    <div v-if="!commandsStore.commands[commandId].loading">
-        <div v-if="commandsStore.commands[commandId]" class="mb-6">
-            <p class="text-gray-700"><span class="font-semibold">ID: </span>{{
-                commandsStore.commands[commandId].id_command }}</p>
-            <p class="text-gray-700"><span class="font-semibold">Prix: </span>{{
-                commandsStore.commands[commandId].prix_command }}</p>
-            <p class="text-gray-700"><span class="font-semibold">URL: </span>{{
-                commandsStore.commands[commandId].url_command }}</p>
-            <p class="text-gray-700"><span class="font-semibold">Status: </span> {{
-                commandsStore.commands[commandId].status_command }}</p>
-            <p class="text-gray-700"><span class="font-semibold">Date: </span>{{
-                commandsStore.commands[commandId].date_command }}</p>
-            <p class="text-gray-700"><span class="font-semibold">Date de Livraison: </span>{{
-                commandsStore.commands[commandId].date_livraison_command }}</p>
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold mb-4">{{ $t('VCommandTitle') }}</h2>
+        <div class="flex space-x-4">
+            <button type="button" @click="commandSave" v-if="commandId == 'new'"
+                class="bg-blue-500 text-white px-4 py-2 rounded">
+                <span v-show="commandsStore.commandEdition.loading"
+                    class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{ $t('VCommandAdd') }}</button>
+            <button type="button" @click="commandUpdate" v-else class="bg-blue-500 text-white px-4 py-2 rounded">
+                <span v-show="commandsStore.commandEdition.loading"
+                    class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{ $t('VCommandUpdate') }}</button>
+            <button type="button" @click="commandDeleteOpenModal" v-if="commandId != 'new'"
+                class="bg-red-500 text-white px-4 py-2 rounded">Supprimer</button>
+            <RouterLink to="/commands" class="bg-gray-300 text-gray-800 px-4 py-2 rounded">{{ $t('VCommandBack') }}</RouterLink>
         </div>
-        <div v-if="!commandsStore.documentsLoading" class="mb-6">
-            <h3 @click="toggleDocuments" class="text-xl font-semibold cursor-pointer mb-2">
-                Documents ({{ commandsStore.documents[commandId] ?
+    </div>
+    <div v-if="commandsStore.commands[commandId] || commandId == 'new'">
+        <div class="mb-6">
+            <Form :validation-schema="schemaCommand" v-slot="{ errors }" @submit.prevent="">
+                <table class="table-auto text-gray-700">
+                    <tbody>
+                        <tr>
+                            <td class="font-semibold pr-4 align-text-top">{{ $t('VCommandPrice') }}:</td>
+                            <td class="flex flex-col">
+                                <Field name="prix_command" type="text"
+                                    v-model="commandsStore.commandEdition.prix_command"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+                                    :class="{ 'border-red-500': errors.prix_command }" />
+                                <span class="text-red-500 h-5 w-80 text-sm">{{ errors.prix_command || ' ' }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="font-semibold pr-4 align-text-top">{{ $t('VCommandUrl') }}:</td>
+                            <td class="flex flex-col">
+                                <Field name="url_command" type="text" v-model="commandsStore.commandEdition.url_command"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+                                    :class="{ 'border-red-500': errors.url_command }" />
+                                <span class="text-red-500 h-5 w-80 text-sm">{{ errors.url_command || ' ' }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="font-semibold pr-4 align-text-top">{{ $t('VCommandDate') }}:</td>
+                            <td class="flex flex-col">
+                                <!-- format date permit is only YYYY-MM-DDTHH-mm-->
+                                <Field name="date_command" type="datetime-local"
+                                    v-model="commandsStore.commandEdition.date_command"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+                                    :class="{ 'border-red-500': errors.date_command }" />
+                                <span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_command || ' ' }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="font-semibold pr-4 align-text-top">{{ $t('VCommandStatus') }}:</td>
+                            <td class="flex flex-col">
+                                <Field name="status_command" as="select"
+                                    v-model="commandsStore.commandEdition.status_command"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+                                    :class="{ 'border-red-500': errors.status_command }">
+                                    <option value="" disabled>-- Sélectionnez un status --</option>
+                                    <option v-for="status in commandTypeStatus" :key="status" :value="status[0]">{{ status[1]
+                                        }}
+                                    </option>
+                                </Field>
+                                <span class="text-red-500 h-5 w-80 text-sm">{{ errors.status_command || ' ' }}</span>
+                            </td>
+                        </tr>
+                        <tr class="pb-4">
+                            <td class="font-semibold pr-4 align-text-top">{{ $t('VCommandDeliveryDate') }}:</td>
+                            <td class="flex flex-col">
+                                <Field name="date_livraison_command" type="datetime-local"
+                                    v-model="commandsStore.commandEdition.date_livraison_command"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+                                    :class="{ 'border-red-500': errors.date_livraison_command }" disabled />
+                                <span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_livraison_command || ' '
+                                    }}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </Form>
+        </div>
+        <div class="mb-6 bg-gray-100 p-2 rounded">
+            <h3 @click="toggleDocuments" class="text-xl font-semibold  bg-gray-400 p-2 rounded"
+                :class="{ 'cursor-pointer': !commandsStore.documentsLoading, 'cursor-not-allowed': commandId == 'new' }">
+                {{ $t('VCommandDocuments') }} ({{ commandsStore.documents[commandId] ?
                     Object.keys(commandsStore.documents[commandId]).length : 0 }})
             </h3>
-            <div v-if="showDocuments">
-                <button @click="documentOpenAddModal" class="bg-blue-500 text-white px-4 py-2 rounded mb-4">
-                    Ajouter un document
+            <div v-if="!commandsStore.documentsLoading && showDocuments" class="p-2">
+                <button type="button" @click="documentAddOpenModal"
+                    class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
+                    {{ $t('VCommandAddDocument') }}
                 </button>
                 <div class="overflow-x-auto max-h-64 overflow-y-auto">
                     <table class="min-w-full table-auto">
                         <thead>
                             <tr>
-                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">Nom</th>
-                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">Type</th>
-                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">Actions</th>
+                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('VCommandDocumentName') }}</th>
+                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('VCommandDocumentType') }}</th>
+                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('VCommandDocumentDate') }}</th>
+                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('VCommandDocumentActions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -206,11 +486,17 @@ const commentaireDeleteOpenModal = (commentaire) => {
                                 :key="document.id_command_document">
                                 <td class="px-4 py-2 border-b border-gray-200">{{ document.name_command_document }}</td>
                                 <td class="px-4 py-2 border-b border-gray-200">{{ document.type_command_document }}</td>
+                                <td class="px-4 py-2 border-b border-gray-200">{{ document.date_command_document }}</td>
                                 <td class="px-4 py-2 border-b border-gray-200 flex space-x-2">
-                                    <button @click="documentOpenEditModal(document)" class="text-blue-500">Editer</button>
-                                    <button @click="documentView(document)" class="text-green-500">Afficher</button>
-                                    <button @click="documentDownload(document)" class="text-yellow-500">Telecharger</button>
-                                    <button @click="documentDelete(document)" class="text-red-500">Supprimer</button>
+                                    <font-awesome-icon icon="fa-solid fa-edit" @click="documentEditOpenModal(document)"
+                                        class="text-blue-500 cursor-pointer hover:text-blue-600" />
+                                    <font-awesome-icon icon="fa-solid fa-eye" @click="documentView(document)"
+                                        class="text-green-500 cursor-pointer hover:text-green-600" />
+                                    <font-awesome-icon icon="fa-solid fa-download" @click="documentDownload(document)"
+                                        class="text-yellow-500 cursor-pointer hover:text-yellow-600" />
+                                    <font-awesome-icon icon="fa-solid fa-trash"
+                                        @click="documentDeleteOpenModal(document)"
+                                        class="text-red-500 cursor-pointer hover:text-red-600" />
                                 </td>
                             </tr>
                         </tbody>
@@ -218,32 +504,67 @@ const commentaireDeleteOpenModal = (commentaire) => {
                 </div>
             </div>
         </div>
-        <div v-if="!commandsStore.itemsLoading" class="mb-6">
-            <h3 @click="toggleItems" class="text-xl font-semibold cursor-pointer mb-2">
-                Items ({{ commandsStore.items[commandId] ? Object.keys(commandsStore.items[commandId]).length : 0 }})
+        <div class="mb-6 bg-gray-100 p-2 rounded">
+            <h3 @click="toggleItems" class="text-xl font-semibold bg-gray-400 p-2 rounded"
+                :class="{ 'cursor-pointer': !commandsStore.itemsLoading, 'cursor-not-allowed': commandId == 'new' }">
+                {{ $t('VCommandItems') }} ({{ commandsStore.items[commandId] ? Object.keys(commandsStore.items[commandId]).length : 0 }})
             </h3>
-            <div v-if="showItems">
-                <button @click="itemOpenAddModal" class="bg-blue-500 text-white px-4 py-2 rounded-md">Ajouter Item</button>
+            <div v-if="!commandsStore.itemsLoading && showItems" class="p-2">
+                <button type="button" @click="itemOpenAddModal"
+                    class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
+                    {{ $t('VCommandAddItem') }}
+                </button>
                 <div class="overflow-x-auto max-h-64 overflow-y-auto">
                     <table class="min-w-full table-auto">
                         <thead>
                             <tr>
-                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">Nom Item</th>
-                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">Quantité</th>
-                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">Prix</th>
-                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">Actions</th>
+                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('VCommandItemName') }}</th>
+                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('VCommandItemQuantity') }}</th>
+                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('VCommandItemPrice') }}</th>
+                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('VCommandItemActions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="item in commandsStore.items[commandId]" :key="item.id_item">
-                                <td class="px-4 py-2 border-b border-gray-200">{{ itemStore.items[item.id_item].nom_item
-                                    }}
+                                <td class="px-4 py-2 border-b border-gray-200">{{ itemStore.items[item.id_item].nom_item }}
                                 </td>
-                                <td class="px-4 py-2 border-b border-gray-200">{{ item.qte_command_item }}</td>
-                                <td class="px-4 py-2 border-b border-gray-200">{{ item.prix_command_item }}</td>
                                 <td class="px-4 py-2 border-b border-gray-200">
-                                    <button @click="itemDelete(item)"
-                                        class="bg-red-500 text-white px-2 py-1 rounded">Retirer</button>
+                                    <template v-if="item.tmp">
+                                        <Form :validation-schema="schemaItem" v-slot="{ errors }">
+                                            <Field name="qte_command_item" type="number"
+                                                v-model="item.tmp.qte_command_item" class="w-20 p-2 border rounded-lg"
+                                                :class="{ 'border-red-500': errors.qte_command_item }" />
+                                        </Form>
+                                    </template>
+                                    <template v-else>
+                                        {{ item.qte_command_item }}
+                                    </template>
+                                </td>
+                                <td class="px-4 py-2 border-b border-gray-200">
+                                    <template v-if="item.tmp">
+                                        <Form :validation-schema="schemaItem" v-slot="{ errors }">
+                                            <Field name="prix_command_item" type="number"
+                                                v-model="item.tmp.prix_command_item" class="w-20 p-2 border rounded-lg"
+                                                :class="{ 'border-red-500': errors.prix_command_item }" />
+                                        </Form>
+                                    </template>
+                                    <template v-else>
+                                        {{ item.prix_command_item }}
+                                    </template>
+                                </td>
+                                <td class="px-4 py-2 border-b border-gray-200 space-x-2">
+                                    <template v-if="item.tmp">
+                                        <button type="button" @click="itemSave(item)"
+                                            class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">{{ $t('VCommandItemSave') }}</button>
+                                        <button type="button" @click="item.tmp = null"
+                                            class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">{{ $t('VCommandItemCancel') }}</button>
+                                    </template>
+                                    <template v-else>
+                                        <button type="button" @click="item.tmp = { ...item }"
+                                            class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">{{ $t('VCommandItemEdit') }}</button>
+                                        <button type="button" @click="itemDelete(item)"
+                                            class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">{{ $t('VCommandItemDelete') }}</button>
+                                    </template>
                                 </td>
                             </tr>
                         </tbody>
@@ -251,21 +572,25 @@ const commentaireDeleteOpenModal = (commentaire) => {
                 </div>
             </div>
         </div>
-        <div v-if="!commandsStore.commentairesLoading" class="mb-6">
-            <h3 @click="toggleCommentaires" class="text-xl font-semibold cursor-pointer mb-2">
-                Commentaires ({{ commandsStore.commentaires[commandId] ?
+        <div class="mb-6 bg-gray-100 p-2 rounded">
+            <h3 @click="toggleCommentaires" class="text-xl font-semibold bg-gray-400 p-2 rounded"
+                :class="{ 'cursor-pointer': !commandsStore.commentairesLoading, 'cursor-not-allowed': commandId == 'new' }">
+                {{ $t('VCommandCommentaires') }} ({{ commandsStore.commentaires[commandId] ?
                     Object.keys(commandsStore.commentaires[commandId]).length : 0 }})
             </h3>
-            <div v-if="showCommentaires">
+            <div v-if="!commandsStore.commentairesLoading && showCommentaires" class="p-2">
                 <!-- Zone de saisie de commentaire -->
-                <div class="flex items-center space-x-4">
-                    <input v-model="commentaireFormNew" type="text" placeholder="Ajouter un commentaire..."
-                        class="w-full p-2 border rounded-lg">
-                    <button @click="commentaireSave(null)"
-                        class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                        Publier
-                    </button>
-                </div>
+                <Form :validation-schema="schemaCommentaire" v-slot="{ errors }">
+                    <div class="flex items-center space-x-4">
+                        <Field name="contenu_command_commentaire" type="text" v-model="commentaireFormNew"
+                            placeholder="Ajouter un commentaire..." class="w-full p-2 border rounded-lg"
+                            :class="{ 'border-red-500': errors.contenu_command_commentaire }" />
+                        <button type="button" @click="commentaireSave(null)"
+                            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                            {{ $t('VCommandCommentAdd') }}
+                        </button>
+                    </div>
+                </Form>
                 <!-- Affichage des commentaires existants -->
                 <div class="space-y-4 overflow-x-auto max-h-64 overflow-y-auto">
                     <div v-for="commentaire in commandsStore.commentaires[commandId]"
@@ -283,65 +608,155 @@ const commentaireDeleteOpenModal = (commentaire) => {
                             </span>
                         </div>
                         <div class="text-center text-gray-800 mb-2">
-                            <template v-if="commentaire.edition">
-                                <textarea v-model="commentaire.editionTmp"
-                                    class="w-full p-2 border rounded-lg"></textarea>
-                                <div class="flex justify-end space-x-2 mt-2">
-                                    <button @click="commentaireSave(commentaire)"
-                                        class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
-                                        Valider
+                            <template v-if="commentaire.tmp">
+                                <Form :validation-schema="schemaCommentaire" v-slot="{ errors }">
+                                    <Field name="contenu_command_commentaire" type="text"
+                                        v-model="commentaire.tmp.contenu_command_commentaire"
+                                        class="w-full p-2 border rounded-lg"
+                                        :class="{ 'border-red-500': errors.contenu_command_commentaire }" />
+                                    <div class="flex justify-end space-x-2 mt-2">
+                                        <button type="button" @click="commentaireSave(commentaire)"
+                                            class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
+                                            {{ $t('VCommandCommentSave') }}
+                                        </button>
+                                        <button type="button" @click="commentaire.tmp = null"
+                                            class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
+                                            {{ $t('VCommandCommentCancel') }}
+                                        </button>
+                                    </div>
+                                </Form>
+                            </template>
+                            <template v-else>
+                                <div :class="{
+                                    'text-right': commentaire.id_user === authStore.user.id_user,
+                                    'text-left': commentaire.id_user !== authStore.user.id_user
+                                }">
+                                    {{ commentaire.contenu_command_commentaire }}
+                                </div>
+                                <!-- Boutons modifier/supprimer si conditions remplies -->
+                                <div v-if="commentaire.id_user === authStore.user.id_user || authStore.user.role === 'admin'"
+                                    class="flex justify-end space-x-2">
+                                    <button type="button" @click="commentaire.tmp = { ...commentaire }"
+                                        class="px-3 py-1 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500">
+                                        {{ $t('VCommandCommentEdit') }}
                                     </button>
-                                    <button @click="commentaire.edition = false"
-                                        class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-                                        Annuler
+                                    <button type="button" @click="commentaireDeleteOpenModal(commentaire)"
+                                        class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                                        {{ $t('VCommandCommentDelete') }}
                                     </button>
                                 </div>
                             </template>
-                            <template v-else>
-                                {{ commentaire.contenu_command_commentaire }}
-                            </template>
                         </div>
-
-                        <!-- Boutons modifier/supprimer si conditions remplies -->
-                        <template v-if="!commentaire.edition">
-                            <div v-if="commentaire.id_user === authStore.user.id_user || authStore.user.role === 'admin'"
-                                class="flex justify-end space-x-2">
-                                <button @click="commentaireEdit(commentaire)"
-                                    class="px-3 py-1 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500">
-                                    Modifier
-                                </button>
-                                <button @click="commentaireDeleteOpenModal(commentaire)"
-                                    class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
-                                    Supprimer
-                                </button>
-                            </div>
-                        </template>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     <div v-else>
-        <div>chargement</div>
+        <div>{{ $t('VCommandLoading') }}</div>
     </div>
 
-    <div v-if="documentModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-        <div class="bg-white p-6 rounded shadow-lg w-96">
-            <h2 class="text-xl mb-4">{{ documentModalData.isEdit ? 'Editer' : 'Ajouter' }} un document</h2>
-            <input v-model="documentModalData.name_command_document" type="text" placeholder="Nom du document"
-                class="w-full p-2 mb-4 border rounded" />
-            <input @change="handleFileUpload" type="file" class="w-full p-2 mb-4" />
-            <div class="flex justify-end space-x-2">
-                <button @click="documentModalShow = false" class="px-4 py-2 bg-gray-300 rounded">Annuler</button>
-                <button @click="documentSave" class="px-4 py-2 bg-blue-500 text-white rounded">Enregistrer</button>
+    <div v-if="commandDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+        @click="commandDeleteModalShow = false">
+        <div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
+            <h2 class="text-xl mb-4">{{ $t('VCommandDeleteTitle') }}</h2>
+            <p>{{ $t('VCommandDeleteText') }}</p>
+            <div class="flex justify-end space-x-4 mt-4">
+                <button type="button" @click="commandDelete()"
+                    class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                    {{ $t('VCommandDeleteConfirm') }}
+                </button>
+                <button type="button" @click="commandDeleteModalShow = false"
+                    class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
+                    {{ $t('VCommandDeleteCancel') }}
+                </button>
             </div>
         </div>
     </div>
-    <div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg shadow-lg w-3/4 p-6">
+
+    <div v-if="documentAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+        @click="documentAddModalShow = false">
+        <div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
+            <Form :validation-schema="schemaAddDocument" v-slot="{ errors }">
+                <h2 class="text-xl mb-4">{{ $t('VCommandDocumentAddTitle') }}</h2>
+                <div class="flex flex-col">
+                    <div class="flex flex-col">
+                        <Field name="name_command_document" type="text"
+                            v-model="documentModalData.name_command_document" placeholder="Nom du document"
+                            class="w-full p-2 border rounded"
+                            :class="{ 'border-red-500': errors.name_command_document }" />
+                        <span class="text-red-500 h-5 w-80 text-sm">{{ errors.name_command_document || ' ' }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
+                            :class="{ 'border-red-500': errors.document }" />
+                        <span class="h-5 w-80 text-sm">{{ $t('VCommandDocumentSize') }}</span>
+                        <span class="text-red-500 h-5 w-80 text-sm">{{ errors.document || ' ' }}</span>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" @click="documentAddModalShow = false"
+                        class="px-4 py-2 bg-gray-300 rounded">{{ $t('VCommandDocumentCancel') }}</button>
+                    <button type="button" @click="documentAdd"
+                        class="px-4 py-2 bg-blue-500 text-white rounded">{{ $t('VCommandDocumentAdd') }}</button>
+                </div>
+            </Form>
+        </div>
+    </div>
+    <div v-if="documentEditModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+        @click="documentEditModalShow = false">
+        <div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
+            <Form :validation-schema="schemaEditDocument" v-slot="{ errors }">
+                <h2 class="text-xl mb-4">{{ $t('VCommandDocumentEditTitle') }}</h2>
+                <div class="flex flex-col">
+                    <div class="flex flex-col">
+                        <Field name="name_command_document" type="text"
+                            v-model="documentModalData.name_command_document" placeholder="Nom du document"
+                            class="w-full p-2 border rounded"
+                            :class="{ 'border-red-500': errors.name_command_document }" />
+                        <span class="text-red-500 h-5 w-80 text-sm">{{ errors.name_command_document || ' ' }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
+                            :class="{ 'border-red-500': errors.document }" />
+                        <span class="h-5 w-80 text-sm">{{ $t('VCommandDocumentSize') }}</span>
+                        <span class="text-red-500 h-5 w-80 text-sm">{{ errors.document || ' ' }}</span>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" @click="documentEditModalShow = false"
+                        class="px-4 py-2 bg-gray-300 rounded">{{ $t('VCommandDocumentCancel') }}</button>
+                    <button type="button" @click="documentEdit"
+                        class="px-4 py-2 bg-blue-500 text-white rounded">{{ $t('VCommandDocumentEdit') }}</button>
+                </div>
+            </Form>
+        </div>
+    </div>
+    <div v-if="documentDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+        @click="documentDeleteModalShow = false">
+        <div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
+            <h2 class="text-xl mb-4">{{ $t('VCommandDocumentDeleteTitle') }}</h2>
+            <p>{{ $t('VCommandDocumentDeleteText') }}</p>
+            <div class="flex justify-end space-x-4 mt-4">
+                <button type="button" @click="documentDelete()"
+                    class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                    {{ $t('VCommandDocumentDeleteConfirm') }}
+                </button>
+                <button type="button" @click="documentDeleteModalShow = false"
+                    class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
+                    {{ $t('VCommandDocumentCancel') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
+        @click="itemModalShow = false">
+        <div class="bg-white rounded-lg shadow-lg w-3/4 p-6" @click.stop>
             <div class="flex justify-between items-center border-b pb-3">
-                <h2 class="text-2xl font-semibold">Liste des Items</h2>
-                <button @click="itemModalShow = false" class="text-gray-500 hover:text-gray-700">&times;</button>
+                <h2 class="text-2xl font-semibold">{{ $t('VCommandItemTitle') }}</h2>
+                <button type="button" @click="itemModalShow = false"
+                    class="text-gray-500 hover:text-gray-700">&times;</button>
             </div>
 
             <!-- Filtres -->
@@ -354,24 +769,64 @@ const commentaireDeleteOpenModal = (commentaire) => {
                 <table class="min-w-full bg-white border border-gray-200">
                     <thead class="bg-gray-100 sticky top-0">
                         <tr>
-                            <th class="px-4 py-2 border-b">Nom Item</th>
-                            <th class="px-4 py-2 border-b">Prix</th>
-                            <th class="px-4 py-2 border-b">Commander</th>
+                            <th class="px-4 py-2 border-b">{{ $t('VCommandItemName') }}</th>
+                            <th class="px-4 py-2 border-b">{{ $t('VCommandItemQuantity') }}</th>
+                            <th class="px-4 py-2 border-b">{{ $t('VCommandItemPrice') }}</th>
+                            <th class="px-4 py-2 border-b">{{ $t('VCommandItemActions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="item in filteredItems" :key="item.id_item">
                             <td class="px-4 py-2 border-b">{{ item.nom_item }}</td>
-                            <td class="px-4 py-2 border-b">{{ item.prix_item }}</td>
                             <td class="px-4 py-2 border-b">
-                                <div v-if="commandsStore.items[commandId][item.id_item]">
-                                    <button @click="itemDelete(item)"
-                                        class="bg-red-500 text-white px-2 py-1 rounded">Retirer</button>
-                                </div>
-                                <div v-else>
-                                    <button @click="itemSave(item.id_item)"
-                                        class="bg-green-500 text-white px-2 py-1 rounded">Ajouter</button>
-                                </div>
+                                <template v-if="item.tmp">
+                                    <Form :validation-schema="schemaItem" v-slot="{ errors }">
+                                        <Field name="qte_command_item" type="number"
+                                            v-model="item.tmp.qte_command_item"
+                                            class="w-20 p-2 border rounded-lg"
+                                            :class="{ 'border-red-500': errors.qte_command_item }" />
+                                    </Form>
+                                </template>
+                                <template v-else-if="commandsStore.items[commandId][item.id_item]">
+                                    <div>{{ commandsStore.items[commandId][item.id_item].qte_command_item }}</div>
+                                </template>
+                                <template v-else>
+                                    <div></div>
+                                </template>
+                            </td>
+                            <td class="px-4 py-2 border-b">
+                                <template v-if="item.tmp">
+                                    <Form :validation-schema="schemaItem" v-slot="{ errors }">
+                                        <Field name="prix_command_item" type="number"
+                                            v-model="item.tmp.prix_command_item"
+                                            class="w-20 p-2 border rounded-lg"
+                                            :class="{ 'border-red-500': errors.prix_command_item }" />
+                                    </Form>
+                                </template>
+                                <template v-else-if="commandsStore.items[commandId][item.id_item]">
+                                        <div>{{ commandsStore.items[commandId][item.id_item].prix_command_item }}</div>
+                                </template>
+                                <template v-else>
+                                    <div></div>
+                                </template>
+                            </td>
+                            <td class="px-4 py-2 border-b">
+                                <template v-if="item.tmp">
+                                    <button type="button" @click="itemSave(item)"
+                                        class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">{{ $t('VCommandItemSave') }}</button>
+                                    <button type="button"
+                                        @click="item.tmp = null"
+                                        class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">{{ $t('VCommandItemCancel') }}</button>
+                                </template>
+                                <template v-else>
+                                    <button v-if="!commandsStore.items[commandId][item.id_item]" type="button" @click="item.tmp = {prix_command_item : 1, qte_command_item : 1, id_item : item.id_item}"
+                                        class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">{{ $t('VCommandItemAdd') }}</button>
+                                    <button v-else type="button"
+                                        @click="item.tmp = { ...commandsStore.items[commandId][item.id_item] }"
+                                        class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">{{ $t('VCommandItemEdit') }}</button>
+                                    <button type="button" @click="itemDelete(item)"
+                                        class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">{{ $t('VCommandItemDelete') }}</button>
+                                </template>
                             </td>
                         </tr>
                     </tbody>
@@ -379,18 +834,19 @@ const commentaireDeleteOpenModal = (commentaire) => {
             </div>
         </div>
     </div>
-    <div v-if="commentaireModalShow" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg">
-            <h2 class="text-lg font-semibold">Confirmer la suppression</h2>
-            <p>Voulez-vous vraiment supprimer ce commentaire ?</p>
+    <div v-if="commentaireModalShow" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
+        @click="commentaireModalShow = false">
+        <div class="bg-white p-6 rounded-lg shadow-lg" @click.stop>
+            <h2 class="text-lg font-semibold">{{ $t('VCommandCommentDeleteTitle') }}</h2>
+            <p>{{ $t('VCommandCommentDeleteText') }}</p>
             <div class="flex justify-end space-x-4 mt-4">
-                <button @click="commentaireDelete()"
+                <button type="button" @click="commentaireDelete()"
                     class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-                    Oui, supprimer
+                    {{ $t('VCommandCommentDeleteConfirm') }}
                 </button>
-                <button @click="commentaireModalShow = false"
+                <button type="button" @click="commentaireModalShow = false"
                     class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-                    Annuler
+                    {{ $t('VCommandCommentDeleteCancel') }}
                 </button>
             </div>
         </div>

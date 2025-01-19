@@ -194,7 +194,7 @@ export const useItemsStore = defineStore({
             }
         },
         async createItem(params) {
-            this.itemEdition = { loading: true };
+            this.itemEdition.loading = true;
             this.itemEdition = await fetchWrapper.post({
                 url: `${baseUrl}/item`,
                 useToken: "access",
@@ -203,7 +203,7 @@ export const useItemsStore = defineStore({
             this.items[this.itemEdition.id_item] = this.itemEdition;
         },
         async updateItem(id, params) {
-            this.itemEdition = { loading: true };
+            this.itemEdition.loading = true;
             this.itemEdition = await fetchWrapper.put({
                 url: `${baseUrl}/item/${id}`,
                 useToken: "access",
@@ -215,7 +215,7 @@ export const useItemsStore = defineStore({
             }
         },
         async deleteItem(id) {
-            this.itemEdition = { loading: true };
+            this.itemEdition.loading = true;
             this.itemEdition = await fetchWrapper.delete({
                 url: `${baseUrl}/item/${id}`,
                 useToken: "access"
