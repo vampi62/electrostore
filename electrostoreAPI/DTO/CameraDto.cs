@@ -74,12 +74,14 @@ public record CameraLightDto
 }
 public record CameraStatusDto
 {
-    public float uptime { get; init; }
-    public string espModel { get; init; }
-    public float espTemperature { get; init; }
-    public int ringLightPower { get; init; }
-    public string versionScanBox { get; init; }
-    public string cameraResolution { get; init; }
-    public string cameraPID { get; init; }
-    public string wifiSignalStrength { get; init; }
+    public bool network { get; init; }
+    public int statusCode { get; init; }
+    public float? uptime { get; init; }
+    public string? espModel { get; init; }
+    public float? espTemperature { get; init; }
+    public int? ringLightPower { get; init; }
+    public string? versionScanBox { get; init; }
+    public string? cameraResolution { get; init; }
+    public string? cameraPID { get; init; }
+    public string? wifiSignalStrength { get; init; }
 }

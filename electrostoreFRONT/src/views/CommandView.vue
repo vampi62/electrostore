@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, computed, inject } from 'vue';
+import { onMounted, onBeforeUnmount , ref, computed, inject } from 'vue';
 import { router } from '@/helpers';
 
 const { addNotification } = inject('useNotification');
@@ -12,7 +12,7 @@ const { t } = useI18n();
 
 import { useRoute } from 'vue-router';
 const route = useRoute();
-let commandId = route.params.id;
+const commandId = route.params.id;
 
 import { useCommandsStore, useUsersStore, useItemsStore, useAuthStore } from '@/stores';
 const commandsStore = useCommandsStore();
@@ -34,7 +34,7 @@ async function fetchData() {
         }
         catch {
             delete commandsStore.commands[commandId];
-            addNotification(t('VCommandNotFound'), 'error');
+            addNotification(t('command.VCommandNotFound'), 'error');
             router.push('/commands');
             return;
         }
@@ -61,6 +61,11 @@ async function fetchData() {
 onMounted(() => {
     fetchData();
 });
+onBeforeUnmount(() => {
+    commandsStore.commandEdition = {
+        loading: false
+    };
+});
 
 const toggleDocuments = () => {
     if (commandId == "new") {
@@ -83,7 +88,7 @@ const toggleCommentaires = () => {
 
 // commande
 const commandDeleteModalShow = ref(false);
-const commandTypeStatus = ref([['En attente', t('VCommandStatus1')], ['En cours', t('VCommandStatus2')], ['Terminée', t('VCommandStatus3')], ['Annulée', t('VCommandStatus4')]]);
+const commandTypeStatus = ref([['En attente', t('command.VCommandStatus1')], ['En cours', t('command.VCommandStatus2')], ['Terminée', t('command.VCommandStatus3')], ['Annulée', t('command.VCommandStatus4')]]);
 const commandDeleteOpenModal = () => {
     commandDeleteModalShow.value = true;
 }
@@ -94,7 +99,7 @@ const commandSave = async () => {
     try {
         await schemaCommand.validate(commandsStore.commandEdition, { abortEarly: false });
         await commandsStore.createCommand(commandsStore.commandEdition);
-        addNotification(t('VCommandCreated'), 'success');
+        addNotification(t('command.VCommandCreated'), 'success');
     } catch (e) {
         e.inner.forEach(error => {
             addNotification(error.message, 'error');
@@ -111,7 +116,7 @@ const commandUpdate = async () => {
     try {
         await schemaCommand.validate(commandsStore.commandEdition, { abortEarly: false });
         await commandsStore.updateCommand(commandId, commandsStore.commandEdition);
-        addNotification(t('VCommandUpdated'), 'success');
+        addNotification(t('command.VCommandUpdated'), 'success');
     } catch (e) {
         e.inner.forEach(error => {
             addNotification(error.message, 'error');
@@ -122,10 +127,10 @@ const commandUpdate = async () => {
 const commandDelete = async () => {
     try {
         await commandsStore.deleteCommand(commandId);
-        addNotification(t('VCommandDeleted'), 'success');
+        addNotification(t('command.VCommandDeleted'), 'success');
         router.push('/commands');
     } catch (e) {
-        addNotification(t('VCommandDeleteError'), 'error');
+        addNotification(t('command.VCommandDeleteError'), 'error');
     }
     commandDeleteModalShow.value = false;
 }
@@ -155,7 +160,7 @@ const documentAdd = async () => {
     try {
         schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
         await commandsStore.createDocument(commandId, documentModalData.value);
-        addNotification(t('VCommandDocumentAdded'), 'success');
+        addNotification(t('command.VCommandDocumentAdded'), 'success');
     } catch (e) {
         e.inner.forEach(error => {
             addNotification(error.message, 'error');
@@ -168,7 +173,7 @@ const documentEdit = async () => {
     try {
         schemaEditDocument.validateSync(documentModalData.value, { abortEarly: false });
         await commandsStore.updateDocument(commandId, documentModalData.value.id_command_document, documentModalData.value);
-        addNotification(t('VCommandDocumentUpdated'), 'success');
+        addNotification(t('command.VCommandDocumentUpdated'), 'success');
     } catch (e) {
         e.inner.forEach(error => {
             addNotification(error.message, 'error');
@@ -180,9 +185,9 @@ const documentEdit = async () => {
 const documentDelete = async () => {
     try {
         await commandsStore.deleteDocument(commandId, documentModalData.value.id_command_document);
-        addNotification(t('VCommandDocumentDeleted'), 'success');
+        addNotification(t('command.VCommandDocumentDeleted'), 'success');
     } catch (e) {
-        addNotification(t('VCommandDocumentDeleteError'), 'error');
+        addNotification(t('command.VCommandDocumentDeleteError'), 'error');
     }
     documentDeleteModalShow.value = false;
 }
@@ -216,7 +221,7 @@ const documentView = async (fileContent) => {
         a.click();
         document.body.removeChild(a);
     } else {
-        addNotification(t('VCommandDocumentNotSupported'), 'error');
+        addNotification(t('command.VCommandDocumentNotSupported'), 'error');
     }
 }
 const getMimeType = (type) => {
@@ -250,7 +255,7 @@ const itemSave = async (item) => {
         try {
             schemaItem.validateSync(item.tmp, { abortEarly: false });
             await commandsStore.updateItem(commandId, item.tmp.id_item, item.tmp);
-            addNotification(t('VCommandItemUpdated'), 'success');
+            addNotification(t('command.VCommandItemUpdated'), 'success');
             item.tmp = null;
         } catch (e) {
             e.inner.forEach(error => {
@@ -262,7 +267,7 @@ const itemSave = async (item) => {
         try {
             schemaItem.validateSync(item.tmp, { abortEarly: false });
             await commandsStore.createItem(commandId, item.tmp);
-            addNotification(t('VCommandItemAdded'), 'success');
+            addNotification(t('command.VCommandItemAdded'), 'success');
             item.tmp = null;
         } catch (e) {
             e.inner.forEach(error => {
@@ -275,9 +280,9 @@ const itemSave = async (item) => {
 const itemDelete = async (item) => {
     try {
         await commandsStore.deleteItem(commandId, item.id_item);
-        addNotification(t('VCommandItemDeleted'), 'success');
+        addNotification(t('command.VCommandItemDeleted'), 'success');
     } catch (e) {
-        addNotification(t('VCommandItemDeleteError'), 'error');
+        addNotification(t('command.VCommandItemDeleteError'), 'error');
     }
 }
 
@@ -298,7 +303,7 @@ const commentaireSave = async (commentaire = null) => {
             await commandsStore.createCommentaire(commandId, {
                 contenu_command_commentaire: commentaireFormNew.value
             });
-            addNotification(t('VCommandCommentAdded'), 'success');
+            addNotification(t('command.VCommandCommentAdded'), 'success');
             commentaireFormNew.value = '';
         } catch (e) {
             e.inner.forEach(error => {
@@ -310,7 +315,7 @@ const commentaireSave = async (commentaire = null) => {
         try {
             schemaCommentaire.validateSync(commentaire.tmp, { abortEarly: false });
             await commandsStore.updateCommentaire(commandId, commentaire.id_command_commentaire, commentaire.tmp);
-            addNotification(t('VCommandCommentUpdated'), 'success');
+            addNotification(t('command.VCommandCommentUpdated'), 'success');
             commentaire.tmp = null;
         } catch (e) {
             e.inner.forEach(error => {
@@ -323,9 +328,9 @@ const commentaireSave = async (commentaire = null) => {
 const commentaireDelete = async () => {
     try {
         await commandsStore.deleteCommentaire(commandId, commentaireModalData.value.id_command_commentaire);
-        addNotification(t('VCommandCommentDeleted'), 'success');
+        addNotification(t('command.VCommandCommentDeleted'), 'success');
     } catch (e) {
-        addNotification(t('VCommandCommentDeleteError'), 'error');
+        addNotification(t('command.VCommandCommentDeleteError'), 'error');
     }
     commentaireModalShow.value = false;
 }
@@ -336,72 +341,72 @@ const commentaireDeleteOpenModal = (commentaire) => {
 
 const schemaCommand = Yup.object().shape({
     prix_command: Yup.number()
-        .required(t('VCommandPriceRequired')),
+        .required(t('command.VCommandPriceRequired')),
     url_command: Yup.string()
-        .url(t('VCommandUrlInvalid'))
-        .required(t('VCommandUrlRequired')),
+        .url(t('command.VCommandUrlInvalid'))
+        .required(t('command.VCommandUrlRequired')),
     date_command: Yup.date()
-        .typeError(t('VCommandDateInvalid'))
-        .required(t('VCommandDateRequired')),
+        .typeError(t('command.VCommandDateInvalid'))
+        .required(t('command.VCommandDateRequired')),
     status_command: Yup.string()
-        .required(t('VCommandStatusRequired')),
+        .required(t('command.VCommandStatusRequired')),
     date_livraison_command: Yup.date()
-        .typeError(t('VCommandDateInvalid'))
+        .typeError(t('command.VCommandDateInvalid'))
         .nullable()
 });
 
 const schemaAddDocument = Yup.object().shape({
     name_command_document: Yup.string()
-        .required(t('VCommandDocumentNameRequired')),
+        .required(t('command.VCommandDocumentNameRequired')),
     document: Yup.mixed()
-        .required(t('VCommandDocumentRequired'))
-        .test('fileSize', t('VCommandDocumentSize'), value => !value || value?.size <= 2000000)
+        .required(t('command.VCommandDocumentRequired'))
+        .test('fileSize', t('command.VCommandDocumentSize'), value => !value || value?.size <= 2000000)
 });
 const schemaEditDocument = Yup.object().shape({
     name_command_document: Yup.string()
-        .required(t('VCommandDocumentNameRequired')),
+        .required(t('command.VCommandDocumentNameRequired')),
     document: Yup.mixed()
         .nullable()
 });
 
 const schemaItem = Yup.object().shape({
     qte_command_item: Yup.number()
-        .required(t('VCommandItemQuantityRequired'))
-        .min(1, t('VCommandItemQuantityMin')),
+        .required(t('command.VCommandItemQuantityRequired'))
+        .min(1, t('command.VCommandItemQuantityMin')),
     prix_command_item: Yup.number()
-        .required(t('VCommandItemPriceRequired'))
-        .min(1, t('VCommandItemPriceMin'))
+        .required(t('command.VCommandItemPriceRequired'))
+        .min(1, t('command.VCommandItemPriceMin'))
 });
 
 const schemaCommentaire = Yup.object().shape({
     contenu_command_commentaire: Yup.string()
-        .required(t('VCommandCommentRequired'))
+        .required(t('command.VCommandCommentRequired'))
 });
 
 </script>
 <template>
     <div class="flex items-center justify-between mb-4">
-        <h2 class="text-2xl font-bold mb-4">{{ $t('VCommandTitle') }}</h2>
+        <h2 class="text-2xl font-bold mb-4">{{ $t('command.VCommandTitle') }}</h2>
         <div class="flex space-x-4">
             <button type="button" @click="commandSave" v-if="commandId == 'new'"
-                class="bg-blue-500 text-white px-4 py-2 rounded">
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
                 <span v-show="commandsStore.commandEdition.loading"
-                    class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{ $t('VCommandAdd') }}</button>
-            <button type="button" @click="commandUpdate" v-else class="bg-blue-500 text-white px-4 py-2 rounded">
+                    class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{ $t('command.VCommandAdd') }}</button>
+            <button type="button" @click="commandUpdate" v-else class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
                 <span v-show="commandsStore.commandEdition.loading"
-                    class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{ $t('VCommandUpdate') }}</button>
+                    class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{ $t('command.VCommandUpdate') }}</button>
             <button type="button" @click="commandDeleteOpenModal" v-if="commandId != 'new'"
-                class="bg-red-500 text-white px-4 py-2 rounded">Supprimer</button>
-            <RouterLink to="/commands" class="bg-gray-300 text-gray-800 px-4 py-2 rounded">{{ $t('VCommandBack') }}</RouterLink>
+                class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Supprimer</button>
+            <RouterLink to="/commands" class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">{{ $t('command.VCommandBack') }}</RouterLink>
         </div>
     </div>
     <div v-if="commandsStore.commands[commandId] || commandId == 'new'">
-        <div class="mb-6">
+        <div class="mb-6 flex justify-between">
             <Form :validation-schema="schemaCommand" v-slot="{ errors }" @submit.prevent="">
                 <table class="table-auto text-gray-700">
                     <tbody>
                         <tr>
-                            <td class="font-semibold pr-4 align-text-top">{{ $t('VCommandPrice') }}:</td>
+                            <td class="font-semibold pr-4 align-text-top">{{ $t('command.VCommandPrice') }}:</td>
                             <td class="flex flex-col">
                                 <Field name="prix_command" type="text"
                                     v-model="commandsStore.commandEdition.prix_command"
@@ -411,7 +416,7 @@ const schemaCommentaire = Yup.object().shape({
                             </td>
                         </tr>
                         <tr>
-                            <td class="font-semibold pr-4 align-text-top">{{ $t('VCommandUrl') }}:</td>
+                            <td class="font-semibold pr-4 align-text-top">{{ $t('command.VCommandUrl') }}:</td>
                             <td class="flex flex-col">
                                 <Field name="url_command" type="text" v-model="commandsStore.commandEdition.url_command"
                                     class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
@@ -420,7 +425,7 @@ const schemaCommentaire = Yup.object().shape({
                             </td>
                         </tr>
                         <tr>
-                            <td class="font-semibold pr-4 align-text-top">{{ $t('VCommandDate') }}:</td>
+                            <td class="font-semibold pr-4 align-text-top">{{ $t('command.VCommandDate') }}:</td>
                             <td class="flex flex-col">
                                 <!-- format date permit is only YYYY-MM-DDTHH-mm-->
                                 <Field name="date_command" type="datetime-local"
@@ -431,7 +436,7 @@ const schemaCommentaire = Yup.object().shape({
                             </td>
                         </tr>
                         <tr>
-                            <td class="font-semibold pr-4 align-text-top">{{ $t('VCommandStatus') }}:</td>
+                            <td class="font-semibold pr-4 align-text-top">{{ $t('command.VCommandStatus') }}:</td>
                             <td class="flex flex-col">
                                 <Field name="status_command" as="select"
                                     v-model="commandsStore.commandEdition.status_command"
@@ -446,7 +451,7 @@ const schemaCommentaire = Yup.object().shape({
                             </td>
                         </tr>
                         <tr class="pb-4">
-                            <td class="font-semibold pr-4 align-text-top">{{ $t('VCommandDeliveryDate') }}:</td>
+                            <td class="font-semibold pr-4 align-text-top">{{ $t('command.VCommandDeliveryDate') }}:</td>
                             <td class="flex flex-col">
                                 <Field name="date_livraison_command" type="datetime-local"
                                     v-model="commandsStore.commandEdition.date_livraison_command"
@@ -459,26 +464,29 @@ const schemaCommentaire = Yup.object().shape({
                     </tbody>
                 </table>
             </Form>
+            <div>
+                <!-- TODO suivie commande -->
+            </div>
         </div>
         <div class="mb-6 bg-gray-100 p-2 rounded">
             <h3 @click="toggleDocuments" class="text-xl font-semibold  bg-gray-400 p-2 rounded"
-                :class="{ 'cursor-pointer': !commandsStore.documentsLoading, 'cursor-not-allowed': commandId == 'new' }">
-                {{ $t('VCommandDocuments') }} ({{ commandsStore.documents[commandId] ?
+                :class="{ 'cursor-pointer': !commandsStore.documentsLoading && commandId != 'new', 'cursor-not-allowed': commandId == 'new' }">
+                {{ $t('command.VCommandDocuments') }} ({{ commandsStore.documents[commandId] ?
                     Object.keys(commandsStore.documents[commandId]).length : 0 }})
             </h3>
             <div v-if="!commandsStore.documentsLoading && showDocuments" class="p-2">
                 <button type="button" @click="documentAddOpenModal"
                     class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
-                    {{ $t('VCommandAddDocument') }}
+                    {{ $t('command.VCommandAddDocument') }}
                 </button>
                 <div class="overflow-x-auto max-h-64 overflow-y-auto">
                     <table class="min-w-full table-auto">
                         <thead>
                             <tr>
-                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('VCommandDocumentName') }}</th>
-                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('VCommandDocumentType') }}</th>
-                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('VCommandDocumentDate') }}</th>
-                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('VCommandDocumentActions') }}</th>
+                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('command.VCommandDocumentName') }}</th>
+                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('command.VCommandDocumentType') }}</th>
+                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('command.VCommandDocumentDate') }}</th>
+                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('command.VCommandDocumentActions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -487,7 +495,7 @@ const schemaCommentaire = Yup.object().shape({
                                 <td class="px-4 py-2 border-b border-gray-200">{{ document.name_command_document }}</td>
                                 <td class="px-4 py-2 border-b border-gray-200">{{ document.type_command_document }}</td>
                                 <td class="px-4 py-2 border-b border-gray-200">{{ document.date_command_document }}</td>
-                                <td class="px-4 py-2 border-b border-gray-200 flex space-x-2">
+                                <td class="px-4 py-2 border-b border-gray-200 space-x-2">
                                     <font-awesome-icon icon="fa-solid fa-edit" @click="documentEditOpenModal(document)"
                                         class="text-blue-500 cursor-pointer hover:text-blue-600" />
                                     <font-awesome-icon icon="fa-solid fa-eye" @click="documentView(document)"
@@ -506,22 +514,22 @@ const schemaCommentaire = Yup.object().shape({
         </div>
         <div class="mb-6 bg-gray-100 p-2 rounded">
             <h3 @click="toggleItems" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-                :class="{ 'cursor-pointer': !commandsStore.itemsLoading, 'cursor-not-allowed': commandId == 'new' }">
-                {{ $t('VCommandItems') }} ({{ commandsStore.items[commandId] ? Object.keys(commandsStore.items[commandId]).length : 0 }})
+                :class="{ 'cursor-pointer': !commandsStore.itemsLoading && commandId != 'new', 'cursor-not-allowed': commandId == 'new' }">
+                {{ $t('command.VCommandItems') }} ({{ commandsStore.items[commandId] ? Object.keys(commandsStore.items[commandId]).length : 0 }})
             </h3>
             <div v-if="!commandsStore.itemsLoading && showItems" class="p-2">
                 <button type="button" @click="itemOpenAddModal"
                     class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
-                    {{ $t('VCommandAddItem') }}
+                    {{ $t('command.VCommandAddItem') }}
                 </button>
                 <div class="overflow-x-auto max-h-64 overflow-y-auto">
                     <table class="min-w-full table-auto">
                         <thead>
                             <tr>
-                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('VCommandItemName') }}</th>
-                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('VCommandItemQuantity') }}</th>
-                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('VCommandItemPrice') }}</th>
-                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('VCommandItemActions') }}</th>
+                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('command.VCommandItemName') }}</th>
+                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('command.VCommandItemQuantity') }}</th>
+                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('command.VCommandItemPrice') }}</th>
+                                <th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{ $t('command.VCommandItemActions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -555,15 +563,15 @@ const schemaCommentaire = Yup.object().shape({
                                 <td class="px-4 py-2 border-b border-gray-200 space-x-2">
                                     <template v-if="item.tmp">
                                         <button type="button" @click="itemSave(item)"
-                                            class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">{{ $t('VCommandItemSave') }}</button>
+                                            class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">{{ $t('command.VCommandItemSave') }}</button>
                                         <button type="button" @click="item.tmp = null"
-                                            class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">{{ $t('VCommandItemCancel') }}</button>
+                                            class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">{{ $t('command.VCommandItemCancel') }}</button>
                                     </template>
                                     <template v-else>
                                         <button type="button" @click="item.tmp = { ...item }"
-                                            class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">{{ $t('VCommandItemEdit') }}</button>
+                                            class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">{{ $t('command.VCommandItemEdit') }}</button>
                                         <button type="button" @click="itemDelete(item)"
-                                            class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">{{ $t('VCommandItemDelete') }}</button>
+                                            class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">{{ $t('command.VCommandItemDelete') }}</button>
                                     </template>
                                 </td>
                             </tr>
@@ -574,8 +582,8 @@ const schemaCommentaire = Yup.object().shape({
         </div>
         <div class="mb-6 bg-gray-100 p-2 rounded">
             <h3 @click="toggleCommentaires" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-                :class="{ 'cursor-pointer': !commandsStore.commentairesLoading, 'cursor-not-allowed': commandId == 'new' }">
-                {{ $t('VCommandCommentaires') }} ({{ commandsStore.commentaires[commandId] ?
+                :class="{ 'cursor-pointer': !commandsStore.commentairesLoading && commandId != 'new', 'cursor-not-allowed': commandId == 'new' }">
+                {{ $t('command.VCommandCommentaires') }} ({{ commandsStore.commentaires[commandId] ?
                     Object.keys(commandsStore.commentaires[commandId]).length : 0 }})
             </h3>
             <div v-if="!commandsStore.commentairesLoading && showCommentaires" class="p-2">
@@ -587,7 +595,7 @@ const schemaCommentaire = Yup.object().shape({
                             :class="{ 'border-red-500': errors.contenu_command_commentaire }" />
                         <button type="button" @click="commentaireSave(null)"
                             class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                            {{ $t('VCommandCommentAdd') }}
+                            {{ $t('command.VCommandCommentAdd') }}
                         </button>
                     </div>
                 </Form>
@@ -617,11 +625,11 @@ const schemaCommentaire = Yup.object().shape({
                                     <div class="flex justify-end space-x-2 mt-2">
                                         <button type="button" @click="commentaireSave(commentaire)"
                                             class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
-                                            {{ $t('VCommandCommentSave') }}
+                                            {{ $t('command.VCommandCommentSave') }}
                                         </button>
                                         <button type="button" @click="commentaire.tmp = null"
                                             class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-                                            {{ $t('VCommandCommentCancel') }}
+                                            {{ $t('command.VCommandCommentCancel') }}
                                         </button>
                                     </div>
                                 </Form>
@@ -638,11 +646,11 @@ const schemaCommentaire = Yup.object().shape({
                                     class="flex justify-end space-x-2">
                                     <button type="button" @click="commentaire.tmp = { ...commentaire }"
                                         class="px-3 py-1 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500">
-                                        {{ $t('VCommandCommentEdit') }}
+                                        {{ $t('command.VCommandCommentEdit') }}
                                     </button>
                                     <button type="button" @click="commentaireDeleteOpenModal(commentaire)"
                                         class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
-                                        {{ $t('VCommandCommentDelete') }}
+                                        {{ $t('command.VCommandCommentDelete') }}
                                     </button>
                                 </div>
                             </template>
@@ -653,22 +661,22 @@ const schemaCommentaire = Yup.object().shape({
         </div>
     </div>
     <div v-else>
-        <div>{{ $t('VCommandLoading') }}</div>
+        <div>{{ $t('command.VCommandLoading') }}</div>
     </div>
 
     <div v-if="commandDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
         @click="commandDeleteModalShow = false">
         <div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-            <h2 class="text-xl mb-4">{{ $t('VCommandDeleteTitle') }}</h2>
-            <p>{{ $t('VCommandDeleteText') }}</p>
+            <h2 class="text-xl mb-4">{{ $t('command.VCommandDeleteTitle') }}</h2>
+            <p>{{ $t('command.VCommandDeleteText') }}</p>
             <div class="flex justify-end space-x-4 mt-4">
                 <button type="button" @click="commandDelete()"
                     class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-                    {{ $t('VCommandDeleteConfirm') }}
+                    {{ $t('command.VCommandDeleteConfirm') }}
                 </button>
                 <button type="button" @click="commandDeleteModalShow = false"
                     class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-                    {{ $t('VCommandDeleteCancel') }}
+                    {{ $t('command.VCommandDeleteCancel') }}
                 </button>
             </div>
         </div>
@@ -678,7 +686,7 @@ const schemaCommentaire = Yup.object().shape({
         @click="documentAddModalShow = false">
         <div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
             <Form :validation-schema="schemaAddDocument" v-slot="{ errors }">
-                <h2 class="text-xl mb-4">{{ $t('VCommandDocumentAddTitle') }}</h2>
+                <h2 class="text-xl mb-4">{{ $t('command.VCommandDocumentAddTitle') }}</h2>
                 <div class="flex flex-col">
                     <div class="flex flex-col">
                         <Field name="name_command_document" type="text"
@@ -690,15 +698,15 @@ const schemaCommentaire = Yup.object().shape({
                     <div class="flex flex-col">
                         <Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
                             :class="{ 'border-red-500': errors.document }" />
-                        <span class="h-5 w-80 text-sm">{{ $t('VCommandDocumentSize') }}</span>
+                        <span class="h-5 w-80 text-sm">{{ $t('command.VCommandDocumentSize') }}</span>
                         <span class="text-red-500 h-5 w-80 text-sm">{{ errors.document || ' ' }}</span>
                     </div>
                 </div>
                 <div class="flex justify-end space-x-2">
                     <button type="button" @click="documentAddModalShow = false"
-                        class="px-4 py-2 bg-gray-300 rounded">{{ $t('VCommandDocumentCancel') }}</button>
+                        class="px-4 py-2 bg-gray-300 rounded">{{ $t('command.VCommandDocumentCancel') }}</button>
                     <button type="button" @click="documentAdd"
-                        class="px-4 py-2 bg-blue-500 text-white rounded">{{ $t('VCommandDocumentAdd') }}</button>
+                        class="px-4 py-2 bg-blue-500 text-white rounded">{{ $t('command.VCommandDocumentAdd') }}</button>
                 </div>
             </Form>
         </div>
@@ -707,7 +715,7 @@ const schemaCommentaire = Yup.object().shape({
         @click="documentEditModalShow = false">
         <div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
             <Form :validation-schema="schemaEditDocument" v-slot="{ errors }">
-                <h2 class="text-xl mb-4">{{ $t('VCommandDocumentEditTitle') }}</h2>
+                <h2 class="text-xl mb-4">{{ $t('command.VCommandDocumentEditTitle') }}</h2>
                 <div class="flex flex-col">
                     <div class="flex flex-col">
                         <Field name="name_command_document" type="text"
@@ -719,15 +727,15 @@ const schemaCommentaire = Yup.object().shape({
                     <div class="flex flex-col">
                         <Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
                             :class="{ 'border-red-500': errors.document }" />
-                        <span class="h-5 w-80 text-sm">{{ $t('VCommandDocumentSize') }}</span>
+                        <span class="h-5 w-80 text-sm">{{ $t('command.VCommandDocumentSize') }}</span>
                         <span class="text-red-500 h-5 w-80 text-sm">{{ errors.document || ' ' }}</span>
                     </div>
                 </div>
                 <div class="flex justify-end space-x-2">
                     <button type="button" @click="documentEditModalShow = false"
-                        class="px-4 py-2 bg-gray-300 rounded">{{ $t('VCommandDocumentCancel') }}</button>
+                        class="px-4 py-2 bg-gray-300 rounded">{{ $t('command.VCommandDocumentCancel') }}</button>
                     <button type="button" @click="documentEdit"
-                        class="px-4 py-2 bg-blue-500 text-white rounded">{{ $t('VCommandDocumentEdit') }}</button>
+                        class="px-4 py-2 bg-blue-500 text-white rounded">{{ $t('command.VCommandDocumentEdit') }}</button>
                 </div>
             </Form>
         </div>
@@ -735,16 +743,16 @@ const schemaCommentaire = Yup.object().shape({
     <div v-if="documentDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
         @click="documentDeleteModalShow = false">
         <div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-            <h2 class="text-xl mb-4">{{ $t('VCommandDocumentDeleteTitle') }}</h2>
-            <p>{{ $t('VCommandDocumentDeleteText') }}</p>
+            <h2 class="text-xl mb-4">{{ $t('command.VCommandDocumentDeleteTitle') }}</h2>
+            <p>{{ $t('command.VCommandDocumentDeleteText') }}</p>
             <div class="flex justify-end space-x-4 mt-4">
                 <button type="button" @click="documentDelete()"
                     class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-                    {{ $t('VCommandDocumentDeleteConfirm') }}
+                    {{ $t('command.VCommandDocumentDeleteConfirm') }}
                 </button>
                 <button type="button" @click="documentDeleteModalShow = false"
                     class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-                    {{ $t('VCommandDocumentCancel') }}
+                    {{ $t('command.VCommandDocumentCancel') }}
                 </button>
             </div>
         </div>
@@ -754,7 +762,7 @@ const schemaCommentaire = Yup.object().shape({
         @click="itemModalShow = false">
         <div class="bg-white rounded-lg shadow-lg w-3/4 p-6" @click.stop>
             <div class="flex justify-between items-center border-b pb-3">
-                <h2 class="text-2xl font-semibold">{{ $t('VCommandItemTitle') }}</h2>
+                <h2 class="text-2xl font-semibold">{{ $t('command.VCommandItemTitle') }}</h2>
                 <button type="button" @click="itemModalShow = false"
                     class="text-gray-500 hover:text-gray-700">&times;</button>
             </div>
@@ -769,10 +777,10 @@ const schemaCommentaire = Yup.object().shape({
                 <table class="min-w-full bg-white border border-gray-200">
                     <thead class="bg-gray-100 sticky top-0">
                         <tr>
-                            <th class="px-4 py-2 border-b">{{ $t('VCommandItemName') }}</th>
-                            <th class="px-4 py-2 border-b">{{ $t('VCommandItemQuantity') }}</th>
-                            <th class="px-4 py-2 border-b">{{ $t('VCommandItemPrice') }}</th>
-                            <th class="px-4 py-2 border-b">{{ $t('VCommandItemActions') }}</th>
+                            <th class="px-4 py-2 border-b">{{ $t('command.VCommandItemName') }}</th>
+                            <th class="px-4 py-2 border-b">{{ $t('command.VCommandItemQuantity') }}</th>
+                            <th class="px-4 py-2 border-b">{{ $t('command.VCommandItemPrice') }}</th>
+                            <th class="px-4 py-2 border-b">{{ $t('command.VCommandItemActions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -813,19 +821,19 @@ const schemaCommentaire = Yup.object().shape({
                             <td class="px-4 py-2 border-b">
                                 <template v-if="item.tmp">
                                     <button type="button" @click="itemSave(item)"
-                                        class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">{{ $t('VCommandItemSave') }}</button>
+                                        class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">{{ $t('command.VCommandItemSave') }}</button>
                                     <button type="button"
                                         @click="item.tmp = null"
-                                        class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">{{ $t('VCommandItemCancel') }}</button>
+                                        class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">{{ $t('command.VCommandItemCancel') }}</button>
                                 </template>
                                 <template v-else>
                                     <button v-if="!commandsStore.items[commandId][item.id_item]" type="button" @click="item.tmp = {prix_command_item : 1, qte_command_item : 1, id_item : item.id_item}"
-                                        class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">{{ $t('VCommandItemAdd') }}</button>
+                                        class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">{{ $t('command.VCommandItemAdd') }}</button>
                                     <button v-else type="button"
                                         @click="item.tmp = { ...commandsStore.items[commandId][item.id_item] }"
-                                        class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">{{ $t('VCommandItemEdit') }}</button>
+                                        class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">{{ $t('command.VCommandItemEdit') }}</button>
                                     <button type="button" @click="itemDelete(item)"
-                                        class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">{{ $t('VCommandItemDelete') }}</button>
+                                        class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">{{ $t('command.VCommandItemDelete') }}</button>
                                 </template>
                             </td>
                         </tr>
@@ -837,16 +845,16 @@ const schemaCommentaire = Yup.object().shape({
     <div v-if="commentaireModalShow" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
         @click="commentaireModalShow = false">
         <div class="bg-white p-6 rounded-lg shadow-lg" @click.stop>
-            <h2 class="text-lg font-semibold">{{ $t('VCommandCommentDeleteTitle') }}</h2>
-            <p>{{ $t('VCommandCommentDeleteText') }}</p>
+            <h2 class="text-lg font-semibold">{{ $t('command.VCommandCommentDeleteTitle') }}</h2>
+            <p>{{ $t('command.VCommandCommentDeleteText') }}</p>
             <div class="flex justify-end space-x-4 mt-4">
                 <button type="button" @click="commentaireDelete()"
                     class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-                    {{ $t('VCommandCommentDeleteConfirm') }}
+                    {{ $t('command.VCommandCommentDeleteConfirm') }}
                 </button>
                 <button type="button" @click="commentaireModalShow = false"
                     class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-                    {{ $t('VCommandCommentDeleteCancel') }}
+                    {{ $t('command.VCommandCommentDeleteCancel') }}
                 </button>
             </div>
         </div>

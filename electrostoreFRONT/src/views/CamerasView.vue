@@ -1,10 +1,30 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue';
-import { useCamerasStore } from '@/stores';
+import { onMounted, ref, computed, inject } from 'vue';
+
+
+const { addNotification } = inject('useNotification');
+
+
+
+
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
+
+
+
+
+
+import { useAuthStore, useCamerasStore } from '@/stores';
 const camerasStore = useCamerasStore();
+const authStore = useAuthStore();
 
 async function fetchData() {
-    camerasStore.getCameraByInterval(100, 0);
+    let offset = 0;
+    const limit = 100;
+    do {
+        await camerasStore.getCameraByInterval(limit, offset);
+        offset += limit;
+    } while (offset < camerasStore.TotalCount)
 }
 onMounted(() => {
     fetchData();
@@ -20,8 +40,8 @@ function changeSort(key) {
     }
 }
 const filter = ref([
-    { key: 'nom_camera', value: '', type: 'text', label: 'nom', compareMethod: 'contain' },
-    { key: 'url_camera', value: '', type: 'text', label: 'url', compareMethod: 'contain' }
+    { key: 'nom_camera', value: '', type: 'text', label: 'camera.VCamerasFilterName', compareMethod: 'contain' },
+    { key: 'url_camera', value: '', type: 'text', label: 'camera.VCamerasFilterUrl', compareMethod: 'contain' }
 ]);
 const filteredCameras = computed(() => {
     return Object.values(camerasStore.cameras).filter(element => {
@@ -63,52 +83,22 @@ const sortedCameras = computed(() => {
     }
     return filteredCameras.value;
 });
-
-const showEditModal = ref(false);
-const showDeleteModal = ref(false);
-const editingCamera = ref({});
-const deletingCamera = ref(null);
-
-const openEditModal = (camera) => {
-    editingCamera.value = { ...camera };
-    showEditModal.value = true;
-};
-const closeEditModal = () => {
-    showEditModal.value = false;
-};
-const updateCamera = () => {
-    // Logique pour mettre à jour la caméra
-    console.log('Mise à jour de la caméra:', editingCamera.value);
-    camerasStore.update(editingCamera.value.id_camera, editingCamera.value)
-    closeEditModal();
-};
-const openDeleteModal = (camera) => {
-    deletingCamera.value = camera;
-    showDeleteModal.value = true;
-};
-const closeDeleteModal = () => {
-    showDeleteModal.value = false;
-    deletingCamera.value = null;
-};
-const confirmDelete = () => {
-    // Logique pour supprimer la caméra
-    console.log('Suppression de la caméra:', deletingCamera.value);
-    closeDeleteModal();
-};
 </script>
 
 <template>
     <div>
-        <h2>camera</h2>
+        <h2>{{ $t('camera.VCamerasTitle') }}</h2>
     </div>
     <div>
-        <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
-            Ajouter
-        </button>
+        <div v-if="authStore.user?.role_user === 'admin'" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm cursor-pointer inline-block mb-2">
+            <RouterLink :to="'/cameras/new'">
+                {{ $t('camera.VCamerasAdd') }}
+            </RouterLink>
+        </div>
         <div>
             <div class="flex flex-wrap">
                 <template v-for="f in filter">
-                    <label class="text-sm text-gray-700 ml-2">{{ f.label }}</label>
+                    <label class="text-sm text-gray-700 ml-2">{{ $t(f.label) }}</label>
                     <template v-if="f.type === 'select'">
                         <select v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2">
                             <option value=""></option>
@@ -137,7 +127,7 @@ const confirmDelete = () => {
                 <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
                     @click="changeSort('nom_camera')">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">nom</span>
+                        <span class="flex-1">{{ $t('camera.VCamerasName') }}</span>
                         <template v-if="sort.key === 'nom_camera'">
                             <template v-if="sort.order === 'asc'">
                                 <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
@@ -154,7 +144,7 @@ const confirmDelete = () => {
                 <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
                     @click="changeSort('url_camera')">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">url</span>
+                        <span class="flex-1">{{ $t('camera.VCamerasUrl') }}</span>
                         <template v-if="sort.key === 'url_camera'">
                             <template v-if="sort.order === 'asc'">
                                 <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
@@ -168,28 +158,19 @@ const confirmDelete = () => {
                         </template>
                     </div>
                 </th>
-                <th
-                    class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
+                <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">login</span>
+                        <span class="flex-1">{{ $t('camera.VCamerasUser') }}</span>
                     </div>
                 </th>
-                <th
-                    class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
+                <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">password</span>
+                        <span class="flex-1">{{ $t('camera.VCamerasNetwork') }}</span>
                     </div>
                 </th>
-                <th
-                    class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
+                <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">capture</span>
-                    </div>
-                </th>
-                <th
-                    class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
-                    <div class="flex justify-between items-center">
-                        <span class="flex-1"></span>
+                        <span class="flex-1">{{ $t('camera.VCamerasStatus') }}</span>
                     </div>
                 </th>
             </tr>
@@ -201,100 +182,36 @@ const confirmDelete = () => {
                     <tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
                         <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ camera.nom_camera }}</td>
                         <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ camera.url_camera }}</td>
-                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ camera.user_camera }}</td>
-                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ camera.mdp_camera }}</td>
-                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-                            <button @click="camerasStore.getCapture(camera.id_camera)"
-                                class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
-                                capture
-                            </button>
-                            <div v-if="camerasStore.capture[camera.id_camera]">
-                                <img alt="Image provenant d'un flux vidéo" :src="camerasStore.capture[camera.id_camera]"
-                                    class="w-16 h-16 object-cover rounded" />
-                            </div>
+                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">
+                            <template v-if="camera.user_camera == '' && camera.password_camera == ''">
+                                <font-awesome-icon icon="fa-solid fa-times" class="ml-2" />
+                            </template>
+                            <template v-else>
+                                <font-awesome-icon icon="fa-solid fa-check" class="ml-2" />
+                            </template>
                         </td>
-                        <td class="border border-gray-300 px-4 py-2 text-center text-sm text-gray-700">
-                            <button @click="openDeleteModal(camera)"
-                                class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
-                                Supprimer
-                            </button>
+                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">
+                            <template v-if="camerasStore.status[camera.id_camera].network">
+                                <font-awesome-icon icon="fa-solid fa-check" class="ml-2 text-green-500" />
+                            </template>
+                            <template v-else>
+                                <font-awesome-icon icon="fa-solid fa-times" class="ml-2 text-red-500" />
+                            </template>
+                        </td>
+                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">
+                            <template v-if="camerasStore.status[camera.id_camera].statusCode == 200">
+                                <font-awesome-icon icon="fa-solid fa-check" class="ml-2 text-green-500" />
+                            </template>
+                            <template v-else>
+                                <font-awesome-icon icon="fa-solid fa-times" class="ml-2 text-red-500" />
+                            </template>
                         </td>
                     </tr>
                 </RouterLink>
             </template>
+            <template v-else>
+                <div>{{ $t('camera.VCamerasLoading') }}</div>
+            </template>
         </tbody>
     </table>
-
-    <!-- Modal de modification -->
-    <div v-if="showEditModal" @click="closeEditModal"
-        class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
-        <div @click.stop class="bg-white p-5 rounded-lg shadow-xl w-1/2">
-            <h3 class="text-lg font-bold mb-4">Modifier la caméra</h3>
-            <form @submit.prevent="updateCamera">
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="nom">
-                        Nom
-                    </label>
-                    <input v-model="editingCamera.nom_camera"
-                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="nom" type="text" required>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="url">
-                        URL
-                    </label>
-                    <input v-model="editingCamera.url_camera"
-                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="url" type="text" required>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="login">
-                        Login
-                    </label>
-                    <input v-model="editingCamera.user_camera"
-                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="login" type="text" required>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
-                        Password
-                    </label>
-                    <input v-model="editingCamera.mdp_camera"
-                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="password" type="password" required>
-                </div>
-                <div class="flex items-center justify-between">
-                    <button
-                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                        type="submit">
-                        Enregistrer
-                    </button>
-                    <button @click="closeEditModal"
-                        class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                        type="button">
-                        Annuler
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal de confirmation de suppression -->
-    <div v-if="showDeleteModal" @click="closeDeleteModal"
-        class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
-        <div @click.stop class="bg-white p-5 rounded-lg shadow-xl">
-            <h3 class="text-lg font-bold mb-4">Confirmer la suppression</h3>
-            <p class="mb-4">Êtes-vous sûr de vouloir supprimer cette caméra ?</p>
-            <div class="flex justify-end">
-                <button @click="confirmDelete"
-                    class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
-                    Supprimer
-                </button>
-                <button @click="closeDeleteModal"
-                    class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                    Annuler
-                </button>
-            </div>
-        </div>
-    </div>
 </template>

@@ -130,9 +130,6 @@ def detect_model(id_model, imageData):
         for line in f:
             class_names.append(line.strip())
 
-    # Charger une image de test
-    #sunflower_url = "https://storage.googleapis.com/download.tensorflow.org/example_images/592px-Red_sunflower.jpg"
-    #sunflower_path = tf.keras.utils.get_file('Red_sunflower', origin=sunflower_url)
     try:
         #img = tf.keras.utils.load_img(sunflower_path, target_size=(img_height, img_width))
         img = tf.keras.preprocessing.image.load_img(io.BytesIO(imageData.read()), target_size=(img_height, img_width))

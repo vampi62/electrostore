@@ -19,37 +19,37 @@ const authStore = useAuthStore();
 
 const schema = Yup.object().shape({
     email: Yup.string()
-        .email(t('VRegisterEmailInvalid'))
-        .required(t('VRegisterEmailRequired')),
+        .email(t('common.VRegisterEmailInvalid'))
+        .required(t('common.VRegisterEmailRequired')),
     firstName: Yup.string()
-        .required(t('VRegisterFirstNameRequired')),
+        .required(t('common.VRegisterFirstNameRequired')),
     lastName: Yup.string()
-        .required(t('VRegisterLastNameRequired')),
+        .required(t('common.VRegisterLastNameRequired')),
     // 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
     password: Yup.string()
-        .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, t('VRegisterPasswordRequirements'))
-        .required(t('VRegisterPasswordRequired')),
-    confirmPassword: Yup.string().oneOf([Yup.ref('password'), null], t('VRegisterPasswordMatch'))
-        .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, t('VRegisterPasswordRequirements'))
-        .required(t('VRegisterConfirmPasswordRequired'))
+        .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, t('common.VRegisterPasswordRequirements'))
+        .required(t('common.VRegisterPasswordRequired')),
+    confirmPassword: Yup.string().oneOf([Yup.ref('password'), null], t('common.VRegisterPasswordMatch'))
+        .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, t('common.VRegisterPasswordRequirements'))
+        .required(t('common.VRegisterConfirmPasswordRequired'))
 });
 
 function onSubmit(values, { setErrors }) {
     const { email, firstName, lastName, password } = values;
     return authStore.register(email, password, firstName, lastName)
         .catch(errors => setErrors({ apiError: errors }))
-        .then(() => setErrors({ apiConfirm: t('VRegisterSuccess') }));
+        .then(() => setErrors({ apiConfirm: t('common.VRegisterSuccess') }));
 }
 </script>
 
 <template>
     <div class="max-w-lg mx-auto bg-white p-6 rounded shadow">
-        <h2 class="text-2xl font-bold mb-4">{{ $t('VRegisterTitle') }}</h2>
+        <h2 class="text-2xl font-bold mb-4">{{ $t('common.VRegisterTitle') }}</h2>
 
         <Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
             <!-- Email Field -->
             <div class="mb-4">
-                <label class="block text-gray-700">{{ $t('VRegisterEmail') }}</label>
+                <label class="block text-gray-700">{{ $t('common.VRegisterEmail') }}</label>
                 <Field name="email" type="email"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.email }" />
@@ -58,7 +58,7 @@ function onSubmit(values, { setErrors }) {
 
             <!-- First Name Field -->
             <div class="mb-4">
-                <label class="block text-gray-700">{{ $t('VRegisterFirstName') }}</label>
+                <label class="block text-gray-700">{{ $t('common.VRegisterFirstName') }}</label>
                 <Field name="firstName" type="text"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.firstName }" />
@@ -67,7 +67,7 @@ function onSubmit(values, { setErrors }) {
 
             <!-- Last Name Field -->
             <div class="mb-4">
-                <label class="block text-gray-700">{{ $t('VRegisterLastName') }}</label>
+                <label class="block text-gray-700">{{ $t('common.VRegisterLastName') }}</label>
                 <Field name="lastName" type="text"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.lastName }" />
@@ -76,7 +76,7 @@ function onSubmit(values, { setErrors }) {
 
             <!-- Password Field -->
             <div class="mb-4">
-                <label class="block text-gray-700">{{ $t('VRegisterPassword') }}</label>
+                <label class="block text-gray-700">{{ $t('common.VRegisterPassword') }}</label>
                 <Field name="password" type="password"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.password }" />
@@ -85,7 +85,7 @@ function onSubmit(values, { setErrors }) {
 
             <!-- Confirm Password Field -->
             <div class="mb-4">
-                <label class="block text-gray-700">{{ $t('VRegisterConfirmPassword') }}</label>
+                <label class="block text-gray-700">{{ $t('common.VRegisterConfirmPassword') }}</label>
                 <Field name="confirmPassword" type="password"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.confirmPassword }" />
@@ -98,7 +98,7 @@ function onSubmit(values, { setErrors }) {
                     :disabled="isSubmitting">
                     <span v-show="isSubmitting"
                         class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
-                    {{ $t('VRegisterSubmit') }}
+                    {{ $t('common.VRegisterSubmit') }}
                 </button>
             </div>
 
@@ -110,7 +110,7 @@ function onSubmit(values, { setErrors }) {
 
         <!-- Link to Login -->
         <div class="mt-4">
-            <RouterLink to="/login" class="text-blue-500 hover:underline">{{ $t('VRegisterLoginLink') }}</RouterLink>
+            <RouterLink to="/login" class="text-blue-500 hover:underline">{{ $t('common.VRegisterLoginLink') }}</RouterLink>
         </div>
     </div>
 </template>

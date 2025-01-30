@@ -6,8 +6,7 @@ import { useUsersStore, useItemsStore } from '@/stores';
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-export const useProjetsStore = defineStore({
-    id: 'projets',
+export const useProjetsStore = defineStore('projets',{
     state: () => ({
         projetsLoading: true,
         projetsTotalCount: 0,
@@ -44,19 +43,19 @@ export const useProjetsStore = defineStore({
                 this.itemsTotalCount[projet.id_projet] = projet.projets_items_count;
                 if (expand.indexOf("projets_commentaires") > -1) {
                     this.commentaires[projet.id_projet] = {};
-                    for (const commentaire of command.projets_commentaires) {
-                        this.commentaires[projet.id_projet][commentaire.id_command_commentaire] = commentaire;
+                    for (const commentaire of projet.projets_commentaires) {
+                        this.commentaires[projet.id_projet][commentaire.id_projet_commentaire] = commentaire;
                     }
                 }
                 if (expand.indexOf("projets_documents") > -1) {
                     this.documents[projet.id_projet] = {};
-                    for (const document of command.projets_documents) {
-                        this.documents[projet.id_projet][document.id_command_document] = document;
+                    for (const document of projet.projets_documents) {
+                        this.documents[projet.id_projet][document.id_projet_document] = document;
                     }
                 }
                 if (expand.indexOf("projets_items") > -1) {
                     this.items[projet.id_projet] = {};
-                    for (const item of command.projets_items) {
+                    for (const item of projet.projets_items) {
                         this.items[projet.id_projet][item.id_item] = item;
                     }
                 }

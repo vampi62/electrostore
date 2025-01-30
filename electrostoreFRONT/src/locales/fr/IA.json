@@ -1,0 +1,14 @@
+{
+    "VIasFilterTrained1": "faux",
+    "VIasFilterTrained2": "vrai",
+    "VIasFilterTrained": "entraîné",
+    "VIasFilterDate": "date",
+    "VIasFilterNom": "nom",
+    "VIasTitle": "IA",
+    "VIasAdd": "Ajouter une IA",
+    "VIasName": "Nom",
+    "VIasDescription": "Description",
+    "VIasDate": "Date",
+    "VIasTrained": "Entraîné",
+    "VIasLoading": "Chargement"
+}

@@ -19,27 +19,27 @@ const authStore = useAuthStore();
 
 const schema = Yup.object().shape({
     email: Yup.string()
-        .email(t('VLoginEmailInvalid'))
-        .required(t('VLoginEmailRequired')),
+        .email(t('common.VLoginEmailInvalid'))
+        .required(t('common.VLoginEmailRequired')),
     password: Yup.string()
-        .required(t('VLoginPasswordRequired'))
+        .required(t('common.VLoginPasswordRequired'))
 });
 
 function onSubmit(values, { setErrors }) {
     const { email, password } = values;
     return authStore.login(email, password)
-        .catch(error => setErrors({ apiError: error }));
+        .catch(error => setErrors({ apiError: t('common.VLoginError') }));
 }
 </script>
 
 <template>
     <div class="max-w-md mx-auto bg-white p-6 rounded shadow">
-        <h2 class="text-2xl font-bold mb-4">{{ $t('VLoginTitle') }}</h2>
+        <h2 class="text-2xl font-bold mb-4">{{ $t('common.VLoginTitle') }}</h2>
 
         <Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
             <!-- Email Field -->
             <div class="mb-4">
-                <label class="block text-gray-700">{{ $t('VLoginEmail') }}</label>
+                <label class="block text-gray-700">{{ $t('common.VLoginEmail') }}</label>
                 <Field name="email" type="email"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.email }" />
@@ -48,7 +48,7 @@ function onSubmit(values, { setErrors }) {
 
             <!-- Password Field -->
             <div class="mb-4">
-                <label class="block text-gray-700">{{ $t('VLoginPassword') }}</label>
+                <label class="block text-gray-700">{{ $t('common.VLoginPassword') }}</label>
                 <Field name="password" type="password"
                     class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                     :class="{ 'border-red-500': errors.password }" />
@@ -61,7 +61,7 @@ function onSubmit(values, { setErrors }) {
                     :disabled="isSubmitting">
                     <span v-show="isSubmitting"
                         class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
-                    {{ $t('VLoginSubmit') }}
+                    {{ $t('common.VLoginSubmit') }}
                 </button>
             </div>
 
@@ -71,8 +71,8 @@ function onSubmit(values, { setErrors }) {
 
         <!-- Links -->
         <div class="mt-4">
-            <RouterLink to="/register" class="text-blue-500 hover:underline">{{ $t('VLoginRegisterLink') }}</RouterLink>
-            <RouterLink to="/forgot-password" class="ml-4 text-blue-500 hover:underline">{{ $t('VLoginForgotPasswordLink')
+            <RouterLink to="/register" class="text-blue-500 hover:underline">{{ $t('common.VLoginRegisterLink') }}</RouterLink>
+            <RouterLink to="/forgot-password" class="ml-4 text-blue-500 hover:underline">{{ $t('common.VLoginForgotPasswordLink')
                 }}</RouterLink>
         </div>
     </div>

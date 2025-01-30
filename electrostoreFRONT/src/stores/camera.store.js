@@ -4,8 +4,7 @@ import { fetchWrapper } from '@/helpers';
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-export const useCamerasStore = defineStore({
-    id: 'cameras',
+export const useCamerasStore = defineStore('cameras',{
     state: () => ({
         loading: true,
         TotalCount: 0,
@@ -52,22 +51,20 @@ export const useCamerasStore = defineStore({
             this.getStatus(id);
         },
         async toggleLight(id) {
-            this.camera.loading = true;
+            this.cameraEdition.loading = true;
             if (this.status[id]?.ringLightPower > 0) {
-                this.camera = await fetchWrapper.post({
+                this.cameraEdition = await fetchWrapper.post({
                     url: `${baseUrl}/camera/${id}/light`,
                     useToken: "access",
                     body: { "state": false }
                 });
             } else {
-                this.camera = await fetchWrapper.post({
+                this.cameraEdition = await fetchWrapper.post({
                     url: `${baseUrl}/camera/${id}/light`,
                     useToken: "access",
                     body: { "state": true }
                 });
             }
-            // waiting 0.5s
-            this.getStatus(this.id_camera);
         },
         async getStream(id) {
             this.stream[id] = await fetchWrapper.stream({
@@ -79,7 +76,7 @@ export const useCamerasStore = defineStore({
             this.stream[id] = null;
         },
         async getStatus(id) {
-            this.status[id].loading = true;
+            this.status[id] = { loading: true };
             this.status[id] = await fetchWrapper.get({
                 url: `${baseUrl}/camera/${id}/status`,
                 useToken: "access"
