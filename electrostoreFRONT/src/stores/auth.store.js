@@ -6,8 +6,7 @@ import { fetchWrapper, router } from '@/helpers';
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-export const useAuthStore = defineStore({
-    id: 'auth',
+export const useAuthStore = defineStore('auth',{
     state: () => ({
         // initialize state from local storage to enable user to stay logged in
         user: JSON.parse(localStorage.getItem('user')) || null,

@@ -10552,9 +10552,17 @@
       "CameraStatusDto": {
         "type": "object",
         "properties": {
+          "network": {
+            "type": "boolean"
+          },
+          "statusCode": {
+            "type": "integer",
+            "format": "int32"
+          },
           "uptime": {
             "type": "number",
-            "format": "float"
+            "format": "float",
+            "nullable": true
           },
           "espModel": {
             "type": "string",
@@ -10562,11 +10570,13 @@
           },
           "espTemperature": {
             "type": "number",
-            "format": "float"
+            "format": "float",
+            "nullable": true
           },
           "ringLightPower": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "versionScanBox": {
             "type": "string",

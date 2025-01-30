@@ -6,8 +6,7 @@ import { useTagsStore, useStoresStore, useCommandsStore, useProjetsStore } from 
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-export const useItemsStore = defineStore({
-    id: 'items',
+export const useItemsStore = defineStore('items',{
     state: () => ({
         itemsLoading: true,
         itemsTotalCount: 0,

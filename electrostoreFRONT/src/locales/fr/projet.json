@@ -1,0 +1,21 @@
+{
+    "VProjetsFilterStatus1": "En attente",
+    "VProjetsFilterStatus2": "En cours",
+    "VProjetsFilterStatus3": "Terminé",
+    "VProjetsFilterStatus": "Statut",
+    "VprojetFilterDate": "Date de début",
+    "VprojetFilterNom": "Nom",
+    "VprojetFilterUrl": "Url",
+    "VprojetFilterDateEnd": "Date de fin",
+    "VprojetFilterItem": "article",
+    "VProjetsTitle": "Projets",
+    "VProjetsAdd": "Ajouter un projet",
+    "VProjetsName": "Nom",
+    "VProjetsDescription": "Description",
+    "VProjetsUrl": "Url",
+    "VProjetsStatus": "Statut",
+    "VProjetsDateStart": "Date de début",
+    "VProjetsItems": "Articles",
+    "VProjetsDateEnd": "Date de fin",
+    "VProjetsLoading": "Chargement"
+}

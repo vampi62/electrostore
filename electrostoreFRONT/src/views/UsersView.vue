@@ -1,10 +1,35 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue';
-import { useUsersStore } from '@/stores';
+import { onMounted, ref, computed, inject } from 'vue';
+import { router } from '@/helpers';
+
+const { addNotification } = inject('useNotification');
+
+
+
+
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
+
+
+
+
+
+import { useAuthStore, useUsersStore } from '@/stores';
 const usersStore = useUsersStore();
+const authStore = useAuthStore();
+
+if (authStore.user?.role_user !== 'admin') {
+    addNotification("vous n'avez pas la permission d'acceder a cette page", 'error');
+    router.push('/');
+}
 
 async function fetchData() {
-    usersStore.getUserByInterval(100, 0);
+    let offset = 0;
+    const limit = 100;
+    do {
+        await usersStore.getUserByInterval(limit, offset);
+        offset += limit;
+    } while (offset < usersStore.usersTotalCount)
 }
 onMounted(() => {
     fetchData();
@@ -20,10 +45,10 @@ function changeSort(key) {
     }
 }
 const filter = ref([
-    { key: 'nom_user', value: '', type: 'text', label: 'nom', compareMethod: 'contain' },
-    { key: 'prenom_user', value: '', type: 'text', label: 'prenom', compareMethod: 'contain' },
-    { key: 'email_user', value: '', type: 'text', label: 'email', compareMethod: 'contain' },
-    { key: 'role_user', value: '', type: 'select', options: [['user', 'user'], ['admin', 'admin']], label: 'role', compareMethod: '=' }
+    { key: 'nom_user', value: '', type: 'text', label: 'user.VUsersFilterName', compareMethod: 'contain' },
+    { key: 'prenom_user', value: '', type: 'text', label: 'user.VUsersFilterFirstName', compareMethod: 'contain' },
+    { key: 'email_user', value: '', type: 'text', label: 'user.VUsersFilterEmail', compareMethod: 'contain' },
+    { key: 'role_user', value: '', type: 'select', options: [['user', 'user.VUsersFilterRole1'], ['admin', 'user.VUsersFilterRole2']], label: 'user.VUsersFilterRole', compareMethod: '=' }
 ]);
 const filteredUsers = computed(() => {
     return Object.values(usersStore.users).filter(element => {
@@ -69,16 +94,18 @@ const sortedUsers = computed(() => {
 
 <template>
     <div>
-        <h2>liste des utilisateurs</h2>
+        <h2>{{ $t('user.VUsersTitle') }}</h2>
     </div>
     <div>
-        <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
-            Ajouter
-        </button>
+        <div class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm cursor-pointer inline-block mb-2">
+            <RouterLink :to="'/users/new'">
+                {{ $t('user.VUsersAdd') }}
+            </RouterLink>
+        </div>
         <div>
             <div class="flex flex-wrap">
                 <template v-for="f in filter">
-                    <label class="text-sm text-gray-700 ml-2">{{ f.label }}</label>
+                    <label class="text-sm text-gray-700 ml-2">{{ $t(f.label) }}</label>
                     <template v-if="f.type === 'select'">
                         <select v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2">
                             <option value=""></option>
@@ -107,7 +134,7 @@ const sortedUsers = computed(() => {
                 <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
                     @click="changeSort('nom_user')">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">nom</span>
+                        <span class="flex-1">{{ $t('user.VUsersName') }}</span>
                         <template v-if="sort.key === 'nom_user'">
                             <template v-if="sort.order === 'asc'">
                                 <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
@@ -124,7 +151,7 @@ const sortedUsers = computed(() => {
                 <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
                     @click="changeSort('prenom_user')">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">prenom</span>
+                        <span class="flex-1">{{ $t('user.VUsersFirstName') }}</span>
                         <template v-if="sort.key === 'prenom_user'">
                             <template v-if="sort.order === 'asc'">
                                 <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
@@ -141,7 +168,7 @@ const sortedUsers = computed(() => {
                 <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
                     @click="changeSort('email_user')">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">email</span>
+                        <span class="flex-1">{{ $t('user.VUsersEmail') }}</span>
                         <template v-if="sort.key === 'email_user'">
                             <template v-if="sort.order === 'asc'">
                                 <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
@@ -158,7 +185,7 @@ const sortedUsers = computed(() => {
                 <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
                     @click="changeSort('role_user')">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">role</span>
+                        <span class="flex-1">{{ $t('user.VUsersRole') }}</span>
                         <template v-if="sort.key === 'role_user'">
                             <template v-if="sort.order === 'asc'">
                                 <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
@@ -172,12 +199,6 @@ const sortedUsers = computed(() => {
                         </template>
                     </div>
                 </th>
-                <th
-                    class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
-                    <div class="flex justify-between items-center">
-                        <span class="flex-1"></span>
-                    </div>
-                </th>
             </tr>
         </thead>
         <tbody>
@@ -189,16 +210,12 @@ const sortedUsers = computed(() => {
                         <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ user.prenom_user }}</td>
                         <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ user.email_user }}</td>
                         <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ user.role_user }}</td>
-                        <td class="border border-gray-300 px-4 py-2 text-center text-sm text-gray-700">
-                            <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
-                                Supprimer
-                            </button>
-                        </td>
                     </tr>
                 </RouterLink>
             </template>
+            <template v-else>
+                <div>{{ $t('user.VUsersLoading') }}</div>
+            </template>
         </tbody>
     </table>
-    <div v-if="usersStore.usersLoading" class="spinner-border spinner-border-sm"></div>
-    <div v-if="usersStore.error" class="text-danger">Error loading users: {{ usersStore.error }}</div>
 </template>

@@ -24,32 +24,32 @@ const email = route.query.email || '';
 
 const schema = Yup.object().shape({
     email: Yup.string()
-        .email(t('VResetPasswordEmailInvalid'))
-        .required(t('VResetPasswordEmailRequired')),
+        .email(t('common.VResetPasswordEmailInvalid'))
+        .required(t('common.VResetPasswordEmailRequired')),
         // 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
     password: Yup.string()
-        .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, t('VResetPasswordPasswordRequirements'))
-        .required(t('VResetPasswordPasswordRequired')),
-    confirmPassword: Yup.string().oneOf([Yup.ref('password'), null], t('VResetPasswordPasswordMatch'))
-        .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, t('VResetPasswordPasswordRequirements'))
-        .required(t('VResetPasswordPasswordConfirmRequired'))
+        .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, t('common.VResetPasswordPasswordRequirements'))
+        .required(t('common.VResetPasswordPasswordRequired')),
+    confirmPassword: Yup.string().oneOf([Yup.ref('password'), null], t('common.VResetPasswordPasswordMatch'))
+        .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, t('common.VResetPasswordPasswordRequirements'))
+        .required(t('common.VResetPasswordPasswordConfirmRequired'))
 });
 
 function onSubmit(values, { setErrors }) {
     const { email, token, password } = values;
     return authStore.resetPassword(email, token, password)
         .catch(error => setErrors({ apiError: error }))
-        .then(() => setErrors({ apiConfirm: t('VResetPasswordSuccess') }));
+        .then(() => setErrors({ apiConfirm: t('common.VResetPasswordSuccess') }));
 }
 </script>
 
 <template>
     <div class="max-w-lg mx-auto bg-white p-6 rounded shadow">
-        <h2 class="text-2xl font-bold mb-4">{{ $t('VResetPasswordTitle') }}</h2>
+        <h2 class="text-2xl font-bold mb-4">{{ $t('common.VResetPasswordTitle') }}</h2>
 
         <div v-if="configsStore.configs.loading" class="flex justify-center items-center">
             <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" role="status">
-                <span class="sr-only">{{ $t('VResetPasswordLoading') }}</span>
+                <span class="sr-only">{{ $t('common.VResetPasswordLoading') }}</span>
             </div>
         </div>
 
@@ -57,7 +57,7 @@ function onSubmit(values, { setErrors }) {
             <Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
                 <!-- Email Field -->
                 <div class="mb-4">
-                    <label class="block text-gray-700">{{ $t('VResetPasswordEmail') }}</label>
+                    <label class="block text-gray-700">{{ $t('common.VResetPasswordEmail') }}</label>
                     <Field name="email" type="email"
                         class="border border-gray-300 rounded w-full px-3 py-2 mt-1 bg-gray-100 focus:outline-none focus:ring focus:ring-blue-300"
                         :class="{ 'border-red-500': errors.email }" :value="email" disabled />
@@ -69,7 +69,7 @@ function onSubmit(values, { setErrors }) {
 
                 <!-- New Password Field -->
                 <div class="mb-4">
-                    <label class="block text-gray-700">{{ $t('VResetPasswordNewPassword') }}</label>
+                    <label class="block text-gray-700">{{ $t('common.VResetPasswordNewPassword') }}</label>
                     <Field name="password" type="password"
                         class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                         :class="{ 'border-red-500': errors.password }" />
@@ -78,7 +78,7 @@ function onSubmit(values, { setErrors }) {
 
                 <!-- Confirm New Password Field -->
                 <div class="mb-4">
-                    <label class="block text-gray-700">{{ $t('VResetPasswordConfirmNewPassword') }}</label>
+                    <label class="block text-gray-700">{{ $t('common.VResetPasswordConfirmNewPassword') }}</label>
                     <Field name="confirmPassword" type="password"
                         class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
                         :class="{ 'border-red-500': errors.confirmPassword }" />
@@ -92,7 +92,7 @@ function onSubmit(values, { setErrors }) {
                         :disabled="isSubmitting">
                         <span v-show="isSubmitting"
                             class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
-                        {{ $t('VResetPasswordSubmit') }}
+                        {{ $t('common.VResetPasswordSubmit') }}
                     </button>
                 </div>
 
@@ -104,11 +104,11 @@ function onSubmit(values, { setErrors }) {
         </div>
 
         <!-- SMTP Disabled Alert -->
-        <div v-else class="bg-red-100 text-red-600 p-3 rounded">{{ $t('VResetPasswordSmtpDisabled') }}</div>
+        <div v-else class="bg-red-100 text-red-600 p-3 rounded">{{ $t('common.VResetPasswordSmtpDisabled') }}</div>
 
         <!-- Link to Login -->
         <div class="mt-4">
-            <RouterLink to="/login" class="text-blue-500 hover:underline">{{ $t('VResetPasswordLoginLink') }}</RouterLink>
+            <RouterLink to="/login" class="text-blue-500 hover:underline">{{ $t('common.VResetPasswordLoginLink') }}</RouterLink>
         </div>
     </div>
 </template>

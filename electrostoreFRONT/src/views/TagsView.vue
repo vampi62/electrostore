@@ -1,10 +1,29 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref, computed, inject } from 'vue';
+
+
+const { addNotification } = inject('useNotification');
+
+
+
+
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
+
+
+
+
+
 import { useTagsStore } from '@/stores';
 const tagsStore = useTagsStore();
 
 async function fetchData() {
-    tagsStore.getTagByInterval(100, 0);
+    let offset = 0;
+    const limit = 100;
+    do {
+        await tagsStore.getTagByInterval(limit, offset);
+        offset += limit;
+    } while (offset < tagsStore.tagsTotalCount)
 }
 onMounted(() => {
     fetchData();
@@ -20,9 +39,9 @@ function changeSort(key) {
     }
 }
 const filter = ref([
-    { key: 'nom_tag', value: '', type: 'text', label: 'nom', compareMethod: 'contain' },
-    { key: 'poids_tag', value: '', type: 'number', label: 'poids minimum', compareMethod: '>=' },
-    { key: 'poids_tag', value: '', type: 'number', label: 'poids maximum', compareMethod: '<=' }
+    { key: 'nom_tag', value: '', type: 'text', label: 'tag.VTagsFilterName', compareMethod: 'contain' },
+    { key: 'poids_tag', value: '', type: 'number', label: 'tag.VTagsFilterWeightMin', compareMethod: '>=' },
+    { key: 'poids_tag', value: '', type: 'number', label: 'tag.VTagsFilterWeightMax', compareMethod: '<=' }
 ]);
 const filteredTags = computed(() => {
     return Object.values(tagsStore.tags).filter(element => {
@@ -68,16 +87,18 @@ const sortedTags = computed(() => {
 
 <template>
     <div>
-        <h2>Tags</h2>
+        <h2>{{ t('tag.VTagsTitle') }}</h2>
     </div>
     <div>
-        <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
-            Ajouter
-        </button>
+        <div class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm cursor-pointer inline-block mb-2">
+            <RouterLink :to="'/tags/new'">
+                {{ t('tag.VTagsAdd') }}
+            </RouterLink>
+        </div>
         <div>
             <div class="flex flex-wrap">
                 <template v-for="f in filter">
-                    <label class="text-sm text-gray-700 ml-2">{{ f.label }}</label>
+                    <label class="text-sm text-gray-700 ml-2">{{ $t(f.label) }}</label>
                     <template v-if="f.type === 'select'">
                         <select v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2">
                             <option value=""></option>
@@ -106,7 +127,7 @@ const sortedTags = computed(() => {
                 <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
                     @click="changeSort('nom_tag')">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">nom</span>
+                        <span class="flex-1">{{ t('tag.VTagsName') }}</span>
                         <template v-if="sort.key === 'nom_tag'">
                             <template v-if="sort.order === 'asc'">
                                 <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
@@ -123,7 +144,7 @@ const sortedTags = computed(() => {
                 <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
                     @click="changeSort('poids_tag')">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1">poids</span>
+                        <span class="flex-1">{{ t('tag.VTagsWeight') }}</span>
                         <template v-if="sort.key === 'poids_tag'">
                             <template v-if="sort.order === 'asc'">
                                 <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
@@ -137,10 +158,55 @@ const sortedTags = computed(() => {
                         </template>
                     </div>
                 </th>
-                <th
-                    class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
+                <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
+                    @click="changeSort('items_tags_count')">
                     <div class="flex justify-between items-center">
-                        <span class="flex-1"></span>
+                        <span class="flex-1">{{ t('tag.VTagsItemsCount') }}</span>
+                        <template v-if="sort.key === 'items_tags_count'">
+                            <template v-if="sort.order === 'asc'">
+                                <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
+                            </template>
+                            <template v-else>
+                                <font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
+                            </template>
+                        </template>
+                        <template v-else>
+                            <font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
+                        </template>
+                    </div>
+                </th>
+                <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
+                    @click="changeSort('stores_tags_count')">
+                    <div class="flex justify-between items-center">
+                        <span class="flex-1">{{ t('tag.VTagsStoresCount') }}</span>
+                        <template v-if="sort.key === 'stores_tags_count'">
+                            <template v-if="sort.order === 'asc'">
+                                <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
+                            </template>
+                            <template v-else>
+                                <font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
+                            </template>
+                        </template>
+                        <template v-else>
+                            <font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
+                        </template>
+                    </div>
+                </th>
+                <th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
+                    @click="changeSort('boxs_tags_count')">
+                    <div class="flex justify-between items-center">
+                        <span class="flex-1">{{ t('tag.VTagsBoxsCount') }}</span>
+                        <template v-if="sort.key === 'boxs_tags_count'">
+                            <template v-if="sort.order === 'asc'">
+                                <font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
+                            </template>
+                            <template v-else>
+                                <font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
+                            </template>
+                        </template>
+                        <template v-else>
+                            <font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
+                        </template>
                     </div>
                 </th>
             </tr>
@@ -152,13 +218,14 @@ const sortedTags = computed(() => {
                     <tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
                         <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ tag.nom_tag }}</td>
                         <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ tag.poids_tag }}</td>
-                        <td class="border border-gray-300 px-4 py-2 text-center text-sm text-gray-700">
-                            <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
-                                Supprimer
-                            </button>
-                        </td>
+                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">{{ tag.items_tags_count }}</td>
+                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">{{ tag.stores_tags_count }}</td>
+                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">{{ tag.boxs_tags_count }}</td>
                     </tr>
                 </RouterLink>
+            </template>
+            <template v-else>
+                <div>{{ t('tag.VTagsLoading') }}</div>
             </template>
         </tbody>
     </table>

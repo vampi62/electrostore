@@ -6,8 +6,7 @@ import { useCommandsStore, useProjetsStore } from '@/stores';
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-export const useUsersStore = defineStore({
-    id: 'users',
+export const useUsersStore = defineStore('users',{
     state: () => ({
         usersLoading: true,
         usersTotalCount: 0,
@@ -154,7 +153,7 @@ export const useUsersStore = defineStore({
                     projetStore.projets[projectCommentaire.id_projet] = projectCommentaire.projets;
                 }
             }
-            this.projetsCommentaireTotalCount[idUser] = newCommentaireList['count'];
+            this.projetsCommentaireTotalCount[idUser] = newProjectCommentaireList['count'];
             this.projetsCommentaireLoading = false;
         },
         async getProjectCommentaireById(idUser, id, expand = []) {
@@ -225,7 +224,7 @@ export const useUsersStore = defineStore({
                     commandStore.commands[commandCommentaire.id_command] = commandCommentaire.commands;
                 }
             }
-            this.commandsCommentaireTotalCount[idUser] = newCommentaireList['count'];
+            this.commandsCommentaireTotalCount[idUser] = newCommandCommentaireList['count'];
             this.commandsCommentaireLoading = false;
         },
         async getCommandCommentaireById(idUser, id, expand = []) {
@@ -276,11 +275,10 @@ export const useUsersStore = defineStore({
             delete this.commandsCommentaire[idUser][id];
         },
 
-        async getTokenByInterval(idUser, limit = 100, offset = 0, expand = []) {
+        async getTokenByInterval(idUser, limit = 100, offset = 0) {
             this.tokensLoading = true;
-            const expandString = expand.join(',');
             let newTokenList = await fetchWrapper.get({
-                url: `${baseUrl}/user/${idUser}/token?limit=${limit}&offset=${offset}&expand=${expandString}`,
+                url: `${baseUrl}/user/${idUser}/token?limit=${limit}&offset=${offset}`,
                 useToken: "access"
             });
             this.tokens[idUser] = {};

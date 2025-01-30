@@ -1,0 +1,15 @@
+{
+    "VUsersFilterName": "Name",
+    "VUsersFilterFirstName": "First name",
+    "VUsersFilterEmail": "Email",
+    "VUsersFilterRole1": "Administrator",
+    "VUsersFilterRole2": "User",
+    "VUsersFilterRole": "Role",
+    "VUsersTitle": "Users",
+    "VUsersAdd": "Add a user",
+    "VUsersName": "Name",
+    "VUsersFirstName": "First name",
+    "VUsersEmail": "Email",
+    "VUsersRole": "Role",
+    "VUsersLoading": "Loading"
+}

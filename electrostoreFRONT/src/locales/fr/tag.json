@@ -1,0 +1,13 @@
+{
+    "VTagsFilterName": "Nom",
+    "VTagsFilterWeightMin": "Poids Min",
+    "VTagsFilterWeightMax": "Poids Max",
+    "VTagsTitle": "Tags",
+    "VTagsAdd": "Ajouter un tag",
+    "VTagsName": "Nom",
+    "VTagsWeight": "Poids",
+    "VTagsItemsCount": "Nombre d'articles",
+    "VTagsStoresCount": "Nombre de magasins",
+    "VTagsBoxsCount": "Nombre de boîtes",
+    "VTagsLoading": "Chargement"
+}
