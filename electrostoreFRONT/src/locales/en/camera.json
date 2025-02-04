@@ -1,12 +1,12 @@
 {
-    "VCamerasFilterName": "name",
-    "VCamerasFilterUrl": "URL",
-    "VCamerasTitle": "Cameras",
-    "VCamerasAdd": "Add a camera",
-    "VCamerasName": "Name",
-    "VCamerasUrl": "URL",
-    "VCamerasUser": "User",
-    "VCamerasNetwork": "Network",
-    "VCamerasStatus": "Status",
-    "VCamerasLoading": "Loading"
+	"VCamerasFilterName": "name",
+	"VCamerasFilterUrl": "URL",
+	"VCamerasTitle": "Cameras",
+	"VCamerasAdd": "Add a camera",
+	"VCamerasName": "Name",
+	"VCamerasUrl": "URL",
+	"VCamerasUser": "User",
+	"VCamerasNetwork": "Network",
+	"VCamerasStatus": "Status",
+	"VCamerasLoading": "Loading"
 }

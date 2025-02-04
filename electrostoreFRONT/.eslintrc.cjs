@@ -1,15 +1,31 @@
 /* eslint-env node */
 module.exports = {
-    "root": true,
-    "extends": [
-        "plugin:vue/vue3-essential",
-        "eslint:recommended"
-    ],
-    ignorePatterns: ['tailwind.config.js', 'postcss.config.js'],
-    "env": {
-        "vue/setup-compiler-macros": true
-    },
-    rules: {
-      'no-constant-condition': ['error', { checkLoops: false }]
-    }
-}
+	root: true,
+	extends: ["plugin:vue/vue3-essential", "eslint:recommended"],
+	ignorePatterns: ["tailwind.config.js", "postcss.config.js"],
+	env: {
+		"vue/setup-compiler-macros": true,
+	},
+	rules: {
+		"no-constant-condition": ["error", { checkLoops: false }],
+		"no-unused-vars": 0,
+		"no-const-assign": 0,
+		"vue/multi-word-component-names": 0,
+		quotes: ["error", "double"],
+		indent: ["error", "tab"],
+		semi: ["error", "always"],
+		"comma-dangle": ["error", "always-multiline"],
+		"arrow-parens": ["error", "always"],
+		"no-console": "warn",
+		eqeqeq: ["error", "always"],
+		curly: ["error", "all"],
+		"brace-style": ["error", "1tbs"],
+		"space-before-function-paren": ["error", "never"],
+		"keyword-spacing": ["error", { before: true, after: true }],
+		"space-infix-ops": "error",
+		"padded-blocks": ["error", "never"],
+		"no-multiple-empty-lines": ["error", { max: 1, maxEOF: 0 }],
+		"object-curly-spacing": ["error", "always"],
+		"array-bracket-spacing": ["error", "never"],
+	},
+};

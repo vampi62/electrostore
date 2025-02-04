@@ -1,15 +1,15 @@
 {
-    "VUsersFilterName": "Nom",
-    "VUsersFilterFirstName": "Prénom",
-    "VUsersFilterEmail": "Email",
-    "VUsersFilterRole1": "Administrateur",
-    "VUsersFilterRole2": "Utilisateur",
-    "VUsersFilterRole": "Rôle",
-    "VUsersTitle": "Utilisateurs",
-    "VUsersAdd": "Ajouter un utilisateur",
-    "VUsersName": "Nom",
-    "VUsersFirstName": "Prénom",
-    "VUsersEmail": "Email",
-    "VUsersRole": "Rôle",
-    "VUsersLoading": "Chargement"
+	"VUsersFilterName": "Nom",
+	"VUsersFilterFirstName": "Prénom",
+	"VUsersFilterEmail": "Email",
+	"VUsersFilterRole1": "Administrateur",
+	"VUsersFilterRole2": "Utilisateur",
+	"VUsersFilterRole": "Rôle",
+	"VUsersTitle": "Utilisateurs",
+	"VUsersAdd": "Ajouter un utilisateur",
+	"VUsersName": "Nom",
+	"VUsersFirstName": "Prénom",
+	"VUsersEmail": "Email",
+	"VUsersRole": "Rôle",
+	"VUsersLoading": "Chargement"
 }
