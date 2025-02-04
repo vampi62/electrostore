@@ -1,14 +1,14 @@
 {
-    "VIasFilterTrained1": "false",
-    "VIasFilterTrained2": "true",
-    "VIasFilterTrained": "trained",
-    "VIasFilterDate": "date",
-    "VIasFilterNom": "name",
-    "VIasTitle": "IA",
-    "VIasAdd": "Add an IA",
-    "VIasName": "Name",
-    "VIasDescription": "Description",
-    "VIasDate": "Date",
-    "VIasTrained": "Trained",
-    "VIasLoading": "Loading"
+	"VIasFilterTrained1": "false",
+	"VIasFilterTrained2": "true",
+	"VIasFilterTrained": "trained",
+	"VIasFilterDate": "date",
+	"VIasFilterNom": "name",
+	"VIasTitle": "IA",
+	"VIasAdd": "Add an IA",
+	"VIasName": "Name",
+	"VIasDescription": "Description",
+	"VIasDate": "Date",
+	"VIasTrained": "Trained",
+	"VIasLoading": "Loading"
 }

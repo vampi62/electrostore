@@ -9936,7 +9936,7 @@
         }
       }
     },
-    "/api/user/{id_user}/commandcommentaire": {
+    "/api/user/{id_user}/command_commentaire": {
       "get": {
         "tags": [
           "UserCommandCommentaire"
@@ -10020,7 +10020,7 @@
         }
       }
     },
-    "/api/user/{id_user}/commandcommentaire/{id_command_commentaire}": {
+    "/api/user/{id_user}/command_commentaire/{id_command_commentaire}": {
       "get": {
         "tags": [
           "UserCommandCommentaire"

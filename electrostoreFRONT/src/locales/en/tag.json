@@ -1,13 +1,13 @@
 {
-    "VTagsFilterName": "Name",
-    "VTagsFilterWeightMin": "Min Weight",
-    "VTagsFilterWeightMax": "Max Weight",
-    "VTagsTitle": "Tags",
-    "VTagsAdd": "Add a tag",
-    "VTagsName": "Name",
-    "VTagsWeight": "Weight",
-    "VTagsItemsCount": "Items Count",
-    "VTagsStoresCount": "Stores Count",
-    "VTagsBoxsCount": "Boxs Count",
-    "VTagsLoading": "Loading"
+	"VTagsFilterName": "Name",
+	"VTagsFilterWeightMin": "Min Weight",
+	"VTagsFilterWeightMax": "Max Weight",
+	"VTagsTitle": "Tags",
+	"VTagsAdd": "Add a tag",
+	"VTagsName": "Name",
+	"VTagsWeight": "Weight",
+	"VTagsItemsCount": "Items Count",
+	"VTagsStoresCount": "Stores Count",
+	"VTagsBoxsCount": "Boxs Count",
+	"VTagsLoading": "Loading"
 }

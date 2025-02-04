@@ -8,7 +8,7 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace electrostore.Controllers
 {
     [ApiController]
-    [Route("api/user/{id_user}/commandcommentaire")]
+    [Route("api/user/{id_user}/command_commentaire")]
 
     public class UserCommandCommentaireController : ControllerBase
     {

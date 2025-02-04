@@ -1,12 +1,12 @@
 {
-    "VStoresFilterName": "Nom",
-    "VStoresFilterMqttName": "Nom MQTT",
-    "VStoresFilterXLength": "Longueur X",
-    "VStoresFilterYLength": "Longueur Y",
-    "VStoresFilterTag": "Tag",
-    "VStoresXLength": "Longueur X",
-    "VStoresYLength": "Longueur Y",
-    "VStoresMqttName": "Nom MQTT",
-    "VStoresTagsList": "Tags",
-    "VStoresLoading": "Chargement"
+	"VStoresFilterName": "Nom",
+	"VStoresFilterMqttName": "Nom MQTT",
+	"VStoresFilterXLength": "Longueur X",
+	"VStoresFilterYLength": "Longueur Y",
+	"VStoresFilterTag": "Tag",
+	"VStoresXLength": "Longueur X",
+	"VStoresYLength": "Longueur Y",
+	"VStoresMqttName": "Nom MQTT",
+	"VStoresTagsList": "Tags",
+	"VStoresLoading": "Chargement"
 }
