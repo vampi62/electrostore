@@ -20,10 +20,10 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedBoxTagDto>>> GetBoxsTagsByBoxId([FromRoute] int id_store, [FromRoute] int id_box, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
+        public async Task<ActionResult<IEnumerable<ReadExtendedBoxTagDto>>> GetBoxsTagsByBoxId([FromRoute] int id_store, [FromRoute] int id_box, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','.")] string? expand = null)
         {
             await _boxTagService.CheckIfStoreExists(id_store,id_box);
-            var boxsTags = await _boxTagService.GetBoxsTagsByBoxId(id_box, limit, offset, expand.Split(',').ToList());
+            var boxsTags = await _boxTagService.GetBoxsTagsByBoxId(id_box, limit, offset, expand?.Split(',').ToList());
             var CountList = await _boxTagService.GetBoxsTagsCountByBoxId(id_box);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
@@ -32,10 +32,10 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_tag}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedBoxTagDto>> GetBoxTagById([FromRoute] int id_store, [FromRoute] int id_box, [FromRoute] int id_tag, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
+        public async Task<ActionResult<ReadExtendedBoxTagDto>> GetBoxTagById([FromRoute] int id_store, [FromRoute] int id_box, [FromRoute] int id_tag, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','.")] string? expand = null)
         {
             await _boxTagService.CheckIfStoreExists(id_store,id_box);
-            var boxTag = await _boxTagService.GetBoxTagById(id_box, id_tag, expand.Split(',').ToList());
+            var boxTag = await _boxTagService.GetBoxTagById(id_box, id_tag, expand?.Split(',').ToList());
             return Ok(boxTag);
         }
 

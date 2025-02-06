@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using electrostore.Dto;
 
 namespace electrostore.Models;
 
@@ -16,7 +17,7 @@ public class ProjetsCommentaires
     [ForeignKey("id_projet")]
     public Projets Projet { get; set; }
 
-    [MaxLength(455)]
+    [MaxLength(Constants.MaxCommentaireLength)]
     public string contenu_projet_commentaire { get; set; }
 
     public DateTime date_projet_commentaire { get; set; }

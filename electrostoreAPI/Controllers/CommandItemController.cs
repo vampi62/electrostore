@@ -20,9 +20,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedCommandItemDto>>> GetCommandItemsByCommandId([FromRoute] int id_command, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
+        public async Task<ActionResult<IEnumerable<ReadExtendedCommandItemDto>>> GetCommandItemsByCommandId([FromRoute] int id_command, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.")] string? expand = null)
         {
-            var commandItems = await _commandItemService.GetCommandItemsByCommandId(id_command, limit, offset, expand.Split(',').ToList());
+            var commandItems = await _commandItemService.GetCommandItemsByCommandId(id_command, limit, offset, expand?.Split(',').ToList());
             var CountList = await _commandItemService.GetCommandItemsCountByCommandId(id_command);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
@@ -31,9 +31,9 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_item}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedCommandItemDto>> GetCommandItemById([FromRoute] int id_command, [FromRoute] int id_item, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
+        public async Task<ActionResult<ReadExtendedCommandItemDto>> GetCommandItemById([FromRoute] int id_command, [FromRoute] int id_item, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.")] string? expand = null)
         {
-            var commandItem = await _commandItemService.GetCommandItemById(id_command, id_item, expand.Split(',').ToList());
+            var commandItem = await _commandItemService.GetCommandItemById(id_command, id_item, expand?.Split(',').ToList());
             return Ok(commandItem);
         }
 
@@ -53,7 +53,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("bulk")]
-		[Authorize(Policy = "AccessToken")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBulkCommandItemDto>> CreateBulkCommandItem([FromRoute] int id_command, [FromBody] List<CreateCommandItemByCommandDto> commandItemDto)
         {
             var commandItemDtoFull = commandItemDto.Select(x => new CreateCommandItemDto

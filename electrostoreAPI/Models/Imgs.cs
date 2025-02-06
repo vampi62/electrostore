@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using electrostore.Dto;
 
 namespace electrostore.Models;
 
@@ -13,13 +14,13 @@ public class Imgs
     [ForeignKey("id_item")]
     public Items Item { get; set; }
 
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxNameLength)]
     public string nom_img { get; set; }
 
-    [MaxLength(150)]
+    [MaxLength(Constants.MaxUrlLength)]
     public string url_img { get; set; }
 
-    [MaxLength(500)]
+    [MaxLength(Constants.MaxDescriptionLength)]
     public string description_img { get; set; }
 
     public DateTime date_img { get; set; }

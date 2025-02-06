@@ -19,7 +19,7 @@ public record CreateCommandDocumentDto : IValidatableObject
     
     [Required]
     [MinLength(1, ErrorMessage = "name_command_document cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "name_command_document cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "name_command_document cannot exceed 50 characters")]
     public string name_command_document { get; init; }
     
     [Required]
@@ -55,7 +55,7 @@ public record CreateCommandDocumentByCommandDto : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "name_command_document cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "name_command_document cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "name_command_document cannot exceed 50 characters")]
     public string name_command_document { get; init; }
     
     [Required]
@@ -89,7 +89,7 @@ public record CreateCommandDocumentByCommandDto : IValidatableObject
 }
 public record UpdateCommandDocumentDto : IValidatableObject
 {
-    [MaxLength(50, ErrorMessage = "name_command_document cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "name_command_document cannot exceed 50 characters")]
     public string? name_command_document { get; init; }
 
     public IFormFile? document { get; init; }

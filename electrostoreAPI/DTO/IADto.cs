@@ -14,12 +14,12 @@ public record CreateIADto : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "nom_store cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "nom_store cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_store cannot exceed 50 characters")]
     public string nom_ia { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "nom_store cannot be empty or whitespace.")]
-    [MaxLength(500, ErrorMessage = "nom_store cannot exceed 500 characters")]
+    [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "nom_store cannot exceed 500 characters")]
     public string description_ia { get; init; }
     
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -36,10 +36,10 @@ public record CreateIADto : IValidatableObject
 }
 public record UpdateIADto : IValidatableObject
 {
-    [MaxLength(50, ErrorMessage = "nom_store cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_store cannot exceed 50 characters")]
     public string? nom_ia { get; init; }
 
-    [MaxLength(500, ErrorMessage = "nom_store cannot exceed 500 characters")]
+    [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "nom_store cannot exceed 500 characters")]
     public string? description_ia { get; init; }
     
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

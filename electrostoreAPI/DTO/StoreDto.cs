@@ -29,7 +29,7 @@ public record CreateStoreDto : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "nom_store cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "nom_store cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_store cannot exceed 50 characters")]
     public string nom_store { get; init; }
 
     [Required]
@@ -42,7 +42,7 @@ public record CreateStoreDto : IValidatableObject
 
     [Required]
     [MinLength(1, ErrorMessage = "mqtt_name_store cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "mqtt_name_store cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "mqtt_name_store cannot exceed 50 characters")]
     public string mqtt_name_store { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -61,7 +61,7 @@ public record CreateStoreDto : IValidatableObject
 
 public record UpdateStoreDto : IValidatableObject
 {
-    [MaxLength(50, ErrorMessage = "nom_store cannot exceed 50 characters.")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_store cannot exceed 50 characters.")]
     public string? nom_store { get; init; }
 
     [Range(1, int.MaxValue, ErrorMessage = "xlength_store must be greater than 0.")]
@@ -70,7 +70,7 @@ public record UpdateStoreDto : IValidatableObject
     [Range(1, int.MaxValue, ErrorMessage = "ylength_store must be greater than 0.")]
     public int? ylength_store { get; init; }
 
-    [MaxLength(50, ErrorMessage = "mqtt_name_store cannot exceed 50 characters.")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "mqtt_name_store cannot exceed 50 characters.")]
     public string? mqtt_name_store { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

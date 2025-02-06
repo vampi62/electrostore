@@ -20,9 +20,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedItemBoxDto>>> GetItemsBoxsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
+        public async Task<ActionResult<IEnumerable<ReadExtendedItemBoxDto>>> GetItemsBoxsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','.")] string? expand = null)
         {
-            var itemBoxs = await _itemBoxService.GetItemsBoxsByItemId(id_item, limit, offset, expand.Split(',').ToList());
+            var itemBoxs = await _itemBoxService.GetItemsBoxsByItemId(id_item, limit, offset, expand?.Split(',').ToList());
             var CountList = await _itemBoxService.GetItemsBoxsCountByItemId(id_item);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
@@ -31,9 +31,9 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_box}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedItemBoxDto>> GetItemBoxById([FromRoute] int id_item, [FromRoute] int id_box, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
+        public async Task<ActionResult<ReadExtendedItemBoxDto>> GetItemBoxById([FromRoute] int id_item, [FromRoute] int id_box, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','.")] string? expand = null)
         {
-            var itemBox = await _itemBoxService.GetItemBoxById(id_item, id_box, expand.Split(',').ToList());
+            var itemBox = await _itemBoxService.GetItemBoxById(id_item, id_box, expand?.Split(',').ToList());
             return Ok(itemBox);
         }
 

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using electrostore.Dto;
 
 
 namespace electrostore.Models;
@@ -15,15 +16,15 @@ public class JWIAccessToken
 
     public DateTime created_at { get; set; }
 
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxIpLength)]
     public string created_by_ip { get; set; }
 
     public DateTime? revoked_at { get; set; }
 
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxIpLength)]
     public string? revoked_by_ip { get; set; }
 
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxReasonLength)]
     public string? revoked_reason { get; set; }
 
     public int id_user { get; set; }

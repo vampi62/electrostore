@@ -17,7 +17,7 @@ public class CommandService : ICommandService
     public async Task<IEnumerable<ReadExtendedCommandDto>> GetCommands(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Commands.AsQueryable();
-        if (idResearch != null && idResearch.Any())
+        if (idResearch != null)
         {
             query = query.Where(b => idResearch.Contains(b.id_command));
         }

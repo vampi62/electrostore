@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using electrostore.Dto;
 
 namespace electrostore.Models;
 
@@ -16,7 +17,7 @@ public class CommandsCommentaires
     [ForeignKey("id_command")]
     public Commands Command { get; set; }
 
-    [MaxLength(455)]
+    [MaxLength(Constants.MaxCommentaireLength)]
     public string contenu_command_commentaire { get; set; }
 
     public DateTime date_command_commentaire { get; set; }

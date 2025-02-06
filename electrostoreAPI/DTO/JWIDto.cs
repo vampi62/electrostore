@@ -29,7 +29,7 @@ public record ReadRefreshTokenDto
 }
 public record UpdateAccessTokenDto : IValidatableObject
 {
-    [MaxLength(50, ErrorMessage = "revoked_reason cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxReasonLength, ErrorMessage = "revoked_reason cannot exceed 50 characters")]
     public string? revoked_reason { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

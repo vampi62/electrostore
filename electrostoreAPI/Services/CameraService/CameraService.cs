@@ -18,7 +18,7 @@ public class CameraService : ICameraService
     public async Task<IEnumerable<ReadCameraDto>> GetCameras(int limit = 100, int offset = 0, List<int>? idResearch = null)
     {
         var query = _context.Cameras.AsQueryable();
-        if (idResearch != null && idResearch.Any())
+        if (idResearch != null)
         {
             query = query.Where(b => idResearch.Contains(b.id_camera));
         }

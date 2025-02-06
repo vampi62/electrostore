@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using electrostore.Dto;
 
 namespace electrostore.Models;
 
@@ -11,10 +12,10 @@ public class Commands
 
     public float prix_command { get; set; }
     
-    [MaxLength(150)]
+    [MaxLength(Constants.MaxUrlLength)]
     public string url_command { get; set; }
 
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxStatusLength)]
     public string status_command { get; set; }
 
     public DateTime date_command { get; set; }

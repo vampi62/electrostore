@@ -52,7 +52,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("bulk")]
-		[Authorize(Policy = "AccessToken")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBulkLedDto>> CreateBulkLed([FromRoute] int id_store, [FromBody] List<CreateLedByStoreDto> ledsDto)
         {
             var ledsDtoFull = ledsDto.Select(ledDto => new CreateLedDto
@@ -81,7 +81,7 @@ namespace electrostore.Controllers
         }
         
         [HttpPut("bulk")]
-		[Authorize(Policy = "AccessToken")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBulkLedDto>> UpdateBulkLed([FromRoute] int id_store, [FromBody] List<UpdateBulkLedStoreDto> ledsDto)
         {
             var leds = await _ledService.UpdateBulkLed(ledsDto, id_store);
@@ -97,7 +97,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("bulk")]
-		[Authorize(Policy = "AccessToken")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBulkLedDto>> DeleteBulkLed([FromRoute] int id_store, [FromBody] List<int> ids)
         {
             var leds = await _ledService.DeleteBulkLed(ids, id_store);

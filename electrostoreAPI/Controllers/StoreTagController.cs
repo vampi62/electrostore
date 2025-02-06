@@ -20,9 +20,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedStoreTagDto>>> GetStoresTagsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
+        public async Task<ActionResult<IEnumerable<ReadExtendedStoreTagDto>>> GetStoresTagsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','.")] string? expand = null)
         {
-            var storeTags = await _storeTagService.GetStoresTagsByStoreId(id_store, limit, offset, expand.Split(',').ToList());
+            var storeTags = await _storeTagService.GetStoresTagsByStoreId(id_store, limit, offset, expand?.Split(',').ToList());
             var CountList = await _storeTagService.GetStoresTagsCountByStoreId(id_store);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
@@ -31,9 +31,9 @@ namespace electrostore.Controllers
         
         [HttpGet("{id_tag}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedStoreTagDto>> GetStoreTagById([FromRoute] int id_store, [FromRoute] int id_tag, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
+        public async Task<ActionResult<ReadExtendedStoreTagDto>> GetStoreTagById([FromRoute] int id_store, [FromRoute] int id_tag, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','.")] string? expand = null)
         {
-            var storeTag = await _storeTagService.GetStoreTagById(id_store, id_tag, expand.Split(',').ToList());
+            var storeTag = await _storeTagService.GetStoreTagById(id_store, id_tag, expand?.Split(',').ToList());
             return Ok(storeTag);
         }
 
@@ -51,7 +51,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("bulk")]
-		[Authorize(Policy = "AccessToken")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBulkStoreTagDto>> CreateBulkStoreTag([FromRoute] int id_store, [FromBody] List<CreateStoreTagByStoreDto> storeTagsDto)
         {
             var storeTagsDtoFull = storeTagsDto.Select(storeTagDto => new CreateStoreTagDto

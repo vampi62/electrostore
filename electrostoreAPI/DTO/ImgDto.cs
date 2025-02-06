@@ -15,12 +15,12 @@ public record CreateImgByItemDto : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "nom_img cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "nom_img cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_img cannot exceed 50 characters")]
     public string nom_img { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "description_img cannot be empty or whitespace.")]
-    [MaxLength(500, ErrorMessage = "description_img cannot exceed 500 characters")]
+    [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "description_img cannot exceed 500 characters")]
     public string description_img { get; init; }
 
     [Required]
@@ -56,12 +56,12 @@ public record CreateImgDto : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "nom_img cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "nom_img cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_img cannot exceed 50 characters")]
     public string nom_img { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "description_img cannot be empty or whitespace.")]
-    [MaxLength(500, ErrorMessage = "description_img cannot exceed 500 characters")]
+    [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "description_img cannot exceed 500 characters")]
     public string description_img { get; init; }
 
     [Required]
@@ -98,10 +98,10 @@ public record CreateImgDto : IValidatableObject
 }
 public record UpdateImgDto : IValidatableObject
 {
-    [MaxLength(50, ErrorMessage = "nom_img cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_img cannot exceed 50 characters")]
     public string? nom_img { get; init; }
 
-    [MaxLength(500, ErrorMessage = "description_img cannot exceed 500 characters")]
+    [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "description_img cannot exceed 500 characters")]
     public string? description_img { get; init; }
     
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using electrostore.Dto;
 
 namespace electrostore.Models;
 
@@ -9,15 +10,15 @@ public class Cameras
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_camera { get; set; }
 
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxNameLength)]
     public string nom_camera { get; set; }
 
-    [MaxLength(150)]
+    [MaxLength(Constants.MaxUrlLength)]
     public string url_camera { get; set; }
 
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxNameLength)]
     public string? user_camera { get; set; }
 
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxNameLength)]
     public string? mdp_camera { get; set; }
 }

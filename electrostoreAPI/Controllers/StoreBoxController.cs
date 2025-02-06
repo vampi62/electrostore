@@ -23,9 +23,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedBoxDto>>> GetBoxsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
+        public async Task<ActionResult<IEnumerable<ReadExtendedBoxDto>>> GetBoxsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','.")] string? expand = null)
         {
-            var boxs = await _boxService.GetBoxsByStoreId(id_store, limit, offset, expand.Split(',').ToList());
+            var boxs = await _boxService.GetBoxsByStoreId(id_store, limit, offset, expand?.Split(',').ToList());
             var CountList = await _boxService.GetBoxsCountByStoreId(id_store);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
@@ -34,9 +34,9 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_box}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedBoxDto>> GetBoxById([FromRoute] int id_store, [FromRoute] int id_box, [FromQuery, SwaggerParameter(Description = "Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','. Default: \"\"")] string expand = "")
+        public async Task<ActionResult<ReadExtendedBoxDto>> GetBoxById([FromRoute] int id_store, [FromRoute] int id_box, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','.")] string? expand = null)
         {
-            var box = await _boxService.GetBoxById(id_box, id_store, expand.Split(',').ToList());
+            var box = await _boxService.GetBoxById(id_box, id_store, expand?.Split(',').ToList());
             return Ok(box);
         }
 
@@ -57,7 +57,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPost("bulk")]
-		[Authorize(Policy = "AccessToken")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBulkBoxDto>> CreateBulkBox([FromRoute] int id_store, [FromBody] List<CreateBoxByStoreDto> boxsDto)
         {
             var boxsDtoFull = boxsDto.Select(boxDto => new CreateBoxDto
@@ -92,7 +92,7 @@ namespace electrostore.Controllers
         }
 
         [HttpPut("bulk")]
-		[Authorize(Policy = "AccessToken")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBulkBoxDto>> UpdateBulkBox([FromRoute] int id_store, [FromBody] List<UpdateBulkBoxByStoreDto> boxsDto)
         {
             var boxs = await _boxService.UpdateBulkBox(boxsDto, id_store);
@@ -112,7 +112,7 @@ namespace electrostore.Controllers
         }
 
         [HttpDelete("bulk")]
-		[Authorize(Policy = "AccessToken")]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBulkBoxDto>> DeleteBulkBox([FromRoute] int id_store, [FromBody] List<int> ids)
         {
             var boxs = await _boxService.DeleteBulkBox(ids, id_store);
