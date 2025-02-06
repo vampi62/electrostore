@@ -41,7 +41,7 @@ git clone https://github.com/vampi62/electrostore
 cd electrostore
 ```
 
-#### complete confi file
+#### complete config file
 ```bash
 # API configuration
 sudo nano electrostoreAPI/appsettings.json
@@ -50,6 +50,10 @@ sudo nano electrostoreAPI/appsettings.json
 # Mqtt --> mqtt
 # SMTP (optional) set Enable to false if you don't want to use the email service
 # JWT (key) set a random key for the jwt token
+
+# AI configuration
+sudo nano electrostoreIA/config.json
+# put the same mariadb credentials as in the API configuration
 
 # FRONT configuration
 sudo nano electrostoreFRONT/.env

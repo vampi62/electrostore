@@ -5,7 +5,7 @@
   #include <ESP8266WiFi.h> // Utilisez la bibliothèque ESP8266WiFi pour ESP8266
   #define LED_PIN 2
 #else
-  #error "Type de carte non pris en charge !"
+  #error "board not supported"
 #endif
 
 #include <ESPAsyncWebServer.h>
@@ -46,8 +46,8 @@ PubSubClient mqttClient(wifiClient);
 
 int maxbuffer = 4096;
 
-const char *ap_ssid = "ESP_Config";     // Nom du réseau WiFi en mode AP (point d'accès)
-const char *ap_password = "ConfigPass"; // Mot de passe du réseau WiFi en mode AP
+const char *ap_ssid = "ESP_Config";     // name of the WiFi network in AP mode
+const char *ap_password = "ConfigPass"; // password of the WiFi network in AP mode
 
 const char *version_ledstore = "1.0";
 
@@ -62,7 +62,7 @@ struct LEDInfo
   int module;
   int delayTime;
 };
-// la valeur dans leds doit être identique a "ledCount"
+// the value in "leds" must be the same number than "ledCount"
 LEDInfo leds[256];
 Adafruit_NeoPixel strip(ledCount, LED_PIN, NEO_GRB + NEO_KHZ800);
 
@@ -176,7 +176,7 @@ void loop()
   {
     if (WiFi.status() != WL_CONNECTED)
     {
-      Serial.println("Connexion au réseau Wi-Fi perdue.");
+      Serial.println("wifi connection lost");
       iswificlient = setupWiFi();
       if (iswificlient)
       {
