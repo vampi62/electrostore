@@ -179,7 +179,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_camera}/status")]
-        [Authorize(Policy = "AccessToken")]
+        [AllowAnonymous]
         public async Task<ActionResult<CameraStatusDto>> GetCameraStatus([FromRoute] int id_camera)
         {
             var camera = await _cameraService.GetCameraById(id_camera);
@@ -217,7 +217,7 @@ namespace electrostore.Controllers
                         return Ok(newCameraStatusDto);
                     }
                     var content = await response.Content.ReadAsStringAsync();
-                    var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
+                    var json = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content);
                     if (json is null)
                     {
                         newCameraStatusDto = new CameraStatusDto {
@@ -229,23 +229,24 @@ namespace electrostore.Controllers
                     newCameraStatusDto = new CameraStatusDto {
                         network = true,
                         statusCode = (int)response.StatusCode,
-                        uptime = (float)json["uptime"],
-                        espModel = (string)json["espModel"],
-                        espTemperature = (float)json["espTemperature"],
-                        ringLightPower = (int)json["ringLightPower"],
-                        versionScanBox = (string)json["versionScanBox"],
-                        cameraResolution = (string)json["cameraResolution"],
-                        cameraPID = (string)json["cameraPID"],
-                        wifiSignalStrength = (string)json["wifiSignalStrength"]
-                    };
+                        uptime = json.TryGetValue("uptime", out var uptime) && uptime.ValueKind == JsonValueKind.Number ? uptime.GetSingle() : 0f,
+						espModel = json.TryGetValue("espModel", out var espModel) && espModel.ValueKind == JsonValueKind.String ? espModel.GetString() : string.Empty,
+						espTemperature = json.TryGetValue("espTemperature", out var espTemperature) && espTemperature.ValueKind == JsonValueKind.Number ? espTemperature.GetSingle() : 0f,
+						ringLightPower = json.TryGetValue("ringLightPower", out var ringLightPower) && ringLightPower.ValueKind == JsonValueKind.Number ? ringLightPower.GetInt32() : 0,
+						versionScanBox = json.TryGetValue("versionScanBox", out var versionScanBox) && versionScanBox.ValueKind == JsonValueKind.String ? versionScanBox.GetString() : string.Empty,
+						cameraResolution = json.TryGetValue("cameraResolution", out var cameraResolution) && cameraResolution.ValueKind == JsonValueKind.String ? cameraResolution.GetString() : string.Empty,
+                        cameraPID = json.TryGetValue("cameraPID", out var cameraPID) && cameraPID.ValueKind == JsonValueKind.Number ? cameraPID.GetInt32().ToString() : string.Empty,
+						wifiSignalStrength = json.TryGetValue("wifiSignalStrength", out var wifiSignalStrength) && wifiSignalStrength.ValueKind == JsonValueKind.String ? wifiSignalStrength.GetString() : string.Empty
+					};
                     return Ok(newCameraStatusDto);
                 }
             }
-            catch
+            catch (Exception e)
             {
+				Console.WriteLine(e);
                 var newCameraStatusDto = new CameraStatusDto {
                     network = false,
-                    statusCode = 404
+                    statusCode = 500
                 };
                 return Ok(newCameraStatusDto);
             }

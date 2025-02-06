@@ -54,9 +54,9 @@
           {
             "name": "idResearch",
             "in": "query",
+            "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -444,18 +444,17 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_items'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_items'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           {
             "name": "idResearch",
             "in": "query",
+            "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -564,10 +563,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_items'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_items'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -709,10 +707,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'command', 'user'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'command', 'user'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -841,10 +838,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'command', 'user'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'command', 'user'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -1334,10 +1330,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -1466,10 +1461,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -1717,9 +1711,9 @@
           {
             "name": "idResearch",
             "in": "query",
+            "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -2081,18 +2075,17 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'item_tags', 'item_boxs', 'command_items', 'projet_items', 'item_documents'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'item_tags', 'item_boxs', 'command_items', 'projet_items', 'item_documents'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           {
             "name": "idResearch",
             "in": "query",
+            "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -2201,10 +2194,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'item_tags', 'item_boxs', 'command_items', 'projet_items', 'item_documents'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'item_tags', 'item_boxs', 'command_items', 'projet_items', 'item_documents'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -2346,10 +2338,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -2478,10 +2469,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -2641,10 +2631,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -2773,10 +2762,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -3665,10 +3653,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -3797,10 +3784,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -4028,10 +4014,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -4160,10 +4145,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -4385,18 +4369,17 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'projets_commentaires', 'projets_documents', 'projets_items'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'projets_documents', 'projets_items'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           {
             "name": "idResearch",
             "in": "query",
+            "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -4505,10 +4488,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'projets_commentaires', 'projets_documents', 'projets_items'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'projets_documents', 'projets_items'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -4650,10 +4632,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -4782,10 +4763,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -5283,10 +5263,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -5415,10 +5394,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -5646,10 +5624,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -5778,10 +5755,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -6225,10 +6201,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -6375,10 +6350,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -6565,10 +6539,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -6715,10 +6688,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -7535,18 +7507,17 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           {
             "name": "idResearch",
             "in": "query",
+            "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -7655,10 +7626,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -7800,10 +7770,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -7932,10 +7901,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -8157,18 +8125,17 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'stores_tags', 'items_tags', 'boxs_tags'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'stores_tags', 'items_tags', 'boxs_tags'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           {
             "name": "idResearch",
             "in": "query",
+            "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -8277,10 +8244,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'stores_tags', 'items_tags', 'boxs_tags'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'stores_tags', 'items_tags', 'boxs_tags'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -8479,10 +8445,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -8611,10 +8576,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -8845,10 +8809,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -8977,10 +8940,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -9211,10 +9173,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -9343,10 +9304,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -9568,18 +9528,17 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'projets_commentaires', 'commands_commentaires'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'commands_commentaires'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           {
             "name": "idResearch",
             "in": "query",
+            "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -9688,10 +9647,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'projets_commentaires', 'commands_commentaires'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'commands_commentaires'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -9972,10 +9930,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'command', 'user'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'command', 'user'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -10047,10 +10004,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'command', 'user'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'command', 'user'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -10210,10 +10166,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -10285,10 +10240,9 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','. Default: \"\"",
+            "description": "(Optional) Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         ],
@@ -11598,6 +11552,14 @@
           },
           "ia_connected": {
             "type": "boolean"
+          },
+          "max_length": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false

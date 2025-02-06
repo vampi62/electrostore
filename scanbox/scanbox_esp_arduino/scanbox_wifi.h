@@ -1,7 +1,7 @@
 bool setupWiFi()
 {
   Serial.println();
-  Serial.print("Connexion au réseau Wi-Fi: ");
+  Serial.print("Connecting to Wi-Fi network: ");
   Serial.println(wifiSSID);
   WiFi.mode(WIFI_STA);
   do
@@ -16,15 +16,15 @@ bool setupWiFi()
     if (WiFi.status() == WL_CONNECTED)
     {
       Serial.println("");
-      Serial.println("Wi-Fi connecté !");
-      Serial.print("Adresse IP: ");
+      Serial.println("Wi-Fi connected!");
+      Serial.print("IP Address: ");
       Serial.println(WiFi.localIP());
       nbrErreurWifiConnect = 0;
     }
     else
     {
       Serial.println("");
-      Serial.println("Connexion au réseau Wi-Fi échouée.");
+      Serial.println("Wi-Fi connection failed.");
       nbrErreurWifiConnect++;
     }
   } while ((WiFi.status() != WL_CONNECTED) && (nbrErreurWifiConnect <= 3));
@@ -36,7 +36,7 @@ bool setupWiFi()
   {
     WiFi.mode(WIFI_AP);
     WiFi.softAP(ap_ssid, ap_password);
-    Serial.print("Adresse IP du réseau temporaire: ");
+    Serial.print("Temporary network IP address: ");
     Serial.println(WiFi.softAPIP());
     return false;
   }

@@ -89,9 +89,9 @@ void handleRoot(AsyncWebServerRequest *request)
   response += "<body>";
   response += "<h1>Menu</h1>";
   response += "<ul>";
-  response += "<li><a href='/wifi'>Paramètres WiFi</a></li>";
-  response += "<li><a href='/user'>Paramètres User</a></li>";
-  response += "<li><a href='/cam'>Paramètres Cam</a></li>";
+  response += "<li><a href='/wifi'>WiFi Settings</a></li>";
+  response += "<li><a href='/user'>User Settings</a></li>";
+  response += "<li><a href='/cam'>Camera Settings</a></li>";
   response += "</ul>";
   response += "</body>";
   response += "</html>";

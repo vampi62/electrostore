@@ -126,19 +126,19 @@ void setup()
     switch (s->id.PID)
     {
     case 0x26: // OV2640 (PID 38 en hexadécimal)
-      Serial.printf("Caméra détectée : OV2640");
+      Serial.printf("Caméra found : OV2640");
       break;
     case 0x5640: // OV5640 (PID 22080 en décimal, 0x5640 en hexadécimal)
-      Serial.printf("Caméra détectée : OV5640");
+      Serial.printf("Caméra found : OV5640");
       break;
     default:
-      Serial.printf("Caméra inconnue avec PID : 0x%x\n", s->id.PID);
+      Serial.printf("Caméra found : %X", s->id.PID);
       break;
     }
   }
   else
   {
-    Serial.printf("Erreur : Impossible de récupérer le capteur de la caméra.");
+    Serial.printf("Error getting sensor information");
   }
   strip.begin();
   strip.setPixelColor(0, strip.Color(20, 20, 20));
@@ -188,12 +188,15 @@ void loop()
   {
     if (WiFi.status() != WL_CONNECTED)
     {
-      Serial.println("Connexion au réseau Wi-Fi perdue.");
+      Serial.println("Wifi connection lost");
       iswificlient = setupWiFi();
       if (iswificlient)
       {
         strip.setPixelColor(0, strip.Color(0, 20, 20));
         strip.show();
+		delay(1000);
+		strip.setPixelColor(0, strip.Color(0, 0, 0));
+		strip.show();
       }
       else
       {

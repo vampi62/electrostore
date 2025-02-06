@@ -1,20 +1,19 @@
 bool containsInvalidCharacter(String str)
 {
-  // Parcourt chaque caractère de la chaîne
   for (int i = 0; i < str.length(); i++)
   {
-    // Vérifie si le caractère est égal au caractère invalide (�)
+    // check if the character is equal to the invalid character (�)
     if (str.charAt(i) == '�')
     {
-      return true; // Caractère invalide trouvé
+      return true;
     }
-    // Vérifie si le caractère est égal au caractère invalide (0xFF)
+    // check if the character is equal to the invalid character (0xFF)
     if (str.charAt(i) == 0xFF)
     {
-      return true; // Caractère invalide trouvé
+      return true;
     }
   }
-  return false; // Aucun caractère invalide trouvé
+  return false;
 }
 
 void writeStringToEEPROM(int startAddress, const String &data)
