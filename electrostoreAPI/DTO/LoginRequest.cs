@@ -6,7 +6,7 @@ public class LoginRequest : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "Email cannot be empty or whitespace.")]
-    [MaxLength(100, ErrorMessage = "Email cannot exceed 100 characters")]
+    [MaxLength(Constants.MaxEmailLength, ErrorMessage = "Email cannot exceed 100 characters")]
     public string Email { get; set; }
 
     [Required]
@@ -30,7 +30,7 @@ public class ForgotPasswordRequest : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "Email cannot be empty or whitespace.")]
-    [MaxLength(100, ErrorMessage = "Email cannot exceed 100 characters")]
+    [MaxLength(Constants.MaxEmailLength, ErrorMessage = "Email cannot exceed 100 characters")]
     public string Email { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -46,7 +46,7 @@ public class ResetPasswordRequest : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "Email cannot be empty or whitespace.")]
-    [MaxLength(100, ErrorMessage = "Email cannot exceed 100 characters")]
+    [MaxLength(Constants.MaxEmailLength, ErrorMessage = "Email cannot exceed 100 characters")]
     public string Email { get; set; }
 
     [Required]
@@ -68,7 +68,7 @@ public class ResetPasswordRequest : IValidatableObject
         {
             yield return new ValidationResult("Token cannot be null, empty, or whitespace.", new[] { nameof(Token) });
         }
-        if (!new System.ComponentModel.DataAnnotations.RegularExpressionAttribute(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$").IsValid(Password))
+        if (!new RegularExpressionAttribute(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$").IsValid(Password))
         {
             yield return new ValidationResult("Password must contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long");
         }

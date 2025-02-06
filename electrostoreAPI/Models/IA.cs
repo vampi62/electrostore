@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using electrostore.Dto;
 
 namespace electrostore.Models;
 
@@ -9,10 +10,10 @@ public class IA
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_ia { get; set; }
     
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxNameLength)]
     public string nom_ia { get; set; }
 
-    [MaxLength(500)]
+    [MaxLength(Constants.MaxDescriptionLength)]
     public string description_ia { get; set; }
 
     public DateTime date_ia { get; set; }

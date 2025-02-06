@@ -19,7 +19,7 @@ public record CreateProjetDocumentDto : IValidatableObject
     
     [Required]
     [MinLength(1, ErrorMessage = "name_projet_document cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "name_projet_document cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "name_projet_document cannot exceed 50 characters")]
     public string name_projet_document { get; init; }
 
     [Required]
@@ -55,7 +55,7 @@ public record CreateProjetDocumentByProjetDto : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "name_projet_document cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "name_projet_document cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "name_projet_document cannot exceed 50 characters")]
     public string name_projet_document { get; init; }
 
     [Required]
@@ -89,7 +89,7 @@ public record CreateProjetDocumentByProjetDto : IValidatableObject
 }
 public record UpdateProjetDocumentDto : IValidatableObject
 {
-    [MaxLength(50, ErrorMessage = "name_projet_document cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "name_projet_document cannot exceed 50 characters")]
     public string? name_projet_document { get; init; }
 
     public IFormFile? document { get; init; }

@@ -17,7 +17,7 @@ public class ProjetService : IProjetService
     public async Task<IEnumerable<ReadExtendedProjetDto>> GetProjets(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Projets.AsQueryable();
-        if (idResearch != null && idResearch.Any())
+        if (idResearch != null)
         {
             query = query.Where(b => idResearch.Contains(b.id_projet));
         }

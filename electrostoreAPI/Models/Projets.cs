@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using electrostore.Dto;
 
 namespace electrostore.Models;
 
@@ -9,16 +10,16 @@ public class Projets
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_projet { get; set; }
     
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxNameLength)]
     public string nom_projet { get; set; }
 
-    [MaxLength(500)]
+    [MaxLength(Constants.MaxDescriptionLength)]
     public string description_projet { get; set; }
 
-    [MaxLength(150)]
+    [MaxLength(Constants.MaxUrlLength)]
     public string url_projet { get; set; }
 
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxStatusLength)]
     public string status_projet { get; set; }
 
     public DateTime date_debut_projet { get; set; }

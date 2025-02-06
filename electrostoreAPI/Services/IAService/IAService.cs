@@ -28,7 +28,7 @@ public class IAService : IIAService
     public async Task<List<ReadIADto>> GetIA(int limit = 100, int offset = 0, List<int>? idResearch = null)
     {
         var query = _context.IA.AsQueryable();
-        if (idResearch != null && idResearch.Any())
+        if (idResearch != null)
         {
             query = query.Where(b => idResearch.Contains(b.id_ia));
         }

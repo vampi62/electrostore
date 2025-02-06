@@ -21,7 +21,7 @@ public class UserService : IUserService
     public async Task<IEnumerable<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Users.AsQueryable();
-        if (idResearch != null && idResearch.Any())
+        if (idResearch != null)
         {
             query = query.Where(b => idResearch.Contains(b.id_user));
         }

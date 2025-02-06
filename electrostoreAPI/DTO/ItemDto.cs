@@ -32,7 +32,7 @@ public record CreateItemDto : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "nom_item cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "nom_item cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_item cannot exceed 50 characters")]
     public string nom_item { get; init; }
 
     [Required]
@@ -41,7 +41,7 @@ public record CreateItemDto : IValidatableObject
 
     [Required]
     [MinLength(1, ErrorMessage = "description_item cannot be empty or whitespace.")]
-    [MaxLength(500, ErrorMessage = "description_item cannot exceed 500 characters")]
+    [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "description_item cannot exceed 500 characters")]
     public string description_item { get; init; }
 
     public int? id_img { get; init; }
@@ -60,13 +60,13 @@ public record CreateItemDto : IValidatableObject
 }
 public record UpdateItemDto : IValidatableObject
 {
-    [MaxLength(50, ErrorMessage = "nom_item cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_item cannot exceed 50 characters")]
     public string? nom_item { get; init; }
 
     [Range(0, int.MaxValue, ErrorMessage = "seuil_min_item must be greater than or equal to 0.")]
     public int? seuil_min_item { get; init; }
 
-    [MaxLength(500, ErrorMessage = "description_item cannot exceed 500 characters")]
+    [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "description_item cannot exceed 500 characters")]
     public string? description_item { get; init; }
 
     public int? id_img { get; init; }

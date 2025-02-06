@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using electrostore.Dto;
 
 namespace electrostore.Models;
 
@@ -13,12 +14,12 @@ public class Items
     [ForeignKey("id_img")]
     public Imgs Img { get; set; }
 
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxNameLength)]
     public string nom_item { get; set; }
 
     public int seuil_min_item { get; set; }
 
-    [MaxLength(500)]
+    [MaxLength(Constants.MaxDescriptionLength)]
     public string description_item { get; set; }
 
     public ICollection<ItemsBoxs> ItemsBoxs { get; set; } = new List<ItemsBoxs>();

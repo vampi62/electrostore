@@ -29,7 +29,7 @@ public record CreateProjetCommentaireByUserDto : IValidatableObject
 
     [Required]
     [MinLength(1, ErrorMessage = "contenu_projet_commentaire cannot be empty or whitespace.")]
-    [MaxLength(455, ErrorMessage = "contenu_projet_commentaire cannot exceed 455 characters")]
+    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_projet_commentaire cannot exceed 455 characters")]
     public string contenu_projet_commentaire { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -44,7 +44,7 @@ public record CreateProjetCommentaireByProjetDto : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "contenu_projet_commentaire cannot be empty or whitespace.")]
-    [MaxLength(455, ErrorMessage = "contenu_projet_commentaire cannot exceed 455 characters")]
+    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_projet_commentaire cannot exceed 455 characters")]
     public string contenu_projet_commentaire { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -65,7 +65,7 @@ public record CreateProjetCommentaireDto : IValidatableObject
 
     [Required]
     [MinLength(1, ErrorMessage = "contenu_projet_commentaire cannot be empty or whitespace.")]
-    [MaxLength(455, ErrorMessage = "contenu_projet_commentaire cannot exceed 455 characters")]
+    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_projet_commentaire cannot exceed 455 characters")]
     public string contenu_projet_commentaire { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -78,7 +78,7 @@ public record CreateProjetCommentaireDto : IValidatableObject
 }
 public record UpdateProjetCommentaireDto : IValidatableObject
 {
-    [MaxLength(455, ErrorMessage = "contenu_projet_commentaire cannot exceed 455 characters")]
+    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_projet_commentaire cannot exceed 455 characters")]
     public string? contenu_projet_commentaire { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

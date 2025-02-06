@@ -33,7 +33,21 @@ namespace electrostore.Controllers
                 // check if the mqtt is connected
                 mqtt_connected = _mqttClient.IsConnected,
                 // ping the iaElectrostoreAPI
-                ia_connected = reply.Status == IPStatus.Success
+                ia_connected = reply.Status == IPStatus.Success,
+                // get the max length of the different fields
+                max_length = new Dictionary<string, int>
+                {
+                    { "url", Constants.MaxUrlLength },
+                    { "commentaire", Constants.MaxCommentaireLength },
+                    { "description", Constants.MaxDescriptionLength },
+                    { "name", Constants.MaxNameLength },
+                    { "type", Constants.MaxTypeLength },
+                    { "email", Constants.MaxEmailLength },
+                    { "ip", Constants.MaxIpLength },
+                    { "reason", Constants.MaxReasonLength },
+                    { "role", Constants.MaxRoleLength },
+                    { "status", Constants.MaxStatusLength }
+                }
             });
         }
     }

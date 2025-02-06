@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using electrostore.Dto;
 
 namespace electrostore.Models;
 
@@ -9,7 +10,7 @@ public class Tags
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_tag { get; set; }
     
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxNameLength)]
     public string nom_tag { get; set; }
 
     public int poids_tag { get; set; } = 0;

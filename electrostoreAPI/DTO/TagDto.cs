@@ -31,7 +31,7 @@ public record CreateTagDto : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "nom_tag cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "nom_tag cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_tag cannot exceed 50 characters")]
     public string nom_tag { get; init; }
 
     [Required]
@@ -48,7 +48,7 @@ public record CreateTagDto : IValidatableObject
 }
 public record UpdateTagDto : IValidatableObject
 {
-    [MaxLength(50, ErrorMessage = "nom_tag cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_tag cannot exceed 50 characters")]
     public string? nom_tag { get; init; }
 
     [Range(0, int.MaxValue, ErrorMessage = "poids_tag must be greater than or equal to 0.")]

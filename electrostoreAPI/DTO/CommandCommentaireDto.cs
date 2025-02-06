@@ -26,7 +26,7 @@ public record CreateCommandCommentaireByCommandDto : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "contenu_command_commentaire cannot be empty or whitespace.")]
-    [MaxLength(455, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
+    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
     public string contenu_command_commentaire { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -44,7 +44,7 @@ public record CreateCommandCommentaireByUserDto : IValidatableObject
 
     [Required]
     [MinLength(1, ErrorMessage = "contenu_command_commentaire cannot be empty or whitespace.")]
-    [MaxLength(455, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
+    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
     public string contenu_command_commentaire { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -65,7 +65,7 @@ public record CreateCommandCommentaireDto : IValidatableObject
 
     [Required]
     [MinLength(1, ErrorMessage = "contenu_command_commentaire cannot be empty or whitespace.")]
-    [MaxLength(455, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
+    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
     public string contenu_command_commentaire { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -78,7 +78,7 @@ public record CreateCommandCommentaireDto : IValidatableObject
 }
 public record UpdateCommandCommentaireDto : IValidatableObject
 {
-    [MaxLength(455, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
+    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
     public string? contenu_command_commentaire { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

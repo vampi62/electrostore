@@ -35,12 +35,12 @@ public record CreateCommandDto : IValidatableObject
 
     [Required]
     [MinLength(1, ErrorMessage = "url_command cannot be empty or whitespace.")]
-    [MaxLength(150, ErrorMessage = "url_command cannot exceed 150 characters")]
+    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "url_command cannot exceed 150 characters")]
     public string url_command { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "status_command cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "status_command cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxStatusLength, ErrorMessage = "status_command cannot exceed 50 characters")]
     public string status_command { get; init; }
 
     [Required]
@@ -65,10 +65,10 @@ public record UpdateCommandDto : IValidatableObject
     [Range(0.0, float.MaxValue, ErrorMessage = "prix_command must be greater than 0.")]
     public float? prix_command { get; init; }
 
-    [MaxLength(150, ErrorMessage = "url_command cannot exceed 150 characters")]
+    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "url_command cannot exceed 150 characters")]
     public string? url_command { get; init; }
 
-    [MaxLength(50, ErrorMessage = "status_command cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxStatusLength, ErrorMessage = "status_command cannot exceed 50 characters")]
     public string? status_command { get; init; }
 
     public DateTime? date_command { get; init; }

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using electrostore.Dto;
 
 namespace electrostore.Models;
 
@@ -9,20 +10,20 @@ public class Users
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_user { get; set; }
     
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxNameLength)]
     public string nom_user { get; set; }
 
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxNameLength)]
     public string prenom_user { get; set; }
 
     [EmailAddress]
-    [MaxLength(100)]
+    [MaxLength(Constants.MaxEmailLength)]
     public string email_user { get; set; }
 
     [MaxLength(255)]
     public string mdp_user { get; set; }
 
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxRoleLength)]
     public string role_user { get; set; }
 
     public Guid? reset_token { get; set; }

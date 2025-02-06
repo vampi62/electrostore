@@ -14,20 +14,20 @@ public record CreateCameraDto : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "nom_camera cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "nom_camera cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_camera cannot exceed 50 characters")]
     public string nom_camera { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "url_camera cannot be empty or whitespace.")]
-    [MaxLength(150, ErrorMessage = "url_camera cannot exceed 150 characters")]
+    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "url_camera cannot exceed 150 characters")]
     public string url_camera { get; init; }
 
     [MinLength(1, ErrorMessage = "user_camera cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "user_camera cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "user_camera cannot exceed 50 characters")]
     public string? user_camera { get; init; }
 
     [MinLength(1, ErrorMessage = "mdp_camera cannot be empty or whitespace.")]
-    [MaxLength(50, ErrorMessage = "mdp_camera cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "mdp_camera cannot exceed 50 characters")]
     public string? mdp_camera { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -44,16 +44,16 @@ public record CreateCameraDto : IValidatableObject
 }
 public record UpdateCameraDto : IValidatableObject
 {
-    [MaxLength(50, ErrorMessage = "nom_camera cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_camera cannot exceed 50 characters")]
     public string? nom_camera { get; init; }
 
-    [MaxLength(150, ErrorMessage = "url_camera cannot exceed 150 characters")]
+    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "url_camera cannot exceed 150 characters")]
     public string? url_camera { get; init; }
 
-    [MaxLength(50, ErrorMessage = "user_camera cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "user_camera cannot exceed 50 characters")]
     public string? user_camera { get; init; }
 
-    [MaxLength(50, ErrorMessage = "mdp_camera cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "mdp_camera cannot exceed 50 characters")]
     public string? mdp_camera { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

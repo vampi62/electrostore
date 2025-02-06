@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using electrostore.Dto;
 using System.Numerics;
 
 namespace electrostore.Models;
@@ -10,13 +11,13 @@ public class CommandsDocuments
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_command_document { get; set; }
 
-    [MaxLength(150)]
+    [MaxLength(Constants.MaxUrlLength)]
     public string url_command_document { get; set; }
 
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxNameLength)]
     public string name_command_document { get; set; }
 
-    [MaxLength(50)]
+    [MaxLength(Constants.MaxTypeLength)]
     public string type_command_document { get; set; }
 
     public decimal size_command_document { get; set; }

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.IAService;
+using Swashbuckle.AspNetCore.Annotations;
 using System.Net;
 using System.Text.Json;
 
@@ -21,7 +22,7 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadIADto>>> GetIA([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery] string idResearch = "")
+        public async Task<ActionResult<IEnumerable<ReadIADto>>> GetIA([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] string? idResearch = null)
         {
             var idList = string.IsNullOrWhiteSpace(idResearch) ? null : idResearch.Split(',').Where(id => int.TryParse(id, out _)).Select(int.Parse).ToList();
             var ias = await _iaService.GetIA(limit, offset, idList);
@@ -52,18 +53,18 @@ namespace electrostore.Controllers
         public async Task<IActionResult> GetTrainingStatus(int id_ia)
         {
             var ia = await _iaService.GetIAById(id_ia);
-            var httpClient = new HttpClient();
-            var response = await httpClient.GetAsync("http://electrostoreia:5000/status/" + id_ia);
-            var content = await response.Content.ReadAsStringAsync();
-            // convert the response to a json object
-            var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
-            if (response.StatusCode != HttpStatusCode.OK)
+            try
             {
-                return BadRequest(json);
-            }
-            else
-            {
+                var httpClient = new HttpClient();
+                var response = await httpClient.GetAsync("http://electrostoreia:5000/status/" + id_ia);
+                var content = await response.Content.ReadAsStringAsync();
+                // convert the response to a json object
+                var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
                 return Ok(json);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { message = e.Message });
             }
         }
 
@@ -79,18 +80,18 @@ namespace electrostore.Controllers
                 }
             }
             var ia = await _iaService.GetIAById(id_ia);
-            var httpClient = new HttpClient();
-            var response = await httpClient.PostAsync("http://electrostoreia:5000/train/" + id_ia, null);
-            var content = await response.Content.ReadAsStringAsync();
-            // convert the response to a json object
-            var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
-            if (response.StatusCode != HttpStatusCode.OK)
+            try
             {
-                return BadRequest(json);
-            }
-            else
-            {
+                var httpClient = new HttpClient();
+                var response = await httpClient.PostAsync("http://electrostoreia:5000/train/" + id_ia, null);
+                var content = await response.Content.ReadAsStringAsync();
+                // convert the response to a json object
+                var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
                 return Ok(json);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { message = e.Message });
             }
         }
 
@@ -99,24 +100,28 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadItemDto>> DetectItem([FromRoute] int id_ia, [FromForm] DetecDto img_to_scan)
         {
             var ia = await _iaService.GetIAById(id_ia);
-            var httpClient = new HttpClient();
-            // requete POST avec l'image à scanner
-            var response = await httpClient.PostAsync("http://electrostoreia:5000/detect/" + id_ia,
-                new MultipartFormDataContent
-                {
-                    { new StreamContent(img_to_scan.img_file.OpenReadStream()), "img_file", img_to_scan.img_file.FileName }
-                }
-            );
-            var content = await response.Content.ReadAsStringAsync();
-            // convert the response to a json object
-            var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
-            if (response.StatusCode != HttpStatusCode.OK)
+            if (!ia.trained_ia)
             {
-                return BadRequest(json);
+                return BadRequest(new { message = "The IA is not trained" });
             }
-            else
+            try
             {
+                var httpClient = new HttpClient();
+                // requete POST avec l'image à scanner
+                var response = await httpClient.PostAsync("http://electrostoreia:5000/detect/" + id_ia,
+                    new MultipartFormDataContent
+                    {
+                        { new StreamContent(img_to_scan.img_file.OpenReadStream()), "img_file", img_to_scan.img_file.FileName }
+                    }
+                );
+                var content = await response.Content.ReadAsStringAsync();
+                // convert the response to a json object
+                var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
                 return Ok(json);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { message = e.Message });
             }
         }
 
