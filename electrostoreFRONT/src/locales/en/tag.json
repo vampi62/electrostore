@@ -9,5 +9,11 @@
 	"VTagsItemsCount": "Items Count",
 	"VTagsStoresCount": "Stores Count",
 	"VTagsBoxsCount": "Boxs Count",
-	"VTagsLoading": "Loading"
+	"VTagsLoading": "Loading",
+	"VTagNotFound": "Tag not found",
+	"VTagTitle": "Tag",
+	"VTagAdd": "Add a tag",
+	"VTagUpdate": "Update",
+	"VTagDelete": "Delete",
+	"VTagBack": "Back"
 }

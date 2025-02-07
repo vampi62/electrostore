@@ -17,5 +17,11 @@
 	"VProjetsDateStart": "Date de début",
 	"VProjetsItems": "Articles",
 	"VProjetsDateEnd": "Date de fin",
-	"VProjetsLoading": "Chargement"
+	"VProjetsLoading": "Chargement",
+	"VProjetNotFound": "Projet introuvable",
+	"VProjetTitle": "Projet",
+	"VProjetAdd": "Ajouter un projet",
+	"VProjetUpdate": "Mettre à jour",
+	"VProjetDelete": "Supprimer",
+	"VProjetBack": "Retour"
 }

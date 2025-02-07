@@ -11,5 +11,11 @@
 	"VUsersFirstName": "First name",
 	"VUsersEmail": "Email",
 	"VUsersRole": "Role",
-	"VUsersLoading": "Loading"
+	"VUsersLoading": "Loading",
+	"VUserNotFound": "User not found",
+	"VUserTitle": "User",
+	"VUserAdd": "Add a user",
+	"VUserUpdate": "Update",
+	"VUserDelete": "Delete",
+	"VUserBack": "Back"
 }

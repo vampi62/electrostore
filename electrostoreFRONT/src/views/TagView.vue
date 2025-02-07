@@ -25,7 +25,7 @@ async function fetchData() {
 			await tagsStore.getTagById(tagId);
 		} catch {
 			delete tagsStore.tags[tagId];
-			addNotification({ message: "tag.VTagUpdated", type: "error", i18n: true });
+			addNotification({ message: "tag.VTagNotFound", type: "error", i18n: true });
 			router.push("/tags");
 			return;
 		}
@@ -59,18 +59,25 @@ onBeforeUnmount(() => {
 			<button type="button" @click="tagSave" v-if="tagId == 'new'"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="tagsStore.tagEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{
-						$t('tag.VTagAdd') }}</button>
+					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
+				</span>
+				{{ $t('tag.VTagAdd') }}
+			</button>
 			<button type="button" @click="tagUpdate" v-else
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="tagsStore.tagEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{
-						$t('tag.VTagUpdate') }}</button>
+					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
+				</span>
+				{{ $t('tag.VTagUpdate') }}
+			</button>
 			<button type="button" @click="tagDeleteOpenModal" v-if="tagId != 'new'"
-				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">{{ $t('tag.VTagDelete') }}</button>
+				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+				{{ $t('tag.VTagDelete') }}
+			</button>
 			<RouterLink to="/tags"
-				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">{{
-					$t('tag.VTagBack') }}</RouterLink>
+				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
+				{{ $t('tag.VTagBack') }}
+			</RouterLink>
 		</div>
 	</div>
 </template>

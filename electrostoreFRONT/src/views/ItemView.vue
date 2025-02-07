@@ -30,7 +30,7 @@ async function fetchData() {
 			await itemsStore.getItemById(itemId);
 		} catch {
 			delete itemsStore.items[itemId];
-			addNotification({ message: "item.VItemUpdated", type: "error", i18n: true });
+			addNotification({ message: "item.VItemNotFound", type: "error", i18n: true });
 			router.push("/items");
 			return;
 		}
@@ -65,18 +65,25 @@ onBeforeUnmount(() => {
 			<button type="button" @click="itemSave" v-if="itemId == 'new'"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="itemsStore.itemEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{
-						$t('item.VItemAdd') }}</button>
+					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
+				</span>
+				{{ $t('item.VItemAdd') }}
+			</button>
 			<button type="button" @click="itemUpdate" v-else
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="itemsStore.itemEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{
-						$t('item.VItemUpdate') }}</button>
+					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
+				</span>
+				{{ $t('item.VItemUpdate') }}
+			</button>
 			<button type="button" @click="itemDeleteOpenModal" v-if="itemId != 'new'"
-				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">{{ $t('item.VItemDelete') }}</button>
-			<RouterLink to="/items"
-				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">{{
-					$t('item.VItemBack') }}</RouterLink>
+				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+				{{ $t('item.VItemDelete') }}
+			</button>
+			<RouterLink to="/inventory"
+				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
+				{{ $t('item.VItemBack') }}
+			</RouterLink>
 		</div>
 	</div>
 </template>

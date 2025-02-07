@@ -14,5 +14,11 @@
 	"VInventoryTags": "Tags",
 	"VInventoryImg": "Image",
 	"VInventoryQuantity": "Quantité",
-	"VInventoryLoading": "Chargement"
+	"VInventoryLoading": "Chargement",
+	"VItemNotFound": "Article introuvable",
+	"VItemTitle": "Article",
+	"VItemAdd": "Ajouter un article",
+	"VItemUpdate": "Mettre à jour",
+	"VItemDelete": "Supprimer",
+	"VItemBack": "Retour"
 }

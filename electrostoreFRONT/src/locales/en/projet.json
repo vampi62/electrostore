@@ -17,5 +17,11 @@
 	"VProjetsDateStart": "Start date",
 	"VProjetsItems": "Items",
 	"VProjetsDateEnd": "End date",
-	"VProjetsLoading": "Loading"
+	"VProjetsLoading": "Loading",
+	"VProjetNotFound": "Project not found",
+	"VProjetTitle": "Project",
+	"VProjetAdd": "Add a project",
+	"VProjetUpdate": "Update",
+	"VProjetDelete": "Delete",
+	"VProjetBack": "Back"
 }

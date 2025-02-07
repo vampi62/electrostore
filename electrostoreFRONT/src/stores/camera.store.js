@@ -53,13 +53,13 @@ export const useCamerasStore = defineStore("cameras",{
 		async toggleLight(id) {
 			this.cameraEdition.loading = true;
 			if (this.status[id]?.ringLightPower > 0) {
-				this.cameraEdition = await fetchWrapper.post({
+				await fetchWrapper.post({
 					url: `${baseUrl}/camera/${id}/light`,
 					useToken: "access",
 					body: { "state": false },
 				});
 			} else {
-				this.cameraEdition = await fetchWrapper.post({
+				await fetchWrapper.post({
 					url: `${baseUrl}/camera/${id}/light`,
 					useToken: "access",
 					body: { "state": true },
@@ -76,7 +76,10 @@ export const useCamerasStore = defineStore("cameras",{
 			this.stream[id] = null;
 		},
 		async getStatus(id) {
-			this.status[id] = { loading: true };
+			if (!this.status[id]) {
+				this.status[id] = {};
+			}
+			this.status[id].loading = true;
 			this.status[id] = await fetchWrapper.get({
 				url: `${baseUrl}/camera/${id}/status`,
 				useToken: "access",

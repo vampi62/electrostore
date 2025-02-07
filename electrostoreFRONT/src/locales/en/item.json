@@ -14,5 +14,11 @@
 	"VInventoryTags": "Tags",
 	"VInventoryImg": "Image",
 	"VInventoryQuantity": "Quantity",
-	"VInventoryLoading": "Loading"
+	"VInventoryLoading": "Loading",
+	"VItemNotFound": "Item not found",
+	"VItemTitle": "Item",
+	"VItemAdd": "Add an item",
+	"VItemUpdate": "Update",
+	"VItemDelete": "Delete",
+	"VItemBack": "Back"
 }
