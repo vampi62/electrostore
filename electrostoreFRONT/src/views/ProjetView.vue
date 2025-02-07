@@ -26,7 +26,7 @@ async function fetchData() {
 			await projetsStore.getProjetById(projetId);
 		} catch {
 			delete projetsStore.projets[projetId];
-			addNotification({ message: "projet.VProjetUpdated", type: "error", i18n: true });
+			addNotification({ message: "projet.VProjetNotFound", type: "error", i18n: true });
 			router.push("/projets");
 			return;
 		}
@@ -62,19 +62,25 @@ onBeforeUnmount(() => {
 			<button type="button" @click="projetSave" v-if="projetId == 'new'"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="projetsStore.projetEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{
-						$t('projet.VProjetAdd') }}</button>
+					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
+				</span>
+				{{ $t('projet.VProjetAdd') }}
+			</button>
 			<button type="button" @click="projetUpdate" v-else
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="projetsStore.projetEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{
-						$t('projet.VProjetUpdate') }}</button>
+					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
+				</span>
+				{{ $t('projet.VProjetUpdate') }}
+			</button>
 			<button type="button" @click="projetDeleteOpenModal" v-if="projetId != 'new'"
-				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">{{ $t('projet.VProjetDelete')
-				}}</button>
+				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+				{{ $t('projet.VProjetDelete') }}
+			</button>
 			<RouterLink to="/projets"
-				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">{{
-					$t('projet.VProjetBack') }}</RouterLink>
+				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
+				{{ $t('projet.VProjetBack') }}
+			</RouterLink>
 		</div>
 	</div>
 </template>

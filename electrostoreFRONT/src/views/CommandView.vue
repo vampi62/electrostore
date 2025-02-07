@@ -94,6 +94,8 @@ const commandDeleteOpenModal = () => {
 const commandSave = async() => {
 	if (commandsStore.commandEdition.status_command === "Terminée") {
 		commandsStore.commandEdition.date_livraison_command = formatDateForDatetimeLocal(new Date());
+	} else {
+		commandsStore.commandEdition.date_livraison_command = null;
 	}
 	try {
 		await schemaCommand.validate(commandsStore.commandEdition, { abortEarly: false });
@@ -111,6 +113,8 @@ const commandSave = async() => {
 const commandUpdate = async() => {
 	if (commandsStore.commandEdition.status_command === "Terminée" && commandsStore.commands[commandId].status_command !== "Terminée") {
 		commandsStore.commandEdition.date_livraison_command = formatDateForDatetimeLocal(new Date());
+	} else if (commandsStore.commandEdition.status_command !== "Terminée") {
+		commandsStore.commandEdition.date_livraison_command = null;
 	}
 	try {
 		await schemaCommand.validate(commandsStore.commandEdition, { abortEarly: false });
@@ -341,11 +345,11 @@ const commentaireDeleteOpenModal = (commentaire) => {
 const schemaCommand = Yup.object().shape({
 	prix_command: Yup.number()
 		.min(0)
-		.max(2000)
+		.max(1000)
 		.typeError(t("command.VCommandPriceNumber"))
 		.required(t("command.VCommandPriceRequired")),
 	url_command: Yup.string()
-		.max(200)
+		.max(20)
 		.url(t("command.VCommandUrlInvalid"))
 		.required(t("command.VCommandUrlRequired")),
 	date_command: Yup.date()
@@ -354,8 +358,8 @@ const schemaCommand = Yup.object().shape({
 	status_command: Yup.string()
 		.required(t("command.VCommandStatusRequired")),
 	date_livraison_command: Yup.date()
-		.typeError(t("command.VCommandDateInvalid"))
-		.nullable(),
+		.nullable()
+		.optional(),
 });
 
 const schemaAddDocument = Yup.object().shape({
@@ -394,19 +398,25 @@ const schemaCommentaire = Yup.object().shape({
 			<button type="button" @click="commandSave" v-if="commandId == 'new'"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="commandsStore.commandEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{
-						$t('command.VCommandAdd') }}</button>
+					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
+				</span>
+				{{ $t('command.VCommandAdd') }}
+			</button>
 			<button type="button" @click="commandUpdate" v-else
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="commandsStore.commandEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{
-						$t('command.VCommandUpdate') }}</button>
+					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
+				</span>
+				{{ $t('command.VCommandUpdate') }}
+			</button>
 			<button type="button" @click="commandDeleteOpenModal" v-if="commandId != 'new'"
-				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">{{ $t('command.VCommandDelete')
-				}}</button>
+				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+				{{ $t('command.VCommandDelete') }}
+			</button>
 			<RouterLink to="/commands"
-				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">{{
-					$t('command.VCommandBack') }}</RouterLink>
+				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
+				{{ $t('command.VCommandBack') }}
+			</RouterLink>
 		</div>
 	</div>
 	<div v-if="commandsStore.commands[commandId] || commandId == 'new'">
@@ -454,7 +464,7 @@ const schemaCommentaire = Yup.object().shape({
 									<option value="" disabled>-- Sélectionnez un status --</option>
 									<option v-for="status in commandTypeStatus" :key="status" :value="status[0]">{{
 										status[1]
-										}}
+									}}
 									</option>
 								</Field>
 								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.status_command || ' ' }}</span>

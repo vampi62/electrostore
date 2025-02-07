@@ -20,9 +20,6 @@ const authStore = useAuthStore();
 
 async function fetchData() {
 	if (iaId !== "new") {
-		intervalRefreshStatus = setInterval(() => {
-			iasStore.getTrainStatus(iaId);
-		}, 15000);
 		iasStore.iaEdition = {
 			loading: false,
 		};
@@ -30,10 +27,14 @@ async function fetchData() {
 			await iasStore.getIaById(iaId);
 		} catch {
 			delete iasStore.ias[iaId];
-			addNotification({ message: "ia.VIaUpdated", type: "error", i18n: true });
+			addNotification({ message: "ia.VIaNotFound", type: "error", i18n: true });
 			router.push("/ias");
 			return;
 		}
+		intervalRefreshStatus = setInterval(() => {
+			iasStore.getTrainStatus(iaId);
+		}, 15000);
+		iasStore.getTrainStatus(iaId);
 		iasStore.iaEdition = {
 			loading: false,
 			nom_ia: iasStore.ias[iaId].nom_ia,
@@ -100,6 +101,17 @@ const iaDelete = async() => {
 	}
 	iaDeleteModalShow.value = false;
 };
+const iaTrain = async() => {
+	try {
+		await iasStore.startTrain(iaId);
+		addNotification({ message: "ia.VIaTrainStart", type: "success", i18n: true });
+	} catch (e) {
+		e.inner.forEach((error) => {
+			addNotification({ message: error.message, type: "error", i18n: false });
+		});
+		return;
+	}
+};
 const formatDateForDatetimeLocal = (date) => {
 	const pad = (num) => String(num).padStart(2, "0");
 	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
@@ -122,27 +134,48 @@ const schemaIa = Yup.object().shape({
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4">{{ $t('ia.VIaTitle') }}</h2>
 		<div class="flex space-x-4">
-			<button type="button" @click="iaSave" v-if="iaId == 'new'" :disabled="authStore.user?.role_user !== 'admin'"
+			<button type="button" @click="iasStore.getTrainStatus(iaId)" v-if="iaId != 'new'"
+				class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 flex items-center">
+				<span v-show="iasStore.status.train?.loading"
+					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
+				</span>
+				{{ $t('ia.VIaRefresh') }}
+			</button>
+			<button type="button" @click="iaTrain" v-if="iaId != 'new' && authStore.user?.role_user == 'admin'"
+				class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center">
+				<span v-show="iasStore.status.start?.loading"
+					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
+				</span>
+				{{ $t('ia.VIaTrain') }}
+			</button>
+			<button type="button" @click="iaSave" v-if="iaId == 'new' && authStore.user?.role_user == 'admin'"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="iasStore.iaEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{
-						$t('ia.VIaAdd') }}</button>
-			<button type="button" @click="iaUpdate" v-else :disabled="authStore.user?.role_user !== 'admin'"
+					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
+				</span>
+				{{ $t('ia.VIaAdd') }}
+			</button>
+			<button type="button" @click="iaUpdate" v-else-if="iaId != 'new' && authStore.user?.role_user == 'admin'"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="iasStore.iaEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{
-						$t('ia.VIaUpdate') }}</button>
-			<button type="button" @click="iaDeleteOpenModal" v-if="iaId != 'new'"
-				:disabled="authStore.user?.role_user !== 'admin'"
-				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">{{ $t('ia.VIaDelete') }}</button>
-			<RouterLink to="/ias"
-				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">{{
-					$t('ia.VIaBack') }}</RouterLink>
+					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
+				</span>
+				{{ $t('ia.VIaUpdate') }}
+			</button>
+			<button type="button" @click="iaDeleteOpenModal"
+				v-if="iaId != 'new' && authStore.user?.role_user == 'admin'"
+				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+				{{ $t('ia.VIaDelete') }}
+			</button>
+			<RouterLink to="/ia"
+				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
+				{{ $t('ia.VIaBack') }}
+			</RouterLink>
 		</div>
 	</div>
 	<div v-if="iasStore.ias[iaId] || iaId == 'new'">
-		<div class="mb-6 flex justify-between">
-			<Form :validation-schema="schemaIa" v-slot="{ errors }" @submit.prevent="">
+		<div class="mb-6 flex justify-between flex-wrap">
+			<Form :validation-schema="schemaIa" v-slot="{ errors }" @submit.prevent="" class="mb-6">
 				<table class="table-auto text-gray-700">
 					<tbody>
 						<tr>
@@ -158,10 +191,13 @@ const schemaIa = Yup.object().shape({
 						<tr>
 							<td class="font-semibold pr-4 align-text-top">{{ $t('ia.VIaDescription') }}:</td>
 							<td class="flex flex-col">
-								<Field name="description_ia" type="text" v-model="iasStore.iaEdition.description_ia"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.description_ia }"
-									:disabled="authStore.user?.role_user !== 'admin'" />
+								<Field name="description_ia" v-slot="{ field }">
+									<textarea v-bind="field" v-model="iasStore.iaEdition.description_ia"
+										class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300 resize-y"
+										:class="{ 'border-red-500': errors.description_ia }"
+										:disabled="authStore.user?.role_user !== 'admin'" rows="4">
+									</textarea>
+								</Field>
 								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.description_ia || ' ' }}</span>
 							</td>
 						</tr>
@@ -169,7 +205,8 @@ const schemaIa = Yup.object().shape({
 							<td class="font-semibold pr-4 align-text-top">{{ $t('ia.VIaDate') }}:</td>
 							<td class="flex flex-col">
 								<!-- format date permit is only YYYY-MM-DDTHH-mm-->
-								<Field name="date_ia" type="datetime-local" v-model="iasStore.iaEdition.date_ia"
+								<Field name="date_ia" type="datetime-local"
+									v-model="iasStore.iaEdition.date_ia"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors.date_ia }" disabled />
 								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_ia || ' ' }}</span>
@@ -189,8 +226,12 @@ const schemaIa = Yup.object().shape({
 					</tbody>
 				</table>
 			</Form>
-			<div>
-				{{ iasStore.status.train }}
+			<div class="w-96 h-96 bg-gray-200 px-4 py-2 rounded">
+				<div v-for="(value, key) in iasStore.status.train" :key="key">
+					<div v-if="key !== 'loading'">
+						{{ key }}: {{ value }}
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>

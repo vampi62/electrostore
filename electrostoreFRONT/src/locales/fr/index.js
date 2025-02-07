@@ -1,7 +1,7 @@
 import camera from "./camera.json";
 import command from "./command.json";
 import common from "./common.json";
-import IA from "./IA.json";
+import ia from "./IA.json";
 import item from "./item.json";
 import projet from "./projet.json";
 import store from "./store.json";
@@ -12,7 +12,7 @@ export default {
 	camera,
 	command,
 	common,
-	IA,
+	ia,
 	item,
 	projet,
 	store,

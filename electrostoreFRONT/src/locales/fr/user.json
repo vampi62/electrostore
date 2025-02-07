@@ -11,5 +11,11 @@
 	"VUsersFirstName": "Prénom",
 	"VUsersEmail": "Email",
 	"VUsersRole": "Rôle",
-	"VUsersLoading": "Chargement"
+	"VUsersLoading": "Chargement",
+	"VUserNotFound": "Utilisateur introuvable",
+	"VUserTitle": "Utilisateur",
+	"VUserAdd": "Ajouter un utilisateur",
+	"VUserUpdate": "Mettre à jour",
+	"VUserDelete": "Supprimer",
+	"VUserBack": "Retour"
 }

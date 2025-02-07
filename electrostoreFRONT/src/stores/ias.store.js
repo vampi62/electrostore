@@ -84,6 +84,7 @@ export const useIasStore = defineStore("ias", {
 				url: `${baseUrl}/ia/${id}/train`,
 				useToken: "access",
 			});
+			console.log(this.status.start);
 		},
 		async detectItem(id, params) {
 			this.status.detect.loading = true;

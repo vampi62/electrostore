@@ -17,6 +17,15 @@ const commandsStore = useCommandsStore();
 const projetsStore = useProjetsStore();
 const authStore = useAuthStore();
 
+if (authStore.user?.role_user !== "admin" && authStore.user?.id_user !== Number(userId)) {
+	addNotification({ message: "vous n'avez pas la permission d'acceder a cette page", type: "error", i18n: false });
+	if (window.history.length > 1) {
+		router.back();
+	} else {
+		router.push("/");
+	}
+}
+
 async function fetchData() {
 	if (userId !== "new") {
 		usersStore.userEdition = {
@@ -26,8 +35,12 @@ async function fetchData() {
 			await usersStore.getUserById(userId);
 		} catch {
 			delete usersStore.users[userId];
-			addNotification({ message: "command.VCommandUpdated", type: "error", i18n: true });
-			router.push("/users");
+			addNotification({ message: "user.VUserNotFound", type: "error", i18n: true });
+			if (window.history.length > 1) {
+				router.back();
+			} else {
+				router.push("/");
+			}
 			return;
 		}
 		usersStore.getProjectCommentaireByInterval(userId, 100, 0, ["projet"]);
@@ -60,21 +73,30 @@ onBeforeUnmount(() => {
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4">{{ $t('user.VUserTitle') }}</h2>
 		<div class="flex space-x-4">
-			<button type="button" @click="userSave" v-if="userId == 'new'"
+			<button type="button" @click="userSave" v-if="userId == 'new' && authStore.user?.role_user == 'admin'"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="usersStore.userEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{
-						$t('user.VUserAdd') }}</button>
-			<button type="button" @click="userUpdate" v-else
+					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
+				</span>
+				{{ $t('user.VUserAdd') }}
+			</button>
+			<button type="button" @click="userUpdate"
+				v-else-if="userId != 'new' && authStore.user?.role_user == 'admin'"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="usersStore.userEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{
-						$t('user.VUserUpdate') }}</button>
-			<button type="button" @click="userDeleteOpenModal" v-if="userId != 'new'"
-				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">{{ $t('user.VUserDelete') }}</button>
+					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
+				</span>
+				{{ $t('user.VUserUpdate') }}
+			</button>
+			<button type="button" @click="userDeleteOpenModal"
+				v-if="userId != 'new' && authStore.user?.role_user == 'admin'"
+				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+				{{ $t('user.VUserDelete') }}
+			</button>
 			<RouterLink to="/users"
-				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">{{
-					$t('user.VUserBack') }}</RouterLink>
+				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
+				{{ $t('user.VUserBack') }}
+			</RouterLink>
 		</div>
 	</div>
 </template>

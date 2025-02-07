@@ -26,18 +26,16 @@ async function fetchData() {
 			await storesStore.getStoreById(storeId);
 		} catch {
 			delete storesStore.stores[storeId];
-			addNotification({ message: "store.VStoreUpdated", type: "error", i18n: true });
+			addNotification({ message: "store.VStoreNotFound", type: "error", i18n: true });
 			router.push("/stores");
 			return;
 		}
 		storesStore.storeEdition = {
 			loading: false,
-			Name: storesStore.stores[storeId].Name,
-			MQTTName: storesStore.stores[storeId].MQTTName,
-			LenX: storesStore.stores[storeId].LenX,
-			LenY: storesStore.stores[storeId].LenY,
-			DBLenX: storesStore.stores[storeId].DBLenX,
-			DBLenY: storesStore.stores[storeId].DBLenY,
+			nom_store: storesStore.stores[storeId].nom_store,
+			mqtt_name_store: storesStore.stores[storeId].mqtt_name_store,
+			xlength_store: storesStore.stores[storeId].xlength_store,
+			ylength_store: storesStore.stores[storeId].ylength_store,
 		};
 	} else {
 		storesStore.storeEdition = {
@@ -581,22 +579,46 @@ document.addEventListener("click", hideMenu);
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4">{{ $t('store.VStoreTitle') }}</h2>
 		<div class="flex space-x-4">
-			<button type="button" @click="storeSave" v-if="storeId == 'new'"
+			<button type="button" @click="storeSave" v-if="storeId == 'new' && authStore.user?.role_user == 'admin'"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="storesStore.storeEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{
-						$t('store.VStoreAdd') }}</button>
-			<button type="button" @click="storeUpdate" v-else
+					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
+				</span>
+				{{ $t('store.VStoreAdd') }}
+			</button>
+			<button type="button" @click="storeUpdate"
+				v-else-if="storeId != 'new' && authStore.user?.role_user == 'admin'"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="storesStore.storeEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>{{
-						$t('store.VStoreUpdate') }}</button>
-			<button type="button" @click="storeDeleteOpenModal" v-if="storeId != 'new'"
-				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">{{ $t('store.VStoreDelete') }}</button>
+					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
+				</span>
+				{{ $t('store.VStoreUpdate') }}
+			</button>
+			<button type="button" @click="storeDeleteOpenModal"
+				v-if="storeId != 'new' && authStore.user?.role_user == 'admin'"
+				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+				{{ $t('store.VStoreDelete') }}
+			</button>
 			<RouterLink to="/stores"
-				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">{{
-					$t('store.VStoreBack') }}</RouterLink>
+				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
+				{{ $t('store.VStoreBack') }}
+			</RouterLink>
 		</div>
+	</div>
+	<div>
+		<input type="text" v-model="storesStore.storeEdition.nom_store"><br>
+		<input type="text" v-model="storesStore.storeEdition.mqtt_name_store"><br>
+		<span>X: </span>
+		<input type="number" v-model="storesStore.storeEdition.xlength_store"><br>
+		<span>Y: </span>
+		<input type="number" v-model="storesStore.storeEdition.ylength_store"><br>
+		<span>Cell size: </span>
+		<input type="range" v-model="sizeOfCell" min="10" max="50" step="10"><br>
+		<button @click="changeStoreSize">changer la taille du tableau</button><br>
+		<br>
+		<br>
+		<span>show led id</span>
+		<input type="checkbox" v-model="showLedId">
 	</div>
 	<!--
 	gridOrigin.left = left position of the grid
@@ -691,20 +713,5 @@ document.addEventListener("click", hideMenu);
 		<strong>{{ mousePos.X }}</strong>
 		<span>Y: </span>
 		<strong>{{ mousePos.Y }}</strong>
-	</div>
-	<div>
-		<span>X: </span>
-		<input type="number" v-model="storeInfo.LenX"><br>
-		<span>Y: </span>
-		<input type="number" v-model="storeInfo.LenY"><br>
-		<span>Cell size: </span>
-		<input type="range" v-model="sizeOfCell" min="10" max="50" step="10"><br>
-		<button @click="changeStoreSize">changer la taille du tableau</button><br>
-		<input type="text" v-model="storeInfo.Name"><br>
-		<input type="text" v-model="storeInfo.MQTTName"><br>
-		<br>
-		<br>
-		<span>show led id</span>
-		<input type="checkbox" v-model="showLedId">
 	</div>
 </template>

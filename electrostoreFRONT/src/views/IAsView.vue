@@ -32,9 +32,9 @@ function changeSort(key) {
 	}
 }
 const filter = ref([
-	{ key: "trained_ia", value: "", type: "select", options: [[false, t("IA.VIasFilterTrained1")], [true, t("IA.VIasFilterTrained2")]], label: "IA.VIasFilterTrained", compareMethod: "=" },
-	{ key: "date_ia", value: "", type: "date", label: "IA.VIasFilterDate", compareMethod: ">=" },
-	{ key: "nom_ia", value: "", type: "text", label: "IA.VIasFilterNom", compareMethod: "contain" },
+	{ key: "trained_ia", value: "", type: "select", options: [[false, t("ia.VIasFilterTrained1")], [true, t("ia.VIasFilterTrained2")]], label: "ia.VIasFilterTrained", compareMethod: "=" },
+	{ key: "date_ia", value: "", type: "date", label: "ia.VIasFilterDate", compareMethod: ">=" },
+	{ key: "nom_ia", value: "", type: "text", label: "ia.VIasFilterNom", compareMethod: "contain" },
 ]);
 const filteredIas = computed(() => {
 	return Object.values(IAStore.ias).filter((element) => {
@@ -80,13 +80,13 @@ const sortedIas = computed(() => {
 
 <template>
 	<div>
-		<h2>{{ $t('IA.VIasTitle') }}</h2>
+		<h2>{{ $t('ia.VIasTitle') }}</h2>
 	</div>
 	<div>
 		<div :disabled="authStore.user?.role_user !== 'admin'"
 			class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm cursor-pointer inline-block mb-2">
 			<RouterLink :to="'/ia/new'">
-				{{ $t('IA.VIasAdd') }}
+				{{ $t('ia.VIasAdd') }}
 			</RouterLink>
 		</div>
 		<div>
@@ -121,7 +121,7 @@ const sortedIas = computed(() => {
 				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
 					@click="changeSort('nom_ia')">
 					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('IA.VIasName') }}</span>
+						<span class="flex-1">{{ $t('ia.VIasName') }}</span>
 						<template v-if="sort.key === 'nom_ia'">
 							<template v-if="sort.order === 'asc'">
 								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
@@ -138,13 +138,13 @@ const sortedIas = computed(() => {
 				<th
 					class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
 					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('IA.VIasDescription') }}</span>
+						<span class="flex-1">{{ $t('ia.VIasDescription') }}</span>
 					</div>
 				</th>
 				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
 					@click="changeSort('date_ia')">
 					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('IA.VIasDate') }}</span>
+						<span class="flex-1">{{ $t('ia.VIasDate') }}</span>
 						<template v-if="sort.key === 'date_ia'">
 							<template v-if="sort.order === 'asc'">
 								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
@@ -161,7 +161,7 @@ const sortedIas = computed(() => {
 				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
 					@click="changeSort('trained_ia')">
 					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('IA.VIasTrained') }}</span>
+						<span class="flex-1">{{ $t('ia.VIasTrained') }}</span>
 						<template v-if="sort.key === 'trained_ia'">
 							<template v-if="sort.order === 'asc'">
 								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
@@ -197,7 +197,7 @@ const sortedIas = computed(() => {
 				</RouterLink>
 			</template>
 			<template v-else>
-				<div>{{ $t('IA.VIasLoading') }}</div>
+				<div>{{ $t('ia.VIasLoading') }}</div>
 			</template>
 		</tbody>
 	</table>

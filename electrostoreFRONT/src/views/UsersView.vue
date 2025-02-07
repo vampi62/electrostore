@@ -4,6 +4,9 @@ import { router } from "@/helpers";
 
 const { addNotification } = inject("useNotification");
 
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+
 import { useAuthStore, useUsersStore } from "@/stores";
 const usersStore = useUsersStore();
 const authStore = useAuthStore();
@@ -38,7 +41,7 @@ const filter = ref([
 	{ key: "nom_user", value: "", type: "text", label: "user.VUsersFilterName", compareMethod: "contain" },
 	{ key: "prenom_user", value: "", type: "text", label: "user.VUsersFilterFirstName", compareMethod: "contain" },
 	{ key: "email_user", value: "", type: "text", label: "user.VUsersFilterEmail", compareMethod: "contain" },
-	{ key: "role_user", value: "", type: "select", options: [["user", "user.VUsersFilterRole1"], ["admin", "user.VUsersFilterRole2"]], label: "user.VUsersFilterRole", compareMethod: "=" },
+	{ key: "role_user", value: "", type: "select", options: [["admin", t("user.VUsersFilterRole1")], ["user", t("user.VUsersFilterRole2")]], label: "user.VUsersFilterRole", compareMethod: "=" },
 ]);
 const filteredUsers = computed(() => {
 	return Object.values(usersStore.users).filter((element) => {

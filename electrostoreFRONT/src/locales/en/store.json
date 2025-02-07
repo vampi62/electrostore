@@ -8,5 +8,11 @@
 	"VStoresYLength": "Y Length",
 	"VStoresMqttName": "MQTT Name",
 	"VStoresTagsList": "Tags",
-	"VStoresLoading": "Loading"
+	"VStoresLoading": "Loading",
+	"VStoreNotFound": "Store not found",
+	"VStoreTitle": "Store",
+	"VStoreAdd": "Add a store",
+	"VStoreUpdate": "Update",
+	"VStoreDelete": "Delete",
+	"VStoreBack": "Back"
 }

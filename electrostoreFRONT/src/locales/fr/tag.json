@@ -9,5 +9,11 @@
 	"VTagsItemsCount": "Nombre d'articles",
 	"VTagsStoresCount": "Nombre de magasins",
 	"VTagsBoxsCount": "Nombre de boîtes",
-	"VTagsLoading": "Chargement"
+	"VTagsLoading": "Chargement",
+	"VTagNotFound": "Tag introuvable",
+	"VTagTitle": "Tag",
+	"VTagAdd": "Ajouter un tag",
+	"VTagUpdate": "Mettre à jour",
+	"VTagDelete": "Supprimer",
+	"VTagBack": "Retour"
 }

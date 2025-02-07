@@ -8,5 +8,11 @@
 	"VStoresYLength": "Longueur Y",
 	"VStoresMqttName": "Nom MQTT",
 	"VStoresTagsList": "Tags",
-	"VStoresLoading": "Chargement"
+	"VStoresLoading": "Chargement",
+	"VStoreNotFound": "Rangement introuvable",
+	"VStoreTitle": "Rangement",
+	"VStoreAdd": "Ajouter un rangement",
+	"VStoreUpdate": "Mettre à jour",
+	"VStoreDelete": "Supprimer",
+	"VStoreBack": "Retour"
 }
