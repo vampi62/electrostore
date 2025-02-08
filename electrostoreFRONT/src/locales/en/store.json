@@ -4,6 +4,8 @@
 	"VStoresFilterXLength": "X Length",
 	"VStoresFilterYLength": "Y Length",
 	"VStoresFilterTag": "Tag",
+	"VStoresTitle": "Stores",
+	"VStoresName": "Name",
 	"VStoresXLength": "X Length",
 	"VStoresYLength": "Y Length",
 	"VStoresMqttName": "MQTT Name",

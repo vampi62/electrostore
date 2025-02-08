@@ -26,6 +26,7 @@ public record ReadRefreshTokenDto
     public string? revoked_by_ip { get; init; }
     public string? revoked_reason { get; init; }
     public Guid id_jwi_access { get; init; }
+    public int id_user { get; init; }
 }
 public record UpdateAccessTokenDto : IValidatableObject
 {

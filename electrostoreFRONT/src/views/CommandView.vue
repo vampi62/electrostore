@@ -17,7 +17,7 @@ const commandId = route.params.id;
 import { useCommandsStore, useUsersStore, useItemsStore, useAuthStore } from "@/stores";
 const commandsStore = useCommandsStore();
 const usersStore = useUsersStore();
-const itemStore = useItemsStore();
+const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
 async function fetchData() {
@@ -88,9 +88,6 @@ const toggleCommentaires = () => {
 // commande
 const commandDeleteModalShow = ref(false);
 const commandTypeStatus = ref([["En attente", t("command.VCommandStatus1")], ["En cours", t("command.VCommandStatus2")], ["Terminée", t("command.VCommandStatus3")], ["Annulée", t("command.VCommandStatus4")]]);
-const commandDeleteOpenModal = () => {
-	commandDeleteModalShow.value = true;
-};
 const commandSave = async() => {
 	if (commandsStore.commandEdition.status_command === "Terminée") {
 		commandsStore.commandEdition.date_livraison_command = formatDateForDatetimeLocal(new Date());
@@ -251,7 +248,7 @@ const filterText = ref("");
 const itemModalShow = ref(false);
 const itemOpenAddModal = () => {
 	itemModalShow.value = true;
-	itemStore.getItemByInterval();
+	itemsStore.getItemByInterval();
 };
 const itemSave = async(item) => {
 	if (commandsStore.items[commandId][item.id_item]) {
@@ -291,8 +288,8 @@ const itemDelete = async(item) => {
 
 const filteredItems = computed(() => {
 	return filterText.value
-		? Object.values(itemStore.items).filter((item) => item.nom_item.toLowerCase().includes(filterText.value.toLowerCase()))
-		: itemStore.items;
+		? Object.values(itemsStore.items).filter((item) => item.nom_item.toLowerCase().includes(filterText.value.toLowerCase()))
+		: itemsStore.items;
 });
 
 // commentaire
@@ -409,7 +406,7 @@ const schemaCommentaire = Yup.object().shape({
 				</span>
 				{{ $t('command.VCommandUpdate') }}
 			</button>
-			<button type="button" @click="commandDeleteOpenModal" v-if="commandId != 'new'"
+			<button type="button" @click="commandDeleteModalShow = true" v-if="commandId != 'new'"
 				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
 				{{ $t('command.VCommandDelete') }}
 			</button>
@@ -461,7 +458,7 @@ const schemaCommentaire = Yup.object().shape({
 									v-model="commandsStore.commandEdition.status_command"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors.status_command }">
-									<option value="" disabled>-- Sélectionnez un status --</option>
+									<option value="" disabled> -- {{ $t('command.VCommandStatusSelect') }} -- </option>
 									<option v-for="status in commandTypeStatus" :key="status" :value="status[0]">{{
 										status[1]
 									}}
@@ -551,19 +548,23 @@ const schemaCommentaire = Yup.object().shape({
 					<table class="min-w-full table-auto">
 						<thead>
 							<tr>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{
-									$t('command.VCommandItemName') }}</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{
-									$t('command.VCommandItemQuantity') }}</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{
-									$t('command.VCommandItemPrice') }}</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{
-									$t('command.VCommandItemActions') }}</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('command.VCommandItemName') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('command.VCommandItemQuantity') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('command.VCommandItemPrice') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('command.VCommandItemActions') }}
+								</th>
 							</tr>
 						</thead>
 						<tbody>
 							<tr v-for="item in commandsStore.items[commandId]" :key="item.id_item">
-								<td class="px-4 py-2 border-b border-gray-200">{{ itemStore.items[item.id_item].nom_item
+								<td class="px-4 py-2 border-b border-gray-200">{{ itemsStore.items[item.id_item].nom_item
 									}}
 								</td>
 								<td class="px-4 py-2 border-b border-gray-200">
@@ -593,19 +594,23 @@ const schemaCommentaire = Yup.object().shape({
 								<td class="px-4 py-2 border-b border-gray-200 space-x-2">
 									<template v-if="item.tmp">
 										<button type="button" @click="itemSave(item)"
-											class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">{{
-												$t('command.VCommandItemSave') }}</button>
+											class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
+											{{ $t('command.VCommandItemSave') }}
+										</button>
 										<button type="button" @click="item.tmp = null"
-											class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">{{
-												$t('command.VCommandItemCancel') }}</button>
+											class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
+											{{ $t('command.VCommandItemCancel') }}
+										</button>
 									</template>
 									<template v-else>
 										<button type="button" @click="item.tmp = { ...item }"
-											class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">{{
-												$t('command.VCommandItemEdit') }}</button>
+											class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+											{{ $t('command.VCommandItemEdit') }}
+										</button>
 										<button type="button" @click="itemDelete(item)"
-											class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">{{
-												$t('command.VCommandItemDelete') }}</button>
+											class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
+											{{ $t('command.VCommandItemDelete') }}
+										</button>
 									</template>
 								</td>
 							</tr>
@@ -769,8 +774,9 @@ const schemaCommentaire = Yup.object().shape({
 					<button type="button" @click="documentEditModalShow = false"
 						class="px-4 py-2 bg-gray-300 rounded">{{
 							$t('command.VCommandDocumentCancel') }}</button>
-					<button type="button" @click="documentEdit" class="px-4 py-2 bg-blue-500 text-white rounded">{{
-						$t('command.VCommandDocumentEdit') }}</button>
+					<button type="button" @click="documentEdit" class="px-4 py-2 bg-blue-500 text-white rounded">
+						{{ $t('command.VCommandDocumentEdit') }}
+					</button>
 				</div>
 			</Form>
 		</div>

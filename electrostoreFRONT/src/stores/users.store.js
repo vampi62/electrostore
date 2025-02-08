@@ -281,21 +281,32 @@ export const useUsersStore = defineStore("users",{
 				url: `${baseUrl}/user/${idUser}/token?limit=${limit}&offset=${offset}`,
 				useToken: "access",
 			});
-			this.tokens[idUser] = {};
+			if (!this.tokens[idUser]) {
+				this.tokens[idUser] = {};
+			}
 			for (const token of newTokenList["data"]) {
-				this.tokens[idUser][token.id_token] = token;
+				this.tokens[idUser][token.id_jwi_refresh] = token;
 			}
 			this.tokensTotalCount[idUser] = newTokenList["count"];
 			this.tokensLoading = false;
 		},
+		async getTokenById(idUser, id) {
+			if (!this.tokens[idUser]) {
+				this.tokens[idUser] = {};
+			}
+			this.tokensEdition = { loading: true };
+			this.tokens[idUser][id] = await fetchWrapper.get({
+				url: `${baseUrl}/user/${idUser}/token/${id}`,
+				useToken: "access",
+			});
+		},
 		async updateToken(idUser, id, params) {
 			this.tokensEdition = { loading: true };
-			this.tokensEdition = await fetchWrapper.put({
+			await fetchWrapper.put({
 				url: `${baseUrl}/user/${idUser}/token/${id}`,
 				useToken: "access",
 				body: params,
 			});
-			this.tokens[idUser][id] = this.tokensEdition;
 		},
 	},
 });

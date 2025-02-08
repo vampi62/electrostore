@@ -96,7 +96,7 @@ const sortedStores = computed(() => {
 
 <template>
 	<div>
-		<h2>stores</h2>
+		<h2 class="text-2xl font-bold mb-4">{{ $t('store.VStoresTitle') }}</h2>
 	</div>
 	<div>
 		<div :disabled="authStore.user?.role_user !== 'admin'"
@@ -137,7 +137,7 @@ const sortedStores = computed(() => {
 				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
 					@click="changeSort('nom_store')">
 					<div class="flex justify-between items-center">
-						<span class="flex-1">nom</span>
+						<span class="flex-1">{{ $t('store.VStoresName') }}</span>
 						<template v-if="sort.key === 'nom_store'">
 							<template v-if="sort.order === 'asc'">
 								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />

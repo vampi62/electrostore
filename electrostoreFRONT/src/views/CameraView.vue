@@ -67,9 +67,6 @@ onBeforeUnmount(() => {
 
 let intervalRefreshStatus = null;
 const cameraDeleteModalShow = ref(false);
-const cameraDeleteOpenModal = () => {
-	cameraDeleteModalShow.value = true;
-};
 const cameraSave = async() => {
 	if (!isChecked.value) {
 		camerasStore.cameraEdition.user_camera = "";
@@ -167,7 +164,7 @@ watch(isChecked, (newValue) => {
 				</span>
 				{{ $t('camera.VCameraUpdate') }}
 			</button>
-			<button type="button" @click="cameraDeleteOpenModal" v-if="cameraId != 'new' && authStore.user?.role_user == 'admin'"
+			<button type="button" @click="cameraDeleteModalShow = true" v-if="cameraId != 'new' && authStore.user?.role_user == 'admin'"
 				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
 				{{ $t('camera.VCameraDelete') }}
 			</button>
@@ -211,8 +208,6 @@ watch(isChecked, (newValue) => {
 										type="checkbox"
 										:checked="isChecked"
 										class="form-checkbox h-5 w-5 text-blue-600"
-										:class="{ 'border-red-500': errors.user_camera }"
-										:disabled="authStore.user?.role_user !== 'admin'"
 									/>
 								</Field>
 							</td>

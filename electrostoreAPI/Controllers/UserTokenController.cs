@@ -36,6 +36,18 @@ namespace electrostore.Controllers
             return Ok(tokens);
         }
 
+        [HttpGet("{id_token}")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult<ReadRefreshTokenDto>> GetAccessTokenById([FromRoute] int id_user, [FromRoute] string id_token)
+        {
+            if (!User.IsInRole("admin") && id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
+            {
+                return Unauthorized(new { message = "You are not allowed to view this token" });
+            }
+            var token = await _jwiService.GetRefreshTokenByToken(id_user, id_token);
+            return Ok(token);
+        }
+
         [HttpPut("{id_token}")]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult> RevokeAccessTokenById([FromRoute] int id_user, [FromRoute] string id_token, [FromBody] UpdateAccessTokenDto updateAccessTokenDto)

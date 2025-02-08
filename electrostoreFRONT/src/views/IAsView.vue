@@ -80,7 +80,7 @@ const sortedIas = computed(() => {
 
 <template>
 	<div>
-		<h2>{{ $t('ia.VIasTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4">{{ $t('ia.VIasTitle') }}</h2>
 	</div>
 	<div>
 		<div :disabled="authStore.user?.role_user !== 'admin'"

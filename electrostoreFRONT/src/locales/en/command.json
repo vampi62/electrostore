@@ -65,6 +65,7 @@
 	"VCommandUrl": "URL",
 	"VCommandDate": "Date",
 	"VCommandStatus": "Status",
+	"VCommandStatusSelect": "Select a status",
 	"VCommandDeliveryDate": "Delivery date",
 	"VCommandDocuments": "Documents",
 	"VCommandAddDocument": "Add a document",

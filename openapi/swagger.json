@@ -10442,6 +10442,52 @@
       }
     },
     "/api/user/{id_user}/token/{id_token}": {
+      "get": {
+        "tags": [
+          "UserToken"
+        ],
+        "parameters": [
+          {
+            "name": "id_user",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadRefreshTokenDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadRefreshTokenDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadRefreshTokenDto"
+                }
+              }
+            }
+          }
+        }
+      },
       "put": {
         "tags": [
           "UserToken"
@@ -12539,6 +12585,10 @@
           "id_jwi_access": {
             "type": "string",
             "format": "uuid"
+          },
+          "id_user": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
