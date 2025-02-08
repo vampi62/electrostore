@@ -179,6 +179,10 @@ public class UserService : IUserService
         }
         if (userDto.role_user is not null)
         {
+            if (userToUpdate.role_user == "admin" && _context.Users.Count(u => u.role_user == "admin") == 1)
+            {
+                throw new InvalidOperationException("You can't change the role of the last admin");
+            }
             userToUpdate.role_user = userDto.role_user;
         }
         await _context.SaveChangesAsync();
@@ -195,6 +199,10 @@ public class UserService : IUserService
     public async Task DeleteUser(int id)
     {
         var userToDelete = await _context.Users.FindAsync(id) ?? throw new KeyNotFoundException($"User with id {id} not found");
+        if (userToDelete.role_user == "admin" && _context.Users.Count(u => u.role_user == "admin") == 1)
+        {
+            throw new InvalidOperationException("You can't delete the last admin");
+        }
         _context.Users.Remove(userToDelete);
         await _context.SaveChangesAsync();
     }

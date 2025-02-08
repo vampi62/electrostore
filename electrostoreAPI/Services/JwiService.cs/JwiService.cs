@@ -205,6 +205,27 @@ public class JwiService : IJwiService
             .ToListAsync();
     }
 
+    public async Task<ReadAccessTokenDto> GetAccessTokenByToken(int userId, string token)
+    {
+        var jwi_access = await _context.JWIAccessToken.FindAsync(Guid.Parse(token));
+        if (jwi_access is null || jwi_access.id_user != userId)
+        {
+            throw new KeyNotFoundException($"AccessToken with id {token} not found");
+        }
+        return new ReadAccessTokenDto
+        {
+            id_jwi_access = jwi_access.id_jwi_access,
+            expires_at = jwi_access.expires_at,
+            is_revoked = jwi_access.is_revoked,
+            created_at = jwi_access.created_at,
+            created_by_ip = jwi_access.created_by_ip,
+            revoked_at = jwi_access.revoked_at,
+            revoked_by_ip = jwi_access.revoked_by_ip,
+            revoked_reason = jwi_access.revoked_reason,
+            id_user = jwi_access.id_user
+        };
+    }
+
     public async Task<int> GetAccessTokensCountByUserId(int userId)
     {
         if (!_context.Users.Any(x => x.id_user == userId))
@@ -237,9 +258,32 @@ public class JwiService : IJwiService
                 revoked_at = x.revoked_at,
                 revoked_by_ip = x.revoked_by_ip,
                 revoked_reason = x.revoked_reason,
-                id_jwi_access = x.id_jwi_access
+                id_jwi_access = x.id_jwi_access,
+                id_user = x.id_user
             })
             .ToListAsync();
+    }
+
+    public async Task<ReadRefreshTokenDto> GetRefreshTokenByToken(int userId, string token)
+    {
+        var jwi_refresh = await _context.JWIRefreshToken.FindAsync(Guid.Parse(token));
+        if (jwi_refresh is null || jwi_refresh.id_user != userId)
+        {
+            throw new KeyNotFoundException($"RefreshToken with id {token} not found");
+        }
+        return new ReadRefreshTokenDto
+        {
+            id_jwi_refresh = jwi_refresh.id_jwi_refresh,
+            expires_at = jwi_refresh.expires_at,
+            is_revoked = jwi_refresh.is_revoked,
+            created_at = jwi_refresh.created_at,
+            created_by_ip = jwi_refresh.created_by_ip,
+            revoked_at = jwi_refresh.revoked_at,
+            revoked_by_ip = jwi_refresh.revoked_by_ip,
+            revoked_reason = jwi_refresh.revoked_reason,
+            id_user = jwi_refresh.id_user,
+            id_jwi_access = jwi_refresh.id_jwi_access
+        };
     }
 
     public async Task<int> GetRefreshTokensCountByUserId(int userId)

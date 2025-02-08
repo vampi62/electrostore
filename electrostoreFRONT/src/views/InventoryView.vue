@@ -111,7 +111,7 @@ const sortedItems = computed(() => {
 
 <template>
 	<div>
-		<h2>{{ $t('item.VInventoryTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4">{{ $t('item.VInventoryTitle') }}</h2>
 	</div>
 	<div>
 		<button

@@ -62,9 +62,6 @@ onBeforeUnmount(() => {
 
 let intervalRefreshStatus = null;
 const iaDeleteModalShow = ref(false);
-const iaDeleteOpenModal = () => {
-	iaDeleteModalShow.value = true;
-};
 const iaSave = async() => {
 	try {
 		await schemaIa.validate(iasStore.iaEdition, { abortEarly: false });
@@ -162,7 +159,7 @@ const schemaIa = Yup.object().shape({
 				</span>
 				{{ $t('ia.VIaUpdate') }}
 			</button>
-			<button type="button" @click="iaDeleteOpenModal"
+			<button type="button" @click="iaDeleteModalShow = true"
 				v-if="iaId != 'new' && authStore.user?.role_user == 'admin'"
 				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
 				{{ $t('ia.VIaDelete') }}

@@ -138,12 +138,15 @@ export const useTagsStore = defineStore("tags",{
 		},
 		async updateTag(id, params) {
 			this.tagEdition.loading = true;
+			if (params.nom_tag === this.tags[id].nom_tag) {
+				params.nom_tag = null;
+			}
 			this.tagEdition = await fetchWrapper.put({
 				url: `${baseUrl}/tag/${id}`,
 				useToken: "access",
 				body: params,
 			});
-			this.tags[id] = params;
+			this.tags[id] = this.tagEdition;
 		},
 		async deleteTag(id) {
 			this.tagEdition.loading = true;
@@ -167,44 +170,47 @@ export const useTagsStore = defineStore("tags",{
 
 		async getTagStoreByInterval(idTag, limit = 100, offset = 0, expand = []) {
 			this.tagsStoreLoading = true;
-			const storeStore = useStoresStore();
+			const storesStore = useStoresStore();
+			const expandString = expand.join(",");
 			if (!this.tagsStore[idTag]) {
 				this.tagsStore[idTag] = {};
 			}
 			let newTagStoreList = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/store?limit=${limit}&offset=${offset}`,
+				url: `${baseUrl}/tag/${idTag}/store?limit=${limit}&offset=${offset}&expand=${expandString}`,
 				useToken: "access",
 			});
 			this.tagsStoreTotalCount[idTag] = newTagStoreList["count"];
 			for (const tagStore of newTagStoreList["data"]) {
 				this.tagsStore[idTag][tagStore.id_store] = tagStore;
 				if (expand.indexOf("store") > -1) {
-					storeStore.stores[tagStore.id_store] = tagStore.store;
+					storesStore.stores[tagStore.id_store] = tagStore.store;
 				}
 			}
 			this.tagsStoreLoading = false;
 		},
 		async getTagStoreById(idTag, idStore, expand = []) {
 			this.tagsStore[idTag] = { loading: true };
-			const storeStore = useStoresStore();
+			const storesStore = useStoresStore();
+			const expandString = expand.join(",");
 			this.tagsStore[idTag] = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/store/${idStore}`,
+				url: `${baseUrl}/tag/${idTag}/store/${idStore}?expand=${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("store") > -1) {
-				storeStore.stores[this.tagsStore[idTag].id_store] = this.tagsStore[idTag].store;
+				storesStore.stores[this.tagsStore[idTag].id_store] = this.tagsStore[idTag].store;
 			}
 		},
-		async createTagStore(idTag, idStore) {
+		async createTagStore(idTag, params) {
 			this.tagStoreEdition = { loading: true };
 			this.tagStoreEdition = await fetchWrapper.post({
-				url: `${baseUrl}/tag/${idTag}/store/${idStore}`,
+				url: `${baseUrl}/tag/${idTag}/store`,
 				useToken: "access",
+				body: params,
 			});
 			if (!this.tagsStore[idTag]) {
 				this.tagsStore[idTag] = {};
 			}
-			this.tagsStore[idTag][idStore] = this.tagStoreEdition;
+			this.tagsStore[idTag][params.id_store] = this.tagStoreEdition;
 		},
 		async deleteTagStore(idTag, idStore) {
 			this.tagStoreEdition = { loading: true };
@@ -242,44 +248,47 @@ export const useTagsStore = defineStore("tags",{
 
 		async getTagBoxByInterval(idTag, limit = 100, offset = 0, expand = []) {
 			this.tagsBoxLoading = true;
-			const itemsStore = useItemsStore();
+			const storesStore = useStoresStore();
+			const expandString = expand.join(",");
 			if (!this.tagsBox[idTag]) {
 				this.tagsBox[idTag] = {};
 			}
 			let newTagBoxList = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/box?limit=${limit}&offset=${offset}`,
+				url: `${baseUrl}/tag/${idTag}/box?limit=${limit}&offset=${offset}&expand=${expandString}`,
 				useToken: "access",
 			});
 			this.tagsBoxTotalCount[idTag] = newTagBoxList["count"];
 			for (const tagBox of newTagBoxList["data"]) {
 				this.tagsBox[idTag][tagBox.id_box] = tagBox;
 				if (expand.indexOf("box") > -1) {
-					itemsStore.boxes[tagBox.id_box] = tagBox.box;
+					storesStore.boxs[tagBox.id_box] = tagBox.box;
 				}
 			}
 			this.tagsBoxLoading = false;
 		},
 		async getTagBoxById(idTag, idBox, expand = []) {
 			this.tagsBox[idTag] = { loading: true };
-			const itemsStore = useItemsStore();
+			const storesStore = useStoresStore();
+			const expandString = expand.join(",");
 			this.tagsBox[idTag] = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/box/${idBox}`,
+				url: `${baseUrl}/tag/${idTag}/box/${idBox}?expand=${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("box") > -1) {
-				itemsStore.boxes[this.tagsBox[idTag].id_box] = this.tagsBox[idTag].box;
+				storesStore.boxs[this.tagsBox[idTag].id_box] = this.tagsBox[idTag].box;
 			}
 		},
-		async createTagBox(idTag, idBox) {
+		async createTagBox(idTag, params) {
 			this.tagBoxEdition = { loading: true };
 			this.tagBoxEdition = await fetchWrapper.post({
-				url: `${baseUrl}/tag/${idTag}/box/${idBox}`,
+				url: `${baseUrl}/tag/${idTag}/box`,
 				useToken: "access",
+				body: params,
 			});
 			if (!this.tagsBox[idTag]) {
 				this.tagsBox[idTag] = {};
 			}
-			this.tagsBox[idTag][idBox] = this.tagBoxEdition;
+			this.tagsBox[idTag][params.id_box] = this.tagBoxEdition;
 		},
 		async deleteTagBox(idTag, idBox) {
 			this.tagBoxEdition = { loading: true };
@@ -318,11 +327,12 @@ export const useTagsStore = defineStore("tags",{
 		async getTagItemByInterval(idTag, limit = 100, offset = 0, expand = []) {
 			this.tagsItemLoading = true;
 			const itemsStore = useItemsStore();
+			const expandString = expand.join(",");
 			if (!this.tagsItem[idTag]) {
 				this.tagsItem[idTag] = {};
 			}
 			let newTagItemList = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/item?limit=${limit}&offset=${offset}`,
+				url: `${baseUrl}/tag/${idTag}/item?limit=${limit}&offset=${offset}&expand=${expandString}`,
 				useToken: "access",
 			});
 			this.tagsItemTotalCount[idTag] = newTagItemList["count"];
@@ -337,24 +347,26 @@ export const useTagsStore = defineStore("tags",{
 		async getTagItemById(idTag, idItem, expand = []) {
 			this.tagsItem[idTag] = { loading: true };
 			const itemsStore = useItemsStore();
+			const expandString = expand.join(",");
 			this.tagsItem[idTag] = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/item/${idItem}`,
+				url: `${baseUrl}/tag/${idTag}/item/${idItem}&expand=${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("item") > -1) {
 				itemsStore.items[this.tagsItem[idTag].id_item] = this.tagsItem[idTag].item;
 			}
 		},
-		async createTagItem(idTag, idItem) {
+		async createTagItem(idTag, params) {
 			this.tagItemEdition = { loading: true };
 			this.tagItemEdition = await fetchWrapper.post({
-				url: `${baseUrl}/tag/${idTag}/item/${idItem}`,
+				url: `${baseUrl}/tag/${idTag}/item`,
 				useToken: "access",
+				body: params,
 			});
 			if (!this.tagsItem[idTag]) {
 				this.tagsItem[idTag] = {};
 			}
-			this.tagsItem[idTag][idItem] = this.tagItemEdition;
+			this.tagsItem[idTag][params.id_item] = this.tagItemEdition;
 		},
 		async deleteTagItem(idTag, idItem) {
 			this.tagItemEdition = { loading: true };

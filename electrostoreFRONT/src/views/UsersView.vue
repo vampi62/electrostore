@@ -87,7 +87,7 @@ const sortedUsers = computed(() => {
 
 <template>
 	<div>
-		<h2>{{ $t('user.VUsersTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4">{{ $t('user.VUsersTitle') }}</h2>
 	</div>
 	<div>
 		<div :disabled="authStore.user?.role_user !== 'admin'"
