@@ -229,10 +229,14 @@ const sortedItems = computed(() => {
 				<RouterLink v-for="item in sortedItems" :key="item.id_item" :to="'/inventory/' + item.id_item" custom
 					v-slot="{ navigate }">
 					<tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ item.nom_item }}</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ item.seuil_min_item }}
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ item.nom_item }}
 						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ item.description_item }}
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ item.seuil_min_item }}
+						</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ item.description_item }}
 						</td>
 						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
 							<ul>

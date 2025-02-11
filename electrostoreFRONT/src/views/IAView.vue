@@ -190,6 +190,7 @@ const schemaIa = Yup.object().shape({
 							<td class="flex flex-col">
 								<Field name="description_ia" v-slot="{ field }">
 									<textarea v-bind="field" v-model="iasStore.iaEdition.description_ia"
+										:value="iasStore.iaEdition.description_ia"
 										class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300 resize-y"
 										:class="{ 'border-red-500': errors.description_ia }"
 										:disabled="authStore.user?.role_user !== 'admin'" rows="4">

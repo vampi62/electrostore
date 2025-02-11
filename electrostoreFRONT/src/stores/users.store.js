@@ -150,7 +150,7 @@ export const useUsersStore = defineStore("users",{
 			for (const projectCommentaire of newProjectCommentaireList["data"]) {
 				this.projetsCommentaire[idUser][projectCommentaire.id_projet_commentaire] = projectCommentaire;
 				if (expand.indexOf("projet") > -1) {
-					projetStore.projets[projectCommentaire.id_projet] = projectCommentaire.projets;
+					projetStore.projets[projectCommentaire.projets.id_projet] = projectCommentaire.projets;
 				}
 			}
 			this.projetsCommentaireTotalCount[idUser] = newProjectCommentaireList["count"];
@@ -221,7 +221,7 @@ export const useUsersStore = defineStore("users",{
 			for (const commandCommentaire of newCommandCommentaireList["data"]) {
 				this.commandsCommentaire[idUser][commandCommentaire.id_command_commentaire] = commandCommentaire;
 				if (expand.indexOf("command") > -1) {
-					commandStore.commands[commandCommentaire.id_command] = commandCommentaire.commands;
+					commandStore.commands[commandCommentaire.commands.id_command] = commandCommentaire.commands;
 				}
 			}
 			this.commandsCommentaireTotalCount[idUser] = newCommandCommentaireList["count"];

@@ -215,12 +215,17 @@ const sortedStores = computed(() => {
 				<RouterLink v-for="store in sortedStores" :key="store.id_store" :to="'/stores/' + store.id_store" custom
 					v-slot="{ navigate }">
 					<tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ store.nom_store }}</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ store.xlength_store }}
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ store.nom_store }}
 						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ store.ylength_store }}
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ store.xlength_store }}
 						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ store.mqtt_name_store }}
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ store.ylength_store }}
+						</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ store.mqtt_name_store }}
 						</td>
 						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
 							<ul>

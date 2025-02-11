@@ -200,10 +200,18 @@ const sortedUsers = computed(() => {
 				<RouterLink v-for="user in sortedUsers" :key="user.id_user" :to="'/users/' + user.id_user" custom
 					v-slot="{ navigate }">
 					<tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ user.nom_user }}</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ user.prenom_user }}</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ user.email_user }}</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ user.role_user }}</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ user.nom_user }}
+						</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ user.prenom_user }}
+						</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ user.email_user }}
+						</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ user.role_user }}
+						</td>
 					</tr>
 				</RouterLink>
 			</template>

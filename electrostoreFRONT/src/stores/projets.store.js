@@ -265,6 +265,12 @@ export const useProjetsStore = defineStore("projets",{
 			});
 			delete this.documents[idProjet][id];
 		},
+		async downloadDocument(idProjet, id) {
+			return await fetchWrapper.image({
+				url: `${baseUrl}/projet/${idProjet}/document/${id}/download`,
+				useToken: "access",
+			});
+		},
 
 		async getItemByList(idProjet, idResearch = [], expand = []) {
 			const itemStore = useItemsStore();

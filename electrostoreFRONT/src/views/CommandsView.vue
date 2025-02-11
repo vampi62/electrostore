@@ -96,6 +96,9 @@ const sortedCommands = computed(() => {
 	}
 	return filteredCommands.value;
 });
+console.log(Object.values(commandsStore.commands));
+console.log(Object.values(filteredCommands.value));
+console.log(Object.values(sortedCommands.value));
 </script>
 
 <template>
@@ -236,13 +239,17 @@ const sortedCommands = computed(() => {
 				<RouterLink v-for="command in sortedCommands" :key="command.id_command"
 					:to="'/commands/' + command.id_command" custom v-slot="{ navigate }">
 					<tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ command.status_command }}
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ command.status_command }}
 						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ command.date_command }}
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ command.date_command }}
 						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ command.url_command }}
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ command.url_command }}
 						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ command.prix_command }}
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ command.prix_command }}
 						</td>
 						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
 							<ul>
@@ -251,9 +258,9 @@ const sortedCommands = computed(() => {
 								</li>
 							</ul>
 						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{
-							command.date_livraison_command
-						}}</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ command.date_livraison_command }}
+						</td>
 					</tr>
 				</RouterLink>
 			</template>

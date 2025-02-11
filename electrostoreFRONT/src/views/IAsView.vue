@@ -182,9 +182,15 @@ const sortedIas = computed(() => {
 				<RouterLink v-for="ia in sortedIas" :key="ia.id_ia" :to="'/ia/' + ia.id_ia" custom
 					v-slot="{ navigate }">
 					<tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.nom_ia }}</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.description_ia }}</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ ia.date_ia }}</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ ia.nom_ia }}
+						</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ ia.description_ia }}
+						</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ ia.date_ia }}
+						</td>
 						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">
 							<template v-if="ia.trained_ia">
 								<font-awesome-icon icon="fa-solid fa-check" class="text-green-500" />
