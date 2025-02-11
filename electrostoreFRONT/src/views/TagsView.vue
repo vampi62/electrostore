@@ -206,14 +206,21 @@ const sortedTags = computed(() => {
 				<RouterLink v-for="tag in sortedTags" :key="tag.id_tag" :to="'/tags/' + tag.id_tag" custom
 					v-slot="{ navigate }">
 					<tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ tag.nom_tag }}</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ tag.poids_tag }}</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">{{
-							tag.items_tags_count }}</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">{{
-							tag.stores_tags_count }}</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">{{
-							tag.boxs_tags_count }}</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ tag.nom_tag }}
+						</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ tag.poids_tag }}
+						</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">
+							{{ tag.items_tags_count }}
+						</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">
+							{{ tag.stores_tags_count }}
+						</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">
+							{{ tag.boxs_tags_count }}
+						</td>
 					</tr>
 				</RouterLink>
 			</template>

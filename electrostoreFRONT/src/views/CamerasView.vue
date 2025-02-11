@@ -173,8 +173,12 @@ const sortedCameras = computed(() => {
 				<RouterLink v-for="camera in sortedCameras" :key="camera.id_camera" :to="'/cameras/' + camera.id_camera"
 					custom v-slot="{ navigate }">
 					<tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ camera.nom_camera }}</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ camera.url_camera }}</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ camera.nom_camera }}
+						</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ camera.url_camera }}
+						</td>
 						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">
 							<template v-if="camera.user_camera == '' && camera.password_camera == ''">
 								<font-awesome-icon icon="fa-solid fa-times" class="ml-2" />

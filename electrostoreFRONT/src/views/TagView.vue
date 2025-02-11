@@ -437,7 +437,8 @@ const schemaTag = Yup.object().shape({
 
 			<!-- Filtres -->
 			<div class="my-4 flex gap-4">
-				<input type="text" v-model="filterItemText" placeholder="Filtrer par nom" class="border p-2 rounded w-full">
+				<input type="text" v-model="filterItemText" :placeholder="$t('tag.VTagItemFilter')"
+					class="border p-2 rounded w-full">
 			</div>
 
 			<!-- Tableau Items -->
@@ -481,7 +482,8 @@ const schemaTag = Yup.object().shape({
 
 			<!-- Filtres -->
 			<div class="my-4 flex gap-4">
-				<input type="text" v-model="filterStoreText" placeholder="Filtrer par nom" class="border p-2 rounded w-full">
+				<input type="text" v-model="filterStoreText" :placeholder="$t('tag.VTagStoreFilter')"
+					class="border p-2 rounded w-full">
 			</div>
 
 			<!-- Tableau Stores -->

@@ -241,16 +241,21 @@ const sortedProjets = computed(() => {
 				<RouterLink v-for="projet in sortedProjets" :key="projet.id_projet" :to="'/projets/' + projet.id_projet"
 					custom v-slot="{ navigate }">
 					<tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ projet.nom_projet }}</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ projet.description_projet
-							}}
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ projet.nom_projet }}
 						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ projet.url_projet }}</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ projet.status_projet }}
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ projet.description_projet }}
 						</td>
-
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ projet.date_debut_projet
-							}}</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ projet.url_projet }}
+						</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ projet.status_projet }}
+						</td>
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ projet.date_debut_projet }}
+						</td>
 						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
 							<ul>
 								<li v-for="item in projetsStore.items[projet.id_projet]" :key="item.id_item">
@@ -258,7 +263,8 @@ const sortedProjets = computed(() => {
 								</li>
 							</ul>
 						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ projet.date_fin_projet }}
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ projet.date_fin_projet }}
 						</td>
 					</tr>
 				</RouterLink>

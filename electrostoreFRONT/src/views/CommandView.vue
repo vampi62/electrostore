@@ -34,7 +34,7 @@ async function fetchData() {
 			return;
 		}
 		commandsStore.getCommentaireByInterval(commandId, 100, 0, ["user"]);
-		commandsStore.getDocumentByInterval(commandId);
+		commandsStore.getDocumentByInterval(commandId, 100, 0);
 		commandsStore.getItemByInterval(commandId, 100, 0, ["item"]);
 		commandsStore.commandEdition = {
 			prix_command: commandsStore.commands[commandId].prix_command,
@@ -630,7 +630,8 @@ const schemaCommentaire = Yup.object().shape({
 				<Form :validation-schema="schemaCommentaire" v-slot="{ errors }">
 					<div class="flex items-center space-x-4">
 						<Field name="contenu_command_commentaire" type="text" v-model="commentaireFormNew"
-							placeholder="Ajouter un commentaire..." class="w-full p-2 border rounded-lg"
+							:placeholder="$t('command.VCommandCommentPlaceholder')"
+							class="w-full p-2 border rounded-lg"
 							:class="{ 'border-red-500': errors.contenu_command_commentaire }" />
 						<button type="button" @click="commentaireSave(null)"
 							class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
@@ -729,7 +730,8 @@ const schemaCommentaire = Yup.object().shape({
 				<div class="flex flex-col">
 					<div class="flex flex-col">
 						<Field name="name_command_document" type="text"
-							v-model="documentModalData.name_command_document" placeholder="Nom du document"
+							v-model="documentModalData.name_command_document"
+							:placeholder="$t('command.VCommandDocumentNamePlaceholder')"
 							class="w-full p-2 border rounded"
 							:class="{ 'border-red-500': errors.name_command_document }" />
 						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.name_command_document || ' ' }}</span>
@@ -758,7 +760,8 @@ const schemaCommentaire = Yup.object().shape({
 				<div class="flex flex-col">
 					<div class="flex flex-col">
 						<Field name="name_command_document" type="text"
-							v-model="documentModalData.name_command_document" placeholder="Nom du document"
+							v-model="documentModalData.name_command_document"
+							:placeholder="$t('command.VCommandDocumentNamePlaceholder')"
 							class="w-full p-2 border rounded"
 							:class="{ 'border-red-500': errors.name_command_document }" />
 						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.name_command_document || ' ' }}</span>
@@ -810,7 +813,9 @@ const schemaCommentaire = Yup.object().shape({
 
 			<!-- Filtres -->
 			<div class="my-4 flex gap-4">
-				<input type="text" v-model="filterText" placeholder="Filtrer par nom" class="border p-2 rounded w-full">
+				<input type="text" v-model="filterText"
+					:placeholder="$t('command.VCommandItemFilterPlaceholder')"
+					class="border p-2 rounded w-full">
 			</div>
 
 			<!-- Tableau Items -->
