@@ -21,4 +21,5 @@ public static class Constants
     public const int MaxReasonLength = 50;
     public const int MaxRoleLength = 50;
     public const int MaxStatusLength = 50;
+    public const int MaxDocumentSizeMB = 5; // in MB
 }

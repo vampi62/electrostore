@@ -139,7 +139,7 @@ export const useTagsStore = defineStore("tags",{
 		async updateTag(id, params) {
 			this.tagEdition.loading = true;
 			if (params.nom_tag === this.tags[id].nom_tag) {
-				params.nom_tag = null;
+				delete params.nom_tag;
 			}
 			this.tagEdition = await fetchWrapper.put({
 				url: `${baseUrl}/tag/${id}`,

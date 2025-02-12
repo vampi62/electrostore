@@ -37,10 +37,10 @@ public record CreateCommandDocumentDto : IValidatableObject
             {
                 yield return new ValidationResult("The file is empty.", new[] { nameof(document) });
             }
-            const long maxFileSize = 5 * 1024 * 1024; // 5 MB
+            const long maxFileSize = Constants.MaxDocumentSizeMB * 1024 * 1024;
             if (document.Length > maxFileSize)
             {
-                yield return new ValidationResult($"The file size cannot exceed {maxFileSize / (1024 * 1024)} MB.", new[] { nameof(document) });
+                yield return new ValidationResult($"The file size cannot exceed {Constants.MaxDocumentSizeMB} MB.", new[] { nameof(document) });
             }
             var allowedExtensions = new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".bmp" };
             var fileExtension = System.IO.Path.GetExtension(document.FileName).ToLowerInvariant();
@@ -73,10 +73,10 @@ public record CreateCommandDocumentByCommandDto : IValidatableObject
             {
                 yield return new ValidationResult("The file is empty.", new[] { nameof(document) });
             }
-            const long maxFileSize = 5 * 1024 * 1024; // 5 MB
+            const long maxFileSize = Constants.MaxDocumentSizeMB * 1024 * 1024;
             if (document.Length > maxFileSize)
             {
-                yield return new ValidationResult($"The file size cannot exceed {maxFileSize / (1024 * 1024)} MB.", new[] { nameof(document) });
+                yield return new ValidationResult($"The file size cannot exceed {Constants.MaxDocumentSizeMB} MB.", new[] { nameof(document) });
             }
             var allowedExtensions = new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".bmp" };
             var fileExtension = System.IO.Path.GetExtension(document.FileName).ToLowerInvariant();
@@ -106,10 +106,10 @@ public record UpdateCommandDocumentDto : IValidatableObject
             {
                 yield return new ValidationResult("The file is empty.", new[] { nameof(document) });
             }
-            const long maxFileSize = 5 * 1024 * 1024; // 5 MB
+            const long maxFileSize = Constants.MaxDocumentSizeMB * 1024 * 1024;
             if (document.Length > maxFileSize)
             {
-                yield return new ValidationResult($"The file size cannot exceed {maxFileSize / (1024 * 1024)} MB.", new[] { nameof(document) });
+                yield return new ValidationResult($"The file size cannot exceed {Constants.MaxDocumentSizeMB} MB.", new[] { nameof(document) });
             }
             var allowedExtensions = new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".bmp" };
             var fileExtension = System.IO.Path.GetExtension(document.FileName).ToLowerInvariant();

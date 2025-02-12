@@ -64,7 +64,7 @@ export const useItemsStore = defineStore("items",{
 				if (expand.indexOf("item_documents") !== -1) {
 					this.documents[item.id_item] = {};
 					for (const document of item["item_documents"]) {
-						this.documents[item.id_item][document.id_document] = document;
+						this.documents[item.id_item][document.id_item_document] = document;
 					}
 				}
 				if (expand.indexOf("item_boxs") !== -1) {
@@ -115,7 +115,7 @@ export const useItemsStore = defineStore("items",{
 				if (expand.indexOf("item_documents") !== -1) {
 					this.documents[item.id_item] = {};
 					for (const document of item["item_documents"]) {
-						this.documents[item.id_item][document.id_document] = document;
+						this.documents[item.id_item][document.id_item_document] = document;
 					}
 				}
 				if (expand.indexOf("item_boxs") !== -1) {
@@ -164,7 +164,7 @@ export const useItemsStore = defineStore("items",{
 			if (expand.indexOf("item_documents") !== -1) {
 				this.documents[id] = {};
 				for (const document of this.items[id]["item_documents"]) {
-					this.documents[id][document.id_document] = document;
+					this.documents[id][document.id_item_document] = document;
 				}
 			}
 			if (expand.indexOf("item_boxs") !== -1) {
@@ -203,6 +203,9 @@ export const useItemsStore = defineStore("items",{
 		},
 		async updateItem(id, params) {
 			this.itemEdition.loading = true;
+			if (params.nom_item === this.items[id].nom_item) {
+				delete params.nom_item;
+			}
 			this.itemEdition = await fetchWrapper.put({
 				url: `${baseUrl}/item/${id}`,
 				useToken: "access",
@@ -233,7 +236,7 @@ export const useItemsStore = defineStore("items",{
 				useToken: "access",
 			});
 			for (const document of newDocumentList["data"]) {
-				this.documents[idItem][document.id_document] = document;
+				this.documents[idItem][document.id_item_document] = document;
 			}
 			this.documentsTotalCount[idItem] = newDocumentList["count"];
 			this.documentsLoading = false;
@@ -250,23 +253,33 @@ export const useItemsStore = defineStore("items",{
 		},
 		async createDocument(idItem, params) {
 			this.documentEdition = { loading: true };
+			const formData = new FormData();
+			formData.append("name_item_document", params.name_item_document);
+			formData.append("document", params.document);
 			this.documentEdition = await fetchWrapper.post({
 				url: `${baseUrl}/item/${idItem}/document`,
 				useToken: "access",
-				body: params,
+				body: formData,
 				contentFile: true,
 			});
 			if (!this.documents[idItem]) {
 				this.documents[idItem] = {};
 			}
-			this.documents[idItem][this.documentEdition.id_document] = this.documentEdition;
+			this.documents[idItem][this.documentEdition.id_item_document] = this.documentEdition;
 		},
 		async updateDocument(idItem, id, params) {
 			this.documentEdition = { loading: true };
+			const formData = new FormData();
+			if (params.name_item_document) {
+				formData.append("name_item_document", params.name_item_document); 
+			}
+			if (params.document) {
+				formData.append("document", params.document); 
+			}
 			this.documentEdition = await fetchWrapper.put({
 				url: `${baseUrl}/item/${idItem}/document/${id}`,
 				useToken: "access",
-				body: params,
+				body: formData,
 				contentFile: true,
 			});
 			this.documents[idItem][id] = this.documentEdition;
@@ -278,6 +291,12 @@ export const useItemsStore = defineStore("items",{
 				useToken: "access",
 			});
 			delete this.documents[idItem][id];
+		},
+		async downloadDocument(idItem, id) {
+			return await fetchWrapper.image({
+				url: `${baseUrl}/item/${idItem}/document/${id}/download`,
+				useToken: "access",
+			});
 		},
 
 		async getItemboxByList(idItem, idResearch = [], expand = []) {
@@ -612,7 +631,7 @@ export const useItemsStore = defineStore("items",{
 				url: `${baseUrl}/item/${id}/img?limit=${limit}&offset=${offset}`,
 				useToken: "access",
 			});
-			for (const img of this.images[id]) {
+			for (const img of this.images[id]["data"]) {
 				if (!this.imagesURL[img.id_img]) {
 					await this.showImageById(id, img.id_img);
 				}
@@ -630,10 +649,14 @@ export const useItemsStore = defineStore("items",{
 		},
 		async createImage(id, params) {
 			this.imageEdition = { loading: true };
+			const formData = new FormData();
+			formData.append("nom_img", params.nom_img);
+			formData.append("description_img", params.description_img);
+			formData.append("img_file", params.document);
 			this.imageEdition = await fetchWrapper.post({
 				url: `${baseUrl}/item/${id}/img`,
 				useToken: "access",
-				body: params,
+				body: formData,
 				contentFile: true,
 			});
 			if (!this.imagesURL[this.imageEdition.id_img]) {
@@ -646,7 +669,6 @@ export const useItemsStore = defineStore("items",{
 				url: `${baseUrl}/item/${id}/img/${id_img}`,
 				useToken: "access",
 				body: params,
-				contentFile: true,
 			});
 			this.images[id] = this.imageEdition;
 			if (!this.imagesURL[this.imageEdition.id_img]) {

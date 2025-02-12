@@ -111,17 +111,10 @@ const toggleTokens = () => {
 const userDeleteModalShow = ref(false);
 const userTypeRole = ref([["admin", t("user.VUserFilterRole1")], ["user", t("user.VUserFilterRole2")]]);
 const userSave = async() => {
-	if (!isChecked.value) {
-		usersStore.userEdition.mdp_user = null;
-		usersStore.userEdition.confirm_mdp_user = null;
-	}
 	try {
 		await schemaUser.value.validate(usersStore.userEdition, { abortEarly: false });
 		await usersStore.createUser(usersStore.userEdition);
 		addNotification({ message: "user.VUserCreated", type: "success", i18n: true });
-		usersStore.userEdition.mdp_user = "";
-		usersStore.userEdition.confirm_mdp_user = "";
-		usersStore.userEdition.current_mdp_user = "";
 	} catch (e) {
 		e.inner.forEach((error) => {
 			addNotification({ message: error.message, type: "error", i18n: false });
@@ -132,13 +125,9 @@ const userSave = async() => {
 	router.push("/users/" + usersStore.userEdition.id_user);
 };
 const userUpdate = async() => {
-	if (!isChecked.value) {
-		usersStore.userEdition.mdp_user = null;
-		usersStore.userEdition.confirm_mdp_user = null;
-	}
 	try {
 		await schemaUser.value.validate(usersStore.userEdition, { abortEarly: false });
-		await usersStore.updateUser(userId, usersStore.userEdition);
+		await usersStore.updateUser(userId, { ...usersStore.userEdition });
 		addNotification({ message: "user.VUserUpdated", type: "success", i18n: true });
 		usersStore.userEdition.mdp_user = "";
 		usersStore.userEdition.confirm_mdp_user = "";

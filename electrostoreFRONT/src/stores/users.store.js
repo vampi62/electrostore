@@ -117,6 +117,10 @@ export const useUsersStore = defineStore("users",{
 		},
 		async updateUser(id, params) {
 			this.userEdition.loading = true;
+			if (params.mdp_user === "" || params.mdp_user === null) {
+				delete params.mdp_user;
+				delete params.confirm_mdp_user;
+			}
 			this.userEdition = await fetchWrapper.put({
 				url: `${baseUrl}/user/${id}`,
 				useToken: "access",

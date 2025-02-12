@@ -179,7 +179,7 @@ namespace electrostore.Controllers
         }
 
         [HttpGet("{id_camera}/status")]
-        [AllowAnonymous]
+        [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<CameraStatusDto>> GetCameraStatus([FromRoute] int id_camera)
         {
             var camera = await _cameraService.GetCameraById(id_camera);

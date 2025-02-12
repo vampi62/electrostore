@@ -188,8 +188,8 @@ const schemaIa = Yup.object().shape({
 						<tr>
 							<td class="font-semibold pr-4 align-text-top">{{ $t('ia.VIaDescription') }}:</td>
 							<td class="flex flex-col">
-								<Field name="description_ia" v-slot="{ field }">
-									<textarea v-bind="field" v-model="iasStore.iaEdition.description_ia"
+								<Field name="description_ia" v-slot="{ description_ia }">
+									<textarea v-bind="description_ia" v-model="iasStore.iaEdition.description_ia"
 										:value="iasStore.iaEdition.description_ia"
 										class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300 resize-y"
 										:class="{ 'border-red-500': errors.description_ia }"
