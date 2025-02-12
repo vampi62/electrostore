@@ -251,8 +251,9 @@ const sortedItems = computed(() => {
 									<img v-if="itemsStore.imagesURL[item.id_img]"
 										:src="itemsStore.imagesURL[item.id_img]" alt="Image"
 										class="w-16 h-16 object-cover rounded" />
-									<span v-else class="w-16 h-16 object-cover rounded">{{ $t('item.VInventoryLoading')
-										}}</span>
+									<span v-else class="w-16 h-16 object-cover rounded">
+										{{ $t('item.VInventoryLoading') }}
+									</span>
 								</template>
 								<template v-else>
 									<img src="../assets/nopicture.webp" alt="Image"

@@ -46,7 +46,8 @@ namespace electrostore.Controllers
                     { "ip", Constants.MaxIpLength },
                     { "reason", Constants.MaxReasonLength },
                     { "role", Constants.MaxRoleLength },
-                    { "status", Constants.MaxStatusLength }
+                    { "status", Constants.MaxStatusLength },
+                    { "document_size_mb", Constants.MaxDocumentSizeMB }
                 }
             });
         }

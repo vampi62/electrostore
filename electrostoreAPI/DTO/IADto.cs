@@ -78,10 +78,10 @@ public record DetecDto : IValidatableObject
     {
         if (img_file is not null)
         {
-            const long maxFileSize = 5 * 1024 * 1024; // 5 MB
+            const long maxFileSize = Constants.MaxDocumentSizeMB * 1024 * 1024;
             if (img_file.Length > maxFileSize)
             {
-                yield return new ValidationResult($"The file size cannot exceed {maxFileSize / (1024 * 1024)} MB.", new[] { nameof(img_file) });
+                yield return new ValidationResult($"The file size cannot exceed {Constants.MaxDocumentSizeMB} MB.", new[] { nameof(img_file) });
             }
             var allowedExtensions = new[] { ".png", ".jpg", ".jpeg", ".gif", ".bmp" };
             var fileExtension = System.IO.Path.GetExtension(img_file.FileName).ToLowerInvariant();

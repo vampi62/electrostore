@@ -247,8 +247,12 @@ export const useProjetsStore = defineStore("projets",{
 		async updateDocument(idProjet, id, params) {
 			this.documentEdition = { loading: true };
 			const formData = new FormData();
-			formData.append("name_projet_document", params.name_projet_document);
-			formData.append("document", params.document);
+			if (params.name_projet_document) {
+				formData.append("name_projet_document", params.name_projet_document); 
+			}
+			if (params.document) {
+				formData.append("document", params.document); 
+			}
 			this.documentEdition = await fetchWrapper.put({
 				url: `${baseUrl}/projet/${idProjet}/document/${id}`,
 				useToken: "access",

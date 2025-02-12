@@ -99,7 +99,7 @@ const tagSave = async() => {
 const tagUpdate = async() => {
 	try {
 		await schemaTag.validate(tagsStore.tagEdition, { abortEarly: false });
-		await tagsStore.updateTag(tagId, tagsStore.tagEdition);
+		await tagsStore.updateTag(tagId, { ...tagsStore.tagEdition });
 		addNotification({ message: "tag.VTagUpdated", type: "success", i18n: true });
 	} catch (e) {
 		e.inner.forEach((error) => {

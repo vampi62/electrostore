@@ -424,7 +424,7 @@ const schemaCommentaire = Yup.object().shape({
 										:class="{ 'border-red-500': errors.description_projet }" rows="4">
 									</textarea>
 								</Field>
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.description_ia || ' ' }}</span>
+								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.description_projet || ' ' }}</span>
 							</td>
 						</tr>
 						<tr>
