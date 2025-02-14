@@ -33,7 +33,8 @@ public class ItemTagService : IItemTagService
                 tag = expand != null && expand.Contains("tag") ? new ReadTagDto
                 {
                     id_tag = it.Tag.id_tag,
-                    nom_tag = it.Tag.nom_tag
+                    nom_tag = it.Tag.nom_tag,
+                    poids_tag = it.Tag.poids_tag
                 } : null,
                 item = expand != null && expand.Contains("item") ? new ReadItemDto
                 {

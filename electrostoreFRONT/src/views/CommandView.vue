@@ -459,9 +459,8 @@ const schemaCommentaire = Yup.object().shape({
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors.status_command }">
 									<option value="" disabled> -- {{ $t('command.VCommandStatusSelect') }} -- </option>
-									<option v-for="status in commandTypeStatus" :key="status" :value="status[0]">{{
-										status[1]
-									}}
+									<option v-for="status in commandTypeStatus" :key="status" :value="status[0]">
+										{{ status[1] }}
 									</option>
 								</Field>
 								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.status_command || ' ' }}</span>
@@ -474,8 +473,9 @@ const schemaCommentaire = Yup.object().shape({
 									v-model="commandsStore.commandEdition.date_livraison_command"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors.date_livraison_command }" disabled />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_livraison_command || ' '
-									}}</span>
+								<span class="text-red-500 h-5 w-80 text-sm">
+									{{ errors.date_livraison_command || ' ' }}
+								</span>
 							</td>
 						</tr>
 					</tbody>
@@ -500,14 +500,18 @@ const schemaCommentaire = Yup.object().shape({
 					<table class="min-w-full table-auto">
 						<thead>
 							<tr>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{
-									$t('command.VCommandDocumentName') }}</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{
-									$t('command.VCommandDocumentType') }}</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{
-									$t('command.VCommandDocumentDate') }}</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{
-									$t('command.VCommandDocumentActions') }}</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('command.VCommandDocumentName') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('command.VCommandDocumentType') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('command.VCommandDocumentDate') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('command.VCommandDocumentActions') }}
+								</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -564,8 +568,8 @@ const schemaCommentaire = Yup.object().shape({
 						</thead>
 						<tbody>
 							<tr v-for="item in commandsStore.items[commandId]" :key="item.id_item">
-								<td class="px-4 py-2 border-b border-gray-200">{{ itemsStore.items[item.id_item].nom_item
-									}}
+								<td class="px-4 py-2 border-b border-gray-200">
+									{{ itemsStore.items[item.id_item].nom_item }}
 								</td>
 								<td class="px-4 py-2 border-b border-gray-200">
 									<template v-if="item.tmp">
@@ -744,10 +748,12 @@ const schemaCommentaire = Yup.object().shape({
 					</div>
 				</div>
 				<div class="flex justify-end space-x-2">
-					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded">{{
-						$t('command.VCommandDocumentCancel') }}</button>
-					<button type="button" @click="documentAdd" class="px-4 py-2 bg-blue-500 text-white rounded">{{
-						$t('command.VCommandDocumentAdd') }}</button>
+					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded">
+						{{ $t('command.VCommandDocumentCancel') }}
+					</button>
+					<button type="button" @click="documentAdd" class="px-4 py-2 bg-blue-500 text-white rounded">
+						{{ $t('command.VCommandDocumentAdd') }}
+					</button>
 				</div>
 			</Form>
 		</div>
@@ -775,8 +781,9 @@ const schemaCommentaire = Yup.object().shape({
 				</div>
 				<div class="flex justify-end space-x-2">
 					<button type="button" @click="documentEditModalShow = false"
-						class="px-4 py-2 bg-gray-300 rounded">{{
-							$t('command.VCommandDocumentCancel') }}</button>
+						class="px-4 py-2 bg-gray-300 rounded">
+						{{ $t('command.VCommandDocumentCancel') }}
+					</button>
 					<button type="button" @click="documentEdit" class="px-4 py-2 bg-blue-500 text-white rounded">
 						{{ $t('command.VCommandDocumentEdit') }}
 					</button>
@@ -865,24 +872,29 @@ const schemaCommentaire = Yup.object().shape({
 							<td class="px-4 py-2 border-b">
 								<template v-if="item.tmp">
 									<button type="button" @click="itemSave(item)"
-										class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">{{
-											$t('command.VCommandItemSave') }}</button>
+										class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
+										{{ $t('command.VCommandItemSave') }}
+									</button>
 									<button type="button" @click="item.tmp = null"
-										class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">{{
-											$t('command.VCommandItemCancel') }}</button>
+										class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
+										{{ $t('command.VCommandItemCancel') }}
+									</button>
 								</template>
 								<template v-else>
 									<button v-if="!commandsStore.items[commandId][item.id_item]" type="button"
 										@click="item.tmp = { prix_command_item: 1, qte_command_item: 1, id_item: item.id_item }"
-										class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">{{
-											$t('command.VCommandItemAdd') }}</button>
+										class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+										{{ $t('command.VCommandItemAdd') }}
+									</button>
 									<button v-else type="button"
 										@click="item.tmp = { ...commandsStore.items[commandId][item.id_item] }"
-										class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">{{
-											$t('command.VCommandItemEdit') }}</button>
+										class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+										{{ $t('command.VCommandItemEdit') }}
+									</button>
 									<button type="button" @click="itemDelete(item)"
-										class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">{{
-											$t('command.VCommandItemDelete') }}</button>
+										class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
+										{{ $t('command.VCommandItemDelete') }}
+									</button>
 								</template>
 							</td>
 						</tr>

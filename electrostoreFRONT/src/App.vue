@@ -58,26 +58,33 @@ const containerClasses = computed(() => [
 				</button>
 				<div class="hidden sm:flex"><!-- for desktop -->
 					<div class="flex space-x-4 justify-end">
-						<RouterLink :to="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400">{{
-							$t('common.VAppProfile') }}</RouterLink>
+						<RouterLink :to="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400">
+							{{ $t('common.VAppProfile') }}
+						</RouterLink>
 						<RouterLink v-if="authStore.user?.role_user === 'admin'" to="/users"
 							class="text-white hover:text-blue-400">
-							{{ $t('common.VAppAdmin') }}</RouterLink>
+							{{ $t('common.VAppAdmin') }}
+						</RouterLink>
 						<a v-if="authStore.user" @click="authStore.logout()"
-							class="cursor-pointer text-white hover:text-blue-400">{{ $t('common.VAppLogout') }}</a>
+							class="cursor-pointer text-white hover:text-blue-400">
+							{{ $t('common.VAppLogout') }}
+						</a>
 					</div>
 				</div>
 			</nav>
 			<div class="fixed sm:hidden top-12 w-full z-50"><!-- for mobile -->
 				<div v-show="showTopBar" class="flex flex-col space-y-4 bg-gray-800 p-4">
-					<RouterLink :to="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400">{{
-						$t('common.VAppProfile') }}</RouterLink>
+					<RouterLink :to="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400">
+						{{ $t('common.VAppProfile') }}
+					</RouterLink>
 					<RouterLink v-if="authStore.user?.role_user === 'admin'" to="/users"
 						class="text-white hover:text-blue-400">
-						{{ $t('common.VAppAdmin') }}</RouterLink>
+						{{ $t('common.VAppAdmin') }}
+					</RouterLink>
 					<a v-if="authStore.user" @click="authStore.logout()"
-						class="cursor-pointer text-white hover:text-blue-400">{{
-							$t('common.VAppLogout') }}</a>
+						class="cursor-pointer text-white hover:text-blue-400">
+						{{ $t('common.VAppLogout') }}
+					</a>
 					<div class="border-t-2 border-blue-400"></div>
 					<ul class="mt-6 space-y-4">
 						<li v-for="nav in listNav" :key="nav.name">

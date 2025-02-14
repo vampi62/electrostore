@@ -68,9 +68,9 @@ function onSubmit(values, { setErrors }) {
 		<div class="mt-4">
 			<RouterLink to="/register" class="text-blue-500 hover:underline">{{ $t('common.VLoginRegisterLink') }}
 			</RouterLink>
-			<RouterLink to="/forgot-password" class="ml-4 text-blue-500 hover:underline">{{
-				$t('common.VLoginForgotPasswordLink')
-			}}</RouterLink>
+			<RouterLink to="/forgot-password" class="ml-4 text-blue-500 hover:underline">
+				{{ $t('common.VLoginForgotPasswordLink') }}
+			</RouterLink>
 		</div>
 	</div>
 </template>

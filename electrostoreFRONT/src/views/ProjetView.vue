@@ -444,9 +444,8 @@ const schemaCommentaire = Yup.object().shape({
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors.status_projet }">
 									<option value="" disabled> -- {{ $t('projet.VProjetStatusSelect') }} -- </option>
-									<option v-for="status in projetTypeStatus" :key="status" :value="status[0]">{{
-										status[1]
-									}}
+									<option v-for="status in projetTypeStatus" :key="status" :value="status[0]">
+										{{ status[1] }}
 									</option>
 								</Field>
 								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.status_projet || ' ' }}</span>
@@ -470,8 +469,9 @@ const schemaCommentaire = Yup.object().shape({
 									v-model="projetsStore.projetEdition.date_fin_projet"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors.date_fin_projet }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_fin_projet || ' '
-									}}</span>
+								<span class="text-red-500 h-5 w-80 text-sm">
+									{{ errors.date_fin_projet || ' ' }}
+								</span>
 							</td>
 						</tr>
 					</tbody>
@@ -493,14 +493,18 @@ const schemaCommentaire = Yup.object().shape({
 					<table class="min-w-full table-auto">
 						<thead>
 							<tr>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{
-									$t('projet.VProjetDocumentName') }}</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{
-									$t('projet.VProjetDocumentType') }}</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{
-									$t('projet.VProjetDocumentDate') }}</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{
-									$t('projet.VProjetDocumentActions') }}</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('projet.VProjetDocumentName') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('projet.VProjetDocumentType') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('projet.VProjetDocumentDate') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('projet.VProjetDocumentActions') }}
+								</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -554,8 +558,8 @@ const schemaCommentaire = Yup.object().shape({
 						</thead>
 						<tbody>
 							<tr v-for="item in projetsStore.items[projetId]" :key="item.id_item">
-								<td class="px-4 py-2 border-b border-gray-200">{{ itemsStore.items[item.id_item].nom_item
-									}}
+								<td class="px-4 py-2 border-b border-gray-200">
+									{{ itemsStore.items[item.id_item].nom_item }}
 								</td>
 								<td class="px-4 py-2 border-b border-gray-200">
 									<template v-if="item.tmp">
@@ -722,10 +726,12 @@ const schemaCommentaire = Yup.object().shape({
 					</div>
 				</div>
 				<div class="flex justify-end space-x-2">
-					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded">{{
-						$t('projet.VProjetDocumentCancel') }}</button>
-					<button type="button" @click="documentAdd" class="px-4 py-2 bg-blue-500 text-white rounded">{{
-						$t('projet.VProjetDocumentAdd') }}</button>
+					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded">
+						{{ $t('projet.VProjetDocumentCancel') }}
+					</button>
+					<button type="button" @click="documentAdd" class="px-4 py-2 bg-blue-500 text-white rounded">
+						{{ $t('projet.VProjetDocumentAdd') }}
+					</button>
 				</div>
 			</Form>
 		</div>
@@ -827,24 +833,29 @@ const schemaCommentaire = Yup.object().shape({
 							<td class="px-4 py-2 border-b">
 								<template v-if="item.tmp">
 									<button type="button" @click="itemSave(item)"
-										class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">{{
-											$t('projet.VProjetItemSave') }}</button>
+										class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
+										{{ $t('projet.VProjetItemSave') }}
+									</button>
 									<button type="button" @click="item.tmp = null"
-										class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">{{
-											$t('projet.VProjetItemCancel') }}</button>
+										class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
+										{{ $t('projet.VProjetItemCancel') }}
+									</button>
 								</template>
 								<template v-else>
 									<button v-if="!projetsStore.items[projetId][item.id_item]" type="button"
 										@click="item.tmp = { prix_projet_item: 1, qte_projet_item: 1, id_item: item.id_item }"
-										class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">{{
-											$t('projet.VProjetItemAdd') }}</button>
+										class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+										{{ $t('projet.VProjetItemAdd') }}
+									</button>
 									<button v-else type="button"
 										@click="item.tmp = { ...projetsStore.items[projetId][item.id_item] }"
-										class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">{{
-											$t('projet.VProjetItemEdit') }}</button>
+										class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+										{{ $t('projet.VProjetItemEdit') }}
+										</button>
 									<button type="button" @click="itemDelete(item)"
-										class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">{{
-											$t('projet.VProjetItemDelete') }}</button>
+										class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
+										{{ $t('projet.VProjetItemDelete') }}
+									</button>
 								</template>
 							</td>
 						</tr>

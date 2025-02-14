@@ -144,7 +144,7 @@ public class ImgService : IImgService
         }
         _context.Imgs.Remove(imgToDelete);
         // supprimer l'image sur le disque
-        File.Delete(imgToDelete.url_img);
+        File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", imgToDelete.url_img));
         await _context.SaveChangesAsync();
     }
 

@@ -18,10 +18,10 @@ export const useItemsStore = defineStore("items",{
 		documents: {},
 		documentEdition: {},
 
-		itemboxsTotalCount: {},
-		itemboxsLoading: false,
-		itemboxs: {},
-		itemboxEdition: {},
+		itemBoxsTotalCount: {},
+		itemBoxsLoading: false,
+		itemBoxs: {},
+		itemBoxEdition: {},
 
 		itemTagsLoading: true,
 		itemTagsTotalCount: {},
@@ -38,6 +38,8 @@ export const useItemsStore = defineStore("items",{
 		itemProjets: {},
 		itemProjetEdition: {},
 
+		imagesLoading: true,
+		imagesTotalCount: {},
 		images: {},
 		imagesURL: {},
 		imageEdition: {},
@@ -57,7 +59,7 @@ export const useItemsStore = defineStore("items",{
 				}
 				this.items[item.id_item] = item;
 				this.documentsTotalCount[item.id_item] = item["item_documents_count"];
-				this.itemboxsTotalCount[item.id_item] = item["item_boxs_count"];
+				this.itemBoxsTotalCount[item.id_item] = item["item_boxs_count"];
 				this.itemTagsTotalCount[item.id_item] = item["item_tags_count"];
 				this.itemCommandsTotalCount[item.id_item] = item["command_items_count"];
 				this.itemProjetsTotalCount[item.id_item] = item["projet_items_count"];
@@ -68,9 +70,9 @@ export const useItemsStore = defineStore("items",{
 					}
 				}
 				if (expand.indexOf("item_boxs") !== -1) {
-					this.itemboxs[item.id_item] = {};
-					for (const itembox of item["item_boxs"]) {
-						this.itemboxs[item.id_item][itembox.id_itembox] = itembox;
+					this.itemBoxs[item.id_item] = {};
+					for (const itemBox of item["item_boxs"]) {
+						this.itemBoxs[item.id_item][itemBox.id_box] = itemBox;
 					}
 				}
 				if (expand.indexOf("item_tags") !== -1) {
@@ -108,7 +110,7 @@ export const useItemsStore = defineStore("items",{
 				}
 				this.items[item.id_item] = item;
 				this.documentsTotalCount[item.id_item] = item["item_documents_count"];
-				this.itemboxsTotalCount[item.id_item] = item["item_boxs_count"];
+				this.itemBoxsTotalCount[item.id_item] = item["item_boxs_count"];
 				this.itemTagsTotalCount[item.id_item] = item["item_tags_count"];
 				this.itemCommandsTotalCount[item.id_item] = item["command_items_count"];
 				this.itemProjetsTotalCount[item.id_item] = item["projet_items_count"];
@@ -119,9 +121,9 @@ export const useItemsStore = defineStore("items",{
 					}
 				}
 				if (expand.indexOf("item_boxs") !== -1) {
-					this.itemboxs[item.id_item] = {};
-					for (const itembox of item["item_boxs"]) {
-						this.itemboxs[item.id_item][itembox.id_itembox] = itembox;
+					this.itemBoxs[item.id_item] = {};
+					for (const itemBox of item["item_boxs"]) {
+						this.itemBoxs[item.id_item][itemBox.id_box] = itemBox;
 					}
 				}
 				if (expand.indexOf("item_tags") !== -1) {
@@ -157,7 +159,7 @@ export const useItemsStore = defineStore("items",{
 				await this.showImageById(id, this.items[id].id_img);
 			}
 			this.documentsTotalCount[id] = this.items[id]["item_documents_count"];
-			this.itemboxsTotalCount[id] = this.items[id]["item_boxs_count"];
+			this.itemBoxsTotalCount[id] = this.items[id]["item_boxs_count"];
 			this.itemTagsTotalCount[id] = this.items[id]["item_tags_count"];
 			this.itemCommandsTotalCount[id] = this.items[id]["command_items_count"];
 			this.itemProjetsTotalCount[id] = this.items[id]["projet_items_count"];
@@ -168,9 +170,9 @@ export const useItemsStore = defineStore("items",{
 				}
 			}
 			if (expand.indexOf("item_boxs") !== -1) {
-				this.itemboxs[id] = {};
-				for (const itembox of this.items[id]["item_boxs"]) {
-					this.itemboxs[id][itembox.id_itembox] = itembox;
+				this.itemBoxs[id] = {};
+				for (const itemBox of this.items[id]["item_boxs"]) {
+					this.itemBoxs[id][itemBox.id_box] = itemBox;
 				}
 			}
 			if (expand.indexOf("item_tags") !== -1) {
@@ -299,90 +301,90 @@ export const useItemsStore = defineStore("items",{
 			});
 		},
 
-		async getItemboxByList(idItem, idResearch = [], expand = []) {
-			this.itemboxsLoading = true;
+		async getItemBoxByList(idItem, idResearch = [], expand = []) {
+			this.itemBoxsLoading = true;
 			const storeStore = useStoresStore();
-			if (!this.itemboxs[idItem]) {
-				this.itemboxs[idItem] = {};
+			if (!this.itemBoxs[idItem]) {
+				this.itemBoxs[idItem] = {};
 			}
 			const expandString = expand.join(",");
 			const idResearchString = idResearch.join(",");
-			let newItemboxList = await fetchWrapper.get({
-				url: `${baseUrl}/item/${idItem}/itembox?&idResearch=${idResearchString}&expand=${expandString}`,
+			let newItemBoxList = await fetchWrapper.get({
+				url: `${baseUrl}/item/${idItem}/box?&idResearch=${idResearchString}&expand=${expandString}`,
 				useToken: "access",
 			});
-			for (const itembox of newItemboxList["data"]) {
-				this.itemboxs[idItem][itembox.id_itembox] = itembox;
+			for (const itemBox of newItemBoxList["data"]) {
+				this.itemBoxs[idItem][itemBox.id_box] = itemBox;
 				if (expand.indexOf("box") !== -1) {
-					storeStore.boxs[itembox.id_box] = itembox["box"];
+					storeStore.boxs[itemBox.id_box] = itemBox["box"];
 				}
 			}
-			this.itemboxsTotalCount[idItem] = newItemboxList["count"];
-			this.itemboxsLoading = false;
+			this.itemBoxsTotalCount[idItem] = newItemBoxList["count"];
+			this.itemBoxsLoading = false;
 		},
-		async getItemboxByInterval(idItem, limit = 100, offset = 0, expand = []) {
-			this.itemboxsLoading = true;
+		async getItemBoxByInterval(idItem, limit = 100, offset = 0, expand = []) {
+			this.itemBoxsLoading = true;
 			const storeStore = useStoresStore();
-			if (!this.itemboxs[idItem]) {
-				this.itemboxs[idItem] = {};
+			if (!this.itemBoxs[idItem]) {
+				this.itemBoxs[idItem] = {};
 			}
 			const expandString = expand.join(",");
-			let newItemboxList = await fetchWrapper.get({
-				url: `${baseUrl}/item/${idItem}/itembox?limit=${limit}&offset=${offset}&expand=${expandString}`,
+			let newItemBoxList = await fetchWrapper.get({
+				url: `${baseUrl}/item/${idItem}/box?limit=${limit}&offset=${offset}&expand=${expandString}`,
 				useToken: "access",
 			});
-			for (const itembox of newItemboxList["data"]) {
-				this.itemboxs[idItem][itembox.id_itembox] = itembox;
+			for (const itemBox of newItemBoxList["data"]) {
+				this.itemBoxs[idItem][itemBox.id_box] = itemBox;
 				if (expand.indexOf("box") !== -1) {
-					storeStore.boxs[itembox.id_box] = itembox["box"];
+					storeStore.boxs[itemBox.id_box] = itemBox["box"];
 				}
 			}
-			this.itemboxsTotalCount[idItem] = newItemboxList["count"];
-			this.itemboxsLoading = false;
+			this.itemBoxsTotalCount[idItem] = newItemBoxList["count"];
+			this.itemBoxsLoading = false;
 		},
-		async getItemboxById(idItem, id, expand = []) {
+		async getItemBoxById(idItem, id, expand = []) {
 			const storeStore = useStoresStore();
-			if (!this.itemboxs[idItem]) {
-				this.itemboxs[idItem] = {};
+			if (!this.itemBoxs[idItem]) {
+				this.itemBoxs[idItem] = {};
 			}
 			const expandString = expand.join(",");
-			this.itemboxs[idItem][id] = { loading: true };
-			this.itemboxs[idItem][id] = await fetchWrapper.get({
-				url: `${baseUrl}/item/${idItem}/itembox/${id}?expand=${expandString}`,
+			this.itemBoxs[idItem][id] = { loading: true };
+			this.itemBoxs[idItem][id] = await fetchWrapper.get({
+				url: `${baseUrl}/item/${idItem}/box/${id}?expand=${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("box") !== -1) {
-				storeStore.boxs[this.itemboxs[idItem][id].id_box] = this.itemboxs[idItem][id]["box"];
+				storeStore.boxs[this.itemBoxs[idItem][id].id_box] = this.itemBoxs[idItem][id]["box"];
 			}
 		},
-		async createItembox(idItem, params) {
-			this.itemboxEdition = { loading: true };
-			this.itemboxEdition = await fetchWrapper.post({
-				url: `${baseUrl}/item/${idItem}/itembox`,
+		async createItemBox(idItem, params) {
+			this.itemBoxEdition = { loading: true };
+			this.itemBoxEdition = await fetchWrapper.post({
+				url: `${baseUrl}/item/${idItem}/box`,
 				useToken: "access",
 				body: params,
 			});
-			if (!this.itemboxs[idItem]) {
-				this.itemboxs[idItem] = {};
+			if (!this.itemBoxs[idItem]) {
+				this.itemBoxs[idItem] = {};
 			}
-			this.itemboxs[idItem][this.itemboxEdition.id_itembox] = this.itemboxEdition;
+			this.itemBoxs[idItem][this.itemBoxEdition.id_box] = this.itemBoxEdition;
 		},
-		async updateItembox(idItem, id, params) {
-			this.itemboxEdition = { loading: true };
-			this.itemboxEdition = await fetchWrapper.put({
-				url: `${baseUrl}/item/${idItem}/itembox/${id}`,
+		async updateItemBox(idItem, id, params) {
+			this.itemBoxEdition = { loading: true };
+			this.itemBoxEdition = await fetchWrapper.put({
+				url: `${baseUrl}/item/${idItem}/box/${id}`,
 				useToken: "access",
 				body: params,
 			});
-			this.itemboxs[idItem][id] = this.itemboxEdition;
+			this.itemBoxs[idItem][id] = this.itemBoxEdition;
 		},
-		async deleteItembox(idItem, id) {
-			this.itemboxEdition = { loading: true };
-			this.itemboxEdition = await fetchWrapper.delete({
-				url: `${baseUrl}/item/${idItem}/itembox/${id}`,
+		async deleteItemBox(idItem, id) {
+			this.itemBoxEdition = { loading: true };
+			this.itemBoxEdition = await fetchWrapper.delete({
+				url: `${baseUrl}/item/${idItem}/box/${id}`,
 				useToken: "access",
 			});
-			delete this.itemboxs[idItem][id];
+			delete this.itemBoxs[idItem][id];
 		},
 
 		async getItemTagByInterval(idItem, limit = 100, offset = 0, expand = []) {
@@ -624,64 +626,79 @@ export const useItemsStore = defineStore("items",{
 			}
 		},
 
-		//
-		async getImageByInterval(id, limit = 100, offset = 0) {
-			this.images[id] = { loading: true };
-			this.images[id] = await fetchWrapper.get({
-				url: `${baseUrl}/item/${id}/img?limit=${limit}&offset=${offset}`,
+		async getImageByInterval(idItem, limit = 100, offset = 0) {
+			this.imagesLoading = true;
+			if (!this.images[idItem]) {
+				this.images[idItem] = {};
+			}
+			let newImagesList = await fetchWrapper.get({
+				url: `${baseUrl}/item/${idItem}/img?limit=${limit}&offset=${offset}`,
 				useToken: "access",
 			});
-			for (const img of this.images[id]["data"]) {
+			for (const img of newImagesList["data"]) {
+				this.images[idItem][img.id_img] = img;
 				if (!this.imagesURL[img.id_img]) {
-					await this.showImageById(id, img.id_img);
+					this.showImageById(idItem, img.id_img);
 				}
 			}
+			this.imagesTotalCount[idItem] = newImagesList["count"];
+			this.imagesLoading = false;
 		},
-		async getImageById(id, id_img) {
-			this.images[id] = { loading: true };
-			this.images[id] = await fetchWrapper.get({
-				url: `${baseUrl}/item/${id}/img/${id_img}`,
+		async getImageById(idItem, id_img) {
+			if (!this.images[idItem]) {
+				this.images[idItem] = {};
+			}
+			this.images[idItem][id_img] = { loading: true };
+			this.images[idItem][id_img] = await fetchWrapper.get({
+				url: `${baseUrl}/item/${idItem}/img/${id_img}`,
 				useToken: "access",
 			});
 			if (!this.imagesURL[id_img]) {
-				await this.showImageById(id, id_img);
+				await this.showImageById(idItem, id_img);
 			}
 		},
-		async createImage(id, params) {
+		async createImage(idItem, params) {
 			this.imageEdition = { loading: true };
+			if (!this.images[idItem]) {
+				this.images[idItem] = {};
+			}
 			const formData = new FormData();
 			formData.append("nom_img", params.nom_img);
 			formData.append("description_img", params.description_img);
-			formData.append("img_file", params.document);
+			formData.append("img_file", params.image);
 			this.imageEdition = await fetchWrapper.post({
-				url: `${baseUrl}/item/${id}/img`,
+				url: `${baseUrl}/item/${idItem}/img`,
 				useToken: "access",
 				body: formData,
 				contentFile: true,
 			});
+			this.images[idItem][this.imageEdition.id_img] = this.imageEdition;
 			if (!this.imagesURL[this.imageEdition.id_img]) {
-				await this.showImageById(id, this.imageEdition.id_img);
+				await this.showImageById(idItem, this.imageEdition.id_img);
 			}
 		},
-		async updateImage(id, id_img, params) {
+		async updateImage(idItem, id_img, params) {
 			this.imageEdition = { loading: true };
+			if (!this.images[idItem]) {
+				this.images[idItem] = {};
+			}
 			this.imageEdition = await fetchWrapper.put({
-				url: `${baseUrl}/item/${id}/img/${id_img}`,
+				url: `${baseUrl}/item/${idItem}/img/${id_img}`,
 				useToken: "access",
 				body: params,
 			});
-			this.images[id] = this.imageEdition;
+			this.images[idItem][id_img] = this.imageEdition;
 			if (!this.imagesURL[this.imageEdition.id_img]) {
-				await this.showImageById(id, this.imageEdition.id_img);
+				await this.showImageById(idItem, this.imageEdition.id_img);
 			}
 		},
-		async deleteImage(id, id_img) {
+		async deleteImage(iditem, id_img) {
 			this.imageEdition = { loading: true };
 			this.imageEdition = await fetchWrapper.delete({
-				url: `${baseUrl}/item/${id}/img/${id_img}`,
+				url: `${baseUrl}/item/${iditem}/img/${id_img}`,
 				useToken: "access",
 			});
-			delete this.images[id];
+			delete this.images[iditem][id_img];
 		},
 		async showImageById(id_item, id_img) {
 			if (this.imagesURL[id_img]) {
