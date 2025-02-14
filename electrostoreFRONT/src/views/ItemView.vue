@@ -31,9 +31,10 @@ async function fetchData() {
 		} catch {
 			delete itemsStore.items[itemId];
 			addNotification({ message: "item.VItemNotFound", type: "error", i18n: true });
-			router.push("/items");
+			router.push("/inventory");
 			return;
 		}
+		itemsStore.getItemBoxByInterval(itemId, 100, 0, ["box"]);
 		itemsStore.getItemTagByInterval(itemId, 100, 0, ["tag"]);
 		itemsStore.getDocumentByInterval(itemId, 100, 0);
 		itemsStore.getItemCommandByInterval(itemId, 100, 0, ["command"]);
@@ -62,11 +63,34 @@ onBeforeUnmount(() => {
 });
 
 const showDocuments = ref(true);
+const showImages = ref(true);
+const showProjetItems = ref(true);
+const showCommandItems = ref(true);
+
 const toggleDocuments = () => {
 	if (itemId === "new") {
 		return;
 	}
 	showDocuments.value = !showDocuments.value;
+};
+const toggleImages = () => {
+	if (itemId === "new") {
+		return;
+	}
+	showImages.value = !showImages.value;
+};
+
+const toggleProjetItems = () => {
+	if (itemId === "new") {
+		return;
+	}
+	showProjetItems.value = !showProjetItems.value;
+};
+const toggleCommandItems = () => {
+	if (itemId === "new") {
+		return;
+	}
+	showCommandItems.value = !showCommandItems.value;
 };
 
 // item
@@ -107,18 +131,25 @@ const itemDelete = async() => {
 	}
 	itemDeleteModalShow.value = false;
 };
+
+function getTotalQuantity() {
+	let listBox = itemsStore.itemBoxs[itemId];
+	if (!listBox) {
+		return 0;
+	}
+}
 const formatDateForDatetimeLocal = (date) => {
+	// if date is a string : convert to date
+	if (typeof date === "string") {
+		date = new Date(date);
+	}
 	const pad = (num) => String(num).padStart(2, "0");
 	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
 const sortedTags = computed(() => {
 	return Object.keys(itemsStore.itemTags[itemId] || {})
-		.sort((a, b) => tagsStore.tags[b].poids_tag - tagsStore.tags[a].poids_tag)
-		.reduce((obj, key) => {
-			obj[key] = itemsStore.itemTags[itemId][key];
-			return obj;
-		}, {});
+		.sort((a, b) => tagsStore.tags[b].poids_tag - tagsStore.tags[a].poids_tag);
 });
 
 // document
@@ -225,6 +256,65 @@ const getMimeType = (type) => {
 	return mimeTypes[type] || "application/octet-stream";
 };
 
+// image
+const imageSelectModalShow = ref(false);
+const imageAddModalShow = ref(false);
+const imageDeleteModalShow = ref(false);
+const selectedImageId = ref(null);
+const imageModalData = ref({ id_img: null, nom_img: "", image: null, isEdit: false });
+const imageSelectOpenModal = () => {
+	if (itemId === "new") {
+		return;
+	}
+	if (Object.keys(itemsStore.images[itemId]).length === 0) {
+		addNotification({ message: "item.VItemImageEmpty", type: "error", i18n: true });
+		return;
+	}
+	if (itemsStore.images[itemId]) {
+		imageSelectModalShow.value = true;
+	}
+};
+const imageAddOpenModal = () => {
+	imageModalData.value = { nom_img: "", image: null, isEdit: false };
+	imageAddModalShow.value = true;
+};
+const imageDeleteOpenModal = (doc) => {
+	imageModalData.value = doc;
+	imageDeleteModalShow.value = true;
+};
+const imageAdd = async() => {
+	try {
+		await itemsStore.createImage(itemId, imageModalData.value);
+		addNotification({ message: "item.VItemImageAdded", type: "success", i18n: true });
+	} catch (e) {
+		addNotification({ message: "item.VItemImageAddError", type: "error", i18n: true });
+	}
+	imageAddModalShow.value = false;
+};
+const imageDelete = async() => {
+	try {
+		await itemsStore.deleteImage(itemId, imageModalData.value.id_img);
+		addNotification({ message: "item.VItemImageDeleted", type: "success", i18n: true });
+	} catch (e) {
+		addNotification({ message: "item.VItemImageDeleteError", type: "error", i18n: true });
+	}
+	imageDeleteModalShow.value = false;
+};
+const handleImageUpload = (e) => {
+	imageModalData.value.image = e.target.files[0];
+};
+const imageDownload = async(imageContent) => {
+	//const file = await itemsStore.downloadImage(itemId, imageContent.id_img);
+	//const url = window.URL.createObjectURL(new Blob([file]));
+	let url = itemsStore.imagesURL[imageContent.id_img];
+	const link = document.createElement("a");
+	link.href = url;
+	link.setAttribute("download", imageContent.nom_img + ".png");
+	document.body.appendChild(link);
+	link.click();
+	document.body.removeChild(link);
+};
+
 const schemaItem = Yup.object().shape({
 	nom_item: Yup.string()
 		.required(t("item.VItemNameRequired")),
@@ -249,6 +339,7 @@ const schemaEditDocument = Yup.object().shape({
 	document: Yup.mixed()
 		.nullable(),
 });
+
 </script>
 
 <template>
@@ -317,20 +408,30 @@ const schemaEditDocument = Yup.object().shape({
 							</td>
 						</tr>
 						<tr>
+							<td class="font-semibold pr-4 align-text-top">{{ $t('item.VItemTotalQuantity') }}:</td>
+							<td class="flex flex-col">
+								<div class="flex space x-2">
+									<span>{{ getTotalQuantity() }}</span>
+								</div>
+							</td>
+						</tr>
+						<tr>
 							<td class="font-semibold pr-4 align-text-top">{{ $t('item.VItemImage') }}:</td>
 							<td class="flex flex-col">
-								<div class="flex justify-center items-center">
+								<div class="flex justify-center items-center"
+									:class="{ 'cursor-pointer': !itemsStore.itemEdition.loading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }"
+									@click="imageSelectOpenModal">
 									<template v-if="itemsStore.itemEdition.id_img">
 										<img v-if="itemsStore.imagesURL[itemsStore.itemEdition.id_img]"
 											:src="itemsStore.imagesURL[itemsStore.itemEdition.id_img]" alt="Image"
-											class="w-16 h-16 object-cover rounded" />
-										<span v-else class="w-16 h-16 object-cover rounded">
+											class="w-48 h-48 object-cover rounded" />
+										<span v-else class="w-48 h-48 object-cover rounded">
 											{{ $t('item.VInventoryLoading') }}
 										</span>
 									</template>
 									<template v-else>
 										<img src="../assets/nopicture.webp" alt="Image"
-											class="w-16 h-16 object-cover rounded" />
+											class="w-48 h-48 object-cover rounded" />
 									</template>
 								</div>
 							</td>
@@ -338,10 +439,16 @@ const schemaEditDocument = Yup.object().shape({
 					</tbody>
 				</table>
 			</Form>
-			<div class="w-96 h-96 bg-gray-200 px-4 py-2 rounded">
-				<span v-for="(value, key) in sortedTags" :key="key">
-					{{ tagsStore.tags[key].nom_tag }} ({{ tagsStore.tags[key].poids_tag }})
+			<div class="w-96 h-96 bg-gray-200 px-2 py-2 rounded">
+				<span v-for="(value, key) in sortedTags" :key="key"
+					class="bg-gray-300 p-1 rounded mr-2 mb-1">
+					{{ tagsStore.tags[value].nom_tag }} ({{ tagsStore.tags[value].poids_tag }})
+					<span @click="itemsStore.deleteItemTag(itemId, value)"
+						class="text-red-500 cursor-pointer hover:text-red-600">
+						<font-awesome-icon icon="fa-solid fa-times" />
+					</span>
 				</span>
+				<!-- input text and list tag for add new tag-->
 			</div>
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
@@ -359,14 +466,18 @@ const schemaEditDocument = Yup.object().shape({
 					<table class="min-w-full table-auto">
 						<thead>
 							<tr>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{
-									$t('item.VItemDocumentName') }}</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{
-									$t('item.VItemDocumentType') }}</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{
-									$t('item.VItemDocumentDate') }}</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">{{
-									$t('item.VItemDocumentActions') }}</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('item.VItemDocumentName') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('item.VItemDocumentType') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('item.VItemDocumentDate') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('item.VItemDocumentActions') }}
+								</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -376,17 +487,169 @@ const schemaEditDocument = Yup.object().shape({
 								<td class="px-4 py-2 border-b border-gray-200">{{ document.type_item_document }}</td>
 								<td class="px-4 py-2 border-b border-gray-200">{{ document.date_item_document }}</td>
 								<td class="px-4 py-2 border-b border-gray-200 space-x-2">
-									<font-awesome-icon icon="fa-solid fa-edit" @click="documentEditOpenModal(document)"
+									<font-awesome-icon icon="fa-solid fa-edit"
+										@click="documentEditOpenModal(document)"
 										class="text-blue-500 cursor-pointer hover:text-blue-600" />
-									<font-awesome-icon icon="fa-solid fa-eye" @click="documentView(document)"
+									<font-awesome-icon icon="fa-solid fa-eye"
+										@click="documentView(document)"
 										class="text-green-500 cursor-pointer hover:text-green-600" />
-									<font-awesome-icon icon="fa-solid fa-download" @click="documentDownload(document)"
+									<font-awesome-icon icon="fa-solid fa-download"
+										@click="documentDownload(document)"
 										class="text-yellow-500 cursor-pointer hover:text-yellow-600" />
 									<font-awesome-icon icon="fa-solid fa-trash"
 										@click="documentDeleteOpenModal(document)"
 										class="text-red-500 cursor-pointer hover:text-red-600" />
 								</td>
 							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="mb-6 bg-gray-100 p-2 rounded">
+			<h3 @click="toggleImages" class="text-xl font-semibold bg-gray-400 p-2 rounded"
+				:class="{ 'cursor-pointer': !itemsStore.images[itemId]?.loading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
+				{{ $t('item.VItemImages') }} ({{ itemsStore.images[itemId] ?
+					Object.keys(itemsStore.images[itemId]).length : 0 }})
+			</h3>
+			<div v-if="!itemsStore.images.imagesLoading && showImages" class="p-2">
+				<button type="button" @click="imageAddOpenModal"
+					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
+					{{ $t('item.VItemAddImage') }}
+				</button>
+				<div class="flex flex-wrap relative" @click="selectedImageId = null">
+					<template v-if="itemsStore.images[itemId]">
+						<div v-for="image in itemsStore.images[itemId]" :key="image.id_img" @click.stop
+							class="w-48 h-48 bg-gray-200 rounded m-2 flex items-center relative">
+							<template v-if="itemsStore.imagesURL[image.id_img]">
+								<img :src="itemsStore.imagesURL[image.id_img]" alt="Image"
+									class="w-48 h-48 object-cover rounded"
+									@click="selectedImageId === image.id_img ? selectedImageId = null : selectedImageId = image.id_img" />
+							</template>
+							<template v-else>
+								{{ $t('item.VItemImageLoading') }}
+							</template>
+							<div v-if="selectedImageId === image.id_img"
+								class="absolute inset-0 flex flex-col justify-center items-center bg-black bg-opacity-75 text-white p-2 rounded">
+								<p class="w-full break-words">{{ image.nom_img }}</p>
+								<p class="w-full break-words">{{ formatDateForDatetimeLocal(image.date_img) }}</p>
+								<div class="flex space-x-2">
+									<font-awesome-icon icon="fa-solid fa-download"
+										@click="imageDownload(image)"
+										class="text-yellow-500 cursor-pointer hover:text-yellow-600" />
+									<font-awesome-icon icon="fa-solid fa-trash"
+										@click="imageDeleteOpenModal(image)"
+										class="text-red-500 cursor-pointer hover:text-red-600" />
+								</div>
+							</div>
+						</div>
+					</template>
+				</div>
+			</div>
+		</div>
+		<div class="mb-6 bg-gray-100 p-2 rounded">
+			<h3 @click="toggleCommandItems" class="text-xl font-semibold bg-gray-400 p-2 rounded"
+				:class="{ 'cursor-pointer': !itemsStore.itemCommandsLoading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
+				{{ $t('item.VItemCommands') }} ({{ itemsStore.itemCommands[itemId] ?
+					Object.keys(itemsStore.itemCommands[itemId]).length : 0 }})
+			</h3>
+			<div v-if="!itemsStore.itemCommandsLoading && showCommandItems" class="p-2">
+				<div class="overflow-x-auto max-h-64 overflow-y-auto">
+					<table class="min-w-full table-auto">
+						<thead>
+							<tr>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('item.VItemCommandDate') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('item.VItemCommandStatus') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('item.VItemCommandQte') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('item.VItemCommandPrice') }}
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							<template v-if="!itemsStore.itemCommandsLoading">
+								<RouterLink v-for="command in itemsStore.itemCommands[itemId]"
+									:key="command.id_command" :to="'/commands/' + command.id_command"
+									custom v-slot="{ navigate }">
+									<tr @click="navigate" class="cursor-pointer hover:bg-gray-200">
+										<td class="px-4 py-2 border-b border-gray-200">
+											{{ commandsStore.commands[command.id_command].date_command }}
+										</td>
+										<td class="px-4 py-2 border-b border-gray-200">
+											{{ commandsStore.commands[command.id_command].status_command }}
+										</td>
+										<td class="px-4 py-2 border-b border-gray-200">
+											{{ command.qte_command_item }}
+										</td>
+										<td class="px-4 py-2 border-b border-gray-200">
+											{{ command.prix_command_item }}
+										</td>
+									</tr>
+								</RouterLink>
+							</template>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="mb-6 bg-gray-100 p-2 rounded">
+			<h3 @click="toggleProjetItems" class="text-xl font-semibold bg-gray-400 p-2 rounded"
+				:class="{ 'cursor-pointer': !itemsStore.itemProjetsLoading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
+				{{ $t('item.VItemProjets') }} ({{ itemsStore.itemProjets[itemId] ?
+					Object.keys(itemsStore.itemProjets[itemId]).length : 0 }})
+			</h3>
+			<div v-if="!itemsStore.itemProjetsLoading && showProjetItems" class="p-2">
+				<div class="overflow-x-auto max-h-64 overflow-y-auto">
+					<table class="min-w-full table-auto">
+						<thead>
+							<tr>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('item.VItemProjetName') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('item.VItemProjetDate') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('item.VItemProjetDateFin') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('item.VItemProjetStatus') }}
+								</th>
+								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
+									{{ $t('item.VItemProjetQte') }}
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							<template v-if="!itemsStore.itemProjetsLoading">
+								<RouterLink v-for="projet in itemsStore.itemProjets[itemId]"
+									:key="projet.id_projet" :to="'/projets/' + projet.id_projet"
+									custom v-slot="{ navigate }">
+									<tr @click="navigate" class="cursor-pointer hover:bg-gray-200">
+										<td class="px-4 py-2 border-b border-gray-200">
+											{{ projetsStore.projets[projet.id_projet].nom_projet }}
+										</td>
+										<td class="px-4 py-2 border-b border-gray-200">
+											{{ projetsStore.projets[projet.id_projet].date_debut_projet }}
+										</td>
+										<td class="px-4 py-2 border-b border-gray-200">
+											{{ projetsStore.projets[projet.id_projet].date_fin_projet }}
+										</td>
+										<td class="px-4 py-2 border-b border-gray-200">
+											{{ projetsStore.projets[projet.id_projet].status_projet }}
+										</td>
+										<td class="px-4 py-2 border-b border-gray-200">
+											{{ projet.qte_projet_item }}
+										</td>
+									</tr>
+								</RouterLink>
+							</template>
 						</tbody>
 					</table>
 				</div>
@@ -415,6 +678,29 @@ const schemaEditDocument = Yup.object().shape({
 		</div>
 	</div>
 
+	<div v-if="imageSelectModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+		@click="imageSelectModalShow = false">
+		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
+			<h2 class="text-xl mb-4">{{ $t('item.VItemImageSelectTitle') }}</h2>
+			<div class="flex flex-wrap">
+				<template v-if="itemsStore.images[itemId]">
+					<div v-for="image in itemsStore.images[itemId]" :key="image.id_img"
+						class="w-24 h-24 bg-gray-200 rounded m-2 flex items-center justify-center">
+						<template v-if="itemsStore.imagesURL[image.id_img]">
+							<img :src="itemsStore.imagesURL[image.id_img]" alt="Image"
+								:class="itemsStore.itemEdition.id_img == image.id_img ? 'border-2 border-blue-500' : 'border-2 border-transparent'"
+								class="w-24 h-24 object-cover rounded"
+								@click="itemsStore.itemEdition.id_img = image.id_img" />
+						</template>
+						<template v-else>
+							{{ $t('item.VItemImageLoading') }}
+						</template>
+					</div>
+				</template>
+			</div>
+		</div>
+	</div>
+
 	<div v-if="documentAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
 		@click="documentAddModalShow = false">
 		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
@@ -437,10 +723,12 @@ const schemaEditDocument = Yup.object().shape({
 					</div>
 				</div>
 				<div class="flex justify-end space-x-2">
-					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded">{{
-						$t('item.VItemDocumentCancel') }}</button>
-					<button type="button" @click="documentAdd" class="px-4 py-2 bg-blue-500 text-white rounded">{{
-						$t('item.VItemDocumentAdd') }}</button>
+					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded">
+						{{ $t('item.VItemDocumentCancel') }}
+					</button>
+					<button type="button" @click="documentAdd" class="px-4 py-2 bg-blue-500 text-white rounded">
+						{{ $t('item.VItemDocumentAdd') }}
+					</button>
 				</div>
 			</Form>
 		</div>
@@ -468,8 +756,9 @@ const schemaEditDocument = Yup.object().shape({
 				</div>
 				<div class="flex justify-end space-x-2">
 					<button type="button" @click="documentEditModalShow = false"
-						class="px-4 py-2 bg-gray-300 rounded">{{
-							$t('item.VItemDocumentCancel') }}</button>
+						class="px-4 py-2 bg-gray-300 rounded">
+						{{ $t('item.VItemDocumentCancel') }}
+					</button>
 					<button type="button" @click="documentEdit" class="px-4 py-2 bg-blue-500 text-white rounded">
 						{{ $t('item.VItemDocumentEdit') }}
 					</button>
@@ -490,6 +779,50 @@ const schemaEditDocument = Yup.object().shape({
 				<button type="button" @click="documentDeleteModalShow = false"
 					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
 					{{ $t('item.VItemDocumentCancel') }}
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<div v-if="imageAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+		@click="imageAddModalShow = false">
+		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
+			<h2 class="text-xl mb-4">{{ $t('item.VItemImageAddTitle') }}</h2>
+			<div class="flex flex-col">
+				<div class="flex flex-col">
+					<Field name="nom_img" type="text"
+						v-model="imageModalData.nom_img"
+						:placeholder="$t('item.VItemImageNamePlaceholder')"
+						class="w-full p-2 border rounded" />
+				</div>
+				<div class="flex flex-col">
+					<Field name="image" type="file" @change="handleImageUpload" class="w-full p-2" />
+				</div>
+			</div>
+			<div class="flex justify-end space-x-2">
+				<button type="button" @click="imageAddModalShow = false"
+					class="px-4 py-2 bg-gray-300 rounded">
+					{{ $t('item.VItemImageCancel') }}
+				</button>
+				<button type="button" @click="imageAdd" class="px-4 py-2 bg-blue-500 text-white rounded">
+					{{ $t('item.VItemImageAdd') }}
+				</button>
+			</div>
+		</div>
+	</div>
+	<div v-if="imageDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+		@click="imageDeleteModalShow = false">
+		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
+			<h2 class="text-xl mb-4">{{ $t('item.VItemImageDeleteTitle') }}</h2>
+			<p>{{ $t('item.VItemImageDeleteText') }}</p>
+			<div class="flex justify-end space-x-4 mt-4">
+				<button type="button" @click="imageDelete()"
+					class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
+					{{ $t('item.VItemImageDeleteConfirm') }}
+				</button>
+				<button type="button" @click="imageDeleteModalShow = false"
+					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
+					{{ $t('item.VItemImageCancel') }}
 				</button>
 			</div>
 		</div>

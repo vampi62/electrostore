@@ -228,7 +228,7 @@ const sortedItems = computed(() => {
 			<template v-if="!itemsStore.itemsLoading">
 				<RouterLink v-for="item in sortedItems" :key="item.id_item" :to="'/inventory/' + item.id_item" custom
 					v-slot="{ navigate }">
-					<tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
+					<tr @click="navigate" class="transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
 						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
 							{{ item.nom_item }}
 						</td>
@@ -261,8 +261,8 @@ const sortedItems = computed(() => {
 								</template>
 							</div>
 						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">{{ item.custom_quantity_item
-							}}
+						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+							{{ item.custom_quantity_item }}
 						</td>
 					</tr>
 				</RouterLink>

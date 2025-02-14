@@ -96,9 +96,6 @@ const sortedCommands = computed(() => {
 	}
 	return filteredCommands.value;
 });
-console.log(Object.values(commandsStore.commands));
-console.log(Object.values(filteredCommands.value));
-console.log(Object.values(sortedCommands.value));
 </script>
 
 <template>
