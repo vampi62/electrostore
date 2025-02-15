@@ -14,7 +14,8 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 const projetId = route.params.id;
 
-import { useProjetsStore, useUsersStore, useItemsStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useProjetsStore, useUsersStore, useItemsStore, useAuthStore } from "@/stores";
+const configsStore = useConfigsStore();
 const projetsStore = useProjetsStore();
 const usersStore = useUsersStore();
 const itemsStore = useItemsStore();
@@ -329,12 +330,17 @@ const commentaireDeleteOpenModal = (commentaire) => {
 
 const schemaProjet = Yup.object().shape({
 	nom_projet: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("projet.VProjetNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
 		.required(t("projet.VProjetNameRequired")),
 	description_projet: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_description"), t("projet.VProjetDescriptionMaxLength") + " " + configsStore.getConfigByKey("max_length_description") + t("common.VAllCaracters"))
 		.required(t("projet.VProjetDescriptionRequired")),
 	url_projet: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_url"), t("projet.VProjetUrlMaxLength") + " " + configsStore.getConfigByKey("max_length_url") + t("common.VAllCaracters"))
+		.url(t("projet.VProjetUrlInvalid"))
 		.required(t("projet.VProjetUrlRequired")),
 	status_projet: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_status"), t("projet.VProjetStatusMaxLength") + " " + configsStore.getConfigByKey("max_length_status") + t("common.VAllCaracters"))
 		.required(t("projet.VProjetStatusRequired")),
 	date_debut_projet: Yup.date()
 		.required(t("projet.VProjetStartDateRequired")),
@@ -346,16 +352,19 @@ const schemaProjet = Yup.object().shape({
 
 const schemaAddDocument = Yup.object().shape({
 	name_projet_document: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("projet.VProjetDocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
 		.required(t("projet.VProjetDocumentNameRequired")),
 	document: Yup.mixed()
 		.required(t("projet.VProjetDocumentRequired"))
-		.test("fileSize", t("projet.VProjetDocumentSize"), (value) => !value || value?.size <= 2000000),
+		.test("fileSize", t("projet.VProjetDocumentSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 const schemaEditDocument = Yup.object().shape({
 	name_projet_document: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("projet.VProjetDocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
 		.required(t("projet.VProjetDocumentNameRequired")),
 	document: Yup.mixed()
-		.nullable(),
+		.nullable()
+		.test("fileSize", t("projet.VProjetDocumentSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 
 const schemaItem = Yup.object().shape({
@@ -366,6 +375,7 @@ const schemaItem = Yup.object().shape({
 
 const schemaCommentaire = Yup.object().shape({
 	contenu_projet_commentaire: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_commentaire"), t("projet.VProjetCommentMaxLength") + " " + configsStore.getConfigByKey("max_length_commentaire") + t("common.VAllCaracters"))
 		.required(t("projet.VProjetCommentRequired")),
 });
 
@@ -721,7 +731,7 @@ const schemaCommentaire = Yup.object().shape({
 					<div class="flex flex-col">
 						<Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
 							:class="{ 'border-red-500': errors.document }" />
-						<span class="h-5 w-80 text-sm">{{ $t('projet.VProjetDocumentSize') }}</span>
+						<span class="h-5 w-80 text-sm">{{ $t('projet.VProjetDocumentSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
 						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.document || ' ' }}</span>
 					</div>
 				</div>
@@ -753,7 +763,7 @@ const schemaCommentaire = Yup.object().shape({
 					<div class="flex flex-col">
 						<Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
 							:class="{ 'border-red-500': errors.document }" />
-						<span class="h-5 w-80 text-sm">{{ $t('projet.VProjetDocumentSize') }}</span>
+						<span class="h-5 w-80 text-sm">{{ $t('projet.VProjetDocumentSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
 						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.document || ' ' }}</span>
 					</div>
 				</div>

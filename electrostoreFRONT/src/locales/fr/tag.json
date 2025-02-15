@@ -24,6 +24,7 @@
 	"VTagBoxAdded": "Boîte ajoutée",
 	"VTagBoxDeleted": "Boîte supprimée",
 	"VTagBoxDeleteError": "Erreur lors de la suppression de la boîte",
+	"VTagNameMaxLength": "Le nom doit contenir au maximum ",
 	"VTagNameRequired": "Nom du tag requis",
 	"VTagPoidsNumber": "Le poids doit être un nombre",
 	"VTagPoidsRequired": "Le poids est requis",

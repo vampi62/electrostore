@@ -14,7 +14,8 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 const itemId = route.params.id;
 
-import { useItemsStore, useTagsStore, useStoresStore, useCommandsStore, useProjetsStore } from "@/stores";
+import { useConfigsStore, useItemsStore, useTagsStore, useStoresStore, useCommandsStore, useProjetsStore } from "@/stores";
+const configsStore = useConfigsStore();
 const itemsStore = useItemsStore();
 const tagsStore = useTagsStore();
 const storesStore = useStoresStore();
@@ -51,6 +52,10 @@ async function fetchData() {
 		itemsStore.itemEdition = {
 			loading: false,
 		};
+		showDocuments.value = false;
+		showImages.value = false;
+		showProjetItems.value = false;
+		showCommandItems.value = false;
 	}
 }
 onMounted(() => {
@@ -132,12 +137,13 @@ const itemDelete = async() => {
 	itemDeleteModalShow.value = false;
 };
 
-function getTotalQuantity() {
-	let listBox = itemsStore.itemBoxs[itemId];
-	if (!listBox) {
+const getTotalQuantity = computed(() => {
+	if (itemId === "new") {
 		return 0;
 	}
-}
+	return itemsStore.itemBoxs[itemId] ? Object.values(itemsStore.itemBoxs[itemId]).reduce((acc, box) => acc + box.qte_item_box, 0) : 0;
+});
+
 const formatDateForDatetimeLocal = (date) => {
 	// if date is a string : convert to date
 	if (typeof date === "string") {
@@ -317,8 +323,10 @@ const imageDownload = async(imageContent) => {
 
 const schemaItem = Yup.object().shape({
 	nom_item: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
 		.required(t("item.VItemNameRequired")),
 	description_item: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_description"), t("item.VItemDescriptionMaxLength") + " " + configsStore.getConfigByKey("max_length_description") + t("common.VAllCaracters"))
 		.required(t("item.VItemDescriptionRequired")),
 	seuil_min_item: Yup.number()
 		.required(t("item.VItemSeuilMinRequired")),
@@ -328,16 +336,28 @@ const schemaItem = Yup.object().shape({
 
 const schemaAddDocument = Yup.object().shape({
 	name_item_document: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemDocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
 		.required(t("item.VItemDocumentNameRequired")),
 	document: Yup.mixed()
 		.required(t("item.VItemDocumentRequired"))
-		.test("fileSize", t("item.VItemDocumentSize"), (value) => !value || value?.size <= 2000000),
+		.test("fileSize", t("item.VItemDocumentSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 const schemaEditDocument = Yup.object().shape({
 	name_item_document: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemDocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
 		.required(t("item.VItemDocumentNameRequired")),
 	document: Yup.mixed()
-		.nullable(),
+		.nullable()
+		.test("fileSize", t("item.VItemDocumentSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
+});
+
+const schemaAddImage = Yup.object().shape({
+	nom_img: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemImageNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+		.required(t("item.VItemImageNameRequired")),
+	image: Yup.mixed()
+		.required(t("item.VItemImageRequired"))
+		.test("fileSize", t("item.VItemImageSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 
 </script>
@@ -411,7 +431,7 @@ const schemaEditDocument = Yup.object().shape({
 							<td class="font-semibold pr-4 align-text-top">{{ $t('item.VItemTotalQuantity') }}:</td>
 							<td class="flex flex-col">
 								<div class="flex space x-2">
-									<span>{{ getTotalQuantity() }}</span>
+									<span>{{ getTotalQuantity }}</span>
 								</div>
 							</td>
 						</tr>
@@ -681,11 +701,17 @@ const schemaEditDocument = Yup.object().shape({
 	<div v-if="imageSelectModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
 		@click="imageSelectModalShow = false">
 		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<h2 class="text-xl mb-4">{{ $t('item.VItemImageSelectTitle') }}</h2>
+			<div class="flex justify-between items-center mb-2">
+				<h2 class="text-xl">{{ $t('item.VItemImageSelectTitle') }}</h2>
+				<div class="flex space-x-2 items-center cursor-pointer bg-gray-200 p-2 rounded" @click="imageSelectModalShow = false">
+					<font-awesome-icon icon="fa-solid fa-times"
+					class="cursor-pointer" />
+				</div>
+			</div>
 			<div class="flex flex-wrap">
 				<template v-if="itemsStore.images[itemId]">
 					<div v-for="image in itemsStore.images[itemId]" :key="image.id_img"
-						class="w-24 h-24 bg-gray-200 rounded m-2 flex items-center justify-center">
+						class="w-24 h-24 bg-gray-200 rounded m-2 flex items-center justify-center cursor-pointer">
 						<template v-if="itemsStore.imagesURL[image.id_img]">
 							<img :src="itemsStore.imagesURL[image.id_img]" alt="Image"
 								:class="itemsStore.itemEdition.id_img == image.id_img ? 'border-2 border-blue-500' : 'border-2 border-transparent'"
@@ -718,7 +744,7 @@ const schemaEditDocument = Yup.object().shape({
 					<div class="flex flex-col">
 						<Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
 							:class="{ 'border-red-500': errors.document }" />
-						<span class="h-5 w-80 text-sm">{{ $t('item.VItemDocumentSize') }}</span>
+						<span class="h-5 w-80 text-sm">{{ $t('item.VItemDocumentSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
 						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.document || ' ' }}</span>
 					</div>
 				</div>
@@ -750,7 +776,7 @@ const schemaEditDocument = Yup.object().shape({
 					<div class="flex flex-col">
 						<Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
 							:class="{ 'border-red-500': errors.document }" />
-						<span class="h-5 w-80 text-sm">{{ $t('item.VItemDocumentSize') }}</span>
+						<span class="h-5 w-80 text-sm">{{ $t('item.VItemDocumentSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
 						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.document || ' ' }}</span>
 					</div>
 				</div>
@@ -787,27 +813,33 @@ const schemaEditDocument = Yup.object().shape({
 	<div v-if="imageAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
 		@click="imageAddModalShow = false">
 		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<h2 class="text-xl mb-4">{{ $t('item.VItemImageAddTitle') }}</h2>
-			<div class="flex flex-col">
+			<Form :validation-schema="schemaAddImage" v-slot="{ errors }">
+				<h2 class="text-xl mb-4">{{ $t('item.VItemImageAddTitle') }}</h2>
 				<div class="flex flex-col">
-					<Field name="nom_img" type="text"
-						v-model="imageModalData.nom_img"
-						:placeholder="$t('item.VItemImageNamePlaceholder')"
-						class="w-full p-2 border rounded" />
+					<div class="flex flex-col">
+						<Field name="nom_img" type="text"
+							v-model="imageModalData.nom_img"
+							:placeholder="$t('item.VItemImageNamePlaceholder')"
+							class="w-full p-2 border rounded"
+							:class="{ 'border-red-500': errors.nom_img }" />
+						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_img || ' ' }}</span>
+					</div>
+					<div class="flex flex-col">
+						<Field name="image" type="file" @change="handleImageUpload" class="w-full p-2" accept="image/*" />
+						<span class="h-5 w-80 text-sm">{{ $t('item.VItemImageSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
+						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.image || ' ' }}</span>
+					</div>
 				</div>
-				<div class="flex flex-col">
-					<Field name="image" type="file" @change="handleImageUpload" class="w-full p-2" />
+				<div class="flex justify-end space-x-2">
+					<button type="button" @click="imageAddModalShow = false"
+						class="px-4 py-2 bg-gray-300 rounded">
+						{{ $t('item.VItemImageCancel') }}
+					</button>
+					<button type="button" @click="imageAdd" class="px-4 py-2 bg-blue-500 text-white rounded">
+						{{ $t('item.VItemImageAdd') }}
+					</button>
 				</div>
-			</div>
-			<div class="flex justify-end space-x-2">
-				<button type="button" @click="imageAddModalShow = false"
-					class="px-4 py-2 bg-gray-300 rounded">
-					{{ $t('item.VItemImageCancel') }}
-				</button>
-				<button type="button" @click="imageAdd" class="px-4 py-2 bg-blue-500 text-white rounded">
-					{{ $t('item.VItemImageAdd') }}
-				</button>
-			</div>
+			</Form>
 		</div>
 	</div>
 	<div v-if="imageDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
