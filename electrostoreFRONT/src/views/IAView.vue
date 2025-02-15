@@ -14,7 +14,8 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 const iaId = route.params.id;
 
-import { useIasStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useIasStore, useAuthStore } from "@/stores";
+const configsStore = useConfigsStore();
 const iasStore = useIasStore();
 const authStore = useAuthStore();
 
@@ -113,17 +114,13 @@ const formatDateForDatetimeLocal = (date) => {
 	const pad = (num) => String(num).padStart(2, "0");
 	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
-
 const schemaIa = Yup.object().shape({
 	nom_ia: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("ia.VIaNameMaxLength") + t("common.VAllCaracters"))
 		.required(t("ia.VIaNameRequired")),
 	description_ia: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_description"), t("ia.VIaDescriptionMaxLength") + t("common.VAllCaracters"))
 		.required(t("ia.VIaDescriptionRequired")),
-	date_ia: Yup.date()
-		.nullable(),
-	trained_ia: Yup.string()
-		.required(t("ia.VIaStatusRequired"))
-		.nullable(),
 });
 </script>
 

@@ -14,7 +14,8 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 const tagId = route.params.id;
 
-import { useTagsStore, useStoresStore, useItemsStore } from "@/stores";
+import { useConfigsStore, useTagsStore, useStoresStore, useItemsStore } from "@/stores";
+const configsStore = useConfigsStore();
 const tagsStore = useTagsStore();
 const storesStore = useStoresStore();
 const itemsStore = useItemsStore();
@@ -216,11 +217,9 @@ const filteredBoxs = computed(() => {
 
 const schemaTag = Yup.object().shape({
 	nom_tag: Yup.string()
-		.max(50)
+		.max(configsStore.getConfigByKey("max_length_name"), t("tag.VTagNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
 		.required(t("tag.VTagNameRequired")),
 	poids_tag: Yup.number()
-		.min(0)
-		.max(5000)
 		.typeError(t("tag.VTagPoidsNumber"))
 		.required(t("tag.VTagPoidsRequired")),
 });

@@ -11599,13 +11599,49 @@
           "ia_connected": {
             "type": "boolean"
           },
-          "max_length": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "nullable": true
+          "max_length_url": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_commentaire": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_description": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_name": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_type": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_email": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_ip": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_reason": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_role": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_size_document_in_mb": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false

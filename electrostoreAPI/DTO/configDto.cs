@@ -7,7 +7,18 @@ public record ReadConfig
     public bool smtp_enabled { get; init; }
     public bool mqtt_connected { get; init; }
     public bool ia_connected { get; init; }
-    public Dictionary<string, int> max_length { get; init; }
+    public int max_length_url { get; init; }
+    public int max_length_commentaire { get; init; }
+    public int max_length_description { get; init; }
+    public int max_length_name { get; init; }
+    public int max_length_type { get; init; }
+    public int max_length_email { get; init; }
+    public int max_length_ip { get; init; }
+    public int max_length_reason { get; init; }
+    public int max_length_role { get; init; }
+    public int max_length_status { get; init; }
+    public int max_size_document_in_mb { get; init; }
+
 }
 public static class Constants
 {

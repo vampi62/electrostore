@@ -14,7 +14,8 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 const cameraId = route.params.id;
 
-import { useCamerasStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useCamerasStore, useAuthStore } from "@/stores";
+const configsStore = useConfigsStore();
 const camerasStore = useCamerasStore();
 const authStore = useAuthStore();
 
@@ -118,14 +119,16 @@ const isChecked = ref(false);
 const createSchema = (isChecked) => {
 	return Yup.object().shape({
 		nom_camera: Yup.string()
+			.max(configsStore.getConfigByKey("max_length_name"), t("camera.VCameraNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
 			.required(t("camera.VCameraNameRequired")),
 		url_camera: Yup.string()
+			.max(configsStore.getConfigByKey("max_length_url"), t("camera.VCameraURLMaxLength") + " " + configsStore.getConfigByKey("max_length_url") + t("common.VAllCaracters"))
 			.required(t("camera.VCameraDescriptionRequired")),
 		user_camera: isChecked
-			? Yup.string().required(t("camera.VCameraUserRequired"))
+			? Yup.string().required(t("camera.VCameraUserRequired")).max(configsStore.getConfigByKey("max_length_name"), t("camera.VCameraUserMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
 			: Yup.string().nullable(),
 		mdp_camera: isChecked
-			? Yup.string().required(t("camera.VCameraPasswordRequired"))
+			? Yup.string().required(t("camera.VCameraPasswordRequired")).max(configsStore.getConfigByKey("max_length_name"), t("camera.VCameraPasswordMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
 			: Yup.string().nullable(),
 	});
 };

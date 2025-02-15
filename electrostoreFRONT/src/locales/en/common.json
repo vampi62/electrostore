@@ -62,5 +62,6 @@
 	"VAppHome": "Home",
 	"VAppProfile": "Profile",
 	"VAppLogout": "Logout",
-	"VAppAdmin": "Admin"
+	"VAppAdmin": "Admin",
+	"VAllCaracters": "characters"
 }

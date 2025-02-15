@@ -11,7 +11,8 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 const storeId = route.params.id;
 
-import { useStoresStore, useTagsStore, useItemsStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useStoresStore, useTagsStore, useItemsStore, useAuthStore } from "@/stores";
+const configsStore = useConfigsStore();
 const storesStore = useStoresStore();
 const tagsStore = useTagsStore();
 const itemsStore = useItemsStore();
