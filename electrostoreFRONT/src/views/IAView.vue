@@ -19,10 +19,10 @@ const configsStore = useConfigsStore();
 const iasStore = useIasStore();
 const authStore = useAuthStore();
 
-async function fetchData() {
+async function fetchAllData() {
 	if (iaId !== "new") {
 		iasStore.iaEdition = {
-			loading: false,
+			loading: true,
 		};
 		try {
 			await iasStore.getIaById(iaId);
@@ -50,7 +50,7 @@ async function fetchData() {
 	}
 }
 onMounted(() => {
-	fetchData();
+	fetchAllData();
 });
 onBeforeUnmount(() => {
 	if (intervalRefreshStatus) {

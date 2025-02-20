@@ -23,6 +23,7 @@ public class CommandCommentaireService : ICommandCommentaireService
         }
         return await _context.CommandsCommentaires
             .Where(c => c.id_command == CommandId)
+            .OrderByDescending(c => c.date_command_commentaire)
             .Skip(offset)
             .Take(limit)
             .Select(c => new ReadExtendedCommandCommentaireDto
@@ -75,6 +76,7 @@ public class CommandCommentaireService : ICommandCommentaireService
         }
         return await _context.CommandsCommentaires
             .Where(c => c.id_user == userId)
+            .OrderByDescending(c => c.date_command_commentaire)
             .Skip(offset)
             .Take(limit)
             .Select(c => new ReadExtendedCommandCommentaireDto

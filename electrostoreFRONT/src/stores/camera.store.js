@@ -43,7 +43,10 @@ export const useCamerasStore = defineStore("cameras",{
 			this.loading = false;
 		},
 		async getCameraById(id) {
-			this.cameras[id] = { loading: true };
+			if (!this.cameras[id]) {
+				this.cameras[id] = {};
+			}
+			this.cameras[id].loading = true;
 			this.cameras[id] = await fetchWrapper.get({
 				url: `${baseUrl}/camera/${id}`,
 				useToken: "access",

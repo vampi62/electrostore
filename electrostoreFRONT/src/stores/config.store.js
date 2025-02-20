@@ -26,7 +26,7 @@ export const useConfigsStore = defineStore("configs",{
 	}),
 	actions: {
 		async getConfig() {
-			this.configs = { loading: true };
+			this.configs.loading = true;
 			this.configs = await fetchWrapper.get({
 				url: `${baseUrl}/config`,
 			});

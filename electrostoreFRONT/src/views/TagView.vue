@@ -20,10 +20,10 @@ const tagsStore = useTagsStore();
 const storesStore = useStoresStore();
 const itemsStore = useItemsStore();
 
-async function fetchData() {
+async function fetchAllData() {
 	if (tagId !== "new") {
 		tagsStore.tagEdition = {
-			loading: false,
+			loading: true,
 		};
 		try {
 			await tagsStore.getTagById(tagId);
@@ -51,7 +51,7 @@ async function fetchData() {
 	}
 }
 onMounted(() => {
-	fetchData();
+	fetchAllData();
 });
 onBeforeUnmount(() => {
 	tagsStore.tagEdition = {
@@ -220,6 +220,7 @@ const schemaTag = Yup.object().shape({
 		.max(configsStore.getConfigByKey("max_length_name"), t("tag.VTagNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
 		.required(t("tag.VTagNameRequired")),
 	poids_tag: Yup.number()
+		.min(0, t("tag.VTagPoidsMin"))
 		.typeError(t("tag.VTagPoidsNumber"))
 		.required(t("tag.VTagPoidsRequired")),
 });

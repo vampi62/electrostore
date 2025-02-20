@@ -21,10 +21,10 @@ const usersStore = useUsersStore();
 const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
-async function fetchData() {
+async function fetchAllData() {
 	if (commandId !== "new") {
 		commandsStore.commandEdition = {
-			loading: false,
+			loading: true,
 		};
 		try {
 			await commandsStore.getCommandById(commandId);
@@ -55,7 +55,7 @@ async function fetchData() {
 	}
 }
 onMounted(() => {
-	fetchData();
+	fetchAllData();
 });
 onBeforeUnmount(() => {
 	commandsStore.commandEdition = {
@@ -380,9 +380,11 @@ const schemaEditDocument = Yup.object().shape({
 const schemaItem = Yup.object().shape({
 	qte_command_item: Yup.number()
 		.required(t("command.VCommandItemQuantityRequired"))
+		.typeError(t("command.VCommandItemQuantityNumber"))
 		.min(1, t("command.VCommandItemQuantityMin")),
 	prix_command_item: Yup.number()
 		.required(t("command.VCommandItemPriceRequired"))
+		.typeError(t("command.VCommandItemPriceNumber"))
 		.min(1, t("command.VCommandItemPriceMin")),
 });
 

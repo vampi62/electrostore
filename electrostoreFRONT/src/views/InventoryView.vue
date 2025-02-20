@@ -6,11 +6,14 @@ const { addNotification } = inject("useNotification");
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
-import { useItemsStore, useTagsStore } from "@/stores";
+import { useConfigsStore, useItemsStore, useTagsStore, useIasStore, useCamerasStore } from "@/stores";
 const itemsStore = useItemsStore();
 const tagsStore = useTagsStore();
+const iasStore = useIasStore();
+const camerasStore = useCamerasStore();
+const configsStore = useConfigsStore();
 
-async function fetchData() {
+async function fetchAllData() {
 	let tagsLink = new Set();
 	let offset = 0;
 	const limit = 100;
@@ -39,7 +42,7 @@ async function fetchData() {
 	filter.value[5].options = Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]);
 }
 onMounted(() => {
-	fetchData();
+	fetchAllData();
 });
 
 const sort = ref({ key: "", order: "asc" });
@@ -118,6 +121,7 @@ const sortedItems = computed(() => {
 			class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm cursor-pointer inline-block mb-2 mr-2">
 			{{ $t('item.VInventoryFind') }}
 		</button>
+		<!-- TODO : open modal with ia and camera list-->
 		<div
 			class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm cursor-pointer inline-block mb-2">
 			<RouterLink :to="'/inventory/new'">

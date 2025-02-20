@@ -34,6 +34,8 @@
 	"VItemNameRequired": "Nom de l'article requis",
 	"VItemDescriptionMaxLength": "La description doit contenir au maximum ",
 	"VItemDescriptionRequired": "Description de l'article requise",
+	"VItemSeuilMinMin": "Le seuil minimum doit être supérieur à 0",
+	"VItemSeuilMinType": "Le seuil minimum doit être un nombre",
 	"VItemSeuilMinRequired": "Seuil minimum requis",
 	"VItemDocumentNameMaxLength": "Le nom du document doit contenir au maximum ",
 	"VItemDocumentNameRequired": "Nom du document requis",

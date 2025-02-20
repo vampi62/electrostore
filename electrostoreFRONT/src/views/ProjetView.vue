@@ -21,10 +21,10 @@ const usersStore = useUsersStore();
 const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
-async function fetchData() {
+async function fetchAllData() {
 	if (projetId !== "new") {
 		projetsStore.projetEdition = {
-			loading: false,
+			loading: true,
 		};
 		try {
 			await projetsStore.getProjetById(projetId);
@@ -53,7 +53,7 @@ async function fetchData() {
 	}
 }
 onMounted(() => {
-	fetchData();
+	fetchAllData();
 });
 onBeforeUnmount(() => {
 	projetsStore.projetEdition = {
@@ -369,8 +369,9 @@ const schemaEditDocument = Yup.object().shape({
 
 const schemaItem = Yup.object().shape({
 	qte_projet_item: Yup.number()
-		.required(t("projet.VProjetItemQuantityRequired"))
-		.min(1, t("projet.VProjetItemQuantityMin")),
+		.min(1, t("projet.VProjetItemQuantityMin"))
+		.typeError(t("projet.VProjetItemQuantityType"))
+		.required(t("projet.VProjetItemQuantityRequired")),
 });
 
 const schemaCommentaire = Yup.object().shape({

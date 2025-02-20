@@ -7,6 +7,9 @@ const { addNotification } = inject("useNotification");
 import { Form, Field } from "vee-validate";
 import * as Yup from "yup";
 
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+
 import { useRoute } from "vue-router";
 const route = useRoute();
 const storeId = route.params.id;
@@ -18,89 +21,306 @@ const tagsStore = useTagsStore();
 const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
-async function fetchData() {
+async function fetchAllData() {
 	if (storeId !== "new") {
 		storesStore.storeEdition = {
-			loading: false,
+			loading: true,
 		};
 		try {
-			await storesStore.getStoreById(storeId);
+			await storesStore.getStoreById(storeId, ["boxs", "leds"]);
 		} catch {
 			delete storesStore.stores[storeId];
 			addNotification({ message: "store.VStoreNotFound", type: "error", i18n: true });
 			router.push("/stores");
 			return;
 		}
+		storesStore.getTagStoreByInterval(storeId, 100, 0, ["tag"]);
 		storesStore.storeEdition = {
 			loading: false,
+			id_store: storesStore.stores[storeId].id_store,
 			nom_store: storesStore.stores[storeId].nom_store,
 			mqtt_name_store: storesStore.stores[storeId].mqtt_name_store,
 			xlength_store: storesStore.stores[storeId].xlength_store,
 			ylength_store: storesStore.stores[storeId].ylength_store,
 		};
+		storesStore.ledEdition = storesStore.leds[storeId];
+		storesStore.boxEdition = storesStore.boxs[storeId];
 	} else {
 		storesStore.storeEdition = {
 			loading: false,
 		};
+		storesStore.ledEdition = {};
+		storesStore.boxEdition = {};
 	}
+	showStoreGrid();
 }
 onMounted(() => {
-	fetchData();
+	fetchAllData();
 });
 onBeforeUnmount(() => {
 	storesStore.storeEdition = {
 		loading: false,
 	};
+	storesStore.ledEdition = {};
+	storesStore.boxEdition = {};
 });
-const storeInfo = ref({
-	DBId: 0,
-	DBLenX: 20,
-	DBLenY: 20,
-	DBName: "Name",
-	DBMQTTName: "MQTTName",
-	LenX: 20,
-	LenY: 20,
-	Name: "Name",
-	MQTTName: "MQTTName",
-});
-const ledInfo = ref([]);
-let nextLedId = 0;
-const boxInfo = ref([]);
-let nextBoxId = 0;
 
+// store
+const storeDeleteModalShow = ref(false);
+const storeInputTagShow = ref(false);
+const tagLoad = ref(false);
+const storeSave = async() => {
+	if (!checkOutOfGrid()) {
+		return;
+	}
+	try {
+		await schemaStore.validate(storesStore.storeEdition, { abortEarly: false });
+		
+		await storesStore.createStore(storesStore.storeEdition);
+		addNotification({ message: "store.VStoreCreated", type: "success", i18n: true });
+		await Promise.all(
+			storesStore.createLedBulk(storesStore.storeEdition.id_store, storesStore.ledEdition),
+			storesStore.createBoxBulk(storesStore.storeEdition.id_store, storesStore.boxEdition));
+	} catch (e) {
+		e.inner.forEach((error) => {
+			addNotification({ message: error.message, type: "error", i18n: false });
+		});
+		storesStore.storeEdition.loading = false;
+		return;
+	}
+	storeId = storesStore.storeEdition.id_store;
+	router.push("/stores/" + storesStore.storeEdition.id_store);
+};
+const storeUpdate = async() => {
+	if (!checkOutOfGrid() || !checkBoxConflict(true)) {
+		return;
+	}
+	try {
+		await schemaStore.validate(storesStore.storeEdition, { abortEarly: false });
+		// delete all the leds and boxs with the status "delete"
+		if (Object.values(storesStore.boxEdition).filter((box) => box.status === "delete").length > 0) {
+			let listIdToDelete = [];
+			Object.values(storesStore.boxEdition).filter((box) => box.status === "delete").forEach((box) => {
+				listIdToDelete.push(box.id_box);
+			});
+			await storesStore.deleteBoxBulk(storeId, listIdToDelete);
+			storesStore.boxEdition = Object.values(storesStore.boxEdition).filter((box) => box.status !== "delete");
+		}
+		if (Object.values(storesStore.ledEdition).filter((led) => led.status === "delete").length > 0) {
+			let listIdToDelete = [];
+			Object.values(storesStore.ledEdition).filter((led) => led.status === "delete").forEach((led) => {
+				listIdToDelete.push(led.id_led);
+			});
+			await storesStore.deleteLedBulk(storeId, listIdToDelete);
+			storesStore.ledEdition = Object.values(storesStore.ledEdition).filter((led) => led.status !== "delete");
+		}
+		await storesStore.updateStore(storeId, { ...storesStore.storeEdition });
+		addNotification({ message: "store.VStoreUpdated", type: "success", i18n: true });
+		if (Object.values(storesStore.boxEdition).filter((box) => box.status === "modified").length > 0) {
+			await storesStore.updateBoxBulk(storeId, Object.values(storesStore.boxEdition).filter((box) => box.status === "modified"));
+			Object.values(storesStore.boxEdition).forEach((box) => {
+				if (box.status === "modified") {
+					delete box.status;
+				}
+			});
+		}
+		// check if a led as been modified (status = modified or mqtt_led_id != storesStore.leds[storeId][id_led].mqtt_led_id)
+		if ((Object.values(storesStore.ledEdition).filter((led) => led.status === "modified" || led.mqtt_led_id !== storesStore.leds[storeId][led.id_led].mqtt_led_id).length) > 0) {
+			await storesStore.updateLedBulk(storeId, Object.values(storesStore.ledEdition).filter((led) => led.status === "modified" || led.mqtt_led_id !== storesStore.leds[storeId][led.id_led].mqtt_led_id));
+			Object.values(storesStore.ledEdition).forEach((led) => {
+				if (led.status === "modified") {
+					delete led.status;
+				}
+			});
+		}
+		if (Object.values(storesStore.boxEdition).filter((box) => box.status === "new").length > 0) {
+			await storesStore.createBoxBulk(storeId, Object.values(storesStore.boxEdition).filter((box) => box.status === "new"));
+			Object.values(storesStore.boxEdition).forEach((box) => {
+				if (box.status === "new") {
+					delete box.status;
+				}
+			});
+		}
+		if (Object.values(storesStore.ledEdition).filter((led) => led.status === "new").length > 0) {
+			await storesStore.createLedBulk(storeId, Object.values(storesStore.ledEdition).filter((led) => led.status === "new"));
+			Object.values(storesStore.ledEdition).forEach((led) => {
+				if (led.status === "new") {
+					delete led.status;
+				}
+			});
+		}
+		// at the end, resync list
+		await storesStore.getStoreById(storeId, ["boxs", "leds"]);
+		storesStore.ledEdition = storesStore.leds[storeId];
+		storesStore.boxEdition = storesStore.boxs[storeId];
+		storesStore.storeEdition.loading = false;
+	} catch (e) {
+		e.inner.forEach((error) => {
+			addNotification({ message: error.message, type: "error", i18n: false });
+		});
+		storesStore.storeEdition.loading = false;
+		return;
+	}
+};
+const storeDelete = async() => {
+	try {
+		await storesStore.deleteStore(storeId);
+		addNotification({ message: "store.VStoreDeleted", type: "success", i18n: true });
+		router.push("/stores");
+	} catch (e) {
+		addNotification({ message: "store.VStoreDeleteError", type: "error", i18n: true });
+	}
+	storeDeleteModalShow.value = false;
+};
+const showInputAddTag = async() => {
+	if (!tagLoad.value) {
+		try {
+			let offset = 0;
+			const limit = 100;
+			do {
+				await tagsStore.getTagByInterval(limit, offset);
+				offset += limit;
+			} while (offset < tagsStore.tagsTotalCount);
+			tagLoad.value = true;
+		} catch (e) {
+			console.log(e);
+		}
+	}
+	storeInputTagShow.value = true;
+};
+
+const newTags = computed(() => {
+	return Object.values(tagsStore.tags).filter((element) => {
+		return !storesStore.storeTags[storeId][element.id_tag];
+	});
+});
+
+// validate the store rezise
+function checkOutOfGrid() {
+	let errorLed = false;
+	Object.keys(storesStore.ledEdition).forEach((led) => {
+		if ((storesStore.ledEdition[led].x_led >= storesStore.storeEdition.xlength_store) || (storesStore.ledEdition[led].y_led >= storesStore.storeEdition.ylength_store)) {
+			if (storesStore.ledEdition[led]?.status !== "delete") {
+				errorLed = true;
+			}
+		}
+	});
+	if (errorLed) {
+		addNotification({ message: "store.VStoreLedOutOfGrid", type: "error", i18n: true });
+		return false;
+	}
+	let errorBox = false;
+	Object.keys(storesStore.boxEdition).forEach((box) => {
+		if ((storesStore.boxEdition[box].xend_box > storesStore.storeEdition.xlength_store) || (storesStore.boxEdition[box].yend_box > storesStore.storeEdition.ylength_store)) {
+			if (storesStore.boxEdition[box]?.status !== "delete") {
+				errorBox = true;
+			}
+		}
+	});
+	if (errorBox) {
+		addNotification({ message: "store.VStoreBoxOutOfGrid", type: "error", i18n: true });
+		return false;
+	}
+	return true;
+}
+
+// check if 2 box are in conflict
+function checkBoxConflict(validate = false) {
+	Object.values(storesStore.boxEdition).forEach((box) => {
+		document.getElementById("BOX" + box.id_box).classList.remove("conflict");
+	});
+	Object.values(storesStore.boxEdition).forEach((box1) => {
+		Object.values(storesStore.boxEdition).forEach((box2) => {
+			if (box1.id_box !== box2.id_box) {
+				if ((box1.xstart_box < box2.xend_box) &&
+				(box1.xend_box > box2.xstart_box) &&
+				(box1.ystart_box < box2.yend_box) &&
+				(box1.yend_box > box2.ystart_box)) {
+					document.getElementById("BOX" + box1.id_box).classList.add("conflict");
+					document.getElementById("BOX" + box2.id_box).classList.add("conflict");
+				}
+			}
+		});
+	});
+	if (validate) {
+		var BreakException = {};
+		try {
+			Object.values(storesStore.boxEdition).forEach((box) => {
+				if (document.getElementById("BOX" + box.id_box).classList.contains("conflict")) {
+					addNotification({ message: "store.VStoreBoxConflict", type: "error", i18n: true });
+					throw BreakException;
+				}
+			});
+			return true;
+		} catch (e) {
+			return false;
+		}
+	}
+}
+
+// gridOrigin.left = left position of the grid
+// gridOrigin.top = top position of the grid
+// gridOrigin.cellSizeX = cell size X
+// gridOrigin.cellSizeY = cell size Y
+// update the grid when the size of the cell change
+function showStoreGrid() {
+	let gridBox = document.querySelector(".grid");
+	gridBox.style.gridTemplateColumns = `repeat(${storesStore.storeEdition.xlength_store}, ${sizeOfCell.value}px)`;
+	gridBox.style.gridTemplateRows = `repeat(${storesStore.storeEdition.ylength_store}, ${sizeOfCell.value}px)`;
+	gridBox.style.width = `${storesStore.storeEdition.xlength_store * sizeOfCell.value}px`;
+	gridBox.style.height = `${storesStore.storeEdition.ylength_store * sizeOfCell.value}px`;
+	let gridBoxPos = gridBox.getBoundingClientRect();
+	gridOrigin.value.left = gridBoxPos.left + window.scrollX;
+	gridOrigin.value.top = gridBoxPos.top + window.scrollY;
+	gridOrigin.value.cellSizeX = Math.floor(gridBoxPos.width / storesStore.storeEdition.xlength_store);
+	gridOrigin.value.cellSizeY = Math.floor(gridBoxPos.height / storesStore.storeEdition.ylength_store);
+}
+
+function getLastLedId() {
+	let max = 0;
+	Object.keys(storesStore.ledEdition).forEach((led) => {
+		if (storesStore.ledEdition[led].id_led > max) {
+			max = storesStore.ledEdition[led].id_led;
+		}
+	});
+	return max;
+}
+function getLastLedMqttId() {
+	let max = 0;
+	Object.keys(storesStore.ledEdition).forEach((led) => {
+		if (storesStore.ledEdition[led].mqtt_led_id > max) {
+			max = storesStore.ledEdition[led].mqtt_led_id;
+		}
+	});
+	return max;
+}
 function addLed() {
-	ledInfo.value.push({
-		id: nextLedId++,
-		DBId: 0,
-		DBX: 0,
-		DBY: 0,
-		DBMQTTId: 0,
-		X: mouseClick.value.X,
-		Y: mouseClick.value.Y,
-		MQTTId: 0,
-		Light: {
-			R: 0,
-			G: 0,
-			B: 0,
-			mode: 0,
-			state: false,
-		},
+	storesStore.pushLed({
+		id_led: getLastLedId() + 1,
+		x_led: mouseClick.value.X,
+		y_led: mouseClick.value.Y,
+		mqtt_led_id: getLastLedMqttId() + 1,
+		status: "new",
 	});
 	showMenu.value = false;
 }
-
+function getLastBoxId() {
+	let max = 0;
+	Object.keys(storesStore.boxEdition).forEach((box) => {
+		if (storesStore.boxEdition[box].id_box > max) {
+			max = storesStore.boxEdition[box].id_box;
+		}
+	});
+	return max;
+}
 function addBox() {
-	boxInfo.value.push({
-		id: nextBoxId++,
-		DBId: 0,
-		DBXMin: 0,
-		DBYMin: 0,
-		DBXMax: 0,
-		DBYMax: 0,
-		XMin: mouseClick.value.X,
-		YMin: mouseClick.value.Y,
-		XMax: mouseClick.value.X + 1,
-		YMax: mouseClick.value.Y + 1,
+	storesStore.pushBox({
+		id_box: getLastBoxId() + 1,
+		xstart_box: mouseClick.value.X,
+		ystart_box: mouseClick.value.Y,
+		xend_box: mouseClick.value.X + 1,
+		yend_box: mouseClick.value.Y + 1,
+		status: "new",
 	});
 	showMenu.value = false;
 }
@@ -131,6 +351,9 @@ const gridOrigin = ref({
 
 function showNewMenu(event) {
 	stopSelecting();
+	if (authStore.user?.role_user !== "admin") {
+		return;
+	}
 	showMenu.value = true;
 	menuPos.value.X = event.clientX;
 	menuPos.value.Y = event.clientY;
@@ -162,14 +385,14 @@ function stopSelecting() {
 	document.querySelector(".cursor-move")?.classList.remove("cursor-move");
 	document.querySelector(".diagonal-hatch")?.classList.remove("diagonal-hatch");
 	if (selectedElement.value.type === "border") {
-		document.querySelector(".grid")?.classList.remove("cursor-nw");
-		document.querySelector(".grid")?.classList.remove("cursor-ne");
-		document.querySelector(".grid")?.classList.remove("cursor-sw");
-		document.querySelector(".grid")?.classList.remove("cursor-se");
-		document.querySelector(".grid")?.classList.remove("cursor-n");
-		document.querySelector(".grid")?.classList.remove("cursor-e");
-		document.querySelector(".grid")?.classList.remove("cursor-s");
-		document.querySelector(".grid")?.classList.remove("cursor-w");
+		document.querySelector(".grid")?.classList.remove("cursor-nw-resize");
+		document.querySelector(".grid")?.classList.remove("cursor-ne-resize");
+		document.querySelector(".grid")?.classList.remove("cursor-sw-resize");
+		document.querySelector(".grid")?.classList.remove("cursor-se-resize");
+		document.querySelector(".grid")?.classList.remove("cursor-n-resize");
+		document.querySelector(".grid")?.classList.remove("cursor-e-resize");
+		document.querySelector(".grid")?.classList.remove("cursor-s-resize");
+		document.querySelector(".grid")?.classList.remove("cursor-w-resize");
 	}
 	selectedElement.value.type = null;
 	selectedElement.value.key = null;
@@ -187,7 +410,10 @@ function selectLed(led, event = null) {
 	stopSelecting(); // unselect if another element is selected
 	selectedElement.value.key = led;
 	selectedElement.value.type = "led";
-	let ledHtml = document.getElementById("LED" + led.id);
+	if (led?.status !== "new") {
+		led.status = "modified";
+	}
+	let ledHtml = document.getElementById("LED" + led.id_led);
 	ledHtml.classList.add("selectedElement");
 }
 
@@ -203,11 +429,15 @@ function selectBox(box, event = null) {
 	selectedElement.value.key = box;
 	selectedElement.value.type = "box";
 	// on stock la valeur de départ de la box
-	selectedElement.value.temp.XMin = box.XMin;
-	selectedElement.value.temp.YMin = box.YMin;
-	selectedElement.value.temp.XMax = box.XMax;
-	selectedElement.value.temp.YMax = box.YMax;
-	let boxHtml = document.getElementById("BOX" + box.id);
+	selectedElement.value.temp.xstart_box = box.xstart_box;
+	selectedElement.value.temp.ystart_box = box.ystart_box;
+	selectedElement.value.temp.xend_box = box.xend_box;
+	selectedElement.value.temp.yend_box = box.yend_box;
+	selectedElement.value.status = "modified";
+	if (box?.status !== "new") {
+		box.status = "modified";
+	}
+	let boxHtml = document.getElementById("BOX" + box.id_box);
 	boxHtml.classList.add("selectedElement");
 	boxHtml.classList.add("diagonal-hatch");
 }
@@ -221,17 +451,20 @@ function selectBorder(border, direction) {
 	selectedElement.value.key = border;
 	selectedElement.value.type = "border";
 	// on stock la valeur de départ de la box lier au border
-	selectedElement.value.temp.XMin = border.XMin;
-	selectedElement.value.temp.YMin = border.YMin;
-	selectedElement.value.temp.XMax = border.XMax;
-	selectedElement.value.temp.YMax = border.YMax;
+	selectedElement.value.temp.xstart_box = border.xstart_box;
+	selectedElement.value.temp.ystart_box = border.ystart_box;
+	selectedElement.value.temp.xend_box = border.xend_box;
+	selectedElement.value.temp.yend_box = border.yend_box;
 	selectedElement.value.temp.direction = direction;
-	let boxHtml = document.getElementById("BOX" + border.id);
+	let boxHtml = document.getElementById("BOX" + border.id_box);
 	boxHtml.classList.add("selectedElement");
 	boxHtml.classList.add("diagonal-hatch");
 }
 
 function startDragging(element, type, direction = null) {
+	if (authStore.user?.role_user !== "admin") {
+		return;
+	}
 	if (hasDragElement.value) {
 		return;
 	}
@@ -267,135 +500,84 @@ function moveMouse(event) {
 	let gridBoxPos = document.querySelector(".grid").getBoundingClientRect();
 	gridOrigin.value.left = gridBoxPos.left + window.scrollX;
 	gridOrigin.value.top = gridBoxPos.top + window.scrollY;
-	gridOrigin.value.cellSizeX = Math.floor(gridBoxPos.width / storeInfo.value.DBLenX);
-	gridOrigin.value.cellSizeY = Math.floor(gridBoxPos.height / storeInfo.value.DBLenY);
+	gridOrigin.value.cellSizeX = Math.floor(gridBoxPos.width / storesStore.storeEdition.xlength_store);
+	gridOrigin.value.cellSizeY = Math.floor(gridBoxPos.height / storesStore.storeEdition.ylength_store);
 	let x = Math.floor((event.clientX - gridOrigin.value.left + window.scrollX) / gridOrigin.value.cellSizeX);
-	let y = storeInfo.value.DBLenY - Math.floor((event.clientY - gridOrigin.value.top + window.scrollY) / gridOrigin.value.cellSizeY) - 1; // reverse Y axis
+	let y = storesStore.storeEdition.ylength_store - Math.floor((event.clientY - gridOrigin.value.top + window.scrollY) / gridOrigin.value.cellSizeY) - 1; // reverse Y axis
 	// if a value is out of the grid, don't update the mousePos
-	if ((x < 0) || (y < 0) || (x >= storeInfo.value.DBLenX) || (y >= storeInfo.value.DBLenY)) {
+	if ((x < 0) || (y < 0) || (x >= storesStore.storeEdition.xlength_store) || (y >= storesStore.storeEdition.ylength_store)) {
 		return;
 	}
 	mousePos.value.X = x;
 	mousePos.value.Y = y;
 	if (hasDragElement.value) {
 		if (selectedElement.value.type === "led") {
-			selectedElement.value.key.X = x;
-			selectedElement.value.key.Y = y;
+			selectedElement.value.key.x_led = x;
+			selectedElement.value.key.y_led = y;
 		} else if (selectedElement.value.type === "box") {
 			let dx = x - mouseClick.value.X;
 			let dy = y - mouseClick.value.Y;
-			if ((selectedElement.value.temp.XMin + dx < 0) ||
-				(selectedElement.value.temp.YMin + dy < 0) ||
-				(selectedElement.value.temp.XMax + dx > storeInfo.value.DBLenX) ||
-				(selectedElement.value.temp.YMax + dy > storeInfo.value.DBLenY)) {
+			if ((selectedElement.value.temp.xstart_box + dx < 0) ||
+				(selectedElement.value.temp.ystart_box + dy < 0) ||
+				(selectedElement.value.temp.xend_box + dx > storesStore.storeEdition.xlength_store) ||
+				(selectedElement.value.temp.yend_box + dy > storesStore.storeEdition.ylength_store)) {
 				return;
 			}
-			selectedElement.value.key.XMin = selectedElement.value.temp.XMin + dx;
-			selectedElement.value.key.YMin = selectedElement.value.temp.YMin + dy;
-			selectedElement.value.key.XMax = selectedElement.value.temp.XMax + dx;
-			selectedElement.value.key.YMax = selectedElement.value.temp.YMax + dy;
-			checkConflict();
+			selectedElement.value.key.xstart_box = selectedElement.value.temp.xstart_box + dx;
+			selectedElement.value.key.ystart_box = selectedElement.value.temp.ystart_box + dy;
+			selectedElement.value.key.xend_box = selectedElement.value.temp.xend_box + dx;
+			selectedElement.value.key.yend_box = selectedElement.value.temp.yend_box + dy;
+			checkBoxConflict();
 		} else if (selectedElement.value.type === "border") {
 			if (selectedElement.value.temp.direction === "ne" || selectedElement.value.temp.direction === "se" || selectedElement.value.temp.direction === "e") {
-				selectedElement.value.key.XMax = selectedElement.value.temp.XMax + (mousePos.value.X - mouseClick.value.X);
+				if (mousePos.value.X >= selectedElement.value.temp.xstart_box) {
+					selectedElement.value.key.xend_box = selectedElement.value.temp.xend_box + (mousePos.value.X - mouseClick.value.X);
+				}
 			}
 			if (selectedElement.value.temp.direction === "nw" || selectedElement.value.temp.direction === "ne" || selectedElement.value.temp.direction === "n") {
-				selectedElement.value.key.YMax = selectedElement.value.temp.YMax + (mousePos.value.Y - mouseClick.value.Y);
+				if (mousePos.value.Y >= selectedElement.value.temp.ystart_box) {
+					selectedElement.value.key.yend_box = selectedElement.value.temp.yend_box + (mousePos.value.Y - mouseClick.value.Y);
+				}
 			}
 			if (selectedElement.value.temp.direction === "nw" || selectedElement.value.temp.direction === "sw" || selectedElement.value.temp.direction === "w") {
-				selectedElement.value.key.XMin = selectedElement.value.temp.XMin + (mousePos.value.X - mouseClick.value.X);
+				if (mousePos.value.X < selectedElement.value.temp.xend_box) {
+					selectedElement.value.key.xstart_box = selectedElement.value.temp.xstart_box + (mousePos.value.X - mouseClick.value.X);
+				}
 			}
 			if (selectedElement.value.temp.direction === "sw" || selectedElement.value.temp.direction === "se" || selectedElement.value.temp.direction === "s") {
-				selectedElement.value.key.YMin = selectedElement.value.temp.YMin + (mousePos.value.Y - mouseClick.value.Y);
+				if (mousePos.value.Y < selectedElement.value.temp.yend_box) {
+					selectedElement.value.key.ystart_box = selectedElement.value.temp.ystart_box + (mousePos.value.Y - mouseClick.value.Y);
+				}
 			}
-			checkConflict();
-		}
-	}
-}
-
-// check if 2 box are in conflict
-function checkConflict() {
-	for (let i = 0; i < boxInfo.value.length; i++) {
-		document.getElementById("BOX" + boxInfo.value[i].id).classList.remove("conflict");
-	}
-	for (let i = 0; i < boxInfo.value.length; i++) {
-		for (let j = i + 1; j < boxInfo.value.length; j++) {
-			if ((boxInfo.value[i].XMin < boxInfo.value[j].XMax) &&
-				(boxInfo.value[i].XMax > boxInfo.value[j].XMin) &&
-				(boxInfo.value[i].YMin < boxInfo.value[j].YMax) &&
-				(boxInfo.value[i].YMax > boxInfo.value[j].YMin)) {
-				document.getElementById("BOX" + boxInfo.value[i].id).classList.add("conflict");
-				document.getElementById("BOX" + boxInfo.value[j].id).classList.add("conflict");
-			}
+			checkBoxConflict();
 		}
 	}
 }
 
 function deleteElement() {
 	if (selectedElement.value.type === "led") {
-		for (let i = 0; i < ledInfo.value.length; i++) {
-			if (ledInfo.value[i] === selectedElement.value.key) {
-				ledInfo.value.splice(i, 1);
-				break;
+		Object.keys(storesStore.ledEdition).forEach((index) => {
+			if (storesStore.ledEdition[index] === selectedElement.value.key) {
+				if (storesStore.ledEdition[index].status === "new") {
+					delete storesStore.ledEdition[index];
+				} else {
+					storesStore.ledEdition[index].status = "delete";
+				}
 			}
-		}
+		});
 	} else if (selectedElement.value.type === "box") {
-		for (let i = 0; i < boxInfo.value.length; i++) {
-			if (boxInfo.value[i] === selectedElement.value.key) {
-				boxInfo.value.splice(i, 1);
-				break;
+		Object.keys(storesStore.boxEdition).forEach((index) => {
+			if (storesStore.boxEdition[index] === selectedElement.value.key) {
+				if (storesStore.boxEdition[index].status === "new") {
+					delete storesStore.boxEdition[index];
+				} else {
+					storesStore.boxEdition[index].status = "delete";
+				}
 			}
-		}
+		});
 	}
 	showMenu.value = false;
 	stopSelecting();
-}
-
-function debugData() {
-	console.log(selectedElement.value.key);
-}
-
-function changeStoreSize() {
-	//check if a led or a box is out of the grid
-	let errorLed = false;
-	for (let i = 0; i < ledInfo.value.length; i++) {
-		if ((ledInfo.value[i].X >= storeInfo.value.LenX) || (ledInfo.value[i].Y >= storeInfo.value.LenY)) {
-			errorLed = true;
-			break;
-		}
-	}
-	if (errorLed) {
-		alert("Une ou plusieurs LED sont en dehors du tableau");
-		return;
-	}
-	let errorBox = false;
-	for (let i = 0; i < boxInfo.value.length; i++) {
-		if ((boxInfo.value[i].XMax > storeInfo.value.LenX) || (boxInfo.value[i].YMax > storeInfo.value.LenY)) {
-			errorBox = true;
-			break;
-		}
-	}
-	if (errorBox) {
-		alert("Une ou plusieurs BOX sont en dehors du tableau");
-		return;
-	}
-	storeInfo.value.DBLenX = storeInfo.value.LenX;
-	storeInfo.value.DBLenY = storeInfo.value.LenY;
-	showStoreGrid(); // update the grid with the new size
-}
-
-// show the grid with the new size
-function showStoreGrid() {
-	let gridBox = document.querySelector(".grid");
-	gridBox.style.gridTemplateColumns = `repeat(${storeInfo.value.LenX}, ${sizeOfCell.value}px)`;
-	gridBox.style.gridTemplateRows = `repeat(${storeInfo.value.LenY}, ${sizeOfCell.value}px)`;
-	gridBox.style.width = `${storeInfo.value.LenX * sizeOfCell.value}px`;
-	gridBox.style.height = `${storeInfo.value.LenY * sizeOfCell.value}px`;
-	let gridBoxPos = gridBox.getBoundingClientRect();
-	gridOrigin.value.left = gridBoxPos.left + window.scrollX;
-	gridOrigin.value.top = gridBoxPos.top + window.scrollY;
-	gridOrigin.value.cellSizeX = Math.floor(gridBoxPos.width / storeInfo.value.DBLenX);
-	gridOrigin.value.cellSizeY = Math.floor(gridBoxPos.height / storeInfo.value.DBLenY);
 }
 
 // stop drag in all this page
@@ -403,6 +585,46 @@ document.addEventListener("mouseup", stopDragging);
 // hide the menu if click outside
 document.addEventListener("click", hideMenu);
 
+const sortedTags = computed(() => {
+	return Object.keys(storesStore.storeTags[storeId] || {})
+		.sort((a, b) => tagsStore.tags[b].poids_tag - tagsStore.tags[a].poids_tag);
+});
+
+const schemaStore = Yup.object().shape({
+	nom_store: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("store.VStoreNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+		.required(t("store.VStoreNameRequired")),
+	mqtt_name_store: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("store.VStoreMQTTNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+		.required(t("store.VStoreMQTTNameRequired")),
+	xlength_store: Yup.number()
+		.min(1, t("store.VStoreXLengthMin"))
+		.typeError(t("store.VStoreXLengthType"))
+		.required(t("store.VStoreXLengthRequired")),
+	ylength_store: Yup.number()
+		.min(1, t("store.VStoreYLengthMin"))
+		.typeError(t("store.VStoreYLengthType"))
+		.required(t("store.VStoreYLengthRequired")),
+});
+
+function isNumber(value) {
+	return typeof value === "number";
+}
+
+const toggleLed = async(ledId) => {
+	try {
+		await storesStore.showLedById(storeId, ledId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
+	} catch (e) {
+		addNotification({ message: "store.VStoreToggleError", type: "error", i18n: true });
+	}
+};
+const toggleBoxLed = async(boxId) => {
+	try {
+		await storesStore.showBoxById(storeId, boxId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
+	} catch (e) {
+		addNotification({ message: "store.VStoreToggleError", type: "error", i18n: true });
+	}
+};
 </script>
 <style>
 .grid {
@@ -529,42 +751,6 @@ document.addEventListener("click", hideMenu);
 	right: -5px;
 }
 
-.cursor-nw {
-	cursor: nw-resize;
-}
-
-.cursor-ne {
-	cursor: ne-resize;
-}
-
-.cursor-sw {
-	cursor: sw-resize;
-}
-
-.cursor-se {
-	cursor: se-resize;
-}
-
-.cursor-n {
-	cursor: n-resize;
-}
-
-.cursor-e {
-	cursor: e-resize;
-}
-
-.cursor-s {
-	cursor: s-resize;
-}
-
-.cursor-w {
-	cursor: w-resize;
-}
-
-.cursor-move {
-	cursor: move;
-}
-
 .no-select {
 	user-select: none;
 	/* Standard */
@@ -606,113 +792,228 @@ document.addEventListener("click", hideMenu);
 			</RouterLink>
 		</div>
 	</div>
-	<div>
-		<input type="text" v-model="storesStore.storeEdition.nom_store"><br>
-		<input type="text" v-model="storesStore.storeEdition.mqtt_name_store"><br>
-		<span>X: </span>
-		<input type="number" v-model="storesStore.storeEdition.xlength_store"><br>
-		<span>Y: </span>
-		<input type="number" v-model="storesStore.storeEdition.ylength_store"><br>
-		<span>Cell size: </span>
-		<input type="range" v-model="sizeOfCell" min="10" max="50" step="10"><br>
-		<button @click="changeStoreSize">changer la taille du tableau</button><br>
-		<br>
-		<br>
-		<span>show led id</span>
-		<input type="checkbox" v-model="showLedId">
-	</div>
-	<!--
-	gridOrigin.left = left position of the grid
-	gridOrigin.top = top position of the grid
-	gridOrigin.cellSizeX = cell size X
-	gridOrigin.cellSizeY = cell size Y
-	-->
-	<div class="grid" @contextmenu.prevent="showNewMenu" @mousemove="moveMouse">
-		<div v-for="i in storeInfo.DBLenX * storeInfo.DBLenY" :key="i" class="cell"></div>
-		<div v-for="led in ledInfo" :key="led.id" class="led" :id="'LED' + led.id" :style="{
-			left: (led.X * gridOrigin.cellSizeX) + gridOrigin.cellSizeX / 2 + 'px',
-			top: (((storeInfo.DBLenY - 1) - led.Y) * gridOrigin.cellSizeY) + gridOrigin.cellSizeY / 2 + 'px',
-			zIndex: 20
-		}" @mousedown.left="startDragging(led, 'led')" @contextmenu.prevent="(event) => selectLed(led, event)"
-			@contextmenu.stop>
-		</div>
-		<template v-if="showLedId">
-			<div v-for="led in ledInfo" :key="led.id" class="no-select" :style="{
-				left: (led.X * gridOrigin.cellSizeX) + gridOrigin.cellSizeX / 2 + 10 + 'px',
-				top: (((storeInfo.DBLenY - 1) - led.Y) * gridOrigin.cellSizeY) + gridOrigin.cellSizeY / 2 + 8 + 'px',
-				zIndex: 20,
-				position: 'absolute'
-			}">
-				{{ led.id }}
-			</div>
-		</template>
-		<div v-for="box in boxInfo" :key="box.id" class="box" :id="'BOX' + box.id" :style="{
-			left: (box.XMin * gridOrigin.cellSizeX) + 'px',
-			top: (((storeInfo.DBLenY) - box.YMax) * gridOrigin.cellSizeY) + 'px',
-			width: ((box.XMax - box.XMin) * (gridOrigin.cellSizeX)) + 'px',
-			height: ((box.YMax - box.YMin) * (gridOrigin.cellSizeY)) + 'px',
-			zIndex: 10
-		}" @mousedown.left="startDragging(box, 'box')" @contextmenu.prevent="(event) => selectBox(box, event)"
-			@contextmenu.stop>
-			<div v-if="!showMenu && (selectedElement.type == null || selectedElement.key == box)">
-				<div class="resizer corner nw cursor-nw" @mousedown.left="startDragging(box, 'border', 'nw')"
-					@contextmenu.stop>
+	<div v-if="storesStore.stores[storeId] || storeId == 'new'">
+		<div class="mb-6 flex justify-between">
+			<Form :validation-schema="schemaStore" v-slot="{ errors }" @submit.prevent="">
+				<table class="table-auto text-gray-700">
+					<tbody>
+						<tr>
+							<td class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreName') }}:</td>
+							<td class="flex flex-col">
+								<Field name="nom_store" type="text"
+									v-model="storesStore.storeEdition.nom_store"
+									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+									:class="{ 'border-red-500': errors.nom_store }" />
+								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_store || ' ' }}</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreMQTTName') }}:</td>
+							<td class="flex flex-col">
+								<Field name="mqtt_name_store" type="text"
+									v-model="storesStore.storeEdition.mqtt_name_store"
+									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+									:class="{ 'border-red-500': errors.mqtt_name_store }" />
+								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.mqtt_name_store || ' ' }}</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreXLength') }}:</td>
+							<td class="flex flex-col">
+								<Field name="xlength_store" type="number"
+									v-model="storesStore.storeEdition.xlength_store" @change="showStoreGrid" @keyup="showStoreGrid"
+									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+									:class="{ 'border-red-500': errors.xlength_store }" />
+								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.xlength_store || ' ' }}</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreYLength') }}:</td>
+							<td class="flex flex-col">
+								<Field name="ylength_store" type="number"
+									v-model="storesStore.storeEdition.ylength_store" @change="showStoreGrid" @keyup="showStoreGrid"
+									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+									:class="{ 'border-red-500': errors.ylength_store }" />
+								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.ylength_store || ' ' }}</span>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="flex space-x-4">
+					<span>{{ $t('store.VStoreCellSize') }}</span>
+					<input type="range" v-model="sizeOfCell" min="10" max="50" step="10" @input="showStoreGrid" />
 				</div>
-				<div class="resizer corner ne cursor-ne" @mousedown.left="startDragging(box, 'border', 'ne')"
-					@contextmenu.stop>
+				<div class="flex space-x-4">
+					<span>{{ $t('store.VStoreShowLedId') }}</span>
+					<input type="checkbox" v-model="showLedId" />
 				</div>
-				<div class="resizer corner sw cursor-sw" @mousedown.left="startDragging(box, 'border', 'sw')"
-					@contextmenu.stop>
-				</div>
-				<div class="resizer corner se cursor-se" @mousedown.left="startDragging(box, 'border', 'se')"
-					@contextmenu.stop>
-				</div>
-				<div class="resizer edge n cursor-n" @mousedown.left="startDragging(box, 'border', 'n')"
-					@contextmenu.stop>
-				</div>
-				<div class="resizer edge e cursor-e" @mousedown.left="startDragging(box, 'border', 'e')"
-					@contextmenu.stop>
-				</div>
-				<div class="resizer edge s cursor-s" @mousedown.left="startDragging(box, 'border', 's')"
-					@contextmenu.stop>
-				</div>
-				<div class="resizer edge w cursor-w" @mousedown.left="startDragging(box, 'border', 'w')"
-					@contextmenu.stop>
-				</div>
-			</div>
-			<div v-else>
-				<div class="resizer corner nw"></div>
-				<div class="resizer corner ne"></div>
-				<div class="resizer corner sw"></div>
-				<div class="resizer corner se"></div>
-				<div class="resizer edge n"></div>
-				<div class="resizer edge e"></div>
-				<div class="resizer edge s"></div>
-				<div class="resizer edge w"></div>
+			</Form>
+			<div class="w-96 h-96 bg-gray-200 px-2 py-2 rounded">
+				<span v-for="(value, key) in sortedTags" :key="key"
+					class="bg-gray-300 p-1 rounded mr-2 mb-2 whitespace-pre">
+					{{ tagsStore.tags[value].nom_tag }} ({{ tagsStore.tags[value].poids_tag }})
+					<span @click="storesStore.deleteTagStore(storeId, value)"
+						class="text-red-500 cursor-pointer hover:text-red-600">
+						<font-awesome-icon icon="fa-solid fa-times" />
+					</span>
+				</span>
+				<span v-if="!storeInputTagShow" class="bg-gray-300 p-1 rounded mr-2 mb-2">
+					<span @click="showInputAddTag"
+						class="text-green-500 cursor-pointer hover:text-green-600">
+						<font-awesome-icon icon="fa-solid fa-plus" />
+					</span>
+				</span>
 			</div>
 		</div>
+		<div class="grid" @contextmenu.prevent="showNewMenu" @mousemove="moveMouse"
+			:class="isNumber(storesStore.storeEdition.xlength_store) && isNumber(storesStore.storeEdition.ylength_store) ? '' : 'cursor-not-allowed'">
+			<template v-if="isNumber(storesStore.storeEdition.xlength_store) && isNumber(storesStore.storeEdition.ylength_store)">
+				<div v-for="i in storesStore.storeEdition.xlength_store * storesStore.storeEdition.ylength_store"
+					:key="i" class="cell"></div>
+				<div v-for="led in storesStore.ledEdition" :key="led.id_led" class="led"
+					:id="'LED' + led.id_led"
+					:style="{
+						left: (led.x_led * gridOrigin.cellSizeX) + gridOrigin.cellSizeX / 2 + 'px',
+						top: (((storesStore.storeEdition.ylength_store - 1) - led.y_led) * gridOrigin.cellSizeY) + gridOrigin.cellSizeY / 2 + 'px',
+						zIndex: 20}"
+					:class="{ 'hidden': led?.status == 'delete' }"
+					@mousedown.left="startDragging(led, 'led')"
+					@contextmenu.prevent="(event) => selectLed(led, event)"
+					@contextmenu.stop>
+				</div>
+				<template v-if="showLedId">
+					<div v-for="led in storesStore.ledEdition" :key="led.id_led" class="no-select"
+						:style="{
+							left: (led.x_led * gridOrigin.cellSizeX) + gridOrigin.cellSizeX / 2 + 10 + 'px',
+							top: (((storesStore.storeEdition.ylength_store - 1) - led.y_led) * gridOrigin.cellSizeY) + gridOrigin.cellSizeY / 2 + 8 + 'px',
+							zIndex: 20,
+							position: 'absolute'}"
+						:class="{ 'hidden': led?.status == 'delete' }">
+						{{ led.mqtt_led_id }}
+					</div>
+				</template>
+				<div v-for="box in storesStore.boxEdition" :key="box.id_box" class="box" :id="'BOX' + box.id_box"
+					:style="{
+						left: (box.xstart_box * gridOrigin.cellSizeX) + 'px',
+						top: (((storesStore.storeEdition.ylength_store) - box.yend_box) * gridOrigin.cellSizeY) + 'px',
+						width: ((box.xend_box - box.xstart_box) * (gridOrigin.cellSizeX)) + 'px',
+						height: ((box.yend_box - box.ystart_box) * (gridOrigin.cellSizeY)) + 'px',
+						zIndex: 10}"
+					:class="{ 'hidden': box?.status == 'delete' }"
+					@mousedown.left="startDragging(box, 'box')"
+					@contextmenu.prevent="(event) => selectBox(box, event)"
+					@contextmenu.stop>
+					<div v-if="authStore.user?.role_user === 'admin' && !showMenu && (selectedElement.type == null || selectedElement.key == box) ">
+						<div class="resizer corner nw cursor-nw-resize" @mousedown.left="startDragging(box, 'border', 'nw')"
+							@contextmenu.stop>
+						</div>
+						<div class="resizer corner ne cursor-ne-resize" @mousedown.left="startDragging(box, 'border', 'ne')"
+							@contextmenu.stop>
+						</div>
+						<div class="resizer corner sw cursor-sw-resize" @mousedown.left="startDragging(box, 'border', 'sw')"
+							@contextmenu.stop>
+						</div>
+						<div class="resizer corner se cursor-se-resize" @mousedown.left="startDragging(box, 'border', 'se')"
+							@contextmenu.stop>
+						</div>
+						<div class="resizer edge n cursor-n-resize" @mousedown.left="startDragging(box, 'border', 'n')"
+							@contextmenu.stop>
+						</div>
+						<div class="resizer edge e cursor-e-resize" @mousedown.left="startDragging(box, 'border', 'e')"
+							@contextmenu.stop>
+						</div>
+						<div class="resizer edge s cursor-s-resize" @mousedown.left="startDragging(box, 'border', 's')"
+							@contextmenu.stop>
+						</div>
+						<div class="resizer edge w cursor-w-resize" @mousedown.left="startDragging(box, 'border', 'w')"
+							@contextmenu.stop>
+						</div>	
+					</div>
+					<div v-else>
+						<div class="resizer corner nw"></div>
+						<div class="resizer corner ne"></div>
+						<div class="resizer corner sw"></div>
+						<div class="resizer corner se"></div>
+						<div class="resizer edge n"></div>
+						<div class="resizer edge e"></div>
+						<div class="resizer edge s"></div>
+						<div class="resizer edge w"></div>	
+					</div>	
+				</div>
+			</template>
+			<template v-else>
+				<!-- TODO : add loading animation -->
+			</template>
+		</div>
 	</div>
-	<div v-if="showMenu && !selectedElement.type" class="context-menu"
-		:style="{ left: menuPos.X + 'px', top: menuPos.Y + 'px' }">
-		<button @click="addLed">Ajouter une LED</button><br>
-		<button @click="addBox">Ajouter une BOX</button>
-	</div>
-	<div v-if="showMenu && selectedElement.type == 'led'" class="context-menu"
-		:style="{ left: menuPos.X + 'px', top: menuPos.Y + 'px' }" id="MenuLedEdit">
-		<button @click="deleteElement">Supprimer la led</button><br>
-		<button>change ID led</button><br>
-		<button>toggle led</button>
-	</div>
-	<div v-if="showMenu && selectedElement.type == 'box'" class="context-menu"
-		:style="{ left: menuPos.X + 'px', top: menuPos.Y + 'px' }" id="MenuBoxEdit">
-		<button @click="deleteElement">Supprimer la box</button><br>
-		<button @click="debugData">voir le contenue</button><br>
-		<button @click="addLed">Ajouter une LED</button>
-	</div>
-	<div>
-		<span>X: </span>
-		<strong>{{ mousePos.X }}</strong>
-		<span>Y: </span>
-		<strong>{{ mousePos.Y }}</strong>
+	<template v-if="isNumber(storesStore.storeEdition.xlength_store) && isNumber(storesStore.storeEdition.ylength_store)">
+		<div v-if="showMenu && !selectedElement.type" class="context-menu"
+			:style="{ left: menuPos.X + 'px', top: menuPos.Y + 'px' }">
+			<div class="flex flex-col">
+				<button @click="addLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
+					{{ $t('store.VStoreAddLed') }}
+				</button>
+				<button @click="addBox" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
+					{{ $t('store.VStoreAddBox') }}
+				</button>
+			</div>
+		</div>
+		<div v-if="showMenu && selectedElement.type == 'led'" class="context-menu"
+			:style="{ left: menuPos.X + 'px', top: menuPos.Y + 'px' }" id="MenuLedEdit">
+			<div class="flex flex-col">
+				<button v-if="authStore.user?.role_user === 'admin'" @click="deleteElement" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600">
+					{{ $t('store.VStoreDeleteLed') }}
+				</button>
+				<button @click="toggleLed(selectedElement.key.id_led)" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
+					{{ $t('store.VStoreToggleLed') }}
+				</button>
+				<div class="flex space-x-4">
+					<span>{{ $t('store.VStoreMqttLedId') }}</span>
+					<input type="number" v-model="storesStore.ledEdition[selectedElement.key.id_led].mqtt_led_id" class="w-16" :disabled="authStore.user?.role_user !== 'admin'" />
+				</div>
+				<!-- TODO : add color weel and select animation and light duration -->
+			</div>
+		</div>
+		<div v-if="showMenu && selectedElement.type == 'box'" class="context-menu"
+			:style="{ left: menuPos.X + 'px', top: menuPos.Y + 'px' }" id="MenuBoxEdit">
+			<div class="flex flex-col">
+				<button v-if="authStore.user?.role_user === 'admin'" @click="deleteElement" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600">
+					{{ $t('store.VStoreDeleteBox') }}
+				</button>
+				<button @click="showBoxContent" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
+					{{ $t('store.VStoreShowBoxContent') }}
+				</button>
+				<button @click="toggleBoxLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
+					{{ $t('store.VStoreToggleBoxLed') }}
+				</button>
+				<button v-if="authStore.user?.role_user === 'admin'" @click="addLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
+					{{ $t('store.VStoreAddLed') }}
+				</button>
+			</div>
+		</div>
+		<div>
+			<span>X: </span>
+			<strong>{{ mousePos.X }}</strong>
+			<span>Y: </span>
+			<strong>{{ mousePos.Y }}</strong>
+		</div>
+	</template>
+
+	<div v-if="storeDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+		@click="storeDeleteModalShow = false">
+		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
+			<h2 class="text-xl mb-4">{{ $t('store.VStoreDeleteTitle') }}</h2>
+			<p>{{ $t('store.VStoreDeleteText') }}</p>
+			<div class="flex justify-end space-x-4 mt-4">
+				<button type="button" @click="storeDelete()"
+					class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
+					{{ $t('store.VStoreDeleteConfirm') }}
+				</button>
+				<button type="button" @click="storeDeleteModalShow = false"
+					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
+					{{ $t('store.VStoreDeleteCancel') }}
+				</button>
+			</div>
+		</div>
 	</div>
 </template>

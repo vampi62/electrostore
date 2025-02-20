@@ -7,7 +7,7 @@ import { useAuthStore, useCamerasStore } from "@/stores";
 const camerasStore = useCamerasStore();
 const authStore = useAuthStore();
 
-async function fetchData() {
+async function fetchAllData() {
 	let offset = 0;
 	const limit = 100;
 	do {
@@ -16,7 +16,7 @@ async function fetchData() {
 	} while (offset < camerasStore.TotalCount);
 }
 onMounted(() => {
-	fetchData();
+	fetchAllData();
 });
 
 const sort = ref({ key: "", order: "asc" });

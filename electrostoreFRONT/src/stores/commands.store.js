@@ -99,7 +99,10 @@ export const useCommandsStore = defineStore("commands",{
 			this.commandsLoading = false;
 		},
 		async getCommandById(id, expand = []) {
-			this.commands[id] = { loading: true };
+			if (!this.commands[id]) {
+				this.commands[id] = {};
+			}
+			this.commands[id].loading = true;
 			const expandString = expand.join(",");
 			this.commands[id] = await fetchWrapper.get({
 				url: `${baseUrl}/command/${id}?expand=${expandString}`,
@@ -179,7 +182,10 @@ export const useCommandsStore = defineStore("commands",{
 			if (!this.commentaires[idCommand]) {
 				this.commentaires[idCommand] = {};
 			}
-			this.commentaires[idCommand][id] = { loading: true };
+			if (!this.commentaires[idCommand][id]) {
+				this.commentaires[idCommand][id] = {};
+			}
+			this.commentaires[idCommand][id].loading = true;
 			const expandString = expand.join(",");
 			this.commentaires[idCommand][id] = await fetchWrapper.get({
 				url: `${baseUrl}/command/${idCommand}/commentaire/${id}?expand=${expandString}`,
@@ -190,7 +196,7 @@ export const useCommandsStore = defineStore("commands",{
 			}
 		},
 		async createCommentaire(idCommand, params) {
-			this.commentaireEdition = { loading: true };
+			this.commentaireEdition.loading = true;
 			this.commentaireEdition = await fetchWrapper.post({
 				url: `${baseUrl}/command/${idCommand}/commentaire`,
 				useToken: "access",
@@ -202,7 +208,7 @@ export const useCommandsStore = defineStore("commands",{
 			this.commentaires[idCommand][this.commentaireEdition.id_command_commentaire] = this.commentaireEdition;
 		},
 		async updateCommentaire(idCommand, id, params) {
-			this.commentaireEdition = { loading: true };
+			this.commentaireEdition.loading = true;
 			this.commentaireEdition = await fetchWrapper.put({
 				url: `${baseUrl}/command/${idCommand}/commentaire/${id}`,
 				useToken: "access",
@@ -211,7 +217,7 @@ export const useCommandsStore = defineStore("commands",{
 			this.commentaires[idCommand][id] = this.commentaireEdition;
 		},
 		async deleteCommentaire(idCommand, id) {
-			this.commentaireEdition = { loading: true };
+			this.commentaireEdition.loading = true;
 			this.commentaireEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/command/${idCommand}/commentaire/${id}`,
 				useToken: "access",
@@ -239,7 +245,10 @@ export const useCommandsStore = defineStore("commands",{
 			if (!this.documents[idCommand]) {
 				this.documents[idCommand] = {};
 			}
-			this.documents[idCommand][id] = { loading: true };
+			if (!this.documents[idCommand][id]) {
+				this.documents[idCommand][id] = {};
+			}
+			this.documents[idCommand][id].loading = true;
 			const expandString = expand.join(",");
 			this.documents[idCommand][id] = await fetchWrapper.get({
 				url: `${baseUrl}/command/${idCommand}/document/${id}?expand=${expandString}`,
@@ -247,7 +256,7 @@ export const useCommandsStore = defineStore("commands",{
 			});
 		},
 		async createDocument(idCommand, params) {
-			this.documentEdition = { loading: true };
+			this.documentEdition.loading = true;
 			const formData = new FormData();
 			formData.append("name_command_document", params.name_command_document);
 			formData.append("document", params.document);
@@ -263,7 +272,7 @@ export const useCommandsStore = defineStore("commands",{
 			this.documents[idCommand][this.documentEdition.id_command_document] = this.documentEdition;
 		},
 		async updateDocument(idCommand, id, params) {
-			this.documentEdition = { loading: true };
+			this.documentEdition.loading = true;
 			const formData = new FormData();
 			if (params.name_command_document) {
 				formData.append("name_command_document", params.name_command_document); 
@@ -280,7 +289,7 @@ export const useCommandsStore = defineStore("commands",{
 			this.documents[idCommand][id] = this.documentEdition;
 		},
 		async deleteDocument(idCommand, id) {
-			this.documentEdition = { loading: true };
+			this.documentEdition.loading = true;
 			this.documentEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/command/${idCommand}/document/${id}`,
 				useToken: "access",
@@ -340,7 +349,10 @@ export const useCommandsStore = defineStore("commands",{
 			if (!this.items[idCommand]) {
 				this.items[idCommand] = {};
 			}
-			this.items[idCommand][id] = { loading: true };
+			if (!this.items[idCommand][id]) {
+				this.items[idCommand][id] = {};
+			}
+			this.items[idCommand][id].loading = true;
 			const expandString = expand.join(",");
 			this.items[idCommand][id] = await fetchWrapper.get({
 				url: `${baseUrl}/command/${idCommand}/item/${id}?expand=${expandString}`,
@@ -351,7 +363,7 @@ export const useCommandsStore = defineStore("commands",{
 			}
 		},
 		async createItem(idCommand, params) {
-			this.itemEdition = { loading: true };
+			this.itemEdition.loading = true;
 			this.itemEdition = await fetchWrapper.post({
 				url: `${baseUrl}/command/${idCommand}/item`,
 				useToken: "access",
@@ -363,7 +375,7 @@ export const useCommandsStore = defineStore("commands",{
 			this.items[idCommand][this.itemEdition.id_item] = this.itemEdition;
 		},
 		async updateItem(idCommand, id, params) {
-			this.itemEdition = { loading: true };
+			this.itemEdition.loading = true;
 			this.itemEdition = await fetchWrapper.put({
 				url: `${baseUrl}/command/${idCommand}/item/${id}`,
 				useToken: "access",
@@ -372,7 +384,7 @@ export const useCommandsStore = defineStore("commands",{
 			this.items[idCommand][id] = params;
 		},
 		async deleteItem(idCommand, id) {
-			this.itemEdition = { loading: true };
+			this.itemEdition.loading = true;
 			this.itemEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/command/${idCommand}/item/${id}`,
 				useToken: "access",
@@ -380,7 +392,7 @@ export const useCommandsStore = defineStore("commands",{
 			delete this.items[idCommand][id];
 		},
 		async createItemBulk(idCommand, params) {
-			this.itemEdition = { loading: true };
+			this.itemEdition.loading = true;
 			this.itemEdition = await fetchWrapper.post({
 				url: `${baseUrl}/command/${idCommand}/item/bulk`,
 				useToken: "access",

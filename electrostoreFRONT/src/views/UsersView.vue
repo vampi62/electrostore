@@ -16,7 +16,7 @@ if (authStore.user?.role_user !== "admin") {
 	router.push("/");
 }
 
-async function fetchData() {
+async function fetchAllData() {
 	let offset = 0;
 	const limit = 100;
 	do {
@@ -25,7 +25,7 @@ async function fetchData() {
 	} while (offset < usersStore.usersTotalCount);
 }
 onMounted(() => {
-	fetchData();
+	fetchAllData();
 });
 
 const sort = ref({ key: "", order: "asc" });
