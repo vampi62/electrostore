@@ -76,6 +76,7 @@
 	"VItemProjetStatus": "Statut",
 	"VItemProjetQte": "Quantité",
 	"VItemLoading": "Chargement",
+	"VItemTagAdd": "Ajouter un tag",
 	"VItemDeleteTitle": "Supprimer l'article",
 	"VItemDeleteText": "Êtes-vous sûr de vouloir supprimer cet article ?",
 	"VItemDeleteConfirm": "Confirmer",

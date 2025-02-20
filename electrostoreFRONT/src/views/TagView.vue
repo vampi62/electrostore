@@ -286,8 +286,7 @@ const schemaTag = Yup.object().shape({
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleItems" class="text-xl font-semibold bg-gray-400 p-2 rounded"
 				:class="{ 'cursor-pointer': !tagsStore.tagsItemLoading && tagId != 'new', 'cursor-not-allowed': tagId == 'new' }">
-				{{ $t('tag.VTagItems') }} ({{ tagsStore.tagsItem[tagId] ?
-					Object.keys(tagsStore.tagsItem[tagId]).length : 0 }})
+				{{ $t('tag.VTagItems') }} ({{ tagsStore.tagsItemTotalCount[tagId] || 0 }})
 			</h3>
 			<div v-if="!tagsStore.tagsItemLoading && showItems" class="p-2">
 				<button type="button" @click="itemOpenAddModal"
@@ -326,8 +325,7 @@ const schemaTag = Yup.object().shape({
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleStores" class="text-xl font-semibold bg-gray-400 p-2 rounded"
 				:class="{ 'cursor-pointer': !tagsStore.tagsStoreLoading && tagId != 'new', 'cursor-not-allowed': tagId == 'new' }">
-				{{ $t('tag.VTagStores') }} ({{ tagsStore.tagsStore[tagId] ?
-					Object.keys(tagsStore.tagsStore[tagId]).length : 0 }})
+				{{ $t('tag.VTagStores') }} ({{ tagsStore.tagsStoreTotalCount[tagId] || 0 }})
 			</h3>
 			<div v-if="!tagsStore.tagsStoreLoading && showStores" class="p-2">
 				<button type="button" @click="storeOpenAddModal"
@@ -366,8 +364,7 @@ const schemaTag = Yup.object().shape({
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleBoxs" class="text-xl font-semibold bg-gray-400 p-2 rounded"
 				:class="{ 'cursor-pointer': !tagsStore.tagsBoxLoading && tagId != 'new', 'cursor-not-allowed': tagId == 'new' }">
-				{{ $t('tag.VTagBoxs') }} ({{ tagsStore.tagsBox[tagId] ?
-					Object.keys(tagsStore.tagsBox[tagId]).length : 0 }})
+				{{ $t('tag.VTagBoxs') }} ({{ tagsStore.tagsBoxTotalCount[tagId] || 0 }})
 			</h3>
 			<div v-if="!tagsStore.tagsBoxLoading && showBoxs" class="p-2">
 				<!-- <button type="button" @click="boxOpenAddModal"

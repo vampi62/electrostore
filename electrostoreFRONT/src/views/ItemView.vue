@@ -100,7 +100,7 @@ const toggleCommandItems = () => {
 
 // item
 const itemDeleteModalShow = ref(false);
-const storeInputTagShow = ref(false);
+const itemInputTagShow = ref(false);
 const tagLoad = ref(false);
 const itemSave = async() => {
 	try {
@@ -152,7 +152,7 @@ const showInputAddTag = async() => {
 			console.log(e);
 		}
 	}
-	storeInputTagShow.value = true;
+	itemInputTagShow.value = true;
 };
 
 const newTags = computed(() => {
@@ -494,7 +494,7 @@ const schemaAddImage = Yup.object().shape({
 						<font-awesome-icon icon="fa-solid fa-times" />
 					</span>
 				</span>
-				<span v-if="!storeInputTagShow" class="bg-gray-300 p-1 rounded mr-2 mb-2">
+				<span v-if="!itemInputTagShow" class="bg-gray-300 p-1 rounded mr-2 mb-2">
 					<span @click="showInputAddTag"
 						class="text-green-500 cursor-pointer hover:text-green-600">
 						<font-awesome-icon icon="fa-solid fa-plus" />
@@ -505,8 +505,7 @@ const schemaAddImage = Yup.object().shape({
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleDocuments" class="text-xl font-semibold  bg-gray-400 p-2 rounded"
 				:class="{ 'cursor-pointer': !itemsStore.documentsLoading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
-				{{ $t('item.VItemDocuments') }} ({{ itemsStore.documents[itemId] ?
-					Object.keys(itemsStore.documents[itemId]).length : 0 }})
+				{{ $t('item.VItemDocuments') }} ({{ itemsStore.documentsTotalCount[itemId] || 0 }})
 			</h3>
 			<div v-if="!itemsStore.documentsLoading && showDocuments" class="p-2">
 				<button type="button" @click="documentAddOpenModal"
@@ -560,8 +559,7 @@ const schemaAddImage = Yup.object().shape({
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleImages" class="text-xl font-semibold bg-gray-400 p-2 rounded"
 				:class="{ 'cursor-pointer': !itemsStore.images[itemId]?.loading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
-				{{ $t('item.VItemImages') }} ({{ itemsStore.images[itemId] ?
-					Object.keys(itemsStore.images[itemId]).length : 0 }})
+				{{ $t('item.VItemImages') }} ({{ itemsStore.imagesTotalCount[itemId] || 0 }})
 			</h3>
 			<div v-if="!itemsStore.images.imagesLoading && showImages" class="p-2">
 				<button type="button" @click="imageAddOpenModal"
@@ -601,8 +599,7 @@ const schemaAddImage = Yup.object().shape({
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleCommandItems" class="text-xl font-semibold bg-gray-400 p-2 rounded"
 				:class="{ 'cursor-pointer': !itemsStore.itemCommandsLoading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
-				{{ $t('item.VItemCommands') }} ({{ itemsStore.itemCommands[itemId] ?
-					Object.keys(itemsStore.itemCommands[itemId]).length : 0 }})
+				{{ $t('item.VItemCommands') }} ({{ itemsStore.itemCommandsTotalCount[itemId] || 0 }})
 			</h3>
 			<div v-if="!itemsStore.itemCommandsLoading && showCommandItems" class="p-2">
 				<div class="overflow-x-auto max-h-64 overflow-y-auto">
@@ -652,8 +649,7 @@ const schemaAddImage = Yup.object().shape({
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleProjetItems" class="text-xl font-semibold bg-gray-400 p-2 rounded"
 				:class="{ 'cursor-pointer': !itemsStore.itemProjetsLoading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
-				{{ $t('item.VItemProjets') }} ({{ itemsStore.itemProjets[itemId] ?
-					Object.keys(itemsStore.itemProjets[itemId]).length : 0 }})
+				{{ $t('item.VItemProjets') }} ({{ itemsStore.itemProjetsTotalCount[itemId] || 0 }})
 			</h3>
 			<div v-if="!itemsStore.itemProjetsLoading && showProjetItems" class="p-2">
 				<div class="overflow-x-auto max-h-64 overflow-y-auto">
@@ -709,6 +705,26 @@ const schemaAddImage = Yup.object().shape({
 	</div>
 	<div v-else>
 		<div>{{ $t('item.VItemLoading') }}</div>
+	</div>
+
+	<div v-if="itemInputTagShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
+		@click="itemInputTagShow = false">
+		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
+			<div class="flex justify-between items-center border-b pb-3">
+				<h2 class="text-2xl font-semibold">{{ $t('item.VItemTagAdd') }}</h2>
+				<button type="button" @click="itemInputTagShow = false"
+					class="text-gray-500 hover:text-gray-700">&times;</button>
+			</div>
+
+			<div class="flex flex-wrap">
+				<template v-for="(tag, key) in newTags" :key="key">
+					<div class="bg-gray-200 p-1 rounded mr-2 mb-2 cursor-pointer"
+						@click="itemsStore.createItemTag(itemId, { id_tag: tag.id_tag })">
+						{{ tag.nom_tag }} ({{ tag.poids_tag }})
+					</div>
+				</template>
+			</div>
+		</div>
 	</div>
 
 	<div v-if="itemDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
