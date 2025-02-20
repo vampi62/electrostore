@@ -30,6 +30,61 @@ if (authStore.user?.role_user !== "admin" && authStore.user?.id_user !== Number(
 	}
 }
 
+async function fetchTokens() {
+	if (userId === "new") {
+		return;
+	}
+	if (usersStore.tokensLoading) {
+		return;
+	}
+	const scrollContainer = HTMLContainerTokens.value;
+	if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 5) {
+		const offset = Object.keys(usersStore.tokens[userId]).length;
+		if (Number(usersStore.tokensTotalCount[userId]) === offset) {
+			return;
+		}
+		await usersStore.getTokenByInterval(userId,
+			(offset + 100 > Number(usersStore.tokensTotalCount[userId]) ? usersStore.tokensTotalCount[userId] : offset + 100),
+			offset);
+	}
+}
+async function fetchProjetCommentaires() {
+	if (userId === "new") {
+		return;
+	}
+	if (usersStore.projetsCommentaireLoading) {
+		return;
+	}
+	const scrollContainer = HTMLContainerProjetsCommentaires.value;
+	if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 5) {
+		const offset = Object.keys(usersStore.projetsCommentaire[userId]).length;
+		if (Number(usersStore.projetsCommentaireTotalCount[userId]) === offset) {
+			return;
+		}
+		await usersStore.getProjectCommentaireByInterval(userId,
+			(offset + 100 > Number(usersStore.projetsCommentaireTotalCount[userId]) ? usersStore.projetsCommentaireTotalCount[userId] : offset + 100),
+			offset, ["projet"]);
+	}
+}
+async function fetchCommandCommentaires() {
+	if (userId === "new") {
+		return;
+	}
+	if (usersStore.commandsCommentaireLoading) {
+		return;
+	}
+	const scrollContainer = HTMLContainerCommandsCommentaires.value;
+	if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 5) {
+		const offset = Object.keys(usersStore.commandsCommentaire[userId]).length;
+		if (Number(usersStore.commandsCommentaireTotalCount[userId]) === offset) {
+			return;
+		}
+		await usersStore.getCommandCommentaireByInterval(userId,
+			(offset + 100 > Number(usersStore.commandsCommentaireTotalCount[userId]) ? usersStore.commandsCommentaireTotalCount[userId] : offset + 100),
+			offset, ["command"]);
+	}
+}
+
 async function fetchAllData() {
 	if (userId !== "new") {
 		usersStore.userEdition = {
@@ -71,13 +126,22 @@ async function fetchAllData() {
 	}
 }
 onMounted(() => {
+	HTMLContainerTokens.value.addEventListener("scroll", fetchTokens);
+	HTMLContainerCommandsCommentaires.value.addEventListener("scroll", fetchCommandCommentaires);
+	HTMLContainerProjetsCommentaires.value.addEventListener("scroll", fetchProjetCommentaires);
 	fetchAllData();
 });
 onBeforeUnmount(() => {
+	HTMLContainerTokens.value.removeEventListener("scroll", fetchTokens);
+	HTMLContainerCommandsCommentaires.value.removeEventListener("scroll", fetchCommandCommentaires);
+	HTMLContainerProjetsCommentaires.value.removeEventListener("scroll", fetchProjetCommentaires);
 	usersStore.userEdition = {
 		loading: false,
 	};
 });
+const HTMLContainerTokens = ref(null);
+const HTMLContainerCommandsCommentaires = ref(null);
+const HTMLContainerProjetsCommentaires = ref(null);
 
 const showParticipation = ref(true);
 const showProjetCommentaires = ref(true);
@@ -227,7 +291,7 @@ watch(isChecked, (newValue) => {
 			</RouterLink>
 		</div>
 	</div>
-	<div v-if="usersStore.users[userId] || userId == 'new'">
+	<div :class="usersStore.users[userId] || userId == 'new' ? 'block' : 'hidden'">
 		<div class="mb-6 flex justify-between flex-wrap">
 			<Form :validation-schema="schemaUser" v-slot="{ errors }" @submit.prevent="" class="mb-6">
 				<table class="table-auto text-gray-700">
@@ -327,15 +391,14 @@ watch(isChecked, (newValue) => {
 				:class="{ 'cursor-pointer': userId != 'new', 'cursor-not-allowed': userId == 'new' }">
 				{{ $t('user.VUserParticipation') }}
 			</h3>
-			<div v-if="showParticipation" class="p-2">
+			<div :class="showParticipation ? 'block' : 'hidden'" class="p-2">
 				<div class="mb-6 bg-gray-100 p-2 rounded">
 					<h3 @click="toggleCommandCommentaires" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-						:class="{ 'cursor-pointer': !usersStore.commandsCommentaireLoading && userId != 'new', 'cursor-not-allowed': userId == 'new' }">
-						{{ $t('user.VUserCommandsCommentaires') }} ({{ usersStore.commandsCommentaire[userId] ?
-							Object.keys(usersStore.commandsCommentaire[userId]).length : 0 }})
+						:class="{ 'cursor-pointer': userId != 'new', 'cursor-not-allowed': userId == 'new' }">
+						{{ $t('user.VUserCommandsCommentaires') }} ({{ usersStore.commandsCommentaireTotalCount[userId] || 0 }})
 					</h3>
-					<div v-if="!usersStore.CommandsCommentaireLoading && showCommandCommentaires" class="p-2">
-						<div class="space-y-4 overflow-x-auto max-h-64 overflow-y-auto">
+					<div :class="(!usersStore.CommandsCommentaireLoading && showCommandCommentaires) ? 'block' : 'hidden'" class="p-2">
+						<div class="space-y-4 overflow-x-auto max-h-64 overflow-y-auto" ref="HTMLContainerCommandsCommentaires">
 							<div v-for="commentaire in usersStore.commandsCommentaire[userId]"
 								:key="commentaire.id_command_commentaire" class="flex flex-col border p-4 rounded-lg">
 								<div class="text-sm text-gray-600">
@@ -362,12 +425,11 @@ watch(isChecked, (newValue) => {
 				</div>
 				<div class="mb-6 bg-gray-100 p-2 rounded">
 					<h3 @click="toggleProjetCommentaires" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-						:class="{ 'cursor-pointer': !usersStore.projetsCommentaireLoading && userId != 'new', 'cursor-not-allowed': userId == 'new' }">
-						{{ $t('user.VUserProjetsCommentaires') }} ({{ usersStore.projetsCommentaire[userId] ?
-							Object.keys(usersStore.projetsCommentaire[userId]).length : 0 }})
+						:class="{ 'cursor-pointer': userId != 'new', 'cursor-not-allowed': userId == 'new' }">
+						{{ $t('user.VUserProjetsCommentaires') }} ({{ usersStore.projetsCommentaireTotalCount[userId] || 0 }})
 					</h3>
-					<div v-if="!usersStore.ProjetsCommentaireLoading && showProjetCommentaires" class="p-2">
-						<div class="space-y-4 overflow-x-auto max-h-64 overflow-y-auto">
+					<div :class="(!usersStore.ProjetsCommentaireLoading && showProjetCommentaires) ? 'block' : 'hidden'" class="p-2">
+						<div class="space-y-4 overflow-x-auto max-h-64 overflow-y-auto" ref="HTMLContainerProjetsCommentaires">
 							<div v-for="commentaire in usersStore.projetsCommentaire[userId]"
 								:key="commentaire.id_projet_commentaire" class="flex flex-col border p-4 rounded-lg">
 								<div class="text-sm text-gray-600">
@@ -396,12 +458,11 @@ watch(isChecked, (newValue) => {
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleTokens" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': !usersStore.tokensLoading && userId != 'new', 'cursor-not-allowed': userId == 'new' }">
-				{{ $t('user.VUserTokens') }} ({{ usersStore.tokens[userId] ?
-					Object.keys(usersStore.tokens[userId]).length : 0 }})
+				:class="{ 'cursor-pointer': userId != 'new', 'cursor-not-allowed': userId == 'new' }">
+				{{ $t('user.VUserTokens') }} ({{ usersStore.tokensTotalCount[userId] || 0 }})
 			</h3>
-			<div v-if="!usersStore.tokensLoading && showTokens" class="p-2">
-				<div class="overflow-x-auto max-h-64 overflow-y-auto">
+			<div :class="showTokens ? 'block' : 'hidden'" class="p-2">
+				<div class="overflow-x-auto max-h-64 overflow-y-auto" ref="HTMLContainerTokens">
 					<table class="min-w-full table-auto">
 						<thead>
 							<tr>
@@ -462,13 +523,16 @@ watch(isChecked, (newValue) => {
 									</button>
 								</td>
 							</tr>
+							<tr v-if="usersStore.tokensLoading">
+								{{ $t('user.VUserLoading') }}
+							</tr>
 						</tbody>
 					</table>
 				</div>
 			</div>
 		</div>
 	</div>
-	<div v-else>
+	<div :class="usersStore.users[userId] || userId == 'new' ? 'hidden' : 'block'">
 		<div>{{ $t('user.VUserLoading') }}</div>
 	</div>
 

@@ -21,6 +21,25 @@ const usersStore = useUsersStore();
 const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
+async function fetchCommentaires() {
+	if (projetId === "new") {
+		return;
+	}
+	if (projetsStore.commentairesLoading) {
+		return;
+	}
+	const scrollContainer = HTMLContainerProjetsCommentaires.value;
+	if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 5) {
+		const offset = Object.keys(projetsStore.commentaires[projetId]).length;
+		if (Number(projetsStore.commentairesTotalCount[projetId]) === offset) {
+			return;
+		}
+		await projetsStore.getCommentaireByInterval(projetId,
+			(offset + 100 > Number(projetsStore.commentairesTotalCount[projetId]) ? projetsStore.commentairesTotalCount[projetId] : offset + 100),
+			offset, ["user"]);
+	}
+}
+
 async function fetchAllData() {
 	if (projetId !== "new") {
 		projetsStore.projetEdition = {
@@ -53,13 +72,16 @@ async function fetchAllData() {
 	}
 }
 onMounted(() => {
+	HTMLContainerProjetsCommentaires.value.addEventListener("scroll", fetchCommentaires);
 	fetchAllData();
 });
 onBeforeUnmount(() => {
+	HTMLContainerProjetsCommentaires.value.removeEventListener("scroll", fetchCommentaires);
 	projetsStore.projetEdition = {
 		loading: false,
 	};
 });
+const HTMLContainerProjetsCommentaires = ref(null);
 
 const showDocuments = ref(true);
 const showItems = ref(true);
@@ -410,7 +432,7 @@ const schemaCommentaire = Yup.object().shape({
 			</RouterLink>
 		</div>
 	</div>
-	<div v-if="projetsStore.projets[projetId] || projetId == 'new'">
+	<div :class="projetsStore.projets[projetId] || projetId == 'new' ? 'block' : 'hidden'">
 		<div class="mb-6 flex justify-between">
 			<Form :validation-schema="schemaProjet" v-slot="{ errors }" @submit.prevent="">
 				<table class="table-auto text-gray-700">
@@ -491,11 +513,10 @@ const schemaCommentaire = Yup.object().shape({
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleDocuments" class="text-xl font-semibold  bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': !projetsStore.documentsLoading && projetId != 'new', 'cursor-not-allowed': projetId == 'new' }">
-				{{ $t('projet.VProjetDocuments') }} ({{ projetsStore.documents[projetId] ?
-					Object.keys(projetsStore.documents[projetId]).length : 0 }})
+				:class="{ 'cursor-pointer': projetId != 'new', 'cursor-not-allowed': projetId == 'new' }">
+				{{ $t('projet.VProjetDocuments') }} ({{ projetsStore.documentsTotalCount[projetId] || 0 }})
 			</h3>
-			<div v-if="!projetsStore.documentsLoading && showDocuments" class="p-2">
+			<div :class="showDocuments ? 'block' : 'hidden'" class="p-2">
 				<button type="button" @click="documentAddOpenModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('projet.VProjetAddDocument') }}
@@ -536,6 +557,11 @@ const schemaCommentaire = Yup.object().shape({
 										class="text-red-500 cursor-pointer hover:text-red-600" />
 								</td>
 							</tr>
+							<tr v-if="projetsStore.documentsLoading" class="text-center">
+								<td class="px-4 py-2 border-b border-gray-200" colspan="4">
+									{{ $t('projet.VProjetLoading') }}
+								</td>
+							</tr>
 						</tbody>
 					</table>
 				</div>
@@ -543,11 +569,10 @@ const schemaCommentaire = Yup.object().shape({
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleItems" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': !projetsStore.itemsLoading && projetId != 'new', 'cursor-not-allowed': projetId == 'new' }">
-				{{ $t('projet.VProjetItems') }} ({{ projetsStore.items[projetId] ?
-					Object.keys(projetsStore.items[projetId]).length : 0 }})
+				:class="{ 'cursor-pointer': projetId != 'new', 'cursor-not-allowed': projetId == 'new' }">
+				{{ $t('projet.VProjetItems') }} ({{ projetsStore.itemsTotalCount[projetId] || 0 }})
 			</h3>
-			<div v-if="!projetsStore.itemsLoading && showItems" class="p-2">
+			<div :class="showItems ? 'block' : 'hidden'" class="p-2">
 				<button type="button" @click="itemOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('projet.VProjetAddItem') }}
@@ -607,6 +632,11 @@ const schemaCommentaire = Yup.object().shape({
 									</template>
 								</td>
 							</tr>
+							<tr v-if="projetsStore.itemsLoading" class="text-center">
+								<td class="px-4 py-2 border-b border-gray-200" colspan="4">
+									{{ $t('projet.VProjetLoading') }}
+								</td>
+							</tr>
 						</tbody>
 					</table>
 				</div>
@@ -614,11 +644,10 @@ const schemaCommentaire = Yup.object().shape({
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleCommentaires" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': !projetsStore.commentairesLoading && projetId != 'new', 'cursor-not-allowed': projetId == 'new' }">
-				{{ $t('projet.VProjetCommentaires') }} ({{ projetsStore.commentaires[projetId] ?
-					Object.keys(projetsStore.commentaires[projetId]).length : 0 }})
+				:class="{ 'cursor-pointer': projetId != 'new', 'cursor-not-allowed': projetId == 'new' }">
+				{{ $t('projet.VProjetCommentaires') }} ({{ projetsStore.commentairesTotalCount[projetId] || 0 }})
 			</h3>
-			<div v-if="!projetsStore.commentairesLoading && showCommentaires" class="p-2">
+			<div :class="showCommentaires ? 'block' : 'hidden'" class="p-2">
 				<!-- Zone de saisie de commentaire -->
 				<Form :validation-schema="schemaCommentaire" v-slot="{ errors }">
 					<div class="flex items-center space-x-4">
@@ -633,7 +662,7 @@ const schemaCommentaire = Yup.object().shape({
 					</div>
 				</Form>
 				<!-- Affichage des commentaires existants -->
-				<div class="space-y-4 overflow-x-auto max-h-64 overflow-y-auto">
+				<div class="space-y-4 overflow-x-auto max-h-64 overflow-y-auto" ref="HTMLContainerProjetsCommentaires">
 					<div v-for="commentaire in projetsStore.commentaires[projetId]"
 						:key="commentaire.id_projet_commentaire" class="flex flex-col border p-4 rounded-lg">
 						<div :class="{
@@ -689,11 +718,15 @@ const schemaCommentaire = Yup.object().shape({
 							</template>
 						</div>
 					</div>
+					<div v-if="projetsStore.commentairesLoading" class="text-center">
+						{{ $t('projet.VProjetLoading') }}
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-	<div v-else>
+	<div :class="!projetsStore.projets[projetId] && projetId != 'new' ? 'block' : 'hidden'"
+		class="text-center">
 		<div>{{ $t('projet.VProjetLoading') }}</div>
 	</div>
 

@@ -64,6 +64,9 @@ export const useProjetsStore = defineStore("projets",{
 			this.projetsLoading = false;
 		},
 		async getProjetById(id, expand = []) {
+			if (!this.projets[id]) {
+				this.projets[id] = {};
+			}
 			this.projets[id].loading = true;
 			const expandString = expand.join(",");
 			this.projets[id] = await fetchWrapper.get({

@@ -38,6 +38,7 @@
 	"VStoreYLength": "Y Length",
 	"VStoreCellSize": "Cell size",
 	"VStoreShowLedId": "Show LED IDs",
+	"VStoreAddTag": "Add a tag",
 	"VStoreDeleteTitle": "Delete store",
 	"VStoreDeleteText": "Are you sure you want to delete this store?",
 	"VStoreDeleteConfirm": "Confirm",

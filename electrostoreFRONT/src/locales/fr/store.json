@@ -38,6 +38,7 @@
 	"VStoreYLength": "Longueur Y",
 	"VStoreCellSize": "Taille des cellules",
 	"VStoreShowLedId": "Afficher les ID des LEDs",
+	"VStoreAddTag": "Ajouter un tag",
 	"VStoreDeleteTitle": "Supprimer le rangement",
 	"VStoreDeleteText": "Êtes-vous sûr de vouloir supprimer ce rangement ?",
 	"VStoreDeleteConfirm": "Confirmer",

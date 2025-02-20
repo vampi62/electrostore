@@ -999,7 +999,27 @@ const toggleBoxLed = async(boxId) => {
 		</div>
 	</template>
 
-	<div v-if="storeDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+	<div v-if="storeInputTagShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
+		@click="storeInputTagShow = false">
+		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
+			<div class="flex justify-between items-center border-b pb-3">
+				<h2 class="text-2xl font-semibold">{{ $t('store.VStoreAddTag') }}</h2>
+				<button type="button" @click="storeInputTagShow = false"
+					class="text-gray-500 hover:text-gray-700">&times;</button>
+			</div>
+
+			<div class="flex flex-wrap">
+				<template v-for="(tag, key) in newTags" :key="key">
+					<div class="bg-gray-200 p-1 rounded mr-2 mb-2 cursor-pointer"
+						@click="storesStore.createTagStore(storeId, { id_tag: tag.id_tag })">
+						{{ tag.nom_tag }} ({{ tag.poids_tag }})
+					</div>
+				</template>
+			</div>
+		</div>
+	</div>
+
+	<div v-if="storeDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
 		@click="storeDeleteModalShow = false">
 		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
 			<h2 class="text-xl mb-4">{{ $t('store.VStoreDeleteTitle') }}</h2>
