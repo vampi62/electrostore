@@ -6,7 +6,7 @@ const { addNotification } = inject("useNotification");
 import { useTagsStore } from "@/stores";
 const tagsStore = useTagsStore();
 
-async function fetchData() {
+async function fetchAllData() {
 	let offset = 0;
 	const limit = 100;
 	do {
@@ -15,7 +15,7 @@ async function fetchData() {
 	} while (offset < tagsStore.tagsTotalCount);
 }
 onMounted(() => {
-	fetchData();
+	fetchAllData();
 });
 
 const sort = ref({ key: "", order: "asc" });

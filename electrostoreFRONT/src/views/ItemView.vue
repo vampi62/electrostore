@@ -22,10 +22,10 @@ const storesStore = useStoresStore();
 const commandsStore = useCommandsStore();
 const projetsStore = useProjetsStore();
 
-async function fetchData() {
+async function fetchAllData() {
 	if (itemId !== "new") {
 		itemsStore.itemEdition = {
-			loading: false,
+			loading: true,
 		};
 		try {
 			await itemsStore.getItemById(itemId);
@@ -59,7 +59,7 @@ async function fetchData() {
 	}
 }
 onMounted(() => {
-	fetchData();
+	fetchAllData();
 });
 onBeforeUnmount(() => {
 	itemsStore.itemEdition = {
@@ -100,6 +100,8 @@ const toggleCommandItems = () => {
 
 // item
 const itemDeleteModalShow = ref(false);
+const storeInputTagShow = ref(false);
+const tagLoad = ref(false);
 const itemSave = async() => {
 	try {
 		await schemaItem.validate(itemsStore.itemEdition, { abortEarly: false });
@@ -136,6 +138,28 @@ const itemDelete = async() => {
 	}
 	itemDeleteModalShow.value = false;
 };
+const showInputAddTag = async() => {
+	if (!tagLoad.value) {
+		try {
+			let offset = 0;
+			const limit = 100;
+			do {
+				await tagsStore.getTagByInterval(limit, offset);
+				offset += limit;
+			} while (offset < tagsStore.tagsTotalCount);
+			tagLoad.value = true;
+		} catch (e) {
+			console.log(e);
+		}
+	}
+	storeInputTagShow.value = true;
+};
+
+const newTags = computed(() => {
+	return Object.values(tagsStore.tags).filter((element) => {
+		return !itemsStore.itemTags[itemId][element.id_tag];
+	});
+});
 
 const getTotalQuantity = computed(() => {
 	if (itemId === "new") {
@@ -329,6 +353,8 @@ const schemaItem = Yup.object().shape({
 		.max(configsStore.getConfigByKey("max_length_description"), t("item.VItemDescriptionMaxLength") + " " + configsStore.getConfigByKey("max_length_description") + t("common.VAllCaracters"))
 		.required(t("item.VItemDescriptionRequired")),
 	seuil_min_item: Yup.number()
+		.min(0, t("item.VItemSeuilMinMin"))
+		.typeError(t("item.VItemSeuilMinType"))
 		.required(t("item.VItemSeuilMinRequired")),
 	id_img: Yup.string()
 		.nullable(),
@@ -468,7 +494,12 @@ const schemaAddImage = Yup.object().shape({
 						<font-awesome-icon icon="fa-solid fa-times" />
 					</span>
 				</span>
-				<!-- input text and list tag for add new tag-->
+				<span v-if="!storeInputTagShow" class="bg-gray-300 p-1 rounded mr-2 mb-2">
+					<span @click="showInputAddTag"
+						class="text-green-500 cursor-pointer hover:text-green-600">
+						<font-awesome-icon icon="fa-solid fa-plus" />
+					</span>
+				</span>
 			</div>
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">

@@ -19,10 +19,10 @@ const configsStore = useConfigsStore();
 const camerasStore = useCamerasStore();
 const authStore = useAuthStore();
 
-async function fetchData() {
+async function fetchAllData() {
 	if (cameraId !== "new") {
 		camerasStore.cameraEdition = {
-			loading: false,
+			loading: true,
 		};
 		try {
 			await camerasStore.getCameraById(cameraId);
@@ -52,7 +52,7 @@ async function fetchData() {
 	}
 }
 onMounted(() => {
-	fetchData();
+	fetchAllData();
 });
 onBeforeUnmount(() => {
 	if (intervalRefreshStatus) {

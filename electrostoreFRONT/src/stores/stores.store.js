@@ -39,6 +39,12 @@ export const useStoresStore = defineStore("stores",{
 		boxTagEdition: {},
 	}),
 	actions: {
+		pushLed(led) {
+			this.ledEdition[led.id_led] = led;
+		},
+		pushBox(box) {
+			this.boxEdition[box.id_box] = box;
+		},
 		async getStoreByList(idResearch = [], expand = []) {
 			this.storesLoading = true;
 			const idResearchString = idResearch.join(",");
@@ -109,7 +115,10 @@ export const useStoresStore = defineStore("stores",{
 			this.storesLoading = false;
 		},
 		async getStoreById(id, expand = []) {
-			this.stores[id] = { loading: true };
+			if (!this.stores[id]) {
+				this.stores[id] = {};
+			}
+			this.stores[id].loading = true;
 			const expandString = expand.join(",");
 			this.stores[id] = await fetchWrapper.get({
 				url: `${baseUrl}/store/${id}?expand=${expandString}`,
@@ -200,7 +209,10 @@ export const useStoresStore = defineStore("stores",{
 			if (!this.boxs[idStore]) {
 				this.boxs[idStore] = {};
 			}
-			this.boxs[idStore][id] = { loading: true };
+			if (!this.boxs[idStore][id]) {
+				this.boxs[idStore][id] = {};
+			}
+			this.boxs[idStore][id].loading = true;
 			const expandString = expand.join(",");
 			this.boxs[idStore][id] = await fetchWrapper.get({
 				url: `${baseUrl}/store/${idStore}/box/${id}?expand=${expandString}`,
@@ -222,7 +234,7 @@ export const useStoresStore = defineStore("stores",{
 			}
 		},
 		async createBox(idStore, params) {
-			this.boxEdition = { loading: true };
+			this.boxEdition.loading = true;
 			this.boxEdition = await fetchWrapper.post({
 				url: `${baseUrl}/store/${idStore}/box`,
 				useToken: "access",
@@ -234,7 +246,7 @@ export const useStoresStore = defineStore("stores",{
 			this.boxs[idStore][this.boxEdition.id_box] = this.boxEdition;
 		},
 		async updateBox(idStore, id, params) {
-			this.boxEdition = { loading: true };
+			this.boxEdition.loading = true;
 			this.boxEdition = await fetchWrapper.put({
 				url: `${baseUrl}/store/${idStore}/box/${id}`,
 				useToken: "access",
@@ -243,7 +255,7 @@ export const useStoresStore = defineStore("stores",{
 			this.boxs[idStore][id] = this.boxEdition;
 		},
 		async deleteBox(idStore, id) {
-			this.boxEdition = { loading: true };
+			this.boxEdition.loading = true;
 			this.boxEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/store/${idStore}/box/${id}`,
 				useToken: "access",
@@ -251,8 +263,7 @@ export const useStoresStore = defineStore("stores",{
 			delete this.boxs[idStore][id];
 		},
 		async createBoxBulk(idStore, params) {
-			this.boxEdition = { loading: true };
-			this.boxEdition = await fetchWrapper.post({
+			let boxList = await fetchWrapper.post({
 				url: `${baseUrl}/store/${idStore}/box/bulk`,
 				useToken: "access",
 				body: params,
@@ -260,13 +271,12 @@ export const useStoresStore = defineStore("stores",{
 			if (!this.boxs[idStore]) {
 				this.boxs[idStore] = {};
 			}
-			for (const box of this.boxEdition["data"]) {
+			for (const box of boxList["valide"]) {
 				this.boxs[idStore][box.id_box] = box;
 			}
 		},
 		async updateBoxBulk(idStore, params) {
-			this.boxEdition = { loading: true };
-			this.boxEdition = await fetchWrapper.put({
+			let boxList = await fetchWrapper.put({
 				url: `${baseUrl}/store/${idStore}/box/bulk`,
 				useToken: "access",
 				body: params,
@@ -274,19 +284,18 @@ export const useStoresStore = defineStore("stores",{
 			if (!this.boxs[idStore]) {
 				this.boxs[idStore] = {};
 			}
-			for (const box of this.boxEdition["data"]) {
+			for (const box of boxList["valide"]) {
 				this.boxs[idStore][box.id_box] = box;
 			}
 		},
 		async deleteBoxBulk(idStore, params) {
-			this.boxEdition = { loading: true };
-			this.boxEdition = await fetchWrapper.delete({
+			let boxList = await fetchWrapper.delete({
 				url: `${baseUrl}/store/${idStore}/box/bulk`,
 				useToken: "access",
 				body: params,
 			});
-			for (const id of this.boxs["valide"]) {
-				delete this.boxs[idStore][id];
+			for (const box of boxList["valide"]) {
+				delete this.boxs[idStore][box.id_box];
 			}
 		},
 		async showBoxById(idStore, id, params) {
@@ -318,14 +327,17 @@ export const useStoresStore = defineStore("stores",{
 			if (!this.leds[idStore]) {
 				this.leds[idStore] = {};
 			}
-			this.leds[idStore][id] = { loading: true };
+			if (!this.leds[idStore][id]) {
+				this.leds[idStore][id] = {};
+			}
+			this.leds[idStore][id].loading = true;
 			this.leds[idStore][id] = await fetchWrapper.get({
 				url: `${baseUrl}/store/${idStore}/led/${id}`,
 				useToken: "access",
 			});
 		},
 		async createLed(idStore, params) {
-			this.ledEdition = { loading: true };
+			this.ledEdition.loading = true;
 			this.ledEdition = await fetchWrapper.post({
 				url: `${baseUrl}/store/${idStore}/led`,
 				useToken: "access",
@@ -337,7 +349,7 @@ export const useStoresStore = defineStore("stores",{
 			this.leds[idStore][this.ledEdition.id_led] = this.ledEdition;
 		},
 		async updateLed(idStore, id, params) {
-			this.ledEdition = { loading: true };
+			this.ledEdition.loading = true;
 			this.ledEdition = await fetchWrapper.put({
 				url: `${baseUrl}/store/${idStore}/led/${id}`,
 				useToken: "access",
@@ -346,7 +358,7 @@ export const useStoresStore = defineStore("stores",{
 			this.leds[idStore][id] = this.ledEdition;
 		},
 		async deleteLed(idStore, id) {
-			this.ledEdition = { loading: true };
+			this.ledEdition.loading = true;
 			this.ledEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/store/${idStore}/led/${id}`,
 				useToken: "access",
@@ -354,8 +366,7 @@ export const useStoresStore = defineStore("stores",{
 			delete this.leds[idStore][id];
 		},
 		async createLedBulk(idStore, params) {
-			this.ledEdition = { loading: true };
-			this.ledEdition = await fetchWrapper.post({
+			let ledList = await fetchWrapper.post({
 				url: `${baseUrl}/store/${idStore}/led/bulk`,
 				useToken: "access",
 				body: params,
@@ -363,13 +374,12 @@ export const useStoresStore = defineStore("stores",{
 			if (!this.leds[idStore]) {
 				this.leds[idStore] = {};
 			}
-			for (const led of this.ledEdition["valide"]) {
+			for (const led of ledList["valide"]) {
 				this.leds[idStore][led.id_led] = led;
 			}
 		},
 		async updateLedBulk(idStore, params) {
-			this.ledEdition = { loading: true };
-			this.ledEdition = await fetchWrapper.put({
+			let ledList = await fetchWrapper.put({
 				url: `${baseUrl}/store/${idStore}/led/bulk`,
 				useToken: "access",
 				body: params,
@@ -377,19 +387,18 @@ export const useStoresStore = defineStore("stores",{
 			if (!this.leds[idStore]) {
 				this.leds[idStore] = {};
 			}
-			for (const led of this.ledEdition["valide"]) {
+			for (const led of ledList["valide"]) {
 				this.leds[idStore][led.id_led] = led;
 			}
 		},
 		async deleteLedBulk(idStore, params) {
-			this.ledEdition = { loading: true };
-			this.ledEdition = await fetchWrapper.delete({
+			let ledList = await fetchWrapper.delete({
 				url: `${baseUrl}/store/${idStore}/led/bulk`,
 				useToken: "access",
 				body: params,
 			});
-			for (const id of this.ledEdition["valide"]) {
-				delete this.leds[idStore][id];
+			for (const led of ledList["valide"]) {
+				delete this.leds[idStore][led.id_led];
 			}
 		},
 		async showLedById(idStore, id, params) {
@@ -418,7 +427,7 @@ export const useStoresStore = defineStore("stores",{
 					tagsStore.tags[tag.id_tag] = tag.tag;
 				}
 			}
-			this.storeTagsTotalCount = newTagList["count"];
+			this.storeTagsTotalCount[idStore] = newTagList["count"];
 			this.storeTagsLoading = false;
 		},
 		async getTagStoreById(idStore, id, expand = []) {
@@ -427,7 +436,10 @@ export const useStoresStore = defineStore("stores",{
 			if (!this.storeTags[idStore]) {
 				this.storeTags[idStore] = {};
 			}
-			this.storeTags[idStore][id] = { loading: true };
+			if (!this.storeTags[idStore][id]) {
+				this.storeTags[idStore][id] = {};
+			}
+			this.storeTags[idStore][id].loading = true;
 			const expandString = expand.join(",");
 			this.storeTags[idStore][id] = await fetchWrapper.get({
 				url: `${baseUrl}/store/${idStore}/tag/${id}?expand=${expandString}`,
@@ -438,7 +450,7 @@ export const useStoresStore = defineStore("stores",{
 			}
 		},
 		async createTagStore(idStore, params) {
-			this.storeTagEdition = { loading: true };
+			this.storeTagEdition.loading = true;
 			this.storeTagEdition = await fetchWrapper.post({
 				url: `${baseUrl}/store/${idStore}/tag`,
 				useToken: "access",
@@ -450,7 +462,7 @@ export const useStoresStore = defineStore("stores",{
 			this.storeTags[idStore][this.storeTagEdition.id_tag] = this.storeTagEdition;
 		},
 		async deleteTagStore(idStore, id) {
-			this.storeTagEdition = { loading: true };
+			this.storeTagEdition.loading = true;
 			this.storeTagEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/store/${idStore}/tag/${id}`,
 				useToken: "access",
@@ -458,8 +470,7 @@ export const useStoresStore = defineStore("stores",{
 			delete this.storeTags[idStore][id];
 		},
 		async createTagStoreBulk(idStore, params) {
-			this.storeTagEdition = { loading: true };
-			this.storeTagEdition = await fetchWrapper.post({
+			let tagStoreList = await fetchWrapper.post({
 				url: `${baseUrl}/store/${idStore}/tag/bulk`,
 				useToken: "access",
 				body: params,
@@ -467,19 +478,18 @@ export const useStoresStore = defineStore("stores",{
 			if (!this.storeTags[idStore]) {
 				this.storeTags[idStore] = {};
 			}
-			for (const tag of this.storeTagEdition["valide"]) {
+			for (const tag of tagStoreList["valide"]) {
 				this.storeTags[idStore][tag.id_tag] = tag;
 			}
 		},
 		async deleteTagStoreBulk(idStore, params) {
-			this.storeTagEdition = { loading: true };
-			this.storeTagEdition = await fetchWrapper.delete({
+			let tagStoreList = await fetchWrapper.delete({
 				url: `${baseUrl}/store/${idStore}/tag/bulk`,
 				useToken: "access",
 				body: params,
 			});
-			for (const id of this.storeTagEdition["valide"]) {
-				delete this.storeTags[idStore][id];
+			for (const tag of tagStoreList["valide"]) {
+				delete this.storeTags[idStore][tag.id_tag];
 			}
 		},
 
@@ -532,7 +542,10 @@ export const useStoresStore = defineStore("stores",{
 			if (!this.boxItems[idBox]) {
 				this.boxItems[idBox] = {};
 			}
-			this.boxItems[idBox][id] = { loading: true };
+			if (!this.boxItems[idBox][id]) {
+				this.boxItems[idBox][id] = {};
+			}
+			this.boxItems[idBox][id].loading = true;
 			const expandString = expand.join(",");
 			this.boxItems[idBox][id] = await fetchWrapper.get({
 				url: `${baseUrl}/box/${idBox}/item/${id}?expand=${expandString}`,
@@ -543,7 +556,7 @@ export const useStoresStore = defineStore("stores",{
 			}
 		},
 		async createBoxItem(idBox, params) {
-			this.boxItemEdition = { loading: true };
+			this.boxItemEdition.loading = true;
 			this.boxItemEdition = await fetchWrapper.post({
 				url: `${baseUrl}/box/${idBox}/item`,
 				useToken: "access",
@@ -555,7 +568,7 @@ export const useStoresStore = defineStore("stores",{
 			this.boxItems[idBox][this.boxItemEdition.id_item] = this.boxItemEdition;
 		},
 		async updateBoxItem(idBox, id, params) {
-			this.boxItemEdition = { loading: true };
+			this.boxItemEdition.loading = true;
 			this.boxItemEdition = await fetchWrapper.put({
 				url: `${baseUrl}/box/${idBox}/item/${id}`,
 				useToken: "access",
@@ -564,7 +577,7 @@ export const useStoresStore = defineStore("stores",{
 			this.boxItems[idBox][id] = this.boxItemEdition;
 		},
 		async deleteBoxItem(idBox, id) {
-			this.boxItemEdition = { loading: true };
+			this.boxItemEdition.loading = true;
 			this.boxItemEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/box/${idBox}/item/${id}`,
 				useToken: "access",
@@ -599,7 +612,10 @@ export const useStoresStore = defineStore("stores",{
 			if (!this.boxTags[idBox]) {
 				this.boxTags[idBox] = {};
 			}
-			this.boxTags[idBox][id] = { loading: true };
+			if (!this.boxTags[idBox][id]) {
+				this.boxTags[idBox][id] = {};
+			}
+			this.boxTags[idBox][id].loading = true;
 			const expandString = expand.join(",");
 			this.boxTags[idBox][id] = await fetchWrapper.get({
 				url: `${baseUrl}/box/${idBox}/tag/${id}?expand=${expandString}`,
@@ -610,7 +626,7 @@ export const useStoresStore = defineStore("stores",{
 			}
 		},
 		async createBoxTag(idBox, params) {
-			this.boxTagEdition = { loading: true };
+			this.boxTagEdition.loading = true;
 			this.boxTagEdition = await fetchWrapper.post({
 				url: `${baseUrl}/box/${idBox}/tag`,
 				useToken: "access",
@@ -622,7 +638,7 @@ export const useStoresStore = defineStore("stores",{
 			this.boxTags[idBox][this.boxTagEdition.id_tag] = this.boxTagEdition;
 		},
 		async deleteBoxTag(idBox, id) {
-			this.boxTagEdition = { loading: true };
+			this.boxTagEdition.loading = true;
 			this.boxTagEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/box/${idBox}/tag/${id}`,
 				useToken: "access",
@@ -630,8 +646,7 @@ export const useStoresStore = defineStore("stores",{
 			delete this.boxTags[idBox][id];
 		},
 		async createBoxTagBulk(idBox, params) {
-			this.boxTagEdition = { loading: true };
-			this.boxTagEdition = await fetchWrapper.post({
+			let boxTagList = await fetchWrapper.post({
 				url: `${baseUrl}/box/${idBox}/tag/bulk`,
 				useToken: "access",
 				body: params,
@@ -639,19 +654,18 @@ export const useStoresStore = defineStore("stores",{
 			if (!this.boxTags[idBox]) {
 				this.boxTags[idBox] = {};
 			}
-			for (const tag of this.boxTagEdition["valide"]) {
+			for (const tag of boxTagList["valide"]) {
 				this.boxTags[idBox][tag.id_tag] = tag;
 			}
 		},
 		async deleteBoxTagBulk(idBox, params) {
-			this.boxTagEdition = { loading: true };
-			this.boxTagEdition = await fetchWrapper.delete({
+			let boxTagList = await fetchWrapper.delete({
 				url: `${baseUrl}/box/${idBox}/tag/bulk`,
 				useToken: "access",
 				body: params,
 			});
-			for (const id of this.boxTagEdition["valide"]) {
-				delete this.boxTags[idBox][id];
+			for (const tag of boxTagList["valide"]) {
+				delete this.boxTags[idBox][tag.id_tag];
 			}
 		},
 	},

@@ -8,7 +8,7 @@ const storesStore = useStoresStore();
 const tagsStore = useTagsStore();
 const authStore = useAuthStore();
 
-async function fetchData() {
+async function fetchAllData() {
 	let tagsLink = new Set();
 	let offset = 0;
 	const limit = 100;
@@ -33,7 +33,7 @@ async function fetchData() {
 	filter.value[4].options = Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]);
 }
 onMounted(() => {
-	fetchData();
+	fetchAllData();
 });
 
 const sort = ref({ key: "", order: "asc" });

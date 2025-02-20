@@ -32,7 +32,8 @@ public class BoxTagService : IBoxTagService
                 tag = expand != null && expand.Contains("tag") ? new ReadTagDto
                 {
                     id_tag = s.Tag.id_tag,
-                    nom_tag = s.Tag.nom_tag
+                    nom_tag = s.Tag.nom_tag,
+                    poids_tag = s.Tag.poids_tag
                 } : null,
                 box = expand != null && expand.Contains("box") ? new ReadBoxDto
                 {

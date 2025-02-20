@@ -10,7 +10,7 @@ import { useProjetsStore, useItemsStore } from "@/stores";
 const projetsStore = useProjetsStore();
 const itemsStore = useItemsStore();
 
-async function fetchData() {
+async function fetchAllData() {
 	let itemsLink = new Set();
 	let offset = 0;
 	const limit = 100;
@@ -35,7 +35,7 @@ async function fetchData() {
 	filter.value[5].options = Object.values(itemsStore.items).map((item) => [item.id_item, item.nom_item]);
 }
 onMounted(() => {
-	fetchData();
+	fetchAllData();
 });
 
 const sort = ref({ key: "", order: "asc" });

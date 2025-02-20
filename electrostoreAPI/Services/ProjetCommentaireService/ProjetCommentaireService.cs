@@ -23,9 +23,10 @@ public class ProjetCommentaireService : IProjetCommentaireService
         }
 
         return await _context.ProjetsCommentaires
+            .Where(p => p.id_projet == projetId)
+            .OrderByDescending(p => p.date_projet_commentaire)
             .Skip(offset)
             .Take(limit)
-            .Where(p => p.id_projet == projetId)
             .Select(p => new ReadExtendedProjetCommentaireDto
             {
                 id_projet_commentaire = p.id_projet_commentaire,
@@ -75,9 +76,10 @@ public class ProjetCommentaireService : IProjetCommentaireService
             throw new KeyNotFoundException($"User with id {userId} not found");
         }
         return await _context.ProjetsCommentaires
+            .Where(p => p.id_user == userId)
+            .OrderByDescending(p => p.date_projet_commentaire)
             .Skip(offset)
             .Take(limit)
-            .Where(p => p.id_user == userId)
             .Select(p => new ReadExtendedProjetCommentaireDto
             {
                 id_projet_commentaire = p.id_projet_commentaire,

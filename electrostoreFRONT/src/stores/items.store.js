@@ -149,7 +149,10 @@ export const useItemsStore = defineStore("items",{
 			this.itemsLoading = false;
 		},
 		async getItemById(id, expand = []) {
-			this.items[id] = { loading: true };
+			if (!this.items[id]) {
+				this.items[id] = {};
+			}
+			this.items[id].loading = true;
 			const expandString = expand.join(",");
 			this.items[id] = await fetchWrapper.get({
 				url: `${baseUrl}/item/${id}?expand=${expandString}`,
@@ -247,14 +250,17 @@ export const useItemsStore = defineStore("items",{
 			if (!this.documents[idItem]) {
 				this.documents[idItem] = {};
 			}
-			this.documents[idItem][id] = { loading: true };
+			if (!this.documents[idItem][id]) {
+				this.documents[idItem][id] = {};
+			}
+			this.documents[idItem][id].loading = true;
 			this.documents[idItem][id] = await fetchWrapper.get({
 				url: `${baseUrl}/item/${idItem}/document/${id}`,
 				useToken: "access",
 			});
 		},
 		async createDocument(idItem, params) {
-			this.documentEdition = { loading: true };
+			this.documentEdition.loading = true;
 			const formData = new FormData();
 			formData.append("name_item_document", params.name_item_document);
 			formData.append("document", params.document);
@@ -270,7 +276,7 @@ export const useItemsStore = defineStore("items",{
 			this.documents[idItem][this.documentEdition.id_item_document] = this.documentEdition;
 		},
 		async updateDocument(idItem, id, params) {
-			this.documentEdition = { loading: true };
+			this.documentEdition.loading = true;
 			const formData = new FormData();
 			if (params.name_item_document) {
 				formData.append("name_item_document", params.name_item_document); 
@@ -287,7 +293,7 @@ export const useItemsStore = defineStore("items",{
 			this.documents[idItem][id] = this.documentEdition;
 		},
 		async deleteDocument(idItem, id) {
-			this.documentEdition = { loading: true };
+			this.documentEdition.loading = true;
 			this.documentEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/item/${idItem}/document/${id}`,
 				useToken: "access",
@@ -347,8 +353,11 @@ export const useItemsStore = defineStore("items",{
 			if (!this.itemBoxs[idItem]) {
 				this.itemBoxs[idItem] = {};
 			}
+			if (!this.itemBoxs[idItem][id]) {
+				this.itemBoxs[idItem][id] = {};
+			}
 			const expandString = expand.join(",");
-			this.itemBoxs[idItem][id] = { loading: true };
+			this.itemBoxs[idItem][id].loading = true;
 			this.itemBoxs[idItem][id] = await fetchWrapper.get({
 				url: `${baseUrl}/item/${idItem}/box/${id}?expand=${expandString}`,
 				useToken: "access",
@@ -358,7 +367,7 @@ export const useItemsStore = defineStore("items",{
 			}
 		},
 		async createItemBox(idItem, params) {
-			this.itemBoxEdition = { loading: true };
+			this.itemBoxEdition.loading = true;
 			this.itemBoxEdition = await fetchWrapper.post({
 				url: `${baseUrl}/item/${idItem}/box`,
 				useToken: "access",
@@ -370,7 +379,7 @@ export const useItemsStore = defineStore("items",{
 			this.itemBoxs[idItem][this.itemBoxEdition.id_box] = this.itemBoxEdition;
 		},
 		async updateItemBox(idItem, id, params) {
-			this.itemBoxEdition = { loading: true };
+			this.itemBoxEdition.loading = true;
 			this.itemBoxEdition = await fetchWrapper.put({
 				url: `${baseUrl}/item/${idItem}/box/${id}`,
 				useToken: "access",
@@ -379,7 +388,7 @@ export const useItemsStore = defineStore("items",{
 			this.itemBoxs[idItem][id] = this.itemBoxEdition;
 		},
 		async deleteItemBox(idItem, id) {
-			this.itemBoxEdition = { loading: true };
+			this.itemBoxEdition.loading = true;
 			this.itemBoxEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/item/${idItem}/box/${id}`,
 				useToken: "access",
@@ -412,8 +421,11 @@ export const useItemsStore = defineStore("items",{
 			if (!this.itemTags[idItem]) {
 				this.itemTags[idItem] = {};
 			}
+			if (!this.itemTags[idItem][id]) {
+				this.itemTags[idItem][id] = {};
+			}
 			const expandString = expand.join(",");
-			this.itemTags[idItem][id] = { loading: true };
+			this.itemTags[idItem][id].loading = true;
 			this.itemTags[idItem][id] = await fetchWrapper.get({
 				url: `${baseUrl}/item/${idItem}/tag/${id}?expand=${expandString}`,
 				useToken: "access",
@@ -423,7 +435,7 @@ export const useItemsStore = defineStore("items",{
 			}
 		},
 		async createItemTag(idItem, params) {
-			this.itemTagEdition = { loading: true };
+			this.itemTagEdition.loading = true;
 			this.itemTagEdition = await fetchWrapper.post({
 				url: `${baseUrl}/item/${idItem}/tag`,
 				useToken: "access",
@@ -435,7 +447,7 @@ export const useItemsStore = defineStore("items",{
 			this.itemTags[idItem][this.itemTagEdition.id_tag] = this.itemTagEdition;
 		},
 		async deleteItemTag(idItem, id) {
-			this.itemTagEdition = { loading: true };
+			this.itemTagEdition.loading = true;
 			this.itemTagEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/item/${idItem}/tag/${id}`,
 				useToken: "access",
@@ -443,9 +455,9 @@ export const useItemsStore = defineStore("items",{
 			delete this.itemTags[idItem][id];
 		},
 		async createItemTagBulk(idItem, idList) {
-			this.itemTagEdition = { loading: true };
+			this.itemTagEdition.loading = true;
 			this.itemTagEdition = await fetchWrapper.post({
-				url: `${baseUrl}/item/${idItem}/tag`,
+				url: `${baseUrl}/item/${idItem}/tag/bulk`,
 				useToken: "access",
 				body: idList,
 			});
@@ -457,9 +469,9 @@ export const useItemsStore = defineStore("items",{
 			}
 		},
 		async deleteItemTagBulk(idItem, idList) {
-			this.itemTagEdition = { loading: true };
+			this.itemTagEdition.loading = true;
 			this.itemTagEdition = await fetchWrapper.delete({
-				url: `${baseUrl}/item/${idItem}/tag`,
+				url: `${baseUrl}/item/${idItem}/tag/bulk`,
 				useToken: "access",
 				body: idList,
 			});
@@ -493,8 +505,11 @@ export const useItemsStore = defineStore("items",{
 			if (!this.itemCommands[idItem]) {
 				this.itemCommands[idItem] = {};
 			}
+			if (!this.itemCommands[idItem][id]) {
+				this.itemCommands[idItem][id] = {};
+			}
 			const expandString = expand.join(",");
-			this.itemCommands[idItem][id] = { loading: true };
+			this.itemCommands[idItem][id].loading = true;
 			this.itemCommands[idItem][id] = await fetchWrapper.get({
 				url: `${baseUrl}/item/${idItem}/command/${id}?expand=${expandString}`,
 				useToken: "access",
@@ -504,7 +519,7 @@ export const useItemsStore = defineStore("items",{
 			}
 		},
 		async createItemCommand(idItem, params) {
-			this.itemCommandEdition = { loading: true };
+			this.itemCommandEdition.loading = true;
 			this.itemCommandEdition = await fetchWrapper.post({
 				url: `${baseUrl}/item/${idItem}/command`,
 				useToken: "access",
@@ -516,7 +531,7 @@ export const useItemsStore = defineStore("items",{
 			this.itemCommands[idItem][this.itemCommandEdition.id_command] = this.itemCommandEdition;
 		},
 		async updateItemCommand(idItem, id, params) {
-			this.itemCommandEdition = { loading: true };
+			this.itemCommandEdition.loading = true;
 			this.itemCommandEdition = await fetchWrapper.put({
 				url: `${baseUrl}/item/${idItem}/command/${id}`,
 				useToken: "access",
@@ -525,7 +540,7 @@ export const useItemsStore = defineStore("items",{
 			this.itemCommands[idItem][id] = this.itemCommandEdition;
 		},
 		async deleteItemCommand(idItem, id) {
-			this.itemCommandEdition = { loading: true };
+			this.itemCommandEdition.loading = true;
 			this.itemCommandEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/item/${idItem}/command/${id}`,
 				useToken: "access",
@@ -533,9 +548,9 @@ export const useItemsStore = defineStore("items",{
 			delete this.itemCommands[idItem][id];
 		},
 		async createItemCommandBulk(idItem, idList) {
-			this.itemCommandEdition = { loading: true };
+			this.itemCommandEdition.loading = true;
 			this.itemCommandEdition = await fetchWrapper.post({
-				url: `${baseUrl}/item/${idItem}/command`,
+				url: `${baseUrl}/item/${idItem}/command/bulk`,
 				useToken: "access",
 				body: idList,
 			});
@@ -572,8 +587,11 @@ export const useItemsStore = defineStore("items",{
 			if (!this.itemProjets[idItem]) {
 				this.itemProjets[idItem] = {};
 			}
+			if (!this.itemProjets[idItem][id]) {
+				this.itemProjets[idItem][id] = {};
+			}
 			const expandString = expand.join(",");
-			this.itemProjets[idItem][id] = { loading: true };
+			this.itemProjets[idItem][id].loading = true;
 			this.itemProjets[idItem][id] = await fetchWrapper.get({
 				url: `${baseUrl}/item/${idItem}/projet/${id}?expand=${expandString}`,
 				useToken: "access",
@@ -583,7 +601,7 @@ export const useItemsStore = defineStore("items",{
 			}
 		},
 		async createItemProjet(idItem, params) {
-			this.itemProjetEdition = { loading: true };
+			this.itemProjetEdition.loading = true;
 			this.itemProjetEdition = await fetchWrapper.post({
 				url: `${baseUrl}/item/${idItem}/projet`,
 				useToken: "access",
@@ -595,7 +613,7 @@ export const useItemsStore = defineStore("items",{
 			this.itemProjets[idItem][this.itemProjetEdition.id_projet] = this.itemProjetEdition;
 		},
 		async updateItemProjet(idItem, id, params) {
-			this.itemProjetEdition = { loading: true };
+			this.itemProjetEdition.loading = true;
 			this.itemProjetEdition = await fetchWrapper.put({
 				url: `${baseUrl}/item/${idItem}/projet/${id}`,
 				useToken: "access",
@@ -604,7 +622,7 @@ export const useItemsStore = defineStore("items",{
 			this.itemProjets[idItem][id] = this.itemProjetEdition;
 		},
 		async deleteItemProjet(idItem, id) {
-			this.itemProjetEdition = { loading: true };
+			this.itemProjetEdition.loading = true;
 			this.itemProjetEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/item/${idItem}/projet/${id}`,
 				useToken: "access",
@@ -612,9 +630,9 @@ export const useItemsStore = defineStore("items",{
 			delete this.itemProjets[idItem][id];
 		},
 		async createItemProjetBulk(idItem, idList) {
-			this.itemProjetEdition = { loading: true };
+			this.itemProjetEdition.loading = true;
 			this.itemProjetEdition = await fetchWrapper.post({
-				url: `${baseUrl}/item/${idItem}/projet`,
+				url: `${baseUrl}/item/${idItem}/projet/bulk`,
 				useToken: "access",
 				body: idList,
 			});
@@ -644,21 +662,24 @@ export const useItemsStore = defineStore("items",{
 			this.imagesTotalCount[idItem] = newImagesList["count"];
 			this.imagesLoading = false;
 		},
-		async getImageById(idItem, id_img) {
+		async getImageById(idItem, id) {
 			if (!this.images[idItem]) {
 				this.images[idItem] = {};
 			}
-			this.images[idItem][id_img] = { loading: true };
-			this.images[idItem][id_img] = await fetchWrapper.get({
-				url: `${baseUrl}/item/${idItem}/img/${id_img}`,
+			if (!this.images[idItem][id]) {
+				this.images[idItem][id] = {};
+			}
+			this.images[idItem][id].loading = true;
+			this.images[idItem][id] = await fetchWrapper.get({
+				url: `${baseUrl}/item/${idItem}/img/${id}`,
 				useToken: "access",
 			});
-			if (!this.imagesURL[id_img]) {
-				await this.showImageById(idItem, id_img);
+			if (!this.imagesURL[id]) {
+				await this.showImageById(idItem, id);
 			}
 		},
 		async createImage(idItem, params) {
-			this.imageEdition = { loading: true };
+			this.imageEdition.loading = true;
 			if (!this.images[idItem]) {
 				this.images[idItem] = {};
 			}
@@ -678,7 +699,7 @@ export const useItemsStore = defineStore("items",{
 			}
 		},
 		async updateImage(idItem, id_img, params) {
-			this.imageEdition = { loading: true };
+			this.imageEdition.loading = true;
 			if (!this.images[idItem]) {
 				this.images[idItem] = {};
 			}
@@ -693,7 +714,7 @@ export const useItemsStore = defineStore("items",{
 			}
 		},
 		async deleteImage(iditem, id_img) {
-			this.imageEdition = { loading: true };
+			this.imageEdition.loading = true;
 			this.imageEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/item/${iditem}/img/${id_img}`,
 				useToken: "access",

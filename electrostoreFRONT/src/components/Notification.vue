@@ -55,22 +55,22 @@ export default {
 			}
 			this.timer = setTimeout(() => {
 				this.$emit("remove", this.id);
-			}, 400);
-			this.$refs.notification.classList.add("close");
+			}, 400); // 0.4s (anim close)
+			this.$refs.notification.classList.add("fade-out");
 		},
 		startTimer() {
 			let duration = 0;
 			if (this.type === "info") {
-				duration = 8100; // 7.7s (progress) + 0.4s (anim)
+				duration = 7700; // 7.7s (progress)
 			} else if (this.type === "success") {
-				duration = 8100;
+				duration = 7700;
 			} else if (this.type === "error") {
-				duration = 18100;
+				duration = 17700;
 			} else {
-				duration = 8100;
+				duration = 7700;
 			}
 			this.timer = setTimeout(() => {
-				this.$emit("remove", this.id);
+				this.close();
 			}, duration);
 		},
 	},
@@ -85,6 +85,11 @@ export default {
 };
 </script>
 <style scoped>
+
+.fade-out {
+    animation: translateX 1s forwards;
+}
+
 .notification {
 	background: #f0f0f0;
 	margin-bottom: 10px;
@@ -97,37 +102,31 @@ export default {
 
 .notification.info {
 	border-left: 5px solid #2196f3;
-	animation: translateX 0.4s ease-in-out 7.7s;
-
 	.sn-progress-loader span {
 		background-color: #2196f3;
 		display: block;
 		height: 100%;
-		animation: progress-bar 7.7s linear infinite;
+		animation: progress-bar 7.7s linear;
 	}
 }
 
 .notification.success {
 	border-left: 5px solid #4caf50;
-	animation: translateX 0.4s ease-in-out 7.7s;
-
 	.sn-progress-loader span {
 		background-color: #4caf50;
 		display: block;
 		height: 100%;
-		animation: progress-bar 7.7s linear infinite;
+		animation: progress-bar 7.7s linear;
 	}
 }
 
 .notification.error {
 	border-left: 5px solid #f44336;
-	animation: translateX 0.4s ease-in-out 17.7s;
-
 	.sn-progress-loader span {
 		background-color: #f44336;
 		display: block;
 		height: 100%;
-		animation: progress-bar 17.7s linear infinite;
+		animation: progress-bar 17.7s linear;
 	}
 }
 
@@ -176,7 +175,7 @@ export default {
 	}
 
 	100% {
-		transform: translateX(100px);
+		transform: translateX(500px);
 		opacity: 0;
 	}
 }

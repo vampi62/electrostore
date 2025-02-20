@@ -39,7 +39,10 @@ export const useIasStore = defineStore("ias", {
 			this.loading = false;
 		},
 		async getIaById(id) {
-			this.ias[id] = { loading: true };
+			if (!this.ias[id]) {
+				this.ias[id] = {};
+			}
+			this.ias[id].loading = true;
 			this.ias[id] = await fetchWrapper.get({
 				url: `${baseUrl}/ia/${id}`,
 				useToken: "access",

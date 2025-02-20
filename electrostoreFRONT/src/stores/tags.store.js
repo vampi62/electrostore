@@ -99,7 +99,10 @@ export const useTagsStore = defineStore("tags",{
 			this.tagsLoading = false;
 		},
 		async getTagById(id, expand = []) {
-			this.tags[id] = { loading: true };
+			if (!this.tags[id]) {
+				this.tags[id] = {};
+			}
+			this.tags[id].loading = true;
 			const expandString = expand.join(",");
 			this.tags[id] = await fetchWrapper.get({
 				url: `${baseUrl}/tag/${id}?expand=${expandString}`,
@@ -163,7 +166,7 @@ export const useTagsStore = defineStore("tags",{
 				useToken: "access",
 				body: params,
 			});
-			for (const tag of this.tagEdition) {
+			for (const tag of this.tagEdition["valide"]) {
 				this.tags[tag.id_tag] = tag;
 			}
 		},
@@ -189,10 +192,16 @@ export const useTagsStore = defineStore("tags",{
 			this.tagsStoreLoading = false;
 		},
 		async getTagStoreById(idTag, idStore, expand = []) {
-			this.tagsStore[idTag] = { loading: true };
+			if (!this.tagsStore[idTag]) {
+				this.tagsStore[idTag] = {};
+			}
+			if (!this.tagsStore[idTag][idStore]) {
+				this.tagsStore[idTag][idStore] = {};
+			}
+			this.tagsStore[idTag][idStore].loading = true;
 			const storesStore = useStoresStore();
 			const expandString = expand.join(",");
-			this.tagsStore[idTag] = await fetchWrapper.get({
+			this.tagsStore[idTag][idStore] = await fetchWrapper.get({
 				url: `${baseUrl}/tag/${idTag}/store/${idStore}?expand=${expandString}`,
 				useToken: "access",
 			});
@@ -201,7 +210,7 @@ export const useTagsStore = defineStore("tags",{
 			}
 		},
 		async createTagStore(idTag, params) {
-			this.tagStoreEdition = { loading: true };
+			this.tagStoreEdition.loading = true;
 			this.tagStoreEdition = await fetchWrapper.post({
 				url: `${baseUrl}/tag/${idTag}/store`,
 				useToken: "access",
@@ -213,7 +222,7 @@ export const useTagsStore = defineStore("tags",{
 			this.tagsStore[idTag][params.id_store] = this.tagStoreEdition;
 		},
 		async deleteTagStore(idTag, idStore) {
-			this.tagStoreEdition = { loading: true };
+			this.tagStoreEdition.loading = true;
 			this.tagStoreEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/tag/${idTag}/store/${idStore}`,
 				useToken: "access",
@@ -221,7 +230,7 @@ export const useTagsStore = defineStore("tags",{
 			delete this.tagsStore[idTag][idStore];
 		},
 		async createTagStoreBulk(idTag, params) {
-			this.tagStoreEdition = { loading: true };
+			this.tagStoreEdition.loading = true;
 			this.tagStoreEdition = await fetchWrapper.post({
 				url: `${baseUrl}/tag/${idTag}/store/bulk`,
 				useToken: "access",
@@ -235,7 +244,7 @@ export const useTagsStore = defineStore("tags",{
 			}
 		},
 		async deleteTagStoreBulk(idTag, params) {
-			this.tagStoreEdition = { loading: true };
+			this.tagStoreEdition.loading = true;
 			this.tagStoreEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/tag/${idTag}/store/bulk`,
 				useToken: "access",
@@ -267,10 +276,16 @@ export const useTagsStore = defineStore("tags",{
 			this.tagsBoxLoading = false;
 		},
 		async getTagBoxById(idTag, idBox, expand = []) {
-			this.tagsBox[idTag] = { loading: true };
+			if (!this.tagsBox[idTag]) {
+				this.tagsBox[idTag] = {};
+			}
+			if (!this.tagsBox[idTag][idBox]) {
+				this.tagsBox[idTag][idBox] = {};
+			}
+			this.tagsBox[idTag][idBox].loading = true;
 			const storesStore = useStoresStore();
 			const expandString = expand.join(",");
-			this.tagsBox[idTag] = await fetchWrapper.get({
+			this.tagsBox[idTag][idBox] = await fetchWrapper.get({
 				url: `${baseUrl}/tag/${idTag}/box/${idBox}?expand=${expandString}`,
 				useToken: "access",
 			});
@@ -279,7 +294,7 @@ export const useTagsStore = defineStore("tags",{
 			}
 		},
 		async createTagBox(idTag, params) {
-			this.tagBoxEdition = { loading: true };
+			this.tagBoxEdition.loading = true;
 			this.tagBoxEdition = await fetchWrapper.post({
 				url: `${baseUrl}/tag/${idTag}/box`,
 				useToken: "access",
@@ -291,7 +306,7 @@ export const useTagsStore = defineStore("tags",{
 			this.tagsBox[idTag][params.id_box] = this.tagBoxEdition;
 		},
 		async deleteTagBox(idTag, idBox) {
-			this.tagBoxEdition = { loading: true };
+			this.tagBoxEdition.loading = true;
 			this.tagBoxEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/tag/${idTag}/box/${idBox}`,
 				useToken: "access",
@@ -299,7 +314,7 @@ export const useTagsStore = defineStore("tags",{
 			delete this.tagsBox[idTag][idBox];
 		},
 		async createTagBoxBulk(idTag, params) {
-			this.tagBoxEdition = { loading: true };
+			this.tagBoxEdition.loading = true;
 			this.tagBoxEdition = await fetchWrapper.post({
 				url: `${baseUrl}/tag/${idTag}/box/bulk`,
 				useToken: "access",
@@ -313,7 +328,7 @@ export const useTagsStore = defineStore("tags",{
 			}
 		},
 		async deleteTagBoxBulk(idTag, params) {
-			this.tagBoxEdition = { loading: true };
+			this.tagBoxEdition.loading = true;
 			this.tagBoxEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/tag/${idTag}/box/bulk`,
 				useToken: "access",
@@ -345,10 +360,16 @@ export const useTagsStore = defineStore("tags",{
 			this.tagsItemLoading = false;
 		},
 		async getTagItemById(idTag, idItem, expand = []) {
-			this.tagsItem[idTag] = { loading: true };
+			if (!this.tagsItem[idTag]) {
+				this.tagsItem[idTag] = {};
+			}
+			if (!this.tagsItem[idTag][idItem]) {
+				this.tagsItem[idTag][idItem] = {};
+			}
+			this.tagsItem[idTag][idItem].loading = true;
 			const itemsStore = useItemsStore();
 			const expandString = expand.join(",");
-			this.tagsItem[idTag] = await fetchWrapper.get({
+			this.tagsItem[idTag][idItem] = await fetchWrapper.get({
 				url: `${baseUrl}/tag/${idTag}/item/${idItem}&expand=${expandString}`,
 				useToken: "access",
 			});
@@ -357,7 +378,7 @@ export const useTagsStore = defineStore("tags",{
 			}
 		},
 		async createTagItem(idTag, params) {
-			this.tagItemEdition = { loading: true };
+			this.tagItemEdition.loading = true;
 			this.tagItemEdition = await fetchWrapper.post({
 				url: `${baseUrl}/tag/${idTag}/item`,
 				useToken: "access",
@@ -369,7 +390,7 @@ export const useTagsStore = defineStore("tags",{
 			this.tagsItem[idTag][params.id_item] = this.tagItemEdition;
 		},
 		async deleteTagItem(idTag, idItem) {
-			this.tagItemEdition = { loading: true };
+			this.tagItemEdition.loading = true;
 			this.tagItemEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/tag/${idTag}/item/${idItem}`,
 				useToken: "access",
@@ -377,7 +398,7 @@ export const useTagsStore = defineStore("tags",{
 			delete this.tagsItem[idTag][idItem];
 		},
 		async createTagItemBulk(idTag, params) {
-			this.tagItemEdition = { loading: true };
+			this.tagItemEdition.loading = true;
 			this.tagItemEdition = await fetchWrapper.post({
 				url: `${baseUrl}/tag/${idTag}/item/bulk`,
 				useToken: "access",
@@ -391,7 +412,7 @@ export const useTagsStore = defineStore("tags",{
 			}
 		},
 		async deleteTagItemBulk(idTag, params) {
-			this.tagItemEdition = { loading: true };
+			this.tagItemEdition.loading = true;
 			this.tagItemEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/tag/${idTag}/item/bulk`,
 				useToken: "access",

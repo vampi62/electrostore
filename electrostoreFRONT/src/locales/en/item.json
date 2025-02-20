@@ -34,6 +34,8 @@
 	"VItemNameRequired": "Item name required",
 	"VItemDescriptionMaxLength": "Description must be at most ",
 	"VItemDescriptionRequired": "Item description required",
+	"VItemSeuilMinMin": "Minimum threshold must be greater than 0",
+	"VItemSeuilMinType": "Minimum threshold must be a number",
 	"VItemSeuilMinRequired": "Minimum threshold required",
 	"VItemDocumentNameMaxLength": "Document name must be at most ",
 	"VItemDocumentNameRequired": "Document name required",

@@ -26,6 +26,7 @@
 	"VTagBoxDeleteError": "Error deleting box",
 	"VTagNameMaxLength": "Name must be at most ",
 	"VTagNameRequired": "Tag name required",
+	"VTagPoidsMin": "Weight must be greater than 0",
 	"VTagPoidsNumber": "Weight must be a number",
 	"VTagPoidsRequired": "Weight is required",
 	"VTagTitle": "Tag",

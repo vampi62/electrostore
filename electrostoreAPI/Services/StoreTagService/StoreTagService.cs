@@ -32,7 +32,8 @@ public class StoreTagService : IStoreTagService
                 tag = expand != null && expand.Contains("tag") ? new ReadTagDto
                 {
                     id_tag = st.Tag.id_tag,
-                    nom_tag = st.Tag.nom_tag
+                    nom_tag = st.Tag.nom_tag,
+                    poids_tag = st.Tag.poids_tag
                 } : null,
                 store = expand != null && expand.Contains("store") ? new ReadStoreDto
                 {

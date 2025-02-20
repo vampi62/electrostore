@@ -30,10 +30,10 @@ if (authStore.user?.role_user !== "admin" && authStore.user?.id_user !== Number(
 	}
 }
 
-async function fetchData() {
+async function fetchAllData() {
 	if (userId !== "new") {
 		usersStore.userEdition = {
-			loading: false,
+			loading: true,
 		};
 		try {
 			await usersStore.getUserById(userId);
@@ -71,7 +71,7 @@ async function fetchData() {
 	}
 }
 onMounted(() => {
-	fetchData();
+	fetchAllData();
 });
 onBeforeUnmount(() => {
 	usersStore.userEdition = {
