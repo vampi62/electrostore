@@ -67,11 +67,18 @@ onBeforeUnmount(() => {
 	};
 });
 
+const showBoxs = ref(true);
 const showDocuments = ref(true);
 const showImages = ref(true);
 const showProjetItems = ref(true);
 const showCommandItems = ref(true);
 
+const toggleBoxs = () => {
+	if (itemId === "new") {
+		return;
+	}
+	showBoxs.value = !showBoxs.value;
+};
 const toggleDocuments = () => {
 	if (itemId === "new") {
 		return;
@@ -96,6 +103,16 @@ const toggleCommandItems = () => {
 		return;
 	}
 	showCommandItems.value = !showCommandItems.value;
+};
+
+const toggleBoxLed = async(boxId) => {
+	let storeId = itemsStore.itemBoxs[itemId][boxId]["box"].id_store;
+	try {
+		await storesStore.showBoxById(storeId, boxId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
+		addNotification({ message: "item.VItemBoxShowSuccess", type: "success", i18n: true });
+	} catch (e) {
+		addNotification({ message: "item.VItemToggleError", type: "error", i18n: true });
+	}
 };
 
 // item
@@ -181,6 +198,35 @@ const sortedTags = computed(() => {
 	return Object.keys(itemsStore.itemTags[itemId] || {})
 		.sort((a, b) => tagsStore.tags[b].poids_tag - tagsStore.tags[a].poids_tag);
 });
+
+// box
+const boxSave = async(box) => {
+	if (itemsStore.itemBoxs[itemId][box.id_box]) {
+		try {
+			schemaBox.validateSync(box.tmp, { abortEarly: false });
+			await itemsStore.updateItemBox(itemId, box.tmp.id_box, box.tmp);
+			addNotification({ message: "item.VItemBoxUpdated", type: "success", i18n: true });
+			box.tmp = null;
+		} catch (e) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
+	} else {
+		try {
+			schemaItem.validateSync(box.tmp, { abortEarly: false });
+			await itemsStore.createItemBox(itemId, box.tmp);
+			addNotification({ message: "item.VItemBoxAdded", type: "success", i18n: true });
+			box.tmp = null;
+		} catch (e) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
+	}
+};
 
 // document
 const documentAddModalShow = ref(false);
@@ -345,6 +391,17 @@ const imageDownload = async(imageContent) => {
 	document.body.removeChild(link);
 };
 
+const schemaBox = Yup.object().shape({
+	qte_item_box: Yup.number()
+		.required(t("item.VItemBoxQuantityRequired"))
+		.typeError(t("item.VItemBoxQuantityNumber"))
+		.min(0, t("item.VItemBoxQuantityMin")),
+	seuil_max_item_item_box: Yup.number()
+		.required(t("item.VItemBoxMaxThresholdRequired"))
+		.typeError(t("item.VItemBoxMaxThresholdNumber"))
+		.min(1, t("item.VItemBoxMaxThresholdMin")),
+});
+
 const schemaItem = Yup.object().shape({
 	nom_item: Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
@@ -500,6 +557,90 @@ const schemaAddImage = Yup.object().shape({
 						<font-awesome-icon icon="fa-solid fa-plus" />
 					</span>
 				</span>
+			</div>
+		</div>
+		<div class="mb-6 bg-gray-100 p-2 rounded">
+			<h3 @click="toggleBoxs" class="text-xl font-semibold bg-gray-400 p-2 rounded"
+				:class="{ 'cursor-pointer': itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
+				{{ $t('item.VitemBoxs') }} ({{ itemsStore.itemBoxsTotalCount[itemId] || 0 }})
+			</h3>
+			<div :class="showBoxs ? 'block' : 'hidden'" class="p-2">
+				<div class="overflow-x-auto max-h-64 overflow-y-auto">
+					<table class="min-w-full table-auto">
+						<thead class="bg-gray-100 sticky top-0">
+							<tr>
+								<th class="px-4 py-2 border-b">{{ $t('item.VItemBoxId') }}</th>
+								<th class="px-4 py-2 border-b">{{ $t('item.VItemBoxQuantity') }}</th>
+								<th class="px-4 py-2 border-b">{{ $t('item.VItemBoxMaxThreshold') }}</th>
+								<th class="px-4 py-2 border-b">{{ $t('item.VItemBoxActions') }}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="box in itemsStore.itemBoxs[itemId]" :key="box.id_box">
+								<td class="px-4 py-2 border-b">{{ box.id_box }}</td>
+								<td class="px-4 py-2 border-b">
+									<template v-if="box.tmp">
+										<Form :validation-schema="schemaBox" v-slot="{ errors }">
+											<Field name="qte_item_box" type="number" v-model="box.tmp.qte_item_box"
+												class="w-20 p-2 border rounded-lg"
+												:class="{ 'border-red-500': errors.qte_item_box }" />
+										</Form>
+									</template>
+									<template v-else-if="itemsStore.itemBoxs[itemId][box.id_box]">
+										<div>{{ itemsStore.itemBoxs[itemId][box.id_box].qte_item_box }}</div>
+									</template>
+									<template v-else>
+										<div></div>
+									</template>
+								</td>
+								<td class="px-4 py-2 border-b">
+									<template v-if="box.tmp">
+										<Form :validation-schema="schemaBox" v-slot="{ errors }">
+											<Field name="seuil_max_item_item_box" type="number"
+												v-model="box.tmp.seuil_max_item_item_box" class="w-20 p-2 border rounded-lg"
+												:class="{ 'border-red-500': errors.seuil_max_item_item_box }" />
+										</Form>
+									</template>
+									<template v-else-if="itemsStore.itemBoxs[itemId][box.id_box]">
+										<div>{{ itemsStore.itemBoxs[itemId][box.id_box].seuil_max_item_item_box }}</div>
+									</template>
+									<template v-else>
+										<div></div>
+									</template>
+								</td>
+								<td class="px-4 py-2 border-b">
+									<template v-if="box.tmp">
+										<button type="button" @click="boxSave(box)"
+											class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
+											{{ $t('item.VItemBoxSave') }}
+										</button>
+										<button type="button" @click="box.tmp = null"
+											class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
+											{{ $t('item.VItemBoxCancel') }}
+										</button>
+									</template>
+									<template v-else>
+										<button v-if="!itemsStore.itemBoxs[itemId][box.id_box]" type="button"
+											@click="box.tmp = { qte_item_box: 0, seuil_max_item_item_box: 1, id_box: box.id_box }"
+											class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+											{{ $t('item.VItemBoxAdd') }}
+										</button>
+										<button v-else type="button"
+											@click="box.tmp = { ...itemsStore.itemBoxs[itemId][box.id_box] }"
+											class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+											{{ $t('item.VItemBoxEdit') }}
+										</button>
+									</template>
+									<button type="button" @click="toggleBoxLed(box.id_box)"
+										class="px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">
+										{{ $t('item.VItemBoxShow') }}
+									</button>
+									
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 			</div>
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">

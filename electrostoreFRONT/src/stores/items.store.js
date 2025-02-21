@@ -342,7 +342,10 @@ export const useItemsStore = defineStore("items",{
 			for (const itemBox of newItemBoxList["data"]) {
 				this.itemBoxs[idItem][itemBox.id_box] = itemBox;
 				if (expand.indexOf("box") !== -1) {
-					storeStore.boxs[itemBox.id_box] = itemBox["box"];
+					if (!storeStore.boxs[itemBox["box"].id_store]) {
+						storeStore.boxs[itemBox["box"].id_store] = {};
+					}
+					storeStore.boxs[itemBox["box"].id_store][itemBox.id_box] = itemBox["box"];
 				}
 			}
 			this.itemBoxsTotalCount[idItem] = newItemBoxList["count"];
