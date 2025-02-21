@@ -125,6 +125,11 @@ namespace electrostore.Controllers
         {
             var box = await _boxService.GetBoxById(id_box, id_store);
             var ledsDB = await _ledService.GetLedsByStoreIdAndPosition(box.id_store, box.xstart_box, box.xend_box, box.ystart_box, box.yend_box);
+            // if no led found
+            if (ledsDB.Count() == 0)
+            {
+                return NoContent();
+            }
             await _ledService.ShowLeds(ledsDB, red, green, blue, timeshow, animation);
             return NoContent();
         }

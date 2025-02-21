@@ -68,6 +68,9 @@ onBeforeUnmount(() => {
 // store
 const storeDeleteModalShow = ref(false);
 const storeInputTagShow = ref(false);
+const storeBoxEditModalShow = ref(false);
+const storeItemAddModalShow = ref(false);
+const boxId = ref(null);
 const tagLoad = ref(false);
 const storeSave = async() => {
 	if (!checkOutOfGrid()) {
@@ -187,6 +190,26 @@ const showInputAddTag = async() => {
 		}
 	}
 	storeInputTagShow.value = true;
+};
+const showBoxContent = async(idBox) => {
+	boxId.value = idBox;
+	try {
+		let offset = 0;
+		const limit = 100;
+		do {
+			await storesStore.getBoxItemByInterval(storeId, idBox, limit, offset, ["item"]);
+			offset += limit;
+		} while (offset < storesStore.boxItemsTotalCount[idBox]);
+		for (const item of Object.values(itemsStore.items)) {
+			if (item.id_img) {
+				await itemsStore.showImageById(item.id_item, item.id_img);
+			}
+		}
+	} catch (e) {
+		console.log(e);
+	}
+	showMenu.value = false;
+	storeBoxEditModalShow.value = true;
 };
 
 const newTags = computed(() => {
@@ -370,6 +393,12 @@ function hideMenu(event) {
 	// if the click is in a div with id 'MenuLedEdit' or 'MenuBoxEdit' don't hide the menu
 	if (document.getElementById("MenuLedEdit")?.contains(event.target) || document.getElementById("MenuBoxEdit")?.contains(event.target)) {
 		return;
+	}
+	if (!showMenu.value) {
+		if (document.getElementById("storeInputTag")?.contains(event.target) || document.getElementById("storeItemTable")?.contains(event.target)) {
+			return;
+		}
+		storeBoxEditModalShow.value = false;
 	}
 	showMenu.value = false;
 	stopSelecting();
@@ -614,6 +643,7 @@ function isNumber(value) {
 const toggleLed = async(ledId) => {
 	try {
 		await storesStore.showLedById(storeId, ledId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
+		addNotification({ message: "store.VStoreLedShowSuccess", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: "store.VStoreToggleError", type: "error", i18n: true });
 	}
@@ -621,10 +651,69 @@ const toggleLed = async(ledId) => {
 const toggleBoxLed = async(boxId) => {
 	try {
 		await storesStore.showBoxById(storeId, boxId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
+		addNotification({ message: "store.VStoreBoxShowSuccess", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: "store.VStoreToggleError", type: "error", i18n: true });
 	}
 };
+
+const itemOpenAddModal = () => {
+	storeItemAddModalShow.value = true;
+	itemsStore.getItemByInterval();
+};
+const itemSave = async(item) => {
+	if (storesStore.boxItems[boxId.value][item.id_item]) {
+		try {
+			schemaItem.validateSync(item.tmp, { abortEarly: false });
+			await storesStore.updateBoxItem(storeId, boxId.value, item.tmp.id_item, item.tmp);
+			addNotification({ message: "store.VStoreItemUpdated", type: "success", i18n: true });
+			item.tmp = null;
+		} catch (e) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
+	} else {
+		try {
+			schemaItem.validateSync(item.tmp, { abortEarly: false });
+			await storesStore.createBoxItem(storeId, boxId.value, item.tmp);
+			addNotification({ message: "store.VStoreItemAdded", type: "success", i18n: true });
+			item.tmp = null;
+		} catch (e) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
+	}
+};
+const itemDelete = async(item) => {
+	try {
+		await storesStore.deleteBoxItem(storeId, boxId.value, item.id_item);
+		addNotification({ message: "store.VStoreItemDeleted", type: "success", i18n: true });
+	} catch (e) {
+		addNotification({ message: "store.VStoreItemDeleteError", type: "error", i18n: true });
+	}
+};
+
+const schemaItem = Yup.object().shape({
+	qte_item_box: Yup.number()
+		.required(t("store.VStoreItemQuantityRequired"))
+		.typeError(t("store.VStoreItemQuantityNumber"))
+		.min(0, t("store.VStoreItemQuantityMin")),
+	seuil_max_item_item_box: Yup.number()
+		.required(t("store.VStoreItemMaxThresholdRequired"))
+		.typeError(t("store.VStoreItemMaxThresholdNumber"))
+		.min(1, t("store.VStoreItemMaxThresholdMin")),
+});
+
+const filterText = ref("");
+const filteredItems = computed(() => {
+	return filterText.value
+		? Object.values(itemsStore.items).filter((item) => item.nom_item.toLowerCase().includes(filterText.value.toLowerCase()))
+		: itemsStore.items;
+});
 </script>
 <style>
 .grid {
@@ -793,7 +882,7 @@ const toggleBoxLed = async(boxId) => {
 		</div>
 	</div>
 	<div v-if="storesStore.stores[storeId] || storeId == 'new'">
-		<div class="mb-6 flex justify-between">
+		<div class="mb-6 flex justify-between whitespace-pre">
 			<Form :validation-schema="schemaStore" v-slot="{ errors }" @submit.prevent="">
 				<table class="table-auto text-gray-700">
 					<tbody>
@@ -865,85 +954,142 @@ const toggleBoxLed = async(boxId) => {
 				</span>
 			</div>
 		</div>
-		<div class="grid" @contextmenu.prevent="showNewMenu" @mousemove="moveMouse"
-			:class="isNumber(storesStore.storeEdition.xlength_store) && isNumber(storesStore.storeEdition.ylength_store) ? '' : 'cursor-not-allowed'">
-			<template v-if="isNumber(storesStore.storeEdition.xlength_store) && isNumber(storesStore.storeEdition.ylength_store)">
-				<div v-for="i in storesStore.storeEdition.xlength_store * storesStore.storeEdition.ylength_store"
-					:key="i" class="cell"></div>
-				<div v-for="led in storesStore.ledEdition" :key="led.id_led" class="led"
-					:id="'LED' + led.id_led"
-					:style="{
-						left: (led.x_led * gridOrigin.cellSizeX) + gridOrigin.cellSizeX / 2 + 'px',
-						top: (((storesStore.storeEdition.ylength_store - 1) - led.y_led) * gridOrigin.cellSizeY) + gridOrigin.cellSizeY / 2 + 'px',
-						zIndex: 20}"
-					:class="{ 'hidden': led?.status == 'delete' }"
-					@mousedown.left="startDragging(led, 'led')"
-					@contextmenu.prevent="(event) => selectLed(led, event)"
-					@contextmenu.stop>
-				</div>
-				<template v-if="showLedId">
-					<div v-for="led in storesStore.ledEdition" :key="led.id_led" class="no-select"
+		<div class="mb-6 flex justify-between whitespace-pre">
+			<div class="grid" @contextmenu.prevent="showNewMenu" @mousemove="moveMouse"
+				:class="isNumber(storesStore.storeEdition.xlength_store) && isNumber(storesStore.storeEdition.ylength_store) ? '' : 'cursor-not-allowed'">
+				<template v-if="isNumber(storesStore.storeEdition.xlength_store) && isNumber(storesStore.storeEdition.ylength_store)">
+					<div v-for="i in storesStore.storeEdition.xlength_store * storesStore.storeEdition.ylength_store"
+						:key="i" class="cell"></div>
+					<div v-for="led in storesStore.ledEdition" :key="led.id_led" class="led"
+						:id="'LED' + led.id_led"
 						:style="{
-							left: (led.x_led * gridOrigin.cellSizeX) + gridOrigin.cellSizeX / 2 + 10 + 'px',
-							top: (((storesStore.storeEdition.ylength_store - 1) - led.y_led) * gridOrigin.cellSizeY) + gridOrigin.cellSizeY / 2 + 8 + 'px',
-							zIndex: 20,
-							position: 'absolute'}"
-						:class="{ 'hidden': led?.status == 'delete' }">
-						{{ led.mqtt_led_id }}
+							left: (led.x_led * gridOrigin.cellSizeX) + gridOrigin.cellSizeX / 2 + 'px',
+							top: (((storesStore.storeEdition.ylength_store - 1) - led.y_led) * gridOrigin.cellSizeY) + gridOrigin.cellSizeY / 2 + 'px',
+							zIndex: 20}"
+						:class="{ 'hidden': led?.status == 'delete' }"
+						@mousedown.left="startDragging(led, 'led')"
+						@contextmenu.prevent="(event) => selectLed(led, event)"
+						@contextmenu.stop>
 					</div>
-				</template>
-				<div v-for="box in storesStore.boxEdition" :key="box.id_box" class="box" :id="'BOX' + box.id_box"
-					:style="{
-						left: (box.xstart_box * gridOrigin.cellSizeX) + 'px',
-						top: (((storesStore.storeEdition.ylength_store) - box.yend_box) * gridOrigin.cellSizeY) + 'px',
-						width: ((box.xend_box - box.xstart_box) * (gridOrigin.cellSizeX)) + 'px',
-						height: ((box.yend_box - box.ystart_box) * (gridOrigin.cellSizeY)) + 'px',
-						zIndex: 10}"
-					:class="{ 'hidden': box?.status == 'delete' }"
-					@mousedown.left="startDragging(box, 'box')"
-					@contextmenu.prevent="(event) => selectBox(box, event)"
-					@contextmenu.stop>
-					<div v-if="authStore.user?.role_user === 'admin' && !showMenu && (selectedElement.type == null || selectedElement.key == box) ">
-						<div class="resizer corner nw cursor-nw-resize" @mousedown.left="startDragging(box, 'border', 'nw')"
-							@contextmenu.stop>
+					<template v-if="showLedId">
+						<div v-for="led in storesStore.ledEdition" :key="led.id_led" class="no-select"
+							:style="{
+								left: (led.x_led * gridOrigin.cellSizeX) + gridOrigin.cellSizeX / 2 + 10 + 'px',
+								top: (((storesStore.storeEdition.ylength_store - 1) - led.y_led) * gridOrigin.cellSizeY) + gridOrigin.cellSizeY / 2 + 8 + 'px',
+								zIndex: 20,
+								position: 'absolute'}"
+							:class="{ 'hidden': led?.status == 'delete' }">
+							{{ led.mqtt_led_id }}
 						</div>
-						<div class="resizer corner ne cursor-ne-resize" @mousedown.left="startDragging(box, 'border', 'ne')"
-							@contextmenu.stop>
+					</template>
+					<div v-for="box in storesStore.boxEdition" :key="box.id_box" class="box" :id="'BOX' + box.id_box"
+						:style="{
+							left: (box.xstart_box * gridOrigin.cellSizeX) + 'px',
+							top: (((storesStore.storeEdition.ylength_store) - box.yend_box) * gridOrigin.cellSizeY) + 'px',
+							width: ((box.xend_box - box.xstart_box) * (gridOrigin.cellSizeX)) + 'px',
+							height: ((box.yend_box - box.ystart_box) * (gridOrigin.cellSizeY)) + 'px',
+							zIndex: 10}"
+						:class="{ 'hidden': box?.status == 'delete' }"
+						@mousedown.left="startDragging(box, 'box')"
+						@contextmenu.prevent="(event) => selectBox(box, event)"
+						@contextmenu.stop>
+						<div v-if="authStore.user?.role_user === 'admin' && !showMenu && (selectedElement.type == null || selectedElement.key == box) ">
+							<div class="resizer corner nw cursor-nw-resize" @mousedown.left="startDragging(box, 'border', 'nw')"
+								@contextmenu.stop>
+							</div>
+							<div class="resizer corner ne cursor-ne-resize" @mousedown.left="startDragging(box, 'border', 'ne')"
+								@contextmenu.stop>
+							</div>
+							<div class="resizer corner sw cursor-sw-resize" @mousedown.left="startDragging(box, 'border', 'sw')"
+								@contextmenu.stop>
+							</div>
+							<div class="resizer corner se cursor-se-resize" @mousedown.left="startDragging(box, 'border', 'se')"
+								@contextmenu.stop>
+							</div>
+							<div class="resizer edge n cursor-n-resize" @mousedown.left="startDragging(box, 'border', 'n')"
+								@contextmenu.stop>
+							</div>
+							<div class="resizer edge e cursor-e-resize" @mousedown.left="startDragging(box, 'border', 'e')"
+								@contextmenu.stop>
+							</div>
+							<div class="resizer edge s cursor-s-resize" @mousedown.left="startDragging(box, 'border', 's')"
+								@contextmenu.stop>
+							</div>
+							<div class="resizer edge w cursor-w-resize" @mousedown.left="startDragging(box, 'border', 'w')"
+								@contextmenu.stop>
+							</div>	
 						</div>
-						<div class="resizer corner sw cursor-sw-resize" @mousedown.left="startDragging(box, 'border', 'sw')"
-							@contextmenu.stop>
-						</div>
-						<div class="resizer corner se cursor-se-resize" @mousedown.left="startDragging(box, 'border', 'se')"
-							@contextmenu.stop>
-						</div>
-						<div class="resizer edge n cursor-n-resize" @mousedown.left="startDragging(box, 'border', 'n')"
-							@contextmenu.stop>
-						</div>
-						<div class="resizer edge e cursor-e-resize" @mousedown.left="startDragging(box, 'border', 'e')"
-							@contextmenu.stop>
-						</div>
-						<div class="resizer edge s cursor-s-resize" @mousedown.left="startDragging(box, 'border', 's')"
-							@contextmenu.stop>
-						</div>
-						<div class="resizer edge w cursor-w-resize" @mousedown.left="startDragging(box, 'border', 'w')"
-							@contextmenu.stop>
+						<div v-else>
+							<div class="resizer corner nw"></div>
+							<div class="resizer corner ne"></div>
+							<div class="resizer corner sw"></div>
+							<div class="resizer corner se"></div>
+							<div class="resizer edge n"></div>
+							<div class="resizer edge e"></div>
+							<div class="resizer edge s"></div>
+							<div class="resizer edge w"></div>	
 						</div>	
 					</div>
-					<div v-else>
-						<div class="resizer corner nw"></div>
-						<div class="resizer corner ne"></div>
-						<div class="resizer corner sw"></div>
-						<div class="resizer corner se"></div>
-						<div class="resizer edge n"></div>
-						<div class="resizer edge e"></div>
-						<div class="resizer edge s"></div>
-						<div class="resizer edge w"></div>	
-					</div>	
+				</template>
+				<template v-else>
+					<!-- TODO : add loading animation -->
+				</template>
+			</div>
+			<div :class="storeBoxEditModalShow ? 'block' : 'hidden'" class="w-96 h-96 bg-gray-200 px-2 py-2 rounded" id="storeInputTag">
+				<div>
+					<h2 class="text-xl mb-4">{{ $t('store.VStoreBoxContent') }} (Id : {{ boxId }})</h2>
+					<div class="overflow-x-auto max-h-64 overflow-y-auto">
+						<table v-if="boxId != null" class="min-w-full table-auto">
+							<thead>
+								<tr class="bg-gray-300">
+									<th class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreItemName') }}</th>
+									<th class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreItemQuantity') }}</th>
+									<th class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreItemMaxThreshold') }}</th>
+									<th class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreItemImg') }}</th>
+								</tr>
+							</thead>
+							<tbody>
+								<RouterLink v-for="(item, key) in storesStore.boxItems[boxId]" :key="key" :to="'/inventory/' + item.id_item" custom
+									v-slot="{ navigate }">
+									<tr @click="navigate" class="transition duration-150 ease-in-out hover:bg-gray-300 cursor-pointer">
+										<td>
+											{{ itemsStore.items[item.id_item].nom_item }}
+										</td>
+										<td>
+											{{ item.qte_item_box }}
+										</td>
+										<td>
+											{{ item.seuil_max_item_item_box }}
+										</td>
+										<td>
+											<div class="flex justify-center items-center">
+												<template v-if="itemsStore.items[item.id_item].id_img">
+													<img v-if="itemsStore.imagesURL[itemsStore.items[item.id_item].id_img]"
+														:src="itemsStore.imagesURL[itemsStore.items[item.id_item].id_img]" alt="Image"
+														class="w-16 h-16 object-cover rounded" />
+													<span v-else class="w-16 h-16 object-cover rounded">
+														{{ $t('store.VStoreLoading') }}
+													</span>
+												</template>
+												<template v-else>
+													<img src="../assets/nopicture.webp" alt="Image"
+														class="w-16 h-16 object-cover rounded" />
+												</template>
+											</div>
+										</td>
+									</tr>
+								</RouterLink>
+								<tr @click="itemOpenAddModal()"
+									class="transition duration-150 ease-in-out hover:bg-gray-300 cursor-pointer">
+									<td colspan="4" class="text-center">
+										{{ $t('store.VStoreAddItem') }}
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
 				</div>
-			</template>
-			<template v-else>
-				<!-- TODO : add loading animation -->
-			</template>
+			</div>
 		</div>
 	</div>
 	<template v-if="isNumber(storesStore.storeEdition.xlength_store) && isNumber(storesStore.storeEdition.ylength_store)">
@@ -980,10 +1126,10 @@ const toggleBoxLed = async(boxId) => {
 				<button v-if="authStore.user?.role_user === 'admin'" @click="deleteElement" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600">
 					{{ $t('store.VStoreDeleteBox') }}
 				</button>
-				<button @click="showBoxContent" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
+				<button @click="showBoxContent(selectedElement.key.id_box)" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
 					{{ $t('store.VStoreShowBoxContent') }}
 				</button>
-				<button @click="toggleBoxLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
+				<button @click="toggleBoxLed(selectedElement.key.id_box)" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
 					{{ $t('store.VStoreToggleBoxLed') }}
 				</button>
 				<button v-if="authStore.user?.role_user === 'admin'" @click="addLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
@@ -1033,6 +1179,101 @@ const toggleBoxLed = async(boxId) => {
 					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
 					{{ $t('store.VStoreDeleteCancel') }}
 				</button>
+			</div>
+		</div>
+	</div>
+
+	<div v-if="storeItemAddModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
+		@click="storeItemAddModalShow = false">
+		<div class="bg-white rounded-lg shadow-lg w-3/4 p-6" @click.stop>
+			<div class="flex justify-between items-center border-b pb-3">
+				<h2 class="text-2xl font-semibold">{{ $t('store.VStoreItemTitle') }}</h2>
+				<button type="button" @click="storeItemAddModalShow = false"
+					class="text-gray-500 hover:text-gray-700">&times;</button>
+			</div>
+
+			<!-- Filtres -->
+			<div class="my-4 flex gap-4">
+				<input type="text" v-model="filterText"
+					:placeholder="$t('store.VStoreItemFilterPlaceholder')"
+					class="border p-2 rounded w-full">
+			</div>
+
+			<!-- Tableau Items -->
+			<div class="overflow-y-auto max-h-96 min-h-96" id="storeItemTable">
+				<table class="min-w-full bg-white border border-gray-200">
+					<thead class="bg-gray-100 sticky top-0">
+						<tr>
+							<th class="px-4 py-2 border-b">{{ $t('store.VStoreItemName') }}</th>
+							<th class="px-4 py-2 border-b">{{ $t('store.VStoreItemQuantity') }}</th>
+							<th class="px-4 py-2 border-b">{{ $t('store.VStoreItemMaxThreshold') }}</th>
+							<th class="px-4 py-2 border-b">{{ $t('store.VStoreItemActions') }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="item in filteredItems" :key="item.id_item">
+							<td class="px-4 py-2 border-b">{{ item.nom_item }}</td>
+							<td class="px-4 py-2 border-b">
+								<template v-if="item.tmp">
+									<Form :validation-schema="schemaItem" v-slot="{ errors }">
+										<Field name="qte_item_box" type="number" v-model="item.tmp.qte_item_box"
+											class="w-20 p-2 border rounded-lg"
+											:class="{ 'border-red-500': errors.qte_item_box }" />
+									</Form>
+								</template>
+								<template v-else-if="storesStore.boxItems[boxId][item.id_item]">
+									<div>{{ storesStore.boxItems[boxId][item.id_item].qte_item_box }}</div>
+								</template>
+								<template v-else>
+									<div></div>
+								</template>
+							</td>
+							<td class="px-4 py-2 border-b">
+								<template v-if="item.tmp">
+									<Form :validation-schema="schemaItem" v-slot="{ errors }">
+										<Field name="seuil_max_item_item_box" type="number"
+											v-model="item.tmp.seuil_max_item_item_box" class="w-20 p-2 border rounded-lg"
+											:class="{ 'border-red-500': errors.seuil_max_item_item_box }" />
+									</Form>
+								</template>
+								<template v-else-if="storesStore.boxItems[boxId][item.id_item]">
+									<div>{{ storesStore.boxItems[boxId][item.id_item].seuil_max_item_item_box }}</div>
+								</template>
+								<template v-else>
+									<div></div>
+								</template>
+							</td>
+							<td class="px-4 py-2 border-b">
+								<template v-if="item.tmp">
+									<button type="button" @click="itemSave(item)"
+										class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
+										{{ $t('store.VStoreItemSave') }}
+									</button>
+									<button type="button" @click="item.tmp = null"
+										class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
+										{{ $t('store.VStoreItemCancel') }}
+									</button>
+								</template>
+								<template v-else>
+									<button v-if="!storesStore.boxItems[boxId][item.id_item]" type="button"
+										@click="item.tmp = { qte_item_box: 0, seuil_max_item_item_box: 1, id_item: item.id_item }"
+										class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+										{{ $t('store.VStoreItemAdd') }}
+									</button>
+									<button v-else type="button"
+										@click="item.tmp = { ...storesStore.boxItems[boxId][item.id_item] }"
+										class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+										{{ $t('store.VStoreItemEdit') }}
+									</button>
+									<button type="button" @click="itemDelete(item)"
+										class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
+										{{ $t('store.VStoreItemDelete') }}
+									</button>
+								</template>
+							</td>
+						</tr>
+					</tbody>
+				</table>
 			</div>
 		</div>
 	</div>

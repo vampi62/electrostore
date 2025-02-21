@@ -52,7 +52,7 @@ namespace electrostore.Controllers
                 seuil_max_item_item_box = itemBoxDto.seuil_max_item_item_box
             };
             var itemBox = await _itemBoxService.CreateItemBox(itemBoxDtoFull);
-            return CreatedAtAction(nameof(GetItemBoxById), new { id_box = itemBox.id_box, id_item = itemBox.id_item }, itemBox);
+            return CreatedAtAction(nameof(GetItemBoxById), new { id_store = id_store, id_box = itemBox.id_box, id_item = itemBox.id_item }, itemBox);
         }
 
         [HttpPut("{id_item}")]
