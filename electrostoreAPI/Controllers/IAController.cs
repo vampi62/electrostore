@@ -97,7 +97,7 @@ namespace electrostore.Controllers
 
         [HttpPost("{id_ia}/detect")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadItemDto>> DetectItem([FromRoute] int id_ia, [FromForm] DetecDto img_to_scan)
+        public async Task<ActionResult<PredictionOutput>> DetectItem([FromRoute] int id_ia, [FromForm] DetecDto img_to_scan)
         {
             var ia = await _iaService.GetIAById(id_ia);
             if (!ia.trained_ia)
@@ -107,6 +107,7 @@ namespace electrostore.Controllers
             try
             {
                 var httpClient = new HttpClient();
+                var newDetecResult = new PredictionOutput();
                 // requete POST avec l'image à scanner
                 var response = await httpClient.PostAsync("http://electrostoreia:5000/detect/" + id_ia,
                     new MultipartFormDataContent
@@ -116,8 +117,20 @@ namespace electrostore.Controllers
                 );
                 var content = await response.Content.ReadAsStringAsync();
                 // convert the response to a json object
-                var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
-                return Ok(json);
+                var json = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content);
+                if (json is null)
+                {
+                    newDetecResult = new PredictionOutput {
+                        PredictedLabel = -1,
+                        Score = 0
+                    };
+                    return Ok(newDetecResult);
+                }
+                newDetecResult = new PredictionOutput {
+                    PredictedLabel = json.TryGetValue("predicted_class", out var predicted_class) && predicted_class.ValueKind == JsonValueKind.Number ? predicted_class.GetInt32() : -1,
+                    Score = json.TryGetValue("confidence", out var confidence) && confidence.ValueKind == JsonValueKind.Number ? confidence.GetSingle() : 0
+                };
+                return Ok(newDetecResult);
             }
             catch (Exception e)
             {

@@ -88,13 +88,17 @@ export const useCamerasStore = defineStore("cameras",{
 				useToken: "access",
 			});
 		},
-		async getCapture(id) {
+		async getCapture(id, getBlob = false) {
 			const response = await fetchWrapper.image({
 				url: `${baseUrl}/camera/${id}/capture`,
 				useToken: "access",
 			});
-			const url = URL.createObjectURL(response);
-			this.capture[id] = url;
+			if (getBlob) {
+				this.capture[id] = response;
+			} else {
+				const url = URL.createObjectURL(response);
+				this.capture[id] = url;
+			}
 		},
 		async createCamera(params) {
 			this.cameraEdition.loading = true;

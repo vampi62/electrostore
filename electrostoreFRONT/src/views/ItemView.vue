@@ -186,7 +186,6 @@ const getTotalQuantity = computed(() => {
 });
 
 const formatDateForDatetimeLocal = (date) => {
-	// if date is a string : convert to date
 	if (typeof date === "string") {
 		date = new Date(date);
 	}

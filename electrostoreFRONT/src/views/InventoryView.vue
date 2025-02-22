@@ -62,6 +62,39 @@ function getTotalQuantity(itembox) {
 	return itembox.reduce((total, box) => total + box.qte_item_box, 0);
 }
 
+async function fetchIAData() {
+	let offset = 0;
+	const limit = 100;
+	do {
+		await iasStore.getIaByInterval(limit, offset);
+		offset += limit;
+	} while (offset < iasStore.TotalCount);
+}
+async function fetchCameraData() {
+	let offset = 0;
+	const limit = 100;
+	do {
+		await camerasStore.getCameraByInterval(limit, offset);
+		offset += limit;
+	} while (offset < camerasStore.TotalCount);
+}
+
+const selectedPageFind = ref({ ia: null, camera: null });
+const showPageFind = ref(false);
+const loadPageFind = async() => {
+	showPageFind.value = true;
+	selectedPageFind.value.ia = null;
+	selectedPageFind.value.camera = null;
+	await Promise.all([fetchIAData(), fetchCameraData()]);
+};
+const formatDateForDatetimeLocal = (date) => {
+	if (typeof date === "string") {
+		date = new Date(date);
+	}
+	const pad = (num) => String(num).padStart(2, "0");
+	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
 const filter = ref([
 	{ key: "nom_item", value: "", type: "text", label: "item.VInventoryFilterName" },
 	{ key: "seuil_min_item", value: "", type: "number", label: "item.VInventoryFilterSeuilMin", compareMethod: ">=" },
@@ -110,6 +143,38 @@ const sortedItems = computed(() => {
 	}
 	return filteredItems.value;
 });
+const changeCamera = (camera) => {
+	if (selectedPageFind.value.camera !== camera) {
+		camerasStore.stopStream(selectedPageFind.value.camera.id_camera);
+	} else {
+		camerasStore.getStatus(selectedPageFind.value.camera.id_camera);
+		camerasStore.getStream(selectedPageFind.value.camera.id_camera);
+	}
+	selectedPageFind.value.camera = camera;
+};
+const cameraUpdateLight = async() => {
+	if (!selectedPageFind.value.camera) {
+		return;
+	}
+	await camerasStore.toggleLight(selectedPageFind.value.camera.id_camera);
+	camerasStore.getStatus(selectedPageFind.value.camera.id_camera);
+};
+const cameraStartDetection = async() => {
+	if (!selectedPageFind.value.camera || !selectedPageFind.value.ia) {
+		return;
+	}
+	iasStore.status.detect = {};
+	await camerasStore.getCapture(selectedPageFind.value.camera.id_camera);
+	if (!camerasStore.capture[selectedPageFind.value.camera.id_camera]) {
+		addNotification("error", t("item.VInventoryErrorCapture"));
+		return;
+	}
+	await iasStore.detect(selectedPageFind.value.ia.id_ia, { "img_file": camerasStore.capture[selectedPageFind.value.camera.id_camera] });
+	if (!iasStore.status.detect.predictedLabel) {
+		addNotification("error", t("item.VInventoryErrorDetect"));
+		return;
+	}
+};
 </script>
 
 <template>
@@ -117,7 +182,7 @@ const sortedItems = computed(() => {
 		<h2 class="text-2xl font-bold mb-4">{{ $t('item.VInventoryTitle') }}</h2>
 	</div>
 	<div>
-		<button
+		<button @click="loadPageFind"
 			class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm cursor-pointer inline-block mb-2 mr-2">
 			{{ $t('item.VInventoryFind') }}
 		</button>
@@ -276,4 +341,107 @@ const sortedItems = computed(() => {
 			</template>
 		</tbody>
 	</table>
+	<div v-if="showPageFind" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center" @click="showPageFind = false">
+		<div class="bg-white p-2 rounded shadow-lg w-2/3" @click.stop>
+			<div class="flex justify-between items-center p-2">
+				<h2 class="text-xl font-bold mb-4">{{ $t('item.VInventoryFindTitle') }}</h2>
+				<button @click="showPageFind = false" class="text-red-500 hover:text-red-600">
+					<font-awesome-icon icon="fa-solid fa-times" />
+				</button>
+			</div>
+			<div class="flex justify-between">
+				<div class="flex-1 border max-w-40">
+					<span class="text-lg font-bold">{{ $t('item.VInventoryFindCameraList') }}</span>
+					<div class="max-h-40 overflow-y-auto">
+						<div v-for="camera in camerasStore.cameras" :key="camera.id_camera" @click="camera.status_code == 200 ? changeCamera(camera) : null"
+							class="p-1 border"
+							:class="{
+								'bg-blue-500 text-white': selectedPageFind.camera === camera,
+								'bg-red-200': selectedPageFind.camera !== camera && camera.status_code !== 200,
+								'bg-gray-200': selectedPageFind.camera !== camera && camera.status_code === 200,
+								'cursor-pointer': camera.status_code == 200 }">
+							<div>{{ camera.nom_camera }}</div>
+							<span class="h-4 text-xs">{{ camera.url_camera }}</span>
+						</div>
+					</div>
+					<span class="text-lg font-bold">{{ $t('item.VInventoryFindIAList') }}</span>
+					<div class="max-h-40 overflow-y-auto">
+						<div v-for="ia in iasStore.ias" :key="ia.id_ia" @click="ia.trained_ia ? selectedPageFind.ia = ia : null"
+							class="p-1 border"
+							:class="{
+								'bg-blue-500 text-white': selectedPageFind.ia === ia,
+								'bg-red-200': selectedPageFind.ia !== ia && ia.trained_ia === false,
+								'bg-gray-200': selectedPageFind.ia !== ia && ia.trained_ia === true,
+								'cursor-pointer': ia.trained_ia }">
+							<div>{{ ia.nom_ia }}</div>
+							<span class="h-4 text-xs">{{ formatDateForDatetimeLocal(ia.date_ia) }}</span>
+						</div>
+					</div>
+				</div>
+				<div class="flex flex-1 flex-col flex-grow items-center">
+					<div class="w-80 h-80 bg-gray-200 px-4 py-2 rounded mb-2">
+						<template v-if="selectedPageFind.camera && camerasStore.stream[selectedPageFind.camera.id_camera]">
+							<img :src=camerasStore.stream[selectedPageFind.camera.id_camera] />
+						</template>
+						<template v-else>
+							<div class="flex justify-center items-center h-full">
+								{{ $t('item.VInventoryNoCamera') }}
+							</div>
+						</template>
+					</div>
+					<div class="flex w-full border-y border-r justify-between">
+						<div class="flex flex-col mx-2">
+							<button @click="cameraStartDetection()"
+							class="px-3 py-1 rounded text-sm inline-block my-2"
+							:class="selectedPageFind.camera ? 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer' : 'bg-blue-200 text-gray-500 cursor-not-allowed'">
+								{{ $t('item.VInventoryDetect') }}
+							</button>
+							<button @click="cameraUpdateLight()"
+							class="px-3 py-1 rounded text-sm inline-block my-2"
+							:class="selectedPageFind.camera ? 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer' : 'bg-blue-200 text-gray-500 cursor-not-allowed'">
+								{{ $t('item.VInventoryLight') }}
+							</button>
+						</div>
+						<div class="flex justify-around flex-grow items-center h-full border-l">
+							<div class="flex flex-col items-center">
+								<div>
+									<template v-if="iasStore.status.detect.loading">
+										<span>{{ $t('item.VInventoryLoading') }}</span>
+									</template>
+									<template v-if="iasStore.status.detect.predictedLabel == -1">
+										<span>{{ $t('item.VInventoryNoItem') }}</span>
+									</template>
+									<template v-else-if="iasStore.status.detect.predictedLabel > -1">
+										<span>{{ itemsStore.items[iasStore.status.detect.predictedLabel].nom_item }}</span>
+										<span>{{ iasStore.status.detect.score }}</span>
+									</template>
+									<template v-else>
+										<span>{{ $t('item.VInventoryNoDetection') }}</span>
+									</template>
+								</div>
+								<template v-if="iasStore.status.detect?.predictedLabel > -1">
+									<RouterLink :to="'/inventory/' + iasStore.status.detect.predictedLabel">
+										<button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm cursor-pointer inline-block mb-2 mr-2">
+											{{ $t('item.VInventoryGoToItem') }}
+										</button>
+									</RouterLink>
+								</template>
+								<template v-else>
+									<button class="bg-blue-200 text-gray-500 px-3 py-1 rounded text-sm cursor-not-allowed inline-block mb-2 mr-2">
+										{{ $t('item.VInventoryGoToItem') }}
+									</button>
+								</template>
+							</div>
+							<div>
+								<img v-if="itemsStore.items[iasStore.status.detect.predictedLabel]?.id_img"
+									:src="itemsStore.imagesURL[itemsStore.items[iasStore.status.detect.predictedLabel].id_img]"
+									class="w-16 h-16 object-cover rounded" />
+								<img v-else src="../assets/nopicture.webp" class="w-16 h-16 object-cover rounded" />
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 </template>

@@ -230,20 +230,20 @@ namespace electrostore.Controllers
                         network = true,
                         statusCode = (int)response.StatusCode,
                         uptime = json.TryGetValue("uptime", out var uptime) && uptime.ValueKind == JsonValueKind.Number ? uptime.GetSingle() : 0f,
-						espModel = json.TryGetValue("espModel", out var espModel) && espModel.ValueKind == JsonValueKind.String ? espModel.GetString() : string.Empty,
-						espTemperature = json.TryGetValue("espTemperature", out var espTemperature) && espTemperature.ValueKind == JsonValueKind.Number ? espTemperature.GetSingle() : 0f,
-						ringLightPower = json.TryGetValue("ringLightPower", out var ringLightPower) && ringLightPower.ValueKind == JsonValueKind.Number ? ringLightPower.GetInt32() : 0,
-						versionScanBox = json.TryGetValue("versionScanBox", out var versionScanBox) && versionScanBox.ValueKind == JsonValueKind.String ? versionScanBox.GetString() : string.Empty,
-						cameraResolution = json.TryGetValue("cameraResolution", out var cameraResolution) && cameraResolution.ValueKind == JsonValueKind.String ? cameraResolution.GetString() : string.Empty,
+                        espModel = json.TryGetValue("espModel", out var espModel) && espModel.ValueKind == JsonValueKind.String ? espModel.GetString() : string.Empty,
+                        espTemperature = json.TryGetValue("espTemperature", out var espTemperature) && espTemperature.ValueKind == JsonValueKind.Number ? espTemperature.GetSingle() : 0f,
+                        ringLightPower = json.TryGetValue("ringLightPower", out var ringLightPower) && ringLightPower.ValueKind == JsonValueKind.Number ? ringLightPower.GetInt32() : 0,
+                        versionScanBox = json.TryGetValue("versionScanBox", out var versionScanBox) && versionScanBox.ValueKind == JsonValueKind.String ? versionScanBox.GetString() : string.Empty,
+                        cameraResolution = json.TryGetValue("cameraResolution", out var cameraResolution) && cameraResolution.ValueKind == JsonValueKind.String ? cameraResolution.GetString() : string.Empty,
                         cameraPID = json.TryGetValue("cameraPID", out var cameraPID) && cameraPID.ValueKind == JsonValueKind.Number ? cameraPID.GetInt32().ToString() : string.Empty,
-						wifiSignalStrength = json.TryGetValue("wifiSignalStrength", out var wifiSignalStrength) && wifiSignalStrength.ValueKind == JsonValueKind.String ? wifiSignalStrength.GetString() : string.Empty
-					};
+                        wifiSignalStrength = json.TryGetValue("wifiSignalStrength", out var wifiSignalStrength) && wifiSignalStrength.ValueKind == JsonValueKind.String ? wifiSignalStrength.GetString() : string.Empty
+                    };
                     return Ok(newCameraStatusDto);
                 }
             }
             catch (Exception e)
             {
-				Console.WriteLine(e);
+                Console.WriteLine(e);
                 var newCameraStatusDto = new CameraStatusDto {
                     network = false,
                     statusCode = 500
