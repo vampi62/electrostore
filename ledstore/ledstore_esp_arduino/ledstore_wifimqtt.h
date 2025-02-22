@@ -60,8 +60,8 @@ bool reconnectMQTT()
     if (mqttClient.connect(SessionName.c_str(), mqttUser.c_str(), mqttPassword.c_str()))
     {
       Serial.println("connected!");
-      Serial.println(mqttTopic.c_str());
-      mqttClient.subscribe(mqttTopic.c_str());
+      Serial.println("electrostore/" + mqttTopic.c_str());
+      mqttClient.subscribe("electrostore/" + mqttTopic.c_str());
       strip.setPixelColor(0, strip.Color(0, 20, 0));
       strip.show();
       nbrErreurMqttConnect = 0;

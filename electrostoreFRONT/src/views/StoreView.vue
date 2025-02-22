@@ -81,9 +81,9 @@ const storeSave = async() => {
 		
 		await storesStore.createStore(storesStore.storeEdition);
 		addNotification({ message: "store.VStoreCreated", type: "success", i18n: true });
-		await Promise.all(
+		await Promise.all([
 			storesStore.createLedBulk(storesStore.storeEdition.id_store, storesStore.ledEdition),
-			storesStore.createBoxBulk(storesStore.storeEdition.id_store, storesStore.boxEdition));
+			storesStore.createBoxBulk(storesStore.storeEdition.id_store, storesStore.boxEdition)]);
 	} catch (e) {
 		e.inner.forEach((error) => {
 			addNotification({ message: error.message, type: "error", i18n: false });
@@ -1038,14 +1038,14 @@ const filteredItems = computed(() => {
 			<div :class="storeBoxEditModalShow ? 'block' : 'hidden'" class="w-96 h-96 bg-gray-200 px-2 py-2 rounded" id="storeInputTag">
 				<div>
 					<h2 class="text-xl mb-4">{{ $t('store.VStoreBoxContent') }} (Id : {{ boxId }})</h2>
-					<div class="overflow-x-auto max-h-64 overflow-y-auto">
+					<div class="overflow-x-auto max-h-80 overflow-y-auto">
 						<table v-if="boxId != null" class="min-w-full table-auto">
 							<thead>
-								<tr class="bg-gray-300">
-									<th class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreItemName') }}</th>
-									<th class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreItemQuantity') }}</th>
-									<th class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreItemMaxThreshold') }}</th>
-									<th class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreItemImg') }}</th>
+								<tr>
+									<th class="font-semibold pr-4 align-text-top bg-gray-300 sticky top-0">{{ $t('store.VStoreItemName') }}</th>
+									<th class="font-semibold pr-4 align-text-top bg-gray-300 sticky top-0">{{ $t('store.VStoreItemQuantity') }}</th>
+									<th class="font-semibold pr-4 align-text-top bg-gray-300 sticky top-0">{{ $t('store.VStoreItemMaxThreshold') }}</th>
+									<th class="font-semibold pr-4 align-text-top bg-gray-300 sticky top-0">{{ $t('store.VStoreItemImg') }}</th>
 								</tr>
 							</thead>
 							<tbody>

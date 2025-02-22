@@ -114,6 +114,10 @@ const cameraDelete = async() => {
 	}
 	cameraDeleteModalShow.value = false;
 };
+const cameraUpdateLight = async(id) => {
+	await camerasStore.updateLight(id);
+	camerasStore.getStatus(id);
+};
 
 const isChecked = ref(false);
 const createSchema = (isChecked) => {
@@ -142,7 +146,7 @@ watch(isChecked, (newValue) => {
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4">{{ $t('camera.VCameraTitle') }}</h2>
 		<div class="flex space-x-4">
-			<button type="button" @click="camerasStore.toggleLight(cameraId)" v-if="cameraId != 'new'"
+			<button type="button" @click="cameraUpdateLight(cameraId)" v-if="cameraId != 'new'"
 				class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 flex items-center">
 				{{ $t('camera.VCameraOnOff') }}
 			</button>

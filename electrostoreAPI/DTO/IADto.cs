@@ -92,6 +92,13 @@ public record DetecDto : IValidatableObject
         }
     }
 }
+public record PredictionOutput
+{
+    public int PredictedLabel { get; init; }
+    public float Score { get; init; }
+}
+
+
 /* 
 public class TrainImageData
 {
