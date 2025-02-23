@@ -6,7 +6,7 @@ services:
     container_name: electrostoreapi
     restart: always
     networks:
-      - dockernet
+      - electrostorenet
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.electrostoreAPI.rule=Host(`yourDNSforAPI.net`)"
@@ -21,7 +21,7 @@ services:
     container_name: electrostoreia
     restart: always
     networks:
-      - dockernet
+      - electrostorenet
     labels:
       - "traefik.enable=false"
     depends_on:
@@ -34,7 +34,7 @@ services:
     container_name: electrostorefront
     restart: always
     networks:
-      - dockernet
+      - electrostorenet
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.electrostoreFRONT.rule=Host(`yourDNSforFRONT.net`)"
@@ -46,9 +46,8 @@ services:
       - electrostoreapi
 
 networks:
-  dockernet:
-    name: dockernet
-    external: true
+  electrostorenet:
+    name: electrostorenet
 
 volumes:
   electrostoreDATA:

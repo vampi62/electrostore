@@ -90,10 +90,16 @@ export const useIasStore = defineStore("ias", {
 		},
 		async detectItem(id, params) {
 			this.status.detect.loading = true;
+			// if params is a Blob, convert it to a File
+			if (params instanceof Blob) {
+				params = new File([params], "img_file.jpg", { type: params.type });
+			}
+			const formData = new FormData();
+			formData.append("img_file", params);
 			this.status.detect = await fetchWrapper.post({
 				url: `${baseUrl}/ia/${id}/detect`,
 				useToken: "access",
-				body: params,
+				body: formData,
 				contentFile: true,
 			});
 		},

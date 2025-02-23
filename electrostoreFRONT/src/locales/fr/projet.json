@@ -54,7 +54,7 @@
 	"VProjetDocumentNameMaxLength": "Le nom du document doit contenir au maximum ",
 	"VProjetDocumentNameRequired": "Nom du document requis",
 	"VProjetDocumentRequired": "Document requis",
-	"VProjetDocumentSize": "Taille du document",
+	"VProjetDocumentSize": "Taille du document ne doit pas dépasser ",
 	"VProjetItemQuantityMin": "La quantité d'article doit être supérieure à 0",
 	"VProjetItemQuantityType": "La quantité d'article doit être un nombre",
 	"VProjetItemQuantityRequired": "Quantité d'article requise",

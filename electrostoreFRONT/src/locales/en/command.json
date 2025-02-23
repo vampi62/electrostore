@@ -56,7 +56,7 @@
 	"VCommandDocumentNameMaxLength": "Document name must not exceed ",
 	"VCommandDocumentRequired": "Document is required",
 	"VCommandDocumentNamePlaceholder": "Document name...",
-	"VCommandDocumentSize": "Document size must not exceed 2 MB",
+	"VCommandDocumentSize": "Document size must not exceed ",
 	"VCommandItemQuantityRequired": "Quantity is required",
 	"VCommandItemQuantityNumber": "Quantity must be a number",
 	"VCommandItemQuantityMin": "Quantity must be greater than 0",

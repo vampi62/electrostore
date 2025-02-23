@@ -133,6 +133,12 @@ def async_train_model(id_model):
 	thread = threading.Thread(target=train_model, args=(id_model,))
 	thread.start()
 
+@tf.function(reduce_retracing=True)
+def predict_image(model, img_array):
+    predictions = model(img_array, training=False)
+    score = tf.nn.softmax(predictions[0])
+    return score
+
 def detect_model(id_model, imageData):
 	# Charger le modèle
 	model_path = os.path.join(MODEL_DIR, f'Model{id_model}.keras')
@@ -153,14 +159,13 @@ def detect_model(id_model, imageData):
 		img_array = tf.keras.utils.img_to_array(img)
 		img_array = tf.expand_dims(img_array, 0)  # Créer un batch
 
-		predictions = model.predict(img_array)
-		score = tf.nn.softmax(predictions[0])
+		score = predict_image(model, img_array)
 
 		predicted_class = class_names[np.argmax(score)]
-		confidence = 100 * np.max(score)
+		confidence = float(100 * np.max(score))
 
 		return {
-			"predicted_class": predicted_class,
+			"predicted_class": int(predicted_class),
 			"confidence": confidence
 		}
 	except Exception as e:

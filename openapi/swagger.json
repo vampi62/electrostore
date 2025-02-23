@@ -2030,17 +2030,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReadItemDto"
+                  "$ref": "#/components/schemas/PredictionOutput"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReadItemDto"
+                  "$ref": "#/components/schemas/PredictionOutput"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReadItemDto"
+                  "$ref": "#/components/schemas/PredictionOutput"
                 }
               }
             }
@@ -11235,6 +11235,20 @@
           },
           "user": {
             "$ref": "#/components/schemas/ReadUserDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PredictionOutput": {
+        "type": "object",
+        "properties": {
+          "predictedLabel": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "score": {
+            "type": "number",
+            "format": "float"
           }
         },
         "additionalProperties": false
