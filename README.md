@@ -71,3 +71,5 @@ for install the database execute the file "electrostore.sql" in your mariadb ser
 ```bash
 docker-compose up -d --build
 ```
+
+after start the server, don't forget to add your traefik container to the network "electrostorenet"

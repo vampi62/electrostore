@@ -56,7 +56,7 @@
 	"VCommandDocumentNameRequired": "Le nom du document est obligatoire",
 	"VCommandDocumentRequired": "Le document est obligatoire",
 	"VCommandDocumentNamePlaceholder": "Nom du document...",
-	"VCommandDocumentSize": "La taille du document ne doit pas dépasser 2 Mo",
+	"VCommandDocumentSize": "La taille du document ne doit pas dépasser ",
 	"VCommandItemQuantityRequired": "La quantité est obligatoire",
 	"VCommandItemQuantityNumber": "La quantité doit être un nombre",
 	"VCommandItemQuantityMin": "La quantité doit être supérieure à 0",

@@ -4,3 +4,4 @@ numpy==2.0.2
 keras==3.8.0
 pillow==11.1.0
 mysql-connector-python==9.2.0
+gunicorn==22.0.0

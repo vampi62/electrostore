@@ -77,4 +77,8 @@ router.beforeEach(async(to) => {
 			return "/inventory";
 		}
 	}
+	// if page not exist redirect to home
+	if (!to.matched.length) {
+		return "/";
+	}
 });
