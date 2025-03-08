@@ -11,16 +11,30 @@ import io
 import json
 
 # check if the config folder and file exist
-if not os.path.exists('/app/config.json'):
+if not os.path.exists('/app/config/appsettings.json'):
 	print("Error: config.json not found.")
 	exit(1)
 
-# load appsettings.json in /config/appsettings.json
-with open('/app/config.json') as f:
+# load appsettings.json in /app/config
+with open('/app/config/appsettings.json') as f:
 	appsettings = json.load(f)
 
+if not ("ConnectionStrings" in appsettings):
+	print("Error: ConnectionStrings not found in appsettings.")
+	exit(1)
+if not "DefaultConnection" in appsettings["ConnectionStrings"]:
+	print("Error: DefaultConnection not found in appsettings.")
+	exit(1)
+appsettingsString = appsettings["ConnectionStrings"]["DefaultConnection"]
+DBsettings = {}
+for setting in appsettingsString.split(';'):
+	if setting == '':
+		continue
+	key, value = setting.split('=')
+	DBsettings[key] = value
+
 app = Flask(__name__)
-mysql_session = db_query.MySQLConnection(appsettings)
+mysql_session = db_query.MySQLConnection(DBsettings)
 if (not mysql_session.connect()):
 	print("Error connecting to MySQL database.")
 	exit(1)

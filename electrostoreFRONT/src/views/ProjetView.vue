@@ -425,7 +425,7 @@ const schemaCommentaire = Yup.object().shape({
 				</span>
 				{{ $t('projet.VProjetUpdate') }}
 			</button>
-			<button type="button" @click="projetDeleteOpenModal" v-if="projetId != 'new'"
+			<button type="button" @click="projetDeleteModalShow = true" v-if="projetId != 'new'"
 				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
 				{{ $t('projet.VProjetDelete') }}
 			</button>

@@ -25,15 +25,21 @@ namespace electrostore.Controllers
         public async Task<ActionResult<ReadConfig>> GetConfigs()
         {
             using var ping = new Ping();
+            PingReply reply;
             // ping juste one time in < 0.3s
-            var reply = await ping.SendPingAsync("electrostoreia", 300);
+            try {
+                reply = await ping.SendPingAsync("electrostoreIA", 300);
+            }
+            catch (PingException) {
+                reply = null;
+            }
             return Ok(new ReadConfig {
                 // get if the smtp is enabled
                 smtp_enabled = _configuration["SMTP:Enable"] == "true",
                 // check if the mqtt is connected
                 mqtt_connected = _mqttClient.IsConnected,
                 // ping the iaElectrostoreAPI
-                ia_connected = reply.Status == IPStatus.Success,
+                ia_connected = reply?.Status == IPStatus.Success,
                 // get the max length of the url
                 max_length_url = Constants.MaxUrlLength,
                 // get the max length

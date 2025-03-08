@@ -51,6 +51,11 @@ public class Program
     {
 
         var builder = WebApplication.CreateBuilder(args);
+        builder.Configuration.AddJsonFile("config/appsettings.json", optional: false, reloadOnChange: true);
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.Configuration.AddJsonFile("config/appsettings.Development.json", optional: true, reloadOnChange: true);
+        }
 
         var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
         var key = Encoding.ASCII.GetBytes(jwtSettings.Key);
@@ -234,6 +239,27 @@ public class Program
         app.MapControllers();
 
         app.UseMiddleware<ExceptionsHandler>();
+
+        using (var serviceScope = app.Services.CreateScope())
+        {
+            var context = serviceScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            // check if the database is up to date with the migrations
+            var pendingMigrations = context.Database.GetPendingMigrations();
+            if (pendingMigrations.Any())
+            {
+                // Appliquer les migrations si nécessaire
+                context.Database.Migrate();
+            }
+            // check if the database is empty
+            /* if (!context.Users.Any())
+            {
+                var userService = serviceScope.ServiceProvider.GetRequiredService<IUserService>();
+                userService.CreateUser(new CreateUserDto
+                {
+                    
+                }).Wait();
+            } */
+        }
 
         app.Run();
     }

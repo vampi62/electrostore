@@ -462,7 +462,7 @@ const schemaAddImage = Yup.object().shape({
 				</span>
 				{{ $t('item.VItemUpdate') }}
 			</button>
-			<button type="button" @click="itemDeleteOpenModal" v-if="itemId != 'new'"
+			<button type="button" @click="itemDeleteModalShow" v-if="itemId != 'new'"
 				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
 				{{ $t('item.VItemDelete') }}
 			</button>

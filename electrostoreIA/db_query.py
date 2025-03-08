@@ -1,5 +1,3 @@
-from mysql.connector import Error
-
 import mysql.connector
 
 class MySQLConnection:
@@ -23,7 +21,7 @@ class MySQLConnection:
 			if self.connection.is_connected():
 				print("Connection to MySQL database was successful")
 				return True
-		except Error as e:
+		except mysql.connector.Error as e:
 			print(f"Error: {e}")
 			self.connection = None
 		return False
@@ -57,7 +55,7 @@ class MySQLConnection:
 			cursor.execute(f"SELECT * FROM IA WHERE id_ia = {id_ia}")
 			ia = cursor.fetchone()
 			return ia
-		except Error as e:
+		except mysql.connector.Error as e:
 			print(f"Error: {e}")
 			return None
 
@@ -70,6 +68,6 @@ class MySQLConnection:
 				cursor.execute(f"UPDATE IA SET trained_ia = 0 WHERE id_ia = {id_ia}")
 			self.connection.commit()
 			return True
-		except Error as e:
+		except mysql.connector.Error as e:
 			print(f"Error: {e}")
 			return False
