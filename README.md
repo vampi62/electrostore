@@ -30,13 +30,12 @@ https://www.lidl.fr/p/parkside-casiers-a-tiroirs/p100377898
 ### Server Installation
 prerequisites:
 - docker + docker-compose
-- traefik with docker provider and letsencrypt enabled
+- (recommended) traefik with docker provider and letsencrypt enabled
 - mariadb server
 - mqtt server
 
 #### clone the repository
 ```bash
-cd ~
 git clone https://github.com/vampi62/electrostore
 cd electrostore
 ```
@@ -44,32 +43,75 @@ cd electrostore
 #### complete config file
 ```bash
 # API configuration
-sudo nano electrostoreAPI/appsettings.json
+sudo nano electrostoreAPI/config/appsettings.json
 # complete the appsettings.json file with your database and mqtt server credentials
 # ConnectionStrings --> mariadb
 # Mqtt --> mqtt
 # SMTP (optional) set Enable to false if you don't want to use the email service
 # JWT (key) set a random key for the jwt token
-
-# AI configuration
-sudo nano electrostoreIA/config.json
-# put the same mariadb credentials as in the API configuration
-
-# FRONT configuration
-sudo nano electrostoreFRONT/.env
-# complete the .env file with your api server url
-
-# DOCKER-COMPOSE configuration
-sudo nano docker-compose.yml
-# change the traefik labels with your domain name for the api and front
 ```
+note: after the first lauch, if you want update the config file, you need to edit the config file in the volume "electrostoreCONFIG" and restart the container
 
-#### install the database
-for install the database execute the file "electrostore.sql" in your mariadb server
-
-#### build and run the server
+#### start database server
+if you have already a mariadb server and a mqtt server, you can skip this step
 ```bash
-docker-compose up -d --build
+sudo docker run -d --name mariadb \
+ --restart always \
+ -p 3306:3306 \
+ -e MYSQL_ROOT_PASSWORD=electrostore \
+ -e MYSQL_DATABASE=electrostore \
+ -e MYSQL_USER=electrostore \
+ -e MYSQL_PASSWORD=electrostore \
+ -v electrostoreDB:/var/lib/mysql \
+ mariadb:11.7.2
+
+
+sudo docker run -d --name mqtt \
+ --restart always \
+ -p 1883:1883 \
+ -v electrostoreMQTT:/mosquitto/data \
+ -v $(pwd)/MQTTCONF:/mosquitto/config \
+ -v electrostoreLOG:/mosquitto/log \
+ eclipse-mosquitto:2.0.20
 ```
 
-after start the server, don't forget to add your traefik container to the network "electrostorenet"
+#### create network
+```bash
+sudo docker network create electrostore
+
+sudo docker network connect electrostore mariadb
+
+sudo docker network connect electrostore mqtt
+```
+
+#### start the API
+```bash
+sudo docker build -t electrostore/api:latest electrostoreAPI
+sudo docker run -d --name electrostoreAPI \
+ --restart always \
+ --network electrostore \
+ -p 5002:80 \
+ -v electrostoreDATA:/app/wwwroot \
+ -v electrostoreCONFIG:/app/config \
+ electrostore/api:latest
+
+sudo docker build -t electrostore/ia:latest electrostoreIA
+sudo docker run -d --name electrostoreIA \
+ --restart always \
+ --network electrostore \
+ -v electrostoreDATA:/data \
+ -v electrostoreCONFIG:/app/config \
+ electrostore/ia:latest
+```
+
+
+#### start the web interface
+set VUE_API_URL with the complete url of the API (ex: https://api.electrostore.com:443/api)
+```bash
+sudo docker build -t electrostore/front:latest electrostoreFRONT
+sudo docker run -d --name electrostoreFRONT \
+ --restart always \
+ -p 8080:80 \
+ -e VUE_API_URL=<VUE_API_URL> \
+ electrostore/front:latest
+```

@@ -78,12 +78,18 @@ const storeSave = async() => {
 	}
 	try {
 		await schemaStore.validate(storesStore.storeEdition, { abortEarly: false });
-		
 		await storesStore.createStore(storesStore.storeEdition);
 		addNotification({ message: "store.VStoreCreated", type: "success", i18n: true });
-		await Promise.all([
-			storesStore.createLedBulk(storesStore.storeEdition.id_store, storesStore.ledEdition),
-			storesStore.createBoxBulk(storesStore.storeEdition.id_store, storesStore.boxEdition)]);
+		if (Object.values(storesStore.boxEdition).length !== 0 && Object.values(storesStore.ledEdition).length !== 0) {
+			await Promise.all([
+				storesStore.createLedBulk(storesStore.storeEdition.id_store, Object.values(storesStore.ledEdition).filter((led) => led.status === "new")),
+				storesStore.createBoxBulk(storesStore.storeEdition.id_store, Object.values(storesStore.boxEdition).filter((box) => box.status === "new"))]);
+		} else if (Object.values(storesStore.ledEdition).length !== 0) {
+			await storesStore.createLedBulk(storesStore.storeEdition.id_store, Object.values(storesStore.ledEdition).filter((led) => led.status === "new"));
+		} else if (Object.values(storesStore.boxEdition).length !== 0) {
+			await storesStore.createBoxBulk(storesStore.storeEdition.id_store, Object.values(storesStore.boxEdition).filter((box) => box.status === "new"));
+		}
+		storesStore.storeEdition.loading = false;
 	} catch (e) {
 		e.inner.forEach((error) => {
 			addNotification({ message: error.message, type: "error", i18n: false });
@@ -870,7 +876,7 @@ const filteredItems = computed(() => {
 				</span>
 				{{ $t('store.VStoreUpdate') }}
 			</button>
-			<button type="button" @click="storeDeleteOpenModal"
+			<button type="button" @click="storeDeleteModalShow = true"
 				v-if="storeId != 'new' && authStore.user?.role_user == 'admin'"
 				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
 				{{ $t('store.VStoreDelete') }}

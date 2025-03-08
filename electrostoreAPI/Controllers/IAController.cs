@@ -56,7 +56,7 @@ namespace electrostore.Controllers
             try
             {
                 var httpClient = new HttpClient();
-                var response = await httpClient.GetAsync("http://electrostoreia:5000/status/" + id_ia);
+                var response = await httpClient.GetAsync("http://electrostoreIA:5000/status/" + id_ia);
                 var content = await response.Content.ReadAsStringAsync();
                 // convert the response to a json object
                 var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
@@ -83,7 +83,7 @@ namespace electrostore.Controllers
             try
             {
                 var httpClient = new HttpClient();
-                var response = await httpClient.PostAsync("http://electrostoreia:5000/train/" + id_ia, null);
+                var response = await httpClient.PostAsync("http://electrostoreIA:5000/train/" + id_ia, null);
                 var content = await response.Content.ReadAsStringAsync();
                 // convert the response to a json object
                 var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
@@ -109,7 +109,7 @@ namespace electrostore.Controllers
                 var httpClient = new HttpClient();
                 var newDetecResult = new PredictionOutput();
                 // requete POST avec l'image à scanner
-                var response = await httpClient.PostAsync("http://electrostoreia:5000/detect/" + id_ia,
+                var response = await httpClient.PostAsync("http://electrostoreIA:5000/detect/" + id_ia,
                     new MultipartFormDataContent
                     {
                         { new StreamContent(img_to_scan.img_file.OpenReadStream()), "img_file", img_to_scan.img_file.FileName }
