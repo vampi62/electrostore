@@ -15,6 +15,7 @@ const defaultLang = "en";
 const locale = isLangAvailable(browserLang) ? browserLang : defaultLang;
 
 export const i18n = createI18n({
+	legacy: false,
 	locale: locale,
 	fallbackLocale: defaultLang,
 	messages,
