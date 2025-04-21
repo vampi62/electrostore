@@ -25,8 +25,14 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<int>("id_store")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("xend_box")
                         .HasColumnType("int");
@@ -55,6 +61,12 @@ namespace electrostore.Migrations
                     b.Property<int>("id_tag")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
                     b.HasKey("id_box", "id_tag");
 
                     b.HasIndex("id_tag");
@@ -68,6 +80,9 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("mdp_camera")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
@@ -76,6 +91,9 @@ namespace electrostore.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("url_camera")
                         .IsRequired()
@@ -97,6 +115,9 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime>("date_command")
                         .HasColumnType("datetime(6)");
 
@@ -110,6 +131,9 @@ namespace electrostore.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("url_command")
                         .IsRequired()
@@ -132,6 +156,9 @@ namespace electrostore.Migrations
                         .HasMaxLength(455)
                         .HasColumnType("varchar(455)");
 
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime>("date_command_commentaire")
                         .HasColumnType("datetime(6)");
 
@@ -143,6 +170,9 @@ namespace electrostore.Migrations
 
                     b.Property<int?>("id_user")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("id_command_commentaire");
 
@@ -158,6 +188,9 @@ namespace electrostore.Migrations
                     b.Property<int>("id_command_document")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("date_command_document")
                         .HasColumnType("datetime(6)");
@@ -177,6 +210,9 @@ namespace electrostore.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("url_command_document")
                         .IsRequired()
@@ -198,11 +234,17 @@ namespace electrostore.Migrations
                     b.Property<int>("id_item")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<float>("prix_command_item")
                         .HasColumnType("float");
 
                     b.Property<int>("qte_command_item")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("id_command", "id_item");
 
@@ -216,6 +258,9 @@ namespace electrostore.Migrations
                     b.Property<int>("id_ia")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("date_ia")
                         .HasColumnType("datetime(6)");
@@ -233,6 +278,9 @@ namespace electrostore.Migrations
                     b.Property<bool>("trained_ia")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
                     b.HasKey("id_ia");
 
                     b.ToTable("IA");
@@ -243,6 +291,9 @@ namespace electrostore.Migrations
                     b.Property<int>("id_img")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("date_img")
                         .HasColumnType("datetime(6)");
@@ -259,6 +310,9 @@ namespace electrostore.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("url_img")
                         .IsRequired()
@@ -278,6 +332,9 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("description_item")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -294,6 +351,9 @@ namespace electrostore.Migrations
                     b.Property<int>("seuil_min_item")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
                     b.HasKey("id_item");
 
                     b.HasIndex("id_img");
@@ -309,11 +369,17 @@ namespace electrostore.Migrations
                     b.Property<int>("id_box")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<int>("qte_item_box")
                         .HasColumnType("int");
 
                     b.Property<int>("seuil_max_item_item_box")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("id_item", "id_box");
 
@@ -327,6 +393,9 @@ namespace electrostore.Migrations
                     b.Property<int>("id_item_document")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("date_item_document")
                         .HasColumnType("datetime(6)");
@@ -347,6 +416,9 @@ namespace electrostore.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("url_item_document")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -366,6 +438,12 @@ namespace electrostore.Migrations
 
                     b.Property<int>("id_tag")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("id_item", "id_tag");
 
@@ -407,6 +485,9 @@ namespace electrostore.Migrations
                     b.Property<string>("revoked_reason")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("id_jwi_access");
 
@@ -452,6 +533,9 @@ namespace electrostore.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
                     b.HasKey("id_jwi_refresh");
 
                     b.HasIndex("id_jwi_access");
@@ -467,11 +551,17 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<int>("id_store")
                         .HasColumnType("int");
 
                     b.Property<int>("mqtt_led_id")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("x_led")
                         .HasColumnType("int");
@@ -491,6 +581,9 @@ namespace electrostore.Migrations
                     b.Property<int>("id_projet")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("date_debut_projet")
                         .HasColumnType("datetime(6)");
@@ -513,6 +606,9 @@ namespace electrostore.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("url_projet")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -534,6 +630,9 @@ namespace electrostore.Migrations
                         .HasMaxLength(455)
                         .HasColumnType("varchar(455)");
 
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime>("date_modif_projet_commentaire")
                         .HasColumnType("datetime(6)");
 
@@ -545,6 +644,9 @@ namespace electrostore.Migrations
 
                     b.Property<int?>("id_user")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("id_projet_commentaire");
 
@@ -560,6 +662,9 @@ namespace electrostore.Migrations
                     b.Property<int>("id_projet_document")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("date_projet_document")
                         .HasColumnType("datetime(6)");
@@ -579,6 +684,9 @@ namespace electrostore.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("url_projet_document")
                         .IsRequired()
@@ -600,8 +708,14 @@ namespace electrostore.Migrations
                     b.Property<int>("id_item")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<int>("qte_projet_item")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("id_projet", "id_item");
 
@@ -616,6 +730,9 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("mqtt_name_store")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -625,6 +742,9 @@ namespace electrostore.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("xlength_store")
                         .HasColumnType("int");
@@ -645,6 +765,12 @@ namespace electrostore.Migrations
                     b.Property<int>("id_tag")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
                     b.HasKey("id_store", "id_tag");
 
                     b.HasIndex("id_tag");
@@ -658,6 +784,9 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("nom_tag")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -665,6 +794,9 @@ namespace electrostore.Migrations
 
                     b.Property<int>("poids_tag")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("id_tag");
 
@@ -676,6 +808,9 @@ namespace electrostore.Migrations
                     b.Property<int>("id_user")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("email_user")
                         .IsRequired()
@@ -707,6 +842,9 @@ namespace electrostore.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("id_user");
 

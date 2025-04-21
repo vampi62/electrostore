@@ -34,6 +34,34 @@ public class ApplicationDbContext : DbContext
     public DbSet<electrostore.Models.Tags> Tags { get; set; }
     public DbSet<electrostore.Models.Users> Users { get; set; }
 
+    public override int SaveChanges()
+    {
+        AddTimestamps();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        AddTimestamps();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void AddTimestamps()
+    {
+        var entities = ChangeTracker.Entries()
+            .Where(x => x.Entity is BaseEntity && (x.State == EntityState.Added || x.State == EntityState.Modified));
+
+        foreach (var entity in entities)
+        {
+            var now = DateTime.UtcNow;
+            if (entity.State == EntityState.Added)
+            {
+                ((BaseEntity)entity.Entity).created_at = now;
+            }
+            ((BaseEntity)entity.Entity).updated_at = now;
+        }
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<BoxsTags>()

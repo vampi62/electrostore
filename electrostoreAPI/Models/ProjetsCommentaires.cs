@@ -4,7 +4,7 @@ using electrostore.Dto;
 
 namespace electrostore.Models;
 
-public class ProjetsCommentaires
+public class ProjetsCommentaires : BaseEntity
 {
     [Key]
     public int id_projet_commentaire { get; set; }

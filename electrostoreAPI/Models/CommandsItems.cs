@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace electrostore.Models;
 
-public class CommandsItems
+public class CommandsItems : BaseEntity
 {
     public int id_item { get; set; }
     [ForeignKey("id_item")]

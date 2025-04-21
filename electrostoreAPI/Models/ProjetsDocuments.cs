@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace electrostore.Models;
 
-public class ProjetsDocuments
+public class ProjetsDocuments : BaseEntity
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
