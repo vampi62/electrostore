@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace electrostore.Models;
 
-public class ItemsBoxs
+public class ItemsBoxs : BaseEntity
 {
     public int id_box { get; set; }
     [ForeignKey("id_box")]

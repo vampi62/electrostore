@@ -27,7 +27,6 @@ public class JwiService : IJwiService
             id_jwi_access = token.token_id,
             expires_at = token.expire_date_token,
             is_revoked = false,
-            created_at = DateTime.UtcNow,
             created_by_ip = clientIp,
             id_user = userId
         };
@@ -36,7 +35,6 @@ public class JwiService : IJwiService
             id_jwi_refresh = token.refresh_token_id,
             expires_at = token.expire_date_refresh_token,
             is_revoked = false,
-            created_at = DateTime.UtcNow,
             created_by_ip = clientIp,
             id_user = userId,
             id_jwi_access = jwi_access.id_jwi_access

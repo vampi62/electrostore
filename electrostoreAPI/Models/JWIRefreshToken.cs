@@ -5,7 +5,7 @@ using electrostore.Dto;
 
 namespace electrostore.Models;
 
-public class JWIRefreshToken
+public class JWIRefreshToken : BaseEntity
 {    
     [Key]
     public Guid id_jwi_refresh { get; set; }
@@ -14,7 +14,6 @@ public class JWIRefreshToken
 
     public bool is_revoked { get; set; }
 
-    public DateTime created_at { get; set; }
 
     [MaxLength(Constants.MaxIpLength)]
     public string created_by_ip { get; set; }

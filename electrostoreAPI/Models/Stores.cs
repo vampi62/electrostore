@@ -4,7 +4,7 @@ using electrostore.Dto;
 
 namespace electrostore.Models;
 
-public class Stores
+public class Stores : BaseEntity
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

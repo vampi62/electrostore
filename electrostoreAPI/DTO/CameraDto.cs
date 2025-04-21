@@ -79,6 +79,12 @@ public record CameraStatusDto
     public float? uptime { get; init; }
     public string? espModel { get; init; }
     public float? espTemperature { get; init; }
+    public string? OTAWait { get; init; }
+    public string? OTAUploading { get; init; }
+    public string? OTAError { get; init; }
+    public int? OTATime { get; init; }
+    public int? OTARemainingTime { get; init; }
+    public float? OTAPercentage { get; init; }
     public int? ringLightPower { get; init; }
     public string? versionScanBox { get; init; }
     public string? cameraResolution { get; init; }
