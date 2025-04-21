@@ -7,8 +7,8 @@ bool setupWiFi()
   do
   {
     WiFi.begin(wifiSSID.c_str(), wifiPassword.c_str());
-    startTime = millis();
-    while (WiFi.status() != WL_CONNECTED && millis() - startTime < connectionTimeout)
+    startTimeWIFI = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - startTimeWIFI < connectionTimeoutWIFI)
     {
       delay(500);
       Serial.print(".");
@@ -51,7 +51,7 @@ bool reconnectMQTT()
   }
   String macAddress = WiFi.macAddress();
   macAddress.replace(":", "");
-  String SessionName = mqttName + macAddress.substring(macAddress.length()-6);
+  String SessionName = mqttName + macAddress;
   Serial.println();
   Serial.print("Connecting to MQTT server...");
   Serial.println(SessionName);
@@ -60,14 +60,15 @@ bool reconnectMQTT()
     if (mqttClient.connect(SessionName.c_str(), mqttUser.c_str(), mqttPassword.c_str()))
     {
       Serial.println("connected!");
-      Serial.println("electrostore/" + mqttTopic.c_str());
-      mqttClient.subscribe("electrostore/" + mqttTopic.c_str());
+      String topicName = "electrostore/" + mqttTopic;
+      Serial.println(topicName.c_str());
+      mqttClient.subscribe(topicName.c_str());
       strip.setPixelColor(0, strip.Color(0, 20, 0));
       strip.show();
       nbrErreurMqttConnect = 0;
       delay(1000);
-	  strip.setPixelColor(0, strip.Color(0, 0, 0));
-	  strip.show();
+      strip.setPixelColor(0, strip.Color(0, 0, 0));
+      strip.show();
     }
     else
     {

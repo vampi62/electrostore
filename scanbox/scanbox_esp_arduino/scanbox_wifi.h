@@ -7,8 +7,8 @@ bool setupWiFi()
   do
   {
     WiFi.begin(wifiSSID.c_str(), wifiPassword.c_str());
-    startTime = millis();
-    while (WiFi.status() != WL_CONNECTED && millis() - startTime < connectionTimeout)
+    startTimeWIFI = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - startTimeWIFI < connectionTimeoutWIFI)
     {
       delay(500);
       Serial.print(".");

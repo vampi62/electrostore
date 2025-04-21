@@ -24,6 +24,12 @@ void handleStatus(AsyncWebServerRequest *request)
   StaticJsonDocument<500> doc;
   doc["uptime"] = millis() / 1000;
   doc["espModel"] = ESP.getChipId();
+  doc["OTAWait"] = waitingOTA ? "Waiting" : "Not Waiting";
+  doc["OTAUploading"] = updateOTA ? "Uploading" : "Not Uploading";
+  doc["OTAError"] = updateOTAError;
+  doc["OTATime"] = IntervalOTA / 1000;
+  doc["OTARemainingTime"] = waitingOTA && (((IntervalOTA - (millis() - startTimeOTA)) / 1000) > 0) ? (IntervalOTA - (millis() - startTimeOTA)) / 1000 : 0;
+  doc["OTAPercentage"] = otaPercentage;
   doc["versionLedStore"] = version_ledstore;
   doc["wifiSignalStrength"] = String(WiFi.RSSI());
   String jsonResponse;
@@ -55,6 +61,7 @@ void handleRoot(AsyncWebServerRequest *request)
   response += "<li><a href='/wifi'>WiFi Settings</a></li>";
   response += "<li><a href='/user'>User Settings</a></li>";
   response += "<li><a href='/mqtt'>Mqtt Settings</a></li>";
+  response += "<li><a href='/ota'>OTA Settings</a></li>";
   response += "</ul>";
   response += "</body>";
   response += "</html>";

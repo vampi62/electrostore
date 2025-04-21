@@ -96,7 +96,10 @@ void handleMenuMqtt(AsyncWebServerRequest *request)
   response += "  </div>";
   response += "  <div class='form-group'>";
   response += "    <label for='mqttTopic'>Topic:</label>";
-  response += "    <input type='text' id='mqttTopic' value='" + mqttTopic + "' maxlength='50'>";
+  response += "    <div style='display: flex; align-items: center;'>";
+  response += "      <div>electrostore/</div>";
+  response += "      <input type='text' id='mqttTopic' value='" + mqttTopic + "' maxlength='50'>";
+  response += "    </div>";
   response += "  </div>";
   response += "  <button onclick='saveMqttSettings()'>Save</button>";
   response += "</div>";

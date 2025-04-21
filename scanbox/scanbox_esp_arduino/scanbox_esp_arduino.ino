@@ -10,6 +10,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <EEPROM.h>
 #include <ArduinoJson.h>
+#include <ArduinoOTA.h>
 
 #define EEPROM_SIZE 512
 
@@ -31,13 +32,19 @@ WiFiClient wifiClient;
 const char *ap_ssid = "ESP_Config";     // Nom du réseau WiFi en mode AP (point d'accès)
 const char *ap_password = "ConfigPass"; // Mot de passe du réseau WiFi en mode AP
 
-const char *version_scanbox = "1.0";
+const char *version_scanbox = "1.1";
 String camResolution;
 
-bool iswificlient = false;
-unsigned long connectionTimeout = 10000; // 10 secondes
-unsigned long startTime;
-unsigned long delaytime;
+
+bool isClientWIFI = false;
+bool waitingOTA = false;
+bool updateOTA = false;
+String updateOTAError = "";
+float otaPercentage = 0.0;
+unsigned long startTimeOTA = 0;
+unsigned long IntervalOTA = 120000; // 2 minutes
+unsigned long connectionTimeoutWIFI = 10000; // 10 secondes
+unsigned long startTimeWIFI;
 
 unsigned int ringLightPower = 0;
 
@@ -52,6 +59,7 @@ Adafruit_NeoPixel strip(64, LED_PIN, NEO_GRB + NEO_KHZ800);
 #include "scanbox_pageUser.h"
 #include "scanbox_pageCam.h"
 #include "scanbox_pageCamVideoFlux.h"
+#include "scanbox_pageOTA.h"
 
 #define CAMERA_MODEL_AI_THINKER
 #define PWDN_GPIO_NUM 32
@@ -150,8 +158,8 @@ void setup()
   espUser = readStringFromEEPROM(ESPUSER_ADDRESS);
   espPassword = readStringFromEEPROM(ESPPASSWORD_ADDRESS);
 
-  iswificlient = setupWiFi();
-  if (iswificlient)
+  isClientWIFI = setupWiFi();
+  if (isClientWIFI)
   {
     strip.setPixelColor(0, strip.Color(0, 20, 20));
     strip.show();
@@ -161,6 +169,41 @@ void setup()
     strip.setPixelColor(0, strip.Color(20, 0, 0));
     strip.show();
   }
+
+  ArduinoOTA.setHostname("ScanBox");
+  ArduinoOTA.setPort(8100);
+  if (espPassword.length() > 0)
+  {
+    ArduinoOTA.setPassword(espPassword.c_str());
+  }
+  else
+  {
+    ArduinoOTA.setPassword("0");
+  }
+  ArduinoOTA.onStart([]() {
+    Serial.println("Start");
+    updateOTA = true;
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nEnd");
+    updateOTA = false;
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    otaPercentage = (progress / (total / 100));
+    Serial.printf("Progress: %u%%\r", otaPercentage);
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    updateOTAError = String(error);
+    updateOTA = false;
+    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+    else if (error == OTA_END_ERROR) Serial.println("End Failed");
+  });
+  ArduinoOTA.begin();
+
   server.on("/wifi", HTTP_GET, handleMenuWifi);
   server.on("/savewifi", HTTP_GET, handleSaveWifi);
   server.on("/user", HTTP_GET, handleMenuUser);
@@ -172,6 +215,11 @@ void setup()
   server.on("/stream", HTTP_GET, handleStream);
   server.on("/capture", HTTP_GET, handleCapture);
   server.on("/status", HTTP_GET, handleStatus);
+  server.on("/ota", HTTP_GET, handleMenuOTA);
+  server.on("/saveota", HTTP_GET, handleOTA);
+/*   server.on("favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send_P(200, "image/x-icon", favicon, sizeof(favicon));
+  }); */
   server.begin();
   strip.setPixelColor(0, strip.Color(0, 0, 0));
   for (int i = 1; i < 64; i++)
@@ -184,19 +232,19 @@ void setup()
 
 void loop()
 {
-  if (iswificlient)
+  if (isClientWIFI)
   {
     if (WiFi.status() != WL_CONNECTED)
     {
       Serial.println("Wifi connection lost");
-      iswificlient = setupWiFi();
-      if (iswificlient)
+      isClientWIFI = setupWiFi();
+      if (isClientWIFI)
       {
         strip.setPixelColor(0, strip.Color(0, 20, 20));
         strip.show();
-		delay(1000);
-		strip.setPixelColor(0, strip.Color(0, 0, 0));
-		strip.show();
+        delay(1000);
+        strip.setPixelColor(0, strip.Color(0, 0, 0));
+        strip.show();
       }
       else
       {
@@ -204,5 +252,13 @@ void loop()
         strip.show();
       }
     }
+  }
+  if (waitingOTA)
+  {
+    if ((millis() - startTimeOTA > IntervalOTA) && (!updateOTA))
+    {
+      waitingOTA = false;
+    }
+    ArduinoOTA.handle();
   }
 }

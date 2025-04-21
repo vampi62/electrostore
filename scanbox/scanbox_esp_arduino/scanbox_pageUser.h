@@ -162,6 +162,7 @@ void handleSaveUser(AsyncWebServerRequest *request)
         {
           espPassword = newESPPassword;
           writeStringToEEPROM(ESPPASSWORD_ADDRESS, espPassword);
+          ArduinoOTA.setPassword(espPassword.c_str());
           FormChange = true;
         }
       }
@@ -178,6 +179,7 @@ void handleSaveUser(AsyncWebServerRequest *request)
       {
         espPassword = "";
         writeStringToEEPROM(ESPPASSWORD_ADDRESS, espPassword);
+        ArduinoOTA.setPassword("0");
         FormChange = true;
       }
     }
