@@ -16,7 +16,7 @@ export const useUsersStore = defineStore("users",{
 		projetsCommentaireLoading: true,
 		projetsCommentaireTotalCount: {},
 		projetsCommentaire: {},
-		projectCommentaireEdition: {},
+		projetCommentaireEdition: {},
 
 		commandsCommentaireLoading: true,
 		commandsCommentaireTotalCount: {},
@@ -140,7 +140,7 @@ export const useUsersStore = defineStore("users",{
 			delete this.users[id];
 		},
 
-		async getProjectCommentaireByInterval(idUser, limit = 100, offset = 0, expand = []) {
+		async getProjetCommentaireByInterval(idUser, limit = 100, offset = 0, expand = []) {
 			// init store
 			const projetStore = useProjetsStore();
 			// init list if not exist
@@ -150,20 +150,20 @@ export const useUsersStore = defineStore("users",{
 			// query
 			this.projetsCommentaireLoading = true;
 			const expandString = expand.join(",");
-			let newProjectCommentaireList = await fetchWrapper.get({
+			let newProjetCommentaireList = await fetchWrapper.get({
 				url: `${baseUrl}/user/${idUser}/projet_commentaire?limit=${limit}&offset=${offset}&expand=${expandString}`,
 				useToken: "access",
 			});
-			for (const projectCommentaire of newProjectCommentaireList["data"]) {
-				this.projetsCommentaire[idUser][projectCommentaire.id_projet_commentaire] = projectCommentaire;
+			for (const projetCommentaire of newProjetCommentaireList["data"]) {
+				this.projetsCommentaire[idUser][projetCommentaire.id_projet_commentaire] = projetCommentaire;
 				if (expand.indexOf("projet") > -1) {
-					projetStore.projets[projectCommentaire.projet.id_projet] = projectCommentaire.projet;
+					projetStore.projets[projetCommentaire.projet.id_projet] = projetCommentaire.projet;
 				}
 			}
-			this.projetsCommentaireTotalCount[idUser] = newProjectCommentaireList["count"];
+			this.projetsCommentaireTotalCount[idUser] = newProjetCommentaireList["count"];
 			this.projetsCommentaireLoading = false;
 		},
-		async getProjectCommentaireById(idUser, id, expand = []) {
+		async getProjetCommentaireById(idUser, id, expand = []) {
 			// init store
 			const projetStore = useProjetsStore();
 			// init list if not exist
@@ -184,9 +184,9 @@ export const useUsersStore = defineStore("users",{
 				projetStore.projets[this.projetsCommentaire[idUser][id].id_projet] = this.projetsCommentaire[idUser][id].projet;
 			}
 		},
-		async createProjectCommentaire(idUser, params) {
-			this.projectCommentaireEdition.loading = true;
-			this.projectCommentaireEdition = await fetchWrapper.post({
+		async createProjetCommentaire(idUser, params) {
+			this.projetCommentaireEdition.loading = true;
+			this.projetCommentaireEdition = await fetchWrapper.post({
 				url: `${baseUrl}/user/${idUser}/projet_commentaire`,
 				useToken: "access",
 				body: params,
@@ -194,20 +194,20 @@ export const useUsersStore = defineStore("users",{
 			if (!this.projetsCommentaire[idUser]) {
 				this.projetsCommentaire[idUser] = {};
 			}
-			this.projetsCommentaire[idUser][this.projectCommentaireEdition.id_projet_commentaire] = this.projectCommentaireEdition;
+			this.projetsCommentaire[idUser][this.projetCommentaireEdition.id_projet_commentaire] = this.projetCommentaireEdition;
 		},
-		async updateProjectCommentaire(idUser, id, params) {
-			this.projectCommentaireEdition.loading = true;
-			this.projectCommentaireEdition = await fetchWrapper.put({
+		async updateProjetCommentaire(idUser, id, params) {
+			this.projetCommentaireEdition.loading = true;
+			this.projetCommentaireEdition = await fetchWrapper.put({
 				url: `${baseUrl}/user/${idUser}/projet_commentaire/${id}`,
 				useToken: "access",
 				body: params,
 			});
-			this.projetsCommentaire[idUser][id] = this.projectCommentaireEdition;
+			this.projetsCommentaire[idUser][id] = this.projetCommentaireEdition;
 		},
-		async deleteProjectCommentaire(idUser, id) {
-			this.projectCommentaireEdition.loading = true;
-			this.projectCommentaireEdition = await fetchWrapper.delete({
+		async deleteProjetCommentaire(idUser, id) {
+			this.projetCommentaireEdition.loading = true;
+			this.projetCommentaireEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/user/${idUser}/projet_commentaire/${id}`,
 				useToken: "access",
 			});

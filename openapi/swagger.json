@@ -5097,7 +5097,7 @@
             }
           },
           {
-            "name": "id_project",
+            "name": "id_projet",
             "in": "path",
             "required": true,
             "schema": {

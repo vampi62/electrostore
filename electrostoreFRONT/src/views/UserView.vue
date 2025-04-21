@@ -61,7 +61,7 @@ async function fetchProjetCommentaires() {
 		if (Number(usersStore.projetsCommentaireTotalCount[userId]) === offset) {
 			return;
 		}
-		await usersStore.getProjectCommentaireByInterval(userId,
+		await usersStore.getProjetCommentaireByInterval(userId,
 			(offset + 100 > Number(usersStore.projetsCommentaireTotalCount[userId]) ? usersStore.projetsCommentaireTotalCount[userId] : offset + 100),
 			offset, ["projet"]);
 	}
@@ -102,7 +102,7 @@ async function fetchAllData() {
 			}
 			return;
 		}
-		usersStore.getProjectCommentaireByInterval(userId, 100, 0, ["projet"]);
+		usersStore.getProjetCommentaireByInterval(userId, 100, 0, ["projet"]);
 		usersStore.getCommandCommentaireByInterval(userId, 100, 0, ["command"]);
 		usersStore.getTokenByInterval(userId, 100, 0);
 		usersStore.userEdition = {
