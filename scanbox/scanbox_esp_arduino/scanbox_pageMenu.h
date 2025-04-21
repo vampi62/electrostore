@@ -58,6 +58,12 @@ void handleStatus(AsyncWebServerRequest *request)
   doc["uptime"] = millis() / 1000;
   doc["espModel"] = ESP.getChipModel();
   doc["espTemperature"] = temperatureRead();
+  doc["OTAWait"] = waitingOTA ? "Waiting" : "Not Waiting";
+  doc["OTAUploading"] = updateOTA ? "Uploading" : "Not Uploading";
+  doc["OTAError"] = updateOTAError;
+  doc["OTATime"] = IntervalOTA / 1000;
+  doc["OTARemainingTime"] = waitingOTA && (((IntervalOTA - (millis() - startTimeOTA)) / 1000) > 0) ? (IntervalOTA - (millis() - startTimeOTA)) / 1000 : 0;
+  doc["OTAPercentage"] = otaPercentage;
   doc["ringLightPower"] = ringLightPower;
   doc["versionScanBox"] = version_scanbox;
   doc["cameraResolution"] = camResolution;
@@ -92,6 +98,7 @@ void handleRoot(AsyncWebServerRequest *request)
   response += "<li><a href='/wifi'>WiFi Settings</a></li>";
   response += "<li><a href='/user'>User Settings</a></li>";
   response += "<li><a href='/cam'>Camera Settings</a></li>";
+  response += "<li><a href='/ota'>OTA Settings</a></li>";
   response += "</ul>";
   response += "</body>";
   response += "</html>";

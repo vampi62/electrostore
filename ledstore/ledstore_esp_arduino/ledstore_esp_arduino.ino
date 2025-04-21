@@ -14,6 +14,7 @@ AsyncWebServer server(80);
 #include <PubSubClient.h>
 #include <Adafruit_NeoPixel.h>
 #include <ArduinoJson.h>
+#include <ArduinoOTA.h>
 
 #define EEPROM_SIZE 512
 
@@ -49,7 +50,7 @@ int maxbuffer = 4096;
 const char *ap_ssid = "ESP_Config";     // name of the WiFi network in AP mode
 const char *ap_password = "ConfigPass"; // password of the WiFi network in AP mode
 
-const char *version_ledstore = "1.0";
+const char *version_ledstore = "1.1";
 
 int ledCount = 256;
 int nbrErreurMqttConnect = 0;
@@ -66,14 +67,22 @@ struct LEDInfo
 LEDInfo leds[256];
 Adafruit_NeoPixel strip(ledCount, LED_PIN, NEO_GRB + NEO_KHZ800);
 
-float outlent;
-float outmoyen;
-float outrapide;
-float insinus = 0;
-bool iswificlient = false;
-unsigned long connectionTimeout = 10000; // 10 secondes
-unsigned long startTime;
-unsigned long delaytime;
+float modSlow;
+float modModerate;
+float modQuick;
+float modFast;
+float inputSinus = 0;
+bool isClientWIFI = false;
+bool waitingOTA = false;
+bool updateOTA = false;
+String updateOTAError = "";
+float otaPercentage = 0.0;
+unsigned long startTimeOTA = 0;
+unsigned long IntervalOTA = 120000; // 2 minutes
+unsigned long connectionTimeoutWIFI = 10000; // 10 secondes
+unsigned long startTimeWIFI;
+unsigned long startTimeLed;
+unsigned long delayTime;
 
 #include "ledstore_eeprom.h"
 #include "ledstore_wifimqtt.h"
@@ -81,6 +90,7 @@ unsigned long delaytime;
 #include "ledstore_pageWifi.h"
 #include "ledstore_pageUser.h"
 #include "ledstore_pageMQTT.h"
+#include "ledstore_pageOTA.h"
 
 void callback(char *topic, byte *payload, unsigned int length)
 {
@@ -119,7 +129,7 @@ void callback(char *topic, byte *payload, unsigned int length)
       leds[indextab + 1].module = ledsArray[i]["module"];
       leds[indextab + 1].delayTime = ledsArray[i]["delay"];
     }
-    startTime = millis();
+    startTimeLed = millis();
   }
 }
 
@@ -141,8 +151,8 @@ void setup()
   mqttServer = readStringFromEEPROM(MQTTSERVER_ADDRESS);
   mqttPort = readStringFromEEPROM(MQTTPORT_ADDRESS);
 
-  iswificlient = setupWiFi();
-  if (iswificlient)
+  isClientWIFI = setupWiFi();
+  if (isClientWIFI)
   {
     strip.setPixelColor(0, strip.Color(0, 20, 20));
     strip.show();
@@ -157,6 +167,41 @@ void setup()
     strip.setPixelColor(0, strip.Color(20, 0, 0));
     strip.show();
   }
+
+  ArduinoOTA.setHostname("LedStore");
+  ArduinoOTA.setPort(8100);
+  if (espPassword.length() > 0)
+  {
+    ArduinoOTA.setPassword(espPassword.c_str());
+  }
+  else
+  {
+    ArduinoOTA.setPassword("0");
+  }
+  ArduinoOTA.onStart([]() {
+    Serial.println("Start");
+    updateOTA = true;
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nEnd");
+    updateOTA = false;
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    otaPercentage = (progress / (total / 100));
+    Serial.printf("Progress: %u%%\r", otaPercentage);
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    updateOTAError = String(error);
+    updateOTA = false;
+    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+    else if (error == OTA_END_ERROR) Serial.println("End Failed");
+  });
+  ArduinoOTA.begin();
+
   server.on("/wifi", HTTP_GET, handleMenuWifi);
   server.on("/savewifi", HTTP_GET, handleSaveWifi);
   server.on("/user", HTTP_GET, handleMenuUser);
@@ -165,6 +210,11 @@ void setup()
   server.on("/savemqtt", HTTP_GET, handleSaveMqtt);
   server.on("/", HTTP_GET, handleRoot);
   server.on("/status", HTTP_GET, handleStatus);
+  server.on("/ota", HTTP_GET, handleMenuOTA);
+  server.on("/saveota", HTTP_GET, handleOTA);
+/*   server.on("favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send_P(200, "image/x-icon", favicon, sizeof(favicon));
+  }); */
   server.begin();
   strip.setPixelColor(0, strip.Color(0, 0, 0));
   strip.show();
@@ -172,13 +222,13 @@ void setup()
 
 void loop()
 {
-  if (iswificlient)
+  if (isClientWIFI)
   {
     if (WiFi.status() != WL_CONNECTED)
     {
       Serial.println("wifi connection lost");
-      iswificlient = setupWiFi();
-      if (iswificlient)
+      isClientWIFI = setupWiFi();
+      if (isClientWIFI)
       {
         strip.setPixelColor(0, strip.Color(0, 20, 20));
         strip.show();
@@ -197,44 +247,54 @@ void loop()
     {
       mqttClient.loop();
     }
-    insinus = insinus + 0.01;
-    if (insinus >= 1080)
+    inputSinus = inputSinus + 0.01;
+    if (inputSinus >= 1080)
     {
-      insinus = 0;
+      inputSinus = 0;
     }
-    float outlent = fabs(sin(insinus / 3));
-    float outmoyen = fabs(sin(insinus / 2));
-    float outrapide = fabs(sin(insinus / 1));
+    float modSlow = fabs(sin(inputSinus));
+    float modModerate = fabs(sin(inputSinus / 0.5));
+    float modQuick = fabs(sin(inputSinus / 0.25));
+    float modFast = fabs(sin(inputSinus / 0.125));
     strip.clear();
-    delaytime = millis();
+    delayTime = millis();
     for (int i = 1; i < ledCount; i++)
     {
       if (leds[i].delayTime > 0)
       {
-        if (leds[i].module == 1)
+        switch (leds[i].module)
         {
-          strip.setPixelColor(i, strip.Color(leds[i].red, leds[i].green, leds[i].blue));
+          case 1:
+            strip.setPixelColor(i, strip.Color(leds[i].red, leds[i].green, leds[i].blue));
+            break;
+          case 2:
+            strip.setPixelColor(i, strip.Color(leds[i].red * modSlow, leds[i].green * modSlow, leds[i].blue * modSlow));
+            break;
+          case 3:
+            strip.setPixelColor(i, strip.Color(leds[i].red * modModerate, leds[i].green * modModerate, leds[i].blue * modModerate));
+            break;
+          case 4:
+            strip.setPixelColor(i, strip.Color(leds[i].red * modQuick, leds[i].green * modQuick, leds[i].blue * modQuick));
+            break;
+          case 5:
+            strip.setPixelColor(i, strip.Color(leds[i].red * modFast, leds[i].green * modFast, leds[i].blue * modFast));
+            break;
+          default:
+            strip.setPixelColor(i, strip.Color(leds[i].red, leds[i].green, leds[i].blue));
+            break;
         }
-        else if (leds[i].module == 2)
-        {
-          strip.setPixelColor(i, strip.Color(leds[i].red * outlent, leds[i].green * outlent, leds[i].blue * outlent));
-        }
-        else if (leds[i].module == 3)
-        {
-          strip.setPixelColor(i, strip.Color(leds[i].red * outmoyen, leds[i].green * outmoyen, leds[i].blue * outmoyen));
-        }
-        else if (leds[i].module == 4)
-        {
-          strip.setPixelColor(i, strip.Color(leds[i].red * outrapide, leds[i].green * outrapide, leds[i].blue * outrapide));
-        }
-        else
-        {
-          strip.setPixelColor(i, strip.Color(leds[i].red, leds[i].green, leds[i].blue));
-        }
-        leds[i].delayTime = leds[i].delayTime - (delaytime - startTime);
+        leds[i].delayTime = leds[i].delayTime - (delayTime - startTimeLed);
       }
     }
-    startTime = millis();
+    startTimeLed = millis();
     strip.show();
+  }
+  if (waitingOTA)
+  {
+    if ((millis() - startTimeOTA > IntervalOTA) && (!updateOTA))
+    {
+      waitingOTA = false;
+    }
+    ArduinoOTA.handle();
   }
 }
