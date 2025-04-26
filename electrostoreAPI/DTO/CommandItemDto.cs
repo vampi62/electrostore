@@ -8,13 +8,11 @@ public record ReadCommandItemDto
     public int id_command { get; init; }
     public int qte_command_item { get; init; }
     public float prix_command_item { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
-public record ReadExtendedCommandItemDto
+public record ReadExtendedCommandItemDto : ReadCommandItemDto
 {
-    public int id_item { get; init; }
-    public int id_command { get; init; }
-    public int qte_command_item { get; init; }
-    public float prix_command_item { get; init; }
     public ReadItemDto? item { get; init; }
     public ReadCommandDto? command { get; init; }
 }

@@ -22,8 +22,6 @@ public class CommandsDocuments : BaseEntity
 
     public decimal size_command_document { get; set; }
 
-    public DateTime date_command_document { get; set; }
-
     public int id_command { get; set; }
     [ForeignKey("id_command")]
     public Commands Command { get; set; }

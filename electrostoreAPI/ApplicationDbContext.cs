@@ -22,8 +22,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<electrostore.Models.ItemsBoxs> ItemsBoxs { get; set; }
     public DbSet<electrostore.Models.ItemsDocuments> ItemsDocuments { get; set; }
     public DbSet<electrostore.Models.ItemsTags> ItemsTags { get; set; }
-    public DbSet<electrostore.Models.JWIAccessToken> JWIAccessToken { get; set; }
-    public DbSet<electrostore.Models.JWIRefreshToken> JWIRefreshToken { get; set; }
+    public DbSet<electrostore.Models.JwiAccessTokens> JwiAccessTokens { get; set; }
+    public DbSet<electrostore.Models.JwiRefreshTokens> JwiRefreshTokens { get; set; }
     public DbSet<electrostore.Models.Leds> Leds { get; set; }
     public DbSet<electrostore.Models.Projets> Projets { get; set; }
     public DbSet<electrostore.Models.ProjetsCommentaires> ProjetsCommentaires { get; set; }

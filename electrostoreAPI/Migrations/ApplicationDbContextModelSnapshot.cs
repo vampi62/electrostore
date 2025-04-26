@@ -159,12 +159,6 @@ namespace electrostore.Migrations
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime>("date_command_commentaire")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime>("date_modif_command_commentaire")
-                        .HasColumnType("datetime(6)");
-
                     b.Property<int>("id_command")
                         .HasColumnType("int");
 
@@ -190,9 +184,6 @@ namespace electrostore.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("created_at")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime>("date_command_document")
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("id_command")
@@ -262,9 +253,6 @@ namespace electrostore.Migrations
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime>("date_ia")
-                        .HasColumnType("datetime(6)");
-
                     b.Property<string>("description_ia")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -293,9 +281,6 @@ namespace electrostore.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("created_at")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime>("date_img")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("description_img")
@@ -397,9 +382,6 @@ namespace electrostore.Migrations
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime>("date_item_document")
-                        .HasColumnType("datetime(6)");
-
                     b.Property<int>("id_item")
                         .HasColumnType("int");
 
@@ -452,7 +434,7 @@ namespace electrostore.Migrations
                     b.ToTable("ItemsTags");
                 });
 
-            modelBuilder.Entity("electrostore.Models.JWIAccessToken", b =>
+            modelBuilder.Entity("electrostore.Models.JwiAccessTokens", b =>
                 {
                     b.Property<Guid>("id_jwi_access")
                         .ValueGeneratedOnAdd()
@@ -493,10 +475,10 @@ namespace electrostore.Migrations
 
                     b.HasIndex("id_user");
 
-                    b.ToTable("JWIAccessToken");
+                    b.ToTable("JwiAccessTokens");
                 });
 
-            modelBuilder.Entity("electrostore.Models.JWIRefreshToken", b =>
+            modelBuilder.Entity("electrostore.Models.JwiRefreshTokens", b =>
                 {
                     b.Property<Guid>("id_jwi_refresh")
                         .ValueGeneratedOnAdd()
@@ -542,7 +524,7 @@ namespace electrostore.Migrations
 
                     b.HasIndex("id_user");
 
-                    b.ToTable("JWIRefreshToken");
+                    b.ToTable("JwiRefreshTokens");
                 });
 
             modelBuilder.Entity("electrostore.Models.Leds", b =>
@@ -633,12 +615,6 @@ namespace electrostore.Migrations
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime>("date_modif_projet_commentaire")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime>("date_projet_commentaire")
-                        .HasColumnType("datetime(6)");
-
                     b.Property<int>("id_projet")
                         .HasColumnType("int");
 
@@ -664,9 +640,6 @@ namespace electrostore.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("created_at")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime>("date_projet_document")
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("id_projet")
@@ -997,7 +970,7 @@ namespace electrostore.Migrations
                     b.Navigation("Tag");
                 });
 
-            modelBuilder.Entity("electrostore.Models.JWIAccessToken", b =>
+            modelBuilder.Entity("electrostore.Models.JwiAccessTokens", b =>
                 {
                     b.HasOne("electrostore.Models.Users", "User")
                         .WithMany()
@@ -1008,9 +981,9 @@ namespace electrostore.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("electrostore.Models.JWIRefreshToken", b =>
+            modelBuilder.Entity("electrostore.Models.JwiRefreshTokens", b =>
                 {
-                    b.HasOne("electrostore.Models.JWIAccessToken", "JWIAccessToken")
+                    b.HasOne("electrostore.Models.JwiAccessTokens", "JWIAccessToken")
                         .WithMany()
                         .HasForeignKey("id_jwi_access")
                         .OnDelete(DeleteBehavior.Cascade)

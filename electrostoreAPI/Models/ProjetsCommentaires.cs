@@ -19,8 +19,4 @@ public class ProjetsCommentaires : BaseEntity
 
     [MaxLength(Constants.MaxCommentaireLength)]
     public string contenu_projet_commentaire { get; set; }
-
-    public DateTime date_projet_commentaire { get; set; }
-
-    public DateTime date_modif_projet_commentaire { get; set; }
 }

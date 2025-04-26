@@ -8,17 +8,11 @@ public record ReadProjetCommentaireDto
     public int id_projet { get; init; }
     public int? id_user { get; init; }
     public string contenu_projet_commentaire { get; init; }
-    public DateTime date_projet_commentaire { get; init; }
-    public DateTime date_modif_projet_commentaire { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
-public record ReadExtendedProjetCommentaireDto
+public record ReadExtendedProjetCommentaireDto : ReadProjetCommentaireDto
 {
-    public int id_projet_commentaire { get; init; }
-    public int id_projet { get; init; }
-    public int? id_user { get; init; }
-    public string contenu_projet_commentaire { get; init; }
-    public DateTime date_projet_commentaire { get; init; }
-    public DateTime date_modif_projet_commentaire { get; init; }
     public ReadProjetDto? projet { get; init; }
     public ReadUserDto? user { get; init; }
 }

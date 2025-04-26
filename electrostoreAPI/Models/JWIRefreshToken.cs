@@ -5,7 +5,7 @@ using electrostore.Dto;
 
 namespace electrostore.Models;
 
-public class JWIRefreshToken : BaseEntity
+public class JwiRefreshTokens : BaseEntity
 {    
     [Key]
     public Guid id_jwi_refresh { get; set; }
@@ -32,5 +32,5 @@ public class JWIRefreshToken : BaseEntity
 
     public Guid id_jwi_access { get; set; }
     [ForeignKey("id_jwi_access")]
-    public JWIAccessToken JWIAccessToken { get; set; }
+    public JwiAccessTokens JWIAccessToken { get; set; }
 }

@@ -1,16 +1,18 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.BoxTagService;
 
 public class BoxTagService : IBoxTagService
 {
+    private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
 
-    public BoxTagService(ApplicationDbContext context)
+    public BoxTagService(IMapper mapper, ApplicationDbContext context)
     {
+        _mapper = mapper;
         _context = context;
     }
 
@@ -21,31 +23,19 @@ public class BoxTagService : IBoxTagService
         {
             throw new KeyNotFoundException($"Box with id {boxId} not found");
         }
-        return await _context.BoxsTags
-            .Skip(offset)
-            .Take(limit)
-            .Where(s => s.id_box == boxId)
-            .Select(s => new ReadExtendedBoxTagDto
-            {
-                id_box = s.id_box,
-                id_tag = s.id_tag,
-                tag = expand != null && expand.Contains("tag") ? new ReadTagDto
-                {
-                    id_tag = s.Tag.id_tag,
-                    nom_tag = s.Tag.nom_tag,
-                    poids_tag = s.Tag.poids_tag
-                } : null,
-                box = expand != null && expand.Contains("box") ? new ReadBoxDto
-                {
-                    id_box = s.Box.id_box,
-                    id_store = s.Box.id_store,
-                    xstart_box = s.Box.xstart_box,
-                    ystart_box = s.Box.ystart_box,
-                    xend_box = s.Box.xend_box,
-                    yend_box = s.Box.yend_box
-                } : null
-            })
-            .ToListAsync();
+        var query = _context.BoxsTags.AsQueryable();
+        query = query.Where(s => s.id_box == boxId);
+        query = query.Skip(offset).Take(limit);
+        if (expand != null && expand.Contains("tag"))
+        {
+            query = query.Include(s => s.Tag);
+        }
+        if (expand != null && expand.Contains("box"))
+        {
+            query = query.Include(s => s.Box);
+        }
+        var boxTag = await query.ToListAsync();
+        return _mapper.Map<IEnumerable<ReadExtendedBoxTagDto>>(boxTag);
     }
 
     public async Task<int> GetBoxsTagsCountByBoxId(int boxId)
@@ -67,30 +57,19 @@ public class BoxTagService : IBoxTagService
         {
             throw new KeyNotFoundException($"Tag with id {tagId} not found");
         }
-        return await _context.BoxsTags
-            .Skip(offset)
-            .Take(limit)
-            .Where(s => s.id_tag == tagId)
-            .Select(s => new ReadExtendedBoxTagDto
-            {
-                id_box = s.id_box,
-                id_tag = s.id_tag,
-                tag = expand != null && expand.Contains("tag") ? new ReadTagDto
-                {
-                    id_tag = s.Tag.id_tag,
-                    nom_tag = s.Tag.nom_tag
-                } : null,
-                box = expand != null && expand.Contains("box") ? new ReadBoxDto
-                {
-                    id_box = s.Box.id_box,
-                    id_store = s.Box.id_store,
-                    xstart_box = s.Box.xstart_box,
-                    ystart_box = s.Box.ystart_box,
-                    xend_box = s.Box.xend_box,
-                    yend_box = s.Box.yend_box
-                } : null
-            })
-            .ToListAsync();
+        var query = _context.BoxsTags.AsQueryable();
+        query = query.Where(s => s.id_tag == tagId);
+        query = query.Skip(offset).Take(limit);
+        if (expand != null && expand.Contains("tag"))
+        {
+            query = query.Include(s => s.Tag);
+        }
+        if (expand != null && expand.Contains("box"))
+        {
+            query = query.Include(s => s.Box);
+        }
+        var boxTag = await query.ToListAsync();
+        return _mapper.Map<IEnumerable<ReadExtendedBoxTagDto>>(boxTag);
     }
 
     public async Task<int> GetBoxsTagsCountByTagId(int tagId)
@@ -107,28 +86,18 @@ public class BoxTagService : IBoxTagService
 
     public async Task<ReadExtendedBoxTagDto> GetBoxTagById(int boxId, int tagId, List<string>? expand = null)
     {
-        return await _context.BoxsTags
-            .Where(s => s.id_box == boxId && s.id_tag == tagId)
-            .Select(s => new ReadExtendedBoxTagDto
-            {
-                id_box = s.id_box,
-                id_tag = s.id_tag,
-                tag = expand != null && expand.Contains("tag") ? new ReadTagDto
-                {
-                    id_tag = s.Tag.id_tag,
-                    nom_tag = s.Tag.nom_tag
-                } : null,
-                box = expand != null && expand.Contains("box") ? new ReadBoxDto
-                {
-                    id_box = s.Box.id_box,
-                    id_store = s.Box.id_store,
-                    xstart_box = s.Box.xstart_box,
-                    ystart_box = s.Box.ystart_box,
-                    xend_box = s.Box.xend_box,
-                    yend_box = s.Box.yend_box
-                } : null
-            })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"BoxTag with id {boxId} and {tagId} not found");
+        var query = _context.BoxsTags.AsQueryable();
+        query = query.Where(s => s.id_box == boxId && s.id_tag == tagId);
+        if (expand != null && expand.Contains("tag"))
+        {
+            query = query.Include(s => s.Tag);
+        }
+        if (expand != null && expand.Contains("box"))
+        {
+            query = query.Include(s => s.Box);
+        }
+        var boxTag = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"BoxTag with id {boxId} and {tagId} not found");
+        return _mapper.Map<ReadExtendedBoxTagDto>(boxTag);
     }
 
     public async Task<ReadBoxTagDto> CreateBoxTag(CreateBoxTagDto boxTagDto)
@@ -155,11 +124,7 @@ public class BoxTagService : IBoxTagService
         };
         _context.BoxsTags.Add(newBoxTag);
         await _context.SaveChangesAsync();
-        return new ReadBoxTagDto
-        {
-            id_box = newBoxTag.id_box,
-            id_tag = newBoxTag.id_tag
-        };
+        return _mapper.Map<ReadBoxTagDto>(newBoxTag);
     }
 
     public async Task<ReadBulkBoxTagDto> CreateBulkBoxTag(List<CreateBoxTagDto> boxTagBulkDto)

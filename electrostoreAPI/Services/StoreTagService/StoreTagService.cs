@@ -1,16 +1,18 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.StoreTagService;
 
 public class StoreTagService : IStoreTagService
 {
+    private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
 
-    public StoreTagService(ApplicationDbContext context)
+    public StoreTagService(IMapper mapper, ApplicationDbContext context)
     {
+        _mapper = mapper;
         _context = context;
     }
 
@@ -21,30 +23,19 @@ public class StoreTagService : IStoreTagService
         {
             throw new KeyNotFoundException($"Store with id {storeId} not found");
         }
-        return await _context.StoresTags
-            .Skip(offset)
-            .Take(limit)
-            .Where(st => st.id_store == storeId)
-            .Select(st => new ReadExtendedStoreTagDto
-            {
-                id_store = st.id_store,
-                id_tag = st.id_tag,
-                tag = expand != null && expand.Contains("tag") ? new ReadTagDto
-                {
-                    id_tag = st.Tag.id_tag,
-                    nom_tag = st.Tag.nom_tag,
-                    poids_tag = st.Tag.poids_tag
-                } : null,
-                store = expand != null && expand.Contains("store") ? new ReadStoreDto
-                {
-                    id_store = st.Store.id_store,
-                    nom_store = st.Store.nom_store,
-                    xlength_store = st.Store.xlength_store,
-                    ylength_store = st.Store.ylength_store,
-                    mqtt_name_store = st.Store.mqtt_name_store
-                } : null
-            })
-            .ToListAsync();
+        var query = _context.StoresTags.AsQueryable();
+        query = query.Where(st => st.id_store == storeId);
+        query = query.Skip(offset).Take(limit);
+        if (expand != null && expand.Contains("tag"))
+        {
+            query = query.Include(st => st.Tag);
+        }
+        if (expand != null && expand.Contains("store"))
+        {
+            query = query.Include(st => st.Store);
+        }
+        var storeTag = await query.ToListAsync();
+        return _mapper.Map<List<ReadExtendedStoreTagDto>>(storeTag);
     }
 
     public async Task<int> GetStoresTagsCountByStoreId(int storeId)
@@ -65,29 +56,19 @@ public class StoreTagService : IStoreTagService
         {
             throw new KeyNotFoundException($"Tag with id {tagId} not found");
         }
-        return await _context.StoresTags
-            .Skip(offset)
-            .Take(limit)
-            .Where(st => st.id_tag == tagId)
-            .Select(st => new ReadExtendedStoreTagDto
-            {
-                id_store = st.id_store,
-                id_tag = st.id_tag,
-                tag = expand != null && expand.Contains("tag") ? new ReadTagDto
-                {
-                    id_tag = st.Tag.id_tag,
-                    nom_tag = st.Tag.nom_tag
-                } : null,
-                store = expand != null && expand.Contains("store") ? new ReadStoreDto
-                {
-                    id_store = st.Store.id_store,
-                    nom_store = st.Store.nom_store,
-                    xlength_store = st.Store.xlength_store,
-                    ylength_store = st.Store.ylength_store,
-                    mqtt_name_store = st.Store.mqtt_name_store
-                } : null
-            })
-            .ToListAsync();
+        var query = _context.StoresTags.AsQueryable();
+        query = query.Where(st => st.id_tag == tagId);
+        query = query.Skip(offset).Take(limit);
+        if (expand != null && expand.Contains("tag"))
+        {
+            query = query.Include(st => st.Tag);
+        }
+        if (expand != null && expand.Contains("store"))
+        {
+            query = query.Include(st => st.Store);
+        }
+        var storeTag = await query.ToListAsync();
+        return _mapper.Map<List<ReadExtendedStoreTagDto>>(storeTag);
     }
 
     public async Task<int> GetStoresTagsCountByTagId(int tagId)
@@ -103,27 +84,18 @@ public class StoreTagService : IStoreTagService
 
     public async Task<ReadExtendedStoreTagDto> GetStoreTagById(int storeId, int tagId, List<string>? expand = null)
     {
-        return await _context.StoresTags
-            .Where(st => st.id_store == storeId && st.id_tag == tagId)
-            .Select(st => new ReadExtendedStoreTagDto
-            {
-                id_store = st.id_store,
-                id_tag = st.id_tag,
-                tag = expand != null && expand.Contains("tag") ? new ReadTagDto
-                {
-                    id_tag = st.Tag.id_tag,
-                    nom_tag = st.Tag.nom_tag
-                } : null,
-                store = expand != null && expand.Contains("store") ? new ReadStoreDto
-                {
-                    id_store = st.Store.id_store,
-                    nom_store = st.Store.nom_store,
-                    xlength_store = st.Store.xlength_store,
-                    ylength_store = st.Store.ylength_store,
-                    mqtt_name_store = st.Store.mqtt_name_store
-                } : null
-            })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"StoreTag with storeId {storeId} and tagId {tagId} not found");
+        var query = _context.StoresTags.AsQueryable();
+        query = query.Where(st => st.id_store == storeId && st.id_tag == tagId);
+        if (expand != null && expand.Contains("tag"))
+        {
+            query = query.Include(st => st.Tag);
+        }
+        if (expand != null && expand.Contains("store"))
+        {
+            query = query.Include(st => st.Store);
+        }
+        var storeTag = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"StoreTag with storeId {storeId} and tagId {tagId} not found");
+        return _mapper.Map<ReadExtendedStoreTagDto>(storeTag);
     }
 
     public async Task<ReadStoreTagDto> CreateStoreTag(CreateStoreTagDto storeTagDto)
@@ -150,11 +122,7 @@ public class StoreTagService : IStoreTagService
         };
         _context.StoresTags.Add(newStoreTag);
         await _context.SaveChangesAsync();
-        return new ReadStoreTagDto
-        {
-            id_store = newStoreTag.id_store,
-            id_tag = newStoreTag.id_tag
-        };
+        return _mapper.Map<ReadStoreTagDto>(newStoreTag);
     }
 
     public async Task<ReadBulkStoreTagDto> CreateBulkStoreTag(List<CreateStoreTagDto> storeTagBulkDto)

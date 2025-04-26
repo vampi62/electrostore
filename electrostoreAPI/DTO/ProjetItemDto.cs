@@ -7,12 +7,11 @@ public record ReadProjetItemDto
     public int id_projet { get; init; }
     public int id_item { get; init; }
     public int qte_projet_item { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
-public record ReadExtendedProjetItemDto
+public record ReadExtendedProjetItemDto : ReadProjetItemDto
 {
-    public int id_projet { get; init; }
-    public int id_item { get; init; }
-    public int qte_projet_item { get; init; }
     public ReadItemDto? item { get; init; }
     public ReadProjetDto? projet { get; init; }
 }

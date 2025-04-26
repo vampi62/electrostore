@@ -6,11 +6,11 @@ public record ReadStoreTagDto
 {
     public int id_store { get; init; }
     public int id_tag { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
-public record ReadExtendedStoreTagDto
+public record ReadExtendedStoreTagDto : ReadStoreTagDto
 {
-    public int id_store { get; init; }
-    public int id_tag { get; init; }
     public ReadTagDto? tag { get; init; }
     public ReadStoreDto? store { get; init; }
 }

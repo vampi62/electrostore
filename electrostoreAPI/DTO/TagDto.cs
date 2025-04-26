@@ -7,12 +7,11 @@ public record ReadTagDto
     public int id_tag { get; init; }
     public string nom_tag { get; init; }
     public int poids_tag { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
-public record ReadExtendedTagDto
+public record ReadExtendedTagDto : ReadTagDto
 {
-    public int id_tag { get; init; }
-    public string nom_tag { get; init; }
-    public int poids_tag { get; init; }
     public int stores_tags_count { get; init; }
     public int items_tags_count { get; init; }
     public int boxs_tags_count { get; init; }

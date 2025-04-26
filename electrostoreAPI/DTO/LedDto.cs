@@ -9,6 +9,8 @@ public record ReadLedDto
     public int y_led { get; init; }
     public int id_store { get; init; }
     public int mqtt_led_id { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
 public record ReadBulkLedDto
 {

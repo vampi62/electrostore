@@ -7,7 +7,7 @@ public interface IJwiService
 {
     public Task SaveToken(JWT token, int userId, string clientIp);
 
-    public bool IsRevoked(string tokenId, string type);
+    public bool IsRevoked(string tokenId, string role);
 
     public bool ValidateToken(string token, string role);
 
@@ -15,9 +15,9 @@ public interface IJwiService
 
     public Task RevokeAllRefreshTokenByUser(int userId, string clientIp, string reason);
 
-    public Task RevokeRefreshTokenById(string tokenId, string clientIp, string reason, int? userId = null);
+    public Task RevokeRefreshTokenById(string token, string clientIp, string reason, int? userId = null);
 
-    public Task RevokeAccessTokenById(string tokenId, string clientIp, string reason, int? userId = null);
+    public Task RevokeAccessTokenById(string token, string clientIp, string reason, int? userId = null);
 
     public Task RevokePairTokenByRefreshToken(string refreshToken, string clientIp, string reason, int? userId = null);
 

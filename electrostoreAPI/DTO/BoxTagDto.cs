@@ -6,11 +6,11 @@ public record ReadBoxTagDto
 {
     public int id_tag { get; init; }
     public int id_box { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
-public record ReadExtendedBoxTagDto
+public record ReadExtendedBoxTagDto : ReadBoxTagDto
 {
-    public int id_tag { get; init; }
-    public int id_box { get; init; }
     public ReadTagDto? tag { get; init; }
     public ReadBoxDto? box { get; init; }
 }

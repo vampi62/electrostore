@@ -8,17 +8,11 @@ public record ReadCommandCommentaireDto
     public int id_command { get; init; }
     public int? id_user { get; init; }
     public string contenu_command_commentaire { get; init; }
-    public DateTime date_command_commentaire { get; init; }
-    public DateTime date_modif_command_commentaire { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
-public record ReadExtendedCommandCommentaireDto
+public record ReadExtendedCommandCommentaireDto : ReadCommandCommentaireDto
 {
-    public int id_command_commentaire { get; init; }
-    public int id_command { get; init; }
-    public int? id_user { get; init; }
-    public string contenu_command_commentaire { get; init; }
-    public DateTime date_command_commentaire { get; init; }
-    public DateTime date_modif_command_commentaire { get; init; }
     public ReadCommandDto? command { get; init; }
     public ReadUserDto? user { get; init; }
 }

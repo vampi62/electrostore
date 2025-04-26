@@ -19,9 +19,4 @@ public class CommandsCommentaires : BaseEntity
 
     [MaxLength(Constants.MaxCommentaireLength)]
     public string contenu_command_commentaire { get; set; }
-
-    public DateTime date_command_commentaire { get; set; }
-
-    public DateTime date_modif_command_commentaire { get; set; }
-
 }

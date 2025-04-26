@@ -9,6 +9,8 @@ public record ReadCameraDto
     public string url_camera { get; init; }
     public string? user_camera { get; init; }
     public string? mdp_camera { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
 public record CreateCameraDto : IValidatableObject
 {

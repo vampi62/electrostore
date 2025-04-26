@@ -1,16 +1,18 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.StoreService;
 
 public class StoreService : IStoreService
 {
+    private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
 
-    public StoreService(ApplicationDbContext context)
+    public StoreService(IMapper mapper, ApplicationDbContext context)
     {
+        _mapper = mapper;
         _context = context;
     }
 
@@ -22,48 +24,21 @@ public class StoreService : IStoreService
         {
             query = query.Where(b => idResearch.Contains(b.id_store));
         }
-        return await query
-            .Skip(offset)
-            .Take(limit)
-            .Select(s => new ReadExtendedStoreDto
-            {
-                id_store = s.id_store,
-                nom_store = s.nom_store,
-                xlength_store = s.xlength_store,
-                ylength_store = s.ylength_store,
-                mqtt_name_store = s.mqtt_name_store,
-                boxs = expand != null && expand.Contains("boxs") ? s.Boxs
-                    .Select(b => new ReadBoxDto
-                    {
-                        id_box = b.id_box,
-                        xstart_box = b.xstart_box,
-                        ystart_box = b.ystart_box,
-                        xend_box = b.xend_box,
-                        yend_box = b.yend_box,
-                        id_store = b.id_store
-                    })
-                    .ToArray() : null,
-                leds = expand != null && expand.Contains("leds") ? s.Leds
-                    .Select(l => new ReadLedDto
-                    {
-                        id_led = l.id_led,
-                        x_led = l.x_led,
-                        y_led = l.y_led,
-                        mqtt_led_id = l.mqtt_led_id,
-                        id_store = l.id_store
-                    })
-                    .ToArray() : null,
-                stores_tags = expand != null && expand.Contains("stores_tags") ? s.StoresTags
-                    .Select(t => new ReadStoreTagDto
-                    {
-                        id_store = t.id_store,
-                        id_tag = t.id_tag
-                    })
-                    .ToArray() : null,
-                boxs_count = s.Boxs.Count,
-                leds_count = s.Leds.Count,
-                stores_tags_count = s.StoresTags.Count
-            }).ToListAsync();
+        query = query.Skip(offset).Take(limit);
+        if (expand != null && expand.Contains("boxs"))
+        {
+            query = query.Include(s => s.Boxs);
+        }
+        if (expand != null && expand.Contains("leds"))
+        {
+            query = query.Include(s => s.Leds);
+        }
+        if (expand != null && expand.Contains("stores_tags"))
+        {
+            query = query.Include(s => s.StoresTags);
+        }
+        var store = await query.ToListAsync();
+        return _mapper.Map<List<ReadExtendedStoreDto>>(store);
     }
 
     public async Task<int> GetStoresCount()
@@ -73,48 +48,22 @@ public class StoreService : IStoreService
 
     public async Task<ReadExtendedStoreDto> GetStoreById(int id, List<string>? expand = null)
     {
-        return await _context.Stores
-            .Where(s => s.id_store == id)
-            .Select(s => new ReadExtendedStoreDto
-            {
-                id_store = s.id_store,
-                nom_store = s.nom_store,
-                xlength_store = s.xlength_store,
-                ylength_store = s.ylength_store,
-                mqtt_name_store = s.mqtt_name_store,
-                boxs = expand != null && expand.Contains("boxs") ? s.Boxs
-                    .Select(b => new ReadBoxDto
-                    {
-                        id_box = b.id_box,
-                        xstart_box = b.xstart_box,
-                        ystart_box = b.ystart_box,
-                        xend_box = b.xend_box,
-                        yend_box = b.yend_box,
-                        id_store = b.id_store
-                    })
-                    .ToArray() : null,
-                leds = expand != null && expand.Contains("leds") ? s.Leds
-                    .Select(l => new ReadLedDto
-                    {
-                        id_led = l.id_led,
-                        x_led = l.x_led,
-                        y_led = l.y_led,
-                        mqtt_led_id = l.mqtt_led_id,
-                        id_store = l.id_store
-                    })
-                    .ToArray() : null,
-                stores_tags = expand != null && expand.Contains("stores_tags") ? s.StoresTags
-                    .Select(t => new ReadStoreTagDto
-                    {
-                        id_store = t.id_store,
-                        id_tag = t.id_tag
-                    })
-                    .ToArray() : null,
-                boxs_count = s.Boxs.Count,
-                leds_count = s.Leds.Count,
-                stores_tags_count = s.StoresTags.Count
-            })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Store with id {id} not found");
+        var query = _context.Stores.AsQueryable();
+        query = query.Where(s => s.id_store == id);
+        if (expand != null && expand.Contains("boxs"))
+        {
+            query = query.Include(s => s.Boxs);
+        }
+        if (expand != null && expand.Contains("leds"))
+        {
+            query = query.Include(s => s.Leds);
+        }
+        if (expand != null && expand.Contains("stores_tags"))
+        {
+            query = query.Include(s => s.StoresTags);
+        }
+        var store = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Store with id {id} not found");
+        return _mapper.Map<ReadExtendedStoreDto>(store);
     }
 
     public async Task<ReadStoreDto> CreateStore(CreateStoreDto storeDto)
@@ -128,14 +77,7 @@ public class StoreService : IStoreService
         };
         _context.Stores.Add(newStore);
         await _context.SaveChangesAsync();
-        return new ReadStoreDto
-        {
-            id_store = newStore.id_store,
-            nom_store = newStore.nom_store,
-            xlength_store = newStore.xlength_store,
-            ylength_store = newStore.ylength_store,
-            mqtt_name_store = newStore.mqtt_name_store
-        };
+        return _mapper.Map<ReadStoreDto>(newStore);
     }
 
     public async Task<ReadStoreDto> UpdateStore(int id, UpdateStoreDto storeDto)
@@ -168,14 +110,7 @@ public class StoreService : IStoreService
             storeToUpdate.mqtt_name_store = storeDto.mqtt_name_store;
         }
         await _context.SaveChangesAsync();
-        return new ReadStoreDto
-        {
-            id_store = storeToUpdate.id_store,
-            nom_store = storeToUpdate.nom_store,
-            xlength_store = storeToUpdate.xlength_store,
-            ylength_store = storeToUpdate.ylength_store,
-            mqtt_name_store = storeToUpdate.mqtt_name_store
-        };
+        return _mapper.Map<ReadStoreDto>(storeToUpdate);
     }
 
     public async Task DeleteStore(int id)

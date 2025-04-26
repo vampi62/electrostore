@@ -8,13 +8,11 @@ public record ReadItemBoxDto
     public int id_item { get; init; }
     public int qte_item_box { get; init; }
     public int seuil_max_item_item_box { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
-public record ReadExtendedItemBoxDto
+public record ReadExtendedItemBoxDto : ReadItemBoxDto
 {
-    public int id_box { get; init; }
-    public int id_item { get; init; }
-    public int qte_item_box { get; init; }
-    public int seuil_max_item_item_box { get; init; }
     public ReadItemDto? item { get; init; }
     public ReadBoxDto? box { get; init; }
 }

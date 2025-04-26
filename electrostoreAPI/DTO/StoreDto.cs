@@ -9,14 +9,11 @@ public record ReadStoreDto
     public int xlength_store { get; init; }
     public int ylength_store { get; init; }
     public string mqtt_name_store { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
-public record ReadExtendedStoreDto
+public record ReadExtendedStoreDto : ReadStoreDto
 {
-    public int id_store { get; init; }
-    public string nom_store { get; init; }
-    public int xlength_store { get; init; }
-    public int ylength_store { get; init; }
-    public string mqtt_name_store { get; init; }
     public int boxs_count { get; init; }
     public int leds_count { get; init; }
     public int stores_tags_count { get; init; }

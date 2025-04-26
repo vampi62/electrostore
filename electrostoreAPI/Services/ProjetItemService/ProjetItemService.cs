@@ -1,146 +1,101 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.ProjetItemService;
 
 public class ProjetItemService : IProjetItemService
 {
+    private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
 
-    public ProjetItemService(ApplicationDbContext context)
+    public ProjetItemService(IMapper mapper, ApplicationDbContext context)
     {
+        _mapper = mapper;
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadExtendedProjetItemDto>> GetProjetItemsByProjetId(int ProjetId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<IEnumerable<ReadExtendedProjetItemDto>> GetProjetItemsByProjetId(int projetId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the projet exists
-        if (!await _context.Projets.AnyAsync(p => p.id_projet == ProjetId))
+        if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
         {
-            throw new KeyNotFoundException($"Projet with id {ProjetId} not found");
+            throw new KeyNotFoundException($"Projet with id {projetId} not found");
         }
-        return await _context.ProjetsItems
-            .Skip(offset)
-            .Take(limit)
-            .Where(p => p.id_projet == ProjetId)
-            .Select(p => new ReadExtendedProjetItemDto
-            {
-                id_item = p.id_item,
-                id_projet = p.id_projet,
-                qte_projet_item = p.qte_projet_item,
-                item = expand != null && expand.Contains("item") ? new ReadItemDto
-                {
-                    id_item = p.Item.id_item,
-                    nom_item = p.Item.nom_item,
-                    seuil_min_item = p.Item.seuil_min_item,
-                    description_item = p.Item.description_item,
-                    id_img = p.Item.id_img
-                } : null,
-                projet = expand != null && expand.Contains("projet") ? new ReadProjetDto
-                {
-                    id_projet = p.Projet.id_projet,
-                    nom_projet = p.Projet.nom_projet,
-                    description_projet = p.Projet.description_projet,
-                    url_projet = p.Projet.url_projet,
-                    status_projet = p.Projet.status_projet,
-                    date_debut_projet = p.Projet.date_debut_projet,
-                    date_fin_projet = p.Projet.date_fin_projet
-                } : null
-            })
-            .ToListAsync();
+        var query = _context.ProjetsItems.AsQueryable();
+        query = query.Where(p => p.id_projet == projetId);
+        query = query.Skip(offset).Take(limit);
+        if (expand != null && expand.Contains("item"))
+        {
+            query = query.Include(p => p.Item);
+        }
+        if (expand != null && expand.Contains("projet"))
+        {
+            query = query.Include(p => p.Projet);
+        }
+        var projetItem = await query.ToListAsync();
+        return _mapper.Map<List<ReadExtendedProjetItemDto>>(projetItem);
     }
 
-    public async Task<int> GetProjetItemsCountByProjetId(int ProjetId)
+    public async Task<int> GetProjetItemsCountByProjetId(int projetId)
     {
         // check if the projet exists
-        if (!await _context.Projets.AnyAsync(p => p.id_projet == ProjetId))
+        if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
         {
-            throw new KeyNotFoundException($"Projet with id {ProjetId} not found");
+            throw new KeyNotFoundException($"Projet with id {projetId} not found");
         }
         return await _context.ProjetsItems
-            .CountAsync(p => p.id_projet == ProjetId);
+            .CountAsync(p => p.id_projet == projetId);
     }
 
-    public async Task<IEnumerable<ReadExtendedProjetItemDto>> GetProjetItemsByItemId(int ItemId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<IEnumerable<ReadExtendedProjetItemDto>> GetProjetItemsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the item exists
-        if (!await _context.Items.AnyAsync(i => i.id_item == ItemId))
+        if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            throw new KeyNotFoundException($"Item with id {ItemId} not found");
+            throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
-        return await _context.ProjetsItems
-            .Skip(offset)
-            .Take(limit)
-            .Where(p => p.id_item == ItemId)
-            .Select(p => new ReadExtendedProjetItemDto
-            {
-                id_item = p.id_item,
-                id_projet = p.id_projet,
-                qte_projet_item = p.qte_projet_item,
-                item = expand != null && expand.Contains("item") ? new ReadItemDto
-                {
-                    id_item = p.Item.id_item,
-                    nom_item = p.Item.nom_item,
-                    seuil_min_item = p.Item.seuil_min_item,
-                    description_item = p.Item.description_item,
-                    id_img = p.Item.id_img
-                } : null,
-                projet = expand != null && expand.Contains("projet") ? new ReadProjetDto
-                {
-                    id_projet = p.Projet.id_projet,
-                    nom_projet = p.Projet.nom_projet,
-                    description_projet = p.Projet.description_projet,
-                    url_projet = p.Projet.url_projet,
-                    status_projet = p.Projet.status_projet,
-                    date_debut_projet = p.Projet.date_debut_projet,
-                    date_fin_projet = p.Projet.date_fin_projet
-                } : null
-            })
-            .ToListAsync();
+        var query = _context.ProjetsItems.AsQueryable();
+        query = query.Where(p => p.id_item == itemId);
+        query = query.Skip(offset).Take(limit);
+        if (expand != null && expand.Contains("item"))
+        {
+            query = query.Include(p => p.Item);
+        }
+        if (expand != null && expand.Contains("projet"))
+        {
+            query = query.Include(p => p.Projet);
+        }
+        var projetItem = await query.ToListAsync();
+        return _mapper.Map<List<ReadExtendedProjetItemDto>>(projetItem);
     }
 
-    public async Task<int> GetProjetItemsCountByItemId(int ItemId)
+    public async Task<int> GetProjetItemsCountByItemId(int itemId)
     {
         // check if the item exists
-        if (!await _context.Items.AnyAsync(i => i.id_item == ItemId))
+        if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            throw new KeyNotFoundException($"Item with id {ItemId} not found");
+            throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
         return await _context.ProjetsItems
-            .CountAsync(p => p.id_item == ItemId);
+            .CountAsync(p => p.id_item == itemId);
     }
 
     public async Task<ReadExtendedProjetItemDto> GetProjetItemById(int projetId, int itemId, List<string>? expand = null)
     {
-        return await _context.ProjetsItems
-            .Where(p => p.id_projet == projetId && p.id_item == itemId)
-            .Select(p => new ReadExtendedProjetItemDto
-            {
-                id_item = p.id_item,
-                id_projet = p.id_projet,
-                qte_projet_item = p.qte_projet_item,
-                item = expand != null && expand.Contains("item") ? new ReadItemDto
-                {
-                    id_item = p.Item.id_item,
-                    nom_item = p.Item.nom_item,
-                    seuil_min_item = p.Item.seuil_min_item,
-                    description_item = p.Item.description_item,
-                    id_img = p.Item.id_img
-                } : null,
-                projet = expand != null && expand.Contains("projet") ? new ReadProjetDto
-                {
-                    id_projet = p.Projet.id_projet,
-                    nom_projet = p.Projet.nom_projet,
-                    description_projet = p.Projet.description_projet,
-                    url_projet = p.Projet.url_projet,
-                    status_projet = p.Projet.status_projet,
-                    date_debut_projet = p.Projet.date_debut_projet,
-                    date_fin_projet = p.Projet.date_fin_projet
-                } : null
-            })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetItem with id_projet {projetId} and id_item {itemId} not found");
+        var query = _context.ProjetsItems.AsQueryable();
+        query = query.Where(p => p.id_projet == projetId && p.id_item == itemId);
+        if (expand != null && expand.Contains("item"))
+        {
+            query = query.Include(p => p.Item);
+        }
+        if (expand != null && expand.Contains("projet"))
+        {
+            query = query.Include(p => p.Projet);
+        }
+        var projetItem = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetItem with id_projet {projetId} and id_item {itemId} not found");
+        return _mapper.Map<ReadExtendedProjetItemDto>(projetItem);
     }
 
     public async Task<ReadProjetItemDto> CreateProjetItem(CreateProjetItemDto projetItemDto)
@@ -168,12 +123,7 @@ public class ProjetItemService : IProjetItemService
         };
         _context.ProjetsItems.Add(newProjetItem);
         await _context.SaveChangesAsync();
-        return new ReadProjetItemDto
-        {
-            id_item = newProjetItem.id_item,
-            id_projet = newProjetItem.id_projet,
-            qte_projet_item = newProjetItem.qte_projet_item
-        };
+        return _mapper.Map<ReadProjetItemDto>(newProjetItem);
     }
 
     public async Task<ReadBulkProjetItemDto> CreateBulkProjetItem(List<CreateProjetItemDto> projetItemBulkDto)
@@ -220,12 +170,7 @@ public class ProjetItemService : IProjetItemService
             projetItemToUpdate.qte_projet_item = projetItemDto.qte_projet_item.Value;
         }
         await _context.SaveChangesAsync();
-        return new ReadProjetItemDto
-        {
-            id_item = projetItemToUpdate.id_item,
-            id_projet = projetItemToUpdate.id_projet,
-            qte_projet_item = projetItemToUpdate.qte_projet_item
-        };
+        return _mapper.Map<ReadProjetItemDto>(projetItemToUpdate);
     }
 
     public async Task DeleteProjetItem(int projetId, int itemId)

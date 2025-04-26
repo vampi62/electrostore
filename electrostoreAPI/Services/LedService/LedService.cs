@@ -1,22 +1,23 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Protocol;
-using System.Text;
 using System.Text.Json;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.LedService;
 
 public class LedService : ILedService
 {
+    private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly IMqttClient _mqttClient;
 
-    public LedService(ApplicationDbContext context, IMqttClient mqttClient)
+    public LedService(IMapper mapper, ApplicationDbContext context, IMqttClient mqttClient)
     {
+        _mapper = mapper;
         _context = context;
         _mqttClient = mqttClient;
     }
@@ -28,19 +29,11 @@ public class LedService : ILedService
         {
             throw new KeyNotFoundException($"Store with id {storeId} not found");
         }
-        return await _context.Leds
-            .Where(led => led.id_store == storeId)
-            .Skip(offset)
-            .Take(limit)
-            .Select(led => new ReadLedDto
-            {
-                id_led = led.id_led,
-                x_led = led.x_led,
-                y_led = led.y_led,
-                id_store = led.id_store,
-                mqtt_led_id = led.mqtt_led_id
-            })
-            .ToListAsync();
+        var query = _context.Leds.AsQueryable();
+        query = query.Where(b => b.id_store == storeId);
+        query = query.Skip(offset).Take(limit);
+        var led = await query.ToListAsync();
+        return _mapper.Map<List<ReadLedDto>>(led);
     }
 
     public async Task<int> GetLedsCountByStoreId(int storeId)
@@ -62,17 +55,10 @@ public class LedService : ILedService
         {
             throw new KeyNotFoundException($"Store with id {storeId} not found");
         }
-        return await _context.Leds
-            .Where(led => led.x_led >= xmin && led.x_led <= xmax && led.y_led >= ymin && led.y_led <= ymax && led.id_store == storeId)
-            .Select(led => new ReadLedDto
-            {
-                id_led = led.id_led,
-                x_led = led.x_led,
-                y_led = led.y_led,
-                id_store = led.id_store,
-                mqtt_led_id = led.mqtt_led_id
-            })
-            .ToListAsync();
+        var query = _context.Leds.AsQueryable();
+        query = query.Where(led => led.x_led >= xmin && led.x_led <= xmax && led.y_led >= ymin && led.y_led <= ymax && led.id_store == storeId);
+        var led = await query.ToListAsync();
+        return _mapper.Map<List<ReadLedDto>>(led);
     }
 
     public async Task<ReadLedDto> GetLedById(int id, int? storeId = null)
@@ -82,15 +68,7 @@ public class LedService : ILedService
         {
             throw new KeyNotFoundException($"Led with id {id} not found in store with id {storeId}");
         }
-
-        return new ReadLedDto
-        {
-            id_led = led.id_led,
-            x_led = led.x_led,
-            y_led = led.y_led,
-            id_store = led.id_store,
-            mqtt_led_id = led.mqtt_led_id
-        };
+        return _mapper.Map<ReadLedDto>(led);
     }
 
     public async Task<ReadLedDto> CreateLed(CreateLedDto ledDto)
@@ -109,14 +87,7 @@ public class LedService : ILedService
         };
         _context.Leds.Add(newLed);
         await _context.SaveChangesAsync();
-        return new ReadLedDto
-        {
-            id_led = newLed.id_led,
-            x_led = newLed.x_led,
-            y_led = newLed.y_led,
-            id_store = newLed.id_store,
-            mqtt_led_id = newLed.mqtt_led_id
-        };
+        return _mapper.Map<ReadLedDto>(newLed);
     }
 
     public async Task<ReadBulkLedDto> CreateBulkLed(List<CreateLedDto> ledsDto)
@@ -127,8 +98,7 @@ public class LedService : ILedService
         {
             try
             {
-                var led = await CreateLed(ledDto);
-                validQuery.Add(led);
+                validQuery.Add(await CreateLed(ledDto));
             }
             catch (Exception e)
             {
@@ -166,14 +136,7 @@ public class LedService : ILedService
             ledToUpdate.mqtt_led_id = ledDto.mqtt_led_id.Value;
         }
         await _context.SaveChangesAsync();
-        return new ReadLedDto
-        {
-            id_led = ledToUpdate.id_led,
-            x_led = ledToUpdate.x_led,
-            y_led = ledToUpdate.y_led,
-            id_store = ledToUpdate.id_store,
-            mqtt_led_id = ledToUpdate.mqtt_led_id
-        };
+        return _mapper.Map<ReadLedDto>(ledToUpdate);
     }
 
     public async Task<ReadBulkLedDto> UpdateBulkLed(List<UpdateBulkLedStoreDto> ledsDto, int storeId)
@@ -190,8 +153,7 @@ public class LedService : ILedService
                     y_led = ledDto.y_led,
                     mqtt_led_id = ledDto.mqtt_led_id
                 };
-                var led = await UpdateLed(ledDto.id_led, ledDtoFull, storeId);
-                validQuery.Add(led);
+                validQuery.Add(await UpdateLed(ledDto.id_led, ledDtoFull, storeId));
             }
             catch (Exception e)
             {

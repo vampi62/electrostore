@@ -20,10 +20,10 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedCommandItemDto>>> GetCommandItemsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.")] string? expand = null)
+        public async Task<ActionResult<IEnumerable<ReadExtendedCommandItemDto>>> GetCommandsItemsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.")] string? expand = null)
         {
-            var commandItems = await _commandItemService.GetCommandItemsByItemId(id_item, limit, offset, expand?.Split(',').ToList());
-            var CountList = await _commandItemService.GetCommandItemsCountByItemId(id_item);
+            var commandItems = await _commandItemService.GetCommandsItemsByItemId(id_item, limit, offset, expand?.Split(',').ToList());
+            var CountList = await _commandItemService.GetCommandsItemsCountByItemId(id_item);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
             return Ok(commandItems);

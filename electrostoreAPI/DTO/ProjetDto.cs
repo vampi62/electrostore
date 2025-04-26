@@ -11,16 +11,11 @@ public record ReadProjetDto
     public string status_projet { get; init; }
     public DateTime date_debut_projet { get; init; }
     public DateTime? date_fin_projet { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
-public record ReadExtendedProjetDto
+public record ReadExtendedProjetDto : ReadProjetDto
 {
-    public int id_projet { get; init; }
-    public string nom_projet { get; init; }
-    public string description_projet { get; init; }
-    public string url_projet { get; init; }
-    public string status_projet { get; init; }
-    public DateTime date_debut_projet { get; init; }
-    public DateTime? date_fin_projet { get; init; }
     public int projets_commentaires_count { get; init; }
     public int projets_documents_count { get; init; }
     public int projets_items_count { get; init; }

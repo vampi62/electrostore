@@ -1,16 +1,18 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.ItemBoxService;
 
 public class ItemBoxService : IItemBoxService
 {
+    private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
 
-    public ItemBoxService(ApplicationDbContext context)
+    public ItemBoxService(IMapper mapper, ApplicationDbContext context)
     {
+        _mapper = mapper;
         _context = context;
     }
 
@@ -21,35 +23,19 @@ public class ItemBoxService : IItemBoxService
         {
             throw new KeyNotFoundException($"Box with id {boxId} not found");
         }
-        return await _context.ItemsBoxs
-            .Skip(offset)
-            .Take(limit)
-            .Where(itemBox => itemBox.id_box == boxId)
-            .Select(itemBox => new ReadExtendedItemBoxDto
-            {
-                id_box = itemBox.id_box,
-                id_item = itemBox.id_item,
-                qte_item_box = itemBox.qte_item_box,
-                seuil_max_item_item_box = itemBox.seuil_max_item_item_box,
-                item = expand != null && expand.Contains("item") ? new ReadItemDto
-                {
-                    id_item = itemBox.Item.id_item,
-                    nom_item = itemBox.Item.nom_item,
-                    seuil_min_item = itemBox.Item.seuil_min_item,
-                    description_item = itemBox.Item.description_item,
-                    id_img = itemBox.Item.id_img
-                } : null,
-                box = expand != null && expand.Contains("box") ? new ReadBoxDto
-                {
-                    id_box = itemBox.Box.id_box,
-                    xstart_box = itemBox.Box.xstart_box,
-                    ystart_box = itemBox.Box.ystart_box,
-                    xend_box = itemBox.Box.xend_box,
-                    yend_box = itemBox.Box.yend_box,
-                    id_store = itemBox.Box.id_store
-                } : null
-            })
-            .ToListAsync();
+        var query = _context.ItemsBoxs.AsQueryable();
+        query = query.Where(itemBox => itemBox.id_box == boxId);
+        query = query.Skip(offset).Take(limit);
+        if (expand != null && expand.Contains("item"))
+        {
+            query = query.Include(itemBox => itemBox.Item);
+        }
+        if (expand != null && expand.Contains("box"))
+        {
+            query = query.Include(itemBox => itemBox.Box);
+        }
+        var itemBox = await query.ToListAsync();
+        return _mapper.Map<List<ReadExtendedItemBoxDto>>(itemBox);
     }
 
     public async Task<int> GetItemsBoxsCountByBoxId(int boxId)
@@ -63,84 +49,53 @@ public class ItemBoxService : IItemBoxService
             .CountAsync(itemBox => itemBox.id_box == boxId);
     }
 
-    public async Task<IEnumerable<ReadExtendedItemBoxDto>> GetItemsBoxsByItemId(int ItemId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<IEnumerable<ReadExtendedItemBoxDto>> GetItemsBoxsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the item exists
-        if (!await _context.Items.AnyAsync(item => item.id_item == ItemId))
+        if (!await _context.Items.AnyAsync(item => item.id_item == itemId))
         {
-            throw new KeyNotFoundException($"Item with id {ItemId} not found");
+            throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
-        return await _context.ItemsBoxs
-            .Skip(offset)
-            .Take(limit)
-            .Where(itemBox => itemBox.id_item == ItemId)
-            .Select(itemBox => new ReadExtendedItemBoxDto
-            {
-                id_box = itemBox.id_box,
-                id_item = itemBox.id_item,
-                qte_item_box = itemBox.qte_item_box,
-                seuil_max_item_item_box = itemBox.seuil_max_item_item_box,
-                item = expand != null && expand.Contains("item") ? new ReadItemDto
-                {
-                    id_item = itemBox.Item.id_item,
-                    nom_item = itemBox.Item.nom_item,
-                    seuil_min_item = itemBox.Item.seuil_min_item,
-                    description_item = itemBox.Item.description_item,
-                    id_img = itemBox.Item.id_img
-                } : null,
-                box = expand != null && expand.Contains("box") ? new ReadBoxDto
-                {
-                    id_box = itemBox.Box.id_box,
-                    xstart_box = itemBox.Box.xstart_box,
-                    ystart_box = itemBox.Box.ystart_box,
-                    xend_box = itemBox.Box.xend_box,
-                    yend_box = itemBox.Box.yend_box,
-                    id_store = itemBox.Box.id_store
-                } : null
-            })
-            .ToListAsync();
+        var query = _context.ItemsBoxs.AsQueryable();
+        query = query.Where(itemBox => itemBox.id_item == itemId);
+        query = query.Skip(offset).Take(limit);
+        if (expand != null && expand.Contains("item"))
+        {
+            query = query.Include(itemBox => itemBox.Item);
+        }
+        if (expand != null && expand.Contains("box"))
+        {
+            query = query.Include(itemBox => itemBox.Box);
+        }
+        var itemBox = await query.ToListAsync();
+        return _mapper.Map<List<ReadExtendedItemBoxDto>>(itemBox);
     }
 
-    public async Task<int> GetItemsBoxsCountByItemId(int ItemId)
+    public async Task<int> GetItemsBoxsCountByItemId(int itemId)
     {
         // check if the item exists
-        if (!await _context.Items.AnyAsync(item => item.id_item == ItemId))
+        if (!await _context.Items.AnyAsync(item => item.id_item == itemId))
         {
-            throw new KeyNotFoundException($"Item with id {ItemId} not found");
+            throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
         return await _context.ItemsBoxs
-            .CountAsync(itemBox => itemBox.id_item == ItemId);
+            .CountAsync(itemBox => itemBox.id_item == itemId);
     }
 
     public async Task<ReadExtendedItemBoxDto> GetItemBoxById(int itemId, int boxId, List<string>? expand = null)
     {
-        return await _context.ItemsBoxs
-            .Where(itemBox => itemBox.id_box == boxId && itemBox.id_item == itemId)
-            .Select(itemBox => new ReadExtendedItemBoxDto
-            {
-                id_box = itemBox.id_box,
-                id_item = itemBox.id_item,
-                qte_item_box = itemBox.qte_item_box,
-                seuil_max_item_item_box = itemBox.seuil_max_item_item_box,
-                item = expand != null && expand.Contains("item") ? new ReadItemDto
-                {
-                    id_item = itemBox.Item.id_item,
-                    nom_item = itemBox.Item.nom_item,
-                    seuil_min_item = itemBox.Item.seuil_min_item,
-                    description_item = itemBox.Item.description_item,
-                    id_img = itemBox.Item.id_img
-                } : null,
-                box = expand != null && expand.Contains("box") ? new ReadBoxDto
-                {
-                    id_box = itemBox.Box.id_box,
-                    xstart_box = itemBox.Box.xstart_box,
-                    ystart_box = itemBox.Box.ystart_box,
-                    xend_box = itemBox.Box.xend_box,
-                    yend_box = itemBox.Box.yend_box,
-                    id_store = itemBox.Box.id_store
-                } : null
-            })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
+        var query = _context.ItemsBoxs.AsQueryable();
+        query = query.Where(itemBox => itemBox.id_box == boxId && itemBox.id_item == itemId);
+        if (expand != null && expand.Contains("item"))
+        {
+            query = query.Include(itemBox => itemBox.Item);
+        }
+        if (expand != null && expand.Contains("box"))
+        {
+            query = query.Include(itemBox => itemBox.Box);
+        }
+        var itemBox = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
+        return _mapper.Map<ReadExtendedItemBoxDto>(itemBox);
     }
 
     public async Task<ReadItemBoxDto> CreateItemBox(CreateItemBoxDto itemBoxDto)
@@ -169,13 +124,7 @@ public class ItemBoxService : IItemBoxService
         };
         _context.ItemsBoxs.Add(newItemBox);
         await _context.SaveChangesAsync();
-        return new ReadItemBoxDto
-        {
-            id_box = newItemBox.id_box,
-            id_item = newItemBox.id_item,
-            qte_item_box = newItemBox.qte_item_box,
-            seuil_max_item_item_box = newItemBox.seuil_max_item_item_box
-        };
+        return _mapper.Map<ReadItemBoxDto>(newItemBox);
     }
 
     public async Task<ReadItemBoxDto> UpdateItemBox(int itemId, int boxId, UpdateItemBoxDto itemBoxDto)
@@ -191,13 +140,7 @@ public class ItemBoxService : IItemBoxService
             itemBoxToUpdate.seuil_max_item_item_box = itemBoxDto.seuil_max_item_item_box.Value;
         }
         await _context.SaveChangesAsync();
-        return new ReadItemBoxDto
-        {
-            id_box = itemBoxToUpdate.id_box,
-            id_item = itemBoxToUpdate.id_item,
-            qte_item_box = itemBoxToUpdate.qte_item_box,
-            seuil_max_item_item_box = itemBoxToUpdate.seuil_max_item_item_box
-        };
+        return _mapper.Map<ReadItemBoxDto>(itemBoxToUpdate);
     }
 
     public async Task DeleteItemBox(int itemId, int boxId)

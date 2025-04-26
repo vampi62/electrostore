@@ -1,16 +1,18 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.ItemTagService;
 
 public class ItemTagService : IItemTagService
 {
+    private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
 
-    public ItemTagService(ApplicationDbContext context)
+    public ItemTagService(IMapper mapper, ApplicationDbContext context)
     {
+        _mapper = mapper;
         _context = context;
     }
 
@@ -21,31 +23,19 @@ public class ItemTagService : IItemTagService
         {
             throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
-
-        return await _context.ItemsTags
-            .Skip(offset)
-            .Take(limit)
-            .Where(it => it.id_item == itemId)
-            .Select(it => new ReadExtendedItemTagDto
-            {
-                id_item = it.id_item,
-                id_tag = it.id_tag,
-                tag = expand != null && expand.Contains("tag") ? new ReadTagDto
-                {
-                    id_tag = it.Tag.id_tag,
-                    nom_tag = it.Tag.nom_tag,
-                    poids_tag = it.Tag.poids_tag
-                } : null,
-                item = expand != null && expand.Contains("item") ? new ReadItemDto
-                {
-                    id_item = it.Item.id_item,
-                    nom_item = it.Item.nom_item,
-                    seuil_min_item = it.Item.seuil_min_item,
-                    description_item = it.Item.description_item,
-                    id_img = it.Item.id_img
-                } : null
-            })
-            .ToListAsync();
+        var query = _context.ItemsTags.AsQueryable();
+        query = query.Where(it => it.id_item == itemId);
+        query = query.Skip(offset).Take(limit);
+        if (expand != null && expand.Contains("tag"))
+        {
+            query = query.Include(it => it.Tag);
+        }
+        if (expand != null && expand.Contains("item"))
+        {
+            query = query.Include(it => it.Item);
+        }
+        var itemTag = await query.ToListAsync();
+        return _mapper.Map<List<ReadExtendedItemTagDto>>(itemTag);
     }
 
     public async Task<int> GetItemsTagsCountByItemId(int itemId)
@@ -55,7 +45,6 @@ public class ItemTagService : IItemTagService
         {
             throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
-
         return await _context.ItemsTags
             .Where(it => it.id_item == itemId)
             .CountAsync();
@@ -68,29 +57,19 @@ public class ItemTagService : IItemTagService
         {
             throw new KeyNotFoundException($"Tag with id {tagId} not found");
         }
-        return await _context.ItemsTags
-            .Skip(offset)
-            .Take(limit)
-            .Where(it => it.id_tag == tagId)
-            .Select(it => new ReadExtendedItemTagDto
-            {
-                id_item = it.id_item,
-                id_tag = it.id_tag,
-                tag = expand != null && expand.Contains("tag") ? new ReadTagDto
-                {
-                    id_tag = it.Tag.id_tag,
-                    nom_tag = it.Tag.nom_tag
-                } : null,
-                item = expand != null && expand.Contains("item") ? new ReadItemDto
-                {
-                    id_item = it.Item.id_item,
-                    nom_item = it.Item.nom_item,
-                    seuil_min_item = it.Item.seuil_min_item,
-                    description_item = it.Item.description_item,
-                    id_img = it.Item.id_img
-                } : null
-            })
-            .ToListAsync();
+        var query = _context.ItemsTags.AsQueryable();
+        query = query.Where(it => it.id_tag == tagId);
+        query = query.Skip(offset).Take(limit);
+        if (expand != null && expand.Contains("tag"))
+        {
+            query = query.Include(it => it.Tag);
+        }
+        if (expand != null && expand.Contains("item"))
+        {
+            query = query.Include(it => it.Item);
+        }
+        var itemTag = await query.ToListAsync();
+        return _mapper.Map<List<ReadExtendedItemTagDto>>(itemTag);
     }
 
     public async Task<int> GetItemsTagsCountByTagId(int tagId)
@@ -107,27 +86,18 @@ public class ItemTagService : IItemTagService
 
     public async Task<ReadExtendedItemTagDto> GetItemTagById(int itemId, int tagId, List<string>? expand = null)
     {
-        return await _context.ItemsTags
-            .Where(it => it.id_item == itemId && it.id_tag == tagId)
-            .Select(it => new ReadExtendedItemTagDto
-            {
-                id_item = it.id_item,
-                id_tag = it.id_tag,
-                tag = expand != null && expand.Contains("tag") ? new ReadTagDto
-                {
-                    id_tag = it.Tag.id_tag,
-                    nom_tag = it.Tag.nom_tag
-                } : null,
-                item = expand != null && expand.Contains("item") ? new ReadItemDto
-                {
-                    id_item = it.Item.id_item,
-                    nom_item = it.Item.nom_item,
-                    seuil_min_item = it.Item.seuil_min_item,
-                    description_item = it.Item.description_item,
-                    id_img = it.Item.id_img
-                } : null
-            })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ItemTag with id_item {itemId} and id_tag {tagId} not found");
+        var query = _context.ItemsTags.AsQueryable();
+        query = query.Where(it => it.id_item == itemId && it.id_tag == tagId);
+        if (expand != null && expand.Contains("tag"))
+        {
+            query = query.Include(it => it.Tag);
+        }
+        if (expand != null && expand.Contains("item"))
+        {
+            query = query.Include(it => it.Item);
+        }
+        var itemTag = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ItemTag with id_item {itemId} and id_tag {tagId} not found");
+        return _mapper.Map<ReadExtendedItemTagDto>(itemTag);
     }
 
     public async Task<ReadItemTagDto> CreateItemTag(CreateItemTagDto itemTagDto)
@@ -154,11 +124,7 @@ public class ItemTagService : IItemTagService
         };
         _context.ItemsTags.Add(itemTag);
         await _context.SaveChangesAsync();
-        return new ReadItemTagDto
-        {
-            id_item = itemTag.id_item,
-            id_tag = itemTag.id_tag
-        };
+        return _mapper.Map<ReadItemTagDto>(itemTag);
     }
 
     public async Task<ReadBulkItemTagDto> CreateBulkItemTag(List<CreateItemTagDto> itemTagBulkDto)

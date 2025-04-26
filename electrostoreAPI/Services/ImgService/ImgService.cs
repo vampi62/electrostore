@@ -1,16 +1,18 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.ImgService;
 
 public class ImgService : IImgService
 {
+    private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
 
-    public ImgService(ApplicationDbContext context)
+    public ImgService(IMapper mapper, ApplicationDbContext context)
     {
+        _mapper = mapper;
         _context = context;
     }
 
@@ -21,19 +23,11 @@ public class ImgService : IImgService
         {
             throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
-        return await _context.Imgs
-            .Skip(offset)
-            .Take(limit)
-            .Where(img => img.id_item == itemId)
-            .Select(img => new ReadImgDto
-            {
-                id_img = img.id_img,
-                nom_img = img.nom_img,
-                url_img = img.url_img,
-                description_img = img.description_img,
-                date_img = img.date_img,
-                id_item = img.id_item
-            }).ToListAsync();
+        var query = _context.Imgs.AsQueryable();
+        query = query.Where(b => b.id_item == itemId);
+        query = query.Skip(offset).Take(limit);
+        var img = await query.ToListAsync();
+        return _mapper.Map<List<ReadImgDto>>(img);
     }
 
     public async Task<int> GetImgsCountByItemId(int itemId)
@@ -55,16 +49,7 @@ public class ImgService : IImgService
         {
             throw new KeyNotFoundException($"Image with id {id} not found");
         }
-
-        return new ReadImgDto
-        {
-            id_img = img.id_img,
-            nom_img = img.nom_img,
-            url_img = img.url_img,
-            description_img = img.description_img,
-            date_img = img.date_img,
-            id_item = img.id_item
-        };
+        return _mapper.Map<ReadImgDto>(img);
     }
 
     public async Task<ReadImgDto> CreateImg(CreateImgDto imgDto)
@@ -92,20 +77,11 @@ public class ImgService : IImgService
             nom_img = imgDto.nom_img,
             url_img = imgDto.id_item + "/" + newName,
             description_img = imgDto.description_img,
-            date_img = DateTime.Now,
             id_item = imgDto.id_item
         };
         _context.Imgs.Add(newImg);
         await _context.SaveChangesAsync();
-        return new ReadImgDto
-        {
-            id_img = newImg.id_img,
-            nom_img = newImg.nom_img,
-            url_img = newImg.url_img,
-            description_img = newImg.description_img,
-            date_img = newImg.date_img,
-            id_item = newImg.id_item
-        };
+        return _mapper.Map<ReadImgDto>(newImg);
     }
 
     public async Task<ReadImgDto> UpdateImg(int id, UpdateImgDto imgDto, int? itemId = null)
@@ -124,15 +100,7 @@ public class ImgService : IImgService
             imgToUpdate.description_img = imgDto.description_img;
         }
         await _context.SaveChangesAsync();
-        return new ReadImgDto
-        {
-            id_img = imgToUpdate.id_img,
-            nom_img = imgToUpdate.nom_img,
-            url_img = imgToUpdate.url_img,
-            description_img = imgToUpdate.description_img,
-            date_img = imgToUpdate.date_img,
-            id_item = imgToUpdate.id_item
-        };
+        return _mapper.Map<ReadImgDto>(imgToUpdate);
     }
 
     public async Task DeleteImg(int id, int? itemId = null)

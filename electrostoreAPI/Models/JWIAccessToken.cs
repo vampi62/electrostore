@@ -5,7 +5,7 @@ using electrostore.Dto;
 
 namespace electrostore.Models;
 
-public class JWIAccessToken : BaseEntity
+public class JwiAccessTokens : BaseEntity
 {    
     [Key]
     public Guid id_jwi_access { get; set; }

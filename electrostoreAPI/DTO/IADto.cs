@@ -7,8 +7,9 @@ public record ReadIADto
     public int id_ia { get; init; }
     public string nom_ia { get; init; }
     public string description_ia { get; init; }
-    public DateTime date_ia { get; init; }
     public bool trained_ia { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
 public record CreateIADto : IValidatableObject
 {

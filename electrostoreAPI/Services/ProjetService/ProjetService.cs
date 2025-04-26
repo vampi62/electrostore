@@ -1,16 +1,18 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.ProjetService;
 
 public class ProjetService : IProjetService
 {
+    private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
 
-    public ProjetService(ApplicationDbContext context)
+    public ProjetService(IMapper mapper, ApplicationDbContext context)
     {
+        _mapper = mapper;
         _context = context;
     }
 
@@ -21,48 +23,21 @@ public class ProjetService : IProjetService
         {
             query = query.Where(b => idResearch.Contains(b.id_projet));
         }
-        return await query
-            .Skip(offset)
-            .Take(limit)
-            .Select(p => new ReadExtendedProjetDto
-            {
-                id_projet = p.id_projet,
-                nom_projet = p.nom_projet,
-                description_projet = p.description_projet,
-                url_projet = p.url_projet,
-                status_projet = p.status_projet,
-                date_debut_projet = p.date_debut_projet,
-                date_fin_projet = p.date_fin_projet,
-                projets_commentaires = expand != null && expand.Contains("projets_commentaires") ? p.ProjetsCommentaires.Select(pc => new ReadProjetCommentaireDto
-                {
-                    id_projet_commentaire = pc.id_projet_commentaire,
-                    id_projet = pc.id_projet,
-                    id_user = pc.id_user,
-                    contenu_projet_commentaire = pc.contenu_projet_commentaire,
-                    date_projet_commentaire = pc.date_projet_commentaire,
-                    date_modif_projet_commentaire = pc.date_modif_projet_commentaire
-                }) : null,
-                projets_documents = expand != null && expand.Contains("projets_documents") ? p.ProjetsDocuments.Select(pd => new ReadProjetDocumentDto
-                {
-                    id_projet_document = pd.id_projet_document,
-                    id_projet = pd.id_projet,
-                    url_projet_document = pd.url_projet_document,
-                    name_projet_document = pd.name_projet_document,
-                    type_projet_document = pd.type_projet_document,
-                    size_projet_document = pd.size_projet_document,
-                    date_projet_document = pd.date_projet_document
-                }) : null,
-                projets_items = expand != null && expand.Contains("projets_items") ? p.ProjetsItems.Select(pi => new ReadProjetItemDto
-                {
-                    id_projet = pi.id_projet,
-                    id_item = pi.id_item,
-                    qte_projet_item = pi.qte_projet_item
-                }) : null,
-                projets_commentaires_count = p.ProjetsCommentaires.Count,
-                projets_documents_count = p.ProjetsDocuments.Count,
-                projets_items_count = p.ProjetsItems.Count
-            })
-            .ToListAsync();
+        query = query.Skip(offset).Take(limit);
+        if (expand != null && expand.Contains("projets_commentaires"))
+        {
+            query = query.Include(p => p.ProjetsCommentaires);
+        }
+        if (expand != null && expand.Contains("projets_documents"))
+        {
+            query = query.Include(p => p.ProjetsDocuments);
+        }
+        if (expand != null && expand.Contains("projets_items"))
+        {
+            query = query.Include(p => p.ProjetsItems);
+        }
+        var projet = await query.ToListAsync();
+        return _mapper.Map<List<ReadExtendedProjetDto>>(projet);
     }
 
     public async Task<int> GetProjetsCount()
@@ -72,47 +47,22 @@ public class ProjetService : IProjetService
 
     public async Task<ReadExtendedProjetDto> GetProjetById(int id, List<string>? expand = null)
     {
-        return await _context.Projets
-            .Where(p => p.id_projet == id)
-            .Select(p => new ReadExtendedProjetDto
-            {
-                id_projet = p.id_projet,
-                nom_projet = p.nom_projet,
-                description_projet = p.description_projet,
-                url_projet = p.url_projet,
-                status_projet = p.status_projet,
-                date_debut_projet = p.date_debut_projet,
-                date_fin_projet = p.date_fin_projet,
-                projets_commentaires = expand != null && expand.Contains("projets_commentaires") ? p.ProjetsCommentaires.Select(pc => new ReadProjetCommentaireDto
-                {
-                    id_projet_commentaire = pc.id_projet_commentaire,
-                    id_projet = pc.id_projet,
-                    id_user = pc.id_user,
-                    contenu_projet_commentaire = pc.contenu_projet_commentaire,
-                    date_projet_commentaire = pc.date_projet_commentaire,
-                    date_modif_projet_commentaire = pc.date_modif_projet_commentaire
-                }) : null,
-                projets_documents = expand != null && expand.Contains("projets_documents") ? p.ProjetsDocuments.Select(pd => new ReadProjetDocumentDto
-                {
-                    id_projet_document = pd.id_projet_document,
-                    id_projet = pd.id_projet,
-                    url_projet_document = pd.url_projet_document,
-                    name_projet_document = pd.name_projet_document,
-                    type_projet_document = pd.type_projet_document,
-                    size_projet_document = pd.size_projet_document,
-                    date_projet_document = pd.date_projet_document
-                }) : null,
-                projets_items = expand != null && expand.Contains("projets_items") ? p.ProjetsItems.Select(pi => new ReadProjetItemDto
-                {
-                    id_projet = pi.id_projet,
-                    id_item = pi.id_item,
-                    qte_projet_item = pi.qte_projet_item
-                }) : null,
-                projets_commentaires_count = p.ProjetsCommentaires.Count,
-                projets_documents_count = p.ProjetsDocuments.Count,
-                projets_items_count = p.ProjetsItems.Count
-            })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Projet with id {id} not found");
+        var query = _context.Projets.AsQueryable();
+        query = query.Where(p => p.id_projet == id);
+        if (expand != null && expand.Contains("projets_commentaires"))
+        {
+            query = query.Include(p => p.ProjetsCommentaires);
+        }
+        if (expand != null && expand.Contains("projets_documents"))
+        {
+            query = query.Include(p => p.ProjetsDocuments);
+        }
+        if (expand != null && expand.Contains("projets_items"))
+        {
+            query = query.Include(p => p.ProjetsItems);
+        }
+        var projet = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Projet with id {id} not found");
+        return _mapper.Map<ReadExtendedProjetDto>(projet);
     }
 
     public async Task<ReadProjetDto> CreateProjet(CreateProjetDto projetDto)
@@ -132,16 +82,7 @@ public class ProjetService : IProjetService
         {
             Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", newProjet.id_projet.ToString()));
         }
-        return new ReadProjetDto
-        {
-            id_projet = newProjet.id_projet,
-            nom_projet = newProjet.nom_projet,
-            description_projet = newProjet.description_projet,
-            url_projet = newProjet.url_projet,
-            status_projet = newProjet.status_projet,
-            date_debut_projet = newProjet.date_debut_projet,
-            date_fin_projet = newProjet.date_fin_projet
-        };
+        return _mapper.Map<ReadProjetDto>(newProjet);
     }
 
     public async Task<ReadProjetDto> UpdateProjet(int id, UpdateProjetDto projetDto)
@@ -172,16 +113,7 @@ public class ProjetService : IProjetService
             projetToUpdate.date_fin_projet = projetDto.date_fin_projet;
         }
         await _context.SaveChangesAsync();
-        return new ReadProjetDto
-        {
-            id_projet = projetToUpdate.id_projet,
-            nom_projet = projetToUpdate.nom_projet,
-            description_projet = projetToUpdate.description_projet,
-            url_projet = projetToUpdate.url_projet,
-            status_projet = projetToUpdate.status_projet,
-            date_debut_projet = projetToUpdate.date_debut_projet,
-            date_fin_projet = projetToUpdate.date_fin_projet
-        };
+        return _mapper.Map<ReadProjetDto>(projetToUpdate);
     }
 
     public async Task DeleteProjet(int id)
