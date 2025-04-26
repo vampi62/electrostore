@@ -1,16 +1,18 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.ProjetDocumentService;
 
 public class ProjetDocumentService : IProjetDocumentService
 {
+    private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
 
-    public ProjetDocumentService(ApplicationDbContext context)
+    public ProjetDocumentService(IMapper mapper, ApplicationDbContext context)
     {
+        _mapper = mapper;
         _context = context;
     }
 
@@ -21,21 +23,11 @@ public class ProjetDocumentService : IProjetDocumentService
         {
             throw new KeyNotFoundException($"Projet with id {projetId} not found");
         }
-        return await _context.ProjetsDocuments
-            .Where(id => id.id_projet == projetId)
-            .Skip(offset)
-            .Take(limit)
-            .Select(projetDocument => new ReadProjetDocumentDto
-            {
-                id_projet_document = projetDocument.id_projet_document,
-                id_projet = projetDocument.id_projet,
-                url_projet_document = projetDocument.url_projet_document,
-                name_projet_document = projetDocument.name_projet_document,
-                type_projet_document = projetDocument.type_projet_document,
-                size_projet_document = projetDocument.size_projet_document,
-                date_projet_document = projetDocument.date_projet_document
-            })
-            .ToListAsync();
+        var query = _context.ProjetsDocuments.AsQueryable();
+        query = query.Where(p => p.id_projet == projetId);
+        query = query.Skip(offset).Take(limit);
+        var projetDocument = await query.ToListAsync();
+        return _mapper.Map<List<ReadProjetDocumentDto>>(projetDocument);
     }
 
     public async Task<int> GetProjetDocumentsCountByProjetId(int projetId)
@@ -56,16 +48,7 @@ public class ProjetDocumentService : IProjetDocumentService
         {
             throw new KeyNotFoundException($"ProjetDocument with id {id} not found for projet with id {projetId}");
         }
-        return new ReadProjetDocumentDto
-        {
-                id_projet_document = projetDocument.id_projet_document,
-                id_projet = projetDocument.id_projet,
-                url_projet_document = projetDocument.url_projet_document,
-                name_projet_document = projetDocument.name_projet_document,
-                type_projet_document = projetDocument.type_projet_document,
-                size_projet_document = projetDocument.size_projet_document,
-                date_projet_document = projetDocument.date_projet_document
-        };
+        return _mapper.Map<ReadProjetDocumentDto>(projetDocument);
     }
 
     public async Task<ReadProjetDocumentDto> CreateProjetDocument(CreateProjetDocumentDto projetDocumentDto)
@@ -97,21 +80,11 @@ public class ProjetDocumentService : IProjetDocumentService
             url_projet_document = projetDocumentDto.id_projet.ToString() + "/" + newName,
             name_projet_document = projetDocumentDto.name_projet_document,
             type_projet_document = fileExt.Replace(".", "").ToLowerInvariant(),
-            size_projet_document = projetDocumentDto.document.Length,
-            date_projet_document = DateTime.Now
+            size_projet_document = projetDocumentDto.document.Length
         };
         await _context.ProjetsDocuments.AddAsync(projetDocument);
         await _context.SaveChangesAsync();
-        return new ReadProjetDocumentDto
-        {
-            id_projet_document = projetDocument.id_projet_document,
-            id_projet = projetDocument.id_projet,
-            url_projet_document = projetDocument.url_projet_document,
-            name_projet_document = projetDocument.name_projet_document,
-            type_projet_document = projetDocument.type_projet_document,
-            size_projet_document = projetDocument.size_projet_document,
-            date_projet_document = projetDocument.date_projet_document
-        };
+        return _mapper.Map<ReadProjetDocumentDto>(projetDocument);
     }
 
     public async Task<ReadProjetDocumentDto> UpdateProjetDocument(int id, UpdateProjetDocumentDto projetDocumentDto, int? projetId = null)
@@ -143,7 +116,6 @@ public class ProjetDocumentService : IProjetDocumentService
             projetDocument.type_projet_document = fileExt.Replace(".", "").ToLowerInvariant();
             projetDocument.url_projet_document = projetDocument.id_projet.ToString() + "/" + newName;
             projetDocument.size_projet_document = projetDocumentDto.document.Length;
-            projetDocument.date_projet_document = DateTime.Now;
             // remove old file
             if (File.Exists(oldPath))
             {
@@ -155,16 +127,7 @@ public class ProjetDocumentService : IProjetDocumentService
             projetDocument.name_projet_document = projetDocumentDto.name_projet_document;
         }
         await _context.SaveChangesAsync();
-        return new ReadProjetDocumentDto
-        {
-            id_projet_document = projetDocument.id_projet_document,
-            id_projet = projetDocument.id_projet,
-            url_projet_document = projetDocument.url_projet_document,
-            name_projet_document = projetDocument.name_projet_document,
-            type_projet_document = projetDocument.type_projet_document,
-            size_projet_document = projetDocument.size_projet_document,
-            date_projet_document = projetDocument.date_projet_document
-        };
+        return _mapper.Map<ReadProjetDocumentDto>(projetDocument);
     }
 
     public async Task DeleteProjetDocument(int id, int? projetId = null)

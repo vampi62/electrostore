@@ -22,8 +22,6 @@ public class ItemsDocuments : BaseEntity
 
     public decimal size_item_document { get; set; }
 
-    public DateTime date_item_document { get; set; }
-
     public int id_item { get; set; }
     [ForeignKey("id_item")]
     public Items Item { get; set; }

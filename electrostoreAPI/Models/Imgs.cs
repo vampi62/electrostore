@@ -22,6 +22,4 @@ public class Imgs : BaseEntity
 
     [MaxLength(Constants.MaxDescriptionLength)]
     public string description_img { get; set; }
-
-    public DateTime date_img { get; set; }
 }

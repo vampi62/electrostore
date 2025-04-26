@@ -16,7 +16,5 @@ public class IA : BaseEntity
     [MaxLength(Constants.MaxDescriptionLength)]
     public string description_ia { get; set; }
 
-    public DateTime date_ia { get; set; }
-
     public bool trained_ia { get; set; } = false;
 }

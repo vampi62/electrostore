@@ -10,7 +10,8 @@ public record ReadProjetDocumentDto
     public string name_projet_document { get; init; }
     public string type_projet_document { get; init; }
     public decimal size_projet_document { get; init; }
-    public DateTime date_projet_document { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
 public record CreateProjetDocumentDto : IValidatableObject
 {

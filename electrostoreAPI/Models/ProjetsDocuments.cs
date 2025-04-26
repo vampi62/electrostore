@@ -22,8 +22,6 @@ public class ProjetsDocuments : BaseEntity
 
     public decimal size_projet_document { get; set; }
 
-    public DateTime date_projet_document { get; set; }
-
     public int id_projet { get; set; }
 
     [ForeignKey("id_projet")]

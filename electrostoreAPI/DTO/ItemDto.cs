@@ -9,14 +9,11 @@ public record ReadItemDto
     public int seuil_min_item { get; init; }
     public string description_item { get; init; }
     public int? id_img { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
-public record ReadExtendedItemDto
+public record ReadExtendedItemDto : ReadItemDto
 {
-    public int id_item { get; init; }
-    public string nom_item { get; init; }
-    public int seuil_min_item { get; init; }
-    public string description_item { get; init; }
-    public int? id_img { get; init; }
     public int item_tags_count { get; init; }
     public int item_boxs_count { get; init; }
     public int command_items_count { get; init; }

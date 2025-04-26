@@ -9,14 +9,11 @@ public record ReadUserDto
     public string prenom_user { get; init; }
     public string email_user { get; init; }
     public string role_user { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
-public record ReadExtendedUserDto
+public record ReadExtendedUserDto : ReadUserDto
 {
-    public int id_user { get; init; }
-    public string nom_user { get; init; }
-    public string prenom_user { get; init; }
-    public string email_user { get; init; }
-    public string role_user { get; init; }
     public int projets_commentaires_count { get; init; }
     public int commands_commentaires_count { get; init; }
     public IEnumerable<ReadProjetCommentaireDto>? projets_commentaires { get; init; }

@@ -15,7 +15,7 @@ public interface IBoxTagService
 
     public Task<ReadExtendedBoxTagDto> GetBoxTagById(int boxId, int tagId, List<string>? expand = null);
 
-    public Task<ReadBoxTagDto> CreateBoxTag(CreateBoxTagDto boxTag);
+    public Task<ReadBoxTagDto> CreateBoxTag(CreateBoxTagDto boxTagDto);
 
     public Task<ReadBulkBoxTagDto> CreateBulkBoxTag(List<CreateBoxTagDto> boxTagBulkDto);
 

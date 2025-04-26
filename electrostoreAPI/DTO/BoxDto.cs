@@ -10,15 +10,11 @@ public record ReadBoxDto
     public int xend_box { get; init; }
     public int yend_box { get; init; }
     public int id_store { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
-public record ReadExtendedBoxDto
+public record ReadExtendedBoxDto : ReadBoxDto
 {
-    public int id_box { get; init; }
-    public int xstart_box { get; init; }
-    public int ystart_box { get; init; }
-    public int xend_box { get; init; }
-    public int yend_box { get; init; }
-    public int id_store { get; init; }
     public ReadStoreDto? store { get; init; }
     public int box_tags_count { get; init; }
     public int item_boxs_count { get; init; }

@@ -1,17 +1,18 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel;
 
 namespace electrostore.Services.ItemService;
 
 public class ItemService : IItemService
 {
+    private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
 
-    public ItemService(ApplicationDbContext context)
+    public ItemService(IMapper mapper, ApplicationDbContext context)
     {
+        _mapper = mapper;
         _context = context;
     }
 
@@ -22,58 +23,29 @@ public class ItemService : IItemService
         {
             query = query.Where(b => idResearch.Contains(b.id_item));
         }
-        return await query
-            .Skip(offset)
-            .Take(limit)
-            .Select(item => new ReadExtendedItemDto
-            {
-                id_item = item.id_item,
-                id_img = item.id_img,
-                nom_item = item.nom_item,
-                seuil_min_item = item.seuil_min_item,
-                description_item = item.description_item,
-                item_tags = expand != null && expand.Contains("item_tags") ? item.ItemsTags.Select(it => new ReadItemTagDto
-                {
-                    id_item = it.id_item,
-                    id_tag = it.id_tag
-                }) : null,
-                item_boxs = expand != null && expand.Contains("item_boxs") ? item.ItemsBoxs.Select(ib => new ReadItemBoxDto
-                {
-                    id_item = ib.id_item,
-                    id_box = ib.id_box,
-                    qte_item_box = ib.qte_item_box,
-                    seuil_max_item_item_box = ib.seuil_max_item_item_box
-                }) : null,
-                command_items = expand != null && expand.Contains("command_items") ? item.CommandsItems.Select(ci => new ReadCommandItemDto
-                {
-                    id_command = ci.id_command,
-                    id_item = ci.id_item,
-                    qte_command_item = ci.qte_command_item,
-                    prix_command_item = ci.prix_command_item
-                }) : null,
-                projet_items = expand != null && expand.Contains("projet_items") ? item.ProjetsItems.Select(pi => new ReadProjetItemDto
-                {
-                    id_projet = pi.id_projet,
-                    id_item = pi.id_item,
-                    qte_projet_item = pi.qte_projet_item
-                }) : null,
-                item_documents = expand != null && expand.Contains("item_documents") ? item.ItemsDocuments.Select(id => new ReadItemDocumentDto
-                {
-                    id_item_document = id.id_item_document,
-                    url_item_document = id.url_item_document,
-                    name_item_document = id.name_item_document,
-                    type_item_document = id.type_item_document,
-                    size_item_document = id.size_item_document,
-                    date_item_document = id.date_item_document,
-                    id_item = id.id_item
-                }) : null,
-                item_tags_count = item.ItemsTags.Count,
-                item_boxs_count = item.ItemsBoxs.Count,
-                command_items_count = item.CommandsItems.Count,
-                projet_items_count = item.ProjetsItems.Count,
-                item_documents_count = item.ItemsDocuments.Count
-            })
-            .ToListAsync();
+        query = query.Skip(offset).Take(limit);
+        if (expand != null && expand.Contains("item_tags"))
+        {
+            query = query.Include(i => i.ItemsTags);
+        }
+        if (expand != null && expand.Contains("item_boxs"))
+        {
+            query = query.Include(i => i.ItemsBoxs);
+        }
+        if (expand != null && expand.Contains("command_items"))
+        {
+            query = query.Include(i => i.CommandsItems);
+        }
+        if (expand != null && expand.Contains("projet_items"))
+        {
+            query = query.Include(i => i.ProjetsItems);
+        }
+        if (expand != null && expand.Contains("item_documents"))
+        {
+            query = query.Include(i => i.ItemsDocuments);
+        }
+        var item = await query.ToListAsync();
+        return _mapper.Map<List<ReadExtendedItemDto>>(item);
     }
 
     public async Task<int> GetItemsCount()
@@ -81,59 +53,32 @@ public class ItemService : IItemService
         return await _context.Items.CountAsync();
     }
 
-    public async Task<ReadExtendedItemDto> GetItemById(int itemId, List<string>? expand = null)
+    public async Task<ReadExtendedItemDto> GetItemById(int id, List<string>? expand = null)
     {
-        return await _context.Items
-            .Where(item => item.id_item == itemId)
-            .Select(item => new ReadExtendedItemDto
-            {
-                id_item = item.id_item,
-                id_img = item.id_img,
-                nom_item = item.nom_item,
-                seuil_min_item = item.seuil_min_item,
-                description_item = item.description_item,
-                item_tags = expand != null && expand.Contains("item_tags") ? item.ItemsTags.Select(it => new ReadItemTagDto
-                {
-                    id_item = it.id_item,
-                    id_tag = it.id_tag
-                }) : null,
-                item_boxs = expand != null && expand.Contains("item_boxs") ? item.ItemsBoxs.Select(ib => new ReadItemBoxDto
-                {
-                    id_item = ib.id_item,
-                    id_box = ib.id_box,
-                    qte_item_box = ib.qte_item_box,
-                    seuil_max_item_item_box = ib.seuil_max_item_item_box
-                }) : null,
-                command_items = expand != null && expand.Contains("command_items") ? item.CommandsItems.Select(ci => new ReadCommandItemDto
-                {
-                    id_command = ci.id_command,
-                    id_item = ci.id_item,
-                    qte_command_item = ci.qte_command_item,
-                    prix_command_item = ci.prix_command_item
-                }) : null,
-                projet_items = expand != null && expand.Contains("projet_items") ? item.ProjetsItems.Select(pi => new ReadProjetItemDto
-                {
-                    id_projet = pi.id_projet,
-                    id_item = pi.id_item,
-                    qte_projet_item = pi.qte_projet_item
-                }) : null,
-                item_documents = expand != null && expand.Contains("item_documents") ? item.ItemsDocuments.Select(id => new ReadItemDocumentDto
-                {
-                    id_item_document = id.id_item_document,
-                    url_item_document = id.url_item_document,
-                    name_item_document = id.name_item_document,
-                    type_item_document = id.type_item_document,
-                    size_item_document = id.size_item_document,
-                    date_item_document = id.date_item_document,
-                    id_item = id.id_item
-                }) : null,
-                item_tags_count = item.ItemsTags.Count,
-                item_boxs_count = item.ItemsBoxs.Count,
-                command_items_count = item.CommandsItems.Count,
-                projet_items_count = item.ProjetsItems.Count,
-                item_documents_count = item.ItemsDocuments.Count
-            })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Item with id {itemId} not found");
+        var query = _context.Items.AsQueryable();
+        query = query.Where(i => i.id_item == id);
+        if (expand != null && expand.Contains("item_tags"))
+        {
+            query = query.Include(i => i.ItemsTags);
+        }
+        if (expand != null && expand.Contains("item_boxs"))
+        {
+            query = query.Include(i => i.ItemsBoxs);
+        }
+        if (expand != null && expand.Contains("command_items"))
+        {
+            query = query.Include(i => i.CommandsItems);
+        }
+        if (expand != null && expand.Contains("projet_items"))
+        {
+            query = query.Include(i => i.ProjetsItems);
+        }
+        if (expand != null && expand.Contains("item_documents"))
+        {
+            query = query.Include(i => i.ItemsDocuments);
+        }
+        var item = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Item with id {id} not found");
+        return _mapper.Map<ReadExtendedItemDto>(item);
     }
 
     public async Task<ReadItemDto> CreateItem(CreateItemDto itemDto)
@@ -165,14 +110,7 @@ public class ItemService : IItemService
         {
             Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", item.id_item.ToString()));
         }
-        return new ReadItemDto
-        {
-            id_item = item.id_item,
-            id_img = item.id_img,
-            nom_item = item.nom_item,
-            seuil_min_item = item.seuil_min_item,
-            description_item = item.description_item,
-        };
+        return _mapper.Map<ReadItemDto>(item);
     }
 
     public async Task<ReadItemDto> UpdateItem(int id, UpdateItemDto itemDto)
@@ -206,30 +144,23 @@ public class ItemService : IItemService
             itemToUpdate.id_img = itemDto.id_img;
         }
         await _context.SaveChangesAsync();
-        return new ReadItemDto
-        {
-            id_item = itemToUpdate.id_item,
-            id_img = itemToUpdate.id_img,
-            nom_item = itemToUpdate.nom_item,
-            seuil_min_item = itemToUpdate.seuil_min_item,
-            description_item = itemToUpdate.description_item,
-        };
+        return _mapper.Map<ReadItemDto>(itemToUpdate);
     }
 
-    public async Task DeleteItem(int itemId)
+    public async Task DeleteItem(int id)
     {
-        var itemToDelete = await _context.Items.FindAsync(itemId) ?? throw new KeyNotFoundException($"Item with id {itemId} not found");
+        var itemToDelete = await _context.Items.FindAsync(id) ?? throw new KeyNotFoundException($"Item with id {id} not found");
         _context.Items.Remove(itemToDelete);
         await _context.SaveChangesAsync();
         //remove folder in wwwroot/images
-        if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", itemId.ToString())))
+        if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", id.ToString())))
         {
-            Directory.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", itemId.ToString()), true);
+            Directory.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", id.ToString()), true);
         }
         //remove folder in wwwroot/itemDocuments
-        if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", itemId.ToString())))
+        if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", id.ToString())))
         {
-            Directory.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", itemId.ToString()), true);
+            Directory.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", id.ToString()), true);
         }
     }
 }

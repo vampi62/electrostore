@@ -5,13 +5,13 @@ namespace electrostore.Services.CommandItemService;
 
 public interface ICommandItemService
 {
-    public Task<IEnumerable<ReadExtendedCommandItemDto>> GetCommandItemsByCommandId(int commandId, int limit = 100, int offset = 0, List<string>? expand = null);
+    public Task<IEnumerable<ReadExtendedCommandItemDto>> GetCommandsItemsByCommandId(int commandId, int limit = 100, int offset = 0, List<string>? expand = null);
 
-    public Task<int> GetCommandItemsCountByCommandId(int commandId);
+    public Task<int> GetCommandsItemsCountByCommandId(int commandId);
 
-    public Task<IEnumerable<ReadExtendedCommandItemDto>> GetCommandItemsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null);
+    public Task<IEnumerable<ReadExtendedCommandItemDto>> GetCommandsItemsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null);
 
-    public Task<int> GetCommandItemsCountByItemId(int itemId);
+    public Task<int> GetCommandsItemsCountByItemId(int itemId);
 
     public Task<ReadExtendedCommandItemDto> GetCommandItemById(int commandId, int itemId, List<string>? expand = null);
 

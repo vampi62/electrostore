@@ -107,7 +107,7 @@ public class Program
                 };
             });
 
-        builder.Services.AddControllers();
+        builder.Services.AddAutoMapper(typeof(MappingProfile));
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
         {

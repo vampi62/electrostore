@@ -10,7 +10,8 @@ public record ReadCommandDocumentDto
     public string name_command_document { get; init; }
     public string type_command_document { get; init; }
     public decimal size_command_document { get; init; }
-    public DateTime date_command_document { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
 public record CreateCommandDocumentDto : IValidatableObject
 {

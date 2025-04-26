@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace electrostore.Dto;
 
-public class LoginRequest : IValidatableObject
+public record LoginRequest : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "Email cannot be empty or whitespace.")]
@@ -26,7 +26,7 @@ public class LoginRequest : IValidatableObject
     }
 }
 
-public class ForgotPasswordRequest : IValidatableObject
+public record ForgotPasswordRequest : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "Email cannot be empty or whitespace.")]
@@ -42,7 +42,7 @@ public class ForgotPasswordRequest : IValidatableObject
     }
 }
 
-public class ResetPasswordRequest : IValidatableObject
+public record ResetPasswordRequest : IValidatableObject
 {
     [Required]
     [MinLength(1, ErrorMessage = "Email cannot be empty or whitespace.")]

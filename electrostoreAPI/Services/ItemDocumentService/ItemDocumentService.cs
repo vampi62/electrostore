@@ -1,16 +1,18 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.ItemDocumentService;
 
 public class ItemDocumentService : IItemDocumentService
 {
+    private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
 
-    public ItemDocumentService(ApplicationDbContext context)
+    public ItemDocumentService(IMapper mapper, ApplicationDbContext context)
     {
+        _mapper = mapper;
         _context = context;
     }
 
@@ -21,21 +23,11 @@ public class ItemDocumentService : IItemDocumentService
         {
             throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
-        return await _context.ItemsDocuments
-            .Where(id => id.id_item == itemId)
-            .Skip(offset)
-            .Take(limit)
-            .Select(itemDocument => new ReadItemDocumentDto
-            {
-                id_item_document = itemDocument.id_item_document,
-                id_item = itemDocument.id_item,
-                url_item_document = itemDocument.url_item_document,
-                name_item_document = itemDocument.name_item_document,
-                type_item_document = itemDocument.type_item_document,
-                size_item_document = itemDocument.size_item_document,
-                date_item_document = itemDocument.date_item_document
-            })
-            .ToListAsync();
+        var query = _context.ItemsDocuments.AsQueryable();
+        query = query.Where(id => id.id_item == itemId);
+        query = query.Skip(offset).Take(limit);
+        var itemDocument = await query.ToListAsync();
+        return _mapper.Map<List<ReadItemDocumentDto>>(itemDocument);
     }
 
     public async Task<int> GetItemsDocumentsCountByItemId(int itemId)
@@ -57,16 +49,7 @@ public class ItemDocumentService : IItemDocumentService
         {
             throw new KeyNotFoundException($"ItemDocument with id {id} not found for item with id {itemId}");
         }
-        return new ReadItemDocumentDto
-        {
-                id_item_document = itemDocument.id_item_document,
-                id_item = itemDocument.id_item,
-                url_item_document = itemDocument.url_item_document,
-                name_item_document = itemDocument.name_item_document,
-                type_item_document = itemDocument.type_item_document,
-                size_item_document = itemDocument.size_item_document,
-                date_item_document = itemDocument.date_item_document
-        };
+        return _mapper.Map<ReadItemDocumentDto>(itemDocument);
     }
 
     public async Task<ReadItemDocumentDto> CreateItemDocument(CreateItemDocumentDto itemDocumentDto)
@@ -98,21 +81,11 @@ public class ItemDocumentService : IItemDocumentService
             url_item_document = itemDocumentDto.id_item.ToString() + "/" + newName,
             name_item_document = itemDocumentDto.name_item_document,
             type_item_document = fileExt.Replace(".", "").ToLowerInvariant(),
-            size_item_document = itemDocumentDto.document.Length,
-            date_item_document = DateTime.Now
+            size_item_document = itemDocumentDto.document.Length
         };
         await _context.ItemsDocuments.AddAsync(itemDocument);
         await _context.SaveChangesAsync();
-        return new ReadItemDocumentDto
-        {
-            id_item_document = itemDocument.id_item_document,
-            id_item = itemDocument.id_item,
-            url_item_document = itemDocument.url_item_document,
-            name_item_document = itemDocument.name_item_document,
-            type_item_document = itemDocument.type_item_document,
-            size_item_document = itemDocument.size_item_document,
-            date_item_document = itemDocument.date_item_document
-        };
+        return _mapper.Map<ReadItemDocumentDto>(itemDocument);
     }
 
     public async Task<ReadItemDocumentDto> UpdateItemDocument(int id, UpdateItemDocumentDto itemDocumentDto, int? itemId = null)
@@ -144,7 +117,6 @@ public class ItemDocumentService : IItemDocumentService
             itemDocument.type_item_document = fileExt.Replace(".", "").ToLowerInvariant();
             itemDocument.url_item_document = itemDocument.id_item.ToString() + "/" + newName;
             itemDocument.size_item_document = itemDocumentDto.document.Length;
-            itemDocument.date_item_document = DateTime.Now;
             // remove old file
             if (File.Exists(oldPath))
             {
@@ -156,16 +128,7 @@ public class ItemDocumentService : IItemDocumentService
             itemDocument.name_item_document = itemDocumentDto.name_item_document;
         }
         await _context.SaveChangesAsync();
-        return new ReadItemDocumentDto
-        {
-            id_item_document = itemDocument.id_item_document,
-            id_item = itemDocument.id_item,
-            url_item_document = itemDocument.url_item_document,
-            name_item_document = itemDocument.name_item_document,
-            type_item_document = itemDocument.type_item_document,
-            size_item_document = itemDocument.size_item_document,
-            date_item_document = itemDocument.date_item_document
-        };
+        return _mapper.Map<ReadItemDocumentDto>(itemDocument);
     }
 
     public async Task DeleteItemDocument(int id, int? itemId = null)

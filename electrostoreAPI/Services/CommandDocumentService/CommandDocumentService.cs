@@ -1,44 +1,36 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.CommandDocumentService;
 
 public class CommandDocumentService : ICommandDocumentService
 {
+    private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
 
-    public CommandDocumentService(ApplicationDbContext context)
+    public CommandDocumentService(IMapper mapper, ApplicationDbContext context)
     {
+        _mapper = mapper;
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadCommandDocumentDto>> GetCommandDocumentsByCommandId(int commandId, int limit = 100, int offset = 0)
+    public async Task<IEnumerable<ReadCommandDocumentDto>> GetCommandsDocumentsByCommandId(int commandId, int limit = 100, int offset = 0)
     {
         // check if command exists
         if (!await _context.Commands.AnyAsync(command => command.id_command == commandId))
         {
             throw new KeyNotFoundException($"Command with id {commandId} not found");
         }
-        return await _context.CommandsDocuments
-            .Where(id => id.id_command == commandId)
-            .Skip(offset)
-            .Take(limit)
-            .Select(commandDocument => new ReadCommandDocumentDto
-            {
-                id_command_document = commandDocument.id_command_document,
-                id_command = commandDocument.id_command,
-                url_command_document = commandDocument.url_command_document,
-                name_command_document = commandDocument.name_command_document,
-                type_command_document = commandDocument.type_command_document,
-                size_command_document = commandDocument.size_command_document,
-                date_command_document = commandDocument.date_command_document
-            })
-            .ToListAsync();
+        var query = _context.CommandsDocuments.AsQueryable();
+        query = query.Where(commandDocument => commandDocument.id_command == commandId);
+        query = query.Skip(offset).Take(limit);
+        var commandDocument = await query.ToListAsync();
+        return _mapper.Map<List<ReadCommandDocumentDto>>(commandDocument);
     }
 
-    public async Task<int> GetCommandDocumentsCountByCommandId(int commandId)
+    public async Task<int> GetCommandsDocumentsCountByCommandId(int commandId)
     {
         // check if command exists
         if (!await _context.Commands.AnyAsync(command => command.id_command == commandId))
@@ -57,16 +49,7 @@ public class CommandDocumentService : ICommandDocumentService
         {
             throw new KeyNotFoundException($"CommandDocument with id {id} not found for command with id {commandId}");
         }
-        return new ReadCommandDocumentDto
-        {
-                id_command_document = commandDocument.id_command_document,
-                id_command = commandDocument.id_command,
-                url_command_document = commandDocument.url_command_document,
-                name_command_document = commandDocument.name_command_document,
-                type_command_document = commandDocument.type_command_document,
-                size_command_document = commandDocument.size_command_document,
-                date_command_document = commandDocument.date_command_document
-        };
+        return _mapper.Map<ReadCommandDocumentDto>(commandDocument);
     }
 
     public async Task<ReadCommandDocumentDto> CreateCommandDocument(CreateCommandDocumentDto commandDocumentDto)
@@ -98,21 +81,11 @@ public class CommandDocumentService : ICommandDocumentService
             url_command_document = commandDocumentDto.id_command.ToString() + "/" + newName,
             name_command_document = commandDocumentDto.name_command_document,
             type_command_document = fileExt.Replace(".", "").ToLowerInvariant(),
-            size_command_document = commandDocumentDto.document.Length,
-            date_command_document = DateTime.Now
+            size_command_document = commandDocumentDto.document.Length
         };
         await _context.CommandsDocuments.AddAsync(commandDocument);
         await _context.SaveChangesAsync();
-        return new ReadCommandDocumentDto
-        {
-            id_command_document = commandDocument.id_command_document,
-            id_command = commandDocument.id_command,
-            url_command_document = commandDocument.url_command_document,
-            name_command_document = commandDocument.name_command_document,
-            type_command_document = commandDocument.type_command_document,
-            size_command_document = commandDocument.size_command_document,
-            date_command_document = commandDocument.date_command_document
-        };
+        return _mapper.Map<ReadCommandDocumentDto>(commandDocument);
     }
 
     public async Task<ReadCommandDocumentDto> UpdateCommandDocument(int id, UpdateCommandDocumentDto commandDocumentDto, int? commandId = null)
@@ -144,7 +117,6 @@ public class CommandDocumentService : ICommandDocumentService
             commandDocument.type_command_document = fileExt.Replace(".", "").ToLowerInvariant();
             commandDocument.url_command_document = commandDocument.id_command.ToString() + "/" + newName;
             commandDocument.size_command_document = commandDocumentDto.document.Length;
-            commandDocument.date_command_document = DateTime.Now;
             // remove old file
             if (File.Exists(oldPath))
             {
@@ -156,16 +128,7 @@ public class CommandDocumentService : ICommandDocumentService
             commandDocument.name_command_document = commandDocumentDto.name_command_document;
         }
         await _context.SaveChangesAsync();
-        return new ReadCommandDocumentDto
-        {
-            id_command_document = commandDocument.id_command_document,
-            id_command = commandDocument.id_command,
-            url_command_document = commandDocument.url_command_document,
-            name_command_document = commandDocument.name_command_document,
-            type_command_document = commandDocument.type_command_document,
-            size_command_document = commandDocument.size_command_document,
-            date_command_document = commandDocument.date_command_document
-        };
+        return _mapper.Map<ReadCommandDocumentDto>(commandDocument);
     }
 
     public async Task DeleteCommandDocument(int id, int? commandId = null)

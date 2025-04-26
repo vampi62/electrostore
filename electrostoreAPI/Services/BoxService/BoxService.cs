@@ -1,16 +1,18 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.BoxService;
 
 public class BoxService : IBoxService
 {
+    private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
 
-    public BoxService(ApplicationDbContext context)
+    public BoxService(IMapper mapper, ApplicationDbContext context)
     {
+        _mapper = mapper;
         _context = context;
     }
 
@@ -21,43 +23,23 @@ public class BoxService : IBoxService
         {
             throw new KeyNotFoundException($"Store with id {storeId} not found");
         }
-        return await _context.Boxs
-            .Where(b => b.id_store == storeId)
-            .Skip(offset)
-            .Take(limit)
-            .Select(s => new ReadExtendedBoxDto
-            {
-                id_box = s.id_box,
-                xstart_box = s.xstart_box,
-                ystart_box = s.ystart_box,
-                xend_box = s.xend_box,
-                yend_box = s.yend_box,
-                id_store = s.id_store,
-                store = expand != null && expand.Contains("store") ? new ReadStoreDto
-                {
-                    id_store = s.Store.id_store,
-                    nom_store = s.Store.nom_store,
-                    xlength_store = s.Store.xlength_store,
-                    ylength_store = s.Store.ylength_store,
-                    mqtt_name_store = s.Store.mqtt_name_store
-                } : null,
-                box_tags = expand != null && expand.Contains("box_tags") ? s.BoxsTags
-                    .Select(bt => new ReadBoxTagDto
-                    {
-                        id_box = bt.id_box,
-                        id_tag = bt.id_tag
-                    }).ToArray() : null,
-                item_boxs = expand != null && expand.Contains("item_boxs") ? s.ItemsBoxs
-                    .Select(ib => new ReadItemBoxDto
-                    {
-                        id_box = ib.id_box,
-                        id_item = ib.id_item,
-                        qte_item_box = ib.qte_item_box,
-                        seuil_max_item_item_box = ib.seuil_max_item_item_box
-                    }).ToArray() : null,
-                box_tags_count = s.BoxsTags.Count,
-                item_boxs_count = s.ItemsBoxs.Count
-            }).ToListAsync();
+        var query = _context.Boxs.AsQueryable();
+        query = query.Where(b => b.id_store == storeId);
+        query = query.Skip(offset).Take(limit);
+        if (expand != null && expand.Contains("store"))
+        {
+            query = query.Include(b => b.Store);
+        }
+        if (expand != null && expand.Contains("box_tags"))
+        {
+            query = query.Include(b => b.BoxsTags);
+        }
+        if (expand != null && expand.Contains("item_boxs"))
+        {
+            query = query.Include(b => b.ItemsBoxs);
+        }
+        var box = await query.ToListAsync();
+        return _mapper.Map<List<ReadExtendedBoxDto>>(box);
     }
 
     public async Task<int> GetBoxsCountByStoreId(int storeId)
@@ -74,41 +56,22 @@ public class BoxService : IBoxService
 
     public async Task<ReadExtendedBoxDto> GetBoxById(int id, int? storeId = null, List<string>? expand = null)
     {
-        return await _context.Boxs
-            .Where(b => b.id_box == id && (storeId == null || b.id_store == storeId))
-            .Select(s => new ReadExtendedBoxDto
-            {
-                id_box = s.id_box,
-                xstart_box = s.xstart_box,
-                ystart_box = s.ystart_box,
-                xend_box = s.xend_box,
-                yend_box = s.yend_box,
-                id_store = s.id_store,
-                store = expand != null && expand.Contains("store") ? new ReadStoreDto
-                {
-                    id_store = s.Store.id_store,
-                    nom_store = s.Store.nom_store,
-                    xlength_store = s.Store.xlength_store,
-                    ylength_store = s.Store.ylength_store,
-                    mqtt_name_store = s.Store.mqtt_name_store
-                } : null,
-                box_tags = expand != null && expand.Contains("box_tags") ? s.BoxsTags
-                    .Select(bt => new ReadBoxTagDto
-                    {
-                        id_box = bt.id_box,
-                        id_tag = bt.id_tag
-                    }).ToArray() : null,
-                item_boxs = expand != null && expand.Contains("item_boxs") ? s.ItemsBoxs
-                    .Select(ib => new ReadItemBoxDto
-                    {
-                        id_box = ib.id_box,
-                        id_item = ib.id_item,
-                        qte_item_box = ib.qte_item_box,
-                        seuil_max_item_item_box = ib.seuil_max_item_item_box
-                    }).ToArray() : null,
-                box_tags_count = s.BoxsTags.Count,
-                item_boxs_count = s.ItemsBoxs.Count
-            }).FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Box with id {id} not found");
+        var query = _context.Boxs.AsQueryable();
+        query = query.Where(b => b.id_box == id && (storeId == null || b.id_store == storeId));
+        if (expand != null && expand.Contains("store"))
+        {
+            query = query.Include(b => b.Store);
+        }
+        if (expand != null && expand.Contains("box_tags"))
+        {
+            query = query.Include(b => b.BoxsTags);
+        }
+        if (expand != null && expand.Contains("item_boxs"))
+        {
+            query = query.Include(b => b.ItemsBoxs);
+        }
+        var box = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Box with id {id} not found");
+        return _mapper.Map<ReadExtendedBoxDto>(box);
     }
 
     public async Task<ReadBoxDto> CreateBox(CreateBoxDto boxDto)
@@ -147,15 +110,7 @@ public class BoxService : IBoxService
         };
         _context.Boxs.Add(newBox);
         await _context.SaveChangesAsync();
-        return new ReadBoxDto
-        {
-            id_box = newBox.id_box,
-            xstart_box = newBox.xstart_box,
-            ystart_box = newBox.ystart_box,
-            yend_box = newBox.yend_box,
-            xend_box = newBox.xend_box,
-            id_store = newBox.id_store
-        };
+        return _mapper.Map<ReadBoxDto>(newBox);
     }
 
     public async Task<ReadBulkBoxDto> CreateBulkBox(List<CreateBoxDto> boxsDto)
@@ -199,15 +154,7 @@ public class BoxService : IBoxService
                     id_store = boxDto.id_store
                 };
                 _context.Boxs.Add(newBox);
-                validQuery.Add(new ReadBoxDto
-                {
-                    id_box = newBox.id_box,
-                    xstart_box = newBox.xstart_box,
-                    ystart_box = newBox.ystart_box,
-                    yend_box = newBox.yend_box,
-                    xend_box = newBox.xend_box,
-                    id_store = newBox.id_store
-                });
+                validQuery.Add(_mapper.Map<ReadBoxDto>(newBox));
             }
             catch (Exception e)
             {
@@ -293,15 +240,7 @@ public class BoxService : IBoxService
             throw new ArgumentException("Box XY position is bigger than the store XY length");
         }
         await _context.SaveChangesAsync();
-        return new ReadBoxDto
-        {
-            id_box = boxToUpdate.id_box,
-            xstart_box = boxToUpdate.xstart_box,
-            ystart_box = boxToUpdate.ystart_box,
-            yend_box = boxToUpdate.yend_box,
-            xend_box = boxToUpdate.xend_box,
-            id_store = boxToUpdate.id_store
-        };
+        return _mapper.Map<ReadBoxDto>(boxToUpdate);
     }
 
     public async Task<ReadBulkBoxDto> UpdateBulkBox(List<UpdateBulkBoxByStoreDto> boxsDto, int? storeId = null)
@@ -352,15 +291,7 @@ public class BoxService : IBoxService
                 {
                     throw new ArgumentException("Box XY position is bigger than the store XY length");
                 }
-                validQuery.Add(new ReadBoxDto
-                {
-                    id_box = boxToUpdate.id_box,
-                    xstart_box = boxToUpdate.xstart_box,
-                    ystart_box = boxToUpdate.ystart_box,
-                    yend_box = boxToUpdate.yend_box,
-                    xend_box = boxToUpdate.xend_box,
-                    id_store = boxToUpdate.id_store
-                });
+                validQuery.Add(_mapper.Map<ReadBoxDto>(boxToUpdate));
             }
             catch (Exception e)
             {

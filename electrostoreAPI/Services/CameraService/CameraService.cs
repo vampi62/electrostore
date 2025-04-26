@@ -1,16 +1,18 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.CameraService;
 
 public class CameraService : ICameraService
 {
+    private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
 
-    public CameraService(ApplicationDbContext context)
+    public CameraService(IMapper mapper, ApplicationDbContext context)
     {
+        _mapper = mapper;
         _context = context;
     }
 
@@ -22,17 +24,9 @@ public class CameraService : ICameraService
         {
             query = query.Where(b => idResearch.Contains(b.id_camera));
         }
-        return await query
-            .Skip(offset)
-            .Take(limit)
-            .Select(s => new ReadCameraDto
-            {
-                id_camera = s.id_camera,
-                nom_camera = s.nom_camera,
-                url_camera = s.url_camera,
-                user_camera = s.user_camera,
-                mdp_camera = s.mdp_camera
-            }).ToListAsync();
+        query = query.Skip(offset).Take(limit);
+        var camera = await query.ToListAsync();
+        return _mapper.Map<List<ReadCameraDto>>(camera);
     }
 
     public async Task<int> GetCamerasCount()
@@ -43,14 +37,7 @@ public class CameraService : ICameraService
     public async Task<ReadCameraDto> GetCameraById(int id)
     {
         var camera = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id {id} not found");
-        return new ReadCameraDto
-        {
-            id_camera = camera.id_camera,
-            nom_camera = camera.nom_camera,
-            url_camera = camera.url_camera,
-            user_camera = camera.user_camera,
-            mdp_camera = camera.mdp_camera
-        };
+        return _mapper.Map<ReadCameraDto>(camera);
     }
 
     public async Task<ReadCameraDto> CreateCamera(CreateCameraDto cameraDto)
@@ -64,14 +51,7 @@ public class CameraService : ICameraService
         };
         _context.Cameras.Add(newCamera);
         await _context.SaveChangesAsync();
-        return new ReadCameraDto
-        {
-            id_camera = newCamera.id_camera,
-            nom_camera = newCamera.nom_camera,
-            url_camera = newCamera.url_camera,
-            user_camera = newCamera.user_camera,
-            mdp_camera = newCamera.mdp_camera
-        };
+        return _mapper.Map<ReadCameraDto>(newCamera);
     }
 
     public async Task<ReadCameraDto> UpdateCamera(int id, UpdateCameraDto cameraDto)
@@ -94,14 +74,7 @@ public class CameraService : ICameraService
             cameraToUpdate.mdp_camera = cameraDto.mdp_camera;
         }
         await _context.SaveChangesAsync();
-        return new ReadCameraDto
-        {
-            id_camera = cameraToUpdate.id_camera,
-            nom_camera = cameraToUpdate.nom_camera,
-            url_camera = cameraToUpdate.url_camera,
-            user_camera = cameraToUpdate.user_camera,
-            mdp_camera = cameraToUpdate.mdp_camera
-        };
+        return _mapper.Map<ReadCameraDto>(cameraToUpdate);
     }
 
     public async Task DeleteCamera(int id)

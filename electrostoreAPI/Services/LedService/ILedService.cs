@@ -25,7 +25,7 @@ public interface ILedService
 
     public Task<ReadBulkLedDto> DeleteBulkLed(List<int> ids, int storeId);
 
-    public Task ShowLed(ReadLedDto ledDB, int red, int green, int blue, int timeshow, int animation);
+    public Task ShowLed(ReadLedDto ledDB, int redColor, int greenColor, int blueColor, int timeshow, int animation);
     
-    public Task ShowLeds(IEnumerable<ReadLedDto> ledsDB, int red, int green, int blue, int timeshow, int animation);
+    public Task ShowLeds(IEnumerable<ReadLedDto> ledsDB, int redColor, int greenColor, int blueColor, int timeshow, int animation);
 }

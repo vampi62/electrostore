@@ -10,7 +10,8 @@ public record ReadItemDocumentDto
     public string name_item_document { get; init; }
     public string type_item_document { get; init; }
     public decimal size_item_document { get; init; }
-    public DateTime date_item_document { get; init; }
+    public DateTime created_at { get; init; }
+    public DateTime updated_at { get; init; }
 }
 public record CreateItemDocumentDto
 {
