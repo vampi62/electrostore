@@ -106,10 +106,9 @@ namespace electrostore.Controllers
 
         [HttpPost("{id_led}/show")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBoxDto>> showLedBox([FromRoute] int id_store, [FromRoute] int id_led, [FromQuery] int red, [FromQuery] int green, [FromQuery] int blue, [FromQuery] int timeshow, [FromQuery] int animation)
+        public async Task<ActionResult> showLedBox([FromRoute] int id_store, [FromRoute] int id_led, [FromQuery] int red, [FromQuery] int green, [FromQuery] int blue, [FromQuery] int timeshow, [FromQuery] int animation)
         {
-            var ledDB = await _ledService.GetLedById(id_led, id_store);
-            await _ledService.ShowLed(ledDB, red, green, blue, timeshow, animation);
+            await _ledService.ShowLedById(id_store, id_led, red, green, blue, timeshow, animation);
             return NoContent();
         }
     }

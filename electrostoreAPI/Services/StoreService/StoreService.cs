@@ -20,7 +20,7 @@ public class StoreService : IStoreService
     public async Task<IEnumerable<ReadExtendedStoreDto>> GetStores(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Stores.AsQueryable();
-        if (idResearch != null)
+        if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(b => idResearch.Contains(b.id_store));
         }

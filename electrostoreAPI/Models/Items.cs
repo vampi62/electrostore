@@ -15,7 +15,10 @@ public class Items : BaseEntity
     public Imgs Img { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public string nom_item { get; set; }
+    public string reference_name_item { get; set; }
+
+    [MaxLength(Constants.MaxNameLength)]
+    public string friendly_name_item { get; set; }
 
     public int seuil_min_item { get; set; }
 

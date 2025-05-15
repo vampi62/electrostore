@@ -16,4 +16,12 @@ public interface ICameraService
     public Task<ReadCameraDto> UpdateCamera(int id, UpdateCameraDto cameraDto);
 
     public Task DeleteCamera(int id);
+
+    public Task<CameraStatusDto> GetCameraStatus(int id_camera);
+
+    public Task<ActionResult> GetCameraCapture(int id_camera);
+
+    public Task<CameraLightDto> SwitchCameraLight(int id_camera, CameraLightDto reqCamera);
+
+    public Task<ActionResult> GetCameraStream(int id_camera, string token);
 }

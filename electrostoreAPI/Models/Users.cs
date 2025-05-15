@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using electrostore.Dto;
+using electrostore.Enums;
 
 namespace electrostore.Models;
 
@@ -23,8 +24,7 @@ public class Users : BaseEntity
     [MaxLength(255)]
     public string mdp_user { get; set; }
 
-    [MaxLength(Constants.MaxRoleLength)]
-    public string role_user { get; set; }
+    public UserRole role_user { get; set; } = UserRole.User;
 
     public Guid? reset_token { get; set; }
 

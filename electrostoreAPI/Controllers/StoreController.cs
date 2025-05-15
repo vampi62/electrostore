@@ -19,10 +19,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedStoreDto>>> GetStores([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags'. Multiple values can be specified by separating them with ','.")] string? expand = null, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] string? idResearch = null)
+        public async Task<ActionResult<IEnumerable<ReadExtendedStoreDto>>> GetStores([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null)
         {
-            var idList = string.IsNullOrWhiteSpace(idResearch) ? null : idResearch.Split(',').Where(id => int.TryParse(id, out _)).Select(int.Parse).ToList();
-            var stores = await _storeService.GetStores(limit, offset, expand?.Split(',').ToList(), idList);
+            var stores = await _storeService.GetStores(limit, offset, expand, idResearch);
             var CountList = await _storeService.GetStoresCount();
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
@@ -31,9 +30,9 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_store}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedStoreDto>> GetStoreById([FromRoute] int id_store, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags'. Multiple values can be specified by separating them with ','.")] string? expand = null)
+        public async Task<ActionResult<ReadExtendedStoreDto>> GetStoreById([FromRoute] int id_store, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var store = await _storeService.GetStoreById(id_store, expand?.Split(',').ToList());
+            var store = await _storeService.GetStoreById(id_store, expand);
             return Ok(store);
         }
 

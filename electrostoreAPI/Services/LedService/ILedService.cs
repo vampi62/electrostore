@@ -1,5 +1,4 @@
 using electrostore.Dto;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.LedService;
 
@@ -8,8 +7,6 @@ public interface ILedService
     public Task<IEnumerable<ReadLedDto>> GetLedsByStoreId(int storeId, int limit = 100, int offset = 0);
 
     public Task<int> GetLedsCountByStoreId(int storeId);
-
-    public Task<IEnumerable<ReadLedDto>> GetLedsByStoreIdAndPosition(int storeId, int xmin, int xmax, int ymin, int ymax);
 
     public Task<ReadLedDto> GetLedById(int id, int? storeId = null);
 
@@ -24,8 +21,8 @@ public interface ILedService
     public Task DeleteLed(int id, int? storeId = null);
 
     public Task<ReadBulkLedDto> DeleteBulkLed(List<int> ids, int storeId);
-
-    public Task ShowLed(ReadLedDto ledDB, int redColor, int greenColor, int blueColor, int timeshow, int animation);
     
-    public Task ShowLeds(IEnumerable<ReadLedDto> ledsDB, int redColor, int greenColor, int blueColor, int timeshow, int animation);
+    public Task ShowLedById(int storeId, int id, int redColor, int greenColor, int blueColor, int timeshow, int animation);
+    
+    public Task ShowLedsByBox(int storeId, int boxId, int redColor, int greenColor, int blueColor, int timeshow, int animation);
 }

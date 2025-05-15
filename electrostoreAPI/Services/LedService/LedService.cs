@@ -48,19 +48,6 @@ public class LedService : ILedService
             .CountAsync();
     }
 
-    public async Task<IEnumerable<ReadLedDto>> GetLedsByStoreIdAndPosition(int storeId, int xmin, int xmax, int ymin, int ymax)
-    {
-        // check if the store exists
-        if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
-        {
-            throw new KeyNotFoundException($"Store with id {storeId} not found");
-        }
-        var query = _context.Leds.AsQueryable();
-        query = query.Where(led => led.x_led >= xmin && led.x_led <= xmax && led.y_led >= ymin && led.y_led <= ymax && led.id_store == storeId);
-        var led = await query.ToListAsync();
-        return _mapper.Map<List<ReadLedDto>>(led);
-    }
-
     public async Task<ReadLedDto> GetLedById(int id, int? storeId = null)
     {
         var led = await _context.Leds.FindAsync(id) ?? throw new KeyNotFoundException($"Led with id {id} not found");
@@ -212,8 +199,11 @@ public class LedService : ILedService
         };
     }
 
-    public async Task ShowLed(ReadLedDto ledDB, int redColor, int greenColor, int blueColor, int timeshow, int animation)
+    public async Task ShowLedById(int storeId, int id, int redColor, int greenColor, int blueColor, int timeshow, int animation)
     {
+        var ledDB = await _context.Leds
+            .Where(led => led.id_store == storeId && led.id_led == id)
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Led with id {id} not found in store with id {storeId}");
         if (!_mqttClient.IsConnected)
         {
             throw new NotImplementedException("MQTT client is not connected");
@@ -243,13 +233,37 @@ public class LedService : ILedService
         await _mqttClient.PublishAsync(message);
     }
 
-    public async Task ShowLeds(IEnumerable<ReadLedDto> ledsDB, int redColor, int greenColor, int blueColor, int timeshow, int animation)
+    public async Task ShowLedsByBox(int storeId, int boxId, int redColor, int greenColor, int blueColor, int timeshow, int animation)
     {
+        // check if the store exists
+        if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
+        {
+            throw new KeyNotFoundException($"Store with id {storeId} not found");
+        }
+        // check if the box exists
+        if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId && b.id_store == storeId))
+        {
+            throw new KeyNotFoundException($"Box with id {boxId} not found in store with id {storeId}");
+        }
+        var ledsDB = await _context.Leds
+            .Join(_context.Boxs,
+                led => new { led.id_store },
+                box => new { box.id_store },
+                (led, box) => new { led, box })
+            .Where(x => x.box.id_box == boxId && x.led.id_store == storeId &&
+                   x.led.x_led >= x.box.xstart_box && x.led.x_led <= x.box.xend_box &&
+                     x.led.y_led >= x.box.ystart_box && x.led.y_led <= x.box.yend_box)
+            .Select(x => x.led)
+            .ToListAsync();
+        if (!ledsDB.Any())
+        {
+            throw new KeyNotFoundException($"No leds found in store with id {storeId} and box with id {boxId}");
+        }
         if (!_mqttClient.IsConnected)
         {
             throw new NotImplementedException("MQTT client is not connected");
         }
-        var store = await _context.Stores.FindAsync(ledsDB.First().id_store) ?? throw new KeyNotFoundException($"Store with id {ledsDB.First().id_store} not found");
+        var store = await _context.Stores.FindAsync(storeId) ?? throw new KeyNotFoundException($"Store with id {storeId} not found");
         var topic = "electrostore/" + store.mqtt_name_store;
         var message = new MqttApplicationMessageBuilder()
             .WithTopic(topic)
@@ -270,5 +284,4 @@ public class LedService : ILedService
             .Build();
         await _mqttClient.PublishAsync(message);
     }
-
 }

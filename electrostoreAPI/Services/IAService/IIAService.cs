@@ -1,5 +1,4 @@
 using electrostore.Dto;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.IAService;
 
@@ -16,4 +15,10 @@ public interface IIAService
     Task<ReadIADto> UpdateIA(int id, UpdateIADto iaDto);
 
     Task DeleteIA(int id);
+    
+    Task<IAStatusDto> GetIATrainingStatusById(int id);
+
+    Task StartIATrainById(int id);
+
+    Task<PredictionOutput> IADetectItem(int id, DetecDto detecDto);
 }

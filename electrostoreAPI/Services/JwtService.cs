@@ -26,17 +26,13 @@ public class JwtService
         // Access token
         var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.id_user.ToString()),
-            new Claim(ClaimTypes.NameIdentifier, user.id_user.ToString()),
-            new Claim(ClaimTypes.Name, user.email_user),
-            new Claim(ClaimTypes.Role, "access"),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Sub, user.id_user.ToString()),
+            new(ClaimTypes.NameIdentifier, user.id_user.ToString()),
+            new(ClaimTypes.Name, user.email_user),
+            new(ClaimTypes.Role, "access"),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(ClaimTypes.Role, user.role_user.ToString())
         };
-        var roles = user.role_user.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-        foreach (var role in roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-        }
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
@@ -51,11 +47,11 @@ public class JwtService
         // Refresh token
         var refreshClaims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.id_user.ToString()),
-            new Claim(ClaimTypes.NameIdentifier, user.id_user.ToString()),
-            new Claim(ClaimTypes.Name, user.email_user),
-            new Claim(ClaimTypes.Role, "refresh"),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Sub, user.id_user.ToString()),
+            new(ClaimTypes.NameIdentifier, user.id_user.ToString()),
+            new(ClaimTypes.Name, user.email_user),
+            new(ClaimTypes.Role, "refresh"),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
         var refreshTokenDescriptor = new SecurityTokenDescriptor
         {

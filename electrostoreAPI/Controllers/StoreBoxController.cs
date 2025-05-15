@@ -23,9 +23,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedBoxDto>>> GetBoxsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','.")] string? expand = null)
+        public async Task<ActionResult<IEnumerable<ReadExtendedBoxDto>>> GetBoxsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var boxs = await _boxService.GetBoxsByStoreId(id_store, limit, offset, expand?.Split(',').ToList());
+            var boxs = await _boxService.GetBoxsByStoreId(id_store, limit, offset, expand);
             var CountList = await _boxService.GetBoxsCountByStoreId(id_store);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
@@ -34,9 +34,9 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_box}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedBoxDto>> GetBoxById([FromRoute] int id_store, [FromRoute] int id_box, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','.")] string? expand = null)
+        public async Task<ActionResult<ReadExtendedBoxDto>> GetBoxById([FromRoute] int id_store, [FromRoute] int id_box, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var box = await _boxService.GetBoxById(id_box, id_store, expand?.Split(',').ToList());
+            var box = await _boxService.GetBoxById(id_box, id_store, expand);
             return Ok(box);
         }
 
@@ -123,14 +123,7 @@ namespace electrostore.Controllers
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult> showLedBox([FromRoute] int id_store, [FromRoute] int id_box, [FromQuery] int red, [FromQuery] int green, [FromQuery] int blue, [FromQuery] int timeshow, [FromQuery] int animation)
         {
-            var box = await _boxService.GetBoxById(id_box, id_store);
-            var ledsDB = await _ledService.GetLedsByStoreIdAndPosition(box.id_store, box.xstart_box, box.xend_box, box.ystart_box, box.yend_box);
-            // if no led found
-            if (ledsDB.Count() == 0)
-            {
-                return NoContent();
-            }
-            await _ledService.ShowLeds(ledsDB, red, green, blue, timeshow, animation);
+            await _ledService.ShowLedsByBox(id_store, id_box, red, green, blue, timeshow, animation);
             return NoContent();
         }
     }

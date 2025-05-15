@@ -6,6 +6,8 @@ using Microsoft.IdentityModel.Tokens;
 using electrostore.Dto;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Models;
+using electrostore.Enums;
+using electrostore.Services.SessionService;
 
 namespace electrostore.Services.JwiService;
 
@@ -14,16 +16,19 @@ public class JwiService : IJwiService
     private readonly IMapper _mapper;
     private readonly JwtSettings _jwtSettings;
     private readonly ApplicationDbContext _context;
+    private readonly ISessionService _sessionService;
 
-    public JwiService(IMapper mapper, ApplicationDbContext context, IOptions<JwtSettings> jwtSettings)
+    public JwiService(IMapper mapper, ApplicationDbContext context, IOptions<JwtSettings> jwtSettings, ISessionService sessionService)
     {
         _mapper = mapper;
         _jwtSettings = jwtSettings.Value ?? throw new ArgumentNullException(nameof(jwtSettings));
         _context = context;
+        _sessionService = sessionService;
     }
 
-    public async Task SaveToken(JWT token, int userId, string clientIp)
+    public async Task SaveToken(JWT token, int userId)
     {
+        var clientIp = _sessionService.GetClientIp();
         var jwi_access = new JwiAccessTokens
         {
             id_jwi_access = token.token_id,
@@ -102,8 +107,9 @@ public class JwiService : IJwiService
         return true;
     }
 
-    public async Task RevokeAllAccessTokenByUser(int userId, string clientIp, string reason)
+    public async Task RevokeAllAccessTokenByUser(int userId, string reason)
     {
+        var clientIp = _sessionService.GetClientIp();
         var jwi_access = await _context.JwiAccessTokens
             .Where(x => x.id_user == userId && !x.is_revoked && x.expires_at > DateTime.UtcNow)
             .ToListAsync();
@@ -117,8 +123,9 @@ public class JwiService : IJwiService
         await _context.SaveChangesAsync();
     }
 
-    public async Task RevokeAllRefreshTokenByUser(int userId, string clientIp, string reason)
+    public async Task RevokeAllRefreshTokenByUser(int userId, string reason)
     {
+        var clientIp = _sessionService.GetClientIp();
         var jwi_refresh = await _context.JwiRefreshTokens
             .Where(x => x.id_user == userId && !x.is_revoked && x.expires_at > DateTime.UtcNow)
             .ToListAsync();
@@ -132,8 +139,9 @@ public class JwiService : IJwiService
         await _context.SaveChangesAsync();
     }
 
-    public async Task RevokeRefreshTokenById(string token, string clientIp, string reason, int? userId = null)
+    public async Task RevokeRefreshTokenById(string token, string reason, int? userId = null)
     {
+        var clientIp = _sessionService.GetClientIp();
         var jwi_refresh = await _context.JwiRefreshTokens.FindAsync(Guid.Parse(token));
         if ((jwi_refresh is null) || (userId is not null && jwi_refresh.id_user != userId))
         {
@@ -146,8 +154,9 @@ public class JwiService : IJwiService
         await _context.SaveChangesAsync();
     }
     
-    public async Task RevokeAccessTokenById(string token, string clientIp, string reason, int? userId = null)
+    public async Task RevokeAccessTokenById(string token, string reason, int? userId = null)
     {
+        var clientIp = _sessionService.GetClientIp();
         var jwi_access = await _context.JwiAccessTokens.FindAsync(Guid.Parse(token));
         if ((jwi_access is null) || (userId is not null && jwi_access.id_user != userId))
         {
@@ -160,8 +169,19 @@ public class JwiService : IJwiService
         await _context.SaveChangesAsync();
     }
     
-    public async Task RevokePairTokenByRefreshToken(string refreshToken, string clientIp, string reason, int? userId = null)
+    public async Task RevokePairTokenByRefreshToken(string refreshToken, string reason, int? userId = null)
     {
+        var clientIp = _sessionService.GetClientIp();
+        var clientId = _sessionService.GetClientId();
+        var clientRole = _sessionService.GetClientRole();
+        if (clientId != userId && clientRole != UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException($"You are not authorized to access this resource");
+        }
+        if (!await _context.Users.AnyAsync(x => x.id_user == userId))
+        {
+            throw new KeyNotFoundException($"User with id {userId} not found");
+        }
         var jwi_refresh = await _context.JwiRefreshTokens.FindAsync(Guid.Parse(refreshToken));
         if ((jwi_refresh is null) || (userId is not null && jwi_refresh.id_user != userId))
         {
@@ -216,6 +236,12 @@ public class JwiService : IJwiService
 
     public async Task<IEnumerable<ReadRefreshTokenDto>> GetRefreshTokensByUserId(int userId, int limit = 100, int offset = 0)
     {
+        var clientId = _sessionService.GetClientId();
+        var clientRole = _sessionService.GetClientRole();
+        if (clientId != userId && clientRole != UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException($"You are not authorized to access this resource");
+        }
         if (!await _context.Users.AnyAsync(x => x.id_user == userId))
         {
             throw new KeyNotFoundException($"User with id {userId} not found");
@@ -230,6 +256,12 @@ public class JwiService : IJwiService
 
     public async Task<ReadRefreshTokenDto> GetRefreshTokenByToken(int userId, string token)
     {
+        var clientId = _sessionService.GetClientId();
+        var clientRole = _sessionService.GetClientRole();
+        if (clientId != userId && clientRole != UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException($"You are not authorized to access this resource");
+        }
         var jwi_refresh = await _context.JwiRefreshTokens.FindAsync(Guid.Parse(token));
         if (jwi_refresh is null || jwi_refresh.id_user != userId)
         {

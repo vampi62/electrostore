@@ -64,6 +64,7 @@ class TrainingCallback(tf.keras.callbacks.Callback):
 
 			training_progress[self.id_model] = {
 				'status': 'in progress',
+				'message': 'Training in progress',
 				'epoch': epoch + 1,
 				'accuracy': accuracy,
 				'val_accuracy': val_accuracy,
@@ -134,6 +135,7 @@ def train_model(id_model):
 		print(f"Model {id_model} trained and saved.")
 		# Marquer la fin de l'entraînement dans le dictionnaire de suivi
 		training_progress[id_model]['status'] = 'completed'
+		training_progress[id_model]['message'] = 'Training completed successfully.'
 		# set to true the trained_ia field in the database
 		mysql_session.change_train_status(id_model, True)
 	except Exception as e:

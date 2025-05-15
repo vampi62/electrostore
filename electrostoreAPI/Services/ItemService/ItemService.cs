@@ -19,7 +19,7 @@ public class ItemService : IItemService
     public async Task<IEnumerable<ReadExtendedItemDto>> GetItems(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Items.AsQueryable();
-        if (idResearch != null)
+        if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(b => idResearch.Contains(b.id_item));
         }
@@ -89,14 +89,15 @@ public class ItemService : IItemService
             throw new KeyNotFoundException($"Img with id {itemDto.id_img} not found");
         }
         // check if item already exists
-        if (await _context.Items.AnyAsync(i => i.nom_item == itemDto.nom_item))
+        if (await _context.Items.AnyAsync(i => i.reference_name_item == itemDto.reference_name_item))
         {
-            throw new InvalidOperationException($"Item with name {itemDto.nom_item} already exists");
+            throw new InvalidOperationException($"Item with name {itemDto.reference_name_item} already exists");
         }
         var item = new Items
         {
             id_img = itemDto.id_img,
-            nom_item = itemDto.nom_item,
+            reference_name_item = itemDto.reference_name_item,
+            friendly_name_item = itemDto.friendly_name_item,
             seuil_min_item = itemDto.seuil_min_item,
             description_item = itemDto.description_item,
         };
@@ -117,14 +118,18 @@ public class ItemService : IItemService
     {
         // check if img exists
         var itemToUpdate = await _context.Items.FindAsync(id) ?? throw new KeyNotFoundException($"Item with id {id} not found");
-        if (itemDto.nom_item is not null)
+        if (itemDto.reference_name_item is not null)
         {
             // check if item already exists
-            if (await _context.Items.AnyAsync(i => i.nom_item == itemDto.nom_item))
+            if (await _context.Items.AnyAsync(i => i.reference_name_item == itemDto.reference_name_item && i.id_item != id))
             {
-                throw new InvalidOperationException($"Item with name {itemDto.nom_item} already exists");
+                throw new InvalidOperationException($"Item with name {itemDto.reference_name_item} already exists");
             }
-            itemToUpdate.nom_item = itemDto.nom_item;
+            itemToUpdate.reference_name_item = itemDto.reference_name_item;
+        }
+        if (itemDto.friendly_name_item is not null)
+        {
+            itemToUpdate.friendly_name_item = itemDto.friendly_name_item;
         }
         if (itemDto.seuil_min_item is not null)
         {

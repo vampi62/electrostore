@@ -56,20 +56,6 @@ public record UpdateIADto : IValidatableObject
     }
 }
 
-public class TrainingStatus
-{
-    public int Progress { get; set; }
-    public bool IsCompleted { get; set; }
-    public string? Message { get; set; }
-    public bool IsRunning { get; set; }
-}
-
-public class GetTrainStart
-{
-    public bool TrainStarted { get; set; }
-    public string msg { get; set; }
-}
-
 public record DetecDto : IValidatableObject
 {
     [Required]
@@ -99,23 +85,13 @@ public record PredictionOutput
     public float Score { get; init; }
 }
 
-
-/* 
-public class TrainImageData
+public record IAStatusDto
 {
-    public int id_img { get; set; }
-    public string url_img { get; set; }
-    public int id_item { get; set; }
+    public string Status { get; init; }
+    public string Message { get; init; }
+    public int Epoch { get; init; }
+    public float Accuracy { get; init; }
+    public float ValAccuracy { get; init; }
+    public float Loss { get; init; }
+    public float ValLoss { get; init; }
 }
-
-public class PredictionInput
-{
-    public int id_img { get; set; }
-    public string url_img { get; set; }
-    public int id_item { get; set; }
-}
-public class PredictionOutput
-{
-    public int PredictedLabel { get; set; }
-    public float[] Score { get; set; }
-} */

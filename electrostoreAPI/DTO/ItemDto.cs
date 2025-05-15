@@ -5,7 +5,8 @@ namespace electrostore.Dto;
 public record ReadItemDto
 {
     public int id_item { get; init; }
-    public string nom_item { get; init; }
+    public string reference_name_item { get; init; }
+    public string friendly_name_item { get; init; }
     public int seuil_min_item { get; init; }
     public string description_item { get; init; }
     public int? id_img { get; init; }
@@ -28,9 +29,14 @@ public record ReadExtendedItemDto : ReadItemDto
 public record CreateItemDto : IValidatableObject
 {
     [Required]
-    [MinLength(1, ErrorMessage = "nom_item cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_item cannot exceed 50 characters")]
-    public string nom_item { get; init; }
+    [MinLength(1, ErrorMessage = "reference_name_item cannot be empty or whitespace.")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "reference_name_item cannot exceed 50 characters")]
+    public string reference_name_item { get; init; }
+
+    [Required]
+    [MinLength(1, ErrorMessage = "friendly_name_item cannot be empty or whitespace.")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "friendly_name_item cannot exceed 50 characters")]
+    public string friendly_name_item { get; init; }
 
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "seuil_min_item must be greater than or equal to 0.")]
@@ -45,9 +51,13 @@ public record CreateItemDto : IValidatableObject
     
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (string.IsNullOrWhiteSpace(nom_item))
+        if (string.IsNullOrWhiteSpace(reference_name_item))
         {
-            yield return new ValidationResult("nom_item cannot be null, empty, or whitespace.", new[] { nameof(nom_item) });
+            yield return new ValidationResult("reference_name_item cannot be null, empty, or whitespace.", new[] { nameof(reference_name_item) });
+        }
+        if (string.IsNullOrWhiteSpace(friendly_name_item))
+        {
+            yield return new ValidationResult("friendly_name_item cannot be null, empty, or whitespace.", new[] { nameof(friendly_name_item) });
         }
         if (string.IsNullOrWhiteSpace(description_item))
         {
@@ -57,8 +67,11 @@ public record CreateItemDto : IValidatableObject
 }
 public record UpdateItemDto : IValidatableObject
 {
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_item cannot exceed 50 characters")]
-    public string? nom_item { get; init; }
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "reference_name_item cannot exceed 50 characters")]
+    public string? reference_name_item { get; init; }
+
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "friendly_name_item cannot exceed 50 characters")]
+    public string? friendly_name_item { get; init; }
 
     [Range(0, int.MaxValue, ErrorMessage = "seuil_min_item must be greater than or equal to 0.")]
     public int? seuil_min_item { get; init; }
@@ -70,9 +83,13 @@ public record UpdateItemDto : IValidatableObject
     
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (nom_item is not null && string.IsNullOrWhiteSpace(nom_item))
+        if (reference_name_item is not null && string.IsNullOrWhiteSpace(reference_name_item))
         {
-            yield return new ValidationResult("nom_item cannot be null, empty, or whitespace.", new[] { nameof(nom_item) });
+            yield return new ValidationResult("reference_name_item cannot be null, empty, or whitespace.", new[] { nameof(reference_name_item) });
+        }
+        if (friendly_name_item is not null && string.IsNullOrWhiteSpace(friendly_name_item))
+        {
+            yield return new ValidationResult("friendly_name_item cannot be null, empty, or whitespace.", new[] { nameof(friendly_name_item) });
         }
         if (description_item is not null && string.IsNullOrWhiteSpace(description_item))
         {

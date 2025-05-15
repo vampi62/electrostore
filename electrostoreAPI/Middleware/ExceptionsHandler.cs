@@ -41,6 +41,7 @@ public class ExceptionsHandler
         context.Response.StatusCode = exception switch
         {
             ArgumentException _ => StatusCodes.Status400BadRequest,
+            UnauthorizedAccessException _ => StatusCodes.Status401Unauthorized,
             KeyNotFoundException _ => StatusCodes.Status404NotFound,
             InvalidOperationException _ => StatusCodes.Status409Conflict,
             NotImplementedException _ => StatusCodes.Status501NotImplemented,

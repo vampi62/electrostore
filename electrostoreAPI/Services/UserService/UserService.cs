@@ -2,8 +2,11 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using System.Net;
-using System.Net.Mail;
+using electrostore.Enums;
+using electrostore.Services.SMTPService;
+using electrostore.Services.SessionService;
+using electrostore.Services.JwiService;
+using electrostore.Services.JwtService;
 
 namespace electrostore.Services.UserService;
 
@@ -12,18 +15,26 @@ public class UserService : IUserService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
-
-    public UserService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration)
+    private readonly ISMTPService _smtpService;
+    private readonly ISessionService _sessionService;
+    private readonly IJwiService _jwiService;
+    private readonly JwtService.JwtService _jwtService;
+    public UserService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration,
+                    ISMTPService smtpService, ISessionService sessionService, IJwiService jwiService, JwtService.JwtService jwtService)
     {
         _mapper = mapper;
         _context = context;
         _configuration = configuration;
+        _smtpService = smtpService;
+        _sessionService = sessionService;
+        _jwiService = jwiService;
+        _jwtService = jwtService;
     }
 
     public async Task<IEnumerable<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Users.AsQueryable();
-        if (idResearch != null)
+        if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(b => idResearch.Contains(b.id_user));
         }
@@ -47,6 +58,12 @@ public class UserService : IUserService
 
     public async Task<ReadUserDto> CreateUser(CreateUserDto userDto)
     {
+        // if the user is not an admin, he can only create a user with the role "user"
+        var User = _sessionService.GetClientRole();
+        if (User < UserRole.Admin && userDto.role_user > UserRole.User)
+        {
+            throw new UnauthorizedAccessException("You are not allowed to create a user with this role");
+        }
         // check if the db is empty, if it is, create an admin user
         Users newUser;
         if (!await _context.Users.AnyAsync())
@@ -57,7 +74,7 @@ public class UserService : IUserService
                 prenom_user = userDto.prenom_user,
                 email_user = userDto.email_user,
                 mdp_user = BCrypt.Net.BCrypt.HashPassword(userDto.mdp_user),
-                role_user = "admin"
+                role_user = UserRole.Admin
             };
         } else {
             // Check if email is already used
@@ -92,14 +109,14 @@ public class UserService : IUserService
         return _mapper.Map<ReadExtendedUserDto>(user);
     }
 
-    public async Task<ReadUserDto> GetUserByEmail(string email)
-    {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == email) ?? throw new KeyNotFoundException($"User with email {email} not found");
-        return _mapper.Map<ReadUserDto>(user);
-    }
-
     public async Task<ReadUserDto> UpdateUser(int id, UpdateUserDto userDto)
     {
+        var clientId = _sessionService.GetClientId();
+        var clientRole = _sessionService.GetClientRole();
+        if (clientId != id && clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not allowed to update this user");
+        }
         var userToUpdate = await _context.Users.FindAsync(id) ?? throw new KeyNotFoundException($"User with id {id} not found");
         if (userDto.nom_user is not null)
         {
@@ -121,23 +138,33 @@ public class UserService : IUserService
         }
         if (userDto.role_user is not null)
         {
-            if (userToUpdate.role_user == "admin" && await _context.Users.CountAsync(u => u.role_user == "admin") == 1)
+            if (userDto.role_user == UserRole.Admin && await _context.Users.CountAsync(u => u.role_user == UserRole.Admin) == 1)
             {
                 throw new InvalidOperationException("You can't change the role of the last admin");
             }
-            userToUpdate.role_user = userDto.role_user;
+            userToUpdate.role_user = userDto.role_user ?? userToUpdate.role_user;
         }
         await _context.SaveChangesAsync();
+        // Revoke all access tokens and refresh tokens for the user
+        await _jwiService.RevokeAllAccessTokenByUser(id, "User update account");
         return _mapper.Map<ReadUserDto>(userToUpdate);
     }
 
     public async Task DeleteUser(int id)
     {
+        var clientId = _sessionService.GetClientId();
+        var clientRole = _sessionService.GetClientRole();
+        if (clientId != id && clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not allowed to delete this user");
+        }
         var userToDelete = await _context.Users.FindAsync(id) ?? throw new KeyNotFoundException($"User with id {id} not found");
-        if (userToDelete.role_user == "admin" && await _context.Users.CountAsync(u => u.role_user == "admin") == 1)
+        if (userToDelete.role_user == UserRole.Admin && await _context.Users.CountAsync(u => u.role_user == UserRole.Admin) == 1)
         {
             throw new InvalidOperationException("You can't delete the last admin");
         }
+        await _jwiService.RevokeAllAccessTokenByUser(id, "User delete account");
+        await _jwiService.RevokeAllRefreshTokenByUser(id, "User delete account");
         _context.Users.Remove(userToDelete);
         await _context.SaveChangesAsync();
     }
@@ -174,32 +201,15 @@ public class UserService : IUserService
             user.reset_token_expiration = DateTime.Now.AddHours(1);
             await _context.SaveChangesAsync();
             // send email with reset_token
-            var smtpClient = new SmtpClient(_configuration["SMTP:Host"])
-            {
-                Port = int.Parse(_configuration["SMTP:Port"] ?? "587"),
-                Credentials = new NetworkCredential(_configuration["SMTP:Username"], _configuration["SMTP:Password"]),
-                EnableSsl = true
-            };
-            var mailMessage = new MailMessage
-            {
-                From = new MailAddress(_configuration["SMTP:Username"]),
-                Subject = "Reset password",
-                Body = "Click on the following link to reset your password: " + _configuration["FrontendUrl"] + "/reset-password?token=" + user.reset_token.ToString() + "&email=" + user.email_user,
-                IsBodyHtml = true
-            };
-            mailMessage.To.Add(request.Email);
-            // send email
-            var sendEmailTask = smtpClient.SendMailAsync(mailMessage);
-            await sendEmailTask;
-            if (sendEmailTask.IsFaulted)
-            {
-                // server error
-                throw new InvalidOperationException("An error occured while sending the email");
-            }
+            await _smtpService.SendEmailAsync(
+                request.Email,
+                "Reset password",
+                "Click on the following link to reset your password: " + _configuration["FrontendUrl"] + "/reset-password?token=" + user.reset_token.ToString() + "&email=" + user.email_user
+            );
         }
     }
 
-    public async Task<ReadUserDto> ResetPassword(ResetPasswordRequest request)
+    public async Task ResetPassword(ResetPasswordRequest request)
     {
         //check if SMTP is Enabled
         if (_configuration["SMTP:Enable"] != "true")
@@ -215,6 +225,47 @@ public class UserService : IUserService
         user.reset_token = null;
         user.reset_token_expiration = null;
         await _context.SaveChangesAsync();
-        return _mapper.Map<ReadUserDto>(user);
+        await _jwiService.RevokeAllAccessTokenByUser(user.id_user, "User reset password");
+        await _jwiService.RevokeAllRefreshTokenByUser(user.id_user, "User reset password");
+    }
+
+    public async Task<LoginResponse> LoginUserPassword(LoginRequest request)
+    {
+        // check if user exists
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.Email) ?? throw new KeyNotFoundException($"User with email {request.Email} not found");
+        // check if password is correct
+        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.mdp_user))
+        {
+            throw new UnauthorizedAccessException("Invalid password");
+        }
+        // generate tokens
+        var token = _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user));
+        await _jwiService.SaveToken(token, user.id_user);
+        // return tokens
+        return new LoginResponse
+        {
+            token = token.token,
+            expire_date_token = token.expire_date_token.ToString("yyyy-MM-dd HH:mm:ss"),
+            refresh_token = token.refresh_token,
+            expire_date_refresh_token = token.expire_date_refresh_token.ToString("yyyy-MM-dd HH:mm:ss"),
+            user = _mapper.Map<ReadUserDto>(user)
+        };
+    }
+
+    public async Task<LoginResponse> RefreshJwt()
+    {
+        var clientId = _sessionService.GetClientId();
+        var user = await _context.Users.FindAsync(clientId) ?? throw new KeyNotFoundException($"User with id {clientId} not found");
+        var token = _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user));
+        await _jwiService.SaveToken(token, user.id_user);
+        // return tokens
+        return new LoginResponse
+        {
+            token = token.token,
+            expire_date_token = token.expire_date_token.ToString("yyyy-MM-dd HH:mm:ss"),
+            refresh_token = token.refresh_token,
+            expire_date_refresh_token = token.expire_date_refresh_token.ToString("yyyy-MM-dd HH:mm:ss"),
+            user = _mapper.Map<ReadUserDto>(user)
+        };
     }
 }

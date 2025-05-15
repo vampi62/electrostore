@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.IAService;
 using Swashbuckle.AspNetCore.Annotations;
-using System.Net;
-using System.Text.Json;
 
 namespace electrostore.Controllers
 {
@@ -22,10 +20,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadIADto>>> GetIA([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] string? idResearch = null)
+        public async Task<ActionResult<IEnumerable<ReadIADto>>> GetIA([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null)
         {
-            var idList = string.IsNullOrWhiteSpace(idResearch) ? null : idResearch.Split(',').Where(id => int.TryParse(id, out _)).Select(int.Parse).ToList();
-            var ias = await _iaService.GetIA(limit, offset, idList);
+            var ias = await _iaService.GetIA(limit, offset, idResearch);
             var CountList = await _iaService.GetIACount();
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
@@ -50,92 +47,26 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_ia}/status")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<IActionResult> GetTrainingStatus(int id_ia)
+        public async Task<ActionResult<IAStatusDto>> GetTrainingStatus(int id_ia)
         {
-            var ia = await _iaService.GetIAById(id_ia);
-            try
-            {
-                var httpClient = new HttpClient();
-                var response = await httpClient.GetAsync("http://electrostoreIA:5000/status/" + id_ia);
-                var content = await response.Content.ReadAsStringAsync();
-                // convert the response to a json object
-                var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
-                return Ok(json);
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, new { message = e.Message });
-            }
+            var IAStatus = await _iaService.GetIATrainingStatusById(id_ia);
+            return Ok(IAStatus);
         }
 
         [HttpPost("{id_ia}/train")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<bool>> TrainIA([FromRoute] int id_ia)
+        public async Task<ActionResult> TrainIA([FromRoute] int id_ia)
         {
-            if (User is not null)
-            {
-                if (!User.IsInRole("admin"))
-                {
-                    return Unauthorized(new { message = "You are not allowed to train an IA" });
-                }
-            }
-            var ia = await _iaService.GetIAById(id_ia);
-            try
-            {
-                var httpClient = new HttpClient();
-                var response = await httpClient.PostAsync("http://electrostoreIA:5000/train/" + id_ia, null);
-                var content = await response.Content.ReadAsStringAsync();
-                // convert the response to a json object
-                var json = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
-                return Ok(json);
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, new { message = e.Message });
-            }
+            await _iaService.StartIATrainById(id_ia);
+            return NoContent();
         }
 
         [HttpPost("{id_ia}/detect")]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<PredictionOutput>> DetectItem([FromRoute] int id_ia, [FromForm] DetecDto img_to_scan)
         {
-            var ia = await _iaService.GetIAById(id_ia);
-            if (!ia.trained_ia)
-            {
-                return BadRequest(new { message = "The IA is not trained" });
-            }
-            try
-            {
-                var httpClient = new HttpClient();
-                var newDetecResult = new PredictionOutput();
-                // requete POST avec l'image à scanner
-                var response = await httpClient.PostAsync("http://electrostoreIA:5000/detect/" + id_ia,
-                    new MultipartFormDataContent
-                    {
-                        { new StreamContent(img_to_scan.img_file.OpenReadStream()), "img_file", img_to_scan.img_file.FileName }
-                    }
-                );
-                var content = await response.Content.ReadAsStringAsync();
-                // convert the response to a json object
-                var json = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content);
-                if (json is null)
-                {
-                    newDetecResult = new PredictionOutput {
-                        PredictedLabel = -1,
-                        Score = 0
-                    };
-                    return Ok(newDetecResult);
-                }
-                newDetecResult = new PredictionOutput {
-                    PredictedLabel = json.TryGetValue("predicted_class", out var predicted_class) && predicted_class.ValueKind == JsonValueKind.Number ? predicted_class.GetInt32() : -1,
-                    Score = json.TryGetValue("confidence", out var confidence) && confidence.ValueKind == JsonValueKind.Number ? confidence.GetSingle() : 0
-                };
-                return Ok(newDetecResult);
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, new { message = e.Message });
-            }
+            var detection = await _iaService.IADetectItem(id_ia, img_to_scan);
+            return Ok(detection);
         }
 
         [HttpPut("{id_ia}")]

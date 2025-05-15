@@ -21,6 +21,7 @@ using electrostore.Services.CommandCommentaireService;
 using electrostore.Services.CommandDocumentService;
 using electrostore.Services.CommandItemService;
 using electrostore.Services.CommandService;
+using electrostore.Services.ConfigService;
 //using electrostore.Services.IAImgService;
 using electrostore.Services.IAService;
 using electrostore.Services.ImgService;
@@ -34,6 +35,8 @@ using electrostore.Services.ProjetCommentaireService;
 using electrostore.Services.ProjetDocumentService;
 using electrostore.Services.ProjetItemService;
 using electrostore.Services.ProjetService;
+using electrostore.Services.SessionService;
+using electrostore.Services.SMTPService;
 using electrostore.Services.StoreService;
 using electrostore.Services.StoreTagService;
 using electrostore.Services.TagService;
@@ -79,6 +82,8 @@ public class Program
         });
 
         addScopes(builder);
+        
+        builder.Services.AddHttpContextAccessor();
 
         builder.Services.AddControllers(options => { options.Filters.Add(new AuthorizeFilter()); })
             // Invalid model state response factory
@@ -272,6 +277,7 @@ public class Program
         builder.Services.AddScoped<ICommandDocumentService, CommandDocumentService>();
         builder.Services.AddScoped<ICommandItemService, CommandItemService>();
         builder.Services.AddScoped<ICommandService, CommandService>();
+        builder.Services.AddScoped<IConfigService, ConfigService>();
         //builder.Services.AddScoped<IIAImgService, IAImgService>();
         builder.Services.AddScoped<IIAService, IAService>();
         builder.Services.AddScoped<IImgService, ImgService>();
@@ -284,6 +290,8 @@ public class Program
         builder.Services.AddScoped<IProjetDocumentService, ProjetDocumentService>();
         builder.Services.AddScoped<IProjetItemService, ProjetItemService>();
         builder.Services.AddScoped<IProjetService, ProjetService>();
+        builder.Services.AddScoped<ISessionService, SessionService>();
+        builder.Services.AddScoped<ISMTPService, SMTPService>();
         builder.Services.AddScoped<IStoreService, StoreService>();
         builder.Services.AddScoped<IStoreTagService, StoreTagService>();
         builder.Services.AddScoped<ITagService, TagService>();

@@ -20,9 +20,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedItemTagDto>>> GetItemsTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','.")] string? expand = null)
+        public async Task<ActionResult<IEnumerable<ReadExtendedItemTagDto>>> GetItemsTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var itemTags = await _itemTagService.GetItemsTagsByTagId(id_tag, limit, offset, expand?.Split(',').ToList());
+            var itemTags = await _itemTagService.GetItemsTagsByTagId(id_tag, limit, offset, expand);
             var CountList = await _itemTagService.GetItemsTagsCountByTagId(id_tag);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
@@ -31,9 +31,9 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_item}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedItemTagDto>> GetItemTagById([FromRoute] int id_tag, [FromRoute] int id_item, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','.")] string? expand = null)
+        public async Task<ActionResult<ReadExtendedItemTagDto>> GetItemTagById([FromRoute] int id_tag, [FromRoute] int id_item, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var itemTag = await _itemTagService.GetItemTagById(id_item, id_tag, expand?.Split(',').ToList());
+            var itemTag = await _itemTagService.GetItemTagById(id_item, id_tag, expand);
             return Ok(itemTag);
         }
 

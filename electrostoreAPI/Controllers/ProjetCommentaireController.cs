@@ -21,9 +21,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedProjetCommentaireDto>>> GetProjetCommentairesByProjetId([FromRoute] int id_projet, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','.")] string? expand = null)
+        public async Task<ActionResult<IEnumerable<ReadExtendedProjetCommentaireDto>>> GetProjetCommentairesByProjetId([FromRoute] int id_projet, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var projetCommentaires = await _projetCommentaireService.GetProjetCommentairesByProjetId(id_projet, limit, offset, expand?.Split(',').ToList());
+            var projetCommentaires = await _projetCommentaireService.GetProjetCommentairesByProjetId(id_projet, limit, offset, expand);
             var CountList = await _projetCommentaireService.GetProjetCommentairesCountByProjetId(id_projet);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
@@ -32,9 +32,9 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_projet_commentaire}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedProjetCommentaireDto>> GetProjetCommentairesById([FromRoute] int id_projet, [FromRoute] int id_projet_commentaire, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','.")] string? expand = null)
+        public async Task<ActionResult<ReadExtendedProjetCommentaireDto>> GetProjetCommentairesById([FromRoute] int id_projet, [FromRoute] int id_projet_commentaire, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var projetCommentaire = await _projetCommentaireService.GetProjetCommentairesById(id_projet_commentaire, null, id_projet, expand?.Split(',').ToList());
+            var projetCommentaire = await _projetCommentaireService.GetProjetCommentairesById(id_projet_commentaire, null, id_projet, expand);
             return Ok(projetCommentaire);
         }
 
@@ -56,11 +56,6 @@ namespace electrostore.Controllers
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadProjetCommentaireDto>> UpdateProjetCommentaire([FromRoute] int id_projet, [FromRoute] int id_projet_commentaire, [FromBody] UpdateProjetCommentaireDto projetCommentaireDto)
         {
-            var checkProjetCommentaire = await _projetCommentaireService.GetProjetCommentairesById(id_projet_commentaire, null, id_projet);
-            if (!User.IsInRole("admin") && checkProjetCommentaire.id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
-            {
-                return Unauthorized(new { message = "You are not allowed to access this resource" });
-            }
             var projetCommentaire = await _projetCommentaireService.UpdateProjetCommentaire(id_projet_commentaire, projetCommentaireDto, null, id_projet);
             return Ok(projetCommentaire);
         }
@@ -69,11 +64,6 @@ namespace electrostore.Controllers
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult> DeleteProjetCommentaire([FromRoute] int id_projet, [FromRoute] int id_projet_commentaire)
         {
-            var checkProjetCommentaire = await _projetCommentaireService.GetProjetCommentairesById(id_projet_commentaire, null, id_projet);
-            if (!User.IsInRole("admin") && checkProjetCommentaire.id_user != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? ""))
-            {
-                return Unauthorized(new { message = "You are not allowed to access this resource" });
-            }
             await _projetCommentaireService.DeleteProjetCommentaire(id_projet_commentaire, null, id_projet);
             return NoContent();
         }
