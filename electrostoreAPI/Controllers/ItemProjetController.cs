@@ -20,9 +20,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedProjetItemDto>>> GetProjetItemsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','.")] string? expand = null)
+        public async Task<ActionResult<IEnumerable<ReadExtendedProjetItemDto>>> GetProjetItemsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var projetItems = await _projetItemService.GetProjetItemsByItemId(id_item, limit, offset, expand?.Split(',').ToList());
+            var projetItems = await _projetItemService.GetProjetItemsByItemId(id_item, limit, offset, expand);
             var CountList = await _projetItemService.GetProjetItemsCountByItemId(id_item);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
@@ -31,9 +31,9 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_projet}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedProjetItemDto>> GetProjetItemById([FromRoute] int id_item, [FromRoute] int id_projet, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','.")] string? expand = null)
+        public async Task<ActionResult<ReadExtendedProjetItemDto>> GetProjetItemById([FromRoute] int id_item, [FromRoute] int id_projet, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var projetItem = await _projetItemService.GetProjetItemById(id_projet, id_item, expand?.Split(',').ToList());
+            var projetItem = await _projetItemService.GetProjetItemById(id_projet, id_item, expand);
             return Ok(projetItem);
         }
 

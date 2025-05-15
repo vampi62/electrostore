@@ -97,7 +97,8 @@ public class MappingProfile : Profile
         CreateMap<Items, ReadItemDto>();
         CreateMap<Items, ReadExtendedItemDto>()
             .ForMember(dest => dest.id_item, opt => opt.MapFrom(src => src.id_item))
-            .ForMember(dest => dest.nom_item, opt => opt.MapFrom(src => src.nom_item))
+            .ForMember(dest => dest.reference_name_item, opt => opt.MapFrom(src => src.reference_name_item))
+            .ForMember(dest => dest.friendly_name_item, opt => opt.MapFrom(src => src.friendly_name_item))
             .ForMember(dest => dest.seuil_min_item, opt => opt.MapFrom(src => src.seuil_min_item))
             .ForMember(dest => dest.description_item, opt => opt.MapFrom(src => src.description_item))
             .ForMember(dest => dest.id_img, opt => opt.MapFrom(src => src.id_img))

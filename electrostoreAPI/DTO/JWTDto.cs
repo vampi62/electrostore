@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace electrostore.Dto;
 
 public record JWT

@@ -2,6 +2,8 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using electrostore.Enums;
+using electrostore.Services.SessionService;
 
 namespace electrostore.Services.ProjetCommentaireService;
 
@@ -9,11 +11,13 @@ public class ProjetCommentaireService : IProjetCommentaireService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly ISessionService _sessionService;
 
-    public ProjetCommentaireService(IMapper mapper, ApplicationDbContext context)
+    public ProjetCommentaireService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService)
     {
         _mapper = mapper;
         _context = context;
+        _sessionService = sessionService;
     }
 
     public async Task<IEnumerable<ReadExtendedProjetCommentaireDto>> GetProjetCommentairesByProjetId(int projetId, int limit = 100, int offset = 0, List<string>? expand = null)
@@ -128,7 +132,13 @@ public class ProjetCommentaireService : IProjetCommentaireService
         var projetCommentaireToUpdate = await _context.ProjetsCommentaires.FindAsync(id);
         if ((projetCommentaireToUpdate is null) || (projetId is not null && projetCommentaireToUpdate.id_projet != projetId) || (userId is not null && projetCommentaireToUpdate.id_user != userId))
         {
-            throw new KeyNotFoundException($"ProjetCommentaire with id {id} not found");
+            throw new KeyNotFoundException($"Commentaire with id {id} not found");
+        }
+        var clientId = _sessionService.GetClientId();
+        var clientRole = _sessionService.GetClientRole();
+        if (clientId != projetCommentaireToUpdate.id_user && clientRole < UserRole.Moderator)
+        {
+            throw new UnauthorizedAccessException($"You are not authorized to update this commentaire");
         }
         projetCommentaireToUpdate.contenu_projet_commentaire = projetCommentaireDto.contenu_projet_commentaire ?? projetCommentaireToUpdate.contenu_projet_commentaire;
         await _context.SaveChangesAsync();
@@ -141,6 +151,12 @@ public class ProjetCommentaireService : IProjetCommentaireService
         if ((projetCommentaireToDelete is null) || (projetId is not null && projetCommentaireToDelete.id_projet != projetId) || (userId is not null && projetCommentaireToDelete.id_user != userId))
         {
             throw new KeyNotFoundException($"ProjetCommentaire with id {id} not found");
+        }
+        var clientId = _sessionService.GetClientId();
+        var clientRole = _sessionService.GetClientRole();
+        if (clientId != projetCommentaireToDelete.id_user && clientRole < UserRole.Moderator)
+        {
+            throw new UnauthorizedAccessException($"You are not authorized to delete this commentaire");
         }
         _context.ProjetsCommentaires.Remove(projetCommentaireToDelete);
         await _context.SaveChangesAsync();

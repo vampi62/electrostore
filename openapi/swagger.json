@@ -56,7 +56,11 @@
             "in": "query",
             "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
             }
           }
         ],
@@ -446,7 +450,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_items'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {
@@ -454,7 +461,11 @@
             "in": "query",
             "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
             }
           }
         ],
@@ -565,7 +576,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_items'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -709,7 +723,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'command', 'user'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -840,7 +857,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'command', 'user'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -1332,7 +1352,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -1463,7 +1486,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -1713,7 +1739,11 @@
             "in": "query",
             "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
             }
           }
         ],
@@ -1940,7 +1970,24 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/IAStatusDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IAStatusDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IAStatusDto"
+                }
+              }
+            }
           }
         }
       }
@@ -1963,24 +2010,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "boolean"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "boolean"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "boolean"
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       }
@@ -2077,7 +2107,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'item_tags', 'item_boxs', 'command_items', 'projet_items', 'item_documents'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {
@@ -2085,7 +2118,11 @@
             "in": "query",
             "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
             }
           }
         ],
@@ -2196,7 +2233,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'item_tags', 'item_boxs', 'command_items', 'projet_items', 'item_documents'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -2340,7 +2380,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -2471,7 +2514,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -2633,7 +2679,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -2764,7 +2813,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -3585,7 +3637,39 @@
         }
       }
     },
-    "/api/item/{id_item}/img/{id_img}/show": {
+    "/api/item/{id_item}/img/{id_img}/picture": {
+      "get": {
+        "tags": [
+          "ItemImg"
+        ],
+        "parameters": [
+          {
+            "name": "id_img",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_item",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/item/{id_item}/img/{id_img}/thumbnail": {
       "get": {
         "tags": [
           "ItemImg"
@@ -3655,7 +3739,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -3786,7 +3873,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -4016,7 +4106,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -4147,7 +4240,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -4371,7 +4467,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'projets_documents', 'projets_items'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {
@@ -4379,7 +4478,11 @@
             "in": "query",
             "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
             }
           }
         ],
@@ -4490,7 +4593,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'projets_documents', 'projets_items'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -4634,7 +4740,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -4765,7 +4874,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -5104,14 +5216,6 @@
               "type": "integer",
               "format": "int32"
             }
-          },
-          {
-            "name": "id_projet",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "requestBody": {
@@ -5265,7 +5369,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -5396,7 +5503,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -5626,7 +5736,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -5757,7 +5870,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -6203,7 +6319,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -6352,7 +6471,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -6541,7 +6663,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -6690,7 +6815,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -7458,24 +7586,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadBoxDto"
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       }
@@ -7509,7 +7620,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {
@@ -7517,7 +7631,11 @@
             "in": "query",
             "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
             }
           }
         ],
@@ -7628,7 +7746,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -7772,7 +7893,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -7903,7 +8027,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -8127,7 +8254,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'stores_tags', 'items_tags', 'boxs_tags'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {
@@ -8135,7 +8265,11 @@
             "in": "query",
             "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
             }
           }
         ],
@@ -8246,7 +8380,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'stores_tags', 'items_tags', 'boxs_tags'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -8447,7 +8584,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -8578,7 +8718,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -8811,7 +8954,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -8942,7 +9088,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -9175,7 +9324,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -9306,7 +9458,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -9530,7 +9685,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'commands_commentaires'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {
@@ -9538,7 +9696,11 @@
             "in": "query",
             "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
             }
           }
         ],
@@ -9649,7 +9811,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'commands_commentaires'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -9932,7 +10097,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'command', 'user'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -10006,7 +10174,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'command', 'user'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -10168,7 +10339,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -10242,7 +10416,10 @@
             "in": "query",
             "description": "(Optional) Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','.",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -10573,6 +10750,33 @@
             "format": "float",
             "nullable": true
           },
+          "otaWait": {
+            "type": "string",
+            "nullable": true
+          },
+          "otaUploading": {
+            "type": "string",
+            "nullable": true
+          },
+          "otaError": {
+            "type": "string",
+            "nullable": true
+          },
+          "otaTime": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "otaRemainingTime": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "otaPercentage": {
+            "type": "number",
+            "format": "float",
+            "nullable": true
+          },
           "ringLightPower": {
             "type": "integer",
             "format": "int32",
@@ -10870,12 +11074,18 @@
       "CreateItemDto": {
         "required": [
           "description_item",
-          "nom_item",
+          "friendly_name_item",
+          "reference_name_item",
           "seuil_min_item"
         ],
         "type": "object",
         "properties": {
-          "nom_item": {
+          "reference_name_item": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "friendly_name_item": {
             "maxLength": 50,
             "minLength": 1,
             "type": "string"
@@ -11161,9 +11371,7 @@
             "type": "string"
           },
           "role_user": {
-            "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
+            "$ref": "#/components/schemas/UserRole"
           }
         },
         "additionalProperties": false
@@ -11191,6 +11399,40 @@
             "maxLength": 100,
             "minLength": 1,
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "IAStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "epoch": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "accuracy": {
+            "type": "number",
+            "format": "float"
+          },
+          "valAccuracy": {
+            "type": "number",
+            "format": "float"
+          },
+          "loss": {
+            "type": "number",
+            "format": "float"
+          },
+          "valLoss": {
+            "type": "number",
+            "format": "float"
           }
         },
         "additionalProperties": false
@@ -11279,6 +11521,14 @@
           "id_store": {
             "type": "integer",
             "format": "int32"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -11293,6 +11543,14 @@
           "id_box": {
             "type": "integer",
             "format": "int32"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -11479,6 +11737,14 @@
           "mdp_camera": {
             "type": "string",
             "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -11503,11 +11769,11 @@
             "type": "string",
             "nullable": true
           },
-          "date_command_commentaire": {
+          "created_at": {
             "type": "string",
             "format": "date-time"
           },
-          "date_modif_command_commentaire": {
+          "updated_at": {
             "type": "string",
             "format": "date-time"
           }
@@ -11541,7 +11807,11 @@
             "type": "number",
             "format": "double"
           },
-          "date_command_document": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
             "type": "string",
             "format": "date-time"
           }
@@ -11575,6 +11845,14 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -11597,6 +11875,14 @@
           "prix_command_item": {
             "type": "number",
             "format": "float"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -11645,10 +11931,6 @@
             "type": "integer",
             "format": "int32"
           },
-          "max_length_role": {
-            "type": "integer",
-            "format": "int32"
-          },
           "max_length_status": {
             "type": "integer",
             "format": "int32"
@@ -11686,6 +11968,14 @@
           "id_store": {
             "type": "integer",
             "format": "int32"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           },
           "store": {
             "$ref": "#/components/schemas/ReadStoreDto"
@@ -11726,6 +12016,14 @@
             "type": "integer",
             "format": "int32"
           },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
           "tag": {
             "$ref": "#/components/schemas/ReadTagDto"
           },
@@ -11755,11 +12053,11 @@
             "type": "string",
             "nullable": true
           },
-          "date_command_commentaire": {
+          "created_at": {
             "type": "string",
             "format": "date-time"
           },
-          "date_modif_command_commentaire": {
+          "updated_at": {
             "type": "string",
             "format": "date-time"
           },
@@ -11799,6 +12097,14 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           },
           "commands_commentaires_count": {
             "type": "integer",
@@ -11855,6 +12161,14 @@
             "type": "number",
             "format": "float"
           },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
           "item": {
             "$ref": "#/components/schemas/ReadItemDto"
           },
@@ -11883,6 +12197,14 @@
             "type": "integer",
             "format": "int32"
           },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
           "item": {
             "$ref": "#/components/schemas/ReadItemDto"
           },
@@ -11899,7 +12221,11 @@
             "type": "integer",
             "format": "int32"
           },
-          "nom_item": {
+          "reference_name_item": {
+            "type": "string",
+            "nullable": true
+          },
+          "friendly_name_item": {
             "type": "string",
             "nullable": true
           },
@@ -11915,6 +12241,14 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           },
           "item_tags_count": {
             "type": "integer",
@@ -11985,6 +12319,14 @@
             "type": "integer",
             "format": "int32"
           },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
           "item": {
             "$ref": "#/components/schemas/ReadItemDto"
           },
@@ -12014,11 +12356,11 @@
             "type": "string",
             "nullable": true
           },
-          "date_projet_commentaire": {
+          "created_at": {
             "type": "string",
             "format": "date-time"
           },
-          "date_modif_projet_commentaire": {
+          "updated_at": {
             "type": "string",
             "format": "date-time"
           },
@@ -12062,6 +12404,14 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           },
           "projets_commentaires_count": {
             "type": "integer",
@@ -12114,6 +12464,14 @@
             "type": "integer",
             "format": "int32"
           },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
           "item": {
             "$ref": "#/components/schemas/ReadItemDto"
           },
@@ -12145,6 +12503,14 @@
           "mqtt_name_store": {
             "type": "string",
             "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           },
           "boxs_count": {
             "type": "integer",
@@ -12193,6 +12559,14 @@
             "type": "integer",
             "format": "int32"
           },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
           "tag": {
             "$ref": "#/components/schemas/ReadTagDto"
           },
@@ -12216,6 +12590,14 @@
           "poids_tag": {
             "type": "integer",
             "format": "int32"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           },
           "stores_tags_count": {
             "type": "integer",
@@ -12273,8 +12655,15 @@
             "nullable": true
           },
           "role_user": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "created_at": {
             "type": "string",
-            "nullable": true
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           },
           "projets_commentaires_count": {
             "type": "integer",
@@ -12316,12 +12705,16 @@
             "type": "string",
             "nullable": true
           },
-          "date_ia": {
+          "trained_ia": {
+            "type": "boolean"
+          },
+          "created_at": {
             "type": "string",
             "format": "date-time"
           },
-          "trained_ia": {
-            "type": "boolean"
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -12337,7 +12730,11 @@
             "type": "string",
             "nullable": true
           },
-          "url_img": {
+          "url_picture_img": {
+            "type": "string",
+            "nullable": true
+          },
+          "url_thumbnail_img": {
             "type": "string",
             "nullable": true
           },
@@ -12345,13 +12742,17 @@
             "type": "string",
             "nullable": true
           },
-          "date_img": {
-            "type": "string",
-            "format": "date-time"
-          },
           "id_item": {
             "type": "integer",
             "format": "int32"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -12374,6 +12775,14 @@
           "seuil_max_item_item_box": {
             "type": "integer",
             "format": "int32"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -12405,7 +12814,11 @@
             "type": "number",
             "format": "double"
           },
-          "date_item_document": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
             "type": "string",
             "format": "date-time"
           }
@@ -12419,7 +12832,11 @@
             "type": "integer",
             "format": "int32"
           },
-          "nom_item": {
+          "reference_name_item": {
+            "type": "string",
+            "nullable": true
+          },
+          "friendly_name_item": {
             "type": "string",
             "nullable": true
           },
@@ -12435,6 +12852,14 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -12449,6 +12874,14 @@
           "id_tag": {
             "type": "integer",
             "format": "int32"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -12475,6 +12908,14 @@
           "mqtt_led_id": {
             "type": "integer",
             "format": "int32"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -12499,11 +12940,11 @@
             "type": "string",
             "nullable": true
           },
-          "date_projet_commentaire": {
+          "created_at": {
             "type": "string",
             "format": "date-time"
           },
-          "date_modif_projet_commentaire": {
+          "updated_at": {
             "type": "string",
             "format": "date-time"
           }
@@ -12537,7 +12978,11 @@
             "type": "number",
             "format": "double"
           },
-          "date_projet_document": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
             "type": "string",
             "format": "date-time"
           }
@@ -12575,6 +13020,14 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -12593,6 +13046,14 @@
           "qte_projet_item": {
             "type": "integer",
             "format": "int32"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -12665,6 +13126,14 @@
           "mqtt_name_store": {
             "type": "string",
             "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -12679,6 +13148,14 @@
           "id_tag": {
             "type": "integer",
             "format": "int32"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -12697,6 +13174,14 @@
           "poids_tag": {
             "type": "integer",
             "format": "int32"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -12721,8 +13206,15 @@
             "nullable": true
           },
           "role_user": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "created_at": {
             "type": "string",
-            "nullable": true
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -13014,7 +13506,12 @@
       "UpdateItemDto": {
         "type": "object",
         "properties": {
-          "nom_item": {
+          "reference_name_item": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "friendly_name_item": {
             "maxLength": 50,
             "type": "string",
             "nullable": true
@@ -13200,9 +13697,7 @@
             "nullable": true
           },
           "role_user": {
-            "maxLength": 50,
-            "type": "string",
-            "nullable": true
+            "$ref": "#/components/schemas/UserRole"
           },
           "current_mdp_user": {
             "minLength": 1,
@@ -13210,6 +13705,15 @@
           }
         },
         "additionalProperties": false
+      },
+      "UserRole": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
       }
     },
     "securitySchemes": {

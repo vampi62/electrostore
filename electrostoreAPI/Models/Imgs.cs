@@ -18,7 +18,10 @@ public class Imgs : BaseEntity
     public string nom_img { get; set; }
 
     [MaxLength(Constants.MaxUrlLength)]
-    public string url_img { get; set; }
+    public string url_picture_img { get; set; }
+
+    [MaxLength(Constants.MaxUrlLength+15)]
+    public string url_thumbnail_img { get; set; }
 
     [MaxLength(Constants.MaxDescriptionLength)]
     public string description_img { get; set; }

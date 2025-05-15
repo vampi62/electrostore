@@ -67,12 +67,28 @@ namespace electrostore.Controllers
             return NoContent();
         }
 
-        [HttpGet("{id_img}/show")]
+        [HttpGet("{id_img}/picture")]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult> GetImgData([FromRoute] int id_img, [FromRoute] int id_item)
         {
             var img = await _imgService.GetImgById(id_img, id_item);
-            var result = await _imgService.GetImageFile(img.url_img); // check if img.url_img is a valid path
+            var result = await _imgService.GetImageFile(img.url_picture_img); // check if img.url_picture_img is a valid path
+            if (result.Success)
+            {
+                return PhysicalFile(result.FilePath, result.MimeType);
+            }
+            else
+            {
+                return NotFound(result.ErrorMessage);
+            }
+        }
+
+        [HttpGet("{id_img}/thumbnail")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult> GetImgThumbnail([FromRoute] int id_img, [FromRoute] int id_item)
+        {
+            var img = await _imgService.GetImgById(id_img, id_item);
+            var result = await _imgService.GetImageFile(img.url_thumbnail_img); // check if img.url_thumbnail_img is a valid path
             if (result.Success)
             {
                 return PhysicalFile(result.FilePath, result.MimeType);

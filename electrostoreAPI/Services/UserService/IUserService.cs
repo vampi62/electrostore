@@ -1,5 +1,4 @@
 using electrostore.Dto;
-using Microsoft.AspNetCore.Mvc;
 
 namespace electrostore.Services.UserService;
 
@@ -13,8 +12,6 @@ public interface IUserService
 
     public Task<ReadExtendedUserDto> GetUserById(int id, List<string>? expand = null);
 
-    public Task<ReadUserDto> GetUserByEmail(string email);
-
     public Task<ReadUserDto> UpdateUser(int id, UpdateUserDto userDto);
 
     public Task DeleteUser(int id);
@@ -25,5 +22,9 @@ public interface IUserService
 
     public Task ForgotPassword(ForgotPasswordRequest request);
 
-    public Task<ReadUserDto> ResetPassword(ResetPasswordRequest request);
+    public Task ResetPassword(ResetPasswordRequest request);
+
+    public Task<LoginResponse> LoginUserPassword(LoginRequest request);
+
+    public Task<LoginResponse> RefreshJwt();
 }

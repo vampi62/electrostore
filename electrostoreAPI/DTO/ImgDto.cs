@@ -6,7 +6,8 @@ public record ReadImgDto
 {
     public int id_img { get; init; }
     public string nom_img { get; init; }
-    public string url_img { get; init; }
+    public string url_picture_img { get; init; }
+    public string url_thumbnail_img { get; init; }
     public string description_img { get; init; }
     public int id_item { get; init; }
     public DateTime created_at { get; init; }

@@ -15,7 +15,6 @@ public record ReadConfig
     public int max_length_email { get; init; }
     public int max_length_ip { get; init; }
     public int max_length_reason { get; init; }
-    public int max_length_role { get; init; }
     public int max_length_status { get; init; }
     public int max_size_document_in_mb { get; init; }
 
@@ -26,11 +25,10 @@ public static class Constants
     public const int MaxCommentaireLength = 455;
     public const int MaxDescriptionLength = 500;
     public const int MaxNameLength = 50;
-    public const int MaxTypeLength = 50;
+    public const int MaxTypeLength = 150;
     public const int MaxEmailLength = 100;
     public const int MaxIpLength = 50;
     public const int MaxReasonLength = 50;
-    public const int MaxRoleLength = 50;
     public const int MaxStatusLength = 50;
     public const int MaxDocumentSizeMB = 5; // in MB
 }

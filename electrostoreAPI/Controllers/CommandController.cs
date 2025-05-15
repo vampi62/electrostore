@@ -20,10 +20,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedCommandDto>>> GetCommands([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_items'. Multiple values can be specified by separating them with ','.")] string? expand = null, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] string? idResearch = null)
+        public async Task<ActionResult<IEnumerable<ReadExtendedCommandDto>>> GetCommands([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_items'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null)
         {
-            var idList = string.IsNullOrWhiteSpace(idResearch) ? null : idResearch.Split(',').Where(id => int.TryParse(id, out _)).Select(int.Parse).ToList();
-            var commands = await _commandService.GetCommands(limit, offset, expand?.Split(',').ToList(), idList);
+            var commands = await _commandService.GetCommands(limit, offset, expand, idResearch);
             var CountList = await _commandService.GetCommandsCount();
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
@@ -32,9 +31,9 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_command}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedCommandDto>> GetCommandById([FromRoute] int id_command, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_items'. Multiple values can be specified by separating them with ','.")] string? expand = null)
+        public async Task<ActionResult<ReadExtendedCommandDto>> GetCommandById([FromRoute] int id_command, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_items'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var command = await _commandService.GetCommandById(id_command, expand?.Split(',').ToList());
+            var command = await _commandService.GetCommandById(id_command, expand);
             return Ok(command);
         }
 

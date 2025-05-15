@@ -199,8 +199,8 @@ namespace electrostore.Migrations
 
                     b.Property<string>("type_command_document")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");
@@ -299,10 +299,15 @@ namespace electrostore.Migrations
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("url_img")
+                    b.Property<string>("url_picture_img")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
+
+                    b.Property<string>("url_thumbnail_img")
+                        .IsRequired()
+                        .HasMaxLength(165)
+                        .HasColumnType("varchar(165)");
 
                     b.HasKey("id_img");
 
@@ -325,10 +330,15 @@ namespace electrostore.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
+                    b.Property<string>("friendly_name_item")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
                     b.Property<int?>("id_img")
                         .HasColumnType("int");
 
-                    b.Property<string>("nom_item")
+                    b.Property<string>("reference_name_item")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
@@ -395,8 +405,8 @@ namespace electrostore.Migrations
 
                     b.Property<string>("type_item_document")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");
@@ -655,8 +665,8 @@ namespace electrostore.Migrations
 
                     b.Property<string>("type_projet_document")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");
@@ -811,10 +821,8 @@ namespace electrostore.Migrations
                     b.Property<DateTime?>("reset_token_expiration")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("role_user")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                    b.Property<int>("role_user")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");

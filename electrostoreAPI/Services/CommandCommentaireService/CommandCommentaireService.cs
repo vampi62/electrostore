@@ -2,6 +2,8 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using electrostore.Enums;
+using electrostore.Services.SessionService;
 
 namespace electrostore.Services.CommandCommentaireService;
 
@@ -9,11 +11,13 @@ public class CommandCommentaireService : ICommandCommentaireService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly ISessionService _sessionService;
 
-    public CommandCommentaireService(IMapper mapper, ApplicationDbContext context)
+    public CommandCommentaireService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService)
     {
         _mapper = mapper;
         _context = context;
+        _sessionService = sessionService;
     }
 
     public async Task<IEnumerable<ReadExtendedCommandCommentaireDto>> GetCommandsCommentairesByCommandId(int CommandId, int limit = 100, int offset = 0, List<string>? expand = null)
@@ -114,40 +118,49 @@ public class CommandCommentaireService : ICommandCommentaireService
         {
             throw new KeyNotFoundException($"User with id {commandCommentaireDto.id_user} not found");
         }
-        var newCommentaire = new CommandsCommentaires
+        var newCommandCommentaire = new CommandsCommentaires
         {
             id_command = commandCommentaireDto.id_command,
             id_user = commandCommentaireDto.id_user,
             contenu_command_commentaire = commandCommentaireDto.contenu_command_commentaire
         };
-        _context.CommandsCommentaires.Add(newCommentaire);
+        _context.CommandsCommentaires.Add(newCommandCommentaire);
         await _context.SaveChangesAsync();
-        return _mapper.Map<ReadCommandCommentaireDto>(newCommentaire);
+        return _mapper.Map<ReadCommandCommentaireDto>(newCommandCommentaire);
     }
 
     public async Task<ReadCommandCommentaireDto> UpdateCommentaire(int id, UpdateCommandCommentaireDto commandCommentaireDto, int? userId = null, int? CommandId = null)
     {
-        var commentaireToUpdate = await _context.CommandsCommentaires.FindAsync(id);
-        if ((commentaireToUpdate is null) || (CommandId is not null && commentaireToUpdate.id_command != CommandId) || (userId is not null && commentaireToUpdate.id_user != userId))
+        var commandCommentaireToUpdate = await _context.CommandsCommentaires.FindAsync(id);
+        if ((commandCommentaireToUpdate is null) || (CommandId is not null && commandCommentaireToUpdate.id_command != CommandId) || (userId is not null && commandCommentaireToUpdate.id_user != userId))
         {
             throw new KeyNotFoundException($"Commentaire with id {id} not found");
         }
-        if (commandCommentaireDto.contenu_command_commentaire is not null)
+        var clientId = _sessionService.GetClientId();
+        var clientRole = _sessionService.GetClientRole();
+        if (clientId != commandCommentaireToUpdate.id_user && clientRole < UserRole.Moderator)
         {
-            commentaireToUpdate.contenu_command_commentaire = commandCommentaireDto.contenu_command_commentaire;
+            throw new UnauthorizedAccessException($"You are not authorized to update this commentaire");
         }
+        commandCommentaireToUpdate.contenu_command_commentaire = commandCommentaireDto.contenu_command_commentaire ?? commandCommentaireToUpdate.contenu_command_commentaire;
         await _context.SaveChangesAsync();
-        return _mapper.Map<ReadCommandCommentaireDto>(commentaireToUpdate);
+        return _mapper.Map<ReadCommandCommentaireDto>(commandCommentaireToUpdate);
     }
 
     public async Task DeleteCommentaire(int id, int? userId = null, int? CommandId = null)
     {
-        var commentaireToDelete = await _context.CommandsCommentaires.FindAsync(id);
-        if ((commentaireToDelete is null) || (CommandId is not null && commentaireToDelete.id_command != CommandId) || (userId is not null && commentaireToDelete.id_user != userId))
+        var commandCommentaireToDelete = await _context.CommandsCommentaires.FindAsync(id);
+        if ((commandCommentaireToDelete is null) || (CommandId is not null && commandCommentaireToDelete.id_command != CommandId) || (userId is not null && commandCommentaireToDelete.id_user != userId))
         {
             throw new KeyNotFoundException($"Commentaire with id {id} not found");
         }
-        _context.CommandsCommentaires.Remove(commentaireToDelete);
+        var clientId = _sessionService.GetClientId();
+        var clientRole = _sessionService.GetClientRole();
+        if (clientId != commandCommentaireToDelete.id_user && clientRole < UserRole.Moderator)
+        {
+            throw new UnauthorizedAccessException($"You are not authorized to delete this commentaire");
+        }
+        _context.CommandsCommentaires.Remove(commandCommentaireToDelete);
         await _context.SaveChangesAsync();
     }
 }
