@@ -478,6 +478,9 @@ namespace electrostore.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
+                    b.Property<Guid>("session_id")
+                        .HasColumnType("char(36)");
+
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");
 
@@ -524,6 +527,9 @@ namespace electrostore.Migrations
                     b.Property<string>("revoked_reason")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
+
+                    b.Property<Guid>("session_id")
+                        .HasColumnType("char(36)");
 
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");

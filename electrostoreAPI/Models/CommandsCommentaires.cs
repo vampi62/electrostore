@@ -11,7 +11,7 @@ public class CommandsCommentaires : BaseEntity
     
     public int? id_user { get; set; }
     [ForeignKey("id_user")]
-    public Users User { get; set; }
+    public Users? User { get; set; }
 
     public int id_command { get; set; }
     [ForeignKey("id_command")]

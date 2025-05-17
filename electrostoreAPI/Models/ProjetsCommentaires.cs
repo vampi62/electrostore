@@ -11,7 +11,7 @@ public class ProjetsCommentaires : BaseEntity
     
     public int? id_user { get; set; }
     [ForeignKey("id_user")]
-    public Users User { get; set; }
+    public Users? User { get; set; }
 
     public int id_projet { get; set; }
     [ForeignKey("id_projet")]

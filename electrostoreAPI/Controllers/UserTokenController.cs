@@ -6,7 +6,7 @@ using electrostore.Services.JwiService;
 namespace electrostore.Controllers
 {
     [ApiController]
-    [Route("api/user/{id_user}/token")]
+    [Route("api/user/{id_user}/sessions")]
 
     public class UserTokenController : ControllerBase
     {
@@ -19,28 +19,30 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadRefreshTokenDto>>> GetAccessTokens([FromRoute] int id_user, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
+        public async Task<ActionResult<IEnumerable<ReadRefreshTokenDto>>> GetSessions([FromRoute] int id_user, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+            [FromQuery] bool showRevoked = false, [FromQuery] bool showExpired = false)
         {
-            var tokens = await _jwiService.GetRefreshTokensByUserId(id_user, limit, offset);
-            var CountList = await _jwiService.GetRefreshTokensCountByUserId(id_user);
+            var sessions = await _jwiService.GetTokenSessionsByUserId(id_user, limit, offset, showRevoked, showExpired);
+            var CountList = await _jwiService.GetTokenSessionsCountByUserId(id_user);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
-            return Ok(tokens);
+            return Ok(sessions);
         }
 
-        [HttpGet("{id_token}")]
+        [HttpGet("{session_id}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadRefreshTokenDto>> GetAccessTokenById([FromRoute] int id_user, [FromRoute] string id_token)
+        public async Task<ActionResult<ReadRefreshTokenDto>> GetSessionById([FromRoute] int id_user, [FromRoute] string session_id,
+            [FromQuery] bool showRevoked = false, [FromQuery] bool showExpired = false)
         {
-            var token = await _jwiService.GetRefreshTokenByToken(id_user, id_token);
-            return Ok(token);
+            var session = await _jwiService.GetTokenSessionById(session_id, id_user, showRevoked, showExpired);
+            return Ok(session);
         }
 
-        [HttpPut("{id_token}")]
+        [HttpPut("{session_id}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> RevokeAccessTokenById([FromRoute] int id_user, [FromRoute] string id_token, [FromBody] UpdateAccessTokenDto updateAccessTokenDto)
+        public async Task<ActionResult> RevokeSessionById([FromRoute] int id_user, [FromRoute] string session_id, [FromBody] UpdateAccessTokenDto updateAccessTokenDto)
         {
-            await _jwiService.RevokePairTokenByRefreshToken(id_token, updateAccessTokenDto.revoked_reason ?? "Revoked by user", id_user);
+            await _jwiService.RevokeSessionById(session_id, updateAccessTokenDto.revoked_reason ?? "Revoked by user", id_user);
             return NoContent();
         }
     }

@@ -10,6 +10,8 @@ public class JwiRefreshTokens : BaseEntity
     [Key]
     public Guid id_jwi_refresh { get; set; }
 
+    public Guid session_id { get; set; }
+
     public DateTime expires_at { get; set; }
 
     public bool is_revoked { get; set; }

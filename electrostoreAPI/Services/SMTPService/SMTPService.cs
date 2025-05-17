@@ -13,6 +13,11 @@ public class SMTPService : ISMTPService
     }
     public async Task SendEmailAsync(string to, string subject, string body)
     {
+        // check if SMTP is enabled
+        if (_configuration["SMTP:Enabled"] != "true")
+        {
+            return;
+        }
         var smtpClient = new SmtpClient(_configuration["SMTP:Host"])
         {
             Port = int.Parse(_configuration["SMTP:Port"] ?? "587"),
