@@ -10543,7 +10543,7 @@
         }
       }
     },
-    "/api/user/{id_user}/token": {
+    "/api/user/{id_user}/sessions": {
       "get": {
         "tags": [
           "UserToken"
@@ -10574,6 +10574,22 @@
               "type": "integer",
               "format": "int32",
               "default": 0
+            }
+          },
+          {
+            "name": "showRevoked",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "showExpired",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -10618,7 +10634,7 @@
         }
       }
     },
-    "/api/user/{id_user}/token/{id_token}": {
+    "/api/user/{id_user}/sessions/{session_id}": {
       "get": {
         "tags": [
           "UserToken"
@@ -10634,11 +10650,27 @@
             }
           },
           {
-            "name": "id_token",
+            "name": "session_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "showRevoked",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "showExpired",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -10680,7 +10712,7 @@
             }
           },
           {
-            "name": "id_token",
+            "name": "session_id",
             "in": "path",
             "required": true,
             "schema": {
@@ -13062,6 +13094,10 @@
         "type": "object",
         "properties": {
           "id_jwi_refresh": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "session_id": {
             "type": "string",
             "format": "uuid"
           },

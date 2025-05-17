@@ -182,10 +182,6 @@ public class Program
             });
         builder.Services.AddAuthorization(options =>
         {
-            options.AddPolicy("admin", policy =>
-                policy.RequireRole("admin"));
-            options.AddPolicy("user", policy =>
-                policy.RequireRole("user"));
             options.AddPolicy("RefreshToken", policy =>
                 policy.RequireRole("refresh"));
             options.AddPolicy("AccessToken", policy =>

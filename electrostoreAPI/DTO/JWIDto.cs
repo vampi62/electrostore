@@ -6,6 +6,7 @@ namespace electrostore.Dto;
 public record ReadAccessTokenDto
 {
     public Guid id_jwi_access { get; init; }
+    public Guid session_id { get; init; }
     public DateTime expires_at { get; init; }
     public bool is_revoked { get; init; }
     public DateTime created_at { get; init; }
@@ -18,6 +19,7 @@ public record ReadAccessTokenDto
 public record ReadRefreshTokenDto
 {
     public Guid id_jwi_refresh { get; init; }
+    public Guid session_id { get; init; }
     public DateTime expires_at { get; init; }
     public bool is_revoked { get; init; }
     public DateTime created_at { get; init; }

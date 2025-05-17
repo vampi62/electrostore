@@ -1,5 +1,6 @@
 using electrostore.Enums;
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace electrostore.Services.SessionService;
 
@@ -65,5 +66,21 @@ public class SessionService : ISessionService
             userId = id;
         }
         return userId;
+    }
+
+    public string GetTokenId()
+    {
+        var httpContext = _httpContextAccessor.HttpContext ?? throw new HttpRequestException("HttpContext is null");
+        var tokenId = string.Empty;
+        if (httpContext.User == null)
+        {
+            return tokenId;
+        }
+        var claim = httpContext.User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti);
+        if (claim != null && Guid.TryParse(claim.Value, out Guid id))
+        {
+            tokenId = id.ToString();
+        }
+        return tokenId;
     }
 }

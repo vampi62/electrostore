@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using electrostore.Dto;
+using electrostore.Enums;
 
 namespace electrostore.Services.JwtService;
 
@@ -30,9 +31,23 @@ public class JwtService
             new(ClaimTypes.NameIdentifier, user.id_user.ToString()),
             new(ClaimTypes.Name, user.email_user),
             new(ClaimTypes.Role, "access"),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new(ClaimTypes.Role, user.role_user.ToString())
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+        switch (user.role_user)
+        {
+            case UserRole.Admin:
+                claims.Add(new Claim(ClaimTypes.Role, "admin"));
+                break;
+            case UserRole.User:
+                claims.Add(new Claim(ClaimTypes.Role, "user"));
+                break;
+            case UserRole.Moderator:
+                claims.Add(new Claim(ClaimTypes.Role, "moderator"));
+                break;
+            default:
+                claims.Add(new Claim(ClaimTypes.Role, "guest"));
+                break;
+        }
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),

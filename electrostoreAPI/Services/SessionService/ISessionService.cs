@@ -9,4 +9,6 @@ public interface ISessionService
     public UserRole GetClientRole();
 
     public int GetClientId();
+
+    public string GetTokenId();
 }

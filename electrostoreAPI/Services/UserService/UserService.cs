@@ -6,7 +6,6 @@ using electrostore.Enums;
 using electrostore.Services.SMTPService;
 using electrostore.Services.SessionService;
 using electrostore.Services.JwiService;
-using electrostore.Services.JwtService;
 
 namespace electrostore.Services.UserService;
 
@@ -90,6 +89,12 @@ public class UserService : IUserService
         }
         _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
+        // send email to the user
+        await _smtpService.SendEmailAsync(
+            newUser.email_user,
+            "Account created",
+            "Your account has been created. Your role is " + newUser.role_user.ToString()
+        );
         return _mapper.Map<ReadUserDto>(newUser);
     }
 
@@ -147,6 +152,32 @@ public class UserService : IUserService
         await _context.SaveChangesAsync();
         // Revoke all access tokens and refresh tokens for the user
         await _jwiService.RevokeAllAccessTokenByUser(id, "User update account");
+        // send email to the user if the email has changed
+        if (userDto.email_user is not null && userToUpdate.email_user != userDto.email_user)
+        {
+            await _smtpService.SendEmailAsync(
+                userToUpdate.email_user,
+                "Email changed",
+                "Your email has been changed to " + userDto.email_user
+            );
+        }
+        else if (userDto.mdp_user is not null)
+        {
+            await _smtpService.SendEmailAsync(
+                userToUpdate.email_user,
+                "Password changed",
+                "Your password has been changed"
+            );
+        }
+        // send email to the user if any other field has changed
+        else
+        {
+            await _smtpService.SendEmailAsync(
+                userToUpdate.email_user,
+                "Account updated",
+                "Your account has been updated"
+            );
+        }
         return _mapper.Map<ReadUserDto>(userToUpdate);
     }
 
@@ -167,6 +198,12 @@ public class UserService : IUserService
         await _jwiService.RevokeAllRefreshTokenByUser(id, "User delete account");
         _context.Users.Remove(userToDelete);
         await _context.SaveChangesAsync();
+        // send email to the user
+        await _smtpService.SendEmailAsync(
+            userToDelete.email_user,
+            "Account deleted",
+            "Your account has been deleted"
+        );
     }
 
     public async Task<bool> CheckUserPasswordByEmail(string email, string password)
@@ -227,6 +264,12 @@ public class UserService : IUserService
         await _context.SaveChangesAsync();
         await _jwiService.RevokeAllAccessTokenByUser(user.id_user, "User reset password");
         await _jwiService.RevokeAllRefreshTokenByUser(user.id_user, "User reset password");
+        // send email to the user
+        await _smtpService.SendEmailAsync(
+            user.email_user,
+            "Password changed",
+            "Your password has been changed"
+        );
     }
 
     public async Task<LoginResponse> LoginUserPassword(LoginRequest request)
@@ -241,6 +284,12 @@ public class UserService : IUserService
         // generate tokens
         var token = _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user));
         await _jwiService.SaveToken(token, user.id_user);
+        // send email to the user
+        await _smtpService.SendEmailAsync(
+            user.email_user,
+            "Login",
+            "A new login has been detected on your account. If this was not you, please change your password."
+        );
         // return tokens
         return new LoginResponse
         {
@@ -255,9 +304,12 @@ public class UserService : IUserService
     public async Task<LoginResponse> RefreshJwt()
     {
         var clientId = _sessionService.GetClientId();
+        var tokenId = _sessionService.GetTokenId();
+        var sessionId = await _jwiService.GetSessionIdByTokenId(tokenId, clientId);
         var user = await _context.Users.FindAsync(clientId) ?? throw new KeyNotFoundException($"User with id {clientId} not found");
         var token = _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user));
-        await _jwiService.SaveToken(token, user.id_user);
+        await _jwiService.RevokePairTokenByRefreshToken(tokenId, "User refresh token", clientId);
+        await _jwiService.SaveToken(token, user.id_user, sessionId);
         // return tokens
         return new LoginResponse
         {
