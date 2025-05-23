@@ -9,12 +9,12 @@ public class Tags : BaseEntity
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_tag { get; set; }
-    
+
     [MaxLength(Constants.MaxNameLength)]
     public string nom_tag { get; set; }
 
     public int poids_tag { get; set; } = 0;
-    
+
     public ICollection<StoresTags> StoresTags { get; set; } = new List<StoresTags>();
     public ICollection<BoxsTags> BoxsTags { get; set; } = new List<BoxsTags>();
     public ICollection<ItemsTags> ItemsTags { get; set; } = new List<ItemsTags>();

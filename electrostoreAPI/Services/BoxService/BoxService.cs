@@ -26,20 +26,28 @@ public class BoxService : IBoxService
         var query = _context.Boxs.AsQueryable();
         query = query.Where(b => b.id_store == storeId);
         query = query.Skip(offset).Take(limit);
-        if (expand != null && expand.Contains("store"))
-        {
-            query = query.Include(b => b.Store);
-        }
-        if (expand != null && expand.Contains("box_tags"))
-        {
-            query = query.Include(b => b.BoxsTags);
-        }
-        if (expand != null && expand.Contains("item_boxs"))
-        {
-            query = query.Include(b => b.ItemsBoxs);
-        }
-        var box = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedBoxDto>>(box);
+        query = query.OrderBy(b => b.id_box);
+        var box = await query
+            .Select(b => new
+            {
+                Box = b,
+                BoxsTagsCount = b.BoxsTags.Count,
+                ItemsBoxsCount = b.ItemsBoxs.Count,
+                b.Store,
+                BoxsTags = expand != null && expand.Contains("box_tags") ? b.BoxsTags.Take(20).ToList() : null,
+                ItemsBoxs = expand != null && expand.Contains("item_boxs") ? b.ItemsBoxs.Take(20).ToList() : null
+            })
+            .ToListAsync();
+        return box.Select(b => {
+            return _mapper.Map<ReadExtendedBoxDto>(b.Box) with
+            {
+                box_tags_count = b.BoxsTagsCount,
+                item_boxs_count = b.ItemsBoxsCount,
+                store = _mapper.Map<ReadStoreDto>(b.Store),
+                box_tags = _mapper.Map<IEnumerable<ReadBoxTagDto>>(b.BoxsTags),
+                item_boxs = _mapper.Map<IEnumerable<ReadItemBoxDto>>(b.ItemsBoxs)
+            };
+        }).ToList();
     }
 
     public async Task<int> GetBoxsCountByStoreId(int storeId)
@@ -58,20 +66,25 @@ public class BoxService : IBoxService
     {
         var query = _context.Boxs.AsQueryable();
         query = query.Where(b => b.id_box == id && (storeId == null || b.id_store == storeId));
-        if (expand != null && expand.Contains("store"))
+        var box = await query
+            .Select(b => new
+            {
+                Box = b,
+                BoxsTagsCount = b.BoxsTags.Count,
+                ItemsBoxsCount = b.ItemsBoxs.Count,
+                b.Store,
+                BoxsTags = expand != null && expand.Contains("box_tags") ? b.BoxsTags.Take(20).ToList() : null,
+                ItemsBoxs = expand != null && expand.Contains("item_boxs") ? b.ItemsBoxs.Take(20).ToList() : null
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Box with id {id} not found");
+        return _mapper.Map<ReadExtendedBoxDto>(box.Box) with
         {
-            query = query.Include(b => b.Store);
-        }
-        if (expand != null && expand.Contains("box_tags"))
-        {
-            query = query.Include(b => b.BoxsTags);
-        }
-        if (expand != null && expand.Contains("item_boxs"))
-        {
-            query = query.Include(b => b.ItemsBoxs);
-        }
-        var box = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Box with id {id} not found");
-        return _mapper.Map<ReadExtendedBoxDto>(box);
+            box_tags_count = box.BoxsTagsCount,
+            item_boxs_count = box.ItemsBoxsCount,
+            store = _mapper.Map<ReadStoreDto>(box.Store),
+            box_tags = _mapper.Map<IEnumerable<ReadBoxTagDto>>(box.BoxsTags),
+            item_boxs = _mapper.Map<IEnumerable<ReadItemBoxDto>>(box.ItemsBoxs)
+        };
     }
 
     public async Task<ReadBoxDto> CreateBox(CreateBoxDto boxDto)

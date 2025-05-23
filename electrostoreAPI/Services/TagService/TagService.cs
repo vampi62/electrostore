@@ -21,23 +21,33 @@ public class TagService : ITagService
         var query = _context.Tags.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
         {
-            query = query.Where(b => idResearch.Contains(b.id_tag));
+            query = query.Where(t => idResearch.Contains(t.id_tag));
         }
         query = query.Skip(offset).Take(limit);
-        if (expand != null && expand.Contains("stores_tags"))
-        {
-            query = query.Include(t => t.StoresTags);
-        }
-        if (expand != null && expand.Contains("items_tags"))
-        {
-            query = query.Include(t => t.ItemsTags);
-        }
-        if (expand != null && expand.Contains("boxs_tags"))
-        {
-            query = query.Include(t => t.BoxsTags);
-        }
-        var tag = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedTagDto>>(tag);
+        query = query.OrderBy(t => t.id_tag);
+        var tags = await query
+            .Select(t => new
+            {
+                Tag = t,
+                StoresTagsCount = t.StoresTags.Count,
+                ItemsTagsCount = t.ItemsTags.Count,
+                BoxsTagsCount = t.BoxsTags.Count,
+                StoresTags = expand != null && expand.Contains("stores_tags") ? t.StoresTags.Take(20).ToList() : null,
+                ItemsTags = expand != null && expand.Contains("items_tags") ? t.ItemsTags.Take(20).ToList() : null,
+                BoxsTags = expand != null && expand.Contains("boxs_tags") ? t.BoxsTags.Take(20).ToList() : null
+            })
+            .ToListAsync();
+        return tags.Select(t => {
+            return _mapper.Map<ReadExtendedTagDto>(t.Tag) with
+            {
+                stores_tags_count = t.StoresTagsCount,
+                items_tags_count = t.ItemsTagsCount,
+                boxs_tags_count = t.BoxsTagsCount,
+                stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(t.StoresTags),
+                items_tags = _mapper.Map<IEnumerable<ReadItemTagDto>>(t.ItemsTags),
+                boxs_tags = _mapper.Map<IEnumerable<ReadBoxTagDto>>(t.BoxsTags)
+            };
+        }).ToList();
     }
 
     public async Task<int> GetTagsCount()
@@ -49,20 +59,27 @@ public class TagService : ITagService
     {
         var query = _context.Tags.AsQueryable();
         query = query.Where(t => t.id_tag == id);
-        if (expand != null && expand.Contains("stores_tags"))
+        var tag = await query
+            .Select(t => new
+            {
+                Tag = t,
+                StoresTagsCount = t.StoresTags.Count,
+                ItemsTagsCount = t.ItemsTags.Count,
+                BoxsTagsCount = t.BoxsTags.Count,
+                StoresTags = expand != null && expand.Contains("stores_tags") ? t.StoresTags.Take(20).ToList() : null,
+                ItemsTags = expand != null && expand.Contains("items_tags") ? t.ItemsTags.Take(20).ToList() : null,
+                BoxsTags = expand != null && expand.Contains("boxs_tags") ? t.BoxsTags.Take(20).ToList() : null
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Tag with id {id} not found");
+        return _mapper.Map<ReadExtendedTagDto>(tag.Tag) with
         {
-            query = query.Include(t => t.StoresTags);
-        }
-        if (expand != null && expand.Contains("items_tags"))
-        {
-            query = query.Include(t => t.ItemsTags);
-        }
-        if (expand != null && expand.Contains("boxs_tags"))
-        {
-            query = query.Include(t => t.BoxsTags);
-        }
-        var tag = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Tag with id {id} not found");
-        return _mapper.Map<ReadExtendedTagDto>(tag);
+            stores_tags_count = tag.StoresTagsCount,
+            items_tags_count = tag.ItemsTagsCount,
+            boxs_tags_count = tag.BoxsTagsCount,
+            stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(tag.StoresTags),
+            items_tags = _mapper.Map<IEnumerable<ReadItemTagDto>>(tag.ItemsTags),
+            boxs_tags = _mapper.Map<IEnumerable<ReadBoxTagDto>>(tag.BoxsTags)
+        };
     }
 
     public async Task<ReadTagDto> CreateTag(CreateTagDto tagDto)

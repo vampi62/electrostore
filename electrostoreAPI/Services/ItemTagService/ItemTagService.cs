@@ -26,6 +26,7 @@ public class ItemTagService : IItemTagService
         var query = _context.ItemsTags.AsQueryable();
         query = query.Where(it => it.id_item == itemId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(it => it.id_tag);
         if (expand != null && expand.Contains("tag"))
         {
             query = query.Include(it => it.Tag);
@@ -60,6 +61,7 @@ public class ItemTagService : IItemTagService
         var query = _context.ItemsTags.AsQueryable();
         query = query.Where(it => it.id_tag == tagId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(it => it.id_item);
         if (expand != null && expand.Contains("tag"))
         {
             query = query.Include(it => it.Tag);

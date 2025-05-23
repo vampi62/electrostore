@@ -35,19 +35,30 @@ public class UserService : IUserService
         var query = _context.Users.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
         {
-            query = query.Where(b => idResearch.Contains(b.id_user));
+            query = query.Where(u => idResearch.Contains(u.id_user));
         }
         query = query.Skip(offset).Take(limit);
-        if (expand != null && expand.Contains("projets_commentaires"))
+        query = query.OrderBy(u => u.id_user);
+        var user = await query
+            .Select(u => new
+            {
+                User = u,
+                ProjetsCommentairesCount = u.ProjetsCommentaires.Count,
+                CommandsCommentairesCount = u.CommandsCommentaires.Count,
+                ProjetsCommentaires = expand != null && expand.Contains("projets_commentaires") ? u.ProjetsCommentaires.Take(20).ToList() : null,
+                CommandsCommentaires = expand != null && expand.Contains("commands_commentaires") ? u.CommandsCommentaires.Take(20).ToList() : null
+            })
+            .ToListAsync();
+        return user.Select(u =>
         {
-            query = query.Include(u => u.ProjetsCommentaires);
-        }
-        if (expand != null && expand.Contains("commands_commentaires"))
-        {
-            query = query.Include(u => u.CommandsCommentaires);
-        }
-        var user = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedUserDto>>(user);
+            return _mapper.Map<ReadExtendedUserDto>(u.User) with
+            {
+                projets_commentaires_count = u.ProjetsCommentairesCount,
+                commands_commentaires_count = u.CommandsCommentairesCount,
+                projets_commentaires = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(u.ProjetsCommentaires),
+                commands_commentaires = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(u.CommandsCommentaires)
+            };
+        }).ToList();
     }
 
     public async Task<int> GetUsersCount()
@@ -102,16 +113,23 @@ public class UserService : IUserService
     {
         var query = _context.Users.AsQueryable();
         query = query.Where(u => u.id_user == id);
-        if (expand != null && expand.Contains("projets_commentaires"))
+        var user = await query
+            .Select(u => new
+            {
+                User = u,
+                ProjetsCommentairesCount = u.ProjetsCommentaires.Count,
+                CommandsCommentairesCount = u.CommandsCommentaires.Count,
+                ProjetsCommentaires = expand != null && expand.Contains("projets_commentaires") ? u.ProjetsCommentaires.Take(20).ToList() : null,
+                CommandsCommentaires = expand != null && expand.Contains("commands_commentaires") ? u.CommandsCommentaires.Take(20).ToList() : null
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"User with id {id} not found");
+        return _mapper.Map<ReadExtendedUserDto>(user.User) with
         {
-            query = query.Include(u => u.ProjetsCommentaires);
-        }
-        if (expand != null && expand.Contains("commands_commentaires"))
-        {
-            query = query.Include(u => u.CommandsCommentaires);
-        }
-        var user = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"User with id {id} not found");
-        return _mapper.Map<ReadExtendedUserDto>(user);
+            projets_commentaires_count = user.ProjetsCommentairesCount,
+            commands_commentaires_count = user.CommandsCommentairesCount,
+            projets_commentaires = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(user.ProjetsCommentaires),
+            commands_commentaires = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(user.CommandsCommentaires)
+        };
     }
 
     public async Task<ReadUserDto> UpdateUser(int id, UpdateUserDto userDto)

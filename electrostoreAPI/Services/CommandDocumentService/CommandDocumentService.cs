@@ -19,13 +19,14 @@ public class CommandDocumentService : ICommandDocumentService
     public async Task<IEnumerable<ReadCommandDocumentDto>> GetCommandsDocumentsByCommandId(int commandId, int limit = 100, int offset = 0)
     {
         // check if command exists
-        if (!await _context.Commands.AnyAsync(command => command.id_command == commandId))
+        if (!await _context.Commands.AnyAsync(c => c.id_command == commandId))
         {
             throw new KeyNotFoundException($"Command with id {commandId} not found");
         }
         var query = _context.CommandsDocuments.AsQueryable();
-        query = query.Where(commandDocument => commandDocument.id_command == commandId);
+        query = query.Where(cd => cd.id_command == commandId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(cd => cd.id_command_document);
         var commandDocument = await query.ToListAsync();
         return _mapper.Map<List<ReadCommandDocumentDto>>(commandDocument);
     }
@@ -33,12 +34,12 @@ public class CommandDocumentService : ICommandDocumentService
     public async Task<int> GetCommandsDocumentsCountByCommandId(int commandId)
     {
         // check if command exists
-        if (!await _context.Commands.AnyAsync(command => command.id_command == commandId))
+        if (!await _context.Commands.AnyAsync(c => c.id_command == commandId))
         {
             throw new KeyNotFoundException($"Command with id {commandId} not found");
         }
         return await _context.CommandsDocuments
-            .Where(id => id.id_command == commandId)
+            .Where(cd => cd.id_command == commandId)
             .CountAsync();
     }
 
@@ -55,7 +56,7 @@ public class CommandDocumentService : ICommandDocumentService
     public async Task<ReadCommandDocumentDto> CreateCommandDocument(CreateCommandDocumentDto commandDocumentDto)
     {
         // check if command exists
-        if (!await _context.Commands.AnyAsync(command => command.id_command == commandDocumentDto.id_command))
+        if (!await _context.Commands.AnyAsync(c => c.id_command == commandDocumentDto.id_command))
         {
             throw new KeyNotFoundException($"Command with id {commandDocumentDto.id_command} not found");
         }

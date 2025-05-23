@@ -26,8 +26,9 @@ public class ImgService : IImgService
             throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
         var query = _context.Imgs.AsQueryable();
-        query = query.Where(b => b.id_item == itemId);
+        query = query.Where(im => im.id_item == itemId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(im => im.id_img);
         var img = await query.ToListAsync();
         return _mapper.Map<List<ReadImgDto>>(img);
     }

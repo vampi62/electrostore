@@ -21,23 +21,33 @@ public class ProjetService : IProjetService
         var query = _context.Projets.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
         {
-            query = query.Where(b => idResearch.Contains(b.id_projet));
+            query = query.Where(p => idResearch.Contains(p.id_projet));
         }
         query = query.Skip(offset).Take(limit);
-        if (expand != null && expand.Contains("projets_commentaires"))
-        {
-            query = query.Include(p => p.ProjetsCommentaires);
-        }
-        if (expand != null && expand.Contains("projets_documents"))
-        {
-            query = query.Include(p => p.ProjetsDocuments);
-        }
-        if (expand != null && expand.Contains("projets_items"))
-        {
-            query = query.Include(p => p.ProjetsItems);
-        }
-        var projet = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedProjetDto>>(projet);
+        query = query.OrderBy(p => p.id_projet);
+        var projet = await query
+            .Select(p => new
+            {
+                Projet = p,
+                ProjetsCommentairesCount = p.ProjetsCommentaires.Count,
+                ProjetsDocumentsCount = p.ProjetsDocuments.Count,
+                ProjetsItemsCount = p.ProjetsItems.Count,
+                ProjetsCommentaires = expand != null && expand.Contains("projets_commentaires") ? p.ProjetsCommentaires.Take(20).ToList() : null,
+                ProjetsDocuments = expand != null && expand.Contains("projets_documents") ? p.ProjetsDocuments.Take(20).ToList() : null,
+                ProjetsItems = expand != null && expand.Contains("projets_items") ? p.ProjetsItems.Take(20).ToList() : null
+            })
+            .ToListAsync();
+        return projet.Select(p => {
+            return _mapper.Map<ReadExtendedProjetDto>(p.Projet) with
+            {
+                projets_commentaires_count = p.ProjetsCommentairesCount,
+                projets_documents_count = p.ProjetsDocumentsCount,
+                projets_items_count = p.ProjetsItemsCount,
+                projets_commentaires = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(p.ProjetsCommentaires),
+                projets_documents = _mapper.Map<IEnumerable<ReadProjetDocumentDto>>(p.ProjetsDocuments),
+                projets_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(p.ProjetsItems)
+            };
+        }).ToList();
     }
 
     public async Task<int> GetProjetsCount()
@@ -49,20 +59,27 @@ public class ProjetService : IProjetService
     {
         var query = _context.Projets.AsQueryable();
         query = query.Where(p => p.id_projet == id);
-        if (expand != null && expand.Contains("projets_commentaires"))
+        var projet = await query
+            .Select(p => new
+            {
+                Projet = p,
+                ProjetsCommentairesCount = p.ProjetsCommentaires.Count,
+                ProjetsDocumentsCount = p.ProjetsDocuments.Count,
+                ProjetsItemsCount = p.ProjetsItems.Count,
+                ProjetsCommentaires = expand != null && expand.Contains("projets_commentaires") ? p.ProjetsCommentaires.Take(20).ToList() : null,
+                ProjetsDocuments = expand != null && expand.Contains("projets_documents") ? p.ProjetsDocuments.Take(20).ToList() : null,
+                ProjetsItems = expand != null && expand.Contains("projets_items") ? p.ProjetsItems.Take(20).ToList() : null
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Projet with id {id} not found");
+        return _mapper.Map<ReadExtendedProjetDto>(projet.Projet) with
         {
-            query = query.Include(p => p.ProjetsCommentaires);
-        }
-        if (expand != null && expand.Contains("projets_documents"))
-        {
-            query = query.Include(p => p.ProjetsDocuments);
-        }
-        if (expand != null && expand.Contains("projets_items"))
-        {
-            query = query.Include(p => p.ProjetsItems);
-        }
-        var projet = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Projet with id {id} not found");
-        return _mapper.Map<ReadExtendedProjetDto>(projet);
+            projets_commentaires_count = projet.ProjetsCommentairesCount,
+            projets_documents_count = projet.ProjetsDocumentsCount,
+            projets_items_count = projet.ProjetsItemsCount,
+            projets_commentaires = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(projet.ProjetsCommentaires),
+            projets_documents = _mapper.Map<IEnumerable<ReadProjetDocumentDto>>(projet.ProjetsDocuments),
+            projets_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(projet.ProjetsItems)
+        };
     }
 
     public async Task<ReadProjetDto> CreateProjet(CreateProjetDto projetDto)

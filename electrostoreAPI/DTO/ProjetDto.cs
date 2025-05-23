@@ -87,7 +87,7 @@ public record UpdateProjetDto : IValidatableObject
     public DateTime? date_debut_projet { get; init; }
 
     public DateTime? date_fin_projet { get; init; }
-    
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (nom_projet is not null && string.IsNullOrWhiteSpace(nom_projet))

@@ -48,7 +48,7 @@ public record CreateItemDto : IValidatableObject
     public string description_item { get; init; }
 
     public int? id_img { get; init; }
-    
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (string.IsNullOrWhiteSpace(reference_name_item))
@@ -80,7 +80,7 @@ public record UpdateItemDto : IValidatableObject
     public string? description_item { get; init; }
 
     public int? id_img { get; init; }
-    
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (reference_name_item is not null && string.IsNullOrWhiteSpace(reference_name_item))

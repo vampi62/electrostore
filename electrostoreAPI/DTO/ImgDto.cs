@@ -27,7 +27,7 @@ public record CreateImgByItemDto : IValidatableObject
 
     [Required]
     public IFormFile img_file { get; init; }
-    
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (string.IsNullOrWhiteSpace(nom_img))
@@ -71,7 +71,7 @@ public record CreateImgDto : IValidatableObject
 
     [Required]
     public IFormFile img_file { get; init; }
-    
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (string.IsNullOrWhiteSpace(nom_img))
@@ -105,7 +105,7 @@ public record UpdateImgDto : IValidatableObject
 
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "description_img cannot exceed 500 characters")]
     public string? description_img { get; init; }
-    
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (nom_img is not null && string.IsNullOrWhiteSpace(nom_img))

@@ -101,13 +101,13 @@ public class JwiService : IJwiService
         if (string.IsNullOrEmpty(tokenId)) return true;
         if (role == "access")
         {
-            var jwi_access = _context.JwiAccessTokens.FirstOrDefault(x => x.id_jwi_access == Guid.Parse(tokenId));
+            var jwi_access = _context.JwiAccessTokens.FirstOrDefault(jwi => jwi.id_jwi_access == Guid.Parse(tokenId));
             if (jwi_access is null) return true;
             return jwi_access.is_revoked;
         }
         else if (role == "refresh")
         {
-            var jwi_refresh = _context.JwiRefreshTokens.FirstOrDefault(x => x.id_jwi_refresh == Guid.Parse(tokenId));
+            var jwi_refresh = _context.JwiRefreshTokens.FirstOrDefault(jwi => jwi.id_jwi_refresh == Guid.Parse(tokenId));
             if (jwi_refresh is null) return true;
             return jwi_refresh.is_revoked;
         }
@@ -118,7 +118,7 @@ public class JwiService : IJwiService
     {
         var clientIp = _sessionService.GetClientIp();
         var jwi_access = await _context.JwiAccessTokens
-            .Where(x => x.id_user == userId && !x.is_revoked && x.expires_at > DateTime.UtcNow)
+            .Where(jwi => jwi.id_user == userId && !jwi.is_revoked && jwi.expires_at > DateTime.UtcNow)
             .ToListAsync();
         foreach (var jwi in jwi_access)
         {
@@ -134,7 +134,7 @@ public class JwiService : IJwiService
     {
         var clientIp = _sessionService.GetClientIp();
         var jwi_refresh = await _context.JwiRefreshTokens
-            .Where(x => x.id_user == userId && !x.is_revoked && x.expires_at > DateTime.UtcNow)
+            .Where(jwi => jwi.id_user == userId && !jwi.is_revoked && jwi.expires_at > DateTime.UtcNow)
             .ToListAsync();
         foreach (var jwi in jwi_refresh)
         {
@@ -155,17 +155,17 @@ public class JwiService : IJwiService
             throw new UnauthorizedAccessException("You are not authorized to view this session.");
         }
         var query = _context.JwiRefreshTokens
-            .Where(x => x.id_user == userId);
+            .Where(jwi => jwi.id_user == userId);
         if (!showRevoked)
         {
-            query = query.Where(x => !x.is_revoked);
+            query = query.Where(jwi => !jwi.is_revoked);
         }
         if (!showExpired)
         {
-            query = query.Where(x => x.expires_at > DateTime.UtcNow);
+            query = query.Where(jwi => jwi.expires_at > DateTime.UtcNow);
         }
-        query = query.OrderByDescending(x => x.created_at);
-        query = query.GroupBy(x => x.session_id).Select(group => group.First());
+        query = query.OrderByDescending(jwi => jwi.created_at);
+        query = query.GroupBy(jwi => jwi.session_id).Select(group => group.First());
         query = query.Skip(offset).Take(limit);
         var sessions = await query.ToListAsync();
         return _mapper.Map<IEnumerable<ReadRefreshTokenDto>>(sessions);
@@ -174,8 +174,8 @@ public class JwiService : IJwiService
     public async Task<int> GetTokenSessionsCountByUserId(int userId)
     {
         var count = await _context.JwiRefreshTokens
-            .Where(x => x.id_user == userId && !x.is_revoked && x.expires_at > DateTime.UtcNow)
-            .GroupBy(x => x.session_id)
+            .Where(jwi => jwi.id_user == userId && !jwi.is_revoked && jwi.expires_at > DateTime.UtcNow)
+            .GroupBy(jwi => jwi.session_id)
             .CountAsync();
         return count;
     }
@@ -189,17 +189,17 @@ public class JwiService : IJwiService
             throw new UnauthorizedAccessException("You are not authorized to view this session.");
         }
         var query = _context.JwiRefreshTokens
-            .Where(x => x.id_user == userId && x.id_jwi_refresh == Guid.Parse(id));
+            .Where(jwi => jwi.id_user == userId && jwi.id_jwi_refresh == Guid.Parse(id));
         if (!showRevoked)
         {
-            query = query.Where(x => !x.is_revoked);
+            query = query.Where(jwi => !jwi.is_revoked);
         }
         if (!showExpired)
         {
-            query = query.Where(x => x.expires_at > DateTime.UtcNow);
+            query = query.Where(jwi => jwi.expires_at > DateTime.UtcNow);
         }
-        query = query.OrderByDescending(x => x.created_at);
-        query = query.GroupBy(x => x.session_id).Select(group => group.First());
+        query = query.OrderByDescending(jwi => jwi.created_at);
+        query = query.GroupBy(jwi => jwi.session_id).Select(group => group.First());
         var session = await query.FirstOrDefaultAsync();
         return _mapper.Map<ReadRefreshTokenDto>(session);
     }
@@ -213,7 +213,7 @@ public class JwiService : IJwiService
             throw new UnauthorizedAccessException("You are not authorized to view this session.");
         }
         var session = await _context.JwiRefreshTokens
-            .Where(x => x.id_user == userId && x.id_jwi_refresh == Guid.Parse(id))
+            .Where(jwi => jwi.id_user == userId && jwi.id_jwi_refresh == Guid.Parse(id))
             .FirstOrDefaultAsync();
         return session?.session_id ?? Guid.Empty;
     }
@@ -228,7 +228,7 @@ public class JwiService : IJwiService
         }
         var clientIp = _sessionService.GetClientIp();
         var jwi_refresh = await _context.JwiRefreshTokens
-            .Where(x => x.id_user == userId && x.session_id == Guid.Parse(id) && !x.is_revoked && x.expires_at > DateTime.UtcNow)
+            .Where(jwi => jwi.id_user == userId && jwi.session_id == Guid.Parse(id) && !jwi.is_revoked && jwi.expires_at > DateTime.UtcNow)
             .FirstOrDefaultAsync();
         if (jwi_refresh is not null)
         {
@@ -238,7 +238,7 @@ public class JwiService : IJwiService
             jwi_refresh.revoked_reason = reason;
         }
         var jwi_access = await _context.JwiAccessTokens
-            .Where(x => x.id_user == userId && x.session_id == Guid.Parse(id) && !x.is_revoked && x.expires_at > DateTime.UtcNow)
+            .Where(jwi => jwi.id_user == userId && jwi.session_id == Guid.Parse(id) && !jwi.is_revoked && jwi.expires_at > DateTime.UtcNow)
             .FirstOrDefaultAsync();
         if (jwi_access is not null)
         {
@@ -259,7 +259,7 @@ public class JwiService : IJwiService
         {
             throw new UnauthorizedAccessException($"You are not authorized to access this resource");
         }
-        if (!await _context.Users.AnyAsync(x => x.id_user == userId))
+        if (!await _context.Users.AnyAsync(u => u.id_user == userId))
         {
             throw new KeyNotFoundException($"User with id {userId} not found");
         }

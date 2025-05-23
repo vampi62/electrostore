@@ -14,7 +14,7 @@ public class Boxs : BaseEntity
     public Stores Store { get; set; }
 
     public int xstart_box { get; set; }
-    
+
     public int ystart_box { get; set; }
 
     public int xend_box { get; set; }

@@ -9,7 +9,7 @@ public class Items : BaseEntity
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_item { get; set; }
-    
+
     public int? id_img { get; set; }
     [ForeignKey("id_img")]
     public Imgs Img { get; set; }

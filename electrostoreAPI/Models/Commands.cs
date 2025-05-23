@@ -11,7 +11,7 @@ public class Commands : BaseEntity
     public int id_command { get; set; }
 
     public float prix_command { get; set; }
-    
+
     [MaxLength(Constants.MaxUrlLength)]
     public string url_command { get; set; }
 

@@ -30,8 +30,9 @@ public class LedService : ILedService
             throw new KeyNotFoundException($"Store with id {storeId} not found");
         }
         var query = _context.Leds.AsQueryable();
-        query = query.Where(b => b.id_store == storeId);
+        query = query.Where(l => l.id_store == storeId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(l => l.id_led);
         var led = await query.ToListAsync();
         return _mapper.Map<List<ReadLedDto>>(led);
     }

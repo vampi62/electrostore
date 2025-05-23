@@ -26,6 +26,7 @@ public class CommandItemService : ICommandItemService
         var query = _context.CommandsItems.AsQueryable();
         query = query.Where(ci => ci.id_command == commandId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(ci => ci.id_item);
         if (expand != null && expand.Contains("item"))
         {
             query = query.Include(ci => ci.Item);
@@ -59,6 +60,7 @@ public class CommandItemService : ICommandItemService
         var query = _context.CommandsItems.AsQueryable();
         query = query.Where(ci => ci.id_item == itemId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(ci => ci.id_command);
         if (expand != null && expand.Contains("item"))
         {
             query = query.Include(ci => ci.Item);

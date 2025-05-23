@@ -8,7 +8,7 @@ public class ItemsBoxs : BaseEntity
     public int id_box { get; set; }
     [ForeignKey("id_box")]
     public Boxs Box { get; set; }
-    
+
     public int id_item { get; set; }
     [ForeignKey("id_item")]
     public Items Item { get; set; }

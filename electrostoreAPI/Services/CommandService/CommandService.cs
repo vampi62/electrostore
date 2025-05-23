@@ -21,23 +21,33 @@ public class CommandService : ICommandService
         var query = _context.Commands.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
         {
-            query = query.Where(b => idResearch.Contains(b.id_command));
+            query = query.Where(c => idResearch.Contains(c.id_command));
         }
-        query.Skip(offset).Take(limit);
-        if (expand != null && expand.Contains("commands_commentaires"))
-        {
-            query = query.Include(c => c.CommandsCommentaires);
-        }
-        if (expand != null && expand.Contains("commands_documents"))
-        {
-            query = query.Include(c => c.CommandsDocuments);
-        }
-        if (expand != null && expand.Contains("commands_items"))
-        {
-            query = query.Include(c => c.CommandsItems);
-        }
-        var command = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedCommandDto>>(command);
+        query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(c => c.id_command);
+        var command = await query
+            .Select(c => new
+            {
+                Command = c,
+                CommandsCommentairesCount = c.CommandsCommentaires.Count,
+                CommandsDocumentsCount = c.CommandsDocuments.Count,
+                CommandsItemsCount = c.CommandsItems.Count,
+                CommandsCommentaires = expand != null && expand.Contains("commands_commentaires") ? c.CommandsCommentaires.Take(20).ToList() : null,
+                CommandsDocuments = expand != null && expand.Contains("commands_documents") ? c.CommandsDocuments.Take(20).ToList() : null,
+                CommandsItems = expand != null && expand.Contains("commands_items") ? c.CommandsItems.Take(20).ToList() : null
+            })
+            .ToListAsync();
+        return command.Select(c => {
+            return _mapper.Map<ReadExtendedCommandDto>(c.Command) with
+            {
+                commands_commentaires_count = c.CommandsCommentairesCount,
+                commands_documents_count = c.CommandsDocumentsCount,
+                commands_items_count = c.CommandsItemsCount,
+                commands_commentaires = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(c.CommandsCommentaires),
+                commands_documents = _mapper.Map<IEnumerable<ReadCommandDocumentDto>>(c.CommandsDocuments),
+                commands_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(c.CommandsItems)
+            };
+        }).ToList();
     }
 
     public async Task<int> GetCommandsCount()
@@ -49,20 +59,27 @@ public class CommandService : ICommandService
     {
         var query = _context.Commands.AsQueryable();
         query = query.Where(c => c.id_command == id);
-        if (expand != null && expand.Contains("commands_commentaires"))
+        var command = await query
+            .Select(c => new
+            {
+                Command = c,
+                CommandsCommentairesCount = c.CommandsCommentaires.Count,
+                CommandsDocumentsCount = c.CommandsDocuments.Count,
+                CommandsItemsCount = c.CommandsItems.Count,
+                CommandsCommentaires = expand != null && expand.Contains("commands_commentaires") ? c.CommandsCommentaires.Take(20).ToList() : null,
+                CommandsDocuments = expand != null && expand.Contains("commands_documents") ? c.CommandsDocuments.Take(20).ToList() : null,
+                CommandsItems = expand != null && expand.Contains("commands_items") ? c.CommandsItems.Take(20).ToList() : null
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Command with id {id} not found");
+        return _mapper.Map<ReadExtendedCommandDto>(command.Command) with
         {
-            query = query.Include(c => c.CommandsCommentaires);
-        }
-        if (expand != null && expand.Contains("commands_documents"))
-        {
-            query = query.Include(c => c.CommandsDocuments);
-        }
-        if (expand != null && expand.Contains("commands_items"))
-        {
-            query = query.Include(c => c.CommandsItems);
-        }
-        var command = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Command with id {id} not found");
-        return _mapper.Map<ReadExtendedCommandDto>(command);
+            commands_commentaires_count = command.CommandsCommentairesCount,
+            commands_documents_count = command.CommandsDocumentsCount,
+            commands_items_count = command.CommandsItemsCount,
+            commands_commentaires = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(command.CommandsCommentaires),
+            commands_documents = _mapper.Map<IEnumerable<ReadCommandDocumentDto>>(command.CommandsDocuments),
+            commands_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(command.CommandsItems)
+        };
     }
 
     public async Task<ReadCommandDto> CreateCommand(CreateCommandDto commandDto)

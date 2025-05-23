@@ -21,31 +21,41 @@ public class ItemService : IItemService
         var query = _context.Items.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
         {
-            query = query.Where(b => idResearch.Contains(b.id_item));
+            query = query.Where(i => idResearch.Contains(i.id_item));
         }
         query = query.Skip(offset).Take(limit);
-        if (expand != null && expand.Contains("item_tags"))
-        {
-            query = query.Include(i => i.ItemsTags);
-        }
-        if (expand != null && expand.Contains("item_boxs"))
-        {
-            query = query.Include(i => i.ItemsBoxs);
-        }
-        if (expand != null && expand.Contains("command_items"))
-        {
-            query = query.Include(i => i.CommandsItems);
-        }
-        if (expand != null && expand.Contains("projet_items"))
-        {
-            query = query.Include(i => i.ProjetsItems);
-        }
-        if (expand != null && expand.Contains("item_documents"))
-        {
-            query = query.Include(i => i.ItemsDocuments);
-        }
-        var item = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedItemDto>>(item);
+        query = query.OrderBy(i => i.id_item);
+        var item = await query
+            .Select(i => new
+            {
+                Item = i,
+                ItemsTagsCount = i.ItemsTags.Count,
+                ItemsBoxsCount = i.ItemsBoxs.Count,
+                CommandsItemsCount = i.CommandsItems.Count,
+                ProjetsItemsCount = i.ProjetsItems.Count,
+                ItemsDocumentsCount = i.ItemsDocuments.Count,
+                ItemsTags = expand != null && expand.Contains("item_tags") ? i.ItemsTags.Take(20).ToList() : null,
+                ItemsBoxs = expand != null && expand.Contains("item_boxs") ? i.ItemsBoxs.Take(20).ToList() : null,
+                CommandsItems = expand != null && expand.Contains("command_items") ? i.CommandsItems.Take(20).ToList() : null,
+                ProjetsItems = expand != null && expand.Contains("projet_items") ? i.ProjetsItems.Take(20).ToList() : null,
+                ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null
+            })
+            .ToListAsync();
+        return item.Select(i => {
+            return _mapper.Map<ReadExtendedItemDto>(i.Item) with
+            {
+                item_tags_count = i.ItemsTagsCount,
+                item_boxs_count = i.ItemsBoxsCount,
+                command_items_count = i.CommandsItemsCount,
+                projet_items_count = i.ProjetsItemsCount,
+                item_documents_count = i.ItemsDocumentsCount,
+                item_tags = _mapper.Map<IEnumerable<ReadItemTagDto>>(i.ItemsTags),
+                item_boxs = _mapper.Map<IEnumerable<ReadItemBoxDto>>(i.ItemsBoxs),
+                command_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(i.CommandsItems),
+                projet_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(i.ProjetsItems),
+                item_documents = _mapper.Map<IEnumerable<ReadItemDocumentDto>>(i.ItemsDocuments)
+            };
+        }).ToList();
     }
 
     public async Task<int> GetItemsCount()
@@ -57,28 +67,35 @@ public class ItemService : IItemService
     {
         var query = _context.Items.AsQueryable();
         query = query.Where(i => i.id_item == id);
-        if (expand != null && expand.Contains("item_tags"))
+        var item = await query
+            .Select(i => new
+            {
+                Item = i,
+                ItemsTagsCount = i.ItemsTags.Count,
+                ItemsBoxsCount = i.ItemsBoxs.Count,
+                CommandsItemsCount = i.CommandsItems.Count,
+                ProjetsItemsCount = i.ProjetsItems.Count,
+                ItemsDocumentsCount = i.ItemsDocuments.Count,
+                ItemsTags = expand != null && expand.Contains("item_tags") ? i.ItemsTags.Take(20).ToList() : null,
+                ItemsBoxs = expand != null && expand.Contains("item_boxs") ? i.ItemsBoxs.Take(20).ToList() : null,
+                CommandsItems = expand != null && expand.Contains("command_items") ? i.CommandsItems.Take(20).ToList() : null,
+                ProjetsItems = expand != null && expand.Contains("projet_items") ? i.ProjetsItems.Take(20).ToList() : null,
+                ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Item with id {id} not found");
+        return _mapper.Map<ReadExtendedItemDto>(item.Item) with
         {
-            query = query.Include(i => i.ItemsTags);
-        }
-        if (expand != null && expand.Contains("item_boxs"))
-        {
-            query = query.Include(i => i.ItemsBoxs);
-        }
-        if (expand != null && expand.Contains("command_items"))
-        {
-            query = query.Include(i => i.CommandsItems);
-        }
-        if (expand != null && expand.Contains("projet_items"))
-        {
-            query = query.Include(i => i.ProjetsItems);
-        }
-        if (expand != null && expand.Contains("item_documents"))
-        {
-            query = query.Include(i => i.ItemsDocuments);
-        }
-        var item = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Item with id {id} not found");
-        return _mapper.Map<ReadExtendedItemDto>(item);
+            item_tags_count = item.ItemsTagsCount,
+            item_boxs_count = item.ItemsBoxsCount,
+            command_items_count = item.CommandsItemsCount,
+            projet_items_count = item.ProjetsItemsCount,
+            item_documents_count = item.ItemsDocumentsCount,
+            item_tags = _mapper.Map<IEnumerable<ReadItemTagDto>>(item.ItemsTags),
+            item_boxs = _mapper.Map<IEnumerable<ReadItemBoxDto>>(item.ItemsBoxs),
+            command_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(item.CommandsItems),
+            projet_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(item.ProjetsItems),
+            item_documents = _mapper.Map<IEnumerable<ReadItemDocumentDto>>(item.ItemsDocuments)
+        };
     }
 
     public async Task<ReadItemDto> CreateItem(CreateItemDto itemDto)
