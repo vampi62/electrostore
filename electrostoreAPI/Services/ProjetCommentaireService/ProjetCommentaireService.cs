@@ -62,16 +62,16 @@ public class ProjetCommentaireService : IProjetCommentaireService
             throw new KeyNotFoundException($"User with id {userId} not found");
         }
         var query = _context.ProjetsCommentaires.AsQueryable();
-        query = query.Where(p => p.id_user == userId);
+        query = query.Where(pc => pc.id_user == userId);
         query = query.Skip(offset).Take(limit);
         query = query.OrderByDescending(p => p.created_at);
         if (expand != null && expand.Contains("projet"))
         {
-            query = query.Include(p => p.Projet);
+            query = query.Include(pc => pc.Projet);
         }
         if (expand != null && expand.Contains("user"))
         {
-            query = query.Include(p => p.User);
+            query = query.Include(pc => pc.User);
         }
         var projetCommentaire = await query.ToListAsync();
         return _mapper.Map<List<ReadExtendedProjetCommentaireDto>>(projetCommentaire);
@@ -91,14 +91,14 @@ public class ProjetCommentaireService : IProjetCommentaireService
     public async Task<ReadExtendedProjetCommentaireDto> GetProjetCommentairesById(int id, int? userId = null, int? projetId = null, List<string>? expand = null)
     {
         var query = _context.ProjetsCommentaires.AsQueryable();
-        query = query.Where(p => p.id_projet_commentaire == id && (projetId == null || p.id_projet == projetId) && (userId == null || p.id_user == userId));
+        query = query.Where(pc => pc.id_projet_commentaire == id && (projetId == null || pc.id_projet == projetId) && (userId == null || pc.id_user == userId));
         if (expand != null && expand.Contains("projet"))
         {
-            query = query.Include(p => p.Projet);
+            query = query.Include(pc => pc.Projet);
         }
         if (expand != null && expand.Contains("user"))
         {
-            query = query.Include(p => p.User);
+            query = query.Include(pc => pc.User);
         }
         var projetCommentaire = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetCommentaire with id {id} not found");
         return _mapper.Map<ReadExtendedProjetCommentaireDto>(projetCommentaire);

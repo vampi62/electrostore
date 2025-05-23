@@ -9,7 +9,7 @@ public class Stores : BaseEntity
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_store { get; set; }
-    
+
     [MaxLength(Constants.MaxNameLength)]
     public string nom_store { get; set; }
 

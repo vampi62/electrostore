@@ -9,7 +9,7 @@ public class IA : BaseEntity
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_ia { get; set; }
-    
+
     [MaxLength(Constants.MaxNameLength)]
     public string nom_ia { get; set; }
 

@@ -26,6 +26,7 @@ public class ItemDocumentService : IItemDocumentService
         var query = _context.ItemsDocuments.AsQueryable();
         query = query.Where(id => id.id_item == itemId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(id => id.id_item_document);
         var itemDocument = await query.ToListAsync();
         return _mapper.Map<List<ReadItemDocumentDto>>(itemDocument);
     }
@@ -33,7 +34,7 @@ public class ItemDocumentService : IItemDocumentService
     public async Task<int> GetItemsDocumentsCountByItemId(int itemId)
     {
         // check if item exists
-        if (!await _context.Items.AnyAsync(item => item.id_item == itemId))
+        if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
             throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
@@ -55,7 +56,7 @@ public class ItemDocumentService : IItemDocumentService
     public async Task<ReadItemDocumentDto> CreateItemDocument(CreateItemDocumentDto itemDocumentDto)
     {
         // check if item exists
-        if (!await _context.Items.AnyAsync(item => item.id_item == itemDocumentDto.id_item))
+        if (!await _context.Items.AnyAsync(i => i.id_item == itemDocumentDto.id_item))
         {
             throw new KeyNotFoundException($"Item with id {itemDocumentDto.id_item} not found");
         }

@@ -9,7 +9,7 @@ public class Projets : BaseEntity
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_projet { get; set; }
-    
+
     [MaxLength(Constants.MaxNameLength)]
     public string nom_projet { get; set; }
 

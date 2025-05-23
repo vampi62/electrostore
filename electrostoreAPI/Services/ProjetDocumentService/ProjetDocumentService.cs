@@ -24,8 +24,9 @@ public class ProjetDocumentService : IProjetDocumentService
             throw new KeyNotFoundException($"Projet with id {projetId} not found");
         }
         var query = _context.ProjetsDocuments.AsQueryable();
-        query = query.Where(p => p.id_projet == projetId);
+        query = query.Where(pd => pd.id_projet == projetId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(pd => pd.id_projet_document);
         var projetDocument = await query.ToListAsync();
         return _mapper.Map<List<ReadProjetDocumentDto>>(projetDocument);
     }
@@ -38,7 +39,7 @@ public class ProjetDocumentService : IProjetDocumentService
             throw new KeyNotFoundException($"Projet with id {projetId} not found");
         }
         return await _context.ProjetsDocuments
-            .CountAsync(id => id.id_projet == projetId);
+            .CountAsync(pd => pd.id_projet == projetId);
     }
 
     public async Task<ReadProjetDocumentDto> GetProjetDocumentById(int id, int? projetId = null)

@@ -8,7 +8,7 @@ public class ProjetsCommentaires : BaseEntity
 {
     [Key]
     public int id_projet_commentaire { get; set; }
-    
+
     public int? id_user { get; set; }
     [ForeignKey("id_user")]
     public Users? User { get; set; }

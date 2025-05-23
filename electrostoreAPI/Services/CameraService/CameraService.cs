@@ -29,9 +29,10 @@ public class CameraService : ICameraService
         var query = _context.Cameras.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
         {
-            query = query.Where(b => idResearch.Contains(b.id_camera));
+            query = query.Where(c => idResearch.Contains(c.id_camera));
         }
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(c => c.id_camera);
         var camera = await query.ToListAsync();
         return _mapper.Map<List<ReadCameraDto>>(camera);
     }

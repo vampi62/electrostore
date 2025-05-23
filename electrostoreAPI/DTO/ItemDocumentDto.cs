@@ -17,15 +17,15 @@ public record CreateItemDocumentDto
 {
     [Required]
     public int id_item { get; init; }
-    
+
     [Required]
     [MinLength(1, ErrorMessage = "name_item_document cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "name_item_document cannot exceed 50 characters")]
     public string name_item_document { get; init; }
-    
+
     [Required]
     public IFormFile document { get; init; }
-    
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (string.IsNullOrWhiteSpace(name_item_document))
@@ -58,10 +58,10 @@ public record CreateItemDocumentByItemDto : IValidatableObject
     [MinLength(1, ErrorMessage = "name_item_document cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "name_item_document cannot exceed 50 characters")]
     public string name_item_document { get; init; }
-    
+
     [Required]
     public IFormFile document { get; init; }
-    
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (string.IsNullOrWhiteSpace(name_item_document))

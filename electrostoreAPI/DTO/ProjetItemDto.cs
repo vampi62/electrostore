@@ -42,10 +42,10 @@ public record CreateProjetItemDto
 {
     [Required]
     public int id_projet { get; init; }
-    
+
     [Required]
     public int id_item { get; init; }
-    
+
     [Required]
     [Range(1, int.MaxValue, ErrorMessage = "qte_projet_item must be greater than 0.")]
     public int qte_projet_item { get; init; }

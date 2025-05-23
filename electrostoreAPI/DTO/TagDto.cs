@@ -52,7 +52,7 @@ public record UpdateTagDto : IValidatableObject
 
     [Range(0, int.MaxValue, ErrorMessage = "poids_tag must be greater than or equal to 0.")]
     public int? poids_tag { get; init; }
-    
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (nom_tag is not null && string.IsNullOrWhiteSpace(nom_tag))

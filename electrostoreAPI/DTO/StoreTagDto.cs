@@ -33,7 +33,7 @@ public record CreateStoreTagDto
 {
     [Required]
     public int id_store { get; init; }
-    
+
     [Required]
     public int id_tag { get; init; }
 }

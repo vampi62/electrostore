@@ -19,20 +19,21 @@ public class BoxTagService : IBoxTagService
     public async Task<IEnumerable<ReadExtendedBoxTagDto>> GetBoxsTagsByBoxId(int boxId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if box exists
-        if (!await _context.Boxs.AnyAsync(s => s.id_box == boxId))
+        if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
         {
             throw new KeyNotFoundException($"Box with id {boxId} not found");
         }
         var query = _context.BoxsTags.AsQueryable();
-        query = query.Where(s => s.id_box == boxId);
+        query = query.Where(bt => bt.id_box == boxId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(bt => bt.id_tag);
         if (expand != null && expand.Contains("tag"))
         {
-            query = query.Include(s => s.Tag);
+            query = query.Include(bt => bt.Tag);
         }
         if (expand != null && expand.Contains("box"))
         {
-            query = query.Include(s => s.Box);
+            query = query.Include(bt => bt.Box);
         }
         var boxTag = await query.ToListAsync();
         return _mapper.Map<IEnumerable<ReadExtendedBoxTagDto>>(boxTag);
@@ -41,32 +42,33 @@ public class BoxTagService : IBoxTagService
     public async Task<int> GetBoxsTagsCountByBoxId(int boxId)
     {
         // check if box exists
-        if (!await _context.Boxs.AnyAsync(s => s.id_box == boxId))
+        if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
         {
             throw new KeyNotFoundException($"Box with id {boxId} not found");
         }
         return await _context.BoxsTags
-            .Where(s => s.id_box == boxId)
+            .Where(bt => bt.id_box == boxId)
             .CountAsync();
     }
 
     public async Task<IEnumerable<ReadExtendedBoxTagDto>> GetBoxsTagsByTagId(int tagId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if tag exists
-        if (!await _context.Tags.AnyAsync(s => s.id_tag == tagId))
+        if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
         {
             throw new KeyNotFoundException($"Tag with id {tagId} not found");
         }
         var query = _context.BoxsTags.AsQueryable();
-        query = query.Where(s => s.id_tag == tagId);
+        query = query.Where(bt => bt.id_tag == tagId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(bt => bt.id_box);
         if (expand != null && expand.Contains("tag"))
         {
-            query = query.Include(s => s.Tag);
+            query = query.Include(bt => bt.Tag);
         }
         if (expand != null && expand.Contains("box"))
         {
-            query = query.Include(s => s.Box);
+            query = query.Include(bt => bt.Box);
         }
         var boxTag = await query.ToListAsync();
         return _mapper.Map<IEnumerable<ReadExtendedBoxTagDto>>(boxTag);
@@ -75,7 +77,7 @@ public class BoxTagService : IBoxTagService
     public async Task<int> GetBoxsTagsCountByTagId(int tagId)
     {
         // check if tag exists
-        if (!await _context.Tags.AnyAsync(s => s.id_tag == tagId))
+        if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
         {
             throw new KeyNotFoundException($"Tag with id {tagId} not found");
         }
@@ -87,14 +89,14 @@ public class BoxTagService : IBoxTagService
     public async Task<ReadExtendedBoxTagDto> GetBoxTagById(int boxId, int tagId, List<string>? expand = null)
     {
         var query = _context.BoxsTags.AsQueryable();
-        query = query.Where(s => s.id_box == boxId && s.id_tag == tagId);
+        query = query.Where(bt => bt.id_box == boxId && bt.id_tag == tagId);
         if (expand != null && expand.Contains("tag"))
         {
-            query = query.Include(s => s.Tag);
+            query = query.Include(bt => bt.Tag);
         }
         if (expand != null && expand.Contains("box"))
         {
-            query = query.Include(s => s.Box);
+            query = query.Include(bt => bt.Box);
         }
         var boxTag = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"BoxTag with id {boxId} and {tagId} not found");
         return _mapper.Map<ReadExtendedBoxTagDto>(boxTag);
@@ -103,17 +105,17 @@ public class BoxTagService : IBoxTagService
     public async Task<ReadBoxTagDto> CreateBoxTag(CreateBoxTagDto boxTagDto)
     {
         // check if box exists
-        if (!await _context.Boxs.AnyAsync(s => s.id_box == boxTagDto.id_box))
+        if (!await _context.Boxs.AnyAsync(b => b.id_box == boxTagDto.id_box))
         {
             throw new KeyNotFoundException($"Box with id {boxTagDto.id_box} not found");
         }
         // check if tag exists
-        if (!await _context.Tags.AnyAsync(s => s.id_tag == boxTagDto.id_tag))
+        if (!await _context.Tags.AnyAsync(t => t.id_tag == boxTagDto.id_tag))
         {
             throw new KeyNotFoundException($"Tag with id {boxTagDto.id_tag} not found");
         }
         // check if the boxtag already exists
-        if (await _context.BoxsTags.AnyAsync(s => s.id_box == boxTagDto.id_box && s.id_tag == boxTagDto.id_tag))
+        if (await _context.BoxsTags.AnyAsync(bt => bt.id_box == boxTagDto.id_box && bt.id_tag == boxTagDto.id_tag))
         {
             throw new InvalidOperationException($"BoxTag with id {boxTagDto.id_box} and {boxTagDto.id_tag} already exists");
         }
@@ -162,7 +164,7 @@ public class BoxTagService : IBoxTagService
 
     public async Task CheckIfStoreExists(int storeId, int boxId)
     {
-        if (!await _context.Boxs.AnyAsync(box => box.id_box == boxId && box.id_store == storeId))
+        if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId && b.id_store == storeId))
         {
             throw new KeyNotFoundException($"Box with id {boxId} not found in store with id {storeId}");
         }

@@ -10,7 +10,7 @@ public class Users : BaseEntity
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_user { get; set; }
-    
+
     [MaxLength(Constants.MaxNameLength)]
     public string nom_user { get; set; }
 

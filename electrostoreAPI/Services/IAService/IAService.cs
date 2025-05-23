@@ -26,9 +26,10 @@ public class IAService : IIAService
         var query = _context.IA.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
         {
-            query = query.Where(b => idResearch.Contains(b.id_ia));
+            query = query.Where(ia => idResearch.Contains(ia.id_ia));
         }
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(ia => ia.id_ia);
         var ia = await query.ToListAsync();
         return _mapper.Map<List<ReadIADto>>(ia);
     }

@@ -24,15 +24,16 @@ public class ProjetItemService : IProjetItemService
             throw new KeyNotFoundException($"Projet with id {projetId} not found");
         }
         var query = _context.ProjetsItems.AsQueryable();
-        query = query.Where(p => p.id_projet == projetId);
+        query = query.Where(pi => pi.id_projet == projetId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(pi => pi.id_item);
         if (expand != null && expand.Contains("item"))
         {
-            query = query.Include(p => p.Item);
+            query = query.Include(pi => pi.Item);
         }
         if (expand != null && expand.Contains("projet"))
         {
-            query = query.Include(p => p.Projet);
+            query = query.Include(pi => pi.Projet);
         }
         var projetItem = await query.ToListAsync();
         return _mapper.Map<List<ReadExtendedProjetItemDto>>(projetItem);
@@ -57,15 +58,16 @@ public class ProjetItemService : IProjetItemService
             throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
         var query = _context.ProjetsItems.AsQueryable();
-        query = query.Where(p => p.id_item == itemId);
+        query = query.Where(pi => pi.id_item == itemId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(pi => pi.id_projet);
         if (expand != null && expand.Contains("item"))
         {
-            query = query.Include(p => p.Item);
+            query = query.Include(pi => pi.Item);
         }
         if (expand != null && expand.Contains("projet"))
         {
-            query = query.Include(p => p.Projet);
+            query = query.Include(pi => pi.Projet);
         }
         var projetItem = await query.ToListAsync();
         return _mapper.Map<List<ReadExtendedProjetItemDto>>(projetItem);
@@ -79,20 +81,20 @@ public class ProjetItemService : IProjetItemService
             throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
         return await _context.ProjetsItems
-            .CountAsync(p => p.id_item == itemId);
+            .CountAsync(pi => pi.id_item == itemId);
     }
 
     public async Task<ReadExtendedProjetItemDto> GetProjetItemById(int projetId, int itemId, List<string>? expand = null)
     {
         var query = _context.ProjetsItems.AsQueryable();
-        query = query.Where(p => p.id_projet == projetId && p.id_item == itemId);
+        query = query.Where(pi => pi.id_projet == projetId && pi.id_item == itemId);
         if (expand != null && expand.Contains("item"))
         {
-            query = query.Include(p => p.Item);
+            query = query.Include(pi => pi.Item);
         }
         if (expand != null && expand.Contains("projet"))
         {
-            query = query.Include(p => p.Projet);
+            query = query.Include(pi => pi.Projet);
         }
         var projetItem = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetItem with id_projet {projetId} and id_item {itemId} not found");
         return _mapper.Map<ReadExtendedProjetItemDto>(projetItem);
@@ -111,7 +113,7 @@ public class ProjetItemService : IProjetItemService
             throw new KeyNotFoundException($"Item with id {projetItemDto.id_item} not found");
         }
         // check if the projetItem already exists
-        if (await _context.ProjetsItems.AnyAsync(p => p.id_projet == projetItemDto.id_projet && p.id_item == projetItemDto.id_item))
+        if (await _context.ProjetsItems.AnyAsync(pi => pi.id_projet == projetItemDto.id_projet && pi.id_item == projetItemDto.id_item))
         {
             throw new InvalidOperationException($"ProjetItem with id_projet {projetItemDto.id_projet} and id_item {projetItemDto.id_item} already exists");
         }

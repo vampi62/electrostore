@@ -12,8 +12,8 @@ public class CommandsItems : BaseEntity
     public int id_command { get; set; }
     [ForeignKey("id_command")]
     public Commands Command { get; set; }
-    
+
     public int qte_command_item { get; set; }
-    
+
     public float prix_command_item { get; set; }
 }

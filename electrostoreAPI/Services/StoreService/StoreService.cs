@@ -22,23 +22,33 @@ public class StoreService : IStoreService
         var query = _context.Stores.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
         {
-            query = query.Where(b => idResearch.Contains(b.id_store));
+            query = query.Where(s => idResearch.Contains(s.id_store));
         }
         query = query.Skip(offset).Take(limit);
-        if (expand != null && expand.Contains("boxs"))
-        {
-            query = query.Include(s => s.Boxs);
-        }
-        if (expand != null && expand.Contains("leds"))
-        {
-            query = query.Include(s => s.Leds);
-        }
-        if (expand != null && expand.Contains("stores_tags"))
-        {
-            query = query.Include(s => s.StoresTags);
-        }
-        var store = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedStoreDto>>(store);
+        var store = await query
+            .OrderBy(s => s.id_store)
+            .Select(s => new
+            {
+                Store = s,
+                BoxsCount = s.Boxs.Count,
+                LedsCount = s.Leds.Count,
+                StoresTagsCount = s.StoresTags.Count,
+                Boxs = expand != null && expand.Contains("boxs") ? s.Boxs.Take(20).ToList() : null,
+                Leds = expand != null && expand.Contains("leds") ? s.Leds.Take(20).ToList() : null,
+                StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null
+            })
+            .ToListAsync();
+        return store.Select(s => {
+            return _mapper.Map<ReadExtendedStoreDto>(s.Store) with
+            {
+                boxs_count = s.BoxsCount,
+                leds_count = s.LedsCount,
+                stores_tags_count = s.StoresTagsCount,
+                boxs = _mapper.Map<IEnumerable<ReadBoxDto>>(s.Boxs),
+                leds = _mapper.Map<IEnumerable<ReadLedDto>>(s.Leds),
+                stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(s.StoresTags)
+            };
+        }).ToList();
     }
 
     public async Task<int> GetStoresCount()
@@ -50,20 +60,27 @@ public class StoreService : IStoreService
     {
         var query = _context.Stores.AsQueryable();
         query = query.Where(s => s.id_store == id);
-        if (expand != null && expand.Contains("boxs"))
+        var store = await query
+            .Select(s => new
+            {
+                Store = s,
+                BoxsCount = s.Boxs.Count,
+                LedsCount = s.Leds.Count,
+                StoresTagsCount = s.StoresTags.Count,
+                Boxs = expand != null && expand.Contains("boxs") ? s.Boxs.Take(20).ToList() : null,
+                Leds = expand != null && expand.Contains("leds") ? s.Leds.Take(20).ToList() : null,
+                StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Store with id {id} not found");
+        return _mapper.Map<ReadExtendedStoreDto>(store.Store) with
         {
-            query = query.Include(s => s.Boxs);
-        }
-        if (expand != null && expand.Contains("leds"))
-        {
-            query = query.Include(s => s.Leds);
-        }
-        if (expand != null && expand.Contains("stores_tags"))
-        {
-            query = query.Include(s => s.StoresTags);
-        }
-        var store = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Store with id {id} not found");
-        return _mapper.Map<ReadExtendedStoreDto>(store);
+            boxs_count = store.BoxsCount,
+            leds_count = store.LedsCount,
+            stores_tags_count = store.StoresTagsCount,
+            boxs = _mapper.Map<IEnumerable<ReadBoxDto>>(store.Boxs),
+            leds = _mapper.Map<IEnumerable<ReadLedDto>>(store.Leds),
+            stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(store.StoresTags)
+        };
     }
 
     public async Task<ReadStoreDto> CreateStore(CreateStoreDto storeDto)

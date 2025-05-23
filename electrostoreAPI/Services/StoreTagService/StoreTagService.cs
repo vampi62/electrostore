@@ -26,6 +26,7 @@ public class StoreTagService : IStoreTagService
         var query = _context.StoresTags.AsQueryable();
         query = query.Where(st => st.id_store == storeId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(st => st.id_tag);
         if (expand != null && expand.Contains("tag"))
         {
             query = query.Include(st => st.Tag);
@@ -59,6 +60,7 @@ public class StoreTagService : IStoreTagService
         var query = _context.StoresTags.AsQueryable();
         query = query.Where(st => st.id_tag == tagId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(st => st.id_store);
         if (expand != null && expand.Contains("tag"))
         {
             query = query.Include(st => st.Tag);

@@ -19,20 +19,21 @@ public class ItemBoxService : IItemBoxService
     public async Task<IEnumerable<ReadExtendedItemBoxDto>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the box exists
-        if (!await _context.Boxs.AnyAsync(box => box.id_box == boxId))
+        if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
         {
             throw new KeyNotFoundException($"Box with id {boxId} not found");
         }
         var query = _context.ItemsBoxs.AsQueryable();
-        query = query.Where(itemBox => itemBox.id_box == boxId);
+        query = query.Where(ib => ib.id_box == boxId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(ib => ib.id_item);
         if (expand != null && expand.Contains("item"))
         {
-            query = query.Include(itemBox => itemBox.Item);
+            query = query.Include(ib => ib.Item);
         }
         if (expand != null && expand.Contains("box"))
         {
-            query = query.Include(itemBox => itemBox.Box);
+            query = query.Include(ib => ib.Box);
         }
         var itemBox = await query.ToListAsync();
         return _mapper.Map<List<ReadExtendedItemBoxDto>>(itemBox);
@@ -41,31 +42,32 @@ public class ItemBoxService : IItemBoxService
     public async Task<int> GetItemsBoxsCountByBoxId(int boxId)
     {
         // check if the box exists
-        if (!await _context.Boxs.AnyAsync(box => box.id_box == boxId))
+        if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
         {
             throw new KeyNotFoundException($"Box with id {boxId} not found");
         }
         return await _context.ItemsBoxs
-            .CountAsync(itemBox => itemBox.id_box == boxId);
+            .CountAsync(ib => ib.id_box == boxId);
     }
 
     public async Task<IEnumerable<ReadExtendedItemBoxDto>> GetItemsBoxsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the item exists
-        if (!await _context.Items.AnyAsync(item => item.id_item == itemId))
+        if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
             throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
         var query = _context.ItemsBoxs.AsQueryable();
-        query = query.Where(itemBox => itemBox.id_item == itemId);
+        query = query.Where(ib => ib.id_item == itemId);
         query = query.Skip(offset).Take(limit);
+        query = query.OrderBy(ib => ib.id_box);
         if (expand != null && expand.Contains("item"))
         {
-            query = query.Include(itemBox => itemBox.Item);
+            query = query.Include(ib => ib.Item);
         }
         if (expand != null && expand.Contains("box"))
         {
-            query = query.Include(itemBox => itemBox.Box);
+            query = query.Include(ib => ib.Box);
         }
         var itemBox = await query.ToListAsync();
         return _mapper.Map<List<ReadExtendedItemBoxDto>>(itemBox);
@@ -74,25 +76,25 @@ public class ItemBoxService : IItemBoxService
     public async Task<int> GetItemsBoxsCountByItemId(int itemId)
     {
         // check if the item exists
-        if (!await _context.Items.AnyAsync(item => item.id_item == itemId))
+        if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
             throw new KeyNotFoundException($"Item with id {itemId} not found");
         }
         return await _context.ItemsBoxs
-            .CountAsync(itemBox => itemBox.id_item == itemId);
+            .CountAsync(ib => ib.id_item == itemId);
     }
 
     public async Task<ReadExtendedItemBoxDto> GetItemBoxById(int itemId, int boxId, List<string>? expand = null)
     {
         var query = _context.ItemsBoxs.AsQueryable();
-        query = query.Where(itemBox => itemBox.id_box == boxId && itemBox.id_item == itemId);
+        query = query.Where(ib => ib.id_box == boxId && ib.id_item == itemId);
         if (expand != null && expand.Contains("item"))
         {
-            query = query.Include(itemBox => itemBox.Item);
+            query = query.Include(ib => ib.Item);
         }
         if (expand != null && expand.Contains("box"))
         {
-            query = query.Include(itemBox => itemBox.Box);
+            query = query.Include(ib => ib.Box);
         }
         var itemBox = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
         return _mapper.Map<ReadExtendedItemBoxDto>(itemBox);
@@ -101,17 +103,17 @@ public class ItemBoxService : IItemBoxService
     public async Task<ReadItemBoxDto> CreateItemBox(CreateItemBoxDto itemBoxDto)
     {
         // check if the box exists
-        if (!await _context.Boxs.AnyAsync(box => box.id_box == itemBoxDto.id_box))
+        if (!await _context.Boxs.AnyAsync(b => b.id_box == itemBoxDto.id_box))
         {
             throw new KeyNotFoundException($"Box with id {itemBoxDto.id_box} not found");
         }
         // check if the item exists
-        if (!await _context.Items.AnyAsync(item => item.id_item == itemBoxDto.id_item))
+        if (!await _context.Items.AnyAsync(i => i.id_item == itemBoxDto.id_item))
         {
             throw new KeyNotFoundException($"Item with id {itemBoxDto.id_item} not found");
         }
         // check if the item is already in the box
-        if (await _context.ItemsBoxs.AnyAsync(itemBox => itemBox.id_box == itemBoxDto.id_box && itemBox.id_item == itemBoxDto.id_item))
+        if (await _context.ItemsBoxs.AnyAsync(ib => ib.id_box == itemBoxDto.id_box && ib.id_item == itemBoxDto.id_item))
         {
             throw new InvalidOperationException("Item is already in the box");
         }
@@ -152,7 +154,7 @@ public class ItemBoxService : IItemBoxService
 
     public async Task CheckIfStoreExists(int storeId, int boxId)
     {
-        if (!await _context.Boxs.AnyAsync(box => box.id_box == boxId && box.id_store == storeId))
+        if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId && b.id_store == storeId))
         {
             throw new KeyNotFoundException($"Box with id {boxId} not found in store with id {storeId}");
         }
