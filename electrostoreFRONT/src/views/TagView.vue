@@ -121,7 +121,6 @@ const tagDelete = async() => {
 };
 
 // Items
-const filterItemText = ref("");
 const itemModalShow = ref(false);
 const itemOpenAddModal = () => {
 	itemModalShow.value = true;
@@ -147,14 +146,15 @@ const itemDelete = async(item) => {
 	}
 };
 
-const filteredItems = computed(() => {
-	return filterItemText.value
-		? Object.values(itemsStore.items).filter((item) => item.nom_item.toLowerCase().includes(filterItemText.value.toLowerCase()))
-		: itemsStore.items;
-});
+const filteredItems = ref([]);
+const updateFilteredItems = (newValue) => {
+	filteredItems.value = newValue;
+};
+const filterItem = ref([
+	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("tag.VTagItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+]);
 
 // Stores
-const filterStoreText = ref("");
 const storeModalShow = ref(false);
 const storeOpenAddModal = () => {
 	storeModalShow.value = true;
@@ -180,14 +180,15 @@ const storeDelete = async(store) => {
 	}
 };
 
-const filteredStores = computed(() => {
-	return filterStoreText.value
-		? Object.values(storesStore.stores).filter((store) => store.nom_store.toLowerCase().includes(filterStoreText.value.toLowerCase()))
-		: storesStore.stores;
-});
+const filteredStores = ref([]);
+const updateFilteredStores = (newValue) => {
+	filteredStores.value = newValue;
+};
+const filterStore = ref([
+	{ key: "nom_store", value: "", type: "text", label: "", placeholder: t("tag.VTagStoreFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+]);
 
 // Boxs
-const filterBoxText = ref("");
 const boxModalShow = ref(false);
 const boxSave = async(box) => {
 	try {
@@ -208,12 +209,6 @@ const boxDelete = async(box) => {
 		addNotification({ message: "tag.VTagBoxDeleteError", type: "error", i18n: true });
 	}
 };
-
-const filteredBoxs = computed(() => {
-	return filterBoxText.value
-		? Object.values(storesStore.boxs).filter((box) => box.nom_box.toLowerCase().includes(filterBoxText.value.toLowerCase()))
-		: storesStore.boxs;
-});
 
 const schemaTag = Yup.object().shape({
 	nom_tag: Yup.string()
@@ -308,7 +303,7 @@ const schemaTag = Yup.object().shape({
 						<tbody>
 							<tr v-for="item in tagsStore.tagsItem[tagId]" :key="item.id_item">
 								<td class="px-4 py-2 border-b border-gray-200">
-									{{ itemsStore.items[item.id_item].nom_item }}
+									{{ itemsStore.items[item.id_item].reference_name_item }}
 								</td>
 								<td class="px-4 py-2 border-b border-gray-200 space-x-2">
 									<button type="button" @click="itemDelete(item)"
@@ -433,10 +428,7 @@ const schemaTag = Yup.object().shape({
 			</div>
 
 			<!-- Filtres -->
-			<div class="my-4 flex gap-4">
-				<input type="text" v-model="filterItemText" :placeholder="$t('tag.VTagItemFilter')"
-					class="border p-2 rounded w-full">
-			</div>
+			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
 
 			<!-- Tableau Items -->
 			<div class="overflow-y-auto max-h-96 min-h-96">
@@ -449,7 +441,7 @@ const schemaTag = Yup.object().shape({
 					</thead>
 					<tbody>
 						<tr v-for="item in filteredItems" :key="item.id_item">
-							<td class="px-4 py-2 border-b">{{ item.nom_item }}</td>
+							<td class="px-4 py-2 border-b">{{ item.reference_name_item }}</td>
 							<td class="px-4 py-2 border-b">
 								<button v-if="!tagsStore.tagsItem[tagId][item.id_item]" type="button"
 									@click="itemSave(item)"
@@ -478,10 +470,7 @@ const schemaTag = Yup.object().shape({
 			</div>
 
 			<!-- Filtres -->
-			<div class="my-4 flex gap-4">
-				<input type="text" v-model="filterStoreText" :placeholder="$t('tag.VTagStoreFilter')"
-					class="border p-2 rounded w-full">
-			</div>
+			<FilterContainer class="my-4 flex gap-4" :filters="filterStore" :store-data="storesStore.stores" @output-filter="updateFilteredStores" />
 
 			<!-- Tableau Stores -->
 			<div class="overflow-y-auto max-h-96 min-h-96">

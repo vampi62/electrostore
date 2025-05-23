@@ -717,7 +717,7 @@ const schemaItem = Yup.object().shape({
 const filterText = ref("");
 const filteredItems = computed(() => {
 	return filterText.value
-		? Object.values(itemsStore.items).filter((item) => item.nom_item.toLowerCase().includes(filterText.value.toLowerCase()))
+		? Object.values(itemsStore.items).filter((item) => item.reference_name_item.toLowerCase().includes(filterText.value.toLowerCase()))
 		: itemsStore.items;
 });
 </script>
@@ -1059,7 +1059,7 @@ const filteredItems = computed(() => {
 									v-slot="{ navigate }">
 									<tr @click="navigate" class="transition duration-150 ease-in-out hover:bg-gray-300 cursor-pointer">
 										<td>
-											{{ itemsStore.items[item.id_item].nom_item }}
+											{{ itemsStore.items[item.id_item].reference_name_item }}
 										</td>
 										<td>
 											{{ item.qte_item_box }}
@@ -1218,7 +1218,7 @@ const filteredItems = computed(() => {
 					</thead>
 					<tbody>
 						<tr v-for="item in filteredItems" :key="item.id_item">
-							<td class="px-4 py-2 border-b">{{ item.nom_item }}</td>
+							<td class="px-4 py-2 border-b">{{ item.reference_name_item }}</td>
 							<td class="px-4 py-2 border-b">
 								<template v-if="item.tmp">
 									<Form :validation-schema="schemaItem" v-slot="{ errors }">

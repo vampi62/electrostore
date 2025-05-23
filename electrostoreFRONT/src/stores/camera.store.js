@@ -17,9 +17,9 @@ export const useCamerasStore = defineStore("cameras",{
 	actions: {
 		async getCameraByList(idResearch = []) {
 			this.loading = true;
-			const idResearchString = idResearch.join(",");
+			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
 			let newCameraList = await fetchWrapper.get({
-				url: `${baseUrl}/camera?&idResearch=${idResearchString}`,
+				url: `${baseUrl}/camera?${idResearchString}`,
 				useToken: "access",
 			});
 			for (const camera of newCameraList["data"]) {

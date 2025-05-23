@@ -42,15 +42,16 @@ export const useItemsStore = defineStore("items",{
 		imagesTotalCount: {},
 		images: {},
 		imagesURL: {},
+		thumbnailsURL: {},
 		imageEdition: {},
 	}),
 	actions: {
 		async getItemByList(idResearch = [], expand = []) {
 			this.itemsLoading = true;
-			const expandString = expand.join(",");
-			const idResearchString = idResearch.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
 			let newItemList = await fetchWrapper.get({
-				url: `${baseUrl}/item?&idResearch=${idResearchString}&expand=${expandString}`,
+				url: `${baseUrl}/item?${idResearchString}&${expandString}`,
 				useToken: "access",
 			});
 			for (const item of newItemList["data"]) {
@@ -99,9 +100,9 @@ export const useItemsStore = defineStore("items",{
 		},
 		async getItemByInterval(limit = 100, offset = 0, expand = []) {
 			this.itemsLoading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newItemList = await fetchWrapper.get({
-				url: `${baseUrl}/item?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/item?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const item of newItemList["data"]) {
@@ -153,9 +154,9 @@ export const useItemsStore = defineStore("items",{
 				this.items[id] = {};
 			}
 			this.items[id].loading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.items[id] = await fetchWrapper.get({
-				url: `${baseUrl}/item/${id}?expand=${expandString}`,
+				url: `${baseUrl}/item/${id}?${expandString}`,
 				useToken: "access",
 			});
 			if (this.items[id].id_img && !this.imagesURL[this.items[id].id_img]) {
@@ -208,9 +209,6 @@ export const useItemsStore = defineStore("items",{
 		},
 		async updateItem(id, params) {
 			this.itemEdition.loading = true;
-			if (params.nom_item === this.items[id].nom_item) {
-				delete params.nom_item;
-			}
 			this.itemEdition = await fetchWrapper.put({
 				url: `${baseUrl}/item/${id}`,
 				useToken: "access",
@@ -235,9 +233,9 @@ export const useItemsStore = defineStore("items",{
 			if (!this.documents[idItem]) {
 				this.documents[idItem] = {};
 			}
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newDocumentList = await fetchWrapper.get({
-				url: `${baseUrl}/item/${idItem}/document?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/item/${idItem}/document?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const document of newDocumentList["data"]) {
@@ -313,10 +311,10 @@ export const useItemsStore = defineStore("items",{
 			if (!this.itemBoxs[idItem]) {
 				this.itemBoxs[idItem] = {};
 			}
-			const expandString = expand.join(",");
-			const idResearchString = idResearch.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
 			let newItemBoxList = await fetchWrapper.get({
-				url: `${baseUrl}/item/${idItem}/box?&idResearch=${idResearchString}&expand=${expandString}`,
+				url: `${baseUrl}/item/${idItem}/box?${idResearchString}&${expandString}`,
 				useToken: "access",
 			});
 			for (const itemBox of newItemBoxList["data"]) {
@@ -334,9 +332,9 @@ export const useItemsStore = defineStore("items",{
 			if (!this.itemBoxs[idItem]) {
 				this.itemBoxs[idItem] = {};
 			}
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newItemBoxList = await fetchWrapper.get({
-				url: `${baseUrl}/item/${idItem}/box?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/item/${idItem}/box?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const itemBox of newItemBoxList["data"]) {
@@ -359,10 +357,10 @@ export const useItemsStore = defineStore("items",{
 			if (!this.itemBoxs[idItem][id]) {
 				this.itemBoxs[idItem][id] = {};
 			}
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.itemBoxs[idItem][id].loading = true;
 			this.itemBoxs[idItem][id] = await fetchWrapper.get({
-				url: `${baseUrl}/item/${idItem}/box/${id}?expand=${expandString}`,
+				url: `${baseUrl}/item/${idItem}/box/${id}?${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("box") !== -1) {
@@ -405,9 +403,9 @@ export const useItemsStore = defineStore("items",{
 			if (!this.itemTags[idItem]) {
 				this.itemTags[idItem] = {};
 			}
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newItemTagList = await fetchWrapper.get({
-				url: `${baseUrl}/item/${idItem}/tag?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/item/${idItem}/tag?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const itemTag of newItemTagList["data"]) {
@@ -427,10 +425,10 @@ export const useItemsStore = defineStore("items",{
 			if (!this.itemTags[idItem][id]) {
 				this.itemTags[idItem][id] = {};
 			}
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.itemTags[idItem][id].loading = true;
 			this.itemTags[idItem][id] = await fetchWrapper.get({
-				url: `${baseUrl}/item/${idItem}/tag/${id}?expand=${expandString}`,
+				url: `${baseUrl}/item/${idItem}/tag/${id}?${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("tag") !== -1) {
@@ -489,9 +487,9 @@ export const useItemsStore = defineStore("items",{
 			if (!this.itemCommands[idItem]) {
 				this.itemCommands[idItem] = {};
 			}
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newItemCommandList = await fetchWrapper.get({
-				url: `${baseUrl}/item/${idItem}/command?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/item/${idItem}/command?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const itemCommand of newItemCommandList["data"]) {
@@ -511,10 +509,10 @@ export const useItemsStore = defineStore("items",{
 			if (!this.itemCommands[idItem][id]) {
 				this.itemCommands[idItem][id] = {};
 			}
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.itemCommands[idItem][id].loading = true;
 			this.itemCommands[idItem][id] = await fetchWrapper.get({
-				url: `${baseUrl}/item/${idItem}/command/${id}?expand=${expandString}`,
+				url: `${baseUrl}/item/${idItem}/command/${id}?${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("command") !== -1) {
@@ -571,9 +569,9 @@ export const useItemsStore = defineStore("items",{
 			if (!this.itemProjets[idItem]) {
 				this.itemProjets[idItem] = {};
 			}
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newItemProjetList = await fetchWrapper.get({
-				url: `${baseUrl}/item/${idItem}/projet?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/item/${idItem}/projet?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const itemProjet of newItemProjetList["data"]) {
@@ -593,10 +591,10 @@ export const useItemsStore = defineStore("items",{
 			if (!this.itemProjets[idItem][id]) {
 				this.itemProjets[idItem][id] = {};
 			}
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.itemProjets[idItem][id].loading = true;
 			this.itemProjets[idItem][id] = await fetchWrapper.get({
-				url: `${baseUrl}/item/${idItem}/projet/${id}?expand=${expandString}`,
+				url: `${baseUrl}/item/${idItem}/projet/${id}?${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("projet") !== -1) {
@@ -729,11 +727,22 @@ export const useItemsStore = defineStore("items",{
 				return;
 			}
 			const response = await fetchWrapper.image({
-				url: `${baseUrl}/item/${id_item}/img/${id_img}/show`,
+				url: `${baseUrl}/item/${id_item}/img/${id_img}/picture`,
 				useToken: "access",
 			});
 			const url = URL.createObjectURL(response);
 			this.imagesURL[id_img] = url;
+		},
+		async showThumbnailById(id_item, id_img) {
+			if (this.thumbnailsURL[id_img]) {
+				return;
+			}
+			const response = await fetchWrapper.image({
+				url: `${baseUrl}/item/${id_item}/img/${id_img}/thumbnail`,
+				useToken: "access",
+			});
+			const url = URL.createObjectURL(response);
+			this.thumbnailsURL[id_img] = url;
 		},
 	},
 });

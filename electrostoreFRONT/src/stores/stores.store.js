@@ -47,10 +47,9 @@ export const useStoresStore = defineStore("stores",{
 		},
 		async getStoreByList(idResearch = [], expand = []) {
 			this.storesLoading = true;
-			const idResearchString = idResearch.join(",");
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newStoreList = await fetchWrapper.get({
-				url: `${baseUrl}/store?&idResearch=${idResearchString}&expand=${expandString}`,
+				url: `${baseUrl}/store?&idResearch=${idResearch}&${expandString}`,
 				useToken: "access",
 			});
 			for (const store of newStoreList["data"]) {
@@ -82,9 +81,9 @@ export const useStoresStore = defineStore("stores",{
 		},
 		async getStoreByInterval(limit = 100, offset = 0, expand = []) {
 			this.storesLoading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newStoreList = await fetchWrapper.get({
-				url: `${baseUrl}/store?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/store?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const store of newStoreList["data"]) {
@@ -119,9 +118,9 @@ export const useStoresStore = defineStore("stores",{
 				this.stores[id] = {};
 			}
 			this.stores[id].loading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.stores[id] = await fetchWrapper.get({
-				url: `${baseUrl}/store/${id}?expand=${expandString}`,
+				url: `${baseUrl}/store/${id}?${expandString}`,
 				useToken: "access",
 			});
 			this.boxsTotalCount[id] = this.stores[id].boxs_count;
@@ -179,9 +178,9 @@ export const useStoresStore = defineStore("stores",{
 				this.boxs[idStore] = {};
 			}
 			this.boxsLoading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newBoxList = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/box?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/store/${idStore}/box?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const box of newBoxList["data"]) {
@@ -213,9 +212,9 @@ export const useStoresStore = defineStore("stores",{
 				this.boxs[idStore][id] = {};
 			}
 			this.boxs[idStore][id].loading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.boxs[idStore][id] = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/box/${id}?expand=${expandString}`,
+				url: `${baseUrl}/store/${idStore}/box/${id}?${expandString}`,
 				useToken: "access",
 			});
 			this.boxItemsTotalCount[id] = this.boxs[idStore][id].item_boxs_count;
@@ -416,9 +415,9 @@ export const useStoresStore = defineStore("stores",{
 				this.storeTags[idStore] = {};
 			}
 			this.storeTagsLoading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newTagList = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/tag?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/store/${idStore}/tag?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const tag of newTagList["data"]) {
@@ -440,9 +439,9 @@ export const useStoresStore = defineStore("stores",{
 				this.storeTags[idStore][id] = {};
 			}
 			this.storeTags[idStore][id].loading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.storeTags[idStore][id] = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/tag/${id}?expand=${expandString}`,
+				url: `${baseUrl}/store/${idStore}/tag/${id}?${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("tag") > -1) {
@@ -500,10 +499,10 @@ export const useStoresStore = defineStore("stores",{
 				this.boxItems[idBox] = {};
 			}
 			this.boxItemsLoading = true;
-			const idResearchString = idResearch.join(",");
-			const expandString = expand.join(",");
+			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newItemList = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/box/${idBox}/item?&idResearch=${idResearchString}&expand=${expandString}`,
+				url: `${baseUrl}/store/${idStore}/box/${idBox}/item?${idResearchString}&${expandString}`,
 				useToken: "access",
 			});
 			for (const item of newItemList["data"]) {
@@ -522,9 +521,9 @@ export const useStoresStore = defineStore("stores",{
 				this.boxItems[idBox] = {};
 			}
 			this.boxItemsLoading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newItemList = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/box/${idBox}/item?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/store/${idStore}/box/${idBox}/item?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const item of newItemList["data"]) {
@@ -546,9 +545,9 @@ export const useStoresStore = defineStore("stores",{
 				this.boxItems[idBox][id] = {};
 			}
 			this.boxItems[idBox][id].loading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.boxItems[idBox][id] = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/box/${idBox}/item/${id}?expand=${expandString}`,
+				url: `${baseUrl}/store/${idStore}/box/${idBox}/item/${id}?${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("item") > -1) {
@@ -592,9 +591,9 @@ export const useStoresStore = defineStore("stores",{
 				this.boxTags[idBox] = {};
 			}
 			this.boxTagsLoading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newTagList = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/box/${idBox}/tag?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/store/${idStore}/box/${idBox}/tag?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const tag of newTagList["data"]) {
@@ -616,9 +615,9 @@ export const useStoresStore = defineStore("stores",{
 				this.boxTags[idBox][id] = {};
 			}
 			this.boxTags[idBox][id].loading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.boxTags[idBox][id] = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/box/${idBox}/tag/${id}?expand=${expandString}`,
+				url: `${baseUrl}/store/${idStore}/box/${idBox}/tag/${id}?${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("tag") > -1) {

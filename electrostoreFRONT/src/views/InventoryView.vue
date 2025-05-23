@@ -114,41 +114,17 @@ const handleFileUpload = (e) => {
 };
 
 const filter = ref([
-	{ key: "nom_item", value: "", type: "text", label: "item.VInventoryFilterName" },
+	{ key: "reference_name_item", value: "", type: "text", label: "item.VInventoryFilterName", compareMethod: "contain" },
 	{ key: "seuil_min_item", value: "", type: "number", label: "item.VInventoryFilterSeuilMin", compareMethod: ">=" },
 	{ key: "seuil_min_item", value: "", type: "number", label: "item.VInventoryFilterSeuilMax", compareMethod: "<=" },
 	{ key: "qte_item_box", subPath: "item_boxs", value: "", type: "number", label: "item.VInventoryFilterQuantityMin", compareMethod: ">=" },
 	{ key: "qte_item_box", subPath: "item_boxs", value: "", type: "number", label: "item.VInventoryFilterQuantityMax", compareMethod: "<=" },
 	{ key: "id_tag", subPath: "item_tags", value: "", type: "select", options: Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]), label: "item.VInventoryFilterTag", compareMethod: "=" },
 ]);
-const filteredItems = computed(() => {
-	return Object.values(itemsStore.items).filter((element) => {
-		return filter.value.every((f) => {
-			if (f.value) {
-				if (f.subPath) {
-					if (f.compareMethod === "=") {
-						return element[f.subPath].some((subElement) => subElement[f.key] === f.value);
-					} else if (f.compareMethod === ">=") {
-						return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) >= f.value;
-					} else if (f.compareMethod === "<=") {
-						return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) <= f.value;
-					}
-				} else {
-					if (f.compareMethod === "=") {
-						return element[f.key] === f.value;
-					} else if (f.compareMethod === ">=") {
-						return element[f.key] >= f.value;
-					} else if (f.compareMethod === "<=") {
-						return element[f.key] <= f.value;
-					} else if (f.compareMethod === "contain") {
-						return element[f.key].includes(f.value);
-					}
-				}
-			}
-			return true;
-		});
-	});
-});
+const filteredItems = ref([]);
+const updateFilteredItems = (newValue) => {
+	filteredItems.value = newValue;
+};
 const sortedItems = computed(() => {
 	if (sort.value.key) {
 		return Object.values(filteredItems.value).sort((a, b) => {
@@ -225,40 +201,16 @@ const openNewPage = (url) => {
 				{{ $t('item.VInventoryAdd') }}
 			</RouterLink>
 		</div>
-		<div>
-			<div class="flex flex-wrap">
-				<template v-for="f in filter" :key="f">
-					<label class="text-sm text-gray-700 ml-2">{{ $t(f.label) }}</label>
-					<template v-if="f.type === 'select'">
-						<select v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2">
-							<option value=""></option>
-							<template v-if="f.options">
-								<option v-for="option in f.options" :key="option[0]" :value="option[0]">{{ option[1] }}
-								</option>
-							</template>
-						</select>
-					</template>
-					<template v-else-if="f.type === 'date'">
-						<input type="date" v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2" />
-					</template>
-					<template v-else-if="f.type === 'number'">
-						<input type="number" v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2" />
-					</template>
-					<template v-else-if="f.type === 'text'">
-						<input type="text" v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2" />
-					</template>
-				</template>
-			</div>
-		</div>
+		<FilterContainer :filters="filter" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
 	</div>
 	<table class="min-w-full border-collapse border border-gray-300">
 		<thead class="bg-gray-100">
 			<tr>
 				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('nom_item')">
+					@click="changeSort('reference_name_item')">
 					<div class="flex justify-between items-center">
 						<span class="flex-1">{{ $t('item.VInventoryName') }}</span>
-						<template v-if="sort.key === 'nom_item'">
+						<template v-if="sort.key === 'reference_name_item'">
 							<template v-if="sort.order === 'asc'">
 								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
 							</template>
@@ -331,7 +283,7 @@ const openNewPage = (url) => {
 					v-slot="{ navigate }">
 					<tr @click="navigate" class="transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
 						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ item.nom_item }}
+							{{ item.reference_name_item }}
 						</td>
 						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
 							{{ item.seuil_min_item }}
@@ -449,7 +401,7 @@ const openNewPage = (url) => {
 								<template v-else-if="iasStore.status.detect.predictedLabel > -1">
 									<div>
 										<span>{{ $t('item.VInventoryItem') }}: </span>
-										<span>{{ itemsStore.items[iasStore.status.detect.predictedLabel].nom_item }}</span>
+										<span>{{ itemsStore.items[iasStore.status.detect.predictedLabel].reference_name_item }}</span>
 									</div>
 									<div>
 										<span>{{ $t('item.VInventoryScore') }}: </span>

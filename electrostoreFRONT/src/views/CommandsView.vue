@@ -32,7 +32,7 @@ async function fetchAllData() {
 	if (itemsNotFound.length > 0) {
 		await itemsStore.getItemByList(itemsNotFound);
 	}
-	filter.value[6].options = Object.values(itemsStore.items).map((item) => [item.id_item, item.nom_item]);
+	filter.value[6].options = Object.values(itemsStore.items).map((item) => [item.id_item, item.reference_name_item]);
 }
 onMounted(() => {
 	fetchAllData();
@@ -54,36 +54,12 @@ const filter = ref([
 	{ key: "prix_command", value: "", type: "number", label: "command.VCommandsFilterPriceMin", compareMethod: ">=" },
 	{ key: "prix_command", value: "", type: "number", label: "command.VCommandsFilterPriceMax", compareMethod: "<=" },
 	{ key: "date_livraison_command", value: "", type: "date", label: "command.VCommandsFilterDateL", compareMethod: ">=" },
-	{ key: "id_item", subPath: "commands_items", value: "", type: "select", options: Object.values(itemsStore.items).map((item) => [item.id_item, item.nom_item]), label: "command.VCommandsFilterItem", compareMethod: "=" },
+	{ key: "id_item", subPath: "commands_items", value: "", type: "select", options: Object.values(itemsStore.items).map((item) => [item.id_item, item.reference_name_item]), label: "command.VCommandsFilterItem", compareMethod: "=" },
 ]);
-const filteredCommands = computed(() => {
-	return Object.values(commandsStore.commands).filter((element) => {
-		return filter.value.every((f) => {
-			if (f.value) {
-				if (f.subPath) {
-					if (f.compareMethod === "=") {
-						return element[f.subPath].some((subElement) => subElement[f.key] === f.value);
-					} else if (f.compareMethod === ">=") {
-						return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) >= f.value;
-					} else if (f.compareMethod === "<=") {
-						return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) <= f.value;
-					}
-				} else {
-					if (f.compareMethod === "=") {
-						return element[f.key] === f.value;
-					} else if (f.compareMethod === ">=") {
-						return element[f.key] >= f.value;
-					} else if (f.compareMethod === "<=") {
-						return element[f.key] <= f.value;
-					} else if (f.compareMethod === "contain") {
-						return element[f.key].includes(f.value);
-					}
-				}
-			}
-			return true;
-		});
-	});
-});
+const filteredCommands = ref([]);
+const updateFilteredCommands = (newValue) => {
+	filteredCommands.value = newValue;
+};
 const sortedCommands = computed(() => {
 	if (sort.value.key) {
 		return Object.values(filteredCommands.value).sort((a, b) => {
@@ -109,31 +85,7 @@ const sortedCommands = computed(() => {
 				{{ $t('command.VCommandsAdd') }}
 			</RouterLink>
 		</div>
-		<div>
-			<div class="flex flex-wrap">
-				<template v-for="f in filter" :key="f">
-					<label class="text-sm text-gray-700 ml-2">{{ $t(f.label) }}</label>
-					<template v-if="f.type === 'select'">
-						<select v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2">
-							<option value=""></option>
-							<template v-if="f.options">
-								<option v-for="option in f.options" :key="option[0]" :value="option[0]">{{ option[1] }}
-								</option>
-							</template>
-						</select>
-					</template>
-					<template v-else-if="f.type === 'date'">
-						<input type="date" v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2" />
-					</template>
-					<template v-else-if="f.type === 'number'">
-						<input type="number" v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2" />
-					</template>
-					<template v-else-if="f.type === 'text'">
-						<input type="text" v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2" />
-					</template>
-				</template>
-			</div>
-		</div>
+		<FilterContainer :filters="filter" :store-data="commandsStore.commands" @output-filter="updateFilteredCommands" />
 	</div>
 	<table class="min-w-full border-collapse border border-gray-300">
 		<thead class="bg-gray-100">
@@ -251,7 +203,7 @@ const sortedCommands = computed(() => {
 						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
 							<ul>
 								<li v-for="item in commandsStore.items[command.id_command]" :key="item.id_item">
-									{{ item.qte_command_item }} - {{ itemsStore.items[item.id_item]?.nom_item }}
+									{{ item.qte_command_item }} - {{ itemsStore.items[item.id_item]?.reference_name_item }}
 								</li>
 							</ul>
 						</td>
