@@ -258,7 +258,6 @@ const getMimeType = (type) => {
 };
 
 // item
-const filterText = ref("");
 const itemModalShow = ref(false);
 const itemOpenAddModal = () => {
 	itemModalShow.value = true;
@@ -300,11 +299,13 @@ const itemDelete = async(item) => {
 	}
 };
 
-const filteredItems = computed(() => {
-	return filterText.value
-		? Object.values(itemsStore.items).filter((item) => item.nom_item.toLowerCase().includes(filterText.value.toLowerCase()))
-		: itemsStore.items;
-});
+const filteredItems = ref([]);
+const updateFilteredItems = (newValue) => {
+	filteredItems.value = newValue;
+};
+const filterItem = ref([
+	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("command.VCommandItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+]);
 
 // commentaire
 const commentaireModalShow = ref(false);
@@ -598,7 +599,7 @@ const schemaCommentaire = Yup.object().shape({
 						<tbody>
 							<tr v-for="item in projetsStore.items[projetId]" :key="item.id_item">
 								<td class="px-4 py-2 border-b border-gray-200">
-									{{ itemsStore.items[item.id_item].nom_item }}
+									{{ itemsStore.items[item.id_item].reference_name_item }}
 								</td>
 								<td class="px-4 py-2 border-b border-gray-200">
 									<template v-if="item.tmp">
@@ -843,11 +844,7 @@ const schemaCommentaire = Yup.object().shape({
 			</div>
 
 			<!-- Filtres -->
-			<div class="my-4 flex gap-4">
-				<input type="text" v-model="filterText"
-					:placeholder="$t('projet.VProjetItemFilterPlaceholder')"
-					class="border p-2 rounded w-full">
-			</div>
+			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
 
 			<!-- Tableau Items -->
 			<div class="overflow-y-auto max-h-96 min-h-96">
@@ -861,7 +858,7 @@ const schemaCommentaire = Yup.object().shape({
 					</thead>
 					<tbody>
 						<tr v-for="item in filteredItems" :key="item.id_item">
-							<td class="px-4 py-2 border-b">{{ item.nom_item }}</td>
+							<td class="px-4 py-2 border-b">{{ item.reference_name_item }}</td>
 							<td class="px-4 py-2 border-b">
 								<template v-if="item.tmp">
 									<Form :validation-schema="schemaItem" v-slot="{ errors }">

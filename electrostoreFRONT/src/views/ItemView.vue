@@ -43,7 +43,7 @@ async function fetchAllData() {
 		itemsStore.getImageByInterval(itemId, 100, 0);
 		itemsStore.itemEdition = {
 			loading: false,
-			nom_item: itemsStore.items[itemId].nom_item,
+			reference_name_item: itemsStore.items[itemId].reference_name_item,
 			description_item: itemsStore.items[itemId].description_item,
 			seuil_min_item: itemsStore.items[itemId].seuil_min_item,
 			id_img: itemsStore.items[itemId].id_img,
@@ -402,7 +402,7 @@ const schemaBox = Yup.object().shape({
 });
 
 const schemaItem = Yup.object().shape({
-	nom_item: Yup.string()
+	reference_name_item: Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
 		.required(t("item.VItemNameRequired")),
 	description_item: Yup.string()
@@ -480,11 +480,11 @@ const schemaAddImage = Yup.object().shape({
 						<tr>
 							<td class="font-semibold pr-4 align-text-top">{{ $t('item.VItemName') }}:</td>
 							<td class="flex flex-col">
-								<Field name="nom_item" type="text"
-									v-model="itemsStore.itemEdition.nom_item"
+								<Field name="reference_name_item" type="text"
+									v-model="itemsStore.itemEdition.reference_name_item"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.nom_item }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_item || ' ' }}</span>
+									:class="{ 'border-red-500': errors.reference_name_item }" />
+								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.reference_name_item || ' ' }}</span>
 							</td>
 						</tr>
 						<tr>

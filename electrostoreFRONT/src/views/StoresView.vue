@@ -52,34 +52,10 @@ const filter = ref([
 	{ key: "ylength_store", value: "", type: "number", label: "store.VStoresFilterYLength", compareMethod: "<=" },
 	{ key: "id_tag", subPath: "stores_tags", value: "", type: "select", options: Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]), label: "store.VStoresFilterTag", compareMethod: "=" },
 ]);
-const filteredStores = computed(() => {
-	return Object.values(storesStore.stores).filter((element) => {
-		return filter.value.every((f) => {
-			if (f.value) {
-				if (f.subPath) {
-					if (f.compareMethod === "=") {
-						return element[f.subPath].some((subElement) => subElement[f.key] === f.value);
-					} else if (f.compareMethod === ">=") {
-						return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) >= f.value;
-					} else if (f.compareMethod === "<=") {
-						return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) <= f.value;
-					}
-				} else {
-					if (f.compareMethod === "=") {
-						return element[f.key] === f.value;
-					} else if (f.compareMethod === ">=") {
-						return element[f.key] >= f.value;
-					} else if (f.compareMethod === "<=") {
-						return element[f.key] <= f.value;
-					} else if (f.compareMethod === "contain") {
-						return element[f.key].includes(f.value);
-					}
-				}
-			}
-			return true;
-		});
-	});
-});
+const filteredStores = ref([]);
+const updateFilteredStores = (newValue) => {
+	filteredStores.value = newValue;
+};
 const sortedStores = computed(() => {
 	if (sort.value.key) {
 		return Object.values(filteredStores.value).sort((a, b) => {
@@ -105,31 +81,7 @@ const sortedStores = computed(() => {
 				Ajouter
 			</RouterLink>
 		</div>
-		<div>
-			<div class="flex flex-wrap">
-				<template v-for="f in filter" :key="f">
-					<label class="text-sm text-gray-700 ml-2">{{ $t(f.label) }}</label>
-					<template v-if="f.type === 'select'">
-						<select v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2">
-							<option value=""></option>
-							<template v-if="f.options">
-								<option v-for="option in f.options" :key="option[0]" :value="option[0]">{{ option[1] }}
-								</option>
-							</template>
-						</select>
-					</template>
-					<template v-else-if="f.type === 'date'">
-						<input type="date" v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2" />
-					</template>
-					<template v-else-if="f.type === 'number'">
-						<input type="number" v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2" />
-					</template>
-					<template v-else-if="f.type === 'text'">
-						<input type="text" v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2" />
-					</template>
-				</template>
-			</div>
-		</div>
+		<FilterContainer :filters="filter" :store-data="storesStore.stores" @output-filter="updateFilteredStores" />
 	</div>
 	<table class="min-w-full border-collapse border border-gray-300">
 		<thead class="bg-gray-100">

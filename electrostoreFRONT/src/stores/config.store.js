@@ -19,7 +19,6 @@ export const useConfigsStore = defineStore("configs",{
 			"max_length_email": 100,
 			"max_length_ip": 50,
 			"max_length_reason": 50,
-			"max_length_role": 50,
 			"max_length_status": 50,
 			"max_size_document_in_mb": 5,
 		},

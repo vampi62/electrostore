@@ -31,10 +31,10 @@ export const useTagsStore = defineStore("tags",{
 	actions: {
 		async getTagByList(idResearch = [], expand = []) {
 			this.tagsLoading = true;
-			const idResearchString = idResearch.join(",");
-			const expandString = expand.join(",");
+			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newTagList = await fetchWrapper.get({
-				url: `${baseUrl}/tag?&idResearch=${idResearchString}&expand=${expandString}`,
+				url: `${baseUrl}/tag?${idResearchString}&${expandString}`,
 				useToken: "access",
 			});
 			for (const tag of newTagList["data"]) {
@@ -66,9 +66,9 @@ export const useTagsStore = defineStore("tags",{
 		},
 		async getTagByInterval(limit = 100, offset = 0, expand = []) {
 			this.tagsLoading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newTagList = await fetchWrapper.get({
-				url: `${baseUrl}/tag?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/tag?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const tag of newTagList["data"]) {
@@ -103,9 +103,9 @@ export const useTagsStore = defineStore("tags",{
 				this.tags[id] = {};
 			}
 			this.tags[id].loading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.tags[id] = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${id}?expand=${expandString}`,
+				url: `${baseUrl}/tag/${id}?${expandString}`,
 				useToken: "access",
 			});
 			this.tagsStoreTotalCount[id] = this.tags[id].stores_tags_count;
@@ -174,12 +174,12 @@ export const useTagsStore = defineStore("tags",{
 		async getTagStoreByInterval(idTag, limit = 100, offset = 0, expand = []) {
 			this.tagsStoreLoading = true;
 			const storesStore = useStoresStore();
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			if (!this.tagsStore[idTag]) {
 				this.tagsStore[idTag] = {};
 			}
 			let newTagStoreList = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/store?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/tag/${idTag}/store?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			this.tagsStoreTotalCount[idTag] = newTagStoreList["count"];
@@ -200,9 +200,9 @@ export const useTagsStore = defineStore("tags",{
 			}
 			this.tagsStore[idTag][idStore].loading = true;
 			const storesStore = useStoresStore();
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.tagsStore[idTag][idStore] = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/store/${idStore}?expand=${expandString}`,
+				url: `${baseUrl}/tag/${idTag}/store/${idStore}?${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("store") > -1) {
@@ -258,12 +258,12 @@ export const useTagsStore = defineStore("tags",{
 		async getTagBoxByInterval(idTag, limit = 100, offset = 0, expand = []) {
 			this.tagsBoxLoading = true;
 			const storesStore = useStoresStore();
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			if (!this.tagsBox[idTag]) {
 				this.tagsBox[idTag] = {};
 			}
 			let newTagBoxList = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/box?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/tag/${idTag}/box?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			this.tagsBoxTotalCount[idTag] = newTagBoxList["count"];
@@ -284,9 +284,9 @@ export const useTagsStore = defineStore("tags",{
 			}
 			this.tagsBox[idTag][idBox].loading = true;
 			const storesStore = useStoresStore();
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.tagsBox[idTag][idBox] = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/box/${idBox}?expand=${expandString}`,
+				url: `${baseUrl}/tag/${idTag}/box/${idBox}?${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("box") > -1) {
@@ -342,12 +342,12 @@ export const useTagsStore = defineStore("tags",{
 		async getTagItemByInterval(idTag, limit = 100, offset = 0, expand = []) {
 			this.tagsItemLoading = true;
 			const itemsStore = useItemsStore();
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			if (!this.tagsItem[idTag]) {
 				this.tagsItem[idTag] = {};
 			}
 			let newTagItemList = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/item?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/tag/${idTag}/item?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			this.tagsItemTotalCount[idTag] = newTagItemList["count"];
@@ -368,9 +368,9 @@ export const useTagsStore = defineStore("tags",{
 			}
 			this.tagsItem[idTag][idItem].loading = true;
 			const itemsStore = useItemsStore();
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.tagsItem[idTag][idItem] = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/item/${idItem}&expand=${expandString}`,
+				url: `${baseUrl}/tag/${idTag}/item/${idItem}&${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("item") > -1) {

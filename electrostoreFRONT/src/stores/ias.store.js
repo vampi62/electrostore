@@ -15,9 +15,9 @@ export const useIasStore = defineStore("ias", {
 	actions: {
 		async getIaByList(idResearch = []) {
 			this.loading = true;
-			const idResearchString = idResearch.join(",");
+			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
 			let newIaList = await fetchWrapper.get({
-				url: `${baseUrl}/ia?&idResearch=${idResearchString}`,
+				url: `${baseUrl}/ia?${idResearchString}`,
 				useToken: "access",
 			});
 			for (const ia of newIaList["data"]) {

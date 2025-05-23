@@ -18,6 +18,7 @@ import {
 import "./assets/tailwind.css";
 
 import NotificationContainer from "./components/NotificationContainer.vue";
+import FilterContainer from "./components/FilterContainer.vue";
 
 const app = createApp(App);
 
@@ -36,6 +37,7 @@ app.use(createPinia());
 app.use(router);
 app.use(i18n);
 app.component("NotificationContainer", NotificationContainer);
+app.component("FilterContainer", FilterContainer);
 app.provide("useNotification", useNotification());
 
 app.mount("#app");

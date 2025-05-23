@@ -36,34 +36,10 @@ const filter = ref([
 	{ key: "date_ia", value: "", type: "date", label: "ia.VIasFilterDate", compareMethod: ">=" },
 	{ key: "nom_ia", value: "", type: "text", label: "ia.VIasFilterNom", compareMethod: "contain" },
 ]);
-const filteredIas = computed(() => {
-	return Object.values(IAStore.ias).filter((element) => {
-		return filter.value.every((f) => {
-			if (f.value) {
-				if (f.subPath) {
-					if (f.compareMethod === "=") {
-						return element[f.subPath].some((subElement) => subElement[f.key] === f.value);
-					} else if (f.compareMethod === ">=") {
-						return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) >= f.value;
-					} else if (f.compareMethod === "<=") {
-						return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) <= f.value;
-					}
-				} else {
-					if (f.compareMethod === "=") {
-						return element[f.key] === f.value;
-					} else if (f.compareMethod === ">=") {
-						return element[f.key] >= f.value;
-					} else if (f.compareMethod === "<=") {
-						return element[f.key] <= f.value;
-					} else if (f.compareMethod === "contain") {
-						return element[f.key].includes(f.value);
-					}
-				}
-			}
-			return true;
-		});
-	});
-});
+const filteredIas = ref([]);
+const updateFilteredIas = (newValue) => {
+	filteredIas.value = newValue;
+};
 const sortedIas = computed(() => {
 	if (sort.value.key) {
 		return Object.values(filteredIas.value).sort((a, b) => {
@@ -89,31 +65,7 @@ const sortedIas = computed(() => {
 				{{ $t('ia.VIasAdd') }}
 			</RouterLink>
 		</div>
-		<div>
-			<div class="flex flex-wrap">
-				<template v-for="f in filter" :key="f">
-					<label class="text-sm text-gray-700 ml-2">{{ $t(f.label) }}</label>
-					<template v-if="f.type === 'select'">
-						<select v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2">
-							<option value=""></option>
-							<template v-if="f.options">
-								<option v-for="option in f.options" :key="option[0]" :value="option[0]">{{ option[1] }}
-								</option>
-							</template>
-						</select>
-					</template>
-					<template v-else-if="f.type === 'date'">
-						<input type="date" v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2" />
-					</template>
-					<template v-else-if="f.type === 'number'">
-						<input type="number" v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2" />
-					</template>
-					<template v-else-if="f.type === 'text'">
-						<input type="text" v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2" />
-					</template>
-				</template>
-			</div>
-		</div>
+		<FilterContainer :filters="filter" :store-data="IAStore.ias" @output-filter="updateFilteredIas" />
 	</div>
 	<table class="min-w-full border-collapse border border-gray-300">
 		<thead class="bg-gray-100">

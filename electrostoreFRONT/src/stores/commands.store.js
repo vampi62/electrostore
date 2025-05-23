@@ -31,10 +31,10 @@ export const useCommandsStore = defineStore("commands",{
 	actions: {
 		async getCommandByList(idResearch = [], expand = []) {
 			this.commandsLoading = true;
-			const idResearchString = idResearch.join(",");
-			const expandString = expand.join(",");
+			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newCommandList = await fetchWrapper.get({
-				url: `${baseUrl}/command?&idResearch=${idResearchString}&expand=${expandString}`,
+				url: `${baseUrl}/command?${idResearchString}&${expandString}`,
 				useToken: "access",
 			});
 			for (const command of newCommandList["data"]) {
@@ -66,9 +66,9 @@ export const useCommandsStore = defineStore("commands",{
 		},
 		async getCommandByInterval(limit = 100, offset = 0, expand = []) {
 			this.commandsLoading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newCommandList = await fetchWrapper.get({
-				url: `${baseUrl}/command?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/command?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const command of newCommandList["data"]) {
@@ -103,9 +103,9 @@ export const useCommandsStore = defineStore("commands",{
 				this.commands[id] = {};
 			}
 			this.commands[id].loading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.commands[id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${id}?expand=${expandString}`,
+				url: `${baseUrl}/command/${id}?${expandString}`,
 				useToken: "access",
 			});
 			this.commentairesTotalCount[id] = this.commands[id].commands_commentaires_count;
@@ -163,9 +163,9 @@ export const useCommandsStore = defineStore("commands",{
 				this.commentaires[idCommand] = {};
 			}
 			this.commentairesLoading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newCommentaireList = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/commentaire?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/command/${idCommand}/commentaire?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const commentaire of newCommentaireList["data"]) {
@@ -186,9 +186,9 @@ export const useCommandsStore = defineStore("commands",{
 				this.commentaires[idCommand][id] = {};
 			}
 			this.commentaires[idCommand][id].loading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.commentaires[idCommand][id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/commentaire/${id}?expand=${expandString}`,
+				url: `${baseUrl}/command/${idCommand}/commentaire/${id}?${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("user") > -1) {
@@ -230,9 +230,9 @@ export const useCommandsStore = defineStore("commands",{
 			if (!this.documents[idCommand]) {
 				this.documents[idCommand] = {};
 			}
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newDocumentList = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/document?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/command/${idCommand}/document?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const document of newDocumentList["data"]) {
@@ -249,9 +249,9 @@ export const useCommandsStore = defineStore("commands",{
 				this.documents[idCommand][id] = {};
 			}
 			this.documents[idCommand][id].loading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.documents[idCommand][id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/document/${id}?expand=${expandString}`,
+				url: `${baseUrl}/command/${idCommand}/document/${id}?${expandString}`,
 				useToken: "access",
 			});
 		},
@@ -309,10 +309,10 @@ export const useCommandsStore = defineStore("commands",{
 				this.items[idCommand] = {};
 			}
 			this.itemsLoading = true;
-			const idResearchString = idResearch.join(",");
-			const expandString = expand.join(",");
+			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newItemList = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/item?&idResearch=${idResearchString}&expand=${expandString}`,
+				url: `${baseUrl}/command/${idCommand}/item?${idResearchString}&${expandString}`,
 				useToken: "access",
 			});
 			for (const item of newItemList["data"]) {
@@ -330,9 +330,9 @@ export const useCommandsStore = defineStore("commands",{
 				this.items[idCommand] = {};
 			}
 			this.itemsLoading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newItemList = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/item?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/command/${idCommand}/item?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const item of newItemList["data"]) {
@@ -353,9 +353,9 @@ export const useCommandsStore = defineStore("commands",{
 				this.items[idCommand][id] = {};
 			}
 			this.items[idCommand][id].loading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.items[idCommand][id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/item/${id}?expand=${expandString}`,
+				url: `${baseUrl}/command/${idCommand}/item/${id}?${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("item") > -1) {

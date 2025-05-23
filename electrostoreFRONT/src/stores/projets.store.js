@@ -31,9 +31,9 @@ export const useProjetsStore = defineStore("projets",{
 	actions: {
 		async getProjetByInterval(limit = 100, offset = 0, expand = []) {
 			this.projetsLoading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newProjetList = await fetchWrapper.get({
-				url: `${baseUrl}/projet?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/projet?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const projet of newProjetList["data"]) {
@@ -68,9 +68,9 @@ export const useProjetsStore = defineStore("projets",{
 				this.projets[id] = {};
 			}
 			this.projets[id].loading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.projets[id] = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${id}?expand=${expandString}`,
+				url: `${baseUrl}/projet/${id}?${expandString}`,
 				useToken: "access",
 			});
 			this.commentairesTotalCount[id] = this.projets[id].projets_commentaires_count;
@@ -128,9 +128,9 @@ export const useProjetsStore = defineStore("projets",{
 				this.commentaires[idProjet] = {};
 			}
 			this.commentairesLoading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newCommentaireList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/commentaire?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/projet/${idProjet}/commentaire?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const commentaire of newCommentaireList["data"]) {
@@ -148,9 +148,9 @@ export const useProjetsStore = defineStore("projets",{
 				this.commentaires[idProjet] = {};
 			}
 			this.commentaires[idProjet][id].loading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.commentaires[idProjet][id] = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/commentaire/${id}?expand=${expandString}`,
+				url: `${baseUrl}/projet/${idProjet}/commentaire/${id}?${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("user") > -1) {
@@ -194,10 +194,10 @@ export const useProjetsStore = defineStore("projets",{
 			}
 			// query
 			this.documentsLoading = true;
-			const idResearchString = idResearch.join(",");
-			const expandString = expand.join(",");
+			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newDocumentList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/document?&idResearch=${idResearchString}&expand=${expandString}`,
+				url: `${baseUrl}/projet/${idProjet}/document?${idResearchString}&${expandString}`,
 				useToken: "access",
 			});
 			for (const document of newDocumentList["data"]) {
@@ -213,9 +213,9 @@ export const useProjetsStore = defineStore("projets",{
 			}
 			// query
 			this.documentsLoading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newDocumentList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/document?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/projet/${idProjet}/document?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const document of newDocumentList["data"]) {
@@ -286,10 +286,10 @@ export const useProjetsStore = defineStore("projets",{
 			}
 			// query
 			this.itemsLoading = true;
-			const idResearchString = idResearch.join(",");
-			const expandString = expand.join(",");
+			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newItemList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/item?&idResearch=${idResearchString}&expand=${expandString}`,
+				url: `${baseUrl}/projet/${idProjet}/item?${idResearchString}&${expandString}`,
 				useToken: "access",
 			});
 			for (const item of newItemList["data"]) {
@@ -308,9 +308,9 @@ export const useProjetsStore = defineStore("projets",{
 			}
 			// query
 			this.itemsLoading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			let newItemList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/item?limit=${limit}&offset=${offset}&expand=${expandString}`,
+				url: `${baseUrl}/projet/${idProjet}/item?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
 			for (const item of newItemList["data"]) {
@@ -331,9 +331,9 @@ export const useProjetsStore = defineStore("projets",{
 				this.items[idProjet][id] = {};
 			}
 			this.items[idProjet][id].loading = true;
-			const expandString = expand.join(",");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.items[idProjet][id] = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/item/${id}&expand=${expandString}`,
+				url: `${baseUrl}/projet/${idProjet}/item/${id}&${expandString}`,
 				useToken: "access",
 			});
 			if (expand.indexOf("item") > -1) {

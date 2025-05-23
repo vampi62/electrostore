@@ -32,7 +32,7 @@ async function fetchAllData() {
 	if (itemsNotFound.length > 0) {
 		await itemsStore.getItemByList(itemsNotFound);
 	}
-	filter.value[5].options = Object.values(itemsStore.items).map((item) => [item.id_item, item.nom_item]);
+	filter.value[5].options = Object.values(itemsStore.items).map((item) => [item.id_item, item.reference_name_item]);
 }
 onMounted(() => {
 	fetchAllData();
@@ -53,36 +53,12 @@ const filter = ref([
 	{ key: "nom_projet", value: "", type: "text", label: "projet.VprojetFilterNom", compareMethod: "contain" },
 	{ key: "url_projet", value: "", type: "text", label: "projet.VprojetFilterUrl", compareMethod: "contain" },
 	{ key: "date_fin_projet", value: "", type: "date", label: "projet.VprojetFilterDateEnd", compareMethod: ">=" },
-	{ key: "id_item", subPath: "projets_items", value: "", type: "select", options: Object.values(itemsStore.items).map((item) => [item.id_item, item.nom_item]), label: "projet.VprojetFilterItem", compareMethod: "=" },
+	{ key: "id_item", subPath: "projets_items", value: "", type: "select", options: Object.values(itemsStore.items).map((item) => [item.id_item, item.reference_name_item]), label: "projet.VprojetFilterItem", compareMethod: "=" },
 ]);
-const filteredProjets = computed(() => {
-	return Object.values(projetsStore.projets).filter((element) => {
-		return filter.value.every((f) => {
-			if (f.value) {
-				if (f.subPath) {
-					if (f.compareMethod === "=") {
-						return element[f.subPath].some((subElement) => subElement[f.key] === f.value);
-					} else if (f.compareMethod === ">=") {
-						return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) >= f.value;
-					} else if (f.compareMethod === "<=") {
-						return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) <= f.value;
-					}
-				} else {
-					if (f.compareMethod === "=") {
-						return element[f.key] === f.value;
-					} else if (f.compareMethod === ">=") {
-						return element[f.key] >= f.value;
-					} else if (f.compareMethod === "<=") {
-						return element[f.key] <= f.value;
-					} else if (f.compareMethod === "contain") {
-						return element[f.key].includes(f.value);
-					}
-				}
-			}
-			return true;
-		});
-	});
-});
+const filteredProjets = ref([]);
+const updateFilteredProjets = (newValue) => {
+	filteredProjets.value = newValue;
+};
 const sortedProjets = computed(() => {
 	if (sort.value.key) {
 		return Object.values(filteredProjets.value).sort((a, b) => {
@@ -108,31 +84,7 @@ const sortedProjets = computed(() => {
 				{{ t('projet.VProjetsAdd') }}
 			</RouterLink>
 		</div>
-		<div>
-			<div class="flex flex-wrap">
-				<template v-for="f in filter" :key="f">
-					<label class="text-sm text-gray-700 ml-2">{{ $t(f.label) }}</label>
-					<template v-if="f.type === 'select'">
-						<select v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2">
-							<option value=""></option>
-							<template v-if="f.options">
-								<option v-for="option in f.options" :key="option[0]" :value="option[0]">{{ option[1] }}
-								</option>
-							</template>
-						</select>
-					</template>
-					<template v-else-if="f.type === 'date'">
-						<input type="date" v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2" />
-					</template>
-					<template v-else-if="f.type === 'number'">
-						<input type="number" v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2" />
-					</template>
-					<template v-else-if="f.type === 'text'">
-						<input type="text" v-model="f.value" class="border border-gray-300 rounded px-2 py-1 ml-2" />
-					</template>
-				</template>
-			</div>
-		</div>
+		<FilterContainer :filters="filter" :store-data="projetsStore.projets" @output-filter="updateFilteredProjets" />
 	</div>
 	<table class="min-w-full border-collapse border border-gray-300">
 		<thead class="bg-gray-100">
@@ -259,7 +211,7 @@ const sortedProjets = computed(() => {
 						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
 							<ul>
 								<li v-for="item in projetsStore.items[projet.id_projet]" :key="item.id_item">
-									{{ item.qte_projet_item }} - {{ itemsStore.items[item.id_item]?.nom_item }}
+									{{ item.qte_projet_item }} - {{ itemsStore.items[item.id_item]?.reference_name_item }}
 								</li>
 							</ul>
 						</td>
