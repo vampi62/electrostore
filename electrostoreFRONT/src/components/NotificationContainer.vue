@@ -11,7 +11,10 @@ import Notification from "./Notification.vue";
 import { inject } from "vue";
 
 export default {
-	components: { Notification },
+	name: "NotificationContainer",
+	components: {
+		Notification,
+	},
 	setup() {
 		const { notifications, removeNotification } = inject("useNotification");
 		return { notifications, removeNotification };

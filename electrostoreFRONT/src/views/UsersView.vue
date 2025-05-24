@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, computed, inject } from "vue";
+import { onMounted, ref, inject } from "vue";
 import { router } from "@/helpers";
 
 const { addNotification } = inject("useNotification");
@@ -11,7 +11,7 @@ import { useAuthStore, useUsersStore } from "@/stores";
 const usersStore = useUsersStore();
 const authStore = useAuthStore();
 
-if (authStore.user?.role_user !== "admin") {
+if (authStore.user?.role_user !== 2 && authStore.user?.role_user !== 1) {
 	addNotification({ message: "vous n'avez pas la permission d'acceder a cette page", type: "error", i18n: false });
 	router.push("/");
 }
@@ -28,37 +28,26 @@ onMounted(() => {
 	fetchAllData();
 });
 
-const sort = ref({ key: "", order: "asc" });
-function changeSort(key) {
-	if (sort.value.key === key) {
-		sort.value.order = sort.value.order === "asc" ? "desc" : "asc";
-	} else {
-		sort.value.key = key;
-		sort.value.order = "asc";
-	}
-}
 const filter = ref([
 	{ key: "nom_user", value: "", type: "text", label: "user.VUsersFilterName", compareMethod: "contain" },
 	{ key: "prenom_user", value: "", type: "text", label: "user.VUsersFilterFirstName", compareMethod: "contain" },
 	{ key: "email_user", value: "", type: "text", label: "user.VUsersFilterEmail", compareMethod: "contain" },
-	{ key: "role_user", value: "", type: "select", options: [["admin", t("user.VUsersFilterRole1")], ["user", t("user.VUsersFilterRole2")]], label: "user.VUsersFilterRole", compareMethod: "=" },
+	{ key: "role_user", value: "", type: "select", typeData: "int", options: [[0, t("user.VUsersFilterRole0")], [1, t("user.VUsersFilterRole1")], [2, t("user.VUsersFilterRole2")]], label: "user.VUsersFilterRole", compareMethod: "=" },
 ]);
+const tableauLabel = ref([
+	{ label: "user.VUsersName", sortable: true, key: "nom_user", type: "text" },
+	{ label: "user.VUsersFirstName", sortable: true, key: "prenom_user", type: "text" },
+	{ label: "user.VUsersEmail", sortable: true, key: "email_user", type: "text" },
+	{ label: "user.VUsersRole", sortable: true, key: "role_user", type: "enum", options: [t("user.VUsersFilterRole0"), t("user.VUsersFilterRole1"), t("user.VUsersFilterRole2")] },
+]);
+const tableauMeta = ref({
+	key: "id_user",
+	path: "/users/",
+});
 const filteredUsers = ref([]);
 const updateFilteredUsers = (newValue) => {
 	filteredUsers.value = newValue;
 };
-const sortedUsers = computed(() => {
-	if (sort.value.key) {
-		return Object.values(filteredUsers.value).sort((a, b) => {
-			if (sort.value.order === "asc") {
-				return a[sort.value.key] > b[sort.value.key] ? 1 : -1;
-			} else {
-				return a[sort.value.key] < b[sort.value.key] ? 1 : -1;
-			}
-		});
-	}
-	return filteredUsers.value;
-});
 </script>
 
 <template>
@@ -74,102 +63,5 @@ const sortedUsers = computed(() => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="usersStore.users" @output-filter="updateFilteredUsers" />
 	</div>
-	<table class="min-w-full border-collapse border border-gray-300">
-		<thead class="bg-gray-100">
-			<tr>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('nom_user')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('user.VUsersName') }}</span>
-						<template v-if="sort.key === 'nom_user'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('prenom_user')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('user.VUsersFirstName') }}</span>
-						<template v-if="sort.key === 'prenom_user'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('email_user')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('user.VUsersEmail') }}</span>
-						<template v-if="sort.key === 'email_user'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('role_user')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('user.VUsersRole') }}</span>
-						<template v-if="sort.key === 'role_user'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-			</tr>
-		</thead>
-		<tbody>
-			<template v-if="!usersStore.usersLoading">
-				<RouterLink v-for="user in sortedUsers" :key="user.id_user" :to="'/users/' + user.id_user" custom
-					v-slot="{ navigate }">
-					<tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ user.nom_user }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ user.prenom_user }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ user.email_user }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ user.role_user }}
-						</td>
-					</tr>
-				</RouterLink>
-			</template>
-			<template v-else>
-				<div>{{ $t('user.VUsersLoading') }}</div>
-			</template>
-		</tbody>
-	</table>
+	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredUsers]"/>
 </template>

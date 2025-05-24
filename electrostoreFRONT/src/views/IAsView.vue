@@ -1,7 +1,5 @@
 <script setup>
-import { onMounted, ref, computed, inject } from "vue";
-
-const { addNotification } = inject("useNotification");
+import { onMounted, ref } from "vue";
 
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
@@ -22,36 +20,25 @@ onMounted(() => {
 	fetchAllData();
 });
 
-const sort = ref({ key: "", order: "asc" });
-function changeSort(key) {
-	if (sort.value.key === key) {
-		sort.value.order = sort.value.order === "asc" ? "desc" : "asc";
-	} else {
-		sort.value.key = key;
-		sort.value.order = "asc";
-	}
-}
 const filter = ref([
-	{ key: "trained_ia", value: "", type: "select", options: [[false, t("ia.VIasFilterTrained1")], [true, t("ia.VIasFilterTrained2")]], label: "ia.VIasFilterTrained", compareMethod: "=" },
-	{ key: "date_ia", value: "", type: "date", label: "ia.VIasFilterDate", compareMethod: ">=" },
+	{ key: "trained_ia", value: undefined, type: "select", dataType: "bool", options: [["false", t("ia.VIasFilterTrained1")], ["true", t("ia.VIasFilterTrained2")]], label: "ia.VIasFilterTrained", compareMethod: "=" },
+	{ key: "updated_at", value: "", type: "date", label: "ia.VIasFilterDate", compareMethod: ">=" },
 	{ key: "nom_ia", value: "", type: "text", label: "ia.VIasFilterNom", compareMethod: "contain" },
 ]);
+const tableauLabel = ref([
+	{ label: "ia.VIasName", sortable: true, key: "nom_ia", type: "text" },
+	{ label: "ia.VIasDescription", sortable: false, key: "description_ia", type: "text" },
+	{ label: "ia.VIasDate", sortable: true, key: "updated_at", type: "date" },
+	{ label: "ia.VIasTrained", sortable: true, key: "trained_ia", type: "bool", condition: "rowData.trained_ia" },
+]);
+const tableauMeta = ref({
+	key: "id_ia",
+	path: "/ia/",
+});
 const filteredIas = ref([]);
 const updateFilteredIas = (newValue) => {
 	filteredIas.value = newValue;
 };
-const sortedIas = computed(() => {
-	if (sort.value.key) {
-		return Object.values(filteredIas.value).sort((a, b) => {
-			if (sort.value.order === "asc") {
-				return a[sort.value.key] > b[sort.value.key] ? 1 : -1;
-			} else {
-				return a[sort.value.key] < b[sort.value.key] ? 1 : -1;
-			}
-		});
-	}
-	return filteredIas.value;
-});
 </script>
 
 <template>
@@ -67,96 +54,5 @@ const sortedIas = computed(() => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="IAStore.ias" @output-filter="updateFilteredIas" />
 	</div>
-	<table class="min-w-full border-collapse border border-gray-300">
-		<thead class="bg-gray-100">
-			<tr>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('nom_ia')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('ia.VIasName') }}</span>
-						<template v-if="sort.key === 'nom_ia'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th
-					class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('ia.VIasDescription') }}</span>
-					</div>
-				</th>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('date_ia')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('ia.VIasDate') }}</span>
-						<template v-if="sort.key === 'date_ia'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('trained_ia')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('ia.VIasTrained') }}</span>
-						<template v-if="sort.key === 'trained_ia'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-			</tr>
-		</thead>
-		<tbody>
-			<template v-if="!IAStore.loading">
-				<RouterLink v-for="ia in sortedIas" :key="ia.id_ia" :to="'/ia/' + ia.id_ia" custom
-					v-slot="{ navigate }">
-					<tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ ia.nom_ia }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ ia.description_ia }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ ia.date_ia }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">
-							<template v-if="ia.trained_ia">
-								<font-awesome-icon icon="fa-solid fa-check" class="text-green-500" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-times" class="text-red-500" />
-							</template>
-						</td>
-					</tr>
-				</RouterLink>
-			</template>
-			<template v-else>
-				<div>{{ $t('ia.VIasLoading') }}</div>
-			</template>
-		</tbody>
-	</table>
+	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredIas]"/>
 </template>

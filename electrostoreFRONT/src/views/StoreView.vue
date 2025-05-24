@@ -861,7 +861,7 @@ const filteredItems = computed(() => {
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4">{{ $t('store.VStoreTitle') }}</h2>
 		<div class="flex space-x-4">
-			<button type="button" @click="storeSave" v-if="storeId == 'new' && authStore.user?.role_user == 'admin'"
+			<button type="button" @click="storeSave" v-if="storeId == 'new' && authStore.user?.role_user == 2"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="storesStore.storeEdition.loading"
 					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
@@ -869,7 +869,7 @@ const filteredItems = computed(() => {
 				{{ $t('store.VStoreAdd') }}
 			</button>
 			<button type="button" @click="storeUpdate"
-				v-else-if="storeId != 'new' && authStore.user?.role_user == 'admin'"
+				v-else-if="storeId != 'new' && authStore.user?.role_user == 2"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="storesStore.storeEdition.loading"
 					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
@@ -877,7 +877,7 @@ const filteredItems = computed(() => {
 				{{ $t('store.VStoreUpdate') }}
 			</button>
 			<button type="button" @click="storeDeleteModalShow = true"
-				v-if="storeId != 'new' && authStore.user?.role_user == 'admin'"
+				v-if="storeId != 'new' && authStore.user?.role_user == 2"
 				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
 				{{ $t('store.VStoreDelete') }}
 			</button>

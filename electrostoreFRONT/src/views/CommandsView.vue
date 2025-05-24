@@ -1,7 +1,5 @@
 <script setup>
-import { onMounted, ref, computed, inject } from "vue";
-
-const { addNotification } = inject("useNotification");
+import { onMounted, ref } from "vue";
 
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
@@ -38,15 +36,6 @@ onMounted(() => {
 	fetchAllData();
 });
 
-const sort = ref({ key: "", order: "asc" });
-function changeSort(key) {
-	if (sort.value.key === key) {
-		sort.value.order = sort.value.order === "asc" ? "desc" : "asc";
-	} else {
-		sort.value.key = key;
-		sort.value.order = "asc";
-	}
-}
 const filter = ref([
 	{ key: "status_command", value: "", type: "select", options: [["En attente", t("command.VCommandsFilterStatus1")], ["En cours", t("command.VCommandsFilterStatus2")], ["Terminée", t("command.VCommandsFilterStatus3")], ["Annulée", t("command.VCommandsFilterStatus4")]], label: "command.VCommandsFilterStatus", compareMethod: "=" },
 	{ key: "date_command", value: "", type: "date", label: "command.VCommandsFilterDate", compareMethod: ">=" },
@@ -54,24 +43,24 @@ const filter = ref([
 	{ key: "prix_command", value: "", type: "number", label: "command.VCommandsFilterPriceMin", compareMethod: ">=" },
 	{ key: "prix_command", value: "", type: "number", label: "command.VCommandsFilterPriceMax", compareMethod: "<=" },
 	{ key: "date_livraison_command", value: "", type: "date", label: "command.VCommandsFilterDateL", compareMethod: ">=" },
-	{ key: "id_item", subPath: "commands_items", value: "", type: "select", options: Object.values(itemsStore.items).map((item) => [item.id_item, item.reference_name_item]), label: "command.VCommandsFilterItem", compareMethod: "=" },
+	{ key: "id_item", subPath: "commands_items", value: "", type: "select", typeData: "int", options: Object.values(itemsStore.items).map((item) => [item.id_item, item.reference_name_item]), label: "command.VCommandsFilterItem", compareMethod: "=" },
 ]);
+const tableauLabel = ref([
+	{ label: "command.VCommandsStatus", sortable: true, key: "status_command", type: "text" },
+	{ label: "command.VCommandsDate", sortable: true, key: "date_command", type: "date" },
+	{ label: "command.VCommandsURL", sortable: true, key: "url_command", type: "text" },
+	{ label: "command.VCommandsPrix", sortable: true, key: "prix_command", type: "text" },
+	{ label: "command.VCommandsItemList", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, keyStoreLink: "id_item", ressourcePrint: [{ type: "link", key: "qte_command_item" }, { type: "text", key: " - " }, { type: "ressource", key: "reference_name_item" }] } },
+	{ label: "command.VCommandsDateL", sortable: true, key: "date_livraison_command", type: "date" },
+]);
+const tableauMeta = ref({
+	key: "id_command",
+	path: "/commands/",
+});
 const filteredCommands = ref([]);
 const updateFilteredCommands = (newValue) => {
 	filteredCommands.value = newValue;
 };
-const sortedCommands = computed(() => {
-	if (sort.value.key) {
-		return Object.values(filteredCommands.value).sort((a, b) => {
-			if (sort.value.order === "asc") {
-				return a[sort.value.key] > b[sort.value.key] ? 1 : -1;
-			} else {
-				return a[sort.value.key] < b[sort.value.key] ? 1 : -1;
-			}
-		});
-	}
-	return filteredCommands.value;
-});
 </script>
 
 <template>
@@ -87,135 +76,5 @@ const sortedCommands = computed(() => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="commandsStore.commands" @output-filter="updateFilteredCommands" />
 	</div>
-	<table class="min-w-full border-collapse border border-gray-300">
-		<thead class="bg-gray-100">
-			<tr>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('status_command')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('command.VCommandsStatus') }}</span>
-						<template v-if="sort.key === 'status_command'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('date_command')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('command.VCommandsDate') }}</span>
-						<template v-if="sort.key === 'date_command'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('url_command')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('command.VCommandsURL') }}</span>
-						<template v-if="sort.key === 'url_command'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('prix_command')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('command.VCommandsPrix') }}</span>
-						<template v-if="sort.key === 'prix_command'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th
-					class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('command.VCommandsItemList') }}</span>
-					</div>
-				</th>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('date_livraison_command')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('command.VCommandsDateL') }}</span>
-						<template v-if="sort.key === 'date_livraison_command'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-			</tr>
-		</thead>
-		<tbody>
-			<template v-if="!commandsStore.commandsLoading">
-				<RouterLink v-for="command in sortedCommands" :key="command.id_command"
-					:to="'/commands/' + command.id_command" custom v-slot="{ navigate }">
-					<tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ command.status_command }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ command.date_command }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ command.url_command }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ command.prix_command }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							<ul>
-								<li v-for="item in commandsStore.items[command.id_command]" :key="item.id_item">
-									{{ item.qte_command_item }} - {{ itemsStore.items[item.id_item]?.reference_name_item }}
-								</li>
-							</ul>
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ command.date_livraison_command }}
-						</td>
-					</tr>
-				</RouterLink>
-			</template>
-			<template v-else>
-				<div>{{ $t('command.VCommandsLoading') }}</div>
-			</template>
-		</tbody>
-	</table>
+	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredCommands,commandsStore.items,itemsStore.items]"/>
 </template>

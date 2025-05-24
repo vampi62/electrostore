@@ -138,21 +138,21 @@ const schemaIa = Yup.object().shape({
 				</span>
 				{{ $t('ia.VIaRefresh') }}
 			</button>
-			<button type="button" @click="iaTrain" v-if="iaId != 'new' && authStore.user?.role_user == 'admin'"
+			<button type="button" @click="iaTrain" v-if="iaId != 'new' && authStore.user?.role_user == 2"
 				class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center">
 				<span v-show="iasStore.status.start?.loading"
 					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
 				</span>
 				{{ $t('ia.VIaTrain') }}
 			</button>
-			<button type="button" @click="iaSave" v-if="iaId == 'new' && authStore.user?.role_user == 'admin'"
+			<button type="button" @click="iaSave" v-if="iaId == 'new' && authStore.user?.role_user == 2"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="iasStore.iaEdition.loading"
 					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
 				</span>
 				{{ $t('ia.VIaAdd') }}
 			</button>
-			<button type="button" @click="iaUpdate" v-else-if="iaId != 'new' && authStore.user?.role_user == 'admin'"
+			<button type="button" @click="iaUpdate" v-else-if="iaId != 'new' && authStore.user?.role_user ==2"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="iasStore.iaEdition.loading"
 					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
@@ -160,7 +160,7 @@ const schemaIa = Yup.object().shape({
 				{{ $t('ia.VIaUpdate') }}
 			</button>
 			<button type="button" @click="iaDeleteModalShow = true"
-				v-if="iaId != 'new' && authStore.user?.role_user == 'admin'"
+				v-if="iaId != 'new' && authStore.user?.role_user == 2"
 				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
 				{{ $t('ia.VIaDelete') }}
 			</button>

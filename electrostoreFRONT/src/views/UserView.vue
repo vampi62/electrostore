@@ -21,7 +21,7 @@ const commandsStore = useCommandsStore();
 const projetsStore = useProjetsStore();
 const authStore = useAuthStore();
 
-if (authStore.user?.role_user !== "admin" && authStore.user?.id_user !== Number(userId)) {
+if (authStore.user?.role_user !== 2 && authStore.user?.role_user !== 1 && authStore.user?.id_user !== Number(userId)) {
 	addNotification({ message: "vous n'avez pas la permission d'acceder a cette page", type: "error", i18n: false });
 	if (window.history.length > 1) {
 		router.back();
@@ -265,7 +265,7 @@ watch(isChecked, (newValue) => {
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4">{{ $t('user.VUserTitle') }}</h2>
 		<div class="flex space-x-4">
-			<button type="button" @click="userSave" v-if="userId == 'new' && authStore.user?.role_user == 'admin'"
+			<button type="button" @click="userSave" v-if="userId == 'new' && authStore.user?.role_user == 1 && authStore.user?.role_user == 2"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="usersStore.userEdition.loading"
 					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
@@ -273,7 +273,7 @@ watch(isChecked, (newValue) => {
 				{{ $t('user.VUserAdd') }}
 			</button>
 			<button type="button" @click="userUpdate"
-				v-else-if="userId != 'new' && authStore.user?.role_user == 'admin'"
+				v-else-if="userId != 'new' && authStore.user?.role_user == 1 && authStore.user?.role_user == 2"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="usersStore.userEdition.loading"
 					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
@@ -281,7 +281,7 @@ watch(isChecked, (newValue) => {
 				{{ $t('user.VUserUpdate') }}
 			</button>
 			<button type="button" @click="userDeleteModalShow = true"
-				v-if="userId != 'new' && authStore.user?.role_user == 'admin'"
+				v-if="userId != 'new' && authStore.user?.role_user == 1 && authStore.user?.role_user == 2"
 				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
 				{{ $t('user.VUserDelete') }}
 			</button>
