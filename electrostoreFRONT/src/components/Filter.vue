@@ -30,6 +30,7 @@
 
 <script>
 export default {
+	name: "Filter",
 	props: {
 		label: {
 			type: String,

@@ -16,6 +16,7 @@
 <script>
 import Filter from "./Filter.vue";
 export default {
+	name: "FilterContainer",
 	props: {
 		filters: {
 			type: Array,
@@ -33,7 +34,7 @@ export default {
 		filteredData() {
 			return Object.values(this.storeData).filter((element) => {
 				return this.filters.every((f) => {
-					if (f.value) {
+					if (f.value !== "" && f.value !== null && f.value !== undefined) {
 						if (f.subPath) {
 							if (f.compareMethod === "=") {
 								return element[f.subPath].some((subElement) => subElement[f.key] === f.value);
@@ -43,6 +44,15 @@ export default {
 								return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) <= f.value;
 							}
 						} else if (f.compareMethod === "=") {
+							if (f.dataType === "bool") {
+								return element[f.key] === (f.value === "true");
+							} else if (f.dataType === "int") {
+								return parseInt(element[f.key]) === parseInt(f.value);
+							} else if (f.dataType === "float") {
+								return parseFloat(element[f.key]) === parseFloat(f.value);
+							} else if (f.dataType === "string") {
+								return element[f.key].toLowerCase() === f.value.toLowerCase();
+							}
 							return element[f.key] === f.value;
 						} else if (f.compareMethod === ">=") {
 							return element[f.key] >= f.value;
@@ -64,10 +74,22 @@ export default {
 				if (index === key) {
 					if (filter.type === "number") {
 						value = parseFloat(value);
+						if (isNaN(value)) {
+							value = "";
+						}
 					} else if (filter.type === "text") {
 						value = value.toLowerCase();
 					} else if (filter.type === "select") {
-						value = parseInt(value);
+						if (filter.typeData === "int") {
+							value = parseInt(value);
+							if (isNaN(value)) {
+								value = "";
+							}
+						} else if (filter.typeData === "float") {
+							value = parseFloat(value);
+						} else if (filter.typeData === "string") {
+							value = value.toLowerCase();
+						}
 					}
 					filter.value = value;
 				}

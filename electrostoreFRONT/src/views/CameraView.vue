@@ -157,21 +157,21 @@ watch(isChecked, (newValue) => {
 				</span>
 				{{ $t('camera.VCameraRefresh') }}
 			</button>
-			<button type="button" @click="cameraSave" v-if="cameraId == 'new' && authStore.user?.role_user == 'admin'"
+			<button type="button" @click="cameraSave" v-if="cameraId == 'new' && authStore.user?.role_user == 2"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="camerasStore.cameraEdition.loading"
 					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
 				</span>
 				{{ $t('camera.VCameraAdd') }}
 			</button>
-			<button type="button" @click="cameraUpdate" v-else-if="cameraId != 'new' && authStore.user?.role_user == 'admin'"
+			<button type="button" @click="cameraUpdate" v-else-if="cameraId != 'new' && authStore.user?.role_user == 2"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				<span v-show="camerasStore.cameraEdition.loading"
 					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
 				</span>
 				{{ $t('camera.VCameraUpdate') }}
 			</button>
-			<button type="button" @click="cameraDeleteModalShow = true" v-if="cameraId != 'new' && authStore.user?.role_user == 'admin'"
+			<button type="button" @click="cameraDeleteModalShow = true" v-if="cameraId != 'new' && authStore.user?.role_user == 2"
 				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
 				{{ $t('camera.VCameraDelete') }}
 			</button>

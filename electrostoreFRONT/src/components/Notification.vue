@@ -24,6 +24,7 @@
 
 <script>
 export default {
+	name: "Notification",
 	props: {
 		message: {
 			type: String,

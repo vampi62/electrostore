@@ -1,7 +1,5 @@
 <script setup>
-import { onMounted, ref, computed, inject } from "vue";
-
-const { addNotification } = inject("useNotification");
+import { onMounted, ref } from "vue";
 
 import { useAuthStore, useStoresStore, useTagsStore } from "@/stores";
 const storesStore = useStoresStore();
@@ -36,38 +34,28 @@ onMounted(() => {
 	fetchAllData();
 });
 
-const sort = ref({ key: "", order: "asc" });
-function changeSort(key) {
-	if (sort.value.key === key) {
-		sort.value.order = sort.value.order === "asc" ? "desc" : "asc";
-	} else {
-		sort.value.key = key;
-		sort.value.order = "asc";
-	}
-}
 const filter = ref([
 	{ key: "nom_store", value: "", type: "text", label: "store.VStoresFilterName", compareMethod: "contain" },
 	{ key: "mqtt_name_store", value: "", type: "text", label: "store.VStoresFilterMqttName", compareMethod: "contain" },
 	{ key: "xlength_store", value: "", type: "number", label: "store.VStoresFilterXLength", compareMethod: "<=" },
 	{ key: "ylength_store", value: "", type: "number", label: "store.VStoresFilterYLength", compareMethod: "<=" },
-	{ key: "id_tag", subPath: "stores_tags", value: "", type: "select", options: Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]), label: "store.VStoresFilterTag", compareMethod: "=" },
+	{ key: "id_tag", subPath: "stores_tags", value: "", type: "select", typeData: "int", options: Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]), label: "store.VStoresFilterTag", compareMethod: "=" },
 ]);
+const tableauLabel = ref([
+	{ label: "store.VStoresName", sortable: true, key: "nom_store", type: "text" },
+	{ label: "store.VStoresXLength", sortable: true, key: "xlength_store", type: "text" },
+	{ label: "store.VStoresYLength", sortable: true, key: "ylength_store", type: "text" },
+	{ label: "store.VStoresMqttName", sortable: true, key: "mqtt_name_store", type: "text" },
+	{ label: "store.VStoresTagsList", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, keyStoreLink: "id_tag", ressourcePrint: [{ type: "ressource", key: "nom_tag" }] } },
+]);
+const tableauMeta = ref({
+	key: "id_store",
+	path: "/stores/",
+});
 const filteredStores = ref([]);
 const updateFilteredStores = (newValue) => {
 	filteredStores.value = newValue;
 };
-const sortedStores = computed(() => {
-	if (sort.value.key) {
-		return Object.values(filteredStores.value).sort((a, b) => {
-			if (sort.value.order === "asc") {
-				return a[sort.value.key] > b[sort.value.key] ? 1 : -1;
-			} else {
-				return a[sort.value.key] < b[sort.value.key] ? 1 : -1;
-			}
-		});
-	}
-	return filteredStores.value;
-});
 </script>
 
 <template>
@@ -83,115 +71,5 @@ const sortedStores = computed(() => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="storesStore.stores" @output-filter="updateFilteredStores" />
 	</div>
-	<table class="min-w-full border-collapse border border-gray-300">
-		<thead class="bg-gray-100">
-			<tr>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('nom_store')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('store.VStoresName') }}</span>
-						<template v-if="sort.key === 'nom_store'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('xlength_store')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('store.VStoresXLength') }}</span>
-						<template v-if="sort.key === 'xlength_store'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('ylength_store')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('store.VStoresYLength') }}</span>
-						<template v-if="sort.key === 'ylength_store'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('mqtt_name_store')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('store.VStoresMqttName') }}</span>
-						<template v-if="sort.key === 'mqtt_name_store'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th
-					class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('store.VStoresTagsList') }}</span>
-					</div>
-				</th>
-			</tr>
-		</thead>
-		<tbody>
-			<template v-if="!storesStore.stores.storesLoading">
-				<RouterLink v-for="store in sortedStores" :key="store.id_store" :to="'/stores/' + store.id_store" custom
-					v-slot="{ navigate }">
-					<tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ store.nom_store }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ store.xlength_store }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ store.ylength_store }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ store.mqtt_name_store }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							<ul>
-								<li v-for="tag in storesStore.storeTags[store.id_store]" :key="tag.id_tag">
-									{{ tagsStore.tags[tag.id_tag]?.nom_tag }}
-								</li>
-							</ul>
-						</td>
-					</tr>
-				</RouterLink>
-			</template>
-			<template v-else>
-				<div>{{ $t('store.VStoresLoading') }}</div>
-			</template>
-		</tbody>
-	</table>
+	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredStores,storesStore.storeTags,tagsStore.tags]"/>
 </template>

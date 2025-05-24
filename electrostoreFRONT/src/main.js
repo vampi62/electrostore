@@ -17,8 +17,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./assets/tailwind.css";
 
-import NotificationContainer from "./components/NotificationContainer.vue";
-import FilterContainer from "./components/FilterContainer.vue";
+import { NotificationContainer, FilterContainer, Tableau } from "./components";
 
 const app = createApp(App);
 
@@ -38,6 +37,7 @@ app.use(router);
 app.use(i18n);
 app.component("NotificationContainer", NotificationContainer);
 app.component("FilterContainer", FilterContainer);
+app.component("Tableau", Tableau);
 app.provide("useNotification", useNotification());
 
 app.mount("#app");

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, computed, inject } from "vue";
+import { onMounted, ref, inject } from "vue";
 
 const { addNotification } = inject("useNotification");
 
@@ -44,16 +44,6 @@ async function fetchAllData() {
 onMounted(() => {
 	fetchAllData();
 });
-
-const sort = ref({ key: "", order: "asc" });
-function changeSort(key) {
-	if (sort.value.key === key) {
-		sort.value.order = sort.value.order === "asc" ? "desc" : "asc";
-	} else {
-		sort.value.key = key;
-		sort.value.order = "asc";
-	}
-}
 
 function getTotalQuantity(itembox) {
 	if (!itembox) {
@@ -119,24 +109,24 @@ const filter = ref([
 	{ key: "seuil_min_item", value: "", type: "number", label: "item.VInventoryFilterSeuilMax", compareMethod: "<=" },
 	{ key: "qte_item_box", subPath: "item_boxs", value: "", type: "number", label: "item.VInventoryFilterQuantityMin", compareMethod: ">=" },
 	{ key: "qte_item_box", subPath: "item_boxs", value: "", type: "number", label: "item.VInventoryFilterQuantityMax", compareMethod: "<=" },
-	{ key: "id_tag", subPath: "item_tags", value: "", type: "select", options: Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]), label: "item.VInventoryFilterTag", compareMethod: "=" },
+	{ key: "id_tag", subPath: "item_tags", value: "", type: "select", typeData: "int", options: Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]), label: "item.VInventoryFilterTag", compareMethod: "=" },
 ]);
+const tableauLabel = ref([
+	{ label: "item.VInventoryName", sortable: true, key: "reference_name_item", type: "text" },
+	{ label: "item.VInventorySeuil", sortable: true, key: "seuil_min_item", type: "text" },
+	{ label: "item.VInventoryDescription", sortable: false, key: "description_item", type: "text" },
+	{ label: "item.VInventoryTags", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, keyStoreLink: "id_tag", ressourcePrint: [{ type: "ressource", key: "nom_tag" }] } },
+	{ label: "item.VInventoryImg", sortable: false, key: "id_img", type: "image", idStoreImg: 3 },
+	{ label: "item.VInventoryQuantity", sortable: true, key: "custom_quantity_item", type: "text" },
+]);
+const tableauMeta = ref({
+	key: "id_item",
+	path: "/inventory/",
+});
 const filteredItems = ref([]);
 const updateFilteredItems = (newValue) => {
 	filteredItems.value = newValue;
 };
-const sortedItems = computed(() => {
-	if (sort.value.key) {
-		return Object.values(filteredItems.value).sort((a, b) => {
-			if (sort.value.order === "asc") {
-				return a[sort.value.key] > b[sort.value.key] ? 1 : -1;
-			} else {
-				return a[sort.value.key] < b[sort.value.key] ? 1 : -1;
-			}
-		});
-	}
-	return filteredItems.value;
-});
 const changeCamera = (camera) => {
 	if (selectedPageFind.value.camera !== null && selectedPageFind.value.camera !== camera) {
 		camerasStore.stopStream(selectedPageFind.value.camera.id_camera);
@@ -203,128 +193,8 @@ const openNewPage = (url) => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
 	</div>
-	<table class="min-w-full border-collapse border border-gray-300">
-		<thead class="bg-gray-100">
-			<tr>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('reference_name_item')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('item.VInventoryName') }}</span>
-						<template v-if="sort.key === 'reference_name_item'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('seuil_min_item')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('item.VInventorySeuil') }}</span>
-						<template v-if="sort.key === 'seuil_min_item'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th
-					class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('item.VInventoryDescription') }}</span>
-					</div>
-				</th>
-				<th
-					class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('item.VInventoryTags') }}</span>
-					</div>
-				</th>
-				<th
-					class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('item.VInventoryImg') }}</span>
-					</div>
-				</th>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('custom_quantity_item')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('item.VInventoryQuantity') }}</span>
-						<template v-if="sort.key === 'custom_quantity_item'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-			</tr>
-		</thead>
-		<tbody>
-			<template v-if="!itemsStore.itemsLoading">
-				<RouterLink v-for="item in sortedItems" :key="item.id_item" :to="'/inventory/' + item.id_item" custom
-					v-slot="{ navigate }">
-					<tr @click="navigate" class="transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ item.reference_name_item }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ item.seuil_min_item }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ item.description_item }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							<ul>
-								<li v-for="tag in itemsStore.itemTags[item.id_item]" :key="tag.id_tag">
-									{{ tagsStore.tags[tag.id_tag]?.nom_tag }}
-								</li>
-							</ul>
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							<div class="flex justify-center items-center">
-								<template v-if="item.id_img">
-									<img v-if="itemsStore.imagesURL[item.id_img]"
-										:src="itemsStore.imagesURL[item.id_img]" alt="Image"
-										class="w-16 h-16 object-cover rounded" />
-									<span v-else class="w-16 h-16 object-cover rounded">
-										{{ $t('item.VInventoryLoading') }}
-									</span>
-								</template>
-								<template v-else>
-									<img src="../assets/nopicture.webp" alt="Image"
-										class="w-16 h-16 object-cover rounded" />
-								</template>
-							</div>
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ item.custom_quantity_item }}
-						</td>
-					</tr>
-				</RouterLink>
-			</template>
-			<template v-else>
-				<div>{{ $t('item.VInventoryLoading') }}</div>
-			</template>
-		</tbody>
-	</table>
+	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredItems,itemsStore.itemTags,tagsStore.tags,itemsStore.imagesURL]"/>
+
 	<div v-if="showPageFind" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center" @click="showPageFind = false">
 		<div class="bg-white p-2 rounded shadow-lg w-2/3" @click.stop>
 			<div class="flex justify-between items-center p-2">

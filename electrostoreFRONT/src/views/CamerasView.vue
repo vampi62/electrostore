@@ -1,7 +1,5 @@
 <script setup>
-import { onMounted, ref, computed, inject } from "vue";
-
-const { addNotification } = inject("useNotification");
+import { onMounted, ref } from "vue";
 
 import { useAuthStore, useCamerasStore } from "@/stores";
 const camerasStore = useCamerasStore();
@@ -19,30 +17,20 @@ onMounted(() => {
 	fetchAllData();
 });
 
-const sort = ref({ key: "", order: "asc" });
-function changeSort(key) {
-	if (sort.value.key === key) {
-		sort.value.order = sort.value.order === "asc" ? "desc" : "asc";
-	} else {
-		sort.value.key = key;
-		sort.value.order = "asc";
-	}
-}
 const filter = ref([
 	{ key: "nom_camera", value: "", type: "text", label: "camera.VCamerasFilterName", compareMethod: "contain" },
 	{ key: "url_camera", value: "", type: "text", label: "camera.VCamerasFilterUrl", compareMethod: "contain" },
 ]);
-const sortedCameras = computed(() => {
-	if (sort.value.key) {
-		return Object.values(filteredCameras.value).sort((a, b) => {
-			if (sort.value.order === "asc") {
-				return a[sort.value.key] > b[sort.value.key] ? 1 : -1;
-			} else {
-				return a[sort.value.key] < b[sort.value.key] ? 1 : -1;
-			}
-		});
-	}
-	return filteredCameras.value;
+const tableauLabel = ref([
+	{ label: "camera.VCamerasName", sortable: true, key: "nom_camera", type: "text" },
+	{ label: "camera.VCamerasUrl", sortable: true, key: "url_camera", type: "text" },
+	{ label: "camera.VCamerasUser", sortable: false, key: "", type: "bool", condition: "rowData?.user_camera == '' && rowData?.mdp_camera == ''" },
+	{ label: "camera.VCamerasNetwork", sortable: false, key: "", type: "bool", condition: "store[1]?.[rowData.id_camera]?.network" },
+	{ label: "camera.VCamerasStatus", sortable: false, key: "", type: "bool", condition: "store[1]?.[rowData.id_camera]?.statusCode == 200" },
+]);
+const tableauMeta = ref({
+	key: "id_camera",
+	path: "/cameras/",
 });
 // recupere les donne filtrer du component FilterContainer.filteredData
 const filteredCameras = ref([]);
@@ -64,104 +52,5 @@ const updateFilteredCameras = (newValue) => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="camerasStore.cameras" @output-filter="updateFilteredCameras" />
 	</div>
-	<table class="min-w-full border-collapse border border-gray-300">
-		<thead class="bg-gray-100">
-			<tr>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('nom_camera')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('camera.VCamerasName') }}</span>
-						<template v-if="sort.key === 'nom_camera'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 cursor-pointer relative"
-					@click="changeSort('url_camera')">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('camera.VCamerasUrl') }}</span>
-						<template v-if="sort.key === 'url_camera'">
-							<template v-if="sort.order === 'asc'">
-								<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
-							</template>
-						</template>
-						<template v-else>
-							<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-						</template>
-					</div>
-				</th>
-				<th
-					class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('camera.VCamerasUser') }}</span>
-					</div>
-				</th>
-				<th
-					class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('camera.VCamerasNetwork') }}</span>
-					</div>
-				</th>
-				<th
-					class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t('camera.VCamerasStatus') }}</span>
-					</div>
-				</th>
-			</tr>
-		</thead>
-		<tbody>
-			<template v-if="!camerasStore.loading">
-				<RouterLink v-for="camera in sortedCameras" :key="camera.id_camera" :to="'/cameras/' + camera.id_camera"
-					custom v-slot="{ navigate }">
-					<tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ camera.nom_camera }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-							{{ camera.url_camera }}
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">
-							<template v-if="camera.user_camera == '' && camera.password_camera == ''">
-								<font-awesome-icon icon="fa-solid fa-times" class="ml-2" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-check" class="ml-2" />
-							</template>
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">
-							<template v-if="camerasStore.status[camera.id_camera].network">
-								<font-awesome-icon icon="fa-solid fa-check" class="ml-2 text-green-500" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-times" class="ml-2 text-red-500" />
-							</template>
-						</td>
-						<td class="border border-gray-300 px-4 py-2 text-sm text-gray-700 text-center">
-							<template v-if="camerasStore.status[camera.id_camera].statusCode == 200">
-								<font-awesome-icon icon="fa-solid fa-check" class="ml-2 text-green-500" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-times" class="ml-2 text-red-500" />
-							</template>
-						</td>
-					</tr>
-				</RouterLink>
-			</template>
-			<template v-else>
-				<div>{{ $t('camera.VCamerasLoading') }}</div>
-			</template>
-		</tbody>
-	</table>
+	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredCameras,camerasStore.status]"/>
 </template>
