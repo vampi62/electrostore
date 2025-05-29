@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, computed, inject } from "vue";
+import { onMounted, onBeforeUnmount, ref, inject } from "vue";
 import { router } from "@/helpers";
 
 const { addNotification } = inject("useNotification");
@@ -66,27 +66,21 @@ const iaDeleteModalShow = ref(false);
 const iaSave = async() => {
 	try {
 		await schemaIa.validate(iasStore.iaEdition, { abortEarly: false });
-		await iasStore.createIa(iasStore.iaEdition);
-		addNotification({ message: "ia.VIaCreated", type: "success", i18n: true });
+		if (iaId !== "new") {
+			await iasStore.updateIa(iaId, { ...iasStore.iaEdition });
+			addNotification({ message: "ia.VIaUpdated", type: "success", i18n: true });
+		} else {
+			await iasStore.createIa({ ...iasStore.iaEdition });
+			addNotification({ message: "ia.VIaCreated", type: "success", i18n: true });
+		}
 	} catch (e) {
 		e.inner.forEach((error) => {
 			addNotification({ message: error.message, type: "error", i18n: false });
 		});
 		return;
 	}
-	iaId = iasStore.iaEdition.id_ia;
-	router.push("/ias/" + iasStore.iaEdition.id_ia);
-};
-const iaUpdate = async() => {
-	try {
-		await schemaIa.validate(iasStore.iaEdition, { abortEarly: false });
-		await iasStore.updateIa(iaId, iasStore.iaEdition);
-		addNotification({ message: "ia.VIaUpdated", type: "success", i18n: true });
-	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
-		return;
+	if (iaId === "new") {
+		router.push("/ias/" + iasStore.iaEdition.id_ia);
 	}
 };
 const iaDelete = async() => {
@@ -130,45 +124,12 @@ const schemaIa = Yup.object().shape({
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4">{{ $t('ia.VIaTitle') }}</h2>
-		<div class="flex space-x-4">
-			<button type="button" @click="iasStore.getTrainStatus(iaId)" v-if="iaId != 'new'"
-				class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 flex items-center">
-				<span v-show="iasStore.status.train?.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('ia.VIaRefresh') }}
-			</button>
-			<button type="button" @click="iaTrain" v-if="iaId != 'new' && authStore.user?.role_user == 2"
-				class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center">
-				<span v-show="iasStore.status.start?.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('ia.VIaTrain') }}
-			</button>
-			<button type="button" @click="iaSave" v-if="iaId == 'new' && authStore.user?.role_user == 2"
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-				<span v-show="iasStore.iaEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('ia.VIaAdd') }}
-			</button>
-			<button type="button" @click="iaUpdate" v-else-if="iaId != 'new' && authStore.user?.role_user ==2"
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-				<span v-show="iasStore.iaEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('ia.VIaUpdate') }}
-			</button>
-			<button type="button" @click="iaDeleteModalShow = true"
-				v-if="iaId != 'new' && authStore.user?.role_user == 2"
-				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-				{{ $t('ia.VIaDelete') }}
-			</button>
-			<RouterLink to="/ia"
-				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
-				{{ $t('ia.VIaBack') }}
-			</RouterLink>
-		</div>
+		<TopButtonEditElement :main-config="{ path: '/ia', save: { roleRequired: 2, loading: iasStore.iaEdition.loading }, delete: { roleRequired: 2 } }"
+			:optional-config="[
+				{ label: 'ia.VIaTrain', roleRequired: 2, loading: iasStore.status.start?.loading, bgColor: 'bg-green-500', hoverColor: 'hover:bg-green-600', action: iaTrain },
+				{ label: 'ia.VIaRefresh', roleRequired: 0, loading: iasStore.status.train?.loading, bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => iasStore.getTrainStatus(iaId) },
+			]"
+			:id="iaId" :store-user="authStore.user" @button-save="iaSave" @button-delete="iaDeleteModalShow = true"/>
 	</div>
 	<div v-if="iasStore.ias[iaId] || iaId == 'new'">
 		<div class="mb-6 flex justify-between flex-wrap">
@@ -237,21 +198,6 @@ const schemaIa = Yup.object().shape({
 		<div>{{ $t('ia.VIaLoading') }}</div>
 	</div>
 
-	<div v-if="iaDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="iaDeleteModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<h2 class="text-xl mb-4">{{ $t('ia.VIaDeleteTitle') }}</h2>
-			<p>{{ $t('ia.VIaDeleteText') }}</p>
-			<div class="flex justify-end space-x-4 mt-4">
-				<button type="button" @click="iaDelete()"
-					class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-					{{ $t('ia.VIaDeleteConfirm') }}
-				</button>
-				<button type="button" @click="iaDeleteModalShow = false"
-					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-					{{ $t('ia.VIaDeleteCancel') }}
-				</button>
-			</div>
-		</div>
-	</div>
+	<ModalDeleteConfirm :showModal="iaDeleteModalShow" @closeModal="iaDeleteModalShow = false"
+		@deleteConfirmed="iaDelete" :textTitle="'ia.VIaDeleteTitle'" :textP="'ia.VIaDeleteText'"/>
 </template>

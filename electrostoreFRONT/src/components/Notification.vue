@@ -88,7 +88,7 @@ export default {
 <style scoped>
 
 .fade-out {
-    animation: translateX 1s forwards;
+	animation: translateX 1s forwards;
 }
 
 .notification {

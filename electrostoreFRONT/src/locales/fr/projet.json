@@ -61,10 +61,6 @@
 	"VProjetCommentMaxLength": "Le commentaire doit contenir au maximum ",
 	"VProjetCommentRequired": "Commentaire requis",
 	"VProjetTitle": "Projet",
-	"VProjetAdd": "Ajouter un projet",
-	"VProjetUpdate": "Mettre à jour",
-	"VProjetDelete": "Supprimer",
-	"VProjetBack": "Retour",
 	"VProjetName": "Nom",
 	"VProjetDescription": "Description",
 	"VProjetUrl": "Url",
@@ -97,8 +93,6 @@
 	"VProjetLoading": "Chargement",
 	"VProjetDeleteTitle": "Supprimer le projet",
 	"VProjetDeleteText": "Êtes-vous sûr de vouloir supprimer ce projet?",
-	"VProjetDeleteConfirm": "Confirmer",
-	"VProjetDeleteCancel": "Annuler",
 	"VProjetDocumentAddTitle": "Ajouter un document",
 	"VProjetDocumentNamePlaceholder": "Nom du document",
 	"VProjetDocumentCancel": "Annuler",
@@ -107,12 +101,9 @@
 	"VProjetDocumentEdit": "Modifier",
 	"VProjetDocumentDeleteTitle": "Supprimer le document",
 	"VProjetDocumentDeleteText": "Êtes-vous sûr de vouloir supprimer ce document?",
-	"VProjetDocumentDeleteConfirm": "Confirmer",
 	"VProjetItemTitle": "Article",
 	"VProjetItemFilterPlaceholder": "Filtrer par nom d'article",
 	"VProjetItemAdd": "Ajouter",
 	"VProjetCommentDeleteTitle": "Supprimer le commentaire",
-	"VProjetCommentDeleteText": "Êtes-vous sûr de vouloir supprimer ce commentaire?",
-	"VProjetCommentDeleteConfirm": "Confirmer",
-	"VProjetCommentDeleteCancel": "Annuler"
+	"VProjetCommentDeleteText": "Êtes-vous sûr de vouloir supprimer ce commentaire?"
 }

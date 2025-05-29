@@ -24,17 +24,11 @@
 	"VIaTitle": "IA",
 	"VIaRefresh": "Actualiser",
 	"VIaTrain": "Entraîner",
-	"VIaAdd": "Ajouter une IA",
-	"VIaUpdate": "Mettre à jour", 
-	"VIaDelete": "Supprimer",
-	"VIaBack": "Retour",
 	"VIaName": "Nom",
 	"VIaDescription": "Description",
 	"VIaDate": "Date",
 	"VIaStatus": "Statut",
 	"VIaLoading": "Chargement",
 	"VIaDeleteTitle": "Supprimer l'IA",
-	"VIaDeleteText": "Êtes-vous sûr de vouloir supprimer cette IA?",
-	"VIaDeleteConfirm": "Confirmer",
-	"VIaDeleteCancel": "Annuler"
+	"VIaDeleteText": "Êtes-vous sûr de vouloir supprimer cette IA?"
 }

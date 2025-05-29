@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, computed, inject } from "vue";
+import { onMounted, onBeforeUnmount, ref, inject } from "vue";
 import { router } from "@/helpers";
 
 const { addNotification } = inject("useNotification");
@@ -112,27 +112,21 @@ const projetTypeStatus = ref([["En attente", t("projet.VProjetStatus1")], ["En c
 const projetSave = async() => {
 	try {
 		await schemaProjet.validate(projetsStore.projetEdition, { abortEarly: false });
-		await projetsStore.createProjet(projetsStore.projetEdition);
-		addNotification({ message: "projet.VProjetCreated", type: "success", i18n: true });
+		if (projetId !== "new") {
+			await projetsStore.updateProjet(projetId, { ...projetsStore.projetEdition });
+			addNotification({ message: "projet.VProjetUpdated", type: "success", i18n: true });
+		} else {
+			await projetsStore.createProjet({ ...projetsStore.projetEdition });
+			addNotification({ message: "projet.VProjetCreated", type: "success", i18n: true });
+		}
 	} catch (e) {
 		e.inner.forEach((error) => {
 			addNotification({ message: error.message, type: "error", i18n: false });
 		});
 		return;
 	}
-	projetId = projetsStore.projetEdition.id_projet;
-	router.push("/projets/" + projetsStore.projetEdition.id_projet);
-};
-const projetUpdate = async() => {
-	try {
-		await schemaProjet.validate(projetsStore.projetEdition, { abortEarly: false });
-		await projetsStore.updateProjet(projetId, projetsStore.projetEdition);
-		addNotification({ message: "projet.VProjetUpdated", type: "success", i18n: true });
-	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
-		return;
+	if (projetId === "new") {
+		router.push("/projets/" + projetsStore.projetEdition.id_projet);
 	}
 };
 const projetDelete = async() => {
@@ -411,30 +405,8 @@ const schemaCommentaire = Yup.object().shape({
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4">{{ $t('projet.VProjetTitle') }}</h2>
-		<div class="flex space-x-4">
-			<button type="button" @click="projetSave" v-if="projetId == 'new'"
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-				<span v-show="projetsStore.projetEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('projet.VProjetAdd') }}
-			</button>
-			<button type="button" @click="projetUpdate" v-else
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-				<span v-show="projetsStore.projetEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('projet.VProjetUpdate') }}
-			</button>
-			<button type="button" @click="projetDeleteModalShow = true" v-if="projetId != 'new'"
-				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-				{{ $t('projet.VProjetDelete') }}
-			</button>
-			<RouterLink to="/projets"
-				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
-				{{ $t('projet.VProjetBack') }}
-			</RouterLink>
-		</div>
+		<TopButtonEditElement :main-config="{ path: '/projets', save: { roleRequired: 0, loading: projetsStore.projetEdition.loading }, delete: { roleRequired: 0 } }"
+			:id="projetId" :store-user="authStore.user" @button-save="projetSave" @button-delete="projetDeleteModalShow = true"/>
 	</div>
 	<div :class="projetsStore.projets[projetId] || projetId == 'new' ? 'block' : 'hidden'">
 		<div class="mb-6 flex justify-between">
@@ -734,23 +706,10 @@ const schemaCommentaire = Yup.object().shape({
 		<div>{{ $t('projet.VProjetLoading') }}</div>
 	</div>
 
-	<div v-if="projetDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="projetDeleteModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<h2 class="text-xl mb-4">{{ $t('projet.VProjetDeleteTitle') }}</h2>
-			<p>{{ $t('projet.VProjetDeleteText') }}</p>
-			<div class="flex justify-end space-x-4 mt-4">
-				<button type="button" @click="projetDelete()"
-					class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-					{{ $t('projet.VProjetDeleteConfirm') }}
-				</button>
-				<button type="button" @click="projetDeleteModalShow = false"
-					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-					{{ $t('projet.VProjetDeleteCancel') }}
-				</button>
-			</div>
-		</div>
-	</div>
+	<ModalDeleteConfirm :showModal="projetDeleteModalShow" @closeModal="projetDeleteModalShow = false"
+		@deleteConfirmed="projetDelete" :textTitle="'projet.VProjetDeleteTitle'"
+		:textP="'projet.VProjetDeleteText'" :textConfirm="'projet.VProjetDeleteConfirm'"
+		:textCancel="'projet.VProjetDeleteCancel'" />
 
 	<div v-if="documentAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
 		@click="documentAddModalShow = false">
@@ -816,23 +775,9 @@ const schemaCommentaire = Yup.object().shape({
 			</Form>
 		</div>
 	</div>
-	<div v-if="documentDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="documentDeleteModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<h2 class="text-xl mb-4">{{ $t('projet.VProjetDocumentDeleteTitle') }}</h2>
-			<p>{{ $t('projet.VProjetDocumentDeleteText') }}</p>
-			<div class="flex justify-end space-x-4 mt-4">
-				<button type="button" @click="documentDelete()"
-					class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-					{{ $t('projet.VProjetDocumentDeleteConfirm') }}
-				</button>
-				<button type="button" @click="documentDeleteModalShow = false"
-					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-					{{ $t('projet.VProjetDocumentCancel') }}
-				</button>
-			</div>
-		</div>
-	</div>
+	<ModalDeleteConfirm :showModal="documentDeleteModalShow" @closeModal="documentDeleteModalShow = false"
+		@deleteConfirmed="documentDelete" :textTitle="'projet.VProjetDocumentDeleteTitle'"
+		:textP="'projet.VProjetDocumentDeleteText'"/>
 
 	<div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
 		@click="itemModalShow = false">
@@ -908,21 +853,7 @@ const schemaCommentaire = Yup.object().shape({
 			</div>
 		</div>
 	</div>
-	<div v-if="commentaireModalShow" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
-		@click="commentaireModalShow = false">
-		<div class="bg-white p-6 rounded-lg shadow-lg" @click.stop>
-			<h2 class="text-lg font-semibold">{{ $t('projet.VProjetCommentDeleteTitle') }}</h2>
-			<p>{{ $t('projet.VProjetCommentDeleteText') }}</p>
-			<div class="flex justify-end space-x-4 mt-4">
-				<button type="button" @click="commentaireDelete()"
-					class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-					{{ $t('projet.VProjetCommentDeleteConfirm') }}
-				</button>
-				<button type="button" @click="commentaireModalShow = false"
-					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-					{{ $t('projet.VProjetCommentDeleteCancel') }}
-				</button>
-			</div>
-		</div>
-	</div>
+	<ModalDeleteConfirm :showModal="commentaireModalShow" @closeModal="commentaireModalShow = false"
+		@deleteConfirmed="commentaireDelete" :textTitle="'projet.VProjetCommentDeleteTitle'"
+		:textP="'projet.VProjetCommentDeleteText'"/>
 </template>

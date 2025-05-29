@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, computed, inject } from "vue";
+import { onMounted, onBeforeUnmount, ref, inject } from "vue";
 import { router } from "@/helpers";
 
 const { addNotification } = inject("useNotification");
@@ -86,27 +86,21 @@ const tagDeleteModalShow = ref(false);
 const tagSave = async() => {
 	try {
 		await schemaTag.validate(tagsStore.tagEdition, { abortEarly: false });
-		await tagsStore.createTag(tagsStore.tagEdition);
-		addNotification({ message: "tag.VTagCreated", type: "success", i18n: true });
+		if (tagId !== "new") {
+			await tagsStore.updateTag(tagId, { ...tagsStore.tagEdition });
+			addNotification({ message: "tag.VTagUpdated", type: "success", i18n: true });
+		} else {
+			await tagsStore.createTag({ ...tagsStore.tagEdition });
+			addNotification({ message: "tag.VTagCreated", type: "success", i18n: true });
+		}
 	} catch (e) {
 		e.inner.forEach((error) => {
 			addNotification({ message: error.message, type: "error", i18n: false });
 		});
 		return;
 	}
-	tagId = tagsStore.tagEdition.id_tag;
-	router.push("/tags/" + tagsStore.tagEdition.id_tag);
-};
-const tagUpdate = async() => {
-	try {
-		await schemaTag.validate(tagsStore.tagEdition, { abortEarly: false });
-		await tagsStore.updateTag(tagId, { ...tagsStore.tagEdition });
-		addNotification({ message: "tag.VTagUpdated", type: "success", i18n: true });
-	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
-		return;
+	if (tagId === "new") {
+		router.push("/tags/" + tagsStore.tagEdition.id_tag);
 	}
 };
 const tagDelete = async() => {
@@ -225,30 +219,8 @@ const schemaTag = Yup.object().shape({
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4">{{ $t('tag.VTagTitle') }}</h2>
-		<div class="flex space-x-4">
-			<button type="button" @click="tagSave" v-if="tagId == 'new'"
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-				<span v-show="tagsStore.tagEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('tag.VTagAdd') }}
-			</button>
-			<button type="button" @click="tagUpdate" v-else
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-				<span v-show="tagsStore.tagEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('tag.VTagUpdate') }}
-			</button>
-			<button type="button" @click="tagDeleteModalShow = true" v-if="tagId != 'new'"
-				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-				{{ $t('tag.VTagDelete') }}
-			</button>
-			<RouterLink to="/tags"
-				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
-				{{ $t('tag.VTagBack') }}
-			</RouterLink>
-		</div>
+		<TopButtonEditElement :main-config="{ path: '/tags', save: { roleRequired: 0, loading: tagsStore.tagEdition.loading }, delete: { roleRequired: 0 } }"
+			:id="tagId" :store-user="authStore.user" @button-save="tagSave" @button-delete="tagDeleteModalShow = true"/>
 	</div>
 	<div v-if="tagsStore.tags[tagId] || tagId == 'new'">
 		<div class="mb-6 flex justify-between">
@@ -400,23 +372,8 @@ const schemaTag = Yup.object().shape({
 		<div>{{ $t('tag.VTagLoading') }}</div>
 	</div>
 
-	<div v-if="tagDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="tagDeleteModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<h2 class="text-xl mb-4">{{ $t('tag.VTagDeleteTitle') }}</h2>
-			<p>{{ $t('tag.VTagDeleteText') }}</p>
-			<div class="flex justify-end space-x-4 mt-4">
-				<button type="button" @click="tagDelete()"
-					class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-					{{ $t('tag.VTagDeleteConfirm') }}
-				</button>
-				<button type="button" @click="tagDeleteModalShow = false"
-					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-					{{ $t('tag.VTagDeleteCancel') }}
-				</button>
-			</div>
-		</div>
-	</div>
+	<ModalDeleteConfirm :showModal="tagDeleteModalShow" @closeModal="tagDeleteModalShow = false"
+		@deleteConfirmed="tagDelete" :textTitle="'tag.VTagDeleteTitle'" :textP="'tag.VTagDeleteText'"/>
 
 	<div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
 		@click="itemModalShow = false">

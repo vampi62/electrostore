@@ -122,27 +122,21 @@ const tagLoad = ref(false);
 const itemSave = async() => {
 	try {
 		await schemaItem.validate(itemsStore.itemEdition, { abortEarly: false });
-		await itemsStore.createItem(itemsStore.itemEdition);
-		addNotification({ message: "item.VItemCreated", type: "success", i18n: true });
+		if (itemId !== "new") {
+			await itemsStore.updateItem(itemId, { ...itemsStore.itemEdition });
+			addNotification({ message: "item.VItemUpdated", type: "success", i18n: true });
+		} else {
+			await itemsStore.createItem({ ...itemsStore.itemEdition });
+			addNotification({ message: "item.VItemCreated", type: "success", i18n: true });
+		}
 	} catch (e) {
 		e.inner.forEach((error) => {
 			addNotification({ message: error.message, type: "error", i18n: false });
 		});
 		return;
 	}
-	itemId = itemsStore.itemEdition.id_item;
-	router.push("/inventory/" + itemsStore.itemEdition.id_item);
-};
-const itemUpdate = async() => {
-	try {
-		await schemaItem.validate(itemsStore.itemEdition, { abortEarly: false });
-		await itemsStore.updateItem(itemId, { ...itemsStore.itemEdition });
-		addNotification({ message: "item.VItemUpdated", type: "success", i18n: true });
-	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
-		return;
+	if (itemId === "new") {
+		router.push("/inventory/" + itemsStore.itemEdition.id_item);
 	}
 };
 const itemDelete = async() => {
@@ -447,30 +441,8 @@ const schemaAddImage = Yup.object().shape({
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4">{{ $t('item.VItemTitle') }}</h2>
-		<div class="flex space-x-4">
-			<button type="button" @click="itemSave" v-if="itemId == 'new'"
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-				<span v-show="itemsStore.itemEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('item.VItemAdd') }}
-			</button>
-			<button type="button" @click="itemUpdate" v-else
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-				<span v-show="itemsStore.itemEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('item.VItemUpdate') }}
-			</button>
-			<button type="button" @click="itemDeleteModalShow" v-if="itemId != 'new'"
-				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-				{{ $t('item.VItemDelete') }}
-			</button>
-			<RouterLink to="/inventory"
-				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
-				{{ $t('item.VItemBack') }}
-			</RouterLink>
-		</div>
+		<TopButtonEditElement :main-config="{ path: '/inventory', save: { roleRequired: 0, loading: itemsStore.itemEdition.loading }, delete: { roleRequired: 0 } }"
+			:id="itemId" :store-user="authStore.user" @button-save="itemSave" @button-delete="itemDeleteModalShow = true"/>
 	</div>
 	<div v-if="itemsStore.items[itemId] || itemId == 'new'">
 		<div class="mb-6 flex justify-between">
@@ -867,23 +839,9 @@ const schemaAddImage = Yup.object().shape({
 		</div>
 	</div>
 
-	<div v-if="itemDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="itemDeleteModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<h2 class="text-xl mb-4">{{ $t('item.VItemDeleteTitle') }}</h2>
-			<p>{{ $t('item.VItemDeleteText') }}</p>
-			<div class="flex justify-end space-x-4 mt-4">
-				<button type="button" @click="itemDelete()"
-					class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-					{{ $t('item.VItemDeleteConfirm') }}
-				</button>
-				<button type="button" @click="itemDeleteModalShow = false"
-					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-					{{ $t('item.VItemDeleteCancel') }}
-				</button>
-			</div>
-		</div>
-	</div>
+	<ModalDeleteConfirm :showModal="itemDeleteModalShow" @closeModal="itemDeleteModalShow = false"
+		@deleteConfirmed="itemDelete" :textTitle="'item.VItemDeleteTitle'"
+		:textP="'item.VItemDeleteText'"/>
 
 	<div v-if="imageSelectModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
 		@click="imageSelectModalShow = false">
@@ -979,23 +937,9 @@ const schemaAddImage = Yup.object().shape({
 			</Form>
 		</div>
 	</div>
-	<div v-if="documentDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="documentDeleteModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<h2 class="text-xl mb-4">{{ $t('item.VItemDocumentDeleteTitle') }}</h2>
-			<p>{{ $t('item.VItemDocumentDeleteText') }}</p>
-			<div class="flex justify-end space-x-4 mt-4">
-				<button type="button" @click="documentDelete()"
-					class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-					{{ $t('item.VItemDocumentDeleteConfirm') }}
-				</button>
-				<button type="button" @click="documentDeleteModalShow = false"
-					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-					{{ $t('item.VItemDocumentCancel') }}
-				</button>
-			</div>
-		</div>
-	</div>
+	<ModalDeleteConfirm :showModal="documentDeleteModalShow" @closeModal="documentDeleteModalShow = false"
+		@deleteConfirmed="documentDelete" :textTitle="'item.VItemDocumentDeleteTitle'"
+		:textP="'item.VItemDocumentDeleteText'"/>
 
 	<div v-if="imageAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
 		@click="imageAddModalShow = false">
@@ -1029,21 +973,7 @@ const schemaAddImage = Yup.object().shape({
 			</Form>
 		</div>
 	</div>
-	<div v-if="imageDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="imageDeleteModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<h2 class="text-xl mb-4">{{ $t('item.VItemImageDeleteTitle') }}</h2>
-			<p>{{ $t('item.VItemImageDeleteText') }}</p>
-			<div class="flex justify-end space-x-4 mt-4">
-				<button type="button" @click="imageDelete()"
-					class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-					{{ $t('item.VItemImageDeleteConfirm') }}
-				</button>
-				<button type="button" @click="imageDeleteModalShow = false"
-					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-					{{ $t('item.VItemImageCancel') }}
-				</button>
-			</div>
-		</div>
-	</div>
+	<ModalDeleteConfirm :showModal="imageDeleteModalShow" @closeModal="imageDeleteModalShow = false"
+		@deleteConfirmed="imageDelete" :textTitle="'item.VItemImageDeleteTitle'"
+		:textP="'item.VItemImageDeleteText'"/>
 </template>

@@ -12,7 +12,6 @@
 	"VCommandsFilterItem": "Article",
 	"VCommandsTitle": "Commandes",
 	"VCommandsAdd": "Ajouter une commande",
-	"VCommandDelete": "Supprimer",
 	"VCommandsStatus": "Statut",
 	"VCommandsDate": "Date",
 	"VCommandsURL": "URL",
@@ -66,9 +65,6 @@
 	"VCommandCommentRequired": "Le commentaire est obligatoire",
 	"VCommandCommentMaxLength": "Le commentaire doit contenir au maximum ",
 	"VCommandTitle": "Commande",
-	"VCommandAdd": "Ajouter une commande",
-	"VCommandUpdate": "Mettre à jour",
-	"VCommandBack": "Retour",
 	"VCommandPrice": "Prix",
 	"VCommandUrl": "URL",
 	"VCommandDate": "Date",
@@ -91,8 +87,6 @@
 	"VCommandDocumentEdit": "Modifier",
 	"VCommandDeleteTitle": "Supprimer la commande",
 	"VCommandDeleteText": "Êtes-vous sûr de vouloir supprimer cette commande ?",
-	"VCommandDeleteConfirm": "Confirmer",
-	"VCommandDeleteCancel": "Annuler",
 	"VCommandCommentaires": "Commentaires",
 	"VCommandCommentPlaceholder": "Ajouter un commentaire...",
 	"VCommandCommentAdd": "publier",
@@ -102,7 +96,6 @@
 	"VCommandCommentDelete": "Supprimer",
 	"VCommandDocumentDeleteTitle": "Supprimer le document",
 	"VCommandDocumentDeleteText": "Êtes-vous sûr de vouloir supprimer ce document ?",
-	"VCommandDocumentDeleteConfirm": "Confirmer",
 	"VCommandItemTitle": "Article",
 	"VCommandItemFilterPlaceholder": "Filtrer par nom d'article",
 	"VCommandItemName": "Nom",
@@ -115,7 +108,5 @@
 	"VCommandItemEdit": "Modifier",
 	"VCommandItemDelete": "Supprimer",
 	"VCommandCommentDeleteTitle": "Supprimer le commentaire",
-	"VCommandCommentDeleteText": "Êtes-vous sûr de vouloir supprimer ce commentaire ?",
-	"VCommandCommentDeleteConfirm": "Confirmer",
-	"VCommandCommentDeleteCancel": "Annuler"
+	"VCommandCommentDeleteText": "Êtes-vous sûr de vouloir supprimer ce commentaire ?"
 }

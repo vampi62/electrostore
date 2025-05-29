@@ -73,77 +73,54 @@ const storeItemAddModalShow = ref(false);
 const boxId = ref(null);
 const tagLoad = ref(false);
 const storeSave = async() => {
-	if (!checkOutOfGrid()) {
-		return;
-	}
-	try {
-		await schemaStore.validate(storesStore.storeEdition, { abortEarly: false });
-		await storesStore.createStore(storesStore.storeEdition);
-		addNotification({ message: "store.VStoreCreated", type: "success", i18n: true });
-		if (Object.values(storesStore.boxEdition).length !== 0 && Object.values(storesStore.ledEdition).length !== 0) {
-			await Promise.all([
-				storesStore.createLedBulk(storesStore.storeEdition.id_store, Object.values(storesStore.ledEdition).filter((led) => led.status === "new")),
-				storesStore.createBoxBulk(storesStore.storeEdition.id_store, Object.values(storesStore.boxEdition).filter((box) => box.status === "new"))]);
-		} else if (Object.values(storesStore.ledEdition).length !== 0) {
-			await storesStore.createLedBulk(storesStore.storeEdition.id_store, Object.values(storesStore.ledEdition).filter((led) => led.status === "new"));
-		} else if (Object.values(storesStore.boxEdition).length !== 0) {
-			await storesStore.createBoxBulk(storesStore.storeEdition.id_store, Object.values(storesStore.boxEdition).filter((box) => box.status === "new"));
-		}
-		storesStore.storeEdition.loading = false;
-	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
-		storesStore.storeEdition.loading = false;
-		return;
-	}
-	storeId = storesStore.storeEdition.id_store;
-	router.push("/stores/" + storesStore.storeEdition.id_store);
-};
-const storeUpdate = async() => {
 	if (!checkOutOfGrid() || !checkBoxConflict(true)) {
 		return;
 	}
 	try {
 		await schemaStore.validate(storesStore.storeEdition, { abortEarly: false });
-		// delete all the leds and boxs with the status "delete"
-		if (Object.values(storesStore.boxEdition).filter((box) => box.status === "delete").length > 0) {
-			let listIdToDelete = [];
-			Object.values(storesStore.boxEdition).filter((box) => box.status === "delete").forEach((box) => {
-				listIdToDelete.push(box.id_box);
-			});
-			await storesStore.deleteBoxBulk(storeId, listIdToDelete);
-			storesStore.boxEdition = Object.values(storesStore.boxEdition).filter((box) => box.status !== "delete");
-		}
-		if (Object.values(storesStore.ledEdition).filter((led) => led.status === "delete").length > 0) {
-			let listIdToDelete = [];
-			Object.values(storesStore.ledEdition).filter((led) => led.status === "delete").forEach((led) => {
-				listIdToDelete.push(led.id_led);
-			});
-			await storesStore.deleteLedBulk(storeId, listIdToDelete);
-			storesStore.ledEdition = Object.values(storesStore.ledEdition).filter((led) => led.status !== "delete");
-		}
-		await storesStore.updateStore(storeId, { ...storesStore.storeEdition });
-		addNotification({ message: "store.VStoreUpdated", type: "success", i18n: true });
-		if (Object.values(storesStore.boxEdition).filter((box) => box.status === "modified").length > 0) {
-			await storesStore.updateBoxBulk(storeId, Object.values(storesStore.boxEdition).filter((box) => box.status === "modified"));
-			Object.values(storesStore.boxEdition).forEach((box) => {
-				if (box.status === "modified") {
-					delete box.status;
-				}
-			});
-		}
-		// check if a led as been modified (status = modified or mqtt_led_id != storesStore.leds[storeId][id_led].mqtt_led_id)
-		if ((Object.values(storesStore.ledEdition).filter((led) => led.status === "modified" || led.mqtt_led_id !== storesStore.leds[storeId][led.id_led].mqtt_led_id).length) > 0) {
-			await storesStore.updateLedBulk(storeId, Object.values(storesStore.ledEdition).filter((led) => led.status === "modified" || led.mqtt_led_id !== storesStore.leds[storeId][led.id_led].mqtt_led_id));
-			Object.values(storesStore.ledEdition).forEach((led) => {
-				if (led.status === "modified") {
-					delete led.status;
-				}
-			});
+		if (storeId !== "new") {
+			// delete all the leds and boxs with the status "delete"
+			if (Object.values(storesStore.boxEdition).filter((box) => box.status === "delete").length > 0) {
+				let listIdToDelete = [];
+				Object.values(storesStore.boxEdition).filter((box) => box.status === "delete").forEach((box) => {
+					listIdToDelete.push(box.id_box);
+				});
+				await storesStore.deleteBoxBulk(storeId, listIdToDelete);
+				storesStore.boxEdition = Object.values(storesStore.boxEdition).filter((box) => box.status !== "delete");
+			}
+			if (Object.values(storesStore.ledEdition).filter((led) => led.status === "delete").length > 0) {
+				let listIdToDelete = [];
+				Object.values(storesStore.ledEdition).filter((led) => led.status === "delete").forEach((led) => {
+					listIdToDelete.push(led.id_led);
+				});
+				await storesStore.deleteLedBulk(storeId, listIdToDelete);
+				storesStore.ledEdition = Object.values(storesStore.ledEdition).filter((led) => led.status !== "delete");
+			}
+			if (Object.values(storesStore.boxEdition).filter((box) => box.status === "modified").length > 0) {
+				await storesStore.updateBoxBulk(storeId, Object.values(storesStore.boxEdition).filter((box) => box.status === "modified"));
+				Object.values(storesStore.boxEdition).forEach((box) => {
+					if (box.status === "modified") {
+						delete box.status;
+					}
+				});
+			}
+			// check if a led as been modified (status = modified or mqtt_led_id != storesStore.leds[storeId][id_led].mqtt_led_id)
+			if ((Object.values(storesStore.ledEdition).filter((led) => led.status === "modified" || led.mqtt_led_id !== storesStore.leds[storeId][led.id_led].mqtt_led_id).length) > 0) {
+				await storesStore.updateLedBulk(storeId, Object.values(storesStore.ledEdition).filter((led) => led.status === "modified" || led.mqtt_led_id !== storesStore.leds[storeId][led.id_led].mqtt_led_id));
+				Object.values(storesStore.ledEdition).forEach((led) => {
+					if (led.status === "modified") {
+						delete led.status;
+					}
+				});
+			}
+			await storesStore.updateStore(storeId, { ...storesStore.storeEdition });
+			addNotification({ message: "store.VStoreUpdated", type: "success", i18n: true });
+		} else {
+			await storesStore.createStore({ ...storesStore.storeEdition });
+			addNotification({ message: "store.VStoreCreated", type: "success", i18n: true });
 		}
 		if (Object.values(storesStore.boxEdition).filter((box) => box.status === "new").length > 0) {
-			await storesStore.createBoxBulk(storeId, Object.values(storesStore.boxEdition).filter((box) => box.status === "new"));
+			await storesStore.createBoxBulk(storesStore.storeEdition.id_store, Object.values(storesStore.boxEdition).filter((box) => box.status === "new"));
 			Object.values(storesStore.boxEdition).forEach((box) => {
 				if (box.status === "new") {
 					delete box.status;
@@ -151,13 +128,14 @@ const storeUpdate = async() => {
 			});
 		}
 		if (Object.values(storesStore.ledEdition).filter((led) => led.status === "new").length > 0) {
-			await storesStore.createLedBulk(storeId, Object.values(storesStore.ledEdition).filter((led) => led.status === "new"));
+			await storesStore.createLedBulk(storesStore.storeEdition.id_store, Object.values(storesStore.ledEdition).filter((led) => led.status === "new"));
 			Object.values(storesStore.ledEdition).forEach((led) => {
 				if (led.status === "new") {
 					delete led.status;
 				}
 			});
 		}
+
 		// at the end, resync list
 		await storesStore.getStoreById(storeId, ["boxs", "leds"]);
 		storesStore.ledEdition = storesStore.leds[storeId];
@@ -169,6 +147,9 @@ const storeUpdate = async() => {
 		});
 		storesStore.storeEdition.loading = false;
 		return;
+	}
+	if (storeId === "new") {
+		router.push("/stores/" + storesStore.storeEdition.id_store);
 	}
 };
 const storeDelete = async() => {
@@ -860,32 +841,8 @@ const filteredItems = computed(() => {
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4">{{ $t('store.VStoreTitle') }}</h2>
-		<div class="flex space-x-4">
-			<button type="button" @click="storeSave" v-if="storeId == 'new' && authStore.user?.role_user == 2"
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-				<span v-show="storesStore.storeEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('store.VStoreAdd') }}
-			</button>
-			<button type="button" @click="storeUpdate"
-				v-else-if="storeId != 'new' && authStore.user?.role_user == 2"
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-				<span v-show="storesStore.storeEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('store.VStoreUpdate') }}
-			</button>
-			<button type="button" @click="storeDeleteModalShow = true"
-				v-if="storeId != 'new' && authStore.user?.role_user == 2"
-				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-				{{ $t('store.VStoreDelete') }}
-			</button>
-			<RouterLink to="/stores"
-				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
-				{{ $t('store.VStoreBack') }}
-			</RouterLink>
-		</div>
+		<TopButtonEditElement :main-config="{ path: '/stores', save: { roleRequired: 2, loading: storesStore.storeEdition.loading }, delete: { roleRequired: 2 } }"
+			:id="storeId" :store-user="authStore.user" @button-save="storeSave" @button-delete="storeDeleteModalShow = true"/>
 	</div>
 	<div v-if="storesStore.stores[storeId] || storeId == 'new'">
 		<div class="mb-6 flex justify-between whitespace-pre">
@@ -1170,24 +1127,9 @@ const filteredItems = computed(() => {
 			</div>
 		</div>
 	</div>
-
-	<div v-if="storeDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
-		@click="storeDeleteModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<h2 class="text-xl mb-4">{{ $t('store.VStoreDeleteTitle') }}</h2>
-			<p>{{ $t('store.VStoreDeleteText') }}</p>
-			<div class="flex justify-end space-x-4 mt-4">
-				<button type="button" @click="storeDelete()"
-					class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-					{{ $t('store.VStoreDeleteConfirm') }}
-				</button>
-				<button type="button" @click="storeDeleteModalShow = false"
-					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-					{{ $t('store.VStoreDeleteCancel') }}
-				</button>
-			</div>
-		</div>
-	</div>
+	<ModalDeleteConfirm :showModal="storeDeleteModalShow" @closeModal="storeDeleteModalShow = false"
+		@deleteConfirmed="storeDelete" :textTitle="'store.VStoreDeleteTitle'"
+		:textP="'store.VStoreDeleteText'"/>
 
 	<div v-if="storeItemAddModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
 		@click="storeItemAddModalShow = false">

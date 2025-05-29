@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, computed, inject } from "vue";
+import { onMounted, onBeforeUnmount, ref, inject } from "vue";
 import { router } from "@/helpers";
 
 const { addNotification } = inject("useNotification");
@@ -112,39 +112,23 @@ const toggleCommentaires = () => {
 const commandDeleteModalShow = ref(false);
 const commandTypeStatus = ref([["En attente", t("command.VCommandStatus1")], ["En cours", t("command.VCommandStatus2")], ["Terminée", t("command.VCommandStatus3")], ["Annulée", t("command.VCommandStatus4")]]);
 const commandSave = async() => {
-	if (commandsStore.commandEdition.status_command === "Terminée") {
-		commandsStore.commandEdition.date_livraison_command = formatDateForDatetimeLocal(new Date());
-	} else {
-		commandsStore.commandEdition.date_livraison_command = null;
-	}
 	try {
 		await schemaCommand.validate(commandsStore.commandEdition, { abortEarly: false });
-		await commandsStore.createCommand(commandsStore.commandEdition);
-		addNotification({ message: "command.VCommandCreated", type: "success", i18n: true });
+		if (commandId !== "new") {
+			await commandsStore.updateCommand(commandId, { ...commandsStore.commandEdition });
+			addNotification({ message: "command.VCommandUpdated", type: "success", i18n: true });
+		} else {
+			await commandsStore.createCommand({ ...commandsStore.commandEdition });
+			addNotification({ message: "command.VCommandCreated", type: "success", i18n: true });
+		}
 	} catch (e) {
 		e.inner.forEach((error) => {
 			addNotification({ message: error.message, type: "error", i18n: false });
 		});
 		return;
 	}
-	commandId = commandsStore.commandEdition.id_command;
-	router.push("/commands/" + commandsStore.commandEdition.id_command);
-};
-const commandUpdate = async() => {
-	if (commandsStore.commandEdition.status_command === "Terminée" && commandsStore.commands[commandId].status_command !== "Terminée") {
-		commandsStore.commandEdition.date_livraison_command = formatDateForDatetimeLocal(new Date());
-	} else if (commandsStore.commandEdition.status_command !== "Terminée") {
-		commandsStore.commandEdition.date_livraison_command = null;
-	}
-	try {
-		await schemaCommand.validate(commandsStore.commandEdition, { abortEarly: false });
-		await commandsStore.updateCommand(commandId, commandsStore.commandEdition);
-		addNotification({ message: "command.VCommandUpdated", type: "success", i18n: true });
-	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
-		return;
+	if (commandId === "new") {
+		router.push("/commands/" + commandsStore.commandEdition.id_command);
 	}
 };
 const commandDelete = async() => {
@@ -424,30 +408,8 @@ const schemaCommentaire = Yup.object().shape({
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4">{{ $t('command.VCommandTitle') }}</h2>
-		<div class="flex space-x-4">
-			<button type="button" @click="commandSave" v-if="commandId == 'new'"
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-				<span v-show="commandsStore.commandEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('command.VCommandAdd') }}
-			</button>
-			<button type="button" @click="commandUpdate" v-else
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-				<span v-show="commandsStore.commandEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('command.VCommandUpdate') }}
-			</button>
-			<button type="button" @click="commandDeleteModalShow = true" v-if="commandId != 'new'"
-				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-				{{ $t('command.VCommandDelete') }}
-			</button>
-			<RouterLink to="/commands"
-				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
-				{{ $t('command.VCommandBack') }}
-			</RouterLink>
-		</div>
+		<TopButtonEditElement :main-config="{ path: '/commands', save: { roleRequired: 0, loading: commandsStore.commandEdition.loading }, delete: { roleRequired: 0 } }"
+			:id="commandId" :store-user="authStore.user" @button-save="commandSave" @button-delete="commandDeleteModalShow = true"/>
 	</div>
 	<div :class="commandsStore.commands[commandId] || commandId == 'new' ? 'block' : 'hidden'">
 		<div class="mb-6 flex justify-between">
@@ -752,23 +714,9 @@ const schemaCommentaire = Yup.object().shape({
 		<div>{{ $t('command.VCommandLoading') }}</div>
 	</div>
 
-	<div v-if="commandDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="commandDeleteModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<h2 class="text-xl mb-4">{{ $t('command.VCommandDeleteTitle') }}</h2>
-			<p>{{ $t('command.VCommandDeleteText') }}</p>
-			<div class="flex justify-end space-x-4 mt-4">
-				<button type="button" @click="commandDelete()"
-					class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-					{{ $t('command.VCommandDeleteConfirm') }}
-				</button>
-				<button type="button" @click="commandDeleteModalShow = false"
-					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-					{{ $t('command.VCommandDeleteCancel') }}
-				</button>
-			</div>
-		</div>
-	</div>
+	<ModalDeleteConfirm :showModal="commandDeleteModalShow" @closeModal="commandDeleteModalShow = false"
+		@deleteConfirmed="commandDelete" :textTitle="'command.VCommandDeleteTitle'"
+		:textP="'command.VCommandDeleteText'"/>
 
 	<div v-if="documentAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
 		@click="documentAddModalShow = false">
@@ -835,23 +783,10 @@ const schemaCommentaire = Yup.object().shape({
 			</Form>
 		</div>
 	</div>
-	<div v-if="documentDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="documentDeleteModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<h2 class="text-xl mb-4">{{ $t('command.VCommandDocumentDeleteTitle') }}</h2>
-			<p>{{ $t('command.VCommandDocumentDeleteText') }}</p>
-			<div class="flex justify-end space-x-4 mt-4">
-				<button type="button" @click="documentDelete()"
-					class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-					{{ $t('command.VCommandDocumentDeleteConfirm') }}
-				</button>
-				<button type="button" @click="documentDeleteModalShow = false"
-					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-					{{ $t('command.VCommandDocumentCancel') }}
-				</button>
-			</div>
-		</div>
-	</div>
+
+	<ModalDeleteConfirm :showModal="documentDeleteModalShow" @closeModal="documentDeleteModalShow = false"
+		@deleteConfirmed="documentDelete" :textTitle="'command.VCommandDocumentDeleteTitle'"
+		:textP="'command.VCommandDocumentDeleteText'"/>
 
 	<div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
 		@click="itemModalShow = false">
@@ -943,21 +878,8 @@ const schemaCommentaire = Yup.object().shape({
 			</div>
 		</div>
 	</div>
-	<div v-if="commentaireModalShow" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
-		@click="commentaireModalShow = false">
-		<div class="bg-white p-6 rounded-lg shadow-lg" @click.stop>
-			<h2 class="text-lg font-semibold">{{ $t('command.VCommandCommentDeleteTitle') }}</h2>
-			<p>{{ $t('command.VCommandCommentDeleteText') }}</p>
-			<div class="flex justify-end space-x-4 mt-4">
-				<button type="button" @click="commentaireDelete()"
-					class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-					{{ $t('command.VCommandCommentDeleteConfirm') }}
-				</button>
-				<button type="button" @click="commentaireModalShow = false"
-					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-					{{ $t('command.VCommandCommentDeleteCancel') }}
-				</button>
-			</div>
-		</div>
-	</div>
+
+	<ModalDeleteConfirm :showModal="commentaireModalShow" @closeModal="commentaireModalShow = false"
+		@deleteConfirmed="commentaireDelete" :textTitle="'command.VCommandCommentDeleteTitle'"
+		:textP="'command.VCommandCommentDeleteText'"/>
 </template>
