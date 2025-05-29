@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, computed, inject, watch } from "vue";
+import { onMounted, onBeforeUnmount, ref, inject, watch } from "vue";
 import { router } from "@/helpers";
 
 const { addNotification } = inject("useNotification");
@@ -75,33 +75,23 @@ const cameraSave = async() => {
 	}
 	try {
 		await schemaCamera.value.validate(camerasStore.cameraEdition, { abortEarly: false });
-		await camerasStore.createCamera(camerasStore.cameraEdition);
-		addNotification({ message: "camera.VCameraCreated", type: "success", i18n: true });
+		if (cameraId !== "new") {
+			await camerasStore.updateCamera(cameraId, { ...camerasStore.cameraEdition });
+			camerasStore.getStatus(cameraId);
+			camerasStore.getStream(cameraId);
+			addNotification({ message: "camera.VCameraUpdated", type: "success", i18n: true });
+		} else {
+			await camerasStore.createCamera({ ...camerasStore.cameraEdition } );
+			addNotification({ message: "camera.VCameraCreated", type: "success", i18n: true });
+		}
 	} catch (e) {
 		e.inner.forEach((error) => {
 			addNotification({ message: error.message, type: "error", i18n: false });
 		});
 		return;
 	}
-	cameraId = camerasStore.cameraEdition.id_camera;
-	router.push("/cameras/" + camerasStore.cameraEdition.id_camera);
-};
-const cameraUpdate = async() => {
-	if (!isChecked.value) {
-		camerasStore.cameraEdition.user_camera = "";
-		camerasStore.cameraEdition.mdp_camera = "";
-	}
-	try {
-		await schemaCamera.value.validate(camerasStore.cameraEdition, { abortEarly: false });
-		await camerasStore.updateCamera(cameraId, camerasStore.cameraEdition);
-		addNotification({ message: "camera.VCameraUpdated", type: "success", i18n: true });
-		camerasStore.getStatus(cameraId);
-		camerasStore.getStream(cameraId);
-	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
-		return;
+	if (cameraId === "new") {
+		router.push("/cameras/" + camerasStore.cameraEdition.id_camera);
 	}
 };
 const cameraDelete = async() => {
@@ -115,7 +105,7 @@ const cameraDelete = async() => {
 	cameraDeleteModalShow.value = false;
 };
 const cameraUpdateLight = async(id) => {
-	await camerasStore.updateLight(id);
+	await camerasStore.toggleLight(id);
 	camerasStore.getStatus(id);
 };
 
@@ -145,40 +135,12 @@ watch(isChecked, (newValue) => {
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4">{{ $t('camera.VCameraTitle') }}</h2>
-		<div class="flex space-x-4">
-			<button type="button" @click="cameraUpdateLight(cameraId)" v-if="cameraId != 'new'"
-				class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 flex items-center">
-				{{ $t('camera.VCameraOnOff') }}
-			</button>
-			<button type="button" @click="camerasStore.getStatus(cameraId)" v-if="cameraId != 'new'"
-				class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 flex items-center">
-				<span v-show="camerasStore.status[cameraId]?.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('camera.VCameraRefresh') }}
-			</button>
-			<button type="button" @click="cameraSave" v-if="cameraId == 'new' && authStore.user?.role_user == 2"
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-				<span v-show="camerasStore.cameraEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('camera.VCameraAdd') }}
-			</button>
-			<button type="button" @click="cameraUpdate" v-else-if="cameraId != 'new' && authStore.user?.role_user == 2"
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-				<span v-show="camerasStore.cameraEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('camera.VCameraUpdate') }}
-			</button>
-			<button type="button" @click="cameraDeleteModalShow = true" v-if="cameraId != 'new' && authStore.user?.role_user == 2"
-				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-				{{ $t('camera.VCameraDelete') }}
-			</button>
-			<RouterLink to="/cameras" class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
-				{{ $t('camera.VCameraBack') }}
-			</RouterLink>
-		</div>
+		<TopButtonEditElement :main-config="{ path: '/cameras', save: { roleRequired: 2, loading: camerasStore.cameraEdition.loading }, delete: { roleRequired: 2 } }"
+			:optional-config="[
+				{ label: 'camera.VCameraOnOff', roleRequired: 2, bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => cameraUpdateLight(cameraId) },
+				{ label: 'camera.VCameraRefresh', roleRequired: 2, loading: camerasStore.status[cameraId]?.loading, bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => camerasStore.getStatus(cameraId) }
+			]"
+			:id="cameraId" :store-user="authStore.user" @button-save="cameraSave" @button-delete="cameraDeleteModalShow = true"/>
 	</div>
 	<div v-if="camerasStore.cameras[cameraId] || cameraId == 'new'">
 		<div class="mb-6 flex justify-between flex-wrap">
@@ -258,21 +220,6 @@ watch(isChecked, (newValue) => {
 		<div>{{ $t('camera.VCameraLoading') }}</div>
 	</div>
 
-	<div v-if="cameraDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="cameraDeleteModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<h2 class="text-xl mb-4">{{ $t('camera.VCameraDeleteTitle') }}</h2>
-			<p>{{ $t('camera.VCameraDeleteText') }}</p>
-			<div class="flex justify-end space-x-4 mt-4">
-				<button type="button" @click="cameraDelete()"
-					class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-					{{ $t('camera.VCameraDeleteConfirm') }}
-				</button>
-				<button type="button" @click="cameraDeleteModalShow = false"
-					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-					{{ $t('camera.VCameraDeleteCancel') }}
-				</button>
-			</div>
-		</div>
-	</div>
+	<ModalDeleteConfirm :showModal="cameraDeleteModalShow" @closeModal="cameraDeleteModalShow = false"
+		@deleteConfirmed="cameraDelete" :textTitle="'camera.VCameraDeleteTitle'" :textP="'camera.VCameraDeleteText'"/>
 </template>

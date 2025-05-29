@@ -29,7 +29,7 @@
 		<tbody>
 			<RouterLink v-for="data in sortedData" :key="data[meta.key]" :to="meta.path + data[meta.key]"
 				custom v-slot="{ navigate }">
-				<tr @click="navigate" class=" transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
+				<tr @click="navigate" class="transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
 					<td  v-for="(column,index) in labels"
 						:key="index"
 						:class="column.type == 'text' ? 'text-left' : 'text-center'"

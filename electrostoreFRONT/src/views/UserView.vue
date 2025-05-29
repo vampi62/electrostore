@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, computed, inject, watch } from "vue";
+import { onMounted, onBeforeUnmount, ref, inject, watch } from "vue";
 import { router } from "@/helpers";
 
 const { addNotification } = inject("useNotification");
@@ -178,22 +178,13 @@ const userTypeRole = ref([["admin", t("user.VUserFilterRole1")], ["user", t("use
 const userSave = async() => {
 	try {
 		await schemaUser.value.validate(usersStore.userEdition, { abortEarly: false });
-		await usersStore.createUser(usersStore.userEdition);
-		addNotification({ message: "user.VUserCreated", type: "success", i18n: true });
-	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
-		return;
-	}
-	userId = usersStore.userEdition.id_user;
-	router.push("/users/" + usersStore.userEdition.id_user);
-};
-const userUpdate = async() => {
-	try {
-		await schemaUser.value.validate(usersStore.userEdition, { abortEarly: false });
-		await usersStore.updateUser(userId, { ...usersStore.userEdition });
-		addNotification({ message: "user.VUserUpdated", type: "success", i18n: true });
+		if (userId !== "new") {
+			await usersStore.updateUser(userId, { ...usersStore.userEdition });
+			addNotification({ message: "user.VUserUpdated", type: "success", i18n: true });
+		} else {
+			await usersStore.createUser({ ...usersStore.userEdition });
+			addNotification({ message: "user.VUserCreated", type: "success", i18n: true });
+		}
 		usersStore.userEdition.mdp_user = "";
 		usersStore.userEdition.confirm_mdp_user = "";
 		usersStore.userEdition.current_mdp_user = "";
@@ -202,6 +193,9 @@ const userUpdate = async() => {
 			addNotification({ message: error.message, type: "error", i18n: false });
 		});
 		return;
+	}
+	if (userId === "new") {
+		router.push("/users/" + usersStore.userEdition.id_user);
 	}
 };
 const userDelete = async() => {
@@ -264,32 +258,8 @@ watch(isChecked, (newValue) => {
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4">{{ $t('user.VUserTitle') }}</h2>
-		<div class="flex space-x-4">
-			<button type="button" @click="userSave" v-if="userId == 'new' && authStore.user?.role_user == 1 && authStore.user?.role_user == 2"
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-				<span v-show="usersStore.userEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('user.VUserAdd') }}
-			</button>
-			<button type="button" @click="userUpdate"
-				v-else-if="userId != 'new' && authStore.user?.role_user == 1 && authStore.user?.role_user == 2"
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-				<span v-show="usersStore.userEdition.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('user.VUserUpdate') }}
-			</button>
-			<button type="button" @click="userDeleteModalShow = true"
-				v-if="userId != 'new' && authStore.user?.role_user == 1 && authStore.user?.role_user == 2"
-				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-				{{ $t('user.VUserDelete') }}
-			</button>
-			<RouterLink to="/users"
-				class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
-				{{ $t('user.VUserBack') }}
-			</RouterLink>
-		</div>
+		<TopButtonEditElement :main-config="{ path: '/users', save: { sameUserId: true, roleRequired: 1, loading: usersStore.userEdition.loading }, delete: { sameUserId: true, roleRequired: 1 } }"
+			:id="userId" :store-user="authStore.user" @button-save="userSave" @button-delete="userDeleteModalShow = true"/>
 	</div>
 	<div :class="usersStore.users[userId] || userId == 'new' ? 'block' : 'hidden'">
 		<div class="mb-6 flex justify-between flex-wrap">
@@ -536,22 +506,7 @@ watch(isChecked, (newValue) => {
 		<div>{{ $t('user.VUserLoading') }}</div>
 	</div>
 
-	<div v-if="userDeleteModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="userDeleteModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<h2 class="text-xl mb-4">{{ $t('user.VUserDeleteTitle') }}</h2>
-			<p v-if="authStore.user?.id_user !== Number(userId)">{{ $t('user.VUserDeleteTextAdmin') }}</p>
-			<p v-else>{{ $t('user.VUserDeleteTextUser') }}</p>
-			<div class="flex justify-end space-x-4 mt-4">
-				<button type="button" @click="userDelete()"
-					class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
-					{{ $t('user.VUserDeleteConfirm') }}
-				</button>
-				<button type="button" @click="userDeleteModalShow = false"
-					class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-					{{ $t('user.VUserDeleteCancel') }}
-				</button>
-			</div>
-		</div>
-	</div>
+	<ModalDeleteConfirm :showModal="userDeleteModalShow" @closeModal="userDeleteModalShow = false"
+		@deleteConfirmed="userDelete" :textTitle="'user.VUserDeleteTitle'"
+		:textP="(authStore.user?.id_user !== Number(userId)) ? 'user.VUserDeleteTextAdmin' : 'user.VUserDeleteTextUser'"/>
 </template>

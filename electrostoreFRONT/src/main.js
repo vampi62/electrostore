@@ -17,7 +17,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./assets/tailwind.css";
 
-import { NotificationContainer, FilterContainer, Tableau } from "./components";
+import { NotificationContainer, FilterContainer, Tableau, ModalDeleteConfirm, TopButtonEditElement } from "./components";
 
 const app = createApp(App);
 
@@ -38,6 +38,8 @@ app.use(i18n);
 app.component("NotificationContainer", NotificationContainer);
 app.component("FilterContainer", FilterContainer);
 app.component("Tableau", Tableau);
+app.component("ModalDeleteConfirm", ModalDeleteConfirm);
+app.component("TopButtonEditElement", TopButtonEditElement);
 app.provide("useNotification", useNotification());
 
 app.mount("#app");

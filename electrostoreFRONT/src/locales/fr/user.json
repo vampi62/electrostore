@@ -36,10 +36,6 @@
 	"VUserConfirmPasswordMatch": "Les mots de passe ne correspondent pas",
 	"VUserCurrentPasswordRequired": "Mot de passe actuel requis",
 	"VUserTitle": "Utilisateur",
-	"VUserAdd": "Ajouter un utilisateur",
-	"VUserUpdate": "Mettre à jour",
-	"VUserDelete": "Supprimer",
-	"VUserBack": "Retour",
 	"VUserName": "Nom",
 	"VUserFirstName": "Prénom",
 	"VUserEmail": "Email",
@@ -67,7 +63,5 @@
 	"VUserLoading": "Chargement",
 	"VUserDeleteTitle": "Supprimer l'utilisateur",
 	"VUserDeleteTextAdmin": "Voulez-vous vraiment supprimer cet utilisateur?",
-	"VUserDeleteTextUser": "Voulez-vous vraiment supprimer votre compte?",
-	"VUserDeleteConfirm": "Confirmer",
-	"VUserDeleteCancel": "Annuler"
+	"VUserDeleteTextUser": "Voulez-vous vraiment supprimer votre compte?"
 }
