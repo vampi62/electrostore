@@ -2,6 +2,8 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using electrostore.Enums;
+using electrostore.Services.SessionService;
 
 namespace electrostore.Services.BoxTagService;
 
@@ -9,11 +11,13 @@ public class BoxTagService : IBoxTagService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly ISessionService _sessionService;
 
-    public BoxTagService(IMapper mapper, ApplicationDbContext context)
+    public BoxTagService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService)
     {
         _mapper = mapper;
         _context = context;
+        _sessionService = sessionService;
     }
 
     public async Task<IEnumerable<ReadExtendedBoxTagDto>> GetBoxsTagsByBoxId(int boxId, int limit = 100, int offset = 0, List<string>? expand = null)
@@ -104,6 +108,11 @@ public class BoxTagService : IBoxTagService
 
     public async Task<ReadBoxTagDto> CreateBoxTag(CreateBoxTagDto boxTagDto)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to create BoxTag");
+        }
         // check if box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxTagDto.id_box))
         {
@@ -131,6 +140,11 @@ public class BoxTagService : IBoxTagService
 
     public async Task<ReadBulkBoxTagDto> CreateBulkBoxTag(List<CreateBoxTagDto> boxTagBulkDto)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to create BoxTag");
+        }
         var validQuery = new List<ReadBoxTagDto>();
         var errorQuery = new List<ErrorDetail>();
         foreach (var boxTagDto in boxTagBulkDto)
@@ -157,6 +171,11 @@ public class BoxTagService : IBoxTagService
 
     public async Task DeleteBoxTag(int boxId, int tagId)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to delete BoxTag");
+        }
         var boxTagToDelete = await _context.BoxsTags.FindAsync(boxId, tagId) ?? throw new KeyNotFoundException($"BoxTag with id {boxId} and {tagId} not found");
         _context.BoxsTags.Remove(boxTagToDelete);
         await _context.SaveChangesAsync();
@@ -172,6 +191,11 @@ public class BoxTagService : IBoxTagService
 
     public async Task<ReadBulkBoxTagDto> DeleteBulkItemTag(List<CreateBoxTagDto> boxTagBulkDto)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to delete BoxTag");
+        }
         var validQuery = new List<ReadBoxTagDto>();
         var errorQuery = new List<ErrorDetail>();
         foreach (var boxTagDto in boxTagBulkDto)

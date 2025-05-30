@@ -2,7 +2,9 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using electrostore.Enums;
 using System.Net.Http.Headers;
+using electrostore.Services.SessionService;
 using electrostore.Services.JwiService;
 using System.Text.Json;
 using System.Text;
@@ -14,12 +16,14 @@ public class CameraService : ICameraService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly ISessionService _sessionService;
     private readonly IJwiService _jwiService;
 
-    public CameraService(IMapper mapper, ApplicationDbContext context, IJwiService jwiService)
+    public CameraService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IJwiService jwiService)
     {
         _mapper = mapper;
         _context = context;
+        _sessionService = sessionService;
         _jwiService = jwiService;
     }
 
@@ -50,6 +54,11 @@ public class CameraService : ICameraService
 
     public async Task<ReadCameraDto> CreateCamera(CreateCameraDto cameraDto)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to create a camera");
+        }
         var newCamera = new Cameras
         {
             nom_camera = cameraDto.nom_camera,
@@ -64,6 +73,11 @@ public class CameraService : ICameraService
 
     public async Task<ReadCameraDto> UpdateCamera(int id, UpdateCameraDto cameraDto)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to update a camera");
+        }
         var cameraToUpdate = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id {id} not found");
         if (cameraDto.nom_camera is not null)
         {
@@ -87,6 +101,11 @@ public class CameraService : ICameraService
 
     public async Task DeleteCamera(int id)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to delete a camera");
+        }
         var cameraToDelete = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id {id} not found");
         _context.Cameras.Remove(cameraToDelete);
         await _context.SaveChangesAsync();

@@ -47,6 +47,11 @@ public class IAService : IIAService
 
     public async Task<ReadIADto> CreateIA(CreateIADto iaDto)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole != UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to create IA");
+        }
         var newIA = new IA
         {
             nom_ia = iaDto.nom_ia,
@@ -59,6 +64,11 @@ public class IAService : IIAService
 
     public async Task<ReadIADto> UpdateIA(int id, UpdateIADto iaDto)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole != UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to update IA");
+        }
         var iaToUpdate = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");
         if (iaDto.nom_ia is not null)
         {
@@ -83,6 +93,11 @@ public class IAService : IIAService
 
     public async Task DeleteIA(int id)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole != UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to delete IA");
+        }
         var iaToDelete = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");
         // remove model if exists
         if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models","Model" + id.ToString() + ".keras")))
@@ -97,7 +112,10 @@ public class IAService : IIAService
 
     public async Task<IAStatusDto> GetIATrainingStatusById(int id)
     {
-        var ia = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");
+        if (await _context.IA.FindAsync(id) == null)
+        {
+            throw new KeyNotFoundException($"IA with id {id} not found");
+        }
         try
         {
             var httpClient = new HttpClient();
@@ -138,7 +156,10 @@ public class IAService : IIAService
         {
             throw new UnauthorizedAccessException("You are not authorized to train IA");
         }
-        var ia = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");
+        if (await _context.IA.FindAsync(id) == null)
+        {
+            throw new KeyNotFoundException($"IA with id {id} not found");
+        }
         try
         {
             var httpClient = new HttpClient();

@@ -14,15 +14,15 @@ public interface IJwiService
 
     public Task RevokeAllRefreshTokenByUser(int userId, string reason);
 
-    public Task<IEnumerable<ReadRefreshTokenDto>> GetTokenSessionsByUserId(int userId, int limit, int offset, bool showRevoked = false, bool showExpired = false);
+    public Task<IEnumerable<SessionDto>> GetTokenSessionsByUserId(int userId, int limit, int offset, bool showRevoked = false, bool showExpired = false);
 
     public Task<int> GetTokenSessionsCountByUserId(int userId);
 
-    public Task<ReadRefreshTokenDto> GetTokenSessionById(string id, int userId, bool showRevoked = false, bool showExpired = false);
+    public Task<SessionDto> GetTokenSessionById(string id, int userId, bool showRevoked = false, bool showExpired = false);
 
     public Task<Guid> GetSessionIdByTokenId(string id, int userId);
 
-    public Task RevokeSessionById(string id, string reason, int userId);
+    public Task<SessionDto> RevokeSessionById(string id, string reason, int userId);
 
     public Task RevokePairTokenByRefreshToken(string refreshToken, string reason, int? userId = null);
 }

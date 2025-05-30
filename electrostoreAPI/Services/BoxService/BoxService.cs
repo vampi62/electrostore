@@ -2,6 +2,8 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using electrostore.Enums;
+using electrostore.Services.SessionService;
 
 namespace electrostore.Services.BoxService;
 
@@ -9,11 +11,13 @@ public class BoxService : IBoxService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly ISessionService _sessionService;
 
-    public BoxService(IMapper mapper, ApplicationDbContext context)
+    public BoxService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService)
     {
         _mapper = mapper;
         _context = context;
+        _sessionService = sessionService;
     }
 
     public async Task<IEnumerable<ReadExtendedBoxDto>> GetBoxsByStoreId(int storeId, int limit = 100, int offset = 0, List<string>? expand = null)
@@ -89,6 +93,11 @@ public class BoxService : IBoxService
 
     public async Task<ReadBoxDto> CreateBox(CreateBoxDto boxDto)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to create a box");
+        }
         // end position must be greater than start position
         if (boxDto.xend_box <= boxDto.xstart_box || boxDto.yend_box <= boxDto.ystart_box)
         {
@@ -128,6 +137,11 @@ public class BoxService : IBoxService
 
     public async Task<ReadBulkBoxDto> CreateBulkBox(List<CreateBoxDto> boxsDto)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to create boxes");
+        }
         var validQuery = new List<ReadBoxDto>();
         var errorQuery = new List<ErrorDetail>();
         foreach (var boxDto in boxsDto)
@@ -191,6 +205,11 @@ public class BoxService : IBoxService
 
     public async Task<ReadBoxDto> UpdateBox(int id, UpdateBoxDto boxDto, int? storeId = null)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to update a box");
+        }
         var boxToUpdate = await _context.Boxs.FindAsync(id);
         bool newXYPosition = false;
         if ((boxToUpdate is null) || (storeId is not null && boxToUpdate.id_store != storeId))
@@ -258,6 +277,11 @@ public class BoxService : IBoxService
 
     public async Task<ReadBulkBoxDto> UpdateBulkBox(List<UpdateBulkBoxByStoreDto> boxsDto, int? storeId = null)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to update boxes");
+        }
         var validQuery = new List<ReadBoxDto>();
         var errorQuery = new List<ErrorDetail>();
         foreach (var boxDto in boxsDto)
@@ -355,6 +379,11 @@ public class BoxService : IBoxService
 
     public async Task DeleteBox(int id, int? storeId = null)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to delete a box");
+        }
         var boxToDelete = await _context.Boxs.FindAsync(id);
         if ((boxToDelete is null) || (storeId is not null && boxToDelete.id_store != storeId))
         {
@@ -371,6 +400,11 @@ public class BoxService : IBoxService
 
     public async Task<ReadBulkBoxDto> DeleteBulkBox(List<int> ids, int storeId)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to delete boxes");
+        }
         var validQuery = new List<ReadBoxDto>();
         var errorQuery = new List<ErrorDetail>();
         foreach (var id in ids)

@@ -2,10 +2,12 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using electrostore.Enums;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Protocol;
 using System.Text.Json;
+using electrostore.Services.SessionService;
 
 namespace electrostore.Services.LedService;
 
@@ -14,12 +16,14 @@ public class LedService : ILedService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly IMqttClient _mqttClient;
+    private readonly ISessionService _sessionService;
 
-    public LedService(IMapper mapper, ApplicationDbContext context, IMqttClient mqttClient)
+    public LedService(IMapper mapper, ApplicationDbContext context, IMqttClient mqttClient, ISessionService sessionService)
     {
         _mapper = mapper;
         _context = context;
         _mqttClient = mqttClient;
+        _sessionService = sessionService;
     }
 
     public async Task<IEnumerable<ReadLedDto>> GetLedsByStoreId(int storeId, int limit = 100, int offset = 0)
@@ -61,6 +65,11 @@ public class LedService : ILedService
 
     public async Task<ReadLedDto> CreateLed(CreateLedDto ledDto)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to create a led");
+        }
         // check if store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == ledDto.id_store))
         {
@@ -80,6 +89,11 @@ public class LedService : ILedService
 
     public async Task<ReadBulkLedDto> CreateBulkLed(List<CreateLedDto> ledsDto)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to create leds");
+        }
         var validQuery = new List<ReadLedDto>();
         var errorQuery = new List<ErrorDetail>();
         foreach (var ledDto in ledsDto)
@@ -106,6 +120,11 @@ public class LedService : ILedService
 
     public async Task<ReadLedDto> UpdateLed(int id, UpdateLedDto ledDto, int? storeId = null)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to update a led");
+        }
         var ledToUpdate = await _context.Leds.FindAsync(id) ?? throw new KeyNotFoundException($"Led with id {id} not found");
         if ((storeId is not null) && (ledToUpdate.id_store != storeId))
         {
@@ -129,6 +148,11 @@ public class LedService : ILedService
 
     public async Task<ReadBulkLedDto> UpdateBulkLed(List<UpdateBulkLedStoreDto> ledsDto, int storeId)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to update leds");
+        }
         var validQuery = new List<ReadLedDto>();
         var errorQuery = new List<ErrorDetail>();
         foreach (var ledDto in ledsDto)
@@ -161,6 +185,11 @@ public class LedService : ILedService
 
     public async Task DeleteLed(int id, int? storeId = null)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to delete a led");
+        }
         var ledToDelete = await _context.Leds.FindAsync(id) ?? throw new KeyNotFoundException($"Led with id {id} not found");
         if ((storeId is not null) && (ledToDelete.id_store != storeId))
         {
@@ -172,6 +201,11 @@ public class LedService : ILedService
 
     public async Task<ReadBulkLedDto> DeleteBulkLed(List<int> ids, int storeId)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to delete leds");
+        }
         var validQuery = new List<ReadLedDto>();
         var errorQuery = new List<ErrorDetail>();
         foreach (var id in ids)

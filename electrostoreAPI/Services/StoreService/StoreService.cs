@@ -2,6 +2,8 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using electrostore.Enums;
+using electrostore.Services.SessionService;
 
 namespace electrostore.Services.StoreService;
 
@@ -9,11 +11,13 @@ public class StoreService : IStoreService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly ISessionService _sessionService;
 
-    public StoreService(IMapper mapper, ApplicationDbContext context)
+    public StoreService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService)
     {
         _mapper = mapper;
         _context = context;
+        _sessionService = sessionService;
     }
 
     // limit the number of store to 100 and add offset and search parameters
@@ -85,6 +89,11 @@ public class StoreService : IStoreService
 
     public async Task<ReadStoreDto> CreateStore(CreateStoreDto storeDto)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to create a store");
+        }
         var newStore = new Stores
         {
             nom_store = storeDto.nom_store,
@@ -99,6 +108,11 @@ public class StoreService : IStoreService
 
     public async Task<ReadStoreDto> UpdateStore(int id, UpdateStoreDto storeDto)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to update a store");
+        }
         var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id {id} not found");
         if (storeDto.nom_store is not null)
         {
@@ -132,6 +146,11 @@ public class StoreService : IStoreService
 
     public async Task DeleteStore(int id)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to delete a store");
+        }
         var storeToDelete = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id {id} not found");
         _context.Stores.Remove(storeToDelete);
         await _context.SaveChangesAsync();
