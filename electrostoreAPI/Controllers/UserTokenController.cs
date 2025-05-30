@@ -19,7 +19,7 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadRefreshTokenDto>>> GetSessions([FromRoute] int id_user, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        public async Task<ActionResult<IEnumerable<SessionDto>>> GetSessions([FromRoute] int id_user, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
             [FromQuery] bool showRevoked = false, [FromQuery] bool showExpired = false)
         {
             var sessions = await _jwiService.GetTokenSessionsByUserId(id_user, limit, offset, showRevoked, showExpired);
@@ -31,7 +31,7 @@ namespace electrostore.Controllers
 
         [HttpGet("{session_id}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadRefreshTokenDto>> GetSessionById([FromRoute] int id_user, [FromRoute] string session_id,
+        public async Task<ActionResult<SessionDto>> GetSessionById([FromRoute] int id_user, [FromRoute] string session_id,
             [FromQuery] bool showRevoked = false, [FromQuery] bool showExpired = false)
         {
             var session = await _jwiService.GetTokenSessionById(session_id, id_user, showRevoked, showExpired);
@@ -40,10 +40,10 @@ namespace electrostore.Controllers
 
         [HttpPut("{session_id}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> RevokeSessionById([FromRoute] int id_user, [FromRoute] string session_id, [FromBody] UpdateAccessTokenDto updateAccessTokenDto)
+        public async Task<ActionResult<SessionDto>> RevokeSessionById([FromRoute] int id_user, [FromRoute] string session_id, [FromBody] UpdateAccessTokenDto updateAccessTokenDto)
         {
-            await _jwiService.RevokeSessionById(session_id, updateAccessTokenDto.revoked_reason ?? "Revoked by user", id_user);
-            return NoContent();
+            var session = await _jwiService.RevokeSessionById(session_id, updateAccessTokenDto.revoked_reason ?? "Revoked by user", id_user);
+            return Ok(session);
         }
     }
 }

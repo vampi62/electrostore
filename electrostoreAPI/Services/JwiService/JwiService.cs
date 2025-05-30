@@ -146,7 +146,7 @@ public class JwiService : IJwiService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<ReadRefreshTokenDto>> GetTokenSessionsByUserId(int userId, int limit, int offset, bool showRevoked = false, bool showExpired = false)
+    public async Task<IEnumerable<SessionDto>> GetTokenSessionsByUserId(int userId, int limit, int offset, bool showRevoked = false, bool showExpired = false)
     {
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
@@ -156,19 +156,34 @@ public class JwiService : IJwiService
         }
         var query = _context.JwiRefreshTokens
             .Where(jwi => jwi.id_user == userId);
+        var groupedQuery = query
+            .GroupBy(jwi => jwi.session_id)
+            .Select(group => new SessionDto
+            {
+                session_id = group.Key,
+                expires_at = group.OrderByDescending(jwi => jwi.expires_at).First().expires_at,
+                is_revoked = group.OrderByDescending(jwi => jwi.expires_at).First().is_revoked,
+                created_at = group.OrderByDescending(jwi => jwi.expires_at).First().created_at,
+                created_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().created_by_ip,
+                revoked_at = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_at,
+                revoked_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_by_ip,
+                revoked_reason = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_reason,
+                id_user = group.OrderByDescending(jwi => jwi.expires_at).First().id_user,
+                first_created_at = group.OrderBy(jwi => jwi.expires_at).First().created_at
+            })
+            .OrderByDescending(jwi => jwi.created_at)
+            .Skip(offset)
+            .Take(limit);
+        var sessions = await groupedQuery.ToListAsync();
         if (!showRevoked)
         {
-            query = query.Where(jwi => !jwi.is_revoked);
+            sessions = sessions.Where(s => !s.is_revoked).ToList();
         }
         if (!showExpired)
         {
-            query = query.Where(jwi => jwi.expires_at > DateTime.UtcNow);
+            sessions = sessions.Where(s => s.expires_at > DateTime.UtcNow).ToList();
         }
-        query = query.OrderByDescending(jwi => jwi.created_at);
-        query = query.GroupBy(jwi => jwi.session_id).Select(group => group.First());
-        query = query.Skip(offset).Take(limit);
-        var sessions = await query.ToListAsync();
-        return _mapper.Map<IEnumerable<ReadRefreshTokenDto>>(sessions);
+        return sessions;
     }
 
     public async Task<int> GetTokenSessionsCountByUserId(int userId)
@@ -180,7 +195,7 @@ public class JwiService : IJwiService
         return count;
     }
 
-    public async Task<ReadRefreshTokenDto> GetTokenSessionById(string id, int userId, bool showRevoked = false, bool showExpired = false)
+    public async Task<SessionDto> GetTokenSessionById(string id, int userId, bool showRevoked = false, bool showExpired = false)
     {
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
@@ -189,19 +204,23 @@ public class JwiService : IJwiService
             throw new UnauthorizedAccessException("You are not authorized to view this session.");
         }
         var query = _context.JwiRefreshTokens
-            .Where(jwi => jwi.id_user == userId && jwi.id_jwi_refresh == Guid.Parse(id));
-        if (!showRevoked)
-        {
-            query = query.Where(jwi => !jwi.is_revoked);
-        }
-        if (!showExpired)
-        {
-            query = query.Where(jwi => jwi.expires_at > DateTime.UtcNow);
-        }
-        query = query.OrderByDescending(jwi => jwi.created_at);
-        query = query.GroupBy(jwi => jwi.session_id).Select(group => group.First());
-        var session = await query.FirstOrDefaultAsync();
-        return _mapper.Map<ReadRefreshTokenDto>(session);
+            .Where(jwi => jwi.id_user == userId && jwi.session_id == Guid.Parse(id));
+        var groupedQuery = query
+            .GroupBy(jwi => jwi.session_id)
+            .Select(group => new SessionDto
+            {
+                session_id = group.Key,
+                expires_at = group.OrderByDescending(jwi => jwi.expires_at).First().expires_at,
+                is_revoked = group.OrderByDescending(jwi => jwi.expires_at).First().is_revoked,
+                created_at = group.OrderByDescending(jwi => jwi.expires_at).First().created_at,
+                created_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().created_by_ip,
+                revoked_at = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_at,
+                revoked_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_by_ip,
+                revoked_reason = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_reason,
+                id_user = group.OrderByDescending(jwi => jwi.expires_at).First().id_user,
+                first_created_at = group.OrderBy(jwi => jwi.expires_at).First().created_at
+            });
+        return await groupedQuery.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Session with id {id} not found for user {userId}");
     }
 
     public async Task<Guid> GetSessionIdByTokenId(string id, int userId)
@@ -218,7 +237,7 @@ public class JwiService : IJwiService
         return session?.session_id ?? Guid.Empty;
     }
 
-    public async Task RevokeSessionById(string id, string reason, int userId)
+    public async Task<SessionDto> RevokeSessionById(string id, string reason, int userId)
     {
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
@@ -248,6 +267,23 @@ public class JwiService : IJwiService
             jwi_access.revoked_reason = reason;
         }
         await _context.SaveChangesAsync();
+        return await _context.JwiRefreshTokens
+            .Where(jwi => jwi.id_user == userId && jwi.session_id == Guid.Parse(id))
+            .GroupBy(jwi => jwi.session_id)
+            .Select(group => new SessionDto
+            {
+                session_id = group.Key,
+                expires_at = group.OrderByDescending(jwi => jwi.expires_at).First().expires_at,
+                is_revoked = group.OrderByDescending(jwi => jwi.expires_at).First().is_revoked,
+                created_at = group.OrderByDescending(jwi => jwi.expires_at).First().created_at,
+                created_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().created_by_ip,
+                revoked_at = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_at,
+                revoked_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_by_ip,
+                revoked_reason = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_reason,
+                id_user = group.OrderByDescending(jwi => jwi.expires_at).First().id_user,
+                first_created_at = group.OrderBy(jwi => jwi.expires_at).First().created_at
+            })
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Session with id {id} not found for user {userId}");     
     }
 
     public async Task RevokePairTokenByRefreshToken(string refreshToken, string reason, int? userId = null)

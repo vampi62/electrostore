@@ -2,6 +2,8 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using electrostore.Enums;
+using electrostore.Services.SessionService;
 
 namespace electrostore.Services.StoreTagService;
 
@@ -9,11 +11,13 @@ public class StoreTagService : IStoreTagService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly ISessionService _sessionService;
 
-    public StoreTagService(IMapper mapper, ApplicationDbContext context)
+    public StoreTagService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService)
     {
         _mapper = mapper;
         _context = context;
+        _sessionService = sessionService;
     }
 
     public async Task<IEnumerable<ReadExtendedStoreTagDto>> GetStoresTagsByStoreId(int storeId, int limit = 100, int offset = 0, List<string>? expand = null)
@@ -102,6 +106,11 @@ public class StoreTagService : IStoreTagService
 
     public async Task<ReadStoreTagDto> CreateStoreTag(CreateStoreTagDto storeTagDto)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to create StoreTag");
+        }
         // check if store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeTagDto.id_store))
         {
@@ -129,6 +138,11 @@ public class StoreTagService : IStoreTagService
 
     public async Task<ReadBulkStoreTagDto> CreateBulkStoreTag(List<CreateStoreTagDto> storeTagBulkDto)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to create StoreTag");
+        }
         var validQuery = new List<ReadStoreTagDto>();
         var errorQuery = new List<ErrorDetail>();
         foreach (var storeTagDto in storeTagBulkDto)
@@ -155,6 +169,11 @@ public class StoreTagService : IStoreTagService
 
     public async Task DeleteStoreTag(int storeId, int tagId)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to delete StoreTag");
+        }
         var storeTag = await _context.StoresTags.FindAsync(storeId, tagId) ?? throw new KeyNotFoundException($"StoreTag with storeId {storeId} and tagId {tagId} not found");
         _context.StoresTags.Remove(storeTag);
         await _context.SaveChangesAsync();
@@ -162,6 +181,11 @@ public class StoreTagService : IStoreTagService
 
     public async Task<ReadBulkStoreTagDto> DeleteBulkItemTag(List<CreateStoreTagDto> storeTagBulkDto)
     {
+        var clientRole = _sessionService.GetClientRole();
+        if (clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to delete StoreTag");
+        }
         var validQuery = new List<ReadStoreTagDto>();
         var errorQuery = new List<ErrorDetail>();
         foreach (var storeTagDto in storeTagBulkDto)
