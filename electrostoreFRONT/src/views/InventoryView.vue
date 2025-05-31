@@ -105,6 +105,7 @@ const handleFileUpload = (e) => {
 
 const filter = ref([
 	{ key: "reference_name_item", value: "", type: "text", label: "item.VInventoryFilterName", compareMethod: "contain" },
+	{ key: "friendly_name_item", value: "", type: "text", label: "item.VInventoryFilterFriendlyName", compareMethod: "contain" },
 	{ key: "seuil_min_item", value: "", type: "number", label: "item.VInventoryFilterSeuilMin", compareMethod: ">=" },
 	{ key: "seuil_min_item", value: "", type: "number", label: "item.VInventoryFilterSeuilMax", compareMethod: "<=" },
 	{ key: "qte_item_box", subPath: "item_boxs", value: "", type: "number", label: "item.VInventoryFilterQuantityMin", compareMethod: ">=" },
@@ -113,6 +114,7 @@ const filter = ref([
 ]);
 const tableauLabel = ref([
 	{ label: "item.VInventoryName", sortable: true, key: "reference_name_item", type: "text" },
+	{ label: "item.VInventoryFriendlyName", sortable: true, key: "friendly_name_item", type: "text" },
 	{ label: "item.VInventorySeuil", sortable: true, key: "seuil_min_item", type: "text" },
 	{ label: "item.VInventoryDescription", sortable: false, key: "description_item", type: "text" },
 	{ label: "item.VInventoryTags", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, keyStoreLink: "id_tag", ressourcePrint: [{ type: "ressource", key: "nom_tag" }] } },

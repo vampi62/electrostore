@@ -23,7 +23,7 @@
 						storeData[1][commentaire.id_user].prenom_user }}
 				</span>
 				<span class="text-xs text-gray-500">
-					- {{ commentaire[meta.date_created] }} - {{ commentaire[meta.date_updated] }}
+					- {{ commentaire.created_at }} - {{ commentaire.updated_at }}
 				</span>
 			</div>
 			<div v-if="meta.CanEdit" class="text-center text-gray-800 mb-2">

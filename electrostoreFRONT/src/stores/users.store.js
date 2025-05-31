@@ -291,14 +291,14 @@ export const useUsersStore = defineStore("users",{
 		async getTokenByInterval(idUser, limit = 100, offset = 0) {
 			this.tokensLoading = true;
 			let newTokenList = await fetchWrapper.get({
-				url: `${baseUrl}/user/${idUser}/token?limit=${limit}&offset=${offset}`,
+				url: `${baseUrl}/user/${idUser}/sessions?limit=${limit}&offset=${offset}`,
 				useToken: "access",
 			});
 			if (!this.tokens[idUser]) {
 				this.tokens[idUser] = {};
 			}
 			for (const token of newTokenList["data"]) {
-				this.tokens[idUser][token.id_jwi_refresh] = token;
+				this.tokens[idUser][token.session_id] = token;
 			}
 			this.tokensTotalCount[idUser] = newTokenList["count"];
 			this.tokensLoading = false;
@@ -312,14 +312,14 @@ export const useUsersStore = defineStore("users",{
 			}
 			this.tokens[idUser][id].loading = true;
 			this.tokens[idUser][id] = await fetchWrapper.get({
-				url: `${baseUrl}/user/${idUser}/token/${id}`,
+				url: `${baseUrl}/user/${idUser}/sessions/${id}`,
 				useToken: "access",
 			});
 		},
 		async updateToken(idUser, id, params) {
 			this.tokensEdition.loading = true;
 			this.tokensEdition = await fetchWrapper.put({
-				url: `${baseUrl}/user/${idUser}/token/${id}`,
+				url: `${baseUrl}/user/${idUser}/sessions/${id}`,
 				useToken: "access",
 				body: params,
 			});

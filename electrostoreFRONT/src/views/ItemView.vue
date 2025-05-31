@@ -14,13 +14,14 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 const itemId = route.params.id;
 
-import { useConfigsStore, useItemsStore, useTagsStore, useStoresStore, useCommandsStore, useProjetsStore } from "@/stores";
+import { useConfigsStore, useItemsStore, useTagsStore, useStoresStore, useCommandsStore, useProjetsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
 const itemsStore = useItemsStore();
 const tagsStore = useTagsStore();
 const storesStore = useStoresStore();
 const commandsStore = useCommandsStore();
 const projetsStore = useProjetsStore();
+const authStore = useAuthStore();
 
 async function fetchAllData() {
 	if (itemId !== "new") {
@@ -44,6 +45,7 @@ async function fetchAllData() {
 		itemsStore.itemEdition = {
 			loading: false,
 			reference_name_item: itemsStore.items[itemId].reference_name_item,
+			friendly_name_item: itemsStore.items[itemId].friendly_name_item,
 			description_item: itemsStore.items[itemId].description_item,
 			seuil_min_item: itemsStore.items[itemId].seuil_min_item,
 			id_img: itemsStore.items[itemId].id_img,
@@ -399,6 +401,9 @@ const schemaItem = Yup.object().shape({
 	reference_name_item: Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
 		.required(t("item.VItemNameRequired")),
+	friendly_name_item: Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemFriendlyNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+		.required(t("item.VItemFriendlyNameRequired")),
 	description_item: Yup.string()
 		.max(configsStore.getConfigByKey("max_length_description"), t("item.VItemDescriptionMaxLength") + " " + configsStore.getConfigByKey("max_length_description") + t("common.VAllCaracters"))
 		.required(t("item.VItemDescriptionRequired")),
@@ -457,6 +462,16 @@ const schemaAddImage = Yup.object().shape({
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors.reference_name_item }" />
 								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.reference_name_item || ' ' }}</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="font-semibold pr-4 align-text-top">{{ $t('item.VItemFriendlyName') }}:</td>
+							<td class="flex flex-col">
+								<Field name="friendly_name_item" type="text"
+									v-model="itemsStore.itemEdition.friendly_name_item"
+									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+									:class="{ 'border-red-500': errors.friendly_name_item }" />
+								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.friendly_name_item || ' ' }}</span>
 							</td>
 						</tr>
 						<tr>
