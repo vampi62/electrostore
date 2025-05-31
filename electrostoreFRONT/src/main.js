@@ -17,7 +17,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "./assets/tailwind.css";
 
-import { NotificationContainer, FilterContainer, Tableau, ModalDeleteConfirm, TopButtonEditElement } from "./components";
+import { Commentaire, FilterContainer, ModalDeleteConfirm, NotificationContainer, Tableau, TopButtonEditElement } from "./components";
 
 const app = createApp(App);
 
@@ -35,11 +35,12 @@ app.component("font-awesome-icon", FontAwesomeIcon);
 app.use(createPinia());
 app.use(router);
 app.use(i18n);
-app.component("NotificationContainer", NotificationContainer);
-app.component("FilterContainer", FilterContainer);
-app.component("Tableau", Tableau);
-app.component("ModalDeleteConfirm", ModalDeleteConfirm);
-app.component("TopButtonEditElement", TopButtonEditElement);
 app.provide("useNotification", useNotification());
+app.component("Commentaire", Commentaire);
+app.component("FilterContainer", FilterContainer);
+app.component("ModalDeleteConfirm", ModalDeleteConfirm);
+app.component("NotificationContainer", NotificationContainer);
+app.component("Tableau", Tableau);
+app.component("TopButtonEditElement", TopButtonEditElement);
 
 app.mount("#app");

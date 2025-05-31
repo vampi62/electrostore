@@ -21,25 +21,6 @@ const usersStore = useUsersStore();
 const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
-async function fetchCommentaires() {
-	if (projetId === "new") {
-		return;
-	}
-	if (projetsStore.commentairesLoading) {
-		return;
-	}
-	const scrollContainer = HTMLContainerProjetsCommentaires.value;
-	if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 5) {
-		const offset = Object.keys(projetsStore.commentaires[projetId]).length;
-		if (Number(projetsStore.commentairesTotalCount[projetId]) === offset) {
-			return;
-		}
-		await projetsStore.getCommentaireByInterval(projetId,
-			(offset + 100 > Number(projetsStore.commentairesTotalCount[projetId]) ? projetsStore.commentairesTotalCount[projetId] : offset + 100),
-			offset, ["user"]);
-	}
-}
-
 async function fetchAllData() {
 	if (projetId !== "new") {
 		projetsStore.projetEdition = {
@@ -72,16 +53,13 @@ async function fetchAllData() {
 	}
 }
 onMounted(() => {
-	HTMLContainerProjetsCommentaires.value.addEventListener("scroll", fetchCommentaires);
 	fetchAllData();
 });
 onBeforeUnmount(() => {
-	HTMLContainerProjetsCommentaires.value.removeEventListener("scroll", fetchCommentaires);
 	projetsStore.projetEdition = {
 		loading: false,
 	};
 });
-const HTMLContainerProjetsCommentaires = ref(null);
 
 const showDocuments = ref(true);
 const showItems = ref(true);
@@ -301,53 +279,6 @@ const filterItem = ref([
 	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("command.VCommandItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
 
-// commentaire
-const commentaireModalShow = ref(false);
-const commentaireModalData = ref({});
-const commentaireFormNew = ref("");
-const commentaireSave = async(commentaire = null) => {
-	if (commentaire === null) {
-		try {
-			schemaCommentaire.validateSync({ contenu_projet_commentaire: commentaireFormNew.value }, { abortEarly: false });
-			await projetsStore.createCommentaire(projetId, {
-				contenu_projet_commentaire: commentaireFormNew.value,
-			});
-			addNotification({ message: "projet.VProjetCommentAdded", type: "success", i18n: true });
-			commentaireFormNew.value = "";
-		} catch (e) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
-			return;
-		}
-	} else {
-		try {
-			schemaCommentaire.validateSync(commentaire.tmp, { abortEarly: false });
-			await projetsStore.updateCommentaire(projetId, commentaire.id_projet_commentaire, commentaire.tmp);
-			addNotification({ message: "projet.VProjetCommentUpdated", type: "success", i18n: true });
-			commentaire.tmp = null;
-		} catch (e) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
-			return;
-		}
-	}
-};
-const commentaireDelete = async() => {
-	try {
-		await projetsStore.deleteCommentaire(projetId, commentaireModalData.value.id_projet_commentaire);
-		addNotification({ message: "projet.VProjetCommentDeleted", type: "success", i18n: true });
-	} catch (e) {
-		addNotification({ message: "projet.VProjetCommentDeleteError", type: "error", i18n: true });
-	}
-	commentaireModalShow.value = false;
-};
-const commentaireDeleteOpenModal = (commentaire) => {
-	commentaireModalData.value = commentaire;
-	commentaireModalShow.value = true;
-};
-
 const schemaProjet = Yup.object().shape({
 	nom_projet: Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("projet.VProjetNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
@@ -392,12 +323,6 @@ const schemaItem = Yup.object().shape({
 		.min(1, t("projet.VProjetItemQuantityMin"))
 		.typeError(t("projet.VProjetItemQuantityType"))
 		.required(t("projet.VProjetItemQuantityRequired")),
-});
-
-const schemaCommentaire = Yup.object().shape({
-	contenu_projet_commentaire: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_commentaire"), t("projet.VProjetCommentMaxLength") + " " + configsStore.getConfigByKey("max_length_commentaire") + t("common.VAllCaracters"))
-		.required(t("projet.VProjetCommentRequired")),
 });
 
 </script>
@@ -624,80 +549,11 @@ const schemaCommentaire = Yup.object().shape({
 				{{ $t('projet.VProjetCommentaires') }} ({{ projetsStore.commentairesTotalCount[projetId] || 0 }})
 			</h3>
 			<div :class="showCommentaires ? 'block' : 'hidden'" class="p-2">
-				<!-- Zone de saisie de commentaire -->
-				<Form :validation-schema="schemaCommentaire" v-slot="{ errors }">
-					<div class="flex items-center space-x-4">
-						<Field name="contenu_projet_commentaire" type="text" v-model="commentaireFormNew"
-							:placeholder="$t('projet.VProjetCommentPlaceholder')"
-							class="w-full p-2 border rounded-lg"
-							:class="{ 'border-red-500': errors.contenu_projet_commentaire }" />
-						<button type="button" @click="commentaireSave(null)"
-							class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-							{{ $t('projet.VProjetCommentAdd') }}
-						</button>
-					</div>
-				</Form>
-				<!-- Affichage des commentaires existants -->
-				<div class="space-y-4 overflow-x-auto max-h-64 overflow-y-auto" ref="HTMLContainerProjetsCommentaires">
-					<div v-for="commentaire in projetsStore.commentaires[projetId]"
-						:key="commentaire.id_projet_commentaire" class="flex flex-col border p-4 rounded-lg">
-						<div :class="{
-							'text-right': commentaire.id_user === authStore.user.id_user,
-							'text-left': commentaire.id_user !== authStore.user.id_user
-						}" class="text-sm text-gray-600">
-							<span class="font-semibold">
-								{{ usersStore.users[commentaire.id_user].nom_user }} {{
-									usersStore.users[commentaire.id_user].prenom_user }}
-							</span>
-							<span class="text-xs text-gray-500">
-								- {{ commentaire.date_projet_commentaire }}
-							</span>
-						</div>
-						<div class="text-center text-gray-800 mb-2">
-							<template v-if="commentaire.tmp">
-								<Form :validation-schema="schemaCommentaire" v-slot="{ errors }">
-									<Field name="contenu_projet_commentaire" type="text"
-										v-model="commentaire.tmp.contenu_projet_commentaire"
-										class="w-full p-2 border rounded-lg"
-										:class="{ 'border-red-500': errors.contenu_projet_commentaire }" />
-									<div class="flex justify-end space-x-2 mt-2">
-										<button type="button" @click="commentaireSave(commentaire)"
-											class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
-											{{ $t('projet.VProjetCommentSave') }}
-										</button>
-										<button type="button" @click="commentaire.tmp = null"
-											class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-											{{ $t('projet.VProjetCommentCancel') }}
-										</button>
-									</div>
-								</Form>
-							</template>
-							<template v-else>
-								<div :class="{
-									'text-right': commentaire.id_user === authStore.user.id_user,
-									'text-left': commentaire.id_user !== authStore.user.id_user
-								}">
-									{{ commentaire.contenu_projet_commentaire }}
-								</div>
-								<!-- Boutons modifier/supprimer si conditions remplies -->
-								<div v-if="commentaire.id_user === authStore.user.id_user || authStore.user.role === 'admin'"
-									class="flex justify-end space-x-2">
-									<button type="button" @click="commentaire.tmp = { ...commentaire }"
-										class="px-3 py-1 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500">
-										{{ $t('projet.VProjetCommentEdit') }}
-									</button>
-									<button type="button" @click="commentaireDeleteOpenModal(commentaire)"
-										class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
-										{{ $t('projet.VProjetCommentDelete') }}
-									</button>
-								</div>
-							</template>
-						</div>
-					</div>
-					<div v-if="projetsStore.commentairesLoading" class="text-center">
-						{{ $t('projet.VProjetLoading') }}
-					</div>
-				</div>
+				<Commentaire :meta="{ contenu: 'contenu_projet_commentaire', date_created: 'created_at', date_updated: 'updated_at', key: 'id_projet_commentaire', CanEdit: true }"
+					:store-data="[projetsStore.commentaires[projetId],usersStore.users,authStore.user,configsStore]"
+					:storeFunction="{ create: (data) => projetsStore.createCommentaire(projetId, data), update: (id, data) => projetsStore.updateCommentaire(projetId, id, data), delete: (id) => projetsStore.deleteCommentaire(projetId, id) }"
+					:loading="projetsStore.commentairesLoading" :texteModalDelete="{ textTitle: 'projet.VProjetCommentDeleteTitle', textP: 'projet.VProjetCommentDeleteText' }"
+				/>
 			</div>
 		</div>
 	</div>
@@ -853,7 +709,4 @@ const schemaCommentaire = Yup.object().shape({
 			</div>
 		</div>
 	</div>
-	<ModalDeleteConfirm :showModal="commentaireModalShow" @closeModal="commentaireModalShow = false"
-		@deleteConfirmed="commentaireDelete" :textTitle="'projet.VProjetCommentDeleteTitle'"
-		:textP="'projet.VProjetCommentDeleteText'"/>
 </template>

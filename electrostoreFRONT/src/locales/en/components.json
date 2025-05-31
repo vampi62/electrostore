@@ -1,4 +1,20 @@
 {
+	"VModalCommentairePlaceholder": "Add a comment",
+	"VModalCommentaireAdd": "Add",
+	"VModalCommentaireSave": "Save",
+	"VModalCommentaireCancel": "Cancel",
+	"VModalCommentaireEdit": "Edit",
+	"VModalCommentaireDelete": "Delete",
+	"VModalCommentaireLink": "Link to resource",
+	"VModalCommentaireLoading": "Loading comments...",
+	"VModalCommentaireMaxLength": "Comment must not exceed ",
+	"VModalCommentaireRequired": "Comment is required",
+	"VModalCommentaireCreateSuccess": "Comment created successfully",
+	"VModalCommentaireUpdateSuccess": "Comment updated successfully",
+	"VModalCommentaireDeleteSuccess": "Comment deleted successfully",
+
+	"VModalTableauImageLoading": "Loading image...",
+
 	"VModalDeleteConfirm": "Confirm",
 	"VModalDeleteCancel": "Cancel",
 	"VModalTopButtonAdd": "Add",

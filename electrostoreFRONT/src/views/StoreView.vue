@@ -361,7 +361,7 @@ const gridOrigin = ref({
 
 function showNewMenu(event) {
 	stopSelecting();
-	if (authStore.user?.role_user !== "admin") {
+	if (authStore.user?.role_user !== 2) {
 		return;
 	}
 	showMenu.value = true;
@@ -478,7 +478,7 @@ function selectBorder(border, direction) {
 }
 
 function startDragging(element, type, direction = null) {
-	if (authStore.user?.role_user !== "admin") {
+	if (authStore.user?.role_user !== 2) {
 		return;
 	}
 	if (hasDragElement.value) {
@@ -956,7 +956,7 @@ const filteredItems = computed(() => {
 						@mousedown.left="startDragging(box, 'box')"
 						@contextmenu.prevent="(event) => selectBox(box, event)"
 						@contextmenu.stop>
-						<div v-if="authStore.user?.role_user === 'admin' && !showMenu && (selectedElement.type == null || selectedElement.key == box) ">
+						<div v-if="authStore.user?.role_user === 2 && !showMenu && (selectedElement.type == null || selectedElement.key == box) ">
 							<div class="resizer corner nw cursor-nw-resize" @mousedown.left="startDragging(box, 'border', 'nw')"
 								@contextmenu.stop>
 							</div>
@@ -1070,7 +1070,7 @@ const filteredItems = computed(() => {
 		<div v-if="showMenu && selectedElement.type == 'led'" class="context-menu"
 			:style="{ left: menuPos.X + 'px', top: menuPos.Y + 'px' }" id="MenuLedEdit">
 			<div class="flex flex-col">
-				<button v-if="authStore.user?.role_user === 'admin'" @click="deleteElement" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600">
+				<button v-if="authStore.user?.role_user === 2" @click="deleteElement" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600">
 					{{ $t('store.VStoreDeleteLed') }}
 				</button>
 				<button @click="toggleLed(selectedElement.key.id_led)" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
@@ -1078,7 +1078,7 @@ const filteredItems = computed(() => {
 				</button>
 				<div class="flex space-x-4">
 					<span>{{ $t('store.VStoreMqttLedId') }}</span>
-					<input type="number" v-model="storesStore.ledEdition[selectedElement.key.id_led].mqtt_led_id" class="w-16" :disabled="authStore.user?.role_user !== 'admin'" />
+					<input type="number" v-model="storesStore.ledEdition[selectedElement.key.id_led].mqtt_led_id" class="w-16" :disabled="authStore.user?.role_user !== 2" />
 				</div>
 				<!-- TODO : add color weel and select animation and light duration -->
 			</div>
@@ -1086,7 +1086,7 @@ const filteredItems = computed(() => {
 		<div v-if="showMenu && selectedElement.type == 'box'" class="context-menu"
 			:style="{ left: menuPos.X + 'px', top: menuPos.Y + 'px' }" id="MenuBoxEdit">
 			<div class="flex flex-col">
-				<button v-if="authStore.user?.role_user === 'admin'" @click="deleteElement" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600">
+				<button v-if="authStore.user?.role_user === 2" @click="deleteElement" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600">
 					{{ $t('store.VStoreDeleteBox') }}
 				</button>
 				<button @click="showBoxContent(selectedElement.key.id_box)" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
@@ -1095,7 +1095,7 @@ const filteredItems = computed(() => {
 				<button @click="toggleBoxLed(selectedElement.key.id_box)" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
 					{{ $t('store.VStoreToggleBoxLed') }}
 				</button>
-				<button v-if="authStore.user?.role_user === 'admin'" @click="addLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
+				<button v-if="authStore.user?.role_user === 2" @click="addLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
 					{{ $t('store.VStoreAddLed') }}
 				</button>
 			</div>

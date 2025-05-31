@@ -46,7 +46,7 @@ const updateFilteredIas = (newValue) => {
 		<h2 class="text-2xl font-bold mb-4">{{ $t('ia.VIasTitle') }}</h2>
 	</div>
 	<div>
-		<div :disabled="authStore.user?.role_user !== 'admin'"
+		<div :disabled="authStore.user?.role_user !== 2"
 			class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm cursor-pointer inline-block mb-2">
 			<RouterLink :to="'/ia/new'">
 				{{ $t('ia.VIasAdd') }}

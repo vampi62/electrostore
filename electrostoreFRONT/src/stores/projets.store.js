@@ -111,7 +111,7 @@ export const useProjetsStore = defineStore("projets",{
 				useToken: "access",
 				body: params,
 			});
-			this.projets[id] = params;
+			this.projets[id] = this.projetEdition;
 		},
 		async deleteProjet(id) {
 			this.projetEdition.loading = true;
@@ -158,7 +158,7 @@ export const useProjetsStore = defineStore("projets",{
 			}
 		},
 		async createCommentaire(idProjet, params) {
-			this.commentaireEdition.loading = true;
+			this.commentaireEdition = { loading: true };
 			this.commentaireEdition = await fetchWrapper.post({
 				url: `${baseUrl}/projet/${idProjet}/commentaire`,
 				useToken: "access",
@@ -168,18 +168,19 @@ export const useProjetsStore = defineStore("projets",{
 				this.commentaires[idProjet] = {};
 			}
 			this.commentaires[idProjet][this.commentaireEdition.id_projet_commentaire] = this.commentaireEdition;
+			this.commentairesTotalCount[idProjet] += 1;
 		},
 		async updateCommentaire(idProjet, id, params) {
-			this.commentaireEdition.loading = true;
+			this.commentaireEdition = { loading: true };
 			this.commentaireEdition = await fetchWrapper.put({
 				url: `${baseUrl}/projet/${idProjet}/commentaire/${id}`,
 				useToken: "access",
 				body: params,
 			});
-			this.commentaires[idProjet][id] = params;
+			this.commentaires[idProjet][id] = { ...this.commentaireEdition };
 		},
 		async deleteCommentaire(idProjet, id) {
-			this.commentaireEdition.loading = true;
+			this.commentaireEdition = { loading: true };
 			this.commentaireEdition = await fetchWrapper.delete({
 				url: `${baseUrl}/projet/${idProjet}/commentaire/${id}`,
 				useToken: "access",

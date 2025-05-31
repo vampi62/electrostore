@@ -21,25 +21,6 @@ const usersStore = useUsersStore();
 const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
-async function fetchCommentaires() {
-	if (commandId === "new") {
-		return;
-	}
-	if (commandsStore.commentairesLoading) {
-		return;
-	}
-	const scrollContainer = HTMLContainerCommandsCommentaires.value;
-	if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 5) {
-		const offset = Object.keys(commandsStore.commentaires[commandId]).length;
-		if (Number(commandsStore.commentairesTotalCount[commandId]) === offset) {
-			return;
-		}
-		await commandsStore.getCommentaireByInterval(commandId,
-			(offset + 100 > Number(commandsStore.commentairesTotalCount[commandId]) ? commandsStore.commentairesTotalCount[commandId] : offset + 100),
-			offset, ["user"]);
-	}
-}
-
 async function fetchAllData() {
 	if (commandId !== "new") {
 		commandsStore.commandEdition = {
@@ -74,16 +55,13 @@ async function fetchAllData() {
 	}
 }
 onMounted(() => {
-	HTMLContainerCommandsCommentaires.value.addEventListener("scroll", fetchCommentaires);
 	fetchAllData();
 });
 onBeforeUnmount(() => {
-	HTMLContainerCommandsCommentaires.value.removeEventListener("scroll", fetchCommentaires);
 	commandsStore.commandEdition = {
 		loading: false,
 	};
 });
-const HTMLContainerCommandsCommentaires = ref(null);
 
 const showDocuments = ref(true);
 const showItems = ref(true);
@@ -303,53 +281,6 @@ const filterItem = ref([
 	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("command.VCommandItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
 
-// commentaire
-const commentaireModalShow = ref(false);
-const commentaireModalData = ref({});
-const commentaireFormNew = ref("");
-const commentaireSave = async(commentaire = null) => {
-	if (commentaire === null) {
-		try {
-			schemaCommentaire.validateSync({ contenu_command_commentaire: commentaireFormNew.value }, { abortEarly: false });
-			await commandsStore.createCommentaire(commandId, {
-				contenu_command_commentaire: commentaireFormNew.value,
-			});
-			addNotification({ message: "command.VCommandCommentAdded", type: "success", i18n: true });
-			commentaireFormNew.value = "";
-		} catch (e) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
-			return;
-		}
-	} else {
-		try {
-			schemaCommentaire.validateSync(commentaire.tmp, { abortEarly: false });
-			await commandsStore.updateCommentaire(commandId, commentaire.id_command_commentaire, commentaire.tmp);
-			addNotification({ message: "command.VCommandCommentUpdated", type: "success", i18n: true });
-			commentaire.tmp = null;
-		} catch (e) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
-			return;
-		}
-	}
-};
-const commentaireDelete = async() => {
-	try {
-		await commandsStore.deleteCommentaire(commandId, commentaireModalData.value.id_command_commentaire);
-		addNotification({ message: "command.VCommandCommentDeleted", type: "success", i18n: true });
-	} catch (e) {
-		addNotification({ message: "command.VCommandCommentDeleteError", type: "error", i18n: true });
-	}
-	commentaireModalShow.value = false;
-};
-const commentaireDeleteOpenModal = (commentaire) => {
-	commentaireModalData.value = commentaire;
-	commentaireModalShow.value = true;
-};
-
 const schemaCommand = Yup.object().shape({
 	prix_command: Yup.number()
 		.min(0, t("command.VCommandPriceMin"))
@@ -396,12 +327,6 @@ const schemaItem = Yup.object().shape({
 		.required(t("command.VCommandItemPriceRequired"))
 		.typeError(t("command.VCommandItemPriceNumber"))
 		.min(1, t("command.VCommandItemPriceMin")),
-});
-
-const schemaCommentaire = Yup.object().shape({
-	contenu_command_commentaire: Yup.string()
-		.required(t("command.VCommandCommentRequired"))
-		.max(configsStore.getConfigByKey("max_length_commentaire"), t("command.VCommandCommentMaxLength") + " " + configsStore.getConfigByKey("max_length_commentaire") + t("common.VAllCaracters")),
 });
 
 </script>
@@ -632,80 +557,11 @@ const schemaCommentaire = Yup.object().shape({
 				{{ $t('command.VCommandCommentaires') }} ({{ commandsStore.commentairesTotalCount[commandId] || 0 }})
 			</h3>
 			<div :class="showCommentaires ? 'block' : 'hidden'" class="p-2">
-				<!-- Zone de saisie de commentaire -->
-				<Form :validation-schema="schemaCommentaire" v-slot="{ errors }">
-					<div class="flex items-center space-x-4">
-						<Field name="contenu_command_commentaire" type="text" v-model="commentaireFormNew"
-							:placeholder="$t('command.VCommandCommentPlaceholder')"
-							class="w-full p-2 border rounded-lg"
-							:class="{ 'border-red-500': errors.contenu_command_commentaire }" />
-						<button type="button" @click="commentaireSave(null)"
-							class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-							{{ $t('command.VCommandCommentAdd') }}
-						</button>
-					</div>
-				</Form>
-				<!-- Affichage des commentaires existants -->
-				<div class="space-y-4 overflow-x-auto max-h-64 overflow-y-auto" ref="HTMLContainerCommandsCommentaires">
-					<div v-for="commentaire in commandsStore.commentaires[commandId]"
-						:key="commentaire.id_command_commentaire" class="flex flex-col border p-4 rounded-lg">
-						<div :class="{
-							'text-right': commentaire.id_user === authStore.user.id_user,
-							'text-left': commentaire.id_user !== authStore.user.id_user
-						}" class="text-sm text-gray-600">
-							<span class="font-semibold">
-								{{ usersStore.users[commentaire.id_user].nom_user }} {{
-									usersStore.users[commentaire.id_user].prenom_user }}
-							</span>
-							<span class="text-xs text-gray-500">
-								- {{ commentaire.date_command_commentaire }}
-							</span>
-						</div>
-						<div class="text-center text-gray-800 mb-2">
-							<template v-if="commentaire.tmp">
-								<Form :validation-schema="schemaCommentaire" v-slot="{ errors }">
-									<Field name="contenu_command_commentaire" type="text"
-										v-model="commentaire.tmp.contenu_command_commentaire"
-										class="w-full p-2 border rounded-lg"
-										:class="{ 'border-red-500': errors.contenu_command_commentaire }" />
-									<div class="flex justify-end space-x-2 mt-2">
-										<button type="button" @click="commentaireSave(commentaire)"
-											class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
-											{{ $t('command.VCommandCommentSave') }}
-										</button>
-										<button type="button" @click="commentaire.tmp = null"
-											class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-											{{ $t('command.VCommandCommentCancel') }}
-										</button>
-									</div>
-								</Form>
-							</template>
-							<template v-else>
-								<div :class="{
-									'text-right': commentaire.id_user === authStore.user.id_user,
-									'text-left': commentaire.id_user !== authStore.user.id_user
-								}">
-									{{ commentaire.contenu_command_commentaire }}
-								</div>
-								<!-- Boutons modifier/supprimer si conditions remplies -->
-								<div v-if="commentaire.id_user === authStore.user.id_user || authStore.user.role === 'admin'"
-									class="flex justify-end space-x-2">
-									<button type="button" @click="commentaire.tmp = { ...commentaire }"
-										class="px-3 py-1 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500">
-										{{ $t('command.VCommandCommentEdit') }}
-									</button>
-									<button type="button" @click="commentaireDeleteOpenModal(commentaire)"
-										class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
-										{{ $t('command.VCommandCommentDelete') }}
-									</button>
-								</div>
-							</template>
-						</div>
-					</div>
-					<div v-if="commandsStore.commentairesLoading" class="text-center">
-						{{ $t('command.VCommandLoading') }}
-					</div>
-				</div>
+				<Commentaire :meta="{ contenu: 'contenu_command_commentaire', date_created: 'created_at', date_updated: 'updated_at', key: 'id_command_commentaire', CanEdit: true }"
+					:store-data="[commandsStore.commentaires[commandId],usersStore.users,authStore.user,configsStore]"
+					:storeFunction="{ create: (data) => commandsStore.createCommentaire(commandId, data), update: (id, data) => commandsStore.updateCommentaire(commandId, id, data), delete: (id) => commandsStore.deleteCommentaire(commandId, id) }"
+					:loading="commandsStore.commentairesLoading" :texteModalDelete="{ textTitle: 'command.VCommandCommentDeleteTitle', textP: 'command.VCommandCommentDeleteText' }"
+				/>
 			</div>
 		</div>
 	</div>
@@ -878,8 +734,4 @@ const schemaCommentaire = Yup.object().shape({
 			</div>
 		</div>
 	</div>
-
-	<ModalDeleteConfirm :showModal="commentaireModalShow" @closeModal="commentaireModalShow = false"
-		@deleteConfirmed="commentaireDelete" :textTitle="'command.VCommandCommentDeleteTitle'"
-		:textP="'command.VCommandCommentDeleteText'"/>
 </template>

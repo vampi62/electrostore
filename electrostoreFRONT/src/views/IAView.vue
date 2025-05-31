@@ -142,7 +142,7 @@ const schemaIa = Yup.object().shape({
 								<Field name="nom_ia" type="text" v-model="iasStore.iaEdition.nom_ia"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors.nom_ia }"
-									:disabled="authStore.user?.role_user !== 'admin'" />
+									:disabled="authStore.user?.role_user !== 2" />
 								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_ia || ' ' }}</span>
 							</td>
 						</tr>
@@ -154,7 +154,7 @@ const schemaIa = Yup.object().shape({
 										:value="iasStore.iaEdition.description_ia"
 										class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300 resize-y"
 										:class="{ 'border-red-500': errors.description_ia }"
-										:disabled="authStore.user?.role_user !== 'admin'" rows="4">
+										:disabled="authStore.user?.role_user !== 2" rows="4">
 									</textarea>
 								</Field>
 								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.description_ia || ' ' }}</span>
