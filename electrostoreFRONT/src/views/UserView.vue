@@ -304,7 +304,7 @@ watch(isChecked, (newValue) => {
 						{{ $t('user.VUserCommandsCommentaires') }} ({{ usersStore.commandsCommentaireTotalCount[userId] || 0 }})
 					</h3>
 					<div :class="showCommandCommentaires ? 'block' : 'hidden'" class="p-2">
-						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', date_created: 'created_at', date_updated: 'updated_at', key: 'id_command_commentaire', CanEdit: false }"
+						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', CanEdit: false }"
 							:store-data="[usersStore.commandsCommentaire[userId],usersStore.users,authStore.user,configsStore]"
 							:loading="usersStore.commandsCommentaireLoading"
 						/>
@@ -316,7 +316,7 @@ watch(isChecked, (newValue) => {
 						{{ $t('user.VUserProjetsCommentaires') }} ({{ usersStore.projetsCommentaireTotalCount[userId] || 0 }})
 					</h3>
 					<div :class="showProjetCommentaires ? 'block' : 'hidden'" class="p-2">
-						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', date_created: 'created_at', date_updated: 'updated_at', key: 'id_projet_commentaire', CanEdit: false }"
+						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', CanEdit: false }"
 							:store-data="[usersStore.projetsCommentaire[userId],usersStore.users,authStore.user,configsStore]"
 							:loading="usersStore.projetsCommentaireLoading"
 						/>
@@ -361,7 +361,7 @@ watch(isChecked, (newValue) => {
 							</tr>
 						</thead>
 						<tbody>
-							<tr v-for="token in usersStore.tokens[userId]" :key="token.id_jwi_refresh">
+							<tr v-for="token in usersStore.tokens[userId]" :key="token.session_id">
 								<td class="px-4 py-2 border-b border-gray-200">
 									{{ token.created_at }}
 								</td>
@@ -386,7 +386,7 @@ watch(isChecked, (newValue) => {
 								<td class="px-4 py-2 border-b border-gray-200">
 									<button type="button"
 										class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-										@click="revokeToken(token.id_jwi_refresh)">
+										@click="revokeToken(token.session_id)">
 										{{ $t('user.VUserTokenRevoke') }}
 									</button>
 								</td>

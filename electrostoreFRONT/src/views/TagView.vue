@@ -14,11 +14,12 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 const tagId = route.params.id;
 
-import { useConfigsStore, useTagsStore, useStoresStore, useItemsStore } from "@/stores";
+import { useConfigsStore, useTagsStore, useStoresStore, useItemsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
 const tagsStore = useTagsStore();
 const storesStore = useStoresStore();
 const itemsStore = useItemsStore();
+const authStore = useAuthStore();
 
 async function fetchAllData() {
 	if (tagId !== "new") {

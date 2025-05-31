@@ -549,7 +549,7 @@ const schemaItem = Yup.object().shape({
 				{{ $t('projet.VProjetCommentaires') }} ({{ projetsStore.commentairesTotalCount[projetId] || 0 }})
 			</h3>
 			<div :class="showCommentaires ? 'block' : 'hidden'" class="p-2">
-				<Commentaire :meta="{ contenu: 'contenu_projet_commentaire', date_created: 'created_at', date_updated: 'updated_at', key: 'id_projet_commentaire', CanEdit: true }"
+				<Commentaire :meta="{ contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', CanEdit: true }"
 					:store-data="[projetsStore.commentaires[projetId],usersStore.users,authStore.user,configsStore]"
 					:storeFunction="{ create: (data) => projetsStore.createCommentaire(projetId, data), update: (id, data) => projetsStore.updateCommentaire(projetId, id, data), delete: (id) => projetsStore.deleteCommentaire(projetId, id) }"
 					:loading="projetsStore.commentairesLoading" :texteModalDelete="{ textTitle: 'projet.VProjetCommentDeleteTitle', textP: 'projet.VProjetCommentDeleteText' }"
