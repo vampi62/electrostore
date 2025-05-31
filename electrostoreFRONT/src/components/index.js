@@ -1,3 +1,4 @@
+export { default as Commentaire } from "./Commentaire.vue";
 export { default as Filter } from "./Filter.vue";
 export { default as FilterContainer } from "./FilterContainer.vue";
 export { default as ModalDeleteConfirm } from "./ModalDeleteConfirm.vue";

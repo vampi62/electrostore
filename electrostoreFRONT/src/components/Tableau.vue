@@ -78,7 +78,7 @@
 										alt=""
 										class="w-16 h-16 object-cover rounded" />
 									<span v-else class="w-16 h-16 object-cover rounded">
-										{{ $t('item.VInventoryLoading') }}
+										{{ $t('components.VModalTableauImageLoading') }}
 									</span>
 								</template>
 								<template v-else>

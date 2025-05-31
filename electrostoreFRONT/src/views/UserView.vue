@@ -30,61 +30,6 @@ if (authStore.user?.role_user !== 2 && authStore.user?.role_user !== 1 && authSt
 	}
 }
 
-async function fetchTokens() {
-	if (userId === "new") {
-		return;
-	}
-	if (usersStore.tokensLoading) {
-		return;
-	}
-	const scrollContainer = HTMLContainerTokens.value;
-	if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 5) {
-		const offset = Object.keys(usersStore.tokens[userId]).length;
-		if (Number(usersStore.tokensTotalCount[userId]) === offset) {
-			return;
-		}
-		await usersStore.getTokenByInterval(userId,
-			(offset + 100 > Number(usersStore.tokensTotalCount[userId]) ? usersStore.tokensTotalCount[userId] : offset + 100),
-			offset);
-	}
-}
-async function fetchProjetCommentaires() {
-	if (userId === "new") {
-		return;
-	}
-	if (usersStore.projetsCommentaireLoading) {
-		return;
-	}
-	const scrollContainer = HTMLContainerProjetsCommentaires.value;
-	if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 5) {
-		const offset = Object.keys(usersStore.projetsCommentaire[userId]).length;
-		if (Number(usersStore.projetsCommentaireTotalCount[userId]) === offset) {
-			return;
-		}
-		await usersStore.getProjetCommentaireByInterval(userId,
-			(offset + 100 > Number(usersStore.projetsCommentaireTotalCount[userId]) ? usersStore.projetsCommentaireTotalCount[userId] : offset + 100),
-			offset, ["projet"]);
-	}
-}
-async function fetchCommandCommentaires() {
-	if (userId === "new") {
-		return;
-	}
-	if (usersStore.commandsCommentaireLoading) {
-		return;
-	}
-	const scrollContainer = HTMLContainerCommandsCommentaires.value;
-	if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 5) {
-		const offset = Object.keys(usersStore.commandsCommentaire[userId]).length;
-		if (Number(usersStore.commandsCommentaireTotalCount[userId]) === offset) {
-			return;
-		}
-		await usersStore.getCommandCommentaireByInterval(userId,
-			(offset + 100 > Number(usersStore.commandsCommentaireTotalCount[userId]) ? usersStore.commandsCommentaireTotalCount[userId] : offset + 100),
-			offset, ["command"]);
-	}
-}
-
 async function fetchAllData() {
 	if (userId !== "new") {
 		usersStore.userEdition = {
@@ -126,22 +71,13 @@ async function fetchAllData() {
 	}
 }
 onMounted(() => {
-	HTMLContainerTokens.value.addEventListener("scroll", fetchTokens);
-	HTMLContainerCommandsCommentaires.value.addEventListener("scroll", fetchCommandCommentaires);
-	HTMLContainerProjetsCommentaires.value.addEventListener("scroll", fetchProjetCommentaires);
 	fetchAllData();
 });
 onBeforeUnmount(() => {
-	HTMLContainerTokens.value.removeEventListener("scroll", fetchTokens);
-	HTMLContainerCommandsCommentaires.value.removeEventListener("scroll", fetchCommandCommentaires);
-	HTMLContainerProjetsCommentaires.value.removeEventListener("scroll", fetchProjetCommentaires);
 	usersStore.userEdition = {
 		loading: false,
 	};
 });
-const HTMLContainerTokens = ref(null);
-const HTMLContainerCommandsCommentaires = ref(null);
-const HTMLContainerProjetsCommentaires = ref(null);
 
 const showParticipation = ref(true);
 const showProjetCommentaires = ref(true);
@@ -174,7 +110,7 @@ const toggleTokens = () => {
 };
 
 const userDeleteModalShow = ref(false);
-const userTypeRole = ref([["admin", t("user.VUserFilterRole1")], ["user", t("user.VUserFilterRole2")]]);
+const userTypeRole = ref([[0, t("user.VUserFilterRole0")], [1, t("user.VUserFilterRole1")], [2, t("user.VUserFilterRole2")]]);
 const userSave = async() => {
 	try {
 		await schemaUser.value.validate(usersStore.userEdition, { abortEarly: false });
@@ -300,7 +236,7 @@ watch(isChecked, (newValue) => {
 									v-model="usersStore.userEdition.role_user"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors.role_user }"
-									:disabled="authStore.user?.role_user !== 'admin'">
+									:disabled="authStore.user?.role_user !== 2">
 									<option value="" disabled :selected="!usersStore.userEdition.role_user"> -- {{ $t('user.VUserSelectRole') }} -- </option>
 									<option v-for="role in userTypeRole" :key="role[0]" :value="role[0]">
 										{{ role[1] }}
@@ -362,66 +298,28 @@ watch(isChecked, (newValue) => {
 				{{ $t('user.VUserParticipation') }}
 			</h3>
 			<div :class="showParticipation ? 'block' : 'hidden'" class="p-2">
-				<div class="mb-6 bg-gray-100 p-2 rounded">
+				<div class="bg-gray-100 p-2 rounded">
 					<h3 @click="toggleCommandCommentaires" class="text-xl font-semibold bg-gray-400 p-2 rounded"
 						:class="{ 'cursor-pointer': userId != 'new', 'cursor-not-allowed': userId == 'new' }">
 						{{ $t('user.VUserCommandsCommentaires') }} ({{ usersStore.commandsCommentaireTotalCount[userId] || 0 }})
 					</h3>
-					<div :class="(!usersStore.CommandsCommentaireLoading && showCommandCommentaires) ? 'block' : 'hidden'" class="p-2">
-						<div class="space-y-4 overflow-x-auto max-h-64 overflow-y-auto" ref="HTMLContainerCommandsCommentaires">
-							<div v-for="commentaire in usersStore.commandsCommentaire[userId]"
-								:key="commentaire.id_command_commentaire" class="flex flex-col border p-4 rounded-lg">
-								<div class="text-sm text-gray-600">
-									<span class="font-semibold">
-										{{ usersStore.users[commentaire.id_user].nom_user }} {{
-											usersStore.users[commentaire.id_user].prenom_user }}
-									</span>
-									<span class="text-xs text-gray-500">
-										- {{ commentaire.date_command_commentaire }}
-									</span>
-								</div>
-								<div class="text-sm text-gray-800 mb-2">
-									<div>
-										{{ commentaire.contenu_command_commentaire }}
-									</div>
-									<RouterLink :to="'/commands/' + commentaire.id_command"
-										class="text-blue-500 hover:underline">
-										{{ $t('user.VUserCommandsCommentairesLink') }}
-									</RouterLink>
-								</div>
-							</div>
-						</div>
+					<div :class="showCommandCommentaires ? 'block' : 'hidden'" class="p-2">
+						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', date_created: 'created_at', date_updated: 'updated_at', key: 'id_command_commentaire', CanEdit: false }"
+							:store-data="[usersStore.commandsCommentaire[userId],usersStore.users,authStore.user,configsStore]"
+							:loading="usersStore.commandsCommentaireLoading"
+						/>
 					</div>
 				</div>
-				<div class="mb-6 bg-gray-100 p-2 rounded">
+				<div class="bg-gray-100 p-2 rounded">
 					<h3 @click="toggleProjetCommentaires" class="text-xl font-semibold bg-gray-400 p-2 rounded"
 						:class="{ 'cursor-pointer': userId != 'new', 'cursor-not-allowed': userId == 'new' }">
 						{{ $t('user.VUserProjetsCommentaires') }} ({{ usersStore.projetsCommentaireTotalCount[userId] || 0 }})
 					</h3>
-					<div :class="(!usersStore.ProjetsCommentaireLoading && showProjetCommentaires) ? 'block' : 'hidden'" class="p-2">
-						<div class="space-y-4 overflow-x-auto max-h-64 overflow-y-auto" ref="HTMLContainerProjetsCommentaires">
-							<div v-for="commentaire in usersStore.projetsCommentaire[userId]"
-								:key="commentaire.id_projet_commentaire" class="flex flex-col border p-4 rounded-lg">
-								<div class="text-sm text-gray-600">
-									<span class="font-semibold">
-										{{ usersStore.users[commentaire.id_user].nom_user }} {{
-											usersStore.users[commentaire.id_user].prenom_user }}
-									</span>
-									<span class="text-xs text-gray-500">
-										- {{ commentaire.date_projet_commentaire }}
-									</span>
-								</div>
-								<div class="text-sm text-gray-800 mb-2">
-									<div>
-										{{ commentaire.contenu_projet_commentaire }}
-									</div>
-									<RouterLink :to="'/projets/' + commentaire.id_projet"
-										class="text-blue-500 hover:underline">
-										{{ $t('user.VUserProjetsCommentairesLink') }}
-									</RouterLink>
-								</div>
-							</div>
-						</div>
+					<div :class="showProjetCommentaires ? 'block' : 'hidden'" class="p-2">
+						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', date_created: 'created_at', date_updated: 'updated_at', key: 'id_projet_commentaire', CanEdit: false }"
+							:store-data="[usersStore.projetsCommentaire[userId],usersStore.users,authStore.user,configsStore]"
+							:loading="usersStore.projetsCommentaireLoading"
+						/>
 					</div>
 				</div>
 			</div>
@@ -505,8 +403,4 @@ watch(isChecked, (newValue) => {
 	<div :class="usersStore.users[userId] || userId == 'new' ? 'hidden' : 'block'">
 		<div>{{ $t('user.VUserLoading') }}</div>
 	</div>
-
-	<ModalDeleteConfirm :showModal="userDeleteModalShow" @closeModal="userDeleteModalShow = false"
-		@deleteConfirmed="userDelete" :textTitle="'user.VUserDeleteTitle'"
-		:textP="(authStore.user?.id_user !== Number(userId)) ? 'user.VUserDeleteTextAdmin' : 'user.VUserDeleteTextUser'"/>
 </template>

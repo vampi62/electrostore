@@ -1,4 +1,20 @@
 {
+	"VModalCommentairePlaceholder": "Ajouter un commentaire",
+	"VModalCommentaireAdd": "Ajouter",
+	"VModalCommentaireSave": "Enregistrer",
+	"VModalCommentaireCancel": "Annuler",
+	"VModalCommentaireEdit": "Modifier",
+	"VModalCommentaireDelete": "Supprimer",
+	"VModalCommentaireLink": "Lien vers la ressource",
+	"VModalCommentaireLoading": "Chargement des commentaires...",
+	"VModalCommentaireMaxLength": "Le commentaire ne doit pas dépasser ",
+	"VModalCommentaireRequired": "Le commentaire est obligatoire",
+	"VModalCommentaireCreateSuccess": "Commentaire créé avec succès",
+	"VModalCommentaireUpdateSuccess": "Commentaire mis à jour avec succès",
+	"VModalCommentaireDeleteSuccess": "Commentaire supprimé avec succès",
+
+	"VModalTableauImageLoading": "Chargement de l'image...",
+
 	"VModalDeleteConfirm": "Confirmer",
 	"VModalDeleteCancel": "Annuler",
 	"VModalTopButtonAdd": "Ajouter",

@@ -153,7 +153,7 @@ watch(isChecked, (newValue) => {
 								<Field name="nom_camera" type="text" v-model="camerasStore.cameraEdition.nom_camera"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors.nom_camera }"
-									:disabled="authStore.user?.role_user !== 'admin'" />
+									:disabled="authStore.user?.role_user !== 2" />
 								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_camera || ' ' }}</span>
 							</td>
 						</tr>
@@ -163,7 +163,7 @@ watch(isChecked, (newValue) => {
 								<Field name="url_camera" type="text" v-model="camerasStore.cameraEdition.url_camera"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors.url_camera }"
-									:disabled="authStore.user?.role_user !== 'admin'" />
+									:disabled="authStore.user?.role_user !== 2" />
 								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.url_camera || ' ' }}</span>
 							</td>
 						</tr>
@@ -187,7 +187,7 @@ watch(isChecked, (newValue) => {
 								<Field name="user_camera" type="text" v-model="camerasStore.cameraEdition.user_camera"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors.user_camera }"
-									:disabled="authStore.user?.role_user !== 'admin' || !isChecked" />
+									:disabled="authStore.user?.role_user !== 2 || !isChecked" />
 								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.user_camera || ' ' }}</span>
 							</td>
 						</tr>
@@ -197,7 +197,7 @@ watch(isChecked, (newValue) => {
 								<Field name="mdp_camera" type="password" v-model="camerasStore.cameraEdition.mdp_camera"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors.mdp_camera }"
-									:disabled="authStore.user?.role_user !== 'admin' || !isChecked" />
+									:disabled="authStore.user?.role_user !== 2 || !isChecked" />
 								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.mdp_camera || ' ' }}</span>
 							</td>
 						</tr>
