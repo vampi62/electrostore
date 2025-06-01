@@ -220,6 +220,6 @@ watch(isChecked, (newValue) => {
 		<div>{{ $t('camera.VCameraLoading') }}</div>
 	</div>
 
-	<ModalDeleteConfirm :showModal="cameraDeleteModalShow" @closeModal="cameraDeleteModalShow = false"
-		@deleteConfirmed="cameraDelete" :textTitle="'camera.VCameraDeleteTitle'" :textP="'camera.VCameraDeleteText'"/>
+	<ModalDeleteConfirm :show-modal="cameraDeleteModalShow" @close-modal="cameraDeleteModalShow = false"
+		@delete-confirmed="cameraDelete" :text-title="'camera.VCameraDeleteTitle'" :text-p="'camera.VCameraDeleteText'"/>
 </template>

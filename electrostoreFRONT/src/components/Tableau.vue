@@ -1,11 +1,10 @@
 <template>
-	<table class="min-w-full border-collapse border border-gray-300">
-		<thead class="bg-gray-100">
+	<table :class="tableauCss.table">
+		<thead :class="tableauCss.thead">
 			<tr>
 				<th v-for="(column,index) in labels"
 					:key="index"
-					class="border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative"
-					:class="column.sortable ? 'cursor-pointer' : ''"
+					:class="[tableauCss.th, column.sortable ? 'cursor-pointer' : '']"
 					@click="changeSort(column)">
 					<div class="flex justify-between items-center">
 						<span class="flex-1">{{ $t(column.label) }}</span>
@@ -26,101 +25,83 @@
 				</th>
 			</tr>
 		</thead>
-		<tbody>
-			<RouterLink v-for="data in sortedData" :key="data[meta.key]" :to="meta.path + data[meta.key]"
-				custom v-slot="{ navigate }">
-				<tr @click="navigate" class="transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer">
-					<td  v-for="(column,index) in labels"
-						:key="index"
-						:class="column.type == 'text' ? 'text-left' : 'text-center'"
-						class="border border-gray-300 px-4 py-2 text-sm text-gray-700"
-					>
-						<template v-if="column.type == 'text'">
-							{{ data[column.key] }}
-						</template>
-						<template v-else-if="column.type == 'enum'">
-							{{ column.options[data[column.key]] }}
-						</template>
-						<template v-else-if="column.type == 'date'">
-							{{ new Date(data[column.key]).toLocaleDateString() }}
-						</template>
-						<template v-else-if="column.type == 'bool'">
-							<template v-if="evaluateCondition(column.condition, data)">
-								<font-awesome-icon icon="fa-solid fa-check" class="ml-2 text-green-500" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-times" class="ml-2 text-red-500" />
-							</template>
-						</template>
-						<template v-else-if="column.type == 'list'">
-							<ul>
-								<li v-for="(item, itemIndex) in this.storeData[column.list.idStoreLink]?.[data[meta.key]] || []"
-									:key="itemIndex">
-									<template v-for="(ressource, ressourceIndex) in column.list.ressourcePrint" :key="ressourceIndex">
-										<template v-if="ressource.type === 'link'">
-											{{ item?.[ressource.key] || 'Unknown' }}
-										</template>
-										<template v-else-if="ressource.type === 'text'">
-											{{ ressource.key }}
-										</template>
-										<template v-else-if="ressource.type === 'ressource'">
-											{{ this.storeData[column.list.idStoreRessource][item[column.list.keyStoreLink]]?.[ressource.key] || 'Unknown' }}
-										</template>
-									</template>
-								</li>
-							</ul>
-						</template>
-						<template v-else-if="column.type == 'image'">
-							<div class="flex justify-center items-center">
-								<template v-if="data[column.key]">
-									<img v-if="this.storeData[column.idStoreImg]?.[data[column.key]]"
-										:src="this.storeData[column.idStoreImg]?.[data[column.key]]"
-										alt=""
-										class="w-16 h-16 object-cover rounded" />
-									<span v-else class="w-16 h-16 object-cover rounded">
-										{{ $t('components.VModalTableauImageLoading') }}
-									</span>
-								</template>
-								<template v-else>
-									<img src="../assets/nopicture.webp" alt=" Unavailable" class="w-16 h-16 object-cover rounded" />
-								</template>
-							</div>
-						</template>
-					</td>
+		<tbody :class="tableauCss.tbody">
+			<template v-if="meta?.path">
+				<RouterLink v-for="row in sortedData" :key="row[meta.key]" :to="meta.path + row[meta.key]"
+					custom v-slot="{ navigate }">
+					<tr @click="navigate" :class="tableauCss.tr">
+						<TableauRow
+							:labels="labels"
+							:row="row"
+							:store-data="storeData"
+							:css="tableauCss.td"
+						/>
+					</tr>
+				</RouterLink>
+			</template>
+			<template v-else>
+				<tr v-for="row in sortedData" :key="row[meta.key]"
+					:class="tableauCss.tr">
+					<TableauRow
+						:labels="labels"
+						:row="row"
+						:store-data="storeData"
+						:css="tableauCss.td"
+					/>
 				</tr>
-			</RouterLink>
+			</template>
 		</tbody>
 	</table>
 </template>
 <script>
+import TableauRow from "./TableauRow.vue";
 export default {
 	name: "Tableau",
 	props: {
 		labels: {
 			type: Array,
 			required: true,
+			// labels for the columns, each object should have a key and label property
+			// e.g. [{ key: 'name', label: 'Name', sortable: true }, { key: 'price', label: 'Price', sortable: true }]
 		},
 		meta: {
 			type: Object,
 			required: true,
+			// meta object containing additional information like path for RouterLink
+			// e.g. { path: '/product/', key: 'id' }
 		},
 		storeData: {
 			type: Array,
 			required: true,
+			// storeData is an array of objects, each object should contain the data for a row
+			// storeData[0] is the main data array
 		},
 		loading: {
 			type: Boolean,
 			default: false,
+			// loading state for the table, used to show a loading spinner or message
 		},
-		message: {
-			type: Object, // message with, 'message' and 'type' properties
-			default: () => ({}),
+		tableauCss: {
+			type: Object,
+			required: false,
+			// tableauCss is an object containing tailwind CSS classes for the table, thead, th, tbody, tr, and td
+			default: () => ({
+				table: "min-w-full border-collapse border border-gray-300",
+				thead: "bg-gray-100",
+				th: "border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative",
+				tbody: "",
+				tr: "transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer",
+				td: "border border-gray-300 px-4 py-2 text-sm text-gray-700",
+			}),
 		},
+	},
+	components: {
+		TableauRow,
 	},
 	computed: {
 		sortedData() {
 			if (this.sort.key) {
-				return [...this.storeData[0]].sort((a, b) => {
+				return [...Object.values(this.storeData[0])].sort((a, b) => {
 					if (this.sort.order === "asc") {
 						return a[this.sort.key] > b[this.sort.key] ? 1 : -1;
 					} else {
@@ -149,14 +130,6 @@ export default {
 			} else {
 				this.sort.key = column.key;
 				this.sort.order = "asc";
-			}
-		},
-		evaluateCondition(condition,rowData) {
-			try {
-				return new Function(["store","rowData"], `return ${condition}`)(this.storeData,rowData);
-			} catch (error) {
-				console.error("Erreur lors de l'évaluation de la condition :", error);
-				return false;
 			}
 		},
 	},

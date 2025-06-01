@@ -373,8 +373,8 @@ const schemaTag = Yup.object().shape({
 		<div>{{ $t('tag.VTagLoading') }}</div>
 	</div>
 
-	<ModalDeleteConfirm :showModal="tagDeleteModalShow" @closeModal="tagDeleteModalShow = false"
-		@deleteConfirmed="tagDelete" :textTitle="'tag.VTagDeleteTitle'" :textP="'tag.VTagDeleteText'"/>
+	<ModalDeleteConfirm :show-modal="tagDeleteModalShow" @close-modal="tagDeleteModalShow = false"
+		@delete-confirmed="tagDelete" :text-title="'tag.VTagDeleteTitle'" :text-p="'tag.VTagDeleteText'"/>
 
 	<div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
 		@click="itemModalShow = false">

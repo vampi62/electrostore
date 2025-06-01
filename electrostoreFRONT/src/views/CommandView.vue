@@ -329,6 +329,41 @@ const schemaItem = Yup.object().shape({
 		.min(1, t("command.VCommandItemPriceMin")),
 });
 
+const labelTableauDocument = ref([
+	{ label: "command.VCommandDocumentName", sortable: true, key: "name_command_document", type: "text" },
+	{ label: "command.VCommandDocumentType", sortable: true, key: "type_command_document", type: "text" },
+	{ label: "command.VCommandDocumentDate", sortable: true, key: "date_command_document", type: "datetime" },
+	{ label: "command.VCommandDocumentActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-edit",
+			action: (row) => documentEditOpenModal(row),
+			type: "button",
+			class: "text-blue-500 cursor-pointer hover:text-blue-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-eye",
+			action: (row) => documentView(row),
+			type: "button",
+			class: "text-green-500 cursor-pointer hover:text-green-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-download",
+			action: (row) => documentDownload(row),
+			type: "button",
+			class: "text-yellow-500 cursor-pointer hover:text-yellow-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			action: (row) => documentDeleteOpenModal(row),
+			type: "button",
+			class: "text-red-500 cursor-pointer hover:text-red-600",
+		},
+	] },
+]);
 </script>
 <template>
 	<div class="flex items-center justify-between mb-4">
@@ -416,48 +451,10 @@ const schemaItem = Yup.object().shape({
 					{{ $t('command.VCommandAddDocument') }}
 				</button>
 				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<table class="min-w-full table-auto">
-						<thead>
-							<tr>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('command.VCommandDocumentName') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('command.VCommandDocumentType') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('command.VCommandDocumentDate') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('command.VCommandDocumentActions') }}
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-for="document in commandsStore.documents[commandId]"
-								:key="document.id_command_document">
-								<td class="px-4 py-2 border-b border-gray-200">{{ document.name_command_document }}</td>
-								<td class="px-4 py-2 border-b border-gray-200">{{ document.type_command_document }}</td>
-								<td class="px-4 py-2 border-b border-gray-200">{{ document.date_command_document }}</td>
-								<td class="px-4 py-2 border-b border-gray-200 space-x-2">
-									<font-awesome-icon icon="fa-solid fa-edit" @click="documentEditOpenModal(document)"
-										class="text-blue-500 cursor-pointer hover:text-blue-600" />
-									<font-awesome-icon icon="fa-solid fa-eye" @click="documentView(document)"
-										class="text-green-500 cursor-pointer hover:text-green-600" />
-									<font-awesome-icon icon="fa-solid fa-download" @click="documentDownload(document)"
-										class="text-yellow-500 cursor-pointer hover:text-yellow-600" />
-									<font-awesome-icon icon="fa-solid fa-trash"
-										@click="documentDeleteOpenModal(document)"
-										class="text-red-500 cursor-pointer hover:text-red-600" />
-								</td>
-							</tr>
-							<tr v-if="commandsStore.documentsLoading" class="text-center">
-								<td class="px-4 py-2 border-b border-gray-200" colspan="4">
-									{{ $t('command.VCommandLoading') }}
-								</td>
-							</tr>
-						</tbody>
-					</table>
+					<Tableau :labels="labelTableauDocument" :store-data="[commandsStore.documents[commandId]]" :meta="{ key: 'id_command_document' }"
+						:loading="commandsStore.documentsLoading"
+						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out hover:bg-gray-200', td: 'px-4 py-2 border-b border-gray-200' }"
+					/>
 				</div>
 			</div>
 		</div>
@@ -559,8 +556,8 @@ const schemaItem = Yup.object().shape({
 			<div :class="showCommentaires ? 'block' : 'hidden'" class="p-2">
 				<Commentaire :meta="{ contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', CanEdit: true }"
 					:store-data="[commandsStore.commentaires[commandId],usersStore.users,authStore.user,configsStore]"
-					:storeFunction="{ create: (data) => commandsStore.createCommentaire(commandId, data), update: (id, data) => commandsStore.updateCommentaire(commandId, id, data), delete: (id) => commandsStore.deleteCommentaire(commandId, id) }"
-					:loading="commandsStore.commentairesLoading" :texteModalDelete="{ textTitle: 'command.VCommandCommentDeleteTitle', textP: 'command.VCommandCommentDeleteText' }"
+					:store-function="{ create: (data) => commandsStore.createCommentaire(commandId, data), update: (id, data) => commandsStore.updateCommentaire(commandId, id, data), delete: (id) => commandsStore.deleteCommentaire(commandId, id) }"
+					:loading="commandsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'command.VCommandCommentDeleteTitle', textP: 'command.VCommandCommentDeleteText' }"
 				/>
 			</div>
 		</div>
@@ -570,9 +567,9 @@ const schemaItem = Yup.object().shape({
 		<div>{{ $t('command.VCommandLoading') }}</div>
 	</div>
 
-	<ModalDeleteConfirm :showModal="commandDeleteModalShow" @closeModal="commandDeleteModalShow = false"
-		@deleteConfirmed="commandDelete" :textTitle="'command.VCommandDeleteTitle'"
-		:textP="'command.VCommandDeleteText'"/>
+	<ModalDeleteConfirm :show-modal="commandDeleteModalShow" @close-modal="commandDeleteModalShow = false"
+		@delete-confirmed="commandDelete" :text-title="'command.VCommandDeleteTitle'"
+		:text-p="'command.VCommandDeleteText'"/>
 
 	<div v-if="documentAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
 		@click="documentAddModalShow = false">
@@ -640,9 +637,9 @@ const schemaItem = Yup.object().shape({
 		</div>
 	</div>
 
-	<ModalDeleteConfirm :showModal="documentDeleteModalShow" @closeModal="documentDeleteModalShow = false"
-		@deleteConfirmed="documentDelete" :textTitle="'command.VCommandDocumentDeleteTitle'"
-		:textP="'command.VCommandDocumentDeleteText'"/>
+	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
+		@delete-confirmed="documentDelete" :text-title="'command.VCommandDocumentDeleteTitle'"
+		:text-p="'command.VCommandDocumentDeleteText'"/>
 
 	<div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
 		@click="itemModalShow = false">

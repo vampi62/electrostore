@@ -63,5 +63,6 @@
 	"VAppProfile": "Profil",
 	"VAppLogout": "Déconnexion",
 	"VAppAdmin": "Admin",
-	"VAllCaracters": "caractères"
+	"VAllCaracters": "caractères",
+	"VALLMissingTranslateLink": "Traduction manquante"
 }

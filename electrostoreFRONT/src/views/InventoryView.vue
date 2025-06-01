@@ -39,7 +39,7 @@ async function fetchAllData() {
 	if (tagsNotFound.length > 0) {
 		await tagsStore.getTagByList(tagsNotFound);
 	}
-	filter.value[5].options = Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]);
+	filter.value[6].options = Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]);
 }
 onMounted(() => {
 	fetchAllData();
@@ -117,7 +117,7 @@ const tableauLabel = ref([
 	{ label: "item.VInventoryFriendlyName", sortable: true, key: "friendly_name_item", type: "text" },
 	{ label: "item.VInventorySeuil", sortable: true, key: "seuil_min_item", type: "text" },
 	{ label: "item.VInventoryDescription", sortable: false, key: "description_item", type: "text" },
-	{ label: "item.VInventoryTags", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, keyStoreLink: "id_tag", ressourcePrint: [{ type: "ressource", key: "nom_tag" }] } },
+	{ label: "item.VInventoryTags", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, key: "id_item", keyStoreLink: "id_tag", ressourcePrint: [{ type: "ressource", key: "nom_tag" }] } },
 	{ label: "item.VInventoryImg", sortable: false, key: "id_img", type: "image", idStoreImg: 3 },
 	{ label: "item.VInventoryQuantity", sortable: true, key: "custom_quantity_item", type: "text" },
 ]);

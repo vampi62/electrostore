@@ -24,15 +24,21 @@ export default {
 	props: {
 		showModal: {
 			type: Boolean,
+			required: true,
+			// This should be a boolean to control the visibility of the modal
 			default: false,
 		},
 		textTitle: {
 			type: String,
-			default: "Confirmation",
+			required: true,
+			// This should be a translation key for the modal title
+			default: "common.VALLMissingTranslateLink",
 		},
 		textP: {
 			type: String,
-			default: "Are you sure you want to delete this Element?",
+			required: true,
+			// This should be a translation key for the modal paragraph text
+			default: "common.VALLMissingTranslateLink",
 		},
 	},
 	emits: ["deleteConfirmed", "closeModal"],
