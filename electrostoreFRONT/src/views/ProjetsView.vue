@@ -50,7 +50,7 @@ const tableauLabel = ref([
 	{ label: "projet.VProjetsUrl", sortable: true, key: "url_projet", type: "text" },
 	{ label: "projet.VProjetsStatus", sortable: true, key: "status_projet", type: "text" },
 	{ label: "projet.VProjetsDateStart", sortable: true, key: "date_debut_projet", type: "date" },
-	{ label: "projet.VProjetsItems", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, keyStoreLink: "id_item", ressourcePrint: [{ type: "link", key: "qte_projet_item" }, { type: "text", key: " - " }, { type: "ressource", key: "reference_name_item" }] } },
+	{ label: "projet.VProjetsItems", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, key: "id_projet", keyStoreLink: "id_item", ressourcePrint: [{ type: "link", key: "qte_projet_item" }, { type: "text", key: " - " }, { type: "ressource", key: "reference_name_item" }] } },
 	{ label: "projet.VProjetsDateEnd", sortable: true, key: "date_fin_projet", type: "date" },
 ]);
 const tableauMeta = ref({

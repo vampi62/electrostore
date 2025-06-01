@@ -325,6 +325,41 @@ const schemaItem = Yup.object().shape({
 		.required(t("projet.VProjetItemQuantityRequired")),
 });
 
+const labelTableauDocument = ref([
+	{ label: "projet.VProjetDocumentName", sortable: true, key: "name_projet_document", type: "text" },
+	{ label: "projet.VProjetDocumentType", sortable: true, key: "type_projet_document", type: "text" },
+	{ label: "projet.VProjetDocumentDate", sortable: true, key: "date_projet_document", type: "datetime" },
+	{ label: "projet.VProjetDocumentActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-edit",
+			action: (row) => documentEditOpenModal(row),
+			type: "button",
+			class: "text-blue-500 cursor-pointer hover:text-blue-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-eye",
+			action: (row) => documentView(row),
+			type: "button",
+			class: "text-green-500 cursor-pointer hover:text-green-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-download",
+			action: (row) => documentDownload(row),
+			type: "button",
+			class: "text-yellow-500 cursor-pointer hover:text-yellow-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			action: (row) => documentDeleteOpenModal(row),
+			type: "button",
+			class: "text-red-500 cursor-pointer hover:text-red-600",
+		},
+	] },
+]);
 </script>
 
 <template>
@@ -423,48 +458,10 @@ const schemaItem = Yup.object().shape({
 					{{ $t('projet.VProjetAddDocument') }}
 				</button>
 				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<table class="min-w-full table-auto">
-						<thead>
-							<tr>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('projet.VProjetDocumentName') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('projet.VProjetDocumentType') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('projet.VProjetDocumentDate') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('projet.VProjetDocumentActions') }}
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-for="document in projetsStore.documents[projetId]"
-								:key="document.id_projet_document">
-								<td class="px-4 py-2 border-b border-gray-200">{{ document.name_projet_document }}</td>
-								<td class="px-4 py-2 border-b border-gray-200">{{ document.type_projet_document }}</td>
-								<td class="px-4 py-2 border-b border-gray-200">{{ document.date_projet_document }}</td>
-								<td class="px-4 py-2 border-b border-gray-200 space-x-2">
-									<font-awesome-icon icon="fa-solid fa-edit" @click="documentEditOpenModal(document)"
-										class="text-blue-500 cursor-pointer hover:text-blue-600" />
-									<font-awesome-icon icon="fa-solid fa-eye" @click="documentView(document)"
-										class="text-green-500 cursor-pointer hover:text-green-600" />
-									<font-awesome-icon icon="fa-solid fa-download" @click="documentDownload(document)"
-										class="text-yellow-500 cursor-pointer hover:text-yellow-600" />
-									<font-awesome-icon icon="fa-solid fa-trash"
-										@click="documentDeleteOpenModal(document)"
-										class="text-red-500 cursor-pointer hover:text-red-600" />
-								</td>
-							</tr>
-							<tr v-if="projetsStore.documentsLoading" class="text-center">
-								<td class="px-4 py-2 border-b border-gray-200" colspan="4">
-									{{ $t('projet.VProjetLoading') }}
-								</td>
-							</tr>
-						</tbody>
-					</table>
+					<Tableau :labels="labelTableauDocument" :store-data="[projetsStore.documents[projetId]]" :meta="{ key: 'id_projet_document' }"
+						:loading="projetsStore.documentsLoading"
+						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out hover:bg-gray-200', td: 'px-4 py-2 border-b border-gray-200' }"
+					/>
 				</div>
 			</div>
 		</div>
@@ -551,8 +548,8 @@ const schemaItem = Yup.object().shape({
 			<div :class="showCommentaires ? 'block' : 'hidden'" class="p-2">
 				<Commentaire :meta="{ contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', CanEdit: true }"
 					:store-data="[projetsStore.commentaires[projetId],usersStore.users,authStore.user,configsStore]"
-					:storeFunction="{ create: (data) => projetsStore.createCommentaire(projetId, data), update: (id, data) => projetsStore.updateCommentaire(projetId, id, data), delete: (id) => projetsStore.deleteCommentaire(projetId, id) }"
-					:loading="projetsStore.commentairesLoading" :texteModalDelete="{ textTitle: 'projet.VProjetCommentDeleteTitle', textP: 'projet.VProjetCommentDeleteText' }"
+					:store-function="{ create: (data) => projetsStore.createCommentaire(projetId, data), update: (id, data) => projetsStore.updateCommentaire(projetId, id, data), delete: (id) => projetsStore.deleteCommentaire(projetId, id) }"
+					:loading="projetsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'projet.VProjetCommentDeleteTitle', textP: 'projet.VProjetCommentDeleteText' }"
 				/>
 			</div>
 		</div>
@@ -562,10 +559,9 @@ const schemaItem = Yup.object().shape({
 		<div>{{ $t('projet.VProjetLoading') }}</div>
 	</div>
 
-	<ModalDeleteConfirm :showModal="projetDeleteModalShow" @closeModal="projetDeleteModalShow = false"
-		@deleteConfirmed="projetDelete" :textTitle="'projet.VProjetDeleteTitle'"
-		:textP="'projet.VProjetDeleteText'" :textConfirm="'projet.VProjetDeleteConfirm'"
-		:textCancel="'projet.VProjetDeleteCancel'" />
+	<ModalDeleteConfirm :show-modal="projetDeleteModalShow" @close-modal="projetDeleteModalShow = false"
+		@delete-confirmed="projetDelete" :text-title="'projet.VProjetDeleteTitle'"
+		:text-p="'projet.VProjetDeleteText'"/>
 
 	<div v-if="documentAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
 		@click="documentAddModalShow = false">
@@ -631,9 +627,9 @@ const schemaItem = Yup.object().shape({
 			</Form>
 		</div>
 	</div>
-	<ModalDeleteConfirm :showModal="documentDeleteModalShow" @closeModal="documentDeleteModalShow = false"
-		@deleteConfirmed="documentDelete" :textTitle="'projet.VProjetDocumentDeleteTitle'"
-		:textP="'projet.VProjetDocumentDeleteText'"/>
+	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
+		@delete-confirmed="documentDelete" :text-title="'projet.VProjetDocumentDeleteTitle'"
+		:text-p="'projet.VProjetDocumentDeleteText'"/>
 
 	<div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
 		@click="itemModalShow = false">

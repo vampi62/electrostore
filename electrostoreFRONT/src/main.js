@@ -13,7 +13,7 @@ import {
 	faTrash, faDownload, faFile, faFilter, faPenToSquare, faEye,
 	faTruckLoading, faTruckMoving, faTruckRampBox,
 	faSort, faSortUp, faSortDown, faPlus, faMinus,
-	faRotateLeft, faRotateRight, faSearch, faCheck, faXmark,
+	faRotateLeft, faRotateRight, faSearch, faCheck, faXmark, faBan,
 } from "@fortawesome/free-solid-svg-icons";
 import "./assets/tailwind.css";
 
@@ -28,7 +28,7 @@ library.add(
 	faTrash, faDownload, faFile, faFilter, faPenToSquare, faEye,
 	faTruckLoading, faTruckMoving, faTruckRampBox,
 	faSort, faSortUp, faSortDown, faPlus, faMinus,
-	faRotateLeft, faRotateRight, faSearch, faCheck, faXmark,
+	faRotateLeft, faRotateRight, faSearch, faCheck, faXmark, faBan,
 );
 
 app.component("font-awesome-icon", FontAwesomeIcon);

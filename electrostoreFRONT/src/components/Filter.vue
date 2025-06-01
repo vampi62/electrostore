@@ -6,7 +6,7 @@
 				:id="`filter-input-${this.$.uid}`"
 				class="border border-gray-300 rounded px-2 py-1"
 				:class="[classCss, label.length > 0 ? 'ml-2' : '']"
-				@change="$emit('update-text', idKey, $event.target.value)"
+				@change="$emit('updateText', $event.target.value)"
 			>
 				<option value=""></option>
 				<template v-if="options">
@@ -22,7 +22,7 @@
 				class="border border-gray-300 rounded px-2 py-1"
 				:class="[classCss, label.length > 0 ? 'ml-2' : '']"
 				:placeholder="placeholder"
-				@input="$emit('update-text', idKey, $event.target.value)"
+				@input="$emit('updateText', $event.target.value)"
 			/>
 		</template>
 	</div>
@@ -35,28 +35,40 @@ export default {
 		label: {
 			type: String,
 			required: true,
+			// This should be a translation key for the label
+			// e.g., 'components.FilterLabel'
+			default: "",
 		},
 		type: {
 			type: String,
-			default: "text", // 'text', 'number', 'select', etc.
+			required: true,
+			// This should be a valid input type
+			// 'text', 'number', 'select', etc.
+			default: "text",
 		},
 		placeholder: {
 			type: String,
+			required: false,
+			// This should be already translated texte
+			// e.g., 'write here your text'
 			default: "",
 		},
 		classCss: {
 			type: String,
+			required: false,
+			// This should be a CSS tailwind class for styling the input
 			default: "",
 		},
 		options: {
 			type: Array,
+			required: false,
+			// This should be an array of options for select input
+			// e.g., [['value1', 'Label 1'], ['value2', 'Label 2']]
+			// translate the labels before passing
+			// to the component
 			default: () => [],
 		},
-		idKey: {
-			type: Number,
-			default: 0,
-		},
 	},
-	emits: ["update-text"],
+	emits: ["updateText"],
 };
 </script>

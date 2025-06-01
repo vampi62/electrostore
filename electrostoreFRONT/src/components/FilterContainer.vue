@@ -8,8 +8,7 @@
 			:class-css="filter?.class"
 			:class="filter?.class"
 			:options="filter?.options"
-			:idKey="index"
-			@update-text="updateText"
+			@update-text="(value) => updateText(index, value)"
 		/>
 	</div>
 </template>
@@ -21,10 +20,23 @@ export default {
 		filters: {
 			type: Array,
 			required: true,
+			// This should be an array of filter objects, each containing:
+			// - key: string (the key in the storeData to filter on)
+			// - label: string (translation key for the label)
+			// - type: string (input type, e.g., 'text', 'number', 'select')
+			// - dataType: string (type of data, e.g., 'int', 'float', 'string', 'bool')
+			// - compareMethod: string (comparison method, e.g., '=', '>=', '<=', 'contain')
+			// - value: any (the value to filter by, can be empty)
+			// - subPath: string (optional, for nested data filtering)
+			// - placeholder: string (translation key for the placeholder, optional)
+			// - class: string (tailwind CSS class for styling, optional)
+			// - options: array (for select inputs, optional, required if type is 'select')
+			default: () => [],
 		},
 		storeData: {
 			type: Object,
 			required: true,
+			// This should be an object containing the data to filter
 		},
 	},
 	components: {
@@ -67,7 +79,7 @@ export default {
 			});
 		},
 	},
-	emits: ["output-filter"],
+	emits: ["outputFilter"],
 	methods: {
 		updateText(key, value) {
 			this.filters.forEach((filter, index) => {
@@ -99,7 +111,7 @@ export default {
 	watch: {
 		filteredData: {
 			handler(newValue) {
-				this.$emit("output-filter", newValue);
+				this.$emit("outputFilter", newValue);
 			},
 			deep: true,
 		},

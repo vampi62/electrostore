@@ -50,7 +50,7 @@ const tableauLabel = ref([
 	{ label: "command.VCommandsDate", sortable: true, key: "date_command", type: "date" },
 	{ label: "command.VCommandsURL", sortable: true, key: "url_command", type: "text" },
 	{ label: "command.VCommandsPrix", sortable: true, key: "prix_command", type: "text" },
-	{ label: "command.VCommandsItemList", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, keyStoreLink: "id_item", ressourcePrint: [{ type: "link", key: "qte_command_item" }, { type: "text", key: " - " }, { type: "ressource", key: "reference_name_item" }] } },
+	{ label: "command.VCommandsItemList", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, key: "id_command", keyStoreLink: "id_item", ressourcePrint: [{ type: "link", key: "qte_command_item" }, { type: "text", key: " - " }, { type: "ressource", key: "reference_name_item" }] } },
 	{ label: "command.VCommandsDateL", sortable: true, key: "date_livraison_command", type: "date" },
 ]);
 const tableauMeta = ref({

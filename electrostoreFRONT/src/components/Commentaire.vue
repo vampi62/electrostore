@@ -80,9 +80,9 @@
 		</div>
 	</div>
 
-	<ModalDeleteConfirm :showModal="deleteModalShow" @closeModal="deleteModalShow = false"
-		@deleteConfirmed="commentaireDelete()" :textTitle="texteModalDelete?.textTitle"
-		:textP="texteModalDelete?.textP"/>
+	<ModalDeleteConfirm :show-modal="deleteModalShow" @close-modal="deleteModalShow = false"
+		@delete-confirmed="commentaireDelete()" :text-title="texteModalDelete?.textTitle"
+		:text-p="texteModalDelete?.textP"/>
 </template>
 
 <script>
@@ -96,22 +96,56 @@ export default {
 		storeData: {
 			type: Array,
 			required: true,
+			// This should be an array containing:
+			// [0] - store with all commentaires
+			// [1] - store with all users
+			// [2] - current user session data
+			// [3] - store with configuration data
+			default: () => [],
 		},
 		storeFunction: {
 			type: Object,
 			required: false,
+			// This should contain functions for create, update, and delete operations
+			default: () => ({
+				create: () => {},
+				update: () => {},
+				delete: () => Promise.resolve(),
+			}),
 		},
 		meta: {
 			type: Object,
 			required: true,
+			// This should contain metadata about the comment, such as:
+			// - key: unique identifier for the comment
+			// - contenu: the content field of the comment
+			// - CanEdit: boolean indicating if the user can edit comments
+			// - idRessource: identifier for the resource linked to the comment
+			// - link: URL for the resource linked to the comment
+			default: () => ({
+				key: "id_commentaire",
+				contenu: "contenu_commentaire",
+				CanEdit: false,
+				idRessource: "id_ressource",
+				link: "/ressource/",
+			}),
+
 		},
 		loading: {
 			type: Boolean,
 			default: true,
+			// Indicates if the component is loading data
 		},
 		texteModalDelete: {
 			type: Object,
 			required: false,
+			// This should contain the text for the delete confirmation modal
+			// the text will be translated using $t so it should be a key from the translation files
+			// Example: { textTitle: "page.VModalCommentaireDeleteTitle", textP: "page.VModalCommentaireDeleteP" }
+			default: () => ({
+				textTitle: "common.VALLMissingTranslateLink",
+				textP: "common.VALLMissingTranslateLink",
+			}),
 		},
 	},
 	components: {

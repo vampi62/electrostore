@@ -46,7 +46,7 @@ const tableauLabel = ref([
 	{ label: "store.VStoresXLength", sortable: true, key: "xlength_store", type: "text" },
 	{ label: "store.VStoresYLength", sortable: true, key: "ylength_store", type: "text" },
 	{ label: "store.VStoresMqttName", sortable: true, key: "mqtt_name_store", type: "text" },
-	{ label: "store.VStoresTagsList", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, keyStoreLink: "id_tag", ressourcePrint: [{ type: "ressource", key: "nom_tag" }] } },
+	{ label: "store.VStoresTagsList", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, key: "id_store", keyStoreLink: "id_tag", ressourcePrint: [{ type: "ressource", key: "nom_tag" }] } },
 ]);
 const tableauMeta = ref({
 	key: "id_store",

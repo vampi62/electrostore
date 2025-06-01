@@ -198,6 +198,6 @@ const schemaIa = Yup.object().shape({
 		<div>{{ $t('ia.VIaLoading') }}</div>
 	</div>
 
-	<ModalDeleteConfirm :showModal="iaDeleteModalShow" @closeModal="iaDeleteModalShow = false"
-		@deleteConfirmed="iaDelete" :textTitle="'ia.VIaDeleteTitle'" :textP="'ia.VIaDeleteText'"/>
+	<ModalDeleteConfirm :show-modal="iaDeleteModalShow" @close-modal="iaDeleteModalShow = false"
+		@delete-confirmed="iaDelete" :text-title="'ia.VIaDeleteTitle'" :text-p="'ia.VIaDeleteText'"/>
 </template>

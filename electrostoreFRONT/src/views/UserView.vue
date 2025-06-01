@@ -189,6 +189,26 @@ const schemaUser = ref(createSchema(usersStore.userEdition.is_checked_custom));
 watch(isChecked, (newValue) => {
 	schemaUser.value = createSchema(newValue);
 });
+
+const labelTableauSession = ref([
+	{ label: "user.VUserTokenCreatedDate", sortable: true, key: "created_at", type: "text" },
+	{ label: "user.VUserTokenCreatedIP", sortable: true, key: "created_by_ip", type: "text" },
+	{ label: "user.VUserTokenExpireDate", sortable: true, key: "expires_at", type: "datetime" },
+	{ label: "user.VUserTokenIsRevoked", sortable: false, key: "is_revoked", type: "text" },
+	{ label: "user.VUserTokenRevokedDate", sortable: false, key: "revoked_at", type: "datetime" },
+	{ label: "user.VUserTokenRevokedIP", sortable: false, key: "revoked_by_ip", type: "text" },
+	{ label: "user.VUserTokenRevokedReason", sortable: false, key: "revoked_reason", type: "text" },
+	{ label: "user.VUserTokenActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "user.VUserTokenRevoke",
+			icon: "fa-solid fa-ban",
+			action: (row) => revokeToken(row.session_id),
+			condition: "rowData?.is_revoked",
+			type: "button",
+			class: "bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600",
+		},
+	] },
+]);
 </script>
 
 <template>
@@ -330,72 +350,11 @@ watch(isChecked, (newValue) => {
 				{{ $t('user.VUserTokens') }} ({{ usersStore.tokensTotalCount[userId] || 0 }})
 			</h3>
 			<div :class="showTokens ? 'block' : 'hidden'" class="p-2">
-				<div class="overflow-x-auto max-h-64 overflow-y-auto" ref="HTMLContainerTokens">
-					<table class="min-w-full table-auto">
-						<thead>
-							<tr>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('user.VUserTokenCreatedDate') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('user.VUserTokenCreatedIP') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('user.VUserTokenExpireDate') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('user.VUserTokenIsRevoked') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('user.VUserTokenRevokedDate') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('user.VUserTokenRevokedIP') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('user.VUserTokenRevokedReason') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('user.VUserTokenActions') }}
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-for="token in usersStore.tokens[userId]" :key="token.session_id">
-								<td class="px-4 py-2 border-b border-gray-200">
-									{{ token.created_at }}
-								</td>
-								<td class="px-4 py-2 border-b border-gray-200">
-									{{ token.created_by_ip }}
-								</td>
-								<td class="px-4 py-2 border-b border-gray-200">
-									{{ token.expires_at }}
-								</td>
-								<td class="px-4 py-2 border-b border-gray-200">
-									{{ token.is_revoked }}
-								</td>
-								<td class="px-4 py-2 border-b border-gray-200">
-									{{ token.revoked_at }}
-								</td>
-								<td class="px-4 py-2 border-b border-gray-200">
-									{{ token.revoked_by_ip }}
-								</td>
-								<td class="px-4 py-2 border-b border-gray-200">
-									{{ token.revoked_reason }}
-								</td>
-								<td class="px-4 py-2 border-b border-gray-200">
-									<button type="button"
-										class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-										@click="revokeToken(token.session_id)">
-										{{ $t('user.VUserTokenRevoke') }}
-									</button>
-								</td>
-							</tr>
-							<tr v-if="usersStore.tokensLoading">
-								{{ $t('user.VUserLoading') }}
-							</tr>
-						</tbody>
-					</table>
+				<div class="overflow-x-auto max-h-64 overflow-y-auto">
+					<Tableau :labels="labelTableauSession" :store-data="[usersStore.tokens[userId]]" :meta="{ key: 'session_id' }"
+						:loading="usersStore.tokensLoading"
+						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out hover:bg-gray-200', td: 'px-4 py-2 border-b border-gray-200' }"
+					/>
 				</div>
 			</div>
 		</div>
@@ -403,4 +362,7 @@ watch(isChecked, (newValue) => {
 	<div :class="usersStore.users[userId] || userId == 'new' ? 'hidden' : 'block'">
 		<div>{{ $t('user.VUserLoading') }}</div>
 	</div>
+	<ModalDeleteConfirm :show-modal="userDeleteModalShow" @close-modal="userDeleteModalShow = false"
+		@delete-confirmed="userDelete" :text-title="'user.VUserDeleteTitle'"
+		:text-p="(authStore.user?.id_user !== Number(userId)) ? 'user.VUserDeleteTextAdmin' : 'user.VUserDeleteTextUser'"/>
 </template>

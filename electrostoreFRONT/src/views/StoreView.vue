@@ -1127,9 +1127,9 @@ const filteredItems = computed(() => {
 			</div>
 		</div>
 	</div>
-	<ModalDeleteConfirm :showModal="storeDeleteModalShow" @closeModal="storeDeleteModalShow = false"
-		@deleteConfirmed="storeDelete" :textTitle="'store.VStoreDeleteTitle'"
-		:textP="'store.VStoreDeleteText'"/>
+	<ModalDeleteConfirm :show-modal="storeDeleteModalShow" @close-modal="storeDeleteModalShow = false"
+		@delete-confirmed="storeDelete" :text-title="'store.VStoreDeleteTitle'"
+		:text-p="'store.VStoreDeleteText'"/>
 
 	<div v-if="storeItemAddModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
 		@click="storeItemAddModalShow = false">
