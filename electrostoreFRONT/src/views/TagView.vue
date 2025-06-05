@@ -215,6 +215,78 @@ const schemaTag = Yup.object().shape({
 		.required(t("tag.VTagPoidsRequired")),
 });
 
+const labelTableauItem = ref([
+	{ label: "tag.VTagItemName", sortable: true, key: "reference_name_item", keyStore: "id_item", store: "1", type: "text" },
+	{ label: "tag.VTagItemActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			action: (row) => itemDelete(row),
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+		},
+	] },
+]);
+const labelTableauStore = ref([
+	{ label: "tag.VTagStoreName", sortable: true, key: "nom_store", keyStore: "id_store", store: "1", type: "text" },
+	{ label: "tag.VTagStoreActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			action: (row) => storeDelete(row),
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+		},
+	] },
+]);
+const labelTableauBox = ref([
+	{ label: "tag.VTagBoxId", sortable: true, key: "id_box", keyStore: "id_box", store: "1", type: "number" },
+	{ label: "tag.VTagBoxActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			action: (row) => boxDelete(row),
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+		},
+	] },
+]);
+
+const labelTableauModalItem = ref([
+	{ label: "tag.VTagItemName", sortable: true, key: "reference_name_item", type: "text" },
+	{ label: "tag.VTagItemActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-save",
+			condition: "!store[1]?.[rowData.id_item]",
+			action: (row) => itemSave(row),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			condition: "store[1]?.[rowData.id_item]",
+			action: (row) => itemDelete(row),
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+		},
+	] },
+]);
+const labelTableauModalStore = ref([
+	{ label: "tag.VTagStoreName", sortable: true, key: "nom_store", type: "text" },
+	{ label: "tag.VTagStoreActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-save",
+			condition: "!store[1]?.[rowData.id_store]",
+			action: (row) => storeSave(row),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			condition: "store[1]?.[rowData.id_store]",
+			action: (row) => storeDelete(row),
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+		},
+	] },
+]);
 </script>
 
 <template>
@@ -253,118 +325,55 @@ const schemaTag = Yup.object().shape({
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleItems" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': !tagsStore.tagsItemLoading && tagId != 'new', 'cursor-not-allowed': tagId == 'new' }">
+				:class="{ 'cursor-pointer': tagId != 'new', 'cursor-not-allowed': tagId == 'new' }">
 				{{ $t('tag.VTagItems') }} ({{ tagsStore.tagsItemTotalCount[tagId] || 0 }})
 			</h3>
-			<div v-if="!tagsStore.tagsItemLoading && showItems" class="p-2">
+			<div v-if="showItems" class="p-2">
 				<button type="button" @click="itemOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('tag.VTagAddItem') }}
 				</button>
 				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<table class="min-w-full table-auto">
-						<thead>
-							<tr>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('tag.VTagItemName') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('tag.VTagItemActions') }}
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-for="item in tagsStore.tagsItem[tagId]" :key="item.id_item">
-								<td class="px-4 py-2 border-b border-gray-200">
-									{{ itemsStore.items[item.id_item].reference_name_item }}
-								</td>
-								<td class="px-4 py-2 border-b border-gray-200 space-x-2">
-									<button type="button" @click="itemDelete(item)"
-										class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
-										{{ $t('tag.VTagItemDelete') }}
-									</button>
-								</td>
-							</tr>
-						</tbody>
-					</table>
+					<Tableau :labels="labelTableauItem" :store-data="[tagsStore.tagsItem[tagId],itemsStore.items]" :meta="{ key: 'id_item' }"
+						:loading="tagsStore.tagsItemLoading"
+						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out', td: 'px-4 py-2 border-b border-gray-200' }"
+					/>
 				</div>
 			</div>
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleStores" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': !tagsStore.tagsStoreLoading && tagId != 'new', 'cursor-not-allowed': tagId == 'new' }">
+				:class="{ 'cursor-pointer': tagId != 'new', 'cursor-not-allowed': tagId == 'new' }">
 				{{ $t('tag.VTagStores') }} ({{ tagsStore.tagsStoreTotalCount[tagId] || 0 }})
 			</h3>
-			<div v-if="!tagsStore.tagsStoreLoading && showStores" class="p-2">
+			<div v-if="showStores" class="p-2">
 				<button type="button" @click="storeOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('tag.VTagAddStore') }}
 				</button>
 				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<table class="min-w-full table-auto">
-						<thead>
-							<tr>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('tag.VTagStoreName') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('tag.VTagStoreActions') }}
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-for="store in tagsStore.tagsStore[tagId]" :key="store.id_store">
-								<td class="px-4 py-2 border-b border-gray-200">
-									{{ storesStore.stores[store.id_store].nom_store }}
-								</td>
-								<td class="px-4 py-2 border-b border-gray-200 space-x-2">
-									<button type="button" @click="storeDelete(store)"
-										class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
-										{{ $t('tag.VTagStoreDelete') }}
-									</button>
-								</td>
-							</tr>
-						</tbody>
-					</table>
+					<Tableau :labels="labelTableauStore" :store-data="[tagsStore.tagsStore[tagId],storesStore.stores]" :meta="{ key: 'id_store' }"
+						:loading="tagsStore.tagsStoreLoading"
+						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out', td: 'px-4 py-2 border-b border-gray-200' }"
+					/>
 				</div>
 			</div>
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleBoxs" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': !tagsStore.tagsBoxLoading && tagId != 'new', 'cursor-not-allowed': tagId == 'new' }">
+				:class="{ 'cursor-pointer': tagId != 'new', 'cursor-not-allowed': tagId == 'new' }">
 				{{ $t('tag.VTagBoxs') }} ({{ tagsStore.tagsBoxTotalCount[tagId] || 0 }})
 			</h3>
-			<div v-if="!tagsStore.tagsBoxLoading && showBoxs" class="p-2">
+			<div v-if="showBoxs" class="p-2">
 				<!-- <button type="button" @click="boxOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('tag.VTagAddBox') }}
 				</button> -->
 				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<table class="min-w-full table-auto">
-						<thead>
-							<tr>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('tag.VTagBoxId') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('tag.VTagBoxActions') }}
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-for="box in tagsStore.tagsBox[tagId]" :key="box.id_box">
-								<td class="px-4 py-2 border-b border-gray-200">
-									{{ storesStore.boxs[box.id_box].id_box }}
-								</td>
-								<td class="px-4 py-2 border-b border-gray-200 space-x-2">
-									<button type="button" @click="boxDelete(box)"
-										class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
-										{{ $t('tag.VTagBoxDelete') }}
-									</button>
-								</td>
-							</tr>
-						</tbody>
-					</table>
+					<Tableau :labels="labelTableauBox" :store-data="[tagsStore.tagsBox[tagId],storesStore.boxs]" :meta="{ key: 'id_box' }"
+						:loading="tagsStore.tagsBoxLoading"
+						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out', td: 'px-4 py-2 border-b border-gray-200' }"
+					/>
 				</div>
 			</div>
 		</div>
@@ -390,30 +399,10 @@ const schemaTag = Yup.object().shape({
 
 			<!-- Tableau Items -->
 			<div class="overflow-y-auto max-h-96 min-h-96">
-				<table class="min-w-full bg-white border border-gray-200">
-					<thead class="bg-gray-100 sticky top-0">
-						<tr>
-							<th class="px-4 py-2 border-b">{{ $t('tag.VTagItemName') }}</th>
-							<th class="px-4 py-2 border-b">{{ $t('tag.VTagItemActions') }}</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="item in filteredItems" :key="item.id_item">
-							<td class="px-4 py-2 border-b">{{ item.reference_name_item }}</td>
-							<td class="px-4 py-2 border-b">
-								<button v-if="!tagsStore.tagsItem[tagId][item.id_item]" type="button"
-									@click="itemSave(item)"
-									class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-									{{ $t('tag.VTagItemAdd') }}
-								</button>
-								<button v-else type="button" @click="itemDelete(item)"
-									class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
-									{{ $t('tag.VTagItemDelete') }}
-								</button>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+				<Tableau :labels="labelTableauModalItem" :store-data="[filteredItems, tagsStore.tagsItem[tagId]]" :meta="{ key: 'id_item' }"
+					:loading="tagsStore.tagsItemLoading"
+					:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out', td: 'px-4 py-2 border-b border-gray-200' }"
+				/>
 			</div>
 		</div>
 	</div>
@@ -432,30 +421,10 @@ const schemaTag = Yup.object().shape({
 
 			<!-- Tableau Stores -->
 			<div class="overflow-y-auto max-h-96 min-h-96">
-				<table class="min-w-full bg-white border border-gray-200">
-					<thead class="bg-gray-100 sticky top-0">
-						<tr>
-							<th class="px-4 py-2 border-b">{{ $t('tag.VTagStoreName') }}</th>
-							<th class="px-4 py-2 border-b">{{ $t('tag.VTagStoreActions') }}</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="store in filteredStores" :key="store.id_store">
-							<td class="px-4 py-2 border-b">{{ store.nom_store }}</td>
-							<td class="px-4 py-2 border-b">
-								<button v-if="!tagsStore.tagsStore[tagId][store.id_store]" type="button"
-									@click="storeSave(store)"
-									class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-									{{ $t('tag.VTagStoreAdd') }}
-								</button>
-								<button v-else type="button" @click="storeDelete(store)"
-									class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
-									{{ $t('tag.VTagStoreDelete') }}
-								</button>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+				<Tableau :labels="labelTableauModalStore" :store-data="[filteredStores, tagsStore.tagsStore[tagId]]" :meta="{ key: 'id_store' }"
+					:loading="tagsStore.tagsStoreLoading"
+					:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out', td: 'px-4 py-2 border-b border-gray-200' }"
+				/>
 			</div>
 		</div>
 	</div>

@@ -1,21 +1,9 @@
 <template>
-	<td  v-for="(column,index) in labels"
+	<td v-for="(column,index) in labels"
 		:key="index"
 		:class="[css, column.type == 'text' ? 'text-left' : 'text-center']"
 	>
-		<template v-if="column.type == 'text'">
-			{{ row[column.key] }}
-		</template>
-		<template v-else-if="column.type == 'enum'">
-			{{ column.options[row[column.key]] }}
-		</template>
-		<template v-else-if="column.type == 'date'">
-			{{ row[column.key] ? new Date(row[column.key]).toLocaleDateString() : '' }}
-		</template>
-		<template v-else-if="column.type == 'datetime'">
-			{{ row[column.key] ? new Date(row[column.key]).toLocaleString() : '' }}
-		</template>
-		<template v-else-if="column.type == 'bool'">
+		<template v-if="column.type == 'bool'">
 			<template v-if="evaluateCondition(column.condition, row)">
 				<font-awesome-icon icon="fa-solid fa-check" class="ml-2 text-green-500" />
 			</template>
@@ -43,10 +31,9 @@
 		</template>
 		<template v-else-if="column.type == 'image'">
 			<div class="flex justify-center items-center">
-				<template v-if="row[column.key]">
-					<img v-if="this.storeData[column.idStoreImg]?.[row[column.key]]"
-						:src="this.storeData[column.idStoreImg]?.[row[column.key]]"
-						alt=""
+				<template v-if="this.storeData[column.store][row[column.keyStore]]?.[column.key]">
+					<img v-if="this.storeData[column.idStoreImg]?.[this.storeData[column.store][row[column.keyStore]]?.[column.key]]"
+						:src="this.storeData[column.idStoreImg]?.[this.storeData[column.store][row[column.keyStore]]?.[column.key]]"
 						class="w-16 h-16 object-cover rounded" />
 					<span v-else class="w-16 h-16 object-cover rounded">
 						{{ $t('components.VModalTableauImageLoading') }}
@@ -60,7 +47,7 @@
 		<template v-else-if="column.type == 'buttons'">
 			<div class="flex justify-center items-center">
 				<template v-for="(button, buttonIndex) in column.buttons" :key="buttonIndex">
-					<template v-if="!button?.condition || !evaluateCondition(button.condition, row)">
+					<template v-if="!button?.condition || evaluateCondition(button.condition, row)">
 						<button @click="button.action(row)" :class="button.class" class="m-1">
 							<span v-if="button.icon">
 								<font-awesome-icon :icon="button.icon" />
@@ -74,9 +61,25 @@
 				</template>
 			</div>
 		</template>
+		<template v-else-if="column.canEdit && row?.tmp">
+			<Form :validation-schema="schema" v-slot="{ errors }">
+				<Field
+					:name="column.key"
+					v-model="row.tmp[column.key]"
+					:type="column.type"
+					:class="['w-20 p-2 border rounded-lg', errors[column.key] ? 'border-red-500' : '']"
+					:placeholder="column.placeholder || ''"
+					:options="column.options || []"
+				/>
+			</Form>
+		</template>
+		<template v-else>
+			<span v-html="formatCellValue(column, row)"></span>
+		</template>
 	</td>
 </template>
 <script>
+import { Form, Field } from "vee-validate";
 export default {
 	name: "TableauRow",
 	props: {
@@ -103,6 +106,16 @@ export default {
 			// Default CSS class tailwind for table cells
 			default: "border border-gray-300 px-4 py-2 text-sm text-gray-700",
 		},
+		schema: {
+			type: Object,
+			required: false,
+			// Validation schema for vee-validate
+			default: () => ({}),
+		},
+	},
+	components: {
+		Form,
+		Field,
 	},
 	methods: {
 		evaluateCondition(condition,rowData) {
@@ -111,6 +124,27 @@ export default {
 			} catch (error) {
 				console.error("Erreur lors de l'évaluation de la condition :", error);
 				return false;
+			}
+		},
+		formatCellValue(column, row) {
+			let value = "";
+			if (column?.store) {
+				value = this.storeData[column.store]?.[row[column.keyStore]]?.[column.key] || "";
+				row[column.key] = value; // Update the row with the fetched value
+			} else {
+				value = row[column.key];
+			}
+			switch (column.type) {
+			case "text":
+				return value;
+			case "enum":
+				return column.options[value];
+			case "date":
+				return value ? new Date(value).toLocaleDateString() : "";
+			case "datetime":
+				return value ? new Date(value).toLocaleString() : "";
+			default:
+				return value;
 			}
 		},
 	},

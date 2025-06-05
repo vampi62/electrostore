@@ -31,9 +31,9 @@
 			class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
 			{{ $t('components.VModalTopButtonDelete') }}
 		</button>
-		<RouterLink :to="mainConfig.path" class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
+		<button @click="hasHistory() ? $router.go(-1) : $router.push('/')" class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
 			{{ $t('components.VModalTopButtonBack') }}
-		</RouterLink>
+		</button>
 	</div>
 </template>
 
@@ -76,6 +76,11 @@ export default {
 			required: true,
 			// current store user session data
 			default: null,
+		},
+	},
+	methods: {
+		hasHistory() {
+			return window.history.length > 2;
 		},
 	},
 	emits: [

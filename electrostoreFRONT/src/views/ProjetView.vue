@@ -334,29 +334,109 @@ const labelTableauDocument = ref([
 			label: "",
 			icon: "fa-solid fa-edit",
 			action: (row) => documentEditOpenModal(row),
-			type: "button",
 			class: "text-blue-500 cursor-pointer hover:text-blue-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-eye",
 			action: (row) => documentView(row),
-			type: "button",
 			class: "text-green-500 cursor-pointer hover:text-green-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-download",
 			action: (row) => documentDownload(row),
-			type: "button",
 			class: "text-yellow-500 cursor-pointer hover:text-yellow-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
 			action: (row) => documentDeleteOpenModal(row),
-			type: "button",
 			class: "text-red-500 cursor-pointer hover:text-red-600",
+		},
+	] },
+]);
+const labelTableauItem = ref([
+	{ label: "projet.VProjetItemName", sortable: true, key: "reference_name_item", keyStore: "id_item", store: "1", type: "text" },
+	{ label: "projet.VProjetItemQuantity", sortable: true, key: "qte_projet_item", type: "number", canEdit: true },
+	{ label: "projet.VProjetItemActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-edit",
+			condition: "!rowData.tmp",
+			action: (row) => {
+				row.tmp = { ...row };
+			},
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-save",
+			condition: "rowData.tmp",
+			action: (row) => itemSave(row),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-times",
+			condition: "rowData.tmp",
+			action: (row) => {
+				row.tmp = null;
+			},
+			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			action: (row) => itemDelete(row),
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+		},
+	] },
+]);
+const labelTableauModalItem = ref([
+	{ label: "projet.VProjetItemName", sortable: true, key: "reference_name_item", type: "text" },
+	{ label: "projet.VProjetItemQuantity", sortable: true, key: "qte_projet_item", keyStore: "id_item", store: "1", type: "number", canEdit: true },
+	{ label: "projet.VProjetItemActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-plus",
+			condition: "store[1]?.[rowData.id_item] === undefined",
+			action: (row) => {
+				row.tmp = { qte_projet_item: 1, id_item: row.id_item };
+			},
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-edit",
+			condition: "store[1]?.[rowData.id_item] && !rowData.tmp",
+			action: (row) => {
+				row.tmp = { ...row };
+			},
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-save",
+			condition: "rowData.tmp",
+			action: (row) => itemSave(row),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-times",
+			condition: "rowData.tmp",
+			action: (row) => {
+				row.tmp = null;
+			},
+			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			condition: "store[1]?.[rowData.id_item]",
+			action: (row) => itemDelete(row),
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
 ]);
@@ -476,67 +556,10 @@ const labelTableauDocument = ref([
 					{{ $t('projet.VProjetAddItem') }}
 				</button>
 				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<table class="min-w-full table-auto">
-						<thead>
-							<tr>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('projet.VProjetItemName') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('projet.VProjetItemQuantity') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('projet.VProjetItemActions') }}
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-for="item in projetsStore.items[projetId]" :key="item.id_item">
-								<td class="px-4 py-2 border-b border-gray-200">
-									{{ itemsStore.items[item.id_item].reference_name_item }}
-								</td>
-								<td class="px-4 py-2 border-b border-gray-200">
-									<template v-if="item.tmp">
-										<Form :validation-schema="schemaItem" v-slot="{ errors }">
-											<Field name="qte_projet_item" type="number"
-												v-model="item.tmp.qte_projet_item" class="w-20 p-2 border rounded-lg"
-												:class="{ 'border-red-500': errors.qte_projet_item }" />
-										</Form>
-									</template>
-									<template v-else>
-										{{ item.qte_projet_item }}
-									</template>
-								</td>
-								<td class="px-4 py-2 border-b border-gray-200 space-x-2">
-									<template v-if="item.tmp">
-										<button type="button" @click="itemSave(item)"
-											class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
-											{{ $t('projet.VProjetItemSave') }}
-										</button>
-										<button type="button" @click="item.tmp = null"
-											class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-											{{ $t('projet.VProjetItemCancel') }}
-										</button>
-									</template>
-									<template v-else>
-										<button type="button" @click="item.tmp = { ...item }"
-											class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-											{{ $t('projet.VProjetItemEdit') }}
-										</button>
-										<button type="button" @click="itemDelete(item)"
-											class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
-											{{ $t('projet.VProjetItemDelete') }}
-										</button>
-									</template>
-								</td>
-							</tr>
-							<tr v-if="projetsStore.itemsLoading" class="text-center">
-								<td class="px-4 py-2 border-b border-gray-200" colspan="4">
-									{{ $t('projet.VProjetLoading') }}
-								</td>
-							</tr>
-						</tbody>
-					</table>
+					<Tableau :labels="labelTableauItem" :store-data="[projetsStore.items[projetId],itemsStore.items]" :meta="{ key: 'id_item' }"
+						:loading="projetsStore.itemsLoading" :schema="schemaItem"
+						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out', td: 'px-4 py-2 border-b border-gray-200' }"
+					/>
 				</div>
 			</div>
 		</div>
@@ -645,63 +668,10 @@ const labelTableauDocument = ref([
 
 			<!-- Tableau Items -->
 			<div class="overflow-y-auto max-h-96 min-h-96">
-				<table class="min-w-full bg-white border border-gray-200">
-					<thead class="bg-gray-100 sticky top-0">
-						<tr>
-							<th class="px-4 py-2 border-b">{{ $t('projet.VProjetItemName') }}</th>
-							<th class="px-4 py-2 border-b">{{ $t('projet.VProjetItemQuantity') }}</th>
-							<th class="px-4 py-2 border-b">{{ $t('projet.VProjetItemActions') }}</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="item in filteredItems" :key="item.id_item">
-							<td class="px-4 py-2 border-b">{{ item.reference_name_item }}</td>
-							<td class="px-4 py-2 border-b">
-								<template v-if="item.tmp">
-									<Form :validation-schema="schemaItem" v-slot="{ errors }">
-										<Field name="qte_projet_item" type="number" v-model="item.tmp.qte_projet_item"
-											class="w-20 p-2 border rounded-lg"
-											:class="{ 'border-red-500': errors.qte_projet_item }" />
-									</Form>
-								</template>
-								<template v-else-if="projetsStore.items[projetId][item.id_item]">
-									<div>{{ projetsStore.items[projetId][item.id_item].qte_projet_item }}</div>
-								</template>
-								<template v-else>
-									<div></div>
-								</template>
-							</td>
-							<td class="px-4 py-2 border-b">
-								<template v-if="item.tmp">
-									<button type="button" @click="itemSave(item)"
-										class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
-										{{ $t('projet.VProjetItemSave') }}
-									</button>
-									<button type="button" @click="item.tmp = null"
-										class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-										{{ $t('projet.VProjetItemCancel') }}
-									</button>
-								</template>
-								<template v-else>
-									<button v-if="!projetsStore.items[projetId][item.id_item]" type="button"
-										@click="item.tmp = { prix_projet_item: 1, qte_projet_item: 1, id_item: item.id_item }"
-										class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-										{{ $t('projet.VProjetItemAdd') }}
-									</button>
-									<button v-else type="button"
-										@click="item.tmp = { ...projetsStore.items[projetId][item.id_item] }"
-										class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-										{{ $t('projet.VProjetItemEdit') }}
-										</button>
-									<button type="button" @click="itemDelete(item)"
-										class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
-										{{ $t('projet.VProjetItemDelete') }}
-									</button>
-								</template>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+				<Tableau :labels="labelTableauModalItem" :store-data="[filteredItems,projetsStore.items[projetId]]" :meta="{ key: 'id_item' }"
+					:loading="projetsStore.itemsLoading" :schema="schemaItem"
+					:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out', td: 'px-4 py-2 border-b border-gray-200' }"
+				/>
 			</div>
 		</div>
 	</div>

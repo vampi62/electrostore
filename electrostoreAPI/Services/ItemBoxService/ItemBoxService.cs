@@ -131,7 +131,7 @@ public class ItemBoxService : IItemBoxService
 
     public async Task<ReadItemBoxDto> UpdateItemBox(int itemId, int boxId, UpdateItemBoxDto itemBoxDto)
     {
-        var itemBoxToUpdate = await _context.ItemsBoxs.FindAsync(boxId, itemId) ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
+        var itemBoxToUpdate = await _context.ItemsBoxs.FindAsync(itemId, boxId) ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
         if (itemBoxDto.qte_item_box is not null)
         {
             itemBoxToUpdate.qte_item_box = itemBoxDto.qte_item_box.Value;
@@ -147,7 +147,7 @@ public class ItemBoxService : IItemBoxService
 
     public async Task DeleteItemBox(int itemId, int boxId)
     {
-        var itemBoxToDelete = await _context.ItemsBoxs.FindAsync(boxId, itemId) ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
+        var itemBoxToDelete = await _context.ItemsBoxs.FindAsync(itemId, boxId) ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
         _context.ItemsBoxs.Remove(itemBoxToDelete);
         await _context.SaveChangesAsync();
     }

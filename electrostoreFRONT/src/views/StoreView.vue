@@ -684,6 +684,14 @@ const itemDelete = async(item) => {
 	}
 };
 
+const filteredItems = ref([]);
+const updateFilteredItems = (newValue) => {
+	filteredItems.value = newValue;
+};
+const filterItem = ref([
+	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("store.VStoreItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+]);
+
 const schemaItem = Yup.object().shape({
 	qte_item_box: Yup.number()
 		.required(t("store.VStoreItemQuantityRequired"))
@@ -695,12 +703,64 @@ const schemaItem = Yup.object().shape({
 		.min(1, t("store.VStoreItemMaxThresholdMin")),
 });
 
-const filterText = ref("");
-const filteredItems = computed(() => {
-	return filterText.value
-		? Object.values(itemsStore.items).filter((item) => item.reference_name_item.toLowerCase().includes(filterText.value.toLowerCase()))
-		: itemsStore.items;
+const labelTableauBoxItem = ref([
+	{ label: "store.VStoreItemName", sortable: true, key: "reference_name_item", type: "text", store: 1, keyStore: "id_item" },
+	{ label: "store.VStoreItemQuantity", sortable: true, key: "qte_item_box", type: "number" },
+	{ label: "store.VStoreItemMaxThreshold", sortable: true, key: "seuil_max_item_item_box", type: "number" },
+	{ label: "store.VStoreItemImg", sortable: false, key: "id_img", type: "image", idStoreImg: 2, store: 1, keyStore: "id_item" },
+]);
+const metaTableauBoxItem = ref({
+	key: "id_item",
+	path: "/inventory/",
 });
+const labelTableauModalItem = ref([
+	{ label: "store.VStoreItemName", sortable: true, key: "reference_name_item", type: "text" },
+	{ label: "store.VStoreItemQuantity", sortable: true, key: "qte_item_box", keyStore: "id_item", store: "1", type: "number", canEdit: true },
+	{ label: "store.VStoreItemMaxThreshold", sortable: true, key: "seuil_max_item_item_box", keyStore: "id_item", store: "1", type: "number", canEdit: true },
+	{ label: "store.VStoreItemActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-plus",
+			condition: "store[1]?.[rowData.id_item] === undefined",
+			action: (row) => {
+				row.tmp = { qte_item_box: 0, seuil_max_item_item_box: 1, id_item: row.id_item };
+			},
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-edit",
+			condition: "store[1]?.[rowData.id_item] && !rowData.tmp",
+			action: (row) => {
+				row.tmp = { ...row };
+			},
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-save",
+			condition: "rowData.tmp",
+			action: (row) => itemSave(row),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-times",
+			condition: "rowData.tmp",
+			action: (row) => {
+				row.tmp = null;
+			},
+			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			condition: "store[1]?.[rowData.id_item]",
+			action: (row) => itemDelete(row),
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+		},
+	] },
+]);
 </script>
 <style>
 .grid {
@@ -1002,54 +1062,18 @@ const filteredItems = computed(() => {
 				<div>
 					<h2 class="text-xl mb-4">{{ $t('store.VStoreBoxContent') }} (Id : {{ boxId }})</h2>
 					<div class="overflow-x-auto max-h-80 overflow-y-auto">
-						<table v-if="boxId != null" class="min-w-full table-auto">
-							<thead>
-								<tr>
-									<th class="font-semibold pr-4 align-text-top bg-gray-300 sticky top-0">{{ $t('store.VStoreItemName') }}</th>
-									<th class="font-semibold pr-4 align-text-top bg-gray-300 sticky top-0">{{ $t('store.VStoreItemQuantity') }}</th>
-									<th class="font-semibold pr-4 align-text-top bg-gray-300 sticky top-0">{{ $t('store.VStoreItemMaxThreshold') }}</th>
-									<th class="font-semibold pr-4 align-text-top bg-gray-300 sticky top-0">{{ $t('store.VStoreItemImg') }}</th>
-								</tr>
-							</thead>
-							<tbody>
-								<RouterLink v-for="(item, key) in storesStore.boxItems[boxId]" :key="key" :to="'/inventory/' + item.id_item" custom
-									v-slot="{ navigate }">
-									<tr @click="navigate" class="transition duration-150 ease-in-out hover:bg-gray-300 cursor-pointer">
-										<td>
-											{{ itemsStore.items[item.id_item].reference_name_item }}
-										</td>
-										<td>
-											{{ item.qte_item_box }}
-										</td>
-										<td>
-											{{ item.seuil_max_item_item_box }}
-										</td>
-										<td>
-											<div class="flex justify-center items-center">
-												<template v-if="itemsStore.items[item.id_item].id_img">
-													<img v-if="itemsStore.imagesURL[itemsStore.items[item.id_item].id_img]"
-														:src="itemsStore.imagesURL[itemsStore.items[item.id_item].id_img]" alt="Image"
-														class="w-16 h-16 object-cover rounded" />
-													<span v-else class="w-16 h-16 object-cover rounded">
-														{{ $t('store.VStoreLoading') }}
-													</span>
-												</template>
-												<template v-else>
-													<img src="../assets/nopicture.webp" alt="Image"
-														class="w-16 h-16 object-cover rounded" />
-												</template>
-											</div>
-										</td>
-									</tr>
-								</RouterLink>
+						<Tableau v-if="boxId != null" :labels="labelTableauBoxItem" :meta="metaTableauBoxItem" :store-data="[storesStore.boxItems[boxId],itemsStore.items,itemsStore.imagesURL]"
+							:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'py-2 text-center bg-gray-300 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out hover:bg-gray-300 cursor-pointer', td: 'border-b border-gray-200' }"
+						>
+							<template #append-row>
 								<tr @click="itemOpenAddModal()"
 									class="transition duration-150 ease-in-out hover:bg-gray-300 cursor-pointer">
 									<td colspan="4" class="text-center">
 										{{ $t('store.VStoreAddItem') }}
 									</td>
 								</tr>
-							</tbody>
-						</table>
+							</template>
+						</Tableau>
 					</div>
 				</div>
 			</div>
@@ -1141,87 +1165,14 @@ const filteredItems = computed(() => {
 			</div>
 
 			<!-- Filtres -->
-			<div class="my-4 flex gap-4">
-				<input type="text" v-model="filterText"
-					:placeholder="$t('store.VStoreItemFilterPlaceholder')"
-					class="border p-2 rounded w-full">
-			</div>
+			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
 
 			<!-- Tableau Items -->
 			<div class="overflow-y-auto max-h-96 min-h-96" id="storeItemTable">
-				<table class="min-w-full bg-white border border-gray-200">
-					<thead class="bg-gray-100 sticky top-0">
-						<tr>
-							<th class="px-4 py-2 border-b">{{ $t('store.VStoreItemName') }}</th>
-							<th class="px-4 py-2 border-b">{{ $t('store.VStoreItemQuantity') }}</th>
-							<th class="px-4 py-2 border-b">{{ $t('store.VStoreItemMaxThreshold') }}</th>
-							<th class="px-4 py-2 border-b">{{ $t('store.VStoreItemActions') }}</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="item in filteredItems" :key="item.id_item">
-							<td class="px-4 py-2 border-b">{{ item.reference_name_item }}</td>
-							<td class="px-4 py-2 border-b">
-								<template v-if="item.tmp">
-									<Form :validation-schema="schemaItem" v-slot="{ errors }">
-										<Field name="qte_item_box" type="number" v-model="item.tmp.qte_item_box"
-											class="w-20 p-2 border rounded-lg"
-											:class="{ 'border-red-500': errors.qte_item_box }" />
-									</Form>
-								</template>
-								<template v-else-if="storesStore.boxItems[boxId][item.id_item]">
-									<div>{{ storesStore.boxItems[boxId][item.id_item].qte_item_box }}</div>
-								</template>
-								<template v-else>
-									<div></div>
-								</template>
-							</td>
-							<td class="px-4 py-2 border-b">
-								<template v-if="item.tmp">
-									<Form :validation-schema="schemaItem" v-slot="{ errors }">
-										<Field name="seuil_max_item_item_box" type="number"
-											v-model="item.tmp.seuil_max_item_item_box" class="w-20 p-2 border rounded-lg"
-											:class="{ 'border-red-500': errors.seuil_max_item_item_box }" />
-									</Form>
-								</template>
-								<template v-else-if="storesStore.boxItems[boxId][item.id_item]">
-									<div>{{ storesStore.boxItems[boxId][item.id_item].seuil_max_item_item_box }}</div>
-								</template>
-								<template v-else>
-									<div></div>
-								</template>
-							</td>
-							<td class="px-4 py-2 border-b">
-								<template v-if="item.tmp">
-									<button type="button" @click="itemSave(item)"
-										class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
-										{{ $t('store.VStoreItemSave') }}
-									</button>
-									<button type="button" @click="item.tmp = null"
-										class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-										{{ $t('store.VStoreItemCancel') }}
-									</button>
-								</template>
-								<template v-else>
-									<button v-if="!storesStore.boxItems[boxId][item.id_item]" type="button"
-										@click="item.tmp = { qte_item_box: 0, seuil_max_item_item_box: 1, id_item: item.id_item }"
-										class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-										{{ $t('store.VStoreItemAdd') }}
-									</button>
-									<button v-else type="button"
-										@click="item.tmp = { ...storesStore.boxItems[boxId][item.id_item] }"
-										class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-										{{ $t('store.VStoreItemEdit') }}
-									</button>
-									<button type="button" @click="itemDelete(item)"
-										class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
-										{{ $t('store.VStoreItemDelete') }}
-									</button>
-								</template>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+				<Tableau :labels="labelTableauModalItem" :store-data="[filteredItems,storesStore.boxItems[boxId]]" :meta="{ key: 'id_item' }"
+					:loading="itemsStore.itemsLoading" :schema="schemaItem"
+					:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out', td: 'px-4 py-2 border-b border-gray-200' }"
+				/>
 			</div>
 		</div>
 	</div>

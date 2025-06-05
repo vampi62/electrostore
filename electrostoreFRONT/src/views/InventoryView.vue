@@ -118,7 +118,7 @@ const tableauLabel = ref([
 	{ label: "item.VInventorySeuil", sortable: true, key: "seuil_min_item", type: "text" },
 	{ label: "item.VInventoryDescription", sortable: false, key: "description_item", type: "text" },
 	{ label: "item.VInventoryTags", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, key: "id_item", keyStoreLink: "id_tag", ressourcePrint: [{ type: "ressource", key: "nom_tag" }] } },
-	{ label: "item.VInventoryImg", sortable: false, key: "id_img", type: "image", idStoreImg: 3 },
+	{ label: "item.VInventoryImg", sortable: false, key: "id_img", type: "image", idStoreImg: 3, store: 4, keyStore: "id_item" },
 	{ label: "item.VInventoryQuantity", sortable: true, key: "custom_quantity_item", type: "text" },
 ]);
 const tableauMeta = ref({
@@ -195,7 +195,7 @@ const openNewPage = (url) => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredItems,itemsStore.itemTags,tagsStore.tags,itemsStore.imagesURL]"/>
+	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredItems,itemsStore.itemTags,tagsStore.tags,itemsStore.imagesURL,itemsStore.items]"/>
 
 	<div v-if="showPageFind" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center" @click="showPageFind = false">
 		<div class="bg-white p-2 rounded shadow-lg w-2/3" @click.stop>

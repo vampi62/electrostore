@@ -27,5 +27,6 @@ module.exports = {
 		"no-multiple-empty-lines": ["error", { max: 1, maxEOF: 0 }],
 		"object-curly-spacing": ["error", "always"],
 		"array-bracket-spacing": ["error", "never"],
+		"vue/no-mutating-props": 0,
 	},
 };
