@@ -9,7 +9,7 @@
 					<div class="flex justify-between items-center">
 						<span class="flex-1">{{ $t(column.label) }}</span>
 						<template v-if="column.sortable">
-							<template v-if="sort.key === column.key">
+							<template v-if="sort.column?.key === column.key">
 								<template v-if="sort.order === 'asc'">
 									<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
 								</template>
@@ -33,6 +33,7 @@
 						<TableauRow
 							:labels="labels"
 							:row="row"
+							:schema="schema"
 							:store-data="storeData"
 							:css="tableauCss.td"
 						/>
@@ -45,11 +46,13 @@
 					<TableauRow
 						:labels="labels"
 						:row="row"
+						:schema="schema"
 						:store-data="storeData"
 						:css="tableauCss.td"
 					/>
 				</tr>
 			</template>
+			<slot name="append-row"></slot>
 		</tbody>
 	</table>
 </template>
@@ -62,7 +65,13 @@ export default {
 			type: Array,
 			required: true,
 			// labels for the columns, each object should have a key and label property
-			// e.g. [{ key: 'name', label: 'Name', sortable: true }, { key: 'price', label: 'Price', sortable: true }]
+			// e.g. [{ key: 'name', label: 'Name', sortable: true, type: "text" }, { key: 'price', label: 'Price', sortable: true, type: "number" }]
+			// or [{ key: 'name_ressource', label: 'Name', sortable: false, keyStore: "id_ressource", store: "1", type: "text" }
+			// if store is provided, it will be used to fetch the data from an other store in the props storeData and use the keyStore to get the resource and normal key to get the value to display
+			// "store" cannot have the value "0"
+			// other example :
+			// { label: "item.VInventoryTags", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, key: "id_item", keyStoreLink: "id_tag", ressourcePrint: [{ type: "ressource", key: "nom_tag" }] } },
+			// this print a list of tags for each item, using the idStoreLink to get the tags from the storeData[1] and the idStoreRessource to get the item from the storeData[2], and ressourcePrint is an array of objects to print the tags, each object should have a type and key property
 		},
 		meta: {
 			type: Object,
@@ -94,18 +103,32 @@ export default {
 				td: "border border-gray-300 px-4 py-2 text-sm text-gray-700",
 			}),
 		},
+		schema: {
+			type: Object,
+			required: false,
+			// schema for vee-validate, used for validation of the form inputs in TableauRow
+			default: () => ({}),
+		},
 	},
 	components: {
 		TableauRow,
 	},
 	computed: {
 		sortedData() {
-			if (this.sort.key) {
+			if (this.sort.column) {
 				return [...Object.values(this.storeData[0])].sort((a, b) => {
-					if (this.sort.order === "asc") {
-						return a[this.sort.key] > b[this.sort.key] ? 1 : -1;
+					if (this.sort.column?.store) {
+						if (this.sort.order === "asc") {
+							return this.storeData[this.sort.column.store][a[this.sort.column.keyStore]]?.[this.sort.column.key] > this.storeData[this.sort.column.store][b[this.sort.column.keyStore]]?.[this.sort.column.key] ? 1 : -1;
+						} else {
+							return this.storeData[this.sort.column.store][a[this.sort.column.keyStore]]?.[this.sort.column.key] < this.storeData[this.sort.column.store][b[this.sort.column.keyStore]]?.[this.sort.column.key] ? 1 : -1;
+						}
 					} else {
-						return a[this.sort.key] < b[this.sort.key] ? 1 : -1;
+						if (this.sort.order === "asc") {
+							return a[this.sort.column.key] > b[this.sort.column.key] ? 1 : -1;
+						} else {
+							return a[this.sort.column.key] < b[this.sort.column.key] ? 1 : -1;
+						}
 					}
 				});
 			}
@@ -115,7 +138,7 @@ export default {
 	data() {
 		return {
 			sort: {
-				key: "",
+				column: null,
 				order: "asc",
 			},
 		};
@@ -125,10 +148,10 @@ export default {
 			if (!column.sortable) {
 				return;
 			}
-			if (this.sort.key === column.key) {
+			if (this.sort.column === column) {
 				this.sort.order = this.sort.order === "asc" ? "desc" : "asc";
 			} else {
-				this.sort.key = column.key;
+				this.sort.column = column;
 				this.sort.order = "asc";
 			}
 		},

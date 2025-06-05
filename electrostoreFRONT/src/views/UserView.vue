@@ -191,20 +191,19 @@ watch(isChecked, (newValue) => {
 });
 
 const labelTableauSession = ref([
-	{ label: "user.VUserTokenCreatedDate", sortable: true, key: "created_at", type: "text" },
+	{ label: "user.VUserTokenCreatedDate", sortable: true, key: "created_at", type: "datetime" },
 	{ label: "user.VUserTokenCreatedIP", sortable: true, key: "created_by_ip", type: "text" },
 	{ label: "user.VUserTokenExpireDate", sortable: true, key: "expires_at", type: "datetime" },
-	{ label: "user.VUserTokenIsRevoked", sortable: false, key: "is_revoked", type: "text" },
-	{ label: "user.VUserTokenRevokedDate", sortable: false, key: "revoked_at", type: "datetime" },
-	{ label: "user.VUserTokenRevokedIP", sortable: false, key: "revoked_by_ip", type: "text" },
-	{ label: "user.VUserTokenRevokedReason", sortable: false, key: "revoked_reason", type: "text" },
+	{ label: "user.VUserTokenIsRevoked", sortable: true, key: "is_revoked", type: "text" },
+	{ label: "user.VUserTokenRevokedDate", sortable: true, key: "revoked_at", type: "datetime" },
+	{ label: "user.VUserTokenRevokedIP", sortable: true, key: "revoked_by_ip", type: "text" },
+	{ label: "user.VUserTokenRevokedReason", sortable: true, key: "revoked_reason", type: "text" },
 	{ label: "user.VUserTokenActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "user.VUserTokenRevoke",
 			icon: "fa-solid fa-ban",
+			condition: "!rowData?.is_revoked",
 			action: (row) => revokeToken(row.session_id),
-			condition: "rowData?.is_revoked",
-			type: "button",
 			class: "bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600",
 		},
 	] },

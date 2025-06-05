@@ -442,31 +442,78 @@ const labelTableauDocument = ref([
 			label: "",
 			icon: "fa-solid fa-edit",
 			action: (row) => documentEditOpenModal(row),
-			type: "button",
 			class: "text-blue-500 cursor-pointer hover:text-blue-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-eye",
 			action: (row) => documentView(row),
-			type: "button",
 			class: "text-green-500 cursor-pointer hover:text-green-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-download",
 			action: (row) => documentDownload(row),
-			type: "button",
 			class: "text-yellow-500 cursor-pointer hover:text-yellow-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
 			action: (row) => documentDeleteOpenModal(row),
-			type: "button",
 			class: "text-red-500 cursor-pointer hover:text-red-600",
 		},
 	] },
+]);
+const labelTableauBox = ref([
+	{ label: "item.VItemBoxId", sortable: true, key: "id_box", type: "text" },
+	{ label: "item.VItemBoxQuantity", sortable: true, key: "qte_item_box", type: "number", canEdit: true },
+	{ label: "item.VItemBoxMaxThreshold", sortable: true, key: "seuil_max_item_item_box", type: "number", canEdit: true },
+	{ label: "item.VItemBoxActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-edit",
+			condition: "!rowData.tmp",
+			action: (row) => {
+				row.tmp = { ...row };
+			},
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-save",
+			condition: "rowData.tmp",
+			action: (row) => boxSave(row),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-times",
+			condition: "rowData.tmp",
+			action: (row) => {
+				row.tmp = null;
+			},
+			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-eye",
+			action: (row) => toggleBoxLed(row.id_box),
+			class: "px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600",
+		},
+	] },
+]);
+const labelTableauCommand = ref([
+	{ label: "item.VItemCommandDate", sortable: true, key: "date_command", keyStore: "id_command", store: "1", type: "datetime" },
+	{ label: "item.VItemCommandStatus", sortable: true, key: "status_command", keyStore: "id_command", store: "1", type: "text" },
+	{ label: "item.VItemCommandQte", sortable: true, key: "qte_command_item", type: "number" },
+	{ label: "item.VItemCommandPrice", sortable: true, key: "prix_command_item", type: "number" },
+]);
+const labelTableauProjet = ref([
+	{ label: "item.VItemProjetName", sortable: true, key: "nom_projet", keyStore: "id_projet", store: "1", type: "text" },
+	{ label: "item.VItemProjetDate", sortable: true, key: "date_debut_projet", keyStore: "id_projet", store: "1", type: "datetime" },
+	{ label: "item.VItemProjetDateFin", sortable: true, key: "date_fin_projet", keyStore: "id_projet", store: "1", type: "datetime" },
+	{ label: "item.VItemProjetStatus", sortable: true, key: "status_projet", keyStore: "id_projet", store: "1", type: "text" },
+	{ label: "item.VItemProjetQte", sortable: true, key: "qte_projet_item", type: "number" },
 ]);
 </script>
 
@@ -579,80 +626,10 @@ const labelTableauDocument = ref([
 			</h3>
 			<div :class="showBoxs ? 'block' : 'hidden'" class="p-2">
 				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<table class="min-w-full table-auto">
-						<thead class="bg-gray-100 sticky top-0">
-							<tr>
-								<th class="px-4 py-2 border-b">{{ $t('item.VItemBoxId') }}</th>
-								<th class="px-4 py-2 border-b">{{ $t('item.VItemBoxQuantity') }}</th>
-								<th class="px-4 py-2 border-b">{{ $t('item.VItemBoxMaxThreshold') }}</th>
-								<th class="px-4 py-2 border-b">{{ $t('item.VItemBoxActions') }}</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-for="box in itemsStore.itemBoxs[itemId]" :key="box.id_box">
-								<td class="px-4 py-2 border-b">{{ box.id_box }}</td>
-								<td class="px-4 py-2 border-b">
-									<template v-if="box.tmp">
-										<Form :validation-schema="schemaBox" v-slot="{ errors }">
-											<Field name="qte_item_box" type="number" v-model="box.tmp.qte_item_box"
-												class="w-20 p-2 border rounded-lg"
-												:class="{ 'border-red-500': errors.qte_item_box }" />
-										</Form>
-									</template>
-									<template v-else-if="itemsStore.itemBoxs[itemId][box.id_box]">
-										<div>{{ itemsStore.itemBoxs[itemId][box.id_box].qte_item_box }}</div>
-									</template>
-									<template v-else>
-										<div></div>
-									</template>
-								</td>
-								<td class="px-4 py-2 border-b">
-									<template v-if="box.tmp">
-										<Form :validation-schema="schemaBox" v-slot="{ errors }">
-											<Field name="seuil_max_item_item_box" type="number"
-												v-model="box.tmp.seuil_max_item_item_box" class="w-20 p-2 border rounded-lg"
-												:class="{ 'border-red-500': errors.seuil_max_item_item_box }" />
-										</Form>
-									</template>
-									<template v-else-if="itemsStore.itemBoxs[itemId][box.id_box]">
-										<div>{{ itemsStore.itemBoxs[itemId][box.id_box].seuil_max_item_item_box }}</div>
-									</template>
-									<template v-else>
-										<div></div>
-									</template>
-								</td>
-								<td class="px-4 py-2 border-b">
-									<template v-if="box.tmp">
-										<button type="button" @click="boxSave(box)"
-											class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
-											{{ $t('item.VItemBoxSave') }}
-										</button>
-										<button type="button" @click="box.tmp = null"
-											class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-											{{ $t('item.VItemBoxCancel') }}
-										</button>
-									</template>
-									<template v-else>
-										<button v-if="!itemsStore.itemBoxs[itemId][box.id_box]" type="button"
-											@click="box.tmp = { qte_item_box: 0, seuil_max_item_item_box: 1, id_box: box.id_box }"
-											class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-											{{ $t('item.VItemBoxAdd') }}
-										</button>
-										<button v-else type="button"
-											@click="box.tmp = { ...itemsStore.itemBoxs[itemId][box.id_box] }"
-											class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-											{{ $t('item.VItemBoxEdit') }}
-										</button>
-									</template>
-									<button type="button" @click="toggleBoxLed(box.id_box)"
-										class="px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">
-										{{ $t('item.VItemBoxShow') }}
-									</button>
-									
-								</td>
-							</tr>
-						</tbody>
-					</table>
+					<Tableau :labels="labelTableauBox" :store-data="[itemsStore.itemBoxs[itemId]]" :meta="{ key: 'id_box' }"
+						:loading="itemsStore.itemBoxsLoading" :schema="schemaBox"
+						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out', td: 'px-4 py-2 border-b border-gray-200' }"
+					/>
 				</div>
 			</div>
 		</div>
@@ -721,46 +698,10 @@ const labelTableauDocument = ref([
 			</h3>
 			<div v-if="!itemsStore.itemCommandsLoading && showCommandItems" class="p-2">
 				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<table class="min-w-full table-auto">
-						<thead>
-							<tr>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('item.VItemCommandDate') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('item.VItemCommandStatus') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('item.VItemCommandQte') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('item.VItemCommandPrice') }}
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							<template v-if="!itemsStore.itemCommandsLoading">
-								<RouterLink v-for="command in itemsStore.itemCommands[itemId]"
-									:key="command.id_command" :to="'/commands/' + command.id_command"
-									custom v-slot="{ navigate }">
-									<tr @click="navigate" class="cursor-pointer hover:bg-gray-200">
-										<td class="px-4 py-2 border-b border-gray-200">
-											{{ commandsStore.commands[command.id_command].date_command }}
-										</td>
-										<td class="px-4 py-2 border-b border-gray-200">
-											{{ commandsStore.commands[command.id_command].status_command }}
-										</td>
-										<td class="px-4 py-2 border-b border-gray-200">
-											{{ command.qte_command_item }}
-										</td>
-										<td class="px-4 py-2 border-b border-gray-200">
-											{{ command.prix_command_item }}
-										</td>
-									</tr>
-								</RouterLink>
-							</template>
-						</tbody>
-					</table>
+					<Tableau :labels="labelTableauCommand" :store-data="[itemsStore.itemCommands[itemId],commandsStore.commands]" :meta="{ key: 'id_item', path: '/commands/' }"
+						:loading="itemsStore.itemCommandsLoading"
+						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer', td: 'px-4 py-2 border-b border-gray-200' }"
+					/>
 				</div>
 			</div>
 		</div>
@@ -771,52 +712,10 @@ const labelTableauDocument = ref([
 			</h3>
 			<div v-if="!itemsStore.itemProjetsLoading && showProjetItems" class="p-2">
 				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<table class="min-w-full table-auto">
-						<thead>
-							<tr>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('item.VItemProjetName') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('item.VItemProjetDate') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('item.VItemProjetDateFin') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('item.VItemProjetStatus') }}
-								</th>
-								<th class="px-4 py-2 text-left bg-gray-200 sticky top-0">
-									{{ $t('item.VItemProjetQte') }}
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							<template v-if="!itemsStore.itemProjetsLoading">
-								<RouterLink v-for="projet in itemsStore.itemProjets[itemId]"
-									:key="projet.id_projet" :to="'/projets/' + projet.id_projet"
-									custom v-slot="{ navigate }">
-									<tr @click="navigate" class="cursor-pointer hover:bg-gray-200">
-										<td class="px-4 py-2 border-b border-gray-200">
-											{{ projetsStore.projets[projet.id_projet].nom_projet }}
-										</td>
-										<td class="px-4 py-2 border-b border-gray-200">
-											{{ projetsStore.projets[projet.id_projet].date_debut_projet }}
-										</td>
-										<td class="px-4 py-2 border-b border-gray-200">
-											{{ projetsStore.projets[projet.id_projet].date_fin_projet }}
-										</td>
-										<td class="px-4 py-2 border-b border-gray-200">
-											{{ projetsStore.projets[projet.id_projet].status_projet }}
-										</td>
-										<td class="px-4 py-2 border-b border-gray-200">
-											{{ projet.qte_projet_item }}
-										</td>
-									</tr>
-								</RouterLink>
-							</template>
-						</tbody>
-					</table>
+					<Tableau :labels="labelTableauProjet" :store-data="[itemsStore.itemProjets[itemId],projetsStore.projets]" :meta="{ key: 'id_projet', path: '/projets/' }"
+						:loading="itemsStore.itemProjetsLoading"
+						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer', td: 'px-4 py-2 border-b border-gray-200' }"
+					/>
 				</div>
 			</div>
 		</div>
