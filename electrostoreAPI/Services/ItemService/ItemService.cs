@@ -124,6 +124,10 @@ public class ItemService : IItemService
         {
             Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", item.id_item.ToString()));
         }
+        if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails", item.id_item.ToString())))
+        {
+            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails", item.id_item.ToString()));
+        }
         if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", item.id_item.ToString())))
         {
             Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", item.id_item.ToString()));
@@ -178,6 +182,11 @@ public class ItemService : IItemService
         if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", id.ToString())))
         {
             Directory.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", id.ToString()), true);
+        }
+        //remove folder in wwwroot/imagesThumbnails
+        if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails", id.ToString())))
+        {
+            Directory.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails", id.ToString()), true);
         }
         //remove folder in wwwroot/itemDocuments
         if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", id.ToString())))

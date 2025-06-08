@@ -68,7 +68,7 @@ namespace electrostore.Controllers
 
         [HttpPut("{id_itemDocument}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadItemDocumentDto>> UpdateItemDocument([FromRoute] int id_itemDocument, [FromForm] UpdateItemDocumentDto itemDocumentDto, [FromRoute] int id_item)
+        public async Task<ActionResult<ReadItemDocumentDto>> UpdateItemDocument([FromRoute] int id_itemDocument, [FromBody] UpdateItemDocumentDto itemDocumentDto, [FromRoute] int id_item)
         {
             var itemDocument = await _itemDocumentService.UpdateItemDocument(id_itemDocument, itemDocumentDto, id_item);
             return Ok(itemDocument);

@@ -195,7 +195,7 @@ const openNewPage = (url) => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredItems,itemsStore.itemTags,tagsStore.tags,itemsStore.imagesURL,itemsStore.items]"/>
+	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredItems,itemsStore.itemTags,tagsStore.tags,itemsStore.thumbnailsURL,itemsStore.items]" :loading="itemsStore.itemsLoading" />
 
 	<div v-if="showPageFind" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center" @click="showPageFind = false">
 		<div class="bg-white p-2 rounded shadow-lg w-2/3" @click.stop>
@@ -297,7 +297,7 @@ const openNewPage = (url) => {
 							</div>
 							<div>
 								<img v-if="itemsStore.items[iasStore.status.detect.predictedLabel]?.id_img"
-									:src="itemsStore.imagesURL[itemsStore.items[iasStore.status.detect.predictedLabel].id_img]"
+									:src="itemsStore.thumbnailsURL[itemsStore.items[iasStore.status.detect.predictedLabel].id_img]"
 									class="w-16 h-16 object-cover rounded" />
 								<img v-else src="../assets/nopicture.webp" class="w-16 h-16 object-cover rounded" />
 							</div>

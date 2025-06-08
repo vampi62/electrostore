@@ -67,7 +67,7 @@ export const useProjetsStore = defineStore("projets",{
 			if (!this.projets[id]) {
 				this.projets[id] = {};
 			}
-			this.projets[id].loading = true;
+			this.projets[id] = { ...this.projets[id], loading: true };
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.projets[id] = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${id}?${expandString}`,
@@ -115,11 +115,12 @@ export const useProjetsStore = defineStore("projets",{
 		},
 		async deleteProjet(id) {
 			this.projetEdition.loading = true;
-			this.projetEdition = await fetchWrapper.delete({
+			await fetchWrapper.delete({
 				url: `${baseUrl}/projet/${id}`,
 				useToken: "access",
 			});
 			delete this.projets[id];
+			this.projetEdition = {};
 		},
 
 		async getCommentaireByInterval(idProjet, limit = 100, offset = 0, expand = []) {
@@ -147,7 +148,10 @@ export const useProjetsStore = defineStore("projets",{
 			if (!this.commentaires[idProjet]) {
 				this.commentaires[idProjet] = {};
 			}
-			this.commentaires[idProjet][id].loading = true;
+			if (!this.commentaires[idProjet][id]) {
+				this.commentaires[idProjet][id] = {};
+			}
+			this.commentaires[idProjet][id] = { ...this.commentaires[idProjet][id], loading: true };
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.commentaires[idProjet][id] = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/commentaire/${id}?${expandString}`,
@@ -158,7 +162,7 @@ export const useProjetsStore = defineStore("projets",{
 			}
 		},
 		async createCommentaire(idProjet, params) {
-			this.commentaireEdition = { loading: true };
+			this.commentaireEdition.loading = true;
 			this.commentaireEdition = await fetchWrapper.post({
 				url: `${baseUrl}/projet/${idProjet}/commentaire`,
 				useToken: "access",
@@ -171,21 +175,22 @@ export const useProjetsStore = defineStore("projets",{
 			this.commentairesTotalCount[idProjet] += 1;
 		},
 		async updateCommentaire(idProjet, id, params) {
-			this.commentaireEdition = { loading: true };
+			this.commentaireEdition.loading = true;
 			this.commentaireEdition = await fetchWrapper.put({
 				url: `${baseUrl}/projet/${idProjet}/commentaire/${id}`,
 				useToken: "access",
 				body: params,
 			});
-			this.commentaires[idProjet][id] = { ...this.commentaireEdition };
+			this.commentaires[idProjet][id] = this.commentaireEdition;
 		},
 		async deleteCommentaire(idProjet, id) {
-			this.commentaireEdition = { loading: true };
-			this.commentaireEdition = await fetchWrapper.delete({
+			this.commentaireEdition.loading = true;
+			await fetchWrapper.delete({
 				url: `${baseUrl}/projet/${idProjet}/commentaire/${id}`,
 				useToken: "access",
 			});
 			delete this.commentaires[idProjet][id];
+			this.commentaireEdition = {};
 		},
 
 		async getDocumentByList(idProjet, idResearch = [], expand = []) {
@@ -226,7 +231,13 @@ export const useProjetsStore = defineStore("projets",{
 			this.documentsLoading = false;
 		},
 		async getDocumentById(idProjet, id) {
-			this.documents[idProjet][id].loading = true;
+			if (!this.documents[idProjet]) {
+				this.documents[idProjet] = {};
+			}
+			if (!this.documents[idProjet][id]) {
+				this.documents[idProjet][id] = {};
+			}
+			this.documents[idProjet][id] = { ...this.documents[idProjet][id], loading: true };
 			this.documents[idProjet][id] = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/document/${id}`,
 				useToken: "access",
@@ -250,28 +261,21 @@ export const useProjetsStore = defineStore("projets",{
 		},
 		async updateDocument(idProjet, id, params) {
 			this.documentEdition.loading = true;
-			const formData = new FormData();
-			if (params.name_projet_document) {
-				formData.append("name_projet_document", params.name_projet_document); 
-			}
-			if (params.document) {
-				formData.append("document", params.document); 
-			}
 			this.documentEdition = await fetchWrapper.put({
 				url: `${baseUrl}/projet/${idProjet}/document/${id}`,
 				useToken: "access",
-				body: formData,
-				contentFile: true,
+				body: params,
 			});
-			this.documents[idProjet][id] = params;
+			this.documents[idProjet][id] = this.documentEdition;
 		},
 		async deleteDocument(idProjet, id) {
 			this.documentEdition.loading = true;
-			this.documentEdition = await fetchWrapper.delete({
+			await fetchWrapper.delete({
 				url: `${baseUrl}/projet/${idProjet}/document/${id}`,
 				useToken: "access",
 			});
 			delete this.documents[idProjet][id];
+			this.documentEdition = {};
 		},
 		async downloadDocument(idProjet, id) {
 			return await fetchWrapper.image({
@@ -331,7 +335,7 @@ export const useProjetsStore = defineStore("projets",{
 			if (!this.items[idProjet][id]) {
 				this.items[idProjet][id] = {};
 			}
-			this.items[idProjet][id].loading = true;
+			this.items[idProjet][id] = { ...this.items[idProjet][id], loading: true };
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.items[idProjet][id] = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/item/${id}&${expandString}`,
@@ -360,15 +364,16 @@ export const useProjetsStore = defineStore("projets",{
 				useToken: "access",
 				body: params,
 			});
-			this.items[idProjet][id] = params;
+			this.items[idProjet][id] = this.itemEdition;
 		},
 		async deleteItem(idProjet, id) {
 			this.itemEdition.loading = true;
-			this.itemEdition = await fetchWrapper.delete({
+			await fetchWrapper.delete({
 				url: `${baseUrl}/projet/${idProjet}/item/${id}`,
 				useToken: "access",
 			});
 			delete this.items[idProjet][id];
+			this.itemEdition = {};
 		},
 		async createItemBulk(idProjet, params) {
 			this.itemEdition.loading = true;

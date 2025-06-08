@@ -367,8 +367,13 @@ const handleImageUpload = (e) => {
 	imageModalData.value.image = e.target.files[0];
 };
 const imageDownload = async(imageContent) => {
-	//const file = await itemsStore.downloadImage(itemId, imageContent.id_img);
-	//const url = window.URL.createObjectURL(new Blob([file]));
+	if (!itemsStore.imagesURL[imageContent.id_img]) {
+		await itemsStore.showImageById(itemId, imageContent.id_img);
+	}
+	if (!itemsStore.imagesURL[imageContent.id_img]) {
+		addNotification({ message: "item.VItemImageDownloadError", type: "error", i18n: true });
+		return;
+	}
 	let url = itemsStore.imagesURL[imageContent.id_img];
 	const link = document.createElement("a");
 	link.href = url;
@@ -419,9 +424,6 @@ const schemaEditDocument = Yup.object().shape({
 	name_item_document: Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemDocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
 		.required(t("item.VItemDocumentNameRequired")),
-	document: Yup.mixed()
-		.nullable()
-		.test("fileSize", t("item.VItemDocumentSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 
 const schemaAddImage = Yup.object().shape({
@@ -585,8 +587,8 @@ const labelTableauProjet = ref([
 									:class="{ 'cursor-pointer': !itemsStore.itemEdition.loading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }"
 									@click="imageSelectOpenModal">
 									<template v-if="itemsStore.itemEdition.id_img">
-										<img v-if="itemsStore.imagesURL[itemsStore.itemEdition.id_img]"
-											:src="itemsStore.imagesURL[itemsStore.itemEdition.id_img]" alt="Image"
+										<img v-if="itemsStore.thumbnailsURL[itemsStore.itemEdition.id_img]"
+											:src="itemsStore.thumbnailsURL[itemsStore.itemEdition.id_img]" alt="Image"
 											class="w-48 h-48 object-cover rounded" />
 										<span v-else class="w-48 h-48 object-cover rounded">
 											{{ $t('item.VInventoryLoading') }}
@@ -653,7 +655,7 @@ const labelTableauProjet = ref([
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleImages" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': !itemsStore.images[itemId]?.loading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
+				:class="{ 'cursor-pointer': itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
 				{{ $t('item.VItemImages') }} ({{ itemsStore.imagesTotalCount[itemId] || 0 }})
 			</h3>
 			<div v-if="!itemsStore.images.imagesLoading && showImages" class="p-2">
@@ -665,8 +667,8 @@ const labelTableauProjet = ref([
 					<template v-if="itemsStore.images[itemId]">
 						<div v-for="image in itemsStore.images[itemId]" :key="image.id_img" @click.stop
 							class="w-48 h-48 bg-gray-200 rounded m-2 flex items-center relative">
-							<template v-if="itemsStore.imagesURL[image.id_img]">
-								<img :src="itemsStore.imagesURL[image.id_img]"
+							<template v-if="itemsStore.thumbnailsURL[image.id_img]">
+								<img :src="itemsStore.thumbnailsURL[image.id_img]"
 									class="w-48 h-48 object-cover rounded"
 									@click="selectedImageId === image.id_img ? selectedImageId = null : selectedImageId = image.id_img" />
 							</template>
@@ -693,10 +695,10 @@ const labelTableauProjet = ref([
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleCommandItems" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': !itemsStore.itemCommandsLoading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
+				:class="{ 'cursor-pointer': itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
 				{{ $t('item.VItemCommands') }} ({{ itemsStore.itemCommandsTotalCount[itemId] || 0 }})
 			</h3>
-			<div v-if="!itemsStore.itemCommandsLoading && showCommandItems" class="p-2">
+			<div v-if="showCommandItems" class="p-2">
 				<div class="overflow-x-auto max-h-64 overflow-y-auto">
 					<Tableau :labels="labelTableauCommand" :store-data="[itemsStore.itemCommands[itemId],commandsStore.commands]" :meta="{ key: 'id_item', path: '/commands/' }"
 						:loading="itemsStore.itemCommandsLoading"
@@ -707,10 +709,10 @@ const labelTableauProjet = ref([
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
 			<h3 @click="toggleProjetItems" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': !itemsStore.itemProjetsLoading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
+				:class="{ 'cursor-pointer': itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
 				{{ $t('item.VItemProjets') }} ({{ itemsStore.itemProjetsTotalCount[itemId] || 0 }})
 			</h3>
-			<div v-if="!itemsStore.itemProjetsLoading && showProjetItems" class="p-2">
+			<div v-if="showProjetItems" class="p-2">
 				<div class="overflow-x-auto max-h-64 overflow-y-auto">
 					<Tableau :labels="labelTableauProjet" :store-data="[itemsStore.itemProjets[itemId],projetsStore.projets]" :meta="{ key: 'id_projet', path: '/projets/' }"
 						:loading="itemsStore.itemProjetsLoading"
@@ -762,8 +764,8 @@ const labelTableauProjet = ref([
 				<template v-if="itemsStore.images[itemId]">
 					<div v-for="image in itemsStore.images[itemId]" :key="image.id_img"
 						class="w-24 h-24 bg-gray-200 rounded m-2 flex items-center justify-center cursor-pointer">
-						<template v-if="itemsStore.imagesURL[image.id_img]">
-							<img :src="itemsStore.imagesURL[image.id_img]" alt="Image"
+						<template v-if="itemsStore.thumbnailsURL[image.id_img]">
+							<img :src="itemsStore.thumbnailsURL[image.id_img]" alt="Image"
 								:class="itemsStore.itemEdition.id_img == image.id_img ? 'border-2 border-blue-500' : 'border-2 border-transparent'"
 								class="w-24 h-24 object-cover rounded"
 								@click="itemsStore.itemEdition.id_img = image.id_img" />
@@ -822,12 +824,6 @@ const labelTableauProjet = ref([
 							class="w-full p-2 border rounded"
 							:class="{ 'border-red-500': errors.name_item_document }" />
 						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.name_item_document || ' ' }}</span>
-					</div>
-					<div class="flex flex-col">
-						<Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
-							:class="{ 'border-red-500': errors.document }" />
-						<span class="h-5 w-80 text-sm">{{ $t('item.VItemDocumentSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
-						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.document || ' ' }}</span>
 					</div>
 				</div>
 				<div class="flex justify-end space-x-2">

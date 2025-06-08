@@ -1,4 +1,6 @@
+import { useNotification } from "@/helpers/notification.js";
 import { useAuthStore } from "@/stores";
+const { addNotification } = useNotification();
 
 let renewPromise = null;
 
@@ -8,7 +10,7 @@ export const fetchWrapper = {
 	put: request("PUT"),
 	delete: request("DELETE"),
 	image: image("GET"),
-	stream: stream("GET"),
+	stream: stream(),
 };
 
 function request(method) {
@@ -43,17 +45,15 @@ function request(method) {
 						console.log("Token expired. Renewing token...");
 						await renewToken(authStore);
 						return request(method)({ url, body, useToken }); // Réessayer la requête après renouvellement
-					} else {
-						if (useToken === "refresh") {
-							// Si la requete cherche a renouveler le token echoue alors on deconnecte le client
-							authStore.logout();
-							throw new Error("2 Unable to renew token. Logging out.");
-						}
+					} else if (useToken === "refresh") {
+						// Si la requete cherche a renouveler le token echoue alors on deconnecte le client
+						authStore.logout();
+						throw new Error("2 Unable to renew token. Logging out.");
 					}
 				} else if (response.status === 403 && authStore.user) {
 					throw new Error("Access forbidden.");
 				}
-				const error = (data && data.errors) || response.statusText;
+				const error = data?.errors || response.statusText;
 				throw new Error(error);
 			}
 			if (totalCount) {
@@ -61,7 +61,10 @@ function request(method) {
 			}
 			return data;
 		} catch (error) {
-			console.error("Request failed:", error);
+			addNotification({
+				type: "error",
+				message: `Error in fetch request: ${error.message}`,
+			});
 			throw error;
 		}
 	};
@@ -70,7 +73,6 @@ function request(method) {
 // renew token or waiting end renew
 async function renewToken(authStore) {
 	if (renewPromise) { // une requete est deja lancer on attend la fin
-		console.log("Waiting for token renewal to complete...");
 		await renewPromise;
 		return;
 	}
@@ -78,7 +80,10 @@ async function renewToken(authStore) {
 	try {
 		await renewPromise;
 	} catch (error) {
-		console.error("Token renewal failed:", error);
+		addNotification({
+			type: "error",
+			message: `Error renewing token: ${error.message}`,
+		});
 		authStore.logout();
 		throw new Error("Unable to renew token. Logging out.");
 	} finally {
@@ -100,7 +105,11 @@ function image(method) {
 		};
 		const response = await fetch(url, requestOptions);
 		if (!response.ok) {
-			return Promise.reject(response.statusText);
+			addNotification({
+				type: "error",
+				message: `Error downloading image: ${response.statusText}`,
+			});
+			return Promise.reject(new Error(response.statusText));
 		}
 		return await response.blob();
 	};

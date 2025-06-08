@@ -60,11 +60,16 @@ public class ProjetDocumentService : IProjetDocumentService
             throw new KeyNotFoundException($"Projet with id {projetDocumentDto.id_projet} not found");
         }
         var fileName = Path.GetFileNameWithoutExtension(projetDocumentDto.document.FileName);
+        fileName = fileName.Replace(".", "").Replace("/", ""); // remove "." and "/" from the file name to prevent directory traversal attacks
+        if (fileName.Length > 100) // cut the file name to 100 characters to prevent too long file names
+        {
+            fileName = fileName[..100];
+        }
         var fileExt = Path.GetExtension(projetDocumentDto.document.FileName);
         var i = 1;
         // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/projetDocuments"
         // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
-        var newName = projetDocumentDto.document.FileName;
+        var newName = fileName;
         while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", projetDocumentDto.id_projet.ToString(), newName)))
         {
             newName = $"{fileName}({i}){fileExt}";
@@ -94,34 +99,6 @@ public class ProjetDocumentService : IProjetDocumentService
         if (projetId is not null && projetDocument.id_projet != projetId)
         {
             throw new KeyNotFoundException($"ProjetDocument with id {id} not found for projet with id {projetId}");
-        }
-        if (projetDocumentDto.document is not null && projetDocumentDto.document.Length > 0)
-        {
-            var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", projetDocument.url_projet_document);
-            var fileName = Path.GetFileNameWithoutExtension(projetDocumentDto.document.FileName);
-            var fileExt = Path.GetExtension(projetDocumentDto.document.FileName);
-            var i = 1;
-            // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/projetDocuments"
-            // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
-            var newName = projetDocumentDto.document.FileName;
-            while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", projetDocument.id_projet.ToString(), newName)))
-            {
-                newName = $"{fileName}({i}){fileExt}";
-                i++;
-            }
-            var savePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", projetDocument.id_projet.ToString(), newName);
-            using (var fileStream = new FileStream(savePath, FileMode.Create))
-            {
-                await projetDocumentDto.document.CopyToAsync(fileStream);
-            }
-            projetDocument.type_projet_document = fileExt.Replace(".", "").ToLowerInvariant();
-            projetDocument.url_projet_document = projetDocument.id_projet.ToString() + "/" + newName;
-            projetDocument.size_projet_document = projetDocumentDto.document.Length;
-            // remove old file
-            if (File.Exists(oldPath))
-            {
-                File.Delete(oldPath);
-            }
         }
         if (projetDocumentDto.name_projet_document is not null)
         {

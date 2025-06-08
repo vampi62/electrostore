@@ -61,11 +61,16 @@ public class ItemDocumentService : IItemDocumentService
             throw new KeyNotFoundException($"Item with id {itemDocumentDto.id_item} not found");
         }
         var fileName = Path.GetFileNameWithoutExtension(itemDocumentDto.document.FileName);
+        fileName = fileName.Replace(".", "").Replace("/", ""); // remove "." and "/" from the file name to prevent directory traversal attacks
+        if (fileName.Length > 100) // cut the file name to 100 characters to prevent too long file names
+        {
+            fileName = fileName[..100];
+        }
         var fileExt = Path.GetExtension(itemDocumentDto.document.FileName);
         var i = 1;
         // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/itemDocuments"
         // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
-        var newName = itemDocumentDto.document.FileName;
+        var newName = fileName;
         while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", itemDocumentDto.id_item.ToString(), newName)))
         {
             newName = $"{fileName}({i}){fileExt}";
@@ -95,34 +100,6 @@ public class ItemDocumentService : IItemDocumentService
         if (itemId is not null && itemDocument.id_item != itemId)
         {
             throw new KeyNotFoundException($"ItemDocument with id {id} not found for item with id {itemId}");
-        }
-        if (itemDocumentDto.document is not null)
-        {
-            var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", itemDocument.url_item_document);
-            var fileName = Path.GetFileNameWithoutExtension(itemDocumentDto.document.FileName);
-            var fileExt = Path.GetExtension(itemDocumentDto.document.FileName);
-            var i = 1;
-            // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/itemDocuments"
-            // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
-            var newName = itemDocumentDto.document.FileName;
-            while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", itemDocument.id_item.ToString(), newName)))
-            {
-                newName = $"{fileName}({i}){fileExt}";
-                i++;
-            }
-            var savePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", itemDocument.id_item.ToString(), newName);
-            using (var fileStream = new FileStream(savePath, FileMode.Create))
-            {
-                await itemDocumentDto.document.CopyToAsync(fileStream);
-            }
-            itemDocument.type_item_document = fileExt.Replace(".", "").ToLowerInvariant();
-            itemDocument.url_item_document = itemDocument.id_item.ToString() + "/" + newName;
-            itemDocument.size_item_document = itemDocumentDto.document.Length;
-            // remove old file
-            if (File.Exists(oldPath))
-            {
-                File.Delete(oldPath);
-            }
         }
         if (itemDocumentDto.name_item_document is not null)
         {

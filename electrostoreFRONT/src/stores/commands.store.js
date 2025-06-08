@@ -102,7 +102,7 @@ export const useCommandsStore = defineStore("commands",{
 			if (!this.commands[id]) {
 				this.commands[id] = {};
 			}
-			this.commands[id].loading = true;
+			this.commands[id] = { ...this.commands[id], loading: true };
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.commands[id] = await fetchWrapper.get({
 				url: `${baseUrl}/command/${id}?${expandString}`,
@@ -146,15 +146,16 @@ export const useCommandsStore = defineStore("commands",{
 				useToken: "access",
 				body: params,
 			});
-			this.commands[id] = params;
+			this.commands[id] = this.commandEdition;
 		},
 		async deleteCommand(id) {
 			this.commandEdition.loading = true;
-			this.commandEdition = await fetchWrapper.delete({
+			await fetchWrapper.delete({
 				url: `${baseUrl}/command/${id}`,
 				useToken: "access",
 			});
 			delete this.commands[id];
+			this.commandEdition = {};
 		},
 
 		async getCommentaireByInterval(idCommand, limit = 100, offset = 0, expand = []) {
@@ -185,7 +186,7 @@ export const useCommandsStore = defineStore("commands",{
 			if (!this.commentaires[idCommand][id]) {
 				this.commentaires[idCommand][id] = {};
 			}
-			this.commentaires[idCommand][id].loading = true;
+			this.commentaires[idCommand][id] = { ...this.commentaires[idCommand][id], loading: true };
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.commentaires[idCommand][id] = await fetchWrapper.get({
 				url: `${baseUrl}/command/${idCommand}/commentaire/${id}?${expandString}`,
@@ -218,11 +219,12 @@ export const useCommandsStore = defineStore("commands",{
 		},
 		async deleteCommentaire(idCommand, id) {
 			this.commentaireEdition.loading = true;
-			this.commentaireEdition = await fetchWrapper.delete({
+			await fetchWrapper.delete({
 				url: `${baseUrl}/command/${idCommand}/commentaire/${id}`,
 				useToken: "access",
 			});
 			delete this.commentaires[idCommand][id];
+			this.commentaireEdition = {};
 		},
 
 		async getDocumentByInterval(idCommand, limit = 100, offset = 0, expand = []) {
@@ -248,7 +250,7 @@ export const useCommandsStore = defineStore("commands",{
 			if (!this.documents[idCommand][id]) {
 				this.documents[idCommand][id] = {};
 			}
-			this.documents[idCommand][id].loading = true;
+			this.documents[idCommand][id] = { ...this.documents[idCommand][id], loading: true };
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.documents[idCommand][id] = await fetchWrapper.get({
 				url: `${baseUrl}/command/${idCommand}/document/${id}?${expandString}`,
@@ -273,28 +275,21 @@ export const useCommandsStore = defineStore("commands",{
 		},
 		async updateDocument(idCommand, id, params) {
 			this.documentEdition.loading = true;
-			const formData = new FormData();
-			if (params.name_command_document) {
-				formData.append("name_command_document", params.name_command_document); 
-			}
-			if (params.document) {
-				formData.append("document", params.document); 
-			}
 			this.documentEdition = await fetchWrapper.put({
 				url: `${baseUrl}/command/${idCommand}/document/${id}`,
 				useToken: "access",
-				body: formData,
-				contentFile: true,
+				body: params,
 			});
 			this.documents[idCommand][id] = this.documentEdition;
 		},
 		async deleteDocument(idCommand, id) {
 			this.documentEdition.loading = true;
-			this.documentEdition = await fetchWrapper.delete({
+			await fetchWrapper.delete({
 				url: `${baseUrl}/command/${idCommand}/document/${id}`,
 				useToken: "access",
 			});
 			delete this.documents[idCommand][id];
+			this.documentEdition = {};
 		},
 		async downloadDocument(idCommand, id) {
 			return await fetchWrapper.image({
@@ -352,7 +347,7 @@ export const useCommandsStore = defineStore("commands",{
 			if (!this.items[idCommand][id]) {
 				this.items[idCommand][id] = {};
 			}
-			this.items[idCommand][id].loading = true;
+			this.items[idCommand][id] = { ...this.items[idCommand][id], loading: true };
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.items[idCommand][id] = await fetchWrapper.get({
 				url: `${baseUrl}/command/${idCommand}/item/${id}?${expandString}`,
@@ -381,15 +376,16 @@ export const useCommandsStore = defineStore("commands",{
 				useToken: "access",
 				body: params,
 			});
-			this.items[idCommand][id] = params;
+			this.items[idCommand][id] = this.itemEdition;
 		},
 		async deleteItem(idCommand, id) {
 			this.itemEdition.loading = true;
-			this.itemEdition = await fetchWrapper.delete({
+			await fetchWrapper.delete({
 				url: `${baseUrl}/command/${idCommand}/item/${id}`,
 				useToken: "access",
 			});
 			delete this.items[idCommand][id];
+			this.itemEdition = {};
 		},
 		async createItemBulk(idCommand, params) {
 			this.itemEdition.loading = true;
