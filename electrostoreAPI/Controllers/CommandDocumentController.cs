@@ -68,7 +68,7 @@ namespace electrostore.Controllers
 
         [HttpPut("{id_commandDocument}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadCommandDocumentDto>> UpdateCommandDocument([FromRoute] int id_commandDocument, [FromForm] UpdateCommandDocumentDto commandDocumentDto, [FromRoute] int id_command)
+        public async Task<ActionResult<ReadCommandDocumentDto>> UpdateCommandDocument([FromRoute] int id_commandDocument, [FromBody] UpdateCommandDocumentDto commandDocumentDto, [FromRoute] int id_command)
         {
             var commandDocument = await _commandDocumentService.UpdateCommandDocument(id_commandDocument, commandDocumentDto, id_command);
             return Ok(commandDocument);

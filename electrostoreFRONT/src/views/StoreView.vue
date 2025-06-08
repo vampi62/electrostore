@@ -1062,8 +1062,9 @@ const labelTableauModalItem = ref([
 				<div>
 					<h2 class="text-xl mb-4">{{ $t('store.VStoreBoxContent') }} (Id : {{ boxId }})</h2>
 					<div class="overflow-x-auto max-h-80 overflow-y-auto">
-						<Tableau v-if="boxId != null" :labels="labelTableauBoxItem" :meta="metaTableauBoxItem" :store-data="[storesStore.boxItems[boxId],itemsStore.items,itemsStore.imagesURL]"
+						<Tableau v-if="boxId != null" :labels="labelTableauBoxItem" :meta="metaTableauBoxItem" :store-data="[storesStore.boxItems[boxId],itemsStore.items,itemsStore.thumbnailsURL]"
 							:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'py-2 text-center bg-gray-300 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out hover:bg-gray-300 cursor-pointer', td: 'border-b border-gray-200' }"
+							:loading="storesStore.boxItemsLoading"
 						>
 							<template #append-row>
 								<tr @click="itemOpenAddModal()"

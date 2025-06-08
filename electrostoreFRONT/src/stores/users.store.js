@@ -88,7 +88,7 @@ export const useUsersStore = defineStore("users",{
 			if (!this.users[id]) {
 				this.users[id] = {};
 			}
-			this.users[id].loading = true;
+			this.users[id] = { ... this.users[id], loading: true };
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.users[id] = await fetchWrapper.get({
 				url: `${baseUrl}/user/${id}?${expandString}`,
@@ -133,11 +133,12 @@ export const useUsersStore = defineStore("users",{
 		},
 		async deleteUser(id) {
 			this.userEdition.loading = true;
-			this.userEdition = await fetchWrapper.delete({
+			await fetchWrapper.delete({
 				url: `${baseUrl}/user/${id}`,
 				useToken: "access",
 			});
 			delete this.users[id];
+			this.userEdition = {};
 		},
 
 		async getProjetCommentaireByInterval(idUser, limit = 100, offset = 0, expand = []) {
@@ -174,7 +175,7 @@ export const useUsersStore = defineStore("users",{
 				this.projetsCommentaire[idUser][id] = {};
 			}
 			// query
-			this.projetsCommentaire[idUser][id].loading = true;
+			this.projetsCommentaire[idUser][id] = { ... this.projetsCommentaire[idUser][id], loading: true };
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.projetsCommentaire[idUser][id] = await fetchWrapper.get({
 				url: `${baseUrl}/user/${idUser}/projet_commentaire/${id}?${expandString}`,
@@ -207,11 +208,12 @@ export const useUsersStore = defineStore("users",{
 		},
 		async deleteProjetCommentaire(idUser, id) {
 			this.projetCommentaireEdition.loading = true;
-			this.projetCommentaireEdition = await fetchWrapper.delete({
+			await fetchWrapper.delete({
 				url: `${baseUrl}/user/${idUser}/projet_commentaire/${id}`,
 				useToken: "access",
 			});
 			delete this.projetsCommentaire[idUser][id];
+			this.projetCommentaireEdition = {};
 		},
 
 		async getCommandCommentaireByInterval(idUser, limit = 100, offset = 0, expand = []) {
@@ -248,7 +250,7 @@ export const useUsersStore = defineStore("users",{
 				this.commandsCommentaire[idUser][id] = {};
 			}
 			// query
-			this.commandsCommentaire[idUser][id].loading = true;
+			this.commandsCommentaire[idUser][id] = { ... this.commandsCommentaire[idUser][id], loading: true };
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.commandsCommentaire[idUser][id] = await fetchWrapper.get({
 				url: `${baseUrl}/user/${idUser}/command_commentaire/${id}?${expandString}`,
@@ -281,11 +283,12 @@ export const useUsersStore = defineStore("users",{
 		},
 		async deleteCommandCommentaire(idUser, id) {
 			this.commandCommentaireEdition.loading = true;
-			this.commandCommentaireEdition = await fetchWrapper.delete({
+			await fetchWrapper.delete({
 				url: `${baseUrl}/user/${idUser}/command_commentaire/${id}`,
 				useToken: "access",
 			});
 			delete this.commandsCommentaire[idUser][id];
+			this.commandCommentaireEdition = {};
 		},
 
 		async getTokenByInterval(idUser, limit = 100, offset = 0) {
@@ -310,7 +313,7 @@ export const useUsersStore = defineStore("users",{
 			if (!this.tokens[idUser][id]) {
 				this.tokens[idUser][id] = {};
 			}
-			this.tokens[idUser][id].loading = true;
+			this.tokens[idUser][id] = { ... this.tokens[idUser][id], loading: true };
 			this.tokens[idUser][id] = await fetchWrapper.get({
 				url: `${baseUrl}/user/${idUser}/sessions/${id}`,
 				useToken: "access",

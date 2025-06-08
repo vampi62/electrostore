@@ -58,13 +58,21 @@ public class ImgService : IImgService
     public async Task<ReadImgDto> CreateImg(CreateImgDto imgDto)
     {
         // check if item exists
-        var item = await _context.Items.FindAsync(imgDto.id_item) ?? throw new KeyNotFoundException($"Item with id {imgDto.id_item} not found");
+        if (await _context.Items.FindAsync(imgDto.id_item) is null)
+        {
+            throw new KeyNotFoundException($"Item with id {imgDto.id_item} not found");
+        }
         var fileName = Path.GetFileNameWithoutExtension(imgDto.img_file.FileName);
+        fileName = fileName.Replace(".", "").Replace("/", ""); // remove "." and "/" from the file name to prevent directory traversal attacks
+        if (fileName.Length > 100) // cut the file name to 100 characters to prevent too long file names
+        {
+            fileName = fileName[..100];
+        }
         var fileExt = Path.GetExtension(imgDto.img_file.FileName);
         var i = 1;
         // verifie si une image avec le meme nom existe deja sur le serveur dans "wwwroot/images"
         // si oui, on ajoute un numero a la fin du nom de l'image et on recommence la verification jusqu'a trouver un nom disponible
-        var pictureName = imgDto.img_file.FileName;
+        var pictureName = fileName;
         while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", imgDto.id_item.ToString(), pictureName)))
         {
             pictureName = $"{fileName}({i}){fileExt}";
@@ -76,18 +84,18 @@ public class ImgService : IImgService
             await imgDto.img_file.CopyToAsync(fileStream);
         }
 
-        var thumbnailName = "thumbnail_" + imgDto.img_file.FileName;
-        while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", imgDto.id_item.ToString(), thumbnailName)))
+        var thumbnailName = fileName;
+        while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails", imgDto.id_item.ToString(), thumbnailName)))
         {
             thumbnailName = $"{fileName}({i}){fileExt}";
             i++;
         }
-        var thumbnailPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", imgDto.id_item.ToString(), thumbnailName);
+        var thumbnailPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails", imgDto.id_item.ToString(), thumbnailName);
         using (var image = await Image.LoadAsync(picturePath))
         {
             image.Mutate(x => x.Resize(new ResizeOptions
             {
-                Size = new Size(1024, 1024),
+                Size = new Size(256, 256),
                 Mode = ResizeMode.Max
             }));
 
@@ -96,8 +104,8 @@ public class ImgService : IImgService
         var newImg = new Imgs
         {
             nom_img = imgDto.nom_img,
-            url_picture_img = imgDto.id_item + "/" + pictureName,
-            url_thumbnail_img = imgDto.id_item + "/" + thumbnailName,
+            url_picture_img = "images/" + imgDto.id_item + "/" + pictureName,
+            url_thumbnail_img = "imagesThumbnails/" + imgDto.id_item + "/" + thumbnailName,
             description_img = imgDto.description_img,
             id_item = imgDto.id_item
         };
@@ -135,13 +143,24 @@ public class ImgService : IImgService
         _context.Imgs.Remove(imgToDelete);
         // supprimer les images sur le disque
         File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", imgToDelete.url_picture_img));
-        File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", imgToDelete.url_thumbnail_img));
+        File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails", imgToDelete.url_thumbnail_img));
         await _context.SaveChangesAsync();
     }
 
     public async Task<GetFileResult> GetImageFile(string url)
     {
-        var pathImg = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", url);
+        // secure the path to prevent directory traversal attacks
+        if (url.Contains(".."))
+        {
+            return new GetFileResult
+            {
+                Success = false,
+                ErrorMessage = "Invalid file path",
+                FilePath = "",
+                MimeType = ""
+            };
+        }
+        var pathImg = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", url);
         if (!File.Exists(pathImg))
         {
             return new GetFileResult

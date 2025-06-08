@@ -1203,27 +1203,19 @@
         ],
         "requestBody": {
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "name_command_document": {
-                    "maxLength": 50,
-                    "type": "string"
-                  },
-                  "document": {
-                    "type": "string",
-                    "format": "binary"
-                  }
-                }
-              },
-              "encoding": {
-                "name_command_document": {
-                  "style": "form"
-                },
-                "document": {
-                  "style": "form"
-                }
+                "$ref": "#/components/schemas/UpdateCommandDocumentDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCommandDocumentDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCommandDocumentDto"
               }
             }
           }
@@ -3227,27 +3219,19 @@
         ],
         "requestBody": {
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "name_item_document": {
-                    "maxLength": 50,
-                    "type": "string"
-                  },
-                  "document": {
-                    "type": "string",
-                    "format": "binary"
-                  }
-                }
-              },
-              "encoding": {
-                "name_item_document": {
-                  "style": "form"
-                },
-                "document": {
-                  "style": "form"
-                }
+                "$ref": "#/components/schemas/UpdateItemDocumentDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemDocumentDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemDocumentDto"
               }
             }
           }
@@ -5220,27 +5204,19 @@
         ],
         "requestBody": {
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "name_projet_document": {
-                    "maxLength": 50,
-                    "type": "string"
-                  },
-                  "document": {
-                    "type": "string",
-                    "format": "binary"
-                  }
-                }
-              },
-              "encoding": {
-                "name_projet_document": {
-                  "style": "form"
-                },
-                "document": {
-                  "style": "form"
-                }
+                "$ref": "#/components/schemas/UpdateProjetDocumentDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjetDocumentDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjetDocumentDto"
               }
             }
           }
@@ -13449,6 +13425,17 @@
         },
         "additionalProperties": false
       },
+      "UpdateCommandDocumentDto": {
+        "type": "object",
+        "properties": {
+          "name_command_document": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "UpdateCommandDto": {
         "type": "object",
         "properties": {
@@ -13552,6 +13539,17 @@
         },
         "additionalProperties": false
       },
+      "UpdateItemDocumentDto": {
+        "type": "object",
+        "properties": {
+          "name_item_document": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "UpdateItemDto": {
         "type": "object",
         "properties": {
@@ -13617,6 +13615,17 @@
         "properties": {
           "contenu_projet_commentaire": {
             "maxLength": 455,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateProjetDocumentDto": {
+        "type": "object",
+        "properties": {
+          "name_projet_document": {
+            "maxLength": 50,
             "type": "string",
             "nullable": true
           }

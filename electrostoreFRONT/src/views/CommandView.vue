@@ -45,6 +45,7 @@ async function fetchAllData() {
 			date_livraison_command: commandsStore.commands[commandId].date_livraison_command,
 			loading: false,
 		};
+		usersStore.users[authStore.user.id_user] = authStore.user; // avoids undefined user when the current user posts first comment
 	} else {
 		commandsStore.commandEdition = {
 			loading: false,
@@ -313,9 +314,6 @@ const schemaEditDocument = Yup.object().shape({
 	name_command_document: Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("command.VCommandDocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
 		.required(t("command.VCommandDocumentNameRequired")),
-	document: Yup.mixed()
-		.nullable()
-		.test("fileSize", t("command.VCommandDocumentSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 
 const schemaItem = Yup.object().shape({
@@ -630,12 +628,6 @@ const labelTableauModalItem = ref([
 							class="w-full p-2 border rounded"
 							:class="{ 'border-red-500': errors.name_command_document }" />
 						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.name_command_document || ' ' }}</span>
-					</div>
-					<div class="flex flex-col">
-						<Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
-							:class="{ 'border-red-500': errors.document }" />
-						<span class="h-5 w-80 text-sm">{{ $t('command.VCommandDocumentSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
-						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.document || ' ' }}</span>
 					</div>
 				</div>
 				<div class="flex justify-end space-x-2">

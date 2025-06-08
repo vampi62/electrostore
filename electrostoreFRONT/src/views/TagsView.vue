@@ -51,5 +51,5 @@ const updateFilteredTags = (newValue) => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="tagsStore.tags" @output-filter="updateFilteredTags" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredTags]"/>
+	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredTags]" :loading="tagsStore.tagsLoading" />
 </template>

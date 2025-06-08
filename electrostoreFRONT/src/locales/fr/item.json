@@ -48,6 +48,7 @@
 	"VItemImageAddError": "Erreur lors de l'ajout de l'image",
 	"VItemImageDeleted": "Image supprimée",
 	"VItemImageDeleteError": "Erreur lors de la suppression de l'image",
+	"VItemImageDownloadError": "Erreur lors du téléchargement de l'image",
 	"VItemBoxQuantityRequired": "Quantité de la boîte d'articles requise",
 	"VItemBoxQuantityNumber": "La quantité de la boîte d'articles doit être un nombre",
 	"VItemBoxQuantityMin": "La quantité de la boîte d'articles doit être positive",

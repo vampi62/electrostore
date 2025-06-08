@@ -46,7 +46,7 @@ export const useCamerasStore = defineStore("cameras",{
 			if (!this.cameras[id]) {
 				this.cameras[id] = {};
 			}
-			this.cameras[id].loading = true;
+			this.cameras[id] = { ...this.cameras[id], loading: true };
 			this.cameras[id] = await fetchWrapper.get({
 				url: `${baseUrl}/camera/${id}`,
 				useToken: "access",
@@ -68,6 +68,7 @@ export const useCamerasStore = defineStore("cameras",{
 					body: { "state": true },
 				});
 			}
+			this.cameraEdition.loading = false;
 		},
 		async getStream(id) {
 			this.stream[id] = await fetchWrapper.stream({
@@ -82,7 +83,7 @@ export const useCamerasStore = defineStore("cameras",{
 			if (!this.status[id]) {
 				this.status[id] = {};
 			}
-			this.status[id].loading = true;
+			this.status[id] = { ...this.status[id], loading: true };
 			this.status[id] = await fetchWrapper.get({
 				url: `${baseUrl}/camera/${id}/status`,
 				useToken: "access",
@@ -120,11 +121,12 @@ export const useCamerasStore = defineStore("cameras",{
 		},
 		async deleteCamera(id) {
 			this.cameraEdition.loading = true;
-			this.cameraEdition = await fetchWrapper.delete({
+			await fetchWrapper.delete({
 				url: `${baseUrl}/camera/${id}`,
 				useToken: "access",
 			});
 			delete this.cameras[id];
+			this.cameraEdition = {};
 		},
 	},
 });

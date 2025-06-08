@@ -48,6 +48,7 @@
 	"VItemImageAddError": "Error adding image",
 	"VItemImageDeleted": "Image deleted",
 	"VItemImageDeleteError": "Error deleting image",
+	"VItemImageDownloadError": "Error downloading image",
 	"VItemBoxQuantityRequired": "Item box quantity required",
 	"VItemBoxQuantityNumber": "Item box quantity must be a number",
 	"VItemBoxQuantityMin": "Item box quantity must be positive",

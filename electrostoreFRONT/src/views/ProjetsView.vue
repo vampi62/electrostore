@@ -76,5 +76,5 @@ const updateFilteredProjets = (newValue) => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="projetsStore.projets" @output-filter="updateFilteredProjets" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredProjets,projetsStore.items,itemsStore.items]"/>
+	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredProjets,projetsStore.items,itemsStore.items]" :loading="projetsStore.projetsLoading" />
 </template>

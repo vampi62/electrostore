@@ -42,7 +42,7 @@ export const useIasStore = defineStore("ias", {
 			if (!this.ias[id]) {
 				this.ias[id] = {};
 			}
-			this.ias[id].loading = true;
+			this.ias[id] = { ...this.ias[id], loading: true };
 			this.ias[id] = await fetchWrapper.get({
 				url: `${baseUrl}/ia/${id}`,
 				useToken: "access",
@@ -64,15 +64,16 @@ export const useIasStore = defineStore("ias", {
 				useToken: "access",
 				body: params,
 			});
-			this.ias[id] = params;
+			this.ias[id] = this.iaEdition;
 		},
 		async deleteIa(id) {
 			this.iaEdition.loading = true;
-			this.iaEdition = await fetchWrapper.delete({
+			await fetchWrapper.delete({
 				url: `${baseUrl}/ia/${id}`,
 				useToken: "access",
 			});
 			delete this.ias[id];
+			this.iaEdition = {};
 		},
 		async getTrainStatus(id) {
 			this.status.train.loading = true;

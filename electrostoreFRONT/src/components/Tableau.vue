@@ -53,6 +53,13 @@
 				</tr>
 			</template>
 			<slot name="append-row"></slot>
+			<template v-if="loading">
+				<tr>
+					<td :colspan="labels.length" class="text-center py-4">
+						<font-awesome-icon icon="fa-solid fa-spinner" spin class="text-gray-500" />
+					</td>
+				</tr>
+			</template>
 		</tbody>
 	</table>
 </template>

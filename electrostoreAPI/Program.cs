@@ -210,6 +210,10 @@ public class Program
         {
             Directory.CreateDirectory("wwwroot/images");
         }
+        if (!Directory.Exists("wwwroot/imagesThumbnails"))
+        {
+            Directory.CreateDirectory("wwwroot/imagesThumbnails");
+        }
         if (!Directory.Exists("wwwroot/models"))
         {
             Directory.CreateDirectory("wwwroot/models");

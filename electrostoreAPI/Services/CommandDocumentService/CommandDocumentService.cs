@@ -61,11 +61,16 @@ public class CommandDocumentService : ICommandDocumentService
             throw new KeyNotFoundException($"Command with id {commandDocumentDto.id_command} not found");
         }
         var fileName = Path.GetFileNameWithoutExtension(commandDocumentDto.document.FileName);
+        fileName = fileName.Replace(".", "").Replace("/", ""); // remove "." and "/" from the file name to prevent directory traversal attacks
+        if (fileName.Length > 100) // cut the file name to 100 characters to prevent too long file names
+        {
+            fileName = fileName[..100];
+        }
         var fileExt = Path.GetExtension(commandDocumentDto.document.FileName);
         var i = 1;
         // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/commandDocuments"
         // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
-        var newName = commandDocumentDto.document.FileName;
+        var newName = fileName;
         while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", commandDocumentDto.id_command.ToString(), newName)))
         {
             newName = $"{fileName}({i}){fileExt}";
@@ -95,34 +100,6 @@ public class CommandDocumentService : ICommandDocumentService
         if (commandId is not null && commandDocument.id_command != commandId)
         {
             throw new KeyNotFoundException($"CommandDocument with id {id} not found for command with id {commandId}");
-        }
-        if (commandDocumentDto.document is not null)
-        {
-            var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", commandDocument.url_command_document);
-            var fileName = Path.GetFileNameWithoutExtension(commandDocumentDto.document.FileName);
-            var fileExt = Path.GetExtension(commandDocumentDto.document.FileName);
-            var i = 1;
-            // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/commandDocuments"
-            // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
-            var newName = commandDocumentDto.document.FileName;
-            while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", commandDocument.id_command.ToString(), newName)))
-            {
-                newName = $"{fileName}({i}){fileExt}";
-                i++;
-            }
-            var savePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", commandDocument.id_command.ToString(), newName);
-            using (var fileStream = new FileStream(savePath, FileMode.Create))
-            {
-                await commandDocumentDto.document.CopyToAsync(fileStream);
-            }
-            commandDocument.type_command_document = fileExt.Replace(".", "").ToLowerInvariant();
-            commandDocument.url_command_document = commandDocument.id_command.ToString() + "/" + newName;
-            commandDocument.size_command_document = commandDocumentDto.document.Length;
-            // remove old file
-            if (File.Exists(oldPath))
-            {
-                File.Delete(oldPath);
-            }
         }
         if (commandDocumentDto.name_command_document is not null)
         {
