@@ -234,10 +234,22 @@ const getMimeType = (type) => {
 
 // item
 const itemModalShow = ref(false);
+const itemLoaded = ref(false);
 const itemOpenAddModal = () => {
 	itemModalShow.value = true;
-	itemsStore.getItemByInterval();
+	if (!itemLoaded.value) {
+		fetchAllItems();
+	}
 };
+async function fetchAllItems() {
+	let offset = 0;
+	const limit = 100;
+	do {
+		await itemsStore.getItemByInterval(limit, offset);
+		offset += limit;
+	} while (offset < itemsStore.itemsTotalCount);
+	itemLoaded.value = true;
+}
 const itemSave = async(item) => {
 	if (commandsStore.items[commandId][item.id_item]) {
 		try {
@@ -534,12 +546,14 @@ const labelTableauModalItem = ref([
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('command.VCommandAddDocument') }}
 				</button>
-				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<Tableau :labels="labelTableauDocument" :store-data="[commandsStore.documents[commandId]]" :meta="{ key: 'id_command_document' }"
-						:loading="commandsStore.documentsLoading"
-						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out hover:bg-gray-200', td: 'px-4 py-2 border-b border-gray-200' }"
-					/>
-				</div>
+				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_command_document' }"
+					:store-data="[commandsStore.documents[commandId]]"
+					:loading="commandsStore.documentsLoading"
+					:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)"
+					:loaded-count="Object.keys(commandsStore.documents[commandId] || {}).length"
+					:fetch-function="(offset, limit) => commandsStore.getDocumentByInterval(commandId, limit, offset)"
+					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+				/>
 			</div>
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
@@ -552,12 +566,14 @@ const labelTableauModalItem = ref([
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('command.VCommandAddItem') }}
 				</button>
-				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<Tableau :labels="labelTableauItem" :store-data="[commandsStore.items[commandId],itemsStore.items]" :meta="{ key: 'id_item' }"
-						:loading="commandsStore.itemsLoading" :schema="schemaItem"
-						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out', td: 'px-4 py-2 border-b border-gray-200' }"
-					/>
-				</div>
+				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item' }"
+					:store-data="[commandsStore.items[commandId],itemsStore.items]"
+					:loading="commandsStore.itemsLoading" :schema="schemaItem"
+					:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)"
+					:loaded-count="Object.keys(commandsStore.items[commandId] || {}).length"
+					:fetch-function="(offset, limit) => commandsStore.getItemByInterval(commandId, limit, offset, ['item'])"
+					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+				/>
 			</div>
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
@@ -570,6 +586,9 @@ const labelTableauModalItem = ref([
 					:store-data="[commandsStore.commentaires[commandId],usersStore.users,authStore.user,configsStore]"
 					:store-function="{ create: (data) => commandsStore.createCommentaire(commandId, data), update: (id, data) => commandsStore.updateCommentaire(commandId, id, data), delete: (id) => commandsStore.deleteCommentaire(commandId, id) }"
 					:loading="commandsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'command.VCommandCommentDeleteTitle', textP: 'command.VCommandCommentDeleteText' }"
+					:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)"
+					:loaded-count="Object.keys(commandsStore.commentaires[commandId] || {}).length"
+					:fetch-function="(offset, limit) => commandsStore.getCommentaireByInterval(commandId, limit, offset, ['user'])"
 				/>
 			</div>
 		</div>
@@ -660,12 +679,11 @@ const labelTableauModalItem = ref([
 			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
 
 			<!-- Tableau Items -->
-			<div class="overflow-y-auto max-h-96 min-h-96">
-				<Tableau :labels="labelTableauModalItem" :store-data="[filteredItems,commandsStore.items[commandId]]" :meta="{ key: 'id_item' }"
-					:loading="commandsStore.itemsLoading" :schema="schemaItem"
-					:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out', td: 'px-4 py-2 border-b border-gray-200' }"
-				/>
-			</div>
+			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
+				:store-data="[filteredItems,commandsStore.items[commandId]]"
+				:loading="commandsStore.itemsLoading" :schema="schemaItem"
+				:tableau-css="{ component: 'min-h-96 max-h-96', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+			/>
 		</div>
 	</div>
 </template>

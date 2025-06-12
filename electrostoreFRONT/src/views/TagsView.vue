@@ -23,10 +23,10 @@ const filter = ref([
 ]);
 const tableauLabel = ref([
 	{ label: "tag.VTagsName", sortable: true, key: "nom_tag", type: "text" },
-	{ label: "tag.VTagsWeight", sortable: true, key: "poids_tag", type: "text" },
-	{ label: "tag.VTagsItemsCount", sortable: true, key: "items_tags_count", type: "text" },
-	{ label: "tag.VTagsStoresCount", sortable: true, key: "stores_tags_count", type: "text" },
-	{ label: "tag.VTagsBoxsCount", sortable: true, key: "boxs_tags_count", type: "text" },
+	{ label: "tag.VTagsWeight", sortable: true, key: "poids_tag", type: "number" },
+	{ label: "tag.VTagsItemsCount", sortable: true, key: "items_tags_count", type: "number" },
+	{ label: "tag.VTagsStoresCount", sortable: true, key: "stores_tags_count", type: "number" },
+	{ label: "tag.VTagsBoxsCount", sortable: true, key: "boxs_tags_count", type: "number" },
 ]);
 const tableauMeta = ref({
 	key: "id_tag",
@@ -51,5 +51,9 @@ const updateFilteredTags = (newValue) => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="tagsStore.tags" @output-filter="updateFilteredTags" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredTags]" :loading="tagsStore.tagsLoading" />
+	<Tableau :labels="tableauLabel" :meta="tableauMeta"
+		:store-data="[filteredTags]"
+		:loading="tagsStore.tagsLoading"
+		:tableau-css="{ component: 'min-h-64'}"
+	/>
 </template>

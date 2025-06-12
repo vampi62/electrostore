@@ -76,5 +76,9 @@ const updateFilteredCommands = (newValue) => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="commandsStore.commands" @output-filter="updateFilteredCommands" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredCommands,commandsStore.items,itemsStore.items]" :loading="commandsStore.commandsLoading" />
+	<Tableau :labels="tableauLabel" :meta="tableauMeta"
+		:store-data="[filteredCommands,commandsStore.items,itemsStore.items]"
+		:loading="commandsStore.commandsLoading"
+		:tableau-css="{ component: 'min-h-64'}"
+	/>
 </template>

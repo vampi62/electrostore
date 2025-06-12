@@ -1,67 +1,69 @@
 <template>
-	<table :class="tableauCss.table">
-		<thead :class="tableauCss.thead">
-			<tr>
-				<th v-for="(column,index) in labels"
-					:key="index"
-					:class="[tableauCss.th, column.sortable ? 'cursor-pointer' : '']"
-					@click="changeSort(column)">
-					<div class="flex justify-between items-center">
-						<span class="flex-1">{{ $t(column.label) }}</span>
-						<template v-if="column.sortable">
-							<template v-if="sort.column?.key === column.key">
-								<template v-if="sort.order === 'asc'">
-									<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
+	<div class="overflow-x-auto overflow-y-auto" :class="mergedCss.component" @scroll="loadNext">
+		<table :class="mergedCss.table">
+			<thead :class="mergedCss.thead">
+				<tr>
+					<th v-for="(column,index) in labels"
+						:key="index"
+						:class="[mergedCss.th, column.sortable ? 'cursor-pointer' : '']"
+						@click="changeSort(column)">
+						<div class="flex justify-between items-center">
+							<span class="flex-1">{{ $t(column.label) }}</span>
+							<template v-if="column.sortable">
+								<template v-if="sort.column?.key === column.key">
+									<template v-if="sort.order === 'asc'">
+										<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
+									</template>
+									<template v-else>
+										<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
+									</template>
 								</template>
 								<template v-else>
-									<font-awesome-icon icon="fa-solid fa-sort-down" class="ml-2" />
+									<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
 								</template>
 							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-sort" class="ml-2" />
-							</template>
-						</template>
-					</div>
-				</th>
-			</tr>
-		</thead>
-		<tbody :class="tableauCss.tbody">
-			<template v-if="meta?.path">
-				<RouterLink v-for="row in sortedData" :key="row[meta.key]" :to="meta.path + row[meta.key]"
-					custom v-slot="{ navigate }">
-					<tr @click="navigate" :class="tableauCss.tr">
+						</div>
+					</th>
+				</tr>
+			</thead>
+			<tbody :class="mergedCss.tbody">
+				<template v-if="meta?.path">
+					<RouterLink v-for="row in sortedData" :key="row[meta.key]" :to="meta.path + row[meta.key]"
+						custom v-slot="{ navigate }">
+						<tr @click="navigate" :class="mergedCss.tr">
+							<TableauRow
+								:labels="labels"
+								:row="row"
+								:schema="schema"
+								:store-data="storeData"
+								:css="mergedCss.td"
+							/>
+						</tr>
+					</RouterLink>
+				</template>
+				<template v-else>
+					<tr v-for="row in sortedData" :key="row[meta.key]"
+						:class="mergedCss.tr">
 						<TableauRow
 							:labels="labels"
 							:row="row"
 							:schema="schema"
 							:store-data="storeData"
-							:css="tableauCss.td"
+							:css="mergedCss.td"
 						/>
 					</tr>
-				</RouterLink>
-			</template>
-			<template v-else>
-				<tr v-for="row in sortedData" :key="row[meta.key]"
-					:class="tableauCss.tr">
-					<TableauRow
-						:labels="labels"
-						:row="row"
-						:schema="schema"
-						:store-data="storeData"
-						:css="tableauCss.td"
-					/>
-				</tr>
-			</template>
-			<slot name="append-row"></slot>
-			<template v-if="loading">
-				<tr>
-					<td :colspan="labels.length" class="text-center py-4">
-						<font-awesome-icon icon="fa-solid fa-spinner" spin class="text-gray-500" />
-					</td>
-				</tr>
-			</template>
-		</tbody>
-	</table>
+				</template>
+				<slot name="append-row"></slot>
+				<template v-if="loading">
+					<tr>
+						<td :colspan="labels.length" class="text-center py-4">
+							<font-awesome-icon icon="fa-solid fa-spinner" spin class="text-gray-500" />
+						</td>
+					</tr>
+				</template>
+			</tbody>
+		</table>
+	</div>
 </template>
 <script>
 import TableauRow from "./TableauRow.vue";
@@ -97,17 +99,30 @@ export default {
 			default: false,
 			// loading state for the table, used to show a loading spinner or message
 		},
+		loadedCount: {
+			type: Number,
+			default: 0,
+		},
+		totalCount: {
+			type: Number,
+			default: 0,
+		},
+		fetchFunction: {
+			type: Function,
+			default: () => {},
+		},
 		tableauCss: {
 			type: Object,
 			required: false,
 			// tableauCss is an object containing tailwind CSS classes for the table, thead, th, tbody, tr, and td
 			default: () => ({
-				table: "min-w-full border-collapse border border-gray-300",
-				thead: "bg-gray-100",
-				th: "border border-gray-300 px-2 py-2 text-center text-sm font-medium text-gray-800 bg-gray-200 relative",
+				component: "max-h-64",
+				table: "min-w-full table-auto",
+				thead: "bg-gray-300 sticky top-0",
+				th: "px-4 py-2 text-center",
 				tbody: "",
-				tr: "transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer",
-				td: "border border-gray-300 px-4 py-2 text-sm text-gray-700",
+				tr: "transition duration-150 ease-in-out cursor-pointer hover:bg-gray-200 even:bg-gray-100",
+				td: "border-b",
 			}),
 		},
 		schema: {
@@ -141,6 +156,18 @@ export default {
 			}
 			return this.storeData[0];
 		},
+		mergedCss() {
+			// Merges the default CSS with the provided tableauCss prop
+			return {
+				component: this.tableauCss?.component || "min-h-64 max-h-64",
+				table: this.tableauCss?.table || "min-w-full table-auto",
+				thead: this.tableauCss?.thead || "bg-gray-300 sticky top-0",
+				th: this.tableauCss?.th || "px-4 py-2 text-center",
+				tbody: this.tableauCss?.tbody || "",
+				tr: this.tableauCss?.tr || "transition duration-150 ease-in-out cursor-pointer hover:bg-gray-200 even:bg-gray-100",
+				td: this.tableauCss?.td || "border-b",
+			};
+		},
 	},
 	data() {
 		return {
@@ -160,6 +187,20 @@ export default {
 			} else {
 				this.sort.column = column;
 				this.sort.order = "asc";
+			}
+		},
+		async loadNext(e) {
+			if (this.totalCount === 0) {
+				return;
+			}
+			if (this.loading) {
+				return;
+			}
+			if (e.target.scrollTop + e.target.clientHeight >= e.target.scrollHeight - 10) {
+				if (this.totalCount === this.loadedCount) {
+					return;
+				}
+				await this.fetchFunction(this.loadedCount + 100, this.loadedCount);
 			}
 		},
 	},

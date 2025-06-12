@@ -326,6 +326,9 @@ const labelTableauSession = ref([
 						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', CanEdit: false }"
 							:store-data="[usersStore.commandsCommentaire[userId],usersStore.users,authStore.user,configsStore]"
 							:loading="usersStore.commandsCommentaireLoading"
+							:total-count="Number(usersStore.commandsCommentaireTotalCount[userId]) || 0"
+							:loaded-count="Object.keys(usersStore.commandsCommentaire[userId] || {}).length"
+							:fetch-function="(offset, limit) => usersStore.getCommandCommentaireByInterval(userId, limit, offset, ['command'])"
 						/>
 					</div>
 				</div>
@@ -338,6 +341,9 @@ const labelTableauSession = ref([
 						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', CanEdit: false }"
 							:store-data="[usersStore.projetsCommentaire[userId],usersStore.users,authStore.user,configsStore]"
 							:loading="usersStore.projetsCommentaireLoading"
+							:total-count="Number(usersStore.projetsCommentaireTotalCount[userId]) || 0"
+							:loaded-count="Object.keys(usersStore.projetsCommentaire[userId] || {}).length"
+							:fetch-function="(offset, limit) => usersStore.getProjetCommentaireByInterval(userId, limit, offset, ['projet'])"
 						/>
 					</div>
 				</div>
@@ -349,12 +355,14 @@ const labelTableauSession = ref([
 				{{ $t('user.VUserTokens') }} ({{ usersStore.tokensTotalCount[userId] || 0 }})
 			</h3>
 			<div :class="showTokens ? 'block' : 'hidden'" class="p-2">
-				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<Tableau :labels="labelTableauSession" :store-data="[usersStore.tokens[userId]]" :meta="{ key: 'session_id' }"
-						:loading="usersStore.tokensLoading"
-						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out hover:bg-gray-200', td: 'px-4 py-2 border-b border-gray-200' }"
-					/>
-				</div>
+				<Tableau :labels="labelTableauSession" :meta="{ key: 'session_id' }"
+					:store-data="[usersStore.tokens[userId]]"
+					:loading="usersStore.tokensLoading"
+					:total-count="Number(usersStore.tokensTotalCount[userId]) || 0"
+					:loaded-count="Object.keys(usersStore.tokens[userId] || {}).length"
+					:fetch-function="(offset, limit) => usersStore.getTokenByInterval(userId, limit, offset)"
+					:tableau-css="{ component: 'min-h-64 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+				/>
 			</div>
 		</div>
 	</div>

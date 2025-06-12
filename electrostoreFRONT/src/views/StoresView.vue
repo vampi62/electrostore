@@ -43,8 +43,8 @@ const filter = ref([
 ]);
 const tableauLabel = ref([
 	{ label: "store.VStoresName", sortable: true, key: "nom_store", type: "text" },
-	{ label: "store.VStoresXLength", sortable: true, key: "xlength_store", type: "text" },
-	{ label: "store.VStoresYLength", sortable: true, key: "ylength_store", type: "text" },
+	{ label: "store.VStoresXLength", sortable: true, key: "xlength_store", type: "number" },
+	{ label: "store.VStoresYLength", sortable: true, key: "ylength_store", type: "number" },
 	{ label: "store.VStoresMqttName", sortable: true, key: "mqtt_name_store", type: "text" },
 	{ label: "store.VStoresTagsList", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, key: "id_store", keyStoreLink: "id_tag", ressourcePrint: [{ type: "ressource", key: "nom_tag" }] } },
 ]);
@@ -71,5 +71,9 @@ const updateFilteredStores = (newValue) => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="storesStore.stores" @output-filter="updateFilteredStores" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredStores,storesStore.storeTags,tagsStore.tags]" :loading="storesStore.storesLoading" />
+	<Tableau :labels="tableauLabel" :meta="tableauMeta"
+		:store-data="[filteredStores,storesStore.storeTags,tagsStore.tags]"
+		:loading="storesStore.storesLoading"
+		:tableau-css="{ component: 'min-h-64'}"
+	/>
 </template>

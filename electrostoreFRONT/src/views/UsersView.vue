@@ -63,5 +63,9 @@ const updateFilteredUsers = (newValue) => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="usersStore.users" @output-filter="updateFilteredUsers" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredUsers]" :loading="usersStore.usersLoading" />
+	<Tableau :labels="tableauLabel" :meta="tableauMeta"
+		:store-data="[filteredUsers]"
+		:loading="usersStore.usersLoading"
+		:tableau-css="{ component: 'min-h-64'}"
+	/>
 </template>
