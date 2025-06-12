@@ -115,11 +115,11 @@ const filter = ref([
 const tableauLabel = ref([
 	{ label: "item.VInventoryName", sortable: true, key: "reference_name_item", type: "text" },
 	{ label: "item.VInventoryFriendlyName", sortable: true, key: "friendly_name_item", type: "text" },
-	{ label: "item.VInventorySeuil", sortable: true, key: "seuil_min_item", type: "text" },
+	{ label: "item.VInventorySeuil", sortable: true, key: "seuil_min_item", type: "number" },
 	{ label: "item.VInventoryDescription", sortable: false, key: "description_item", type: "text" },
 	{ label: "item.VInventoryTags", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, key: "id_item", keyStoreLink: "id_tag", ressourcePrint: [{ type: "ressource", key: "nom_tag" }] } },
 	{ label: "item.VInventoryImg", sortable: false, key: "id_img", type: "image", idStoreImg: 3, store: 4, keyStore: "id_item" },
-	{ label: "item.VInventoryQuantity", sortable: true, key: "custom_quantity_item", type: "text" },
+	{ label: "item.VInventoryQuantity", sortable: true, key: "custom_quantity_item", type: "number" },
 ]);
 const tableauMeta = ref({
 	key: "id_item",
@@ -186,7 +186,6 @@ const openNewPage = (url) => {
 			class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm cursor-pointer inline-block mb-2 mr-2">
 			{{ $t('item.VInventoryFind') }}
 		</button>
-		<!-- TODO : open modal with ia and camera list-->
 		<div
 			class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm cursor-pointer inline-block mb-2">
 			<RouterLink :to="'/inventory/new'">
@@ -195,7 +194,11 @@ const openNewPage = (url) => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredItems,itemsStore.itemTags,tagsStore.tags,itemsStore.thumbnailsURL,itemsStore.items]" :loading="itemsStore.itemsLoading" />
+	<Tableau :labels="tableauLabel" :meta="tableauMeta"
+		:store-data="[filteredItems,itemsStore.itemTags,tagsStore.tags,itemsStore.thumbnailsURL,itemsStore.items]"
+		:loading="itemsStore.itemsLoading"
+		:tableau-css="{ component: 'min-h-64'}"
+	/>
 
 	<div v-if="showPageFind" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center" @click="showPageFind = false">
 		<div class="bg-white p-2 rounded shadow-lg w-2/3" @click.stop>

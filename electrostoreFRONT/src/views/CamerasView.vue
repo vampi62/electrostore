@@ -52,5 +52,9 @@ const updateFilteredCameras = (newValue) => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="camerasStore.cameras" @output-filter="updateFilteredCameras" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredCameras,camerasStore.status]" :loading="camerasStore.loading" />
+	<Tableau :labels="tableauLabel" :meta="tableauMeta"
+		:store-data="[filteredCameras,camerasStore.status]"
+		:loading="camerasStore.loading"
+		:tableau-css="{ component: 'min-h-64'}"
+	/>
 </template>

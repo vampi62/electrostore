@@ -644,10 +644,22 @@ const toggleBoxLed = async(boxId) => {
 	}
 };
 
+const itemLoaded = ref(false);
 const itemOpenAddModal = () => {
 	storeItemAddModalShow.value = true;
-	itemsStore.getItemByInterval();
+	if (!itemLoaded.value) {
+		fetchAllItems();
+	}
 };
+async function fetchAllItems() {
+	let offset = 0;
+	const limit = 100;
+	do {
+		await itemsStore.getItemByInterval(limit, offset);
+		offset += limit;
+	} while (offset < itemsStore.itemsTotalCount);
+	itemLoaded.value = true;
+}
 const itemSave = async(item) => {
 	if (storesStore.boxItems[boxId.value][item.id_item]) {
 		try {
@@ -1061,21 +1073,23 @@ const labelTableauModalItem = ref([
 			<div :class="storeBoxEditModalShow ? 'block' : 'hidden'" class="w-96 h-96 bg-gray-200 px-2 py-2 rounded" id="storeInputTag">
 				<div>
 					<h2 class="text-xl mb-4">{{ $t('store.VStoreBoxContent') }} (Id : {{ boxId }})</h2>
-					<div class="overflow-x-auto max-h-80 overflow-y-auto">
-						<Tableau v-if="boxId != null" :labels="labelTableauBoxItem" :meta="metaTableauBoxItem" :store-data="[storesStore.boxItems[boxId],itemsStore.items,itemsStore.thumbnailsURL]"
-							:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'py-2 text-center bg-gray-300 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out hover:bg-gray-300 cursor-pointer', td: 'border-b border-gray-200' }"
-							:loading="storesStore.boxItemsLoading"
-						>
-							<template #append-row>
-								<tr @click="itemOpenAddModal()"
-									class="transition duration-150 ease-in-out hover:bg-gray-300 cursor-pointer">
-									<td colspan="4" class="text-center">
-										{{ $t('store.VStoreAddItem') }}
-									</td>
-								</tr>
-							</template>
-						</Tableau>
-					</div>
+					<Tableau v-if="boxId != null" :labels="labelTableauBoxItem" :meta="metaTableauBoxItem"
+						:store-data="[storesStore.boxItems[boxId],itemsStore.items,itemsStore.thumbnailsURL]"
+						:loading="storesStore.boxItemsLoading"
+						:total-count="Number(storesStore.boxItemsTotalCount[boxId] || 0)"
+						:loaded-count="Object.keys(storesStore.boxItems[boxId] || {}).length"
+						:fetch-function="(offset, limit) => storesStore.getBoxItems(storeId, boxId, offset, limit)"
+						:tableau-css="{ component: 'max-h-80' }"
+					>
+						<template #append-row>
+							<tr @click="itemOpenAddModal()"
+								class="transition duration-150 ease-in-out hover:bg-gray-300 cursor-pointer">
+								<td colspan="4" class="text-center">
+									{{ $t('store.VStoreAddItem') }}
+								</td>
+							</tr>
+						</template>
+					</Tableau>
 				</div>
 			</div>
 		</div>
@@ -1169,12 +1183,11 @@ const labelTableauModalItem = ref([
 			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
 
 			<!-- Tableau Items -->
-			<div class="overflow-y-auto max-h-96 min-h-96" id="storeItemTable">
-				<Tableau :labels="labelTableauModalItem" :store-data="[filteredItems,storesStore.boxItems[boxId]]" :meta="{ key: 'id_item' }"
-					:loading="itemsStore.itemsLoading" :schema="schemaItem"
-					:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out', td: 'px-4 py-2 border-b border-gray-200' }"
-				/>
-			</div>
+			<Tableau id="storeItemTable" :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
+				:store-data="[filteredItems,storesStore.boxItems[boxId]]"
+				:loading="itemsStore.itemsLoading" :schema="schemaItem"
+				:tableau-css="{ component: 'min-h-96 max-h-96', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+			/>
 		</div>
 	</div>
 </template>

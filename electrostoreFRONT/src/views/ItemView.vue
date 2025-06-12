@@ -627,12 +627,14 @@ const labelTableauProjet = ref([
 				{{ $t('item.VitemBoxs') }} ({{ itemsStore.itemBoxsTotalCount[itemId] || 0 }})
 			</h3>
 			<div :class="showBoxs ? 'block' : 'hidden'" class="p-2">
-				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<Tableau :labels="labelTableauBox" :store-data="[itemsStore.itemBoxs[itemId]]" :meta="{ key: 'id_box' }"
-						:loading="itemsStore.itemBoxsLoading" :schema="schemaBox"
-						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out', td: 'px-4 py-2 border-b border-gray-200' }"
-					/>
-				</div>
+				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box' }"
+					:store-data="[itemsStore.itemBoxs[itemId]]"
+					:loading="itemsStore.itemBoxsLoading" :schema="schemaBox"
+					:total-count="Number(itemsStore.itemBoxsTotalCount[itemId])"
+					:loaded-count="Object.keys(itemsStore.itemBoxs[itemId] || {}).length"
+					:fetch-function="(offset, limit) => itemsStore.getItemBoxByInterval(itemId, limit, offset)"
+					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+				/>
 			</div>
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
@@ -645,12 +647,14 @@ const labelTableauProjet = ref([
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('item.VItemAddDocument') }}
 				</button>
-				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<Tableau :labels="labelTableauDocument" :store-data="[itemsStore.documents[itemId]]" :meta="{ key: 'id_command_document' }"
-						:loading="itemsStore.documentsLoading"
-						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out hover:bg-gray-200', td: 'px-4 py-2 border-b border-gray-200' }"
-					/>
-				</div>
+				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_command_document' }"
+					:store-data="[itemsStore.documents[itemId]]"
+					:loading="itemsStore.documentsLoading"
+					:total-count="Number(itemsStore.documentsTotalCount[itemId])"
+					:loaded-count="Object.keys(itemsStore.documents[itemId] || {}).length"
+					:fetch-function="(offset, limit) => itemsStore.getDocumentByInterval(itemId, limit, offset)"
+					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+				/>
 			</div>
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
@@ -699,12 +703,14 @@ const labelTableauProjet = ref([
 				{{ $t('item.VItemCommands') }} ({{ itemsStore.itemCommandsTotalCount[itemId] || 0 }})
 			</h3>
 			<div v-if="showCommandItems" class="p-2">
-				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<Tableau :labels="labelTableauCommand" :store-data="[itemsStore.itemCommands[itemId],commandsStore.commands]" :meta="{ key: 'id_item', path: '/commands/' }"
-						:loading="itemsStore.itemCommandsLoading"
-						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer', td: 'px-4 py-2 border-b border-gray-200' }"
-					/>
-				</div>
+				<Tableau :labels="labelTableauCommand" :meta="{ key: 'id_item', path: '/commands/' }"
+					:store-data="[itemsStore.itemCommands[itemId],commandsStore.commands]"
+					:loading="itemsStore.itemCommandsLoading"
+					:total-count="Number(itemsStore.itemCommandsTotalCount[itemId])"
+					:loaded-count="Object.keys(itemsStore.itemCommands[itemId] || {}).length"
+					:fetch-function="(offset, limit) => itemsStore.getItemCommandByInterval(itemId, limit, offset)"
+					:tableau-css="{ component: 'max-h-64' }"
+				/>
 			</div>
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
@@ -713,12 +719,14 @@ const labelTableauProjet = ref([
 				{{ $t('item.VItemProjets') }} ({{ itemsStore.itemProjetsTotalCount[itemId] || 0 }})
 			</h3>
 			<div v-if="showProjetItems" class="p-2">
-				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<Tableau :labels="labelTableauProjet" :store-data="[itemsStore.itemProjets[itemId],projetsStore.projets]" :meta="{ key: 'id_projet', path: '/projets/' }"
-						:loading="itemsStore.itemProjetsLoading"
-						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 cursor-pointer', td: 'px-4 py-2 border-b border-gray-200' }"
-					/>
-				</div>
+				<Tableau :labels="labelTableauProjet" :meta="{ key: 'id_projet', path: '/projets/' }"
+					:store-data="[itemsStore.itemProjets[itemId],projetsStore.projets]"
+					:loading="itemsStore.itemProjetsLoading"
+					:total-count="Number(itemsStore.itemProjetsTotalCount[itemId])"
+					:loaded-count="Object.keys(itemsStore.itemProjets[itemId] || {}).length"
+					:fetch-function="(offset, limit) => itemsStore.getItemProjetByInterval(itemId, limit, offset)"
+					:tableau-css="{ component: 'max-h-64' }"
+				/>
 			</div>
 		</div>
 	</div>

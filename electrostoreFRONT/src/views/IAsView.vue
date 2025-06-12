@@ -54,5 +54,9 @@ const updateFilteredIas = (newValue) => {
 		</div>
 		<FilterContainer :filters="filter" :store-data="IAStore.ias" @output-filter="updateFilteredIas" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta" :store-data="[filteredIas]" :loading="IAStore.loading" />
+	<Tableau :labels="tableauLabel" :meta="tableauMeta"
+		:store-data="[filteredIas]"
+		:loading="IAStore.loading"
+		:tableau-css="{ component: 'min-h-64'}"
+	/>
 </template>

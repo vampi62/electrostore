@@ -28,7 +28,7 @@ const listNav = [
 ];
 
 const containerClasses = computed(() => [
-	"p-4 overflow-y-scroll fixed bottom-0 right-0 left-0",
+	"p-4 overflow-y-scroll fixed bottom-0 right-0 left-0 flex flex-col",
 	reduceLeftSideBar.value && authStore.user && !isIframe.value ? "sm:ml-16" : "",
 	!reduceLeftSideBar.value && authStore.user && !isIframe.value ? "sm:ml-64" : "",
 	authStore.user && !isIframe.value ? "top-16" : "top-0",

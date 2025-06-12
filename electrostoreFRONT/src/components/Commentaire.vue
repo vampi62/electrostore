@@ -11,7 +11,7 @@
 			</button>
 		</div>
 	</Form>
-	<div class="space-y-4 overflow-x-auto max-h-96 overflow-y-auto" :ref="`HTMLContainerCommentaires-${this.$.uid}`">
+	<div class="space-y-4 overflow-x-auto max-h-96 overflow-y-auto" @scroll="loadNext">
 		<div v-for="commentaire in storeData[0]"
 			:key="commentaire[meta.key]" class="flex flex-col border p-4 rounded-lg">
 			<div :class="{
@@ -136,6 +136,18 @@ export default {
 			default: true,
 			// Indicates if the component is loading data
 		},
+		loadedCount: {
+			type: Number,
+			default: 0,
+		},
+		totalCount: {
+			type: Number,
+			default: 0,
+		},
+		fetchFunction: {
+			type: Function,
+			default: () => {},
+		},
 		texteModalDelete: {
 			type: Object,
 			required: false,
@@ -234,6 +246,20 @@ export default {
 					});
 				});
 			this.deleteModalShow = false;
+		},
+		async loadNext(e) {
+			if (this.totalCount === 0) {
+				return;
+			}
+			if (this.loading) {
+				return;
+			}
+			if (e.target.scrollTop + e.target.clientHeight >= e.target.scrollHeight - 10) {
+				if (this.totalCount === this.loadedCount) {
+					return;
+				}
+				await this.fetchFunction(this.loadedCount + 100, this.loadedCount);
+			}
 		},
 	},
 };

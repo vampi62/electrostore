@@ -232,10 +232,22 @@ const getMimeType = (type) => {
 
 // item
 const itemModalShow = ref(false);
+const itemLoaded = ref(false);
 const itemOpenAddModal = () => {
 	itemModalShow.value = true;
-	itemsStore.getItemByInterval();
+	if (!itemLoaded.value) {
+		fetchAllItems();
+	}
 };
+async function fetchAllItems() {
+	let offset = 0;
+	const limit = 100;
+	do {
+		await itemsStore.getItemByInterval(limit, offset);
+		offset += limit;
+	} while (offset < itemsStore.itemsTotalCount);
+	itemLoaded.value = true;
+}
 const itemSave = async(item) => {
 	if (projetsStore.items[projetId][item.id_item]) {
 		try {
@@ -535,12 +547,14 @@ const labelTableauModalItem = ref([
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('projet.VProjetAddDocument') }}
 				</button>
-				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<Tableau :labels="labelTableauDocument" :store-data="[projetsStore.documents[projetId]]" :meta="{ key: 'id_projet_document' }"
-						:loading="projetsStore.documentsLoading"
-						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out hover:bg-gray-200', td: 'px-4 py-2 border-b border-gray-200' }"
-					/>
-				</div>
+				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_projet_document' }"
+					:store-data="[projetsStore.documents[projetId]]"
+					:loading="projetsStore.documentsLoading"
+					:total-count="Number(projetsStore.documentsTotalCount[projetId])"
+					:loaded-count="Object.keys(projetsStore.documents[projetId] || {}).length"
+					:fetch-function="(offset, limit) => projetsStore.getDocumentByInterval(projetId, limit, offset)"
+					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+				/>
 			</div>
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
@@ -553,12 +567,14 @@ const labelTableauModalItem = ref([
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('projet.VProjetAddItem') }}
 				</button>
-				<div class="overflow-x-auto max-h-64 overflow-y-auto">
-					<Tableau :labels="labelTableauItem" :store-data="[projetsStore.items[projetId],itemsStore.items]" :meta="{ key: 'id_item' }"
-						:loading="projetsStore.itemsLoading" :schema="schemaItem"
-						:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out', td: 'px-4 py-2 border-b border-gray-200' }"
-					/>
-				</div>
+				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item' }"
+					:store-data="[projetsStore.items[projetId],itemsStore.items]"
+					:loading="projetsStore.itemsLoading" :schema="schemaItem"
+					:total-count="Number(projetsStore.itemsTotalCount[projetId])"
+					:loaded-count="Object.keys(projetsStore.items[projetId] || {}).length"
+					:fetch-function="(offset, limit) => projetsStore.getItemByInterval(projetId, limit, offset, ['item'])"
+					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+				/>
 			</div>
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
@@ -571,6 +587,9 @@ const labelTableauModalItem = ref([
 					:store-data="[projetsStore.commentaires[projetId],usersStore.users,authStore.user,configsStore]"
 					:store-function="{ create: (data) => projetsStore.createCommentaire(projetId, data), update: (id, data) => projetsStore.updateCommentaire(projetId, id, data), delete: (id) => projetsStore.deleteCommentaire(projetId, id) }"
 					:loading="projetsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'projet.VProjetCommentDeleteTitle', textP: 'projet.VProjetCommentDeleteText' }"
+					:total-count="Number(projetsStore.commentairesTotalCount[projetId])"
+					:loaded-count="Object.keys(projetsStore.commentaires[projetId] || {}).length"
+					:fetch-function="(offset, limit) => projetsStore.getCommentaireByInterval(projetId, limit, offset)"
 				/>
 			</div>
 		</div>
@@ -659,12 +678,11 @@ const labelTableauModalItem = ref([
 			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
 
 			<!-- Tableau Items -->
-			<div class="overflow-y-auto max-h-96 min-h-96">
-				<Tableau :labels="labelTableauModalItem" :store-data="[filteredItems,projetsStore.items[projetId]]" :meta="{ key: 'id_item' }"
-					:loading="projetsStore.itemsLoading" :schema="schemaItem"
-					:tableau-css="{ table: 'min-w-full table-auto', thead: 'bg-gray-100', th: 'px-4 py-2 text-center bg-gray-200 sticky top-0', tbody: '', tr: 'transition duration-150 ease-in-out', td: 'px-4 py-2 border-b border-gray-200' }"
-				/>
-			</div>
+			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
+				:store-data="[filteredItems,projetsStore.items[projetId]]"
+				:loading="projetsStore.itemsLoading" :schema="schemaItem"
+				:tableau-css="{ component: 'min-h-96 max-h-96', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+			/>
 		</div>
 	</div>
 </template>
