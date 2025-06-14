@@ -117,12 +117,7 @@ public class ProjetItemService : IProjetItemService
         {
             throw new InvalidOperationException($"ProjetItem with id_projet {projetItemDto.id_projet} and id_item {projetItemDto.id_item} already exists");
         }
-        var newProjetItem = new ProjetsItems
-        {
-            id_projet = projetItemDto.id_projet,
-            id_item = projetItemDto.id_item,
-            qte_projet_item = projetItemDto.qte_projet_item
-        };
+        var newProjetItem = _mapper.Map<ProjetsItems>(projetItemDto);
         _context.ProjetsItems.Add(newProjetItem);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadProjetItemDto>(newProjetItem);

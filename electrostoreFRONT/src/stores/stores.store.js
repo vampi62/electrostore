@@ -172,6 +172,24 @@ export const useStoresStore = defineStore("stores",{
 			delete this.stores[id];
 			this.storeEdition = {};
 		},
+		async createStoreComplete(params) {
+			this.storeEdition.loading = true;
+			this.storeEdition = await fetchWrapper.post({
+				url: `${baseUrl}/store/complete`,
+				useToken: "access",
+				body: params,
+			});
+			this.stores[this.storeEdition.store.id_store] = this.storeEdition;
+		},
+		async updateStoreComplete(id, params) {
+			this.storeEdition.loading = true;
+			this.storeEdition = await fetchWrapper.put({
+				url: `${baseUrl}/store/${id}/complete`,
+				useToken: "access",
+				body: params,
+			});
+			this.stores[id] = this.storeEdition;
+		},
 
 		async getBoxByInterval(idStore, limit = 100, offset = 0, expand = []) {
 			// init list if not exist

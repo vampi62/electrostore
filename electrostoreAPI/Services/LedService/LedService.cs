@@ -75,13 +75,7 @@ public class LedService : ILedService
         {
             throw new KeyNotFoundException($"Store with id {ledDto.id_store} not found");
         }
-        var newLed = new Leds
-        {
-            x_led = ledDto.x_led,
-            y_led = ledDto.y_led,
-            id_store = ledDto.id_store,
-            mqtt_led_id = ledDto.mqtt_led_id
-        };
+        var newLed = _mapper.Map<Leds>(ledDto);
         _context.Leds.Add(newLed);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadLedDto>(newLed);
@@ -146,7 +140,7 @@ public class LedService : ILedService
         return _mapper.Map<ReadLedDto>(ledToUpdate);
     }
 
-    public async Task<ReadBulkLedDto> UpdateBulkLed(List<UpdateBulkLedStoreDto> ledsDto, int storeId)
+    public async Task<ReadBulkLedDto> UpdateBulkLed(List<UpdateBulkLedByStoreDto> ledsDto, int storeId)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)

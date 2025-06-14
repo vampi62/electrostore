@@ -52,11 +52,7 @@ public class IAService : IIAService
         {
             throw new UnauthorizedAccessException("You are not authorized to create IA");
         }
-        var newIA = new IA
-        {
-            nom_ia = iaDto.nom_ia,
-            description_ia = iaDto.description_ia
-        };
+        var newIA = _mapper.Map<IA>(iaDto);
         _context.IA.Add(newIA);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadIADto>(newIA);

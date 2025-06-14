@@ -117,13 +117,7 @@ public class ItemBoxService : IItemBoxService
         {
             throw new InvalidOperationException("Item is already in the box");
         }
-        var newItemBox = new ItemsBoxs
-        {
-            id_box = itemBoxDto.id_box,
-            id_item = itemBoxDto.id_item,
-            qte_item_box = itemBoxDto.qte_item_box,
-            seuil_max_item_item_box = itemBoxDto.seuil_max_item_item_box
-        };
+        var newItemBox = _mapper.Map<ItemsBoxs>(itemBoxDto);
         _context.ItemsBoxs.Add(newItemBox);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadItemBoxDto>(newItemBox);

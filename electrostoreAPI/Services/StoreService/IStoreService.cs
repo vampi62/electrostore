@@ -15,4 +15,8 @@ public interface IStoreService
     public Task<ReadStoreDto> UpdateStore(int id, UpdateStoreDto storeDto);
 
     public Task DeleteStore(int id);
+
+    public Task<ReadStoreCompleteDto> CreateStoreComplete(CreateStoreCompleteDto storeDto);
+
+    public Task<ReadStoreCompleteDto> UpdateStoreComplete(int id, UpdateStoreCompleteDto storeDto);
 }

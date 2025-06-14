@@ -16,7 +16,7 @@ public interface ILedService
 
     public Task<ReadLedDto> UpdateLed(int id, UpdateLedDto ledDto, int? storeId = null);
 
-    public Task<ReadBulkLedDto> UpdateBulkLed(List<UpdateBulkLedStoreDto> ledsDto, int storeId);
+    public Task<ReadBulkLedDto> UpdateBulkLed(List<UpdateBulkLedByStoreDto> ledsDto, int storeId);
 
     public Task DeleteLed(int id, int? storeId = null);
 

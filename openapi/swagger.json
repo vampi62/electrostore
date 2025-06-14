@@ -7380,7 +7380,7 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/UpdateBulkLedStoreDto"
+                  "$ref": "#/components/schemas/UpdateBulkLedByStoreDto"
                 }
               }
             },
@@ -7388,7 +7388,7 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/UpdateBulkLedStoreDto"
+                  "$ref": "#/components/schemas/UpdateBulkLedByStoreDto"
                 }
               }
             },
@@ -7396,7 +7396,7 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/UpdateBulkLedStoreDto"
+                  "$ref": "#/components/schemas/UpdateBulkLedByStoreDto"
                 }
               }
             }
@@ -7827,6 +7827,113 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/store/complete": {
+      "post": {
+        "tags": [
+          "Stores"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStoreCompleteDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStoreCompleteDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStoreCompleteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadStoreCompleteDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadStoreCompleteDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadStoreCompleteDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/{id_store}/complete": {
+      "put": {
+        "tags": [
+          "Stores"
+        ],
+        "parameters": [
+          {
+            "name": "id_store",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStoreCompleteDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStoreCompleteDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStoreCompleteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadStoreCompleteDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadStoreCompleteDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadStoreCompleteDto"
+                }
+              }
+            }
           }
         }
       }
@@ -11285,6 +11392,29 @@
         },
         "additionalProperties": false
       },
+      "CreateStoreCompleteDto": {
+        "type": "object",
+        "properties": {
+          "store": {
+            "$ref": "#/components/schemas/CreateStoreDto"
+          },
+          "boxs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateBoxByStoreDto"
+            },
+            "nullable": true
+          },
+          "leds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateLedByStoreDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "CreateStoreDto": {
         "required": [
           "mqtt_name_store",
@@ -13083,6 +13213,21 @@
         },
         "additionalProperties": false
       },
+      "ReadStoreCompleteDto": {
+        "type": "object",
+        "properties": {
+          "store": {
+            "$ref": "#/components/schemas/ReadStoreDto"
+          },
+          "leds": {
+            "$ref": "#/components/schemas/ReadBulkLedDto"
+          },
+          "boxs": {
+            "$ref": "#/components/schemas/ReadBulkBoxDto"
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadStoreDto": {
         "type": "object",
         "properties": {
@@ -13353,11 +13498,15 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
       },
-      "UpdateBulkLedStoreDto": {
+      "UpdateBulkLedByStoreDto": {
         "type": "object",
         "properties": {
           "id_led": {
@@ -13383,6 +13532,10 @@
             "minimum": 0,
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -13676,6 +13829,29 @@
             "minimum": 1,
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateStoreCompleteDto": {
+        "type": "object",
+        "properties": {
+          "store": {
+            "$ref": "#/components/schemas/UpdateStoreDto"
+          },
+          "boxs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdateBulkBoxByStoreDto"
+            },
+            "nullable": true
+          },
+          "leds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdateBulkLedByStoreDto"
+            },
             "nullable": true
           }
         },

@@ -43,8 +43,8 @@ async function fetchAllData() {
 			xlength_store: storesStore.stores[storeId].xlength_store,
 			ylength_store: storesStore.stores[storeId].ylength_store,
 		};
-		storesStore.ledEdition = storesStore.leds[storeId];
-		storesStore.boxEdition = storesStore.boxs[storeId];
+		storesStore.ledEdition = { ...storesStore.leds[storeId] };
+		storesStore.boxEdition = { ...storesStore.boxs[storeId] };
 	} else {
 		storesStore.storeEdition = {
 			loading: false,
@@ -79,77 +79,52 @@ const storeSave = async() => {
 	try {
 		await schemaStore.validate(storesStore.storeEdition, { abortEarly: false });
 		if (storeId !== "new") {
-			// delete all the leds and boxs with the status "delete"
-			if (Object.values(storesStore.boxEdition).filter((box) => box.status === "delete").length > 0) {
-				let listIdToDelete = [];
-				Object.values(storesStore.boxEdition).filter((box) => box.status === "delete").forEach((box) => {
-					listIdToDelete.push(box.id_box);
-				});
-				await storesStore.deleteBoxBulk(storeId, listIdToDelete);
-				storesStore.boxEdition = Object.values(storesStore.boxEdition).filter((box) => box.status !== "delete");
-			}
-			if (Object.values(storesStore.ledEdition).filter((led) => led.status === "delete").length > 0) {
-				let listIdToDelete = [];
-				Object.values(storesStore.ledEdition).filter((led) => led.status === "delete").forEach((led) => {
-					listIdToDelete.push(led.id_led);
-				});
-				await storesStore.deleteLedBulk(storeId, listIdToDelete);
-				storesStore.ledEdition = Object.values(storesStore.ledEdition).filter((led) => led.status !== "delete");
-			}
-			if (Object.values(storesStore.boxEdition).filter((box) => box.status === "modified").length > 0) {
-				await storesStore.updateBoxBulk(storeId, Object.values(storesStore.boxEdition).filter((box) => box.status === "modified"));
-				Object.values(storesStore.boxEdition).forEach((box) => {
-					if (box.status === "modified") {
-						delete box.status;
-					}
-				});
-			}
-			// check if a led as been modified (status = modified or mqtt_led_id != storesStore.leds[storeId][id_led].mqtt_led_id)
-			if ((Object.values(storesStore.ledEdition).filter((led) => led.status === "modified" || led.mqtt_led_id !== storesStore.leds[storeId][led.id_led].mqtt_led_id).length) > 0) {
-				await storesStore.updateLedBulk(storeId, Object.values(storesStore.ledEdition).filter((led) => led.status === "modified" || led.mqtt_led_id !== storesStore.leds[storeId][led.id_led].mqtt_led_id));
-				Object.values(storesStore.ledEdition).forEach((led) => {
-					if (led.status === "modified") {
-						delete led.status;
-					}
-				});
-			}
-			await storesStore.updateStore(storeId, { ...storesStore.storeEdition });
+			await storesStore.updateStoreComplete(storeId, { 
+				store: storesStore.storeEdition,
+				leds: Object.values(storesStore.ledEdition),
+				boxs: Object.values(storesStore.boxEdition),
+			});
 			addNotification({ message: "store.VStoreUpdated", type: "success", i18n: true });
+			await storesStore.getStoreById(storeId, ["boxs", "leds"]);
+			storesStore.storeEdition = {
+				loading: false,
+				id_store: storesStore.stores[storeId].id_store,
+				nom_store: storesStore.stores[storeId].nom_store,
+				mqtt_name_store: storesStore.stores[storeId].mqtt_name_store,
+				xlength_store: storesStore.stores[storeId].xlength_store,
+				ylength_store: storesStore.stores[storeId].ylength_store,
+			};
+			storesStore.ledEdition = { ...storesStore.leds[storeId] };
+			storesStore.boxEdition = { ...storesStore.boxs[storeId] };
 		} else {
-			await storesStore.createStore({ ...storesStore.storeEdition });
+			await storesStore.createStoreComplete({ 
+				store: storesStore.storeEdition,
+				leds: Object.values(storesStore.ledEdition),
+				boxs: Object.values(storesStore.boxEdition),
+			});
 			addNotification({ message: "store.VStoreCreated", type: "success", i18n: true });
 		}
-		if (Object.values(storesStore.boxEdition).filter((box) => box.status === "new").length > 0) {
-			await storesStore.createBoxBulk(storesStore.storeEdition.id_store, Object.values(storesStore.boxEdition).filter((box) => box.status === "new"));
-			Object.values(storesStore.boxEdition).forEach((box) => {
-				if (box.status === "new") {
-					delete box.status;
-				}
-			});
-		}
-		if (Object.values(storesStore.ledEdition).filter((led) => led.status === "new").length > 0) {
-			await storesStore.createLedBulk(storesStore.storeEdition.id_store, Object.values(storesStore.ledEdition).filter((led) => led.status === "new"));
-			Object.values(storesStore.ledEdition).forEach((led) => {
-				if (led.status === "new") {
-					delete led.status;
-				}
-			});
-		}
-
-		// at the end, resync list
-		await storesStore.getStoreById(storeId, ["boxs", "leds"]);
-		storesStore.ledEdition = storesStore.leds[storeId];
-		storesStore.boxEdition = storesStore.boxs[storeId];
 		storesStore.storeEdition.loading = false;
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
+		addNotification({ message: e.message, type: "error", i18n: false });
 		storesStore.storeEdition.loading = false;
 		return;
 	}
 	if (storeId === "new") {
-		router.push("/stores/" + storesStore.storeEdition.id_store);
+		router.push("/stores/" + storesStore.storeEdition.store.id_store);
+		// reload the store data
+		await storesStore.getStoreById(storesStore.storeEdition.store.id_store, ["boxs", "leds"]);
+		storesStore.ledEdition = { ...storesStore.leds[storesStore.storeEdition.store.id_store] };
+		storesStore.boxEdition = { ...storesStore.boxs[storesStore.storeEdition.store.id_store] };
+		storesStore.storeEdition = {
+			loading: false,
+			id_store: storesStore.storeEdition.store.id_store,
+			nom_store: storesStore.storeEdition.store.nom_store,
+			mqtt_name_store: storesStore.storeEdition.store.mqtt_name_store,
+			xlength_store: storesStore.storeEdition.store.xlength_store,
+			ylength_store: storesStore.storeEdition.store.ylength_store,
+		};
+		showStoreGrid();
 	}
 };
 const storeDelete = async() => {
@@ -472,6 +447,9 @@ function selectBorder(border, direction) {
 	selectedElement.value.temp.xend_box = border.xend_box;
 	selectedElement.value.temp.yend_box = border.yend_box;
 	selectedElement.value.temp.direction = direction;
+	if (border?.status !== "new") {
+		border.status = "modified";
+	}
 	let boxHtml = document.getElementById("BOX" + border.id_box);
 	boxHtml.classList.add("selectedElement");
 	boxHtml.classList.add("diagonal-hatch");

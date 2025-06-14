@@ -84,15 +84,7 @@ public class ProjetService : IProjetService
 
     public async Task<ReadProjetDto> CreateProjet(CreateProjetDto projetDto)
     {
-        var newProjet = new Projets
-        {
-            nom_projet = projetDto.nom_projet,
-            description_projet = projetDto.description_projet,
-            url_projet = projetDto.url_projet,
-            status_projet = projetDto.status_projet,
-            date_debut_projet = projetDto.date_debut_projet,
-            date_fin_projet = projetDto.date_fin_projet
-        };
+        var newProjet = _mapper.Map<Projets>(projetDto);
         _context.Projets.Add(newProjet);
         await _context.SaveChangesAsync();
         if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", newProjet.id_projet.ToString())))

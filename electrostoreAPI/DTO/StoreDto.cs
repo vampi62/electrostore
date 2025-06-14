@@ -83,3 +83,23 @@ public record UpdateStoreDto : IValidatableObject
         }
     }
 }
+
+public record ReadStoreCompleteDto
+{
+    public ReadStoreDto store { get; init; }
+    public ReadBulkLedDto? leds { get; init; }
+    public ReadBulkBoxDto? boxs { get; init; }
+}
+public record CreateStoreCompleteDto
+{
+    public CreateStoreDto store { get; init; }
+    public IEnumerable<CreateBoxByStoreDto>? boxs { get; init; }
+    public IEnumerable<CreateLedByStoreDto>? leds { get; init; }
+}
+
+public record UpdateStoreCompleteDto
+{
+    public UpdateStoreDto store { get; init; }
+    public IEnumerable<UpdateBulkBoxByStoreDto>? boxs { get; init; }
+    public IEnumerable<UpdateBulkLedByStoreDto>? leds { get; init; }
+}

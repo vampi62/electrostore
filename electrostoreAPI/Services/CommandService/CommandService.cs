@@ -84,14 +84,7 @@ public class CommandService : ICommandService
 
     public async Task<ReadCommandDto> CreateCommand(CreateCommandDto commandDto)
     {
-        var newCommand = new Commands
-        {
-            prix_command = commandDto.prix_command,
-            url_command = commandDto.url_command,
-            status_command = commandDto.status_command,
-            date_command = commandDto.date_command,
-            date_livraison_command = commandDto.date_livraison_command
-        };
+        var newCommand = _mapper.Map<Commands>(commandDto);
         _context.Commands.Add(newCommand);
         await _context.SaveChangesAsync();
         if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", newCommand.id_command.ToString())))

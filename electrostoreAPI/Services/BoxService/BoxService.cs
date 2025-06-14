@@ -122,14 +122,7 @@ public class BoxService : IBoxService
         {
             throw new ArgumentException("Box XY position already taken");
         }
-        var newBox = new Boxs
-        {
-            xstart_box = boxDto.xstart_box,
-            ystart_box = boxDto.ystart_box,
-            yend_box = boxDto.yend_box,
-            xend_box = boxDto.xend_box,
-            id_store = boxDto.id_store
-        };
+        var newBox = _mapper.Map<Boxs>(boxDto);
         _context.Boxs.Add(newBox);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadBoxDto>(newBox);
@@ -172,14 +165,7 @@ public class BoxService : IBoxService
                 {
                     throw new ArgumentException("Box XY position already taken");
                 }
-                var newBox = new Boxs
-                {
-                    xstart_box = boxDto.xstart_box,
-                    ystart_box = boxDto.ystart_box,
-                    yend_box = boxDto.yend_box,
-                    xend_box = boxDto.xend_box,
-                    id_store = boxDto.id_store
-                };
+                var newBox = _mapper.Map<Boxs>(boxDto);
                 _context.Boxs.Add(newBox);
                 validQuery.Add(_mapper.Map<ReadBoxDto>(newBox));
             }

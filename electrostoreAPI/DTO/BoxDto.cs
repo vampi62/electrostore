@@ -112,4 +112,6 @@ public record UpdateBulkBoxByStoreDto
     public int? yend_box { get; init; }
     
     public int? new_id_store { get; init; }
+
+    public string? status { get; init; } // status field to indicate the new status "delete", "modified", "new"
 }

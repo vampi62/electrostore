@@ -110,14 +110,7 @@ public class ItemService : IItemService
         {
             throw new InvalidOperationException($"Item with name {itemDto.reference_name_item} already exists");
         }
-        var item = new Items
-        {
-            id_img = itemDto.id_img,
-            reference_name_item = itemDto.reference_name_item,
-            friendly_name_item = itemDto.friendly_name_item,
-            seuil_min_item = itemDto.seuil_min_item,
-            description_item = itemDto.description_item,
-        };
+        var item = _mapper.Map<Items>(itemDto);
         _context.Items.Add(item);
         await _context.SaveChangesAsync();
         if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", item.id_item.ToString())))
