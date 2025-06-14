@@ -128,11 +128,7 @@ public class BoxTagService : IBoxTagService
         {
             throw new InvalidOperationException($"BoxTag with id {boxTagDto.id_box} and {boxTagDto.id_tag} already exists");
         }
-        var newBoxTag = new BoxsTags
-        {
-            id_box = boxTagDto.id_box,
-            id_tag = boxTagDto.id_tag
-        };
+        var newBoxTag = _mapper.Map<BoxsTags>(boxTagDto);
         _context.BoxsTags.Add(newBoxTag);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadBoxTagDto>(newBoxTag);

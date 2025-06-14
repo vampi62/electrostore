@@ -126,11 +126,7 @@ public class StoreTagService : IStoreTagService
         {
             throw new InvalidOperationException($"StoreTag with storeId {storeTagDto.id_store} and tagId {storeTagDto.id_tag} already exists");
         }
-        var newStoreTag = new StoresTags
-        {
-            id_store = storeTagDto.id_store,
-            id_tag = storeTagDto.id_tag
-        };
+        var newStoreTag = _mapper.Map<StoresTags>(storeTagDto);
         _context.StoresTags.Add(newStoreTag);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadStoreTagDto>(newStoreTag);

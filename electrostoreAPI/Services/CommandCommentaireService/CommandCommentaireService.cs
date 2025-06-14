@@ -118,12 +118,7 @@ public class CommandCommentaireService : ICommandCommentaireService
         {
             throw new KeyNotFoundException($"User with id {commandCommentaireDto.id_user} not found");
         }
-        var newCommandCommentaire = new CommandsCommentaires
-        {
-            id_command = commandCommentaireDto.id_command,
-            id_user = commandCommentaireDto.id_user,
-            contenu_command_commentaire = commandCommentaireDto.contenu_command_commentaire
-        };
+        var newCommandCommentaire = _mapper.Map<CommandsCommentaires>(commandCommentaireDto);
         _context.CommandsCommentaires.Add(newCommandCommentaire);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadCommandCommentaireDto>(newCommandCommentaire);

@@ -89,11 +89,7 @@ public class TagService : ITagService
         {
             throw new InvalidOperationException($"Tag with name {tagDto.nom_tag} already exists");
         }
-        var newTag = new Tags
-        {
-            nom_tag = tagDto.nom_tag,
-            poids_tag = tagDto.poids_tag ?? 0
-        };
+        var newTag = _mapper.Map<Tags>(tagDto);
         _context.Tags.Add(newTag);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadTagDto>(newTag);

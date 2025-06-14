@@ -24,7 +24,7 @@ namespace electrostore.Controllers
             var stores = await _storeService.GetStores(limit, offset, expand, idResearch);
             var CountList = await _storeService.GetStoresCount();
             Response.Headers.Add("X-Total-Count", CountList.ToString());
-            Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
+            Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
             return Ok(stores);
         }
 
@@ -58,6 +58,22 @@ namespace electrostore.Controllers
         {
             await _storeService.DeleteStore(id_store);
             return NoContent();
+        }
+
+        [HttpPost("complete")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult<ReadStoreCompleteDto>> CreateStoreComplete([FromBody] CreateStoreCompleteDto store)
+        {
+            var newStore = await _storeService.CreateStoreComplete(store);
+            return CreatedAtAction(nameof(GetStoreById), new { id_store = newStore.store.id_store }, newStore);
+        }
+
+        [HttpPut("{id_store}/complete")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult<ReadStoreCompleteDto>> UpdateStoreComplete([FromRoute] int id_store, [FromBody] UpdateStoreCompleteDto store)
+        {
+            var storeToUpdate = await _storeService.UpdateStoreComplete(id_store, store);
+            return Ok(storeToUpdate);
         }
     }
 }

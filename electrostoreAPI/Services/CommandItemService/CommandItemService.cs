@@ -117,13 +117,7 @@ public class CommandItemService : ICommandItemService
         {
             throw new ArgumentException($"CommandItem with commandId {commandItemDto.id_command} and itemId {commandItemDto.id_item} already exists");
         }
-        var newCommandItem = new CommandsItems
-        {
-            id_item = commandItemDto.id_item,
-            id_command = commandItemDto.id_command,
-            qte_command_item = commandItemDto.qte_command_item,
-            prix_command_item = commandItemDto.prix_command_item
-        };
+        var newCommandItem = _mapper.Map<CommandsItems>(commandItemDto);
         _context.CommandsItems.Add(newCommandItem);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadCommandItemDto>(newCommandItem);

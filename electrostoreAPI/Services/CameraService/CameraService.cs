@@ -59,13 +59,7 @@ public class CameraService : ICameraService
         {
             throw new UnauthorizedAccessException("You do not have permission to create a camera");
         }
-        var newCamera = new Cameras
-        {
-            nom_camera = cameraDto.nom_camera,
-            url_camera = cameraDto.url_camera,
-            user_camera = cameraDto.user_camera,
-            mdp_camera = cameraDto.mdp_camera
-        };
+        var newCamera = _mapper.Map<Cameras>(cameraDto);
         _context.Cameras.Add(newCamera);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadCameraDto>(newCamera);

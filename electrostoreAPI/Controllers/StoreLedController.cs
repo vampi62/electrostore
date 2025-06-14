@@ -82,7 +82,7 @@ namespace electrostore.Controllers
         
         [HttpPut("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkLedDto>> UpdateBulkLed([FromRoute] int id_store, [FromBody] List<UpdateBulkLedStoreDto> ledsDto)
+        public async Task<ActionResult<ReadBulkLedDto>> UpdateBulkLed([FromRoute] int id_store, [FromBody] List<UpdateBulkLedByStoreDto> ledsDto)
         {
             var leds = await _ledService.UpdateBulkLed(ledsDto, id_store);
             return Ok(leds);

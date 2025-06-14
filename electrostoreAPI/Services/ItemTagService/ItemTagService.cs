@@ -119,11 +119,7 @@ public class ItemTagService : IItemTagService
         {
             throw new InvalidOperationException($"ItemTag with id_item {itemTagDto.id_item} and id_tag {itemTagDto.id_tag} already exists");
         }
-        var itemTag = new ItemsTags
-        {
-            id_item = itemTagDto.id_item,
-            id_tag = itemTagDto.id_tag
-        };
+        var itemTag = _mapper.Map<ItemsTags>(itemTagDto);
         _context.ItemsTags.Add(itemTag);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadItemTagDto>(itemTag);

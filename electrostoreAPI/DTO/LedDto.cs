@@ -70,7 +70,7 @@ public record UpdateLedDto
     [Range(0, int.MaxValue, ErrorMessage = "mqtt_led_id must be greater than or equal to 0.")]
     public int? mqtt_led_id { get; init; }
 }
-public record UpdateBulkLedStoreDto
+public record UpdateBulkLedByStoreDto
 {
     public int id_led { get; init; }
 
@@ -82,4 +82,6 @@ public record UpdateBulkLedStoreDto
 
     [Range(0, int.MaxValue, ErrorMessage = "mqtt_led_id must be greater than or equal to 0.")]
     public int? mqtt_led_id { get; init; }
+
+    public string? status { get; init; } // status field to indicate the new status "delete", "modified", "new"
 }

@@ -116,12 +116,7 @@ public class ProjetCommentaireService : IProjetCommentaireService
         {
             throw new KeyNotFoundException($"User with id {projetCommentaireDto.id_user} not found");
         }
-        var newProjetCommentaire = new ProjetsCommentaires
-        {
-            id_projet = projetCommentaireDto.id_projet,
-            id_user = projetCommentaireDto.id_user,
-            contenu_projet_commentaire = projetCommentaireDto.contenu_projet_commentaire
-        };
+        var newProjetCommentaire = _mapper.Map<ProjetsCommentaires>(projetCommentaireDto);
         _context.ProjetsCommentaires.Add(newProjetCommentaire);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadProjetCommentaireDto>(newProjetCommentaire);

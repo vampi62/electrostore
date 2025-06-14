@@ -31,7 +31,8 @@
 			class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
 			{{ $t('components.VModalTopButtonDelete') }}
 		</button>
-		<button @click="hasHistory() ? $router.go(-1) : $router.push('/')" class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
+		<button @click="hasHistory() ? (previousPageIsNew() ? $router.push({ path: mainConfig.path }) : $router.go(-1)) : $router.push({ path: mainConfig.path })"
+		class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
 			{{ $t('components.VModalTopButtonBack') }}
 		</button>
 	</div>
@@ -81,6 +82,10 @@ export default {
 	methods: {
 		hasHistory() {
 			return window.history.length > 2;
+		},
+		previousPageIsNew() {
+			const previousPage = window.history.state?.back;
+			return previousPage && previousPage.endsWith("/new");
 		},
 	},
 	emits: [
