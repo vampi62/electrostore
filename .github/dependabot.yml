@@ -1,7 +1,34 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+
+  - package-ecosystem: "docker"
     directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+
+  - package-ecosystem: "npm"
+    directory: "/electrostoreFRONT"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+
+  - package-ecosystem: "pip"
+    directory: "/electrostoreIA"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+
+  - package-ecosystem: "nuget"
+    directory: "/electrostoreAPI"
     schedule:
       interval: "weekly"
     labels:

@@ -93,6 +93,9 @@ sudo docker run -d --name electrostoreAPI \
  -p 5002:80 \
  -v electrostoreDATA:/app/wwwroot \
  -v electrostoreCONFIG:/app/config \
+ --tmpfs /tmp \
+ --security-opt no-new-privileges=true \
+ --read-only=true \
  electrostore/api:latest
 
 sudo docker build -t electrostore/ia:latest electrostoreIA
@@ -100,7 +103,11 @@ sudo docker run -d --name electrostoreIA \
  --restart always \
  --network electrostore \
  -v electrostoreDATA:/data \
- -v electrostoreCONFIG:/app/config \
+ -v electrostoreCONFIG:/app/config:ro \
+ --tmpfs /tmp \
+ --security-opt no-new-privileges=true \
+ --read-only=true \
+ --cap-drop ALL \
  electrostore/ia:latest
 ```
 
@@ -113,5 +120,7 @@ sudo docker run -d --name electrostoreFRONT \
  --restart always \
  -p 8080:80 \
  -e VUE_API_URL=<VUE_API_URL> \
+ --security-opt no-new-privileges=true \
+ --cap-drop ALL \
  electrostore/front:latest
 ```
