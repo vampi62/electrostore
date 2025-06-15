@@ -10,7 +10,7 @@ COPY . .
 
 RUN npm run build
 
-FROM httpd:latest
+FROM httpd:alpine
 
 COPY --from=build /app/dist /usr/local/apache2/htdocs/
 

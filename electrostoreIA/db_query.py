@@ -46,7 +46,7 @@ class MySQLConnection:
 		public string nom_ia { get; set; }
 		[MaxLength(500)]
 		public string description_ia { get; set; }
-		public DateTime date_ia { get; set; }
+		public DateTime date_train_ia { get; set; }
 		public bool trained_ia { get; set; } = false;
 	} """
 	def get_ia(self, id_ia):
@@ -63,7 +63,8 @@ class MySQLConnection:
 		try:
 			cursor = self.connection.cursor()
 			if trained_ia:
-				cursor.execute(f"UPDATE IA SET trained_ia = 1, date_ia = NOW() WHERE id_ia = {id_ia}")
+				#cursor.execute(f"UPDATE IA SET trained_ia = 1, date_train_ia = NOW() WHERE id_ia = {id_ia}")
+				cursor.execute(f"UPDATE IA SET trained_ia = 1 WHERE id_ia = {id_ia}")
 			else:
 				cursor.execute(f"UPDATE IA SET trained_ia = 0 WHERE id_ia = {id_ia}")
 			self.connection.commit()
