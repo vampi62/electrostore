@@ -3,5 +3,5 @@ tensorflow==2.19.0
 numpy==2.0.2
 keras==3.9.0
 pillow==11.1.0
-mysql-connector-python==9.2.0
+mysql-connector-python==9.3.0
 gunicorn==23.0.0
