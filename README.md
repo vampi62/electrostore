@@ -124,3 +124,16 @@ sudo docker run -d --name electrostoreFRONT \
  --cap-drop ALL \
  electrostore/front:latest
 ```
+
+## login to the web interface
+Open your web browser and navigate to `http://<your-server-ip>:8080`. You should see the ElectroStore web interface.
+use the default credentials:
+- **Username**: admin@localhost.local
+- **Password**: Admin@1234
+
+## Documentation
+You can find the documentation for the Electrostore API at:
+[installation](/docs/01_installation.md)
+[esp led and scanbox](/docs/02_storeLed_and_scanner.md)
+[web interface](/docs/03_frontend_usage.md)
+[api usage](/docs/04_api_usage.md)

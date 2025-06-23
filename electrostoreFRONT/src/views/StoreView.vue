@@ -912,10 +912,13 @@ const labelTableauModalItem = ref([
 						<tr>
 							<td class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreMQTTName') }}:</td>
 							<td class="flex flex-col">
-								<Field name="mqtt_name_store" type="text"
-									v-model="storesStore.storeEdition.mqtt_name_store"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.mqtt_name_store }" />
+								<span class="flex items-center">
+									<span>electrostore/</span>
+									<Field name="mqtt_name_store" type="text"
+										v-model="storesStore.storeEdition.mqtt_name_store"
+										class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+										:class="{ 'border-red-500': errors.mqtt_name_store }" />
+								</span>
 								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.mqtt_name_store || ' ' }}</span>
 							</td>
 						</tr>
