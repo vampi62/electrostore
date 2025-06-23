@@ -324,7 +324,7 @@ const imageSelectModalShow = ref(false);
 const imageAddModalShow = ref(false);
 const imageDeleteModalShow = ref(false);
 const selectedImageId = ref(null);
-const imageModalData = ref({ id_img: null, nom_img: "", image: null, isEdit: false });
+const imageModalData = ref({ id_img: null, nom_img: "", description_img: "undefined", image: null, isEdit: false });
 const imageSelectOpenModal = () => {
 	if (itemId === "new") {
 		return;
@@ -338,7 +338,7 @@ const imageSelectOpenModal = () => {
 	}
 };
 const imageAddOpenModal = () => {
-	imageModalData.value = { nom_img: "", image: null, isEdit: false };
+	imageModalData.value = { nom_img: "", description_img: "undefined", image: null, isEdit: false };
 	imageAddModalShow.value = true;
 };
 const imageDeleteOpenModal = (doc) => {

@@ -45,11 +45,11 @@ public record CreateImgByItemDto : IValidatableObject
             {
                 yield return new ValidationResult($"The file size cannot exceed {Constants.MaxDocumentSizeMB} MB.", new[] { nameof(img_file) });
             }
-            var allowedExtensions = new[] { ".png", ".jpg", ".jpeg", ".gif", ".bmp" };
+            var allowedExtensions = new[] { ".tiff", ".jfif", ".bmp", ".pjp", ".apng", ".jpeg", ".png", ".webp", ".svgz", ".jpg", ".heic", ".gif", ".svg", ".heif", ".ico", ".xbm", ".dib", ".tif", ".pjpeg", ".avif" };
             var fileExtension = System.IO.Path.GetExtension(img_file.FileName).ToLowerInvariant();
-            if (!string.IsNullOrEmpty(fileExtension) && !allowedExtensions.Contains(fileExtension))
+            if (string.IsNullOrEmpty(fileExtension) || !allowedExtensions.Contains(fileExtension))
             {
-                yield return new ValidationResult("The file type is not allowed. Allowed types are: .png, .jpg, .jpeg, .gif, .bmp.", new[] { nameof(img_file) });
+                yield return new ValidationResult("The file type is not allowed. Allowed types are: " + string.Join(", ", allowedExtensions) + ".", new[] { nameof(img_file) });
             }
         }
     }
@@ -89,11 +89,11 @@ public record CreateImgDto : IValidatableObject
             {
                 yield return new ValidationResult($"The file size cannot exceed {Constants.MaxDocumentSizeMB} MB.", new[] { nameof(img_file) });
             }
-            var allowedExtensions = new[] { ".png", ".jpg", ".jpeg", ".gif", ".bmp" };
+            var allowedExtensions = new[] { ".tiff", ".jfif", ".bmp", ".pjp", ".apng", ".jpeg", ".png", ".webp", ".svgz", ".jpg", ".heic", ".gif", ".svg", ".heif", ".ico", ".xbm", ".dib", ".tif", ".pjpeg", ".avif" };
             var fileExtension = System.IO.Path.GetExtension(img_file.FileName).ToLowerInvariant();
-            if (!string.IsNullOrEmpty(fileExtension) && !allowedExtensions.Contains(fileExtension))
+            if (string.IsNullOrEmpty(fileExtension) || !allowedExtensions.Contains(fileExtension))
             {
-                yield return new ValidationResult("The file type is not allowed. Allowed types are: .png, .jpg, .jpeg, .gif, .bmp.", new[] { nameof(img_file) });
+                yield return new ValidationResult("The file type is not allowed. Allowed types are: " + string.Join(", ", allowedExtensions) + ".", new[] { nameof(img_file) });
             }
         }
     }

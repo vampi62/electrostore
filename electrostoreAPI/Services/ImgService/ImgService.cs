@@ -72,7 +72,7 @@ public class ImgService : IImgService
         var i = 1;
         // verifie si une image avec le meme nom existe deja sur le serveur dans "wwwroot/images"
         // si oui, on ajoute un numero a la fin du nom de l'image et on recommence la verification jusqu'a trouver un nom disponible
-        var pictureName = fileName;
+        var pictureName = fileName + fileExt;
         while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", imgDto.id_item.ToString(), pictureName)))
         {
             pictureName = $"{fileName}({i}){fileExt}";
@@ -84,7 +84,7 @@ public class ImgService : IImgService
             await imgDto.img_file.CopyToAsync(fileStream);
         }
 
-        var thumbnailName = fileName;
+        var thumbnailName = fileName + fileExt;
         while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails", imgDto.id_item.ToString(), thumbnailName)))
         {
             thumbnailName = $"{fileName}({i}){fileExt}";
@@ -142,8 +142,8 @@ public class ImgService : IImgService
         }
         _context.Imgs.Remove(imgToDelete);
         // supprimer les images sur le disque
-        File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", imgToDelete.url_picture_img));
-        File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails", imgToDelete.url_thumbnail_img));
+        File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imgToDelete.url_picture_img));
+        File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imgToDelete.url_thumbnail_img));
         await _context.SaveChangesAsync();
     }
 

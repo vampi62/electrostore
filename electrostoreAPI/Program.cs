@@ -13,6 +13,7 @@ using MQTTnet.Client;
 using electrostore;
 
 using electrostore.Dto;
+using electrostore.Enums;
 
 using electrostore.Services.BoxService;
 using electrostore.Services.BoxTagService;
@@ -256,14 +257,18 @@ public class Program
                 context.Database.Migrate();
             }
             // check if the database is empty
-            /* if (!context.Users.Any())
+            if (!context.Users.Any())
             {
                 var userService = serviceScope.ServiceProvider.GetRequiredService<IUserService>();
                 userService.CreateUser(new CreateUserDto
                 {
-                    
+                    nom_user = "Admin",
+                    prenom_user = "Admin",
+                    email_user = "admin@localhost.local",
+                    mdp_user = "Admin@1234",
+                    role_user = UserRole.Admin
                 }).Wait();
-            } */
+            }
         }
 
         app.Run();
