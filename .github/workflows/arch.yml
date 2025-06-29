@@ -68,7 +68,7 @@ jobs:
         run: |
           echo "BRANCH: ${{ env.BRANCH }}"
           echo "VERSION: ${{ env.VERSION }}"
-          echo "BUILD:" ${{ env.BUILD }}"
+          echo "BUILD: ${{ env.BUILD }}"
           echo "DEPLOY: ${{ env.DEPLOY }}"
           echo "RELEASE: ${{ env.RELEASE }}"
 #  tests:
