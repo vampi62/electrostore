@@ -1,0 +1,259 @@
+name: CI/CD Pipeline
+on:
+  workflow_call:
+    inputs:
+      architecture:
+        description: 'The architecture(s) of the images that will be build. linux/amd64 or linux/arm64/v8 or linux/amd64,linux/arm64/v8'
+        required: false
+        default: 'linux/amd64,linux/arm64/v8'
+        type: string
+      version:
+        description: 'The main version that is build.'
+        required: true
+        type: string
+      branch:
+        description: 'The branch that triggered this workflow.'
+        required: true
+        type: string
+      release:
+        description: 'If this is a release build.'
+        required: false
+        default: "false"
+        type: string
+  
+  workflow_dispatch:
+    inputs:
+      architecture:
+        description: 'The architecture(s) of the images that will be build. linux/amd64 or linux/arm64/v8 or linux/amd64,linux/arm64/v8'
+        required: false
+        default: 'linux/amd64,linux/arm64/v8'
+        type: string
+      version:
+        description: 'The main version that is build.'
+        required: true
+        type: string
+      branch:
+        description: 'The branch that triggered this workflow.'
+        required: true
+        type: string
+      release:
+        description: 'If this is a release build.'
+        required: false
+        default: "false"
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  HCL_FILE: ./build.hcl
+
+jobs:
+  target:
+    name: Set up target matrix
+    runs-on: self-hosted
+    outputs:
+      matrix: ${{ steps.targets.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+      - name: Create matrix
+        id: targets
+        run: |
+          echo matrix=$(docker buildx bake -f ${{env.HCL_FILE}} --print | jq -cr '.group.default.targets') >> $GITHUB_OUTPUT
+      - name: Show matrix
+        run: |
+          echo ${{ steps.targets.outputs.matrix }}
+
+
+  build-arm64:
+    name: arm64 - build
+    if: contains(inputs.architecture, 'linux/arm64/v8')
+    needs:
+      - target
+    runs-on: self-hosted
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(needs.target.outputs.matrix) }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.branch }}
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Helper to convert github repo to lowercase
+      id: repo
+      uses: ASzc/change-string-case-action@v6
+      with:
+        string: ${{ github.repository }}
+    - name: Get unique random number
+      id: uuid
+      run: |
+        echo uuid=$RANDOM >> $GITHUB_OUTPUT
+    - name: Build docker image with retry
+      env:
+        ARCH: linux/arm64/v8
+        BUILDER: ${{ steps.uuid.outputs.uuid }}
+        VERSION: ${{ inputs.version }}-arm64
+        REPO: ${{ steps.repo.outputs.lowercase }}
+        BUILDX_NO_DEFAULT_ATTESTATIONS: 1
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 30
+        retry_wait_seconds: 30
+        max_attempts: 5
+        shell: bash
+        command: |
+          set -euxo pipefail \
+          ; /usr/bin/docker info \
+          ; /usr/bin/docker buildx rm builder-${{ env.BUILDER }} \
+          || echo "builder does not exist" \
+          ; /usr/bin/docker buildx create --name builder-${{ env.BUILDER }} --driver docker-container --use \
+          ; /usr/bin/docker buildx bake --push \
+          --file ./build.hcl \
+          --set *.cache-from=type=registry,ref=ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:buildcache-arm64 \
+          --set *.cache-to=type=registry,ref=ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:buildcache-arm64,mode=max \
+          --set *.platform=${{ env.ARCH }} ${{ matrix.target }} \
+          ; /usr/bin/docker buildx rm builder-${{ env.BUILDER }}
+
+  build-amd64:
+    name: x64 - build
+    if: contains(inputs.architecture, 'linux/amd64')
+    needs:
+      - target
+    runs-on: self-hosted
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(needs.target.outputs.matrix) }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.branch }}
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Helper to convert github repo to lowercase
+      id: repo
+      uses: ASzc/change-string-case-action@v6
+      with:
+        string: ${{ github.repository }}
+    - name: Get unique random number
+      id: uuid
+      run: |
+        echo uuid=$RANDOM >> $GITHUB_OUTPUT
+    - name: Build docker image with retry
+      env:
+        ARCH: linux/amd64
+        BUILDER: ${{ steps.uuid.outputs.uuid }}
+        VERSION: ${{ inputs.version }}-amd64
+        REPO: ${{ steps.repo.outputs.lowercase }}
+        BUILDX_NO_DEFAULT_ATTESTATIONS: 1
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 30
+        retry_wait_seconds: 30
+        max_attempts: 5
+        shell: bash
+        command: |
+          set -euxo pipefail \
+          ; /usr/bin/docker info \
+          ; /usr/bin/docker buildx rm builder-${{ env.BUILDER }} \
+          || echo "builder does not exist" \
+          ; /usr/bin/docker buildx create --name builder-${{ env.BUILDER }} --driver docker-container --use \
+          ; /usr/bin/docker buildx bake --push \
+          --file ./build.hcl \
+          --set *.cache-from=type=registry,ref=ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:buildcache-amd64 \
+          --set *.cache-to=type=registry,ref=ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:buildcache-amd64,mode=max \
+          --set *.platform=${{ env.ARCH }} ${{ matrix.target }} \
+          ; /usr/bin/docker buildx rm builder-${{ env.BUILDER }}
+
+  deploy-images:
+    name: Deploy images on ghcr.io
+    runs-on: self-hosted
+    needs:
+      - target
+      - build-arm64
+      - build-amd64
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(needs.target.outputs.matrix) }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.branch }}
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Helper to convert github repo to lowercase
+      id: repo
+      uses: ASzc/change-string-case-action@v6
+      with:
+        string: ${{ github.repository }}
+    - name: Push multiarch image to Github (ghcr.io)
+      if: contains(inputs.architecture, 'linux/amd64,linux/arm64/v8')
+      shell: bash
+      run: |
+        docker buildx imagetools create \
+          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.branch }} \
+          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }} \
+          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:latest \
+          ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }}-amd64 \
+          ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }}-arm64
+    - name: Push amd64 image to Github (ghcr.io)
+      if: contains(inputs.architecture, 'linux/amd64') && !contains(inputs.architecture, 'linux/arm64/v8')
+      shell: bash
+      run: |
+        docker buildx imagetools create \
+          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.branch }} \
+          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }} \
+          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:latest \
+          ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }}-amd64
+    - name: Push arm64 image to Github (ghcr.io)
+      if: contains(inputs.architecture, 'linux/arm64/v8') && !contains(inputs.architecture, 'linux/amd64')
+      shell: bash
+      run: |
+        docker buildx imagetools create \
+          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.branch }} \
+          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }} \
+          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:latest \
+          ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }}-arm64

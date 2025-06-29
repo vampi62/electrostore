@@ -28,6 +28,8 @@ https://www.lidl.fr/p/parkside-casiers-a-tiroirs/p100377898
 - 1 - WS2812 LED controller for esp01
 
 ### Server Installation
+for using a stable version follow the instructions in the [docs/01_installation.md](docs/01_installation.md) file, otherwise you can follow the instructions below to install the development version.
+
 prerequisites:
 - docker + docker-compose
 - (recommended) traefik with docker provider and letsencrypt enabled
@@ -96,9 +98,9 @@ sudo docker run -d --name electrostoreAPI \
  --tmpfs /tmp \
  --security-opt no-new-privileges=true \
  --read-only=true \
- electrostore/api:latest
+ electrostore/api:local
 
-sudo docker build -t electrostore/ia:latest electrostoreIA
+sudo docker build -t electrostore/ia:local electrostoreIA
 sudo docker run -d --name electrostoreIA \
  --restart always \
  --network electrostore \
@@ -108,21 +110,21 @@ sudo docker run -d --name electrostoreIA \
  --security-opt no-new-privileges=true \
  --read-only=true \
  --cap-drop ALL \
- electrostore/ia:latest
+ electrostore/ia:local
 ```
 
 
 #### start the web interface
 set VUE_API_URL with the complete url of the API (ex: https://api.electrostore.com:443/api)
 ```bash
-sudo docker build -t electrostore/front:latest electrostoreFRONT
+sudo docker build -t electrostore/front:local electrostoreFRONT
 sudo docker run -d --name electrostoreFRONT \
  --restart always \
  -p 8080:80 \
  -e VUE_API_URL=<VUE_API_URL> \
  --security-opt no-new-privileges=true \
  --cap-drop ALL \
- electrostore/front:latest
+ electrostore/front:local
 ```
 
 ## login to the web interface
@@ -133,7 +135,11 @@ use the default credentials:
 
 ## Documentation
 You can find the documentation for the Electrostore API at:
-[installation](/docs/01_installation.md)
+
+[installation stable version](/docs/01_installation.md)
+
 [esp led and scanbox](/docs/02_storeLed_and_scanner.md)
+
 [web interface](/docs/03_frontend_usage.md)
+
 [api usage](/docs/04_api_usage.md)

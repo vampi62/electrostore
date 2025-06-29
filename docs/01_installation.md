@@ -2,7 +2,7 @@
 # Installation
 
 ## start database server
-if you have already a mariadb server and a mqtt server, you can skip this step
+if you have already a mariadb server and a mqtt server, you can skip this step, just make sure that the database is named `electrostore` with a user with the permissions to access it.
 ```bash
 sudo docker run -d --name mariadb \
  --restart always \
@@ -99,7 +99,7 @@ Complete the `config.json` file with the following content, replacing placeholde
     "Audience": "<your-audience>",
     "ExpireDays": 1
   },
-  "FrontendUrl": "https://<frontend-url>",
+  "FrontendUrl": "http://<frontend-url>",
   "AllowedHosts": "*"
 }
 ```
@@ -115,7 +115,7 @@ sudo docker run -d --name electrostoreAPI \
  --tmpfs /tmp \
  --security-opt no-new-privileges=true \
  --read-only=true \
- vampi62/electrostore/api:latest
+ vampi62/electrostore/api:v1.0
 
 sudo docker run -d --name electrostoreIA \
  --restart always \
@@ -126,7 +126,7 @@ sudo docker run -d --name electrostoreIA \
  --security-opt no-new-privileges=true \
  --read-only=true \
  --cap-drop ALL \
- vampi62/electrostore/ia:latest
+ vampi62/electrostore/ia:v1.0
 ```
 
 ## start the web interface
@@ -135,10 +135,10 @@ set `VUE_API_URL` with the complete url of the API (ex: https://api.electrostore
 sudo docker run -d --name electrostoreFRONT \
  --restart always \
  -p 8080:80 \
- -e VUE_API_URL=https://<your-api-url>/api \
+ -e VUE_API_URL=http://<your-api-url>/api \
  --security-opt no-new-privileges=true \
  --cap-drop ALL \
- vampi62/electrostore/front:latest
+ vampi62/electrostore/front:v1.0
 ```
 
 ## login to the web interface
