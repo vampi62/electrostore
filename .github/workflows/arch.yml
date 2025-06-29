@@ -1,0 +1,116 @@
+name: start-linux-build
+on:
+  push:
+    branches:
+      - main
+      - v*
+
+concurrency: ci-build-${{ github.ref }}
+
+permissions:
+  contents: read
+  packages: write
+  issues: read
+  pull-requests: read
+  deployments: write
+
+jobs:
+  init-work:
+    name: Init work
+    runs-on: self-hosted
+    outputs:
+        VERSION: ${{ env.VERSION }}
+        BRANCH: ${{ env.BRANCH }}
+        BUILD: ${{ env.BUILD }}
+        DEPLOY: ${{ env.DEPLOY }}
+        RELEASE: ${{ env.RELEASE }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract branch name
+        shell: bash
+        run: |
+          echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
+      - name: Init for main branch
+        if: env.BRANCH == 'main'
+        shell: bash
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          echo "VERSION=pr-${COMMIT_SHA:0:8}" >> $GITHUB_ENV
+          echo "BUILD=true" >> $GITHUB_ENV
+          echo "DEPLOY=true" >> $GITHUB_ENV
+          echo "RELEASE=false" >> $GITHUB_ENV
+
+      - name: Init for v* branches
+        if: startsWith(env.BRANCH, 'v')
+        id: deploy
+        shell: bash
+        run: |
+          version=$( git tag --sort=version:refname --list "${{ env.BRANCH }}.*" | tail -1  );
+          root_version=${version%.*};
+          patch_version=${version##*.};
+          if [ "$patch_version" == "" ]; then 
+            pinned_version=${{ env.BRANCH }}.0;
+          else
+            pinned_version=$root_version.$(expr $patch_version + 1);
+          fi;
+          echo "VERSION=$pinned_version" >> $GITHUB_ENV
+          echo "BUILD=true" >> $GITHUB_ENV
+          echo "DEPLOY=true" >> $GITHUB_ENV
+          echo "RELEASE=true" >> $GITHUB_ENV
+
+      - name: Debug var
+        shell: bash
+        run: |
+          echo "BRANCH: ${{ env.BRANCH }}"
+          echo "VERSION: ${{ env.VERSION }}"
+          echo "BUILD:" ${{ env.BUILD }}"
+          echo "DEPLOY: ${{ env.DEPLOY }}"
+          echo "RELEASE: ${{ env.RELEASE }}"
+#  tests:
+#    needs:
+#      - init-work
+#    uses: ./.github/workflows/tests.yml
+#    permissions:
+#      packages: write
+#      contents: read
+#    with:
+#      branch: ${{needs.init-work.outputs.BRANCH}}
+#    secrets: inherit
+
+  build:
+    needs:
+      - init-work
+#      - tests
+    if: needs.init-work.outputs.BUILD == 'true'
+    uses: ./.github/workflows/build.yml
+    permissions:
+      packages: write
+      contents: read
+    with:
+      architecture: 'linux/amd64,linux/arm64/v8'
+      version: ${{needs.init-work.outputs.VERSION}}
+      branch: ${{needs.init-work.outputs.BRANCH}}
+      release: ${{needs.init-work.outputs.RELEASE}}
+    secrets: inherit
+
+  release:
+    needs:
+      - init-work
+      - build
+    if: needs.init-work.outputs.RELEASE == 'true'
+    uses: ./.github/workflows/release.yml
+    permissions:
+      issues: read
+      contents: write
+      packages: read
+      pull-requests: read
+      deployments: write
+    with:
+      version: ${{needs.init-work.outputs.VERSION}}
+      branch: ${{needs.init-work.outputs.BRANCH}}
+    secrets: inherit

@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'The main version that is build.'
+        required: true
+        type: string
+      branch:
+        description: 'The branch that triggered this workflow.'
+        required: true
+        type: string
+  
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The main version that is build.'
+        required: true
+        type: string
+      branch:
+        description: 'The branch that triggered this workflow.'
+        required: true
+        type: string
+
+permissions:
+  issues: read
+  contents: write
+  packages: read
+  pull-requests: read
+  deployments: write
+
+jobs:
+  release:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.branch }}
+          
+      - name: Get branch tags
+        id: branch_tags
+        run: |
+          git fetch --tags
+          # get last tag on the current version branch
+          branch_tags=$(git tag --list "${{ inputs.branch }}*" | sort -V | tail -n 1)
+          if [ -z "$branch_tags" ]; then
+            echo "branch_tags=none" >> $GITHUB_OUTPUT
+          else
+            echo "branch_tags=$branch_tags" >> $GITHUB_OUTPUT
+          fi
+          echo "last tag: $branch_tags"
+
+      - name: Generate Changelog
+        if: ${{ steps.branch_tags.outputs.branch_tags != 'none' }}
+        uses: metcalfc/changelog-generator@v4.6.2
+        id: changelog
+        with:
+          mytoken: ${{ secrets.GITHUB_TOKEN }}
+          head-ref: ${{ inputs.branch }}
+          base-ref: ${{ steps.branch_tags.outputs.branch_tags }}
+
+      - name: Get the changelog
+        if: ${{ steps.changelog.outputs.changelog != '' }}
+        run: |
+          cat << "EOF"
+          ${{ steps.changelog.outputs.changelog }}
+          EOF
+      
+      - name: Create First Release
+        if: ${{ steps.branch_tags.outputs.branch_tags == 'none' }}
+        uses: ncipollo/release-action@v1.12.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          token: ${{ github.token }}
+          body: "Initial release for version ${{ inputs.version }}."
+          draft: false
+          prerelease: false
+          generateReleaseNotes: true
+          tag: ${{ inputs.version }}
+          name: Release ${{ inputs.version }}
+
+      - name: Create Release
+        id: create_release
+        if: ${{ steps.changelog.outputs.changelog != '' }}
+        uses: ncipollo/release-action@v1.12.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          token: ${{ github.token }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+          generateReleaseNotes: true
+          tag: ${{ inputs.version }}
+          name: Release ${{ inputs.version }}
