@@ -61,7 +61,7 @@ function "tag" {
 
 target "api" {
   inherits = ["defaults"]
-  context = "electrotoreAPI/"
+  context = "electrostoreAPI/"
   tags = tag("api")
 }
 
