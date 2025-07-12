@@ -12,7 +12,7 @@ const { t } = useI18n();
 
 import { useRoute } from "vue-router";
 const route = useRoute();
-const projetId = route.params.id;
+let projetId = route.params.id;
 
 import { useConfigsStore, useProjetsStore, useUsersStore, useItemsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -51,6 +51,9 @@ async function fetchAllData() {
 		projetsStore.projetEdition = {
 			loading: false,
 		};
+		showDocuments.value = false;
+		showItems.value = false;
+		showCommentaires.value = false;
 	}
 }
 onMounted(() => {
@@ -105,7 +108,8 @@ const projetSave = async() => {
 		return;
 	}
 	if (projetId === "new") {
-		router.push("/projets/" + projetsStore.projetEdition.id_projet);
+		projetId = String(projetsStore.projetEdition.id_projet);
+		router.push("/projets/" + projetId);
 	}
 };
 const projetDelete = async() => {
@@ -117,13 +121,6 @@ const projetDelete = async() => {
 		addNotification({ message: "projet.VProjetDeleteError", type: "error", i18n: true });
 	}
 	projetDeleteModalShow.value = false;
-};
-const formatDateForDatetimeLocal = (date) => {
-	if (typeof date === "string") {
-		date = new Date(date);
-	}
-	const pad = (num) => String(num).padStart(2, "0");
-	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
 // document

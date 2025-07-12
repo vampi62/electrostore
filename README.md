@@ -42,18 +42,6 @@ git clone https://github.com/vampi62/electrostore
 cd electrostore
 ```
 
-#### complete config file
-```bash
-# API configuration
-sudo nano electrostoreAPI/config/appsettings.json
-# complete the appsettings.json file with your database and mqtt server credentials
-# ConnectionStrings --> mariadb
-# Mqtt --> mqtt
-# SMTP (optional) set Enable to false if you don't want to use the email service
-# JWT (key) set a random key for the jwt token
-```
-note: after the first lauch, if you want update the config file, you need to edit the config file in the volume "electrostoreCONFIG" and restart the container
-
 #### start database server
 if you have already a mariadb server and a mqtt server, you can skip this step
 ```bash
@@ -86,6 +74,50 @@ sudo docker network connect electrostore mariadb
 sudo docker network connect electrostore mqtt
 ```
 
+#### create and Complete config file
+```bash
+sudo mkdir /opt/electrostore && cd /opt/electrostore
+sudo nano config.json
+```
+Complete the `config.json` file with the following content, replacing placeholders with your actual values:
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=mariadb;Port=3306;Database=electrostore;Uid=electrostore;Pwd=password;"
+  },
+  "MQTT": {
+    "Username": "electrostore",
+    "Password": "QHF8Gmq3oa2L117FmLqC",
+    "Server": "mqtt",
+    "Port": 1883,
+    "ClientId": "electroapi"
+  },
+  "SMTP": {
+    "Enable": "false",
+    "Host": "<your-smtp-server (optional)>",
+    "Port": 587,
+    "Username": "<your-email (optional)>",
+    "Password": "<your-email-password (optional)>",
+    "From": "<your-email (optional)>",
+  },
+  "Jwt": {
+    "Key": "<your-random-key>",
+    "Issuer": "<your-issuer>",
+    "Audience": "<your-audience>",
+    "ExpireDays": 1
+  },
+  "FrontendUrl": "http://<frontend-url>",
+  "AllowedHosts": "*"
+}
+```
+
 #### start the API
 ```bash
 sudo docker build -t electrostore/api:latest electrostoreAPI
@@ -93,24 +125,24 @@ sudo docker run -d --name electrostoreAPI \
  --restart always \
  --network electrostore \
  -p 5002:80 \
- -v electrostoreDATA:/app/wwwroot \
- -v electrostoreCONFIG:/app/config \
+ -v electrostoreDATADEV:/app/wwwroot \
+ -v /opt/electrostore:/app/config:ro \
  --tmpfs /tmp \
  --security-opt no-new-privileges=true \
  --read-only=true \
- electrostore/api:local
+ ghcr.io/vampi62/electrostore/api:local
 
 sudo docker build -t electrostore/ia:local electrostoreIA
 sudo docker run -d --name electrostoreIA \
  --restart always \
  --network electrostore \
- -v electrostoreDATA:/data \
- -v electrostoreCONFIG:/app/config:ro \
+ -v electrostoreDATADEV:/data \
+ -v /opt/electrostore:/app/config:ro \
  --tmpfs /tmp \
  --security-opt no-new-privileges=true \
  --read-only=true \
  --cap-drop ALL \
- electrostore/ia:local
+ ghcr.io/vampi62/electrostore/ia:local
 ```
 
 
@@ -124,7 +156,7 @@ sudo docker run -d --name electrostoreFRONT \
  -e VUE_API_URL=<VUE_API_URL> \
  --security-opt no-new-privileges=true \
  --cap-drop ALL \
- electrostore/front:local
+ ghcr.io/vampi62/electrostore/front:local
 ```
 
 ## login to the web interface

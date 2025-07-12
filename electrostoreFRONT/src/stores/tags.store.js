@@ -137,7 +137,7 @@ export const useTagsStore = defineStore("tags",{
 				useToken: "access",
 				body: params,
 			});
-			this.tags[this.tagEdition.id] = this.tagEdition;
+			this.tags[this.tagEdition.id_tag] = this.tagEdition;
 		},
 		async updateTag(id, params) {
 			this.tagEdition.loading = true;

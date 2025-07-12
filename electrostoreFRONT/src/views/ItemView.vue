@@ -12,7 +12,7 @@ const { t } = useI18n();
 
 import { useRoute } from "vue-router";
 const route = useRoute();
-const itemId = route.params.id;
+let itemId = route.params.id;
 
 import { useConfigsStore, useItemsStore, useTagsStore, useStoresStore, useCommandsStore, useProjetsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -54,6 +54,7 @@ async function fetchAllData() {
 		itemsStore.itemEdition = {
 			loading: false,
 		};
+		showBoxs.value = false;
 		showDocuments.value = false;
 		showImages.value = false;
 		showProjetItems.value = false;
@@ -138,7 +139,8 @@ const itemSave = async() => {
 		return;
 	}
 	if (itemId === "new") {
-		router.push("/inventory/" + itemsStore.itemEdition.id_item);
+		itemId = String(itemsStore.itemEdition.id_item);
+		router.push("/inventory/" + itemId);
 	}
 };
 const itemDelete = async() => {
