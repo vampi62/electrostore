@@ -260,7 +260,7 @@ public class Program
             if (!context.Users.Any())
             {
                 var userService = serviceScope.ServiceProvider.GetRequiredService<IUserService>();
-                userService.CreateUser(new CreateUserDto
+                userService.CreateFirstAdminUser(new CreateUserDto
                 {
                     nom_user = "Admin",
                     prenom_user = "Admin",
