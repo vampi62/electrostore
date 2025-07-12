@@ -12,7 +12,7 @@ import * as Yup from "yup";
 
 import { useRoute } from "vue-router";
 const route = useRoute();
-const userId = route.params.id;
+let userId = route.params.id;
 
 import { useConfigsStore, useUsersStore, useCommandsStore, useProjetsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -131,7 +131,8 @@ const userSave = async() => {
 		return;
 	}
 	if (userId === "new") {
-		router.push("/users/" + usersStore.userEdition.id_user);
+		userId = String(usersStore.userEdition.id_user);
+		router.push("/users/" + userId);
 	}
 };
 const userDelete = async() => {

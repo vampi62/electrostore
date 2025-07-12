@@ -24,11 +24,9 @@ public record CreateCameraDto : IValidatableObject
     [MaxLength(Constants.MaxUrlLength, ErrorMessage = "url_camera cannot exceed 150 characters")]
     public string url_camera { get; init; }
 
-    [MinLength(1, ErrorMessage = "user_camera cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "user_camera cannot exceed 50 characters")]
     public string? user_camera { get; init; }
 
-    [MinLength(1, ErrorMessage = "mdp_camera cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "mdp_camera cannot exceed 50 characters")]
     public string? mdp_camera { get; init; }
 

@@ -5,10 +5,10 @@
 	>
 		<template v-if="column.type == 'bool'">
 			<template v-if="evaluateCondition(column.condition, row)">
-				<font-awesome-icon icon="fa-solid fa-check" class="ml-2 text-green-500" />
+				<font-awesome-icon icon="fa-solid fa-check" class="text-green-500" />
 			</template>
 			<template v-else>
-				<font-awesome-icon icon="fa-solid fa-times" class="ml-2 text-red-500" />
+				<font-awesome-icon icon="fa-solid fa-times" class="text-red-500" />
 			</template>
 		</template>
 		<template v-else-if="column.type == 'list'">

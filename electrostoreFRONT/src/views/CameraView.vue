@@ -12,7 +12,7 @@ const { t } = useI18n();
 
 import { useRoute } from "vue-router";
 const route = useRoute();
-const cameraId = route.params.id;
+let cameraId = route.params.id;
 
 import { useConfigsStore, useCamerasStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -91,7 +91,8 @@ const cameraSave = async() => {
 		return;
 	}
 	if (cameraId === "new") {
-		router.push("/cameras/" + camerasStore.cameraEdition.id_camera);
+		cameraId = String(camerasStore.cameraEdition.id_camera);
+		router.push("/cameras/" + cameraId);
 	}
 };
 const cameraDelete = async() => {

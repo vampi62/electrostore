@@ -111,22 +111,24 @@ sudo docker run -d --name electrostoreAPI \
  --network electrostore \
  -p 5002:80 \
  -v electrostoreDATA:/app/wwwroot \
- -v /opt/electrostore:/app/config \
+ -v /opt/electrostore:/app/config:ro \
  --tmpfs /tmp \
  --security-opt no-new-privileges=true \
  --read-only=true \
- vampi62/electrostore/api:v1.0
+ --cap-add NET_RAW \
+ --cap-drop ALL \
+ ghcr.io/vampi62/electrostore/api:v1.0
 
 sudo docker run -d --name electrostoreIA \
  --restart always \
  --network electrostore \
  -v electrostoreDATA:/data \
- -v /opt/electrostore:/app/config \
+ -v /opt/electrostore:/app/config:ro \
  --tmpfs /tmp \
  --security-opt no-new-privileges=true \
  --read-only=true \
  --cap-drop ALL \
- vampi62/electrostore/ia:v1.0
+ ghcr.io/vampi62/electrostore/ia:v1.0
 ```
 
 ## start the web interface
@@ -138,7 +140,7 @@ sudo docker run -d --name electrostoreFRONT \
  -e VUE_API_URL=http://<your-api-url>/api \
  --security-opt no-new-privileges=true \
  --cap-drop ALL \
- vampi62/electrostore/front:v1.0
+ ghcr.io/vampi62/electrostore/front:v1.0
 ```
 
 ## login to the web interface

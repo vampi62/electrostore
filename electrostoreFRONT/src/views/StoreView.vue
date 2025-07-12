@@ -12,7 +12,7 @@ const { t } = useI18n();
 
 import { useRoute } from "vue-router";
 const route = useRoute();
-const storeId = route.params.id;
+let storeId = route.params.id;
 
 import { useConfigsStore, useStoresStore, useTagsStore, useItemsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -111,7 +111,8 @@ const storeSave = async() => {
 		return;
 	}
 	if (storeId === "new") {
-		router.push("/stores/" + storesStore.storeEdition.store.id_store);
+		storeId = String(storesStore.storeEdition.store.id_store);
+		router.push("/stores/" + storeId);
 		// reload the store data
 		await storesStore.getStoreById(storesStore.storeEdition.store.id_store, ["boxs", "leds"]);
 		storesStore.ledEdition = { ...storesStore.leds[storesStore.storeEdition.store.id_store] };
