@@ -74,30 +74,20 @@ public class UserService : IUserService
         {
             throw new UnauthorizedAccessException("You are not allowed to create a user with this role");
         }
-        // check if the db is empty, if it is, create an admin user
-        Users newUser;
-        if (!await _context.Users.AnyAsync())
+        // Check if email is already used
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user);
+        if (user is not null)
         {
-            newUser = new Users
-            {
-                nom_user = userDto.nom_user,
-                prenom_user = userDto.prenom_user,
-                email_user = userDto.email_user,
-                mdp_user = BCrypt.Net.BCrypt.HashPassword(userDto.mdp_user),
-                role_user = UserRole.Admin
-            };
-        } else {
-            // Check if email is already used
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user) ?? throw new InvalidOperationException($"Email {userDto.email_user} is already used");
-            newUser = new Users
-            {
-                nom_user = userDto.nom_user,
-                prenom_user = userDto.prenom_user,
-                email_user = userDto.email_user,
-                mdp_user = BCrypt.Net.BCrypt.HashPassword(userDto.mdp_user),
-                role_user = userDto.role_user
-            };
+            throw new InvalidOperationException($"Email {userDto.email_user} is already used");
         }
+        var newUser = new Users
+        {
+            nom_user = userDto.nom_user,
+            prenom_user = userDto.prenom_user,
+            email_user = userDto.email_user,
+            mdp_user = BCrypt.Net.BCrypt.HashPassword(userDto.mdp_user),
+            role_user = userDto.role_user
+        };
         _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
         // send email to the user
@@ -106,6 +96,27 @@ public class UserService : IUserService
             "Account created",
             "Your account has been created. Your role is " + newUser.role_user.ToString()
         );
+        return _mapper.Map<ReadUserDto>(newUser);
+    }
+
+    public async Task<ReadUserDto> CreateFirstAdminUser(CreateUserDto userDto)
+    {
+        // Check if email is already used
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user);
+        if (user is not null)
+        {
+            throw new InvalidOperationException($"Email {userDto.email_user} is already used");
+        }
+        var newUser = new Users
+        {
+            nom_user = userDto.nom_user,
+            prenom_user = userDto.prenom_user,
+            email_user = userDto.email_user,
+            mdp_user = BCrypt.Net.BCrypt.HashPassword(userDto.mdp_user),
+            role_user = userDto.role_user
+        };
+        _context.Users.Add(newUser);
+        await _context.SaveChangesAsync();
         return _mapper.Map<ReadUserDto>(newUser);
     }
 

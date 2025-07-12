@@ -12,7 +12,7 @@ const { t } = useI18n();
 
 import { useRoute } from "vue-router";
 const route = useRoute();
-const iaId = route.params.id;
+let iaId = route.params.id;
 
 import { useConfigsStore, useIasStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -29,7 +29,7 @@ async function fetchAllData() {
 		} catch {
 			delete iasStore.ias[iaId];
 			addNotification({ message: "ia.VIaNotFound", type: "error", i18n: true });
-			router.push("/ias");
+			router.push("/ia");
 			return;
 		}
 		intervalRefreshStatus = setInterval(() => {
@@ -80,14 +80,15 @@ const iaSave = async() => {
 		return;
 	}
 	if (iaId === "new") {
-		router.push("/ias/" + iasStore.iaEdition.id_ia);
+		iaId = String(iasStore.iaEdition.id_ia);
+		router.push("/ia/" + iaId);
 	}
 };
 const iaDelete = async() => {
 	try {
 		await iasStore.deleteIa(iaId);
 		addNotification({ message: "ia.VIaDeleted", type: "success", i18n: true });
-		router.push("/ias");
+		router.push("/ia");
 	} catch (e) {
 		addNotification({ message: "ia.VIaDeleteError", type: "error", i18n: true });
 	}

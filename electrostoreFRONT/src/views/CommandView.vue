@@ -12,7 +12,7 @@ const { t } = useI18n();
 
 import { useRoute } from "vue-router";
 const route = useRoute();
-const commandId = route.params.id;
+let commandId = route.params.id;
 
 import { useConfigsStore, useCommandsStore, useUsersStore, useItemsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -107,7 +107,8 @@ const commandSave = async() => {
 		return;
 	}
 	if (commandId === "new") {
-		router.push("/commands/" + commandsStore.commandEdition.id_command);
+		commandId = String(commandsStore.commandEdition.id_command);
+		router.push("/commands/" + commandId);
 	}
 };
 const commandDelete = async() => {
@@ -119,13 +120,6 @@ const commandDelete = async() => {
 		addNotification({ message: "command.VCommandDeleteError", type: "error", i18n: true });
 	}
 	commandDeleteModalShow.value = false;
-};
-const formatDateForDatetimeLocal = (date) => {
-	if (typeof date === "string") {
-		date = new Date(date);
-	}
-	const pad = (num) => String(num).padStart(2, "0");
-	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
 // document
