@@ -9,6 +9,8 @@ public interface IUserService
     public Task<int> GetUsersCount();
 
     public Task<ReadUserDto> CreateUser(CreateUserDto userDto);
+    
+    public Task<ReadUserDto> CreateFirstAdminUser(CreateUserDto userDto);
 
     public Task<ReadExtendedUserDto> GetUserById(int id, List<string>? expand = null);
 

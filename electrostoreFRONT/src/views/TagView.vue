@@ -12,7 +12,7 @@ import * as Yup from "yup";
 
 import { useRoute } from "vue-router";
 const route = useRoute();
-const tagId = route.params.id;
+let tagId = route.params.id;
 
 import { useConfigsStore, useTagsStore, useStoresStore, useItemsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -101,7 +101,8 @@ const tagSave = async() => {
 		return;
 	}
 	if (tagId === "new") {
-		router.push("/tags/" + tagsStore.tagEdition.id_tag);
+		tagId = String(tagsStore.tagEdition.id_tag);
+		router.push("/tags/" + tagId);
 	}
 };
 const tagDelete = async() => {
