@@ -130,6 +130,8 @@ sudo docker run -d --name electrostoreAPI \
  --tmpfs /tmp \
  --security-opt no-new-privileges=true \
  --read-only=true \
+ --cap-add NET_RAW \
+ --cap-drop ALL \
  ghcr.io/vampi62/electrostore/api:local
 
 sudo docker build -t electrostore/ia:local electrostoreIA
@@ -142,6 +144,7 @@ sudo docker run -d --name electrostoreIA \
  --security-opt no-new-privileges=true \
  --read-only=true \
  --cap-drop ALL \
+ --cpus=2 \
  ghcr.io/vampi62/electrostore/ia:local
 ```
 
