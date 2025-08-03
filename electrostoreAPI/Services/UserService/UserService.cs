@@ -323,9 +323,9 @@ public class UserService : IUserService
         return new LoginResponse
         {
             token = token.token,
-            expire_date_token = token.expire_date_token.ToString("yyyy-MM-dd HH:mm:ss"),
+            expire_date_token = token.expire_date_token,
             refresh_token = token.refresh_token,
-            expire_date_refresh_token = token.expire_date_refresh_token.ToString("yyyy-MM-dd HH:mm:ss"),
+            expire_date_refresh_token = token.expire_date_refresh_token,
             user = _mapper.Map<ReadUserDto>(user)
         };
     }
@@ -343,9 +343,9 @@ public class UserService : IUserService
         return new LoginResponse
         {
             token = token.token,
-            expire_date_token = token.expire_date_token.ToString("yyyy-MM-dd HH:mm:ss"),
+            expire_date_token = token.expire_date_token,
             refresh_token = token.refresh_token,
-            expire_date_refresh_token = token.expire_date_refresh_token.ToString("yyyy-MM-dd HH:mm:ss"),
+            expire_date_refresh_token = token.expire_date_refresh_token,
             user = _mapper.Map<ReadUserDto>(user)
         };
     }
