@@ -1,0 +1,31 @@
+name: test
+
+on:
+  pull_request:
+    paths:
+      - "electrostoreIA/**"
+      - "tests/electrostoreIA/**"
+
+jobs:
+  test-IA:
+    name: tests - IA
+    runs-on: self-hosted
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./electrostoreIA
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.branch }}
+    - name: Set up python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: |
+        pip install -r ../tests/electrostoreIA/requirements.txt
+    - name: Run tests
+      run: |
+        python -m pytest ../tests/electrostoreIA

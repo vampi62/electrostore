@@ -71,16 +71,17 @@ jobs:
           echo "BUILD: ${{ env.BUILD }}"
           echo "DEPLOY: ${{ env.DEPLOY }}"
           echo "RELEASE: ${{ env.RELEASE }}"
-#  tests:
-#    needs:
-#      - init-work
-#    uses: ./.github/workflows/tests.yml
-#    permissions:
-#      packages: write
-#      contents: read
-#    with:
-#      branch: ${{needs.init-work.outputs.BRANCH}}
-#    secrets: inherit
+
+  tests:
+    needs:
+      - init-work
+    uses: ./.github/workflows/tests.yml
+    permissions:
+      packages: write
+      contents: read
+    with:
+      branch: ${{needs.init-work.outputs.BRANCH}}
+    secrets: inherit
 
   build:
     needs:
