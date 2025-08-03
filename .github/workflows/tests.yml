@@ -18,7 +18,7 @@ on:
 jobs:
   test-api:
     name: tests - API
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
@@ -39,7 +39,7 @@ jobs:
 
   test-front:
     name: tests - FRONT
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
@@ -71,7 +71,7 @@ jobs:
 
   test-IA:
     name: tests - IA
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash

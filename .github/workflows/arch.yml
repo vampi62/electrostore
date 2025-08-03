@@ -17,7 +17,7 @@ permissions:
 jobs:
   init-work:
     name: Init work
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     outputs:
         VERSION: ${{ env.VERSION }}
         BRANCH: ${{ env.BRANCH }}
