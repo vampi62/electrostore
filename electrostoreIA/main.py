@@ -49,7 +49,7 @@ except Exception as e:
 
 # Chemins pour stocker les modèles et les classes
 MODEL_DIR = '/data/models/'
-IMAGE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset')
+IMAGE_DIR = '/data/images/'
 
 # Dictionnaire partagé pour stocker l'avancement de l'entraînement
 training_progress = {}
@@ -198,29 +198,6 @@ def detect_model(id_model, imageData):
 @app.route('/train/<int:id_model>', methods=['POST'])
 def train(id_model):
 	try:
-		# Check if demo mode is enabled via environment variable
-		if os.environ.get('demo', '').lower() == 'true':
-			# In demo mode, mock the training process
-			print("Demo mode enabled: Mocking training process")
-			# check if the model exists in the database
-			model = mysql_session.get_ia(id_model)
-			if model is None:
-				return jsonify({"error": "Model not found in the database."}), 404
-			# Set training as completed immediately
-			training_progress[id_model] = {
-				'status': 'completed',
-				'message': 'Training completed successfully (demo mode).',
-				'epoch': 10,
-				'accuracy': 0.95,
-				'val_accuracy': 0.92,
-				'loss': 0.15,
-				'val_loss': 0.25
-			}
-			# Set trained_ia field to true in the database
-			mysql_session.change_train_status(id_model, True)
-			return jsonify({"message": f"Training for model {id_model} completed (demo mode)."}), 200
-
-		# Normal mode - proceed with actual training
 		# check if a training is already in progress
 		for model in training_progress:
 			if training_progress[model]['status'] == 'in progress':

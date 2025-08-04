@@ -66,7 +66,7 @@
 	</div>
 </template>
 <script>
-import { defineAsyncComponent } from "vue";
+import TableauRow from "./TableauRow.vue";
 export default {
 	name: "Tableau",
 	props: {
@@ -133,7 +133,7 @@ export default {
 		},
 	},
 	components: {
-		TableauRow: defineAsyncComponent(() => import("./TableauRow.vue")),
+		TableauRow,
 	},
 	computed: {
 		sortedData() {
