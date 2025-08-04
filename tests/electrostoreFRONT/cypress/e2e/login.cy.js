@@ -1,6 +1,24 @@
 /* eslint-disable no-undef */
 describe("Login Page", () => {
 	beforeEach(() => {
+		// Force the browser language to English
+		cy.on('window:before:load', (win) => {
+			Object.defineProperty(win.navigator, 'language', {
+				value: 'en-US'
+			});
+			Object.defineProperty(win.navigator, 'languages', {
+				value: ['en-US', 'en']
+			});
+			Object.defineProperty(win.navigator, 'userLanguage', {
+				value: 'en-US'
+			});
+		});
+		
+		// Set localStorage to force English language for the application
+		cy.window().then((win) => {
+			win.localStorage.setItem('i18nextLng', 'en');
+		});
+		
 		// Visit the login page before each test
 		cy.visit("/login");
 	});
@@ -18,8 +36,8 @@ describe("Login Page", () => {
 		cy.get("button[type=\"submit\"]").click();
 
 		// Check that validation errors are displayed
-		cy.get("form").contains("L'adresse e-mail est obligatoire").should("be.visible");
-		cy.get("form").contains("Le mot de passe est obligatoire").should("be.visible");
+		cy.get("form").contains("Email is required").should("be.visible");
+		cy.get("form").contains("Password is required").should("be.visible");
 	});
 
 	it("shows error message for invalid credentials", () => {
@@ -40,7 +58,7 @@ describe("Login Page", () => {
 		cy.wait("@loginRequest");
 
 		// Check that the error message is displayed
-		cy.get("form").contains("Identifiants incorrects").should("be.visible");
+		cy.get("form").contains("Incorrect credentials").should("be.visible");
 	});
 
 	it("redirects to dashboard after successful login", () => {
@@ -76,7 +94,7 @@ describe("Login Page", () => {
 
 	it("allows navigation to forgot password page", () => {
 		// Check if there's a "Forgot password" link and click it
-		cy.contains("Mot de passe oublié ?").then((link) => {
+		cy.contains("Forgot password ?").then((link) => {
 			if (link.length > 0) {
 				cy.wrap(link).click();
 				cy.url().should("include", "/forgot-password");
