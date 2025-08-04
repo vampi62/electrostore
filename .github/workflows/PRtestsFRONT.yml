@@ -34,7 +34,13 @@ jobs:
         VITE_API_URL: http://localhost:8080
       uses: cypress-io/github-action@v6
       with:
-        start: VITE_API_URL=http://localhost/api npm run dev
+        start: npm run dev
         wait-on: 'http://localhost:5173'
         wait-on-timeout: 30
         working-directory: ./tests/electrostoreFRONT
+    - name: Upload screenshots
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: cypress-screenshots
+        path: tests/electrostoreFRONT/cypress/screenshots
