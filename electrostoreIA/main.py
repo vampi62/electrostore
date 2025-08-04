@@ -5,7 +5,7 @@ from tensorflow.keras import layers, models
 import pathlib
 import os
 import threading
-from electrostoreIA import db_query
+import db_query
 from PIL import Image
 import io
 import json
@@ -36,8 +36,9 @@ try:
             mysql_session = db_query.MySQLConnection(DBsettings)
             mysql_session.connect()
 except Exception as e:
-	# check if the env "test" is set and equals to "true"
-	if os.getenv('test', 'false').lower() == 'true':
+	# check if app.config['TESTING'] = True
+	print(f"Error initializing database connection: {str(e)}")
+	if 'app.config' in globals() and app.config.get('TESTING', False):
 		# In case of any error, just print it but continue execution for tests
 		print(f"Warning: Could not initialize database connection: {str(e)}")
 		# For tests, we'll use a mock session
