@@ -2,7 +2,7 @@
     "name": "electrostore-front-tests",
     "version": "0.0.0",
     "scripts": {
-        "dev": "vite",
+        "dev": "cd ../../electrostoreFRONT && vite",
         "test:unit": "vitest run --environment jsdom",
         "cypress:open": "cypress open",
         "cypress:run": "cypress run"
