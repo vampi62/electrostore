@@ -1,0 +1,46 @@
+name: test
+
+on:
+  pull_request:
+    paths:
+      - "electrostoreFRONT/**"
+      - "tests/electrostoreFRONT/**"
+
+jobs:
+  test-front:
+    name: tests - FRONT
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./electrostoreFRONT
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.branch }}
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Install dependencies
+      run: npm install
+    - name: Install test dependencies
+      run: cd ../tests/electrostoreFRONT && npm install
+    - name: Run unit tests
+      run: cd ../tests/electrostoreFRONT && npm run test:unit
+    - name: Cypress run
+      env:
+        VITE_API_URL: http://localhost/placeholder/api
+      uses: cypress-io/github-action@v6
+      with:
+        start: npm run dev
+        wait-on: 'http://localhost:5173'
+        wait-on-timeout: 30
+        working-directory: ./tests/electrostoreFRONT
+    - name: Upload screenshots
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: cypress-screenshots
+        path: tests/electrostoreFRONT/cypress/screenshots

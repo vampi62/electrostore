@@ -1,0 +1,29 @@
+name: test
+
+on:
+  pull_request:
+    paths:
+      - "electrostoreAPI/**"
+      - "tests/electrostoreAPI/**"
+
+jobs:
+  test-api:
+    name: tests - API
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./electrostoreAPI
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.branch }}
+    - name: Set up C#
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '7.0.x'
+    - name: Install dependencies
+      run: dotnet restore
+    - name: Run tests
+      run: dotnet test ../tests/electrostoreAPI
