@@ -86,7 +86,7 @@ jobs:
   build:
     needs:
       - init-work
-#      - tests
+      - tests
     if: needs.init-work.outputs.BUILD == 'true'
     uses: ./.github/workflows/build.yml
     permissions:

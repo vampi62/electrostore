@@ -11619,7 +11619,7 @@
             "nullable": true
           },
           "expire_date_token": {
-            "type": "string",
+            "type": "date-time",
             "nullable": true
           },
           "refresh_token": {
@@ -11627,7 +11627,7 @@
             "nullable": true
           },
           "expire_date_refresh_token": {
-            "type": "string",
+            "type": "date-time",
             "nullable": true
           },
           "user": {
