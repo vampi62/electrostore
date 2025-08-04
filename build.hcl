@@ -37,6 +37,11 @@ group "default" {
 target "defaults" {
   platforms = [ "linux/amd64"]
   dockerfile = "Dockerfile"
+  labels = {
+    "org.opencontainers.image.source" = "https://github.com/${REPO}"
+    "org.opencontainers.image.description" = "Electrostore ${VERSION}"
+    "org.opencontainers.image.version" = "${VERSION}"
+  }
 }
 
 #-----------------------------------------------------------------------------------------

@@ -1,0 +1,7 @@
+name: vampi62/electrostore-python
+version: 0.0.0
+library: true
+extensionTargets:
+  codeql/python-all: '*'
+dataExtensions:
+  - models/**/*.yml
