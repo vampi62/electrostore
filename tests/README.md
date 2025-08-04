@@ -34,5 +34,8 @@ Python unit tests for the Flask API. These tests use pytest and pytest-flask for
 ```bash
 cd electrostoreIA
 pip install -r ../tests/electrostoreIA/requirements.txt
-python -m pytest ../tests/electrostoreIA
+# LINUX
+test=true python -m pytest ../tests/electrostoreIA
+# WINDOWS
+set test=true && python -m pytest ../tests/electrostoreIA
 ```

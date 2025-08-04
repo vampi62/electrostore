@@ -18,6 +18,26 @@ describe("Login Page", () => {
 		cy.window().then((win) => {
 			win.localStorage.setItem('i18nextLng', 'en');
 		});
+
+		// intercept the API calls GET /api/config
+		cy.intercept("GET", "**/api/config", {
+			statusCode: 200,
+			body: {
+				"smtp_enabled": false,
+				"mqtt_connected": false,
+				"ia_connected": false,
+				"max_length_url": 150,
+				"max_length_commentaire": 455,
+				"max_length_description": 500,
+				"max_length_name": 50,
+				"max_length_type": 50,
+				"max_length_email": 100,
+				"max_length_ip": 50,
+				"max_length_reason": 50,
+				"max_length_status": 50,
+				"max_size_document_in_mb": 5,
+			},
+		}).as("getConfig");
 		
 		// Visit the login page before each test
 		cy.visit("/login");

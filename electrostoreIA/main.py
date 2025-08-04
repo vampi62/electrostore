@@ -36,16 +36,20 @@ try:
             mysql_session = db_query.MySQLConnection(DBsettings)
             mysql_session.connect()
 except Exception as e:
-    # In case of any error, just print it but continue execution for tests
-    print(f"Warning: Could not initialize database connection: {str(e)}")
-    # For tests, we'll use a mock session
-    class MockMySQLConnection:
-        def change_train_status(self, id_model, status):
-            return True
-        def get_ia(self, id_model):
-            return {"id": id_model, "name": "Test Model"}
-    
-    mysql_session = MockMySQLConnection()
+	# check if the env "test" is set and equals to "true"
+	if os.getenv('test', 'false').lower() == 'true':
+		# In case of any error, just print it but continue execution for tests
+		print(f"Warning: Could not initialize database connection: {str(e)}")
+		# For tests, we'll use a mock session
+		class MockMySQLConnection:
+			def change_train_status(self, id_model, status):
+				return True
+			def get_ia(self, id_model):
+				return {"id": id_model, "name": "Test Model"}
+		mysql_session = MockMySQLConnection()
+	else:
+		# If not in test mode, raise the error
+		raise Exception(f"Could not initialize database connection: {str(e)}")
 
 # Chemins pour stocker les modèles et les classes
 MODEL_DIR = '/data/models/'
