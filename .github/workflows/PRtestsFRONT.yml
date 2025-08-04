@@ -31,7 +31,7 @@ jobs:
       run: cd ../tests/electrostoreFRONT && npm run test:unit
     - name: Cypress run
       env:
-        VITE_API_URL: http://localhost:8080
+        VITE_API_URL: http://localhost/placeholder/api
       uses: cypress-io/github-action@v6
       with:
         start: npm run dev
