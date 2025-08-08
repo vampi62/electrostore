@@ -219,16 +219,11 @@ const boxSave = async(box) => {
 
 // document
 const documentAddModalShow = ref(false);
-const documentEditModalShow = ref(false);
 const documentDeleteModalShow = ref(false);
 const documentModalData = ref({ id_item_document: null, name_item_document: "", document: null, isEdit: false });
 const documentAddOpenModal = () => {
 	documentModalData.value = { name_item_document: "", document: null, isEdit: false };
 	documentAddModalShow.value = true;
-};
-const documentEditOpenModal = (doc) => {
-	documentModalData.value = { id_item_document: doc.id_item_document, name_item_document: doc.name_item_document, document: null, isEdit: true };
-	documentEditModalShow.value = true;
 };
 const documentDeleteOpenModal = (doc) => {
 	documentModalData.value = doc;
@@ -247,10 +242,10 @@ const documentAdd = async() => {
 	}
 	documentAddModalShow.value = false;
 };
-const documentEdit = async() => {
+const documentEdit = async(row) => {
 	try {
-		schemaEditDocument.validateSync(documentModalData.value, { abortEarly: false });
-		await itemsStore.updateDocument(itemId, documentModalData.value.id_item_document, documentModalData.value);
+		schemaEditDocument.validateSync(row, { abortEarly: false });
+		await itemsStore.updateDocument(itemId, row.id_item_document, row);
 		addNotification({ message: "item.VItemDocumentUpdated", type: "success", i18n: true });
 	} catch (e) {
 		e.inner.forEach((error) => {
@@ -258,7 +253,6 @@ const documentEdit = async() => {
 		});
 		return;
 	}
-	documentEditModalShow.value = false;
 };
 const documentDelete = async() => {
 	try {
@@ -438,15 +432,25 @@ const schemaAddImage = Yup.object().shape({
 });
 
 const labelTableauDocument = ref([
-	{ label: "item.VItemDocumentName", sortable: true, key: "name_item_document", type: "text" },
+	{ label: "item.VItemDocumentName", sortable: true, key: "name_item_document", type: "text", canEdit: true },
 	{ label: "item.VItemDocumentType", sortable: true, key: "type_item_document", type: "text" },
 	{ label: "item.VItemDocumentDate", sortable: true, key: "date_item_document", type: "datetime" },
 	{ label: "item.VItemDocumentActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			action: (row) => documentEditOpenModal(row),
+			condition: "!rowData.tmp",
+			action: (row) => {
+				row.tmp = { ...row };
+			},
 			class: "text-blue-500 cursor-pointer hover:text-blue-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-save",
+			condition: "rowData.tmp",
+			action: (row) => documentEdit(row),
+			class: "text-green-500 cursor-pointer hover:text-green-600",
 		},
 		{
 			label: "",
@@ -655,7 +659,7 @@ const labelTableauProjet = ref([
 					:total-count="Number(itemsStore.documentsTotalCount[itemId])"
 					:loaded-count="Object.keys(itemsStore.documents[itemId] || {}).length"
 					:fetch-function="(offset, limit) => itemsStore.getDocumentByInterval(itemId, limit, offset)"
-					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</div>
 		</div>
@@ -816,33 +820,6 @@ const labelTableauProjet = ref([
 					</button>
 					<button type="button" @click="documentAdd" class="px-4 py-2 bg-blue-500 text-white rounded">
 						{{ $t('item.VItemDocumentAdd') }}
-					</button>
-				</div>
-			</Form>
-		</div>
-	</div>
-	<div v-if="documentEditModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="documentEditModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<Form :validation-schema="schemaEditDocument" v-slot="{ errors }">
-				<h2 class="text-xl mb-4">{{ $t('item.VItemDocumentEditTitle') }}</h2>
-				<div class="flex flex-col">
-					<div class="flex flex-col">
-						<Field name="name_item_document" type="text"
-							v-model="documentModalData.name_item_document"
-							:placeholder="$t('item.VItemDocumentNamePlaceholder')"
-							class="w-full p-2 border rounded"
-							:class="{ 'border-red-500': errors.name_item_document }" />
-						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.name_item_document || ' ' }}</span>
-					</div>
-				</div>
-				<div class="flex justify-end space-x-2">
-					<button type="button" @click="documentEditModalShow = false"
-						class="px-4 py-2 bg-gray-300 rounded">
-						{{ $t('item.VItemDocumentCancel') }}
-					</button>
-					<button type="button" @click="documentEdit" class="px-4 py-2 bg-blue-500 text-white rounded">
-						{{ $t('item.VItemDocumentEdit') }}
 					</button>
 				</div>
 			</Form>

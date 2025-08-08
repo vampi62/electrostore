@@ -120,8 +120,6 @@
 	"VItemDocumentNamePlaceholder": "Nom du document",
 	"VItemDocumentCancel": "Annuler",
 	"VItemDocumentAdd": "Ajouter",
-	"VItemDocumentEditTitle": "Modifier le document",
-	"VItemDocumentEdit": "Modifier",
 	"VItemDocumentDeleteTitle": "Supprimer le document",
 	"VItemDocumentDeleteText": "Êtes-vous sûr de vouloir supprimer ce document ?",
 	"VItemImageAddTitle": "Ajouter une image",
