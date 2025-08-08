@@ -4,6 +4,8 @@ import { fetchWrapper } from "@/helpers";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
+const demoMode = `${import.meta.env.APP_DEMO_MODE}` === "true";
+
 export const useConfigsStore = defineStore("configs",{
 	state: () => ({
 		configs: {},

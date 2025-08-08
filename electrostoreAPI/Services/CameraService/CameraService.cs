@@ -18,6 +18,7 @@ public class CameraService : ICameraService
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
     private readonly IJwiService _jwiService;
+    private const string DemoModeKey = "demoMode";
 
     public CameraService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IJwiService jwiService)
     {
@@ -110,6 +111,28 @@ public class CameraService : ICameraService
         var camera = await _context.Cameras.FindAsync(id_camera) ?? throw new KeyNotFoundException($"Camera with id {id_camera} not found");
         try
         {
+            if (_configuration.GetValue<bool>(DemoModeKey))
+            {
+                return new CameraStatusDto
+                {
+                    network = true,
+                    statusCode = 200,
+                    uptime = 123.45f,
+                    espModel = "ESP32",
+                    espTemperature = 30.0f,
+                    OTAWait = "No updates",
+                    OTAUploading = "No uploads",
+                    OTAError = "No errors",
+                    OTATime = 0,
+                    OTARemainingTime = 0,
+                    OTAPercentage = 0.0f,
+                    ringLightPower = 100,
+                    versionScanBox = "1.0.0",
+                    cameraResolution = "1920x1080",
+                    cameraPID = "12345678",
+                    wifiSignalStrength = "-70dBm"
+                };
+            }
             var client = new HttpClient();
             var urlFluxStream = camera.url_camera.EndsWith('/') ? camera.url_camera.Substring(0, camera.url_camera.Length - 1) : camera.url_camera;
             var request = new HttpRequestMessage(HttpMethod.Get, urlFluxStream);
@@ -170,6 +193,15 @@ public class CameraService : ICameraService
         var camera = await _context.Cameras.FindAsync(id_camera) ?? throw new KeyNotFoundException($"Camera with id {id_camera} not found");
         try
         {
+            if (_configuration.GetValue<bool>(DemoModeKey))
+            {
+                var demoImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "demo", "demo_camera_capture.jpg");
+                if (!System.IO.File.Exists(demoImagePath))
+                {
+                    throw new FileNotFoundException("Demo image not found", demoImagePath);
+                }
+                return new FileStreamResult(new FileStream(demoImagePath, FileMode.Open, FileAccess.Read), "image/jpeg");
+            }
             var client = new HttpClient();
             var urlFluxStream = camera.url_camera.EndsWith('/') ? camera.url_camera.Substring(0, camera.url_camera.Length - 1) : camera.url_camera;
             var request = new HttpRequestMessage(HttpMethod.Get, urlFluxStream + "/capture");
@@ -199,6 +231,10 @@ public class CameraService : ICameraService
         var camera = await _context.Cameras.FindAsync(id_camera) ?? throw new KeyNotFoundException($"Camera with id {id_camera} not found");
         try
         {
+            if (_configuration.GetValue<bool>(DemoModeKey))
+            {
+                return new CameraLightDto { state = reqCamera.state };
+            }
             var client = new HttpClient();
             var urlFluxStream = camera.url_camera.EndsWith('/') ? camera.url_camera.Substring(0, camera.url_camera.Length - 1) : camera.url_camera;
             var request = new HttpRequestMessage(HttpMethod.Get, urlFluxStream + "/light?state=" + (reqCamera.state ? "on" : "off"));
@@ -237,6 +273,16 @@ public class CameraService : ICameraService
         var camera = await _context.Cameras.FindAsync(id_camera) ?? throw new KeyNotFoundException($"Camera with id {id_camera} not found");
         try
         {
+            if (_configuration.GetValue<bool>(DemoModeKey))
+            {
+                var demoStreamPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "demo", "demo_camera_stream.mjpeg");
+                if (!System.IO.File.Exists(demoStreamPath))
+                {
+                    throw new FileNotFoundException("Demo stream not found", demoStreamPath);
+                }
+                var demoContentStream = new FileStream(demoStreamPath, FileMode.Open, FileAccess.Read);
+                return new FileStreamResult(demoContentStream, "multipart/x-mixed-replace; boundary=--myboundary");
+            }
             var client = new HttpClient();
             var urlFluxStream = camera.url_camera.EndsWith('/') ? camera.url_camera.Substring(0, camera.url_camera.Length - 1) : camera.url_camera;
             var request = new HttpRequestMessage(HttpMethod.Get, urlFluxStream + "/stream");
