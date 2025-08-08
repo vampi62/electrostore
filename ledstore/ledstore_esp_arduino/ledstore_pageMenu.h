@@ -63,6 +63,10 @@ void handleRoot(AsyncWebServerRequest *request)
   response += "<li><a href='/mqtt'>Mqtt Settings</a></li>";
   response += "<li><a href='/ota'>OTA Settings</a></li>";
   response += "</ul>";
+  response += "<div class='info'>";
+  response += "<b>LedStore Version:</b> " + String(version_ledstore) + "<br>";
+  response += "<b>credit:</b> Created by <b>vampi62</b>. Visit <a href=\"https://github.com/vampi62/electrostore\">Github Project</a> for more information.</b> ";
+  response += "</div>";
   response += "</body>";
   response += "</html>";
   request->send(200, "text/html", response);
