@@ -156,7 +156,7 @@ sudo docker run -d --name electrostoreFRONT \
  --restart always \
  --network electrostore \
  -p 8080:80 \
- -e VUE_API_URL=http://192.168.2.55:5002 \
+ -e VUE_API_URL=<VUE_API_URL> \
  --security-opt no-new-privileges=true \
  --cap-drop ALL \
  ghcr.io/vampi62/electrostore/front:local
