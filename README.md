@@ -120,7 +120,7 @@ Complete the `appsettings.json` file with the following content, replacing place
 
 #### start the API
 ```bash
-sudo docker build -t electrostore/api:latest electrostoreAPI
+sudo docker build -t ghcr.io/vampi62/electrostore/api:local electrostoreAPI
 sudo docker run -d --name electrostoreAPI \
  --restart always \
  --network electrostore \
@@ -134,7 +134,7 @@ sudo docker run -d --name electrostoreAPI \
  --cap-drop ALL \
  ghcr.io/vampi62/electrostore/api:local
 
-sudo docker build -t electrostore/ia:local electrostoreIA
+sudo docker build -t ghcr.io/vampi62/electrostore/ia:local electrostoreIA
 sudo docker run -d --name electrostoreIA \
  --restart always \
  --network electrostore \
@@ -152,11 +152,12 @@ sudo docker run -d --name electrostoreIA \
 #### start the web interface
 set VUE_API_URL with the complete url of the API (ex: https://api.electrostore.com:443/api)
 ```bash
-sudo docker build -t electrostore/front:local electrostoreFRONT
+sudo docker build -t ghcr.io/vampi62/electrostore/front:local electrostoreFRONT
 sudo docker run -d --name electrostoreFRONT \
  --restart always \
+ --network electrostore \
  -p 8080:80 \
- -e VUE_API_URL=<VUE_API_URL> \
+ -e VUE_API_URL=http://192.168.2.55:5002 \
  --security-opt no-new-privileges=true \
  --cap-drop ALL \
  ghcr.io/vampi62/electrostore/front:local

@@ -99,6 +99,14 @@ describe("Login Page", () => {
 				},
 			},
 		}).as("loginRequest");
+		cy.intercept("GET", "**/api/item", {
+			statusCode: 200,
+			body: [],
+			headers: {
+				"Content-Type": "application/json",
+				"X-Total-Count": "0",
+			},
+		}).as("getItems");
 
 		// Fill in the form with valid credentials
 		cy.get("input[type=\"email\"]").type("admin@example.com");
