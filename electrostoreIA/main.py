@@ -16,6 +16,7 @@ app = Flask(__name__)
 # Database connection setup
 mysql_session = None
 
+appsettings = {}
 try:
     # Try to load config and connect to DB
     # check if the config folder and file exist
