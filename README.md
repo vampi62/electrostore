@@ -130,7 +130,6 @@ sudo docker run -d --name electrostoreAPI \
  --tmpfs /tmp \
  --security-opt no-new-privileges=true \
  --read-only=true \
- --cap-add NET_RAW \
  --cap-drop ALL \
  ghcr.io/vampi62/electrostore/api:local
 
