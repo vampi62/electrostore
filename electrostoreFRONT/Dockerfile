@@ -23,7 +23,8 @@ COPY entrypoint.sh /usr/local/apache2/
 RUN chmod +x /usr/local/apache2/entrypoint.sh && \
     chown -R 3216:3216 /usr/local/apache2/htdocs && \
     chown -R 3216:3216 /usr/local/apache2/conf && \
-    chown -R 3216:3216 /usr/local/apache2/entrypoint.sh
+    chown -R 3216:3216 /usr/local/apache2/entrypoint.sh && \
+    chown -R 3216:3216 /usr/local/apache2/logs
 
 USER 3216:3216
 

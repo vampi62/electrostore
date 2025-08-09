@@ -14,9 +14,9 @@ WORKDIR /app
 
 COPY --from=build /app/out .
 
-RUN chown -R 3216:3216 /app
+#RUN chown -R 3216:3216 /app
 
-USER 3216:3216
+#USER 3216:3216
 
 EXPOSE 80
 
