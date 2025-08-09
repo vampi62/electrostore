@@ -51,13 +51,15 @@ void handleRoot(AsyncWebServerRequest *request)
   response += "  h1 { text-align: center; color: #4CAF50; }";
   response += "  ul { list-style-type: none; padding: 0; max-width: 400px; margin: 20px auto; }";
   response += "  li { margin: 10px 0; }";
-  response += "  a { display: block; text-align: center; padding: 10px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px; }";
-  response += "  a:hover { background-color: #45a049; }";
+  response += "  .menu a { display: block; text-align: center; padding: 10px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px; }";
+  response += "  .menu a:hover { background-color: #45a049; }";
+  response += "  .info a { text-align: center; margin: 3px; text-decoration: none; color: #4CAF50; }";
+  response += "  .info a:hover { text-decoration: underline; }";
   response += "</style>";
   response += "</head>";
   response += "<body>";
   response += "<h1>Menu</h1>";
-  response += "<ul>";
+  response += "<ul class='menu'>";
   response += "<li><a href='/wifi'>WiFi Settings</a></li>";
   response += "<li><a href='/user'>User Settings</a></li>";
   response += "<li><a href='/mqtt'>Mqtt Settings</a></li>";
@@ -65,7 +67,7 @@ void handleRoot(AsyncWebServerRequest *request)
   response += "</ul>";
   response += "<div class='info'>";
   response += "<b>LedStore Version:</b> " + String(version_ledstore) + "<br>";
-  response += "<b>credit:</b> Created by <b>vampi62</b>. Visit <a href=\"https://github.com/vampi62/electrostore\">Github Project</a> for more information.</b> ";
+  response += "<b>credit:</b> Created by <b>vampi62</b>. Visit <a href='https://github.com/vampi62/electrostore'>Github Project</a> for more information.</b> ";
   response += "</div>";
   response += "</body>";
   response += "</html>";
