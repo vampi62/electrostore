@@ -25,7 +25,7 @@ describe("Login Page", () => {
 			body: {
 				"smtp_enabled": false,
 				"mqtt_connected": false,
-				"ia_connected": false,
+				"ia_service_status": false,
 				"max_length_url": 150,
 				"max_length_commentaire": 455,
 				"max_length_description": 500,

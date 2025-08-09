@@ -17,37 +17,46 @@ public class ConfigService : IConfigService
 
     public async Task<ReadConfig> getAllConfig()
     {
+        Dictionary<string, JsonElement> status;
         try
         {
             var httpClient = new HttpClient();
             var response = await httpClient.GetAsync("http://electrostoreIA:5000/health");
             var content = await response.Content.ReadAsStringAsync();
-            var status = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content) ?? throw new InvalidOperationException("Error while getting IA health status");
-            return new ReadConfig
-            {
-                // get if the smtp is enabled
-                smtp_enabled = _configuration["SMTP:Enable"] == "true",
-                // check if the mqtt is connected
-                mqtt_connected = _mqttClient.IsConnected,
-                // check if ia status is healthy
-                ia_connected = status.TryGetValue("status", out var statusValue) && statusValue.ValueKind == JsonValueKind.String && statusValue.GetString() == "healthy",
-                // get the max length of the url
-                max_length_url = Constants.MaxUrlLength,
-                // get the max length
-                max_length_commentaire = Constants.MaxCommentaireLength,
-                max_length_description = Constants.MaxDescriptionLength,
-                max_length_name = Constants.MaxNameLength,
-                max_length_type = Constants.MaxTypeLength,
-                max_length_email = Constants.MaxEmailLength,
-                max_length_ip = Constants.MaxIpLength,
-                max_length_reason = Constants.MaxReasonLength,
-                max_length_status = Constants.MaxStatusLength,
-                max_size_document_in_mb = Constants.MaxDocumentSizeMB
-            };
+            status = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content) ?? throw new InvalidOperationException("Error while getting IA health status");
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Error while getting configuration", ex);
+            // Log the exception or handle it as needed
+            Console.WriteLine($"Error fetching IA health status: {ex.Message}");
+            // Optionally, you can set a default value for status if needed
+            status = new Dictionary<string, JsonElement>
+            {
+                { "status", JsonDocument.Parse("\"unknown\"").RootElement }
+            };
         }
+        return new ReadConfig
+        {
+            // get if the smtp is enabled
+            smtp_enabled = _configuration["SMTP:Enable"] == "true",
+            // check if the mqtt is connected
+            mqtt_connected = _mqttClient.IsConnected,
+            // return the IA service status
+            ia_service_status = status.TryGetValue("status", out var statusElement) && statusElement.GetString() != null ? statusElement.GetString()! : string.Empty,
+            // check if the demo mode is enabled
+            demo_mode = _configuration.GetValue<bool>("DemoMode"),
+            // get the max length of the url
+            max_length_url = Constants.MaxUrlLength,
+            // get the max length
+            max_length_commentaire = Constants.MaxCommentaireLength,
+            max_length_description = Constants.MaxDescriptionLength,
+            max_length_name = Constants.MaxNameLength,
+            max_length_type = Constants.MaxTypeLength,
+            max_length_email = Constants.MaxEmailLength,
+            max_length_ip = Constants.MaxIpLength,
+            max_length_reason = Constants.MaxReasonLength,
+            max_length_status = Constants.MaxStatusLength,
+            max_size_document_in_mb = Constants.MaxDocumentSizeMB
+        };
     }
 }

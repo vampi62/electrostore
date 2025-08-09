@@ -203,8 +203,8 @@ def detect_model(id_model, imageData):
 @app.route('/train/<int:id_model>', methods=['POST'])
 def train(id_model):
 	try:
-		# Check if demo mode is enabled via environment variable
-		if os.environ.get('demo', '').lower() == 'true':
+		# Check if demo mode is enabled via appsettings
+		if appsettings.get('DemoMode', False):
 			# In demo mode, mock the training process
 			print("Demo mode enabled: Mocking training process")
 			# check if the model exists in the database
@@ -270,8 +270,8 @@ def health_check():
 	"""- connexion à la base de données"""
 	"""- uptime de l'application"""
 	try:
-		config = {
-			"status": "healthy",
+		config = { #if demoMode is enabled, set status to demo
+			"status": "healthy" if appsettings.get('DemoMode', False) is False else "demo",
 			"training_in_progress": any(model['status'] == 'in progress' for model in training_progress.values()),
 			"db_connected": mysql_session is not None and mysql_session.is_connected(),
 			"uptime": os.popen('uptime -p').read().strip()

@@ -12,7 +12,8 @@ export const useConfigsStore = defineStore("configs",{
 		defaultsConfig: {
 			"smtp_enabled": false,
 			"mqtt_connected": false,
-			"ia_connected": false,
+			"ia_service_status": false,
+			"demo_mode": demoMode,
 			"max_length_url": 150,
 			"max_length_commentaire": 455,
 			"max_length_description": 500,
@@ -31,9 +32,6 @@ export const useConfigsStore = defineStore("configs",{
 			this.configs = await fetchWrapper.get({
 				url: `${baseUrl}/config`,
 			});
-		},
-		isDemoMode() {
-			return demoMode;
 		},
 	},
 	getters: {
