@@ -120,7 +120,7 @@ Complete the `config.json` file with the following content, replacing placeholde
 
 #### start the API
 ```bash
-sudo docker build -t electrostore/api:latest electrostoreAPI
+sudo docker build -t electrostore/api:local electrostoreAPI
 sudo docker run -d --name electrostoreAPI \
  --restart always \
  --network electrostore \
