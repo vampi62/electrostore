@@ -342,9 +342,18 @@ const labelTableauDocument = ref([
 		},
 		{
 			label: "",
+			icon: "fa-solid fa-times",
+			condition: "rowData.tmp",
+			action: (row) => {
+				row.tmp = null;
+			},
+			class: "text-gray-500 cursor-pointer hover:text-gray-600",
+		},
+		{
+			label: "",
 			icon: "fa-solid fa-save",
 			condition: "rowData.tmp",
-			action: (row) => documentEdit(row),
+			action: (row) => documentEdit(row.tmp),
 			class: "text-green-500 cursor-pointer hover:text-green-600",
 		},
 		{

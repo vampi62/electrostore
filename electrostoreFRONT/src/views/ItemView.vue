@@ -447,9 +447,18 @@ const labelTableauDocument = ref([
 		},
 		{
 			label: "",
+			icon: "fa-solid fa-times",
+			condition: "rowData.tmp",
+			action: (row) => {
+				row.tmp = null;
+			},
+			class: "text-gray-500 cursor-pointer hover:text-gray-600",
+		},
+		{
+			label: "",
 			icon: "fa-solid fa-save",
 			condition: "rowData.tmp",
-			action: (row) => documentEdit(row),
+			action: (row) => documentEdit(row.tmp),
 			class: "text-green-500 cursor-pointer hover:text-green-600",
 		},
 		{
@@ -653,7 +662,7 @@ const labelTableauProjet = ref([
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('item.VItemAddDocument') }}
 				</button>
-				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_command_document' }"
+				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_item_document' }"
 					:store-data="[itemsStore.documents[itemId]]"
 					:loading="itemsStore.documentsLoading"
 					:total-count="Number(itemsStore.documentsTotalCount[itemId])"
