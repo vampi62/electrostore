@@ -40,6 +40,9 @@ const containerClasses = computed(() => [
 		<div v-show="authStore.user && !isIframe">
 			<nav class="flex justify-between p-5 bg-gray-800 border-b-2 border-blue-400 fixed w-full top-0 h-16">
 				<RouterLink to="/" class="text-white hover:text-blue-400">{{ $t('common.VAppHome') }}</RouterLink>
+				<div v-if="configsStore.getConfigByKey('demo_mode') === true" class="text-red-500 text-center">
+					{{ $t('common.VAppDemoMode') }}
+				</div>
 				<a href="https://github.com/vampi62/electrostore" class="block sm:hidden text-white hover:text-blue-400"
 					target="_blank" rel="noopener noreferrer"><!-- for mobile -->
 					<p class="space-x-4">
@@ -111,6 +114,9 @@ const containerClasses = computed(() => [
 							</RouterLink>
 						</li>
 					</ul>
+				</div>
+				<div v-if="configsStore.getConfigByKey('demo_mode') === true" class="text-red-500 text-center mt-4">
+					{{ $t('common.VAppDemoMode') }}
 				</div>
 				<a href="https://github.com/vampi62/electrostore" class="block text-white hover:text-blue-400"
 					target="_blank" rel="noopener noreferrer">

@@ -63,6 +63,7 @@
 	"VAppProfile": "Profile",
 	"VAppLogout": "Logout",
 	"VAppAdmin": "Admin",
+	"VAppDemoMode": "Demo mode enabled",
 	"VAllCaracters": "characters",
 	"VALLMissingTranslateLink": "Missing translation"
 }
