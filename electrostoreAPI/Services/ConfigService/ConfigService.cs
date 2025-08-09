@@ -1,6 +1,6 @@
 using MQTTnet.Client;
-using System.Net.NetworkInformation;
 using electrostore.Dto;
+using System.Text.Json;
 
 namespace electrostore.Services.ConfigService;
 
@@ -17,22 +17,34 @@ public class ConfigService : IConfigService
 
     public async Task<ReadConfig> getAllConfig()
     {
-        using var ping = new Ping();
-        PingReply? reply;
-        // ping juste one time in < 0.3s
-        try {
-            reply = await ping.SendPingAsync("electrostoreIA", 300);
+        Dictionary<string, JsonElement> status;
+        try
+        {
+            var httpClient = new HttpClient();
+            var response = await httpClient.GetAsync("http://electrostoreIA:5000/health");
+            var content = await response.Content.ReadAsStringAsync();
+            status = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content) ?? throw new InvalidOperationException("Error while getting IA health status");
         }
-        catch (PingException) {
-            reply = null;
+        catch (Exception ex)
+        {
+            // Log the exception or handle it as needed
+            Console.WriteLine($"Error fetching IA health status: {ex.Message}");
+            // Optionally, you can set a default value for status if needed
+            status = new Dictionary<string, JsonElement>
+            {
+                { "status", JsonDocument.Parse("\"unknown\"").RootElement }
+            };
         }
-        return new ReadConfig {
+        return new ReadConfig
+        {
             // get if the smtp is enabled
             smtp_enabled = _configuration["SMTP:Enable"] == "true",
             // check if the mqtt is connected
             mqtt_connected = _mqttClient.IsConnected,
-            // ping the iaElectrostoreAPI
-            ia_connected = reply?.Status == IPStatus.Success,
+            // return the IA service status
+            ia_service_status = status.TryGetValue("status", out var statusElement) && statusElement.GetString() != null ? statusElement.GetString()! : string.Empty,
+            // check if the demo mode is enabled
+            demo_mode = _configuration.GetValue<bool>("DemoMode"),
             // get the max length of the url
             max_length_url = Constants.MaxUrlLength,
             // get the max length

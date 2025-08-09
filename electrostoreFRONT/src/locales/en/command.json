@@ -77,8 +77,6 @@
 	"VCommandDocumentAddTitle": "Add a document",
 	"VCommandDocumentAdd": "Add",
 	"VCommandDocumentCancel": "Cancel",
-	"VCommandDocumentEditTitle": "Edit document",
-	"VCommandDocumentEdit": "Edit",
 	"VCommandDeleteTitle": "Delete command",
 	"VCommandDeleteText": "Are you sure you want to delete this command ?",
 	"VCommandCommentaires": "Comments",

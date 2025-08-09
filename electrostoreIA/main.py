@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import numpy as np
 import tensorflow as tf
-from keras import layers, models
+from tensorflow.keras import layers, models
 import pathlib
 import os
 import threading
@@ -10,34 +10,48 @@ from PIL import Image
 import io
 import json
 
-# check if the config folder and file exist
-if not os.path.exists('/app/config/appsettings.json'):
-	print("Error: config.json not found.")
-	exit(1)
-
-# load appsettings.json in /app/config
-with open('/app/config/appsettings.json') as f:
-	appsettings = json.load(f)
-
-if not ("ConnectionStrings" in appsettings):
-	print("Error: ConnectionStrings not found in appsettings.")
-	exit(1)
-if not "DefaultConnection" in appsettings["ConnectionStrings"]:
-	print("Error: DefaultConnection not found in appsettings.")
-	exit(1)
-appsettingsString = appsettings["ConnectionStrings"]["DefaultConnection"]
-DBsettings = {}
-for setting in appsettingsString.split(';'):
-	if setting == '':
-		continue
-	key, value = setting.split('=')
-	DBsettings[key] = value
-
+# Initialize Flask app
 app = Flask(__name__)
-mysql_session = db_query.MySQLConnection(DBsettings)
-if (not mysql_session.connect()):
-	print("Error connecting to MySQL database.")
-	exit(1)
+
+# Database connection setup
+mysql_session = None
+
+appsettings = {}
+try:
+    # Try to load config and connect to DB
+    # check if the config folder and file exist
+    if os.path.exists('/app/config/appsettings.json'):
+        # load appsettings.json in /app/config
+        with open('/app/config/appsettings.json') as f:
+            appsettings = json.load(f)
+
+        if ("ConnectionStrings" in appsettings) and ("DefaultConnection" in appsettings["ConnectionStrings"]):
+            appsettingsString = appsettings["ConnectionStrings"]["DefaultConnection"]
+            DBsettings = {}
+            for setting in appsettingsString.split(';'):
+                if setting == '':
+                    continue
+                key, value = setting.split('=')
+                DBsettings[key] = value
+
+            mysql_session = db_query.MySQLConnection(DBsettings)
+            mysql_session.connect()
+except Exception as e:
+	# check if app.config['TESTING'] = True
+	print(f"Error initializing database connection: {str(e)}")
+	if 'app.config' in globals() and app.config.get('TESTING', False):
+		# In case of any error, just print it but continue execution for tests
+		print(f"Warning: Could not initialize database connection: {str(e)}")
+		# For tests, we'll use a mock session
+		class MockMySQLConnection:
+			def change_train_status(self, id_model, status):
+				return True
+			def get_ia(self, id_model):
+				return {"id": id_model, "name": "Test Model"}
+		mysql_session = MockMySQLConnection()
+	else:
+		# If not in test mode, raise the error
+		raise Exception(f"Could not initialize database connection: {str(e)}")
 
 # Chemins pour stocker les modèles et les classes
 MODEL_DIR = '/data/models/'
@@ -190,6 +204,29 @@ def detect_model(id_model, imageData):
 @app.route('/train/<int:id_model>', methods=['POST'])
 def train(id_model):
 	try:
+		# Check if demo mode is enabled via appsettings
+		if appsettings.get('DemoMode', False):
+			# In demo mode, mock the training process
+			print("Demo mode enabled: Mocking training process")
+			# check if the model exists in the database
+			model = mysql_session.get_ia(id_model)
+			if model is None:
+				return jsonify({"error": "Model not found in the database."}), 404
+			# Set training as completed immediately
+			training_progress[id_model] = {
+				'status': 'completed',
+				'message': 'Training completed successfully (demo mode).',
+				'epoch': 10,
+				'accuracy': 0.95,
+				'val_accuracy': 0.92,
+				'loss': 0.15,
+				'val_loss': 0.25
+			}
+			# Set trained_ia field to true in the database
+			mysql_session.change_train_status(id_model, True)
+			return jsonify({"message": f"Training for model {id_model} completed (demo mode)."}), 200
+
+		# Normal mode - proceed with actual training
 		# check if a training is already in progress
 		for model in training_progress:
 			if training_progress[model]['status'] == 'in progress':
@@ -226,6 +263,23 @@ def detect(id_model):
 		return jsonify(result), 200
 	except Exception as e:
 		return jsonify({"error": str(e)}), 500
+
+@app.route('/health', methods=['GET'])
+def health_check():
+	"""Route pour vérifier la santé de l'application."""
+	"""- ia en cours d'entraînement"""
+	"""- connexion à la base de données"""
+	"""- uptime de l'application"""
+	try:
+		config = { #if demoMode is enabled, set status to demo
+			"status": "healthy" if appsettings.get('DemoMode', False) is False else "demo",
+			"training_in_progress": any(model['status'] == 'in progress' for model in training_progress.values()),
+			"db_connected": mysql_session is not None and mysql_session.is_connected(),
+			"uptime": os.popen('uptime -p').read().strip()
+		}
+		return jsonify(config), 200
+	except Exception as e:
+		return jsonify({"status": "unhealthy", "error": str(e)}), 500
 
 if __name__ == '__main__':
 	app.run(host='0.0.0.0', port=5000)

@@ -11619,7 +11619,7 @@
             "nullable": true
           },
           "expire_date_token": {
-            "type": "string",
+            "type": "date-time",
             "nullable": true
           },
           "refresh_token": {
@@ -11627,7 +11627,7 @@
             "nullable": true
           },
           "expire_date_refresh_token": {
-            "type": "string",
+            "type": "date-time",
             "nullable": true
           },
           "user": {
@@ -12051,7 +12051,7 @@
           "mqtt_connected": {
             "type": "boolean"
           },
-          "ia_connected": {
+          "ia_service_status": {
             "type": "boolean"
           },
           "max_length_url": {

@@ -17,7 +17,7 @@ sudo docker run -d --name mariadb \
 
 create MQTT configuration
 ```bash
-sudo mkdir /opt/mqtt && cd /opt/mqtt
+sudo mkdir /opt/mqtt && sudo mkdir /opt/mqtt/config && cd /opt/mqtt/config
 
 sudo nano mosquitto.conf
 
@@ -63,9 +63,9 @@ sudo docker network connect electrostore mqtt
 ## create and Complete config file
 ```bash
 sudo mkdir /opt/electrostore && cd /opt/electrostore
-sudo nano config.json
+sudo nano appsettings.json
 ```
-Complete the `config.json` file with the following content, replacing placeholders with your actual values:
+Complete the `appsettings.json` file with the following content, replacing placeholders with your actual values:
 
 ```json
 {
@@ -115,7 +115,6 @@ sudo docker run -d --name electrostoreAPI \
  --tmpfs /tmp \
  --security-opt no-new-privileges=true \
  --read-only=true \
- --cap-add NET_RAW \
  --cap-drop ALL \
  ghcr.io/vampi62/electrostore/api:v1.0
 
