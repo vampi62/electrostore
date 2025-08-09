@@ -20,6 +20,7 @@ public class CameraService : ICameraService
     private readonly IJwiService _jwiService;
     private readonly IConfiguration _configuration;
     private const string DemoModeKey = "DemoMode";
+    private const string camAuthMethod = "Basic";
 
     public CameraService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IJwiService jwiService, IConfiguration configuration)
     {
@@ -141,7 +142,7 @@ public class CameraService : ICameraService
             if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.mdp_camera))
             {
                 var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.mdp_camera}");
-                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+                request.Headers.Authorization = new AuthenticationHeaderValue(camAuthMethod, Convert.ToBase64String(byteArray));
             }
             client.Timeout = TimeSpan.FromSeconds(5);
             var response = await client.SendAsync(request);
@@ -210,13 +211,13 @@ public class CameraService : ICameraService
             if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.mdp_camera))
             {
                 var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.mdp_camera}");
-                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+                request.Headers.Authorization = new AuthenticationHeaderValue(camAuthMethod, Convert.ToBase64String(byteArray));
             }
             client.Timeout = TimeSpan.FromSeconds(5);
             var response = await client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception($"Error while getting camera capture: {response.StatusCode}");
+                throw new InvalidOperationException($"Error while getting camera capture: {response.StatusCode}");
             }
             var contentStream = await response.Content.ReadAsStreamAsync();
             return new FileStreamResult(contentStream, "image/jpeg");
@@ -224,7 +225,7 @@ public class CameraService : ICameraService
         catch (Exception ex)
         {
             Console.WriteLine(ex);
-            throw new Exception($"Error while getting camera capture: {ex.Message}");
+            throw new InvalidOperationException($"Error while getting camera capture: {ex.Message}");
         }
     }
 
@@ -243,26 +244,26 @@ public class CameraService : ICameraService
             if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.mdp_camera))
             {
                 var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.mdp_camera}");
-                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+                request.Headers.Authorization = new AuthenticationHeaderValue(camAuthMethod, Convert.ToBase64String(byteArray));
             }
             client.Timeout = TimeSpan.FromSeconds(5);
             var response = await client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception($"Error while switching camera light: {response.StatusCode}");
+                throw new InvalidOperationException($"Error while switching camera light: {response.StatusCode}");
             }
             var content = await response.Content.ReadAsStringAsync();
             var json = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content);
             if (json is null || !json.ContainsKey("ringLightPower"))
             {
-                throw new Exception($"Error while switching camera light: {response.StatusCode}");
+                throw new InvalidOperationException($"Error while switching camera light: {response.StatusCode}");
             }
             return new CameraLightDto { state = json["ringLightPower"].GetBoolean() };
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex);
-            throw new Exception($"Error while switching camera light: {ex.Message}");
+            throw new InvalidOperationException($"Error while switching camera light: {ex.Message}");
         }
     }
 
@@ -291,25 +292,25 @@ public class CameraService : ICameraService
             if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.mdp_camera))
             {
                 var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.mdp_camera}");
-                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+                request.Headers.Authorization = new AuthenticationHeaderValue(camAuthMethod, Convert.ToBase64String(byteArray));
             }
             var response = await client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception($"Error while getting camera stream: {response.StatusCode}");
+                throw new InvalidOperationException($"Error while getting camera stream: {response.StatusCode}");
             }
             if (response.Content.Headers.ContentType is null)
             {
-                throw new Exception($"Error while getting camera stream: {response.StatusCode}");
+                throw new InvalidOperationException($"Error while getting camera stream: {response.StatusCode}");
             }
-            var boundary = (response.Content.Headers.ContentType.Parameters.FirstOrDefault(p => p.Name == "boundary")?.Value) ?? throw new Exception($"Error while getting camera stream: {response.StatusCode}");
+            var boundary = (response.Content.Headers.ContentType.Parameters.FirstOrDefault(p => p.Name == "boundary")?.Value) ?? throw new InvalidOperationException($"Error while getting camera stream: {response.StatusCode}");
             var contentStream = await response.Content.ReadAsStreamAsync();
             return new FileStreamResult(contentStream, "multipart/x-mixed-replace; boundary=" + boundary);
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex);
-            throw new Exception($"Error while getting camera stream: {ex.Message}");
+            throw new InvalidOperationException($"Error while getting camera stream: {ex.Message}");
         }
     }
 }

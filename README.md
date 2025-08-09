@@ -77,9 +77,9 @@ sudo docker network connect electrostore mqtt
 #### create and Complete config file
 ```bash
 sudo mkdir /opt/electrostore && cd /opt/electrostore
-sudo nano config.json
+sudo nano appsettings.json
 ```
-Complete the `config.json` file with the following content, replacing placeholders with your actual values:
+Complete the `appsettings.json` file with the following content, replacing placeholders with your actual values:
 
 ```json
 {
@@ -90,7 +90,7 @@ Complete the `config.json` file with the following content, replacing placeholde
     }
   },
   "ConnectionStrings": {
-    "DefaultConnection": "Server=mariadb;Port=3306;Database=electrostore;Uid=electrostore;Pwd=password;"
+    "DefaultConnection": "Server=mariadb;Port=3306;Database=electrostore;Uid=electrostore;Pwd=electrostore;"
   },
   "MQTT": {
     "Username": "electrostore",
@@ -120,7 +120,7 @@ Complete the `config.json` file with the following content, replacing placeholde
 
 #### start the API
 ```bash
-sudo docker build -t electrostore/api:latest electrostoreAPI
+sudo docker build -t ghcr.io/vampi62/electrostore/api:local electrostoreAPI
 sudo docker run -d --name electrostoreAPI \
  --restart always \
  --network electrostore \
@@ -130,11 +130,10 @@ sudo docker run -d --name electrostoreAPI \
  --tmpfs /tmp \
  --security-opt no-new-privileges=true \
  --read-only=true \
- --cap-add NET_RAW \
  --cap-drop ALL \
  ghcr.io/vampi62/electrostore/api:local
 
-sudo docker build -t electrostore/ia:local electrostoreIA
+sudo docker build -t ghcr.io/vampi62/electrostore/ia:local electrostoreIA
 sudo docker run -d --name electrostoreIA \
  --restart always \
  --network electrostore \
@@ -152,11 +151,12 @@ sudo docker run -d --name electrostoreIA \
 #### start the web interface
 set VUE_API_URL with the complete url of the API (ex: https://api.electrostore.com:443/api)
 ```bash
-sudo docker build -t electrostore/front:local electrostoreFRONT
+sudo docker build -t ghcr.io/vampi62/electrostore/front:local electrostoreFRONT
 sudo docker run -d --name electrostoreFRONT \
  --restart always \
+ --network electrostore \
  -p 8080:80 \
- -e VUE_API_URL=<VUE_API_URL> \
+ -e VUE_API_URL=http://192.168.2.55:5002 \
  --security-opt no-new-privileges=true \
  --cap-drop ALL \
  ghcr.io/vampi62/electrostore/front:local
