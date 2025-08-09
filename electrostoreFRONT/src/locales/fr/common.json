@@ -63,6 +63,7 @@
 	"VAppProfile": "Profil",
 	"VAppLogout": "Déconnexion",
 	"VAppAdmin": "Admin",
+	"VAppDemoMode": "Mode démo activé",
 	"VAllCaracters": "caractères",
 	"VALLMissingTranslateLink": "Traduction manquante"
 }

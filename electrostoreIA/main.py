@@ -16,6 +16,7 @@ app = Flask(__name__)
 # Database connection setup
 mysql_session = None
 
+appsettings = {}
 try:
     # Try to load config and connect to DB
     # check if the config folder and file exist
@@ -203,6 +204,29 @@ def detect_model(id_model, imageData):
 @app.route('/train/<int:id_model>', methods=['POST'])
 def train(id_model):
 	try:
+		# Check if demo mode is enabled via appsettings
+		if appsettings.get('DemoMode', False):
+			# In demo mode, mock the training process
+			print("Demo mode enabled: Mocking training process")
+			# check if the model exists in the database
+			model = mysql_session.get_ia(id_model)
+			if model is None:
+				return jsonify({"error": "Model not found in the database."}), 404
+			# Set training as completed immediately
+			training_progress[id_model] = {
+				'status': 'completed',
+				'message': 'Training completed successfully (demo mode).',
+				'epoch': 10,
+				'accuracy': 0.95,
+				'val_accuracy': 0.92,
+				'loss': 0.15,
+				'val_loss': 0.25
+			}
+			# Set trained_ia field to true in the database
+			mysql_session.change_train_status(id_model, True)
+			return jsonify({"message": f"Training for model {id_model} completed (demo mode)."}), 200
+
+		# Normal mode - proceed with actual training
 		# check if a training is already in progress
 		for model in training_progress:
 			if training_progress[model]['status'] == 'in progress':
@@ -247,8 +271,8 @@ def health_check():
 	"""- connexion à la base de données"""
 	"""- uptime de l'application"""
 	try:
-		config = {
-			"status": "healthy",
+		config = { #if demoMode is enabled, set status to demo
+			"status": "healthy" if appsettings.get('DemoMode', False) is False else "demo",
 			"training_in_progress": any(model['status'] == 'in progress' for model in training_progress.values()),
 			"db_connected": mysql_session is not None and mysql_session.is_connected(),
 			"uptime": os.popen('uptime -p').read().strip()

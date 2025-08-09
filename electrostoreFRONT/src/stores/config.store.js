@@ -4,13 +4,16 @@ import { fetchWrapper } from "@/helpers";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
+const demoMode = `${import.meta.env.VITE_APP_DEMO_MODE}` === "true";
+
 export const useConfigsStore = defineStore("configs",{
 	state: () => ({
 		configs: {},
 		defaultsConfig: {
 			"smtp_enabled": false,
 			"mqtt_connected": false,
-			"ia_connected": false,
+			"ia_service_status": false,
+			"demo_mode": demoMode,
 			"max_length_url": 150,
 			"max_length_commentaire": 455,
 			"max_length_description": 500,

@@ -12051,7 +12051,7 @@
           "mqtt_connected": {
             "type": "boolean"
           },
-          "ia_connected": {
+          "ia_service_status": {
             "type": "boolean"
           },
           "max_length_url": {
