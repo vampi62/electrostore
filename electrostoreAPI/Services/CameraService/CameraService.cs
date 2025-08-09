@@ -18,16 +18,14 @@ public class CameraService : ICameraService
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
     private readonly IJwiService _jwiService;
-    private readonly IConfiguration _configuration;
     private const string camAuthMethod = "Basic";
 
-    public CameraService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IJwiService jwiService, IConfiguration configuration)
+    public CameraService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IJwiService jwiService)
     {
         _mapper = mapper;
         _context = context;
         _sessionService = sessionService;
         _jwiService = jwiService;
-        _configuration = configuration;
     }
 
     // limit the number of camera to 100 and add offset and search parameters
