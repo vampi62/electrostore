@@ -105,7 +105,7 @@ void handleMenuMqtt(AsyncWebServerRequest *request)
   response += "</div>";
   response += "<a href='/'>Back</a>";
   response += "<div class='info'>";
-  response += "<b>ScanBox Version:</b> " + String(version_ledstore) + "<br>";
+  response += "<b>LedStore Version:</b> " + String(version_ledstore) + "<br>";
   response += "<b>ESP Model:</b> " + String(ESP.getChipId()) + "<br>";
   response += "<b>ESP Uptime:</b> <span id='uptime'>" + String(millis() / 1000) + "s</span><br>";
   response += "</div>";

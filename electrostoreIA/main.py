@@ -263,5 +263,22 @@ def detect(id_model):
 	except Exception as e:
 		return jsonify({"error": str(e)}), 500
 
+@app.route('/health', methods=['GET'])
+def health_check():
+	"""Route pour vérifier la santé de l'application."""
+	"""- ia en cours d'entraînement"""
+	"""- connexion à la base de données"""
+	"""- uptime de l'application"""
+	try:
+		config = {
+			"status": "healthy",
+			"training_in_progress": any(model['status'] == 'in progress' for model in training_progress.values()),
+			"db_connected": mysql_session is not None and mysql_session.is_connected(),
+			"uptime": os.popen('uptime -p').read().strip()
+		}
+		return jsonify(config), 200
+	except Exception as e:
+		return jsonify({"status": "unhealthy", "error": str(e)}), 500
+
 if __name__ == '__main__':
 	app.run(host='0.0.0.0', port=5000)
