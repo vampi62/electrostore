@@ -77,9 +77,9 @@ sudo docker network connect electrostore mqtt
 #### create and Complete config file
 ```bash
 sudo mkdir /opt/electrostore && cd /opt/electrostore
-sudo nano config.json
+sudo nano appsettings.json
 ```
-Complete the `config.json` file with the following content, replacing placeholders with your actual values:
+Complete the `appsettings.json` file with the following content, replacing placeholders with your actual values:
 
 ```json
 {
@@ -90,7 +90,7 @@ Complete the `config.json` file with the following content, replacing placeholde
     }
   },
   "ConnectionStrings": {
-    "DefaultConnection": "Server=mariadb;Port=3306;Database=electrostore;Uid=electrostore;Pwd=password;"
+    "DefaultConnection": "Server=mariadb;Port=3306;Database=electrostore;Uid=electrostore;Pwd=electrostore;"
   },
   "MQTT": {
     "Username": "electrostore",
