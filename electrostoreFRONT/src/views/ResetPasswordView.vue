@@ -54,7 +54,7 @@ function onSubmit(values, { setErrors }) {
 			<Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
 				<!-- Email Field -->
 				<div class="mb-4">
-					<label class="block text-gray-700">{{ $t('common.VResetPasswordEmail') }}</label>
+					<label class="block text-gray-700" for="email">{{ $t('common.VResetPasswordEmail') }}</label>
 					<Field name="email" type="email"
 						class="border border-gray-300 rounded w-full px-3 py-2 mt-1 bg-gray-100 focus:outline-none focus:ring focus:ring-blue-300"
 						:class="{ 'border-red-500': errors.email }" :value="email" disabled />
@@ -66,7 +66,7 @@ function onSubmit(values, { setErrors }) {
 
 				<!-- New Password Field -->
 				<div class="mb-4">
-					<label class="block text-gray-700">{{ $t('common.VResetPasswordNewPassword') }}</label>
+					<label class="block text-gray-700" for="password">{{ $t('common.VResetPasswordNewPassword') }}</label>
 					<Field name="password" type="password"
 						class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
 						:class="{ 'border-red-500': errors.password }" />
@@ -75,7 +75,7 @@ function onSubmit(values, { setErrors }) {
 
 				<!-- Confirm New Password Field -->
 				<div class="mb-4">
-					<label class="block text-gray-700">{{ $t('common.VResetPasswordConfirmNewPassword') }}</label>
+					<label class="block text-gray-700" for="confirmPassword">{{ $t('common.VResetPasswordConfirmNewPassword') }}</label>
 					<Field name="confirmPassword" type="password"
 						class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
 						:class="{ 'border-red-500': errors.confirmPassword }" />

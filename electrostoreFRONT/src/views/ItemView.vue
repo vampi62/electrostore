@@ -603,14 +603,14 @@ const labelTableauProjet = ref([
 									@click="imageSelectOpenModal">
 									<template v-if="itemsStore.itemEdition.id_img">
 										<img v-if="itemsStore.thumbnailsURL[itemsStore.itemEdition.id_img]"
-											:src="itemsStore.thumbnailsURL[itemsStore.itemEdition.id_img]" alt="Image"
+											:src="itemsStore.thumbnailsURL[itemsStore.itemEdition.id_img]" alt="Main"
 											class="w-48 h-48 object-cover rounded" />
 										<span v-else class="w-48 h-48 object-cover rounded">
 											{{ $t('item.VInventoryLoading') }}
 										</span>
 									</template>
 									<template v-else>
-										<img src="../assets/nopicture.webp" alt="Image"
+										<img src="../assets/nopicture.webp" alt="Not Found"
 											class="w-48 h-48 object-cover rounded" />
 									</template>
 								</div>
@@ -688,7 +688,7 @@ const labelTableauProjet = ref([
 							class="w-48 h-48 bg-gray-200 rounded m-2 flex items-center relative">
 							<template v-if="itemsStore.thumbnailsURL[image.id_img]">
 								<img :src="itemsStore.thumbnailsURL[image.id_img]"
-									class="w-48 h-48 object-cover rounded"
+									class="w-48 h-48 object-cover rounded" alt={{ image.nom_img }}
 									@click="selectedImageId === image.id_img ? selectedImageId = null : selectedImageId = image.id_img" />
 							</template>
 							<template v-else>
@@ -788,7 +788,7 @@ const labelTableauProjet = ref([
 					<div v-for="image in itemsStore.images[itemId]" :key="image.id_img"
 						class="w-24 h-24 bg-gray-200 rounded m-2 flex items-center justify-center cursor-pointer">
 						<template v-if="itemsStore.thumbnailsURL[image.id_img]">
-							<img :src="itemsStore.thumbnailsURL[image.id_img]" alt="Image"
+							<img :src="itemsStore.thumbnailsURL[image.id_img]" alt={{ image.nom_img }}
 								:class="itemsStore.itemEdition.id_img == image.id_img ? 'border-2 border-blue-500' : 'border-2 border-transparent'"
 								class="w-24 h-24 object-cover rounded"
 								@click="itemsStore.itemEdition.id_img = image.id_img" />

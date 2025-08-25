@@ -34,7 +34,7 @@ function onSubmit(values, { setErrors }) {
 		<Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
 			<!-- Email Field -->
 			<div class="mb-4">
-				<label class="block text-gray-700">{{ $t('common.VLoginEmail') }}</label>
+				<label class="block text-gray-700" for="email">{{ $t('common.VLoginEmail') }}</label>
 				<Field name="email" type="email"
 					class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
 					:class="{ 'border-red-500': errors.email }" />
@@ -43,7 +43,7 @@ function onSubmit(values, { setErrors }) {
 
 			<!-- Password Field -->
 			<div class="mb-4">
-				<label class="block text-gray-700">{{ $t('common.VLoginPassword') }}</label>
+				<label class="block text-gray-700" for="password">{{ $t('common.VLoginPassword') }}</label>
 				<Field name="password" type="password"
 					class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
 					:class="{ 'border-red-500': errors.password }" />

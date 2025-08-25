@@ -206,7 +206,7 @@ watch(isChecked, (newValue) => {
 				</table>
 			</Form>
 			<div class="w-96 h-80 bg-gray-200 px-4 py-2 rounded">
-				<img :src=camerasStore.stream[cameraId] />
+				<img :src=camerasStore.stream[cameraId] alt="Camera Stream" />
 			</div>
 			<div class="w-96 h-80 bg-gray-200 px-4 py-2 rounded">
 				<div v-for="(value, key) in camerasStore.status[cameraId]" :key="key">

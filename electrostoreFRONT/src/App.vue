@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, computed, inject } from "vue";
+import { ref, computed, inject } from "vue";
 
 const { addNotification } = inject("useNotification");
 
@@ -68,10 +68,10 @@ const containerClasses = computed(() => [
 							class="text-white hover:text-blue-400">
 							{{ $t('common.VAppAdmin') }}
 						</RouterLink>
-						<a v-if="authStore.user" @click="authStore.logout()"
+						<button v-if="authStore.user" @click="authStore.logout()"
 							class="cursor-pointer text-white hover:text-blue-400">
 							{{ $t('common.VAppLogout') }}
-						</a>
+						</button>
 					</div>
 				</div>
 			</nav>
@@ -84,10 +84,10 @@ const containerClasses = computed(() => [
 						class="text-white hover:text-blue-400">
 						{{ $t('common.VAppAdmin') }}
 					</RouterLink>
-					<a v-if="authStore.user" @click="authStore.logout()"
+					<button v-if="authStore.user" @click="authStore.logout()"
 						class="cursor-pointer text-white hover:text-blue-400">
 						{{ $t('common.VAppLogout') }}
-					</a>
+					</button>
 					<div class="border-t-2 border-blue-400"></div>
 					<ul class="mt-6 space-y-4">
 						<li v-for="nav in listNav" :key="nav.name">
