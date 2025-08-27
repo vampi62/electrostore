@@ -16,15 +16,15 @@ public record ReadCommandDocumentDto
 public record CreateCommandDocumentDto : IValidatableObject
 {
     [Required]
-    public int id_command { get; init; }
+    public required int id_command { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "name_command_document cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "name_command_document cannot exceed 50 characters")]
-    public string name_command_document { get; init; }
+    public required string name_command_document { get; init; }
 
     [Required]
-    public IFormFile document { get; init; }
+    public required IFormFile document { get; init; }
     
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -57,10 +57,10 @@ public record CreateCommandDocumentByCommandDto : IValidatableObject
     [Required]
     [MinLength(1, ErrorMessage = "name_command_document cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "name_command_document cannot exceed 50 characters")]
-    public string name_command_document { get; init; }
+    public required string name_command_document { get; init; }
 
     [Required]
-    public IFormFile document { get; init; }
+    public required IFormFile document { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

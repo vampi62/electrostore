@@ -19,12 +19,12 @@ public record ReadExtendedProjetCommentaireDto : ReadProjetCommentaireDto
 public record CreateProjetCommentaireByUserDto : IValidatableObject
 {
     [Required]
-    public int id_projet { get; init; }
+    public required int id_projet { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "contenu_projet_commentaire cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_projet_commentaire cannot exceed 455 characters")]
-    public string contenu_projet_commentaire { get; init; }
+    public required string contenu_projet_commentaire { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -39,7 +39,7 @@ public record CreateProjetCommentaireByProjetDto : IValidatableObject
     [Required]
     [MinLength(1, ErrorMessage = "contenu_projet_commentaire cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_projet_commentaire cannot exceed 455 characters")]
-    public string contenu_projet_commentaire { get; init; }
+    public required string contenu_projet_commentaire { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -52,15 +52,15 @@ public record CreateProjetCommentaireByProjetDto : IValidatableObject
 public record CreateProjetCommentaireDto : IValidatableObject
 {
     [Required]
-    public int id_projet { get; init; }
+    public required int id_projet { get; init; }
 
     [Required]
-    public int id_user { get; init; }
+    public required int id_user { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "contenu_projet_commentaire cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_projet_commentaire cannot exceed 455 characters")]
-    public string contenu_projet_commentaire { get; init; }
+    public required string contenu_projet_commentaire { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

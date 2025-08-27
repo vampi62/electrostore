@@ -145,12 +145,11 @@ export default {
 						} else {
 							return this.storeData[this.sort.column.store][a[this.sort.column.keyStore]]?.[this.sort.column.key] < this.storeData[this.sort.column.store][b[this.sort.column.keyStore]]?.[this.sort.column.key] ? 1 : -1;
 						}
+					}
+					if (this.sort.order === "asc") {
+						return a[this.sort.column.key] > b[this.sort.column.key] ? 1 : -1;
 					} else {
-						if (this.sort.order === "asc") {
-							return a[this.sort.column.key] > b[this.sort.column.key] ? 1 : -1;
-						} else {
-							return a[this.sort.column.key] < b[this.sort.column.key] ? 1 : -1;
-						}
+						return a[this.sort.column.key] < b[this.sort.column.key] ? 1 : -1;
 					}
 				});
 			}

@@ -25,24 +25,24 @@ public record CreateUserDto : IValidatableObject
     [Required]
     [MinLength(1, ErrorMessage = "nom_user cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_user cannot exceed 50 characters")]
-    public string nom_user { get; init; }
+    public required string nom_user { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "prenom_user cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "prenom_user cannot exceed 50 characters")]
-    public string prenom_user { get; init; }
+    public required string prenom_user { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "email_user cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxEmailLength, ErrorMessage = "email_user cannot exceed 100 characters")]
-    public string email_user { get; init; }
+    public required string email_user { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "mdp_user cannot be empty or whitespace.")]
-    public string mdp_user { get; init; }
+    public required string mdp_user { get; init; }
 
     [Required]
-    public UserRole role_user { get; init; }
+    public required UserRole role_user { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -84,7 +84,7 @@ public record UpdateUserDto : IValidatableObject
     public UserRole? role_user { get; init; }
 
     [Required]
-    public string current_mdp_user { get; init; }
+    public required string current_mdp_user { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

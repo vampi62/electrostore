@@ -18,15 +18,15 @@ public record CreateImgByItemDto : IValidatableObject
     [Required]
     [MinLength(1, ErrorMessage = "nom_img cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_img cannot exceed 50 characters")]
-    public string nom_img { get; init; }
+    public required string nom_img { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "description_img cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "description_img cannot exceed 500 characters")]
-    public string description_img { get; init; }
+    public required string description_img { get; init; }
 
     [Required]
-    public IFormFile img_file { get; init; }
+    public required IFormFile img_file { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -59,18 +59,18 @@ public record CreateImgDto : IValidatableObject
     [Required]
     [MinLength(1, ErrorMessage = "nom_img cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_img cannot exceed 50 characters")]
-    public string nom_img { get; init; }
+    public required string nom_img { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "description_img cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "description_img cannot exceed 500 characters")]
-    public string description_img { get; init; }
+    public required string description_img { get; init; }
 
     [Required]
-    public int id_item { get; init; }
+    public required int id_item { get; init; }
 
     [Required]
-    public IFormFile img_file { get; init; }
+    public required IFormFile img_file { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

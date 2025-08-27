@@ -26,20 +26,20 @@ public record CreateCommandDto : IValidatableObject
 {
     [Required]
     [Range(0.0, float.MaxValue, ErrorMessage = "prix_command must be greater than 0.")]
-    public float prix_command { get; init; }
+    public required float prix_command { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "url_command cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxUrlLength, ErrorMessage = "url_command cannot exceed 150 characters")]
-    public string url_command { get; init; }
+    public required string url_command { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "status_command cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxStatusLength, ErrorMessage = "status_command cannot exceed 50 characters")]
-    public string status_command { get; init; }
+    public required string status_command { get; init; }
 
     [Required]
-    public DateTime date_command { get; init; }
+    public required DateTime date_command { get; init; }
 
     public DateTime? date_livraison_command { get; init; }
 

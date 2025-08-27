@@ -106,7 +106,7 @@ const storeSave = async() => {
 		}
 		storesStore.storeEdition.loading = false;
 	} catch (e) {
-		addNotification({ message: e.message, type: "error", i18n: false });
+		addNotification({ message: e, type: "error", i18n: false });
 		storesStore.storeEdition.loading = false;
 		return;
 	}
@@ -134,7 +134,7 @@ const storeDelete = async() => {
 		addNotification({ message: "store.VStoreDeleted", type: "success", i18n: true });
 		router.push("/stores");
 	} catch (e) {
-		addNotification({ message: "store.VStoreDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 	storeDeleteModalShow.value = false;
 };
@@ -149,7 +149,7 @@ const showInputAddTag = async() => {
 			} while (offset < tagsStore.tagsTotalCount);
 			tagLoad.value = true;
 		} catch (e) {
-			console.log(e);
+			addNotification({ message: e, type: "error", i18n: false });
 		}
 	}
 	storeInputTagShow.value = true;
@@ -169,7 +169,7 @@ const showBoxContent = async(idBox) => {
 			}
 		}
 	} catch (e) {
-		console.log(e);
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 	showMenu.value = false;
 	storeBoxEditModalShow.value = true;
@@ -229,7 +229,7 @@ function checkBoxConflict(validate = false) {
 		});
 	});
 	if (validate) {
-		var BreakException = {};
+		let BreakException = {};
 		try {
 			Object.values(storesStore.boxEdition).forEach((box) => {
 				if (document.getElementById("BOX" + box.id_box).classList.contains("conflict")) {
@@ -611,7 +611,7 @@ const toggleLed = async(ledId) => {
 		await storesStore.showLedById(storeId, ledId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
 		addNotification({ message: "store.VStoreLedShowSuccess", type: "success", i18n: true });
 	} catch (e) {
-		addNotification({ message: "store.VStoreToggleError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
 const toggleBoxLed = async(boxId) => {
@@ -619,7 +619,7 @@ const toggleBoxLed = async(boxId) => {
 		await storesStore.showBoxById(storeId, boxId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
 		addNotification({ message: "store.VStoreBoxShowSuccess", type: "success", i18n: true });
 	} catch (e) {
-		addNotification({ message: "store.VStoreToggleError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
 
@@ -647,9 +647,7 @@ const itemSave = async(item) => {
 			addNotification({ message: "store.VStoreItemUpdated", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
+			addNotification({ message: e, type: "error", i18n: false });
 			return;
 		}
 	} else {
@@ -659,9 +657,7 @@ const itemSave = async(item) => {
 			addNotification({ message: "store.VStoreItemAdded", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
+			addNotification({ message: e, type: "error", i18n: false });
 			return;
 		}
 	}
@@ -671,7 +667,7 @@ const itemDelete = async(item) => {
 		await storesStore.deleteBoxItem(storeId, boxId.value, item.id_item);
 		addNotification({ message: "store.VStoreItemDeleted", type: "success", i18n: true });
 	} catch (e) {
-		addNotification({ message: "store.VStoreItemDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
 
@@ -898,53 +894,51 @@ const labelTableauModalItem = ref([
 	<div v-if="storesStore.stores[storeId] || storeId == 'new'">
 		<div class="mb-6 flex justify-between whitespace-pre">
 			<Form :validation-schema="schemaStore" v-slot="{ errors }" @submit.prevent="">
-				<table class="table-auto text-gray-700">
-					<tbody>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreName') }}:</td>
-							<td class="flex flex-col">
-								<Field name="nom_store" type="text"
-									v-model="storesStore.storeEdition.nom_store"
+				<div class="flex flex-col text-gray-700 space-y-2">
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="nom_store">{{ $t('store.VStoreName') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="nom_store" type="text"
+								v-model="storesStore.storeEdition.nom_store"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.nom_store }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_store || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="mqtt_name_store">{{ $t('store.VStoreMQTTName') }}:</label>
+						<div class="flex flex-col flex-1">
+							<span class="flex items-center">
+								<span>electrostore/</span>
+								<Field name="mqtt_name_store" type="text"
+									v-model="storesStore.storeEdition.mqtt_name_store"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.nom_store }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_store || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreMQTTName') }}:</td>
-							<td class="flex flex-col">
-								<span class="flex items-center">
-									<span>electrostore/</span>
-									<Field name="mqtt_name_store" type="text"
-										v-model="storesStore.storeEdition.mqtt_name_store"
-										class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-										:class="{ 'border-red-500': errors.mqtt_name_store }" />
-								</span>
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.mqtt_name_store || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreXLength') }}:</td>
-							<td class="flex flex-col">
-								<Field name="xlength_store" type="number"
-									v-model="storesStore.storeEdition.xlength_store" @change="showStoreGrid" @keyup="showStoreGrid"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.xlength_store }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.xlength_store || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('store.VStoreYLength') }}:</td>
-							<td class="flex flex-col">
-								<Field name="ylength_store" type="number"
-									v-model="storesStore.storeEdition.ylength_store" @change="showStoreGrid" @keyup="showStoreGrid"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.ylength_store }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.ylength_store || ' ' }}</span>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+									:class="{ 'border-red-500': errors.mqtt_name_store }" />
+							</span>
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.mqtt_name_store || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="xlength_store">{{ $t('store.VStoreXLength') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="xlength_store" type="number"
+								v-model="storesStore.storeEdition.xlength_store" @change="showStoreGrid" @keyup="showStoreGrid"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.xlength_store }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.xlength_store || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="ylength_store">{{ $t('store.VStoreYLength') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="ylength_store" type="number"
+								v-model="storesStore.storeEdition.ylength_store" @change="showStoreGrid" @keyup="showStoreGrid"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.ylength_store }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.ylength_store || ' ' }}</span>
+						</div>
+					</div>
+				</div>
 				<div class="flex space-x-4">
 					<span>{{ $t('store.VStoreCellSize') }}</span>
 					<input type="range" v-model="sizeOfCell" min="10" max="50" step="10" @input="showStoreGrid" />

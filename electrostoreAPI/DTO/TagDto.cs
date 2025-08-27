@@ -31,11 +31,11 @@ public record CreateTagDto : IValidatableObject
     [Required]
     [MinLength(1, ErrorMessage = "nom_tag cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_tag cannot exceed 50 characters")]
-    public string nom_tag { get; init; }
+    public required string nom_tag { get; init; }
 
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "poids_tag must be greater than or equal to 0.")]
-    public int? poids_tag { get; init; } = 0;
+    public required int? poids_tag { get; init; } = 0;
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

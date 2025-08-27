@@ -16,15 +16,15 @@ public record ReadProjetDocumentDto
 public record CreateProjetDocumentDto : IValidatableObject
 {
     [Required]
-    public int id_projet { get; init; }
+    public required int id_projet { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "name_projet_document cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "name_projet_document cannot exceed 50 characters")]
-    public string name_projet_document { get; init; }
+    public required string name_projet_document { get; init; }
 
     [Required]
-    public IFormFile document { get; init; }
+    public required IFormFile document { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -57,10 +57,10 @@ public record CreateProjetDocumentByProjetDto : IValidatableObject
     [Required]
     [MinLength(1, ErrorMessage = "name_projet_document cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "name_projet_document cannot exceed 50 characters")]
-    public string name_projet_document { get; init; }
+    public required string name_projet_document { get; init; }
 
     [Required]
-    public IFormFile document { get; init; }
+    public required IFormFile document { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

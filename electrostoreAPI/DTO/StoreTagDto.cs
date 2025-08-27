@@ -22,18 +22,18 @@ public record ReadBulkStoreTagDto
 public record CreateStoreTagByTagDto
 {
     [Required]
-    public int id_store { get; init; }
+    public required int id_store { get; init; }
 }
 public record CreateStoreTagByStoreDto
 {
     [Required]
-    public int id_tag { get; init; }
+    public required int id_tag { get; init; }
 }
 public record CreateStoreTagDto
 {
     [Required]
-    public int id_store { get; init; }
+    public required int id_store { get; init; }
 
     [Required]
-    public int id_tag { get; init; }
+    public required int id_tag { get; init; }
 }

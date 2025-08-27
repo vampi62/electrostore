@@ -48,7 +48,7 @@ using electrostore.Middleware;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.HttpOverrides;
 
-
+namespace electrostore;
 public class Program
 {
     public static void Main(string[] args)
@@ -61,7 +61,7 @@ public class Program
             builder.Configuration.AddJsonFile("config/appsettings.Development.json", optional: true, reloadOnChange: true);
         }
 
-        var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
+        var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>() ?? new JwtSettings();
         var key = Encoding.ASCII.GetBytes(jwtSettings.Key);
 
         // Add services to the container.
@@ -192,12 +192,13 @@ public class Program
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("CorsPolicy",
-                builder => builder.AllowAnyOrigin()
-                    .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    //.WithOrigins("https://store.raspberrycloudav.fr")
-                    //.AllowCredentials()
-                    );
+                cors =>
+                {
+                    var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+                    cors.WithOrigins(allowedOrigins)
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
         });
 
         var app = builder.Build();

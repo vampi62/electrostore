@@ -27,20 +27,20 @@ public record CreateStoreDto : IValidatableObject
     [Required]
     [MinLength(1, ErrorMessage = "nom_store cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_store cannot exceed 50 characters")]
-    public string nom_store { get; init; }
+    public required string nom_store { get; init; }
 
     [Required]
     [Range(1, int.MaxValue, ErrorMessage = "xlength_store must be greater than 0.")]
-    public int xlength_store { get; init; }
+    public required int xlength_store { get; init; }
 
     [Required]
     [Range(1, int.MaxValue, ErrorMessage = "ylength_store must be greater than 0.")]
-    public int ylength_store { get; init; }
+    public required int ylength_store { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "mqtt_name_store cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "mqtt_name_store cannot exceed 50 characters")]
-    public string mqtt_name_store { get; init; }
+    public required string mqtt_name_store { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

@@ -7,11 +7,11 @@ public record LoginRequest : IValidatableObject
     [Required]
     [MinLength(1, ErrorMessage = "Email cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxEmailLength, ErrorMessage = "Email cannot exceed 100 characters")]
-    public string Email { get; set; }
+    public required string Email { get; set; }
 
     [Required]
     [MinLength(1, ErrorMessage = "Password cannot be empty or whitespace.")]
-    public string Password { get; set; }
+    public required string Password { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -31,7 +31,7 @@ public record ForgotPasswordRequest : IValidatableObject
     [Required]
     [MinLength(1, ErrorMessage = "Email cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxEmailLength, ErrorMessage = "Email cannot exceed 100 characters")]
-    public string Email { get; set; }
+    public required string Email { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -47,16 +47,16 @@ public record ResetPasswordRequest : IValidatableObject
     [Required]
     [MinLength(1, ErrorMessage = "Email cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxEmailLength, ErrorMessage = "Email cannot exceed 100 characters")]
-    public string Email { get; set; }
+    public required string Email { get; set; }
 
     [Required]
     [MinLength(1, ErrorMessage = "Token cannot be empty or whitespace.")]
     [MaxLength(50, ErrorMessage = "Token cannot exceed 50 characters")]
-    public string Token { get; set; }
+    public required string Token { get; set; }
 
     [Required]
     [MinLength(1, ErrorMessage = "Password cannot be empty or whitespace.")]
-    public string Password { get; set; }
+    public required string Password { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

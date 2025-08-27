@@ -21,32 +21,32 @@ public record CreateLedByStoreDto
 {
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "x_led must be greater than or equal to 0.")]
-    public int x_led { get; init; }
+    public required int x_led { get; init; }
 
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "y_led must be greater than or equal to 0.")]
-    public int y_led { get; init; }
+    public required int y_led { get; init; }
 
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "mqtt_led_id must be greater than or equal to 0.")]
-    public int mqtt_led_id { get; init; }
+    public required int mqtt_led_id { get; init; }
 }
 public record CreateLedDto
 {
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "x_led must be greater than or equal to 0.")]
-    public int x_led { get; init; }
+    public required int x_led { get; init; }
 
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "y_led must be greater than or equal to 0.")]
-    public int y_led { get; init; }
+    public required int y_led { get; init; }
 
     [Required]
-    public int id_store { get; init; }
+    public required int id_store { get; init; }
 
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "mqtt_led_id must be greater than or equal to 0.")]
-    public int mqtt_led_id { get; init; }
+    public required int mqtt_led_id { get; init; }
 }
 public record UpdateLedByStoreDto
 {

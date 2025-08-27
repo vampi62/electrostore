@@ -21,7 +21,7 @@ public record CreateCommandCommentaireByCommandDto : IValidatableObject
     [Required]
     [MinLength(1, ErrorMessage = "contenu_command_commentaire cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
-    public string contenu_command_commentaire { get; init; }
+    public required string contenu_command_commentaire { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -34,12 +34,12 @@ public record CreateCommandCommentaireByCommandDto : IValidatableObject
 public record CreateCommandCommentaireByUserDto : IValidatableObject
 {
     [Required]
-    public int id_command { get; init; }
+    public required int id_command { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "contenu_command_commentaire cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
-    public string contenu_command_commentaire { get; init; }
+    public required string contenu_command_commentaire { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -52,15 +52,15 @@ public record CreateCommandCommentaireByUserDto : IValidatableObject
 public record CreateCommandCommentaireDto : IValidatableObject
 {
     [Required]
-    public int id_command { get; init; }
+    public required int id_command { get; init; }
 
     [Required]
-    public int id_user { get; init; }
+    public required int id_user { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "contenu_command_commentaire cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
-    public string contenu_command_commentaire { get; init; }
+    public required string contenu_command_commentaire { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

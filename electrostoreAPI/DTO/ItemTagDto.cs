@@ -22,18 +22,18 @@ public record ReadBulkItemTagDto
 public record CreateItemTagByTagDto
 {
     [Required]
-    public int id_item { get; init; }
+    public required int id_item { get; init; }
 }
 public record CreateItemTagByItemDto
 {
     [Required]
-    public int id_tag { get; init; }
+    public required int id_tag { get; init; }
 }
 public record CreateItemTagDto
 {
     [Required]
-    public int id_item { get; init; }
+    public required int id_item { get; init; }
 
     [Required]
-    public int id_tag { get; init; }
+    public required int id_tag { get; init; }
 }

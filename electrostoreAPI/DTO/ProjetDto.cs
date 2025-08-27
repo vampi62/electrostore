@@ -28,22 +28,22 @@ public record CreateProjetDto : IValidatableObject
     [Required]
     [MinLength(1, ErrorMessage = "nom_projet cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_projet cannot exceed 50 characters")]
-    public string nom_projet { get; init; }
+    public required string nom_projet { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "description_projet cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "description_projet cannot exceed 500 characters")]
-    public string description_projet { get; init; }
+    public required string description_projet { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "url_projet cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxUrlLength, ErrorMessage = "url_projet cannot exceed 150 characters")]
-    public string url_projet { get; init; }
+    public required string url_projet { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "status_projet cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxStatusLength, ErrorMessage = "status_projet cannot exceed 50 characters")]
-    public string status_projet { get; init; }
+    public required string status_projet { get; init; }
 
     [Required]
     public DateTime date_debut_projet { get; init; }

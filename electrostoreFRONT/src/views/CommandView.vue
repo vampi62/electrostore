@@ -101,9 +101,7 @@ const commandSave = async() => {
 			addNotification({ message: "command.VCommandCreated", type: "success", i18n: true });
 		}
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
+		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
 	if (commandId === "new") {
@@ -117,7 +115,7 @@ const commandDelete = async() => {
 		addNotification({ message: "command.VCommandDeleted", type: "success", i18n: true });
 		router.push("/commands");
 	} catch (e) {
-		addNotification({ message: "command.VCommandDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 	commandDeleteModalShow.value = false;
 };
@@ -140,9 +138,7 @@ const documentAdd = async() => {
 		await commandsStore.createDocument(commandId, documentModalData.value);
 		addNotification({ message: "command.VCommandDocumentAdded", type: "success", i18n: true });
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
+		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
 	documentAddModalShow.value = false;
@@ -153,10 +149,7 @@ const documentEdit = async(row) => {
 		await commandsStore.updateDocument(commandId, row.id_command_document, row);
 		addNotification({ message: "command.VCommandDocumentUpdated", type: "success", i18n: true });
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
-		return;
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
 const documentDelete = async() => {
@@ -164,7 +157,7 @@ const documentDelete = async() => {
 		await commandsStore.deleteDocument(commandId, documentModalData.value.id_command_document);
 		addNotification({ message: "command.VCommandDocumentDeleted", type: "success", i18n: true });
 	} catch (e) {
-		addNotification({ message: "command.VCommandDocumentDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 	documentDeleteModalShow.value = false;
 };
@@ -246,10 +239,7 @@ const itemSave = async(item) => {
 			addNotification({ message: "command.VCommandItemUpdated", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
-			return;
+			addNotification({ message: e, type: "error", i18n: false });
 		}
 	} else {
 		try {
@@ -258,10 +248,7 @@ const itemSave = async(item) => {
 			addNotification({ message: "command.VCommandItemAdded", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
-			return;
+			addNotification({ message: e, type: "error", i18n: false });
 		}
 	}
 };
@@ -270,7 +257,7 @@ const itemDelete = async(item) => {
 		await commandsStore.deleteItem(commandId, item.id_item);
 		addNotification({ message: "command.VCommandItemDeleted", type: "success", i18n: true });
 	} catch (e) {
-		addNotification({ message: "command.VCommandItemDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
 
@@ -477,67 +464,63 @@ const labelTableauModalItem = ref([
 	<div :class="commandsStore.commands[commandId] || commandId == 'new' ? 'block' : 'hidden'">
 		<div class="mb-6 flex justify-between">
 			<Form :validation-schema="schemaCommand" v-slot="{ errors }" @submit.prevent="">
-				<table class="table-auto text-gray-700">
-					<tbody>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('command.VCommandPrice') }}:</td>
-							<td class="flex flex-col">
-								<Field name="prix_command" type="text"
-									v-model="commandsStore.commandEdition.prix_command"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.prix_command }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.prix_command || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('command.VCommandUrl') }}:</td>
-							<td class="flex flex-col">
-								<Field name="url_command" type="text" v-model="commandsStore.commandEdition.url_command"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.url_command }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.url_command || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('command.VCommandDate') }}:</td>
-							<td class="flex flex-col">
-								<!-- format date permit is only YYYY-MM-DDTHH-mm-->
-								<Field name="date_command" type="datetime-local"
-									v-model="commandsStore.commandEdition.date_command"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.date_command }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_command || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('command.VCommandStatus') }}:</td>
-							<td class="flex flex-col">
-								<Field name="status_command" as="select"
-									v-model="commandsStore.commandEdition.status_command"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.status_command }">
-									<option value="" disabled> -- {{ $t('command.VCommandStatusSelect') }} -- </option>
-									<option v-for="status in commandTypeStatus" :key="status" :value="status[0]">
-										{{ status[1] }}
-									</option>
-								</Field>
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.status_command || ' ' }}</span>
-							</td>
-						</tr>
-						<tr class="pb-4">
-							<td class="font-semibold pr-4 align-text-top">{{ $t('command.VCommandDeliveryDate') }}:</td>
-							<td class="flex flex-col">
-								<Field name="date_livraison_command" type="datetime-local"
-									v-model="commandsStore.commandEdition.date_livraison_command"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.date_livraison_command }" disabled />
-								<span class="text-red-500 h-5 w-80 text-sm">
-									{{ errors.date_livraison_command || ' ' }}
-								</span>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+				<div class="flex flex-col text-gray-700 space-y-2">
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="prix_command">{{ $t('command.VCommandPrice') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="prix_command" type="text"
+								v-model="commandsStore.commandEdition.prix_command"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.prix_command }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.prix_command || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="url_command">{{ $t('command.VCommandUrl') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="url_command" type="text" v-model="commandsStore.commandEdition.url_command"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.url_command }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.url_command || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="date_command">{{ $t('command.VCommandDate') }}:</label>
+						<div class="flex flex-col flex-1">
+							<!-- format date permit is only YYYY-MM-DDTHH-mm-->
+							<Field name="date_command" type="datetime-local"
+								v-model="commandsStore.commandEdition.date_command"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.date_command }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_command || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="status_command">{{ $t('command.VCommandStatus') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="status_command" as="select"
+								v-model="commandsStore.commandEdition.status_command"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.status_command }">
+								<option value="" disabled> -- {{ $t('command.VCommandStatusSelect') }} -- </option>
+								<option v-for="status in commandTypeStatus" :key="status" :value="status[0]">
+									{{ status[1] }}
+								</option>
+							</Field>
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.status_command || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="date_livraison_command">{{ $t('command.VCommandDeliveryDate') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="date_livraison_command" type="datetime-local"
+								v-model="commandsStore.commandEdition.date_livraison_command"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.date_livraison_command }" disabled />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_livraison_command || ' ' }}</span>
+						</div>
+					</div>
+				</div>
 			</Form>
 			<div>
 				<!-- TODO suivie commande -->

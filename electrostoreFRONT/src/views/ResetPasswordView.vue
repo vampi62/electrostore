@@ -1,8 +1,4 @@
 <script setup>
-import { onMounted, ref, computed, inject } from "vue";
-
-const { addNotification } = inject("useNotification");
-
 import { Form, Field } from "vee-validate";
 import * as Yup from "yup";
 
@@ -45,7 +41,7 @@ function onSubmit(values, { setErrors }) {
 		<h2 class="text-2xl font-bold mb-4">{{ $t('common.VResetPasswordTitle') }}</h2>
 
 		<div v-if="configsStore.configs.loading" class="flex justify-center items-center">
-			<div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" role="status">
+			<div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin">
 				<span class="sr-only">{{ $t('common.VResetPasswordLoading') }}</span>
 			</div>
 		</div>
