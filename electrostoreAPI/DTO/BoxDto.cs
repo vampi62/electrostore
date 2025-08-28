@@ -97,7 +97,7 @@ public record UpdateBoxDto
 }
 public record UpdateBulkBoxByStoreDto
 {
-    public int id_box { get; init; }
+    public required int id_box { get; init; }
 
     [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
     public int? xstart_box { get; init; }

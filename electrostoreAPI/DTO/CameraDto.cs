@@ -58,7 +58,7 @@ public record UpdateCameraDto : IValidatableObject
 }
 public record CameraLightDto
 {
-    public bool state { get; init; }
+    public required bool state { get; init; }
 }
 public record CameraStatusDto
 {

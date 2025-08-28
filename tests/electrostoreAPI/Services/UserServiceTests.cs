@@ -12,7 +12,7 @@ using electrostore.Dto;
 using electrostore.Enums;
 using electrostore.Models;
 using electrostore.Services.UserService;
-using electrostore.Services.SMTPService;
+using electrostore.Services.SmtpService;
 using electrostore.Services.SessionService;
 using electrostore.Services.JwiService;
 using electrostore.Services.JwtService;
@@ -22,7 +22,7 @@ namespace electrostore.Tests.Services
     public class UserServiceTests
     {
         private readonly Mock<IMapper> _mockMapper;
-        private readonly Mock<ISMTPService> _mockSmtpService;
+        private readonly Mock<ISmtpService> _mockSmtpService;
         private readonly Mock<ISessionService> _mockSessionService;
         private readonly Mock<IJwiService> _mockJwiService;
         private readonly JwtService _jwtService;
@@ -32,7 +32,7 @@ namespace electrostore.Tests.Services
         public UserServiceTests()
         {
             _mockMapper = new Mock<IMapper>();
-            _mockSmtpService = new Mock<ISMTPService>();
+            _mockSmtpService = new Mock<ISmtpService>();
             _mockSessionService = new Mock<ISessionService>();
             _mockJwiService = new Mock<IJwiService>();
             _mockConfiguration = new Mock<IConfiguration>();
@@ -99,7 +99,7 @@ namespace electrostore.Tests.Services
                 updated_at = DateTime.Now
             };
 
-            var tokenResponse = new JWT
+            var tokenResponse = new Jwt
             {
                 token = "access_token",
                 refresh_token = "refresh_token",
@@ -128,7 +128,7 @@ namespace electrostore.Tests.Services
             Assert.True(result.expire_date_refresh_token > DateTime.Now);
             Assert.Equal(userDto, result.user);
 
-            _mockJwiService.Verify(j => j.SaveToken(It.IsAny<JWT>(), user.id_user, It.IsAny<Guid?>()), Times.Once);
+            _mockJwiService.Verify(j => j.SaveToken(It.IsAny<Jwt>(), user.id_user, It.IsAny<Guid?>()), Times.Once);
             _mockSmtpService.Verify(s => s.SendEmailAsync(
                 user.email_user,
                 "Login",
@@ -176,7 +176,7 @@ namespace electrostore.Tests.Services
                 updated_at = DateTime.Now
             };
 
-            var tokenResponse = new JWT
+            var tokenResponse = new Jwt
             {
                 token = "access_token",
                 refresh_token = "refresh_token",
@@ -212,7 +212,7 @@ namespace electrostore.Tests.Services
             Assert.Equal(userDto, result.user);
 
             _mockJwiService.Verify(j => j.RevokePairTokenByRefreshToken("old_token_id", "User refresh token", 1), Times.Once);
-            _mockJwiService.Verify(j => j.SaveToken(It.IsAny<JWT>(), user.id_user, It.IsAny<Guid?>()), Times.Once);
+            _mockJwiService.Verify(j => j.SaveToken(It.IsAny<Jwt>(), user.id_user, It.IsAny<Guid?>()), Times.Once);
         }
 
         // Performance benchmark test

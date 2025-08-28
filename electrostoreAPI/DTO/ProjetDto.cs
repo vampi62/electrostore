@@ -46,7 +46,7 @@ public record CreateProjetDto
     public required string status_projet { get; init; }
 
     [Required]
-    public DateTime date_debut_projet { get; init; }
+    public required DateTime date_debut_projet { get; init; }
 
     public DateTime? date_fin_projet { get; init; }
 }

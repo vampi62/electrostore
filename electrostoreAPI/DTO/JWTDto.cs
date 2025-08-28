@@ -1,6 +1,6 @@
 namespace electrostore.Dto;
 
-public record JWT
+public record Jwt
 {
     public required string token { get; init; }
     public DateTime expire_date_token { get; init; }

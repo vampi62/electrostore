@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Mvc;
@@ -9,8 +8,6 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 
 using MQTTnet;
 using MQTTnet.Client;
-
-using electrostore;
 
 using electrostore.Dto;
 using electrostore.Enums;
@@ -36,12 +33,13 @@ using electrostore.Services.ProjetDocumentService;
 using electrostore.Services.ProjetItemService;
 using electrostore.Services.ProjetService;
 using electrostore.Services.SessionService;
-using electrostore.Services.SMTPService;
+using electrostore.Services.SmtpService;
 using electrostore.Services.StoreService;
 using electrostore.Services.StoreTagService;
 using electrostore.Services.TagService;
 using electrostore.Services.UserService;
 using electrostore.Services.JwtService;
+using electrostore.Services.FileService;
 using electrostore.Middleware;
 
 using Microsoft.OpenApi.Models;
@@ -98,7 +96,7 @@ public static class Program
                 options.InvalidModelStateResponseFactory = context =>
                 {
                     var modelStateErrors = context.ModelState
-                        .Where(ms => ms.Value.Errors.Count > 0)
+                        .Where(ms => ms.Value != null && ms.Value.Errors.Count > 0)
                         .SelectMany(ms => ms.Value.Errors)
                         .Select(e => e.ErrorMessage)
                         .ToList();
@@ -256,13 +254,14 @@ public static class Program
         builder.Services.AddScoped<IProjetItemService, ProjetItemService>();
         builder.Services.AddScoped<IProjetService, ProjetService>();
         builder.Services.AddScoped<ISessionService, SessionService>();
-        builder.Services.AddScoped<ISMTPService, SMTPService>();
+        builder.Services.AddScoped<ISmtpService, SmtpService>();
         builder.Services.AddScoped<IStoreService, StoreService>();
         builder.Services.AddScoped<IStoreTagService, StoreTagService>();
         builder.Services.AddScoped<ITagService, TagService>();
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IJwiService, JwiService>();
         builder.Services.AddSingleton<JwtService>();
+        builder.Services.AddScoped<FileService>();
     }
 
     private static void CreateRequiredDirectories()

@@ -9,6 +9,9 @@ public class ItemService : IItemService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly string _itemDocumentsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments");
+    private readonly string _imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
+    private readonly string _imagesThumbnailsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails");
 
     public ItemService(IMapper mapper, ApplicationDbContext context)
     {
@@ -113,17 +116,17 @@ public class ItemService : IItemService
         var item = _mapper.Map<Items>(itemDto);
         _context.Items.Add(item);
         await _context.SaveChangesAsync();
-        if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", item.id_item.ToString())))
+        if (!Directory.Exists(Path.Combine(_imagesPath, item.id_item.ToString())))
         {
-            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", item.id_item.ToString()));
+            Directory.CreateDirectory(Path.Combine(_imagesPath, item.id_item.ToString()));
         }
-        if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails", item.id_item.ToString())))
+        if (!Directory.Exists(Path.Combine(_imagesThumbnailsPath, item.id_item.ToString())))
         {
-            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails", item.id_item.ToString()));
+            Directory.CreateDirectory(Path.Combine(_imagesThumbnailsPath, item.id_item.ToString()));
         }
-        if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", item.id_item.ToString())))
+        if (!Directory.Exists(Path.Combine(_itemDocumentsPath, item.id_item.ToString())))
         {
-            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", item.id_item.ToString()));
+            Directory.CreateDirectory(Path.Combine(_itemDocumentsPath, item.id_item.ToString()));
         }
         return _mapper.Map<ReadItemDto>(item);
     }
@@ -172,19 +175,19 @@ public class ItemService : IItemService
         _context.Items.Remove(itemToDelete);
         await _context.SaveChangesAsync();
         //remove folder in wwwroot/images
-        if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", id.ToString())))
+        if (Directory.Exists(Path.Combine(_imagesPath, id.ToString())))
         {
-            Directory.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", id.ToString()), true);
+            Directory.Delete(Path.Combine(_imagesPath, id.ToString()), true);
         }
         //remove folder in wwwroot/imagesThumbnails
-        if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails", id.ToString())))
+        if (Directory.Exists(Path.Combine(_imagesThumbnailsPath, id.ToString())))
         {
-            Directory.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails", id.ToString()), true);
+            Directory.Delete(Path.Combine(_imagesThumbnailsPath, id.ToString()), true);
         }
         //remove folder in wwwroot/itemDocuments
-        if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", id.ToString())))
+        if (Directory.Exists(Path.Combine(_itemDocumentsPath, id.ToString())))
         {
-            Directory.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments", id.ToString()), true);
+            Directory.Delete(Path.Combine(_itemDocumentsPath, id.ToString()), true);
         }
     }
 }

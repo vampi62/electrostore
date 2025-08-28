@@ -16,6 +16,4 @@ public interface ICommandDocumentService
     public Task<ReadCommandDocumentDto> UpdateCommandDocument(int id, UpdateCommandDocumentDto commandDocumentDto, int? commandId = null);
 
     public Task DeleteCommandDocument(int id, int? commandId = null);
-
-    public Task<GetFileResult> GetFile(string url);
 }
