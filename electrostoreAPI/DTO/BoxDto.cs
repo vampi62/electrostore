@@ -23,8 +23,8 @@ public record ReadExtendedBoxDto : ReadBoxDto
 }
 public record ReadBulkBoxDto
 {
-    public List<ReadBoxDto> Valide { get; init; }
-    public List<ErrorDetail> Error { get; init; }
+    public required List<ReadBoxDto> Valide { get; init; }
+    public required List<ErrorDetail> Error { get; init; }
 }
 public record CreateBoxByStoreDto
 {

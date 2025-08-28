@@ -16,8 +16,8 @@ public record ReadExtendedBoxTagDto : ReadBoxTagDto
 }
 public record ReadBulkBoxTagDto
 {
-    public List<ReadBoxTagDto> Valide { get; init; }
-    public List<ErrorDetail> Error { get; init; }
+    public required List<ReadBoxTagDto> Valide { get; init; }
+    public required List<ErrorDetail> Error { get; init; }
 }
 public record CreateBoxTagByTagDto
 {

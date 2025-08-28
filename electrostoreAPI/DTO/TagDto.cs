@@ -5,7 +5,7 @@ namespace electrostore.Dto;
 public record ReadTagDto
 {
     public int id_tag { get; init; }
-    public string nom_tag { get; init; }
+    public required string nom_tag { get; init; }
     public int poids_tag { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
@@ -22,11 +22,11 @@ public record ReadExtendedTagDto : ReadTagDto
 
 public record ReadBulkTagDto
 {
-    public List<ReadTagDto> Valide { get; init; }
-    public List<ErrorDetail> Error { get; init; }
+    public required List<ReadTagDto> Valide { get; init; }
+    public required List<ErrorDetail> Error { get; init; }
 }
 
-public record CreateTagDto : IValidatableObject
+public record CreateTagDto
 {
     [Required]
     [MinLength(1, ErrorMessage = "nom_tag cannot be empty or whitespace.")]
@@ -36,14 +36,6 @@ public record CreateTagDto : IValidatableObject
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "poids_tag must be greater than or equal to 0.")]
     public required int? poids_tag { get; init; } = 0;
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (string.IsNullOrWhiteSpace(nom_tag))
-        {
-            yield return new ValidationResult("nom_tag cannot be null, empty, or whitespace.", new[] { nameof(nom_tag) });
-        }
-    }
 }
 public record UpdateTagDto : IValidatableObject
 {

@@ -10,7 +10,7 @@ public record ReadAccessTokenDto
     public DateTime expires_at { get; init; }
     public bool is_revoked { get; init; }
     public DateTime created_at { get; init; }
-    public string created_by_ip { get; init; }
+    public required string created_by_ip { get; init; }
     public DateTime? revoked_at { get; init; }
     public string? revoked_by_ip { get; init; }
     public string? revoked_reason { get; init; }
@@ -23,7 +23,7 @@ public record ReadRefreshTokenDto
     public DateTime expires_at { get; init; }
     public bool is_revoked { get; init; }
     public DateTime created_at { get; init; }
-    public string created_by_ip { get; init; }
+    public required string created_by_ip { get; init; }
     public DateTime? revoked_at { get; init; }
     public string? revoked_by_ip { get; init; }
     public string? revoked_reason { get; init; }
@@ -36,7 +36,7 @@ public record SessionDto
     public DateTime expires_at { get; init; }
     public bool is_revoked { get; init; }
     public DateTime created_at { get; init; }
-    public string created_by_ip { get; init; }
+    public required string created_by_ip { get; init; }
     public DateTime? revoked_at { get; init; }
     public string? revoked_by_ip { get; init; }
     public string? revoked_reason { get; init; }

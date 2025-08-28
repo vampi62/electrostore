@@ -14,8 +14,8 @@ public record ReadLedDto
 }
 public record ReadBulkLedDto
 {
-    public List<ReadLedDto> Valide { get; init; }
-    public List<ErrorDetail> Error { get; init; }
+    public required List<ReadLedDto> Valide { get; init; }
+    public required List<ErrorDetail> Error { get; init; }
 }
 public record CreateLedByStoreDto
 {

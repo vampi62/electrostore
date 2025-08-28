@@ -23,7 +23,6 @@ using electrostore.Services.CommandDocumentService;
 using electrostore.Services.CommandItemService;
 using electrostore.Services.CommandService;
 using electrostore.Services.ConfigService;
-//using electrostore.Services.IAImgService;
 using electrostore.Services.IAService;
 using electrostore.Services.ImgService;
 using electrostore.Services.ItemBoxService;
@@ -49,7 +48,8 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.HttpOverrides;
 
 namespace electrostore;
-public class Program
+
+public static class Program
 {
     public static void Main(string[] args)
     {
@@ -61,12 +61,17 @@ public class Program
             builder.Configuration.AddJsonFile("config/appsettings.Development.json", optional: true, reloadOnChange: true);
         }
 
-        var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>() ?? new JwtSettings();
+        var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>() ?? new JwtSettings
+        {
+            Key = "default_key_value",
+            Issuer = "default_issuer_value",
+            Audience = "default_audience_value"
+        };
         var key = Encoding.ASCII.GetBytes(jwtSettings.Key);
 
         // Add services to the container.
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), new MySqlServerVersion(new Version(11,4,7))));
+            options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), new MySqlServerVersion(new Version(11, 4, 7))));
 
         builder.Services.AddSingleton<IMqttClient>(sp =>
         {
@@ -83,7 +88,7 @@ public class Program
         });
 
         addScopes(builder);
-        
+
         builder.Services.AddHttpContextAccessor();
 
         builder.Services.AddControllers(options => { options.Filters.Add(new AuthorizeFilter()); })
@@ -202,12 +207,66 @@ public class Program
         });
 
         var app = builder.Build();
-        if (app.Environment.IsDevelopment()) {
+        if (app.Environment.IsDevelopment())
+        {
             app.UseSwagger();
             app.UseSwaggerUI();
         }
         app.UseStaticFiles();
 
+        CreateRequiredDirectories();
+
+        app.UseForwardedHeaders(new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+        });
+        app.UseCors("CorsPolicy");
+
+        app.UseAuthentication();
+
+        app.UseAuthorization();
+
+        app.MapControllers();
+
+        app.UseMiddleware<ExceptionsHandler>();
+
+        InitializeDatabase(app);
+
+        app.Run();
+    }
+    private static void addScopes(WebApplicationBuilder builder)
+    {
+        builder.Services.AddScoped<IBoxService, BoxService>();
+        builder.Services.AddScoped<IBoxTagService, BoxTagService>();
+        builder.Services.AddScoped<ICameraService, CameraService>();
+        builder.Services.AddScoped<ICommandCommentaireService, CommandCommentaireService>();
+        builder.Services.AddScoped<ICommandDocumentService, CommandDocumentService>();
+        builder.Services.AddScoped<ICommandItemService, CommandItemService>();
+        builder.Services.AddScoped<ICommandService, CommandService>();
+        builder.Services.AddScoped<IConfigService, ConfigService>();
+        builder.Services.AddScoped<IIAService, IAService>();
+        builder.Services.AddScoped<IImgService, ImgService>();
+        builder.Services.AddScoped<IItemBoxService, ItemBoxService>();
+        builder.Services.AddScoped<IItemDocumentService, ItemDocumentService>();
+        builder.Services.AddScoped<IItemService, ItemService>();
+        builder.Services.AddScoped<IItemTagService, ItemTagService>();
+        builder.Services.AddScoped<ILedService, LedService>();
+        builder.Services.AddScoped<IProjetCommentaireService, ProjetCommentaireService>();
+        builder.Services.AddScoped<IProjetDocumentService, ProjetDocumentService>();
+        builder.Services.AddScoped<IProjetItemService, ProjetItemService>();
+        builder.Services.AddScoped<IProjetService, ProjetService>();
+        builder.Services.AddScoped<ISessionService, SessionService>();
+        builder.Services.AddScoped<ISMTPService, SMTPService>();
+        builder.Services.AddScoped<IStoreService, StoreService>();
+        builder.Services.AddScoped<IStoreTagService, StoreTagService>();
+        builder.Services.AddScoped<ITagService, TagService>();
+        builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IJwiService, JwiService>();
+        builder.Services.AddSingleton<JwtService>();
+    }
+
+    private static void CreateRequiredDirectories()
+    {
         if (!Directory.Exists("wwwroot/images"))
         {
             Directory.CreateDirectory("wwwroot/images");
@@ -232,21 +291,10 @@ public class Program
         {
             Directory.CreateDirectory("wwwroot/commandDocuments");
         }
+    }
 
-        app.UseForwardedHeaders(new ForwardedHeadersOptions
-        {
-            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-        });
-        app.UseCors("CorsPolicy");
-
-        app.UseAuthentication();
-
-        app.UseAuthorization();
-
-        app.MapControllers();
-
-        app.UseMiddleware<ExceptionsHandler>();
-
+    private static void InitializeDatabase(WebApplication app)
+    {
         using (var serviceScope = app.Services.CreateScope())
         {
             var context = serviceScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -271,38 +319,5 @@ public class Program
                 }).Wait();
             }
         }
-
-        app.Run();
-    }
-    private static void addScopes(WebApplicationBuilder builder)
-    {
-        builder.Services.AddScoped<IBoxService, BoxService>();
-        builder.Services.AddScoped<IBoxTagService, BoxTagService>();
-        builder.Services.AddScoped<ICameraService, CameraService>();
-        builder.Services.AddScoped<ICommandCommentaireService, CommandCommentaireService>();
-        builder.Services.AddScoped<ICommandDocumentService, CommandDocumentService>();
-        builder.Services.AddScoped<ICommandItemService, CommandItemService>();
-        builder.Services.AddScoped<ICommandService, CommandService>();
-        builder.Services.AddScoped<IConfigService, ConfigService>();
-        //builder.Services.AddScoped<IIAImgService, IAImgService>();
-        builder.Services.AddScoped<IIAService, IAService>();
-        builder.Services.AddScoped<IImgService, ImgService>();
-        builder.Services.AddScoped<IItemBoxService, ItemBoxService>();
-        builder.Services.AddScoped<IItemDocumentService, ItemDocumentService>();
-        builder.Services.AddScoped<IItemService, ItemService>();
-        builder.Services.AddScoped<IItemTagService, ItemTagService>();
-        builder.Services.AddScoped<ILedService, LedService>();
-        builder.Services.AddScoped<IProjetCommentaireService, ProjetCommentaireService>();
-        builder.Services.AddScoped<IProjetDocumentService, ProjetDocumentService>();
-        builder.Services.AddScoped<IProjetItemService, ProjetItemService>();
-        builder.Services.AddScoped<IProjetService, ProjetService>();
-        builder.Services.AddScoped<ISessionService, SessionService>();
-        builder.Services.AddScoped<ISMTPService, SMTPService>();
-        builder.Services.AddScoped<IStoreService, StoreService>();
-        builder.Services.AddScoped<IStoreTagService, StoreTagService>();
-        builder.Services.AddScoped<ITagService, TagService>();
-        builder.Services.AddScoped<IUserService, UserService>();
-        builder.Services.AddScoped<IJwiService, JwiService>();
-        builder.Services.AddSingleton<JwtService>();
     }
 }

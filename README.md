@@ -113,6 +113,10 @@ Complete the `appsettings.json` file with the following content, replacing place
     "Audience": "<your-audience>",
     "ExpireDays": 1
   },
+  "AllowedOrigins": [
+    "https://<your-frontend-domain1>",
+    "https://<your-frontend-domain2>"
+  ],
   "FrontendUrl": "http://<frontend-url>",
   "AllowedHosts": "*"
 }

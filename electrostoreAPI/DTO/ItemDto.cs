@@ -5,10 +5,10 @@ namespace electrostore.Dto;
 public record ReadItemDto
 {
     public int id_item { get; init; }
-    public string reference_name_item { get; init; }
-    public string friendly_name_item { get; init; }
+    public required string reference_name_item { get; init; }
+    public required string friendly_name_item { get; init; }
     public int seuil_min_item { get; init; }
-    public string description_item { get; init; }
+    public required string description_item { get; init; }
     public int? id_img { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
@@ -26,7 +26,7 @@ public record ReadExtendedItemDto : ReadItemDto
     public IEnumerable<ReadProjetItemDto>? projet_items { get; init; }
     public IEnumerable<ReadItemDocumentDto>? item_documents { get; init; }
 }
-public record CreateItemDto : IValidatableObject
+public record CreateItemDto
 {
     [Required]
     [MinLength(1, ErrorMessage = "reference_name_item cannot be empty or whitespace.")]
@@ -48,22 +48,6 @@ public record CreateItemDto : IValidatableObject
     public required string description_item { get; init; }
 
     public int? id_img { get; init; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (string.IsNullOrWhiteSpace(reference_name_item))
-        {
-            yield return new ValidationResult("reference_name_item cannot be null, empty, or whitespace.", new[] { nameof(reference_name_item) });
-        }
-        if (string.IsNullOrWhiteSpace(friendly_name_item))
-        {
-            yield return new ValidationResult("friendly_name_item cannot be null, empty, or whitespace.", new[] { nameof(friendly_name_item) });
-        }
-        if (string.IsNullOrWhiteSpace(description_item))
-        {
-            yield return new ValidationResult("description_item cannot be null, empty, or whitespace.", new[] { nameof(description_item) });
-        }
-    }
 }
 public record UpdateItemDto : IValidatableObject
 {

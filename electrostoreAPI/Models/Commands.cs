@@ -13,10 +13,10 @@ public class Commands : BaseEntity
     public float prix_command { get; set; }
 
     [MaxLength(Constants.MaxUrlLength)]
-    public string url_command { get; set; }
+    public required string url_command { get; set; }
 
     [MaxLength(Constants.MaxStatusLength)]
-    public string status_command { get; set; }
+    public required string status_command { get; set; }
 
     public DateTime date_command { get; set; }
 

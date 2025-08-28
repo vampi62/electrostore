@@ -6,8 +6,8 @@ public record ReadCommandDto
 {
     public int id_command { get; init; }
     public float prix_command { get; init; }
-    public string url_command { get; init; }
-    public string status_command { get; init; }
+    public required string url_command { get; init; }
+    public required string status_command { get; init; }
     public DateTime date_command { get; init; }
     public DateTime? date_livraison_command { get; init; }
     public DateTime created_at { get; init; }
@@ -22,7 +22,7 @@ public record ReadExtendedCommandDto : ReadCommandDto
     public IEnumerable<ReadCommandDocumentDto>? commands_documents { get; init; }
     public IEnumerable<ReadCommandItemDto>? commands_items { get; init; }
 }
-public record CreateCommandDto : IValidatableObject
+public record CreateCommandDto
 {
     [Required]
     [Range(0.0, float.MaxValue, ErrorMessage = "prix_command must be greater than 0.")]
@@ -42,18 +42,6 @@ public record CreateCommandDto : IValidatableObject
     public required DateTime date_command { get; init; }
 
     public DateTime? date_livraison_command { get; init; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (string.IsNullOrWhiteSpace(url_command))
-        {
-            yield return new ValidationResult("url_command cannot be null, empty, or whitespace.", new[] { nameof(url_command) });
-        }
-        if (string.IsNullOrWhiteSpace(status_command))
-        {
-            yield return new ValidationResult("status_command cannot be null, empty, or whitespace.", new[] { nameof(status_command) });
-        }
-    }
 }
 public record UpdateCommandDto : IValidatableObject
 {

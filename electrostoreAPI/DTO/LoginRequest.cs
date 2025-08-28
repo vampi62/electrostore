@@ -35,9 +35,9 @@ public record ForgotPasswordRequest : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (string.IsNullOrWhiteSpace(Email))
+        if (!new EmailAddressAttribute().IsValid(Email))
         {
-            yield return new ValidationResult("Email cannot be null, empty, or whitespace.", new[] { nameof(Email) });
+            yield return new ValidationResult("Email has an Invalid email format", new[] { nameof(Email) });
         }
     }
 }
@@ -60,9 +60,9 @@ public record ResetPasswordRequest : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (string.IsNullOrWhiteSpace(Email))
+        if (!new EmailAddressAttribute().IsValid(Email))
         {
-            yield return new ValidationResult("Email cannot be null, empty, or whitespace.", new[] { nameof(Email) });
+            yield return new ValidationResult("Email has an Invalid email format", new[] { nameof(Email) });
         }
         if (string.IsNullOrWhiteSpace(Token))
         {
@@ -70,7 +70,7 @@ public record ResetPasswordRequest : IValidatableObject
         }
         if (!new RegularExpressionAttribute(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$").IsValid(Password))
         {
-            yield return new ValidationResult("Password must contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long");
+            yield return new ValidationResult("Password must contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long", new[] { nameof(Password) });
         }
     }
 }

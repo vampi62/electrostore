@@ -12,13 +12,13 @@ public class CommandsDocuments : BaseEntity
     public int id_command_document { get; set; }
 
     [MaxLength(Constants.MaxUrlLength)]
-    public string url_command_document { get; set; }
+    public required string url_command_document { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public string name_command_document { get; set; }
+    public required string name_command_document { get; set; }
 
     [MaxLength(Constants.MaxTypeLength)]
-    public string type_command_document { get; set; }
+    public required string type_command_document { get; set; }
 
     public decimal size_command_document { get; set; }
 

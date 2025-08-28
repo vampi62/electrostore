@@ -6,9 +6,9 @@ namespace electrostore.Dto;
 public record ReadUserDto
 {
     public int id_user { get; init; }
-    public string nom_user { get; init; }
-    public string prenom_user { get; init; }
-    public string email_user { get; init; }
+    public required string nom_user { get; init; }
+    public required string prenom_user { get; init; }
+    public required string email_user { get; init; }
     public UserRole role_user { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
@@ -46,25 +46,13 @@ public record CreateUserDto : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (string.IsNullOrWhiteSpace(nom_user))
+        if (!new EmailAddressAttribute().IsValid(email_user))
         {
-            yield return new ValidationResult("nom_user cannot be null, empty, or whitespace.", new[] { nameof(nom_user) });
-        }
-        if (string.IsNullOrWhiteSpace(prenom_user))
-        {
-            yield return new ValidationResult("prenom_user cannot be null, empty, or whitespace.", new[] { nameof(prenom_user) });
-        }
-        if (string.IsNullOrWhiteSpace(email_user))
-        {
-            yield return new ValidationResult("email_user cannot be null, empty, or whitespace.", new[] { nameof(email_user) });
-        }
-        else if (!new EmailAddressAttribute().IsValid(email_user))
-        {
-            throw new InvalidOperationException("email_user has an Invalid email format");
+            yield return new ValidationResult("email_user has an Invalid email format", new[] { nameof(email_user) });
         }
         if (!new RegularExpressionAttribute(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$").IsValid(mdp_user))
         {
-            yield return new ValidationResult("mdp_user must contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long");
+            yield return new ValidationResult("mdp_user must contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long", new[] { nameof(mdp_user) });
         }
     }
 }
@@ -102,11 +90,11 @@ public record UpdateUserDto : IValidatableObject
         }
         else if (email_user is not null && !new EmailAddressAttribute().IsValid(email_user))
         {
-            throw new InvalidOperationException("email_user has an Invalid email format");
+            yield return new ValidationResult("email_user has an Invalid email format", new[] { nameof(email_user) });
         }
         if (mdp_user is not null && !new RegularExpressionAttribute(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$").IsValid(mdp_user))
         {
-            yield return new ValidationResult("mdp_user must contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long");
+            yield return new ValidationResult("mdp_user must contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long", new[] { nameof(mdp_user) });
         }
     }
 }

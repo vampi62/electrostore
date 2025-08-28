@@ -17,8 +17,8 @@ public record ReadExtendedProjetItemDto : ReadProjetItemDto
 }
 public record ReadBulkProjetItemDto
 {
-    public List<ReadProjetItemDto> Valide { get; init; }
-    public List<ErrorDetail> Error { get; init; }
+    public required List<ReadProjetItemDto> Valide { get; init; }
+    public required List<ErrorDetail> Error { get; init; }
 }
 public record CreateProjetItemByProjetDto
 {

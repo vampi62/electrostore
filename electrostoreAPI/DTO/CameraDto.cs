@@ -5,14 +5,14 @@ namespace electrostore.Dto;
 public record ReadCameraDto
 {
     public int id_camera { get; init; } 
-    public string nom_camera { get; init; }
-    public string url_camera { get; init; }
+    public required string nom_camera { get; init; }
+    public required string url_camera { get; init; }
     public string? user_camera { get; init; }
     public string? mdp_camera { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
 }
-public record CreateCameraDto : IValidatableObject
+public record CreateCameraDto
 {
     [Required]
     [MinLength(1, ErrorMessage = "nom_camera cannot be empty or whitespace.")]
@@ -29,18 +29,6 @@ public record CreateCameraDto : IValidatableObject
 
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "mdp_camera cannot exceed 50 characters")]
     public string? mdp_camera { get; init; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (string.IsNullOrWhiteSpace(nom_camera))
-        {
-            yield return new ValidationResult("nom_camera cannot be empty or whitespace.", new[] { nameof(nom_camera) });
-        }
-        if (string.IsNullOrWhiteSpace(url_camera))
-        {
-            yield return new ValidationResult("url_camera cannot be empty or whitespace.", new[] { nameof(url_camera) });
-        }
-    }
 }
 public record UpdateCameraDto : IValidatableObject
 {
