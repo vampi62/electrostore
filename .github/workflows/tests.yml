@@ -7,7 +7,6 @@ on:
         description: 'The branch that triggered this workflow.'
         required: true
         type: string
-
   workflow_dispatch:
     inputs:
       branch:
@@ -34,8 +33,19 @@ jobs:
         dotnet-version: '7.0.x'
     - name: Install dependencies
       run: dotnet restore
-    - name: Run tests
-      run: dotnet test ../tests/electrostoreAPI
+    - name: Run tests and collect coverage (OpenCover)
+      run: |
+        dotnet test ../tests/electrostoreAPI \
+          --collect "XPlat Code Coverage" \
+          --logger "trx;LogFileName=test-results.trx" \
+          --results-directory ./TestResults \
+          -- \
+          DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+    - name: Publish code coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: api-coverage
+        path: electrostoreAPI/TestResults
 
   test-front:
     name: tests - FRONT
@@ -57,8 +67,13 @@ jobs:
       run: npm install
     - name: Install test dependencies
       run: cd ../tests/electrostoreFRONT && npm install
-    - name: Run unit tests
-      run: cd ../tests/electrostoreFRONT && npm run test:unit
+    - name: Run unit tests with coverage
+      run: cd ../tests/electrostoreFRONT && npm run test:unit -- --coverage --coverage.reporter=lcov
+    - name: Upload front coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: front-coverage
+        path: tests/electrostoreFRONT/coverage
     - name: Cypress run
       env:
         VITE_API_URL: http://localhost/vite_api_url_placeholder/api
@@ -95,6 +110,104 @@ jobs:
       run: |
         pip install -r requirements.txt
         pip install -r ../tests/electrostoreIA/requirements.txt
-    - name: Run tests
+    - name: Run tests with coverage
       run: |
-        python -m pytest ../tests/electrostoreIA
+        python -m pytest ../tests/electrostoreIA --cov=electrostoreIA --cov-report=xml:coverage.xml
+    - name: Upload ia coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: ia-coverage
+        path: electrostoreIA/coverage.xml
+
+  sonarqube-api:
+    name: SonarQube - API
+    needs:
+      - test-api
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./electrostoreAPI
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.branch }}
+    - name: Set up C#
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '7.0.x'
+    - name: Download API coverage
+      uses: actions/download-artifact@v4
+      with:
+        name: api-coverage
+        path: api-coverage
+    - name: Run SonarQube scan
+      run: |
+        dotnet tool install --global dotnet-sonarscanner
+        dotnet sonarscanner begin /k:"electrostore-api" \
+          /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" \
+          /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+          /d:sonar.exclusions="**/Migrations/**" \
+          /d:sonar.cpd.exclusions="**/DTO/**,**/Models/**" \
+          /d:sonar.cs.vstest.reportsPaths=../api-coverage/*.trx \
+          /d:sonar.cs.opencover.reportsPaths=../api-coverage/**/coverage.opencover.xml
+        dotnet build
+        dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
+  sonarqube-front:
+    name: SonarQube - FRONT
+    needs:
+      - test-front
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.branch }}
+    - name: Download FRONT coverage
+      uses: actions/download-artifact@v4
+      with:
+        name: front-coverage
+        path: front-coverage
+    - name: SonarScanner
+      uses: SonarSource/sonarqube-scan-action@v5
+      env:
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.projectKey=electrostore-front
+          -Dsonar.projectName=electrostore-front
+          -Dsonar.sources=electrostoreFRONT
+          -Dsonar.javascript.lcov.reportPaths=front-coverage/lcov.info
+          -Dsonar.cfamily.cache.enabled=false
+
+  sonarqube-ia:
+    name: SonarQube - IA
+    needs:
+      - test-IA
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.branch }}
+        fetch-depth: 0
+    - name: Download IA coverage
+      uses: actions/download-artifact@v4
+      with:
+        name: ia-coverage
+        path: ia-coverage
+    - name: SonarScanner
+      uses: SonarSource/sonarqube-scan-action@v5
+      env:
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.projectKey=electrostore-ia
+          -Dsonar.projectName=electrostore-ia
+          -Dsonar.sources=electrostoreIA
+          -Dsonar.python.coverage.reportPaths=ia-coverage/coverage.xml
+          -Dsonar.cfamily.cache.enabled=false

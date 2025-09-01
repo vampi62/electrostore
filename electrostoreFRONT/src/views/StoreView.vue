@@ -1148,7 +1148,7 @@ const labelTableauModalItem = ref([
 
 	<div v-if="storeItemAddModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
 		@click="storeItemAddModalShow = false">
-		<div class="bg-white rounded-lg shadow-lg w-3/4 p-6" @click.stop>
+		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
 			<div class="flex justify-between items-center border-b pb-3">
 				<h2 class="text-2xl font-semibold">{{ $t('store.VStoreItemTitle') }}</h2>
 				<button type="button" @click="storeItemAddModalShow = false"
@@ -1162,7 +1162,7 @@ const labelTableauModalItem = ref([
 			<Tableau id="storeItemTable" :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
 				:store-data="[filteredItems,storesStore.boxItems[boxId]]"
 				:loading="itemsStore.itemsLoading" :schema="schemaItem"
-				:tableau-css="{ component: 'min-h-96 max-h-96', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
 	</div>

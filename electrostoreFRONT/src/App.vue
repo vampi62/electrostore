@@ -72,7 +72,7 @@ const containerClasses = computed(() => [
 				</div>
 			</div>
 		</nav>
-		<div class="fixed sm:hidden top-12 w-full z-50"><!-- for mobile -->
+		<div class="fixed sm:hidden top-12 w-full z-10"><!-- for mobile -->
 			<div v-show="showTopBar" class="flex flex-col space-y-4 bg-gray-800 p-4">
 				<RouterLink :to="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400">
 					{{ $t('common.VAppProfile') }}
@@ -82,7 +82,7 @@ const containerClasses = computed(() => [
 					{{ $t('common.VAppAdmin') }}
 				</RouterLink>
 				<button v-if="authStore.user" @click="authStore.logout()"
-					class="cursor-pointer text-white hover:text-blue-400">
+					class="cursor-pointer text-white hover:text-blue-400 text-left">
 					{{ $t('common.VAppLogout') }}
 				</button>
 				<div class="border-t-2 border-blue-400"></div>

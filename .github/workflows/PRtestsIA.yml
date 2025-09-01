@@ -17,8 +17,6 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      with:
-        ref: ${{ inputs.branch }}
     - name: Set up python
       uses: actions/setup-python@v5
       with:
@@ -27,6 +25,40 @@ jobs:
       run: |
         pip install -r requirements.txt
         pip install -r ../tests/electrostoreIA/requirements.txt
-    - name: Run tests
+    - name: Run tests with coverage
       run: |
-        python -m pytest ../tests/electrostoreIA
+        python -m pytest ../tests/electrostoreIA --cov=electrostoreIA --cov-report=xml:coverage.xml
+    - name: Upload ia coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: ia-coverage
+        path: electrostoreIA/coverage.xml
+
+  sonarqube-ia:
+    name: SonarQube - IA
+    needs:
+      - test-IA
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.branch }}
+        fetch-depth: 0
+    - name: Download IA coverage
+      uses: actions/download-artifact@v4
+      with:
+        name: ia-coverage
+        path: ia-coverage
+    - name: SonarScanner
+      uses: SonarSource/sonarqube-scan-action@v5
+      env:
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.projectKey=electrostore-ia
+          -Dsonar.projectName=electrostore-ia
+          -Dsonar.sources=electrostoreIA
+          -Dsonar.python.coverage.reportPaths=ia-coverage/coverage.xml
+          -Dsonar.cfamily.cache.enabled=false

@@ -197,7 +197,7 @@ const openNewPage = (url) => {
 	<Tableau :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[filteredItems,itemsStore.itemTags,tagsStore.tags,itemsStore.thumbnailsURL,itemsStore.items]"
 		:loading="itemsStore.itemsLoading"
-		:tableau-css="{ component: 'min-h-64'}"
+		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 
 	<div v-if="showPageFind" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center" @click="showPageFind = false">

@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'The main version that is build.'
+        required: true
+        type: string
+      branch:
+        description: 'The branch that triggered this workflow.'
+        required: true
+        type: string
+      release:
+        description: 'If this is a release build.'
+        required: false
+        default: "false"
+        type: string
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The main version that is build.'
+        required: true
+        type: string
+      branch:
+        description: 'The branch that triggered this workflow.'
+        required: true
+        type: string
+      release:
+        description: 'If this is a release build.'
+        required: false
+        default: "false"
+        type: string
+
+
+jobs:
+  OVH-deployment:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Helper to convert github repo to lowercase
+      id: repo
+      uses: ASzc/change-string-case-action@v6
+      with:
+        string: ${{ github.repository }}
+    - name: DEMO deployment
+      if: ${{ inputs.release == 'true' }}
+      uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ secrets.OVH_HOST }}
+        username: ${{ secrets.OVH_USERNAME }}
+        password: ${{ secrets.OVH_PASSWORD }}
+        port: ${{ secrets.OVH_PORT }}
+        script: |
+          docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/api:latest
+          docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/front:latest
+          docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/ia:latest
+    - name: TEST deployment
+      if: ${{ inputs.release != 'true' }}
+      uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ secrets.OVH_HOST }}
+        username: ${{ secrets.OVH_USERNAME }}
+        password: ${{ secrets.OVH_PASSWORD }}
+        port: ${{ secrets.OVH_PORT }}
+        script: |
+          docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/api:${{ inputs.version }}
+          docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/front:${{ inputs.version }}
+          docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/ia:${{ inputs.version }}
+          
