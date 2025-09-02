@@ -11,16 +11,16 @@ public class Projets : BaseEntity
     public int id_projet { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public string nom_projet { get; set; }
+    public required string nom_projet { get; set; }
 
     [MaxLength(Constants.MaxDescriptionLength)]
-    public string description_projet { get; set; }
+    public required string description_projet { get; set; }
 
     [MaxLength(Constants.MaxUrlLength)]
-    public string url_projet { get; set; }
+    public required string url_projet { get; set; }
 
     [MaxLength(Constants.MaxStatusLength)]
-    public string status_projet { get; set; }
+    public required string status_projet { get; set; }
 
     public DateTime date_debut_projet { get; set; }
 

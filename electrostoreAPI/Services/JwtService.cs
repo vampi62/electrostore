@@ -17,7 +17,7 @@ public class JwtService
         _jwtSettings = jwtSettings.Value ?? throw new ArgumentNullException(nameof(jwtSettings));
     }
 
-    public JWT GenerateToken(ReadUserDto user)
+    public Jwt GenerateToken(ReadUserDto user)
     {
         if (user is null) throw new ArgumentNullException(nameof(user));
 
@@ -80,7 +80,7 @@ public class JwtService
         var refreshTokenString = tokenHandler.WriteToken(refreshToken);
 
         // return token
-        return new JWT
+        return new Jwt
         {
             token = tokenString,
             expire_date_token = tokenDescriptor.Expires ?? DateTime.UtcNow.AddDays(_jwtSettings.ExpireDays),

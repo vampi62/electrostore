@@ -17,8 +17,6 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      with:
-        ref: ${{ inputs.branch }}
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
@@ -27,8 +25,13 @@ jobs:
       run: npm install
     - name: Install test dependencies
       run: cd ../tests/electrostoreFRONT && npm install
-    - name: Run unit tests
-      run: cd ../tests/electrostoreFRONT && npm run test:unit
+    - name: Run unit tests with coverage
+      run: cd ../tests/electrostoreFRONT && npm run test:unit -- --coverage --coverage.reporter=lcov
+    - name: Upload front coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: front-coverage
+        path: tests/electrostoreFRONT/coverage
     - name: Cypress run
       env:
         VITE_API_URL: http://localhost/vite_api_url_placeholder/api
@@ -44,3 +47,34 @@ jobs:
       with:
         name: cypress-screenshots
         path: tests/electrostoreFRONT/cypress/screenshots
+
+  sonarqube-front:
+    name: SonarQube - FRONT
+    needs:
+      - test-front
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Get PR ID
+      id: get-pr-id
+      run: |
+        PR_ID="${{ github.event.pull_request.number }}"
+        echo "pr_id=$PR_ID" >> $GITHUB_OUTPUT
+    - name: Download FRONT coverage
+      uses: actions/download-artifact@v4
+      with:
+        name: front-coverage
+        path: front-coverage
+    - name: SonarScanner
+      uses: SonarSource/sonarqube-scan-action@v5
+      env:
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.projectKey=PR-${{ steps.get-pr-id.outputs.pr_id }}-electrostore-front
+          -Dsonar.projectName=PR-${{ steps.get-pr-id.outputs.pr_id }}-electrostore-front
+          -Dsonar.sources=electrostoreFRONT
+          -Dsonar.javascript.lcov.reportPaths=front-coverage/lcov.info
+          -Dsonar.cfamily.cache.enabled=false

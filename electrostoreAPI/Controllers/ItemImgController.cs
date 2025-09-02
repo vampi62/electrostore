@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.ImgService;
+using electrostore.Services.FileService;
 
 namespace electrostore.Controllers
 {
@@ -11,10 +12,13 @@ namespace electrostore.Controllers
     public class ItemImgController : ControllerBase
     {
         private readonly IImgService _imgService;
+        private readonly FileService _fileService;
+        private readonly string _basePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
 
-        public ItemImgController(IImgService imgService)
+        public ItemImgController(IImgService imgService, FileService fileService)
         {
             _imgService = imgService;
+            _fileService = fileService;
         }
 
         [HttpGet]
@@ -72,7 +76,7 @@ namespace electrostore.Controllers
         public async Task<ActionResult> GetImgData([FromRoute] int id_img, [FromRoute] int id_item)
         {
             var img = await _imgService.GetImgById(id_img, id_item);
-            var result = await _imgService.GetImageFile(img.url_picture_img); // check if img.url_picture_img is a valid path
+            var result = await _fileService.GetFile(_basePath, img.url_picture_img); // check if img.url_picture_img is a valid path
             if (result.Success)
             {
                 return PhysicalFile(result.FilePath, result.MimeType);
@@ -88,7 +92,7 @@ namespace electrostore.Controllers
         public async Task<ActionResult> GetImgThumbnail([FromRoute] int id_img, [FromRoute] int id_item)
         {
             var img = await _imgService.GetImgById(id_img, id_item);
-            var result = await _imgService.GetImageFile(img.url_thumbnail_img); // check if img.url_thumbnail_img is a valid path
+            var result = await _fileService.GetFile(_basePath, img.url_thumbnail_img); // check if img.url_thumbnail_img is a valid path
             if (result.Success)
             {
                 return PhysicalFile(result.FilePath, result.MimeType);

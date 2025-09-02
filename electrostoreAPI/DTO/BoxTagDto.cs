@@ -16,24 +16,24 @@ public record ReadExtendedBoxTagDto : ReadBoxTagDto
 }
 public record ReadBulkBoxTagDto
 {
-    public List<ReadBoxTagDto> Valide { get; init; }
-    public List<ErrorDetail> Error { get; init; }
+    public required List<ReadBoxTagDto> Valide { get; init; }
+    public required List<ErrorDetail> Error { get; init; }
 }
 public record CreateBoxTagByTagDto
 {
     [Required]
-    public int id_box { get; init; }
+    public required int id_box { get; init; }
 }
 public record CreateBoxTagByBoxDto
 {
     [Required]
-    public int id_tag { get; init; }
+    public required int id_tag { get; init; }
 }
 public record CreateBoxTagDto
 {
     [Required]
-    public int id_tag { get; init; }
+    public required int id_tag { get; init; }
 
     [Required]
-    public int id_box { get; init; }
+    public required int id_box { get; init; }
 }

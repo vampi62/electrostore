@@ -1,8 +1,4 @@
 <script setup>
-import { onMounted, ref, computed, inject } from "vue";
-
-const { addNotification } = inject("useNotification");
-
 import { Form, Field } from "vee-validate";
 import * as Yup from "yup";
 
@@ -32,7 +28,7 @@ function onSubmit(values, { setErrors }) {
 		<h2 class="text-2xl font-bold mb-4">{{ $t('common.VForgotPasswordTitle') }}</h2>
 		<!-- Loading Spinner -->
 		<div v-if="configsStore.configs.loading" class="flex items-center justify-center my-4">
-			<div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" role="status">
+			<div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin">
 				<span class="sr-only">{{ $t('common.VForgotPasswordLoading') }}</span>
 			</div>
 		</div>
@@ -41,7 +37,7 @@ function onSubmit(values, { setErrors }) {
 		<div v-else-if="configsStore.configs.smtp_enabled">
 			<Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
 				<div class="mb-4">
-					<label class="block text-gray-700">{{ $t('common.VForgotPasswordEmail') }}</label>
+					<label class="block text-gray-700" for="email">{{ $t('common.VForgotPasswordEmail') }}</label>
 					<Field name="email" type="email"
 						class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
 						:class="{ 'border-red-500': errors.email }" />

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.ProjetDocumentService;
+using electrostore.Services.FileService;
 
 namespace electrostore.Controllers
 {
@@ -11,10 +12,13 @@ namespace electrostore.Controllers
     public class ProjetDocumentController : ControllerBase
     {
         private readonly IProjetDocumentService _projetDocumentService;
+        private readonly FileService _fileService;
+        private readonly string _projetDocumentsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments");
 
-        public ProjetDocumentController(IProjetDocumentService projetDocumentService)
+        public ProjetDocumentController(IProjetDocumentService projetDocumentService, FileService fileService)
         {
             _projetDocumentService = projetDocumentService;
+            _fileService = fileService;
         }
 
         [HttpGet]
@@ -41,7 +45,7 @@ namespace electrostore.Controllers
         public async Task<ActionResult> DownloadProjetDocument([FromRoute] int id_projetDocument, [FromRoute] int id_projet)
         {
             var projetDocument = await _projetDocumentService.GetProjetDocumentById(id_projetDocument, id_projet);
-            var result = await _projetDocumentService.GetFile(projetDocument.url_projet_document); // check if projetDocument.url_projet_document is a valid path
+            var result = await _fileService.GetFile(_projetDocumentsPath, projetDocument.url_projet_document); // check if projetDocument.url_projet_document is a valid path
             if (result.Success)
             {
                 return PhysicalFile(result.FilePath, result.MimeType, projetDocument.name_projet_document);

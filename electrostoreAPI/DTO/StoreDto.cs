@@ -5,10 +5,10 @@ namespace electrostore.Dto;
 public record ReadStoreDto
 {
     public int id_store { get; init; }
-    public string nom_store { get; init; }
+    public required string nom_store { get; init; }
     public int xlength_store { get; init; }
     public int ylength_store { get; init; }
-    public string mqtt_name_store { get; init; }
+    public required string mqtt_name_store { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
 }
@@ -22,38 +22,25 @@ public record ReadExtendedStoreDto : ReadStoreDto
     public IEnumerable<ReadStoreTagDto>? stores_tags { get; init; }
 }
 
-public record CreateStoreDto : IValidatableObject
+public record CreateStoreDto
 {
     [Required]
     [MinLength(1, ErrorMessage = "nom_store cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_store cannot exceed 50 characters")]
-    public string nom_store { get; init; }
+    public required string nom_store { get; init; }
 
     [Required]
     [Range(1, int.MaxValue, ErrorMessage = "xlength_store must be greater than 0.")]
-    public int xlength_store { get; init; }
+    public required int xlength_store { get; init; }
 
     [Required]
     [Range(1, int.MaxValue, ErrorMessage = "ylength_store must be greater than 0.")]
-    public int ylength_store { get; init; }
+    public required int ylength_store { get; init; }
 
     [Required]
     [MinLength(1, ErrorMessage = "mqtt_name_store cannot be empty or whitespace.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "mqtt_name_store cannot exceed 50 characters")]
-    public string mqtt_name_store { get; init; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (string.IsNullOrWhiteSpace(nom_store))
-        {
-            yield return new ValidationResult("nom_store cannot be null, empty, or whitespace.", new[] { nameof(nom_store) });
-        }
-
-        if (string.IsNullOrWhiteSpace(mqtt_name_store))
-        {
-            yield return new ValidationResult("mqtt_name_store cannot be null, empty, or whitespace.", new[] { nameof(mqtt_name_store) });
-        }
-    }
+    public required string mqtt_name_store { get; init; }
 }
 
 public record UpdateStoreDto : IValidatableObject
@@ -86,20 +73,20 @@ public record UpdateStoreDto : IValidatableObject
 
 public record ReadStoreCompleteDto
 {
-    public ReadStoreDto store { get; init; }
+    public required ReadStoreDto store { get; init; }
     public ReadBulkLedDto? leds { get; init; }
     public ReadBulkBoxDto? boxs { get; init; }
 }
 public record CreateStoreCompleteDto
 {
-    public CreateStoreDto store { get; init; }
+    public required CreateStoreDto store { get; init; }
     public IEnumerable<CreateBoxByStoreDto>? boxs { get; init; }
     public IEnumerable<CreateLedByStoreDto>? leds { get; init; }
 }
 
 public record UpdateStoreCompleteDto
 {
-    public UpdateStoreDto store { get; init; }
+    public required UpdateStoreDto store { get; init; }
     public IEnumerable<UpdateBulkBoxByStoreDto>? boxs { get; init; }
     public IEnumerable<UpdateBulkLedByStoreDto>? leds { get; init; }
 }

@@ -102,9 +102,7 @@ const projetSave = async() => {
 			addNotification({ message: "projet.VProjetCreated", type: "success", i18n: true });
 		}
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
+		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
 	if (projetId === "new") {
@@ -118,7 +116,7 @@ const projetDelete = async() => {
 		addNotification({ message: "projet.VProjetDeleted", type: "success", i18n: true });
 		router.push("/projets");
 	} catch (e) {
-		addNotification({ message: "projet.VProjetDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 	projetDeleteModalShow.value = false;
 };
@@ -141,9 +139,7 @@ const documentAdd = async() => {
 		await projetsStore.createDocument(projetId, documentModalData.value);
 		addNotification({ message: "projet.VProjetDocumentAdded", type: "success", i18n: true });
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
+		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
 	documentAddModalShow.value = false;
@@ -154,9 +150,7 @@ const documentEdit = async(row) => {
 		await projetsStore.updateDocument(projetId, row.id_projet_document, row);
 		addNotification({ message: "projet.VProjetDocumentUpdated", type: "success", i18n: true });
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
+		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
 };
@@ -165,7 +159,7 @@ const documentDelete = async() => {
 		await projetsStore.deleteDocument(projetId, documentModalData.value.id_projet_document);
 		addNotification({ message: "projet.VProjetDocumentDeleted", type: "success", i18n: true });
 	} catch (e) {
-		addNotification({ message: "projet.VProjetDocumentDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 	documentDeleteModalShow.value = false;
 };
@@ -247,9 +241,7 @@ const itemSave = async(item) => {
 			addNotification({ message: "projet.VProjetItemUpdated", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
+			addNotification({ message: e, type: "error", i18n: false });
 			return;
 		}
 	} else {
@@ -259,9 +251,7 @@ const itemSave = async(item) => {
 			addNotification({ message: "projet.VProjetItemAdded", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
+			addNotification({ message: e, type: "error", i18n: false });
 			return;
 		}
 	}
@@ -271,7 +261,7 @@ const itemDelete = async(item) => {
 		await projetsStore.deleteItem(projetId, item.id_item);
 		addNotification({ message: "projet.VProjetItemDeleted", type: "success", i18n: true });
 	} catch (e) {
-		addNotification({ message: "projet.VProjetItemDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
 
@@ -471,80 +461,74 @@ const labelTableauModalItem = ref([
 	<div :class="projetsStore.projets[projetId] || projetId == 'new' ? 'block' : 'hidden'">
 		<div class="mb-6 flex justify-between">
 			<Form :validation-schema="schemaProjet" v-slot="{ errors }" @submit.prevent="">
-				<table class="table-auto text-gray-700">
-					<tbody>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('projet.VProjetName') }}:</td>
-							<td class="flex flex-col">
-								<Field name="nom_projet" type="text"
-									v-model="projetsStore.projetEdition.nom_projet"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.nom_projet }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_projet || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('projet.VProjetDescription') }}:</td>
-							<td class="flex flex-col">
-								<Field name="description_projet" v-slot="{ field }">
-									<textarea v-bind="field" v-model="projetsStore.projetEdition.description_projet"
-										:value="projetsStore.projetEdition.description_projet"
-										class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300 resize-y"
-										:class="{ 'border-red-500': errors.description_projet }" rows="4">
-									</textarea>
-								</Field>
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.description_projet || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('projet.VProjetUrl') }}:</td>
-							<td class="flex flex-col">
-								<Field name="url_projet" type="text" v-model="projetsStore.projetEdition.url_projet"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.url_projet }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.url_projet || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('projet.VProjetStatus') }}:</td>
-							<td class="flex flex-col">
-								<Field name="status_projet" as="select"
-									v-model="projetsStore.projetEdition.status_projet"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.status_projet }">
-									<option value="" disabled> -- {{ $t('projet.VProjetStatusSelect') }} -- </option>
-									<option v-for="status in projetTypeStatus" :key="status" :value="status[0]">
-										{{ status[1] }}
-									</option>
-								</Field>
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.status_projet || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('projet.VProjetStartDate') }}:</td>
-							<td class="flex flex-col">
-								<!-- format date permit is only YYYY-MM-DDTHH-mm-->
-								<Field name="date_debut_projet" type="datetime-local"
-									v-model="projetsStore.projetEdition.date_debut_projet"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.date_debut_projet }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_debut_projet || ' ' }}</span>
-							</td>
-						</tr>
-						<tr class="pb-4">
-							<td class="font-semibold pr-4 align-text-top">{{ $t('projet.VProjetEndDate') }}:</td>
-							<td class="flex flex-col">
-								<Field name="date_fin_projet" type="datetime-local"
-									v-model="projetsStore.projetEdition.date_fin_projet"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.date_fin_projet }" />
-								<span class="text-red-500 h-5 w-80 text-sm">
-									{{ errors.date_fin_projet || ' ' }}
-								</span>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+				<div class="flex flex-col text-gray-700 space-y-2">
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="nom_projet">{{ $t('projet.VProjetName') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="nom_projet" type="text"
+								v-model="projetsStore.projetEdition.nom_projet"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.nom_projet }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_projet || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="description_projet">{{ $t('projet.VProjetDescription') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="description_projet" v-slot="{ field }">
+								<textarea v-bind="field" v-model="projetsStore.projetEdition.description_projet"
+									:value="projetsStore.projetEdition.description_projet"
+									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300 resize-y"
+									:class="{ 'border-red-500': errors.description_projet }" rows="4"></textarea>
+							</Field>
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.description_projet || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="url_projet">{{ $t('projet.VProjetUrl') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="url_projet" type="text" v-model="projetsStore.projetEdition.url_projet"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.url_projet }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.url_projet || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="status_projet">{{ $t('projet.VProjetStatus') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="status_projet" as="select"
+								v-model="projetsStore.projetEdition.status_projet"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.status_projet }">
+								<option value="" disabled> -- {{ $t('projet.VProjetStatusSelect') }} -- </option>
+								<option v-for="status in projetTypeStatus" :key="status" :value="status[0]">
+									{{ status[1] }}
+								</option>
+							</Field>
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.status_projet || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="date_debut_projet">{{ $t('projet.VProjetStartDate') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="date_debut_projet" type="datetime-local"
+								v-model="projetsStore.projetEdition.date_debut_projet"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.date_debut_projet }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_debut_projet || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="date_fin_projet">{{ $t('projet.VProjetEndDate') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="date_fin_projet" type="datetime-local"
+								v-model="projetsStore.projetEdition.date_fin_projet"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.date_fin_projet }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_fin_projet || ' ' }}</span>
+						</div>
+					</div>
+				</div>
 			</Form>
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
@@ -651,7 +635,7 @@ const labelTableauModalItem = ref([
 
 	<div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
 		@click="itemModalShow = false">
-		<div class="bg-white rounded-lg shadow-lg w-3/4 p-6" @click.stop>
+		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
 			<div class="flex justify-between items-center border-b pb-3">
 				<h2 class="text-2xl font-semibold">{{ $t('projet.VProjetItemTitle') }}</h2>
 				<button type="button" @click="itemModalShow = false"
@@ -665,7 +649,7 @@ const labelTableauModalItem = ref([
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
 				:store-data="[filteredItems,projetsStore.items[projetId]]"
 				:loading="projetsStore.itemsLoading" :schema="schemaItem"
-				:tableau-css="{ component: 'min-h-96 max-h-96', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
 	</div>

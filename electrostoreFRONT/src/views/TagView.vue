@@ -95,9 +95,7 @@ const tagSave = async() => {
 			addNotification({ message: "tag.VTagCreated", type: "success", i18n: true });
 		}
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
+		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
 	if (tagId === "new") {
@@ -111,7 +109,7 @@ const tagDelete = async() => {
 		addNotification({ message: "tag.VTagDeleted", type: "success", i18n: true });
 		router.push("/tags");
 	} catch (e) {
-		addNotification({ message: "tag.VTagDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 	tagDeleteModalShow.value = false;
 };
@@ -139,9 +137,7 @@ const itemSave = async(item) => {
 		await tagsStore.createTagItem(tagId, item);
 		addNotification({ message: "tag.VTagItemAdded", type: "success", i18n: true });
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
+		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
 };
@@ -150,7 +146,7 @@ const itemDelete = async(item) => {
 		await tagsStore.deleteTagItem(tagId, item.id_item);
 		addNotification({ message: "tag.VTagItemDeleted", type: "success", i18n: true });
 	} catch (e) {
-		addNotification({ message: "tag.VTagItemDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
 
@@ -185,9 +181,7 @@ const storeSave = async(store) => {
 		await tagsStore.createTagStore(tagId, store);
 		addNotification({ message: "tag.VTagStoreAdded", type: "success", i18n: true });
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
+		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
 };
@@ -196,7 +190,7 @@ const storeDelete = async(store) => {
 		await tagsStore.deleteTagStore(tagId, store.id_store);
 		addNotification({ message: "tag.VTagStoreDeleted", type: "success", i18n: true });
 	} catch (e) {
-		addNotification({ message: "tag.VTagStoreDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
 
@@ -215,9 +209,7 @@ const boxSave = async(box) => {
 		await tagsStore.createTagBox(tagId, box);
 		addNotification({ message: "tag.VTagBoxAdded", type: "success", i18n: true });
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
+		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
 };
@@ -226,7 +218,7 @@ const boxDelete = async(box) => {
 		await tagsStore.deleteTagBox(tagId, box.id_box);
 		addNotification({ message: "tag.VTagBoxDeleted", type: "success", i18n: true });
 	} catch (e) {
-		addNotification({ message: "tag.VTagBoxDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
 
@@ -323,29 +315,27 @@ const labelTableauModalStore = ref([
 	<div v-if="tagsStore.tags[tagId] || tagId == 'new'">
 		<div class="mb-6 flex justify-between">
 			<Form :validation-schema="schemaTag" v-slot="{ errors }" @submit.prevent="">
-				<table class="table-auto text-gray-700">
-					<tbody>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('tag.VTagName') }}:</td>
-							<td class="flex flex-col">
-								<Field name="nom_tag" type="text"
-									v-model="tagsStore.tagEdition.nom_tag"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.nom_tag }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_tag || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('tag.VTagPoids') }}:</td>
-							<td class="flex flex-col">
-								<Field name="poids_tag" type="text" v-model="tagsStore.tagEdition.poids_tag"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.poids_tag }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.poids_tag || ' ' }}</span>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+				<div class="flex flex-col text-gray-700 space-y-2">
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="nom_tag">{{ $t('tag.VTagName') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="nom_tag" type="text"
+								v-model="tagsStore.tagEdition.nom_tag"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.nom_tag }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_tag || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="poids_tag">{{ $t('tag.VTagPoids') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="poids_tag" type="text" v-model="tagsStore.tagEdition.poids_tag"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.poids_tag }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.poids_tag || ' ' }}</span>
+						</div>
+					</div>
+				</div>
 			</Form>
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">
@@ -418,7 +408,7 @@ const labelTableauModalStore = ref([
 
 	<div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
 		@click="itemModalShow = false">
-		<div class="bg-white rounded-lg shadow-lg w-3/4 p-6" @click.stop>
+		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
 			<div class="flex justify-between items-center border-b pb-3">
 				<h2 class="text-2xl font-semibold">{{ $t('tag.VTagItemTitle') }}</h2>
 				<button type="button" @click="itemModalShow = false"
@@ -432,14 +422,14 @@ const labelTableauModalStore = ref([
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
 				:store-data="[filteredItems, tagsStore.tagsItem[tagId]]"
 				:loading="tagsStore.tagsItemLoading"
-				:tableau-css="{ component: 'min-h-96 max-h-96', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
 	</div>
 
 	<div v-if="storeModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
 		@click="storeModalShow = false">
-		<div class="bg-white rounded-lg shadow-lg w-3/4 p-6" @click.stop>
+		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
 			<div class="flex justify-between items-center border-b pb-3">
 				<h2 class="text-2xl font-semibold">{{ $t('tag.VTagStoreTitle') }}</h2>
 				<button type="button" @click="storeModalShow = false"
@@ -453,7 +443,7 @@ const labelTableauModalStore = ref([
 			<Tableau :labels="labelTableauModalStore" :meta="{ key: 'id_store' }"
 				:store-data="[filteredStores, tagsStore.tagsStore[tagId]]"
 				:loading="tagsStore.tagsStoreLoading"
-				:tableau-css="{ component: 'min-h-96 max-h-96', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
 	</div>

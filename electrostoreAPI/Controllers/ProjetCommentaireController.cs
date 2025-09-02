@@ -45,7 +45,7 @@ namespace electrostore.Controllers
             var projetCommentaireDtoFull = new CreateProjetCommentaireDto
             {
                 id_projet = id_projet,
-                id_user = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value),
+                id_user = int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId) ? userId : throw new InvalidOperationException("User identifier not found."),
                 contenu_projet_commentaire = projetCommentaireDto.contenu_projet_commentaire
             };
             var projetCommentaire = await _projetCommentaireService.CreateProjetCommentaire(projetCommentaireDtoFull);

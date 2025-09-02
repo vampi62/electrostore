@@ -9,6 +9,7 @@ public class CommandService : ICommandService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly string _commandDocumentsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments");
 
     public CommandService(IMapper mapper, ApplicationDbContext context)
     {
@@ -85,11 +86,13 @@ public class CommandService : ICommandService
     public async Task<ReadCommandDto> CreateCommand(CreateCommandDto commandDto)
     {
         var newCommand = _mapper.Map<Commands>(commandDto);
+        // TODO went the format of status_command will be changed to enum
+        // set date_livraison_command to null if status_command is enum for not delivered
         _context.Commands.Add(newCommand);
         await _context.SaveChangesAsync();
-        if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", newCommand.id_command.ToString())))
+        if (!Directory.Exists(Path.Combine(_commandDocumentsPath, newCommand.id_command.ToString())))
         {
-            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", newCommand.id_command.ToString()));
+            Directory.CreateDirectory(Path.Combine(_commandDocumentsPath, newCommand.id_command.ToString()));
         }
         return _mapper.Map<ReadCommandDto>(newCommand);
     }
@@ -117,6 +120,8 @@ public class CommandService : ICommandService
         {
             commandToUpdate.date_livraison_command = commandDto.date_livraison_command;
         }
+        // TODO went the format of status_command will be changed to enum
+        // set date_livraison_command to null if status_command is enum for not delivered
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadCommandDto>(commandToUpdate);
     }
@@ -127,9 +132,9 @@ public class CommandService : ICommandService
         _context.Commands.Remove(commandToDelete);
         await _context.SaveChangesAsync();
         //remove folder in wwwroot/commandDocuments
-        if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", id.ToString())))
+        if (Directory.Exists(Path.Combine(_commandDocumentsPath, id.ToString())))
         {
-            Directory.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments", id.ToString()), true);
+            Directory.Delete(Path.Combine(_commandDocumentsPath, id.ToString()), true);
         }
     }
 }

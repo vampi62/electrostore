@@ -55,6 +55,6 @@ const updateFilteredCameras = (newValue) => {
 	<Tableau :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[filteredCameras,camerasStore.status]"
 		:loading="camerasStore.loading"
-		:tableau-css="{ component: 'min-h-64'}"
+		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

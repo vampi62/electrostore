@@ -18,5 +18,5 @@ public class ProjetsCommentaires : BaseEntity
     public Projets Projet { get; set; }
 
     [MaxLength(Constants.MaxCommentaireLength)]
-    public string contenu_projet_commentaire { get; set; }
+    public required string contenu_projet_commentaire { get; set; }
 }

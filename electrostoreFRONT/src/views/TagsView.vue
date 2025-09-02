@@ -54,6 +54,6 @@ const updateFilteredTags = (newValue) => {
 	<Tableau :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[filteredTags]"
 		:loading="tagsStore.tagsLoading"
-		:tableau-css="{ component: 'min-h-64'}"
+		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

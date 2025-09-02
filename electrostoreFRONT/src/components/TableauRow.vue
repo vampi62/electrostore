@@ -34,13 +34,13 @@
 				<template v-if="this.storeData[column.store][row[column.keyStore]]?.[column.key]">
 					<img v-if="this.storeData[column.idStoreImg]?.[this.storeData[column.store][row[column.keyStore]]?.[column.key]]"
 						:src="this.storeData[column.idStoreImg]?.[this.storeData[column.store][row[column.keyStore]]?.[column.key]]"
-						class="w-16 h-16 object-cover rounded" />
+						class="w-16 h-16 object-cover rounded" :alt="`Id ${row[column.key]}`" />
 					<span v-else class="w-16 h-16 object-cover rounded">
 						{{ $t('components.VModalTableauImageLoading') }}
 					</span>
 				</template>
 				<template v-else>
-					<img src="../assets/nopicture.webp" alt=" Unavailable" class="w-16 h-16 object-cover rounded" />
+					<img src="../assets/nopicture.webp" alt="Unavailable" class="w-16 h-16 object-cover rounded" />
 				</template>
 			</div>
 		</template>

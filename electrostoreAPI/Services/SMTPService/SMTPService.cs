@@ -1,13 +1,13 @@
 using System.Net;
 using System.Net.Mail;
 
-namespace electrostore.Services.SMTPService;
+namespace electrostore.Services.SmtpService;
 
-public class SMTPService : ISMTPService
+public class SmtpService : ISmtpService
 {
     private readonly IConfiguration _configuration;
 
-    public SMTPService(IConfiguration configuration)
+    public SmtpService(IConfiguration configuration)
     {
         _configuration = configuration;
     }
@@ -24,9 +24,14 @@ public class SMTPService : ISMTPService
             Credentials = new NetworkCredential(_configuration["SMTP:Username"], _configuration["SMTP:Password"]),
             EnableSsl = true
         };
+        var smtpUsername = _configuration["SMTP:Username"];
+        if (string.IsNullOrWhiteSpace(smtpUsername))
+        {
+            throw new ArgumentException("SMTP:Username configuration value is missing or empty.");
+        }
         var mailMessage = new MailMessage
         {
-            From = new MailAddress(_configuration["SMTP:Username"]),
+            From = new MailAddress(smtpUsername),
             Subject = subject,
             Body = body,
             IsBodyHtml = true

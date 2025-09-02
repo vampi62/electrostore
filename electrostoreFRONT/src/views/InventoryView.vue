@@ -197,7 +197,7 @@ const openNewPage = (url) => {
 	<Tableau :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[filteredItems,itemsStore.itemTags,tagsStore.tags,itemsStore.thumbnailsURL,itemsStore.items]"
 		:loading="itemsStore.itemsLoading"
-		:tableau-css="{ component: 'min-h-64'}"
+		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 
 	<div v-if="showPageFind" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center" @click="showPageFind = false">
@@ -240,10 +240,12 @@ const openNewPage = (url) => {
 				<div class="flex flex-1 flex-col flex-grow items-center">
 					<div class="w-80 h-80 bg-gray-200 px-4 py-2 rounded mb-2">
 						<template v-if="selectedPageFind.camera && camerasStore.stream[selectedPageFind.camera.id_camera]">
-							<img :src=camerasStore.stream[selectedPageFind.camera.id_camera] @click="$refs.fileInput.click()" class="w-full h-full object-cover rounded cursor-pointer" />
+							<img :src=camerasStore.stream[selectedPageFind.camera.id_camera] @click="$refs.fileInput.click()"
+								class="w-full h-full object-cover rounded cursor-pointer" alt="Camera Stream" />
 						</template>
 						<template v-else-if="selectedPageFind.imageBlob">
-							<img :src="selectedPageFind.imageBlob" @click="$refs.fileInput.click()" class="w-full h-full object-cover rounded cursor-pointer" />
+							<img :src="selectedPageFind.imageBlob" @click="$refs.fileInput.click()"
+								class="w-full h-full object-cover rounded cursor-pointer" alt="Uploaded" />
 						</template>
 						<template v-else>
 							<div class="flex justify-center items-center h-full cursor-pointer" @click="$refs.fileInput.click()">
@@ -301,8 +303,8 @@ const openNewPage = (url) => {
 							<div>
 								<img v-if="itemsStore.items[iasStore.status.detect.predictedLabel]?.id_img"
 									:src="itemsStore.thumbnailsURL[itemsStore.items[iasStore.status.detect.predictedLabel].id_img]"
-									class="w-16 h-16 object-cover rounded" />
-								<img v-else src="../assets/nopicture.webp" class="w-16 h-16 object-cover rounded" />
+									class="w-16 h-16 object-cover rounded" alt="Main" />
+								<img v-else src="../assets/nopicture.webp" class="w-16 h-16 object-cover rounded" alt="Not Found" />
 							</div>
 						</div>
 					</div>

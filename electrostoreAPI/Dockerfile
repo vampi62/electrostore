@@ -2,7 +2,8 @@ FROM mcr.microsoft.com/dotnet/sdk:7.0-alpine AS build
 
 WORKDIR /app
 
-COPY . .
+COPY ["Controllers/", "DTO/", "Enums/", "Middleware/", "Migrations/", "Models/", "Services/", \
+        "ApplicationDbContext.cs", "electrostore.csproj", "Mapper.cs", "Program.cs", "SwaggerClass.cs", "./"]
 
 RUN dotnet restore
 
