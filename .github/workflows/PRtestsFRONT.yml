@@ -56,8 +56,11 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      with:
-        ref: ${{ inputs.branch }}
+    - name: Get PR ID
+      id: get-pr-id
+      run: |
+        PR_ID="${{ github.event.pull_request.number }}"
+        echo "pr_id=$PR_ID" >> $GITHUB_OUTPUT
     - name: Download FRONT coverage
       uses: actions/download-artifact@v4
       with:
@@ -70,8 +73,8 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       with:
         args: >
-          -Dsonar.projectKey=electrostore-front
-          -Dsonar.projectName=electrostore-front
+          -Dsonar.projectKey=PR-${{ steps.get-pr-id.outputs.pr_id }}-electrostore-front
+          -Dsonar.projectName=PR-${{ steps.get-pr-id.outputs.pr_id }}-electrostore-front
           -Dsonar.sources=electrostoreFRONT
           -Dsonar.javascript.lcov.reportPaths=front-coverage/lcov.info
           -Dsonar.cfamily.cache.enabled=false

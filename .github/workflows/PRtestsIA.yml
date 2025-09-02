@@ -42,9 +42,11 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      with:
-        ref: ${{ inputs.branch }}
-        fetch-depth: 0
+    - name: Get PR ID
+      id: get-pr-id
+      run: |
+        PR_ID="${{ github.event.pull_request.number }}"
+        echo "pr_id=$PR_ID" >> $GITHUB_OUTPUT
     - name: Download IA coverage
       uses: actions/download-artifact@v4
       with:
@@ -57,8 +59,8 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       with:
         args: >
-          -Dsonar.projectKey=electrostore-ia
-          -Dsonar.projectName=electrostore-ia
+          -Dsonar.projectKey=PR-${{ steps.get-pr-id.outputs.pr_id }}-electrostore-ia
+          -Dsonar.projectName=PR-${{ steps.get-pr-id.outputs.pr_id }}-electrostore-ia
           -Dsonar.sources=electrostoreIA
           -Dsonar.python.coverage.reportPaths=ia-coverage/coverage.xml
           -Dsonar.cfamily.cache.enabled=false

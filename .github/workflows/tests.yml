@@ -143,17 +143,21 @@ jobs:
         name: api-coverage
         path: api-coverage
     - name: Run SonarQube scan
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        PROJECT_KEY: "${{ inputs.branch }}-electrostore-api"
       run: |
         dotnet tool install --global dotnet-sonarscanner
-        dotnet sonarscanner begin /k:"electrostore-api" \
-          /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" \
-          /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+        dotnet sonarscanner begin /k:"$PROJECT_KEY" \
+          /d:sonar.host.url="$SONAR_HOST_URL" \
+          /d:sonar.token="$SONAR_TOKEN" \
           /d:sonar.exclusions="**/Migrations/**" \
           /d:sonar.cpd.exclusions="**/DTO/**,**/Models/**" \
           /d:sonar.cs.vstest.reportsPaths=../api-coverage/*.trx \
           /d:sonar.cs.opencover.reportsPaths=../api-coverage/**/coverage.opencover.xml
         dotnet build
-        dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+        dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
   sonarqube-front:
     name: SonarQube - FRONT
@@ -177,8 +181,8 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       with:
         args: >
-          -Dsonar.projectKey=electrostore-front
-          -Dsonar.projectName=electrostore-front
+          -Dsonar.projectKey=${{ inputs.branch }}-electrostore-front
+          -Dsonar.projectName=${{ inputs.branch }}-electrostore-front
           -Dsonar.sources=electrostoreFRONT
           -Dsonar.javascript.lcov.reportPaths=front-coverage/lcov.info
           -Dsonar.cfamily.cache.enabled=false
@@ -206,8 +210,8 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       with:
         args: >
-          -Dsonar.projectKey=electrostore-ia
-          -Dsonar.projectName=electrostore-ia
+          -Dsonar.projectKey=${{ inputs.branch }}-electrostore-ia
+          -Dsonar.projectName=${{ inputs.branch }}-electrostore-ia
           -Dsonar.sources=electrostoreIA
           -Dsonar.python.coverage.reportPaths=ia-coverage/coverage.xml
           -Dsonar.cfamily.cache.enabled=false
