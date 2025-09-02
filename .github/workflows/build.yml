@@ -234,6 +234,11 @@ jobs:
       shell: bash
       run: |
         docker buildx imagetools create \
+          --label org.opencontainers.image.url=https://github.com/${{ steps.repo.outputs.lowercase }} \
+          --label org.opencontainers.image.title="Electrostore ${{matrix.target}}" \
+          --label org.opencontainers.image.description="Electrostore ${{matrix.target}} image" \
+          --label org.opencontainers.image.source=https://github.com/${{ steps.repo.outputs.lowercase }} \
+          --label org.opencontainers.image.version=${{ inputs.version }} \
           --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.branch }} \
           --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }} \
           --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:latest \
@@ -244,6 +249,11 @@ jobs:
       shell: bash
       run: |
         docker buildx imagetools create \
+          --label org.opencontainers.image.url=https://github.com/${{ steps.repo.outputs.lowercase }} \
+          --label org.opencontainers.image.title="Electrostore ${{matrix.target}}" \
+          --label org.opencontainers.image.description="Electrostore ${{matrix.target}} image" \
+          --label org.opencontainers.image.source=https://github.com/${{ steps.repo.outputs.lowercase }} \
+          --label org.opencontainers.image.version=${{ inputs.version }} \
           --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.branch }} \
           --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }} \
           --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:latest \
@@ -253,6 +263,11 @@ jobs:
       shell: bash
       run: |
         docker buildx imagetools create \
+          --label org.opencontainers.image.url=https://github.com/${{ steps.repo.outputs.lowercase }} \
+          --label org.opencontainers.image.title="Electrostore ${{matrix.target}}" \
+          --label org.opencontainers.image.description="Electrostore ${{matrix.target}} image" \
+          --label org.opencontainers.image.source=https://github.com/${{ steps.repo.outputs.lowercase }} \
+          --label org.opencontainers.image.version=${{ inputs.version }} \
           --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.branch }} \
           --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }} \
           --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:latest \

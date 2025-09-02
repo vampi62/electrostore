@@ -12,18 +12,18 @@ public class Items : BaseEntity
 
     public int? id_img { get; set; }
     [ForeignKey("id_img")]
-    public Imgs Img { get; set; }
+    public Imgs? Img { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public string reference_name_item { get; set; }
+    public required string reference_name_item { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public string friendly_name_item { get; set; }
+    public required string friendly_name_item { get; set; }
 
     public int seuil_min_item { get; set; }
 
     [MaxLength(Constants.MaxDescriptionLength)]
-    public string description_item { get; set; }
+    public required string description_item { get; set; }
 
     public ICollection<ItemsBoxs> ItemsBoxs { get; set; } = new List<ItemsBoxs>();
     public ICollection<ItemsTags> ItemsTags { get; set; } = new List<ItemsTags>();

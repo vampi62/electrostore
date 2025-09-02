@@ -18,5 +18,5 @@ public class CommandsCommentaires : BaseEntity
     public Commands Command { get; set; }
 
     [MaxLength(Constants.MaxCommentaireLength)]
-    public string contenu_command_commentaire { get; set; }
+    public required string contenu_command_commentaire { get; set; }
 }

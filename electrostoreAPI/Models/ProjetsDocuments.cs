@@ -12,13 +12,13 @@ public class ProjetsDocuments : BaseEntity
     public int id_projet_document { get; set; }
 
     [MaxLength(Constants.MaxUrlLength)]
-    public string url_projet_document { get; set; }
+    public required string url_projet_document { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public string name_projet_document { get; set; }
+    public required string name_projet_document { get; set; }
 
     [MaxLength(Constants.MaxTypeLength)]
-    public string type_projet_document { get; set; }
+    public required string type_projet_document { get; set; }
 
     public decimal size_projet_document { get; set; }
 

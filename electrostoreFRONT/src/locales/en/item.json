@@ -36,6 +36,7 @@
 	"VItemUpdated": "Item updated",
 	"VItemDeleted": "Item deleted",
 	"VItemDeleteError": "Error deleting item",
+	"VItemTagLoadError": "Error loading tags",
 	"VItemBoxUpdated": "Item box updated",
 	"VItemBoxAdded": "Item box added",
 	"VItemDocumentAdded": "Document added",

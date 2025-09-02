@@ -48,29 +48,33 @@ export default {
 				return this.filters.every((f) => {
 					if (f.value !== "" && f.value !== null && f.value !== undefined) {
 						if (f.subPath) {
-							if (f.compareMethod === "=") {
+							switch (f.compareMethod) {
+							case "=":
 								return element[f.subPath].some((subElement) => subElement[f.key] === f.value);
-							} else if (f.compareMethod === ">=") {
+							case ">=":
 								return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) >= f.value;
-							} else if (f.compareMethod === "<=") {
+							case "<=":
 								return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) <= f.value;
 							}
-						} else if (f.compareMethod === "=") {
-							if (f.dataType === "bool") {
+						}
+						switch (f.compareMethod) {
+						case "=":
+							switch (f.dataType) {
+							case "bool":
 								return element[f.key] === (f.value === "true");
-							} else if (f.dataType === "int") {
+							case "int":
 								return parseInt(element[f.key]) === parseInt(f.value);
-							} else if (f.dataType === "float") {
+							case "float":
 								return parseFloat(element[f.key]) === parseFloat(f.value);
-							} else if (f.dataType === "string") {
+							case "string":
 								return element[f.key].toLowerCase() === f.value.toLowerCase();
 							}
 							return element[f.key] === f.value;
-						} else if (f.compareMethod === ">=") {
+						case ">=":
 							return element[f.key] >= f.value;
-						} else if (f.compareMethod === "<=") {
+						case "<=":
 							return element[f.key] <= f.value;
-						} else if (f.compareMethod === "contain") {
+						case "contain":
 							return element[f.key].includes(f.value);
 						}
 					}
@@ -84,23 +88,30 @@ export default {
 		updateText(key, value) {
 			this.filters.forEach((filter, index) => {
 				if (index === key) {
-					if (filter.type === "number") {
+					switch (filter.type) {
+					case "number":
 						value = parseFloat(value);
 						if (isNaN(value)) {
 							value = "";
 						}
-					} else if (filter.type === "text") {
+						break;
+					case "text":
 						value = value.toLowerCase();
-					} else if (filter.type === "select") {
-						if (filter.typeData === "int") {
+						break;
+					case "select":
+						switch (filter.typeData) {
+						case "int":
 							value = parseInt(value);
 							if (isNaN(value)) {
 								value = "";
 							}
-						} else if (filter.typeData === "float") {
+							break;
+						case "float":
 							value = parseFloat(value);
-						} else if (filter.typeData === "string") {
+							break;
+						case "string":
 							value = value.toLowerCase();
+							break;
 						}
 					}
 					filter.value = value;

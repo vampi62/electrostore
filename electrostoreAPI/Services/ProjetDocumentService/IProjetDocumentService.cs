@@ -15,6 +15,4 @@ public interface IProjetDocumentService
     public Task<ReadProjetDocumentDto> UpdateProjetDocument(int id, UpdateProjetDocumentDto projetDocumentDto, int? projetId = null);
 
     public Task DeleteProjetDocument(int id, int? projetId = null);
-
-    public Task<GetFileResult> GetFile(string url);
 }

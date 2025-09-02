@@ -4,9 +4,10 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm install --ignore-scripts
 
-COPY . .
+COPY [ "src/", "public/", \
+         ".env", ".eslintrc.cjs", "index.html", "postcss.config.js", "tailwind.config.js", "vite.config.js", "./" ]
 
 RUN npm run build
 

@@ -13,20 +13,18 @@ namespace electrostore.Services.JwiService;
 
 public class JwiService : IJwiService
 {
-    private readonly IMapper _mapper;
     private readonly JwtSettings _jwtSettings;
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
 
-    public JwiService(IMapper mapper, ApplicationDbContext context, IOptions<JwtSettings> jwtSettings, ISessionService sessionService)
+    public JwiService(ApplicationDbContext context, IOptions<JwtSettings> jwtSettings, ISessionService sessionService)
     {
-        _mapper = mapper;
         _jwtSettings = jwtSettings.Value ?? throw new ArgumentNullException(nameof(jwtSettings));
         _context = context;
         _sessionService = sessionService;
     }
 
-    public async Task SaveToken(JWT token, int userId, Guid? sessionId = null)
+    public async Task SaveToken(Jwt token, int userId, Guid? sessionId = null)
     {
         // check if sessionId is null
         if (sessionId is null)

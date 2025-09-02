@@ -79,6 +79,6 @@ const updateFilteredCommands = (newValue) => {
 	<Tableau :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[filteredCommands,commandsStore.items,itemsStore.items]"
 		:loading="commandsStore.commandsLoading"
-		:tableau-css="{ component: 'min-h-64'}"
+		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

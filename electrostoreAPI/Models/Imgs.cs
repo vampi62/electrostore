@@ -15,14 +15,14 @@ public class Imgs : BaseEntity
     public Items Item { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public string nom_img { get; set; }
+    public required string nom_img { get; set; }
 
     [MaxLength(Constants.MaxUrlLength)]
-    public string url_picture_img { get; set; }
+    public required string url_picture_img { get; set; }
 
     [MaxLength(Constants.MaxUrlLength+15)]
-    public string url_thumbnail_img { get; set; }
+    public required string url_thumbnail_img { get; set; }
 
     [MaxLength(Constants.MaxDescriptionLength)]
-    public string description_img { get; set; }
+    public required string description_img { get; set; }
 }

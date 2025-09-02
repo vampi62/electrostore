@@ -123,7 +123,7 @@ describe("Login Page", () => {
 	it("allows navigation to forgot password page", () => {
 		// Check if there's a "Forgot password" link and click it
 		cy.contains("Forgot password ?").then((link) => {
-			if (link.length > 0) {
+			if (link && link.length > 0) {
 				cy.wrap(link).click();
 				cy.url().should("include", "/forgot-password");
 			}
@@ -134,8 +134,18 @@ describe("Login Page", () => {
 	it("loads the login page quickly (performance benchmark)", () => {
 		// Measure page load time
 		cy.window().then((win) => {
-			const perfData = win.performance.timing;
-			const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
+			// Utiliser l'API Performance moderne
+			const navigationEntries = win.performance.getEntriesByType('navigation');
+			let pageLoadTime;
+			
+			if (navigationEntries.length > 0) {
+				// Utiliser PerformanceNavigationTiming API (moderne)
+				pageLoadTime = navigationEntries[0].loadEventEnd - navigationEntries[0].startTime;
+			} else {
+				// Fallback pour les navigateurs qui ne supportent pas PerformanceNavigationTiming
+				cy.log('Navigation Timing API non supportée, utilisation d\'une alternative');
+				pageLoadTime = win.performance.now(); // Temps écoulé depuis la création de la page
+			}
 			
 			// Log the performance data
 			cy.log(`[BENCHMARK] Page load time: ${pageLoadTime}ms`);

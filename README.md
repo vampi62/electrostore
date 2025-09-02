@@ -113,6 +113,10 @@ Complete the `appsettings.json` file with the following content, replacing place
     "Audience": "<your-audience>",
     "ExpireDays": 1
   },
+  "AllowedOrigins": [
+    "https://<your-frontend-domain1>",
+    "https://<your-frontend-domain2>"
+  ],
   "FrontendUrl": "http://<frontend-url>",
   "AllowedHosts": "*"
 }
@@ -131,6 +135,8 @@ sudo docker run -d --name electrostoreAPI \
  --security-opt no-new-privileges=true \
  --read-only=true \
  --cap-drop ALL \
+ --cpus=2 \
+ --memory=1g \
  ghcr.io/vampi62/electrostore/api:local
 
 sudo docker build -t ghcr.io/vampi62/electrostore/ia:local electrostoreIA
@@ -144,6 +150,7 @@ sudo docker run -d --name electrostoreIA \
  --read-only=true \
  --cap-drop ALL \
  --cpus=2 \
+ --memory=2g \
  ghcr.io/vampi62/electrostore/ia:local
 ```
 
@@ -159,6 +166,8 @@ sudo docker run -d --name electrostoreFRONT \
  -e VUE_API_URL=<VUE_API_URL> \
  --security-opt no-new-privileges=true \
  --cap-drop ALL \
+ --cpus=2 \
+ --memory=1g \
  ghcr.io/vampi62/electrostore/front:local
 ```
 

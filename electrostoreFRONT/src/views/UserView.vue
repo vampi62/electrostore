@@ -125,9 +125,7 @@ const userSave = async() => {
 		usersStore.userEdition.confirm_mdp_user = "";
 		usersStore.userEdition.current_mdp_user = "";
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
+		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
 	if (userId === "new") {
@@ -141,7 +139,7 @@ const userDelete = async() => {
 		addNotification({ message: "user.VUserDeleted", type: "success", i18n: true });
 		router.push("/users");
 	} catch (e) {
-		addNotification({ message: "user.VUserDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 	userDeleteModalShow.value = false;
 };
@@ -152,7 +150,7 @@ const revokeToken = async(tokenId) => {
 		usersStore.getTokenById(userId, tokenId);
 		addNotification({ message: "user.VUserTokenRevoked", type: "success", i18n: true });
 	} catch (e) {
-		addNotification({ message: "user.VUserTokenRevokeError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
 
@@ -220,96 +218,94 @@ const labelTableauSession = ref([
 	<div :class="usersStore.users[userId] || userId == 'new' ? 'block' : 'hidden'">
 		<div class="mb-6 flex justify-between flex-wrap">
 			<Form :validation-schema="schemaUser" v-slot="{ errors }" @submit.prevent="" class="mb-6">
-				<table class="table-auto text-gray-700">
-					<tbody>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('user.VUserName') }}:</td>
-							<td class="flex flex-col">
-								<Field name="nom_user" type="text" v-model="usersStore.userEdition.nom_user"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.nom_user }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_user || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('user.VUserFirstName') }}:</td>
-							<td class="flex flex-col">
-								<Field name="prenom_user" type="text" v-model="usersStore.userEdition.prenom_user"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.prenom_user }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.prenom_user || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('user.VUserEmail') }}:</td>
-							<td class="flex flex-col">
-								<Field name="email_user" type="text" v-model="usersStore.userEdition.email_user"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.email_user }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.email_user || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('user.VUserRole') }}:</td>
-							<td class="flex flex-col">
-								<Field name="role_user" as="select"
-									v-model="usersStore.userEdition.role_user"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.role_user }"
-									:disabled="authStore.user?.role_user !== 2">
-									<option value="" disabled :selected="!usersStore.userEdition.role_user"> -- {{ $t('user.VUserSelectRole') }} -- </option>
-									<option v-for="role in userTypeRole" :key="role[0]" :value="role[0]">
-										{{ role[1] }}
-									</option>
-								</Field>
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.role_user || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('user.VUserCheck') }}:</td>
-							<td class="flex flex-col">
-								<Field name="check" v-slot="{ is_checked_custom }">
-									<input
-										v-model="isChecked"
-										v-bind="is_checked_custom"
-										type="checkbox"
-										:checked="isChecked"
-										class="form-checkbox h-5 w-5 text-blue-600"
-									/>
-								</Field>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('user.VUserPassword') }}:</td>
-							<td class="flex flex-col">
-								<Field name="mdp_user" type="text" v-model="usersStore.userEdition.mdp_user"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.mdp_user }"
-									:disabled="!isChecked" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.mdp_user || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('user.VUserConfirmPassword') }}:</td>
-							<td class="flex flex-col">
-								<Field name="confirm_mdp_user" type="password" v-model="usersStore.userEdition.confirm_mdp_user"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.confirm_mdp_user }"
-									:disabled="!isChecked" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.confirm_mdp_user || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('user.VUserCurrentPassword') }}:</td>
-							<td class="flex flex-col">
-								<Field name="current_mdp_user" type="password" v-model="usersStore.userEdition.current_mdp_user"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.current_mdp_user }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.current_mdp_user || ' ' }}</span>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+				<div class="flex flex-col text-gray-700 space-y-2">
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="nom_user">{{ $t('user.VUserName') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="nom_user" type="text" v-model="usersStore.userEdition.nom_user"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.nom_user }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_user || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="prenom_user">{{ $t('user.VUserFirstName') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="prenom_user" type="text" v-model="usersStore.userEdition.prenom_user"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.prenom_user }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.prenom_user || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="email_user">{{ $t('user.VUserEmail') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="email_user" type="text" v-model="usersStore.userEdition.email_user"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.email_user }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.email_user || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="role_user">{{ $t('user.VUserRole') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="role_user" as="select"
+								v-model="usersStore.userEdition.role_user"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.role_user }"
+								:disabled="authStore.user?.role_user !== 2">
+								<option value="" disabled :selected="!usersStore.userEdition.role_user"> -- {{ $t('user.VUserSelectRole') }} -- </option>
+								<option v-for="role in userTypeRole" :key="role[0]" :value="role[0]">
+									{{ role[1] }}
+								</option>
+							</Field>
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.role_user || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="check">{{ $t('user.VUserRole') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="check" v-slot="{ is_checked_custom }">
+								<input
+									v-model="isChecked"
+									v-bind="is_checked_custom"
+									type="checkbox"
+									:checked="isChecked"
+									class="form-checkbox h-5 w-5 text-blue-600"
+								/>
+							</Field>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="mdp_user">{{ $t('user.VUserPassword') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="mdp_user" type="text" v-model="usersStore.userEdition.mdp_user"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.mdp_user }"
+								:disabled="!isChecked" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.mdp_user || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="confirm_mdp_user">{{ $t('user.VUserConfirmPassword') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="confirm_mdp_user" type="password" v-model="usersStore.userEdition.confirm_mdp_user"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.confirm_mdp_user }"
+								:disabled="!isChecked" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.confirm_mdp_user || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="current_mdp_user">{{ $t('user.VUserCurrentPassword') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="current_mdp_user" type="password" v-model="usersStore.userEdition.current_mdp_user"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.current_mdp_user }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.current_mdp_user || ' ' }}</span>
+						</div>
+					</div>
+				</div>
 			</Form>
 		</div>
 		<div class="mb-6 bg-gray-100 p-2 rounded">

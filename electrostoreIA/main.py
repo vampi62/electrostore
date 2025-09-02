@@ -16,6 +16,12 @@ app = Flask(__name__)
 # Database connection setup
 mysql_session = None
 
+#enum status
+class Status:
+	IN_PROGRESS = 'in progress'
+	COMPLETED = 'completed'
+	ERROR = 'error'
+
 appsettings = {}
 try:
     # Try to load config and connect to DB
@@ -51,7 +57,7 @@ except Exception as e:
 		mysql_session = MockMySQLConnection()
 	else:
 		# If not in test mode, raise the error
-		raise Exception(f"Could not initialize database connection: {str(e)}")
+		raise ConnectionError(f"Could not initialize database connection: {str(e)}")
 
 # Chemins pour stocker les modèles et les classes
 MODEL_DIR = '/data/models/'
@@ -77,7 +83,7 @@ class TrainingCallback(tf.keras.callbacks.Callback):
 			val_loss = logs.get('val_loss', 0)
 
 			training_progress[self.id_model] = {
-				'status': 'in progress',
+				'status': Status.IN_PROGRESS,
 				'message': 'Training in progress',
 				'epoch': epoch + 1,
 				'accuracy': accuracy,
@@ -148,14 +154,14 @@ def train_model(id_model):
 
 		print(f"Model {id_model} trained and saved.")
 		# Marquer la fin de l'entraînement dans le dictionnaire de suivi
-		training_progress[id_model]['status'] = 'completed'
+		training_progress[id_model]['status'] = Status.COMPLETED
 		training_progress[id_model]['message'] = 'Training completed successfully.'
 		# set to true the trained_ia field in the database
 		mysql_session.change_train_status(id_model, True)
 	except Exception as e:
 		print(f"Error training model {id_model}: {str(e)}")
 		# Marquer l'erreur dans le dictionnaire de suivi
-		training_progress[id_model]['status'] = 'error'
+		training_progress[id_model]['status'] = Status.ERROR
 		training_progress[id_model]['message'] = str(e)
 
 def async_train_model(id_model):
@@ -169,11 +175,11 @@ def predict_image(model, img_array):
     score = tf.nn.softmax(predictions[0])
     return score
 
-def detect_model(id_model, imageData):
+def detect_model(id_model, image_data):
 	# Charger le modèle
 	model_path = os.path.join(MODEL_DIR, f'Model{id_model}.keras')
 	if not os.path.exists(model_path):
-		raise Exception(f"Model {id_model} not found or not trained yet.")
+		raise FileNotFoundError(f"Model {id_model} not found or not trained yet.")
 	model = tf.keras.models.load_model(model_path)
 
 	# Charger les noms des classes
@@ -184,8 +190,7 @@ def detect_model(id_model, imageData):
 			class_names.append(line.strip())
 
 	try:
-		#img = tf.keras.utils.load_img(sunflower_path, target_size=(img_height, img_width))
-		img = tf.keras.preprocessing.image.load_img(io.BytesIO(imageData.read()), target_size=(img_height, img_width))
+		img = tf.keras.preprocessing.image.load_img(io.BytesIO(image_data.read()), target_size=(img_height, img_width))
 		img_array = tf.keras.utils.img_to_array(img)
 		img_array = tf.expand_dims(img_array, 0)  # Créer un batch
 
@@ -199,7 +204,7 @@ def detect_model(id_model, imageData):
 			"confidence": confidence
 		}
 	except Exception as e:
-		raise Exception(f"Error detecting image: {str(e)}")
+		raise ValueError(f"Error processing image: {str(e)}")
 
 @app.route('/train/<int:id_model>', methods=['POST'])
 def train(id_model):
@@ -214,7 +219,7 @@ def train(id_model):
 				return jsonify({"error": "Model not found in the database."}), 404
 			# Set training as completed immediately
 			training_progress[id_model] = {
-				'status': 'completed',
+				'status': Status.COMPLETED,
 				'message': 'Training completed successfully (demo mode).',
 				'epoch': 10,
 				'accuracy': 0.95,
@@ -229,14 +234,14 @@ def train(id_model):
 		# Normal mode - proceed with actual training
 		# check if a training is already in progress
 		for model in training_progress:
-			if training_progress[model]['status'] == 'in progress':
+			if training_progress[model]['status'] == Status.IN_PROGRESS:
 				return jsonify({"error": "Training already in progress for a model."}), 400
 		# check if the model exists in the database
 		model = mysql_session.get_ia(id_model)
 		if model is None:
 			return jsonify({"error": "Model not found in the database."}), 404
 		# Initialiser le progrès dans le dictionnaire
-		training_progress[id_model] = {'status': 'in progress'}
+		training_progress[id_model] = {'status': Status.IN_PROGRESS}
 		# set to false the trained_ia field in the database
 		mysql_session.change_train_status(id_model, False)
 		# Lancer la tâche d'entraînement en arrière-plan
@@ -273,7 +278,7 @@ def health_check():
 	try:
 		config = { #if demoMode is enabled, set status to demo
 			"status": "healthy" if appsettings.get('DemoMode', False) is False else "demo",
-			"training_in_progress": any(model['status'] == 'in progress' for model in training_progress.values()),
+			"training_in_progress": any(model['status'] == Status.IN_PROGRESS for model in training_progress.values()),
 			"db_connected": mysql_session is not None and mysql_session.is_connected(),
 			"uptime": os.popen('uptime -p').read().strip()
 		}

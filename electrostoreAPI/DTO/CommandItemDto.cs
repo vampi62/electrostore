@@ -18,50 +18,50 @@ public record ReadExtendedCommandItemDto : ReadCommandItemDto
 }
 public record ReadBulkCommandItemDto
 {
-    public List<ReadCommandItemDto> Valide { get; init; }
-    public List<ErrorDetail> Error { get; init; }
+    public required List<ReadCommandItemDto> Valide { get; init; }
+    public required List<ErrorDetail> Error { get; init; }
 }
 public record CreateCommandItemByCommandDto
 {
     [Required]
-    public int id_item { get; init; }
+    public required int id_item { get; init; }
 
     [Required]
     [Range(1, int.MaxValue, ErrorMessage = "qte_projet_item must be greater than 0.")]
-    public int qte_command_item { get; init; }
+    public required int qte_command_item { get; init; }
 
     [Required]
     [Range(0.0, float.MaxValue, ErrorMessage = "prix_command_item must be greater than 0.")]
-    public float prix_command_item { get; init; }
+    public required float prix_command_item { get; init; }
 }
 public record CreateCommandItemByItemDto
 {
     [Required]
-    public int id_command { get; init; }
+    public required int id_command { get; init; }
 
     [Required]
     [Range(1, int.MaxValue, ErrorMessage = "qte_projet_item must be greater than 0.")]
-    public int qte_command_item { get; init; }
+    public required int qte_command_item { get; init; }
 
     [Required]
     [Range(0.0, float.MaxValue, ErrorMessage = "prix_command_item must be greater than 0.")]
-    public float prix_command_item { get; init; }
+    public required float prix_command_item { get; init; }
 }
 public record CreateCommandItemDto
 {
     [Required]
-    public int id_item { get; init; }
+    public required int id_item { get; init; }
 
     [Required]
-    public int id_command { get; init; }
+    public required int id_command { get; init; }
 
     [Required]
     [Range(1, int.MaxValue, ErrorMessage = "qte_projet_item must be greater than 0.")]
-    public int qte_command_item { get; init; }
+    public required int qte_command_item { get; init; }
 
     [Required]
     [Range(0.0, float.MaxValue, ErrorMessage = "prix_command_item must be greater than or equal to 0.")]
-    public float prix_command_item { get; init; }
+    public required float prix_command_item { get; init; }
 }
 public record UpdateCommandItemDto
 {

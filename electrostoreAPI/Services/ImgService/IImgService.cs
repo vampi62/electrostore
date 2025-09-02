@@ -15,6 +15,4 @@ public interface IImgService
     public Task<ReadImgDto> UpdateImg(int id, UpdateImgDto imgDto, int? itemId = null);
 
     public Task DeleteImg(int id, int? itemId = null);
-
-    public Task<GetFileResult> GetImageFile(string url);
 }

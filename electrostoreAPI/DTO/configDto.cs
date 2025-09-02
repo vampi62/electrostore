@@ -6,7 +6,7 @@ public record ReadConfig
 {
     public bool smtp_enabled { get; init; }
     public bool mqtt_connected { get; init; }
-    public string ia_service_status { get; init; }
+    public required string ia_service_status { get; init; }
     public bool demo_mode { get; init; }
     public int max_length_url { get; init; }
     public int max_length_commentaire { get; init; }

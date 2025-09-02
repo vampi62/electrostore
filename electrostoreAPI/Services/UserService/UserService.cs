@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
 using electrostore.Enums;
-using electrostore.Services.SMTPService;
+using electrostore.Services.SmtpService;
 using electrostore.Services.SessionService;
 using electrostore.Services.JwiService;
 
@@ -14,12 +14,12 @@ public class UserService : IUserService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
-    private readonly ISMTPService _smtpService;
+    private readonly ISmtpService _smtpService;
     private readonly ISessionService _sessionService;
     private readonly IJwiService _jwiService;
     private readonly JwtService.JwtService _jwtService;
     public UserService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration,
-                    ISMTPService smtpService, ISessionService sessionService, IJwiService jwiService, JwtService.JwtService jwtService)
+                    ISmtpService smtpService, ISessionService sessionService, IJwiService jwiService, JwtService.JwtService jwtService)
     {
         _mapper = mapper;
         _context = context;
@@ -160,10 +160,15 @@ public class UserService : IUserService
         {
             userToUpdate.prenom_user = userDto.prenom_user;
         }
+        var oldUserEmail = userToUpdate.email_user;
         if (userDto.email_user is not null)
         {
             // Check if email is already used
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user) ?? throw new KeyNotFoundException($"User with email {userDto.email_user} not found");
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user && u.id_user != id);
+            if (existingUser != null)
+            {
+                throw new InvalidOperationException($"Email {userDto.email_user} is already used by another user");
+            }
             userToUpdate.email_user = userDto.email_user;
         }
         if (userDto.mdp_user is not null)
@@ -187,7 +192,12 @@ public class UserService : IUserService
             await _smtpService.SendEmailAsync(
                 userToUpdate.email_user,
                 "Email changed",
-                "Your email has been changed to " + userDto.email_user
+                "Your email has been changed from " + oldUserEmail + " to " + userDto.email_user
+            );
+            await _smtpService.SendEmailAsync(
+                oldUserEmail,
+                "Email changed",
+                "Your email has been changed from " + oldUserEmail + " to " + userDto.email_user
             );
         }
         else if (userDto.mdp_user is not null)

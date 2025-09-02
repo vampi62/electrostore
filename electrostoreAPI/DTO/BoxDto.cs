@@ -23,47 +23,47 @@ public record ReadExtendedBoxDto : ReadBoxDto
 }
 public record ReadBulkBoxDto
 {
-    public List<ReadBoxDto> Valide { get; init; }
-    public List<ErrorDetail> Error { get; init; }
+    public required List<ReadBoxDto> Valide { get; init; }
+    public required List<ErrorDetail> Error { get; init; }
 }
 public record CreateBoxByStoreDto
 {
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
-    public int xstart_box { get; init; }
+    public required int xstart_box { get; init; }
 
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
-    public int ystart_box { get; init; }
+    public required int ystart_box { get; init; }
 
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
-    public int xend_box { get; init; }
+    public required int xend_box { get; init; }
 
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
-    public int yend_box { get; init; }
+    public required int yend_box { get; init; }
 }
 public record CreateBoxDto
 {
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
-    public int xstart_box { get; init; }
+    public required int xstart_box { get; init; }
 
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
-    public int ystart_box { get; init; }
+    public required int ystart_box { get; init; }
 
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
-    public int xend_box { get; init; }
+    public required int xend_box { get; init; }
 
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
-    public int yend_box { get; init; }
+    public required int yend_box { get; init; }
 
     [Required]
-    public int id_store { get; init; }
+    public required int id_store { get; init; }
 }
 public record UpdateBoxByStoreDto
 {
@@ -97,7 +97,7 @@ public record UpdateBoxDto
 }
 public record UpdateBulkBoxByStoreDto
 {
-    public int id_box { get; init; }
+    public required int id_box { get; init; }
 
     [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
     public int? xstart_box { get; init; }

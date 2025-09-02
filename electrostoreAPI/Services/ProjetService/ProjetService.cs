@@ -9,6 +9,7 @@ public class ProjetService : IProjetService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly string _projetDocumentsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments");
 
     public ProjetService(IMapper mapper, ApplicationDbContext context)
     {
@@ -86,10 +87,12 @@ public class ProjetService : IProjetService
     {
         var newProjet = _mapper.Map<Projets>(projetDto);
         _context.Projets.Add(newProjet);
+        // TODO went the format of status_projet will be changed to enum
+        // set date_fin_projet to null if status_projet is enum for not finished / started / planned
         await _context.SaveChangesAsync();
-        if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", newProjet.id_projet.ToString())))
+        if (!Directory.Exists(Path.Combine(_projetDocumentsPath, newProjet.id_projet.ToString())))
         {
-            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", newProjet.id_projet.ToString()));
+            Directory.CreateDirectory(Path.Combine(_projetDocumentsPath, newProjet.id_projet.ToString()));
         }
         return _mapper.Map<ReadProjetDto>(newProjet);
     }
@@ -121,6 +124,8 @@ public class ProjetService : IProjetService
         {
             projetToUpdate.date_fin_projet = projetDto.date_fin_projet;
         }
+        // TODO went the format of status_projet will be changed to enum
+        // set date_fin_projet to null if status_projet is enum for not finished / started / planned
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadProjetDto>(projetToUpdate);
     }
@@ -131,9 +136,9 @@ public class ProjetService : IProjetService
         _context.Projets.Remove(projetToDelete);
         await _context.SaveChangesAsync();
         //remove folder in wwwroot/projetDocuments
-        if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", id.ToString())))
+        if (Directory.Exists(Path.Combine(_projetDocumentsPath, id.ToString())))
         {
-            Directory.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments", id.ToString()), true);
+            Directory.Delete(Path.Combine(_projetDocumentsPath, id.ToString()), true);
         }
     }
 }

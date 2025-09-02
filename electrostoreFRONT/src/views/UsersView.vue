@@ -66,6 +66,6 @@ const updateFilteredUsers = (newValue) => {
 	<Tableau :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[filteredUsers]"
 		:loading="usersStore.usersLoading"
-		:tableau-css="{ component: 'min-h-64'}"
+		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

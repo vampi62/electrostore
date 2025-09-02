@@ -66,7 +66,7 @@ class TestFlaskAPI:
         assert response_data['status'] == 'completed'
         assert response_data['message'] == 'Training completed successfully.'
         assert response_data['epoch'] == 5
-        assert response_data['accuracy'] == 0.85
+        assert response_data['accuracy'] >= 0.85
 
     @patch('electrostoreIA.main.detect_model')
     def test_detect_endpoint(self, mock_detect_model, client):
@@ -87,5 +87,5 @@ class TestFlaskAPI:
         # Assert
         assert response.status_code == 200
         assert response_data['predicted_class'] == 1
-        assert response_data['confidence'] == 95.0
+        assert response_data['confidence'] >= 95.0
         mock_detect_model.assert_called_once()

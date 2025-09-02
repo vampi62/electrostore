@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.CommandDocumentService;
+using electrostore.Services.FileService;
 
 namespace electrostore.Controllers
 {
@@ -11,10 +12,13 @@ namespace electrostore.Controllers
     public class CommandDocumentController : ControllerBase
     {
         private readonly ICommandDocumentService _commandDocumentService;
+        private readonly FileService _fileService;
+        private readonly string _commandDocumentsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments");
 
-        public CommandDocumentController(ICommandDocumentService commandDocumentService)
+        public CommandDocumentController(ICommandDocumentService commandDocumentService, FileService fileService)
         {
             _commandDocumentService = commandDocumentService;
+            _fileService = fileService;
         }
 
         [HttpGet]
@@ -41,7 +45,7 @@ namespace electrostore.Controllers
         public async Task<ActionResult> DownloadCommandDocument([FromRoute] int id_commandDocument, [FromRoute] int id_command)
         {
             var commandDocument = await _commandDocumentService.GetCommandDocumentById(id_commandDocument, id_command);
-            var result = await _commandDocumentService.GetFile(commandDocument.url_command_document); // check if commandDocument.url_command_document is a valid path
+            var result = await _fileService.GetFile(_commandDocumentsPath, commandDocument.url_command_document); // check if commandDocument.url_command_document is a valid path
             if (result.Success)
             {
                 return PhysicalFile(result.FilePath, result.MimeType, commandDocument.name_command_document);

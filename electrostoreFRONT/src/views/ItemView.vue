@@ -114,7 +114,7 @@ const toggleBoxLed = async(boxId) => {
 		await storesStore.showBoxById(storeId, boxId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
 		addNotification({ message: "item.VItemBoxShowSuccess", type: "success", i18n: true });
 	} catch (e) {
-		addNotification({ message: "item.VItemToggleError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
 
@@ -133,9 +133,7 @@ const itemSave = async() => {
 			addNotification({ message: "item.VItemCreated", type: "success", i18n: true });
 		}
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
+		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
 	if (itemId === "new") {
@@ -149,7 +147,7 @@ const itemDelete = async() => {
 		addNotification({ message: "item.VItemDeleted", type: "success", i18n: true });
 		router.push("/inventory");
 	} catch (e) {
-		addNotification({ message: "item.VItemDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 	itemDeleteModalShow.value = false;
 };
@@ -164,7 +162,8 @@ const showInputAddTag = async() => {
 			} while (offset < tagsStore.tagsTotalCount);
 			tagLoad.value = true;
 		} catch (e) {
-			console.log(e);
+			addNotification({ message: e, type: "error", i18n: false });
+			return;
 		}
 	}
 	itemInputTagShow.value = true;
@@ -197,9 +196,7 @@ const boxSave = async(box) => {
 			addNotification({ message: "item.VItemBoxUpdated", type: "success", i18n: true });
 			box.tmp = null;
 		} catch (e) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
+			addNotification({ message: e, type: "error", i18n: false });
 			return;
 		}
 	} else {
@@ -209,9 +206,7 @@ const boxSave = async(box) => {
 			addNotification({ message: "item.VItemBoxAdded", type: "success", i18n: true });
 			box.tmp = null;
 		} catch (e) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
+			addNotification({ message: e, type: "error", i18n: false });
 			return;
 		}
 	}
@@ -235,9 +230,7 @@ const documentAdd = async() => {
 		await itemsStore.createDocument(itemId, documentModalData.value);
 		addNotification({ message: "item.VItemDocumentAdded", type: "success", i18n: true });
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
+		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
 	documentAddModalShow.value = false;
@@ -248,9 +241,7 @@ const documentEdit = async(row) => {
 		await itemsStore.updateDocument(itemId, row.id_item_document, row);
 		addNotification({ message: "item.VItemDocumentUpdated", type: "success", i18n: true });
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
+		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
 };
@@ -259,7 +250,7 @@ const documentDelete = async() => {
 		await itemsStore.deleteDocument(itemId, documentModalData.value.id_item_document);
 		addNotification({ message: "item.VItemDocumentDeleted", type: "success", i18n: true });
 	} catch (e) {
-		addNotification({ message: "item.VItemDocumentDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 	documentDeleteModalShow.value = false;
 };
@@ -346,7 +337,7 @@ const imageAdd = async() => {
 		await itemsStore.createImage(itemId, imageModalData.value);
 		addNotification({ message: "item.VItemImageAdded", type: "success", i18n: true });
 	} catch (e) {
-		addNotification({ message: "item.VItemImageAddError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 	imageAddModalShow.value = false;
 };
@@ -355,7 +346,7 @@ const imageDelete = async() => {
 		await itemsStore.deleteImage(itemId, imageModalData.value.id_img);
 		addNotification({ message: "item.VItemImageDeleted", type: "success", i18n: true });
 	} catch (e) {
-		addNotification({ message: "item.VItemImageDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 	imageDeleteModalShow.value = false;
 };
@@ -543,81 +534,79 @@ const labelTableauProjet = ref([
 	<div v-if="itemsStore.items[itemId] || itemId == 'new'">
 		<div class="mb-6 flex justify-between">
 			<Form :validation-schema="schemaItem" v-slot="{ errors }" @submit.prevent="">
-				<table class="table-auto text-gray-700">
-					<tbody>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('item.VItemName') }}:</td>
-							<td class="flex flex-col">
-								<Field name="reference_name_item" type="text"
-									v-model="itemsStore.itemEdition.reference_name_item"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.reference_name_item }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.reference_name_item || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('item.VItemFriendlyName') }}:</td>
-							<td class="flex flex-col">
-								<Field name="friendly_name_item" type="text"
-									v-model="itemsStore.itemEdition.friendly_name_item"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.friendly_name_item }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.friendly_name_item || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('item.VItemDescription') }}:</td>
-							<td class="flex flex-col">
-								<Field name="description_item" v-slot="{ description_item }">
-									<textarea v-bind="description_item" v-model="itemsStore.itemEdition.description_item"
-										:value="itemsStore.itemEdition.description_item"
-										class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300 resize-y"
-										:class="{ 'border-red-500': errors.description_item }" rows="4">
-									</textarea>
-								</Field>
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.description_item || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('item.VItemSeuilMin') }}:</td>
-							<td class="flex flex-col">
-								<Field name="seuil_min_item" type="number" v-model="itemsStore.itemEdition.seuil_min_item"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.seuil_min_item }" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.seuil_min_item || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('item.VItemTotalQuantity') }}:</td>
-							<td class="flex flex-col">
-								<div class="flex space x-2">
-									<span>{{ getTotalQuantity }}</span>
-								</div>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('item.VItemImage') }}:</td>
-							<td class="flex flex-col">
-								<div class="flex justify-center items-center"
-									:class="{ 'cursor-pointer': !itemsStore.itemEdition.loading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }"
-									@click="imageSelectOpenModal">
-									<template v-if="itemsStore.itemEdition.id_img">
-										<img v-if="itemsStore.thumbnailsURL[itemsStore.itemEdition.id_img]"
-											:src="itemsStore.thumbnailsURL[itemsStore.itemEdition.id_img]" alt="Image"
-											class="w-48 h-48 object-cover rounded" />
-										<span v-else class="w-48 h-48 object-cover rounded">
-											{{ $t('item.VInventoryLoading') }}
-										</span>
-									</template>
-									<template v-else>
-										<img src="../assets/nopicture.webp" alt="Image"
-											class="w-48 h-48 object-cover rounded" />
-									</template>
-								</div>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+				<div class="flex flex-col text-gray-700 space-y-2">
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="reference_name_item">{{ $t('item.VItemName') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="reference_name_item" type="text"
+								v-model="itemsStore.itemEdition.reference_name_item"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.reference_name_item }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.reference_name_item || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="friendly_name_item">{{ $t('item.VItemFriendlyName') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="friendly_name_item" type="text"
+								v-model="itemsStore.itemEdition.friendly_name_item"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.friendly_name_item }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.friendly_name_item || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="description_item">{{ $t('item.VItemDescription') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="description_item" v-slot="{ description_item }">
+								<textarea v-bind="description_item" v-model="itemsStore.itemEdition.description_item"
+									:value="itemsStore.itemEdition.description_item"
+									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300 resize-y"
+									:class="{ 'border-red-500': errors.description_item }" rows="4">
+								</textarea>
+							</Field>
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.description_item || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="seuil_min_item">{{ $t('item.VItemSeuilMin') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="seuil_min_item" type="number" v-model="itemsStore.itemEdition.seuil_min_item"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.seuil_min_item }" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.seuil_min_item || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<span class="font-semibold min-w-[140px]">{{ $t('item.VItemTotalQuantity') }}:</span>
+						<div class="flex flex-col flex-1">
+							<div class="flex space x-2">
+								<span>{{ getTotalQuantity }}</span>
+							</div>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<span class="font-semibold min-w-[140px]">{{ $t('item.VItemImage') }}:</span>
+						<div class="flex flex-col flex-1">
+							<div class="flex justify-center items-center"
+								:class="{ 'cursor-pointer': !itemsStore.itemEdition.loading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }"
+								@click="imageSelectOpenModal">
+								<template v-if="itemsStore.itemEdition.id_img">
+									<img v-if="itemsStore.thumbnailsURL[itemsStore.itemEdition.id_img]"
+										:src="itemsStore.thumbnailsURL[itemsStore.itemEdition.id_img]" alt="Main"
+										class="w-48 h-48 object-cover rounded" />
+									<span v-else class="w-48 h-48 object-cover rounded">
+										{{ $t('item.VInventoryLoading') }}
+									</span>
+								</template>
+								<template v-else>
+									<img src="../assets/nopicture.webp" alt="Not Found"
+										class="w-48 h-48 object-cover rounded" />
+								</template>
+							</div>
+						</div>
+					</div>
+				</div>
 			</Form>
 			<div class="w-96 h-96 bg-gray-200 px-2 py-2 rounded">
 				<span v-for="(value, key) in sortedTags" :key="key"
@@ -688,7 +677,7 @@ const labelTableauProjet = ref([
 							class="w-48 h-48 bg-gray-200 rounded m-2 flex items-center relative">
 							<template v-if="itemsStore.thumbnailsURL[image.id_img]">
 								<img :src="itemsStore.thumbnailsURL[image.id_img]"
-									class="w-48 h-48 object-cover rounded"
+									class="w-48 h-48 object-cover rounded" alt={{ image.nom_img }}
 									@click="selectedImageId === image.id_img ? selectedImageId = null : selectedImageId = image.id_img" />
 							</template>
 							<template v-else>
@@ -788,7 +777,7 @@ const labelTableauProjet = ref([
 					<div v-for="image in itemsStore.images[itemId]" :key="image.id_img"
 						class="w-24 h-24 bg-gray-200 rounded m-2 flex items-center justify-center cursor-pointer">
 						<template v-if="itemsStore.thumbnailsURL[image.id_img]">
-							<img :src="itemsStore.thumbnailsURL[image.id_img]" alt="Image"
+							<img :src="itemsStore.thumbnailsURL[image.id_img]" alt={{ image.nom_img }}
 								:class="itemsStore.itemEdition.id_img == image.id_img ? 'border-2 border-blue-500' : 'border-2 border-transparent'"
 								class="w-24 h-24 object-cover rounded"
 								@click="itemsStore.itemEdition.id_img = image.id_img" />

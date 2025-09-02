@@ -12,13 +12,13 @@ public class ItemsDocuments : BaseEntity
     public int id_item_document { get; set; }
 
     [MaxLength(Constants.MaxUrlLength)]
-    public string url_item_document { get; set; }
+    public required string url_item_document { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public string name_item_document { get; set; }
+    public required string name_item_document { get; set; }
 
     [MaxLength(Constants.MaxTypeLength)]
-    public string type_item_document { get; set; }
+    public required string type_item_document { get; set; }
 
     public decimal size_item_document { get; set; }
 

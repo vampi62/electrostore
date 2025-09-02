@@ -18,7 +18,7 @@ public class JwiAccessTokens : BaseEntity
 
 
     [MaxLength(Constants.MaxIpLength)]
-    public string created_by_ip { get; set; }
+    public required string created_by_ip { get; set; }
 
     public DateTime? revoked_at { get; set; }
 

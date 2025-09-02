@@ -36,6 +36,7 @@
 	"VItemUpdated": "Article mis à jour",
 	"VItemDeleted": "Article supprimé",
 	"VItemDeleteError": "Erreur lors de la suppression de l'article",
+	"VItemTagLoadError": "Erreur lors du chargement des tags",
 	"VItemBoxUpdated": "Mise à jour de la boîte d'articles",
 	"VItemBoxAdded": "Boîte d'articles ajoutée",
 	"VItemDocumentAdded": "Document ajouté",

@@ -15,6 +15,4 @@ public interface IItemDocumentService
     public Task<ReadItemDocumentDto> UpdateItemDocument(int id, UpdateItemDocumentDto itemDocumentDto, int? itemId = null);
 
     public Task DeleteItemDocument(int id, int? itemId = null);
-
-    public Task<GetFileResult> GetFile(string url);
 }

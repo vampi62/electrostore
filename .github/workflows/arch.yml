@@ -115,3 +115,19 @@ jobs:
       version: ${{needs.init-work.outputs.VERSION}}
       branch: ${{needs.init-work.outputs.BRANCH}}
     secrets: inherit
+  
+  deploy:
+    needs:
+      - init-work
+      - build
+    if: needs.init-work.outputs.DEPLOY == 'true'
+    uses: ./.github/workflows/deployDemo.yml
+    permissions:
+      contents: read
+      packages: read
+      deployments: write
+    with:
+      version: ${{needs.init-work.outputs.VERSION}}
+      branch: ${{needs.init-work.outputs.BRANCH}}
+      release: ${{needs.init-work.outputs.RELEASE}}
+    secrets: inherit
