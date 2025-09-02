@@ -45,7 +45,7 @@ namespace electrostore.Controllers
             var commandCommentaireDtoFull = new CreateCommandCommentaireDto
             {
                 id_command = id_command,
-                id_user = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value),
+                id_user = int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId) ? userId : throw new InvalidOperationException("User identifier not found."),
                 contenu_command_commentaire = commandCommentaireDto.contenu_command_commentaire
             };
             var commandCommentaire = await _commandCommentaireService.CreateCommentaire(commandCommentaireDtoFull);

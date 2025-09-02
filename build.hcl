@@ -38,8 +38,10 @@ target "defaults" {
   platforms = [ "linux/amd64"]
   dockerfile = "Dockerfile"
   labels = {
+    "org.opencontainers.image.url" = "https://github.com/${REPO}"
+    "org.opencontainers.image.title" = "Electrostore"
+    "org.opencontainers.image.description" = "Electrostore Local Image"
     "org.opencontainers.image.source" = "https://github.com/${REPO}"
-    "org.opencontainers.image.description" = "Electrostore ${VERSION}"
     "org.opencontainers.image.version" = "${VERSION}"
   }
 }
@@ -56,6 +58,14 @@ function "tag" {
   ]
 }
 
+# Derive all labels
+function "label" {
+  params = [label_name, label_value]
+  result = {
+    "org.opencontainers.image.${label_name}" = "${label_value}"
+  }
+}
+
 #-----------------------------------------------------------------------------------------
 # All individual targets (images to build)
 # Build an individual target using.
@@ -68,16 +78,37 @@ target "api" {
   inherits = ["defaults"]
   context = "electrostoreAPI/"
   tags = tag("api")
+  labels = merge(
+    label("url", "https://github.com/${REPO}"),
+    label("title", "Electrostore api"),
+    label("description", "Electrostore api image"),
+    label("source", "https://github.com/${REPO}"),
+    label("version", "${VERSION}")
+  )
 }
 
 target "front" {
   inherits = ["defaults"]
   context = "electrostoreFRONT/"
   tags = tag("front")
+  labels = merge(
+    label("url", "https://github.com/${REPO}"),
+    label("title", "Electrostore front"),
+    label("description", "Electrostore front image"),
+    label("source", "https://github.com/${REPO}"),
+    label("version", "${VERSION}")
+  )
 }
 
 target "ia" {
   inherits = ["defaults"]
   context = "electrostoreIA/"
   tags = tag("ia")
+  labels = merge(
+    label("url", "https://github.com/${REPO}"),
+    label("title", "Electrostore ia"),
+    label("description", "Electrostore ia image"),
+    label("source", "https://github.com/${REPO}"),
+    label("version", "${VERSION}")
+  )
 }

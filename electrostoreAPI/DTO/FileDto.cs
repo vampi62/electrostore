@@ -2,8 +2,8 @@ namespace electrostore.Dto;
 
 public record GetFileResult
 {
-    public string FilePath { get; init; }
-    public string MimeType { get; init; }
+    public required string FilePath { get; init; }
+    public required string MimeType { get; init; }
     public bool Success { get; init; }
     public string? ErrorMessage { get; init; }
 }

@@ -13,6 +13,8 @@ public class IAService : IIAService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
+    private readonly string _iaServiceUrl = "http://electrostoreIA:5000";
+    private readonly string _modelsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models");
 
     public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService)
     {
@@ -75,11 +77,11 @@ public class IAService : IIAService
             iaToUpdate.description_ia = iaDto.description_ia;
         }
         // if model exists set trained_ia to true
-        if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models","Model" + id.ToString() + ".keras")) && !iaToUpdate.trained_ia)
+        if (File.Exists(Path.Combine(_modelsPath, GetModelFilePath(id))) && !iaToUpdate.trained_ia)
         {
             iaToUpdate.trained_ia = true;
         }
-        else if (!File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models","Model" + id.ToString() + ".keras")) && iaToUpdate.trained_ia)
+        else if (!File.Exists(Path.Combine(_modelsPath, GetModelFilePath(id))) && iaToUpdate.trained_ia)
         {
             iaToUpdate.trained_ia = false;
         }
@@ -96,12 +98,14 @@ public class IAService : IIAService
         }
         var iaToDelete = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");
         // remove model if exists
-        if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models","Model" + id.ToString() + ".keras")))
+        if (File.Exists(GetModelFilePath(id)))
         {
-            File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models","Model" + id.ToString() + ".keras"));
-            File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models","ItemList" + id.ToString() + ".txt"));
+            File.Delete(GetModelFilePath(id));
         }
-
+        if (File.Exists(GetModelItemListFilePath(id)))
+        {
+            File.Delete(GetModelItemListFilePath(id));
+        }
         _context.IA.Remove(iaToDelete);
         await _context.SaveChangesAsync();
     }
@@ -115,9 +119,9 @@ public class IAService : IIAService
         try
         {
             var httpClient = new HttpClient();
-            var response = await httpClient.GetAsync("http://electrostoreIA:5000/status/" + id);
+            var response = await httpClient.GetAsync(_iaServiceUrl + "/status/" + id);
             var content = await response.Content.ReadAsStringAsync();
-            var status = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content) ?? throw new Exception("Error while getting IA training status");
+            var status = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content) ?? new Dictionary<string, JsonElement>();
             return new IAStatusDto
             {
                 Status = status.TryGetValue("status", out var statusValue) && statusValue.ValueKind == JsonValueKind.String ? statusValue.GetString()! : "unknown",
@@ -159,17 +163,17 @@ public class IAService : IIAService
         try
         {
             var httpClient = new HttpClient();
-            var response = await httpClient.PostAsync("http://electrostoreIA:5000/train/" + id, null);
+            var response = await httpClient.PostAsync(_iaServiceUrl + "/train/" + id, null);
             // check if 200 OK
             if (response.StatusCode != System.Net.HttpStatusCode.OK)
             {
-                throw new Exception("Error while training IA");
+                throw new InvalidOperationException("Error while training IA");
             }
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
-            throw new Exception("Error while training IA", e);
+            throw new InvalidOperationException("Error while training IA", e); 
         }
     }
 
@@ -178,14 +182,14 @@ public class IAService : IIAService
         var ia = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");
         if (!ia.trained_ia)
         {
-            throw new Exception("IA is not trained");
+            throw new InvalidOperationException("IA is not trained");
         }
         try
         {
             var httpClient = new HttpClient();
             PredictionOutput newDetecResult;
             // requete POST avec l'image à scanner
-            var response = await httpClient.PostAsync("http://electrostoreIA:5000/detect/" + id,
+            var response = await httpClient.PostAsync(_iaServiceUrl + "/detect/" + id,
                 new MultipartFormDataContent
                 {
                     { new StreamContent(detecDto.img_file.OpenReadStream()), "img_file", detecDto.img_file.FileName }
@@ -196,13 +200,15 @@ public class IAService : IIAService
             var json = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content);
             if (json is null)
             {
-                newDetecResult = new PredictionOutput {
+                newDetecResult = new PredictionOutput
+                {
                     PredictedLabel = -1,
                     Score = 0
                 };
                 return newDetecResult;
             }
-            newDetecResult = new PredictionOutput {
+            newDetecResult = new PredictionOutput
+            {
                 PredictedLabel = json.TryGetValue("predicted_class", out var predicted_class) && predicted_class.ValueKind == JsonValueKind.Number ? predicted_class.GetInt32() : -1,
                 Score = json.TryGetValue("confidence", out var confidence) && confidence.ValueKind == JsonValueKind.Number ? confidence.GetSingle() : 0
             };
@@ -211,7 +217,16 @@ public class IAService : IIAService
         catch (Exception e)
         {
             Console.WriteLine(e);
-            throw new Exception("Error while detecting item", e);
+            throw new InvalidOperationException("Error while detecting item", e);
         }
+    }
+
+    private string GetModelFilePath(int id)
+    {
+        return Path.Combine(_modelsPath, "Model" + id.ToString() + ".keras");
+    }
+    private string GetModelItemListFilePath(int id)
+    {
+        return Path.Combine(_modelsPath, "ItemList" + id.ToString() + ".txt");
     }
 }

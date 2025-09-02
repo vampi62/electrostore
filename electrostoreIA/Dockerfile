@@ -6,7 +6,7 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY ["db_query.py", "main.py", "./"]
 
 #RUN chown -R 3216:3216 /app
 

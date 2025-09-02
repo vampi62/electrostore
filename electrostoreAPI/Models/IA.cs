@@ -11,10 +11,10 @@ public class IA : BaseEntity
     public int id_ia { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public string nom_ia { get; set; }
+    public required string nom_ia { get; set; }
 
     [MaxLength(Constants.MaxDescriptionLength)]
-    public string description_ia { get; set; }
+    public required string description_ia { get; set; }
 
     public bool trained_ia { get; set; } = false;
 }

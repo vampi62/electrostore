@@ -11,6 +11,8 @@ public class ImgService : IImgService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly string _imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
+    private readonly string _imagesThumbnailsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails");
 
     public ImgService(IMapper mapper, ApplicationDbContext context)
     {
@@ -73,24 +75,24 @@ public class ImgService : IImgService
         // verifie si une image avec le meme nom existe deja sur le serveur dans "wwwroot/images"
         // si oui, on ajoute un numero a la fin du nom de l'image et on recommence la verification jusqu'a trouver un nom disponible
         var pictureName = fileName + fileExt;
-        while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", imgDto.id_item.ToString(), pictureName)))
+        while (File.Exists(Path.Combine(_imagesPath, imgDto.id_item.ToString(), pictureName)))
         {
             pictureName = $"{fileName}({i}){fileExt}";
             i++;
         }
-        var picturePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", imgDto.id_item.ToString(), pictureName);
+        var picturePath = Path.Combine(_imagesPath, imgDto.id_item.ToString(), pictureName);
         using (var fileStream = new FileStream(picturePath, FileMode.Create))
         {
             await imgDto.img_file.CopyToAsync(fileStream);
         }
 
         var thumbnailName = fileName + fileExt;
-        while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails", imgDto.id_item.ToString(), thumbnailName)))
+        while (File.Exists(Path.Combine(_imagesThumbnailsPath, imgDto.id_item.ToString(), thumbnailName)))
         {
             thumbnailName = $"{fileName}({i}){fileExt}";
             i++;
         }
-        var thumbnailPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails", imgDto.id_item.ToString(), thumbnailName);
+        var thumbnailPath = Path.Combine(_imagesThumbnailsPath, imgDto.id_item.ToString(), thumbnailName);
         using (var image = await Image.LoadAsync(picturePath))
         {
             image.Mutate(x => x.Resize(new ResizeOptions
@@ -145,48 +147,5 @@ public class ImgService : IImgService
         File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imgToDelete.url_picture_img));
         File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imgToDelete.url_thumbnail_img));
         await _context.SaveChangesAsync();
-    }
-
-    public async Task<GetFileResult> GetImageFile(string url)
-    {
-        // secure the path to prevent directory traversal attacks
-        if (url.Contains(".."))
-        {
-            return new GetFileResult
-            {
-                Success = false,
-                ErrorMessage = "Invalid file path",
-                FilePath = "",
-                MimeType = ""
-            };
-        }
-        var pathImg = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", url);
-        if (!File.Exists(pathImg))
-        {
-            return new GetFileResult
-            {
-                Success = false,
-                ErrorMessage = "File not found",
-                FilePath = "",
-                MimeType = ""
-            };
-        } else {
-            var ext = Path.GetExtension(pathImg);
-            var mimeType = ext switch
-            {
-                ".png" => "image/png",
-                ".jpg" => "image/jpeg",
-                ".jpeg" => "image/jpeg",
-                ".gif" => "image/gif",
-                ".bmp" => "image/bmp",
-                _ => "application/octet-stream"
-            };
-            return await Task.FromResult(new GetFileResult
-            {
-                Success = true,
-                FilePath = pathImg,
-                MimeType = mimeType
-            });
-        }
     }
 }

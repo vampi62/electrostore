@@ -74,9 +74,7 @@ const iaSave = async() => {
 			addNotification({ message: "ia.VIaCreated", type: "success", i18n: true });
 		}
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
+		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
 	if (iaId === "new") {
@@ -90,7 +88,7 @@ const iaDelete = async() => {
 		addNotification({ message: "ia.VIaDeleted", type: "success", i18n: true });
 		router.push("/ia");
 	} catch (e) {
-		addNotification({ message: "ia.VIaDeleteError", type: "error", i18n: true });
+		addNotification({ message: e, type: "error", i18n: false });
 	}
 	iaDeleteModalShow.value = false;
 };
@@ -99,18 +97,8 @@ const iaTrain = async() => {
 		await iasStore.startTrain(iaId);
 		addNotification({ message: "ia.VIaTrainStart", type: "success", i18n: true });
 	} catch (e) {
-		e.inner.forEach((error) => {
-			addNotification({ message: error.message, type: "error", i18n: false });
-		});
-		return;
+		addNotification({ message: e, type: "error", i18n: false });
 	}
-};
-const formatDateForDatetimeLocal = (date) => {
-	if (typeof date === "string") {
-		date = new Date(date);
-	}
-	const pad = (num) => String(num).padStart(2, "0");
-	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 const schemaIa = Yup.object().shape({
 	nom_ia: Yup.string()
@@ -135,56 +123,54 @@ const schemaIa = Yup.object().shape({
 	<div v-if="iasStore.ias[iaId] || iaId == 'new'">
 		<div class="mb-6 flex justify-between flex-wrap">
 			<Form :validation-schema="schemaIa" v-slot="{ errors }" @submit.prevent="" class="mb-6">
-				<table class="table-auto text-gray-700">
-					<tbody>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('ia.VIaName') }}:</td>
-							<td class="flex flex-col">
-								<Field name="nom_ia" type="text" v-model="iasStore.iaEdition.nom_ia"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.nom_ia }"
-									:disabled="authStore.user?.role_user !== 2" />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_ia || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('ia.VIaDescription') }}:</td>
-							<td class="flex flex-col">
-								<Field name="description_ia" v-slot="{ description_ia }">
-									<textarea v-bind="description_ia" v-model="iasStore.iaEdition.description_ia"
-										:value="iasStore.iaEdition.description_ia"
-										class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300 resize-y"
-										:class="{ 'border-red-500': errors.description_ia }"
-										:disabled="authStore.user?.role_user !== 2" rows="4">
-									</textarea>
-								</Field>
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.description_ia || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('ia.VIaDate') }}:</td>
-							<td class="flex flex-col">
-								<!-- format date permit is only YYYY-MM-DDTHH-mm-->
-								<Field name="date_ia" type="datetime-local"
-									v-model="iasStore.iaEdition.date_ia"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.date_ia }" disabled />
-								<span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_ia || ' ' }}</span>
-							</td>
-						</tr>
-						<tr>
-							<td class="font-semibold pr-4 align-text-top">{{ $t('ia.VIaStatus') }}:</td>
-							<td class="flex flex-col">
-								<template v-if="iasStore.iaEdition.trained_ia">
-									<font-awesome-icon icon="fa-solid fa-check" class="text-green-500" />
-								</template>
-								<template v-else>
-									<font-awesome-icon icon="fa-solid fa-times" class="text-red-500" />
-								</template>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+				<div class="flex flex-col text-gray-700 space-y-2">
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="nom_ia">{{ $t('ia.VIaName') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="nom_ia" type="text" v-model="iasStore.iaEdition.nom_ia"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.nom_ia }"
+								:disabled="authStore.user?.role_user !== 2" />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_ia || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="description_ia">{{ $t('ia.VIaDescription') }}:</label>
+						<div class="flex flex-col flex-1">
+							<Field name="description_ia" v-slot="{ description_ia }">
+								<textarea v-bind="description_ia" v-model="iasStore.iaEdition.description_ia"
+									:value="iasStore.iaEdition.description_ia"
+									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300 resize-y"
+									:class="{ 'border-red-500': errors.description_ia }"
+									:disabled="authStore.user?.role_user !== 2" rows="4">
+								</textarea>
+							</Field>
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.description_ia || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<label class="font-semibold min-w-[140px]" for="date_ia">{{ $t('ia.VIaDate') }}:</label>
+						<div class="flex flex-col flex-1">
+							<!-- format date permit is only YYYY-MM-DDTHH-mm-->
+							<Field name="date_ia" type="datetime-local"
+								v-model="iasStore.iaEdition.date_ia"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors.date_ia }" disabled />
+							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_ia || ' ' }}</span>
+						</div>
+					</div>
+					<div class="flex flex-row items-start space-x-2">
+						<span class="font-semibold min-w-[140px]">{{ $t('ia.VIaStatus') }}:</span>
+						<div class="flex flex-col flex-1">
+							<template v-if="iasStore.iaEdition.trained_ia">
+								<font-awesome-icon icon="fa-solid fa-check" class="text-green-500" />
+							</template>
+							<template v-else>
+								<font-awesome-icon icon="fa-solid fa-times" class="text-red-500" />
+							</template>
+						</div>
+					</div>
+				</div>
 			</Form>
 			<div class="w-96 h-96 bg-gray-200 px-4 py-2 rounded">
 				<div v-for="(value, key) in iasStore.status.train" :key="key">

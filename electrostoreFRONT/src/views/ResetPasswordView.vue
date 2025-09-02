@@ -1,8 +1,4 @@
 <script setup>
-import { onMounted, ref, computed, inject } from "vue";
-
-const { addNotification } = inject("useNotification");
-
 import { Form, Field } from "vee-validate";
 import * as Yup from "yup";
 
@@ -45,7 +41,7 @@ function onSubmit(values, { setErrors }) {
 		<h2 class="text-2xl font-bold mb-4">{{ $t('common.VResetPasswordTitle') }}</h2>
 
 		<div v-if="configsStore.configs.loading" class="flex justify-center items-center">
-			<div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" role="status">
+			<div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin">
 				<span class="sr-only">{{ $t('common.VResetPasswordLoading') }}</span>
 			</div>
 		</div>
@@ -54,7 +50,7 @@ function onSubmit(values, { setErrors }) {
 			<Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
 				<!-- Email Field -->
 				<div class="mb-4">
-					<label class="block text-gray-700">{{ $t('common.VResetPasswordEmail') }}</label>
+					<label class="block text-gray-700" for="email">{{ $t('common.VResetPasswordEmail') }}</label>
 					<Field name="email" type="email"
 						class="border border-gray-300 rounded w-full px-3 py-2 mt-1 bg-gray-100 focus:outline-none focus:ring focus:ring-blue-300"
 						:class="{ 'border-red-500': errors.email }" :value="email" disabled />
@@ -66,7 +62,7 @@ function onSubmit(values, { setErrors }) {
 
 				<!-- New Password Field -->
 				<div class="mb-4">
-					<label class="block text-gray-700">{{ $t('common.VResetPasswordNewPassword') }}</label>
+					<label class="block text-gray-700" for="password">{{ $t('common.VResetPasswordNewPassword') }}</label>
 					<Field name="password" type="password"
 						class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
 						:class="{ 'border-red-500': errors.password }" />
@@ -75,7 +71,7 @@ function onSubmit(values, { setErrors }) {
 
 				<!-- Confirm New Password Field -->
 				<div class="mb-4">
-					<label class="block text-gray-700">{{ $t('common.VResetPasswordConfirmNewPassword') }}</label>
+					<label class="block text-gray-700" for="confirmPassword">{{ $t('common.VResetPasswordConfirmNewPassword') }}</label>
 					<Field name="confirmPassword" type="password"
 						class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
 						:class="{ 'border-red-500': errors.confirmPassword }" />
