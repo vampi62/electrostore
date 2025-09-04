@@ -454,48 +454,48 @@ const labelTableauModalItem = ref([
 
 <template>
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-2xl font-bold mb-4">{{ $t('projet.VProjetTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('projet.VProjetTitle') }}</h2>
 		<TopButtonEditElement :main-config="{ path: '/projets', save: { roleRequired: 0, loading: projetsStore.projetEdition.loading }, delete: { roleRequired: 0 } }"
 			:id="projetId" :store-user="authStore.user" @button-save="projetSave" @button-delete="projetDeleteModalShow = true"/>
 	</div>
-	<div :class="projetsStore.projets[projetId] || projetId == 'new' ? 'block' : 'hidden'">
-		<div class="mb-6 flex justify-between">
-			<Form :validation-schema="schemaProjet" v-slot="{ errors }" @submit.prevent="">
+	<div v-if="projetsStore.projets[projetId] || projetId == 'new'" class="w-full">
+		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
+			<Form :validation-schema="schemaProjet" v-slot="{ errors }" @submit.prevent="" class="mb-6 w-full sm:w-[490px]">
 				<div class="flex flex-col text-gray-700 space-y-2">
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="nom_projet">{{ $t('projet.VProjetName') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="nom_projet">{{ $t('projet.VProjetName') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="nom_projet" type="text"
 								v-model="projetsStore.projetEdition.nom_projet"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.nom_projet }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_projet || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.nom_projet || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="description_projet">{{ $t('projet.VProjetDescription') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="description_projet">{{ $t('projet.VProjetDescription') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="description_projet" v-slot="{ field }">
 								<textarea v-bind="field" v-model="projetsStore.projetEdition.description_projet"
 									:value="projetsStore.projetEdition.description_projet"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300 resize-y"
 									:class="{ 'border-red-500': errors.description_projet }" rows="4"></textarea>
 							</Field>
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.description_projet || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.description_projet || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="url_projet">{{ $t('projet.VProjetUrl') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="url_projet">{{ $t('projet.VProjetUrl') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="url_projet" type="text" v-model="projetsStore.projetEdition.url_projet"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.url_projet }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.url_projet || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.url_projet || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="status_projet">{{ $t('projet.VProjetStatus') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="status_projet">{{ $t('projet.VProjetStatus') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="status_projet" as="select"
 								v-model="projetsStore.projetEdition.status_projet"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
@@ -505,27 +505,27 @@ const labelTableauModalItem = ref([
 									{{ status[1] }}
 								</option>
 							</Field>
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.status_projet || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.status_projet || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="date_debut_projet">{{ $t('projet.VProjetStartDate') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="date_debut_projet">{{ $t('projet.VProjetStartDate') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="date_debut_projet" type="datetime-local"
 								v-model="projetsStore.projetEdition.date_debut_projet"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.date_debut_projet }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_debut_projet || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.date_debut_projet || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="date_fin_projet">{{ $t('projet.VProjetEndDate') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="date_fin_projet">{{ $t('projet.VProjetEndDate') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="date_fin_projet" type="datetime-local"
 								v-model="projetsStore.projetEdition.date_fin_projet"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.date_fin_projet }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_fin_projet || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.date_fin_projet || ' ' }}</span>
 						</div>
 					</div>
 				</div>
@@ -588,8 +588,7 @@ const labelTableauModalItem = ref([
 			</div>
 		</div>
 	</div>
-	<div :class="!projetsStore.projets[projetId] && projetId != 'new' ? 'block' : 'hidden'"
-		class="text-center">
+	<div v-else>
 		<div>{{ $t('projet.VProjetLoading') }}</div>
 	</div>
 
@@ -609,13 +608,13 @@ const labelTableauModalItem = ref([
 							:placeholder="$t('projet.VProjetDocumentNamePlaceholder')"
 							class="w-full p-2 border rounded"
 							:class="{ 'border-red-500': errors.name_projet_document }" />
-						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.name_projet_document || ' ' }}</span>
+						<span class="text-red-500 h-5 w-full text-sm">{{ errors.name_projet_document || ' ' }}</span>
 					</div>
 					<div class="flex flex-col">
 						<Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
 							:class="{ 'border-red-500': errors.document }" />
 						<span class="h-5 w-80 text-sm">{{ $t('projet.VProjetDocumentSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
-						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.document || ' ' }}</span>
+						<span class="text-red-500 h-5 w-full text-sm">{{ errors.document || ' ' }}</span>
 					</div>
 				</div>
 				<div class="flex justify-end space-x-2">

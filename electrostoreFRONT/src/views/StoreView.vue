@@ -887,27 +887,27 @@ const labelTableauModalItem = ref([
 </style>
 <template>
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-2xl font-bold mb-4">{{ $t('store.VStoreTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('store.VStoreTitle') }}</h2>
 		<TopButtonEditElement :main-config="{ path: '/stores', save: { roleRequired: 2, loading: storesStore.storeEdition.loading }, delete: { roleRequired: 2 } }"
 			:id="storeId" :store-user="authStore.user" @button-save="storeSave" @button-delete="storeDeleteModalShow = true"/>
 	</div>
-	<div v-if="storesStore.stores[storeId] || storeId == 'new'">
-		<div class="mb-6 flex justify-between whitespace-pre">
-			<Form :validation-schema="schemaStore" v-slot="{ errors }" @submit.prevent="">
+	<div v-if="storesStore.stores[storeId] || storeId == 'new'" class="w-full">
+		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
+			<Form :validation-schema="schemaStore" v-slot="{ errors }" @submit.prevent="" class="mb-6 w-full sm:w-[490px]">
 				<div class="flex flex-col text-gray-700 space-y-2">
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="nom_store">{{ $t('store.VStoreName') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="nom_store">{{ $t('store.VStoreName') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="nom_store" type="text"
 								v-model="storesStore.storeEdition.nom_store"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.nom_store }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_store || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.nom_store || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="mqtt_name_store">{{ $t('store.VStoreMQTTName') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="mqtt_name_store">{{ $t('store.VStoreMQTTName') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<span class="flex items-center">
 								<span>electrostore/</span>
 								<Field name="mqtt_name_store" type="text"
@@ -915,27 +915,27 @@ const labelTableauModalItem = ref([
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors.mqtt_name_store }" />
 							</span>
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.mqtt_name_store || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.mqtt_name_store || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="xlength_store">{{ $t('store.VStoreXLength') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="xlength_store">{{ $t('store.VStoreXLength') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="xlength_store" type="number"
 								v-model="storesStore.storeEdition.xlength_store" @change="showStoreGrid" @keyup="showStoreGrid"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.xlength_store }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.xlength_store || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.xlength_store || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="ylength_store">{{ $t('store.VStoreYLength') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="ylength_store">{{ $t('store.VStoreYLength') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="ylength_store" type="number"
 								v-model="storesStore.storeEdition.ylength_store" @change="showStoreGrid" @keyup="showStoreGrid"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.ylength_store }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.ylength_store || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.ylength_store || ' ' }}</span>
 						</div>
 					</div>
 				</div>
@@ -1069,6 +1069,9 @@ const labelTableauModalItem = ref([
 				</div>
 			</div>
 		</div>
+	</div>
+	<div v-else>
+		{{ $t('store.VStoreLoading') }}
 	</div>
 	<template v-if="isNumber(storesStore.storeEdition.xlength_store) && isNumber(storesStore.storeEdition.ylength_store)">
 		<div v-if="showMenu && !selectedElement.type" class="context-menu"

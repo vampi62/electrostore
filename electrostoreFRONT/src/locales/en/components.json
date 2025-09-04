@@ -20,5 +20,6 @@
 	"VModalTopButtonAdd": "Add",
 	"VModalTopButtonUpdate": "Update",
 	"VModalTopButtonDelete": "Delete",
-	"VModalTopButtonBack": "Back"
+	"VModalTopButtonBack": "Back",
+	"VModalTopButtonMenu": "Menu"
 }

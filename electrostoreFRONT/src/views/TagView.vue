@@ -308,31 +308,31 @@ const labelTableauModalStore = ref([
 
 <template>
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-2xl font-bold mb-4">{{ $t('tag.VTagTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('tag.VTagTitle') }}</h2>
 		<TopButtonEditElement :main-config="{ path: '/tags', save: { roleRequired: 0, loading: tagsStore.tagEdition.loading }, delete: { roleRequired: 0 } }"
 			:id="tagId" :store-user="authStore.user" @button-save="tagSave" @button-delete="tagDeleteModalShow = true"/>
 	</div>
-	<div v-if="tagsStore.tags[tagId] || tagId == 'new'">
-		<div class="mb-6 flex justify-between">
-			<Form :validation-schema="schemaTag" v-slot="{ errors }" @submit.prevent="">
+	<div v-if="tagsStore.tags[tagId] || tagId == 'new'" class="w-full">
+		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
+			<Form :validation-schema="schemaTag" v-slot="{ errors }" @submit.prevent="" class="mb-6 w-full sm:w-[490px]">
 				<div class="flex flex-col text-gray-700 space-y-2">
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="nom_tag">{{ $t('tag.VTagName') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="nom_tag">{{ $t('tag.VTagName') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="nom_tag" type="text"
 								v-model="tagsStore.tagEdition.nom_tag"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.nom_tag }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_tag || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.nom_tag || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="poids_tag">{{ $t('tag.VTagPoids') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="poids_tag">{{ $t('tag.VTagPoids') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="poids_tag" type="text" v-model="tagsStore.tagEdition.poids_tag"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.poids_tag }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.poids_tag || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.poids_tag || ' ' }}</span>
 						</div>
 					</div>
 				</div>
