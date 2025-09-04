@@ -110,7 +110,7 @@ const filter = ref([
 	{ key: "seuil_min_item", value: "", type: "number", label: "item.VInventoryFilterSeuilMax", compareMethod: "<=" },
 	{ key: "qte_item_box", subPath: "item_boxs", value: "", type: "number", label: "item.VInventoryFilterQuantityMin", compareMethod: ">=" },
 	{ key: "qte_item_box", subPath: "item_boxs", value: "", type: "number", label: "item.VInventoryFilterQuantityMax", compareMethod: "<=" },
-	{ key: "id_tag", subPath: "item_tags", value: "", type: "select", typeData: "int", options: Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]), label: "item.VInventoryFilterTag", compareMethod: "=" },
+	{ key: "id_tag", subPath: "item_tags", value: "", type: "datalist", typeData: "int", options: Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]), label: "item.VInventoryFilterTag", compareMethod: "=" },
 ]);
 const tableauLabel = ref([
 	{ label: "item.VInventoryName", sortable: true, key: "reference_name_item", type: "text" },

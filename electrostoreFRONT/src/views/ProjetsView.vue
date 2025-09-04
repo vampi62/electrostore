@@ -37,12 +37,12 @@ onMounted(() => {
 });
 
 const filter = ref([
-	{ key: "status_projet", value: "", type: "select", options: [["en attente", t("projet.VProjetsFilterStatus1")], ["en cours", t("projet.VProjetsFilterStatus2")], ["terminée", t("projet.VProjetsFilterStatus3")]], label: "projet.VProjetsFilterStatus", compareMethod: "=" },
+	{ key: "status_projet", value: "", type: "datalist", options: [["en attente", t("projet.VProjetsFilterStatus1")], ["en cours", t("projet.VProjetsFilterStatus2")], ["terminée", t("projet.VProjetsFilterStatus3")]], label: "projet.VProjetsFilterStatus", compareMethod: "=" },
 	{ key: "date_debut_projet", value: "", type: "date", label: "projet.VprojetFilterDate", compareMethod: ">=" },
 	{ key: "nom_projet", value: "", type: "text", label: "projet.VprojetFilterNom", compareMethod: "contain" },
 	{ key: "url_projet", value: "", type: "text", label: "projet.VprojetFilterUrl", compareMethod: "contain" },
 	{ key: "date_fin_projet", value: "", type: "date", label: "projet.VprojetFilterDateEnd", compareMethod: ">=" },
-	{ key: "id_item", subPath: "projets_items", value: "", type: "select", typeData: "int", options: Object.values(itemsStore.items).map((item) => [item.id_item, item.reference_name_item]), label: "projet.VprojetFilterItem", compareMethod: "=" },
+	{ key: "id_item", subPath: "projets_items", value: "", type: "datalist", typeData: "int", options: Object.values(itemsStore.items).map((item) => [item.id_item, item.reference_name_item]), label: "projet.VprojetFilterItem", compareMethod: "=" },
 ]);
 const tableauLabel = ref([
 	{ label: "projet.VProjetsName", sortable: true, key: "nom_projet", type: "text" },

@@ -21,7 +21,7 @@ onMounted(() => {
 });
 
 const filter = ref([
-	{ key: "trained_ia", value: undefined, type: "select", dataType: "bool", options: [["false", t("ia.VIasFilterTrained1")], ["true", t("ia.VIasFilterTrained2")]], label: "ia.VIasFilterTrained", compareMethod: "=" },
+	{ key: "trained_ia", value: undefined, type: "datalist", dataType: "bool", options: [["false", t("ia.VIasFilterTrained1")], ["true", t("ia.VIasFilterTrained2")]], label: "ia.VIasFilterTrained", compareMethod: "=" },
 	{ key: "updated_at", value: "", type: "date", label: "ia.VIasFilterDate", compareMethod: ">=" },
 	{ key: "nom_ia", value: "", type: "text", label: "ia.VIasFilterNom", compareMethod: "contain" },
 ]);

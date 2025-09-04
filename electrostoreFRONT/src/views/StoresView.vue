@@ -39,7 +39,7 @@ const filter = ref([
 	{ key: "mqtt_name_store", value: "", type: "text", label: "store.VStoresFilterMqttName", compareMethod: "contain" },
 	{ key: "xlength_store", value: "", type: "number", label: "store.VStoresFilterXLength", compareMethod: "<=" },
 	{ key: "ylength_store", value: "", type: "number", label: "store.VStoresFilterYLength", compareMethod: "<=" },
-	{ key: "id_tag", subPath: "stores_tags", value: "", type: "select", typeData: "int", options: Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]), label: "store.VStoresFilterTag", compareMethod: "=" },
+	{ key: "id_tag", subPath: "stores_tags", value: "", type: "datalist", typeData: "int", options: Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]), label: "store.VStoresFilterTag", compareMethod: "=" },
 ]);
 const tableauLabel = ref([
 	{ label: "store.VStoresName", sortable: true, key: "nom_store", type: "text" },
