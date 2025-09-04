@@ -133,7 +133,7 @@ export default {
 		},
 	},
 	components: {
-		TableauRow: defineAsyncComponent(() => import("./TableauRow.vue")),
+		TableauRow: defineAsyncComponent(() => import("@/components/TableauRow.vue")),
 	},
 	computed: {
 		sortedData() {

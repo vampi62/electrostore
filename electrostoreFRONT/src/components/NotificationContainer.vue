@@ -7,13 +7,13 @@
 </template>
 
 <script>
-import Notification from "./Notification.vue";
+import { defineAsyncComponent } from "vue";
 import { inject } from "vue";
 
 export default {
 	name: "NotificationContainer",
 	components: {
-		Notification,
+		Notification: defineAsyncComponent(() => import("@/components/Notification.vue")),
 	},
 	setup() {
 		const { notifications, removeNotification } = inject("useNotification");

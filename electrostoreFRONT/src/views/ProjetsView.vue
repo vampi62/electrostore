@@ -65,7 +65,7 @@ const updateFilteredProjets = (newValue) => {
 
 <template>
 	<div>
-		<h2 class="text-2xl font-bold mb-4">{{ t('projet.VProjetsTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ t('projet.VProjetsTitle') }}</h2>
 	</div>
 	<div>
 		<div

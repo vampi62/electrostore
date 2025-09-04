@@ -211,44 +211,44 @@ const labelTableauSession = ref([
 
 <template>
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-2xl font-bold mb-4">{{ $t('user.VUserTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('user.VUserTitle') }}</h2>
 		<TopButtonEditElement :main-config="{ path: '/users', save: { sameUserId: true, roleRequired: 1, loading: usersStore.userEdition.loading }, delete: { sameUserId: true, roleRequired: 1 } }"
 			:id="userId" :store-user="authStore.user" @button-save="userSave" @button-delete="userDeleteModalShow = true"/>
 	</div>
-	<div :class="usersStore.users[userId] || userId == 'new' ? 'block' : 'hidden'">
-		<div class="mb-6 flex justify-between flex-wrap">
-			<Form :validation-schema="schemaUser" v-slot="{ errors }" @submit.prevent="" class="mb-6">
+	<div v-if="usersStore.users[userId] || userId == 'new'" class="w-full">
+		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
+			<Form :validation-schema="schemaUser" v-slot="{ errors }" @submit.prevent="" class="mb-6 w-full sm:w-[490px]">
 				<div class="flex flex-col text-gray-700 space-y-2">
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="nom_user">{{ $t('user.VUserName') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="nom_user">{{ $t('user.VUserName') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="nom_user" type="text" v-model="usersStore.userEdition.nom_user"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.nom_user }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_user || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.nom_user || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="prenom_user">{{ $t('user.VUserFirstName') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="prenom_user">{{ $t('user.VUserFirstName') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="prenom_user" type="text" v-model="usersStore.userEdition.prenom_user"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.prenom_user }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.prenom_user || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.prenom_user || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="email_user">{{ $t('user.VUserEmail') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="email_user">{{ $t('user.VUserEmail') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="email_user" type="text" v-model="usersStore.userEdition.email_user"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.email_user }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.email_user || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.email_user || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="role_user">{{ $t('user.VUserRole') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="role_user">{{ $t('user.VUserRole') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="role_user" as="select"
 								v-model="usersStore.userEdition.role_user"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
@@ -259,12 +259,12 @@ const labelTableauSession = ref([
 									{{ role[1] }}
 								</option>
 							</Field>
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.role_user || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.role_user || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="check">{{ $t('user.VUserRole') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="check">{{ $t('user.VUserCheck') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="check" v-slot="{ is_checked_custom }">
 								<input
 									v-model="isChecked"
@@ -276,33 +276,33 @@ const labelTableauSession = ref([
 							</Field>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="mdp_user">{{ $t('user.VUserPassword') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="mdp_user">{{ $t('user.VUserPassword') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="mdp_user" type="text" v-model="usersStore.userEdition.mdp_user"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.mdp_user }"
 								:disabled="!isChecked" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.mdp_user || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.mdp_user || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="confirm_mdp_user">{{ $t('user.VUserConfirmPassword') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="confirm_mdp_user">{{ $t('user.VUserConfirmPassword') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="confirm_mdp_user" type="password" v-model="usersStore.userEdition.confirm_mdp_user"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.confirm_mdp_user }"
 								:disabled="!isChecked" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.confirm_mdp_user || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.confirm_mdp_user || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="current_mdp_user">{{ $t('user.VUserCurrentPassword') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="current_mdp_user">{{ $t('user.VUserCurrentPassword') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="current_mdp_user" type="password" v-model="usersStore.userEdition.current_mdp_user"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.current_mdp_user }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.current_mdp_user || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.current_mdp_user || ' ' }}</span>
 						</div>
 					</div>
 				</div>
@@ -363,7 +363,7 @@ const labelTableauSession = ref([
 			</div>
 		</div>
 	</div>
-	<div :class="usersStore.users[userId] || userId == 'new' ? 'hidden' : 'block'">
+	<div v-else>
 		<div>{{ $t('user.VUserLoading') }}</div>
 	</div>
 	<ModalDeleteConfirm :show-modal="userDeleteModalShow" @close-modal="userDeleteModalShow = false"
