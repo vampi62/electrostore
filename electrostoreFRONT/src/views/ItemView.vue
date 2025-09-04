@@ -527,37 +527,37 @@ const labelTableauProjet = ref([
 
 <template>
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-2xl font-bold mb-4">{{ $t('item.VItemTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('item.VItemTitle') }}</h2>
 		<TopButtonEditElement :main-config="{ path: '/inventory', save: { roleRequired: 0, loading: itemsStore.itemEdition.loading }, delete: { roleRequired: 0 } }"
 			:id="itemId" :store-user="authStore.user" @button-save="itemSave" @button-delete="itemDeleteModalShow = true"/>
 	</div>
-	<div v-if="itemsStore.items[itemId] || itemId == 'new'">
-		<div class="mb-6 flex justify-between">
-			<Form :validation-schema="schemaItem" v-slot="{ errors }" @submit.prevent="">
+	<div v-if="itemsStore.items[itemId] || itemId == 'new'" class="w-full">
+		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
+			<Form :validation-schema="schemaItem" v-slot="{ errors }" @submit.prevent="" class="mb-6 w-full sm:w-[490px]">
 				<div class="flex flex-col text-gray-700 space-y-2">
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="reference_name_item">{{ $t('item.VItemName') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="reference_name_item">{{ $t('item.VItemName') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="reference_name_item" type="text"
 								v-model="itemsStore.itemEdition.reference_name_item"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.reference_name_item }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.reference_name_item || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.reference_name_item || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="friendly_name_item">{{ $t('item.VItemFriendlyName') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="friendly_name_item">{{ $t('item.VItemFriendlyName') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="friendly_name_item" type="text"
 								v-model="itemsStore.itemEdition.friendly_name_item"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.friendly_name_item }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.friendly_name_item || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.friendly_name_item || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="description_item">{{ $t('item.VItemDescription') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="description_item">{{ $t('item.VItemDescription') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="description_item" v-slot="{ description_item }">
 								<textarea v-bind="description_item" v-model="itemsStore.itemEdition.description_item"
 									:value="itemsStore.itemEdition.description_item"
@@ -565,29 +565,29 @@ const labelTableauProjet = ref([
 									:class="{ 'border-red-500': errors.description_item }" rows="4">
 								</textarea>
 							</Field>
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.description_item || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.description_item || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="seuil_min_item">{{ $t('item.VItemSeuilMin') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="seuil_min_item">{{ $t('item.VItemSeuilMin') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="seuil_min_item" type="number" v-model="itemsStore.itemEdition.seuil_min_item"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.seuil_min_item }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.seuil_min_item || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.seuil_min_item || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<span class="font-semibold min-w-[140px]">{{ $t('item.VItemTotalQuantity') }}:</span>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<span class="font-semibold sm:min-w-[140px]">{{ $t('item.VItemTotalQuantity') }}:</span>
+						<div class="flex flex-col flex-1 w-full">
 							<div class="flex space x-2">
 								<span>{{ getTotalQuantity }}</span>
 							</div>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<span class="font-semibold min-w-[140px]">{{ $t('item.VItemImage') }}:</span>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<span class="font-semibold sm:min-w-[140px]">{{ $t('item.VItemImage') }}:</span>
+						<div class="flex flex-col flex-1 w-full">
 							<div class="flex justify-center items-center"
 								:class="{ 'cursor-pointer': !itemsStore.itemEdition.loading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }"
 								@click="imageSelectOpenModal">
@@ -803,13 +803,13 @@ const labelTableauProjet = ref([
 							:placeholder="$t('item.VItemDocumentNamePlaceholder')"
 							class="w-full p-2 border rounded"
 							:class="{ 'border-red-500': errors.name_item_document }" />
-						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.name_item_document || ' ' }}</span>
+						<span class="text-red-500 h-5 w-full text-sm">{{ errors.name_item_document || ' ' }}</span>
 					</div>
 					<div class="flex flex-col">
 						<Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
 							:class="{ 'border-red-500': errors.document }" />
 						<span class="h-5 w-80 text-sm">{{ $t('item.VItemDocumentSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
-						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.document || ' ' }}</span>
+						<span class="text-red-500 h-5 w-full text-sm">{{ errors.document || ' ' }}</span>
 					</div>
 				</div>
 				<div class="flex justify-end space-x-2">
@@ -839,12 +839,12 @@ const labelTableauProjet = ref([
 							:placeholder="$t('item.VItemImageNamePlaceholder')"
 							class="w-full p-2 border rounded"
 							:class="{ 'border-red-500': errors.nom_img }" />
-						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_img || ' ' }}</span>
+						<span class="text-red-500 h-5 w-full text-sm">{{ errors.nom_img || ' ' }}</span>
 					</div>
 					<div class="flex flex-col">
 						<Field name="image" type="file" @change="handleImageUpload" class="w-full p-2" accept="image/*" />
 						<span class="h-5 w-80 text-sm">{{ $t('item.VItemImageSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
-						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.image || ' ' }}</span>
+						<span class="text-red-500 h-5 w-full text-sm">{{ errors.image || ' ' }}</span>
 					</div>
 				</div>
 				<div class="flex justify-end space-x-2">

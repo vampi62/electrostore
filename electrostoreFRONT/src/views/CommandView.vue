@@ -457,47 +457,47 @@ const labelTableauModalItem = ref([
 </script>
 <template>
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-2xl font-bold mb-4">{{ $t('command.VCommandTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('command.VCommandTitle') }}</h2>
 		<TopButtonEditElement :main-config="{ path: '/commands', save: { roleRequired: 0, loading: commandsStore.commandEdition.loading }, delete: { roleRequired: 0 } }"
 			:id="commandId" :store-user="authStore.user" @button-save="commandSave" @button-delete="commandDeleteModalShow = true"/>
 	</div>
-	<div :class="commandsStore.commands[commandId] || commandId == 'new' ? 'block' : 'hidden'">
-		<div class="mb-6 flex justify-between">
-			<Form :validation-schema="schemaCommand" v-slot="{ errors }" @submit.prevent="">
+	<div v-if="commandsStore.commands[commandId] || commandId == 'new'" class="w-full">
+		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
+			<Form :validation-schema="schemaCommand" v-slot="{ errors }" @submit.prevent="" class="mb-6 w-full sm:w-[490px]">
 				<div class="flex flex-col text-gray-700 space-y-2">
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="prix_command">{{ $t('command.VCommandPrice') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="prix_command">{{ $t('command.VCommandPrice') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="prix_command" type="text"
 								v-model="commandsStore.commandEdition.prix_command"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.prix_command }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.prix_command || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.prix_command || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="url_command">{{ $t('command.VCommandUrl') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="url_command">{{ $t('command.VCommandUrl') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="url_command" type="text" v-model="commandsStore.commandEdition.url_command"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.url_command }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.url_command || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.url_command || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="date_command">{{ $t('command.VCommandDate') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="date_command">{{ $t('command.VCommandDate') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<!-- format date permit is only YYYY-MM-DDTHH-mm-->
 							<Field name="date_command" type="datetime-local"
 								v-model="commandsStore.commandEdition.date_command"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.date_command }" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_command || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.date_command || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="status_command">{{ $t('command.VCommandStatus') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="status_command">{{ $t('command.VCommandStatus') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="status_command" as="select"
 								v-model="commandsStore.commandEdition.status_command"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
@@ -507,17 +507,17 @@ const labelTableauModalItem = ref([
 									{{ status[1] }}
 								</option>
 							</Field>
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.status_command || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.status_command || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="date_livraison_command">{{ $t('command.VCommandDeliveryDate') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="date_livraison_command">{{ $t('command.VCommandDeliveryDate') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="date_livraison_command" type="datetime-local"
 								v-model="commandsStore.commandEdition.date_livraison_command"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.date_livraison_command }" disabled />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.date_livraison_command || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.date_livraison_command || ' ' }}</span>
 						</div>
 					</div>
 				</div>
@@ -583,8 +583,7 @@ const labelTableauModalItem = ref([
 			</div>
 		</div>
 	</div>
-	<div :class="!commandsStore.commands[commandId] && commandId != 'new' ? 'block' : 'hidden'"
-		class="text-center">
+	<div v-else>
 		<div>{{ $t('command.VCommandLoading') }}</div>
 	</div>
 
@@ -604,13 +603,13 @@ const labelTableauModalItem = ref([
 							:placeholder="$t('command.VCommandDocumentNamePlaceholder')"
 							class="w-full p-2 border rounded"
 							:class="{ 'border-red-500': errors.name_command_document }" />
-						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.name_command_document || ' ' }}</span>
+						<span class="text-red-500 h-5 w-full text-sm">{{ errors.name_command_document || ' ' }}</span>
 					</div>
 					<div class="flex flex-col">
 						<Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
 							:class="{ 'border-red-500': errors.document }" />
 						<span class="h-5 w-80 text-sm">{{ $t('command.VCommandDocumentSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
-						<span class="text-red-500 h-5 w-80 text-sm">{{ errors.document || ' ' }}</span>
+						<span class="text-red-500 h-5 w-full text-sm">{{ errors.document || ' ' }}</span>
 					</div>
 				</div>
 				<div class="flex justify-end space-x-2">
