@@ -1,4 +1,4 @@
-name: Release
+name: deploy OVH
 
 on:
   workflow_call:
@@ -37,6 +37,7 @@ on:
 jobs:
   OVH-deployment:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
