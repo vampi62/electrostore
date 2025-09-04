@@ -40,7 +40,7 @@ const updateFilteredTags = (newValue) => {
 
 <template>
 	<div>
-		<h2 class="text-2xl font-bold mb-4">{{ $t('tag.VTagsTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('tag.VTagsTitle') }}</h2>
 	</div>
 	<div>
 		<div

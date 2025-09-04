@@ -1,5 +1,5 @@
 <template>
-	<div class="flex flex-wrap">
+	<div class="flex flex-wrap sm:justify-start justify-center gap-4 mb-4 max-h-40 overflow-y-auto">
 		<Filter v-for="(filter, index) in filters"
 			:key="index"
 			:label="filter.label"
@@ -13,7 +13,7 @@
 	</div>
 </template>
 <script>
-import Filter from "./Filter.vue";
+import { defineAsyncComponent } from "vue";
 export default {
 	name: "FilterContainer",
 	props: {
@@ -40,7 +40,7 @@ export default {
 		},
 	},
 	components: {
-		Filter,
+		Filter : defineAsyncComponent(() => import("@/components/Filter.vue")),
 	},
 	computed: {
 		filteredData() {

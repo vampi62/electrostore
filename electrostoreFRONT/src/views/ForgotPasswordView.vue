@@ -25,7 +25,7 @@ function onSubmit(values, { setErrors }) {
 
 <template>
 	<div class="max-w-lg mx-auto bg-white p-6 rounded shadow">
-		<h2 class="text-2xl font-bold mb-4">{{ $t('common.VForgotPasswordTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('common.VForgotPasswordTitle') }}</h2>
 		<!-- Loading Spinner -->
 		<div v-if="configsStore.configs.loading" class="flex items-center justify-center my-4">
 			<div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin">

@@ -133,7 +133,7 @@ watch(isChecked, (newValue) => {
 
 <template>
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-2xl font-bold mb-4">{{ $t('camera.VCameraTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('camera.VCameraTitle') }}</h2>
 		<TopButtonEditElement :main-config="{ path: '/cameras', save: { roleRequired: 2, loading: camerasStore.cameraEdition.loading }, delete: { roleRequired: 2 } }"
 			:optional-config="[
 				{ label: 'camera.VCameraOnOff', roleRequired: 2, bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => cameraUpdateLight(cameraId) },
@@ -141,33 +141,33 @@ watch(isChecked, (newValue) => {
 			]"
 			:id="cameraId" :store-user="authStore.user" @button-save="cameraSave" @button-delete="cameraDeleteModalShow = true"/>
 	</div>
-	<div v-if="camerasStore.cameras[cameraId] || cameraId == 'new'">
-		<div class="mb-6 flex justify-between flex-wrap">
-			<Form :validation-schema="schemaCamera" v-slot="{ errors }" @submit.prevent="" class="mb-6">
+	<div v-if="camerasStore.cameras[cameraId] || cameraId == 'new'" class="w-full">
+		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
+			<Form :validation-schema="schemaCamera" v-slot="{ errors }" @submit.prevent="" class="mb-6 w-full sm:w-[490px]">
 				<div class="flex flex-col text-gray-700 space-y-2">
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="nom_camera">{{ $t('camera.VCameraName') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="nom_camera">{{ $t('camera.VCameraName') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="nom_camera" type="text" v-model="camerasStore.cameraEdition.nom_camera"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.nom_camera }"
 								:disabled="authStore.user?.role_user !== 2" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.nom_camera || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.nom_camera || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="url_camera">{{ $t('camera.VCameraURL') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="url_camera">{{ $t('camera.VCameraURL') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="url_camera" type="text" v-model="camerasStore.cameraEdition.url_camera"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.url_camera }"
 								:disabled="authStore.user?.role_user !== 2" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.url_camera || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.url_camera || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="check">{{ $t('camera.VCameraCheck') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="check">{{ $t('camera.VCameraCheck') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="check" v-slot="{ is_checked_custom }">
 								<input
 									v-model="isChecked"
@@ -179,24 +179,24 @@ watch(isChecked, (newValue) => {
 							</Field>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="user_camera">{{ $t('camera.VCameraUser') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="user_camera">{{ $t('camera.VCameraUser') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="user_camera" type="text" v-model="camerasStore.cameraEdition.user_camera"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.user_camera }"
 								:disabled="authStore.user?.role_user !== 2 || !isChecked" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.user_camera || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.user_camera || ' ' }}</span>
 						</div>
 					</div>
-					<div class="flex flex-row items-start space-x-2">
-						<label class="font-semibold min-w-[140px]" for="mdp_camera">{{ $t('camera.VCameraPassword') }}:</label>
-						<div class="flex flex-col flex-1">
+					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+						<label class="font-semibold sm:min-w-[140px]" for="mdp_camera">{{ $t('camera.VCameraPassword') }}:</label>
+						<div class="flex flex-col flex-1 w-full">
 							<Field name="mdp_camera" type="password" v-model="camerasStore.cameraEdition.mdp_camera"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors.mdp_camera }"
 								:disabled="authStore.user?.role_user !== 2 || !isChecked" />
-							<span class="text-red-500 h-5 w-80 text-sm">{{ errors.mdp_camera || ' ' }}</span>
+							<span class="text-red-500 h-5 w-full text-sm">{{ errors.mdp_camera || ' ' }}</span>
 						</div>
 					</div>
 				</div>

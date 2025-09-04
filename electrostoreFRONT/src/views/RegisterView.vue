@@ -35,7 +35,7 @@ function onSubmit(values, { setErrors }) {
 
 <template>
 	<div class="max-w-lg mx-auto bg-white p-6 rounded shadow">
-		<h2 class="text-2xl font-bold mb-4">{{ $t('common.VRegisterTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('common.VRegisterTitle') }}</h2>
 
 		<Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
 			<!-- Email Field -->
