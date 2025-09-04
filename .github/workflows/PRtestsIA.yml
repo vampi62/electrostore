@@ -1,4 +1,4 @@
-name: test
+name: tests PR IA
 
 on:
   pull_request:
@@ -28,30 +28,11 @@ jobs:
     - name: Run tests with coverage
       run: |
         python -m pytest ../tests/electrostoreIA --cov=electrostoreIA --cov-report=xml:coverage.xml
-    - name: Upload ia coverage
-      uses: actions/upload-artifact@v4
-      with:
-        name: ia-coverage
-        path: electrostoreIA/coverage.xml
-
-  sonarqube-ia:
-    name: SonarQube - IA
-    needs:
-      - test-IA
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
     - name: Get PR ID
       id: get-pr-id
       run: |
         PR_ID="${{ github.event.pull_request.number }}"
         echo "pr_id=$PR_ID" >> $GITHUB_OUTPUT
-    - name: Download IA coverage
-      uses: actions/download-artifact@v4
-      with:
-        name: ia-coverage
-        path: ia-coverage
     - name: SonarScanner
       uses: SonarSource/sonarqube-scan-action@v5
       env:
@@ -62,5 +43,5 @@ jobs:
           -Dsonar.projectKey=PR-${{ steps.get-pr-id.outputs.pr_id }}-electrostore-ia
           -Dsonar.projectName=PR-${{ steps.get-pr-id.outputs.pr_id }}-electrostore-ia
           -Dsonar.sources=electrostoreIA
-          -Dsonar.python.coverage.reportPaths=ia-coverage/coverage.xml
+          -Dsonar.python.coverage.reportPaths=electrostoreIA/coverage.xml
           -Dsonar.cfamily.cache.enabled=false
