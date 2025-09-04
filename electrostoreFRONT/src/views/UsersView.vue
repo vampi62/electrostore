@@ -32,7 +32,7 @@ const filter = ref([
 	{ key: "nom_user", value: "", type: "text", label: "user.VUsersFilterName", compareMethod: "contain" },
 	{ key: "prenom_user", value: "", type: "text", label: "user.VUsersFilterFirstName", compareMethod: "contain" },
 	{ key: "email_user", value: "", type: "text", label: "user.VUsersFilterEmail", compareMethod: "contain" },
-	{ key: "role_user", value: "", type: "select", typeData: "int", options: [[0, t("user.VUsersFilterRole0")], [1, t("user.VUsersFilterRole1")], [2, t("user.VUsersFilterRole2")]], label: "user.VUsersFilterRole", compareMethod: "=" },
+	{ key: "role_user", value: "", type: "datalist", typeData: "int", options: [[0, t("user.VUsersFilterRole0")], [1, t("user.VUsersFilterRole1")], [2, t("user.VUsersFilterRole2")]], label: "user.VUsersFilterRole", compareMethod: "=" },
 ]);
 const tableauLabel = ref([
 	{ label: "user.VUsersName", sortable: true, key: "nom_user", type: "text" },

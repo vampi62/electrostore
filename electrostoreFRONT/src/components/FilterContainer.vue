@@ -7,7 +7,7 @@
 			:placeholder="filter?.placeholder"
 			:class-css="filter?.class"
 			:class="filter?.class"
-			:options="filter?.options"
+			:options="filter?.options && filter.options.length > 0 ? filterOption(filter) : []"
 			@update-text="(value) => updateText(index, value)"
 		/>
 	</div>
@@ -117,6 +117,24 @@ export default {
 					filter.value = value;
 				}
 			});
+		},
+		filterOption(filter) {
+			if ((filter.type === "select" || filter.type === "datalist") && filter.options.length > 0) {
+				const optionsSet = new Set();
+				filter.options.forEach((option) => {
+					Object.values(this.storeData).forEach((element) => {
+						if (filter.subPath) {
+							if (element[filter.subPath].some((subElement) => subElement[filter.key] === option[0])) {
+								optionsSet.add(option);
+							}
+						} else if (element[filter.key] === option[0]) {
+							optionsSet.add(option);
+						}
+					});
+				});
+				return Array.from(optionsSet);
+			}
+			return filter.options;
 		},
 	},
 	watch: {

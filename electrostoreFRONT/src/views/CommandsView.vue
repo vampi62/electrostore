@@ -37,13 +37,13 @@ onMounted(() => {
 });
 
 const filter = ref([
-	{ key: "status_command", value: "", type: "select", options: [["En attente", t("command.VCommandsFilterStatus1")], ["En cours", t("command.VCommandsFilterStatus2")], ["Terminée", t("command.VCommandsFilterStatus3")], ["Annulée", t("command.VCommandsFilterStatus4")]], label: "command.VCommandsFilterStatus", compareMethod: "=" },
+	{ key: "status_command", value: "", type: "datalist", options: [["En attente", t("command.VCommandsFilterStatus1")], ["En cours", t("command.VCommandsFilterStatus2")], ["Terminée", t("command.VCommandsFilterStatus3")], ["Annulée", t("command.VCommandsFilterStatus4")]], label: "command.VCommandsFilterStatus", compareMethod: "=" },
 	{ key: "date_command", value: "", type: "date", label: "command.VCommandsFilterDate", compareMethod: ">=" },
 	{ key: "url_command", value: "", type: "text", label: "command.VCommandsFilterURL", compareMethod: "contain" },
 	{ key: "prix_command", value: "", type: "number", label: "command.VCommandsFilterPriceMin", compareMethod: ">=" },
 	{ key: "prix_command", value: "", type: "number", label: "command.VCommandsFilterPriceMax", compareMethod: "<=" },
 	{ key: "date_livraison_command", value: "", type: "date", label: "command.VCommandsFilterDateL", compareMethod: ">=" },
-	{ key: "id_item", subPath: "commands_items", value: "", type: "select", typeData: "int", options: Object.values(itemsStore.items).map((item) => [item.id_item, item.reference_name_item]), label: "command.VCommandsFilterItem", compareMethod: "=" },
+	{ key: "id_item", subPath: "commands_items", value: "", type: "datalist", typeData: "int", options: Object.values(itemsStore.items).map((item) => [item.id_item, item.reference_name_item]), label: "command.VCommandsFilterItem", compareMethod: "=" },
 ]);
 const tableauLabel = ref([
 	{ label: "command.VCommandsStatus", sortable: true, key: "status_command", type: "text" },
