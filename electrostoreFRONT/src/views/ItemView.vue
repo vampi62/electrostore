@@ -78,8 +78,6 @@ const toggleBoxLed = async(boxId) => {
 
 // item
 const itemDeleteModalShow = ref(false);
-const itemInputTagShow = ref(false);
-const tagLoad = ref(false);
 const itemSave = async() => {
 	try {
 		createSchema().validateSync(itemsStore.itemEdition, { abortEarly: false });
@@ -115,29 +113,6 @@ const itemDelete = async() => {
 	}
 	itemDeleteModalShow.value = false;
 };
-const showInputAddTag = async() => {
-	if (!tagLoad.value) {
-		try {
-			let offset = 0;
-			const limit = 100;
-			do {
-				await tagsStore.getTagByInterval(limit, offset);
-				offset += limit;
-			} while (offset < tagsStore.tagsTotalCount);
-			tagLoad.value = true;
-		} catch (e) {
-			addNotification({ message: e, type: "error", i18n: false });
-			return;
-		}
-	}
-	itemInputTagShow.value = true;
-};
-
-const newTags = computed(() => {
-	return Object.values(tagsStore.tags).filter((element) => {
-		return !itemsStore.itemTags[itemId][element.id_tag];
-	});
-});
 
 const getTotalQuantity = computed(() => {
 	if (itemId === "new") {
@@ -353,6 +328,50 @@ const imageDownload = async(imageContent) => {
 	document.body.removeChild(link);
 };
 
+// tag
+const tagModalShow = ref(false);
+const tagLoad = ref(false);
+const filteredTags = ref([]);
+const updateFilteredTags = (newValue) => {
+	filteredTags.value = newValue;
+};
+const filterTag = ref([
+	{ key: "nom_tag", value: "", type: "text", label: "", placeholder: t("store.VStoreTagFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+]);
+
+const tagOpenAddModal = () => {
+	tagModalShow.value = true;
+	if (!tagLoad.value) {
+		fetchAllTags();
+	}
+};
+async function fetchAllTags() {
+	let offset = 0;
+	const limit = 100;
+	do {
+		await tagsStore.getTagByInterval(limit, offset);
+		offset += limit;
+	} while (offset < tagsStore.tagsTotalCount);
+	tagLoad.value = true;
+}
+
+function tagSave(id_tag) {
+	try {
+		itemsStore.createItemTag(itemId,  { id_tag: id_tag });
+		addNotification({ message: "item.VItemTagAdded", type: "success", i18n: true });
+	} catch (e) {
+		addNotification({ message: e, type: "error", i18n: false });
+	}
+}
+function tagDelete(id_tag) {
+	try {
+		itemsStore.deleteItemTag(itemId, id_tag);
+		addNotification({ message: "item.VItemTagDeleted", type: "success", i18n: true });
+	} catch (e) {
+		addNotification({ message: e, type: "error", i18n: false });
+	}
+}
+
 const schemaBox = Yup.object().shape({
 	qte_item_box: Yup.number()
 		.required(t("item.VItemBoxQuantityRequired"))
@@ -415,6 +434,25 @@ const labelForm = [
 	{ key: "quantity", label: "item.VItemTotalQuantity", type: "computed", value: getTotalQuantity },
 	{ key: "id_img", label: "item.VItemImage", type: "custom" },
 ];
+const labelTableauModalTag = ref([
+	{ label: "item.VItemTagName", sortable: true, key: "nom_tag", type: "text" },
+	{ label: "item.VItemTagActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-save",
+			condition: "!store[1]?.[rowData.id_tag]",
+			action: (row) => tagSave(row.id_tag),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			condition: "store[1]?.[rowData.id_tag]",
+			action: (row) => tagDelete(row.id_tag),
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+		},
+	] },
+]);
 const labelTableauDocument = ref([
 	{ label: "item.VItemDocumentName", sortable: true, key: "name_item_document", type: "text", canEdit: true },
 	{ label: "item.VItemDocumentType", sortable: true, key: "type_item_document", type: "text" },
@@ -546,7 +584,8 @@ const labelTableauProjet = ref([
 					</div>
 				</template>
 			</FormContainer>
-			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :tags-store="tagsStore.tags" :delete-function="(value) => itemsStore.deleteItemTag(itemId, value)"/>
+			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="itemId !== 'new'"
+				:delete-function="(value) => tagDelete(value)" @openModalTag="tagOpenAddModal"/>
 		</div>
 		<CollapsibleSection title="item.VitemBoxs"
 			:total-count="Number(itemsStore.itemBoxsTotalCount[itemId] || 0)" :id-page="itemId">
@@ -645,24 +684,25 @@ const labelTableauProjet = ref([
 	<div v-else>
 		<div>{{ $t('item.VItemLoading') }}</div>
 	</div>
-
-	<div v-if="itemInputTagShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
-		@click="itemInputTagShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
+	
+	<div v-if="tagModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
+		@click="tagModalShow = false">
+		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
 			<div class="flex justify-between items-center border-b pb-3">
-				<h2 class="text-2xl font-semibold">{{ $t('item.VItemTagAdd') }}</h2>
-				<button type="button" @click="itemInputTagShow = false"
+				<h2 class="text-2xl font-semibold">{{ $t('store.VStoreAddTag') }}</h2>
+				<button type="button" @click="tagModalShow = false"
 					class="text-gray-500 hover:text-gray-700">&times;</button>
 			</div>
 
-			<div class="flex flex-wrap">
-				<template v-for="(tag, key) in newTags" :key="key">
-					<div class="bg-gray-200 p-1 rounded mr-2 mb-2 cursor-pointer"
-						@click="itemsStore.createItemTag(itemId, { id_tag: tag.id_tag })">
-						{{ tag.nom_tag }} ({{ tag.poids_tag }})
-					</div>
-				</template>
-			</div>
+			<!-- Filtres -->
+			<FilterContainer class="my-4 flex gap-4" :filters="filterTag" :store-data="tagsStore.tags" @output-filter="updateFilteredTags" />
+
+			<!-- Tableau Items -->
+			<Tableau :labels="labelTableauModalTag" :meta="{ key: 'id_tag' }"
+				:store-data="[filteredTags, itemsStore.itemTags[itemId]]"
+				:loading="tagsStore.tagsLoading"
+				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+			/>
 		</div>
 	</div>
 

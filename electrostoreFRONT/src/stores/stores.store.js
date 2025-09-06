@@ -145,50 +145,50 @@ export const useStoresStore = defineStore("stores",{
 				}
 			}
 		},
-		async createStore(params) {
-			this.storeEdition.loading = true;
-			this.storeEdition = await fetchWrapper.post({
+		async createStore(id, params) {
+			this.storeEdition[id].loading = true;
+			this.storeEdition[id] = await fetchWrapper.post({
 				url: `${baseUrl}/store`,
 				useToken: "access",
 				body: params,
 			});
-			this.stores[this.storeEdition.id_store] = this.storeEdition;
+			this.stores[this.storeEdition[id].id_store] = this.storeEdition[id];
 		},
 		async updateStore(id, params) {
-			this.storeEdition.loading = true;
-			this.storeEdition = await fetchWrapper.put({
+			this.storeEdition[id].loading = true;
+			this.storeEdition[id] = await fetchWrapper.put({
 				url: `${baseUrl}/store/${id}`,
 				useToken: "access",
 				body: params,
 			});
-			this.stores[id] = this.storeEdition;
+			this.stores[id] = this.storeEdition[id];
 		},
 		async deleteStore(id) {
-			this.storeEdition.loading = true;
+			this.storeEdition[id].loading = true;
 			await fetchWrapper.delete({
 				url: `${baseUrl}/store/${id}`,
 				useToken: "access",
 			});
 			delete this.stores[id];
-			this.storeEdition = {};
+			this.storeEdition[id] = {};
 		},
-		async createStoreComplete(params) {
-			this.storeEdition.loading = true;
-			this.storeEdition = await fetchWrapper.post({
+		async createStoreComplete(id, params) {
+			this.storeEdition[id].loading = true;
+			this.storeEdition[id] = await fetchWrapper.post({
 				url: `${baseUrl}/store/complete`,
 				useToken: "access",
 				body: params,
 			});
-			this.stores[this.storeEdition.store.id_store] = this.storeEdition;
+			this.stores[this.storeEdition[id].store.id_store] = this.storeEdition[id];
 		},
 		async updateStoreComplete(id, params) {
-			this.storeEdition.loading = true;
-			this.storeEdition = await fetchWrapper.put({
+			this.storeEdition[id].loading = true;
+			this.storeEdition[id] = await fetchWrapper.put({
 				url: `${baseUrl}/store/${id}/complete`,
 				useToken: "access",
 				body: params,
 			});
-			this.stores[id] = this.storeEdition;
+			this.stores[id] = this.storeEdition[id];
 		},
 
 		async getBoxByInterval(idStore, limit = 100, offset = 0, expand = []) {

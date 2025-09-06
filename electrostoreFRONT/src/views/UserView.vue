@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, inject, watch } from "vue";
+import { onMounted, onBeforeUnmount, ref, inject } from "vue";
 import { router } from "@/helpers";
 
 const { addNotification } = inject("useNotification");
@@ -7,7 +7,6 @@ const { addNotification } = inject("useNotification");
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
-import { Form, Field } from "vee-validate";
 import * as Yup from "yup";
 
 import { useRoute } from "vue-router";
@@ -204,7 +203,7 @@ const labelTableauSession = ref([
 				<CollapsibleSection title="user.VUserCommandsCommentaires" :disable-margin="true"
 					:total-count="Number(usersStore.commandsCommentaireTotalCount[userId] || 0)" :id-page="userId">
 					<template #append-row>
-						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', CanEdit: false }"
+						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: false }"
 							:store-data="[usersStore.commandsCommentaire[userId],usersStore.users,authStore.user,configsStore]"
 							:loading="usersStore.commandsCommentaireLoading"
 							:total-count="Number(usersStore.commandsCommentaireTotalCount[userId]) || 0"
@@ -216,7 +215,7 @@ const labelTableauSession = ref([
 				<CollapsibleSection title="user.VUserProjetsCommentaires" :disable-margin="true"
 					:total-count="Number(usersStore.projetsCommentaireTotalCount[userId] || 0)" :id-page="userId">
 					<template #append-row>
-						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', CanEdit: false }"
+						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: false }"
 							:store-data="[usersStore.projetsCommentaire[userId],usersStore.users,authStore.user,configsStore]"
 							:loading="usersStore.projetsCommentaireLoading"
 							:total-count="Number(usersStore.projetsCommentaireTotalCount[userId]) || 0"

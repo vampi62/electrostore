@@ -513,7 +513,7 @@ const labelTableauModalItem = ref([
 		<CollapsibleSection title="projet.VProjetCommentaires"
 			:total-count="Number(projetsStore.commentairesTotalCount[projetId] || 0)" :id-page="projetId">
 			<template #append-row>
-				<Commentaire :meta="{ contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', CanEdit: true }"
+				<Commentaire :meta="{ contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: true }"
 					:store-data="[projetsStore.commentaires[projetId],usersStore.users,authStore.user,configsStore]"
 					:store-function="{ create: (data) => projetsStore.createCommentaire(projetId, data), update: (id, data) => projetsStore.updateCommentaire(projetId, id, data), delete: (id) => projetsStore.deleteCommentaire(projetId, id) }"
 					:loading="projetsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'projet.VProjetCommentDeleteTitle', textP: 'projet.VProjetCommentDeleteText' }"
