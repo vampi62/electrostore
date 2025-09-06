@@ -44,6 +44,7 @@ async function fetchAllData() {
 		itemsStore.getImageByInterval(itemId, 100, 0);
 		itemsStore.itemEdition = {
 			loading: false,
+			id_item: itemsStore.items[itemId].id_item,
 			reference_name_item: itemsStore.items[itemId].reference_name_item,
 			friendly_name_item: itemsStore.items[itemId].friendly_name_item,
 			description_item: itemsStore.items[itemId].description_item,
@@ -54,11 +55,6 @@ async function fetchAllData() {
 		itemsStore.itemEdition = {
 			loading: false,
 		};
-		showBoxs.value = false;
-		showDocuments.value = false;
-		showImages.value = false;
-		showProjetItems.value = false;
-		showCommandItems.value = false;
 	}
 }
 onMounted(() => {
@@ -69,44 +65,6 @@ onBeforeUnmount(() => {
 		loading: false,
 	};
 });
-
-const showBoxs = ref(true);
-const showDocuments = ref(true);
-const showImages = ref(true);
-const showProjetItems = ref(true);
-const showCommandItems = ref(true);
-
-const toggleBoxs = () => {
-	if (itemId === "new") {
-		return;
-	}
-	showBoxs.value = !showBoxs.value;
-};
-const toggleDocuments = () => {
-	if (itemId === "new") {
-		return;
-	}
-	showDocuments.value = !showDocuments.value;
-};
-const toggleImages = () => {
-	if (itemId === "new") {
-		return;
-	}
-	showImages.value = !showImages.value;
-};
-
-const toggleProjetItems = () => {
-	if (itemId === "new") {
-		return;
-	}
-	showProjetItems.value = !showProjetItems.value;
-};
-const toggleCommandItems = () => {
-	if (itemId === "new") {
-		return;
-	}
-	showCommandItems.value = !showCommandItems.value;
-};
 
 const toggleBoxLed = async(boxId) => {
 	let storeId = itemsStore.itemBoxs[itemId][boxId]["box"].id_store;
@@ -124,7 +82,7 @@ const itemInputTagShow = ref(false);
 const tagLoad = ref(false);
 const itemSave = async() => {
 	try {
-		await schemaItem.validate(itemsStore.itemEdition, { abortEarly: false });
+		createSchema().validateSync(itemsStore.itemEdition, { abortEarly: false });
 		if (itemId !== "new") {
 			await itemsStore.updateItem(itemId, { ...itemsStore.itemEdition });
 			addNotification({ message: "item.VItemUpdated", type: "success", i18n: true });
@@ -133,6 +91,12 @@ const itemSave = async() => {
 			addNotification({ message: "item.VItemCreated", type: "success", i18n: true });
 		}
 	} catch (e) {
+		if (e.inner) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -182,11 +146,6 @@ const getTotalQuantity = computed(() => {
 	return itemsStore.itemBoxs[itemId] ? Object.values(itemsStore.itemBoxs[itemId]).reduce((acc, box) => acc + box.qte_item_box, 0) : 0;
 });
 
-const sortedTags = computed(() => {
-	return Object.keys(itemsStore.itemTags[itemId] || {})
-		.sort((a, b) => tagsStore.tags[b].poids_tag - tagsStore.tags[a].poids_tag);
-});
-
 // box
 const boxSave = async(box) => {
 	if (itemsStore.itemBoxs[itemId][box.id_box]) {
@@ -196,16 +155,28 @@ const boxSave = async(box) => {
 			addNotification({ message: "item.VItemBoxUpdated", type: "success", i18n: true });
 			box.tmp = null;
 		} catch (e) {
+			if (e.inner) {
+				e.inner.forEach((error) => {
+					addNotification({ message: error.message, type: "error", i18n: false });
+				});
+				return;
+			}
 			addNotification({ message: e, type: "error", i18n: false });
 			return;
 		}
 	} else {
 		try {
-			schemaItem.validateSync(box.tmp, { abortEarly: false });
+			createSchema().validateSync(box.tmp, { abortEarly: false });
 			await itemsStore.createItemBox(itemId, box.tmp);
 			addNotification({ message: "item.VItemBoxAdded", type: "success", i18n: true });
 			box.tmp = null;
 		} catch (e) {
+			if (e.inner) {
+				e.inner.forEach((error) => {
+					addNotification({ message: error.message, type: "error", i18n: false });
+				});
+				return;
+			}
 			addNotification({ message: e, type: "error", i18n: false });
 			return;
 		}
@@ -230,6 +201,12 @@ const documentAdd = async() => {
 		await itemsStore.createDocument(itemId, documentModalData.value);
 		addNotification({ message: "item.VItemDocumentAdded", type: "success", i18n: true });
 	} catch (e) {
+		if (e.inner) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -241,6 +218,12 @@ const documentEdit = async(row) => {
 		await itemsStore.updateDocument(itemId, row.id_item_document, row);
 		addNotification({ message: "item.VItemDocumentUpdated", type: "success", i18n: true });
 	} catch (e) {
+		if (e.inner) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -381,23 +364,25 @@ const schemaBox = Yup.object().shape({
 		.min(1, t("item.VItemBoxMaxThresholdMin")),
 });
 
-const schemaItem = Yup.object().shape({
-	reference_name_item: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-		.required(t("item.VItemNameRequired")),
-	friendly_name_item: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemFriendlyNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-		.required(t("item.VItemFriendlyNameRequired")),
-	description_item: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_description"), t("item.VItemDescriptionMaxLength") + " " + configsStore.getConfigByKey("max_length_description") + t("common.VAllCaracters"))
-		.required(t("item.VItemDescriptionRequired")),
-	seuil_min_item: Yup.number()
-		.min(0, t("item.VItemSeuilMinMin"))
-		.typeError(t("item.VItemSeuilMinType"))
-		.required(t("item.VItemSeuilMinRequired")),
-	id_img: Yup.string()
-		.nullable(),
-});
+const createSchema = () => {
+	return Yup.object().shape({
+		reference_name_item: Yup.string()
+			.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.required(t("item.VItemNameRequired")),
+		friendly_name_item: Yup.string()
+			.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemFriendlyNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.required(t("item.VItemFriendlyNameRequired")),
+		description_item: Yup.string()
+			.max(configsStore.getConfigByKey("max_length_description"), t("item.VItemDescriptionMaxLength") + " " + configsStore.getConfigByKey("max_length_description") + t("common.VAllCaracters"))
+			.required(t("item.VItemDescriptionRequired")),
+		seuil_min_item: Yup.number()
+			.min(0, t("item.VItemSeuilMinMin"))
+			.typeError(t("item.VItemSeuilMinType"))
+			.required(t("item.VItemSeuilMinRequired")),
+		id_img: Yup.string()
+			.nullable(),
+	});
+};
 
 const schemaAddDocument = Yup.object().shape({
 	name_item_document: Yup.string()
@@ -422,6 +407,14 @@ const schemaAddImage = Yup.object().shape({
 		.test("fileSize", t("item.VItemImageSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 
+const labelForm = [
+	{ key: "reference_name_item", label: "item.VItemName", type: "text" },
+	{ key: "friendly_name_item", label: "item.VItemFriendlyName", type: "text" },
+	{ key: "description_item", label: "item.VItemDescription", type: "textarea" },
+	{ key: "seuil_min_item", label: "item.VItemSeuilMin", type: "number" },
+	{ key: "quantity", label: "item.VItemTotalQuantity", type: "computed", value: getTotalQuantity },
+	{ key: "id_img", label: "item.VItemImage", type: "custom" },
+];
 const labelTableauDocument = ref([
 	{ label: "item.VItemDocumentName", sortable: true, key: "name_item_document", type: "text", canEdit: true },
 	{ label: "item.VItemDocumentType", sortable: true, key: "type_item_document", type: "text" },
@@ -533,104 +526,31 @@ const labelTableauProjet = ref([
 	</div>
 	<div v-if="itemsStore.items[itemId] || itemId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<Form :validation-schema="schemaItem" v-slot="{ errors }" @submit.prevent="" class="mb-6 w-full sm:w-[490px]">
-				<div class="flex flex-col text-gray-700 space-y-2">
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="reference_name_item">{{ $t('item.VItemName') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="reference_name_item" type="text"
-								v-model="itemsStore.itemEdition.reference_name_item"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.reference_name_item }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.reference_name_item || ' ' }}</span>
-						</div>
+			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="itemsStore.itemEdition">
+				<template #id_img>
+					<div class="flex justify-center items-center"
+						:class="{ 'cursor-pointer': !itemsStore.itemEdition.loading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }"
+						@click="imageSelectOpenModal">
+						<template v-if="itemsStore.itemEdition.id_img">
+							<img v-if="itemsStore.thumbnailsURL[itemsStore.itemEdition.id_img]"
+								:src="itemsStore.thumbnailsURL[itemsStore.itemEdition.id_img]" alt="Main"
+								class="w-48 h-48 object-cover rounded" />
+							<span v-else class="w-48 h-48 object-cover rounded">
+								{{ $t('item.VInventoryLoading') }}
+							</span>
+						</template>
+						<template v-else>
+							<img src="../assets/nopicture.webp" alt="Not Found"
+								class="w-48 h-48 object-cover rounded" />
+						</template>
 					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="friendly_name_item">{{ $t('item.VItemFriendlyName') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="friendly_name_item" type="text"
-								v-model="itemsStore.itemEdition.friendly_name_item"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.friendly_name_item }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.friendly_name_item || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="description_item">{{ $t('item.VItemDescription') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="description_item" v-slot="{ description_item }">
-								<textarea v-bind="description_item" v-model="itemsStore.itemEdition.description_item"
-									:value="itemsStore.itemEdition.description_item"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300 resize-y"
-									:class="{ 'border-red-500': errors.description_item }" rows="4">
-								</textarea>
-							</Field>
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.description_item || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="seuil_min_item">{{ $t('item.VItemSeuilMin') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="seuil_min_item" type="number" v-model="itemsStore.itemEdition.seuil_min_item"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.seuil_min_item }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.seuil_min_item || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<span class="font-semibold sm:min-w-[140px]">{{ $t('item.VItemTotalQuantity') }}:</span>
-						<div class="flex flex-col flex-1 w-full">
-							<div class="flex space x-2">
-								<span>{{ getTotalQuantity }}</span>
-							</div>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<span class="font-semibold sm:min-w-[140px]">{{ $t('item.VItemImage') }}:</span>
-						<div class="flex flex-col flex-1 w-full">
-							<div class="flex justify-center items-center"
-								:class="{ 'cursor-pointer': !itemsStore.itemEdition.loading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }"
-								@click="imageSelectOpenModal">
-								<template v-if="itemsStore.itemEdition.id_img">
-									<img v-if="itemsStore.thumbnailsURL[itemsStore.itemEdition.id_img]"
-										:src="itemsStore.thumbnailsURL[itemsStore.itemEdition.id_img]" alt="Main"
-										class="w-48 h-48 object-cover rounded" />
-									<span v-else class="w-48 h-48 object-cover rounded">
-										{{ $t('item.VInventoryLoading') }}
-									</span>
-								</template>
-								<template v-else>
-									<img src="../assets/nopicture.webp" alt="Not Found"
-										class="w-48 h-48 object-cover rounded" />
-								</template>
-							</div>
-						</div>
-					</div>
-				</div>
-			</Form>
-			<div class="w-96 h-96 bg-gray-200 px-2 py-2 rounded">
-				<span v-for="(value, key) in sortedTags" :key="key"
-					class="bg-gray-300 p-1 rounded mr-2 mb-1">
-					{{ tagsStore.tags[value].nom_tag }} ({{ tagsStore.tags[value].poids_tag }})
-					<span @click="itemsStore.deleteItemTag(itemId, value)"
-						class="text-red-500 cursor-pointer hover:text-red-600">
-						<font-awesome-icon icon="fa-solid fa-times" />
-					</span>
-				</span>
-				<span v-if="!itemInputTagShow" class="bg-gray-300 p-1 rounded mr-2 mb-2">
-					<span @click="showInputAddTag"
-						class="text-green-500 cursor-pointer hover:text-green-600">
-						<font-awesome-icon icon="fa-solid fa-plus" />
-					</span>
-				</span>
-			</div>
+				</template>
+			</FormContainer>
+			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :tags-store="tagsStore.tags" :delete-function="(value) => itemsStore.deleteItemTag(itemId, value)"/>
 		</div>
-		<div class="mb-6 bg-gray-100 p-2 rounded">
-			<h3 @click="toggleBoxs" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
-				{{ $t('item.VitemBoxs') }} ({{ itemsStore.itemBoxsTotalCount[itemId] || 0 }})
-			</h3>
-			<div :class="showBoxs ? 'block' : 'hidden'" class="p-2">
+		<CollapsibleSection title="item.VitemBoxs"
+			:total-count="Number(itemsStore.itemBoxsTotalCount[itemId] || 0)" :id-page="itemId">
+			<template #append-row>
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box' }"
 					:store-data="[itemsStore.itemBoxs[itemId]]"
 					:loading="itemsStore.itemBoxsLoading" :schema="schemaBox"
@@ -639,14 +559,11 @@ const labelTableauProjet = ref([
 					:fetch-function="(offset, limit) => itemsStore.getItemBoxByInterval(itemId, limit, offset)"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
-			</div>
-		</div>
-		<div class="mb-6 bg-gray-100 p-2 rounded">
-			<h3 @click="toggleDocuments" class="text-xl font-semibold  bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': !itemsStore.documentsLoading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
-				{{ $t('item.VItemDocuments') }} ({{ itemsStore.documentsTotalCount[itemId] || 0 }})
-			</h3>
-			<div v-if="!itemsStore.documentsLoading && showDocuments" class="p-2">
+			</template>
+		</CollapsibleSection>
+		<CollapsibleSection title="item.VItemDocuments"
+			:total-count="Number(itemsStore.documentsTotalCount[itemId] || 0)" :id-page="itemId">
+			<template #append-row>
 				<button type="button" @click="documentAddOpenModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('item.VItemAddDocument') }}
@@ -659,14 +576,11 @@ const labelTableauProjet = ref([
 					:fetch-function="(offset, limit) => itemsStore.getDocumentByInterval(itemId, limit, offset)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
-			</div>
-		</div>
-		<div class="mb-6 bg-gray-100 p-2 rounded">
-			<h3 @click="toggleImages" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
-				{{ $t('item.VItemImages') }} ({{ itemsStore.imagesTotalCount[itemId] || 0 }})
-			</h3>
-			<div v-if="!itemsStore.images.imagesLoading && showImages" class="p-2">
+			</template>
+		</CollapsibleSection>
+		<CollapsibleSection title="item.VItemImages"
+			:total-count="Number(itemsStore.imagesTotalCount[itemId] || 0)" :id-page="itemId">
+			<template #append-row>
 				<button type="button" @click="imageAddOpenModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('item.VItemAddImage') }}
@@ -699,14 +613,11 @@ const labelTableauProjet = ref([
 						</div>
 					</template>
 				</div>
-			</div>
-		</div>
-		<div class="mb-6 bg-gray-100 p-2 rounded">
-			<h3 @click="toggleCommandItems" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
-				{{ $t('item.VItemCommands') }} ({{ itemsStore.itemCommandsTotalCount[itemId] || 0 }})
-			</h3>
-			<div v-if="showCommandItems" class="p-2">
+			</template>
+		</CollapsibleSection>
+		<CollapsibleSection title="item.VItemCommands"
+			:total-count="Number(itemsStore.itemCommandsTotalCount[itemId] || 0)" :id-page="itemId">
+			<template #append-row>
 				<Tableau :labels="labelTableauCommand" :meta="{ key: 'id_item', path: '/commands/' }"
 					:store-data="[itemsStore.itemCommands[itemId],commandsStore.commands]"
 					:loading="itemsStore.itemCommandsLoading"
@@ -715,14 +626,11 @@ const labelTableauProjet = ref([
 					:fetch-function="(offset, limit) => itemsStore.getItemCommandByInterval(itemId, limit, offset)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
-			</div>
-		</div>
-		<div class="mb-6 bg-gray-100 p-2 rounded">
-			<h3 @click="toggleProjetItems" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': itemId != 'new', 'cursor-not-allowed': itemId == 'new' }">
-				{{ $t('item.VItemProjets') }} ({{ itemsStore.itemProjetsTotalCount[itemId] || 0 }})
-			</h3>
-			<div v-if="showProjetItems" class="p-2">
+			</template>
+		</CollapsibleSection>
+		<CollapsibleSection title="item.VItemProjets"
+			:total-count="Number(itemsStore.itemProjetsTotalCount[itemId] || 0)" :id-page="itemId">
+			<template #append-row>
 				<Tableau :labels="labelTableauProjet" :meta="{ key: 'id_projet', path: '/projets/' }"
 					:store-data="[itemsStore.itemProjets[itemId],projetsStore.projets]"
 					:loading="itemsStore.itemProjetsLoading"
@@ -731,8 +639,8 @@ const labelTableauProjet = ref([
 					:fetch-function="(offset, limit) => itemsStore.getItemProjetByInterval(itemId, limit, offset)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
-			</div>
-		</div>
+			</template>
+		</CollapsibleSection>
 	</div>
 	<div v-else>
 		<div>{{ $t('item.VItemLoading') }}</div>

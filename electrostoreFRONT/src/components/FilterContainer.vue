@@ -40,7 +40,7 @@ export default {
 		},
 	},
 	components: {
-		Filter : defineAsyncComponent(() => import("@/components/Filter.vue")),
+		Filter: defineAsyncComponent(() => import("@/components/Filter.vue")),
 	},
 	computed: {
 		filteredData() {
@@ -124,7 +124,7 @@ export default {
 				filter.options.forEach((option) => {
 					Object.values(this.storeData).forEach((element) => {
 						if (filter.subPath) {
-							if (element[filter.subPath].some((subElement) => subElement[filter.key] === option[0])) {
+							if (Array.isArray(element[filter.subPath]) && (element[filter.subPath].some((subElement) => subElement[filter.key] === option[0]))) {
 								optionsSet.add(option);
 							}
 						} else if (element[filter.key] === option[0]) {

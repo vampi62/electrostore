@@ -51,9 +51,6 @@ async function fetchAllData() {
 		projetsStore.projetEdition = {
 			loading: false,
 		};
-		showDocuments.value = false;
-		showItems.value = false;
-		showCommentaires.value = false;
 	}
 }
 onMounted(() => {
@@ -65,35 +62,12 @@ onBeforeUnmount(() => {
 	};
 });
 
-const showDocuments = ref(true);
-const showItems = ref(true);
-const showCommentaires = ref(true);
-
-const toggleDocuments = () => {
-	if (projetId === "new") {
-		return;
-	}
-	showDocuments.value = !showDocuments.value;
-};
-const toggleItems = () => {
-	if (projetId === "new") {
-		return;
-	}
-	showItems.value = !showItems.value;
-};
-const toggleCommentaires = () => {
-	if (projetId === "new") {
-		return;
-	}
-	showCommentaires.value = !showCommentaires.value;
-};
-
 // projet
 const projetDeleteModalShow = ref(false);
 const projetTypeStatus = ref([["En attente", t("projet.VProjetStatus1")], ["En cours", t("projet.VProjetStatus2")], ["Terminée", t("projet.VProjetStatus3")], ["Annulée", t("projet.VProjetStatus4")]]);
 const projetSave = async() => {
 	try {
-		await schemaProjet.validate(projetsStore.projetEdition, { abortEarly: false });
+		createSchema().validateSync(projetsStore.projetEdition, { abortEarly: false });
 		if (projetId !== "new") {
 			await projetsStore.updateProjet(projetId, { ...projetsStore.projetEdition });
 			addNotification({ message: "projet.VProjetUpdated", type: "success", i18n: true });
@@ -102,6 +76,12 @@ const projetSave = async() => {
 			addNotification({ message: "projet.VProjetCreated", type: "success", i18n: true });
 		}
 	} catch (e) {
+		if (e.inner) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -139,6 +119,12 @@ const documentAdd = async() => {
 		await projetsStore.createDocument(projetId, documentModalData.value);
 		addNotification({ message: "projet.VProjetDocumentAdded", type: "success", i18n: true });
 	} catch (e) {
+		if (e.inner) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -150,6 +136,12 @@ const documentEdit = async(row) => {
 		await projetsStore.updateDocument(projetId, row.id_projet_document, row);
 		addNotification({ message: "projet.VProjetDocumentUpdated", type: "success", i18n: true });
 	} catch (e) {
+		if (e.inner) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -241,6 +233,12 @@ const itemSave = async(item) => {
 			addNotification({ message: "projet.VProjetItemUpdated", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
+			if (e.inner) {
+				e.inner.forEach((error) => {
+					addNotification({ message: error.message, type: "error", i18n: false });
+				});
+				return;
+			}
 			addNotification({ message: e, type: "error", i18n: false });
 			return;
 		}
@@ -251,6 +249,12 @@ const itemSave = async(item) => {
 			addNotification({ message: "projet.VProjetItemAdded", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
+			if (e.inner) {
+				e.inner.forEach((error) => {
+					addNotification({ message: error.message, type: "error", i18n: false });
+				});
+				return;
+			}
 			addNotification({ message: e, type: "error", i18n: false });
 			return;
 		}
@@ -273,27 +277,29 @@ const filterItem = ref([
 	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("command.VCommandItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
 
-const schemaProjet = Yup.object().shape({
-	nom_projet: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("projet.VProjetNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-		.required(t("projet.VProjetNameRequired")),
-	description_projet: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_description"), t("projet.VProjetDescriptionMaxLength") + " " + configsStore.getConfigByKey("max_length_description") + t("common.VAllCaracters"))
-		.required(t("projet.VProjetDescriptionRequired")),
-	url_projet: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_url"), t("projet.VProjetUrlMaxLength") + " " + configsStore.getConfigByKey("max_length_url") + t("common.VAllCaracters"))
-		.url(t("projet.VProjetUrlInvalid"))
-		.required(t("projet.VProjetUrlRequired")),
-	status_projet: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_status"), t("projet.VProjetStatusMaxLength") + " " + configsStore.getConfigByKey("max_length_status") + t("common.VAllCaracters"))
-		.required(t("projet.VProjetStatusRequired")),
-	date_debut_projet: Yup.date()
-		.required(t("projet.VProjetStartDateRequired")),
-	date_fin_projet: Yup.date()
-		.required(t("projet.VProjetEndDateRequired"))
-		.nullable()
-		.optional(),
-});
+const createSchema = () => {
+	return Yup.object().shape({
+		nom_projet: Yup.string()
+			.max(configsStore.getConfigByKey("max_length_name"), t("projet.VProjetNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.required(t("projet.VProjetNameRequired")),
+		description_projet: Yup.string()
+			.max(configsStore.getConfigByKey("max_length_description"), t("projet.VProjetDescriptionMaxLength") + " " + configsStore.getConfigByKey("max_length_description") + t("common.VAllCaracters"))
+			.required(t("projet.VProjetDescriptionRequired")),
+		url_projet: Yup.string()
+			.max(configsStore.getConfigByKey("max_length_url"), t("projet.VProjetUrlMaxLength") + " " + configsStore.getConfigByKey("max_length_url") + t("common.VAllCaracters"))
+			.url(t("projet.VProjetUrlInvalid"))
+			.required(t("projet.VProjetUrlRequired")),
+		status_projet: Yup.string()
+			.max(configsStore.getConfigByKey("max_length_status"), t("projet.VProjetStatusMaxLength") + " " + configsStore.getConfigByKey("max_length_status") + t("common.VAllCaracters"))
+			.required(t("projet.VProjetStatusRequired")),
+		date_debut_projet: Yup.date()
+			.required(t("projet.VProjetStartDateRequired")),
+		date_fin_projet: Yup.date()
+			.required(t("projet.VProjetEndDateRequired"))
+			.nullable()
+			.optional(),
+	});
+};
 
 const schemaAddDocument = Yup.object().shape({
 	name_projet_document: Yup.string()
@@ -316,6 +322,14 @@ const schemaItem = Yup.object().shape({
 		.required(t("projet.VProjetItemQuantityRequired")),
 });
 
+const labelForm = ref([
+	{ key: "nom_projet", label: "projet.VProjetName", type: "text" },
+	{ key: "description_projet", label: "projet.VProjetDescription", type: "textarea", rows: 4 },
+	{ key: "url_projet", label: "projet.VProjetUrl", type: "text" },
+	{ key: "status_projet", label: "projet.VProjetStatus", type: "select", options: projetTypeStatus },
+	{ key: "date_debut_projet", label: "projet.VProjetStartDate", type: "datetime-local" },
+	{ key: "date_fin_projet", label: "projet.VProjetEndDate", type: "datetime-local" },
+]);
 const labelTableauDocument = ref([
 	{ label: "projet.VProjetDocumentName", sortable: true, key: "name_projet_document", type: "text", canEdit: true },
 	{ label: "projet.VProjetDocumentType", sortable: true, key: "type_projet_document", type: "text" },
@@ -410,7 +424,7 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
-			condition: "store[1]?.[rowData.id_item] === undefined",
+			condition: "store[1]?.[rowData.id_item] === undefined && !rowData.tmp",
 			action: (row) => {
 				row.tmp = { qte_projet_item: 1, id_item: row.id_item };
 			},
@@ -460,83 +474,11 @@ const labelTableauModalItem = ref([
 	</div>
 	<div v-if="projetsStore.projets[projetId] || projetId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<Form :validation-schema="schemaProjet" v-slot="{ errors }" @submit.prevent="" class="mb-6 w-full sm:w-[490px]">
-				<div class="flex flex-col text-gray-700 space-y-2">
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="nom_projet">{{ $t('projet.VProjetName') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="nom_projet" type="text"
-								v-model="projetsStore.projetEdition.nom_projet"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.nom_projet }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.nom_projet || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="description_projet">{{ $t('projet.VProjetDescription') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="description_projet" v-slot="{ field }">
-								<textarea v-bind="field" v-model="projetsStore.projetEdition.description_projet"
-									:value="projetsStore.projetEdition.description_projet"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300 resize-y"
-									:class="{ 'border-red-500': errors.description_projet }" rows="4"></textarea>
-							</Field>
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.description_projet || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="url_projet">{{ $t('projet.VProjetUrl') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="url_projet" type="text" v-model="projetsStore.projetEdition.url_projet"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.url_projet }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.url_projet || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="status_projet">{{ $t('projet.VProjetStatus') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="status_projet" as="select"
-								v-model="projetsStore.projetEdition.status_projet"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.status_projet }">
-								<option value="" disabled> -- {{ $t('projet.VProjetStatusSelect') }} -- </option>
-								<option v-for="status in projetTypeStatus" :key="status" :value="status[0]">
-									{{ status[1] }}
-								</option>
-							</Field>
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.status_projet || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="date_debut_projet">{{ $t('projet.VProjetStartDate') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="date_debut_projet" type="datetime-local"
-								v-model="projetsStore.projetEdition.date_debut_projet"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.date_debut_projet }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.date_debut_projet || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="date_fin_projet">{{ $t('projet.VProjetEndDate') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="date_fin_projet" type="datetime-local"
-								v-model="projetsStore.projetEdition.date_fin_projet"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.date_fin_projet }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.date_fin_projet || ' ' }}</span>
-						</div>
-					</div>
-				</div>
-			</Form>
+			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="projetsStore.projetEdition"/>
 		</div>
-		<div class="mb-6 bg-gray-100 p-2 rounded">
-			<h3 @click="toggleDocuments" class="text-xl font-semibold  bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': projetId != 'new', 'cursor-not-allowed': projetId == 'new' }">
-				{{ $t('projet.VProjetDocuments') }} ({{ projetsStore.documentsTotalCount[projetId] || 0 }})
-			</h3>
-			<div :class="showDocuments ? 'block' : 'hidden'" class="p-2">
+		<CollapsibleSection title="projet.VProjetDocuments"
+			:total-count="Number(projetsStore.documentsTotalCount[projetId] || 0)" :id-page="projetId">
+			<template #append-row>
 				<button type="button" @click="documentAddOpenModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('projet.VProjetAddDocument') }}
@@ -549,14 +491,11 @@ const labelTableauModalItem = ref([
 					:fetch-function="(offset, limit) => projetsStore.getDocumentByInterval(projetId, limit, offset)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
-			</div>
-		</div>
-		<div class="mb-6 bg-gray-100 p-2 rounded">
-			<h3 @click="toggleItems" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': projetId != 'new', 'cursor-not-allowed': projetId == 'new' }">
-				{{ $t('projet.VProjetItems') }} ({{ projetsStore.itemsTotalCount[projetId] || 0 }})
-			</h3>
-			<div :class="showItems ? 'block' : 'hidden'" class="p-2">
+			</template>
+		</CollapsibleSection>
+		<CollapsibleSection title="projet.VProjetItems"
+			:total-count="Number(projetsStore.itemsTotalCount[projetId] || 0)" :id-page="projetId">
+			<template #append-row>
 				<button type="button" @click="itemOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('projet.VProjetAddItem') }}
@@ -569,14 +508,11 @@ const labelTableauModalItem = ref([
 					:fetch-function="(offset, limit) => projetsStore.getItemByInterval(projetId, limit, offset, ['item'])"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
-			</div>
-		</div>
-		<div class="mb-6 bg-gray-100 p-2 rounded">
-			<h3 @click="toggleCommentaires" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': projetId != 'new', 'cursor-not-allowed': projetId == 'new' }">
-				{{ $t('projet.VProjetCommentaires') }} ({{ projetsStore.commentairesTotalCount[projetId] || 0 }})
-			</h3>
-			<div :class="showCommentaires ? 'block' : 'hidden'" class="p-2">
+			</template>
+		</CollapsibleSection>
+		<CollapsibleSection title="projet.VProjetCommentaires"
+			:total-count="Number(projetsStore.commentairesTotalCount[projetId] || 0)" :id-page="projetId">
+			<template #append-row>
 				<Commentaire :meta="{ contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', CanEdit: true }"
 					:store-data="[projetsStore.commentaires[projetId],usersStore.users,authStore.user,configsStore]"
 					:store-function="{ create: (data) => projetsStore.createCommentaire(projetId, data), update: (id, data) => projetsStore.updateCommentaire(projetId, id, data), delete: (id) => projetsStore.deleteCommentaire(projetId, id) }"
@@ -585,8 +521,8 @@ const labelTableauModalItem = ref([
 					:loaded-count="Object.keys(projetsStore.commentaires[projetId] || {}).length"
 					:fetch-function="(offset, limit) => projetsStore.getCommentaireByInterval(projetId, limit, offset)"
 				/>
-			</div>
-		</div>
+			</template>
+		</CollapsibleSection>
 	</div>
 	<div v-else>
 		<div>{{ $t('projet.VProjetLoading') }}</div>

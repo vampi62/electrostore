@@ -35,12 +35,20 @@ app.use(router);
 app.use(i18n);
 app.provide("useNotification", useNotification());
 app.component(
+	"CollapsibleSection",
+	defineAsyncComponent(() => import("@/components/CollapsibleSection.vue")),
+);
+app.component(
 	"Commentaire",
 	defineAsyncComponent(() => import("@/components/Commentaire.vue")),
 );
 app.component(
 	"FilterContainer",
 	defineAsyncComponent(() => import("@/components/FilterContainer.vue")),
+);
+app.component(
+	"FormContainer",
+	defineAsyncComponent(() => import("@/components/FormContainer.vue")),
 );
 app.component(
 	"ModalDeleteConfirm",
@@ -51,8 +59,16 @@ app.component(
 	defineAsyncComponent(() => import("@/components/NotificationContainer.vue")),
 );
 app.component(
+	"StatusDisplay",
+	defineAsyncComponent(() => import("@/components/StatusDisplay.vue")),
+);
+app.component(
 	"Tableau",
 	defineAsyncComponent(() => import("@/components/Tableau.vue")),
+);
+app.component(
+	"Tags",
+	defineAsyncComponent(() => import("@/components/Tags.vue")),
 );
 app.component(
 	"TopButtonEditElement",
