@@ -65,7 +65,7 @@ let intervalRefreshStatus = null;
 const iaDeleteModalShow = ref(false);
 const iaSave = async() => {
 	try {
-		await schemaIa.validate(iasStore.iaEdition, { abortEarly: false });
+		createSchema().validateSync(iasStore.iaEdition, { abortEarly: false });
 		if (iaId !== "new") {
 			await iasStore.updateIa(iaId, { ...iasStore.iaEdition });
 			addNotification({ message: "ia.VIaUpdated", type: "success", i18n: true });
@@ -74,6 +74,12 @@ const iaSave = async() => {
 			addNotification({ message: "ia.VIaCreated", type: "success", i18n: true });
 		}
 	} catch (e) {
+		if (e.inner) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -100,14 +106,20 @@ const iaTrain = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
-const schemaIa = Yup.object().shape({
-	nom_ia: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("ia.VIaNameMaxLength") + t("common.VAllCaracters"))
-		.required(t("ia.VIaNameRequired")),
-	description_ia: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_description"), t("ia.VIaDescriptionMaxLength") + t("common.VAllCaracters"))
-		.required(t("ia.VIaDescriptionRequired")),
-});
+const createSchema = () => {
+	return Yup.object().shape({
+		nom_ia: Yup.string()
+			.max(configsStore.getConfigByKey("max_length_name"), t("ia.VIaNameMaxLength") + t("common.VAllCaracters"))
+			.required(t("ia.VIaNameRequired")),
+		description_ia: Yup.string()
+			.max(configsStore.getConfigByKey("max_length_description"), t("ia.VIaDescriptionMaxLength") + t("common.VAllCaracters"))
+			.required(t("ia.VIaDescriptionRequired")),
+	});
+};
+const labelForm = [
+	{ key: "nom_ia", label: "ia.VIaName", type: "text", condition: "session.role_user === 2" },
+	{ key: "description_ia", label: "ia.VIaDescription", type: "textarea", rows: 4, condition: "session.role_user === 2" },
+];
 </script>
 
 <template>
@@ -122,63 +134,8 @@ const schemaIa = Yup.object().shape({
 	</div>
 	<div v-if="iasStore.ias[iaId] || iaId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<Form :validation-schema="schemaIa" v-slot="{ errors }" @submit.prevent="" class="mb-6 w-full sm:w-[490px]">
-				<div class="flex flex-col text-gray-700 space-y-2">
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="nom_ia">{{ $t('ia.VIaName') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="nom_ia" type="text" v-model="iasStore.iaEdition.nom_ia"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.nom_ia }"
-								:disabled="authStore.user?.role_user !== 2" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.nom_ia || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="description_ia">{{ $t('ia.VIaDescription') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="description_ia" v-slot="{ description_ia }">
-								<textarea v-bind="description_ia" v-model="iasStore.iaEdition.description_ia"
-									:value="iasStore.iaEdition.description_ia"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300 resize-y"
-									:class="{ 'border-red-500': errors.description_ia }"
-									:disabled="authStore.user?.role_user !== 2" rows="4">
-								</textarea>
-							</Field>
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.description_ia || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="date_ia">{{ $t('ia.VIaDate') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<!-- format date permit is only YYYY-MM-DDTHH-mm-->
-							<Field name="date_ia" type="datetime-local"
-								v-model="iasStore.iaEdition.date_ia"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.date_ia }" disabled />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.date_ia || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<span class="font-semibold sm:min-w-[140px]">{{ $t('ia.VIaStatus') }}:</span>
-						<div class="flex flex-col flex-1 w-full">
-							<template v-if="iasStore.iaEdition.trained_ia">
-								<font-awesome-icon icon="fa-solid fa-check" class="text-green-500" />
-							</template>
-							<template v-else>
-								<font-awesome-icon icon="fa-solid fa-times" class="text-red-500" />
-							</template>
-						</div>
-					</div>
-				</div>
-			</Form>
-			<div class="w-96 h-96 bg-gray-200 px-4 py-2 rounded">
-				<div v-for="(value, key) in iasStore.status.train" :key="key">
-					<div v-if="key !== 'loading'">
-						{{ key }}: {{ value }}
-					</div>
-				</div>
-			</div>
+			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="iasStore.iaEdition" :store-user="authStore.user"/>
+			<StatusDisplay :data-store="iasStore.status.train" />
 		</div>
 	</div>
 	<div v-else>

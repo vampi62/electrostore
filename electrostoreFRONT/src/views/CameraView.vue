@@ -4,7 +4,6 @@ import { router } from "@/helpers";
 
 const { addNotification } = inject("useNotification");
 
-import { Form, Field } from "vee-validate";
 import * as Yup from "yup";
 
 import { useI18n } from "vue-i18n";
@@ -74,7 +73,7 @@ const cameraSave = async() => {
 		camerasStore.cameraEdition.mdp_camera = "";
 	}
 	try {
-		await schemaCamera.value.validate(camerasStore.cameraEdition, { abortEarly: false });
+		createSchema(isChecked).validateSync(camerasStore.cameraEdition, { abortEarly: false });
 		if (cameraId !== "new") {
 			await camerasStore.updateCamera(cameraId, { ...camerasStore.cameraEdition });
 			camerasStore.getStatus(cameraId);
@@ -85,6 +84,12 @@ const cameraSave = async() => {
 			addNotification({ message: "camera.VCameraCreated", type: "success", i18n: true });
 		}
 	} catch (e) {
+		if (e.inner) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -125,12 +130,15 @@ const createSchema = (isChecked) => {
 			: Yup.string().nullable(),
 	});
 };
-const schemaCamera = ref(createSchema(camerasStore.cameraEdition.is_checked_custom));
-watch(isChecked, (newValue) => {
-	schemaCamera.value = createSchema(newValue);
-});
-</script>
 
+const labelForm = ref([
+	{ key: "nom_camera", label: "camera.VCameraName", type: "text", condition: "session.role_user === 2" },
+	{ key: "url_camera", label: "camera.VCameraURL", type: "text", condition: "session.role_user === 2" },
+	{ key: "check", label: "camera.VCameraCheck", type: "checkbox", model: isChecked, condition: "session.role_user === 2" },
+	{ key: "user_camera", label: "camera.VCameraUser", type: "text", condition: "session.role_user === 2 && form[2].model" },
+	{ key: "mdp_camera", label: "camera.VCameraPassword", type: "password", condition: "session.role_user === 2 && form[2].model" },
+]);
+</script>
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('camera.VCameraTitle') }}</h2>
@@ -142,75 +150,12 @@ watch(isChecked, (newValue) => {
 			:id="cameraId" :store-user="authStore.user" @button-save="cameraSave" @button-delete="cameraDeleteModalShow = true"/>
 	</div>
 	<div v-if="camerasStore.cameras[cameraId] || cameraId == 'new'" class="w-full">
-		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<Form :validation-schema="schemaCamera" v-slot="{ errors }" @submit.prevent="" class="mb-6 w-full sm:w-[490px]">
-				<div class="flex flex-col text-gray-700 space-y-2">
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="nom_camera">{{ $t('camera.VCameraName') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="nom_camera" type="text" v-model="camerasStore.cameraEdition.nom_camera"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.nom_camera }"
-								:disabled="authStore.user?.role_user !== 2" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.nom_camera || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="url_camera">{{ $t('camera.VCameraURL') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="url_camera" type="text" v-model="camerasStore.cameraEdition.url_camera"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.url_camera }"
-								:disabled="authStore.user?.role_user !== 2" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.url_camera || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="check">{{ $t('camera.VCameraCheck') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="check" v-slot="{ is_checked_custom }">
-								<input
-									v-model="isChecked"
-									v-bind="is_checked_custom"
-									type="checkbox"
-									:checked="isChecked"
-									class="form-checkbox h-5 w-5 text-blue-600"
-								/>
-							</Field>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="user_camera">{{ $t('camera.VCameraUser') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="user_camera" type="text" v-model="camerasStore.cameraEdition.user_camera"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.user_camera }"
-								:disabled="authStore.user?.role_user !== 2 || !isChecked" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.user_camera || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="mdp_camera">{{ $t('camera.VCameraPassword') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="mdp_camera" type="password" v-model="camerasStore.cameraEdition.mdp_camera"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.mdp_camera }"
-								:disabled="authStore.user?.role_user !== 2 || !isChecked" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.mdp_camera || ' ' }}</span>
-						</div>
-					</div>
-				</div>
-			</Form>
-			<div class="w-96 h-80 bg-gray-200 px-4 py-2 rounded">
-				<img :src=camerasStore.stream[cameraId] alt="Camera Stream" />
+		<div class="mb-6 flex justify-between flex-wrap w-full gap-y-4 gap-x-4">
+			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="camerasStore.cameraEdition" :store-user="authStore.user"/>
+			<div class="flex-1 min-w-64 min-h-80 bg-gray-200 px-4 py-2 rounded">
+				<img :src="camerasStore.stream[cameraId]" alt="Camera Stream" />
 			</div>
-			<div class="w-96 h-80 bg-gray-200 px-4 py-2 rounded">
-				<div v-for="(value, key) in camerasStore.status[cameraId]" :key="key">
-					<div v-if="key !== 'loading' ">
-						{{ key }}: {{ value }}
-					</div>
-				</div>
-			</div>
+			<StatusDisplay :data-store="camerasStore.status[cameraId]" />
 		</div>
 	</div>
 	<div v-else>

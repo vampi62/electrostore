@@ -240,7 +240,7 @@ const openNewPage = (url) => {
 				<div class="flex flex-1 flex-col flex-grow items-center">
 					<div class="w-80 h-80 bg-gray-200 px-4 py-2 rounded mb-2">
 						<template v-if="selectedPageFind.camera && camerasStore.stream[selectedPageFind.camera.id_camera]">
-							<img :src=camerasStore.stream[selectedPageFind.camera.id_camera] @click="$refs.fileInput.click()"
+							<img :src="camerasStore.stream[selectedPageFind.camera.id_camera]" @click="$refs.fileInput.click()"
 								class="w-full h-full object-cover rounded cursor-pointer" alt="Camera Stream" />
 						</template>
 						<template v-else-if="selectedPageFind.imageBlob">

@@ -86,7 +86,7 @@
 </template>
 
 <script>
-import { inject } from "vue";
+import { inject, defineAsyncComponent } from "vue";
 import { Form, Field } from "vee-validate";
 import * as Yup from "yup";
 import ModalDeleteConfirm from "@/components/ModalDeleteConfirm.vue";
@@ -163,7 +163,7 @@ export default {
 	components: {
 		Form,
 		Field,
-		ModalDeleteConfirm,
+		ModalDeleteConfirm: defineAsyncComponent(() => import("@/components/ModalDeleteConfirm.vue")),
 	},
 	setup() {
 		const { addNotification } = inject("useNotification"); 
