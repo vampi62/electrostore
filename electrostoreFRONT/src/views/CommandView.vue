@@ -50,9 +50,6 @@ async function fetchAllData() {
 		commandsStore.commandEdition = {
 			loading: false,
 		};
-		showDocuments.value = false;
-		showItems.value = false;
-		showCommentaires.value = false;
 	}
 }
 onMounted(() => {
@@ -64,35 +61,12 @@ onBeforeUnmount(() => {
 	};
 });
 
-const showDocuments = ref(true);
-const showItems = ref(true);
-const showCommentaires = ref(true);
-
-const toggleDocuments = () => {
-	if (commandId === "new") {
-		return;
-	}
-	showDocuments.value = !showDocuments.value;
-};
-const toggleItems = () => {
-	if (commandId === "new") {
-		return;
-	}
-	showItems.value = !showItems.value;
-};
-const toggleCommentaires = () => {
-	if (commandId === "new") {
-		return;
-	}
-	showCommentaires.value = !showCommentaires.value;
-};
-
 // commande
 const commandDeleteModalShow = ref(false);
 const commandTypeStatus = ref([["En attente", t("command.VCommandStatus1")], ["En cours", t("command.VCommandStatus2")], ["Terminée", t("command.VCommandStatus3")], ["Annulée", t("command.VCommandStatus4")]]);
 const commandSave = async() => {
 	try {
-		await schemaCommand.validate(commandsStore.commandEdition, { abortEarly: false });
+		createSchema().validateSync(commandsStore.commandEdition, { abortEarly: false });
 		if (commandId !== "new") {
 			await commandsStore.updateCommand(commandId, { ...commandsStore.commandEdition });
 			addNotification({ message: "command.VCommandUpdated", type: "success", i18n: true });
@@ -101,6 +75,12 @@ const commandSave = async() => {
 			addNotification({ message: "command.VCommandCreated", type: "success", i18n: true });
 		}
 	} catch (e) {
+		if (e.inner) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -138,6 +118,12 @@ const documentAdd = async() => {
 		await commandsStore.createDocument(commandId, documentModalData.value);
 		addNotification({ message: "command.VCommandDocumentAdded", type: "success", i18n: true });
 	} catch (e) {
+		if (e.inner) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -149,6 +135,12 @@ const documentEdit = async(row) => {
 		await commandsStore.updateDocument(commandId, row.id_command_document, row);
 		addNotification({ message: "command.VCommandDocumentUpdated", type: "success", i18n: true });
 	} catch (e) {
+		if (e.inner) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
 		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
@@ -239,7 +231,14 @@ const itemSave = async(item) => {
 			addNotification({ message: "command.VCommandItemUpdated", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
+			if (e.inner) {
+				e.inner.forEach((error) => {
+					addNotification({ message: error.message, type: "error", i18n: false });
+				});
+				return;
+			}
 			addNotification({ message: e, type: "error", i18n: false });
+			return;
 		}
 	} else {
 		try {
@@ -248,7 +247,14 @@ const itemSave = async(item) => {
 			addNotification({ message: "command.VCommandItemAdded", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
+			if (e.inner) {
+				e.inner.forEach((error) => {
+					addNotification({ message: error.message, type: "error", i18n: false });
+				});
+				return;
+			}
 			addNotification({ message: e, type: "error", i18n: false });
+			return;
 		}
 	}
 };
@@ -269,25 +275,27 @@ const filterItem = ref([
 	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("command.VCommandItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
 
-const schemaCommand = Yup.object().shape({
-	prix_command: Yup.number()
-		.min(0, t("command.VCommandPriceMin"))
-		.typeError(t("command.VCommandPriceNumber"))
-		.required(t("command.VCommandPriceRequired")),
-	url_command: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_url"), t("command.VCommandUrlMaxLength") + " " + configsStore.getConfigByKey("max_length_url") + t("common.VAllCaracters"))
-		.url(t("command.VCommandUrlInvalid"))
-		.required(t("command.VCommandUrlRequired")),
-	date_command: Yup.date()
-		.typeError(t("command.VCommandDateInvalid"))
-		.required(t("command.VCommandDateRequired")),
-	status_command: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_status"), t("command.VCommandStatusMaxLength") + " " + configsStore.getConfigByKey("max_length_status") + t("common.VAllCaracters"))
-		.required(t("command.VCommandStatusRequired")),
-	date_livraison_command: Yup.date()
-		.nullable()
-		.optional(),
-});
+const createSchema = () => {
+	return Yup.object().shape({
+		prix_command: Yup.number()
+			.min(0, t("command.VCommandPriceMin"))
+			.typeError(t("command.VCommandPriceNumber"))
+			.required(t("command.VCommandPriceRequired")),
+		url_command: Yup.string()
+			.max(configsStore.getConfigByKey("max_length_url"), t("command.VCommandUrlMaxLength") + " " + configsStore.getConfigByKey("max_length_url") + t("common.VAllCaracters"))
+			.url(t("command.VCommandUrlInvalid"))
+			.required(t("command.VCommandUrlRequired")),
+		date_command: Yup.date()
+			.typeError(t("command.VCommandDateInvalid"))
+			.required(t("command.VCommandDateRequired")),
+		status_command: Yup.string()
+			.max(configsStore.getConfigByKey("max_length_status"), t("command.VCommandStatusMaxLength") + " " + configsStore.getConfigByKey("max_length_status") + t("common.VAllCaracters"))
+			.required(t("command.VCommandStatusRequired")),
+		date_livraison_command: Yup.date()
+			.nullable()
+			.optional(),
+	});
+};
 
 const schemaAddDocument = Yup.object().shape({
 	name_command_document: Yup.string()
@@ -302,7 +310,6 @@ const schemaEditDocument = Yup.object().shape({
 		.max(configsStore.getConfigByKey("max_length_name"), t("command.VCommandDocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
 		.required(t("command.VCommandDocumentNameRequired")),
 });
-
 const schemaItem = Yup.object().shape({
 	qte_command_item: Yup.number()
 		.required(t("command.VCommandItemQuantityRequired"))
@@ -314,6 +321,13 @@ const schemaItem = Yup.object().shape({
 		.min(1, t("command.VCommandItemPriceMin")),
 });
 
+const labelForm = ref([
+	{ key: "prix_command", label: "command.VCommandPrice", type: "number" },
+	{ key: "url_command", label: "command.VCommandUrl", type: "text" },
+	{ key: "date_command", label: "command.VCommandDate", type: "datetime-local" },
+	{ key: "status_command", label: "command.VCommandStatus", type: "select", options: commandTypeStatus },
+	{ key: "date_livraison_command", label: "command.VCommandDeliveryDate", type: "datetime-local" },
+]);
 const labelTableauDocument = ref([
 	{ label: "command.VCommandDocumentName", sortable: true, key: "name_command_document", type: "text", canEdit: true },
 	{ label: "command.VCommandDocumentType", sortable: true, key: "type_command_document", type: "text" },
@@ -414,7 +428,7 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
-			condition: "store[1]?.[rowData.id_item] === undefined",
+			condition: "store[1]?.[rowData.id_item] === undefined && !rowData.tmp",
 			action: (row) => {
 				row.tmp = { prix_command_item: 1, qte_command_item: 1, id_item: row.id_item };
 			},
@@ -463,75 +477,14 @@ const labelTableauModalItem = ref([
 	</div>
 	<div v-if="commandsStore.commands[commandId] || commandId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<Form :validation-schema="schemaCommand" v-slot="{ errors }" @submit.prevent="" class="mb-6 w-full sm:w-[490px]">
-				<div class="flex flex-col text-gray-700 space-y-2">
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="prix_command">{{ $t('command.VCommandPrice') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="prix_command" type="text"
-								v-model="commandsStore.commandEdition.prix_command"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.prix_command }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.prix_command || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="url_command">{{ $t('command.VCommandUrl') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="url_command" type="text" v-model="commandsStore.commandEdition.url_command"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.url_command }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.url_command || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="date_command">{{ $t('command.VCommandDate') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<!-- format date permit is only YYYY-MM-DDTHH-mm-->
-							<Field name="date_command" type="datetime-local"
-								v-model="commandsStore.commandEdition.date_command"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.date_command }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.date_command || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="status_command">{{ $t('command.VCommandStatus') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="status_command" as="select"
-								v-model="commandsStore.commandEdition.status_command"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.status_command }">
-								<option value="" disabled> -- {{ $t('command.VCommandStatusSelect') }} -- </option>
-								<option v-for="status in commandTypeStatus" :key="status" :value="status[0]">
-									{{ status[1] }}
-								</option>
-							</Field>
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.status_command || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="date_livraison_command">{{ $t('command.VCommandDeliveryDate') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="date_livraison_command" type="datetime-local"
-								v-model="commandsStore.commandEdition.date_livraison_command"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.date_livraison_command }" disabled />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.date_livraison_command || ' ' }}</span>
-						</div>
-					</div>
-				</div>
-			</Form>
+			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="commandsStore.commandEdition" />
 			<div>
 				<!-- TODO suivie commande -->
 			</div>
 		</div>
-		<div class="mb-6 bg-gray-100 p-2 rounded">
-			<h3 @click="toggleDocuments" class="text-xl font-semibold  bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': commandId != 'new', 'cursor-not-allowed': commandId == 'new' }">
-				{{ $t('command.VCommandDocuments') }} ({{ commandsStore.documentsTotalCount[commandId] || 0 }})
-			</h3>
-			<div :class="showDocuments ? 'block' : 'hidden'" class="p-2">
+		<CollapsibleSection title="command.VCommandDocuments"
+			:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)" :id-page="commandId">
+			<template #append-row>
 				<button type="button" @click="documentAddOpenModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('command.VCommandAddDocument') }}
@@ -544,14 +497,11 @@ const labelTableauModalItem = ref([
 					:fetch-function="(offset, limit) => commandsStore.getDocumentByInterval(commandId, limit, offset)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
-			</div>
-		</div>
-		<div class="mb-6 bg-gray-100 p-2 rounded">
-			<h3 @click="toggleItems" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': commandId != 'new', 'cursor-not-allowed': commandId == 'new' }">
-				{{ $t('command.VCommandItems') }} ({{ commandsStore.itemsTotalCount[commandId] || 0 }})
-			</h3>
-			<div :class="showItems ? 'block' : 'hidden'" class="p-2">
+			</template>
+		</CollapsibleSection>
+		<CollapsibleSection title="command.VCommandItems"
+			:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)" :id-page="commandId">
+			<template #append-row>
 				<button type="button" @click="itemOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('command.VCommandAddItem') }}
@@ -564,14 +514,11 @@ const labelTableauModalItem = ref([
 					:fetch-function="(offset, limit) => commandsStore.getItemByInterval(commandId, limit, offset, ['item'])"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
-			</div>
-		</div>
-		<div class="mb-6 bg-gray-100 p-2 rounded">
-			<h3 @click="toggleCommentaires" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': commandId != 'new', 'cursor-not-allowed': commandId == 'new' }">
-				{{ $t('command.VCommandCommentaires') }} ({{ commandsStore.commentairesTotalCount[commandId] || 0 }})
-			</h3>
-			<div :class="showCommentaires ? 'block' : 'hidden'" class="p-2">
+			</template>
+		</CollapsibleSection>
+		<CollapsibleSection title="command.VCommandCommentaires"
+			:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)" :id-page="commandId">
+			<template #append-row>
 				<Commentaire :meta="{ contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', CanEdit: true }"
 					:store-data="[commandsStore.commentaires[commandId],usersStore.users,authStore.user,configsStore]"
 					:store-function="{ create: (data) => commandsStore.createCommentaire(commandId, data), update: (id, data) => commandsStore.updateCommentaire(commandId, id, data), delete: (id) => commandsStore.deleteCommentaire(commandId, id) }"
@@ -580,8 +527,8 @@ const labelTableauModalItem = ref([
 					:loaded-count="Object.keys(commandsStore.commentaires[commandId] || {}).length"
 					:fetch-function="(offset, limit) => commandsStore.getCommentaireByInterval(commandId, limit, offset, ['user'])"
 				/>
-			</div>
-		</div>
+			</template>
+		</CollapsibleSection>
 	</div>
 	<div v-else>
 		<div>{{ $t('command.VCommandLoading') }}</div>

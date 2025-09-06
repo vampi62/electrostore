@@ -52,6 +52,7 @@ async function fetchAllData() {
 		usersStore.getTokenByInterval(userId, 100, 0);
 		usersStore.userEdition = {
 			loading: false,
+			id_user: usersStore.users[userId].id_user,
 			nom_user: usersStore.users[userId].nom_user,
 			prenom_user: usersStore.users[userId].prenom_user,
 			email_user: usersStore.users[userId].email_user,
@@ -64,10 +65,6 @@ async function fetchAllData() {
 		usersStore.userEdition = {
 			loading: false,
 		};
-		showParticipation.value = false;
-		showProjetCommentaires.value = false;
-		showCommandCommentaires.value = false;
-		showTokens.value = false;
 	}
 }
 onMounted(() => {
@@ -79,41 +76,11 @@ onBeforeUnmount(() => {
 	};
 });
 
-const showParticipation = ref(true);
-const showProjetCommentaires = ref(true);
-const showCommandCommentaires = ref(true);
-const showTokens = ref(true);
-
-const toggleParticipation = () => {
-	if (userId === "new") {
-		return;
-	}
-	showParticipation.value = !showParticipation.value;
-};
-const toggleProjetCommentaires = () => {
-	if (userId === "new") {
-		return;
-	}
-	showProjetCommentaires.value = !showProjetCommentaires.value;
-};
-const toggleCommandCommentaires = () => {
-	if (userId === "new") {
-		return;
-	}
-	showCommandCommentaires.value = !showCommandCommentaires.value;
-};
-const toggleTokens = () => {
-	if (userId === "new") {
-		return;
-	}
-	showTokens.value = !showTokens.value;
-};
-
 const userDeleteModalShow = ref(false);
 const userTypeRole = ref([[0, t("user.VUserFilterRole0")], [1, t("user.VUserFilterRole1")], [2, t("user.VUserFilterRole2")]]);
 const userSave = async() => {
 	try {
-		await schemaUser.value.validate(usersStore.userEdition, { abortEarly: false });
+		createSchema(isChecked).validateSync(usersStore.userEdition, { abortEarly: false });
 		if (userId !== "new") {
 			await usersStore.updateUser(userId, { ...usersStore.userEdition });
 			addNotification({ message: "user.VUserUpdated", type: "success", i18n: true });
@@ -125,6 +92,12 @@ const userSave = async() => {
 		usersStore.userEdition.confirm_mdp_user = "";
 		usersStore.userEdition.current_mdp_user = "";
 	} catch (e) {
+		if (e.inner) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -184,11 +157,17 @@ const createSchema = (isChecked) => {
 			.required(t("user.VUserCurrentPasswordRequired")),
 	});
 };
-const schemaUser = ref(createSchema(usersStore.userEdition.is_checked_custom));
-watch(isChecked, (newValue) => {
-	schemaUser.value = createSchema(newValue);
-});
 
+const labelForm = ref([
+	{ key: "nom_user", label: "user.VUserName", type: "text", condition: "form?.id_user === session?.id_user || session?.role_user === 2" },
+	{ key: "prenom_user", label: "user.VUserFirstName", type: "text", condition: "form?.id_user === session?.id_user || session?.role_user === 2" },
+	{ key: "email_user", label: "user.VUserEmail", type: "text", condition: "form?.id_user === session?.id_user || session?.role_user === 2" },
+	{ key: "role_user", label: "user.VUserRole", type: "select", options: userTypeRole, condition: "form?.id_user === session?.id_user || session?.role_user === 2" },
+	{ key: "check", label: "user.VUserCheck", type: "checkbox", model: isChecked, condition: "form?.id_user === session?.id_user || session?.role_user === 2" },
+	{ key: "mdp_user", label: "user.VUserPassword", type: "password", condition: "(form?.id_user === session?.id_user || session?.role_user === 2) && form[4].model" },
+	{ key: "confirm_mdp_user", label: "user.VUserConfirmPassword", type: "password", condition: "(form?.id_user === session?.id_user || session?.role_user === 2) && form[4].model" },
+	{ key: "current_mdp_user", label: "user.VUserCurrentPassword", type: "password", condition: "form?.id_user === session?.id_user || session?.role_user === 2" },
+]);
 const labelTableauSession = ref([
 	{ label: "user.VUserTokenCreatedDate", sortable: true, key: "created_at", type: "datetime" },
 	{ label: "user.VUserTokenCreatedIP", sortable: true, key: "created_by_ip", type: "text" },
@@ -217,109 +196,14 @@ const labelTableauSession = ref([
 	</div>
 	<div v-if="usersStore.users[userId] || userId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<Form :validation-schema="schemaUser" v-slot="{ errors }" @submit.prevent="" class="mb-6 w-full sm:w-[490px]">
-				<div class="flex flex-col text-gray-700 space-y-2">
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="nom_user">{{ $t('user.VUserName') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="nom_user" type="text" v-model="usersStore.userEdition.nom_user"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.nom_user }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.nom_user || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="prenom_user">{{ $t('user.VUserFirstName') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="prenom_user" type="text" v-model="usersStore.userEdition.prenom_user"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.prenom_user }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.prenom_user || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="email_user">{{ $t('user.VUserEmail') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="email_user" type="text" v-model="usersStore.userEdition.email_user"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.email_user }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.email_user || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="role_user">{{ $t('user.VUserRole') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="role_user" as="select"
-								v-model="usersStore.userEdition.role_user"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.role_user }"
-								:disabled="authStore.user?.role_user !== 2">
-								<option value="" disabled :selected="!usersStore.userEdition.role_user"> -- {{ $t('user.VUserSelectRole') }} -- </option>
-								<option v-for="role in userTypeRole" :key="role[0]" :value="role[0]">
-									{{ role[1] }}
-								</option>
-							</Field>
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.role_user || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="check">{{ $t('user.VUserCheck') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="check" v-slot="{ is_checked_custom }">
-								<input
-									v-model="isChecked"
-									v-bind="is_checked_custom"
-									type="checkbox"
-									:checked="isChecked"
-									class="form-checkbox h-5 w-5 text-blue-600"
-								/>
-							</Field>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="mdp_user">{{ $t('user.VUserPassword') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="mdp_user" type="text" v-model="usersStore.userEdition.mdp_user"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.mdp_user }"
-								:disabled="!isChecked" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.mdp_user || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="confirm_mdp_user">{{ $t('user.VUserConfirmPassword') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="confirm_mdp_user" type="password" v-model="usersStore.userEdition.confirm_mdp_user"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.confirm_mdp_user }"
-								:disabled="!isChecked" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.confirm_mdp_user || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="current_mdp_user">{{ $t('user.VUserCurrentPassword') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="current_mdp_user" type="password" v-model="usersStore.userEdition.current_mdp_user"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.current_mdp_user }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.current_mdp_user || ' ' }}</span>
-						</div>
-					</div>
-				</div>
-			</Form>
+			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="usersStore.userEdition" :store-user="authStore.user"/>
 		</div>
-		<div class="mb-6 bg-gray-100 p-2 rounded">
-			<h3 @click="toggleParticipation" class="text-xl font-semibold  bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': userId != 'new', 'cursor-not-allowed': userId == 'new' }">
-				{{ $t('user.VUserParticipation') }}
-			</h3>
-			<div :class="showParticipation ? 'block' : 'hidden'" class="p-2">
-				<div class="bg-gray-100 p-2 rounded">
-					<h3 @click="toggleCommandCommentaires" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-						:class="{ 'cursor-pointer': userId != 'new', 'cursor-not-allowed': userId == 'new' }">
-						{{ $t('user.VUserCommandsCommentaires') }} ({{ usersStore.commandsCommentaireTotalCount[userId] || 0 }})
-					</h3>
-					<div :class="showCommandCommentaires ? 'block' : 'hidden'" class="p-2">
+		<CollapsibleSection title="user.VUserParticipation"
+			:id-page="userId">
+			<template #append-row>
+				<CollapsibleSection title="user.VUserCommandsCommentaires" :disable-margin="true"
+					:total-count="Number(usersStore.commandsCommentaireTotalCount[userId] || 0)" :id-page="userId">
+					<template #append-row>
 						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', CanEdit: false }"
 							:store-data="[usersStore.commandsCommentaire[userId],usersStore.users,authStore.user,configsStore]"
 							:loading="usersStore.commandsCommentaireLoading"
@@ -327,14 +211,11 @@ const labelTableauSession = ref([
 							:loaded-count="Object.keys(usersStore.commandsCommentaire[userId] || {}).length"
 							:fetch-function="(offset, limit) => usersStore.getCommandCommentaireByInterval(userId, limit, offset, ['command'])"
 						/>
-					</div>
-				</div>
-				<div class="bg-gray-100 p-2 rounded">
-					<h3 @click="toggleProjetCommentaires" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-						:class="{ 'cursor-pointer': userId != 'new', 'cursor-not-allowed': userId == 'new' }">
-						{{ $t('user.VUserProjetsCommentaires') }} ({{ usersStore.projetsCommentaireTotalCount[userId] || 0 }})
-					</h3>
-					<div :class="showProjetCommentaires ? 'block' : 'hidden'" class="p-2">
+					</template>
+				</CollapsibleSection>
+				<CollapsibleSection title="user.VUserProjetsCommentaires" :disable-margin="true"
+					:total-count="Number(usersStore.projetsCommentaireTotalCount[userId] || 0)" :id-page="userId">
+					<template #append-row>
 						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', CanEdit: false }"
 							:store-data="[usersStore.projetsCommentaire[userId],usersStore.users,authStore.user,configsStore]"
 							:loading="usersStore.projetsCommentaireLoading"
@@ -342,16 +223,13 @@ const labelTableauSession = ref([
 							:loaded-count="Object.keys(usersStore.projetsCommentaire[userId] || {}).length"
 							:fetch-function="(offset, limit) => usersStore.getProjetCommentaireByInterval(userId, limit, offset, ['projet'])"
 						/>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="mb-6 bg-gray-100 p-2 rounded">
-			<h3 @click="toggleTokens" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': userId != 'new', 'cursor-not-allowed': userId == 'new' }">
-				{{ $t('user.VUserTokens') }} ({{ usersStore.tokensTotalCount[userId] || 0 }})
-			</h3>
-			<div :class="showTokens ? 'block' : 'hidden'" class="p-2">
+					</template>
+				</CollapsibleSection>
+			</template>
+		</CollapsibleSection>
+		<CollapsibleSection title="user.VUserTokens"
+			:total-count="Number(usersStore.tokensTotalCount[userId] || 0)" :id-page="userId">
+			<template #append-row>
 				<Tableau :labels="labelTableauSession" :meta="{ key: 'session_id' }"
 					:store-data="[usersStore.tokens[userId]]"
 					:loading="usersStore.tokensLoading"
@@ -360,8 +238,8 @@ const labelTableauSession = ref([
 					:fetch-function="(offset, limit) => usersStore.getTokenByInterval(userId, limit, offset)"
 					:tableau-css="{ component: 'min-h-64 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
-			</div>
-		</div>
+			</template>
+		</CollapsibleSection>
 	</div>
 	<div v-else>
 		<div>{{ $t('user.VUserLoading') }}</div>
