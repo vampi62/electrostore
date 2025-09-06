@@ -77,7 +77,7 @@ const storeSave = async() => {
 		return;
 	}
 	try {
-		await schemaStore.validate(storesStore.storeEdition, { abortEarly: false });
+		createSchema().validateSync(storesStore.storeEdition, { abortEarly: false });
 		if (storeId !== "new") {
 			await storesStore.updateStoreComplete(storeId, { 
 				store: storesStore.storeEdition,
@@ -106,6 +106,13 @@ const storeSave = async() => {
 		}
 		storesStore.storeEdition.loading = false;
 	} catch (e) {
+		if (e.inner) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			storesStore.storeEdition.loading = false;
+			return;
+		}
 		addNotification({ message: e, type: "error", i18n: false });
 		storesStore.storeEdition.loading = false;
 		return;
@@ -580,27 +587,24 @@ document.addEventListener("mouseup", stopDragging);
 // hide the menu if click outside
 document.addEventListener("click", hideMenu);
 
-const sortedTags = computed(() => {
-	return Object.keys(storesStore.storeTags[storeId] || {})
-		.sort((a, b) => tagsStore.tags[b].poids_tag - tagsStore.tags[a].poids_tag);
-});
-
-const schemaStore = Yup.object().shape({
-	nom_store: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("store.VStoreNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-		.required(t("store.VStoreNameRequired")),
-	mqtt_name_store: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("store.VStoreMQTTNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-		.required(t("store.VStoreMQTTNameRequired")),
-	xlength_store: Yup.number()
-		.min(1, t("store.VStoreXLengthMin"))
-		.typeError(t("store.VStoreXLengthType"))
-		.required(t("store.VStoreXLengthRequired")),
-	ylength_store: Yup.number()
-		.min(1, t("store.VStoreYLengthMin"))
-		.typeError(t("store.VStoreYLengthType"))
-		.required(t("store.VStoreYLengthRequired")),
-});
+const createSchema = () => {
+	return Yup.object().shape({
+		nom_store: Yup.string()
+			.max(configsStore.getConfigByKey("max_length_name"), t("store.VStoreNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.required(t("store.VStoreNameRequired")),
+		mqtt_name_store: Yup.string()
+			.max(configsStore.getConfigByKey("max_length_name"), t("store.VStoreMQTTNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.required(t("store.VStoreMQTTNameRequired")),
+		xlength_store: Yup.number()
+			.min(1, t("store.VStoreXLengthMin"))
+			.typeError(t("store.VStoreXLengthType"))
+			.required(t("store.VStoreXLengthRequired")),
+		ylength_store: Yup.number()
+			.min(1, t("store.VStoreYLengthMin"))
+			.typeError(t("store.VStoreYLengthType"))
+			.required(t("store.VStoreYLengthRequired")),
+	});
+};
 
 function isNumber(value) {
 	return typeof value === "number";
@@ -647,6 +651,12 @@ const itemSave = async(item) => {
 			addNotification({ message: "store.VStoreItemUpdated", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
+			if (e.inner) {
+				e.inner.forEach((error) => {
+					addNotification({ message: error.message, type: "error", i18n: false });
+				});
+				return;
+			}
 			addNotification({ message: e, type: "error", i18n: false });
 			return;
 		}
@@ -657,6 +667,12 @@ const itemSave = async(item) => {
 			addNotification({ message: "store.VStoreItemAdded", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
+			if (e.inner) {
+				e.inner.forEach((error) => {
+					addNotification({ message: error.message, type: "error", i18n: false });
+				});
+				return;
+			}
 			addNotification({ message: e, type: "error", i18n: false });
 			return;
 		}
@@ -690,6 +706,12 @@ const schemaItem = Yup.object().shape({
 		.min(1, t("store.VStoreItemMaxThresholdMin")),
 });
 
+const labelForm = ref([
+	{ key: "nom_store", label: "store.VStoreName", type: "text", condition: "session?.role_user === 2" },
+	{ key: "mqtt_name_store", label: "store.VStoreMQTTName", type: "text", condition: "session?.role_user === 2" },
+	{ key: "xlength_store", label: "store.VStoreXLength", type: "number", condition: "session?.role_user === 2" },
+	{ key: "ylength_store", label: "store.VStoreYLength", type: "number", condition: "session?.role_user === 2" },
+]);
 const labelTableauBoxItem = ref([
 	{ label: "store.VStoreItemName", sortable: true, key: "reference_name_item", type: "text", store: 1, keyStore: "id_item" },
 	{ label: "store.VStoreItemQuantity", sortable: true, key: "qte_item_box", type: "number" },
@@ -893,77 +915,8 @@ const labelTableauModalItem = ref([
 	</div>
 	<div v-if="storesStore.stores[storeId] || storeId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<Form :validation-schema="schemaStore" v-slot="{ errors }" @submit.prevent="" class="mb-6 w-full sm:w-[490px]">
-				<div class="flex flex-col text-gray-700 space-y-2">
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="nom_store">{{ $t('store.VStoreName') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="nom_store" type="text"
-								v-model="storesStore.storeEdition.nom_store"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.nom_store }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.nom_store || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="mqtt_name_store">{{ $t('store.VStoreMQTTName') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<span class="flex items-center">
-								<span>electrostore/</span>
-								<Field name="mqtt_name_store" type="text"
-									v-model="storesStore.storeEdition.mqtt_name_store"
-									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-									:class="{ 'border-red-500': errors.mqtt_name_store }" />
-							</span>
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.mqtt_name_store || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="xlength_store">{{ $t('store.VStoreXLength') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="xlength_store" type="number"
-								v-model="storesStore.storeEdition.xlength_store" @change="showStoreGrid" @keyup="showStoreGrid"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.xlength_store }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.xlength_store || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="ylength_store">{{ $t('store.VStoreYLength') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="ylength_store" type="number"
-								v-model="storesStore.storeEdition.ylength_store" @change="showStoreGrid" @keyup="showStoreGrid"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.ylength_store }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.ylength_store || ' ' }}</span>
-						</div>
-					</div>
-				</div>
-				<div class="flex space-x-4">
-					<span>{{ $t('store.VStoreCellSize') }}</span>
-					<input type="range" v-model="sizeOfCell" min="10" max="50" step="10" @input="showStoreGrid" />
-				</div>
-				<div class="flex space-x-4">
-					<span>{{ $t('store.VStoreShowLedId') }}</span>
-					<input type="checkbox" v-model="showLedId" />
-				</div>
-			</Form>
-			<div class="w-96 h-96 bg-gray-200 px-2 py-2 rounded">
-				<span v-for="(value, key) in sortedTags" :key="key"
-					class="bg-gray-300 p-1 rounded mr-2 mb-2 whitespace-pre">
-					{{ tagsStore.tags[value].nom_tag }} ({{ tagsStore.tags[value].poids_tag }})
-					<span @click="storesStore.deleteTagStore(storeId, value)"
-						class="text-red-500 cursor-pointer hover:text-red-600">
-						<font-awesome-icon icon="fa-solid fa-times" />
-					</span>
-				</span>
-				<span v-if="!storeInputTagShow" class="bg-gray-300 p-1 rounded mr-2 mb-2">
-					<span @click="showInputAddTag"
-						class="text-green-500 cursor-pointer hover:text-green-600">
-						<font-awesome-icon icon="fa-solid fa-plus" />
-					</span>
-				</span>
-			</div>
+			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="storesStore.storeEdition" :store-user="authStore.user"/>
+			<Tags :current-tags="storesStore.storeTags[storeId] || {}" :tags-store="tagsStore.tags" :delete-function="(value) => storesStore.deleteTagStore(storeId, value)"/>
 		</div>
 		<div class="mb-6 flex justify-between whitespace-pre">
 			<div class="grid" @contextmenu.prevent="showNewMenu" @mousemove="moveMouse"

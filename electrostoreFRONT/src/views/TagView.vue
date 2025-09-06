@@ -46,9 +46,6 @@ async function fetchAllData() {
 		tagsStore.tagEdition = {
 			loading: false,
 		};
-		showItems.value = false;
-		showBoxs.value = false;
-		showStores.value = false;
 	}
 }
 onMounted(() => {
@@ -60,33 +57,10 @@ onBeforeUnmount(() => {
 	};
 });
 
-const showItems = ref(true);
-const showBoxs = ref(true);
-const showStores = ref(true);
-
-const toggleItems = () => {
-	if (tagId === "new") {
-		return;
-	}
-	showItems.value = !showItems.value;
-};
-const toggleBoxs = () => {
-	if (tagId === "new") {
-		return;
-	}
-	showBoxs.value = !showBoxs.value;
-};
-const toggleStores = () => {
-	if (tagId === "new") {
-		return;
-	}
-	showStores.value = !showStores.value;
-};
-
 const tagDeleteModalShow = ref(false);
 const tagSave = async() => {
 	try {
-		await schemaTag.validate(tagsStore.tagEdition, { abortEarly: false });
+		createSchema().validateSync(tagsStore.tagEdition, { abortEarly: false });
 		if (tagId !== "new") {
 			await tagsStore.updateTag(tagId, { ...tagsStore.tagEdition });
 			addNotification({ message: "tag.VTagUpdated", type: "success", i18n: true });
@@ -95,6 +69,12 @@ const tagSave = async() => {
 			addNotification({ message: "tag.VTagCreated", type: "success", i18n: true });
 		}
 	} catch (e) {
+		if (e.inner) {
+			e.inner.forEach((error) => {
+				addNotification({ message: error.message, type: "error", i18n: false });
+			});
+			return;
+		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -222,16 +202,22 @@ const boxDelete = async(box) => {
 	}
 };
 
-const schemaTag = Yup.object().shape({
-	nom_tag: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("tag.VTagNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-		.required(t("tag.VTagNameRequired")),
-	poids_tag: Yup.number()
-		.min(0, t("tag.VTagPoidsMin"))
-		.typeError(t("tag.VTagPoidsNumber"))
-		.required(t("tag.VTagPoidsRequired")),
-});
+const createSchema = () => {
+	return Yup.object().shape({
+		nom_tag: Yup.string()
+			.max(configsStore.getConfigByKey("max_length_name"), t("tag.VTagNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.required(t("tag.VTagNameRequired")),
+		poids_tag: Yup.number()
+			.min(0, t("tag.VTagPoidsMin"))
+			.typeError(t("tag.VTagPoidsNumber"))
+			.required(t("tag.VTagPoidsRequired")),
+	});
+};
 
+const labelForm = [
+	{ key: "nom_tag", label: "tag.VTagName", type: "text" },
+	{ key: "poids_tag", label: "tag.VTagPoids", type: "number" },
+];
 const labelTableauItem = ref([
 	{ label: "tag.VTagItemName", sortable: true, key: "reference_name_item", keyStore: "id_item", store: "1", type: "text" },
 	{ label: "tag.VTagItemActions", sortable: false, key: "", type: "buttons", buttons: [
@@ -314,36 +300,11 @@ const labelTableauModalStore = ref([
 	</div>
 	<div v-if="tagsStore.tags[tagId] || tagId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<Form :validation-schema="schemaTag" v-slot="{ errors }" @submit.prevent="" class="mb-6 w-full sm:w-[490px]">
-				<div class="flex flex-col text-gray-700 space-y-2">
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="nom_tag">{{ $t('tag.VTagName') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="nom_tag" type="text"
-								v-model="tagsStore.tagEdition.nom_tag"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.nom_tag }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.nom_tag || ' ' }}</span>
-						</div>
-					</div>
-					<div class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-						<label class="font-semibold sm:min-w-[140px]" for="poids_tag">{{ $t('tag.VTagPoids') }}:</label>
-						<div class="flex flex-col flex-1 w-full">
-							<Field name="poids_tag" type="text" v-model="tagsStore.tagEdition.poids_tag"
-								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
-								:class="{ 'border-red-500': errors.poids_tag }" />
-							<span class="text-red-500 h-5 w-full text-sm">{{ errors.poids_tag || ' ' }}</span>
-						</div>
-					</div>
-				</div>
-			</Form>
+			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="tagsStore.tagEdition"/>
 		</div>
-		<div class="mb-6 bg-gray-100 p-2 rounded">
-			<h3 @click="toggleItems" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': tagId != 'new', 'cursor-not-allowed': tagId == 'new' }">
-				{{ $t('tag.VTagItems') }} ({{ tagsStore.tagsItemTotalCount[tagId] || 0 }})
-			</h3>
-			<div v-if="showItems" class="p-2">
+		<CollapsibleSection title="tag.VTagItems"
+			:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)" :id-page="tagId">
+			<template #append-row>
 				<button type="button" @click="itemOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('tag.VTagAddItem') }}
@@ -356,14 +317,11 @@ const labelTableauModalStore = ref([
 					:fetch-function="(offset, limit) => tagsStore.getTagItemByInterval(tagId, limit, offset, ['item'])"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
-			</div>
-		</div>
-		<div class="mb-6 bg-gray-100 p-2 rounded">
-			<h3 @click="toggleStores" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': tagId != 'new', 'cursor-not-allowed': tagId == 'new' }">
-				{{ $t('tag.VTagStores') }} ({{ tagsStore.tagsStoreTotalCount[tagId] || 0 }})
-			</h3>
-			<div v-if="showStores" class="p-2">
+			</template>
+		</CollapsibleSection>
+		<CollapsibleSection title="tag.VTagStores"
+			:total-count="Number(tagsStore.tagsStoreTotalCount[tagId] || 0)" :id-page="tagId">
+			<template #append-row>
 				<button type="button" @click="storeOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('tag.VTagAddStore') }}
@@ -376,14 +334,11 @@ const labelTableauModalStore = ref([
 					:fetch-function="(offset, limit) => tagsStore.getTagStoreByInterval(tagId, limit, offset, ['store'])"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
-			</div>
-		</div>
-		<div class="mb-6 bg-gray-100 p-2 rounded">
-			<h3 @click="toggleBoxs" class="text-xl font-semibold bg-gray-400 p-2 rounded"
-				:class="{ 'cursor-pointer': tagId != 'new', 'cursor-not-allowed': tagId == 'new' }">
-				{{ $t('tag.VTagBoxs') }} ({{ tagsStore.tagsBoxTotalCount[tagId] || 0 }})
-			</h3>
-			<div v-if="showBoxs" class="p-2">
+			</template>
+		</CollapsibleSection>
+		<CollapsibleSection title="tag.VTagBoxs"
+			:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)" :id-page="tagId">
+			<template #append-row>
 				<!-- <button type="button" @click="boxOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('tag.VTagAddBox') }}
@@ -396,8 +351,8 @@ const labelTableauModalStore = ref([
 					:fetch-function="(offset, limit) => tagsStore.getTagBoxByInterval(tagId, limit, offset, ['box'])"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
-			</div>
-		</div>
+			</template>
+		</CollapsibleSection>
 	</div>
 	<div v-else>
 		<div>{{ $t('tag.VTagLoading') }}</div>

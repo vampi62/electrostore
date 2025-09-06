@@ -7,8 +7,7 @@
 </template>
 
 <script>
-import { defineAsyncComponent } from "vue";
-import { inject } from "vue";
+import { inject, defineAsyncComponent } from "vue";
 
 export default {
 	name: "NotificationContainer",
