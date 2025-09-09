@@ -168,7 +168,8 @@ const labelForm = ref([
 	{ key: "current_mdp_user", label: "user.VUserCurrentPassword", type: "password", condition: "form?.id_user === session?.id_user || session?.role_user === 2" },
 ]);
 const labelTableauSession = ref([
-	{ label: "user.VUserTokenCreatedDate", sortable: true, key: "created_at", type: "datetime" },
+	{ label: "user.VUserTokenCreatedDate", sortable: true, key: "first_created_at", type: "datetime" },
+	{ label: "user.VUserTokenLastLoginDate", sortable: true, key: "created_at", type: "datetime" },
 	{ label: "user.VUserTokenCreatedIP", sortable: true, key: "created_by_ip", type: "text" },
 	{ label: "user.VUserTokenExpireDate", sortable: true, key: "expires_at", type: "datetime" },
 	{ label: "user.VUserTokenIsRevoked", sortable: true, key: "is_revoked", type: "text" },

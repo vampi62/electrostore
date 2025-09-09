@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, computed, inject } from "vue";
+import { onMounted, onBeforeUnmount, ref, inject } from "vue";
 import { router } from "@/helpers";
 
 const { addNotification } = inject("useNotification");
@@ -247,6 +247,10 @@ const labelTableauModalTag = ref([
 		{{ $t('store.VStoreLoading') }}
 	</div>
 
+	<ModalDeleteConfirm :show-modal="storeDeleteModalShow" @close-modal="storeDeleteModalShow = false"
+		@delete-confirmed="storeDelete" :text-title="'store.VStoreDeleteTitle'"
+		:text-p="'store.VStoreDeleteText'"/>
+
 	<div v-if="tagModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
 		@click="tagModalShow = false">
 		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
@@ -268,7 +272,4 @@ const labelTableauModalTag = ref([
 		</div>
 	</div>
 
-	<ModalDeleteConfirm :show-modal="storeDeleteModalShow" @close-modal="storeDeleteModalShow = false"
-		@delete-confirmed="storeDelete" :text-title="'store.VStoreDeleteTitle'"
-		:text-p="'store.VStoreDeleteText'"/>
 </template>
