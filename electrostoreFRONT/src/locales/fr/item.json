@@ -128,5 +128,10 @@
 	"VItemImageCancel": "Annuler",
 	"VItemImageAdd": "Ajouter",
 	"VItemImageDeleteTitle": "Supprimer l'image",
-	"VItemImageDeleteText": "Êtes-vous sûr de vouloir supprimer cette image ?"
+	"VItemImageDeleteText": "Êtes-vous sûr de vouloir supprimer cette image ?",
+	"VItemTagFilterPlaceholder": "Rechercher un tag",
+	"VItemTagName": "Nom",
+	"VItemTagActions": "Actions",
+	"VItemTagAdded": "Tag ajouté",
+	"VItemTagDeleted": "Tag supprimé"
 }

@@ -31,6 +31,8 @@ const containerClasses = computed(() => [
 	!reduceLeftSideBar.value && authStore.user && !isIframe.value ? "sm:ml-64" : "",
 	authStore.user && !isIframe.value ? "top-16" : "top-0",
 ]);
+
+const showAboutModal = ref(false);
 </script>
 
 <template>
@@ -69,6 +71,10 @@ const containerClasses = computed(() => [
 						class="cursor-pointer text-white hover:text-blue-400">
 						{{ $t('common.VAppLogout') }}
 					</button>
+					<button @click="showAboutModal = true"
+						class="cursor-pointer text-white hover:text-blue-400 text-left">
+						{{ $t('common.VAppAbout') }}
+					</button>
 				</div>
 			</div>
 		</nav>
@@ -84,6 +90,10 @@ const containerClasses = computed(() => [
 				<button v-if="authStore.user" @click="authStore.logout()"
 					class="cursor-pointer text-white hover:text-blue-400 text-left">
 					{{ $t('common.VAppLogout') }}
+				</button>
+				<button @click="showAboutModal = true"
+					class="cursor-pointer text-white hover:text-blue-400 text-left">
+					{{ $t('common.VAppAbout') }}
 				</button>
 				<div class="border-t-2 border-blue-400"></div>
 				<ul class="mt-6 space-y-4">
@@ -135,6 +145,11 @@ const containerClasses = computed(() => [
 		<RouterView />
 	</div>
 	<NotificationContainer />
+	<div v-if="showAboutModal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-20" @click="showAboutModal = false">
+		<div class="bg-white rounded-lg shadow-lg w-3/4 h-3/4 p-6" @click.stop>
+		</div>
+	</div>
+
 </template>
 
 <style>

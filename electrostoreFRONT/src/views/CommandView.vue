@@ -14,6 +14,8 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 let commandId = route.params.id;
 
+import { getMimeType } from "@/utils";
+
 import { useConfigsStore, useCommandsStore, useUsersStore, useItemsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
 const commandsStore = useCommandsStore();
@@ -185,24 +187,6 @@ const documentView = async(fileContent) => {
 	} else {
 		addNotification({ message: "command.VCommandDocumentNotSupported", type: "error", i18n: true });
 	}
-};
-const getMimeType = (type) => {
-	const mimeTypes = {
-		"pdf": "application/pdf",
-		"doc": "application/msword",
-		"docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-		"xls": "application/vnd.ms-excel",
-		"xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-		"ppt": "application/vnd.ms-powerpoint",
-		"pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-		"txt": "text/plain",
-		"png": "image/png",
-		"jpg": "image/jpeg",
-		"jpeg": "image/jpeg",
-		"gif": "image/gif",
-		"bmp": "image/bmp",
-	};
-	return mimeTypes[type] || "application/octet-stream";
 };
 
 // item
@@ -519,7 +503,7 @@ const labelTableauModalItem = ref([
 		<CollapsibleSection title="command.VCommandCommentaires"
 			:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)" :id-page="commandId">
 			<template #append-row>
-				<Commentaire :meta="{ contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', CanEdit: true }"
+				<Commentaire :meta="{ contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: true }"
 					:store-data="[commandsStore.commentaires[commandId],usersStore.users,authStore.user,configsStore]"
 					:store-function="{ create: (data) => commandsStore.createCommentaire(commandId, data), update: (id, data) => commandsStore.updateCommentaire(commandId, id, data), delete: (id) => commandsStore.deleteCommentaire(commandId, id) }"
 					:loading="commandsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'command.VCommandCommentDeleteTitle', textP: 'command.VCommandCommentDeleteText' }"

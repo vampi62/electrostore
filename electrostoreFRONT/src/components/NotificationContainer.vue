@@ -1,5 +1,5 @@
 <template>
-	<div class="notification-container">
+	<div class="fixed bottom-5 right-5 flex flex-col z-[1000]">
 		<Notification v-for="(notification) in notifications" :key="notification.id" :id="notification.id"
 			:message="notification.message" :type="notification.type" :i18n="notification.i18n"
 			@remove="removeNotification" />
@@ -20,14 +20,3 @@ export default {
 	},
 };
 </script>
-
-<style scoped>
-.notification-container {
-	position: fixed;
-	bottom: 20px;
-	right: 20px;
-	display: flex;
-	flex-direction: column;
-	z-index: 1000;
-}
-</style>
