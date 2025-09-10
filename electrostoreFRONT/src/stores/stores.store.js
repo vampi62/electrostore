@@ -39,12 +39,6 @@ export const useStoresStore = defineStore("stores",{
 		boxTagEdition: {},
 	}),
 	actions: {
-		pushLed(led) {
-			this.ledEdition[led.id_led] = led;
-		},
-		pushBox(box) {
-			this.boxEdition[box.id_box] = box;
-		},
 		async getStoreByList(idResearch = [], expand = []) {
 			this.storesLoading = true;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");

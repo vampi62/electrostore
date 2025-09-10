@@ -1,6 +1,6 @@
 /**
  * Get extension's mimetype
- * @param {string} date - file extension
+ * @param {string}   - file extension
  * @returns {string} - mimetype
  */
 export function getMimeType(type) {

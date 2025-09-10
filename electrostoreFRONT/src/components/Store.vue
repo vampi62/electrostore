@@ -88,7 +88,7 @@
 						<button v-if="canEdit" @click="deleteElement" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600">
 							{{ $t('store.VStoreDeleteLed') }}
 						</button>
-						<button @click="toggleLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
+						<button v-if="ledEdition[selectedElement.key.id_led].status != 'new'" @click="toggleLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
 							{{ $t('store.VStoreToggleLed') }}
 						</button>
 						<div class="flex space-x-4">
@@ -101,10 +101,10 @@
 						<button v-if="canEdit" @click="deleteElement" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600">
 							{{ $t('store.VStoreDeleteBox') }}
 						</button>
-						<button @click="showBoxContent" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
+						<button v-if="boxEdition[selectedElement.key.id_box].status != 'new'" @click="$emit('openBoxContent', selectedElement.key.id_box)" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
 							{{ $t('store.VStoreShowBoxContent') }}
 						</button>
-						<button @click="toggleBoxLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
+						<button v-if="boxEdition[selectedElement.key.id_box].status != 'new'" @click="toggleBoxLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
 							{{ $t('store.VStoreToggleBoxLed') }}
 						</button>
 						<button v-if="canEdit" @click="addLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
@@ -118,6 +118,10 @@
 				<strong>{{ mousePos.X }}</strong>
 				<span>Y: </span>
 				<strong>{{ mousePos.Y }}</strong>
+				<label class="ml-4">
+					<input type="checkbox" v-model="showLedId" />
+					{{ $t('store.VStoreShowLedId') }}
+				</label>
 			</div>
 		</template>
 		<template v-else>
@@ -127,13 +131,16 @@
 </template>
 
 <script>
+import { inject } from "vue";
 export default {
 	name: "Tableau",
 	mounted() {
 		document.addEventListener("click", (event) => this.hideMenu(event));
+		document.addEventListener("mouseup", (event) => this.stopDragging(event));
 	},
 	beforeUnmount() {
-		document.removeEventListener("click", (event) => this.hideMenu(event));
+		document.removeEventListener("click", (event) => this.this.hideMenu(event));
+		document.removeEventListener("mouseup", (event) => this.stopDragging(event));
 	},
 	props: {
 		storeData: {
@@ -152,27 +159,31 @@ export default {
 			type: Boolean,
 			required: true,
 		},
+		storeFunc: {
+			type: Object,
+			required: true,
+		},
 	},
 	methods: {
 		addLed() {
-			this.storesStore.pushLed({
+			this.ledEdition[this.getLastLedId() + 1] = {
 				id_led: this.getLastLedId() + 1,
 				x_led: this.mouseClick.X,
 				y_led: this.mouseClick.Y,
 				mqtt_led_id: this.getLastLedMqttId() + 1,
 				status: "new",
-			});
+			};
 			this.showMenu = false;
 		},
 		addBox() {
-			this.storesStore.pushBox({
+			this.boxEdition[this.getLastBoxId() + 1] = {
 				id_box: this.getLastBoxId() + 1,
 				xstart_box: this.mouseClick.X,
 				ystart_box: this.mouseClick.Y,
 				xend_box: this.mouseClick.X + 1,
 				yend_box: this.mouseClick.Y + 1,
 				status: "new",
-			});
+			};
 			this.showMenu = false;
 		},
 		getLastBoxId() {
@@ -210,10 +221,19 @@ export default {
 				return;
 			}
 			this.showMenu = true;
-			this.menuPos.Xpx = event.layerX;// TODO change type for editing
-			this.menuPos.Ypx = event.layerY;// TODO change type for editing
+			this.saveMouseClickPos();
+			if (isNewElement) {
+				this.menuPos.Xpx = event.layerX;
+				this.menuPos.Ypx = event.layerY;
+			} else {
+				this.menuPos.Xpx = event.layerX + event.target.offsetLeft;
+				this.menuPos.Ypx = event.layerY + event.target.offsetTop;
+			}
 		},
 		hideMenu(event) {
+			if (this.$refs.menuModal?.contains(event.target)) {
+				return;
+			}
 			this.showMenu = false;
 			this.stopSelecting();
 		},
@@ -221,7 +241,10 @@ export default {
 			this.mouseClick.X = this.mousePos.X;
 			this.mouseClick.Y = this.mousePos.Y;
 		},
-		stopSelecting() {
+		stopSelecting(event = null) {
+			if (event !== null && this.$refs.menuModal?.contains(event.target)) {
+				return;
+			}
 			document.querySelector(".selectedElement")?.classList.remove("selectedElement");
 			document.querySelector(".cursor-move")?.classList.remove("cursor-move");
 			document.querySelector(".diagonal-hatch")?.classList.remove("diagonal-hatch");
@@ -278,6 +301,208 @@ export default {
 			boxHtml.classList.add("selectedElement");
 			boxHtml.classList.add("diagonal-hatch");
 		},
+		selectBorder(border, direction) {
+			if (this.selectedElement.key === border) {
+				this.stopSelecting(); // unselect if click on the selectedElement element
+				return;
+			}
+			this.stopSelecting(); // unselect if click on another element
+			this.selectedElement.key = border;
+			this.selectedElement.type = "border";
+			// on stock la valeur de départ de la box lier au border
+			this.selectedElement.temp.xstart_box = border.xstart_box;
+			this.selectedElement.temp.ystart_box = border.ystart_box;
+			this.selectedElement.temp.xend_box = border.xend_box;
+			this.selectedElement.temp.yend_box = border.yend_box;
+			this.selectedElement.temp.direction = direction;
+			if (border?.status !== "new") {
+				border.status = "modified";
+			}
+			let boxHtml = this.$refs["BOX" + border.id_box][0];
+			boxHtml.classList.add("selectedElement");
+			boxHtml.classList.add("diagonal-hatch");
+		},
+		deleteElement() {
+			if (this.selectedElement.type === "led") {
+				Object.keys(this.ledEdition).forEach((index) => {
+					if (this.ledEdition[index] === this.selectedElement.key) {
+						if (this.ledEdition[index].status === "new") {
+							delete this.ledEdition[index];
+						} else {
+							this.ledEdition[index].status = "delete";
+						}
+					}
+				});
+			} else if (this.selectedElement.type === "box") {
+				Object.keys(this.boxEdition).forEach((index) => {
+					if (this.boxEdition[index] === this.selectedElement.key) {
+						if (this.boxEdition[index].status === "new") {
+							delete this.boxEdition[index];
+						} else {
+							this.boxEdition[index].status = "delete";
+						}
+					}
+				});
+			}
+			this.showMenu = false;
+			this.stopSelecting();
+		},
+		async toggleLed(ledId) {
+			try {
+				await this.storeFunc.showLedById(ledId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
+				this.addNotification({ message: "store.VStoreLedShowSuccess", type: "success", i18n: true });
+			} catch (e) {
+				this.addNotification({ message: e, type: "error", i18n: false });
+			}
+		},
+		async toggleBoxLed(boxId) {
+			try {
+				await this.storeFunc.showBoxById(boxId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
+				this.addNotification({ message: "store.VStoreBoxShowSuccess", type: "success", i18n: true });
+			} catch (e) {
+				this.addNotification({ message: e, type: "error", i18n: false });
+			}
+		},
+		startDragging(element, type, direction = null) {
+			if (!this.canEdit) {
+				return;
+			}
+			if (this.hasDragElement) {
+				return;
+			}
+			this.saveMouseClickPos();
+			// if the element is not the selected element, change the selected element
+			if ((this.selectedElement.key !== element) || (this.selectedElement.type !== type)) {
+				if (type === "led") {
+					this.selectLed(element);
+					document.querySelector(".grid")?.classList.add("cursor-move");
+				} else if (type === "box") {
+					this.selectBox(element);
+					document.querySelector(".grid")?.classList.add("cursor-move");
+				} else if (type === "border") {
+					this.selectBorder(element, direction);
+					document.querySelector(".grid")?.classList.add("cursor-" + direction);
+				}
+			}
+			this.hasDragElement = true;
+			this.showMenu = false;
+		},
+		stopDragging() {
+			if (!this.hasDragElement) {
+				return;
+			}
+			this.hasDragElement = false;
+		},
+		moveMouse(event) {
+			let gridBoxPos = document.querySelector(".grid").getBoundingClientRect();
+			let left = gridBoxPos.left + window.scrollX;
+			let top = gridBoxPos.top + window.scrollY;
+			this.gridSize.cellSizeX = Math.floor(gridBoxPos.width / this.storeData.xlength_store);
+			this.gridSize.cellSizeY = Math.floor(gridBoxPos.height / this.storeData.ylength_store);
+			let x = Math.floor((event.clientX - left + window.scrollX) / this.gridSize.cellSizeX);
+			let y = this.storeData.ylength_store - Math.floor((event.clientY - top + window.scrollY) / this.gridSize.cellSizeY) - 1;
+			// if a value is out of the grid, don't update the mousePos
+			if ((x < 0) || (y < 0) || (x >= this.storeData.xlength_store) || (y >= this.storeData.ylength_store)) {
+				return;
+			}
+			this.mousePos.X = x;
+			this.mousePos.Y = y;
+			if (!this.hasDragElement) {
+				return;
+			}
+			if (this.selectedElement.type === "led") {
+				this.selectedElement.key.x_led = x;
+				this.selectedElement.key.y_led = y;
+			} else if (this.selectedElement.type === "box") {
+				let dx = x - this.mouseClick.X;
+				let dy = y - this.mouseClick.Y;
+				if ((this.selectedElement.temp.xstart_box + dx < 0) ||
+					(this.selectedElement.temp.ystart_box + dy < 0) ||
+					(this.selectedElement.temp.xend_box + dx > this.storeData.xlength_store) ||
+					(this.selectedElement.temp.yend_box + dy > this.storeData.ylength_store)) {
+					return;
+				}
+				this.selectedElement.key.xstart_box = this.selectedElement.temp.xstart_box + dx;
+				this.selectedElement.key.ystart_box = this.selectedElement.temp.ystart_box + dy;
+				this.selectedElement.key.xend_box = this.selectedElement.temp.xend_box + dx;
+				this.selectedElement.key.yend_box = this.selectedElement.temp.yend_box + dy;
+				this.checkBoxConflict();
+			} else if (this.selectedElement.type === "border") {
+				if ((this.selectedElement.temp.direction === "ne" || this.selectedElement.temp.direction === "se" || this.selectedElement.temp.direction === "e") &&
+					(this.mousePos.X >= this.selectedElement.temp.xstart_box)) {
+					this.selectedElement.key.xend_box = this.selectedElement.temp.xend_box + (this.mousePos.X - this.mouseClick.X);
+				} else if ((this.selectedElement.temp.direction === "nw" || this.selectedElement.temp.direction === "ne" || this.selectedElement.temp.direction === "n") &&
+					(this.mousePos.Y >= this.selectedElement.temp.ystart_box)) {
+					this.selectedElement.key.yend_box = this.selectedElement.temp.yend_box + (this.mousePos.Y - this.mouseClick.Y);
+				} else if ((this.selectedElement.temp.direction === "nw" || this.selectedElement.temp.direction === "sw" || this.selectedElement.temp.direction === "w") &&
+					(this.mousePos.X < this.selectedElement.temp.xend_box)) {
+					this.selectedElement.key.xstart_box = this.selectedElement.temp.xstart_box + (this.mousePos.X - this.mouseClick.X);
+				} else if ((this.selectedElement.temp.direction === "sw" || this.selectedElement.temp.direction === "se" || this.selectedElement.temp.direction === "s") &&
+					(this.mousePos.Y < this.selectedElement.temp.yend_box)) {
+					this.selectedElement.key.ystart_box = this.selectedElement.temp.ystart_box + (this.mousePos.Y - this.mouseClick.Y);
+				}
+				this.checkBoxConflict();
+			}
+		},
+		checkBoxConflict(validate = false) {
+			Object.values(this.boxEdition).forEach((box) => {
+				this.$refs["BOX" + box.id_box][0].classList.remove("conflict");
+			});
+			Object.values(this.boxEdition).forEach((box1) => {
+				Object.values(this.boxEdition).forEach((box2) => {
+					if (box1.id_box !== box2.id_box) {
+						if ((box1.xstart_box < box2.xend_box) &&
+						(box1.xend_box > box2.xstart_box) &&
+						(box1.ystart_box < box2.yend_box) &&
+						(box1.yend_box > box2.ystart_box)) {
+							this.$refs["BOX" + box1.id_box][0].classList.add("conflict");
+							this.$refs["BOX" + box2.id_box][0].classList.add("conflict");
+						}
+					}
+				});
+			});
+			if (validate) {
+				let BreakException = {};
+				try {
+					Object.values(this.boxEdition).forEach((box) => {
+						if (this.$refs["BOX" + box.id_box][0].classList.contains("conflict")) {
+							this.addNotification({ message: "store.VStoreBoxConflict", type: "error", i18n: true });
+							throw BreakException;
+						}
+					});
+					return true;
+				} catch (e) {
+					return false;
+				}
+			}
+		},
+		checkOutOfGrid() {
+			let errorLed = false;
+			Object.keys(this.ledEdition).forEach((led) => {
+				if ((this.ledEdition[led].x_led >= this.storeData.xlength_store) || (this.ledEdition[led].y_led >= this.storeData.ylength_store)) {
+					if (this.ledEdition[led]?.status !== "delete") {
+						errorLed = true;
+					}
+				}
+			});
+			if (errorLed) {
+				this.addNotification({ message: "store.VStoreLedOutOfGrid", type: "error", i18n: true });
+				return false;
+			}
+			let errorBox = false;
+			Object.keys(this.boxEdition).forEach((box) => {
+				if ((this.boxEdition[box].xend_box > this.storeData.xlength_store) || (this.boxEdition[box].yend_box > this.storeData.ylength_store)) {
+					if (this.boxEdition[box]?.status !== "delete") {
+						errorBox = true;
+					}
+				}
+			});
+			if (errorBox) {
+				this.addNotification({ message: "store.VStoreBoxOutOfGrid", type: "error", i18n: true });
+				return false;
+			}
+			return true;
+		},
 	},
 	emits: [
 		"openBoxContent",
@@ -291,6 +516,12 @@ export default {
 					`;
 		},
 	},
+	setup() {
+		const { addNotification } = inject("useNotification"); 
+		return {
+			addNotification,
+		};
+	},
 	data() {
 		return {
 			showMenu: false,
@@ -300,6 +531,7 @@ export default {
 			gridSize: { cellSizeX: 40, cellSizeY: 40 },
 			showLedId: true,
 			selectedElement: { type: null, key: null, temp: {} },
+			hasDragElement: false,
 		};
 	},
 	

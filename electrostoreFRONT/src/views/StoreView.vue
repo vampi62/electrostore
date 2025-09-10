@@ -13,10 +13,11 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 let storeId = route.params.id;
 
-import { useConfigsStore, useStoresStore, useTagsStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useStoresStore, useTagsStore, useItemsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
 const storesStore = useStoresStore();
 const tagsStore = useTagsStore();
+const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
@@ -58,20 +59,24 @@ onBeforeUnmount(() => {
 	storesStore.storeEdition[storeId] = {
 		loading: false,
 	};
-	storesStore.ledEdition = {};
-	storesStore.boxEdition = {};
+	storesStore.ledEdition[storeId] = {};
+	storesStore.boxEdition[storeId] = {};
 });
 
 // store
+const storeGrid = ref(null);
 const storeDeleteModalShow = ref(false);
 const storeSave = async() => {
 	try {
 		createSchema().validateSync(storesStore.storeEdition[storeId], { abortEarly: false });
+		if (!storeGrid.value.checkOutOfGrid()) {
+			return;
+		}
 		if (storeId !== "new") {
 			await storesStore.updateStoreComplete(storeId, { 
 				store: storesStore.storeEdition[storeId],
-				leds: Object.values(storesStore.ledEdition),
-				boxs: Object.values(storesStore.boxEdition),
+				leds: Object.values(storesStore.ledEdition[storeId]),
+				boxs: Object.values(storesStore.boxEdition[storeId]),
 			});
 			addNotification({ message: "store.VStoreUpdated", type: "success", i18n: true });
 			await storesStore.getStoreById(storeId, ["boxs", "leds"]);
@@ -88,8 +93,8 @@ const storeSave = async() => {
 		} else {
 			await storesStore.createStoreComplete(storeId, { 
 				store: storesStore.storeEdition[storeId],
-				leds: Object.values(storesStore.ledEdition),
-				boxs: Object.values(storesStore.boxEdition),
+				leds: Object.values(storesStore.ledEdition[storeId]),
+				boxs: Object.values(storesStore.boxEdition[storeId]),
 			});
 			addNotification({ message: "store.VStoreCreated", type: "success", i18n: true });
 		}
@@ -111,8 +116,8 @@ const storeSave = async() => {
 		router.push("/stores/" + storeId);
 		// reload the store data
 		await storesStore.getStoreById(storesStore.storeEdition[storeId].store.id_store, ["boxs", "leds"]);
-		storesStore.ledEdition = { ...storesStore.leds[storesStore.storeEdition[storeId].store.id_store] };
-		storesStore.boxEdition = { ...storesStore.boxs[storesStore.storeEdition[storeId].store.id_store] };
+		storesStore.ledEdition[storeId] = { ...storesStore.leds[storesStore.storeEdition[storeId].store.id_store] };
+		storesStore.boxEdition[storeId] = { ...storesStore.boxs[storesStore.storeEdition[storeId].store.id_store] };
 		storesStore.storeEdition[storeId] = {
 			loading: false,
 			id_store: storesStore.storeEdition[storeId].store.id_store,
@@ -153,6 +158,97 @@ const createSchema = () => {
 	});
 };
 
+const schemaItem = Yup.object().shape({
+	qte_item_box: Yup.number()
+		.required(t("store.VStoreItemQuantityRequired"))
+		.typeError(t("store.VStoreItemQuantityNumber"))
+		.min(0, t("store.VStoreItemQuantityMin")),
+	seuil_max_item_item_box: Yup.number()
+		.required(t("store.VStoreItemMaxThresholdRequired"))
+		.typeError(t("store.VStoreItemMaxThresholdNumber"))
+		.min(1, t("store.VStoreItemMaxThresholdMin")),
+});
+
+// box & item
+const storeBoxEditModalShow = ref(false);
+const storeItemAddModalShow = ref(false);
+const boxId = ref(0);
+const showBoxContent = async(idBox) => {
+	boxId.value = idBox;
+	try {
+		let offset = 0;
+		const limit = 100;
+		do {
+			await storesStore.getBoxItemByInterval(storeId, idBox, limit, offset, ["item"]);
+			offset += limit;
+		} while (offset < storesStore.boxItemsTotalCount[idBox]);
+		for (const item of Object.values(itemsStore.items)) {
+			if (item.id_img) {
+				await itemsStore.showImageById(item.id_item, item.id_img);
+			}
+		}
+	} catch (e) {
+		addNotification({ message: e, type: "error", i18n: false });
+	}
+	storeBoxEditModalShow.value = true;
+};
+const itemLoaded = ref(false);
+const itemOpenAddModal = () => {
+	storeItemAddModalShow.value = true;
+	if (!itemLoaded.value) {
+		fetchAllItems();
+	}
+};
+async function fetchAllItems() {
+	let offset = 0;
+	const limit = 100;
+	do {
+		await itemsStore.getItemByInterval(limit, offset);
+		offset += limit;
+	} while (offset < itemsStore.itemsTotalCount);
+	itemLoaded.value = true;
+}
+const itemSave = async(item) => {
+	if (storesStore.boxItems[boxId.value][item.id_item]) {
+		try {
+			schemaItem.validateSync(item.tmp, { abortEarly: false });
+			await storesStore.updateBoxItem(storeId, boxId.value, item.tmp.id_item, item.tmp);
+			addNotification({ message: "store.VStoreItemUpdated", type: "success", i18n: true });
+			item.tmp = null;
+		} catch (e) {
+			addNotification({ message: e, type: "error", i18n: false });
+			return;
+		}
+	} else {
+		try {
+			schemaItem.validateSync(item.tmp, { abortEarly: false });
+			await storesStore.createBoxItem(storeId, boxId.value, item.tmp);
+			addNotification({ message: "store.VStoreItemAdded", type: "success", i18n: true });
+			item.tmp = null;
+		} catch (e) {
+			addNotification({ message: e, type: "error", i18n: false });
+			return;
+		}
+	}
+};
+const itemDelete = async(item) => {
+	try {
+		await storesStore.deleteBoxItem(storeId, boxId.value, item.id_item);
+		addNotification({ message: "store.VStoreItemDeleted", type: "success", i18n: true });
+	} catch (e) {
+		addNotification({ message: e, type: "error", i18n: false });
+	}
+};
+
+const filteredItems = ref([]);
+const updateFilteredItems = (newValue) => {
+	filteredItems.value = newValue;
+};
+const filterItem = ref([
+	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("store.VStoreItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+]);
+
+// tag
 const tagModalShow = ref(false);
 const tagLoad = ref(false);
 const filteredTags = ref([]);
@@ -196,8 +292,66 @@ function tagDelete(id_tag) {
 	}
 }
 
+const labelTableauBoxItem = ref([
+	{ label: "store.VStoreItemName", sortable: true, key: "reference_name_item", type: "text", store: 1, keyStore: "id_item" },
+	{ label: "store.VStoreItemQuantity", sortable: true, key: "qte_item_box", type: "number" },
+	{ label: "store.VStoreItemMaxThreshold", sortable: true, key: "seuil_max_item_item_box", type: "number" },
+	{ label: "store.VStoreItemImg", sortable: false, key: "id_img", type: "image", idStoreImg: 2, store: 1, keyStore: "id_item" },
+]);
+const metaTableauBoxItem = ref({
+	key: "id_item",
+	path: "/inventory/",
+});
+const labelTableauModalItem = ref([
+	{ label: "store.VStoreItemName", sortable: true, key: "reference_name_item", type: "text" },
+	{ label: "store.VStoreItemQuantity", sortable: true, key: "qte_item_box", keyStore: "id_item", store: "1", type: "number", canEdit: true },
+	{ label: "store.VStoreItemMaxThreshold", sortable: true, key: "seuil_max_item_item_box", keyStore: "id_item", store: "1", type: "number", canEdit: true },
+	{ label: "store.VStoreItemActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-plus",
+			condition: "store[1]?.[rowData.id_item] === undefined",
+			action: (row) => {
+				row.tmp = { qte_item_box: 0, seuil_max_item_item_box: 1, id_item: row.id_item };
+			},
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-edit",
+			condition: "store[1]?.[rowData.id_item] && !rowData.tmp",
+			action: (row) => {
+				row.tmp = { ...row };
+			},
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-save",
+			condition: "rowData.tmp",
+			action: (row) => itemSave(row),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-times",
+			condition: "rowData.tmp",
+			action: (row) => {
+				row.tmp = null;
+			},
+			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			condition: "store[1]?.[rowData.id_item]",
+			action: (row) => itemDelete(row),
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+		},
+	] },
+]);
 const labelForm = ref([
-	{ key: "nom_store", label: "store.VStoreName", type: "text", condition: "session?.role_user === 2" },
+	{ key: "nom_store", label: "store.VStoreName", tledEditionype: "text", condition: "session?.role_user === 2" },
 	{ key: "mqtt_name_store", label: "store.VStoreMQTTName", type: "text", condition: "session?.role_user === 2" },
 	{ key: "xlength_store", label: "store.VStoreXLength", type: "number", condition: "session?.role_user === 2" },
 	{ key: "ylength_store", label: "store.VStoreYLength", type: "number", condition: "session?.role_user === 2" },
@@ -234,13 +388,43 @@ const labelTableauModalTag = ref([
 			<Tags :current-tags="storesStore.storeTags[storeId] || {}" :tags-store="tagsStore.tags" :can-edit="storeId !== 'new'"
 				:delete-function="(value) => tagDelete(value)" @openModalTag="tagOpenAddModal"/>
 		</div>
-		<div class="mb-6 flex justify-between whitespace-pre">
-			<Store
-				:store-data="storesStore.storeEdition[storeId] || {}"
-				:led-edition="storesStore.ledEdition[storeId] || {}"
-				:box-edition="storesStore.boxEdition[storeId] || {}"
-				:can-edit="storeId !== 'new' && authStore.user?.role_user === 2"
-			/>
+		<div class="mb-6 flex justify-between flex-wrap whitespace-pre">
+			<div class="flex-1">
+				<Store ref="storeGrid"
+					:store-data="storesStore.storeEdition[storeId] || {}"
+					:led-edition="storesStore.ledEdition[storeId] || {}"
+					:box-edition="storesStore.boxEdition[storeId] || {}"
+					:can-edit="storeId !== 'new' && authStore.user?.role_user === 2"
+					:store-func="{ showLedById: (id,data) => storesStore.showLedById(storeId, id, data), showBoxById: (id,data) => storesStore.showBoxById(storeId, id, data) }"
+					@open-box-content="(id) => showBoxContent(id)"
+				/>
+			</div>
+			<div :class="storeBoxEditModalShow ? 'flex' : 'hidden'" class="flex-col max-w-1/2 min-h-32 bg-gray-200 px-2 py-2 rounded" id="storeInputTag">
+				<div class="flex justify-between items-center border-b pb-3">
+					<h2 class="text-xl mb-4">{{ $t('store.VStoreBoxContent') }} (Id : {{ boxId }})</h2>
+					<button type="button" @click="storeBoxEditModalShow = false"
+						class="text-xl text-gray-500 hover:text-gray-700">&times;</button>
+				</div>
+				<div>
+					<Tableau v-if="boxId != null" :labels="labelTableauBoxItem" :meta="metaTableauBoxItem"
+						:store-data="[storesStore.boxItems[boxId],itemsStore.items,itemsStore.thumbnailsURL]"
+						:loading="storesStore.boxItemsLoading"
+						:total-count="Number(storesStore.boxItemsTotalCount[boxId] || 0)"
+						:loaded-count="Object.keys(storesStore.boxItems[boxId] || {}).length"
+						:fetch-function="(offset, limit) => storesStore.getBoxItems(storeId, boxId, offset, limit)"
+						:tableau-css="{ component: 'max-h-80', tr: 'transition duration-150 ease-in-out cursor-pointer hover:bg-gray-300 even:bg-gray-100' }"
+					>
+						<template #append-row>
+							<tr @click="itemOpenAddModal()"
+								class="transition duration-150 ease-in-out hover:bg-gray-300 cursor-pointer">
+								<td colspan="4" class="text-center">
+									{{ $t('store.VStoreAddItem') }}
+								</td>
+							</tr>
+						</template>
+					</Tableau>
+				</div>
+			</div>
 		</div>
 	</div>
 	<div v-else>
@@ -272,4 +456,22 @@ const labelTableauModalTag = ref([
 		</div>
 	</div>
 
+	<div v-if="storeItemAddModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
+		@click="storeItemAddModalShow = false">
+		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
+			<div class="flex justify-between items-center border-b pb-3">
+				<h2 class="text-2xl font-semibold">{{ $t('store.VStoreItemTitle') }}</h2>
+				<button type="button" @click="storeItemAddModalShow = false"
+					class="text-gray-500 hover:text-gray-700">&times;</button>
+			</div>
+
+			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
+
+			<Tableau id="storeItemTable" :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
+				:store-data="[filteredItems,storesStore.boxItems[boxId]]"
+				:loading="itemsStore.itemsLoading" :schema="schemaItem"
+				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+			/>
+		</div>
+	</div>
 </template>
