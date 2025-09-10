@@ -63,6 +63,10 @@ app.component(
 	defineAsyncComponent(() => import("@/components/StatusDisplay.vue")),
 );
 app.component(
+	"Store",
+	defineAsyncComponent(() => import("@/components/Store.vue")),
+);
+app.component(
 	"Tableau",
 	defineAsyncComponent(() => import("@/components/Tableau.vue")),
 );

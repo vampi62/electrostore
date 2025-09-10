@@ -74,5 +74,10 @@
 	"VStoreItemCancel": "Annuler",
 	"VStoreItemAdd": "Ajouter",
 	"VStoreItemEdit": "Modifier",
-	"VStoreItemDelete": "Supprimer"
+	"VStoreItemDelete": "Supprimer",
+	"VStoreTagFilterPlaceholder": "Rechercher un tag",
+	"VStoreTagName": "Nom",
+	"VStoreTagActions": "Actions",
+	"VStoreTagAdded": "Tag ajouté au rangement",
+	"VStoreTagDeleted": "Tag supprimé du rangement"
 }

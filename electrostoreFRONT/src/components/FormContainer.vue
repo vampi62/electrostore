@@ -2,10 +2,10 @@
 	<Form :validation-schema="schema" v-slot="{ errors }" @submit.prevent="" class="mb-6 w-full sm:w-[490px]">
 		<div class="flex flex-col text-gray-700 space-y-2">
 			<div v-for="field in labels" :key="field.key" class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
-				<label class="font-semibold sm:min-w-[140px]" for="prix_command">{{ $t(field.label) }}:</label>
+				<label class="font-semibold sm:min-w-[140px]" :for="`form-input-${this.$.uid}-${field.key}`">{{ $t(field.label) }}:</label>
 				<div class="flex flex-col flex-1 w-full">
 					<template v-if="field.type === 'checkbox'">
-						<Field :name="field.key" v-slot="{ is_checked_custom }">
+						<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" v-slot="{ is_checked_custom }">
 							<input
 								v-model="field.model"
 								v-bind="is_checked_custom"
@@ -17,7 +17,7 @@
 						</Field>
 					</template>
 					<template v-else-if="field.type === 'select'">
-						<Field :name="field.key" as="select" v-model="storeData[field.key]"
+						<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" as="select" v-model="storeData[field.key]"
 							class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 							:class="{ 'border-red-500': errors[field.key] }"
 							:disabled="field?.condition && !evaluateCondition(field.condition)">
@@ -26,7 +26,7 @@
 						<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
 					</template>
 					<template v-else-if="field.type === 'textarea'">
-						<Field :name="field.key" as="textarea" v-model="storeData[field.key]" :rows="field.rows || 3"
+						<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" as="textarea" v-model="storeData[field.key]" :rows="field.rows || 3"
 							class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 							:class="{ 'border-red-500': errors[field.key] }"
 							:disabled="field?.condition && !evaluateCondition(field.condition)" />
@@ -41,7 +41,7 @@
 						<slot :name="field.key"></slot>
 					</template>
 					<template v-else>
-						<Field :name="field.key" :type="field.type" v-model="storeData[field.key]"
+						<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" :type="field.type" v-model="storeData[field.key]"
 							class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 							:class="{ 'border-red-500': errors[field.key] }"
 							:disabled="field?.condition && !evaluateCondition(field.condition)" />
@@ -52,6 +52,7 @@
 		</div>
 	</Form>
 </template>
+
 <script>
 import { Form, Field } from "vee-validate";
 export default {

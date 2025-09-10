@@ -56,7 +56,7 @@ const updateFilteredUsers = (newValue) => {
 	</div>
 	<div>
 		<div :disabled="authStore.user?.role_user !== 2"
-			class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm cursor-pointer inline-block mb-2">
+			class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded cursor-pointer inline-block mb-2">
 			<RouterLink :to="'/users/new'">
 				{{ $t('user.VUsersAdd') }}
 			</RouterLink>

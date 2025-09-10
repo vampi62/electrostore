@@ -1,25 +1,41 @@
 <template>
-	<div ref="notification" class="notification" :class="type" @click="close">
+	<div ref="notification" class="notification mb-2.5 rounded-lg shadow-sm overflow-hidden cursor-pointer" :class="type" @click="close">
 		<div class="sn-progress-loader">
 			<span></span>
 		</div>
-		<div class="sn-container">
-			<div class="sn-texte">
-				<div class="sn-title">{{ type }}</div>
-				<div class="sn-content" v-if="i18n">{{ $t(message) }}</div>
-				<div class="sn-content" v-else>{{ message }}</div>
-
+		<div class="flex justify-between items-center p-2.5">
+			<div class="flex flex-col justify-between">
+				<div class="font-bold mb-2">{{ type }}</div>
+				<template v-if="i18n">
+					<div class="text-sm" >{{ $t(message) }}</div>
+				</template>
+				<template v-else>
+					<div class="text-sm">{{ message }}</div>
+				</template>
 			</div>
-			<div class="icon">
-				<svg class="simple-notification-svg" xmlns="http://www.w3.org/2000/svg" fill="#ffffff" height="24"
+			<template v-if="type == 'success'">
+				<svg xmlns="http://www.w3.org/2000/svg" fill="#4caf50" height="24"
 					viewBox="0 0 24 24" width="24">
 					<path d="M0 0h24v24H0z" fill="none"></path>
 					<path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path>
 				</svg>
-			</div>
+			</template>
+			<template v-if="type == 'info'">
+				<svg xmlns="http://www.w3.org/2000/svg" fill="#2196f3" height="24" viewBox="0 0 24 24" width="24">
+					<path d="M0 0h24v24H0z" fill="none"/>
+					<path d="M12 5.99L19.53 19H4.47L12 5.99M12 2L1 21h22L12 2z"/>
+					<path d="M12 16c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
+					<path d="M12 8c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
+				</svg>
+			</template>
+			<template v-if="type == 'error'">
+				<svg xmlns="http://www.w3.org/2000/svg" fill="#f44336" height="24" viewBox="0 0 24 24" width="24">
+					<path d="M0 0h24v24H0z" fill="none"/>
+					<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+				</svg>
+			</template>
 		</div>
 	</div>
-
 </template>
 
 <script>
@@ -92,13 +108,8 @@ export default {
 }
 
 .notification {
-	background: #f0f0f0;
-	margin-bottom: 10px;
-	border-radius: 5px;
+	background-color: #f0f0f0;
 	width: 300px;
-	box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-	overflow: hidden;
-	cursor: pointer;
 }
 
 .notification.info {
@@ -129,28 +140,6 @@ export default {
 		height: 100%;
 		animation: progress-bar 17.7s linear;
 	}
-}
-
-.sn-title {
-	font-weight: bold;
-	margin-bottom: 8px;
-}
-
-.sn-content {
-	font-size: 14px;
-}
-
-.sn-container {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 10px;
-}
-
-.sn-texte {
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
 }
 
 .sn-progress-loader {

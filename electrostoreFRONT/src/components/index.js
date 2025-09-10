@@ -7,6 +7,7 @@ export { default as ModalDeleteConfirm } from "./ModalDeleteConfirm.vue";
 export { default as Notification } from "./Notification.vue";
 export { default as NotificationContainer } from "./NotificationContainer.vue";
 export { default as StatusDisplay } from "./StatusDisplay.vue";
+export { default as Store } from "./Store.vue";
 export { default as Tableau } from "./Tableau.vue";
 export { default as Tags } from "./Tags.vue";
 export { default as TopButtonEditElement } from "./TopButtonEditElement.vue";

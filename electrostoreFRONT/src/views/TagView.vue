@@ -7,7 +7,6 @@ const { addNotification } = inject("useNotification");
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
-import { Form, Field } from "vee-validate";
 import * as Yup from "yup";
 
 import { useRoute } from "vue-router";

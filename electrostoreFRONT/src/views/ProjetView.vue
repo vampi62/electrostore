@@ -14,6 +14,8 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 let projetId = route.params.id;
 
+import { getMimeType } from "@/utils";
+
 import { useConfigsStore, useProjetsStore, useUsersStore, useItemsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
 const projetsStore = useProjetsStore();
@@ -187,24 +189,6 @@ const documentView = async(fileContent) => {
 	} else {
 		addNotification({ message: "projet.VProjetDocumentNotSupported", type: "error", i18n: true });
 	}
-};
-const getMimeType = (type) => {
-	const mimeTypes = {
-		"pdf": "application/pdf",
-		"doc": "application/msword",
-		"docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-		"xls": "application/vnd.ms-excel",
-		"xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-		"ppt": "application/vnd.ms-powerpoint",
-		"pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-		"txt": "text/plain",
-		"png": "image/png",
-		"jpg": "image/jpeg",
-		"jpeg": "image/jpeg",
-		"gif": "image/gif",
-		"bmp": "image/bmp",
-	};
-	return mimeTypes[type] || "application/octet-stream";
 };
 
 // item
@@ -513,7 +497,7 @@ const labelTableauModalItem = ref([
 		<CollapsibleSection title="projet.VProjetCommentaires"
 			:total-count="Number(projetsStore.commentairesTotalCount[projetId] || 0)" :id-page="projetId">
 			<template #append-row>
-				<Commentaire :meta="{ contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', CanEdit: true }"
+				<Commentaire :meta="{ contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: true }"
 					:store-data="[projetsStore.commentaires[projetId],usersStore.users,authStore.user,configsStore]"
 					:store-function="{ create: (data) => projetsStore.createCommentaire(projetId, data), update: (id, data) => projetsStore.updateCommentaire(projetId, id, data), delete: (id) => projetsStore.deleteCommentaire(projetId, id) }"
 					:loading="projetsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'projet.VProjetCommentDeleteTitle', textP: 'projet.VProjetCommentDeleteText' }"
