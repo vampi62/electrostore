@@ -8,7 +8,7 @@
 				<font-awesome-icon icon="fa-solid fa-times" />
 			</span>
 		</span>
-		<span class="bg-gray-300 p-1 rounded mr-2 mb-2">
+		<span v-if="canEdit" class="bg-gray-300 p-1 rounded mr-2 mb-2">
 			<span @click="$emit('openModalTag')"
 				class="text-green-500 cursor-pointer hover:text-green-600">
 				<font-awesome-icon icon="fa-solid fa-plus" />
@@ -36,6 +36,10 @@ export default {
 		deleteFunction: {
 			type: Function,
 			default: () => {},
+		},
+		canEdit: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	computed:{

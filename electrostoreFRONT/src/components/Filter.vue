@@ -18,8 +18,8 @@
 		<template v-else-if="type === 'datalist'">
 			<div class="relative max-w-xs mx-auto">
 				<input
-					ref="filterInput"
 					:id="`filter-input-${this.$.uid}`"
+					ref="filterInput"
 					type="text"
 					class="border border-gray-300 rounded px-2 py-1"
 					:class="[classCss, label.length > 0 ? 'mr-2' : '']"
@@ -44,7 +44,7 @@
 			</div>
 			<teleport to="body">
 				<div v-show="isOpen"
-					:id="`filter-list-${this.$.uid}`"
+					:ref="`filterList`"
 					class="absolute z-50 border max-h-48 overflow-y-auto bg-white left-0" style="width: calc(100% - 8px);">
 					<div v-for="option in filterOption" :key="option[0]"
 						@mousedown.prevent="selectOption(option)"
@@ -161,7 +161,7 @@ export default {
 				return;
 			}
 			let inputElement = this.$refs.filterInput;
-			let listElement = document.getElementById(`filter-list-${this.$.uid}`);
+			let listElement = this.$refs.filterList;
 			if (inputElement && listElement) {
 				let rect = inputElement.getBoundingClientRect();
 				listElement.style.top = `${rect.bottom + window.scrollY}px`;

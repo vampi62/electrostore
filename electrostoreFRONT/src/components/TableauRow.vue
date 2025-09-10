@@ -78,6 +78,7 @@
 		</template>
 	</td>
 </template>
+
 <script>
 import { Form, Field } from "vee-validate";
 export default {

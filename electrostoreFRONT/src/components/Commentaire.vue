@@ -1,5 +1,5 @@
 <template>
-	<Form v-if="meta.CanEdit" :validation-schema="schemaCommentaire" v-slot="{ errors }">
+	<Form v-if="meta.canEdit" :validation-schema="schemaCommentaire" v-slot="{ errors }">
 		<div class="flex items-center space-x-4">
 			<Field :name="meta.contenu" type="text" v-model="commentaireFormNew"
 				:placeholder="$t('components.VModalCommentairePlaceholder')"
@@ -15,8 +15,8 @@
 		<div v-for="commentaire in storeData[0]"
 			:key="commentaire[meta.key]" class="flex flex-col border p-4 rounded-lg">
 			<div :class="{
-				'text-right': meta.CanEdit && commentaire.id_user === storeData[2].id_user,
-				'text-left': meta.CanEdit && commentaire.id_user !== storeData[2].id_user
+				'text-right': meta.canEdit && commentaire.id_user === storeData[2].id_user,
+				'text-left': meta.canEdit && commentaire.id_user !== storeData[2].id_user
 			}" class="text-sm text-gray-600">
 				<span class="font-semibold">
 					{{ storeData[1][commentaire.id_user].nom_user }} {{
@@ -26,8 +26,8 @@
 					- {{ commentaire.created_at }} - {{ commentaire.updated_at }}
 				</span>
 			</div>
-			<div v-if="meta.CanEdit" class="text-center text-gray-800 mb-2">
-				<template v-if="commentaire.tmp && meta.CanEdit">
+			<div v-if="meta.canEdit" class="text-center text-gray-800 mb-2">
+				<template v-if="commentaire.tmp && meta.canEdit">
 					<Form :validation-schema="schemaCommentaire" v-slot="{ errors }">
 						<Field :name="meta.contenu" type="text"
 							v-model="commentaire.tmp[meta.contenu]"
@@ -52,7 +52,7 @@
 					}">
 						{{ commentaire[meta.contenu] }}
 					</div>
-					<div v-if="meta.CanEdit && (commentaire.id_user === storeData[2].id_user || storeData[2].role_user === 1 || storeData[2].role_user === 2)"
+					<div v-if="meta.canEdit && (commentaire.id_user === storeData[2].id_user || storeData[2].role_user === 1 || storeData[2].role_user === 2)"
 						class="flex justify-end space-x-2">
 						<button type="button" @click="commentaire.tmp = { ...commentaire }"
 							class="px-3 py-1 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500">
@@ -65,7 +65,7 @@
 					</div>
 				</template>
 			</div>
-			<div v-if="!meta.CanEdit" class="text-sm text-gray-800 mb-2">
+			<div v-if="!meta.canEdit" class="text-sm text-gray-800 mb-2">
 				<div>
 					{{ commentaire[meta.contenu] }}
 				</div>
@@ -89,7 +89,6 @@
 import { inject, defineAsyncComponent } from "vue";
 import { Form, Field } from "vee-validate";
 import * as Yup from "yup";
-import ModalDeleteConfirm from "@/components/ModalDeleteConfirm.vue";
 export default {
 	name: "Commentaire",
 	props: {
@@ -119,13 +118,13 @@ export default {
 			// This should contain metadata about the comment, such as:
 			// - key: unique identifier for the comment
 			// - contenu: the content field of the comment
-			// - CanEdit: boolean indicating if the user can edit comments
+			// - canEdit: boolean indicating if the user can edit comments
 			// - idRessource: identifier for the resource linked to the comment
 			// - link: URL for the resource linked to the comment
 			default: () => ({
 				key: "id_commentaire",
 				contenu: "contenu_commentaire",
-				CanEdit: false,
+				canEdit: false,
 				idRessource: "id_ressource",
 				link: "/ressource/",
 			}),
