@@ -4,4 +4,8 @@ for file in /usr/local/apache2/htdocs/assets/js/*.js; do
     sed -i "s|http://localhost/vite_api_url_placeholder/api|"${VUE_API_URL}"|g" $file
     sed -i "s|demo_mode_placeholder|"${APP_DEMO_MODE}"|g" $file
 done
+for file in /usr/local/apache2/htdocs/assets/*.js; do
+    sed -i "s|http://localhost/vite_api_url_placeholder/api|"${VUE_API_URL}"|g" $file
+    sed -i "s|demo_mode_placeholder|"${APP_DEMO_MODE}"|g" $file
+done
 exec "$@"
