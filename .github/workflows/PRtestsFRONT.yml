@@ -48,7 +48,7 @@ jobs:
         PR_ID="${{ github.event.pull_request.number }}"
         echo "pr_id=$PR_ID" >> $GITHUB_OUTPUT
     - name: SonarScanner
-      uses: SonarSource/sonarqube-scan-action@v5
+      uses: SonarSource/sonarqube-scan-action@v6
       env:
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

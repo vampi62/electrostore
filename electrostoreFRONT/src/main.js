@@ -55,6 +55,10 @@ app.component(
 	defineAsyncComponent(() => import("@/components/ModalDeleteConfirm.vue")),
 );
 app.component(
+	"ModalFinder",
+	defineAsyncComponent(() => import("@/components/ModalFinder.vue")),
+);
+app.component(
 	"NotificationContainer",
 	defineAsyncComponent(() => import("@/components/NotificationContainer.vue")),
 );

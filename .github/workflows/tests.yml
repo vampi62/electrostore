@@ -96,7 +96,7 @@ jobs:
         name: cypress-screenshots
         path: tests/electrostoreFRONT/cypress/screenshots
     - name: SonarScanner
-      uses: SonarSource/sonarqube-scan-action@v5
+      uses: SonarSource/sonarqube-scan-action@v6
       env:
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -132,7 +132,7 @@ jobs:
       run: |
         python -m pytest ../tests/electrostoreIA --cov=electrostoreIA --cov-report=xml:coverage.xml
     - name: SonarScanner
-      uses: SonarSource/sonarqube-scan-action@v5
+      uses: SonarSource/sonarqube-scan-action@v6
       env:
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
