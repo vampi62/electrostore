@@ -38,7 +38,13 @@ const showAboutModal = ref(false);
 <template>
 	<div v-show="authStore.user && !isIframe">
 		<nav class="flex justify-between p-5 bg-gray-800 border-b-2 border-blue-400 fixed w-full top-0 h-16">
-			<RouterLink to="/" class="text-white hover:text-blue-400">{{ $t('common.VAppHome') }}</RouterLink>
+			<div class="flex items-center space-x-4">
+				<RouterLink to="/" class="text-white hover:text-blue-400">{{ $t('common.VAppHome') }}</RouterLink>
+				<button @click="$refs.modalFinder.loadPageFind()"
+					class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded cursor-pointer inline-block">
+					{{ $t('common.VAppFind') }}
+				</button>
+			</div>
 			<div v-if="configsStore.getConfigByKey('demo_mode') === true" class="text-red-500 text-center">
 				{{ $t('common.VAppDemoMode') }}
 			</div>
@@ -144,6 +150,7 @@ const showAboutModal = ref(false);
 	<div :class="containerClasses">
 		<RouterView />
 	</div>
+	<ModalFinder ref="modalFinder" />
 	<NotificationContainer />
 	<div v-if="showAboutModal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-20" @click="showAboutModal = false">
 		<div class="bg-white rounded-lg shadow-lg w-3/4 h-3/4 p-6" @click.stop>
