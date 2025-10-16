@@ -13,7 +13,6 @@ namespace electrostore.Controllers
     {
         private readonly IImgService _imgService;
         private readonly FileService _fileService;
-        private readonly string _basePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
 
         public ItemImgController(IImgService imgService, FileService fileService)
         {
@@ -76,10 +75,10 @@ namespace electrostore.Controllers
         public async Task<ActionResult> GetImgData([FromRoute] int id_img, [FromRoute] int id_item)
         {
             var img = await _imgService.GetImgById(id_img, id_item);
-            var result = await _fileService.GetFile(_basePath, img.url_picture_img); // check if img.url_picture_img is a valid path
-            if (result.Success)
+            var result = await _fileService.GetFile(img.url_picture_img);
+            if (result.Success && result.FileStream != null)
             {
-                return PhysicalFile(result.FilePath, result.MimeType);
+                return File(result.FileStream, result.MimeType);
             }
             else
             {
@@ -92,10 +91,10 @@ namespace electrostore.Controllers
         public async Task<ActionResult> GetImgThumbnail([FromRoute] int id_img, [FromRoute] int id_item)
         {
             var img = await _imgService.GetImgById(id_img, id_item);
-            var result = await _fileService.GetFile(_basePath, img.url_thumbnail_img); // check if img.url_thumbnail_img is a valid path
-            if (result.Success)
+            var result = await _fileService.GetFile(img.url_thumbnail_img);
+            if (result.Success && result.FileStream != null)
             {
-                return PhysicalFile(result.FilePath, result.MimeType);
+                return File(result.FileStream, result.MimeType);
             }
             else
             {

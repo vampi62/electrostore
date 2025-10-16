@@ -9,12 +9,14 @@ public class CommandDocumentService : ICommandDocumentService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly FileService.FileService _fileService;
     private readonly string _commandDocumentsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments");
 
-    public CommandDocumentService(IMapper mapper, ApplicationDbContext context)
+    public CommandDocumentService(IMapper mapper, ApplicationDbContext context, FileService.FileService fileService)
     {
         _mapper = mapper;
         _context = context;
+        _fileService = fileService;
     }
 
     public async Task<IEnumerable<ReadCommandDocumentDto>> GetCommandsDocumentsByCommandId(int commandId, int limit = 100, int offset = 0)
@@ -61,33 +63,13 @@ public class CommandDocumentService : ICommandDocumentService
         {
             throw new KeyNotFoundException($"Command with id {commandDocumentDto.id_command} not found");
         }
-        var fileName = Path.GetFileNameWithoutExtension(commandDocumentDto.document.FileName);
-        fileName = fileName.Replace(".", "").Replace("/", ""); // remove "." and "/" from the file name to prevent directory traversal attacks
-        if (fileName.Length > 100) // cut the file name to 100 characters to prevent too long file names
-        {
-            fileName = fileName[..100];
-        }
-        var fileExt = Path.GetExtension(commandDocumentDto.document.FileName);
-        var i = 1;
-        // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/commandDocuments"
-        // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
-        var newName = fileName;
-        while (File.Exists(Path.Combine(_commandDocumentsPath, commandDocumentDto.id_command.ToString(), newName)))
-        {
-            newName = $"{fileName}({i}){fileExt}";
-            i++;
-        }
-        var savePath = Path.Combine(_commandDocumentsPath, commandDocumentDto.id_command.ToString(), newName);
-        using (var fileStream = new FileStream(savePath, FileMode.Create))
-        {
-            await commandDocumentDto.document.CopyToAsync(fileStream);
-        }
+        var savedFile = await _fileService.SaveFile(Path.Combine(_commandDocumentsPath, commandDocumentDto.id_command.ToString()), commandDocumentDto.document);
         var commandDocument = new CommandsDocuments
         {
             id_command = commandDocumentDto.id_command,
-            url_command_document = commandDocumentDto.id_command.ToString() + "/" + newName,
+            url_command_document = savedFile.url,
             name_command_document = commandDocumentDto.name_command_document,
-            type_command_document = fileExt.Replace(".", "").ToLowerInvariant(),
+            type_command_document = savedFile.mimeType,
             size_command_document = commandDocumentDto.document.Length
         };
         await _context.CommandsDocuments.AddAsync(commandDocument);
@@ -117,11 +99,7 @@ public class CommandDocumentService : ICommandDocumentService
         {
             throw new KeyNotFoundException($"CommandDocument with id {id} not found for command with id {commandId}");
         }
-        var path = Path.Combine(_commandDocumentsPath, commandDocument.url_command_document);
-        if (File.Exists(path))
-        {
-            File.Delete(path);
-        }
+        await _fileService.DeleteFile(commandDocument.url_command_document);
         _context.CommandsDocuments.Remove(commandDocument);
         await _context.SaveChangesAsync();
     }

@@ -13,7 +13,6 @@ namespace electrostore.Controllers
     {
         private readonly ICommandDocumentService _commandDocumentService;
         private readonly FileService _fileService;
-        private readonly string _commandDocumentsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments");
 
         public CommandDocumentController(ICommandDocumentService commandDocumentService, FileService fileService)
         {
@@ -45,10 +44,10 @@ namespace electrostore.Controllers
         public async Task<ActionResult> DownloadCommandDocument([FromRoute] int id_commandDocument, [FromRoute] int id_command)
         {
             var commandDocument = await _commandDocumentService.GetCommandDocumentById(id_commandDocument, id_command);
-            var result = await _fileService.GetFile(_commandDocumentsPath, commandDocument.url_command_document); // check if commandDocument.url_command_document is a valid path
-            if (result.Success)
+            var result = await _fileService.GetFile(commandDocument.url_command_document);
+            if (result.Success && result.FileStream != null)
             {
-                return PhysicalFile(result.FilePath, result.MimeType, commandDocument.name_command_document);
+                return File(result.FileStream, result.MimeType, commandDocument.name_command_document);
             }
             else
             {

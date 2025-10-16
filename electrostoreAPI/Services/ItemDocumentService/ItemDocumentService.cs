@@ -9,12 +9,14 @@ public class ItemDocumentService : IItemDocumentService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly FileService.FileService _fileService;
     private readonly string _itemDocumentsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments");
 
-    public ItemDocumentService(IMapper mapper, ApplicationDbContext context)
+    public ItemDocumentService(IMapper mapper, ApplicationDbContext context, FileService.FileService fileService)
     {
         _mapper = mapper;
         _context = context;
+        _fileService = fileService;
     }
 
     public async Task<IEnumerable<ReadItemDocumentDto>> GetItemsDocumentsByItemId(int itemId, int limit = 100, int offset = 0)
@@ -61,33 +63,13 @@ public class ItemDocumentService : IItemDocumentService
         {
             throw new KeyNotFoundException($"Item with id {itemDocumentDto.id_item} not found");
         }
-        var fileName = Path.GetFileNameWithoutExtension(itemDocumentDto.document.FileName);
-        fileName = fileName.Replace(".", "").Replace("/", ""); // remove "." and "/" from the file name to prevent directory traversal attacks
-        if (fileName.Length > 100) // cut the file name to 100 characters to prevent too long file names
-        {
-            fileName = fileName[..100];
-        }
-        var fileExt = Path.GetExtension(itemDocumentDto.document.FileName);
-        var i = 1;
-        // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/itemDocuments"
-        // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
-        var newName = fileName;
-        while (File.Exists(Path.Combine(_itemDocumentsPath, itemDocumentDto.id_item.ToString(), newName)))
-        {
-            newName = $"{fileName}({i}){fileExt}";
-            i++;
-        }
-        var savePath = Path.Combine(_itemDocumentsPath, itemDocumentDto.id_item.ToString(), newName);
-        using (var fileStream = new FileStream(savePath, FileMode.Create))
-        {
-            await itemDocumentDto.document.CopyToAsync(fileStream);
-        }
+        var savedFile = await _fileService.SaveFile(Path.Combine(_itemDocumentsPath, itemDocumentDto.id_item.ToString()), itemDocumentDto.document);
         var itemDocument = new ItemsDocuments
         {
             id_item = itemDocumentDto.id_item,
-            url_item_document = itemDocumentDto.id_item.ToString() + "/" + newName,
+            url_item_document = savedFile.url,
             name_item_document = itemDocumentDto.name_item_document,
-            type_item_document = fileExt.Replace(".", "").ToLowerInvariant(),
+            type_item_document = savedFile.mimeType,
             size_item_document = itemDocumentDto.document.Length
         };
         await _context.ItemsDocuments.AddAsync(itemDocument);
@@ -117,11 +99,7 @@ public class ItemDocumentService : IItemDocumentService
         {
             throw new KeyNotFoundException($"ItemDocument with id {id} not found for item with id {itemId}");
         }
-        var path = Path.Combine(_itemDocumentsPath, itemDocument.url_item_document);
-        if (File.Exists(path))
-        {
-            File.Delete(path);
-        }
+        await _fileService.DeleteFile(itemDocument.url_item_document);
         _context.ItemsDocuments.Remove(itemDocument);
         await _context.SaveChangesAsync();
     }
