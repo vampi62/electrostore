@@ -9,12 +9,14 @@ public class ProjetDocumentService : IProjetDocumentService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly FileService.FileService _fileService;
     private readonly string _projetDocumentsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments");
 
-    public ProjetDocumentService(IMapper mapper, ApplicationDbContext context)
+    public ProjetDocumentService(IMapper mapper, ApplicationDbContext context, FileService.FileService fileService)
     {
         _mapper = mapper;
         _context = context;
+        _fileService = fileService;
     }
 
     public async Task<IEnumerable<ReadProjetDocumentDto>> GetProjetDocumentsByProjetId(int projetId, int limit = 100, int offset = 0)
@@ -60,33 +62,13 @@ public class ProjetDocumentService : IProjetDocumentService
         {
             throw new KeyNotFoundException($"Projet with id {projetDocumentDto.id_projet} not found");
         }
-        var fileName = Path.GetFileNameWithoutExtension(projetDocumentDto.document.FileName);
-        fileName = fileName.Replace(".", "").Replace("/", ""); // remove "." and "/" from the file name to prevent directory traversal attacks
-        if (fileName.Length > 100) // cut the file name to 100 characters to prevent too long file names
-        {
-            fileName = fileName[..100];
-        }
-        var fileExt = Path.GetExtension(projetDocumentDto.document.FileName);
-        var i = 1;
-        // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/projetDocuments"
-        // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
-        var newName = fileName;
-        while (File.Exists(Path.Combine(_projetDocumentsPath, projetDocumentDto.id_projet.ToString(), newName)))
-        {
-            newName = $"{fileName}({i}){fileExt}";
-            i++;
-        }
-        var savePath = Path.Combine(_projetDocumentsPath, projetDocumentDto.id_projet.ToString(), newName);
-        using (var fileStream = new FileStream(savePath, FileMode.Create))
-        {
-            await projetDocumentDto.document.CopyToAsync(fileStream);
-        }
+        var savedFile = await _fileService.SaveFile(Path.Combine(_projetDocumentsPath, projetDocumentDto.id_projet.ToString()), projetDocumentDto.document);
         var projetDocument = new ProjetsDocuments
         {
             id_projet = projetDocumentDto.id_projet,
-            url_projet_document = projetDocumentDto.id_projet.ToString() + "/" + newName,
+            url_projet_document = savedFile.url,
             name_projet_document = projetDocumentDto.name_projet_document,
-            type_projet_document = fileExt.Replace(".", "").ToLowerInvariant(),
+            type_projet_document = savedFile.mimeType,
             size_projet_document = projetDocumentDto.document.Length
         };
         await _context.ProjetsDocuments.AddAsync(projetDocument);
@@ -116,11 +98,7 @@ public class ProjetDocumentService : IProjetDocumentService
         {
             throw new KeyNotFoundException($"ProjetDocument with id {id} not found for projet with id {projetId}");
         }
-        var path = Path.Combine(_projetDocumentsPath, projetDocument.url_projet_document);
-        if (File.Exists(path))
-        {
-            File.Delete(path);
-        }
+        await _fileService.DeleteFile(projetDocument.url_projet_document);
         _context.ProjetsDocuments.Remove(projetDocument);
         await _context.SaveChangesAsync();
     }

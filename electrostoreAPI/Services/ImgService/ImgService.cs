@@ -2,8 +2,6 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
 
 namespace electrostore.Services.ImgService;
 
@@ -11,13 +9,15 @@ public class ImgService : IImgService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly FileService.FileService _fileService;
     private readonly string _imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
     private readonly string _imagesThumbnailsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails");
 
-    public ImgService(IMapper mapper, ApplicationDbContext context)
+    public ImgService(IMapper mapper, ApplicationDbContext context, FileService.FileService fileService)
     {
         _mapper = mapper;
         _context = context;
+        _fileService = fileService;
     }
 
     public async Task<IEnumerable<ReadImgDto>> GetImgsByItemId(int itemId, int limit = 100, int offset = 0)
@@ -64,50 +64,16 @@ public class ImgService : IImgService
         {
             throw new KeyNotFoundException($"Item with id {imgDto.id_item} not found");
         }
-        var fileName = Path.GetFileNameWithoutExtension(imgDto.img_file.FileName);
-        fileName = fileName.Replace(".", "").Replace("/", ""); // remove "." and "/" from the file name to prevent directory traversal attacks
-        if (fileName.Length > 100) // cut the file name to 100 characters to prevent too long file names
-        {
-            fileName = fileName[..100];
-        }
-        var fileExt = Path.GetExtension(imgDto.img_file.FileName);
-        var i = 1;
-        // verifie si une image avec le meme nom existe deja sur le serveur dans "wwwroot/images"
-        // si oui, on ajoute un numero a la fin du nom de l'image et on recommence la verification jusqu'a trouver un nom disponible
-        var pictureName = fileName + fileExt;
-        while (File.Exists(Path.Combine(_imagesPath, imgDto.id_item.ToString(), pictureName)))
-        {
-            pictureName = $"{fileName}({i}){fileExt}";
-            i++;
-        }
-        var picturePath = Path.Combine(_imagesPath, imgDto.id_item.ToString(), pictureName);
-        using (var fileStream = new FileStream(picturePath, FileMode.Create))
-        {
-            await imgDto.img_file.CopyToAsync(fileStream);
-        }
-
-        var thumbnailName = fileName + fileExt;
-        while (File.Exists(Path.Combine(_imagesThumbnailsPath, imgDto.id_item.ToString(), thumbnailName)))
-        {
-            thumbnailName = $"{fileName}({i}){fileExt}";
-            i++;
-        }
-        var thumbnailPath = Path.Combine(_imagesThumbnailsPath, imgDto.id_item.ToString(), thumbnailName);
-        using (var image = await Image.LoadAsync(picturePath))
-        {
-            image.Mutate(x => x.Resize(new ResizeOptions
-            {
-                Size = new Size(256, 256),
-                Mode = ResizeMode.Max
-            }));
-
-            await image.SaveAsJpegAsync(thumbnailPath);
-        }
+        var savedImg = await _fileService.SaveFile(Path.Combine(_imagesPath, imgDto.id_item.ToString()), imgDto.img_file);
+        var savedThumbnail = await _fileService.GenerateThumbnail(
+            savedImg.url,
+            Path.Combine(_imagesThumbnailsPath, imgDto.id_item.ToString()),
+            256, 256);
         var newImg = new Imgs
         {
             nom_img = imgDto.nom_img,
-            url_picture_img = "images/" + imgDto.id_item + "/" + pictureName,
-            url_thumbnail_img = "imagesThumbnails/" + imgDto.id_item + "/" + thumbnailName,
+            url_picture_img = savedImg.url,
+            url_thumbnail_img = savedThumbnail.url,
             description_img = imgDto.description_img,
             id_item = imgDto.id_item
         };
@@ -142,10 +108,9 @@ public class ImgService : IImgService
         {
             throw new KeyNotFoundException($"Image with id {id} not found");
         }
+        await _fileService.DeleteFile(imgToDelete.url_picture_img);
+        await _fileService.DeleteFile(imgToDelete.url_thumbnail_img);
         _context.Imgs.Remove(imgToDelete);
-        // supprimer les images sur le disque
-        File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imgToDelete.url_picture_img));
-        File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imgToDelete.url_thumbnail_img));
         await _context.SaveChangesAsync();
     }
 }

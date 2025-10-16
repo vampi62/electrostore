@@ -13,7 +13,6 @@ namespace electrostore.Controllers
     {
         private readonly IItemDocumentService _itemDocumentService;
         private readonly FileService _fileService;
-        private readonly string _itemDocumentsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments");
 
         public ItemDocumentController(IItemDocumentService itemDocumentService, FileService fileService)
         {
@@ -45,10 +44,10 @@ namespace electrostore.Controllers
         public async Task<ActionResult> DownloadItemDocument([FromRoute] int id_itemDocument, [FromRoute] int id_item)
         {
             var itemDocument = await _itemDocumentService.GetItemDocumentById(id_itemDocument, id_item);
-            var result = await _fileService.GetFile(_itemDocumentsPath, itemDocument.url_item_document); // check if itemDocument.url_item_document is a valid path
-            if (result.Success)
+            var result = await _fileService.GetFile(itemDocument.url_item_document);
+            if (result.Success && result.FileStream != null)
             {
-                return PhysicalFile(result.FilePath, result.MimeType, itemDocument.name_item_document);
+                return File(result.FileStream, result.MimeType, itemDocument.name_item_document);
             }
             else
             {

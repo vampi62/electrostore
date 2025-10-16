@@ -113,6 +113,13 @@ Complete the `appsettings.json` file with the following content, replacing place
     "Audience": "<your-audience>",
     "ExpireDays": 1
   },
+  "S3": {
+    "Enable": "false",
+    "ServiceUrl": "http://<minio-url>:9000",
+    "AccessKey": "<access-key>",
+    "SecretKey": "<secret-key>",
+    "BucketName": "electrostore"
+  },
   "AllowedOrigins": [
     "https://<your-frontend-domain1>",
     "https://<your-frontend-domain2>"

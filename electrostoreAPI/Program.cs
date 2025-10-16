@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Minio;
 
 using MQTTnet;
 using MQTTnet.Client;
@@ -51,7 +52,6 @@ public static class Program
 {
     public static void Main(string[] args)
     {
-
         var builder = WebApplication.CreateBuilder(args);
         builder.Configuration.AddJsonFile("config/appsettings.json", optional: false, reloadOnChange: true);
         if (builder.Environment.IsDevelopment())
@@ -67,25 +67,7 @@ public static class Program
         };
         var key = Encoding.ASCII.GetBytes(jwtSettings.Key);
 
-        // Add services to the container.
-        builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), new MySqlServerVersion(new Version(11, 4, 7))));
-
-        builder.Services.AddSingleton<IMqttClient>(sp =>
-        {
-            var factory = new MqttFactory();
-            var mqttClient = factory.CreateMqttClient();
-            var options = new MqttClientOptionsBuilder()
-                .WithClientId(builder.Configuration.GetSection("MQTT:ClientId").Value)
-                .WithTcpServer(builder.Configuration.GetSection("MQTT:Server").Value, builder.Configuration.GetSection("MQTT:Port").Get<int>())
-                .WithCredentials(builder.Configuration.GetSection("MQTT:Username").Value, builder.Configuration.GetSection("MQTT:Password").Value)
-                .WithCleanSession()
-                .Build();
-            mqttClient.ConnectAsync(options);
-            return mqttClient;
-        });
-
-        addScopes(builder);
+        AddScopes(builder);
 
         builder.Services.AddHttpContextAccessor();
 
@@ -149,6 +131,44 @@ public static class Program
         });
 
         builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+
+        AddAuthentication(builder, key);
+
+        var app = builder.Build();
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+        app.UseStaticFiles();
+
+        // if S3 is not enabled create the required directories
+        if (!builder.Configuration.GetSection("S3:Enable").Get<bool>())
+        {
+            CreateRequiredDirectories();
+        }
+
+        app.UseForwardedHeaders(new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+        });
+        app.UseCors("CorsPolicy");
+
+        app.UseAuthentication();
+
+        app.UseAuthorization();
+
+        app.MapControllers();
+
+        app.UseMiddleware<ExceptionsHandler>();
+
+        InitializeDatabase(app);
+
+        app.Run();
+    }
+
+    private static void AddAuthentication(WebApplicationBuilder builder, byte[] key)
+    {
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
@@ -203,37 +223,42 @@ public static class Program
                         .AllowAnyMethod();
                 });
         });
-
-        var app = builder.Build();
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseSwagger();
-            app.UseSwaggerUI();
-        }
-        app.UseStaticFiles();
-
-        CreateRequiredDirectories();
-
-        app.UseForwardedHeaders(new ForwardedHeadersOptions
-        {
-            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-        });
-        app.UseCors("CorsPolicy");
-
-        app.UseAuthentication();
-
-        app.UseAuthorization();
-
-        app.MapControllers();
-
-        app.UseMiddleware<ExceptionsHandler>();
-
-        InitializeDatabase(app);
-
-        app.Run();
     }
-    private static void addScopes(WebApplicationBuilder builder)
+
+    private static void AddScopes(WebApplicationBuilder builder)
     {
+        // Add services to the container.
+        builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), new MySqlServerVersion(new Version(11, 4, 7))));
+
+        builder.Services.AddSingleton<IMqttClient>(sp =>
+        {
+            var factory = new MqttFactory();
+            var mqttClient = factory.CreateMqttClient();
+            var options = new MqttClientOptionsBuilder()
+                .WithClientId(builder.Configuration.GetSection("MQTT:ClientId").Value)
+                .WithTcpServer(builder.Configuration.GetSection("MQTT:Server").Value, builder.Configuration.GetSection("MQTT:Port").Get<int>())
+                .WithCredentials(builder.Configuration.GetSection("MQTT:Username").Value, builder.Configuration.GetSection("MQTT:Password").Value)
+                .WithCleanSession()
+                .Build();
+            mqttClient.ConnectAsync(options);
+            return mqttClient;
+        });
+        // if S3 is enabled add the Minio client
+        if (builder.Configuration.GetSection("S3:Enable").Get<bool>())
+        {
+            builder.Services.AddSingleton<IMinioClient>(sp =>
+            {
+                var minioClient = new MinioClient()
+                    .WithEndpoint(builder.Configuration.GetSection("S3:ServiceUrl").Value ?? "http://localhost:9000")
+                    .WithCredentials(
+                        builder.Configuration.GetSection("S3:AccessKey").Value ?? "minioadmin",
+                        builder.Configuration.GetSection("S3:SecretKey").Value ?? "minioadmin")
+                    .Build();
+                return minioClient;
+            });
+        }
+
         builder.Services.AddScoped<IBoxService, BoxService>();
         builder.Services.AddScoped<IBoxTagService, BoxTagService>();
         builder.Services.AddScoped<ICameraService, CameraService>();
