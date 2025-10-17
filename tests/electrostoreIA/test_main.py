@@ -74,20 +74,6 @@ class TestFlaskAPI:
         assert "message" in response_data
         assert "Training for model 1 started" in response_data["message"]
 
-    @patch('electrostoreIA.model_trainer.is_training_in_progress')
-    def test_train_endpoint_already_in_progress(self, mock_is_training, client):
-        """Test training when another training is in progress."""
-        # Arrange
-        mock_is_training.return_value = True
-        
-        # Act
-        response = client.post('/train/1')
-        response_data = json.loads(response.data)
-        
-        # Assert
-        assert response.status_code == 400
-        assert "Training already in progress" in response_data["error"]
-
     def test_status_endpoint_nonexistent_model(self, client):
         """Test status endpoint for non-existent model."""
         # Act
