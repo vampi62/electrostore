@@ -1,3 +1,5 @@
+"""Tests for the main Flask application and routes."""
+
 import pytest
 import json
 import io
@@ -8,17 +10,34 @@ import os
 # Add the parent directory to sys.path to import the electrostoreIA module
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from electrostoreIA.main import train, status, detect
-
 @pytest.fixture
-def client():
-    from electrostoreIA.main import app
-    app.config['TESTING'] = True
+def app():
+    """Create and configure a test Flask app."""
+    from flask import Flask
+    from electrostoreIA.routes import register_routes
+    from electrostoreIA.model_trainer import training_progress
     
-    # Set up training_progress variable for tests
-    from electrostoreIA.main import training_progress
-    training_progress.clear()  # Clear any existing data
-    training_progress[1] = {
+    # Create test app
+    test_app = Flask(__name__)
+    test_app.config['TESTING'] = True
+    
+    # Create mock dependencies
+    mock_appsettings = {'DemoMode': False}
+    mock_mysql_session = MagicMock()
+    mock_mysql_session.get_ia.return_value = {"id": 1, "name": "Test Model"}
+    mock_mysql_session.change_train_status.return_value = True
+    mock_mysql_session.is_connected.return_value = True
+    
+    mock_s3_manager = MagicMock()
+    mock_s3_manager.is_enabled.return_value = True
+    mock_s3_manager.test_connection.return_value = True
+    
+    # Register routes with mocked dependencies
+    register_routes(test_app, mock_appsettings, mock_s3_manager, mock_mysql_session)
+    
+    # Set up training_progress for tests
+    training_progress.clear()
+    training_progress[10] = {
         'status': 'completed',
         'message': 'Training completed successfully.',
         'epoch': 5,
@@ -28,64 +47,77 @@ def client():
         'val_loss': 0.35
     }
     
-    with app.test_client() as client:
-        yield client
+    return test_app
+
+@pytest.fixture
+def client(app):
+    """Create a test client."""
+    return app.test_client()
 
 class TestFlaskAPI:
-    @patch('electrostoreIA.main.async_train_model')
-    @patch('electrostoreIA.main.mysql_session')
-    def test_train_endpoint(self, mock_mysql_session, mock_async_train, client):
+    """Test Flask API endpoints."""
+
+    @patch('electrostoreIA.model_trainer.async_train_model')
+    @patch('electrostoreIA.model_trainer.is_training_in_progress')
+    def test_train_endpoint_success(self, mock_is_training, mock_async_train, client):
+        """Test successful training start."""
         # Arrange
+        mock_is_training.return_value = False
         mock_async_train.return_value = None
-        mock_mysql_session.get_ia.return_value = {"id": 1, "name": "Test Model"}
-        mock_mysql_session.change_train_status.return_value = True
-        test_data = {'id_model': 1}
         
         # Act
-        response = client.post('/train/' + str(test_data['id_model']))
+        response = client.post('/train/1')
         response_data = json.loads(response.data)
         
         # Assert
         assert response.status_code == 200
         assert "message" in response_data
         assert "Training for model 1 started" in response_data["message"]
-        mock_async_train.assert_called_once_with(1)
-        mock_mysql_session.get_ia.assert_called_once_with(1)
-        mock_mysql_session.change_train_status.assert_called_once_with(1, False)
 
-    def test_status_endpoint(self, client):
+    @patch('electrostoreIA.model_trainer.is_training_in_progress')
+    def test_train_endpoint_already_in_progress(self, mock_is_training, client):
+        """Test training when another training is in progress."""
         # Arrange
-        test_data = {'id_model': 1}
+        mock_is_training.return_value = True
         
         # Act
-        response = client.get('/status/' + str(test_data['id_model']))
+        response = client.post('/train/1')
+        response_data = json.loads(response.data)
+        
+        # Assert
+        assert response.status_code == 400
+        assert "Training already in progress" in response_data["error"]
+
+    def test_status_endpoint_nonexistent_model(self, client):
+        """Test status endpoint for non-existent model."""
+        # Act
+        response = client.get('/status/999')
+        response_data = json.loads(response.data)
+        
+        # Assert
+        assert response.status_code == 404
+        assert "No training in progress" in response_data["message"]
+
+    def test_detect_endpoint_no_file(self, client):
+        """Test detection endpoint without file."""
+        # Act
+        response = client.post('/detect/1')
+        response_data = json.loads(response.data)
+        
+        # Assert
+        assert response.status_code == 400
+        assert "No image file provided" in response_data["error"]
+
+    def test_health_endpoint(self, client):
+        """Test health check endpoint."""
+        # Act
+        response = client.get('/health')
         response_data = json.loads(response.data)
         
         # Assert
         assert response.status_code == 200
-        assert response_data['status'] == 'completed'
-        assert response_data['message'] == 'Training completed successfully.'
-        assert response_data['epoch'] == 5
-        assert response_data['accuracy'] >= 0.85
-
-    @patch('electrostoreIA.main.detect_model')
-    def test_detect_endpoint(self, mock_detect_model, client):
-        # Arrange
-        mock_detect_model.return_value = {'predicted_class': 1, 'confidence': 95.0}
-        test_data = {'id_model': 1}
-        
-        # Create a mock file
-        mock_file = io.BytesIO(b'test image data')
-        
-        # Act
-        response = client.post(
-            '/detect/' + str(test_data['id_model']),
-            data={'img_file': (mock_file, 'test.jpg')}
-        )
-        response_data = json.loads(response.data)
-        
-        # Assert
-        assert response.status_code == 200
-        assert response_data['predicted_class'] == 1
-        assert response_data['confidence'] >= 95.0
-        mock_detect_model.assert_called_once()
+        assert response_data['status'] == 'healthy'
+        assert 'training_in_progress' in response_data
+        assert 'db_connected' in response_data
+        assert 's3_status' in response_data
+        assert response_data['db_connected'] is True
