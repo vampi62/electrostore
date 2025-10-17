@@ -166,3 +166,22 @@ class TestAppInit:
         mock_load_settings.assert_called_once()
         mock_init_db.assert_called_once_with(mock_appsettings)
         mock_init_s3.assert_called_once_with(mock_appsettings)
+
+    @patch('electrostoreIA.app_init.initialize_s3_manager')
+    @patch('electrostoreIA.app_init.initialize_database')
+    @patch('electrostoreIA.app_init.load_appsettings')
+    def test_initialize_application_with_error(self, mock_load_settings, mock_init_db, mock_init_s3):
+        """Test application initialization with error in non-testing mode."""
+        # Arrange
+        mock_appsettings = {"test": "value"}
+        mock_s3_manager = MagicMock()
+        
+        mock_load_settings.return_value = mock_appsettings
+        mock_init_db.side_effect = Exception("Database error")
+        mock_init_s3.return_value = mock_s3_manager
+        
+        # Mock the globals check for non-testing mode
+        with patch('builtins.globals', return_value={}):
+            # Act & Assert
+            with pytest.raises(ConnectionError, match="Could not initialize application: Database error"):
+                initialize_application()
