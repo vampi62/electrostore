@@ -3,7 +3,7 @@
 import os
 from flask import request, jsonify
 
-from config import Status
+from electrostoreIA.config import Status
 from model_trainer import (
     async_train_model, get_training_status, is_training_in_progress, 
     create_demo_training_result, training_progress
@@ -27,8 +27,9 @@ def register_routes(app, appsettings, s3_manager, mysql_session):
                     return jsonify({"error": "Model not found in the database."}), 404
                 # Set training as completed immediately
                 training_progress[id_model] = create_demo_training_result(id_model)
-                # Set trained_ia field to true in the database
-                mysql_session.change_train_status(id_model, True)
+                # Set trained_ia field to false in the database
+                # no change to the database in demo mode
+                #mysql_session.change_train_status(id_model, True)
                 return jsonify({"message": f"Training for model {id_model} completed (demo mode)."}), 200
 
             # Normal mode - proceed with actual training

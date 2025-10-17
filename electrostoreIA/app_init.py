@@ -45,21 +45,6 @@ def initialize_s3_manager(appsettings):
         return S3Manager()
 
 
-def create_mock_database_session():
-    """Create a mock database session for testing."""
-    class MockMySQLConnection:
-        def change_train_status(self, id_model, status):
-            return True
-        
-        def get_ia(self, id_model):
-            return {"id": id_model, "name": "Test Model"}
-        
-        def is_connected(self):
-            return True
-    
-    return MockMySQLConnection()
-
-
 def initialize_application():
     """Initialize the complete application configuration."""
     appsettings = load_appsettings()
@@ -74,13 +59,6 @@ def initialize_application():
         s3_manager = initialize_s3_manager(appsettings)
         
     except Exception as e:
-        print(f"Error initializing application: {str(e)}")
-        
-        # Check if in testing mode
-        if 'app.config' in globals() and getattr(globals().get('app', {}), 'config', {}).get('TESTING', False):
-            print(f"Warning: Could not initialize database connection: {str(e)}")
-            mysql_session = create_mock_database_session()
-        else:
-            raise ConnectionError(f"Could not initialize database connection: {str(e)}")
+        raise ConnectionError(f"Could not initialize application: {str(e)}")
     
     return appsettings, mysql_session, s3_manager

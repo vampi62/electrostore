@@ -1,7 +1,7 @@
 """File management utilities for S3 synchronization and local storage."""
 
 import os
-from config import MODEL_DIR, IMAGE_DIR
+from electrostoreIA.config import MODEL_DIR, IMAGE_DIR
 
 
 def get_model_path(id_model, s3_manager=None):
