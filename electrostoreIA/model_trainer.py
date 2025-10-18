@@ -6,7 +6,7 @@ import threading
 import tensorflow as tf
 from tensorflow.keras import layers, models
 
-from electrostoreIA.config import Status, MODEL_DIR, IMG_HEIGHT, IMG_WIDTH, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS
+from config import Status, MODEL_DIR, IMG_HEIGHT, IMG_WIDTH, DEFAULT_BATCH_SIZE, DEFAULT_EPOCHS
 from file_manager import get_images_directory
 
 # Dictionnaire partagé pour stocker l'avancement de l'entraînement
