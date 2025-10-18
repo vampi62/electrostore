@@ -1,6 +1,5 @@
 using electrostore.Dto;
 using Minio;
-using Minio.DataModel.Args;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
@@ -122,29 +121,49 @@ public class FileService
         {
             fileName = fileName[..100];
         }
-        var newName = fileName;
         var fileExt = Path.GetExtension(file.FileName);
+        var newName = fileName + fileExt;
         var i = 1;
-        // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/commandDocuments"
-        // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
-        while (File.Exists(Path.Combine(basePath, newName)))
-        {
-            newName = $"{fileName}({i}){fileExt}";
-            i++;
-        }
         string fileUrl;
         // if S3 is used, upload the file to S3 and return the url
         if (_configuration.GetValue<bool>("S3:Enable"))
         {
             var bucketName = _configuration.GetValue<string>("S3:BucketName");
-            fileUrl = basePath.Replace("wwwroot/", "") + Path.AltDirectorySeparatorChar + newName;
-            var filePath = Path.GetRandomFileName(); // create a temp file
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            var baseS3Url = basePath.Replace(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), "") + Path.AltDirectorySeparatorChar;
+            if (baseS3Url.StartsWith(Path.AltDirectorySeparatorChar))
             {
-                await file.CopyToAsync(stream);
+                baseS3Url = baseS3Url[1..];
             }
-            using (var uploadStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            fileUrl = baseS3Url + newName;
+            // verifie si un document avec le meme nom existe deja sur le serveur S3
+            // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
+            while (true)
             {
+                try
+                {
+                    await _minioClient.StatObjectAsync(new StatObjectArgs()
+                        .WithBucket(bucketName)
+                        .WithObject(fileUrl)
+                    );
+                    // si on arrive ici, c'est que le fichier existe deja
+                    newName = $"{fileName}({i}){fileExt}";
+                    fileUrl = baseS3Url + newName;
+                    if (fileUrl.StartsWith(Path.AltDirectorySeparatorChar))
+                    {
+                        fileUrl = fileUrl[1..];
+                    }
+                    i++;
+                }
+                catch (Minio.Exceptions.ObjectNotFoundException)
+                {
+                    // le fichier n'existe pas, on peut sortir de la boucle
+                    break;
+                }
+            }
+            using (var uploadStream = new MemoryStream())
+            {
+                await file.CopyToAsync(uploadStream);
+                uploadStream.Position = 0;
                 await _minioClient.PutObjectAsync(new PutObjectArgs()
                     .WithBucket(bucketName)
                     .WithObject(fileUrl)
@@ -153,11 +172,16 @@ public class FileService
                     .WithContentType(file.ContentType)
                 );
             }
-            // delete the temp file
-            File.Delete(filePath);
         }
         else
         {
+            // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/commandDocuments"
+            // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
+            while (File.Exists(Path.Combine(basePath, newName)))
+            {
+                newName = $"{fileName}({i}){fileExt}";
+                i++;
+            }
             fileUrl = Path.Combine(basePath, newName);
             using (var fileStream = new FileStream(fileUrl, FileMode.Create))
             {
@@ -216,6 +240,59 @@ public class FileService
             if (File.Exists(url))
             {
                 File.Delete(url);
+            }
+        }
+    }
+
+    public async Task CreateDirectory(string path)
+    {
+        if (_configuration.GetValue<bool>("S3:Enable"))
+        {
+            // S3 does not have directories, so we do nothing here
+        }
+        else
+        {
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+        }
+    }
+
+    public async Task DeleteDirectory(string path)
+    {
+        if (_configuration.GetValue<bool>("S3:Enable"))
+        {
+            // S3 removes objects, so we need to list all objects with the given prefix and delete them
+            var bucketName = _configuration.GetValue<string>("S3:BucketName");
+            var objects = _minioClient.ListObjectsAsync(new ListObjectsArgs()
+                .WithBucket(bucketName)
+                .WithPrefix(path.Replace("wwwroot/", ""))
+                .WithRecursive(true)
+            );
+            // Collect keys from the IObservable<Item> since it does not support await foreach
+            var keys = new List<string>();
+            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var subscription = objects.Subscribe(
+                item => { if (item?.Key != null) keys.Add(item.Key); },
+                ex => tcs.TrySetException(ex),
+                () => tcs.TrySetResult(true)
+            );
+            await tcs.Task;
+            subscription.Dispose();
+            foreach (var key in keys)
+            {
+                await _minioClient.RemoveObjectAsync(new RemoveObjectArgs()
+                    .WithBucket(bucketName)
+                    .WithObject(key)
+                );
+            }
+        }
+        else
+        {
+            if (Directory.Exists(path))
+            {
+                Directory.Delete(path, true);
             }
         }
     }
