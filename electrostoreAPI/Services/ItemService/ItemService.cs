@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using electrostore.Services.FileService;
 
 namespace electrostore.Services.ItemService;
 
@@ -9,12 +10,12 @@ public class ItemService : IItemService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
-    private readonly FileService.FileService _fileService;
-    private readonly string _itemDocumentsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments");
-    private readonly string _imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
-    private readonly string _imagesThumbnailsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails");
+    private readonly IFileService _fileService;
+    private readonly string _itemDocumentsPath = "itemDocuments";
+    private readonly string _imagesPath = "images";
+    private readonly string _imagesThumbnailsPath = "imagesThumbnails";
 
-    public ItemService(IMapper mapper, ApplicationDbContext context, FileService.FileService fileService)
+    public ItemService(IMapper mapper, ApplicationDbContext context, IFileService fileService)
     {
         _mapper = mapper;
         _context = context;
@@ -117,10 +118,10 @@ public class ItemService : IItemService
         }
         var item = _mapper.Map<Items>(itemDto);
         _context.Items.Add(item);
-        await _context.SaveChangesAsync();
         await _fileService.CreateDirectory(Path.Combine(_imagesPath, item.id_item.ToString()));
         await _fileService.CreateDirectory(Path.Combine(_imagesThumbnailsPath, item.id_item.ToString()));
         await _fileService.CreateDirectory(Path.Combine(_itemDocumentsPath, item.id_item.ToString()));
+        await _context.SaveChangesAsync();
         return _mapper.Map<ReadItemDto>(item);
     }
 
@@ -166,9 +167,9 @@ public class ItemService : IItemService
     {
         var itemToDelete = await _context.Items.FindAsync(id) ?? throw new KeyNotFoundException($"Item with id {id} not found");
         _context.Items.Remove(itemToDelete);
-        await _context.SaveChangesAsync();
         await _fileService.DeleteDirectory(Path.Combine(_imagesPath, id.ToString()));
         await _fileService.DeleteDirectory(Path.Combine(_imagesThumbnailsPath, id.ToString()));
         await _fileService.DeleteDirectory(Path.Combine(_itemDocumentsPath, id.ToString()));
+        await _context.SaveChangesAsync();
     }
 }

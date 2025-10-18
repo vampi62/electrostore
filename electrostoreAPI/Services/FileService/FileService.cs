@@ -5,7 +5,7 @@ using SixLabors.ImageSharp.Processing;
 
 namespace electrostore.Services.FileService;
 
-public class FileService
+public class FileService : IFileService
 {
     private readonly IConfiguration _configuration;
     private readonly IMinioClient _minioClient;
@@ -68,7 +68,8 @@ public class FileService
         }
         else
         {
-            if (File.Exists(url))
+            var localPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", url);
+            if (File.Exists(localPath))
             {
                 // try to get the mime type from the file extension
                 var ext = Path.GetExtension(url).ToLower();
@@ -90,7 +91,7 @@ public class FileService
                     _ => "application/octet-stream"
                 };
                 var FileStream = new MemoryStream();
-                using (var stream = new FileStream(url, FileMode.Open, FileAccess.Read))
+                using (var stream = new FileStream(localPath, FileMode.Open, FileAccess.Read))
                 {
                     await stream.CopyToAsync(FileStream);
                 }
@@ -129,7 +130,7 @@ public class FileService
         if (_configuration.GetValue<bool>("S3:Enable"))
         {
             var bucketName = _configuration.GetValue<string>("S3:BucketName");
-            var baseS3Url = basePath.Replace(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), "") + Path.AltDirectorySeparatorChar;
+            var baseS3Url = basePath + Path.AltDirectorySeparatorChar;
             if (baseS3Url.StartsWith(Path.AltDirectorySeparatorChar))
             {
                 baseS3Url = baseS3Url[1..];
@@ -177,13 +178,14 @@ public class FileService
         {
             // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/commandDocuments"
             // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
-            while (File.Exists(Path.Combine(basePath, newName)))
+            while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", basePath, newName)))
             {
                 newName = $"{fileName}({i}){fileExt}";
                 i++;
             }
             fileUrl = Path.Combine(basePath, newName);
-            using (var fileStream = new FileStream(fileUrl, FileMode.Create))
+            var localPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", fileUrl);
+            using (var fileStream = new FileStream(localPath, FileMode.Create))
             {
                 await file.CopyToAsync(fileStream);
             }
@@ -237,9 +239,10 @@ public class FileService
         }
         else
         {
-            if (File.Exists(url))
+            var localPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", url);
+            if (File.Exists(localPath))
             {
-                File.Delete(url);
+                File.Delete(localPath);
             }
         }
     }
@@ -252,9 +255,10 @@ public class FileService
         }
         else
         {
-            if (!Directory.Exists(path))
+            var localPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", path);
+            if (!Directory.Exists(localPath))
             {
-                Directory.CreateDirectory(path);
+                Directory.CreateDirectory(localPath);
             }
         }
     }
@@ -267,7 +271,7 @@ public class FileService
             var bucketName = _configuration.GetValue<string>("S3:BucketName");
             var objects = _minioClient.ListObjectsAsync(new ListObjectsArgs()
                 .WithBucket(bucketName)
-                .WithPrefix(path.Replace("wwwroot/", ""))
+                .WithPrefix(path)
                 .WithRecursive(true)
             );
             // Collect keys from the IObservable<Item> since it does not support await foreach
@@ -290,9 +294,10 @@ public class FileService
         }
         else
         {
-            if (Directory.Exists(path))
+            var localPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", path);
+            if (Directory.Exists(localPath))
             {
-                Directory.Delete(path, true);
+                Directory.Delete(localPath, true);
             }
         }
     }

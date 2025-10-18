@@ -10,6 +10,7 @@ using electrostore;
 using electrostore.Dto;
 using electrostore.Models;
 using electrostore.Services.ItemService;
+using electrostore.Services.FileService;
 
 namespace electrostore.Tests.Services
 {
@@ -17,6 +18,7 @@ namespace electrostore.Tests.Services
     {
         private readonly Mock<IMapper> _mockMapper;
         private readonly DbContextOptions<ApplicationDbContext> _dbContextOptions;
+        private readonly Mock<IFileService> _mockFileService;
 
         public ItemServiceTests()
         {
@@ -26,6 +28,10 @@ namespace electrostore.Tests.Services
             _dbContextOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
+            
+            _mockFileService = new Mock<IFileService>();
+            _mockFileService.Setup(fs => fs.CreateDirectory(It.IsAny<string>())).Returns(Task.CompletedTask);
+            _mockFileService.Setup(fs => fs.DeleteDirectory(It.IsAny<string>())).Returns(Task.CompletedTask);
         }
 
         [Fact]
@@ -48,7 +54,7 @@ namespace electrostore.Tests.Services
             }
             await context.SaveChangesAsync();
 
-            var itemService = new ItemService(_mockMapper.Object, context);
+            var itemService = new ItemService(_mockMapper.Object, context, _mockFileService.Object);
 
             _mockMapper.Setup(m => m.Map<ReadExtendedItemDto>(It.IsAny<Items>()))
                 .Returns((Items i) => new ReadExtendedItemDto
@@ -86,7 +92,7 @@ namespace electrostore.Tests.Services
             context.Items.Add(item);
             await context.SaveChangesAsync();
 
-            var itemService = new ItemService(_mockMapper.Object, context);
+            var itemService = new ItemService(_mockMapper.Object, context, _mockFileService.Object);
 
             var expectedItem = new ReadExtendedItemDto
             {
@@ -118,7 +124,7 @@ namespace electrostore.Tests.Services
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
             
-            var itemService = new ItemService(_mockMapper.Object, context);
+            var itemService = new ItemService(_mockMapper.Object, context, _mockFileService.Object);
 
             var createItemDto = new CreateItemDto
             {
@@ -148,11 +154,7 @@ namespace electrostore.Tests.Services
 
             _mockMapper.Setup(m => m.Map<ReadItemDto>(It.IsAny<Items>()))
                 .Returns(expectedItem);
-
-            // Mock Directory.Exists and Directory.CreateDirectory to avoid file system operations
-            var directoryExists = typeof(Directory).GetMethod("Exists", new[] { typeof(string) });
-            var directoryCreateDirectory = typeof(Directory).GetMethod("CreateDirectory", new[] { typeof(string) });
-
+            
             // Act
             var result = await itemService.CreateItem(createItemDto);
 
@@ -186,7 +188,7 @@ namespace electrostore.Tests.Services
             context.Items.Add(item);
             await context.SaveChangesAsync();
 
-            var itemService = new ItemService(_mockMapper.Object, context);
+            var itemService = new ItemService(_mockMapper.Object, context, _mockFileService.Object);
 
             var updateItemDto = new UpdateItemDto
             {
@@ -243,11 +245,7 @@ namespace electrostore.Tests.Services
             context.Items.Add(item);
             await context.SaveChangesAsync();
 
-            var itemService = new ItemService(_mockMapper.Object, context);
-
-            // Mock Directory.Exists and Directory.Delete to avoid file system operations
-            var directoryExists = typeof(Directory).GetMethod("Exists", new[] { typeof(string) });
-            var directoryDelete = typeof(Directory).GetMethod("Delete", new[] { typeof(string), typeof(bool) });
+            var itemService = new ItemService(_mockMapper.Object, context, _mockFileService.Object);
 
             // Act
             await itemService.DeleteItem(1);
@@ -278,7 +276,7 @@ namespace electrostore.Tests.Services
             }
             await context.SaveChangesAsync();
 
-            var itemService = new ItemService(_mockMapper.Object, context);
+            var itemService = new ItemService(_mockMapper.Object, context, _mockFileService.Object);
 
             _mockMapper.Setup(m => m.Map<ReadExtendedItemDto>(It.IsAny<Items>()))
                 .Returns((Items i) => new ReadExtendedItemDto

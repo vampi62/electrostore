@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using electrostore.Services.FileService;
 
 namespace electrostore.Services.ProjetService;
 
@@ -9,12 +10,14 @@ public class ProjetService : IProjetService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
-    private readonly string _projetDocumentsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments");
+    private readonly IFileService _fileService;
+    private readonly string _projetDocumentsPath = "projetDocuments";
 
-    public ProjetService(IMapper mapper, ApplicationDbContext context)
+    public ProjetService(IMapper mapper, ApplicationDbContext context, IFileService fileService)
     {
         _mapper = mapper;
         _context = context;
+        _fileService = fileService;
     }
 
     public async Task<IEnumerable<ReadExtendedProjetDto>> GetProjets(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
@@ -89,11 +92,8 @@ public class ProjetService : IProjetService
         _context.Projets.Add(newProjet);
         // TODO went the format of status_projet will be changed to enum
         // set date_fin_projet to null if status_projet is enum for not finished / started / planned
+        await _fileService.CreateDirectory(Path.Combine(_projetDocumentsPath, newProjet.id_projet.ToString()));
         await _context.SaveChangesAsync();
-        if (!Directory.Exists(Path.Combine(_projetDocumentsPath, newProjet.id_projet.ToString())))
-        {
-            Directory.CreateDirectory(Path.Combine(_projetDocumentsPath, newProjet.id_projet.ToString()));
-        }
         return _mapper.Map<ReadProjetDto>(newProjet);
     }
 
@@ -134,11 +134,7 @@ public class ProjetService : IProjetService
     {
         var projetToDelete = await _context.Projets.FindAsync(id) ?? throw new KeyNotFoundException($"Projet with id {id} not found");
         _context.Projets.Remove(projetToDelete);
+        await _fileService.DeleteDirectory(Path.Combine(_projetDocumentsPath, id.ToString()));
         await _context.SaveChangesAsync();
-        //remove folder in wwwroot/projetDocuments
-        if (Directory.Exists(Path.Combine(_projetDocumentsPath, id.ToString())))
-        {
-            Directory.Delete(Path.Combine(_projetDocumentsPath, id.ToString()), true);
-        }
     }
 }

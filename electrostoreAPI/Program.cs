@@ -263,6 +263,7 @@ public static class Program
         builder.Services.AddScoped<ICommandItemService, CommandItemService>();
         builder.Services.AddScoped<ICommandService, CommandService>();
         builder.Services.AddScoped<IConfigService, ConfigService>();
+        builder.Services.AddScoped<IFileService, FileService>();
         builder.Services.AddScoped<IIAService, IAService>();
         builder.Services.AddScoped<IImgService, ImgService>();
         builder.Services.AddScoped<IItemBoxService, ItemBoxService>();
@@ -282,7 +283,6 @@ public static class Program
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IJwiService, JwiService>();
         builder.Services.AddSingleton<JwtService>();
-        builder.Services.AddScoped<FileService>();
     }
 
     private static void CreateRequiredDirectories()

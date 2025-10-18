@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using electrostore.Services.FileService;
 
 namespace electrostore.Services.CommandService;
 
@@ -9,12 +10,14 @@ public class CommandService : ICommandService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
-    private readonly string _commandDocumentsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/commandDocuments");
+    private readonly IFileService _fileService;
+    private readonly string _commandDocumentsPath = "commandDocuments";
 
-    public CommandService(IMapper mapper, ApplicationDbContext context)
+    public CommandService(IMapper mapper, ApplicationDbContext context, IFileService fileService)
     {
         _mapper = mapper;
         _context = context;
+        _fileService = fileService;
     }
 
     public async Task<IEnumerable<ReadExtendedCommandDto>> GetCommands(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
@@ -89,11 +92,8 @@ public class CommandService : ICommandService
         // TODO went the format of status_command will be changed to enum
         // set date_livraison_command to null if status_command is enum for not delivered
         _context.Commands.Add(newCommand);
+        await _fileService.CreateDirectory(Path.Combine(_commandDocumentsPath, newCommand.id_command.ToString()));
         await _context.SaveChangesAsync();
-        if (!Directory.Exists(Path.Combine(_commandDocumentsPath, newCommand.id_command.ToString())))
-        {
-            Directory.CreateDirectory(Path.Combine(_commandDocumentsPath, newCommand.id_command.ToString()));
-        }
         return _mapper.Map<ReadCommandDto>(newCommand);
     }
 
@@ -130,11 +130,7 @@ public class CommandService : ICommandService
     {
         var commandToDelete = await _context.Commands.FindAsync(id) ?? throw new KeyNotFoundException($"Command with id {id} not found");
         _context.Commands.Remove(commandToDelete);
+        await _fileService.DeleteDirectory(Path.Combine(_commandDocumentsPath, id.ToString()));
         await _context.SaveChangesAsync();
-        //remove folder in wwwroot/commandDocuments
-        if (Directory.Exists(Path.Combine(_commandDocumentsPath, id.ToString())))
-        {
-            Directory.Delete(Path.Combine(_commandDocumentsPath, id.ToString()), true);
-        }
     }
 }
