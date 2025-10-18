@@ -6,12 +6,15 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ["db_query.py", "main.py", "./"]
+COPY ["app_init.py", "config.py", "db_query.py", "file_manager.py", "image_detector.py", "main.py", "model_trainer.py", "routes.py", "S3Manager.py", "./"]
 
-#RUN chown -R 3216:3216 /app
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh && chown -R 3216:3216 /app
 
-#USER 3216:3216
+USER 3216:3216
 
 EXPOSE 5000
+
+ENTRYPOINT ["/entrypoint.sh"]
 
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
