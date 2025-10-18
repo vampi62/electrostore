@@ -9,14 +9,16 @@ public class ItemService : IItemService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly FileService.FileService _fileService;
     private readonly string _itemDocumentsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/itemDocuments");
     private readonly string _imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
     private readonly string _imagesThumbnailsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails");
 
-    public ItemService(IMapper mapper, ApplicationDbContext context)
+    public ItemService(IMapper mapper, ApplicationDbContext context, FileService.FileService fileService)
     {
         _mapper = mapper;
         _context = context;
+        _fileService = fileService;
     }
 
     public async Task<IEnumerable<ReadExtendedItemDto>> GetItems(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
@@ -116,18 +118,9 @@ public class ItemService : IItemService
         var item = _mapper.Map<Items>(itemDto);
         _context.Items.Add(item);
         await _context.SaveChangesAsync();
-        if (!Directory.Exists(Path.Combine(_imagesPath, item.id_item.ToString())))
-        {
-            Directory.CreateDirectory(Path.Combine(_imagesPath, item.id_item.ToString()));
-        }
-        if (!Directory.Exists(Path.Combine(_imagesThumbnailsPath, item.id_item.ToString())))
-        {
-            Directory.CreateDirectory(Path.Combine(_imagesThumbnailsPath, item.id_item.ToString()));
-        }
-        if (!Directory.Exists(Path.Combine(_itemDocumentsPath, item.id_item.ToString())))
-        {
-            Directory.CreateDirectory(Path.Combine(_itemDocumentsPath, item.id_item.ToString()));
-        }
+        await _fileService.CreateDirectory(Path.Combine(_imagesPath, item.id_item.ToString()));
+        await _fileService.CreateDirectory(Path.Combine(_imagesThumbnailsPath, item.id_item.ToString()));
+        await _fileService.CreateDirectory(Path.Combine(_itemDocumentsPath, item.id_item.ToString()));
         return _mapper.Map<ReadItemDto>(item);
     }
 
@@ -174,20 +167,8 @@ public class ItemService : IItemService
         var itemToDelete = await _context.Items.FindAsync(id) ?? throw new KeyNotFoundException($"Item with id {id} not found");
         _context.Items.Remove(itemToDelete);
         await _context.SaveChangesAsync();
-        //remove folder in wwwroot/images
-        if (Directory.Exists(Path.Combine(_imagesPath, id.ToString())))
-        {
-            Directory.Delete(Path.Combine(_imagesPath, id.ToString()), true);
-        }
-        //remove folder in wwwroot/imagesThumbnails
-        if (Directory.Exists(Path.Combine(_imagesThumbnailsPath, id.ToString())))
-        {
-            Directory.Delete(Path.Combine(_imagesThumbnailsPath, id.ToString()), true);
-        }
-        //remove folder in wwwroot/itemDocuments
-        if (Directory.Exists(Path.Combine(_itemDocumentsPath, id.ToString())))
-        {
-            Directory.Delete(Path.Combine(_itemDocumentsPath, id.ToString()), true);
-        }
+        await _fileService.DeleteDirectory(Path.Combine(_imagesPath, id.ToString()));
+        await _fileService.DeleteDirectory(Path.Combine(_imagesThumbnailsPath, id.ToString()));
+        await _fileService.DeleteDirectory(Path.Combine(_itemDocumentsPath, id.ToString()));
     }
 }

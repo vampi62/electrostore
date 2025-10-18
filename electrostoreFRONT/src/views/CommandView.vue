@@ -14,7 +14,7 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 let commandId = route.params.id;
 
-import { getMimeType } from "@/utils";
+import { getExtension } from "@/utils";
 
 import { useConfigsStore, useCommandsStore, useUsersStore, useItemsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -163,20 +163,20 @@ const documentDownload = async(fileContent) => {
 	const url = window.URL.createObjectURL(new Blob([file]));
 	const link = document.createElement("a");
 	link.href = url;
-	link.setAttribute("download", fileContent.name_command_document + "." + fileContent.type_command_document);
+	link.setAttribute("download", fileContent.name_command_document + "." + getExtension(fileContent.type_command_document));
 	document.body.appendChild(link);
 	link.click();
 	document.body.removeChild(link);
 };
 const documentView = async(fileContent) => {
 	const file = await commandsStore.downloadDocument(commandId, fileContent.id_command_document);
-	const blob = new Blob([file], { type: getMimeType(fileContent.type_command_document) });
+	const blob = new Blob([file], { type: fileContent.type_command_document });
 	const url = window.URL.createObjectURL(blob);
 
-	if (["pdf", "png", "jpg", "jpeg", "gif", "bmp"].includes(fileContent.type_command_document)) {
+	if (["pdf", "png", "jpg", "jpeg", "gif", "bmp"].includes(getExtension(fileContent.type_command_document))) {
 		// Ouvrir directement dans une nouvelle fenêtre
 		window.open(url, "_blank");
-	} else if (["doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt"].includes(fileContent.type_command_document)) {
+	} else if (["doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt"].includes(getExtension(fileContent.type_command_document))) {
 		// Télécharger automatiquement pour les formats éditables
 		const a = document.createElement("a");
 		a.href = url;

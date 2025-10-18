@@ -101,7 +101,7 @@ Complete the `appsettings.json` file with the following content, replacing place
   },
   "S3": {
     "Enable": "false",
-    "ServiceUrl": "http://<minio-url>:9000",
+    "Endpoint": "<minio-url>:9000",
     "AccessKey": "<access-key>",
     "SecretKey": "<secret-key>",
     "BucketName": "electrostore"
@@ -127,6 +127,7 @@ sudo docker run -d --name electrostoreAPI \
  --security-opt no-new-privileges=true \
  --read-only=true \
  --cap-drop ALL \
+ --cap-add CHOWN \
  --cpus=2 \
  --memory=1g \
  ghcr.io/vampi62/electrostore/api:v1.0
@@ -140,6 +141,7 @@ sudo docker run -d --name electrostoreIA \
  --security-opt no-new-privileges=true \
  --read-only=true \
  --cap-drop ALL \
+ --cap-add CHOWN \
  --cpus=2 \
  --memory=2g \
  ghcr.io/vampi62/electrostore/ia:v1.0

@@ -244,20 +244,16 @@ public static class Program
             mqttClient.ConnectAsync(options);
             return mqttClient;
         });
-        // if S3 is enabled add the Minio client
-        if (builder.Configuration.GetSection("S3:Enable").Get<bool>())
+        builder.Services.AddSingleton<IMinioClient>(sp =>
         {
-            builder.Services.AddSingleton<IMinioClient>(sp =>
-            {
-                var minioClient = new MinioClient()
-                    .WithEndpoint(builder.Configuration.GetSection("S3:ServiceUrl").Value ?? "http://localhost:9000")
-                    .WithCredentials(
-                        builder.Configuration.GetSection("S3:AccessKey").Value ?? "minioadmin",
-                        builder.Configuration.GetSection("S3:SecretKey").Value ?? "minioadmin")
-                    .Build();
-                return minioClient;
-            });
-        }
+            var minioClient = new MinioClient()
+                .WithEndpoint(builder.Configuration.GetSection("S3:Endpoint").Value ?? "localhost:9000")
+                .WithCredentials(
+                    builder.Configuration.GetSection("S3:AccessKey").Value ?? "minioadmin",
+                    builder.Configuration.GetSection("S3:SecretKey").Value ?? "minioadmin")
+                .Build();
+            return minioClient;
+        });
 
         builder.Services.AddScoped<IBoxService, BoxService>();
         builder.Services.AddScoped<IBoxTagService, BoxTagService>();

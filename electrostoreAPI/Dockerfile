@@ -15,10 +15,13 @@ WORKDIR /app
 
 COPY --from=build /app/out .
 
-#RUN chown -R 3216:3216 /app
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh && chown -R 3216:3216 /app
 
-#USER 3216:3216
+USER 3216:3216
 
 EXPOSE 80
+
+ENTRYPOINT ["/entrypoint.sh"]
 
 CMD ["dotnet", "electrostore.dll"]
