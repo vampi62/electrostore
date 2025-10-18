@@ -12,9 +12,9 @@ namespace electrostore.Controllers
     public class ItemImgController : ControllerBase
     {
         private readonly IImgService _imgService;
-        private readonly FileService _fileService;
+        private readonly IFileService _fileService;
 
-        public ItemImgController(IImgService imgService, FileService fileService)
+        public ItemImgController(IImgService imgService, IFileService fileService)
         {
             _imgService = imgService;
             _fileService = fileService;

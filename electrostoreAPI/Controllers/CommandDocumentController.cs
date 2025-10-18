@@ -12,9 +12,9 @@ namespace electrostore.Controllers
     public class CommandDocumentController : ControllerBase
     {
         private readonly ICommandDocumentService _commandDocumentService;
-        private readonly FileService _fileService;
+        private readonly IFileService _fileService;
 
-        public CommandDocumentController(ICommandDocumentService commandDocumentService, FileService fileService)
+        public CommandDocumentController(ICommandDocumentService commandDocumentService, IFileService fileService)
         {
             _commandDocumentService = commandDocumentService;
             _fileService = fileService;

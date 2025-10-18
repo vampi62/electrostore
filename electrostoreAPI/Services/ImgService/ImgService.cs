@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using electrostore.Services.FileService;
 
 namespace electrostore.Services.ImgService;
 
@@ -9,11 +10,11 @@ public class ImgService : IImgService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
-    private readonly FileService.FileService _fileService;
-    private readonly string _imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
-    private readonly string _imagesThumbnailsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/imagesThumbnails");
+    private readonly IFileService _fileService;
+    private readonly string _imagesPath = "images";
+    private readonly string _imagesThumbnailsPath = "imagesThumbnails";
 
-    public ImgService(IMapper mapper, ApplicationDbContext context, FileService.FileService fileService)
+    public ImgService(IMapper mapper, ApplicationDbContext context, IFileService fileService)
     {
         _mapper = mapper;
         _context = context;
