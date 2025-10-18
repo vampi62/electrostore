@@ -95,6 +95,7 @@ public class FileService : IFileService
                 {
                     await stream.CopyToAsync(FileStream);
                 }
+                FileStream.Position = 0;
                 return new GetFileResult
                 {
                     Success = true,
