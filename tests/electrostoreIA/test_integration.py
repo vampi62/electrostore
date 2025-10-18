@@ -71,10 +71,11 @@ class TestModuleIntegration:
         # Test with S3 enabled
         settings_enabled = {
             'Enable': 'True',
-            'ServiceUrl': 'http://localhost:9000',
+            'Endpoint': 'localhost:9000',
             'AccessKey': 'test',
             'SecretKey': 'test',
-            'BucketName': 'test-bucket'
+            'BucketName': 'test-bucket',
+            'Secure': 'false'
         }
         s3_manager_enabled = S3Manager(settings_enabled)
         assert s3_manager_enabled.is_enabled()
