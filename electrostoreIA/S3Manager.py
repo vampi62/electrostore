@@ -12,14 +12,11 @@ class S3Manager:
 		if config and config.get("Enable", "false").lower() == "true":
 			try:
 				# Parse the service URL to get endpoint and secure flag
-				parsed_url = urlparse(config["ServiceUrl"])
-				endpoint = f"{parsed_url.hostname}:{parsed_url.port}" if parsed_url.port else parsed_url.hostname
-				secure = parsed_url.scheme == "https"
 				self.client = Minio(
-					endpoint=endpoint,
+					endpoint=config["Endpoint"],
 					access_key=config["AccessKey"],
 					secret_key=config["SecretKey"],
-					secure=secure
+					secure=config["Secure"].lower() == "true"
 				)
 				self.bucket_name = config["BucketName"]
 				self.enabled = True

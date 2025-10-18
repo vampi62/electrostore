@@ -3,7 +3,7 @@
 import os
 from flask import request, jsonify
 
-from electrostoreIA.config import Status
+from config import Status
 from model_trainer import (
     async_train_model, get_training_status, is_training_in_progress, 
     create_demo_training_result, training_progress
@@ -84,11 +84,10 @@ def register_routes(app, appsettings, s3_manager, mysql_session):
                     s3_status = "error: connection test failed"
             
             config = {
-                "status": "healthy" if appsettings.get('DemoMode', False) is False else "demo",
+                "status": "healthy" if str(appsettings.get('DemoMode', False)).lower() == 'false' else "demo",
                 "training_in_progress": is_training_in_progress(),
                 "db_connected": mysql_session is not None and mysql_session.is_connected(),
-                "s3_status": s3_status,
-                "uptime": os.popen('uptime -p').read().strip()
+                "s3_status": s3_status
             }
             return jsonify(config), 200
         except Exception as e:

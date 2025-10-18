@@ -36,10 +36,11 @@ class TestS3Manager:
         
         config = {
             "Enable": "true",
-            "ServiceUrl": "http://localhost:9000",
+            "Endpoint": "localhost:9000",
             "AccessKey": "test_access",
             "SecretKey": "test_secret",
-            "BucketName": "test_bucket"
+            "BucketName": "test_bucket",
+            "Secure": "false"
         }
         
         # Act
@@ -64,10 +65,11 @@ class TestS3Manager:
         
         config = {
             "Enable": "true",
-            "ServiceUrl": "https://s3.amazonaws.com",
+            "Endpoint": "s3.amazonaws.com",
             "AccessKey": "test_access",
             "SecretKey": "test_secret",
-            "BucketName": "test_bucket"
+            "BucketName": "test_bucket",
+            "Secure": "true"
         }
         
         # Act
@@ -90,10 +92,11 @@ class TestS3Manager:
         
         config = {
             "Enable": "true",
-            "ServiceUrl": "http://localhost:9000",
+            "Endpoint": "localhost:9000",
             "AccessKey": "test_access",
             "SecretKey": "test_secret",
-            "BucketName": "test_bucket"
+            "BucketName": "test_bucket",
+            "Secure": "false"
         }
         
         # Act

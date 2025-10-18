@@ -92,10 +92,11 @@ class TestAppInit:
         appsettings = {
             "S3": {
                 "Enable": "true",
-                "ServiceUrl": "http://localhost:9000",
+                "Endpoint": "localhost:9000",
                 "AccessKey": "test",
                 "SecretKey": "test",
-                "BucketName": "test"
+                "BucketName": "test",
+                "Secure": "false"
             }
         }
         

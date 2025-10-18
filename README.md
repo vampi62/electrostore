@@ -118,7 +118,8 @@ Complete the `appsettings.json` file with the following content, replacing place
     "Endpoint": "<minio-url>:9000",
     "AccessKey": "<access-key>",
     "SecretKey": "<secret-key>",
-    "BucketName": "electrostore"
+    "BucketName": "electrostore",
+    "Secure": "false"
   },
   "AllowedOrigins": [
     "https://<your-frontend-domain1>",

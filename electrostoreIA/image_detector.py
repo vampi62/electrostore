@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 
-from electrostoreIA.config import IMG_HEIGHT, IMG_WIDTH
+from config import IMG_HEIGHT, IMG_WIDTH
 from file_manager import get_model_path, get_class_names_path
 
 
