@@ -12,9 +12,9 @@ namespace electrostore.Controllers
     public class ProjetDocumentController : ControllerBase
     {
         private readonly IProjetDocumentService _projetDocumentService;
-        private readonly FileService _fileService;
+        private readonly IFileService _fileService;
 
-        public ProjetDocumentController(IProjetDocumentService projetDocumentService, FileService fileService)
+        public ProjetDocumentController(IProjetDocumentService projetDocumentService, IFileService fileService)
         {
             _projetDocumentService = projetDocumentService;
             _fileService = fileService;

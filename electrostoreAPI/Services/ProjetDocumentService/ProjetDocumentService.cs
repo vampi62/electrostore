@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
+using electrostore.Services.FileService;
 
 namespace electrostore.Services.ProjetDocumentService;
 
@@ -9,10 +10,10 @@ public class ProjetDocumentService : IProjetDocumentService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
-    private readonly FileService.FileService _fileService;
-    private readonly string _projetDocumentsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/projetDocuments");
+    private readonly IFileService _fileService;
+    private readonly string _projetDocumentsPath = "projetDocuments";
 
-    public ProjetDocumentService(IMapper mapper, ApplicationDbContext context, FileService.FileService fileService)
+    public ProjetDocumentService(IMapper mapper, ApplicationDbContext context, IFileService fileService)
     {
         _mapper = mapper;
         _context = context;
