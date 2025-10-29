@@ -14,7 +14,7 @@ public class SessionService : ISessionService
     }
     public string GetClientIp()
     {
-        var httpContext = _httpContextAccessor.HttpContext ?? throw new HttpRequestException("HttpContext is null");
+        var httpContext = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException("HttpContext is null");
         var clientIp = "";
         if (httpContext.Request.Headers.TryGetValue("X-Forwarded-For", out Microsoft.Extensions.Primitives.StringValues value))
         {
@@ -54,7 +54,7 @@ public class SessionService : ISessionService
 
     public int GetClientId()
     {
-        var httpContext = _httpContextAccessor.HttpContext ?? throw new HttpRequestException("HttpContext is null");
+        var httpContext = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException("HttpContext is null");
         var userId = 0;
         if (httpContext.User == null)
         {
@@ -70,7 +70,7 @@ public class SessionService : ISessionService
 
     public string GetTokenId()
     {
-        var httpContext = _httpContextAccessor.HttpContext ?? throw new HttpRequestException("HttpContext is null");
+        var httpContext = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException("HttpContext is null");
         var tokenId = string.Empty;
         if (httpContext.User == null)
         {
