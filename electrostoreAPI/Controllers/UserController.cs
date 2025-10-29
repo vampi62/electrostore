@@ -61,37 +61,5 @@ namespace electrostore.Controllers
             await _userService.DeleteUser(id_user);
             return NoContent();
         }
-    
-        [HttpPost("login")]
-        [AllowAnonymous]
-        public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest loginRequest)
-        {
-            var tokenLogin = await _userService.LoginUserPassword(loginRequest);
-            return Ok(tokenLogin);
-        }
-
-        [HttpPost("refresh-token")]
-        [Authorize(Policy = "RefreshToken")]
-        public async Task<ActionResult<LoginResponse>> RefreshToken()
-        {
-            var tokenRefresh = await _userService.RefreshJwt();
-            return Ok(tokenRefresh);
-        }
-
-        [HttpPost("forgot-password")]
-        [AllowAnonymous]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest forgotPasswordRequest)
-        {
-            await _userService.ForgotPassword(forgotPasswordRequest);
-            return Ok();
-        }
-
-        [HttpPost("reset-password")]
-        [AllowAnonymous]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest resetPasswordRequest)
-        {
-            await _userService.ResetPassword(resetPasswordRequest);
-            return Ok();
-        }
     }
 }

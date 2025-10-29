@@ -41,6 +41,7 @@ using electrostore.Services.TagService;
 using electrostore.Services.UserService;
 using electrostore.Services.JwtService;
 using electrostore.Services.FileService;
+using electrostore.Services.AuthService;
 using electrostore.Middleware;
 
 using Microsoft.OpenApi.Models;
@@ -282,6 +283,7 @@ public static class Program
         builder.Services.AddScoped<ITagService, TagService>();
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IJwiService, JwiService>();
+        builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddSingleton<JwtService>();
     }
 

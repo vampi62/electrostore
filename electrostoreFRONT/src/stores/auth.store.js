@@ -47,7 +47,7 @@ export const useAuthStore = defineStore("auth",{
 		},
 		async login(email, password) {
 			const request = await fetchWrapper.post({
-				url: `${baseUrl}/user/login`,
+				url: `${baseUrl}/auth/login`,
 				body: { "email": email, "password": password },
 			});
 			this.setToken(
@@ -71,7 +71,7 @@ export const useAuthStore = defineStore("auth",{
 		},
 		async refreshLogin() {
 			const request = await fetchWrapper.post({
-				url: `${baseUrl}/user/refresh-token`,
+				url: `${baseUrl}/auth/refresh-token`,
 				useToken: "refresh",
 			});
 			this.setToken(
@@ -82,13 +82,13 @@ export const useAuthStore = defineStore("auth",{
 		},
 		async forgotPassword(email) {
 			return await fetchWrapper.post({
-				url: `${baseUrl}/user/forgot-password`,
+				url: `${baseUrl}/auth/forgot-password`,
 				body: { "email": email },
 			});
 		},
 		async resetPassword(email, token, password) {
 			const request = await fetchWrapper.post({
-				url: `${baseUrl}/user/reset-password`,
+				url: `${baseUrl}/auth/reset-password`,
 				body: { "email": email, "token": token, "password": password },
 			});
 			if (request) {
