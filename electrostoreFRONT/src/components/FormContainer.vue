@@ -40,6 +40,22 @@
 					<template v-else-if="field.type === 'custom'">
 						<slot :name="field.key"></slot>
 					</template>
+					<template v-else-if="field.type === 'password'">
+						<div class="relative">
+							<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" :type="showPassword ? 'text' : 'password'" v-model="storeData[field.key]"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors[field.key] }"
+								:disabled="field?.condition && !evaluateCondition(field.condition)" />
+							<button type="button" @mouseup="showPassword = false" @mousedown="showPassword = true"
+								class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800">
+								<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+								</svg>
+							</button>
+						</div>
+						<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
+					</template>
 					<template v-else>
 						<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" :type="field.type" v-model="storeData[field.key]"
 							class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
@@ -93,6 +109,11 @@ export default {
 				return false;
 			}
 		},
+	},
+	data() {
+		return {
+			showPassword: false,
+		};
 	},
 };
 </script>
