@@ -4,7 +4,7 @@ namespace electrostore.Services.JwiService;
 
 public interface IJwiService
 {
-    public Task SaveToken(Jwt token, int userId, Guid? sessionId = null);
+    public Task SaveToken(Jwt token, int userId, string reason = "user_password", Guid? sessionId = null);
 
     public bool IsRevoked(string tokenId, string role);
 

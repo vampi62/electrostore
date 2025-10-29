@@ -77,18 +77,29 @@ export default {
 		schemaBuilder: {
 			type: Function,
 			required: true,
+			// This function should return a Yup validation schema based on the form fields
 		},
 		labels: {
 			type: Array,
 			required: true,
+			// This should be an array of field objects, each containing:
+			// - key: string (the key in the storeData for the field)
+			// - label: string (translation key for the label)
+			// - type: string (input type, e.g., 'text', 'number', 'select', 'checkbox', 'password', 'textarea', 'computed', 'custom')
+			// - model: any (for checkbox type, the boolean model value)
+			// - condition: string (optional, a JavaScript expression to evaluate whether to enable the field)
+			// - options: array (for select inputs, optional, required if type is 'select')
+			// - rows: number (for textarea inputs, optional)
 		},
 		storeData: {
 			type: Object,
 			default: () => ({}),
+			// This should be an object containing the data for the form fields
 		},
 		storeUser: {
 			type: Object,
 			default: () => ({}),
+			// This should be an object containing the user session data
 		},
 	},
 	computed: {

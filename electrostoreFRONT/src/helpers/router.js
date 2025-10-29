@@ -9,6 +9,7 @@ export const router = createRouter({
 		{ path: "/", component: () => import("@/views/HomeView.vue") },
 		{ path: "/profile", component: () => import("@/views/HomeView.vue") },
 		{ path: "/login", component: () => import("@/views/LoginView.vue") },
+		{ path: "/auth/callback", component: () => import("@/views/CallbackView.vue") },
 		{ path: "/reset-password", component: () => import("@/views/ResetPasswordView.vue") },
 		{ path: "/forgot-password", component: () => import("@/views/ForgotPasswordView.vue") },
 		{ path: "/register", component: () => import("@/views/RegisterView.vue") },
@@ -32,7 +33,7 @@ export const router = createRouter({
 });
 
 router.beforeEach(async(to) => {
-	const publicPages = ["/login", "/register", "/forgot-password", "/reset-password"];
+	const publicPages = ["/login", "/auth/callback", "/register", "/forgot-password", "/reset-password"];
 	const authRequired = !publicPages.includes(to.path);
 	const auth = useAuthStore();
 

@@ -77,10 +77,10 @@ public class AuthService : IAuthService
         var authority = ssoModuleConfig["Authority"];
         var redirectUri = ssoModuleConfig["RedirectUri"];
         var tokenResponse = await ExchangeCodeForToken(request.Code, clientId!, clientSecret!, authority!, redirectUri!);
-        var userInfo = await GetUserInfo(tokenResponse.AccessToken, authority!);
+        var userInfo = await GetUserInfo(tokenResponse.access_token, authority!);
         var user = await GetOrCreateUser(userInfo);
-        var jwt = _jwtService.GenerateToken(user);
-        await _jwiService.SaveToken(jwt, user.id_user);
+        var jwt = _jwtService.GenerateToken(user, "sso_" + sso_method);
+        await _jwiService.SaveToken(jwt, user.id_user, "sso_" + sso_method);
         await _smtpService.SendEmailAsync(
             user.email_user,
             "Login",
@@ -236,8 +236,8 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException("Invalid password");
         }
         // generate tokens
-        var token = _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user));
-        await _jwiService.SaveToken(token, user.id_user);
+        var token = _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user), "user_password");
+        await _jwiService.SaveToken(token, user.id_user, "user_password");
         // send email to the user
         await _smtpService.SendEmailAsync(
             user.email_user,
@@ -259,11 +259,12 @@ public class AuthService : IAuthService
     {
         var clientId = _sessionService.GetClientId();
         var tokenId = _sessionService.GetTokenId();
+        var authMethod = _sessionService.GetTokenAuthMethod();
         var sessionId = await _jwiService.GetSessionIdByTokenId(tokenId, clientId);
         var user = await _context.Users.FindAsync(clientId) ?? throw new KeyNotFoundException($"User with id {clientId} not found");
-        var token = _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user));
+        var token = _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user), authMethod);
         await _jwiService.RevokePairTokenByRefreshToken(tokenId, "User refresh token", clientId);
-        await _jwiService.SaveToken(token, user.id_user, sessionId);
+        await _jwiService.SaveToken(token, user.id_user, authMethod, sessionId);
         // return tokens
         return new LoginResponse
         {
@@ -319,10 +320,10 @@ public class AuthService : IAuthService
 
     private sealed class TokenResponse
     {
-        public string AccessToken { get; set; } = string.Empty;
-        public string TokenType { get; set; } = string.Empty;
-        public string RefreshToken { get; set; } = string.Empty;
-        public string Scope { get; set; } = string.Empty;
+        public string access_token { get; set; } = string.Empty;
+        public string token_type { get; set; } = string.Empty;
+        public string id_token { get; set; } = string.Empty;
+        public string scope { get; set; } = string.Empty;
     }
 
     private sealed class UserInfoResponse

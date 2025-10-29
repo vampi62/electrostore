@@ -83,4 +83,20 @@ public class SessionService : ISessionService
         }
         return tokenId;
     }
+
+    public string GetTokenAuthMethod()
+    {
+        var httpContext = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException("HttpContext is null");
+        var authMethod = string.Empty;
+        if (httpContext.User == null)
+        {
+            return authMethod;
+        }
+        var claim = httpContext.User.Claims.FirstOrDefault(c => c.Type == "auth_method");
+        if (claim != null)
+        {
+            authMethod = claim.Value;
+        }
+        return authMethod;
+    }
 }

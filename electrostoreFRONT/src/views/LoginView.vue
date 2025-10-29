@@ -59,12 +59,19 @@ function onSubmit(values, { setErrors }) {
 			</div>
 
 			<!-- Submit Button -->
-			<div class="mb-4">
+			<div class="mb-4 flex justify-between items-center">
 				<button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-400"
 					:disabled="isSubmitting" type="submit">
 					<span v-show="isSubmitting"
 						class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
 					{{ $t('common.VLoginSubmit') }}
+				</button>
+				<span class="m-2">/</span>
+				<button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:bg-green-400"
+					:disabled="isSubmitting" type="button" @click="authStore.loginSSO()">
+					<span v-show="isSubmitting"
+						class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
+					{{ $t('common.VLoginSSOSubmit') }}
 				</button>
 			</div>
 
@@ -73,7 +80,7 @@ function onSubmit(values, { setErrors }) {
 		</Form>
 
 		<!-- Links -->
-		<div class="mt-4">
+		<div class="mt-4 flex justify-between">
 			<RouterLink to="/register" class="text-blue-500 hover:underline">{{ $t('common.VLoginRegisterLink') }}
 			</RouterLink>
 			<RouterLink to="/forgot-password" class="ml-4 text-blue-500 hover:underline">

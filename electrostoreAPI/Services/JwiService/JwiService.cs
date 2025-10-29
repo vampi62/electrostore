@@ -24,7 +24,7 @@ public class JwiService : IJwiService
         _sessionService = sessionService;
     }
 
-    public async Task SaveToken(Jwt token, int userId, Guid? sessionId = null)
+    public async Task SaveToken(Jwt token, int userId, string reason = "user_password", Guid? sessionId = null)
     {
         // check if sessionId is null
         if (sessionId is null)
@@ -37,7 +37,7 @@ public class JwiService : IJwiService
             id_jwi_access = token.token_id,
             expires_at = token.expire_date_token,
             is_revoked = false,
-            auth_method = "user_password",
+            auth_method = reason,
             created_by_ip = clientIp,
             id_user = userId,
             session_id = (Guid)sessionId,
@@ -47,7 +47,7 @@ public class JwiService : IJwiService
             id_jwi_refresh = token.refresh_token_id,
             expires_at = token.expire_date_refresh_token,
             is_revoked = false,
-            auth_method = "user_password",
+            auth_method = reason,
             created_by_ip = clientIp,
             id_user = userId,
             session_id = (Guid)sessionId,
