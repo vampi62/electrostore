@@ -10,7 +10,6 @@ export const useAuthStore = defineStore("auth",{
 		user: JSON.parse(localStorage.getItem("user")) || null,
 		accessToken: JSON.parse(localStorage.getItem("accessToken")) || null,
 		refreshToken: JSON.parse(localStorage.getItem("refreshToken")) || null,
-		returnUrl: null,
 		isSSOUser: JSON.parse(localStorage.getItem("isSSOUser")) || false,
 	}),
 	actions: {
@@ -61,8 +60,7 @@ export const useAuthStore = defineStore("auth",{
 				{ "token": request?.refresh_token, "date_expire": request?.expire_date_refresh_token },
 				false,
 			);
-			// redirect to previous url or default to home page if no previous url or if previous url is login page
-			router.push((this.returnUrl && this.returnUrl !== "/login") ? this.returnUrl : "/");
+			router.push("/");
 		},
 		async loginSSO() {
 			const request = await fetchWrapper.get({

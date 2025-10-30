@@ -68,7 +68,7 @@ public class AuthService : IAuthService
     {
         if (!_stateStore.ContainsKey(request.State) || _stateStore[request.State] < DateTime.UtcNow)
         {
-            throw new UnauthorizedAccessException("État invalide ou expiré");
+            throw new UnauthorizedAccessException("Invalid or expired state parameter");
         }
         _stateStore.Remove(request.State);
         var ssoModuleConfig = _configuration.GetSection("OAuth:" + ToPascalCase(sso_method));
@@ -113,14 +113,15 @@ public class AuthService : IAuthService
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
-            throw new HttpRequestException($"Erreur lors de l'échange du code: {response.StatusCode}");
+            Console.WriteLine(errorContent);
+            throw new HttpRequestException($"Error exchanging code for token: {response.StatusCode}");
         }
         var jsonResponse = await response.Content.ReadAsStringAsync();
         var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(jsonResponse, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
         });
-        return tokenResponse ?? throw new InvalidOperationException("Réponse token invalide");
+        return tokenResponse ?? throw new InvalidOperationException("Invalid token response");
     }
 
     private async Task<UserInfoResponse> GetUserInfo(string accessToken, string authority)
@@ -132,14 +133,15 @@ public class AuthService : IAuthService
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
-            throw new HttpRequestException($"Erreur lors de la récupération des informations utilisateur: {response.StatusCode}");
+            Console.WriteLine(errorContent);
+            throw new HttpRequestException($"Error retrieving user info: {response.StatusCode}");
         }
         var jsonResponse = await response.Content.ReadAsStringAsync();
         var userInfo = JsonSerializer.Deserialize<UserInfoResponse>(jsonResponse, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
         });
-        return userInfo ?? throw new InvalidOperationException("Informations utilisateur invalides");
+        return userInfo ?? throw new InvalidOperationException("Invalid user info response");
     }
 
     private async Task<ReadUserDto> GetOrCreateUser(UserInfoResponse userInfo)
