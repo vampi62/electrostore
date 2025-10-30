@@ -50,6 +50,7 @@
 	"VUserCommandsCommentaires": "User commands comments",
 	"VUserProjetsCommentaires": "User projects comments",
 	"VUserTokens": "User tokens",
+	"VUserShowExpiredAndRevokedTokens": "Show expired and revoked tokens",
 	"VUserTokenCreatedDate": "Login date",
 	"VUserTokenLastLoginDate": "Last login date",
 	"VUserTokenCreatedIP": "IP login",

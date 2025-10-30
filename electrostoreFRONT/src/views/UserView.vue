@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, inject } from "vue";
+import { onMounted, onBeforeUnmount, ref, inject, watch } from "vue";
 import { router } from "@/helpers";
 
 const { addNotification } = inject("useNotification");
@@ -125,6 +125,11 @@ const revokeToken = async(tokenId) => {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
+const isCheckedTokens = ref(false);
+function watchIsCheckedTokens() {
+	usersStore.getTokenByInterval(userId.value, 100, 0, isCheckedTokens.value, isCheckedTokens.value);
+}
+watch(isCheckedTokens, watchIsCheckedTokens);
 
 const isChecked = ref(false);
 const createSchema = (isChecked) => {
@@ -230,12 +235,19 @@ const labelTableauSession = ref([
 		<CollapsibleSection title="user.VUserTokens"
 			:total-count="Number(usersStore.tokensTotalCount[userId] || 0)" :id-page="userId">
 			<template #append-row>
+				<div>
+					<!-- bouton pour choisir de charger les revoked et les expired -->
+					<label class="inline-flex items-center mb-4">
+						<input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600" v-model="isCheckedTokens">
+						<span class="ml-2 text-gray-700">{{ $t('user.VUserShowExpiredAndRevokedTokens') }}</span>
+					</label>
+				</div>
 				<Tableau :labels="labelTableauSession" :meta="{ key: 'session_id' }"
 					:store-data="[usersStore.tokens[userId]]"
 					:loading="usersStore.tokensLoading"
 					:total-count="Number(usersStore.tokensTotalCount[userId]) || 0"
 					:loaded-count="Object.keys(usersStore.tokens[userId] || {}).length"
-					:fetch-function="(offset, limit) => usersStore.getTokenByInterval(userId, limit, offset)"
+					:fetch-function="(offset, limit) => usersStore.getTokenByInterval(userId, limit, offset, isCheckedTokens, isCheckedTokens)"
 					:tableau-css="{ component: 'min-h-64 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>

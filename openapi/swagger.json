@@ -10660,7 +10660,7 @@
             }
           },
           {
-            "name": "showRevoked",
+            "name": "show_revoked",
             "in": "query",
             "schema": {
               "type": "boolean",
@@ -10668,7 +10668,7 @@
             }
           },
           {
-            "name": "showExpired",
+            "name": "show_expired",
             "in": "query",
             "schema": {
               "type": "boolean",
@@ -10741,7 +10741,7 @@
             }
           },
           {
-            "name": "showRevoked",
+            "name": "show_revoked",
             "in": "query",
             "schema": {
               "type": "boolean",
@@ -10749,7 +10749,7 @@
             }
           },
           {
-            "name": "showExpired",
+            "name": "show_expired",
             "in": "query",
             "schema": {
               "type": "boolean",
