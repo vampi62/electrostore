@@ -13,21 +13,16 @@ public class UserService : IUserService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
-    private readonly IConfiguration _configuration;
     private readonly ISmtpService _smtpService;
     private readonly ISessionService _sessionService;
     private readonly IJwiService _jwiService;
-    private readonly JwtService.JwtService _jwtService;
-    public UserService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration,
-                    ISmtpService smtpService, ISessionService sessionService, IJwiService jwiService, JwtService.JwtService jwtService)
+    public UserService(IMapper mapper, ApplicationDbContext context, ISmtpService smtpService, ISessionService sessionService, IJwiService jwiService)
     {
         _mapper = mapper;
         _context = context;
-        _configuration = configuration;
         _smtpService = smtpService;
         _sessionService = sessionService;
         _jwiService = jwiService;
-        _jwtService = jwtService;
     }
 
     public async Task<IEnumerable<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
@@ -243,120 +238,5 @@ public class UserService : IUserService
             "Account deleted",
             "Your account has been deleted"
         );
-    }
-
-    public async Task<bool> CheckUserPasswordByEmail(string email, string password)
-    {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == email) ?? throw new KeyNotFoundException($"User with email {email} not found");
-        return BCrypt.Net.BCrypt.Verify(password, user.mdp_user);
-    }
-
-    public async Task<bool> CheckUserPasswordById(int id, string password)
-    {
-        var user = await _context.Users.FindAsync(id);
-        if (user is null)
-        {
-            return false;
-        }
-        return BCrypt.Net.BCrypt.Verify(password, user.mdp_user);
-    }
-
-    public async Task ForgotPassword(ForgotPasswordRequest request)
-    {
-        //check if SMTP is Enabled
-        if (_configuration["SMTP:Enable"] != "true")
-        {
-            throw new InvalidOperationException("SMTP is not enabled");
-        }
-        // check if user exists
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.Email);
-        if (user is not null)
-        {
-            // add reset_token
-            user.reset_token = Guid.NewGuid();
-            user.reset_token_expiration = DateTime.Now.AddHours(1);
-            await _context.SaveChangesAsync();
-            // send email with reset_token
-            await _smtpService.SendEmailAsync(
-                request.Email,
-                "Reset password",
-                "Click on the following link to reset your password: " + _configuration["FrontendUrl"] + "/reset-password?token=" + user.reset_token.ToString() + "&email=" + user.email_user
-            );
-        }
-    }
-
-    public async Task ResetPassword(ResetPasswordRequest request)
-    {
-        //check if SMTP is Enabled
-        if (_configuration["SMTP:Enable"] != "true")
-        {
-            throw new InvalidOperationException("SMTP is not enabled");
-        }
-        // check if token is valid
-        var user = await _context.Users.FirstOrDefaultAsync(
-            u => u.email_user == request.Email && u.reset_token.ToString() == request.Token && u.reset_token_expiration > DateTime.Now
-        ) ?? throw new InvalidOperationException("Invalid token");
-        // update password
-        user.mdp_user = BCrypt.Net.BCrypt.HashPassword(request.Password);
-        user.reset_token = null;
-        user.reset_token_expiration = null;
-        await _context.SaveChangesAsync();
-        await _jwiService.RevokeAllAccessTokenByUser(user.id_user, "User reset password");
-        await _jwiService.RevokeAllRefreshTokenByUser(user.id_user, "User reset password");
-        // send email to the user
-        await _smtpService.SendEmailAsync(
-            user.email_user,
-            "Password changed",
-            "Your password has been changed"
-        );
-    }
-
-    public async Task<LoginResponse> LoginUserPassword(LoginRequest request)
-    {
-        // check if user exists
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.Email) ?? throw new KeyNotFoundException($"User with email {request.Email} not found");
-        // check if password is correct
-        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.mdp_user))
-        {
-            throw new UnauthorizedAccessException("Invalid password");
-        }
-        // generate tokens
-        var token = _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user));
-        await _jwiService.SaveToken(token, user.id_user);
-        // send email to the user
-        await _smtpService.SendEmailAsync(
-            user.email_user,
-            "Login",
-            "A new login has been detected on your account. If this was not you, please change your password."
-        );
-        // return tokens
-        return new LoginResponse
-        {
-            token = token.token,
-            expire_date_token = token.expire_date_token,
-            refresh_token = token.refresh_token,
-            expire_date_refresh_token = token.expire_date_refresh_token,
-            user = _mapper.Map<ReadUserDto>(user)
-        };
-    }
-
-    public async Task<LoginResponse> RefreshJwt()
-    {
-        var clientId = _sessionService.GetClientId();
-        var tokenId = _sessionService.GetTokenId();
-        var sessionId = await _jwiService.GetSessionIdByTokenId(tokenId, clientId);
-        var user = await _context.Users.FindAsync(clientId) ?? throw new KeyNotFoundException($"User with id {clientId} not found");
-        var token = _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user));
-        await _jwiService.RevokePairTokenByRefreshToken(tokenId, "User refresh token", clientId);
-        await _jwiService.SaveToken(token, user.id_user, sessionId);
-        // return tokens
-        return new LoginResponse
-        {
-            token = token.token,
-            expire_date_token = token.expire_date_token,
-            refresh_token = token.refresh_token,
-            expire_date_refresh_token = token.expire_date_refresh_token,
-            user = _mapper.Map<ReadUserDto>(user)
-        };
     }
 }

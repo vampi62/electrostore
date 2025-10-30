@@ -214,7 +214,7 @@ namespace electrostore.Tests
             
             // Act
             var startTime = DateTime.Now;
-            var response = await client.PostAsync("/api/user/login", content);
+            var response = await client.PostAsync("/api/auth/login", content);
             var endTime = DateTime.Now;
             var executionTime = (endTime - startTime).TotalMilliseconds;
             

@@ -33,3 +33,9 @@ public record ErrorDetail
     public required string Reason { get; init; }
     public required object Data { get; init; }
 }
+
+public record SsoUrlResponse
+{
+    public required string AuthUrl { get; init; }
+    public required string State { get; init; }
+}

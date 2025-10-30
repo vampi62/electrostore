@@ -55,6 +55,7 @@
 	"VUserTokenCreatedIP": "IP connexion",
 	"VUserTokenExpireDate": "Date d'expiration",
 	"VUserTokenIsRevoked": "Est révoqué",
+	"VUserTokenAuthMethod": "Méthode d'authentification",
 	"VUserTokenRevokedDate": "Date de révocation",
 	"VUserTokenRevokedIP": "IP de révocation",
 	"VUserTokenRevokedReason": "Raison de la révocation",

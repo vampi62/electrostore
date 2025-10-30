@@ -16,6 +16,8 @@ public class JwiRefreshTokens : BaseEntity
 
     public bool is_revoked { get; set; }
 
+    public required string auth_method { get; set; }
+
 
     [MaxLength(Constants.MaxIpLength)]
     public required string created_by_ip { get; set; }

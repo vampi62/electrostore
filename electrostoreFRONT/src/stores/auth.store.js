@@ -10,24 +10,28 @@ export const useAuthStore = defineStore("auth",{
 		user: JSON.parse(localStorage.getItem("user")) || null,
 		accessToken: JSON.parse(localStorage.getItem("accessToken")) || null,
 		refreshToken: JSON.parse(localStorage.getItem("refreshToken")) || null,
-		returnUrl: null,
+		isSSOUser: JSON.parse(localStorage.getItem("isSSOUser")) || false,
 	}),
 	actions: {
-		setToken(user, accessToken, refreshToken) {
+		setToken(user, accessToken, refreshToken, isSSOUser = false) {
 			this.accessToken = accessToken;
 			this.refreshToken = refreshToken;
 			this.user = user;
+			this.isSSOUser = isSSOUser;
 			localStorage.setItem("accessToken", JSON.stringify(accessToken));
 			localStorage.setItem("refreshToken", JSON.stringify(refreshToken));
 			localStorage.setItem("user", JSON.stringify(user));
+			localStorage.setItem("isSSOUser", JSON.stringify(isSSOUser));
 		},
 		clearToken() {
 			this.accessToken = null;
 			this.refreshToken = null;
 			this.user = null;
+			this.isSSOUser = false;
 			localStorage.removeItem("accessToken");
 			localStorage.removeItem("refreshToken");
 			localStorage.removeItem("user");
+			localStorage.removeItem("isSSOUser");
 		},
 		TokenIsExpired() {
 			// if date expire is less than current date + 5 minutes
@@ -47,16 +51,45 @@ export const useAuthStore = defineStore("auth",{
 		},
 		async login(email, password) {
 			const request = await fetchWrapper.post({
-				url: `${baseUrl}/user/login`,
+				url: `${baseUrl}/auth/login`,
 				body: { "email": email, "password": password },
 			});
 			this.setToken(
 				request?.user,
 				{ "token": request?.token, "date_expire": request?.expire_date_token },
 				{ "token": request?.refresh_token, "date_expire": request?.expire_date_refresh_token },
+				false,
 			);
-			// redirect to previous url or default to home page if no previous url or if previous url is login page
-			router.push((this.returnUrl && this.returnUrl !== "/login") ? this.returnUrl : "/");
+			router.push("/");
+		},
+		async loginSSO() {
+			const request = await fetchWrapper.get({
+				url: `${baseUrl}/auth/authentik/url`,
+			});
+			// open small window to the url
+			//window.open(request.url, "SSO Login", "width=600,height=600");
+			// redirect to the url
+			window.location.href = request.authUrl;
+		},
+		async handleSSOCallback() {
+			const params = new URLSearchParams(window.location.search);
+			const token = params.get("code");
+			const state = params.get("state");
+			if (token && state) {
+				const request = await fetchWrapper.post({
+					url: `${baseUrl}/auth/authentik/callback`,
+					body: { "Code": token, "State": state },
+				});
+				this.setToken(
+					request?.user,
+					{ "token": request?.token, "date_expire": request?.expire_date_token },
+					{ "token": request?.refresh_token, "date_expire": request?.expire_date_refresh_token },
+					true,
+				);
+				localStorage.removeItem("ssoState");
+				// redirect to previous url or default to home page if no previous url or if previous url is login page
+				router.push((this.returnUrl && this.returnUrl !== "/login") ? this.returnUrl : "/");
+			}
 		},
 		async register(email, password, prenom, nom) {
 			const request = fetchWrapper.post({
@@ -71,24 +104,25 @@ export const useAuthStore = defineStore("auth",{
 		},
 		async refreshLogin() {
 			const request = await fetchWrapper.post({
-				url: `${baseUrl}/user/refresh-token`,
+				url: `${baseUrl}/auth/refresh-token`,
 				useToken: "refresh",
 			});
 			this.setToken(
 				request?.user,
 				{ "token": request?.token, "date_expire": request?.expire_date_token },
 				{ "token": request?.refresh_token, "date_expire": request?.expire_date_refresh_token },
+				this.isSSOUser,
 			);
 		},
 		async forgotPassword(email) {
 			return await fetchWrapper.post({
-				url: `${baseUrl}/user/forgot-password`,
+				url: `${baseUrl}/auth/forgot-password`,
 				body: { "email": email },
 			});
 		},
 		async resetPassword(email, token, password) {
 			const request = await fetchWrapper.post({
-				url: `${baseUrl}/user/reset-password`,
+				url: `${baseUrl}/auth/reset-password`,
 				body: { "email": email, "token": token, "password": password },
 			});
 			if (request) {

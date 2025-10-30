@@ -17,16 +17,4 @@ public interface IUserService
     public Task<ReadUserDto> UpdateUser(int id, UpdateUserDto userDto);
 
     public Task DeleteUser(int id);
-
-    public Task<bool> CheckUserPasswordByEmail(string email, string password);
-
-    public Task<bool> CheckUserPasswordById(int id, string password);
-
-    public Task ForgotPassword(ForgotPasswordRequest request);
-
-    public Task ResetPassword(ResetPasswordRequest request);
-
-    public Task<LoginResponse> LoginUserPassword(LoginRequest request);
-
-    public Task<LoginResponse> RefreshJwt();
 }

@@ -24,7 +24,7 @@ public class JwiService : IJwiService
         _sessionService = sessionService;
     }
 
-    public async Task SaveToken(Jwt token, int userId, Guid? sessionId = null)
+    public async Task SaveToken(Jwt token, int userId, string reason = "user_password", Guid? sessionId = null)
     {
         // check if sessionId is null
         if (sessionId is null)
@@ -37,6 +37,7 @@ public class JwiService : IJwiService
             id_jwi_access = token.token_id,
             expires_at = token.expire_date_token,
             is_revoked = false,
+            auth_method = reason,
             created_by_ip = clientIp,
             id_user = userId,
             session_id = (Guid)sessionId,
@@ -46,6 +47,7 @@ public class JwiService : IJwiService
             id_jwi_refresh = token.refresh_token_id,
             expires_at = token.expire_date_refresh_token,
             is_revoked = false,
+            auth_method = reason,
             created_by_ip = clientIp,
             id_user = userId,
             session_id = (Guid)sessionId,
@@ -161,6 +163,7 @@ public class JwiService : IJwiService
                 session_id = group.Key,
                 expires_at = group.OrderByDescending(jwi => jwi.expires_at).First().expires_at,
                 is_revoked = group.OrderByDescending(jwi => jwi.expires_at).First().is_revoked,
+                auth_method = group.OrderByDescending(jwi => jwi.expires_at).First().auth_method,
                 created_at = group.OrderByDescending(jwi => jwi.expires_at).First().created_at,
                 created_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().created_by_ip,
                 revoked_at = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_at,
@@ -210,6 +213,7 @@ public class JwiService : IJwiService
                 session_id = group.Key,
                 expires_at = group.OrderByDescending(jwi => jwi.expires_at).First().expires_at,
                 is_revoked = group.OrderByDescending(jwi => jwi.expires_at).First().is_revoked,
+                auth_method = group.OrderByDescending(jwi => jwi.expires_at).First().auth_method,
                 created_at = group.OrderByDescending(jwi => jwi.expires_at).First().created_at,
                 created_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().created_by_ip,
                 revoked_at = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_at,
@@ -273,6 +277,7 @@ public class JwiService : IJwiService
                 session_id = group.Key,
                 expires_at = group.OrderByDescending(jwi => jwi.expires_at).First().expires_at,
                 is_revoked = group.OrderByDescending(jwi => jwi.expires_at).First().is_revoked,
+                auth_method = group.OrderByDescending(jwi => jwi.expires_at).First().auth_method,
                 created_at = group.OrderByDescending(jwi => jwi.expires_at).First().created_at,
                 created_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().created_by_ip,
                 revoked_at = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_at,

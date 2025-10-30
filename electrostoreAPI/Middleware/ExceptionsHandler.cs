@@ -45,6 +45,7 @@ public class ExceptionsHandler
             KeyNotFoundException _ => StatusCodes.Status404NotFound,
             InvalidOperationException _ => StatusCodes.Status409Conflict,
             NotImplementedException _ => StatusCodes.Status501NotImplemented,
+            HttpRequestException _ => StatusCodes.Status502BadGateway,
             _ => StatusCodes.Status500InternalServerError
         };
 

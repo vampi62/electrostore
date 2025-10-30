@@ -450,6 +450,10 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
+                    b.Property<string>("auth_method")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
@@ -496,6 +500,10 @@ namespace electrostore.Migrations
                     b.Property<Guid>("id_jwi_refresh")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
+
+                    b.Property<string>("auth_method")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");

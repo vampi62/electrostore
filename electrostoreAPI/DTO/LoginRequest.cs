@@ -74,3 +74,26 @@ public record ResetPasswordRequest : IValidatableObject
         }
     }
 }
+
+public record SsoLoginRequest : IValidatableObject
+{
+    [Required]
+    [MinLength(1, ErrorMessage = "Authorization code cannot be empty or whitespace.")]
+    public required string Code { get; set; }
+
+    [Required]
+    [MinLength(1, ErrorMessage = "State cannot be empty or whitespace.")]
+    public required string State { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (string.IsNullOrWhiteSpace(Code))
+        {
+            yield return new ValidationResult("Code cannot be null, empty, or whitespace.", new[] { nameof(Code) });
+        }
+        if (string.IsNullOrWhiteSpace(State))
+        {
+            yield return new ValidationResult("State cannot be null, empty, or whitespace.", new[] { nameof(State) });
+        }
+    }
+}

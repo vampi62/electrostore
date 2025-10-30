@@ -113,6 +113,15 @@ Complete the `appsettings.json` file with the following content, replacing place
     "Audience": "<your-audience>",
     "ExpireDays": 1
   },
+  "OAuth": {
+    "<method-name>": {
+      "ClientId": "<client-id>",
+      "ClientSecret": "<client-secret>",
+      "Authority": "https://<sso-server-url>/application/o/authorize/",
+      "RedirectUri": "https://<frontend-url>/auth/callback",
+      "Scope": "openid profile email"
+    }
+  },
   "S3": {
     "Enable": "false",
     "Endpoint": "<minio-url>:9000",
