@@ -5,9 +5,13 @@
 			:class="{ 'cursor-pointer': idPage != 'new', 'cursor-not-allowed': idPage == 'new' }">
 			{{ $t(title) }} <span v-if="totalCount >= 0">({{ totalCount }})</span>
 		</h3>
-		<div :class="showSection ? 'block' : 'hidden'" class="p-2">
-			<slot name="append-row"></slot>
-		</div>
+		<transition @before-enter="beforeEnter" @enter="enter" @leave="leave">
+			<div v-show="showSection" class=" overflow-hidden">
+				<div class="p-2">
+					<slot name="append-row"></slot>
+				</div>
+			</div>
+		</transition>
 	</div>
 </template>
 
@@ -46,6 +50,25 @@ export default {
 			if (this.idPage !== "new") {
 				this.showSection = !this.showSection;
 			}
+		},
+		beforeEnter(el) {
+			el.style.height = "0";
+		},
+		enter(el) {
+			el.style.height = "auto";
+			const height = getComputedStyle(el).height;
+			el.style.height = "0";
+			requestAnimationFrame(() => {
+				el.style.transition = "height 0.3s ease-in-out";
+				el.style.height = height;
+			});
+		},
+		leave(el) {
+			el.style.height = getComputedStyle(el).height;
+			requestAnimationFrame(() => {
+				el.style.transition = "height 0.3s ease-in-out";
+				el.style.height = "0";
+			});
 		},
 	},
 };
