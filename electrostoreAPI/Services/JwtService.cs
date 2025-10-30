@@ -17,7 +17,7 @@ public class JwtService
         _jwtSettings = jwtSettings.Value ?? throw new ArgumentNullException(nameof(jwtSettings));
     }
 
-    public Jwt GenerateToken(ReadUserDto user)
+    public Jwt GenerateToken(ReadUserDto user, string reason)
     {
         if (user is null) throw new ArgumentNullException(nameof(user));
 
@@ -31,6 +31,7 @@ public class JwtService
             new(ClaimTypes.NameIdentifier, user.id_user.ToString()),
             new(ClaimTypes.Name, user.email_user),
             new(ClaimTypes.Role, "access"),
+            new(ClaimTypes.AuthenticationMethod, reason),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
         switch (user.role_user)
@@ -66,6 +67,7 @@ public class JwtService
             new(ClaimTypes.NameIdentifier, user.id_user.ToString()),
             new(ClaimTypes.Name, user.email_user),
             new(ClaimTypes.Role, "refresh"),
+            new(ClaimTypes.AuthenticationMethod, reason),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
         var refreshTokenDescriptor = new SecurityTokenDescriptor

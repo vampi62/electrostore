@@ -11,4 +11,6 @@ public interface ISessionService
     public int GetClientId();
 
     public string GetTokenId();
+
+    public string GetTokenAuthMethod();
 }

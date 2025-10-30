@@ -18,22 +18,30 @@ Tokens must be included in the `Authorization` header of requests in the format 
   - Allows a new user to register.
 
 - **Login**
-  - `POST /api/login`
+  - `POST /api/auth/login`
   - Allows a user to log in and receive an `access token` and a `refresh token`.
 
+- **Get SSO Authentication URL** ('if A SSO method is configured')
+  - `GET /api/auth/{sso_method}/url`
+  - Retrieves the authentication URL for the specified SSO method (e.g., Authentik).
+
+- **SSO Callback** ('if A SSO method is configured')
+  - `POST /api/auth/{sso_method}/callback`
+  - Handles the SSO callback and returns a JWT.
+
 - **Forgot Password**
-  - `POST /api/forgot-password`
+  - `POST /api/auth/forgot-password`
   - Sends an email with a reset code valid for 1 hour.
   - Requires an SMTP server to be configured; otherwise, it returns an error.
 
 - **Reset Password**
-  - `POST /api/reset-password`
+  - `POST /api/auth/reset-password`
   - Allows resetting the password using the code received by email.
 
 ### Route Using the Refresh Token
 
 - **Refresh Token**
-  - `POST /user/refresh-token`
+  - `POST /api/auth/refresh-token`
   - Uses the `refresh token` to obtain a new pair of tokens.
   - The `refresh token` must be placed in the `Authorization` header.
 

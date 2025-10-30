@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from "vue";
 import { Form, Field } from "vee-validate";
 import * as Yup from "yup";
 
@@ -7,6 +8,8 @@ const { t } = useI18n();
 
 import { useAuthStore } from "@/stores";
 const authStore = useAuthStore();
+
+const showPassword = ref(false);
 
 const schema = Yup.object().shape({
 	email: Yup.string()
@@ -40,19 +43,35 @@ function onSubmit(values, { setErrors }) {
 			<!-- Password Field -->
 			<div class="mb-4">
 				<label class="block text-gray-700" for="password">{{ $t('common.VLoginPassword') }}</label>
-				<Field name="password" type="password"
-					class="border border-gray-300 rounded w-full px-3 py-2 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
-					:class="{ 'border-red-500': errors.password }" />
+				<div class="relative">
+					<Field name="password" :type="showPassword ? 'text' : 'password'"
+						class="border border-gray-300 rounded w-full px-3 py-2 pr-10 mt-1 focus:outline-none focus:ring focus:ring-blue-300"
+						:class="{ 'border-red-500': errors.password }" />
+					<button type="button" @mouseup="showPassword = false" @mousedown="showPassword = true"
+						class="absolute inset-y-0 right-0 pr-3 mt-1 flex items-center text-gray-600 hover:text-gray-800">
+						<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+						</svg>
+					</button>
+				</div>
 				<div class="text-red-500 text-sm mt-1 min-h-5">{{ errors.password }}</div>
 			</div>
 
 			<!-- Submit Button -->
-			<div class="mb-4">
+			<div class="mb-4 flex justify-between items-center">
 				<button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-400"
 					:disabled="isSubmitting" type="submit">
 					<span v-show="isSubmitting"
 						class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
 					{{ $t('common.VLoginSubmit') }}
+				</button>
+				<span class="m-2">/</span>
+				<button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:bg-green-400"
+					:disabled="isSubmitting" type="button" @click="authStore.loginSSO()">
+					<span v-show="isSubmitting"
+						class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
+					{{ $t('common.VLoginSSOSubmit') }}
 				</button>
 			</div>
 
@@ -61,7 +80,7 @@ function onSubmit(values, { setErrors }) {
 		</Form>
 
 		<!-- Links -->
-		<div class="mt-4">
+		<div class="mt-4 flex justify-between">
 			<RouterLink to="/register" class="text-blue-500 hover:underline">{{ $t('common.VLoginRegisterLink') }}
 			</RouterLink>
 			<RouterLink to="/forgot-password" class="ml-4 text-blue-500 hover:underline">

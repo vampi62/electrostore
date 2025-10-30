@@ -62,7 +62,7 @@ describe("Login Page", () => {
 
 	it("shows error message for invalid credentials", () => {
 		// Mock the API response for invalid credentials
-		cy.intercept("POST", "**/api/user/login", {
+		cy.intercept("POST", "**/api/auth/login", {
 			statusCode: 401,
 			body: {
 				message: "Invalid email or password",
@@ -83,7 +83,7 @@ describe("Login Page", () => {
 
 	it("redirects to dashboard after successful login", () => {
 		// Mock the API response for successful login
-		cy.intercept("POST", "**/api/user/login", {
+		cy.intercept("POST", "**/api/auth/login", {
 			statusCode: 200,
 			body: {
 				token: "fake-jwt-token",

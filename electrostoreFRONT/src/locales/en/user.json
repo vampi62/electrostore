@@ -55,6 +55,7 @@
 	"VUserTokenCreatedIP": "IP login",
 	"VUserTokenExpireDate": "Expire date",
 	"VUserTokenIsRevoked": "Is revoked",
+	"VUserTokenAuthMethod": "Authentication method",
 	"VUserTokenRevokedDate": "Revoked date",
 	"VUserTokenRevokedIP": "Revoked IP",
 	"VUserTokenRevokedReason": "Revoked reason",

@@ -158,14 +158,14 @@ const createSchema = (isChecked) => {
 };
 
 const labelForm = ref([
-	{ key: "nom_user", label: "user.VUserName", type: "text", condition: "form?.id_user === session?.id_user || session?.role_user === 2" },
-	{ key: "prenom_user", label: "user.VUserFirstName", type: "text", condition: "form?.id_user === session?.id_user || session?.role_user === 2" },
-	{ key: "email_user", label: "user.VUserEmail", type: "text", condition: "form?.id_user === session?.id_user || session?.role_user === 2" },
-	{ key: "role_user", label: "user.VUserRole", type: "select", options: userTypeRole, condition: "form?.id_user === session?.id_user || session?.role_user === 2" },
-	{ key: "check", label: "user.VUserCheck", type: "checkbox", model: isChecked, condition: "form?.id_user === session?.id_user || session?.role_user === 2" },
-	{ key: "mdp_user", label: "user.VUserPassword", type: "password", condition: "(form?.id_user === session?.id_user || session?.role_user === 2) && form[4].model" },
-	{ key: "confirm_mdp_user", label: "user.VUserConfirmPassword", type: "password", condition: "(form?.id_user === session?.id_user || session?.role_user === 2) && form[4].model" },
-	{ key: "current_mdp_user", label: "user.VUserCurrentPassword", type: "password", condition: "form?.id_user === session?.id_user || session?.role_user === 2" },
+	{ key: "nom_user", label: "user.VUserName", type: "text", condition: "edition?.id_user === session?.id_user || session?.role_user === 2" },
+	{ key: "prenom_user", label: "user.VUserFirstName", type: "text", condition: "edition?.id_user === session?.id_user || session?.role_user === 2" },
+	{ key: "email_user", label: "user.VUserEmail", type: "text", condition: "edition?.id_user === session?.id_user || session?.role_user === 2" },
+	{ key: "role_user", label: "user.VUserRole", type: "select", options: userTypeRole, condition: "session?.role_user === 2" },
+	{ key: "check", label: "user.VUserCheck", type: "checkbox", model: isChecked, condition: "edition?.id_user === session?.id_user || session?.role_user === 2" },
+	{ key: "mdp_user", label: "user.VUserPassword", type: "password", condition: "(edition?.id_user === session?.id_user || session?.role_user === 2) && form[4].model" },
+	{ key: "confirm_mdp_user", label: "user.VUserConfirmPassword", type: "password", condition: "(edition?.id_user === session?.id_user || session?.role_user === 2) && form[4].model" },
+	{ key: "current_mdp_user", label: "user.VUserCurrentPassword", type: "password", condition: "edition?.id_user === session?.id_user || session?.role_user === 2" },
 ]);
 const labelTableauSession = ref([
 	{ label: "user.VUserTokenCreatedDate", sortable: true, key: "first_created_at", type: "datetime" },
@@ -173,6 +173,7 @@ const labelTableauSession = ref([
 	{ label: "user.VUserTokenCreatedIP", sortable: true, key: "created_by_ip", type: "text" },
 	{ label: "user.VUserTokenExpireDate", sortable: true, key: "expires_at", type: "datetime" },
 	{ label: "user.VUserTokenIsRevoked", sortable: true, key: "is_revoked", type: "text" },
+	{ label: "user.VUserTokenAuthMethod", sortable: true, key: "auth_method", type: "text" },
 	{ label: "user.VUserTokenRevokedDate", sortable: true, key: "revoked_at", type: "datetime" },
 	{ label: "user.VUserTokenRevokedIP", sortable: true, key: "revoked_by_ip", type: "text" },
 	{ label: "user.VUserTokenRevokedReason", sortable: true, key: "revoked_reason", type: "text" },
