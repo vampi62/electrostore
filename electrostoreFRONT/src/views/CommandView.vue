@@ -105,6 +105,7 @@ const commandDelete = async() => {
 // document
 const documentAddModalShow = ref(false);
 const documentDeleteModalShow = ref(false);
+const documentAddLoading = ref(false);
 const documentModalData = ref({ id_command_document: null, name_command_document: "", document: null, isEdit: false });
 const documentAddOpenModal = () => {
 	documentModalData.value = { name_command_document: "", document: null, isEdit: false };
@@ -115,6 +116,7 @@ const documentDeleteOpenModal = (doc) => {
 	documentDeleteModalShow.value = true;
 };
 const documentAdd = async() => {
+	documentAddLoading.value = true;
 	try {
 		schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
 		await commandsStore.createDocument(commandId.value, documentModalData.value);
@@ -129,6 +131,8 @@ const documentAdd = async() => {
 		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
+	} finally {
+		documentAddLoading.value = false;
 	}
 };
 const documentEdit = async(row) => {
@@ -547,7 +551,11 @@ const labelTableauModalItem = ref([
 					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
 						{{ $t('command.VCommandDocumentCancel') }}
 					</button>
-					<button type="button" @click="documentAdd" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+					<button type="button" @click="documentAdd" 
+						class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-400"
+						:disabled="documentAddLoading">
+						<span v-show="documentAddLoading"
+							class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
 						{{ $t('command.VCommandDocumentAdd') }}
 					</button>
 				</div>
