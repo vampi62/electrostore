@@ -440,7 +440,7 @@ const labelTableauModalTag = ref([
 const labelTableauDocument = ref([
 	{ label: "item.VItemDocumentName", sortable: true, key: "name_item_document", type: "text", canEdit: true },
 	{ label: "item.VItemDocumentType", sortable: true, key: "type_item_document", type: "text" },
-	{ label: "item.VItemDocumentDate", sortable: true, key: "date_item_document", type: "datetime" },
+	{ label: "item.VItemDocumentDate", sortable: true, key: "created_at", type: "datetime" },
 	{ label: "item.VItemDocumentActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -745,10 +745,10 @@ const labelTableauProjet = ref([
 					</div>
 				</div>
 				<div class="flex justify-end space-x-2">
-					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded">
+					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
 						{{ $t('item.VItemDocumentCancel') }}
 					</button>
-					<button type="button" @click="documentAdd" class="px-4 py-2 bg-blue-500 text-white rounded">
+					<button type="button" @click="documentAdd" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
 						{{ $t('item.VItemDocumentAdd') }}
 					</button>
 				</div>
@@ -781,10 +781,10 @@ const labelTableauProjet = ref([
 				</div>
 				<div class="flex justify-end space-x-2">
 					<button type="button" @click="imageAddModalShow = false"
-						class="px-4 py-2 bg-gray-300 rounded">
+						class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
 						{{ $t('item.VItemImageCancel') }}
 					</button>
-					<button type="button" @click="imageAdd" class="px-4 py-2 bg-blue-500 text-white rounded">
+					<button type="button" @click="imageAdd" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
 						{{ $t('item.VItemImageAdd') }}
 					</button>
 				</div>

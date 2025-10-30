@@ -315,7 +315,7 @@ const labelForm = ref([
 const labelTableauDocument = ref([
 	{ label: "command.VCommandDocumentName", sortable: true, key: "name_command_document", type: "text", canEdit: true },
 	{ label: "command.VCommandDocumentType", sortable: true, key: "type_command_document", type: "text" },
-	{ label: "command.VCommandDocumentDate", sortable: true, key: "date_command_document", type: "datetime" },
+	{ label: "command.VCommandDocumentDate", sortable: true, key: "created_at", type: "datetime" },
 	{ label: "command.VCommandDocumentActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -544,10 +544,10 @@ const labelTableauModalItem = ref([
 					</div>
 				</div>
 				<div class="flex justify-end space-x-2">
-					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded">
+					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
 						{{ $t('command.VCommandDocumentCancel') }}
 					</button>
-					<button type="button" @click="documentAdd" class="px-4 py-2 bg-blue-500 text-white rounded">
+					<button type="button" @click="documentAdd" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
 						{{ $t('command.VCommandDocumentAdd') }}
 					</button>
 				</div>

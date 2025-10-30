@@ -317,7 +317,7 @@ const labelForm = ref([
 const labelTableauDocument = ref([
 	{ label: "projet.VProjetDocumentName", sortable: true, key: "name_projet_document", type: "text", canEdit: true },
 	{ label: "projet.VProjetDocumentType", sortable: true, key: "type_projet_document", type: "text" },
-	{ label: "projet.VProjetDocumentDate", sortable: true, key: "date_projet_document", type: "datetime" },
+	{ label: "projet.VProjetDocumentDate", sortable: true, key: "created_at", type: "datetime" },
 	{ label: "projet.VProjetDocumentActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -538,7 +538,7 @@ const labelTableauModalItem = ref([
 					</div>
 				</div>
 				<div class="flex justify-end space-x-2">
-					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded">
+					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
 						{{ $t('projet.VProjetDocumentCancel') }}
 					</button>
 					<button type="button" @click="documentAdd" class="px-4 py-2 bg-blue-500 text-white rounded">
