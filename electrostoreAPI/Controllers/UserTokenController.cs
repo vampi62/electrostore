@@ -20,10 +20,10 @@ namespace electrostore.Controllers
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<IEnumerable<SessionDto>>> GetSessions([FromRoute] int id_user, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
-            [FromQuery] bool showRevoked = false, [FromQuery] bool showExpired = false)
+            [FromQuery] bool show_revoked = false, [FromQuery] bool show_expired = false)
         {
-            var sessions = await _jwiService.GetTokenSessionsByUserId(id_user, limit, offset, showRevoked, showExpired);
-            var CountList = await _jwiService.GetTokenSessionsCountByUserId(id_user);
+            var sessions = await _jwiService.GetTokenSessionsByUserId(id_user, limit, offset, show_revoked, show_expired);
+            var CountList = await _jwiService.GetTokenSessionsCountByUserId(id_user, show_revoked, show_expired);
             Response.Headers.Add("X-Total-Count", CountList.ToString());
             Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
             return Ok(sessions);
@@ -32,9 +32,9 @@ namespace electrostore.Controllers
         [HttpGet("{session_id}")]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<SessionDto>> GetSessionById([FromRoute] int id_user, [FromRoute] string session_id,
-            [FromQuery] bool showRevoked = false, [FromQuery] bool showExpired = false)
+            [FromQuery] bool show_revoked = false, [FromQuery] bool show_expired = false)
         {
-            var session = await _jwiService.GetTokenSessionById(session_id, id_user, showRevoked, showExpired);
+            var session = await _jwiService.GetTokenSessionById(session_id, id_user, show_revoked, show_expired);
             return Ok(session);
         }
 

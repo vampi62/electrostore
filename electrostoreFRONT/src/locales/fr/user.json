@@ -50,6 +50,7 @@
 	"VUserCommandsCommentaires": "Commentaires des commandes de l'utilisateur",
 	"VUserProjetsCommentaires": "Commentaires des projets de l'utilisateur",
 	"VUserTokens": "Jetons d'utilisateur",
+	"VUserShowExpiredAndRevokedTokens": "Afficher les jetons expirés et révoqués",
 	"VUserTokenCreatedDate": "Date de connexion",
 	"VUserTokenLastLoginDate": "Dernière connexion",
 	"VUserTokenCreatedIP": "IP connexion",

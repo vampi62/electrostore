@@ -12,7 +12,7 @@ const { t } = useI18n();
 
 import { useRoute } from "vue-router";
 const route = useRoute();
-let projetId = route.params.id;
+const projetId = ref(route.params.id);
 
 import { getExtension } from "@/utils";
 
@@ -24,29 +24,29 @@ const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
-	if (projetId !== "new") {
+	if (projetId.value !== "new") {
 		projetsStore.projetEdition = {
 			loading: true,
 		};
 		try {
-			await projetsStore.getProjetById(projetId);
+			await projetsStore.getProjetById(projetId.value);
 		} catch {
-			delete projetsStore.projets[projetId];
+			delete projetsStore.projets[projetId.value];
 			addNotification({ message: "projet.VProjetNotFound", type: "error", i18n: true });
 			router.push("/projets");
 			return;
 		}
-		projetsStore.getCommentaireByInterval(projetId, 100, 0, ["user"]);
-		projetsStore.getDocumentByInterval(projetId, 100, 0);
-		projetsStore.getItemByInterval(projetId, 100, 0, ["item"]);
+		projetsStore.getCommentaireByInterval(projetId.value, 100, 0, ["user"]);
+		projetsStore.getDocumentByInterval(projetId.value, 100, 0);
+		projetsStore.getItemByInterval(projetId.value, 100, 0, ["item"]);
 		projetsStore.projetEdition = {
 			loading: false,
-			nom_projet: projetsStore.projets[projetId].nom_projet,
-			description_projet: projetsStore.projets[projetId].description_projet,
-			url_projet: projetsStore.projets[projetId].url_projet,
-			status_projet: projetsStore.projets[projetId].status_projet,
-			date_debut_projet: projetsStore.projets[projetId].date_debut_projet,
-			date_fin_projet: projetsStore.projets[projetId].date_fin_projet,
+			nom_projet: projetsStore.projets[projetId.value].nom_projet,
+			description_projet: projetsStore.projets[projetId.value].description_projet,
+			url_projet: projetsStore.projets[projetId.value].url_projet,
+			status_projet: projetsStore.projets[projetId.value].status_projet,
+			date_debut_projet: projetsStore.projets[projetId.value].date_debut_projet,
+			date_fin_projet: projetsStore.projets[projetId.value].date_fin_projet,
 		};
 		usersStore.users[authStore.user.id_user] = authStore.user; // avoids undefined user when the current user posts first comment
 	} else {
@@ -70,8 +70,8 @@ const projetTypeStatus = ref([["En attente", t("projet.VProjetStatus1")], ["En c
 const projetSave = async() => {
 	try {
 		createSchema().validateSync(projetsStore.projetEdition, { abortEarly: false });
-		if (projetId !== "new") {
-			await projetsStore.updateProjet(projetId, { ...projetsStore.projetEdition });
+		if (projetId.value !== "new") {
+			await projetsStore.updateProjet(projetId.value, { ...projetsStore.projetEdition });
 			addNotification({ message: "projet.VProjetUpdated", type: "success", i18n: true });
 		} else {
 			await projetsStore.createProjet({ ...projetsStore.projetEdition });
@@ -87,14 +87,14 @@ const projetSave = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
-	if (projetId === "new") {
-		projetId = String(projetsStore.projetEdition.id_projet);
-		router.push("/projets/" + projetId);
+	if (projetId.value === "new") {
+		projetId.value = String(projetsStore.projetEdition.id_projet);
+		router.push("/projets/" + projetId.value);
 	}
 };
 const projetDelete = async() => {
 	try {
-		await projetsStore.deleteProjet(projetId);
+		await projetsStore.deleteProjet(projetId.value);
 		addNotification({ message: "projet.VProjetDeleted", type: "success", i18n: true });
 		router.push("/projets");
 	} catch (e) {
@@ -118,8 +118,9 @@ const documentDeleteOpenModal = (doc) => {
 const documentAdd = async() => {
 	try {
 		schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
-		await projetsStore.createDocument(projetId, documentModalData.value);
+		await projetsStore.createDocument(projetId.value, documentModalData.value);
 		addNotification({ message: "projet.VProjetDocumentAdded", type: "success", i18n: true });
+		documentAddModalShow.value = false;
 	} catch (e) {
 		if (e.inner) {
 			e.inner.forEach((error) => {
@@ -130,12 +131,11 @@ const documentAdd = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
-	documentAddModalShow.value = false;
 };
 const documentEdit = async(row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
-		await projetsStore.updateDocument(projetId, row.id_projet_document, row);
+		await projetsStore.updateDocument(projetId.value, row.id_projet_document, row);
 		addNotification({ message: "projet.VProjetDocumentUpdated", type: "success", i18n: true });
 	} catch (e) {
 		if (e.inner) {
@@ -150,7 +150,7 @@ const documentEdit = async(row) => {
 };
 const documentDelete = async() => {
 	try {
-		await projetsStore.deleteDocument(projetId, documentModalData.value.id_projet_document);
+		await projetsStore.deleteDocument(projetId.value, documentModalData.value.id_projet_document);
 		addNotification({ message: "projet.VProjetDocumentDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -161,7 +161,7 @@ const handleFileUpload = (e) => {
 	documentModalData.value.document = e.target.files[0];
 };
 const documentDownload = async(fileContent) => {
-	const file = await projetsStore.downloadDocument(projetId, fileContent.id_projet_document);
+	const file = await projetsStore.downloadDocument(projetId.value, fileContent.id_projet_document);
 	const url = window.URL.createObjectURL(new Blob([file]));
 	const link = document.createElement("a");
 	link.href = url;
@@ -171,7 +171,7 @@ const documentDownload = async(fileContent) => {
 	document.body.removeChild(link);
 };
 const documentView = async(fileContent) => {
-	const file = await projetsStore.downloadDocument(projetId, fileContent.id_projet_document);
+	const file = await projetsStore.downloadDocument(projetId.value, fileContent.id_projet_document);
 	const blob = new Blob([file], { type: fileContent.type_projet_document });
 	const url = window.URL.createObjectURL(blob);
 
@@ -182,7 +182,7 @@ const documentView = async(fileContent) => {
 		// Télécharger automatiquement pour les formats éditables
 		const a = document.createElement("a");
 		a.href = url;
-		a.download = fileContent.name || `document.${fileContent.type_projet_document}`;
+		a.download = fileContent.name || `document.${getExtension(fileContent.type_projet_document)}`;
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
@@ -210,10 +210,10 @@ async function fetchAllItems() {
 	itemLoaded.value = true;
 }
 const itemSave = async(item) => {
-	if (projetsStore.items[projetId][item.id_item]) {
+	if (projetsStore.items[projetId.value][item.id_item]) {
 		try {
 			schemaItem.validateSync(item.tmp, { abortEarly: false });
-			await projetsStore.updateItem(projetId, item.tmp.id_item, item.tmp);
+			await projetsStore.updateItem(projetId.value, item.tmp.id_item, item.tmp);
 			addNotification({ message: "projet.VProjetItemUpdated", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
@@ -229,7 +229,7 @@ const itemSave = async(item) => {
 	} else {
 		try {
 			schemaItem.validateSync(item.tmp, { abortEarly: false });
-			await projetsStore.createItem(projetId, item.tmp);
+			await projetsStore.createItem(projetId.value, item.tmp);
 			addNotification({ message: "projet.VProjetItemAdded", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
@@ -246,7 +246,7 @@ const itemSave = async(item) => {
 };
 const itemDelete = async(item) => {
 	try {
-		await projetsStore.deleteItem(projetId, item.id_item);
+		await projetsStore.deleteItem(projetId.value, item.id_item);
 		addNotification({ message: "projet.VProjetItemDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
