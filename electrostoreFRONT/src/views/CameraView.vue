@@ -11,7 +11,7 @@ const { t } = useI18n();
 
 import { useRoute } from "vue-router";
 const route = useRoute();
-let cameraId = route.params.id;
+const cameraId = ref(route.params.id);
 
 import { useConfigsStore, useCamerasStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -19,31 +19,31 @@ const camerasStore = useCamerasStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
-	if (cameraId !== "new") {
+	if (cameraId.value !== "new") {
 		camerasStore.cameraEdition = {
 			loading: true,
 		};
 		try {
-			await camerasStore.getCameraById(cameraId);
+			await camerasStore.getCameraById(cameraId.value);
 		} catch {
-			delete camerasStore.cameras[cameraId];
+			delete camerasStore.cameras[cameraId.value];
 			addNotification({ message: "camera.VCameraNotFound", type: "error", i18n: true });
 			router.push("/cameras");
 			return;
 		}
 		intervalRefreshStatus = setInterval(() => {
-			camerasStore.getStatus(cameraId);
+			camerasStore.getStatus(cameraId.value);
 		}, 15000);
-		camerasStore.getStatus(cameraId);
-		camerasStore.getStream(cameraId);
+		camerasStore.getStatus(cameraId.value);
+		camerasStore.getStream(cameraId.value);
 		camerasStore.cameraEdition = {
 			loading: false,
-			nom_camera: camerasStore.cameras[cameraId].nom_camera,
-			url_camera: camerasStore.cameras[cameraId].url_camera,
-			user_camera: camerasStore.cameras[cameraId].user_camera,
-			mdp_camera: camerasStore.cameras[cameraId].mdp_camera,
+			nom_camera: camerasStore.cameras[cameraId.value].nom_camera,
+			url_camera: camerasStore.cameras[cameraId.value].url_camera,
+			user_camera: camerasStore.cameras[cameraId.value].user_camera,
+			mdp_camera: camerasStore.cameras[cameraId.value].mdp_camera,
 		};
-		isChecked.value = (camerasStore.cameras[cameraId].user_camera !== "") || (camerasStore.cameras[cameraId].mdp_camera !== "");
+		isChecked.value = (camerasStore.cameras[cameraId.value].user_camera !== "") || (camerasStore.cameras[cameraId.value].mdp_camera !== "");
 	} else {
 		camerasStore.cameraEdition = {
 			loading: false,
@@ -57,8 +57,8 @@ onBeforeUnmount(() => {
 	if (intervalRefreshStatus) {
 		clearInterval(intervalRefreshStatus);
 	}
-	if (camerasStore.stream[cameraId]) {
-		delete camerasStore.stream[cameraId];
+	if (camerasStore.stream[cameraId.value]) {
+		delete camerasStore.stream[cameraId.value];
 	}
 	camerasStore.cameraEdition = {
 		loading: false,
@@ -74,10 +74,10 @@ const cameraSave = async() => {
 	}
 	try {
 		createSchema(isChecked).validateSync(camerasStore.cameraEdition, { abortEarly: false });
-		if (cameraId !== "new") {
-			await camerasStore.updateCamera(cameraId, { ...camerasStore.cameraEdition });
-			camerasStore.getStatus(cameraId);
-			camerasStore.getStream(cameraId);
+		if (cameraId.value !== "new") {
+			await camerasStore.updateCamera(cameraId.value, { ...camerasStore.cameraEdition });
+			camerasStore.getStatus(cameraId.value);
+			camerasStore.getStream(cameraId.value);
 			addNotification({ message: "camera.VCameraUpdated", type: "success", i18n: true });
 		} else {
 			await camerasStore.createCamera({ ...camerasStore.cameraEdition } );
@@ -93,14 +93,14 @@ const cameraSave = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
-	if (cameraId === "new") {
-		cameraId = String(camerasStore.cameraEdition.id_camera);
-		router.push("/cameras/" + cameraId);
+	if (cameraId.value === "new") {
+		cameraId.value = String(camerasStore.cameraEdition.id_camera);
+		router.push("/cameras/" + cameraId.value);
 	}
 };
 const cameraDelete = async() => {
 	try {
-		await camerasStore.deleteCamera(cameraId);
+		await camerasStore.deleteCamera(cameraId.value);
 		addNotification({ message: "camera.VCameraDeleted", type: "success", i18n: true });
 		router.push("/cameras");
 	} catch (e) {

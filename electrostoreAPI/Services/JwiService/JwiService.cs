@@ -187,10 +187,12 @@ public class JwiService : IJwiService
         return sessions;
     }
 
-    public async Task<int> GetTokenSessionsCountByUserId(int userId)
+    public async Task<int> GetTokenSessionsCountByUserId(int userId, bool showRevoked = false, bool showExpired = false)
     {
         var count = await _context.JwiRefreshTokens
-            .Where(jwi => jwi.id_user == userId && !jwi.is_revoked && jwi.expires_at > DateTime.UtcNow)
+            .Where(jwi => jwi.id_user == userId &&
+                (showRevoked || !jwi.is_revoked) &&
+                (showExpired || jwi.expires_at > DateTime.UtcNow))
             .GroupBy(jwi => jwi.session_id)
             .CountAsync();
         return count;

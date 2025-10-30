@@ -11,7 +11,7 @@ const { t } = useI18n();
 
 import { useRoute } from "vue-router";
 const route = useRoute();
-let storeId = route.params.id;
+const storeId = ref(route.params.id);
 
 import { useConfigsStore, useStoresStore, useTagsStore, useItemsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -21,46 +21,46 @@ const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
-	if (storeId !== "new") {
-		storesStore.storeEdition[storeId] = {
+	if (storeId.value !== "new") {
+		storesStore.storeEdition[storeId.value] = {
 			loading: true,
 		};
 		try {
-			await storesStore.getStoreById(storeId, ["boxs", "leds"]);
+			await storesStore.getStoreById(storeId.value, ["boxs", "leds"]);
 		} catch {
-			delete storesStore.stores[storeId];
+			delete storesStore.stores[storeId.value];
 			addNotification({ message: "store.VStoreNotFound", type: "error", i18n: true });
 			router.push("/stores");
 			return;
 		}
-		storesStore.getTagStoreByInterval(storeId, 100, 0, ["tag"]);
-		storesStore.storeEdition[storeId] = {
+		storesStore.getTagStoreByInterval(storeId.value, 100, 0, ["tag"]);
+		storesStore.storeEdition[storeId.value] = {
 			loading: false,
-			id_store: storesStore.stores[storeId].id_store,
-			nom_store: storesStore.stores[storeId].nom_store,
-			mqtt_name_store: storesStore.stores[storeId].mqtt_name_store,
-			xlength_store: storesStore.stores[storeId].xlength_store,
-			ylength_store: storesStore.stores[storeId].ylength_store,
+			id_store: storesStore.stores[storeId.value].id_store,
+			nom_store: storesStore.stores[storeId.value].nom_store,
+			mqtt_name_store: storesStore.stores[storeId.value].mqtt_name_store,
+			xlength_store: storesStore.stores[storeId.value].xlength_store,
+			ylength_store: storesStore.stores[storeId.value].ylength_store,
 		};
-		storesStore.ledEdition[storeId] = { ...storesStore.leds[storeId] };
-		storesStore.boxEdition[storeId] = { ...storesStore.boxs[storeId] };
+		storesStore.ledEdition[storeId.value] = { ...storesStore.leds[storeId.value] };
+		storesStore.boxEdition[storeId.value] = { ...storesStore.boxs[storeId.value] };
 	} else {
-		storesStore.storeEdition[storeId] = {
+		storesStore.storeEdition[storeId.value] = {
 			loading: false,
 		};
-		storesStore.ledEdition[storeId] = {};
-		storesStore.boxEdition[storeId] = {};
+		storesStore.ledEdition[storeId.value] = {};
+		storesStore.boxEdition[storeId.value] = {};
 	}
 }
 onMounted(() => {
 	fetchAllData();
 });
 onBeforeUnmount(() => {
-	storesStore.storeEdition[storeId] = {
+	storesStore.storeEdition[storeId.value] = {
 		loading: false,
 	};
-	storesStore.ledEdition[storeId] = {};
-	storesStore.boxEdition[storeId] = {};
+	storesStore.ledEdition[storeId.value] = {};
+	storesStore.boxEdition[storeId.value] = {};
 });
 
 // store
@@ -68,69 +68,69 @@ const storeGrid = ref(null);
 const storeDeleteModalShow = ref(false);
 const storeSave = async() => {
 	try {
-		createSchema().validateSync(storesStore.storeEdition[storeId], { abortEarly: false });
+		createSchema().validateSync(storesStore.storeEdition[storeId.value], { abortEarly: false });
 		if (!storeGrid.value.checkOutOfGrid()) {
 			return;
 		}
-		if (storeId !== "new") {
-			await storesStore.updateStoreComplete(storeId, { 
-				store: storesStore.storeEdition[storeId],
-				leds: Object.values(storesStore.ledEdition[storeId]),
-				boxs: Object.values(storesStore.boxEdition[storeId]),
+		if (storeId.value !== "new") {
+			await storesStore.updateStoreComplete(storeId.value, { 
+				store: storesStore.storeEdition[storeId.value],
+				leds: Object.values(storesStore.ledEdition[storeId.value]),
+				boxs: Object.values(storesStore.boxEdition[storeId.value]),
 			});
 			addNotification({ message: "store.VStoreUpdated", type: "success", i18n: true });
-			await storesStore.getStoreById(storeId, ["boxs", "leds"]);
-			storesStore.storeEdition[storeId] = {
+			await storesStore.getStoreById(storeId.value, ["boxs", "leds"]);
+			storesStore.storeEdition[storeId.value] = {
 				loading: false,
-				id_store: storesStore.stores[storeId].id_store,
-				nom_store: storesStore.stores[storeId].nom_store,
-				mqtt_name_store: storesStore.stores[storeId].mqtt_name_store,
-				xlength_store: storesStore.stores[storeId].xlength_store,
-				ylength_store: storesStore.stores[storeId].ylength_store,
+				id_store: storesStore.stores[storeId.value].id_store,
+				nom_store: storesStore.stores[storeId.value].nom_store,
+				mqtt_name_store: storesStore.stores[storeId.value].mqtt_name_store,
+				xlength_store: storesStore.stores[storeId.value].xlength_store,
+				ylength_store: storesStore.stores[storeId.value].ylength_store,
 			};
-			storesStore.ledEdition[storeId] = { ...storesStore.leds[storeId] };
-			storesStore.boxEdition[storeId] = { ...storesStore.boxs[storeId] };
+			storesStore.ledEdition[storeId.value] = { ...storesStore.leds[storeId.value] };
+			storesStore.boxEdition[storeId.value] = { ...storesStore.boxs[storeId.value] };
 		} else {
-			await storesStore.createStoreComplete(storeId, { 
-				store: storesStore.storeEdition[storeId],
-				leds: Object.values(storesStore.ledEdition[storeId]),
-				boxs: Object.values(storesStore.boxEdition[storeId]),
+			await storesStore.createStoreComplete(storeId.value, { 
+				store: storesStore.storeEdition[storeId.value],
+				leds: Object.values(storesStore.ledEdition[storeId.value]),
+				boxs: Object.values(storesStore.boxEdition[storeId.value]),
 			});
 			addNotification({ message: "store.VStoreCreated", type: "success", i18n: true });
 		}
-		storesStore.storeEdition[storeId].loading = false;
+		storesStore.storeEdition[storeId.value].loading = false;
 	} catch (e) {
 		if (e.inner) {
 			e.inner.forEach((error) => {
 				addNotification({ message: error.message, type: "error", i18n: false });
 			});
-			storesStore.storeEdition[storeId].loading = false;
+			storesStore.storeEdition[storeId.value].loading = false;
 			return;
 		}
 		addNotification({ message: e, type: "error", i18n: false });
-		storesStore.storeEdition[storeId].loading = false;
+		storesStore.storeEdition[storeId.value].loading = false;
 		return;
 	}
-	if (storeId === "new") {
-		storeId = String(storesStore.storeEdition[storeId].store.id_store);
-		router.push("/stores/" + storeId);
+	if (storeId.value === "new") {
+		storeId.value = String(storesStore.storeEdition[storeId.value].store.id_store);
+		router.push("/stores/" + storeId.value);
 		// reload the store data
-		await storesStore.getStoreById(storesStore.storeEdition[storeId].store.id_store, ["boxs", "leds"]);
-		storesStore.ledEdition[storeId] = { ...storesStore.leds[storesStore.storeEdition[storeId].store.id_store] };
-		storesStore.boxEdition[storeId] = { ...storesStore.boxs[storesStore.storeEdition[storeId].store.id_store] };
-		storesStore.storeEdition[storeId] = {
+		await storesStore.getStoreById(storesStore.storeEdition[storeId.value].store.id_store, ["boxs", "leds"]);
+		storesStore.ledEdition[storeId.value] = { ...storesStore.leds[storesStore.storeEdition[storeId.value].store.id_store] };
+		storesStore.boxEdition[storeId.value] = { ...storesStore.boxs[storesStore.storeEdition[storeId.value].store.id_store] };
+		storesStore.storeEdition[storeId.value] = {
 			loading: false,
-			id_store: storesStore.storeEdition[storeId].store.id_store,
-			nom_store: storesStore.storeEdition[storeId].store.nom_store,
-			mqtt_name_store: storesStore.storeEdition[storeId].store.mqtt_name_store,
-			xlength_store: storesStore.storeEdition[storeId].store.xlength_store,
-			ylength_store: storesStore.storeEdition[storeId].store.ylength_store,
+			id_store: storesStore.storeEdition[storeId.value].store.id_store,
+			nom_store: storesStore.storeEdition[storeId.value].store.nom_store,
+			mqtt_name_store: storesStore.storeEdition[storeId.value].store.mqtt_name_store,
+			xlength_store: storesStore.storeEdition[storeId.value].store.xlength_store,
+			ylength_store: storesStore.storeEdition[storeId.value].store.ylength_store,
 		};
 	}
 };
 const storeDelete = async() => {
 	try {
-		await storesStore.deleteStore(storeId);
+		await storesStore.deleteStore(storeId.value);
 		addNotification({ message: "store.VStoreDeleted", type: "success", i18n: true });
 		router.push("/stores");
 	} catch (e) {
@@ -179,7 +179,7 @@ const showBoxContent = async(idBox) => {
 		let offset = 0;
 		const limit = 100;
 		do {
-			await storesStore.getBoxItemByInterval(storeId, idBox, limit, offset, ["item"]);
+			await storesStore.getBoxItemByInterval(storeId.value, idBox, limit, offset, ["item"]);
 			offset += limit;
 		} while (offset < storesStore.boxItemsTotalCount[idBox]);
 		for (const item of Object.values(itemsStore.items)) {
@@ -212,7 +212,7 @@ const itemSave = async(item) => {
 	if (storesStore.boxItems[boxId.value][item.id_item]) {
 		try {
 			schemaItem.validateSync(item.tmp, { abortEarly: false });
-			await storesStore.updateBoxItem(storeId, boxId.value, item.tmp.id_item, item.tmp);
+			await storesStore.updateBoxItem(storeId.value, boxId.value, item.tmp.id_item, item.tmp);
 			addNotification({ message: "store.VStoreItemUpdated", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
@@ -222,7 +222,7 @@ const itemSave = async(item) => {
 	} else {
 		try {
 			schemaItem.validateSync(item.tmp, { abortEarly: false });
-			await storesStore.createBoxItem(storeId, boxId.value, item.tmp);
+			await storesStore.createBoxItem(storeId.value, boxId.value, item.tmp);
 			addNotification({ message: "store.VStoreItemAdded", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
@@ -233,7 +233,7 @@ const itemSave = async(item) => {
 };
 const itemDelete = async(item) => {
 	try {
-		await storesStore.deleteBoxItem(storeId, boxId.value, item.id_item);
+		await storesStore.deleteBoxItem(storeId.value, boxId.value, item.id_item);
 		addNotification({ message: "store.VStoreItemDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -277,7 +277,7 @@ async function fetchAllTags() {
 
 function tagSave(id_tag) {
 	try {
-		storesStore.createTagStore(storeId,  { id_tag: id_tag });
+		storesStore.createTagStore(storeId.value,  { id_tag: id_tag });
 		addNotification({ message: "store.VStoreTagAdded", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -285,7 +285,7 @@ function tagSave(id_tag) {
 }
 function tagDelete(id_tag) {
 	try {
-		storesStore.deleteTagStore(storeId, id_tag);
+		storesStore.deleteTagStore(storeId.value, id_tag);
 		addNotification({ message: "store.VStoreTagDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });

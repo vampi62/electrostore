@@ -11,7 +11,7 @@ import * as Yup from "yup";
 
 import { useRoute } from "vue-router";
 const route = useRoute();
-let tagId = route.params.id;
+const tagId = ref(route.params.id);
 
 import { useConfigsStore, useTagsStore, useStoresStore, useItemsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -21,25 +21,25 @@ const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
-	if (tagId !== "new") {
+	if (tagId.value !== "new") {
 		tagsStore.tagEdition = {
 			loading: true,
 		};
 		try {
-			await tagsStore.getTagById(tagId);
+			await tagsStore.getTagById(tagId.value);
 		} catch {
-			delete tagsStore.tags[tagId];
+			delete tagsStore.tags[tagId.value];
 			addNotification({ message: "tag.VTagNotFound", type: "error", i18n: true });
 			router.push("/tags");
 			return;
 		}
-		tagsStore.getTagItemByInterval(tagId, 100, 0, ["item"]);
-		tagsStore.getTagStoreByInterval(tagId, 100, 0, ["store"]);
-		tagsStore.getTagBoxByInterval(tagId, 100, 0, ["box"]);
+		tagsStore.getTagItemByInterval(tagId.value, 100, 0, ["item"]);
+		tagsStore.getTagStoreByInterval(tagId.value, 100, 0, ["store"]);
+		tagsStore.getTagBoxByInterval(tagId.value, 100, 0, ["box"]);
 		tagsStore.tagEdition = {
 			loading: false,
-			nom_tag: tagsStore.tags[tagId].nom_tag,
-			poids_tag: tagsStore.tags[tagId].poids_tag,
+			nom_tag: tagsStore.tags[tagId.value].nom_tag,
+			poids_tag: tagsStore.tags[tagId.value].poids_tag,
 		};
 	} else {
 		tagsStore.tagEdition = {
@@ -60,8 +60,8 @@ const tagDeleteModalShow = ref(false);
 const tagSave = async() => {
 	try {
 		createSchema().validateSync(tagsStore.tagEdition, { abortEarly: false });
-		if (tagId !== "new") {
-			await tagsStore.updateTag(tagId, { ...tagsStore.tagEdition });
+		if (tagId.value !== "new") {
+			await tagsStore.updateTag(tagId.value, { ...tagsStore.tagEdition });
 			addNotification({ message: "tag.VTagUpdated", type: "success", i18n: true });
 		} else {
 			await tagsStore.createTag({ ...tagsStore.tagEdition });
@@ -77,14 +77,14 @@ const tagSave = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
-	if (tagId === "new") {
-		tagId = String(tagsStore.tagEdition.id_tag);
-		router.push("/tags/" + tagId);
+	if (tagId.value === "new") {
+		tagId.value = String(tagsStore.tagEdition.id_tag);
+		router.push("/tags/" + tagId.value);
 	}
 };
 const tagDelete = async() => {
 	try {
-		await tagsStore.deleteTag(tagId);
+		await tagsStore.deleteTag(tagId.value);
 		addNotification({ message: "tag.VTagDeleted", type: "success", i18n: true });
 		router.push("/tags");
 	} catch (e) {
@@ -113,7 +113,7 @@ async function fetchAllItems() {
 }
 const itemSave = async(item) => {
 	try {
-		await tagsStore.createTagItem(tagId, item);
+		await tagsStore.createTagItem(tagId.value, item);
 		addNotification({ message: "tag.VTagItemAdded", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -122,7 +122,7 @@ const itemSave = async(item) => {
 };
 const itemDelete = async(item) => {
 	try {
-		await tagsStore.deleteTagItem(tagId, item.id_item);
+		await tagsStore.deleteTagItem(tagId.value, item.id_item);
 		addNotification({ message: "tag.VTagItemDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -157,7 +157,7 @@ async function fetchAllStores() {
 }
 const storeSave = async(store) => {
 	try {
-		await tagsStore.createTagStore(tagId, store);
+		await tagsStore.createTagStore(tagId.value, store);
 		addNotification({ message: "tag.VTagStoreAdded", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -166,7 +166,7 @@ const storeSave = async(store) => {
 };
 const storeDelete = async(store) => {
 	try {
-		await tagsStore.deleteTagStore(tagId, store.id_store);
+		await tagsStore.deleteTagStore(tagId.value, store.id_store);
 		addNotification({ message: "tag.VTagStoreDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -185,7 +185,7 @@ const filterStore = ref([
 const boxModalShow = ref(false);
 const boxSave = async(box) => {
 	try {
-		await tagsStore.createTagBox(tagId, box);
+		await tagsStore.createTagBox(tagId.value, box);
 		addNotification({ message: "tag.VTagBoxAdded", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -194,7 +194,7 @@ const boxSave = async(box) => {
 };
 const boxDelete = async(box) => {
 	try {
-		await tagsStore.deleteTagBox(tagId, box.id_box);
+		await tagsStore.deleteTagBox(tagId.value, box.id_box);
 		addNotification({ message: "tag.VTagBoxDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });

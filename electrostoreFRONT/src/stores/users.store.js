@@ -291,10 +291,10 @@ export const useUsersStore = defineStore("users",{
 			this.commandCommentaireEdition = {};
 		},
 
-		async getTokenByInterval(idUser, limit = 100, offset = 0) {
+		async getTokenByInterval(idUser, limit = 100, offset = 0, showExpired = false, showRevoked = false) {
 			this.tokensLoading = true;
 			let newTokenList = await fetchWrapper.get({
-				url: `${baseUrl}/user/${idUser}/sessions?limit=${limit}&offset=${offset}`,
+				url: `${baseUrl}/user/${idUser}/sessions?limit=${limit}&offset=${offset}&show_expired=${showExpired}&show_revoked=${showRevoked}`,
 				useToken: "access",
 			});
 			if (!this.tokens[idUser]) {

@@ -12,7 +12,7 @@ const { t } = useI18n();
 
 import { useRoute } from "vue-router";
 const route = useRoute();
-let itemId = route.params.id;
+const itemId = ref(route.params.id);
 
 import { getExtension } from "@/utils";
 
@@ -26,32 +26,32 @@ const projetsStore = useProjetsStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
-	if (itemId !== "new") {
+	if (itemId.value !== "new") {
 		itemsStore.itemEdition = {
 			loading: true,
 		};
 		try {
-			await itemsStore.getItemById(itemId);
+			await itemsStore.getItemById(itemId.value);
 		} catch {
-			delete itemsStore.items[itemId];
+			delete itemsStore.items[itemId.value];
 			addNotification({ message: "item.VItemNotFound", type: "error", i18n: true });
 			router.push("/inventory");
 			return;
 		}
-		itemsStore.getItemBoxByInterval(itemId, 100, 0, ["box"]);
-		itemsStore.getItemTagByInterval(itemId, 100, 0, ["tag"]);
-		itemsStore.getDocumentByInterval(itemId, 100, 0);
-		itemsStore.getItemCommandByInterval(itemId, 100, 0, ["command"]);
-		itemsStore.getItemProjetByInterval(itemId, 100, 0, ["projet"]);
-		itemsStore.getImageByInterval(itemId, 100, 0);
+		itemsStore.getItemBoxByInterval(itemId.value, 100, 0, ["box"]);
+		itemsStore.getItemTagByInterval(itemId.value, 100, 0, ["tag"]);
+		itemsStore.getDocumentByInterval(itemId.value, 100, 0);
+		itemsStore.getItemCommandByInterval(itemId.value, 100, 0, ["command"]);
+		itemsStore.getItemProjetByInterval(itemId.value, 100, 0, ["projet"]);
+		itemsStore.getImageByInterval(itemId.value, 100, 0);
 		itemsStore.itemEdition = {
 			loading: false,
-			id_item: itemsStore.items[itemId].id_item,
-			reference_name_item: itemsStore.items[itemId].reference_name_item,
-			friendly_name_item: itemsStore.items[itemId].friendly_name_item,
-			description_item: itemsStore.items[itemId].description_item,
-			seuil_min_item: itemsStore.items[itemId].seuil_min_item,
-			id_img: itemsStore.items[itemId].id_img,
+			id_item: itemsStore.items[itemId.value].id_item,
+			reference_name_item: itemsStore.items[itemId.value].reference_name_item,
+			friendly_name_item: itemsStore.items[itemId.value].friendly_name_item,
+			description_item: itemsStore.items[itemId.value].description_item,
+			seuil_min_item: itemsStore.items[itemId.value].seuil_min_item,
+			id_img: itemsStore.items[itemId.value].id_img,
 		};
 	} else {
 		itemsStore.itemEdition = {
@@ -69,7 +69,7 @@ onBeforeUnmount(() => {
 });
 
 const toggleBoxLed = async(boxId) => {
-	let storeId = itemsStore.itemBoxs[itemId][boxId]["box"].id_store;
+	let storeId = itemsStore.itemBoxs[itemId.value][boxId]["box"].id_store;
 	try {
 		await storesStore.showBoxById(storeId, boxId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
 		addNotification({ message: "item.VItemBoxShowSuccess", type: "success", i18n: true });
@@ -83,8 +83,8 @@ const itemDeleteModalShow = ref(false);
 const itemSave = async() => {
 	try {
 		createSchema().validateSync(itemsStore.itemEdition, { abortEarly: false });
-		if (itemId !== "new") {
-			await itemsStore.updateItem(itemId, { ...itemsStore.itemEdition });
+		if (itemId.value !== "new") {
+			await itemsStore.updateItem(itemId.value, { ...itemsStore.itemEdition });
 			addNotification({ message: "item.VItemUpdated", type: "success", i18n: true });
 		} else {
 			await itemsStore.createItem({ ...itemsStore.itemEdition });
@@ -100,14 +100,14 @@ const itemSave = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
-	if (itemId === "new") {
-		itemId = String(itemsStore.itemEdition.id_item);
-		router.push("/inventory/" + itemId);
+	if (itemId.value === "new") {
+		itemId.value = String(itemsStore.itemEdition.id_item);
+		router.push("/inventory/" + itemId.value);
 	}
 };
 const itemDelete = async() => {
 	try {
-		await itemsStore.deleteItem(itemId);
+		await itemsStore.deleteItem(itemId.value);
 		addNotification({ message: "item.VItemDeleted", type: "success", i18n: true });
 		router.push("/inventory");
 	} catch (e) {
@@ -117,18 +117,18 @@ const itemDelete = async() => {
 };
 
 const getTotalQuantity = computed(() => {
-	if (itemId === "new") {
+	if (itemId.value === "new") {
 		return 0;
 	}
-	return itemsStore.itemBoxs[itemId] ? Object.values(itemsStore.itemBoxs[itemId]).reduce((acc, box) => acc + box.qte_item_box, 0) : 0;
+	return itemsStore.itemBoxs[itemId.value] ? Object.values(itemsStore.itemBoxs[itemId.value]).reduce((acc, box) => acc + box.qte_item_box, 0) : 0;
 });
 
 // box
 const boxSave = async(box) => {
-	if (itemsStore.itemBoxs[itemId][box.id_box]) {
+	if (itemsStore.itemBoxs[itemId.value][box.id_box]) {
 		try {
 			schemaBox.validateSync(box.tmp, { abortEarly: false });
-			await itemsStore.updateItemBox(itemId, box.tmp.id_box, box.tmp);
+			await itemsStore.updateItemBox(itemId.value, box.tmp.id_box, box.tmp);
 			addNotification({ message: "item.VItemBoxUpdated", type: "success", i18n: true });
 			box.tmp = null;
 		} catch (e) {
@@ -144,7 +144,7 @@ const boxSave = async(box) => {
 	} else {
 		try {
 			createSchema().validateSync(box.tmp, { abortEarly: false });
-			await itemsStore.createItemBox(itemId, box.tmp);
+			await itemsStore.createItemBox(itemId.value, box.tmp);
 			addNotification({ message: "item.VItemBoxAdded", type: "success", i18n: true });
 			box.tmp = null;
 		} catch (e) {
@@ -175,8 +175,9 @@ const documentDeleteOpenModal = (doc) => {
 const documentAdd = async() => {
 	try {
 		schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
-		await itemsStore.createDocument(itemId, documentModalData.value);
+		await itemsStore.createDocument(itemId.value, documentModalData.value);
 		addNotification({ message: "item.VItemDocumentAdded", type: "success", i18n: true });
+		documentAddModalShow.value = false;
 	} catch (e) {
 		if (e.inner) {
 			e.inner.forEach((error) => {
@@ -187,12 +188,11 @@ const documentAdd = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
-	documentAddModalShow.value = false;
 };
 const documentEdit = async(row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
-		await itemsStore.updateDocument(itemId, row.id_item_document, row);
+		await itemsStore.updateDocument(itemId.value, row.id_item_document, row);
 		addNotification({ message: "item.VItemDocumentUpdated", type: "success", i18n: true });
 	} catch (e) {
 		if (e.inner) {
@@ -207,7 +207,7 @@ const documentEdit = async(row) => {
 };
 const documentDelete = async() => {
 	try {
-		await itemsStore.deleteDocument(itemId, documentModalData.value.id_item_document);
+		await itemsStore.deleteDocument(itemId.value, documentModalData.value.id_item_document);
 		addNotification({ message: "item.VItemDocumentDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -218,7 +218,7 @@ const handleFileUpload = (e) => {
 	documentModalData.value.document = e.target.files[0];
 };
 const documentDownload = async(fileContent) => {
-	const file = await itemsStore.downloadDocument(itemId, fileContent.id_item_document);
+	const file = await itemsStore.downloadDocument(itemId.value, fileContent.id_item_document);
 	const url = window.URL.createObjectURL(new Blob([file]));
 	const link = document.createElement("a");
 	link.href = url;
@@ -228,7 +228,7 @@ const documentDownload = async(fileContent) => {
 	document.body.removeChild(link);
 };
 const documentView = async(fileContent) => {
-	const file = await itemsStore.downloadDocument(itemId, fileContent.id_item_document);
+	const file = await itemsStore.downloadDocument(itemId.value, fileContent.id_item_document);
 	const blob = new Blob([file], { type: fileContent.type_item_document });
 	const url = window.URL.createObjectURL(blob);
 
@@ -239,7 +239,7 @@ const documentView = async(fileContent) => {
 		// Télécharger automatiquement pour les formats éditables
 		const a = document.createElement("a");
 		a.href = url;
-		a.download = fileContent.name || `document.${fileContent.type_item_document}`;
+		a.download = fileContent.name || `document.${getExtension(fileContent.type_item_document)}`;
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
@@ -255,14 +255,14 @@ const imageDeleteModalShow = ref(false);
 const selectedImageId = ref(null);
 const imageModalData = ref({ id_img: null, nom_img: "", description_img: "undefined", image: null, isEdit: false });
 const imageSelectOpenModal = () => {
-	if (itemId === "new") {
+	if (itemId.value === "new") {
 		return;
 	}
-	if (Object.keys(itemsStore.images[itemId]).length === 0) {
+	if (Object.keys(itemsStore.images[itemId.value]).length === 0) {
 		addNotification({ message: "item.VItemImageEmpty", type: "error", i18n: true });
 		return;
 	}
-	if (itemsStore.images[itemId]) {
+	if (itemsStore.images[itemId.value]) {
 		imageSelectModalShow.value = true;
 	}
 };
@@ -276,16 +276,16 @@ const imageDeleteOpenModal = (doc) => {
 };
 const imageAdd = async() => {
 	try {
-		await itemsStore.createImage(itemId, imageModalData.value);
+		await itemsStore.createImage(itemId.value, imageModalData.value);
 		addNotification({ message: "item.VItemImageAdded", type: "success", i18n: true });
+		imageAddModalShow.value = false;
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
-	imageAddModalShow.value = false;
 };
 const imageDelete = async() => {
 	try {
-		await itemsStore.deleteImage(itemId, imageModalData.value.id_img);
+		await itemsStore.deleteImage(itemId.value, imageModalData.value.id_img);
 		addNotification({ message: "item.VItemImageDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -297,7 +297,7 @@ const handleImageUpload = (e) => {
 };
 const imageDownload = async(imageContent) => {
 	if (!itemsStore.imagesURL[imageContent.id_img]) {
-		await itemsStore.showImageById(itemId, imageContent.id_img);
+		await itemsStore.showImageById(itemId.value, imageContent.id_img);
 	}
 	if (!itemsStore.imagesURL[imageContent.id_img]) {
 		addNotification({ message: "item.VItemImageDownloadError", type: "error", i18n: true });
@@ -341,7 +341,7 @@ async function fetchAllTags() {
 
 function tagSave(id_tag) {
 	try {
-		itemsStore.createItemTag(itemId,  { id_tag: id_tag });
+		itemsStore.createItemTag(itemId.value,  { id_tag: id_tag });
 		addNotification({ message: "item.VItemTagAdded", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -349,7 +349,7 @@ function tagSave(id_tag) {
 }
 function tagDelete(id_tag) {
 	try {
-		itemsStore.deleteItemTag(itemId, id_tag);
+		itemsStore.deleteItemTag(itemId.value, id_tag);
 		addNotification({ message: "item.VItemTagDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });

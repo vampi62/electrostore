@@ -12,7 +12,7 @@ const { t } = useI18n();
 
 import { useRoute } from "vue-router";
 const route = useRoute();
-let commandId = route.params.id;
+const commandId = ref(route.params.id);
 
 import { getExtension } from "@/utils";
 
@@ -24,27 +24,27 @@ const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
-	if (commandId !== "new") {
+	if (commandId.value !== "new") {
 		commandsStore.commandEdition = {
 			loading: true,
 		};
 		try {
-			await commandsStore.getCommandById(commandId);
+			await commandsStore.getCommandById(commandId.value);
 		} catch {
-			delete commandsStore.commands[commandId];
+			delete commandsStore.commands[commandId.value];
 			addNotification({ message: "command.VCommandNotFound", type: "error", i18n: true });
 			router.push("/commands");
 			return;
 		}
-		commandsStore.getCommentaireByInterval(commandId, 100, 0, ["user"]);
-		commandsStore.getDocumentByInterval(commandId, 100, 0);
-		commandsStore.getItemByInterval(commandId, 100, 0, ["item"]);
+		commandsStore.getCommentaireByInterval(commandId.value, 100, 0, ["user"]);
+		commandsStore.getDocumentByInterval(commandId.value, 100, 0);
+		commandsStore.getItemByInterval(commandId.value, 100, 0, ["item"]);
 		commandsStore.commandEdition = {
-			prix_command: commandsStore.commands[commandId].prix_command,
-			url_command: commandsStore.commands[commandId].url_command,
-			status_command: commandsStore.commands[commandId].status_command,
-			date_command: commandsStore.commands[commandId].date_command,
-			date_livraison_command: commandsStore.commands[commandId].date_livraison_command,
+			prix_command: commandsStore.commands[commandId.value].prix_command,
+			url_command: commandsStore.commands[commandId.value].url_command,
+			status_command: commandsStore.commands[commandId.value].status_command,
+			date_command: commandsStore.commands[commandId.value].date_command,
+			date_livraison_command: commandsStore.commands[commandId.value].date_livraison_command,
 			loading: false,
 		};
 		usersStore.users[authStore.user.id_user] = authStore.user; // avoids undefined user when the current user posts first comment
@@ -69,8 +69,8 @@ const commandTypeStatus = ref([["En attente", t("command.VCommandStatus1")], ["E
 const commandSave = async() => {
 	try {
 		createSchema().validateSync(commandsStore.commandEdition, { abortEarly: false });
-		if (commandId !== "new") {
-			await commandsStore.updateCommand(commandId, { ...commandsStore.commandEdition });
+		if (commandId.value !== "new") {
+			await commandsStore.updateCommand(commandId.value, { ...commandsStore.commandEdition });
 			addNotification({ message: "command.VCommandUpdated", type: "success", i18n: true });
 		} else {
 			await commandsStore.createCommand({ ...commandsStore.commandEdition });
@@ -86,14 +86,14 @@ const commandSave = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
-	if (commandId === "new") {
-		commandId = String(commandsStore.commandEdition.id_command);
-		router.push("/commands/" + commandId);
+	if (commandId.value === "new") {
+		commandId.value = String(commandsStore.commandEdition.id_command);
+		router.push("/commands/" + commandId.value);
 	}
 };
 const commandDelete = async() => {
 	try {
-		await commandsStore.deleteCommand(commandId);
+		await commandsStore.deleteCommand(commandId.value);
 		addNotification({ message: "command.VCommandDeleted", type: "success", i18n: true });
 		router.push("/commands");
 	} catch (e) {
@@ -117,8 +117,9 @@ const documentDeleteOpenModal = (doc) => {
 const documentAdd = async() => {
 	try {
 		schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
-		await commandsStore.createDocument(commandId, documentModalData.value);
+		await commandsStore.createDocument(commandId.value, documentModalData.value);
 		addNotification({ message: "command.VCommandDocumentAdded", type: "success", i18n: true });
+		documentAddModalShow.value = false;
 	} catch (e) {
 		if (e.inner) {
 			e.inner.forEach((error) => {
@@ -129,12 +130,11 @@ const documentAdd = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
-	documentAddModalShow.value = false;
 };
 const documentEdit = async(row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
-		await commandsStore.updateDocument(commandId, row.id_command_document, row);
+		await commandsStore.updateDocument(commandId.value, row.id_command_document, row);
 		addNotification({ message: "command.VCommandDocumentUpdated", type: "success", i18n: true });
 	} catch (e) {
 		if (e.inner) {
@@ -148,7 +148,7 @@ const documentEdit = async(row) => {
 };
 const documentDelete = async() => {
 	try {
-		await commandsStore.deleteDocument(commandId, documentModalData.value.id_command_document);
+		await commandsStore.deleteDocument(commandId.value, documentModalData.value.id_command_document);
 		addNotification({ message: "command.VCommandDocumentDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -159,7 +159,7 @@ const handleFileUpload = (e) => {
 	documentModalData.value.document = e.target.files[0];
 };
 const documentDownload = async(fileContent) => {
-	const file = await commandsStore.downloadDocument(commandId, fileContent.id_command_document);
+	const file = await commandsStore.downloadDocument(commandId.value, fileContent.id_command_document);
 	const url = window.URL.createObjectURL(new Blob([file]));
 	const link = document.createElement("a");
 	link.href = url;
@@ -169,7 +169,7 @@ const documentDownload = async(fileContent) => {
 	document.body.removeChild(link);
 };
 const documentView = async(fileContent) => {
-	const file = await commandsStore.downloadDocument(commandId, fileContent.id_command_document);
+	const file = await commandsStore.downloadDocument(commandId.value, fileContent.id_command_document);
 	const blob = new Blob([file], { type: fileContent.type_command_document });
 	const url = window.URL.createObjectURL(blob);
 
@@ -180,7 +180,7 @@ const documentView = async(fileContent) => {
 		// Télécharger automatiquement pour les formats éditables
 		const a = document.createElement("a");
 		a.href = url;
-		a.download = fileContent.name || `document.${fileContent.type_command_document}`;
+		a.download = fileContent.name || `document.${getExtension(fileContent.type_command_document)}`;
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
@@ -208,10 +208,10 @@ async function fetchAllItems() {
 	itemLoaded.value = true;
 }
 const itemSave = async(item) => {
-	if (commandsStore.items[commandId][item.id_item]) {
+	if (commandsStore.items[commandId.value][item.id_item]) {
 		try {
 			schemaItem.validateSync(item.tmp, { abortEarly: false });
-			await commandsStore.updateItem(commandId, item.tmp.id_item, item.tmp);
+			await commandsStore.updateItem(commandId.value, item.tmp.id_item, item.tmp);
 			addNotification({ message: "command.VCommandItemUpdated", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
@@ -227,7 +227,7 @@ const itemSave = async(item) => {
 	} else {
 		try {
 			schemaItem.validateSync(item.tmp, { abortEarly: false });
-			await commandsStore.createItem(commandId, item.tmp);
+			await commandsStore.createItem(commandId.value, item.tmp);
 			addNotification({ message: "command.VCommandItemAdded", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
@@ -244,7 +244,7 @@ const itemSave = async(item) => {
 };
 const itemDelete = async(item) => {
 	try {
-		await commandsStore.deleteItem(commandId, item.id_item);
+		await commandsStore.deleteItem(commandId.value, item.id_item);
 		addNotification({ message: "command.VCommandItemDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
