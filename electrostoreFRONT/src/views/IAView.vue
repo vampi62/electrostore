@@ -11,7 +11,7 @@ const { t } = useI18n();
 
 import { useRoute } from "vue-router";
 const route = useRoute();
-let iaId = route.params.id;
+const iaId = ref(route.params.id);
 
 import { useConfigsStore, useIasStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -19,28 +19,28 @@ const iasStore = useIasStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
-	if (iaId !== "new") {
+	if (iaId.value !== "new") {
 		iasStore.iaEdition = {
 			loading: true,
 		};
 		try {
-			await iasStore.getIaById(iaId);
+			await iasStore.getIaById(iaId.value);
 		} catch {
-			delete iasStore.ias[iaId];
+			delete iasStore.ias[iaId.value];
 			addNotification({ message: "ia.VIaNotFound", type: "error", i18n: true });
 			router.push("/ia");
 			return;
 		}
 		intervalRefreshStatus = setInterval(() => {
-			iasStore.getTrainStatus(iaId);
+			iasStore.getTrainStatus(iaId.value);
 		}, 15000);
-		iasStore.getTrainStatus(iaId);
+		iasStore.getTrainStatus(iaId.value);
 		iasStore.iaEdition = {
 			loading: false,
-			nom_ia: iasStore.ias[iaId].nom_ia,
-			description_ia: iasStore.ias[iaId].description_ia,
-			date_ia: iasStore.ias[iaId].date_ia,
-			trained_ia: iasStore.ias[iaId].trained_ia,
+			nom_ia: iasStore.ias[iaId.value].nom_ia,
+			description_ia: iasStore.ias[iaId.value].description_ia,
+			date_ia: iasStore.ias[iaId.value].date_ia,
+			trained_ia: iasStore.ias[iaId.value].trained_ia,
 		};
 	} else {
 		iasStore.iaEdition = {
@@ -65,8 +65,8 @@ const iaDeleteModalShow = ref(false);
 const iaSave = async() => {
 	try {
 		createSchema().validateSync(iasStore.iaEdition, { abortEarly: false });
-		if (iaId !== "new") {
-			await iasStore.updateIa(iaId, { ...iasStore.iaEdition });
+		if (iaId.value !== "new") {
+			await iasStore.updateIa(iaId.value, { ...iasStore.iaEdition });
 			addNotification({ message: "ia.VIaUpdated", type: "success", i18n: true });
 		} else {
 			await iasStore.createIa({ ...iasStore.iaEdition });
@@ -82,14 +82,14 @@ const iaSave = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
-	if (iaId === "new") {
-		iaId = String(iasStore.iaEdition.id_ia);
-		router.push("/ia/" + iaId);
+	if (iaId.value === "new") {
+		iaId.value = String(iasStore.iaEdition.id_ia);
+		router.push("/ia/" + iaId.value);
 	}
 };
 const iaDelete = async() => {
 	try {
-		await iasStore.deleteIa(iaId);
+		await iasStore.deleteIa(iaId.value);
 		addNotification({ message: "ia.VIaDeleted", type: "success", i18n: true });
 		router.push("/ia");
 	} catch (e) {
@@ -99,7 +99,7 @@ const iaDelete = async() => {
 };
 const iaTrain = async() => {
 	try {
-		await iasStore.startTrain(iaId);
+		await iasStore.startTrain(iaId.value);
 		addNotification({ message: "ia.VIaTrainStart", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });

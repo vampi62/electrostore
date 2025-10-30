@@ -11,7 +11,7 @@ import * as Yup from "yup";
 
 import { useRoute } from "vue-router";
 const route = useRoute();
-let userId = route.params.id;
+const userId = ref(route.params.id);
 
 import { useConfigsStore, useUsersStore, useCommandsStore, useProjetsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -20,7 +20,7 @@ const commandsStore = useCommandsStore();
 const projetsStore = useProjetsStore();
 const authStore = useAuthStore();
 
-if (authStore.user?.role_user !== 2 && authStore.user?.role_user !== 1 && authStore.user?.id_user !== Number(userId)) {
+if (authStore.user?.role_user !== 2 && authStore.user?.role_user !== 1 && authStore.user?.id_user !== Number(userId.value)) {
 	addNotification({ message: "vous n'avez pas la permission d'acceder a cette page", type: "error", i18n: false });
 	if (window.history.length > 1) {
 		router.back();
@@ -30,14 +30,14 @@ if (authStore.user?.role_user !== 2 && authStore.user?.role_user !== 1 && authSt
 }
 
 async function fetchAllData() {
-	if (userId !== "new") {
+	if (userId.value !== "new") {
 		usersStore.userEdition = {
 			loading: true,
 		};
 		try {
-			await usersStore.getUserById(userId);
+			await usersStore.getUserById(userId.value);
 		} catch {
-			delete usersStore.users[userId];
+			delete usersStore.users[userId.value];
 			addNotification({ message: "user.VUserNotFound", type: "error", i18n: true });
 			if (window.history.length > 1) {
 				router.back();
@@ -46,16 +46,16 @@ async function fetchAllData() {
 			}
 			return;
 		}
-		usersStore.getProjetCommentaireByInterval(userId, 100, 0, ["projet"]);
-		usersStore.getCommandCommentaireByInterval(userId, 100, 0, ["command"]);
-		usersStore.getTokenByInterval(userId, 100, 0);
+		usersStore.getProjetCommentaireByInterval(userId.value, 100, 0, ["projet"]);
+		usersStore.getCommandCommentaireByInterval(userId.value, 100, 0, ["command"]);
+		usersStore.getTokenByInterval(userId.value, 100, 0);
 		usersStore.userEdition = {
 			loading: false,
-			id_user: usersStore.users[userId].id_user,
-			nom_user: usersStore.users[userId].nom_user,
-			prenom_user: usersStore.users[userId].prenom_user,
-			email_user: usersStore.users[userId].email_user,
-			role_user: usersStore.users[userId].role_user,
+			id_user: usersStore.users[userId.value].id_user,
+			nom_user: usersStore.users[userId.value].nom_user,
+			prenom_user: usersStore.users[userId.value].prenom_user,
+			email_user: usersStore.users[userId.value].email_user,
+			role_user: usersStore.users[userId.value].role_user,
 			current_mdp_user: "",
 			mdp_user: "",
 			confirm_mdp_user: "",
@@ -80,8 +80,8 @@ const userTypeRole = ref([[0, t("user.VUserFilterRole0")], [1, t("user.VUserFilt
 const userSave = async() => {
 	try {
 		createSchema(isChecked).validateSync(usersStore.userEdition, { abortEarly: false });
-		if (userId !== "new") {
-			await usersStore.updateUser(userId, { ...usersStore.userEdition });
+		if (userId.value !== "new") {
+			await usersStore.updateUser(userId.value, { ...usersStore.userEdition });
 			addNotification({ message: "user.VUserUpdated", type: "success", i18n: true });
 		} else {
 			await usersStore.createUser({ ...usersStore.userEdition });
@@ -100,14 +100,14 @@ const userSave = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
-	if (userId === "new") {
-		userId = String(usersStore.userEdition.id_user);
-		router.push("/users/" + userId);
+	if (userId.value === "new") {
+		userId.value = String(usersStore.userEdition.id_user);
+		router.push("/users/" + userId.value);
 	}
 };
 const userDelete = async() => {
 	try {
-		await usersStore.deleteUser(userId);
+		await usersStore.deleteUser(userId.value);
 		addNotification({ message: "user.VUserDeleted", type: "success", i18n: true });
 		router.push("/users");
 	} catch (e) {
@@ -118,8 +118,8 @@ const userDelete = async() => {
 
 const revokeToken = async(tokenId) => {
 	try {
-		await usersStore.updateToken(userId, tokenId, { "revoked_reason": "Revoked by user" });
-		usersStore.getTokenById(userId, tokenId);
+		await usersStore.updateToken(userId.value, tokenId, { "revoked_reason": "Revoked by user" });
+		usersStore.getTokenById(userId.value, tokenId);
 		addNotification({ message: "user.VUserTokenRevoked", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
