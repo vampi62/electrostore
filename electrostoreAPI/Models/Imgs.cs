@@ -12,7 +12,7 @@ public class Imgs : BaseEntity
 
     public int id_item { get; set; }
     [ForeignKey("id_item")]
-    public Items Item { get; set; }
+    public Items? Item { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
     public required string nom_img { get; set; }

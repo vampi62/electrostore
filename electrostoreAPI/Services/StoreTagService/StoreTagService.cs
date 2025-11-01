@@ -175,7 +175,7 @@ public class StoreTagService : IStoreTagService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<ReadBulkStoreTagDto> DeleteBulkItemTag(List<CreateStoreTagDto> storeTagBulkDto)
+    public async Task<ReadBulkStoreTagDto> DeleteBulkStoreTag(List<CreateStoreTagDto> storeTagBulkDto)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)

@@ -32,5 +32,5 @@ public class JwiAccessTokens : BaseEntity
 
     public int id_user { get; set; }
     [ForeignKey("id_user")]
-    public Users User { get; set; }
+    public Users? User { get; set; }
 }

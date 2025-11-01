@@ -254,11 +254,11 @@ public class CameraService : ICameraService
             }
             var content = await response.Content.ReadAsStringAsync();
             var json = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content);
-            if (json is null || !json.ContainsKey("ringLightPower"))
+            if (json is null || !json.TryGetValue("ringLightPower", out JsonElement value))
             {
                 throw new InvalidOperationException($"Error while switching camera light: {response.StatusCode}");
             }
-            return new CameraLightDto { state = json["ringLightPower"].GetBoolean() };
+            return new CameraLightDto { state = value.GetBoolean() };
         }
         catch (Exception ex)
         {

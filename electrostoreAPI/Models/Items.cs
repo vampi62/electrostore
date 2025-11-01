@@ -25,9 +25,9 @@ public class Items : BaseEntity
     [MaxLength(Constants.MaxDescriptionLength)]
     public required string description_item { get; set; }
 
+    public ICollection<CommandsItems> CommandsItems { get; set; } = new List<CommandsItems>();
     public ICollection<ItemsBoxs> ItemsBoxs { get; set; } = new List<ItemsBoxs>();
+    public ICollection<ItemsDocuments> ItemsDocuments { get; set; } = new List<ItemsDocuments>();
     public ICollection<ItemsTags> ItemsTags { get; set; } = new List<ItemsTags>();
     public ICollection<ProjetsItems> ProjetsItems { get; set; } = new List<ProjetsItems>();
-    public ICollection<CommandsItems> CommandsItems { get; set; } = new List<CommandsItems>();
-    public ICollection<ItemsDocuments> ItemsDocuments { get; set; } = new List<ItemsDocuments>();
 }

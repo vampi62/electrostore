@@ -7,9 +7,9 @@ public class BoxsTags : BaseEntity
 {
     public int id_box { get; set; }
     [ForeignKey("id_box")]
-    public Boxs Box { get; set; }
+    public Boxs? Box { get; set; }
 
     public int id_tag { get; set; }
     [ForeignKey("id_tag")]
-    public Tags Tag { get; set; }
+    public Tags? Tag { get; set; }
 }
