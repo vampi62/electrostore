@@ -105,6 +105,11 @@ public class ProjetService : IProjetService
         }
         var newProjet = _mapper.Map<Projets>(projetDto);
         _context.Projets.Add(newProjet);
+        _context.ProjetsStatus.Add(new ProjetsStatus
+        {
+            id_projet = newProjet.id_projet,
+            status_projet = newProjet.status_projet
+        });
         await _fileService.CreateDirectory(Path.Combine(_projetDocumentsPath, newProjet.id_projet.ToString()));
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadProjetDto>(newProjet);
@@ -113,6 +118,7 @@ public class ProjetService : IProjetService
     public async Task<ReadProjetDto> UpdateProjet(int id, UpdateProjetDto projetDto)
     {
         var projetToUpdate = await _context.Projets.FindAsync(id) ?? throw new KeyNotFoundException($"Projet with id {id} not found");
+        var statusChanged = projetDto.status_projet.HasValue && projetDto.status_projet.Value != projetToUpdate.status_projet;
         if (projetDto.nom_projet is not null)
         {
             projetToUpdate.nom_projet = projetDto.nom_projet;
@@ -151,6 +157,14 @@ public class ProjetService : IProjetService
         else
         {
             projetToUpdate.date_fin_projet = null;
+        }
+        if (statusChanged)
+        {
+            _context.ProjetsStatus.Add(new ProjetsStatus
+            {
+                id_projet = projetToUpdate.id_projet,
+                status_projet = projetToUpdate.status_projet
+            });
         }
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadProjetDto>(projetToUpdate);

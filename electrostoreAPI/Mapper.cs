@@ -91,6 +91,11 @@ public class MappingProfile : Profile
         CreateMap<ProjetsItems, ReadExtendedProjetItemDto>()
             .ForMember(dest => dest.projet, opt => opt.MapFrom(src => src.Projet))
             .ForMember(dest => dest.item, opt => opt.MapFrom(src => src.Item));
+        
+        CreateMap<ProjetsStatus, ReadProjetStatusDto>();
+        CreateMap<ProjetsStatus, ReadExtendedProjetStatusDto>()
+            .ForMember(dest => dest.projet, opt => opt.MapFrom(src => src.Projet));
+        CreateMap<CreateProjetStatusDto, ProjetsStatus>();
 
         CreateMap<CreateProjetTagDto, ProjetTags>();
         CreateMap<ProjetTags, ReadProjetTagDto>();
