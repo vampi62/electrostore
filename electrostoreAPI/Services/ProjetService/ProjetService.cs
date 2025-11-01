@@ -92,10 +92,19 @@ public class ProjetService : IProjetService
 
     public async Task<ReadProjetDto> CreateProjet(CreateProjetDto projetDto)
     {
+        if (projetDto.status_projet == Enums.ProjetStatus.Completed || projetDto.status_projet == Enums.ProjetStatus.Archived)
+        {
+            if (!projetDto.date_fin_projet.HasValue)
+            {
+                throw new ArgumentException("date_fin_projet is required when status_projet is Completed or Archived");
+            }
+        }
+        else
+        {
+            projetDto = projetDto with { date_fin_projet = null };
+        }
         var newProjet = _mapper.Map<Projets>(projetDto);
         _context.Projets.Add(newProjet);
-        // TODO went the format of status_projet will be changed to enum
-        // set date_fin_projet to null if status_projet is enum for not finished / started / planned
         await _fileService.CreateDirectory(Path.Combine(_projetDocumentsPath, newProjet.id_projet.ToString()));
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadProjetDto>(newProjet);
@@ -118,7 +127,7 @@ public class ProjetService : IProjetService
         }
         if (projetDto.status_projet is not null)
         {
-            projetToUpdate.status_projet = projetDto.status_projet;
+            projetToUpdate.status_projet = projetDto.status_projet.Value;
         }
         if (projetDto.date_debut_projet is not null)
         {
@@ -128,8 +137,21 @@ public class ProjetService : IProjetService
         {
             projetToUpdate.date_fin_projet = projetDto.date_fin_projet;
         }
-        // TODO went the format of status_projet will be changed to enum
-        // set date_fin_projet to null if status_projet is enum for not finished / started / planned
+        if (projetToUpdate.date_fin_projet.HasValue && projetToUpdate.date_fin_projet < projetToUpdate.date_debut_projet)
+        {
+            throw new ArgumentException("date_fin_projet cannot be earlier than date_debut_projet");
+        }
+        if (projetToUpdate.status_projet == Enums.ProjetStatus.Completed || projetToUpdate.status_projet == Enums.ProjetStatus.Archived)
+        {
+            if (!projetToUpdate.date_fin_projet.HasValue)
+            {
+                throw new ArgumentException("date_fin_projet is required when status_projet is Completed or Archived");
+            }
+        }
+        else
+        {
+            projetToUpdate.date_fin_projet = null;
+        }
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadProjetDto>(projetToUpdate);
     }

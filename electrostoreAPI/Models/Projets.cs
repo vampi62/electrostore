@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using electrostore.Dto;
+using electrostore.Enums;
 
 namespace electrostore.Models;
 
@@ -19,8 +20,7 @@ public class Projets : BaseEntity
     [MaxLength(Constants.MaxUrlLength)]
     public required string url_projet { get; set; }
 
-    [MaxLength(Constants.MaxStatusLength)]
-    public required string status_projet { get; set; }
+    public ProjetStatus status_projet { get; set; } = ProjetStatus.NotStarted;
 
     public DateTime date_debut_projet { get; set; }
 
