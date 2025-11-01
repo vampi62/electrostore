@@ -22,6 +22,8 @@ public record ReadExtendedProjetDto : ReadProjetDto
     public IEnumerable<ReadProjetCommentaireDto>? projets_commentaires { get; init; }
     public IEnumerable<ReadProjetDocumentDto>? projets_documents { get; init; }
     public IEnumerable<ReadProjetItemDto>? projets_items { get; init; }
+    public IEnumerable<ReadProjetProjetTagDto>? projets_projet_tags { get; init; }
+    
 }
 public record CreateProjetDto
 {

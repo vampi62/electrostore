@@ -38,7 +38,8 @@ public class ProjetService : IProjetService
                 ProjetsItemsCount = p.ProjetsItems.Count,
                 ProjetsCommentaires = expand != null && expand.Contains("projets_commentaires") ? p.ProjetsCommentaires.Take(20).ToList() : null,
                 ProjetsDocuments = expand != null && expand.Contains("projets_documents") ? p.ProjetsDocuments.Take(20).ToList() : null,
-                ProjetsItems = expand != null && expand.Contains("projets_items") ? p.ProjetsItems.Take(20).ToList() : null
+                ProjetsItems = expand != null && expand.Contains("projets_items") ? p.ProjetsItems.Take(20).ToList() : null,
+                ProjetsProjetTags = expand != null && expand.Contains("projets_projet_tags") ? p.ProjetsProjetTags.Take(20).ToList() : null
             })
             .ToListAsync();
         return projet.Select(p => {
@@ -49,7 +50,8 @@ public class ProjetService : IProjetService
                 projets_items_count = p.ProjetsItemsCount,
                 projets_commentaires = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(p.ProjetsCommentaires),
                 projets_documents = _mapper.Map<IEnumerable<ReadProjetDocumentDto>>(p.ProjetsDocuments),
-                projets_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(p.ProjetsItems)
+                projets_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(p.ProjetsItems),
+                projets_projet_tags = _mapper.Map<IEnumerable<ReadProjetProjetTagDto>>(p.ProjetsProjetTags)
             };
         }).ToList();
     }
@@ -72,7 +74,8 @@ public class ProjetService : IProjetService
                 ProjetsItemsCount = p.ProjetsItems.Count,
                 ProjetsCommentaires = expand != null && expand.Contains("projets_commentaires") ? p.ProjetsCommentaires.Take(20).ToList() : null,
                 ProjetsDocuments = expand != null && expand.Contains("projets_documents") ? p.ProjetsDocuments.Take(20).ToList() : null,
-                ProjetsItems = expand != null && expand.Contains("projets_items") ? p.ProjetsItems.Take(20).ToList() : null
+                ProjetsItems = expand != null && expand.Contains("projets_items") ? p.ProjetsItems.Take(20).ToList() : null,
+                ProjetsProjetTags = expand != null && expand.Contains("projets_projet_tags") ? p.ProjetsProjetTags.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Projet with id {id} not found");
         return _mapper.Map<ReadExtendedProjetDto>(projet.Projet) with
@@ -82,7 +85,8 @@ public class ProjetService : IProjetService
             projets_items_count = projet.ProjetsItemsCount,
             projets_commentaires = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(projet.ProjetsCommentaires),
             projets_documents = _mapper.Map<IEnumerable<ReadProjetDocumentDto>>(projet.ProjetsDocuments),
-            projets_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(projet.ProjetsItems)
+            projets_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(projet.ProjetsItems),
+            projets_projet_tags = _mapper.Map<IEnumerable<ReadProjetProjetTagDto>>(projet.ProjetsProjetTags)
         };
     }
 
