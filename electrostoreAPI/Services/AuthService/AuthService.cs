@@ -66,7 +66,7 @@ public class AuthService : IAuthService
 
     public async Task<LoginResponse> LoginWithSSO(string sso_method, SsoLoginRequest request)
     {
-        if (!_stateStore.ContainsKey(request.State) || _stateStore[request.State] < DateTime.UtcNow)
+        if (!_stateStore.TryGetValue(request.State, out DateTime value) || value < DateTime.UtcNow)
         {
             throw new UnauthorizedAccessException("Invalid or expired state parameter");
         }

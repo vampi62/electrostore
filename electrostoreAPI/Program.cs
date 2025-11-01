@@ -83,7 +83,7 @@ public static class Program
                 {
                     var modelStateErrors = context.ModelState
                         .Where(ms => ms.Value != null && ms.Value.Errors.Count > 0)
-                        .SelectMany(ms => ms.Value.Errors)
+                        .SelectMany(ms => ms.Value!.Errors)
                         .Select(e => e.ErrorMessage)
                         .ToList();
 
