@@ -252,6 +252,8 @@ public static class Program
                 .WithCredentials(
                     builder.Configuration.GetSection("S3:AccessKey").Value ?? "minioadmin",
                     builder.Configuration.GetSection("S3:SecretKey").Value ?? "minioadmin")
+                .WithRegion(builder.Configuration.GetSection("S3:Region").Value ?? "us-east-1")
+                .WithSSL(builder.Configuration.GetSection("S3:Secure").Get<bool>())
                 .Build();
             return minioClient;
         });
