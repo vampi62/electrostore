@@ -11,7 +11,7 @@ using electrostore;
 namespace electrostore.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251101150346_addTagProjet")]
+    [Migration("20251101144205_addTagProjet")]
     partial class addTagProjet
     {
         /// <inheritdoc />
