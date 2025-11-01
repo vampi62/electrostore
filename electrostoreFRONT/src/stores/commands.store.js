@@ -274,7 +274,7 @@ export const useCommandsStore = defineStore("commands",{
 			this.documents[idCommand][this.documentEdition.id_command_document] = this.documentEdition;
 		},
 		async updateDocument(idCommand, id, params) {
-			this.documentEdition.loading = true;
+			this.documents[idCommand][id].loading = true;
 			this.documentEdition = await fetchWrapper.put({
 				url: `${baseUrl}/command/${idCommand}/document/${id}`,
 				useToken: "access",

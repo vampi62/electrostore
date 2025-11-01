@@ -260,7 +260,7 @@ export const useProjetsStore = defineStore("projets",{
 			this.documents[idProjet][this.documentEdition.id_projet_document] = this.documentEdition;
 		},
 		async updateDocument(idProjet, id, params) {
-			this.documentEdition.loading = true;
+			this.documents[idProjet][id].loading = true;
 			this.documentEdition = await fetchWrapper.put({
 				url: `${baseUrl}/projet/${idProjet}/document/${id}`,
 				useToken: "access",

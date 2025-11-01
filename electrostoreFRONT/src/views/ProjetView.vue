@@ -24,7 +24,11 @@ const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
-	if (projetId.value !== "new") {
+	if (projetId.value === "new") {
+		projetsStore.projetEdition = {
+			loading: false,
+		};
+	} else {
 		projetsStore.projetEdition = {
 			loading: true,
 		};
@@ -49,10 +53,6 @@ async function fetchAllData() {
 			date_fin_projet: projetsStore.projets[projetId.value].date_fin_projet,
 		};
 		usersStore.users[authStore.user.id_user] = authStore.user; // avoids undefined user when the current user posts first comment
-	} else {
-		projetsStore.projetEdition = {
-			loading: false,
-		};
 	}
 }
 onMounted(() => {
@@ -70,12 +70,12 @@ const projetTypeStatus = ref([["En attente", t("projet.VProjetStatus1")], ["En c
 const projetSave = async() => {
 	try {
 		createSchema().validateSync(projetsStore.projetEdition, { abortEarly: false });
-		if (projetId.value !== "new") {
-			await projetsStore.updateProjet(projetId.value, { ...projetsStore.projetEdition });
-			addNotification({ message: "projet.VProjetUpdated", type: "success", i18n: true });
-		} else {
+		if (projetId.value === "new") {
 			await projetsStore.createProjet({ ...projetsStore.projetEdition });
 			addNotification({ message: "projet.VProjetCreated", type: "success", i18n: true });
+		} else {
+			await projetsStore.updateProjet(projetId.value, { ...projetsStore.projetEdition });
+			addNotification({ message: "projet.VProjetUpdated", type: "success", i18n: true });
 		}
 	} catch (e) {
 		if (e.inner) {
@@ -106,9 +106,9 @@ const projetDelete = async() => {
 // document
 const documentAddModalShow = ref(false);
 const documentDeleteModalShow = ref(false);
-const documentModalData = ref({ id_projet_document: null, name_projet_document: "", document: null, isEdit: false });
+const documentModalData = ref({ id_projet_document: null, name_projet_document: "", document: null });
 const documentAddOpenModal = () => {
-	documentModalData.value = { name_projet_document: "", document: null, isEdit: false };
+	documentModalData.value = { name_projet_document: "", document: null };
 	documentAddModalShow.value = true;
 };
 const documentDeleteOpenModal = (doc) => {
@@ -156,9 +156,6 @@ const documentDelete = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
 	documentDeleteModalShow.value = false;
-};
-const handleFileUpload = (e) => {
-	documentModalData.value.document = e.target.files[0];
 };
 const documentDownload = async(fileContent) => {
 	const file = await projetsStore.downloadDocument(projetId.value, fileContent.id_projet_document);
@@ -317,7 +314,7 @@ const labelForm = ref([
 const labelTableauDocument = ref([
 	{ label: "projet.VProjetDocumentName", sortable: true, key: "name_projet_document", type: "text", canEdit: true },
 	{ label: "projet.VProjetDocumentType", sortable: true, key: "type_projet_document", type: "text" },
-	{ label: "projet.VProjetDocumentDate", sortable: true, key: "date_projet_document", type: "datetime" },
+	{ label: "projet.VProjetDocumentDate", sortable: true, key: "created_at", type: "datetime" },
 	{ label: "projet.VProjetDocumentActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -343,18 +340,21 @@ const labelTableauDocument = ref([
 			condition: "rowData.tmp",
 			action: (row) => documentEdit(row.tmp),
 			class: "text-green-500 cursor-pointer hover:text-green-600",
+			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-eye",
 			action: (row) => documentView(row),
 			class: "text-green-500 cursor-pointer hover:text-green-600",
+			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-download",
 			action: (row) => documentDownload(row),
 			class: "text-yellow-500 cursor-pointer hover:text-yellow-600",
+			animation: true,
 		},
 		{
 			label: "",
@@ -383,6 +383,7 @@ const labelTableauItem = ref([
 			condition: "rowData.tmp",
 			action: (row) => itemSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
 		},
 		{
 			label: "",
@@ -398,6 +399,7 @@ const labelTableauItem = ref([
 			icon: "fa-solid fa-trash",
 			action: (row) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+			animation: true,
 		},
 	] },
 ]);
@@ -429,6 +431,7 @@ const labelTableauModalItem = ref([
 			condition: "rowData.tmp",
 			action: (row) => itemSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
 		},
 		{
 			label: "",
@@ -445,6 +448,7 @@ const labelTableauModalItem = ref([
 			condition: "store[1]?.[rowData.id_item]",
 			action: (row) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+			animation: true,
 		},
 	] },
 ]);
@@ -513,43 +517,18 @@ const labelTableauModalItem = ref([
 	</div>
 
 	<ModalDeleteConfirm :show-modal="projetDeleteModalShow" @close-modal="projetDeleteModalShow = false"
-		@delete-confirmed="projetDelete" :text-title="'projet.VProjetDeleteTitle'"
+		:delete-action="projetDelete" :text-title="'projet.VProjetDeleteTitle'"
 		:text-p="'projet.VProjetDeleteText'"/>
 
-	<div v-if="documentAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="documentAddModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<Form :validation-schema="schemaAddDocument" v-slot="{ errors }">
-				<h2 class="text-xl mb-4">{{ $t('projet.VProjetDocumentAddTitle') }}</h2>
-				<div class="flex flex-col">
-					<div class="flex flex-col">
-						<Field name="name_projet_document" type="text"
-							v-model="documentModalData.name_projet_document"
-							:placeholder="$t('projet.VProjetDocumentNamePlaceholder')"
-							class="w-full p-2 border rounded"
-							:class="{ 'border-red-500': errors.name_projet_document }" />
-						<span class="text-red-500 h-5 w-full text-sm">{{ errors.name_projet_document || ' ' }}</span>
-					</div>
-					<div class="flex flex-col">
-						<Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
-							:class="{ 'border-red-500': errors.document }" />
-						<span class="h-5 w-80 text-sm">{{ $t('projet.VProjetDocumentSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
-						<span class="text-red-500 h-5 w-full text-sm">{{ errors.document || ' ' }}</span>
-					</div>
-				</div>
-				<div class="flex justify-end space-x-2">
-					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded">
-						{{ $t('projet.VProjetDocumentCancel') }}
-					</button>
-					<button type="button" @click="documentAdd" class="px-4 py-2 bg-blue-500 text-white rounded">
-						{{ $t('projet.VProjetDocumentAdd') }}
-					</button>
-				</div>
-			</Form>
-		</div>
-	</div>
+	<ModalAddFile :show-modal="documentAddModalShow" @close-modal="documentAddModalShow = false"
+		:text-title="'projet.VProjetDocumentAddTitle'" :schema-add="schemaAddDocument"
+		:modal-data="documentModalData" :add-action="documentAdd" :key-name-document="'name_projet_document'" :key-file-document="'document'"
+		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
+		:text-max-size="'projet.VProjetDocumentSize'" :text-placeholder-document="'projet.VProjetDocumentNamePlaceholder'"
+	/>
+
 	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
-		@delete-confirmed="documentDelete" :text-title="'projet.VProjetDocumentDeleteTitle'"
+		:delete-action="documentDelete" :text-title="'projet.VProjetDocumentDeleteTitle'"
 		:text-p="'projet.VProjetDocumentDeleteText'"/>
 
 	<div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"

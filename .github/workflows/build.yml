@@ -74,7 +74,7 @@ jobs:
     if: contains(inputs.architecture, 'linux/arm64/v8')
     needs:
       - target
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     strategy:
       fail-fast: false
       matrix:
@@ -137,7 +137,7 @@ jobs:
     if: contains(inputs.architecture, 'linux/amd64')
     needs:
       - target
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:

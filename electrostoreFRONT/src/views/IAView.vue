@@ -19,7 +19,11 @@ const iasStore = useIasStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
-	if (iaId.value !== "new") {
+	if (iaId.value === "new") {
+		iasStore.iaEdition = {
+			loading: false,
+		};
+	} else {
 		iasStore.iaEdition = {
 			loading: true,
 		};
@@ -42,10 +46,6 @@ async function fetchAllData() {
 			date_ia: iasStore.ias[iaId.value].date_ia,
 			trained_ia: iasStore.ias[iaId.value].trained_ia,
 		};
-	} else {
-		iasStore.iaEdition = {
-			loading: false,
-		};
 	}
 }
 onMounted(() => {
@@ -65,12 +65,12 @@ const iaDeleteModalShow = ref(false);
 const iaSave = async() => {
 	try {
 		createSchema().validateSync(iasStore.iaEdition, { abortEarly: false });
-		if (iaId.value !== "new") {
-			await iasStore.updateIa(iaId.value, { ...iasStore.iaEdition });
-			addNotification({ message: "ia.VIaUpdated", type: "success", i18n: true });
-		} else {
+		if (iaId.value === "new") {
 			await iasStore.createIa({ ...iasStore.iaEdition });
 			addNotification({ message: "ia.VIaCreated", type: "success", i18n: true });
+		} else {
+			await iasStore.updateIa(iaId.value, { ...iasStore.iaEdition });
+			addNotification({ message: "ia.VIaUpdated", type: "success", i18n: true });
 		}
 	} catch (e) {
 		if (e.inner) {
@@ -142,5 +142,5 @@ const labelForm = [
 	</div>
 
 	<ModalDeleteConfirm :show-modal="iaDeleteModalShow" @close-modal="iaDeleteModalShow = false"
-		@delete-confirmed="iaDelete" :text-title="'ia.VIaDeleteTitle'" :text-p="'ia.VIaDeleteText'"/>
+		:delete-action="iaDelete" :text-title="'ia.VIaDeleteTitle'" :text-p="'ia.VIaDeleteText'"/>
 </template>

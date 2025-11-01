@@ -63,11 +63,17 @@ const updateFilteredStores = (newValue) => {
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('store.VStoresTitle') }}</h2>
 	</div>
 	<div>
-		<div :disabled="authStore.user?.role_user !== 2"
-			class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded cursor-pointer inline-block mb-2">
-			<RouterLink :to="'/stores/new'">
-				Ajouter
+		<div :class="{
+				'bg-blue-500 hover:bg-blue-600 cursor-pointer': authStore.user?.role_user === 2,
+				'bg-gray-400 cursor-not-allowed': authStore.user?.role_user !== 2
+			}"
+			class="text-white px-4 py-2 rounded inline-block mb-2">
+			<RouterLink v-if="authStore.user?.role_user === 2" :to="'/stores/new'">
+				{{ $t('store.VStoresAdd') }}
 			</RouterLink>
+			<span v-else class="pointer-events-none">
+				{{ $t('store.VStoresAdd') }}
+			</span>
 		</div>
 		<FilterContainer :filters="filter" :store-data="storesStore.stores" @output-filter="updateFilteredStores" />
 	</div>

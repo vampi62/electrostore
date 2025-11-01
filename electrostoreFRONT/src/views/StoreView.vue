@@ -21,7 +21,13 @@ const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
-	if (storeId.value !== "new") {
+	if (storeId.value === "new") {
+		storesStore.storeEdition[storeId.value] = {
+			loading: false,
+		};
+		storesStore.ledEdition[storeId.value] = {};
+		storesStore.boxEdition[storeId.value] = {};
+	} else {
 		storesStore.storeEdition[storeId.value] = {
 			loading: true,
 		};
@@ -44,12 +50,6 @@ async function fetchAllData() {
 		};
 		storesStore.ledEdition[storeId.value] = { ...storesStore.leds[storeId.value] };
 		storesStore.boxEdition[storeId.value] = { ...storesStore.boxs[storeId.value] };
-	} else {
-		storesStore.storeEdition[storeId.value] = {
-			loading: false,
-		};
-		storesStore.ledEdition[storeId.value] = {};
-		storesStore.boxEdition[storeId.value] = {};
 	}
 }
 onMounted(() => {
@@ -72,7 +72,14 @@ const storeSave = async() => {
 		if (!storeGrid.value.checkOutOfGrid()) {
 			return;
 		}
-		if (storeId.value !== "new") {
+		if (storeId.value === "new") {
+			await storesStore.createStoreComplete(storeId.value, { 
+				store: storesStore.storeEdition[storeId.value],
+				leds: Object.values(storesStore.ledEdition[storeId.value]),
+				boxs: Object.values(storesStore.boxEdition[storeId.value]),
+			});
+			addNotification({ message: "store.VStoreCreated", type: "success", i18n: true });
+		} else {
 			await storesStore.updateStoreComplete(storeId.value, { 
 				store: storesStore.storeEdition[storeId.value],
 				leds: Object.values(storesStore.ledEdition[storeId.value]),
@@ -90,13 +97,6 @@ const storeSave = async() => {
 			};
 			storesStore.ledEdition[storeId.value] = { ...storesStore.leds[storeId.value] };
 			storesStore.boxEdition[storeId.value] = { ...storesStore.boxs[storeId.value] };
-		} else {
-			await storesStore.createStoreComplete(storeId.value, { 
-				store: storesStore.storeEdition[storeId.value],
-				leds: Object.values(storesStore.ledEdition[storeId.value]),
-				boxs: Object.values(storesStore.boxEdition[storeId.value]),
-			});
-			addNotification({ message: "store.VStoreCreated", type: "success", i18n: true });
 		}
 		storesStore.storeEdition[storeId.value].loading = false;
 	} catch (e) {
@@ -331,6 +331,7 @@ const labelTableauModalItem = ref([
 			condition: "rowData.tmp",
 			action: (row) => itemSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
 		},
 		{
 			label: "",
@@ -347,6 +348,7 @@ const labelTableauModalItem = ref([
 			condition: "store[1]?.[rowData.id_item]",
 			action: (row) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+			animation: true,
 		},
 	] },
 ]);
@@ -365,6 +367,7 @@ const labelTableauModalTag = ref([
 			condition: "!store[1]?.[rowData.id_tag]",
 			action: (row) => tagSave(row.id_tag),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
 		},
 		{
 			label: "",
@@ -372,6 +375,7 @@ const labelTableauModalTag = ref([
 			condition: "store[1]?.[rowData.id_tag]",
 			action: (row) => tagDelete(row.id_tag),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+			animation: true,
 		},
 	] },
 ]);
@@ -385,7 +389,7 @@ const labelTableauModalTag = ref([
 	<div v-if="storesStore.stores[storeId] || storeId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="storesStore.storeEdition[storeId] || {}" :store-user="authStore.user"/>
-			<Tags :current-tags="storesStore.storeTags[storeId] || {}" :tags-store="tagsStore.tags" :can-edit="storeId !== 'new'"
+			<Tags :current-tags="storesStore.storeTags[storeId] || {}" :tags-store="tagsStore.tags" :can-edit="storeId !== 'new' && authStore.user.role_user >= 1"
 				:delete-function="(value) => tagDelete(value)" @openModalTag="tagOpenAddModal"/>
 		</div>
 		<div class="mb-6 flex justify-between flex-wrap whitespace-pre">
@@ -432,7 +436,7 @@ const labelTableauModalTag = ref([
 	</div>
 
 	<ModalDeleteConfirm :show-modal="storeDeleteModalShow" @close-modal="storeDeleteModalShow = false"
-		@delete-confirmed="storeDelete" :text-title="'store.VStoreDeleteTitle'"
+		:delete-action="storeDelete" :text-title="'store.VStoreDeleteTitle'"
 		:text-p="'store.VStoreDeleteText'"/>
 
 	<div v-if="tagModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"

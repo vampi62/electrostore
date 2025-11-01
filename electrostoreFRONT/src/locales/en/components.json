@@ -15,6 +15,9 @@
 
 	"VModalTableauImageLoading": "Loading image...",
 
+	"VModalAddFileCancel": "Cancel",
+	"VModalAddFileAdd": "Add",
+
 	"VModalDeleteConfirm": "Confirm",
 	"VModalDeleteCancel": "Cancel",
 	"VModalTopButtonAdd": "Add",

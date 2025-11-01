@@ -45,7 +45,7 @@
 			<teleport to="body">
 				<div v-show="isOpen"
 					:ref="`filterList`"
-					class="absolute z-50 border max-h-48 overflow-y-auto bg-white left-0" style="width: calc(100% - 8px);">
+					class="absolute border max-h-48 overflow-y-auto bg-white left-0" style="width: calc(100% - 8px);">
 					<div v-for="option in filterOption" :key="option[0]"
 						@mousedown.prevent="selectOption(option)"
 						class="flex flex-col p-2 hover:bg-gray-100 cursor-pointer">
