@@ -3,6 +3,7 @@ export { default as Commentaire } from "./Commentaire.vue";
 export { default as Filter } from "./Filter.vue";
 export { default as FilterContainer } from "./FilterContainer.vue";
 export { default as FormContainer } from "./FormContainer.vue";
+export { default as ModalAddFile } from "./ModalAddFile.vue";
 export { default as ModalDeleteConfirm } from "./ModalDeleteConfirm.vue";
 export { default as ModalFinder } from "./ModalFinder.vue";
 export { default as Notification } from "./Notification.vue";

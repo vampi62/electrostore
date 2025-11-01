@@ -154,9 +154,6 @@ const documentDelete = async() => {
 	}
 	documentDeleteModalShow.value = false;
 };
-const handleFileUpload = (e) => {
-	documentModalData.value.document = e.target.files[0];
-};
 const documentDownload = async(fileContent) => {
 	const file = await commandsStore.downloadDocument(commandId.value, fileContent.id_command_document);
 	const url = window.URL.createObjectURL(new Blob([file]));
@@ -528,42 +525,12 @@ const labelTableauModalItem = ref([
 		:delete-action="commandDelete" :text-title="'command.VCommandDeleteTitle'"
 		:text-p="'command.VCommandDeleteText'"/>
 
-	<div v-if="documentAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="documentAddModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<Form :validation-schema="schemaAddDocument" v-slot="{ errors }">
-				<h2 class="text-xl mb-4">{{ $t('command.VCommandDocumentAddTitle') }}</h2>
-				<div class="flex flex-col">
-					<div class="flex flex-col">
-						<Field name="name_command_document" type="text"
-							v-model="documentModalData.name_command_document"
-							:placeholder="$t('command.VCommandDocumentNamePlaceholder')"
-							class="w-full p-2 border rounded"
-							:class="{ 'border-red-500': errors.name_command_document }" />
-						<span class="text-red-500 h-5 w-full text-sm">{{ errors.name_command_document || ' ' }}</span>
-					</div>
-					<div class="flex flex-col">
-						<Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
-							:class="{ 'border-red-500': errors.document }" />
-						<span class="h-5 w-80 text-sm">{{ $t('command.VCommandDocumentSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
-						<span class="text-red-500 h-5 w-full text-sm">{{ errors.document || ' ' }}</span>
-					</div>
-				</div>
-				<div class="flex justify-end space-x-2">
-					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
-						{{ $t('command.VCommandDocumentCancel') }}
-					</button>
-					<button type="button" @click="documentAdd" 
-						class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-400"
-						:disabled="documentAddLoading">
-						<span v-show="documentAddLoading"
-							class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
-						{{ $t('command.VCommandDocumentAdd') }}
-					</button>
-				</div>
-			</Form>
-		</div>
-	</div>
+	<ModalAddFile :show-modal="documentAddModalShow" @close-modal="documentAddModalShow = false"
+		:text-title="'command.VCommandDocumentAddTitle'" :schema-add="schemaAddDocument"
+		:modal-data="documentModalData" :add-action="documentAdd" :key-name-document="'name_command_document'" :key-file-document="'document'"
+		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
+		:text-max-size="'command.VCommandDocumentSize'" :text-placeholder-document="'command.VCommandDocumentNamePlaceholder'"
+	/>
 
 	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
 		:delete-action="documentDelete" :text-title="'command.VCommandDocumentDeleteTitle'"

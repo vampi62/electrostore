@@ -15,6 +15,9 @@
 
 	"VModalTableauImageLoading": "Chargement de l'image...",
 
+	"VModalAddFileCancel": "Annuler",
+	"VModalAddFileAdd": "Ajouter",
+
 	"VModalDeleteConfirm": "Confirmer",
 	"VModalDeleteCancel": "Annuler",
 	"VModalTopButtonAdd": "Ajouter",

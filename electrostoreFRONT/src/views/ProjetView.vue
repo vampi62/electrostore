@@ -106,7 +106,6 @@ const projetDelete = async() => {
 // document
 const documentAddModalShow = ref(false);
 const documentDeleteModalShow = ref(false);
-const documentAddLoading = ref(false);
 const documentModalData = ref({ id_projet_document: null, name_projet_document: "", document: null });
 const documentAddOpenModal = () => {
 	documentModalData.value = { name_projet_document: "", document: null };
@@ -117,7 +116,6 @@ const documentDeleteOpenModal = (doc) => {
 	documentDeleteModalShow.value = true;
 };
 const documentAdd = async() => {
-	documentAddLoading.value = true;
 	try {
 		schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
 		await projetsStore.createDocument(projetId.value, documentModalData.value);
@@ -132,8 +130,6 @@ const documentAdd = async() => {
 		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
-	} finally {
-		documentAddLoading.value = false;
 	}
 };
 const documentEdit = async(row) => {
@@ -160,9 +156,6 @@ const documentDelete = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
 	documentDeleteModalShow.value = false;
-};
-const handleFileUpload = (e) => {
-	documentModalData.value.document = e.target.files[0];
 };
 const documentDownload = async(fileContent) => {
 	const file = await projetsStore.downloadDocument(projetId.value, fileContent.id_projet_document);
@@ -527,42 +520,13 @@ const labelTableauModalItem = ref([
 		:delete-action="projetDelete" :text-title="'projet.VProjetDeleteTitle'"
 		:text-p="'projet.VProjetDeleteText'"/>
 
-	<div v-if="documentAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="documentAddModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<Form :validation-schema="schemaAddDocument" v-slot="{ errors }">
-				<h2 class="text-xl mb-4">{{ $t('projet.VProjetDocumentAddTitle') }}</h2>
-				<div class="flex flex-col">
-					<div class="flex flex-col">
-						<Field name="name_projet_document" type="text"
-							v-model="documentModalData.name_projet_document"
-							:placeholder="$t('projet.VProjetDocumentNamePlaceholder')"
-							class="w-full p-2 border rounded"
-							:class="{ 'border-red-500': errors.name_projet_document }" />
-						<span class="text-red-500 h-5 w-full text-sm">{{ errors.name_projet_document || ' ' }}</span>
-					</div>
-					<div class="flex flex-col">
-						<Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
-							:class="{ 'border-red-500': errors.document }" />
-						<span class="h-5 w-80 text-sm">{{ $t('projet.VProjetDocumentSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
-						<span class="text-red-500 h-5 w-full text-sm">{{ errors.document || ' ' }}</span>
-					</div>
-				</div>
-				<div class="flex justify-end space-x-2">
-					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
-						{{ $t('projet.VProjetDocumentCancel') }}
-					</button>
-					<button type="button" @click="documentAdd" 
-						class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-400"
-						:disabled="documentAddLoading">
-						<span v-show="documentAddLoading"
-							class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
-						{{ $t('projet.VProjetDocumentAdd') }}
-					</button>
-				</div>
-			</Form>
-		</div>
-	</div>
+	<ModalAddFile :show-modal="documentAddModalShow" @close-modal="documentAddModalShow = false"
+		:text-title="'projet.VProjetDocumentAddTitle'" :schema-add="schemaAddDocument"
+		:modal-data="documentModalData" :add-action="documentAdd" :key-name-document="'name_projet_document'" :key-file-document="'document'"
+		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
+		:text-max-size="'projet.VProjetDocumentSize'" :text-placeholder-document="'projet.VProjetDocumentNamePlaceholder'"
+	/>
+
 	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
 		:delete-action="documentDelete" :text-title="'projet.VProjetDocumentDeleteTitle'"
 		:text-p="'projet.VProjetDocumentDeleteText'"/>

@@ -163,7 +163,6 @@ const boxSave = async(box) => {
 // document
 const documentAddModalShow = ref(false);
 const documentDeleteModalShow = ref(false);
-const documentAddLoading = ref(false);
 const documentModalData = ref({ id_item_document: null, name_item_document: "", document: null });
 const documentAddOpenModal = () => {
 	documentModalData.value = { name_item_document: "", document: null };
@@ -174,7 +173,6 @@ const documentDeleteOpenModal = (doc) => {
 	documentDeleteModalShow.value = true;
 };
 const documentAdd = async() => {
-	documentAddLoading.value = true;
 	try {
 		schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
 		await itemsStore.createDocument(itemId.value, documentModalData.value);
@@ -189,8 +187,6 @@ const documentAdd = async() => {
 		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
-	} finally {
-		documentAddLoading.value = false;
 	}
 };
 const documentEdit = async(row) => {
@@ -256,7 +252,6 @@ const documentView = async(fileContent) => {
 const imageSelectModalShow = ref(false);
 const imageAddModalShow = ref(false);
 const imageDeleteModalShow = ref(false);
-const imageAddLoading = ref(false);
 const selectedImageId = ref(null);
 const imageModalData = ref({ id_img: null, nom_img: "", description_img: "undefined", image: null });
 const imageSelectOpenModal = () => {
@@ -280,15 +275,12 @@ const imageDeleteOpenModal = (doc) => {
 	imageDeleteModalShow.value = true;
 };
 const imageAdd = async() => {
-	imageAddLoading.value = true;
 	try {
 		await itemsStore.createImage(itemId.value, imageModalData.value);
 		addNotification({ message: "item.VItemImageAdded", type: "success", i18n: true });
 		imageAddModalShow.value = false;
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
-	} finally {
-		imageAddLoading.value = false;
 	}
 };
 const imageDelete = async() => {
@@ -299,9 +291,6 @@ const imageDelete = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
 	imageDeleteModalShow.value = false;
-};
-const handleImageUpload = (e) => {
-	imageModalData.value.image = e.target.files[0];
 };
 const imageDownload = async(imageContent) => {
 	if (!itemsStore.imagesURL[imageContent.id_img]) {
@@ -736,82 +725,24 @@ const labelTableauProjet = ref([
 		</div>
 	</div>
 
-	<div v-if="documentAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="documentAddModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<Form :validation-schema="schemaAddDocument" v-slot="{ errors }">
-				<h2 class="text-xl mb-4">{{ $t('item.VItemDocumentAddTitle') }}</h2>
-				<div class="flex flex-col">
-					<div class="flex flex-col">
-						<Field name="name_item_document" type="text"
-							v-model="documentModalData.name_item_document"
-							:placeholder="$t('item.VItemDocumentNamePlaceholder')"
-							class="w-full p-2 border rounded"
-							:class="{ 'border-red-500': errors.name_item_document }" />
-						<span class="text-red-500 h-5 w-full text-sm">{{ errors.name_item_document || ' ' }}</span>
-					</div>
-					<div class="flex flex-col">
-						<Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
-							:class="{ 'border-red-500': errors.document }" />
-						<span class="h-5 w-80 text-sm">{{ $t('item.VItemDocumentSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
-						<span class="text-red-500 h-5 w-full text-sm">{{ errors.document || ' ' }}</span>
-					</div>
-				</div>
-				<div class="flex justify-end space-x-2">
-					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
-						{{ $t('item.VItemDocumentCancel') }}
-					</button>
-					<button type="button" @click="documentAdd" 
-						class="flex items-center px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-400"
-						:disabled="documentAddLoading">
-						<span v-show="documentAddLoading"
-							class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
-						{{ $t('item.VItemDocumentAdd') }}
-					</button>
-				</div>
-			</Form>
-		</div>
-	</div>
+	<ModalAddFile :show-modal="documentAddModalShow" @close-modal="documentAddModalShow = false"
+		:text-title="'item.VItemDocumentAddTitle'" :schema-add="schemaAddDocument"
+		:modal-data="documentModalData" :add-action="documentAdd" :key-name-document="'name_item_document'" :key-file-document="'document'"
+		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
+		:text-max-size="'item.VItemDocumentSize'" :text-placeholder-document="'item.VItemDocumentNamePlaceholder'"
+	/>
+
 	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
 		:delete-action="documentDelete" :text-title="'item.VItemDocumentDeleteTitle'"
 		:text-p="'item.VItemDocumentDeleteText'"/>
 
-	<div v-if="imageAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="imageAddModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<Form :validation-schema="schemaAddImage" v-slot="{ errors }">
-				<h2 class="text-xl mb-4">{{ $t('item.VItemImageAddTitle') }}</h2>
-				<div class="flex flex-col">
-					<div class="flex flex-col">
-						<Field name="nom_img" type="text"
-							v-model="imageModalData.nom_img"
-							:placeholder="$t('item.VItemImageNamePlaceholder')"
-							class="w-full p-2 border rounded"
-							:class="{ 'border-red-500': errors.nom_img }" />
-						<span class="text-red-500 h-5 w-full text-sm">{{ errors.nom_img || ' ' }}</span>
-					</div>
-					<div class="flex flex-col">
-						<Field name="image" type="file" @change="handleImageUpload" class="w-full p-2" accept="image/*" />
-						<span class="h-5 w-80 text-sm">{{ $t('item.VItemImageSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
-						<span class="text-red-500 h-5 w-full text-sm">{{ errors.image || ' ' }}</span>
-					</div>
-				</div>
-				<div class="flex justify-end space-x-2">
-					<button type="button" @click="imageAddModalShow = false"
-						class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
-						{{ $t('item.VItemImageCancel') }}
-					</button>
-					<button type="button" @click="imageAdd" 
-						class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-400"
-						:disabled="documentAddLoading">
-						<span v-show="documentAddLoading"
-							class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
-						{{ $t('item.VItemImageAdd') }}
-					</button>
-				</div>
-			</Form>
-		</div>
-	</div>
+	<ModalAddFile :show-modal="imageAddModalShow" @close-modal="imageAddModalShow = false"
+		:text-title="'item.VItemImageAddTitle'" :schema-add="schemaAddImage"
+		:modal-data="imageModalData" :add-action="imageAdd" :key-name-document="'nom_img'" :key-file-document="'image'"
+		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
+		:text-max-size="'item.VItemImageSize'" :text-placeholder-document="'item.VItemImageNamePlaceholder'"
+	/>
+
 	<ModalDeleteConfirm :show-modal="imageDeleteModalShow" @close-modal="imageDeleteModalShow = false"
 		:delete-action="imageDelete" :text-title="'item.VItemImageDeleteTitle'"
 		:text-p="'item.VItemImageDeleteText'"/>
