@@ -14,7 +14,7 @@
 						<span class="text-red-500 h-5 w-full text-sm">{{ errors[keyNameDocument] || ' ' }}</span>
 					</div>
 					<div class="flex flex-col">
-						<Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
+						<Field :name="keyFileDocument" type="file" @change="handleFileUpload" class="w-full p-2"
 							:class="{ 'border-red-500': errors[keyFileDocument] }" />
 						<span class="h-5 w-80 text-sm">{{ $t(textMaxSize) }} ({{ maxSizeInMb }}Mo)</span>
 						<span class="text-red-500 h-5 w-full text-sm">{{ errors[keyFileDocument] || ' ' }}</span>
@@ -40,7 +40,6 @@
 			</Form>
 		</div>
 	</div>
-	
 </template>
 
 <script>

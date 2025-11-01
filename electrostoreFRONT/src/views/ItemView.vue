@@ -61,11 +61,17 @@ async function fetchAllData() {
 }
 onMounted(() => {
 	fetchAllData();
+	window.addEventListener("click", () => {
+		selectedImageId.value = null;
+	});
 });
 onBeforeUnmount(() => {
 	itemsStore.itemEdition = {
 		loading: false,
 	};
+	window.removeEventListener("click", () => {
+		selectedImageId.value = null;
+	});
 });
 
 const toggleBoxLed = async(boxId) => {
@@ -213,9 +219,6 @@ const documentDelete = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
 	documentDeleteModalShow.value = false;
-};
-const handleFileUpload = (e) => {
-	documentModalData.value.document = e.target.files[0];
 };
 const documentDownload = async(fileContent) => {
 	const file = await itemsStore.downloadDocument(itemId.value, fileContent.id_item_document);
@@ -610,13 +613,13 @@ const labelTableauProjet = ref([
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('item.VItemAddImage') }}
 				</button>
-				<div class="flex flex-wrap relative" @click="selectedImageId = null">
+				<div class="flex flex-wrap relative">
 					<template v-if="itemsStore.images[itemId]">
 						<div v-for="image in itemsStore.images[itemId]" :key="image.id_img" @click.stop
 							class="w-48 h-48 bg-gray-200 rounded m-2 flex items-center relative">
 							<template v-if="itemsStore.thumbnailsURL[image.id_img]">
 								<img :src="itemsStore.thumbnailsURL[image.id_img]"
-									class="w-48 h-48 object-cover rounded" alt={{ image.nom_img }}
+									class="w-48 h-48 object-cover rounded" :alt="image.nom_img"
 									@click="selectedImageId === image.id_img ? selectedImageId = null : selectedImageId = image.id_img" />
 							</template>
 							<template v-else>
@@ -711,7 +714,7 @@ const labelTableauProjet = ref([
 					<div v-for="image in itemsStore.images[itemId]" :key="image.id_img"
 						class="w-24 h-24 bg-gray-200 rounded m-2 flex items-center justify-center cursor-pointer">
 						<template v-if="itemsStore.thumbnailsURL[image.id_img]">
-							<img :src="itemsStore.thumbnailsURL[image.id_img]" alt={{ image.nom_img }}
+							<img :src="itemsStore.thumbnailsURL[image.id_img]" :alt="image.nom_img"
 								:class="itemsStore.itemEdition.id_img == image.id_img ? 'border-2 border-blue-500' : 'border-2 border-transparent'"
 								class="w-24 h-24 object-cover rounded"
 								@click="itemsStore.itemEdition.id_img = image.id_img" />
