@@ -5,10 +5,17 @@
 				:placeholder="$t('components.VModalCommentairePlaceholder')"
 				class="w-full p-2 border rounded-lg"
 				:class="{ 'border-red-500': errors[meta.contenu] }" />
-			<button type="button" @click="commentaireCreate(commentaireFormNew)"
-				class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-				{{ $t('components.VModalCommentaireAdd') }}
-			</button>
+			<div class="relative">
+				<button type="button" @click="commentaireCreate(commentaireFormNew)"
+					class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+					:disabled="createLoading">
+					{{ $t('components.VModalCommentaireAdd') }}
+				</button>
+				<div v-if="createLoading"
+					class="absolute inset-0 bg-blue-500 bg-opacity-90 rounded-lg flex items-center justify-center">
+					<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+				</div>
+			</div>
 		</div>
 	</Form>
 	<div class="space-y-4 overflow-x-auto max-h-96 overflow-y-auto" @scroll="loadNext">
@@ -34,10 +41,16 @@
 							class="w-full p-2 border rounded-lg"
 							:class="{ 'border-red-500': errors[meta.contenu] }" />
 						<div class="flex justify-end space-x-2 mt-2">
-							<button type="button" @click="commentaireUpdate(commentaire.tmp)"
-								class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
-								{{ $t('components.VModalCommentaireSave') }}
-							</button>
+							<div class="relative">
+								<button type="button" @click="commentaireUpdate(commentaire.tmp)"
+									class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
+									{{ $t('components.VModalCommentaireSave') }}
+								</button>
+								<div v-if="commentaire.tmp.loading"
+									class="absolute inset-0 bg-green-500 bg-opacity-90 rounded-lg flex items-center justify-center">
+									<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+								</div>
+							</div>
 							<button type="button" @click="commentaire.tmp = null"
 								class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
 								{{ $t('components.VModalCommentaireCancel') }}
@@ -81,7 +94,7 @@
 	</div>
 
 	<ModalDeleteConfirm :show-modal="deleteModalShow" @close-modal="deleteModalShow = false"
-		@delete-confirmed="commentaireDelete()" :text-title="texteModalDelete?.textTitle"
+		:delete-action="commentaireDelete" :text-title="texteModalDelete?.textTitle"
 		:text-p="texteModalDelete?.textP"/>
 </template>
 
@@ -175,6 +188,7 @@ export default {
 			commentaireFormNew: "",
 			selectedCommentaire: null,
 			deleteModalShow: false,
+			createLoading: false,
 		};
 	},
 	computed: {
@@ -187,10 +201,11 @@ export default {
 		},
 	},
 	methods: {
-		commentaireCreate(commentaire) {
+		async commentaireCreate(commentaire) {
+			this.createLoading = true;
 			try {
 				this.schemaCommentaire.validateSync({ [this.meta.contenu]: commentaire }, { abortEarly: false });
-				this.storeFunction.create({
+				await this.storeFunction.create({
 					[this.meta.contenu]: commentaire,
 				});
 				this.addNotification({
@@ -205,12 +220,15 @@ export default {
 						message: error.message,
 					});
 				});
+			} finally {
+				this.createLoading = false;
 			}
 		},
-		commentaireUpdate(commentaire) {
+		async commentaireUpdate(commentaire) {
+			commentaire.loading = true;
 			try {
 				this.schemaCommentaire.validateSync(commentaire, { abortEarly: false });
-				this.storeFunction.update(commentaire[this.meta.key], {
+				await this.storeFunction.update(commentaire[this.meta.key], {
 					[this.meta.contenu]: commentaire[this.meta.contenu],
 				});
 				this.addNotification({
@@ -228,8 +246,8 @@ export default {
 				return;
 			}
 		},
-		commentaireDelete() {
-			this.storeFunction.delete(this.selectedCommentaire)
+		async commentaireDelete() {
+			await this.storeFunction.delete(this.selectedCommentaire)
 				.then(() => {
 					this.addNotification({
 						type: "success",

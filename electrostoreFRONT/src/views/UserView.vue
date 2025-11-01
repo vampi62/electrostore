@@ -30,7 +30,11 @@ if (authStore.user?.role_user !== 2 && authStore.user?.role_user !== 1 && authSt
 }
 
 async function fetchAllData() {
-	if (userId.value !== "new") {
+	if (userId.value === "new") {
+		usersStore.userEdition = {
+			loading: false,
+		};
+	} else {
 		usersStore.userEdition = {
 			loading: true,
 		};
@@ -60,10 +64,6 @@ async function fetchAllData() {
 			mdp_user: "",
 			confirm_mdp_user: "",
 		};
-	} else {
-		usersStore.userEdition = {
-			loading: false,
-		};
 	}
 }
 onMounted(() => {
@@ -80,12 +80,12 @@ const userTypeRole = ref([[0, t("user.VUserFilterRole0")], [1, t("user.VUserFilt
 const userSave = async() => {
 	try {
 		createSchema(isChecked).validateSync(usersStore.userEdition, { abortEarly: false });
-		if (userId.value !== "new") {
-			await usersStore.updateUser(userId.value, { ...usersStore.userEdition });
-			addNotification({ message: "user.VUserUpdated", type: "success", i18n: true });
-		} else {
+		if (userId.value === "new") {
 			await usersStore.createUser({ ...usersStore.userEdition });
 			addNotification({ message: "user.VUserCreated", type: "success", i18n: true });
+		} else {
+			await usersStore.updateUser(userId.value, { ...usersStore.userEdition });
+			addNotification({ message: "user.VUserUpdated", type: "success", i18n: true });
 		}
 		usersStore.userEdition.mdp_user = "";
 		usersStore.userEdition.confirm_mdp_user = "";
@@ -189,6 +189,7 @@ const labelTableauSession = ref([
 			condition: "!rowData?.is_revoked",
 			action: (row) => revokeToken(row.session_id),
 			class: "bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600",
+			animation: true,
 		},
 	] },
 ]);
@@ -258,6 +259,6 @@ const labelTableauSession = ref([
 		<div>{{ $t('user.VUserLoading') }}</div>
 	</div>
 	<ModalDeleteConfirm :show-modal="userDeleteModalShow" @close-modal="userDeleteModalShow = false"
-		@delete-confirmed="userDelete" :text-title="'user.VUserDeleteTitle'"
+		:delete-action="userDelete" :text-title="'user.VUserDeleteTitle'"
 		:text-p="(authStore.user?.id_user !== Number(userId)) ? 'user.VUserDeleteTextAdmin' : 'user.VUserDeleteTextUser'"/>
 </template>

@@ -24,7 +24,11 @@ const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
-	if (projetId.value !== "new") {
+	if (projetId.value === "new") {
+		projetsStore.projetEdition = {
+			loading: false,
+		};
+	} else {
 		projetsStore.projetEdition = {
 			loading: true,
 		};
@@ -49,10 +53,6 @@ async function fetchAllData() {
 			date_fin_projet: projetsStore.projets[projetId.value].date_fin_projet,
 		};
 		usersStore.users[authStore.user.id_user] = authStore.user; // avoids undefined user when the current user posts first comment
-	} else {
-		projetsStore.projetEdition = {
-			loading: false,
-		};
 	}
 }
 onMounted(() => {
@@ -70,12 +70,12 @@ const projetTypeStatus = ref([["En attente", t("projet.VProjetStatus1")], ["En c
 const projetSave = async() => {
 	try {
 		createSchema().validateSync(projetsStore.projetEdition, { abortEarly: false });
-		if (projetId.value !== "new") {
-			await projetsStore.updateProjet(projetId.value, { ...projetsStore.projetEdition });
-			addNotification({ message: "projet.VProjetUpdated", type: "success", i18n: true });
-		} else {
+		if (projetId.value === "new") {
 			await projetsStore.createProjet({ ...projetsStore.projetEdition });
 			addNotification({ message: "projet.VProjetCreated", type: "success", i18n: true });
+		} else {
+			await projetsStore.updateProjet(projetId.value, { ...projetsStore.projetEdition });
+			addNotification({ message: "projet.VProjetUpdated", type: "success", i18n: true });
 		}
 	} catch (e) {
 		if (e.inner) {
@@ -107,9 +107,9 @@ const projetDelete = async() => {
 const documentAddModalShow = ref(false);
 const documentDeleteModalShow = ref(false);
 const documentAddLoading = ref(false);
-const documentModalData = ref({ id_projet_document: null, name_projet_document: "", document: null, isEdit: false });
+const documentModalData = ref({ id_projet_document: null, name_projet_document: "", document: null });
 const documentAddOpenModal = () => {
-	documentModalData.value = { name_projet_document: "", document: null, isEdit: false };
+	documentModalData.value = { name_projet_document: "", document: null };
 	documentAddModalShow.value = true;
 };
 const documentDeleteOpenModal = (doc) => {
@@ -347,18 +347,21 @@ const labelTableauDocument = ref([
 			condition: "rowData.tmp",
 			action: (row) => documentEdit(row.tmp),
 			class: "text-green-500 cursor-pointer hover:text-green-600",
+			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-eye",
 			action: (row) => documentView(row),
 			class: "text-green-500 cursor-pointer hover:text-green-600",
+			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-download",
 			action: (row) => documentDownload(row),
 			class: "text-yellow-500 cursor-pointer hover:text-yellow-600",
+			animation: true,
 		},
 		{
 			label: "",
@@ -387,6 +390,7 @@ const labelTableauItem = ref([
 			condition: "rowData.tmp",
 			action: (row) => itemSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
 		},
 		{
 			label: "",
@@ -402,6 +406,7 @@ const labelTableauItem = ref([
 			icon: "fa-solid fa-trash",
 			action: (row) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+			animation: true,
 		},
 	] },
 ]);
@@ -433,6 +438,7 @@ const labelTableauModalItem = ref([
 			condition: "rowData.tmp",
 			action: (row) => itemSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
 		},
 		{
 			label: "",
@@ -449,6 +455,7 @@ const labelTableauModalItem = ref([
 			condition: "store[1]?.[rowData.id_item]",
 			action: (row) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+			animation: true,
 		},
 	] },
 ]);
@@ -517,7 +524,7 @@ const labelTableauModalItem = ref([
 	</div>
 
 	<ModalDeleteConfirm :show-modal="projetDeleteModalShow" @close-modal="projetDeleteModalShow = false"
-		@delete-confirmed="projetDelete" :text-title="'projet.VProjetDeleteTitle'"
+		:delete-action="projetDelete" :text-title="'projet.VProjetDeleteTitle'"
 		:text-p="'projet.VProjetDeleteText'"/>
 
 	<div v-if="documentAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
@@ -557,7 +564,7 @@ const labelTableauModalItem = ref([
 		</div>
 	</div>
 	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
-		@delete-confirmed="documentDelete" :text-title="'projet.VProjetDocumentDeleteTitle'"
+		:delete-action="documentDelete" :text-title="'projet.VProjetDocumentDeleteTitle'"
 		:text-p="'projet.VProjetDocumentDeleteText'"/>
 
 	<div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"

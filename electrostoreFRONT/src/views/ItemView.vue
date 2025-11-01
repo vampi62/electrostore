@@ -26,7 +26,11 @@ const projetsStore = useProjetsStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
-	if (itemId.value !== "new") {
+	if (itemId.value === "new") {
+		itemsStore.itemEdition = {
+			loading: false,
+		};
+	} else {
 		itemsStore.itemEdition = {
 			loading: true,
 		};
@@ -52,10 +56,6 @@ async function fetchAllData() {
 			description_item: itemsStore.items[itemId.value].description_item,
 			seuil_min_item: itemsStore.items[itemId.value].seuil_min_item,
 			id_img: itemsStore.items[itemId.value].id_img,
-		};
-	} else {
-		itemsStore.itemEdition = {
-			loading: false,
 		};
 	}
 }
@@ -164,9 +164,9 @@ const boxSave = async(box) => {
 const documentAddModalShow = ref(false);
 const documentDeleteModalShow = ref(false);
 const documentAddLoading = ref(false);
-const documentModalData = ref({ id_item_document: null, name_item_document: "", document: null, isEdit: false });
+const documentModalData = ref({ id_item_document: null, name_item_document: "", document: null });
 const documentAddOpenModal = () => {
-	documentModalData.value = { name_item_document: "", document: null, isEdit: false };
+	documentModalData.value = { name_item_document: "", document: null };
 	documentAddModalShow.value = true;
 };
 const documentDeleteOpenModal = (doc) => {
@@ -258,7 +258,7 @@ const imageAddModalShow = ref(false);
 const imageDeleteModalShow = ref(false);
 const imageAddLoading = ref(false);
 const selectedImageId = ref(null);
-const imageModalData = ref({ id_img: null, nom_img: "", description_img: "undefined", image: null, isEdit: false });
+const imageModalData = ref({ id_img: null, nom_img: "", description_img: "undefined", image: null });
 const imageSelectOpenModal = () => {
 	if (itemId.value === "new") {
 		return;
@@ -272,7 +272,7 @@ const imageSelectOpenModal = () => {
 	}
 };
 const imageAddOpenModal = () => {
-	imageModalData.value = { nom_img: "", description_img: "undefined", image: null, isEdit: false };
+	imageModalData.value = { nom_img: "", description_img: "undefined", image: null };
 	imageAddModalShow.value = true;
 };
 const imageDeleteOpenModal = (doc) => {
@@ -474,18 +474,21 @@ const labelTableauDocument = ref([
 			condition: "rowData.tmp",
 			action: (row) => documentEdit(row.tmp),
 			class: "text-green-500 cursor-pointer hover:text-green-600",
+			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-eye",
 			action: (row) => documentView(row),
 			class: "text-green-500 cursor-pointer hover:text-green-600",
+			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-download",
 			action: (row) => documentDownload(row),
 			class: "text-yellow-500 cursor-pointer hover:text-yellow-600",
+			animation: true,
 		},
 		{
 			label: "",
@@ -515,6 +518,7 @@ const labelTableauBox = ref([
 			condition: "rowData.tmp",
 			action: (row) => boxSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
 		},
 		{
 			label: "",
@@ -530,6 +534,7 @@ const labelTableauBox = ref([
 			icon: "fa-solid fa-eye",
 			action: (row) => toggleBoxLed(row.id_box),
 			class: "px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600",
+			animation: true,
 		},
 	] },
 ]);
@@ -576,7 +581,7 @@ const labelTableauProjet = ref([
 					</div>
 				</template>
 			</FormContainer>
-			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="itemId !== 'new'"
+			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="itemId !== 'new' && authStore.user.role_user >= 1"
 				:delete-function="(value) => tagDelete(value)" @openModalTag="tagOpenAddModal"/>
 		</div>
 		<CollapsibleSection title="item.VitemBoxs"
@@ -699,7 +704,7 @@ const labelTableauProjet = ref([
 	</div>
 
 	<ModalDeleteConfirm :show-modal="itemDeleteModalShow" @close-modal="itemDeleteModalShow = false"
-		@delete-confirmed="itemDelete" :text-title="'item.VItemDeleteTitle'"
+		:delete-action="itemDelete" :text-title="'item.VItemDeleteTitle'"
 		:text-p="'item.VItemDeleteText'"/>
 
 	<div v-if="imageSelectModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
@@ -757,7 +762,7 @@ const labelTableauProjet = ref([
 						{{ $t('item.VItemDocumentCancel') }}
 					</button>
 					<button type="button" @click="documentAdd" 
-						class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-400"
+						class="flex items-center px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-400"
 						:disabled="documentAddLoading">
 						<span v-show="documentAddLoading"
 							class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block"></span>
@@ -768,7 +773,7 @@ const labelTableauProjet = ref([
 		</div>
 	</div>
 	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
-		@delete-confirmed="documentDelete" :text-title="'item.VItemDocumentDeleteTitle'"
+		:delete-action="documentDelete" :text-title="'item.VItemDocumentDeleteTitle'"
 		:text-p="'item.VItemDocumentDeleteText'"/>
 
 	<div v-if="imageAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
@@ -808,6 +813,6 @@ const labelTableauProjet = ref([
 		</div>
 	</div>
 	<ModalDeleteConfirm :show-modal="imageDeleteModalShow" @close-modal="imageDeleteModalShow = false"
-		@delete-confirmed="imageDelete" :text-title="'item.VItemImageDeleteTitle'"
+		:delete-action="imageDelete" :text-title="'item.VItemImageDeleteTitle'"
 		:text-p="'item.VItemImageDeleteText'"/>
 </template>

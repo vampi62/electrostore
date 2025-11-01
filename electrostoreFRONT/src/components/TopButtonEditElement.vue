@@ -2,31 +2,40 @@
 	<div class="hidden md:flex flex-wrap gap-2 justify-end">
 		<!-- Desktop -->
 		<template v-for="(button, index) in optionalConfig" :key="index">
-			<button type="button" @click="button.action"
-				v-if="id != 'new' && storeUser?.role_user >= button.roleRequired"
-				:class="['text-white px-4 py-2 rounded flex items-center',
-				button.bgColor ? button.bgColor : 'bg-gray-500',
-				button.hoverColor ? button.hoverColor : 'hover:bg-gray-600']">
-				<span v-show="button.loading"
-					class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t(button.label) }}
-			</button>
+			<div v-if="id != 'new' && storeUser?.role_user >= button.roleRequired" class="relative">
+				<button type="button" @click="button.action"
+					:class="['text-white px-4 py-2 rounded flex items-center',
+					button.bgColor ? button.bgColor : 'bg-gray-500',
+					button.hoverColor ? button.hoverColor : 'hover:bg-gray-600']">
+					{{ $t(button.label) }}
+				</button>
+				<div v-show="button.loading" 
+					:class="['absolute inset-0 bg-opacity-90 rounded flex items-center justify-center',
+					button.bgColor ? button.bgColor : 'bg-gray-500']">
+					<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+				</div>
+			</div>
 		</template>
-		<button type="button" @click="$emit('buttonSave')" v-if="id == 'new' && ((storeUser?.role_user >= mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))"
-			class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-			<span v-show="mainConfig.save.loading"
-				class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-			</span>
-			{{ $t('components.VModalTopButtonAdd') }}
-		</button>
-		<button type="button" @click="$emit('buttonSave')" v-if="id != 'new' && ((storeUser?.role_user >= mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))"
-			class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
-			<span v-show="mainConfig.save.loading"
-				class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-			</span>
-			{{ $t('components.VModalTopButtonUpdate') }}
-		</button>
+		<div v-if="id == 'new' && ((storeUser?.role_user >= mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))" class="relative">
+			<button type="button" @click="$emit('buttonSave')"
+				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
+				{{ $t('components.VModalTopButtonAdd') }}
+			</button>
+			<div v-show="mainConfig.save.loading" 
+				class="absolute inset-0 bg-blue-500 bg-opacity-90 rounded flex items-center justify-center">
+				<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+			</div>
+		</div>
+		<div v-if="id != 'new' && ((storeUser?.role_user >= mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))" class="relative">
+			<button type="button" @click="$emit('buttonSave')"
+				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
+				{{ $t('components.VModalTopButtonUpdate') }}
+			</button>
+			<div v-show="mainConfig.save.loading" 
+				class="absolute inset-0 bg-blue-500 bg-opacity-90 rounded flex items-center justify-center">
+				<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+			</div>
+		</div>
 		<button type="button" @click="$emit('buttonDelete')" v-if="id != 'new' && ((storeUser?.role_user >= mainConfig.delete.roleRequired) || (mainConfig.delete?.sameUserId && storeUser?.id_user == id))"
 			class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
 			{{ $t('components.VModalTopButtonDelete') }}
@@ -37,7 +46,7 @@
 		</button>
 	</div>
 	<!-- Mobile -->
-	<div class="md:hidden relative">
+	<div class="md:hidden relative z-50">
 		<button @click="showMobileMenu = !showMobileMenu"
 			class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 flex items-center w-full justify-between">
 			{{ $t('components.VModalTopButtonMenu') }}
@@ -54,35 +63,42 @@
 		</button>
 		<!-- Menu -->
 		<div v-if="showMobileMenu"
-			class="absolute right-0 mt-2 w-48 rounded-md shadow-lg z-50 border border-gray-200">
+			class="absolute right-0 mt-2 w-48 rounded-md shadow-lg border border-gray-200">
 			<template v-for="(button, index) in optionalConfig" :key="index">
-				<button v-if="id != 'new' && storeUser?.role_user >= button.roleRequired" @click="button.action"
-					:class="['relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white text-gray-700 hover:bg-gray-100 border-b border-gray-200',
-					button.bgColor ? button.bgColor : 'bg-gray-500',
-					button.hoverColor ? button.hoverColor : 'hover:bg-gray-600']">
-					<span v-show="button.loading"
-						class="absolute left-4 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-					</span>
-					{{ $t(button.label) }}
-				</button>
+				<div v-if="id != 'new' && storeUser?.role_user >= button.roleRequired" class="relative">
+					<button @click="button.action"
+						:class="['relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white text-gray-700 hover:bg-gray-100 border-b border-gray-200',
+						button.bgColor ? button.bgColor : 'bg-gray-500',
+						button.hoverColor ? button.hoverColor : 'hover:bg-gray-600']">
+						{{ $t(button.label) }}
+					</button>
+					<div v-show="button.loading" 
+						:class="['absolute inset-0 bg-opacity-90 flex items-center justify-center',
+						button.bgColor ? button.bgColor : 'bg-gray-500']">
+						<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+					</div>
+				</div>
 			</template>
-			<button v-if="id == 'new' && ((storeUser?.role_user >= mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))"
-				@click="$emit('buttonSave')"
-				class="relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-blue-500 hover:bg-blue-600 border-b border-gray-200">
-				<span v-show="mainConfig.save.loading"
-					class="absolute left-4 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 inline-block">
-				</span>
-				{{ $t('components.VModalTopButtonAdd') }}
-			</button>
-			<button v-if="id != 'new' && ((storeUser?.role_user >= mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))"
-				@click="$emit('buttonSave')"
-				class="relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-blue-500 hover:bg-blue-600 border-b border-gray-200">
-				<span
-					v-show="mainConfig.save.loading"
-					class="absolute left-4 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
-				></span>
-				{{ $t('components.VModalTopButtonUpdate') }}
-			</button>
+			<div v-if="id == 'new' && ((storeUser?.role_user >= mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))" class="relative">
+				<button @click="$emit('buttonSave')"
+					class="relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-blue-500 hover:bg-blue-600 border-b border-gray-200">
+					{{ $t('components.VModalTopButtonAdd') }}
+				</button>
+				<div v-show="mainConfig.save.loading" 
+					class="absolute inset-0 bg-blue-500 bg-opacity-90 flex items-center justify-center">
+					<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+				</div>
+			</div>
+			<div v-if="id != 'new' && ((storeUser?.role_user >= mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))" class="relative">
+				<button @click="$emit('buttonSave')"
+					class="relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-blue-500 hover:bg-blue-600 border-b border-gray-200">
+					{{ $t('components.VModalTopButtonUpdate') }}
+				</button>
+				<div v-show="mainConfig.save.loading" 
+					class="absolute inset-0 bg-blue-500 bg-opacity-90 flex items-center justify-center">
+					<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+				</div>
+			</div>
 			<button v-if="id != 'new' && ((storeUser?.role_user >= mainConfig.delete.roleRequired) || (mainConfig.delete?.sameUserId && storeUser?.id_user == id))"
 				@click="$emit('buttonDelete')"
 				class="relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-red-500 hover:bg-red-600 border-b border-gray-200">
