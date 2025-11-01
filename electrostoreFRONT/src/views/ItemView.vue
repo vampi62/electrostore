@@ -26,7 +26,11 @@ const projetsStore = useProjetsStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
-	if (itemId.value !== "new") {
+	if (itemId.value === "new") {
+		itemsStore.itemEdition = {
+			loading: false,
+		};
+	} else {
 		itemsStore.itemEdition = {
 			loading: true,
 		};
@@ -53,19 +57,21 @@ async function fetchAllData() {
 			seuil_min_item: itemsStore.items[itemId.value].seuil_min_item,
 			id_img: itemsStore.items[itemId.value].id_img,
 		};
-	} else {
-		itemsStore.itemEdition = {
-			loading: false,
-		};
 	}
 }
 onMounted(() => {
 	fetchAllData();
+	window.addEventListener("click", () => {
+		selectedImageId.value = null;
+	});
 });
 onBeforeUnmount(() => {
 	itemsStore.itemEdition = {
 		loading: false,
 	};
+	window.removeEventListener("click", () => {
+		selectedImageId.value = null;
+	});
 });
 
 const toggleBoxLed = async(boxId) => {
@@ -163,9 +169,9 @@ const boxSave = async(box) => {
 // document
 const documentAddModalShow = ref(false);
 const documentDeleteModalShow = ref(false);
-const documentModalData = ref({ id_item_document: null, name_item_document: "", document: null, isEdit: false });
+const documentModalData = ref({ id_item_document: null, name_item_document: "", document: null });
 const documentAddOpenModal = () => {
-	documentModalData.value = { name_item_document: "", document: null, isEdit: false };
+	documentModalData.value = { name_item_document: "", document: null };
 	documentAddModalShow.value = true;
 };
 const documentDeleteOpenModal = (doc) => {
@@ -214,9 +220,6 @@ const documentDelete = async() => {
 	}
 	documentDeleteModalShow.value = false;
 };
-const handleFileUpload = (e) => {
-	documentModalData.value.document = e.target.files[0];
-};
 const documentDownload = async(fileContent) => {
 	const file = await itemsStore.downloadDocument(itemId.value, fileContent.id_item_document);
 	const url = window.URL.createObjectURL(new Blob([file]));
@@ -253,7 +256,7 @@ const imageSelectModalShow = ref(false);
 const imageAddModalShow = ref(false);
 const imageDeleteModalShow = ref(false);
 const selectedImageId = ref(null);
-const imageModalData = ref({ id_img: null, nom_img: "", description_img: "undefined", image: null, isEdit: false });
+const imageModalData = ref({ id_img: null, nom_img: "", description_img: "undefined", image: null });
 const imageSelectOpenModal = () => {
 	if (itemId.value === "new") {
 		return;
@@ -267,7 +270,7 @@ const imageSelectOpenModal = () => {
 	}
 };
 const imageAddOpenModal = () => {
-	imageModalData.value = { nom_img: "", description_img: "undefined", image: null, isEdit: false };
+	imageModalData.value = { nom_img: "", description_img: "undefined", image: null };
 	imageAddModalShow.value = true;
 };
 const imageDeleteOpenModal = (doc) => {
@@ -291,9 +294,6 @@ const imageDelete = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
 	imageDeleteModalShow.value = false;
-};
-const handleImageUpload = (e) => {
-	imageModalData.value.image = e.target.files[0];
 };
 const imageDownload = async(imageContent) => {
 	if (!itemsStore.imagesURL[imageContent.id_img]) {
@@ -440,7 +440,7 @@ const labelTableauModalTag = ref([
 const labelTableauDocument = ref([
 	{ label: "item.VItemDocumentName", sortable: true, key: "name_item_document", type: "text", canEdit: true },
 	{ label: "item.VItemDocumentType", sortable: true, key: "type_item_document", type: "text" },
-	{ label: "item.VItemDocumentDate", sortable: true, key: "date_item_document", type: "datetime" },
+	{ label: "item.VItemDocumentDate", sortable: true, key: "created_at", type: "datetime" },
 	{ label: "item.VItemDocumentActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -466,18 +466,21 @@ const labelTableauDocument = ref([
 			condition: "rowData.tmp",
 			action: (row) => documentEdit(row.tmp),
 			class: "text-green-500 cursor-pointer hover:text-green-600",
+			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-eye",
 			action: (row) => documentView(row),
 			class: "text-green-500 cursor-pointer hover:text-green-600",
+			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-download",
 			action: (row) => documentDownload(row),
 			class: "text-yellow-500 cursor-pointer hover:text-yellow-600",
+			animation: true,
 		},
 		{
 			label: "",
@@ -507,6 +510,7 @@ const labelTableauBox = ref([
 			condition: "rowData.tmp",
 			action: (row) => boxSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
 		},
 		{
 			label: "",
@@ -522,6 +526,7 @@ const labelTableauBox = ref([
 			icon: "fa-solid fa-eye",
 			action: (row) => toggleBoxLed(row.id_box),
 			class: "px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600",
+			animation: true,
 		},
 	] },
 ]);
@@ -568,7 +573,7 @@ const labelTableauProjet = ref([
 					</div>
 				</template>
 			</FormContainer>
-			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="itemId !== 'new'"
+			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="itemId !== 'new' && authStore.user.role_user >= 1"
 				:delete-function="(value) => tagDelete(value)" @openModalTag="tagOpenAddModal"/>
 		</div>
 		<CollapsibleSection title="item.VitemBoxs"
@@ -608,13 +613,13 @@ const labelTableauProjet = ref([
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('item.VItemAddImage') }}
 				</button>
-				<div class="flex flex-wrap relative" @click="selectedImageId = null">
+				<div class="flex flex-wrap relative">
 					<template v-if="itemsStore.images[itemId]">
 						<div v-for="image in itemsStore.images[itemId]" :key="image.id_img" @click.stop
 							class="w-48 h-48 bg-gray-200 rounded m-2 flex items-center relative">
 							<template v-if="itemsStore.thumbnailsURL[image.id_img]">
 								<img :src="itemsStore.thumbnailsURL[image.id_img]"
-									class="w-48 h-48 object-cover rounded" alt={{ image.nom_img }}
+									class="w-48 h-48 object-cover rounded" :alt="image.nom_img"
 									@click="selectedImageId === image.id_img ? selectedImageId = null : selectedImageId = image.id_img" />
 							</template>
 							<template v-else>
@@ -691,7 +696,7 @@ const labelTableauProjet = ref([
 	</div>
 
 	<ModalDeleteConfirm :show-modal="itemDeleteModalShow" @close-modal="itemDeleteModalShow = false"
-		@delete-confirmed="itemDelete" :text-title="'item.VItemDeleteTitle'"
+		:delete-action="itemDelete" :text-title="'item.VItemDeleteTitle'"
 		:text-p="'item.VItemDeleteText'"/>
 
 	<div v-if="imageSelectModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
@@ -709,7 +714,7 @@ const labelTableauProjet = ref([
 					<div v-for="image in itemsStore.images[itemId]" :key="image.id_img"
 						class="w-24 h-24 bg-gray-200 rounded m-2 flex items-center justify-center cursor-pointer">
 						<template v-if="itemsStore.thumbnailsURL[image.id_img]">
-							<img :src="itemsStore.thumbnailsURL[image.id_img]" alt={{ image.nom_img }}
+							<img :src="itemsStore.thumbnailsURL[image.id_img]" :alt="image.nom_img"
 								:class="itemsStore.itemEdition.id_img == image.id_img ? 'border-2 border-blue-500' : 'border-2 border-transparent'"
 								class="w-24 h-24 object-cover rounded"
 								@click="itemsStore.itemEdition.id_img = image.id_img" />
@@ -723,75 +728,25 @@ const labelTableauProjet = ref([
 		</div>
 	</div>
 
-	<div v-if="documentAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="documentAddModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<Form :validation-schema="schemaAddDocument" v-slot="{ errors }">
-				<h2 class="text-xl mb-4">{{ $t('item.VItemDocumentAddTitle') }}</h2>
-				<div class="flex flex-col">
-					<div class="flex flex-col">
-						<Field name="name_item_document" type="text"
-							v-model="documentModalData.name_item_document"
-							:placeholder="$t('item.VItemDocumentNamePlaceholder')"
-							class="w-full p-2 border rounded"
-							:class="{ 'border-red-500': errors.name_item_document }" />
-						<span class="text-red-500 h-5 w-full text-sm">{{ errors.name_item_document || ' ' }}</span>
-					</div>
-					<div class="flex flex-col">
-						<Field name="document" type="file" @change="handleFileUpload" class="w-full p-2"
-							:class="{ 'border-red-500': errors.document }" />
-						<span class="h-5 w-80 text-sm">{{ $t('item.VItemDocumentSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
-						<span class="text-red-500 h-5 w-full text-sm">{{ errors.document || ' ' }}</span>
-					</div>
-				</div>
-				<div class="flex justify-end space-x-2">
-					<button type="button" @click="documentAddModalShow = false" class="px-4 py-2 bg-gray-300 rounded">
-						{{ $t('item.VItemDocumentCancel') }}
-					</button>
-					<button type="button" @click="documentAdd" class="px-4 py-2 bg-blue-500 text-white rounded">
-						{{ $t('item.VItemDocumentAdd') }}
-					</button>
-				</div>
-			</Form>
-		</div>
-	</div>
+	<ModalAddFile :show-modal="documentAddModalShow" @close-modal="documentAddModalShow = false"
+		:text-title="'item.VItemDocumentAddTitle'" :schema-add="schemaAddDocument"
+		:modal-data="documentModalData" :add-action="documentAdd" :key-name-document="'name_item_document'" :key-file-document="'document'"
+		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
+		:text-max-size="'item.VItemDocumentSize'" :text-placeholder-document="'item.VItemDocumentNamePlaceholder'"
+	/>
+
 	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
-		@delete-confirmed="documentDelete" :text-title="'item.VItemDocumentDeleteTitle'"
+		:delete-action="documentDelete" :text-title="'item.VItemDocumentDeleteTitle'"
 		:text-p="'item.VItemDocumentDeleteText'"/>
 
-	<div v-if="imageAddModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="imageAddModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<Form :validation-schema="schemaAddImage" v-slot="{ errors }">
-				<h2 class="text-xl mb-4">{{ $t('item.VItemImageAddTitle') }}</h2>
-				<div class="flex flex-col">
-					<div class="flex flex-col">
-						<Field name="nom_img" type="text"
-							v-model="imageModalData.nom_img"
-							:placeholder="$t('item.VItemImageNamePlaceholder')"
-							class="w-full p-2 border rounded"
-							:class="{ 'border-red-500': errors.nom_img }" />
-						<span class="text-red-500 h-5 w-full text-sm">{{ errors.nom_img || ' ' }}</span>
-					</div>
-					<div class="flex flex-col">
-						<Field name="image" type="file" @change="handleImageUpload" class="w-full p-2" accept="image/*" />
-						<span class="h-5 w-80 text-sm">{{ $t('item.VItemImageSize') }} ({{ configsStore.getConfigByKey("max_size_document_in_mb") }}Mo)</span>
-						<span class="text-red-500 h-5 w-full text-sm">{{ errors.image || ' ' }}</span>
-					</div>
-				</div>
-				<div class="flex justify-end space-x-2">
-					<button type="button" @click="imageAddModalShow = false"
-						class="px-4 py-2 bg-gray-300 rounded">
-						{{ $t('item.VItemImageCancel') }}
-					</button>
-					<button type="button" @click="imageAdd" class="px-4 py-2 bg-blue-500 text-white rounded">
-						{{ $t('item.VItemImageAdd') }}
-					</button>
-				</div>
-			</Form>
-		</div>
-	</div>
+	<ModalAddFile :show-modal="imageAddModalShow" @close-modal="imageAddModalShow = false"
+		:text-title="'item.VItemImageAddTitle'" :schema-add="schemaAddImage"
+		:modal-data="imageModalData" :add-action="imageAdd" :key-name-document="'nom_img'" :key-file-document="'image'"
+		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
+		:text-max-size="'item.VItemImageSize'" :text-placeholder-document="'item.VItemImageNamePlaceholder'"
+	/>
+
 	<ModalDeleteConfirm :show-modal="imageDeleteModalShow" @close-modal="imageDeleteModalShow = false"
-		@delete-confirmed="imageDelete" :text-title="'item.VItemImageDeleteTitle'"
+		:delete-action="imageDelete" :text-title="'item.VItemImageDeleteTitle'"
 		:text-p="'item.VItemImageDeleteText'"/>
 </template>

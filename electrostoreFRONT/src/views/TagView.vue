@@ -21,7 +21,11 @@ const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
-	if (tagId.value !== "new") {
+	if (tagId.value === "new") {
+		tagsStore.tagEdition = {
+			loading: false,
+		};
+	} else {
 		tagsStore.tagEdition = {
 			loading: true,
 		};
@@ -41,10 +45,6 @@ async function fetchAllData() {
 			nom_tag: tagsStore.tags[tagId.value].nom_tag,
 			poids_tag: tagsStore.tags[tagId.value].poids_tag,
 		};
-	} else {
-		tagsStore.tagEdition = {
-			loading: false,
-		};
 	}
 }
 onMounted(() => {
@@ -60,12 +60,12 @@ const tagDeleteModalShow = ref(false);
 const tagSave = async() => {
 	try {
 		createSchema().validateSync(tagsStore.tagEdition, { abortEarly: false });
-		if (tagId.value !== "new") {
-			await tagsStore.updateTag(tagId.value, { ...tagsStore.tagEdition });
-			addNotification({ message: "tag.VTagUpdated", type: "success", i18n: true });
-		} else {
+		if (tagId.value === "new") {
 			await tagsStore.createTag({ ...tagsStore.tagEdition });
 			addNotification({ message: "tag.VTagCreated", type: "success", i18n: true });
+		} else {
+			await tagsStore.updateTag(tagId.value, { ...tagsStore.tagEdition });
+			addNotification({ message: "tag.VTagUpdated", type: "success", i18n: true });
 		}
 	} catch (e) {
 		if (e.inner) {
@@ -225,6 +225,7 @@ const labelTableauItem = ref([
 			icon: "fa-solid fa-trash",
 			action: (row) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+			animation: true,
 		},
 	] },
 ]);
@@ -236,6 +237,7 @@ const labelTableauStore = ref([
 			icon: "fa-solid fa-trash",
 			action: (row) => storeDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+			animation: true,
 		},
 	] },
 ]);
@@ -247,6 +249,7 @@ const labelTableauBox = ref([
 			icon: "fa-solid fa-trash",
 			action: (row) => boxDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+			animation: true,
 		},
 	] },
 ]);
@@ -260,6 +263,7 @@ const labelTableauModalItem = ref([
 			condition: "!store[1]?.[rowData.id_item]",
 			action: (row) => itemSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
 		},
 		{
 			label: "",
@@ -267,6 +271,7 @@ const labelTableauModalItem = ref([
 			condition: "store[1]?.[rowData.id_item]",
 			action: (row) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+			animation: true,
 		},
 	] },
 ]);
@@ -279,6 +284,7 @@ const labelTableauModalStore = ref([
 			condition: "!store[1]?.[rowData.id_store]",
 			action: (row) => storeSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
 		},
 		{
 			label: "",
@@ -286,6 +292,7 @@ const labelTableauModalStore = ref([
 			condition: "store[1]?.[rowData.id_store]",
 			action: (row) => storeDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+			animation: true,
 		},
 	] },
 ]);
@@ -358,7 +365,7 @@ const labelTableauModalStore = ref([
 	</div>
 
 	<ModalDeleteConfirm :show-modal="tagDeleteModalShow" @close-modal="tagDeleteModalShow = false"
-		@delete-confirmed="tagDelete" :text-title="'tag.VTagDeleteTitle'" :text-p="'tag.VTagDeleteText'"/>
+		:delete-action="tagDelete" :text-title="'tag.VTagDeleteTitle'" :text-p="'tag.VTagDeleteText'"/>
 
 	<div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
 		@click="itemModalShow = false">

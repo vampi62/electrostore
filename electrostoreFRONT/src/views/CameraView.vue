@@ -19,7 +19,11 @@ const camerasStore = useCamerasStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
-	if (cameraId.value !== "new") {
+	if (cameraId.value === "new") {
+		camerasStore.cameraEdition = {
+			loading: false,
+		};
+	} else {
 		camerasStore.cameraEdition = {
 			loading: true,
 		};
@@ -44,10 +48,6 @@ async function fetchAllData() {
 			mdp_camera: camerasStore.cameras[cameraId.value].mdp_camera,
 		};
 		isChecked.value = (camerasStore.cameras[cameraId.value].user_camera !== "") || (camerasStore.cameras[cameraId.value].mdp_camera !== "");
-	} else {
-		camerasStore.cameraEdition = {
-			loading: false,
-		};
 	}
 }
 onMounted(() => {
@@ -74,14 +74,14 @@ const cameraSave = async() => {
 	}
 	try {
 		createSchema(isChecked).validateSync(camerasStore.cameraEdition, { abortEarly: false });
-		if (cameraId.value !== "new") {
+		if (cameraId.value === "new") {
+			await camerasStore.createCamera({ ...camerasStore.cameraEdition } );
+			addNotification({ message: "camera.VCameraCreated", type: "success", i18n: true });
+		} else {
 			await camerasStore.updateCamera(cameraId.value, { ...camerasStore.cameraEdition });
 			camerasStore.getStatus(cameraId.value);
 			camerasStore.getStream(cameraId.value);
 			addNotification({ message: "camera.VCameraUpdated", type: "success", i18n: true });
-		} else {
-			await camerasStore.createCamera({ ...camerasStore.cameraEdition } );
-			addNotification({ message: "camera.VCameraCreated", type: "success", i18n: true });
 		}
 	} catch (e) {
 		if (e.inner) {
@@ -163,5 +163,5 @@ const labelForm = ref([
 	</div>
 
 	<ModalDeleteConfirm :show-modal="cameraDeleteModalShow" @close-modal="cameraDeleteModalShow = false"
-		@delete-confirmed="cameraDelete" :text-title="'camera.VCameraDeleteTitle'" :text-p="'camera.VCameraDeleteText'"/>
+		:delete-action="cameraDelete" :text-title="'camera.VCameraDeleteTitle'" :text-p="'camera.VCameraDeleteText'"/>
 </template>

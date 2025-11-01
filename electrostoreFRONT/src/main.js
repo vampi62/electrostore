@@ -51,6 +51,10 @@ app.component(
 	defineAsyncComponent(() => import("@/components/FormContainer.vue")),
 );
 app.component(
+	"ModalAddFile",
+	defineAsyncComponent(() => import("@/components/ModalAddFile.vue")),
+);
+app.component(
 	"ModalDeleteConfirm",
 	defineAsyncComponent(() => import("@/components/ModalDeleteConfirm.vue")),
 );

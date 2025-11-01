@@ -275,7 +275,7 @@ export const useItemsStore = defineStore("items",{
 			this.documents[idItem][this.documentEdition.id_item_document] = this.documentEdition;
 		},
 		async updateDocument(idItem, id, params) {
-			this.documentEdition.loading = true;
+			this.documents[idItem][id].loading = true;
 			this.documentEdition = await fetchWrapper.put({
 				url: `${baseUrl}/item/${idItem}/document/${id}`,
 				useToken: "access",

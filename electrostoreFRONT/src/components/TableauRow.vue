@@ -48,15 +48,7 @@
 			<div class="flex justify-center items-center">
 				<template v-for="(button, buttonIndex) in column.buttons" :key="buttonIndex">
 					<template v-if="!button?.condition || evaluateCondition(button.condition, row)">
-						<button @click="button.action(row)" :class="button.class" class="m-1">
-							<span v-if="button.icon">
-								<font-awesome-icon :icon="button.icon" />
-								<span v-if="button.label" class="mr-2"></span>
-							</span>
-							<span v-if="button.label">
-								{{ $t(button.label) }}
-							</span>
-						</button>
+						<TableauActionButton :button="button" :row="row" />
 					</template>
 				</template>
 			</div>
@@ -80,6 +72,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from "vue";
 import { Form, Field } from "vee-validate";
 export default {
 	name: "TableauRow",
@@ -117,6 +110,7 @@ export default {
 	components: {
 		Form,
 		Field,
+		TableauActionButton: defineAsyncComponent(() => import("@/components/TableauActionButton.vue")),
 	},
 	methods: {
 		evaluateCondition(condition,rowData) {
