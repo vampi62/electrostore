@@ -46,7 +46,7 @@ public record CreateProjetDto
     public required string url_projet { get; init; }
 
     [Required]
-    public ProjetStatus status_projet { get; init; }
+    public required ProjetStatus status_projet { get; init; }
 
     [Required]
     public required DateTime date_debut_projet { get; init; }

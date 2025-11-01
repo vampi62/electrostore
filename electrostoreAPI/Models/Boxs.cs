@@ -11,7 +11,7 @@ public class Boxs : BaseEntity
 
     public int id_store { get; set; }
     [ForeignKey("id_store")]
-    public Stores Store { get; set; }
+    public Stores? Store { get; set; }
 
     public int xstart_box { get; set; }
 
