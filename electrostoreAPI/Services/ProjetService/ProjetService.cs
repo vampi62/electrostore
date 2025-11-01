@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
 using electrostore.Services.FileService;
+using electrostore.Services.ProjetStatusService;
 
 namespace electrostore.Services.ProjetService;
 
@@ -11,13 +12,15 @@ public class ProjetService : IProjetService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly IFileService _fileService;
+    private readonly IProjetStatusService _projetStatusService;
     private readonly string _projetDocumentsPath = "projetDocuments";
 
-    public ProjetService(IMapper mapper, ApplicationDbContext context, IFileService fileService)
+    public ProjetService(IMapper mapper, ApplicationDbContext context, IFileService fileService, IProjetStatusService projetStatusService)
     {
         _mapper = mapper;
         _context = context;
         _fileService = fileService;
+        _projetStatusService = projetStatusService;
     }
 
     public async Task<IEnumerable<ReadExtendedProjetDto>> GetProjets(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
@@ -36,10 +39,13 @@ public class ProjetService : IProjetService
                 ProjetsCommentairesCount = p.ProjetsCommentaires.Count,
                 ProjetsDocumentsCount = p.ProjetsDocuments.Count,
                 ProjetsItemsCount = p.ProjetsItems.Count,
+                ProjetsProjetTagsCount = p.ProjetsProjetTags.Count,
+                ProjetsStatusHistoryCount = p.ProjetsStatus.Count,
                 ProjetsCommentaires = expand != null && expand.Contains("projets_commentaires") ? p.ProjetsCommentaires.Take(20).ToList() : null,
                 ProjetsDocuments = expand != null && expand.Contains("projets_documents") ? p.ProjetsDocuments.Take(20).ToList() : null,
                 ProjetsItems = expand != null && expand.Contains("projets_items") ? p.ProjetsItems.Take(20).ToList() : null,
-                ProjetsProjetTags = expand != null && expand.Contains("projets_projet_tags") ? p.ProjetsProjetTags.Take(20).ToList() : null
+                ProjetsProjetTags = expand != null && expand.Contains("projets_projet_tags") ? p.ProjetsProjetTags.Take(20).ToList() : null,
+                ProjetsStatus = expand != null && expand.Contains("projets_status_history") ? p.ProjetsStatus.Take(20).ToList() : null
             })
             .ToListAsync();
         return projet.Select(p => {
@@ -48,10 +54,13 @@ public class ProjetService : IProjetService
                 projets_commentaires_count = p.ProjetsCommentairesCount,
                 projets_documents_count = p.ProjetsDocumentsCount,
                 projets_items_count = p.ProjetsItemsCount,
+                projets_tags_count = p.ProjetsProjetTagsCount,
+                projets_status_history_count = p.ProjetsStatusHistoryCount,
                 projets_commentaires = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(p.ProjetsCommentaires),
                 projets_documents = _mapper.Map<IEnumerable<ReadProjetDocumentDto>>(p.ProjetsDocuments),
                 projets_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(p.ProjetsItems),
-                projets_projet_tags = _mapper.Map<IEnumerable<ReadProjetProjetTagDto>>(p.ProjetsProjetTags)
+                projets_projet_tags = _mapper.Map<IEnumerable<ReadProjetProjetTagDto>>(p.ProjetsProjetTags),
+                projets_status_history = _mapper.Map<IEnumerable<ReadProjetStatusDto>>(p.ProjetsStatus)
             };
         }).ToList();
     }
@@ -72,10 +81,13 @@ public class ProjetService : IProjetService
                 ProjetsCommentairesCount = p.ProjetsCommentaires.Count,
                 ProjetsDocumentsCount = p.ProjetsDocuments.Count,
                 ProjetsItemsCount = p.ProjetsItems.Count,
+                ProjetsProjetsTagsCount = p.ProjetsProjetTags.Count,
+                ProjetsStatusHistoryCount = p.ProjetsStatus.Count,
                 ProjetsCommentaires = expand != null && expand.Contains("projets_commentaires") ? p.ProjetsCommentaires.Take(20).ToList() : null,
                 ProjetsDocuments = expand != null && expand.Contains("projets_documents") ? p.ProjetsDocuments.Take(20).ToList() : null,
                 ProjetsItems = expand != null && expand.Contains("projets_items") ? p.ProjetsItems.Take(20).ToList() : null,
-                ProjetsProjetTags = expand != null && expand.Contains("projets_projet_tags") ? p.ProjetsProjetTags.Take(20).ToList() : null
+                ProjetsProjetTags = expand != null && expand.Contains("projets_projet_tags") ? p.ProjetsProjetTags.Take(20).ToList() : null,
+                ProjetsStatus = expand != null && expand.Contains("projets_status_history") ? p.ProjetsStatus.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Projet with id {id} not found");
         return _mapper.Map<ReadExtendedProjetDto>(projet.Projet) with
@@ -83,35 +95,27 @@ public class ProjetService : IProjetService
             projets_commentaires_count = projet.ProjetsCommentairesCount,
             projets_documents_count = projet.ProjetsDocumentsCount,
             projets_items_count = projet.ProjetsItemsCount,
+            projets_tags_count = projet.ProjetsProjetsTagsCount,
+            projets_status_history_count = projet.ProjetsStatusHistoryCount,
             projets_commentaires = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(projet.ProjetsCommentaires),
             projets_documents = _mapper.Map<IEnumerable<ReadProjetDocumentDto>>(projet.ProjetsDocuments),
             projets_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(projet.ProjetsItems),
-            projets_projet_tags = _mapper.Map<IEnumerable<ReadProjetProjetTagDto>>(projet.ProjetsProjetTags)
+            projets_projet_tags = _mapper.Map<IEnumerable<ReadProjetProjetTagDto>>(projet.ProjetsProjetTags),
+            projets_status_history = _mapper.Map<IEnumerable<ReadProjetStatusDto>>(projet.ProjetsStatus)
         };
     }
 
     public async Task<ReadProjetDto> CreateProjet(CreateProjetDto projetDto)
     {
-        if (projetDto.status_projet == Enums.ProjetStatus.Completed || projetDto.status_projet == Enums.ProjetStatus.Archived)
-        {
-            if (!projetDto.date_fin_projet.HasValue)
-            {
-                throw new ArgumentException("date_fin_projet is required when status_projet is Completed or Archived");
-            }
-        }
-        else
-        {
-            projetDto = projetDto with { date_fin_projet = null };
-        }
         var newProjet = _mapper.Map<Projets>(projetDto);
         _context.Projets.Add(newProjet);
-        _context.ProjetsStatus.Add(new ProjetsStatus
+        await _fileService.CreateDirectory(Path.Combine(_projetDocumentsPath, newProjet.id_projet.ToString()));
+        await _context.SaveChangesAsync();
+        await _projetStatusService.CreateProjetStatus(new CreateProjetStatusDto
         {
             id_projet = newProjet.id_projet,
             status_projet = newProjet.status_projet
         });
-        await _fileService.CreateDirectory(Path.Combine(_projetDocumentsPath, newProjet.id_projet.ToString()));
-        await _context.SaveChangesAsync();
         return _mapper.Map<ReadProjetDto>(newProjet);
     }
 
@@ -139,34 +143,15 @@ public class ProjetService : IProjetService
         {
             projetToUpdate.date_debut_projet = projetDto.date_debut_projet.Value;
         }
-        if (projetDto.date_fin_projet is not null)
-        {
-            projetToUpdate.date_fin_projet = projetDto.date_fin_projet;
-        }
-        if (projetToUpdate.date_fin_projet.HasValue && projetToUpdate.date_fin_projet < projetToUpdate.date_debut_projet)
-        {
-            throw new ArgumentException("date_fin_projet cannot be earlier than date_debut_projet");
-        }
-        if (projetToUpdate.status_projet == Enums.ProjetStatus.Completed || projetToUpdate.status_projet == Enums.ProjetStatus.Archived)
-        {
-            if (!projetToUpdate.date_fin_projet.HasValue)
-            {
-                throw new ArgumentException("date_fin_projet is required when status_projet is Completed or Archived");
-            }
-        }
-        else
-        {
-            projetToUpdate.date_fin_projet = null;
-        }
+        await _context.SaveChangesAsync();
         if (statusChanged)
         {
-            _context.ProjetsStatus.Add(new ProjetsStatus
+            await _projetStatusService.CreateProjetStatus(new CreateProjetStatusDto
             {
                 id_projet = projetToUpdate.id_projet,
                 status_projet = projetToUpdate.status_projet
             });
         }
-        await _context.SaveChangesAsync();
         return _mapper.Map<ReadProjetDto>(projetToUpdate);
     }
 

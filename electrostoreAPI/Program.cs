@@ -34,6 +34,7 @@ using electrostore.Services.ProjetDocumentService;
 using electrostore.Services.ProjetItemService;
 using electrostore.Services.ProjetProjetTagService;
 using electrostore.Services.ProjetService;
+using electrostore.Services.ProjetStatusService;
 using electrostore.Services.ProjetTagService;
 using electrostore.Services.SessionService;
 using electrostore.Services.SmtpService;
@@ -281,6 +282,7 @@ public static class Program
         builder.Services.AddScoped<IProjetItemService, ProjetItemService>();
         builder.Services.AddScoped<IProjetProjetTagService, ProjetProjetTagService>();
         builder.Services.AddScoped<IProjetService, ProjetService>();
+        builder.Services.AddScoped<IProjetStatusService, ProjetStatusService>();
         builder.Services.AddScoped<IProjetTagService, ProjetTagService>();
         builder.Services.AddScoped<ISessionService, SessionService>();
         builder.Services.AddScoped<ISmtpService, SmtpService>();

@@ -619,9 +619,6 @@ namespace electrostore.Migrations
                     b.Property<DateTime>("date_debut_projet")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime?>("date_fin_projet")
-                        .HasColumnType("datetime(6)");
-
                     b.Property<string>("description_projet")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -1171,7 +1168,7 @@ namespace electrostore.Migrations
             modelBuilder.Entity("electrostore.Models.ProjetsStatus", b =>
                 {
                     b.HasOne("electrostore.Models.Projets", "Projet")
-                        .WithMany()
+                        .WithMany("ProjetsStatus")
                         .HasForeignKey("id_projet")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1241,6 +1238,8 @@ namespace electrostore.Migrations
                     b.Navigation("ProjetsItems");
 
                     b.Navigation("ProjetsProjetTags");
+
+                    b.Navigation("ProjetsStatus");
                 });
 
             modelBuilder.Entity("electrostore.Models.Stores", b =>

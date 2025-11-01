@@ -11,7 +11,6 @@ public record ReadProjetDto
     public required string url_projet { get; init; }
     public ProjetStatus status_projet { get; init; }
     public DateTime date_debut_projet { get; init; }
-    public DateTime? date_fin_projet { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
 }
@@ -20,10 +19,13 @@ public record ReadExtendedProjetDto : ReadProjetDto
     public int projets_commentaires_count { get; init; }
     public int projets_documents_count { get; init; }
     public int projets_items_count { get; init; }
+    public int projets_tags_count { get; init; }
+    public int projets_status_history_count { get; init; }
     public IEnumerable<ReadProjetCommentaireDto>? projets_commentaires { get; init; }
     public IEnumerable<ReadProjetDocumentDto>? projets_documents { get; init; }
     public IEnumerable<ReadProjetItemDto>? projets_items { get; init; }
     public IEnumerable<ReadProjetProjetTagDto>? projets_projet_tags { get; init; }
+    public IEnumerable<ReadProjetStatusDto>? projets_status_history { get; init; }
     
 }
 public record CreateProjetDto
@@ -48,16 +50,6 @@ public record CreateProjetDto
 
     [Required]
     public required DateTime date_debut_projet { get; init; }
-
-    public DateTime? date_fin_projet { get; init; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (date_fin_projet.HasValue && date_fin_projet < date_debut_projet)
-        {
-            yield return new ValidationResult("date_fin_projet cannot be earlier than date_debut_projet", new[] { nameof(date_fin_projet) });
-        }
-    }
 }
 public record UpdateProjetDto : IValidatableObject
 {
@@ -73,8 +65,6 @@ public record UpdateProjetDto : IValidatableObject
     public ProjetStatus? status_projet { get; init; }
 
     public DateTime? date_debut_projet { get; init; }
-
-    public DateTime? date_fin_projet { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

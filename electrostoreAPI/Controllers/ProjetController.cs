@@ -20,7 +20,7 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedProjetDto>>> GetProjets([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'projets_documents', 'projets_items', 'projets_projet_tags'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null)
+        public async Task<ActionResult<IEnumerable<ReadExtendedProjetDto>>> GetProjets([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'projets_documents', 'projets_items', 'projets_projet_tags', 'projets_status_history'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null)
         {
             var projets = await _projetService.GetProjets(limit, offset, expand, idResearch);
             var CountList = await _projetService.GetProjetsCount();
@@ -31,7 +31,7 @@ namespace electrostore.Controllers
 
         [HttpGet("{id_projet}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedProjetDto>> GetProjetById([FromRoute] int id_projet, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'projets_documents', 'projets_items'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<ReadExtendedProjetDto>> GetProjetById([FromRoute] int id_projet, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'projets_documents', 'projets_items', 'projets_projet_tags', 'projets_status_history'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             var projet = await _projetService.GetProjetById(id_projet, expand);
             return Ok(projet);
