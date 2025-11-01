@@ -11,7 +11,7 @@ using electrostore;
 namespace electrostore.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251101144205_addTagProjet")]
+    [Migration("20251101150346_addTagProjet")]
     partial class addTagProjet
     {
         /// <inheritdoc />
@@ -760,15 +760,12 @@ namespace electrostore.Migrations
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("id_tag")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("id_projet", "id_projet_tag");
 
-                    b.HasIndex("id_tag");
+                    b.HasIndex("id_projet_tag");
 
                     b.ToTable("ProjetsProjetTags");
                 });
@@ -1142,7 +1139,7 @@ namespace electrostore.Migrations
 
                     b.HasOne("electrostore.Models.ProjetTags", "ProjetTag")
                         .WithMany("ProjetsProjetTags")
-                        .HasForeignKey("id_tag")
+                        .HasForeignKey("id_projet_tag")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
