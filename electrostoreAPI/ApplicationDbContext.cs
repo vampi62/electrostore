@@ -66,20 +66,20 @@ public class ApplicationDbContext : DbContext
     {
         modelBuilder.Entity<BoxsTags>()
             .HasKey(bt => new { bt.id_box, bt.id_tag });
+
+        modelBuilder.Entity<CommandsItems>()
+            .HasKey(ci => new { ci.id_command, ci.id_item });
+
+        modelBuilder.Entity<ItemsBoxs>()
+            .HasKey(ib => new { ib.id_item, ib.id_box });
         
         modelBuilder.Entity<ItemsTags>()
             .HasKey(it => new { it.id_item, it.id_tag });
 
-        modelBuilder.Entity<ItemsBoxs>()
-            .HasKey(ib => new { ib.id_item, ib.id_box });
-
-        modelBuilder.Entity<StoresTags>()
-            .HasKey(st => new { st.id_store, st.id_tag });
-
         modelBuilder.Entity<ProjetsItems>()
             .HasKey(pi => new { pi.id_projet, pi.id_item });
 
-        modelBuilder.Entity<CommandsItems>()
-            .HasKey(ci => new { ci.id_command, ci.id_item });
+        modelBuilder.Entity<StoresTags>()
+            .HasKey(st => new { st.id_store, st.id_tag });
     }
 }

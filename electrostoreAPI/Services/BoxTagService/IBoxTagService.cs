@@ -22,5 +22,5 @@ public interface IBoxTagService
 
     public Task CheckIfStoreExists(int storeId, int boxId);
 
-    public Task<ReadBulkBoxTagDto> DeleteBulkItemTag(List<CreateBoxTagDto> boxTagBulkDto);
+    public Task<ReadBulkBoxTagDto> DeleteBulkBoxTag(List<CreateBoxTagDto> boxTagBulkDto);
 }

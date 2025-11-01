@@ -26,7 +26,7 @@ public class Projets : BaseEntity
 
     public DateTime? date_fin_projet { get; set; }
 
-    public ICollection<ProjetsItems> ProjetsItems { get; set; } = new List<ProjetsItems>();
     public ICollection<ProjetsCommentaires> ProjetsCommentaires { get; set; } = new List<ProjetsCommentaires>();
     public ICollection<ProjetsDocuments> ProjetsDocuments { get; set; } = new List<ProjetsDocuments>();
+    public ICollection<ProjetsItems> ProjetsItems { get; set; } = new List<ProjetsItems>();
 }

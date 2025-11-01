@@ -21,6 +21,6 @@ public class Boxs : BaseEntity
 
     public int yend_box { get; set; }
 
-    public ICollection<ItemsBoxs> ItemsBoxs { get; set; } = new List<ItemsBoxs>();
     public ICollection<BoxsTags> BoxsTags { get; set; } = new List<BoxsTags>();
+    public ICollection<ItemsBoxs> ItemsBoxs { get; set; } = new List<ItemsBoxs>();
 }
