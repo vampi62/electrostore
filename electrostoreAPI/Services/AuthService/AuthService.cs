@@ -22,6 +22,7 @@ public class AuthService : IAuthService
     private readonly JwtService.JwtService _jwtService;
     private readonly IJwiService _jwiService;
     private static readonly Dictionary<string, DateTime> _stateStore = new();
+    // In-memory store for state parameters, if you want persistence or use duplication across instances, consider using a distributed cache like Redis
 
     public AuthService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, ISmtpService smtpService, ISessionService sessionService, IUserService userService, JwtService.JwtService jwtService, IJwiService jwiService)
     {
@@ -96,7 +97,7 @@ public class AuthService : IAuthService
         };
     }
 
-    private async Task<TokenResponse> ExchangeCodeForToken(string code, string clientId, string clientSecret, string authority, string redirectUri)
+    private static async Task<TokenResponse> ExchangeCodeForToken(string code, string clientId, string clientSecret, string authority, string redirectUri)
     {
         var tokenEndpoint = authority.Replace("/authorize/", "/token/");
         var requestBody = new List<KeyValuePair<string, string>>
@@ -124,7 +125,7 @@ public class AuthService : IAuthService
         return tokenResponse ?? throw new InvalidOperationException("Invalid token response");
     }
 
-    private async Task<UserInfoResponse> GetUserInfo(string accessToken, string authority)
+    private static async Task<UserInfoResponse> GetUserInfo(string accessToken, string authority)
     {
         var userInfoEndpoint = authority.Replace("/application/o/authorize/", "/application/o/userinfo/");
         var httpClient = new HttpClient();

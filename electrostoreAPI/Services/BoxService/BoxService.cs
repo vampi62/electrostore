@@ -98,31 +98,11 @@ public class BoxService : IBoxService
         {
             throw new UnauthorizedAccessException("You are not authorized to create a box");
         }
-        // end position must be greater than start position
-        if (boxDto.xend_box <= boxDto.xstart_box || boxDto.yend_box <= boxDto.ystart_box)
-        {
-            throw new ArgumentException("End position must be greater than start position");
-        }
         // check if the store exists
         var store = await _context.Stores.FindAsync(boxDto.id_store) ?? throw new KeyNotFoundException($"Store with id {boxDto.id_store} not found");
-        // check if the box XY position is not bigger than the store XY length
-        if (boxDto.xend_box > store.xlength_store || boxDto.yend_box > store.ylength_store)
-        {
-            throw new ArgumentException("Box XY position is bigger than the store XY length");
-        }
-        // check if a box in the same store has a XY position already taken
-        // (((NXS > OXS && NXS < OXE) || (NXE < OXE && NXE > OXS)) && ((NYS > OYS && NYS < OYE) || (NYE < OYE && NYE > OYS)))
-        // N = new box, O = old box
-        // X = x position, Y = y position, S = start, E = end
-        if (await _context.Boxs.AnyAsync(b => b.id_store == boxDto.id_store &&
-                                              ((boxDto.xstart_box <= b.xstart_box && boxDto.xend_box > b.xstart_box) ||
-                                               (boxDto.xstart_box >= b.xstart_box && boxDto.xstart_box < b.xend_box)) &&
-                                              ((boxDto.ystart_box <= b.ystart_box && boxDto.yend_box > b.ystart_box) ||
-                                               (boxDto.ystart_box >= b.ystart_box && boxDto.ystart_box < b.yend_box))))
-        {
-            throw new ArgumentException("Box XY position already taken");
-        }
+        await CheckCreateBoxPositionOverlap(boxDto);
         var newBox = _mapper.Map<Boxs>(boxDto);
+        ValidateBoxPosition(newBox, store);
         _context.Boxs.Add(newBox);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadBoxDto>(newBox);
@@ -148,24 +128,9 @@ public class BoxService : IBoxService
                 }
                 // check if the store exists
                 var store = await _context.Stores.FindAsync(boxDto.id_store) ?? throw new KeyNotFoundException($"Store with id {boxDto.id_store} not found");
-                // check if the box XY position is not bigger than the store XY length
-                if (boxDto.xend_box > store.xlength_store || boxDto.yend_box > store.ylength_store)
-                {
-                    throw new ArgumentException("Box XY position is bigger than the store XY length");
-                }
-                // check if a box in the same store has a XY position already taken
-                // (((NXS > OXS && NXS < OXE) || (NXE < OXE && NXE > OXS)) && ((NYS > OYS && NYS < OYE) || (NYE < OYE && NYE > OYS)))
-                // N = new box, O = old box
-                // X = x position, Y = y position, S = start, E = end
-                if (await _context.Boxs.AnyAsync(b => b.id_store == boxDto.id_store &&
-                                                    ((boxDto.xstart_box <= b.xstart_box && boxDto.xend_box > b.xstart_box) ||
-                                                    (boxDto.xstart_box >= b.xstart_box && boxDto.xstart_box < b.xend_box)) &&
-                                                    ((boxDto.ystart_box <= b.ystart_box && boxDto.yend_box > b.ystart_box) ||
-                                                    (boxDto.ystart_box >= b.ystart_box && boxDto.ystart_box < b.yend_box))))
-                {
-                    throw new ArgumentException("Box XY position already taken");
-                }
+                await CheckCreateBoxPositionOverlap(boxDto);
                 var newBox = _mapper.Map<Boxs>(boxDto);
+                ValidateBoxPosition(newBox, store);
                 _context.Boxs.Add(newBox);
                 validQuery.Add(_mapper.Map<ReadBoxDto>(newBox));
             }
@@ -197,66 +162,14 @@ public class BoxService : IBoxService
             throw new UnauthorizedAccessException("You are not authorized to update a box");
         }
         var boxToUpdate = await _context.Boxs.FindAsync(id);
-        bool newXYPosition = false;
         if ((boxToUpdate is null) || (storeId is not null && boxToUpdate.id_store != storeId))
         {
             throw new KeyNotFoundException($"Box with id {id} not found");
         }
-        if (boxDto.xstart_box is not null)
-        {
-            boxToUpdate.xstart_box = boxDto.xstart_box.Value;
-            newXYPosition = true;
-        }
-        if (boxDto.ystart_box is not null)
-        {
-            boxToUpdate.ystart_box = boxDto.ystart_box.Value;
-            newXYPosition = true;
-        }
-        if (boxDto.yend_box is not null)
-        {
-            boxToUpdate.yend_box = boxDto.yend_box.Value;
-            newXYPosition = true;
-        }
-        if (boxDto.xend_box is not null)
-        {
-            boxToUpdate.xend_box = boxDto.xend_box.Value;
-            newXYPosition = true;
-        }
-        // end position must be greater than start position
-        if (boxToUpdate.xend_box <= boxToUpdate.xstart_box || boxToUpdate.yend_box <= boxToUpdate.ystart_box)
-        {
-            throw new ArgumentException("End position must be greater than start position");
-        }
-        if (boxDto.new_id_store is not null)
-        {
-            if (!await _context.Stores.AnyAsync(s => s.id_store == boxDto.new_id_store))
-            {
-                throw new KeyNotFoundException($"Store with id {boxDto.new_id_store} not found");
-            }
-            boxToUpdate.id_store = boxDto.new_id_store.Value;
-            newXYPosition = true;
-        }
-        if (newXYPosition)
-        {
-            // check if a box in the store has a XY position already taken except the box to update
-            // (((NXS > OXS && NXS < OXE) || (NXE < OXE && NXE > OXS)) && ((NYS > OYS && NYS < OYE) || (NYE < OYE && NYE > OYS)))
-            // N = new box, O = old box
-            // X = x position, Y = y position, S = start, E = end
-            if (await _context.Boxs.AnyAsync(b => b.id_store == boxToUpdate.id_store && b.id_box != boxToUpdate.id_box &&
-                                              ((boxDto.xstart_box <= b.xstart_box && boxDto.xend_box > b.xstart_box) ||
-                                               (boxDto.xstart_box >= b.xstart_box && boxDto.xstart_box < b.xend_box)) &&
-                                              ((boxDto.ystart_box <= b.ystart_box && boxDto.yend_box > b.ystart_box) ||
-                                               (boxDto.ystart_box >= b.ystart_box && boxDto.ystart_box < b.yend_box))))
-            {
-                throw new ArgumentException("Box XY position already taken");
-            }
-        }
-        // check if the box XY position is not bigger than the store XY length
+        await UpdateBoxInformations(boxToUpdate, boxDto);
         var store = await _context.Stores.FindAsync(boxToUpdate.id_store) ?? throw new KeyNotFoundException($"Store with id {boxToUpdate.id_store} not found");
-        if (boxToUpdate.xend_box > store.xlength_store || boxToUpdate.yend_box > store.ylength_store)
-        {
-            throw new ArgumentException("Box XY position is bigger than the store XY length");
-        }
+        ValidateBoxPosition(boxToUpdate, store);
+        await CheckUpdateBoxPositionOverlap(boxToUpdate, boxDto);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadBoxDto>(boxToUpdate);
     }
@@ -279,41 +192,10 @@ public class BoxService : IBoxService
                 {
                     throw new KeyNotFoundException($"Box with id {boxDto.id_box} not found");
                 }
-                if (boxDto.xstart_box is not null)
-                {
-                    boxToUpdate.xstart_box = boxDto.xstart_box.Value;
-                }
-                if (boxDto.ystart_box is not null)
-                {
-                    boxToUpdate.ystart_box = boxDto.ystart_box.Value;
-                }
-                if (boxDto.yend_box is not null)
-                {
-                    boxToUpdate.yend_box = boxDto.yend_box.Value;
-                }
-                if (boxDto.xend_box is not null)
-                {
-                    boxToUpdate.xend_box = boxDto.xend_box.Value;
-                }
-                // end position must be greater than start position
-                if (boxToUpdate.xend_box <= boxToUpdate.xstart_box || boxToUpdate.yend_box <= boxToUpdate.ystart_box)
-                {
-                    throw new ArgumentException("End position must be greater than start position");
-                }
-                if (boxDto.new_id_store is not null)
-                {
-                    if (!await _context.Stores.AnyAsync(s => s.id_store == boxDto.new_id_store))
-                    {
-                        throw new KeyNotFoundException($"Store with id {boxDto.new_id_store} not found");
-                    }
-                    boxToUpdate.id_store = boxDto.new_id_store.Value;
-                }
+                await UpdateBoxInformations(boxToUpdate, _mapper.Map<UpdateBoxDto>(boxDto));
                 // check if the box XY position is not bigger than the store XY length
                 var store = await _context.Stores.FindAsync(boxToUpdate.id_store) ?? throw new KeyNotFoundException($"Store with id {boxToUpdate.id_store} not found");
-                if (boxToUpdate.xend_box > store.xlength_store || boxToUpdate.yend_box > store.ylength_store)
-                {
-                    throw new ArgumentException("Box XY position is bigger than the store XY length");
-                }
+                ValidateBoxPosition(boxToUpdate, store);
                 validQuery.Add(_mapper.Map<ReadBoxDto>(boxToUpdate));
             }
             catch (Exception e)
@@ -333,14 +215,7 @@ public class BoxService : IBoxService
                 try
                 {
                     var boxToUpdate = await _context.Boxs.FindAsync(boxDto.id_box) ?? throw new KeyNotFoundException($"Box with id {boxDto.id_box} not found");
-                    if (await _context.Boxs.AnyAsync(b => b.id_store == boxToUpdate.id_store && b.id_box != boxToUpdate.id_box &&
-                                                        ((boxDto.xstart_box <= b.xstart_box && boxDto.xend_box > b.xstart_box) ||
-                                                        (boxDto.xstart_box >= b.xstart_box && boxDto.xstart_box < b.xend_box)) &&
-                                                        ((boxDto.ystart_box <= b.ystart_box && boxDto.yend_box > b.ystart_box) ||
-                                                        (boxDto.ystart_box >= b.ystart_box && boxDto.ystart_box < b.yend_box))))
-                    {
-                        throw new ArgumentException("Box XY position already taken");
-                    }
+                    await CheckUpdateBoxPositionOverlap(boxToUpdate, _mapper.Map<UpdateBoxDto>(boxDto));
                 }
                 catch (Exception e)
                 {
@@ -351,10 +226,10 @@ public class BoxService : IBoxService
                     });
                 }
             }
-            if (errorQuery.Count == 0)
-            {
-                await _context.SaveChangesAsync();
-            }
+        }
+        if (errorQuery.Count == 0)
+        {
+            await _context.SaveChangesAsync();
         }
         return new ReadBulkBoxDto
         {
@@ -417,5 +292,77 @@ public class BoxService : IBoxService
             Valide = validQuery,
             Error = errorQuery
         };
+    }
+
+    private static void ValidateBoxPosition(Boxs box, Stores? store)
+    {
+        if (box.xend_box <= box.xstart_box || box.yend_box <= box.ystart_box)
+        {
+            throw new ArgumentException("End position must be greater than start position");
+        }
+        if (store is not null && (box.xend_box > store.xlength_store || box.yend_box > store.ylength_store))
+        {
+            throw new ArgumentException("Box XY position is bigger than the store XY length");
+        }
+    }
+
+    private async Task UpdateBoxInformations(Boxs boxToUpdate, UpdateBoxDto boxDto)
+    {
+        if (boxDto.xstart_box is not null)
+        {
+            boxToUpdate.xstart_box = boxDto.xstart_box.Value;
+        }
+        if (boxDto.ystart_box is not null)
+        {
+            boxToUpdate.ystart_box = boxDto.ystart_box.Value;
+        }
+        if (boxDto.yend_box is not null)
+        {
+            boxToUpdate.yend_box = boxDto.yend_box.Value;
+        }
+        if (boxDto.xend_box is not null)
+        {
+            boxToUpdate.xend_box = boxDto.xend_box.Value;
+        }
+        if (boxDto.new_id_store is not null)
+        {
+            if (!await _context.Stores.AnyAsync(s => s.id_store == boxDto.new_id_store))
+            {
+                throw new KeyNotFoundException($"Store with id {boxDto.new_id_store} not found");
+            }
+            boxToUpdate.id_store = boxDto.new_id_store.Value;
+        }
+    }
+
+    private async Task CheckCreateBoxPositionOverlap(CreateBoxDto newBox)
+    {
+        // check if a box in the store has a XY position already taken
+        // structure : (((NXS > OXS & NXS < OXE) | (NXE < OXE & NXE > OXS)) & ((NYS > OYS & NYS < OYE) | (NYE < OYE & NYE > OYS)))
+        // N = new box, O = old box
+        // X = x position, Y = y position, S = start, E = end
+        if (await _context.Boxs.AnyAsync(b => b.id_store == newBox.id_store &&
+            ((newBox.xstart_box <= b.xstart_box && newBox.xend_box > b.xstart_box) ||
+            (newBox.xstart_box >= b.xstart_box && newBox.xstart_box < b.xend_box)) &&
+            ((newBox.ystart_box <= b.ystart_box && newBox.yend_box > b.ystart_box) ||
+            (newBox.ystart_box >= b.ystart_box && newBox.ystart_box < b.yend_box))))
+        {
+            throw new ArgumentException("Box XY position already taken");
+        }
+    }
+
+    private async Task CheckUpdateBoxPositionOverlap(Boxs boxToUpdate, UpdateBoxDto boxDto)
+    {
+        // check if a box in the store has a XY position already taken except the box to update
+        // structure : (((NXS > OXS & NXS < OXE) | (NXE < OXE & NXE > OXS)) & ((NYS > OYS & NYS < OYE) | (NYE < OYE & NYE > OYS)))
+        // N = new box, O = old box
+        // X = x position, Y = y position, S = start, E = end
+        if (await _context.Boxs.AnyAsync(b => b.id_store == boxToUpdate.id_store && b.id_box != boxToUpdate.id_box &&
+            ((boxDto.xstart_box <= b.xstart_box && boxDto.xend_box > b.xstart_box) ||
+            (boxDto.xstart_box >= b.xstart_box && boxDto.xstart_box < b.xend_box)) &&
+            ((boxDto.ystart_box <= b.ystart_box && boxDto.yend_box > b.ystart_box) ||
+            (boxDto.ystart_box >= b.ystart_box && boxDto.ystart_box < b.yend_box))))
+        {
+            throw new ArgumentException("Box XY position already taken");
+        }
     }
 }

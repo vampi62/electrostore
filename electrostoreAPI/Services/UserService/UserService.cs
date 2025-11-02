@@ -182,6 +182,37 @@ public class UserService : IUserService
         // Revoke all access tokens and refresh tokens for the user
         await _jwiService.RevokeAllAccessTokenByUser(id, "User update account");
         // send email to the user if the email has changed
+        await AlerteUpdateUser(userToUpdate, userDto, oldUserEmail);
+        return _mapper.Map<ReadUserDto>(userToUpdate);
+    }
+
+    public async Task DeleteUser(int id)
+    {
+        var clientId = _sessionService.GetClientId();
+        var clientRole = _sessionService.GetClientRole();
+        if (clientId != id && clientRole < UserRole.Admin)
+        {
+            throw new UnauthorizedAccessException("You are not allowed to delete this user");
+        }
+        var userToDelete = await _context.Users.FindAsync(id) ?? throw new KeyNotFoundException($"User with id {id} not found");
+        if (userToDelete.role_user == UserRole.Admin && await _context.Users.CountAsync(u => u.role_user == UserRole.Admin) == 1)
+        {
+            throw new InvalidOperationException("You can't delete the last admin");
+        }
+        await _jwiService.RevokeAllAccessTokenByUser(id, "User delete account");
+        await _jwiService.RevokeAllRefreshTokenByUser(id, "User delete account");
+        _context.Users.Remove(userToDelete);
+        await _context.SaveChangesAsync();
+        // send email to the user
+        await _smtpService.SendEmailAsync(
+            userToDelete.email_user,
+            "Account deleted",
+            "Your account has been deleted"
+        );
+    }
+
+    private async Task AlerteUpdateUser(Users userToUpdate, UpdateUserDto userDto, string oldUserEmail)
+    {
         if (userDto.email_user is not null && userToUpdate.email_user != userDto.email_user)
         {
             await _smtpService.SendEmailAsync(
@@ -212,31 +243,5 @@ public class UserService : IUserService
                 "Your account has been updated"
             );
         }
-        return _mapper.Map<ReadUserDto>(userToUpdate);
-    }
-
-    public async Task DeleteUser(int id)
-    {
-        var clientId = _sessionService.GetClientId();
-        var clientRole = _sessionService.GetClientRole();
-        if (clientId != id && clientRole < UserRole.Admin)
-        {
-            throw new UnauthorizedAccessException("You are not allowed to delete this user");
-        }
-        var userToDelete = await _context.Users.FindAsync(id) ?? throw new KeyNotFoundException($"User with id {id} not found");
-        if (userToDelete.role_user == UserRole.Admin && await _context.Users.CountAsync(u => u.role_user == UserRole.Admin) == 1)
-        {
-            throw new InvalidOperationException("You can't delete the last admin");
-        }
-        await _jwiService.RevokeAllAccessTokenByUser(id, "User delete account");
-        await _jwiService.RevokeAllRefreshTokenByUser(id, "User delete account");
-        _context.Users.Remove(userToDelete);
-        await _context.SaveChangesAsync();
-        // send email to the user
-        await _smtpService.SendEmailAsync(
-            userToDelete.email_user,
-            "Account deleted",
-            "Your account has been deleted"
-        );
     }
 }

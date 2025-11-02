@@ -124,13 +124,13 @@ public class IAService : IIAService
             var status = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content) ?? new Dictionary<string, JsonElement>();
             return new IAStatusDto
             {
-                Status = status.TryGetValue("status", out var statusValue) && statusValue.ValueKind == JsonValueKind.String ? statusValue.GetString()! : "unknown",
-                Message = status.TryGetValue("message", out var messageValue) && messageValue.ValueKind == JsonValueKind.String ? messageValue.GetString()! : "unknown",
-                Epoch = status.TryGetValue("epoch", out var epochValue) && epochValue.ValueKind == JsonValueKind.Number ? epochValue.GetInt32() : 0,
-                Accuracy = status.TryGetValue("accuracy", out var accuracyValue) && accuracyValue.ValueKind == JsonValueKind.Number ? accuracyValue.GetSingle() : 0,
-                ValAccuracy = status.TryGetValue("val_accuracy", out var val_accuracyValue) && val_accuracyValue.ValueKind == JsonValueKind.Number ? val_accuracyValue.GetSingle() : 0,
-                Loss = status.TryGetValue("loss", out var lossValue) && lossValue.ValueKind == JsonValueKind.Number ? lossValue.GetSingle() : 0,
-                ValLoss = status.TryGetValue("val_loss", out var val_lossValue) && val_lossValue.ValueKind == JsonValueKind.Number ? val_lossValue.GetSingle() : 0
+                Status = GetStringValue(status, "status", "unknown"),
+                Message = GetStringValue(status, "message", "unknown"),
+                Epoch = GetIntValue(status, "epoch", 0),
+                Accuracy = GetFloatValue(status, "accuracy", 0),
+                ValAccuracy = GetFloatValue(status, "val_accuracy", 0),
+                Loss = GetFloatValue(status, "loss", 0),
+                ValLoss = GetFloatValue(status, "val_loss", 0)
             };
         }
         catch (Exception e)
@@ -209,8 +209,8 @@ public class IAService : IIAService
             }
             newDetecResult = new PredictionOutput
             {
-                PredictedLabel = json.TryGetValue("predicted_class", out var predicted_class) && predicted_class.ValueKind == JsonValueKind.Number ? predicted_class.GetInt32() : -1,
-                Score = json.TryGetValue("confidence", out var confidence) && confidence.ValueKind == JsonValueKind.Number ? confidence.GetSingle() : 0
+                PredictedLabel = GetIntValue(json, "predicted_class", -1),
+                Score = GetFloatValue(json, "confidence", 0)
             };
             return newDetecResult;
         }
@@ -228,5 +228,26 @@ public class IAService : IIAService
     private string GetModelItemListFilePath(int id)
     {
         return Path.Combine(_modelsPath, "ItemList" + id.ToString() + ".txt");
+    }
+
+    private static string GetStringValue(Dictionary<string, JsonElement> dict, string key, string defaultValue)
+    {
+        return dict.TryGetValue(key, out var value) && value.ValueKind == JsonValueKind.String 
+            ? value.GetString()! 
+            : defaultValue;
+    }
+
+    private static int GetIntValue(Dictionary<string, JsonElement> dict, string key, int defaultValue)
+    {
+        return dict.TryGetValue(key, out var value) && value.ValueKind == JsonValueKind.Number 
+            ? value.GetInt32() 
+            : defaultValue;
+    }
+
+    private static float GetFloatValue(Dictionary<string, JsonElement> dict, string key, float defaultValue)
+    {
+        return dict.TryGetValue(key, out var value) && value.ValueKind == JsonValueKind.Number 
+            ? value.GetSingle() 
+            : defaultValue;
     }
 }

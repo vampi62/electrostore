@@ -12,6 +12,7 @@ public class MappingProfile : Profile
         CreateMap<CreateBoxDto, Boxs>();
         CreateMap<Boxs, ReadBoxDto>();
         CreateMap<Boxs, ReadExtendedBoxDto>();
+        CreateMap<UpdateBulkBoxByStoreDto, UpdateBoxDto>();
 
         CreateMap<CreateBoxTagDto, BoxsTags>();
         CreateMap<BoxsTags, ReadBoxTagDto>();
