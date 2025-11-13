@@ -42,19 +42,19 @@ export const useTagsStore = defineStore("tags",{
 				this.tagsStoreTotalCount[tag.id_tag] = tag.stores_tags_count;
 				this.tagsBoxTotalCount[tag.id_tag] = tag.boxs_tags_count;
 				this.tagsItemTotalCount[tag.id_tag] = tag.items_tags_count;
-				if (expand.indexOf("stores_tags") > -1) {
+				if (expand.includes("stores_tags")) {
 					this.tagsStore[tag.id_tag] = {};
 					for (const tagStore of tag.stores_tags) {
 						this.tagsStore[tag.id_tag][tagStore.id_store] = tagStore;
 					}
 				}
-				if (expand.indexOf("boxs_tags") > -1) {
+				if (expand.includes("boxs_tags")) {
 					this.tagsBox[tag.id_tag] = {};
 					for (const tagBox of tag.boxs_tags) {
 						this.tagsBox[tag.id_tag][tagBox.id_box] = tagBox;
 					}
 				}
-				if (expand.indexOf("items_tags") > -1) {
+				if (expand.includes("items_tags")) {
 					this.tagsItem[tag.id_tag] = {};
 					for (const tagItem of tag.items_tags) {
 						this.tagsItem[tag.id_tag][tagItem.id_item] = tagItem;
@@ -76,19 +76,19 @@ export const useTagsStore = defineStore("tags",{
 				this.tagsStoreTotalCount[tag.id_tag] = tag.stores_tags_count;
 				this.tagsBoxTotalCount[tag.id_tag] = tag.boxs_tags_count;
 				this.tagsItemTotalCount[tag.id_tag] = tag.items_tags_count;
-				if (expand.indexOf("stores_tags") > -1) {
+				if (expand.includes("stores_tags")) {
 					this.tagsStore[tag.id_tag] = {};
 					for (const tagStore of tag.stores_tags) {
 						this.tagsStore[tag.id_tag][tagStore.id_store] = tagStore;
 					}
 				}
-				if (expand.indexOf("boxs_tags") > -1) {
+				if (expand.includes("boxs_tags")) {
 					this.tagsBox[tag.id_tag] = {};
 					for (const tagBox of tag.boxs_tags) {
 						this.tagsBox[tag.id_tag][tagBox.id_box] = tagBox;
 					}
 				}
-				if (expand.indexOf("items_tags") > -1) {
+				if (expand.includes("items_tags")) {
 					this.tagsItem[tag.id_tag] = {};
 					for (const tagItem of tag.items_tags) {
 						this.tagsItem[tag.id_tag][tagItem.id_item] = tagItem;
@@ -111,19 +111,19 @@ export const useTagsStore = defineStore("tags",{
 			this.tagsStoreTotalCount[id] = this.tags[id].stores_tags_count;
 			this.tagsBoxTotalCount[id] = this.tags[id].boxs_tags_count;
 			this.tagsItemTotalCount[id] = this.tags[id].items_tags_count;
-			if (expand.indexOf("stores_tags") > -1) {
+			if (expand.includes("stores_tags")) {
 				this.tagsStore[id] = {};
 				for (const tagStore of this.tags[id].stores_tags) {
 					this.tagsStore[id][tagStore.id_store] = tagStore;
 				}
 			}
-			if (expand.indexOf("boxs_tags") > -1) {
+			if (expand.includes("boxs_tags")) {
 				this.tagsBox[id] = {};
 				for (const tagBox of this.tags[id].boxs_tags) {
 					this.tagsBox[id][tagBox.id_box] = tagBox;
 				}
 			}
-			if (expand.indexOf("items_tags") > -1) {
+			if (expand.includes("items_tags")) {
 				this.tagsItem[id] = {};
 				for (const tagItem of this.tags[id].items_tags) {
 					this.tagsItem[id][tagItem.id_item] = tagItem;
@@ -186,7 +186,7 @@ export const useTagsStore = defineStore("tags",{
 			this.tagsStoreTotalCount[idTag] = newTagStoreList["count"];
 			for (const tagStore of newTagStoreList["data"]) {
 				this.tagsStore[idTag][tagStore.id_store] = tagStore;
-				if (expand.indexOf("store") > -1) {
+				if (expand.includes("store")) {
 					storesStore.stores[tagStore.id_store] = tagStore.store;
 				}
 			}
@@ -206,7 +206,7 @@ export const useTagsStore = defineStore("tags",{
 				url: `${baseUrl}/tag/${idTag}/store/${idStore}?${expandString}`,
 				useToken: "access",
 			});
-			if (expand.indexOf("store") > -1) {
+			if (expand.includes("store")) {
 				storesStore.stores[this.tagsStore[idTag].id_store] = this.tagsStore[idTag].store;
 			}
 		},
@@ -271,7 +271,7 @@ export const useTagsStore = defineStore("tags",{
 			this.tagsBoxTotalCount[idTag] = newTagBoxList["count"];
 			for (const tagBox of newTagBoxList["data"]) {
 				this.tagsBox[idTag][tagBox.id_box] = tagBox;
-				if (expand.indexOf("box") > -1) {
+				if (expand.includes("box")) {
 					storesStore.boxs[tagBox.id_box] = tagBox.box;
 				}
 			}
@@ -291,7 +291,7 @@ export const useTagsStore = defineStore("tags",{
 				url: `${baseUrl}/tag/${idTag}/box/${idBox}?${expandString}`,
 				useToken: "access",
 			});
-			if (expand.indexOf("box") > -1) {
+			if (expand.includes("box")) {
 				storesStore.boxs[this.tagsBox[idTag].id_box] = this.tagsBox[idTag].box;
 			}
 		},
@@ -356,7 +356,7 @@ export const useTagsStore = defineStore("tags",{
 			this.tagsItemTotalCount[idTag] = newTagItemList["count"];
 			for (const tagItem of newTagItemList["data"]) {
 				this.tagsItem[idTag][tagItem.id_item] = tagItem;
-				if (expand.indexOf("item") > -1) {
+				if (expand.includes("item")) {
 					itemsStore.items[tagItem.id_item] = tagItem.item;
 				}
 			}
@@ -376,7 +376,7 @@ export const useTagsStore = defineStore("tags",{
 				url: `${baseUrl}/tag/${idTag}/item/${idItem}&${expandString}`,
 				useToken: "access",
 			});
-			if (expand.indexOf("item") > -1) {
+			if (expand.includes("item")) {
 				itemsStore.items[this.tagsItem[idTag].id_item] = this.tagsItem[idTag].item;
 			}
 		},

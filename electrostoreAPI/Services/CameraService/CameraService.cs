@@ -148,7 +148,8 @@ public class CameraService : ICameraService
             var response = await client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
-                return new CameraStatusDto {
+                return new CameraStatusDto
+                {
                     network = true,
                     statusCode = (int)response.StatusCode
                 };
@@ -157,34 +158,37 @@ public class CameraService : ICameraService
             var json = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content);
             if (json is null)
             {
-                return new CameraStatusDto {
+                return new CameraStatusDto
+                {
                     network = true,
                     statusCode = (int)response.StatusCode
                 };
             }
-            return new CameraStatusDto {
+            return new CameraStatusDto
+            {
                 network = true,
                 statusCode = (int)response.StatusCode,
-                uptime = json.TryGetValue("uptime", out var uptime) && uptime.ValueKind == JsonValueKind.Number ? uptime.GetSingle() : 0f,
-                espModel = json.TryGetValue("espModel", out var espModel) && espModel.ValueKind == JsonValueKind.String ? espModel.GetString() : string.Empty,
-                espTemperature = json.TryGetValue("espTemperature", out var espTemperature) && espTemperature.ValueKind == JsonValueKind.Number ? espTemperature.GetSingle() : 0f,
-                OTAWait = json.TryGetValue("OTAWait", out var OTAWait) && OTAWait.ValueKind == JsonValueKind.String ? OTAWait.GetString() : string.Empty,
-                OTAUploading = json.TryGetValue("OTAUploading", out var OTAUploading) && OTAUploading.ValueKind == JsonValueKind.String ? OTAUploading.GetString() : string.Empty,
-                OTAError = json.TryGetValue("OTAError", out var OTAError) && OTAError.ValueKind == JsonValueKind.String ? OTAError.GetString() : string.Empty,
-                OTATime = json.TryGetValue("OTATime", out var OTATime) && OTATime.ValueKind == JsonValueKind.Number ? OTATime.GetInt32() : 0,
-                OTARemainingTime = json.TryGetValue("OTARemainingTime", out var OTARemainingTime) && OTARemainingTime.ValueKind == JsonValueKind.Number ? OTARemainingTime.GetInt32() : 0,
-                OTAPercentage = json.TryGetValue("OTAPercentage", out var OTAPercentage) && OTAPercentage.ValueKind == JsonValueKind.Number ? OTAPercentage.GetSingle() : 0f,
-                ringLightPower = json.TryGetValue("ringLightPower", out var ringLightPower) && ringLightPower.ValueKind == JsonValueKind.Number ? ringLightPower.GetInt32() : 0,
-                versionScanBox = json.TryGetValue("versionScanBox", out var versionScanBox) && versionScanBox.ValueKind == JsonValueKind.String ? versionScanBox.GetString() : string.Empty,
-                cameraResolution = json.TryGetValue("cameraResolution", out var cameraResolution) && cameraResolution.ValueKind == JsonValueKind.String ? cameraResolution.GetString() : string.Empty,
-                cameraPID = json.TryGetValue("cameraPID", out var cameraPID) && cameraPID.ValueKind == JsonValueKind.Number ? cameraPID.GetInt32().ToString() : string.Empty,
-                wifiSignalStrength = json.TryGetValue("wifiSignalStrength", out var wifiSignalStrength) && wifiSignalStrength.ValueKind == JsonValueKind.String ? wifiSignalStrength.GetString() : string.Empty
+                uptime = GetFloatValue(json, "uptime", 0f),
+                espModel = GetStringValue(json, "espModel", string.Empty),
+                espTemperature = GetFloatValue(json, "espTemperature", 0f),
+                OTAWait = GetStringValue(json, "OTAWait", string.Empty),
+                OTAUploading = GetStringValue(json, "OTAUploading", string.Empty),
+                OTAError = GetStringValue(json, "OTAError", string.Empty),
+                OTATime = GetIntValue(json, "OTATime", 0),
+                OTARemainingTime = GetIntValue(json, "OTARemainingTime", 0),
+                OTAPercentage = GetFloatValue(json, "OTAPercentage", 0f),
+                ringLightPower = GetIntValue(json, "ringLightPower", 0),
+                versionScanBox = GetStringValue(json, "versionScanBox", string.Empty),
+                cameraResolution = GetStringValue(json, "cameraResolution", string.Empty),
+                cameraPID = GetIntValue(json, "cameraPID", 0).ToString(),
+                wifiSignalStrength = GetStringValue(json, "wifiSignalStrength", string.Empty)
             };
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex);
-            return new CameraStatusDto {
+            return new CameraStatusDto
+            {
                 network = false,
                 statusCode = 500
             };
@@ -254,11 +258,11 @@ public class CameraService : ICameraService
             }
             var content = await response.Content.ReadAsStringAsync();
             var json = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content);
-            if (json is null || !json.ContainsKey("ringLightPower"))
+            if (json is null || !json.TryGetValue("ringLightPower", out JsonElement value))
             {
                 throw new InvalidOperationException($"Error while switching camera light: {response.StatusCode}");
             }
-            return new CameraLightDto { state = json["ringLightPower"].GetBoolean() };
+            return new CameraLightDto { state = value.GetBoolean() };
         }
         catch (Exception ex)
         {
@@ -312,5 +316,26 @@ public class CameraService : ICameraService
             Console.WriteLine(ex);
             throw new InvalidOperationException($"Error while getting camera stream: {ex.Message}");
         }
+    }
+
+    private static string GetStringValue(Dictionary<string, JsonElement> dict, string key, string defaultValue)
+    {
+        return dict.TryGetValue(key, out var value) && value.ValueKind == JsonValueKind.String 
+            ? value.GetString()! 
+            : defaultValue;
+    }
+
+    private static int GetIntValue(Dictionary<string, JsonElement> dict, string key, int defaultValue)
+    {
+        return dict.TryGetValue(key, out var value) && value.ValueKind == JsonValueKind.Number 
+            ? value.GetInt32() 
+            : defaultValue;
+    }
+
+    private static float GetFloatValue(Dictionary<string, JsonElement> dict, string key, float defaultValue)
+    {
+        return dict.TryGetValue(key, out var value) && value.ValueKind == JsonValueKind.Number 
+            ? value.GetSingle() 
+            : defaultValue;
     }
 }

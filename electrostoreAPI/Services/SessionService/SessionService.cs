@@ -7,6 +7,7 @@ namespace electrostore.Services.SessionService;
 public class SessionService : ISessionService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly string _errorMessageHttpContextNull = "HttpContext is null";
 
     public SessionService(IHttpContextAccessor httpContextAccessor)
     {
@@ -14,7 +15,7 @@ public class SessionService : ISessionService
     }
     public string GetClientIp()
     {
-        var httpContext = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException("HttpContext is null");
+        var httpContext = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException(_errorMessageHttpContextNull);
         var clientIp = "";
         if (httpContext.Request.Headers.TryGetValue("X-Forwarded-For", out Microsoft.Extensions.Primitives.StringValues value))
         {
@@ -54,7 +55,7 @@ public class SessionService : ISessionService
 
     public int GetClientId()
     {
-        var httpContext = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException("HttpContext is null");
+        var httpContext = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException(_errorMessageHttpContextNull);
         var userId = 0;
         if (httpContext.User == null)
         {
@@ -70,7 +71,7 @@ public class SessionService : ISessionService
 
     public string GetTokenId()
     {
-        var httpContext = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException("HttpContext is null");
+        var httpContext = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException(_errorMessageHttpContextNull);
         var tokenId = string.Empty;
         if (httpContext.User == null)
         {
@@ -86,7 +87,7 @@ public class SessionService : ISessionService
 
     public string GetTokenAuthMethod()
     {
-        var httpContext = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException("HttpContext is null");
+        var httpContext = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException(_errorMessageHttpContextNull);
         var authMethod = string.Empty;
         if (httpContext.User == null)
         {

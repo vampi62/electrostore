@@ -80,12 +80,12 @@ namespace electrostore.Controllers
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadBulkBoxTagDto>> DeleteBulkBoxTag([FromRoute] int id_box, [FromBody] List<int> id_tags)
         {
-            var itemTagsDtoFull = id_tags.Select(id_item => new CreateBoxTagDto
+            var boxTagsDtoFull = id_tags.Select(id_tag => new CreateBoxTagDto
             {
                 id_box = id_box,
-                id_tag = id_item
+                id_tag = id_tag
             }).ToList();
-            var boxTags = await _boxTagService.DeleteBulkItemTag(itemTagsDtoFull);
+            var boxTags = await _boxTagService.DeleteBulkBoxTag(boxTagsDtoFull);
             return Ok(boxTags);
         }
     }

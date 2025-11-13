@@ -29,6 +29,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<electrostore.Models.ProjetsCommentaires> ProjetsCommentaires { get; set; }
     public DbSet<electrostore.Models.ProjetsDocuments> ProjetsDocuments { get; set; }
     public DbSet<electrostore.Models.ProjetsItems> ProjetsItems { get; set; }
+    public DbSet<electrostore.Models.ProjetsProjetTags> ProjetsProjetTags { get; set; }
+    public DbSet<electrostore.Models.ProjetTags> ProjetTags { get; set; }
+    public DbSet<electrostore.Models.ProjetsStatus> ProjetsStatus { get; set; }
     public DbSet<electrostore.Models.Stores> Stores { get; set; }
     public DbSet<electrostore.Models.StoresTags> StoresTags { get; set; }
     public DbSet<electrostore.Models.Tags> Tags { get; set; }
@@ -66,20 +69,23 @@ public class ApplicationDbContext : DbContext
     {
         modelBuilder.Entity<BoxsTags>()
             .HasKey(bt => new { bt.id_box, bt.id_tag });
+
+        modelBuilder.Entity<CommandsItems>()
+            .HasKey(ci => new { ci.id_command, ci.id_item });
+
+        modelBuilder.Entity<ItemsBoxs>()
+            .HasKey(ib => new { ib.id_item, ib.id_box });
         
         modelBuilder.Entity<ItemsTags>()
             .HasKey(it => new { it.id_item, it.id_tag });
 
-        modelBuilder.Entity<ItemsBoxs>()
-            .HasKey(ib => new { ib.id_item, ib.id_box });
-
-        modelBuilder.Entity<StoresTags>()
-            .HasKey(st => new { st.id_store, st.id_tag });
-
         modelBuilder.Entity<ProjetsItems>()
             .HasKey(pi => new { pi.id_projet, pi.id_item });
 
-        modelBuilder.Entity<CommandsItems>()
-            .HasKey(ci => new { ci.id_command, ci.id_item });
+        modelBuilder.Entity<ProjetsProjetTags>()
+            .HasKey(ib => new { ib.id_projet, ib.id_projet_tag });
+
+        modelBuilder.Entity<StoresTags>()
+            .HasKey(st => new { st.id_store, st.id_tag });
     }
 }

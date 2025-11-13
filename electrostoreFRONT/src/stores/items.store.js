@@ -64,31 +64,31 @@ export const useItemsStore = defineStore("items",{
 				this.itemTagsTotalCount[item.id_item] = item["item_tags_count"];
 				this.itemCommandsTotalCount[item.id_item] = item["command_items_count"];
 				this.itemProjetsTotalCount[item.id_item] = item["projet_items_count"];
-				if (expand.indexOf("item_documents") !== -1) {
+				if (expand.includes("item_documents") !== -1) {
 					this.documents[item.id_item] = {};
 					for (const document of item["item_documents"]) {
 						this.documents[item.id_item][document.id_item_document] = document;
 					}
 				}
-				if (expand.indexOf("item_boxs") !== -1) {
+				if (expand.includes("item_boxs") !== -1) {
 					this.itemBoxs[item.id_item] = {};
 					for (const itemBox of item["item_boxs"]) {
 						this.itemBoxs[item.id_item][itemBox.id_box] = itemBox;
 					}
 				}
-				if (expand.indexOf("item_tags") !== -1) {
+				if (expand.includes("item_tags") !== -1) {
 					this.itemTags[item.id_item] = {};
 					for (const itemTag of item["item_tags"]) {
 						this.itemTags[item.id_item][itemTag.id_tag] = itemTag;
 					}
 				}
-				if (expand.indexOf("command_items") !== -1) {
+				if (expand.includes("command_items") !== -1) {
 					this.itemCommands[item.id_item] = {};
 					for (const itemCommand of item["command_items"]) {
 						this.itemCommands[item.id_item][itemCommand.id_command] = itemCommand;
 					}
 				}
-				if (expand.indexOf("projet_items") !== -1) {
+				if (expand.includes("projet_items") !== -1) {
 					this.itemProjets[item.id_item] = {};
 					for (const itemProjet of item["projet_items"]) {
 						this.itemProjets[item.id_item][itemProjet.id_projet] = itemProjet;
@@ -115,31 +115,31 @@ export const useItemsStore = defineStore("items",{
 				this.itemTagsTotalCount[item.id_item] = item["item_tags_count"];
 				this.itemCommandsTotalCount[item.id_item] = item["command_items_count"];
 				this.itemProjetsTotalCount[item.id_item] = item["projet_items_count"];
-				if (expand.indexOf("item_documents") !== -1) {
+				if (expand.includes("item_documents") !== -1) {
 					this.documents[item.id_item] = {};
 					for (const document of item["item_documents"]) {
 						this.documents[item.id_item][document.id_item_document] = document;
 					}
 				}
-				if (expand.indexOf("item_boxs") !== -1) {
+				if (expand.includes("item_boxs") !== -1) {
 					this.itemBoxs[item.id_item] = {};
 					for (const itemBox of item["item_boxs"]) {
 						this.itemBoxs[item.id_item][itemBox.id_box] = itemBox;
 					}
 				}
-				if (expand.indexOf("item_tags") !== -1) {
+				if (expand.includes("item_tags") !== -1) {
 					this.itemTags[item.id_item] = {};
 					for (const itemTag of item["item_tags"]) {
 						this.itemTags[item.id_item][itemTag.id_tag] = itemTag;
 					}
 				}
-				if (expand.indexOf("command_items") !== -1) {
+				if (expand.includes("command_items") !== -1) {
 					this.itemCommands[item.id_item] = {};
 					for (const itemCommand of item["command_items"]) {
 						this.itemCommands[item.id_item][itemCommand.id_command] = itemCommand;
 					}
 				}
-				if (expand.indexOf("projet_items") !== -1) {
+				if (expand.includes("projet_items") !== -1) {
 					this.itemProjets[item.id_item] = {};
 					for (const itemProjet of item["projet_items"]) {
 						this.itemProjets[item.id_item][itemProjet.id_projet] = itemProjet;
@@ -167,31 +167,31 @@ export const useItemsStore = defineStore("items",{
 			this.itemTagsTotalCount[id] = this.items[id]["item_tags_count"];
 			this.itemCommandsTotalCount[id] = this.items[id]["command_items_count"];
 			this.itemProjetsTotalCount[id] = this.items[id]["projet_items_count"];
-			if (expand.indexOf("item_documents") !== -1) {
+			if (expand.includes("item_documents") !== -1) {
 				this.documents[id] = {};
 				for (const document of this.items[id]["item_documents"]) {
 					this.documents[id][document.id_item_document] = document;
 				}
 			}
-			if (expand.indexOf("item_boxs") !== -1) {
+			if (expand.includes("item_boxs") !== -1) {
 				this.itemBoxs[id] = {};
 				for (const itemBox of this.items[id]["item_boxs"]) {
 					this.itemBoxs[id][itemBox.id_box] = itemBox;
 				}
 			}
-			if (expand.indexOf("item_tags") !== -1) {
+			if (expand.includes("item_tags") !== -1) {
 				this.itemTags[id] = {};
 				for (const itemTag of this.items[id]["item_tags"]) {
 					this.itemTags[id][itemTag.id_tag] = itemTag;
 				}
 			}
-			if (expand.indexOf("command_items") !== -1) {
+			if (expand.includes("command_items") !== -1) {
 				this.itemCommands[id] = {};
 				for (const itemCommand of this.items[id]["command_items"]) {
 					this.itemCommands[id][itemCommand.id_command] = itemCommand;
 				}
 			}
-			if (expand.indexOf("projet_items") !== -1) {
+			if (expand.includes("projet_items") !== -1) {
 				this.itemProjets[id] = {};
 				for (const itemProjet of this.items[id]["projet_items"]) {
 					this.itemProjets[id][itemProjet.id_projet] = itemProjet;
@@ -313,7 +313,7 @@ export const useItemsStore = defineStore("items",{
 			});
 			for (const itemBox of newItemBoxList["data"]) {
 				this.itemBoxs[idItem][itemBox.id_box] = itemBox;
-				if (expand.indexOf("box") !== -1) {
+				if (expand.includes("box") !== -1) {
 					storeStore.boxs[itemBox.id_box] = itemBox["box"];
 				}
 			}
@@ -333,7 +333,7 @@ export const useItemsStore = defineStore("items",{
 			});
 			for (const itemBox of newItemBoxList["data"]) {
 				this.itemBoxs[idItem][itemBox.id_box] = itemBox;
-				if (expand.indexOf("box") !== -1) {
+				if (expand.includes("box") !== -1) {
 					if (!storeStore.boxs[itemBox["box"].id_store]) {
 						storeStore.boxs[itemBox["box"].id_store] = {};
 					}
@@ -357,7 +357,7 @@ export const useItemsStore = defineStore("items",{
 				url: `${baseUrl}/item/${idItem}/box/${id}?${expandString}`,
 				useToken: "access",
 			});
-			if (expand.indexOf("box") !== -1) {
+			if (expand.includes("box") !== -1) {
 				storeStore.boxs[this.itemBoxs[idItem][id].id_box] = this.itemBoxs[idItem][id]["box"];
 			}
 		},
@@ -405,7 +405,7 @@ export const useItemsStore = defineStore("items",{
 			});
 			for (const itemTag of newItemTagList["data"]) {
 				this.itemTags[idItem][itemTag.id_tag] = itemTag;
-				if (expand.indexOf("tag") !== -1) {
+				if (expand.includes("tag") !== -1) {
 					tagsStore.tags[itemTag.id_tag] = itemTag["tag"];
 				}
 			}
@@ -426,7 +426,7 @@ export const useItemsStore = defineStore("items",{
 				url: `${baseUrl}/item/${idItem}/tag/${id}?${expandString}`,
 				useToken: "access",
 			});
-			if (expand.indexOf("tag") !== -1) {
+			if (expand.includes("tag") !== -1) {
 				tagsStore.tags[this.itemTags[idItem][id].id_tag] = this.itemTags[idItem][id]["tag"];
 			}
 		},
@@ -490,7 +490,7 @@ export const useItemsStore = defineStore("items",{
 			});
 			for (const itemCommand of newItemCommandList["data"]) {
 				this.itemCommands[idItem][itemCommand.id_command] = itemCommand;
-				if (expand.indexOf("command") !== -1) {
+				if (expand.includes("command") !== -1) {
 					commandsStore.commands[itemCommand.id_command] = itemCommand["command"];
 				}
 			}
@@ -511,7 +511,7 @@ export const useItemsStore = defineStore("items",{
 				url: `${baseUrl}/item/${idItem}/command/${id}?${expandString}`,
 				useToken: "access",
 			});
-			if (expand.indexOf("command") !== -1) {
+			if (expand.includes("command") !== -1) {
 				commandsStore.commands[this.itemCommands[idItem][id].id_command] = this.itemCommands[idItem][id]["command"];
 			}
 		},
@@ -573,7 +573,7 @@ export const useItemsStore = defineStore("items",{
 			});
 			for (const itemProjet of newItemProjetList["data"]) {
 				this.itemProjets[idItem][itemProjet.id_projet] = itemProjet;
-				if (expand.indexOf("projet") !== -1) {
+				if (expand.includes("projet") !== -1) {
 					projetsStore.projets[itemProjet.id_projet] = itemProjet["projet"];
 				}
 			}
@@ -594,7 +594,7 @@ export const useItemsStore = defineStore("items",{
 				url: `${baseUrl}/item/${idItem}/projet/${id}?${expandString}`,
 				useToken: "access",
 			});
-			if (expand.indexOf("projet") !== -1) {
+			if (expand.includes("projet") !== -1) {
 				projetsStore.projets[this.itemProjets[idItem][id].id_projet] = this.itemProjets[idItem][id]["projet"];
 			}
 		},

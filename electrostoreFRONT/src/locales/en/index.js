@@ -5,6 +5,7 @@ import components from "./components.json";
 import ia from "./IA.json";
 import item from "./item.json";
 import projet from "./projet.json";
+import projetTag from "./projetTag.json";
 import store from "./store.json";
 import tag from "./tag.json";
 import user from "./user.json";
@@ -17,6 +18,7 @@ export default {
 	ia,
 	item,
 	projet,
+	projetTag,
 	store,
 	tag,
 	user,

@@ -33,6 +33,7 @@
 	"VCommandDocumentDeleted": "Document deleted successfully",
 	"VCommandDocumentDeleteError": "Error deleting document",
 	"VCommandDocumentNotSupported": "Document type not supported",
+	"VCommandDocumentOpenInNewTab": "Open document in new tab",
 	"VCommandItemUpdated": "Item updated successfully",
 	"VCommandItemAdded": "Item added successfully",
 	"VCommandItemDeleted": "Item deleted successfully",

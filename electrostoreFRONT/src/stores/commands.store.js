@@ -42,19 +42,19 @@ export const useCommandsStore = defineStore("commands",{
 				this.commentairesTotalCount[command.id_command] = command.commands_commentaires_count;
 				this.documentsTotalCount[command.id_command] = command.commands_documents_count;
 				this.itemsTotalCount[command.id_command] = command.commands_items_count;
-				if (expand.indexOf("commands_commentaires") > -1) {
+				if (expand.includes("commands_commentaires")) {
 					this.commentaires[command.id_command] = {};
 					for (const commentaire of command.commands_commentaires) {
 						this.commentaires[command.id_command][commentaire.id_command_commentaire] = commentaire;
 					}
 				}
-				if (expand.indexOf("commands_documents") > -1) {
+				if (expand.includes("commands_documents")) {
 					this.documents[command.id_command] = {};
 					for (const document of command.commands_documents) {
 						this.documents[command.id_command][document.id_command_document] = document;
 					}
 				}
-				if (expand.indexOf("commands_items") > -1) {
+				if (expand.includes("commands_items")) {
 					this.items[command.id_command] = {};
 					for (const item of command.commands_items) {
 						this.items[command.id_command][item.id_item] = item;
@@ -76,19 +76,19 @@ export const useCommandsStore = defineStore("commands",{
 				this.commentairesTotalCount[command.id_command] = command.commands_commentaires_count;
 				this.documentsTotalCount[command.id_command] = command.commands_documents_count;
 				this.itemsTotalCount[command.id_command] = command.commands_items_count;
-				if (expand.indexOf("commands_commentaires") > -1) {
+				if (expand.includes("commands_commentaires")) {
 					this.commentaires[command.id_command] = {};
 					for (const commentaire of command.commands_commentaires) {
 						this.commentaires[command.id_command][commentaire.id_command_commentaire] = commentaire;
 					}
 				}
-				if (expand.indexOf("commands_documents") > -1) {
+				if (expand.includes("commands_documents")) {
 					this.documents[command.id_command] = {};
 					for (const document of command.commands_documents) {
 						this.documents[command.id_command][document.id_command_document] = document;
 					}
 				}
-				if (expand.indexOf("commands_items") > -1) {
+				if (expand.includes("commands_items")) {
 					this.items[command.id_command] = {};
 					for (const item of command.commands_items) {
 						this.items[command.id_command][item.id_item] = item;
@@ -111,19 +111,19 @@ export const useCommandsStore = defineStore("commands",{
 			this.commentairesTotalCount[id] = this.commands[id].commands_commentaires_count;
 			this.documentsTotalCount[id] = this.commands[id].commands_documents_count;
 			this.itemsTotalCount[id] = this.commands[id].commands_items_count;
-			if (expand.indexOf("commands_commentaires") > -1) {
+			if (expand.includes("commands_commentaires")) {
 				this.commentaires[id] = {};
 				for (const commentaire of this.commands[id].commands_commentaires) {
 					this.commentaires[id][commentaire.id_command_commentaire] = commentaire;
 				}
 			}
-			if (expand.indexOf("commands_documents") > -1) {
+			if (expand.includes("commands_documents")) {
 				this.documents[id] = {};
 				for (const document of this.commands[id].commands_documents) {
 					this.documents[id][document.id_command_document] = document;
 				}
 			}
-			if (expand.indexOf("commands_items") > -1) {
+			if (expand.includes("commands_items")) {
 				this.items[id] = {};
 				for (const item of this.commands[id].commands_items) {
 					this.items[id][item.id_item] = item;
@@ -171,7 +171,7 @@ export const useCommandsStore = defineStore("commands",{
 			});
 			for (const commentaire of newCommentaireList["data"]) {
 				this.commentaires[idCommand][commentaire.id_command_commentaire] = commentaire;
-				if (expand.indexOf("user") > -1) {
+				if (expand.includes("user")) {
 					userStore.users[commentaire.id_user] = commentaire.user;
 				}
 			}
@@ -192,7 +192,7 @@ export const useCommandsStore = defineStore("commands",{
 				url: `${baseUrl}/command/${idCommand}/commentaire/${id}?${expandString}`,
 				useToken: "access",
 			});
-			if (expand.indexOf("user") > -1) {
+			if (expand.includes("user")) {
 				userStore.users[this.commentaires[idCommand][id].id_user] = this.commentaires[idCommand][id].user;
 			}
 		},
@@ -298,27 +298,6 @@ export const useCommandsStore = defineStore("commands",{
 			});
 		},
 
-		async getItemByList(idCommand, idResearch = [], expand = []) {
-			const itemStore = useItemsStore();
-			if (!this.items[idCommand]) {
-				this.items[idCommand] = {};
-			}
-			this.itemsLoading = true;
-			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			let newItemList = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/item?${idResearchString}&${expandString}`,
-				useToken: "access",
-			});
-			for (const item of newItemList["data"]) {
-				this.items[idCommand][item.id_item] = item;
-				if (expand.indexOf("item") > -1) {
-					itemStore.items[item.id_item] = item.item;
-				}
-			}
-			this.itemsTotalCount[idCommand] = newItemList["count"];
-			this.itemsLoading = false;
-		},
 		async getItemByInterval(idCommand, limit = 100, offset = 0, expand = []) {
 			const itemStore = useItemsStore();
 			if (!this.items[idCommand]) {
@@ -332,7 +311,7 @@ export const useCommandsStore = defineStore("commands",{
 			});
 			for (const item of newItemList["data"]) {
 				this.items[idCommand][item.id_item] = item;
-				if (expand.indexOf("item") > -1) {
+				if (expand.includes("item")) {
 					itemStore.items[item.id_item] = item.item;
 				}
 			}
@@ -353,7 +332,7 @@ export const useCommandsStore = defineStore("commands",{
 				url: `${baseUrl}/command/${idCommand}/item/${id}?${expandString}`,
 				useToken: "access",
 			});
-			if (expand.indexOf("item") > -1) {
+			if (expand.includes("item")) {
 				itemStore.items[id] = this.items[idCommand][id].item;
 			}
 		},

@@ -32,7 +32,10 @@ using electrostore.Services.LedService;
 using electrostore.Services.ProjetCommentaireService;
 using electrostore.Services.ProjetDocumentService;
 using electrostore.Services.ProjetItemService;
+using electrostore.Services.ProjetProjetTagService;
 using electrostore.Services.ProjetService;
+using electrostore.Services.ProjetStatusService;
+using electrostore.Services.ProjetTagService;
 using electrostore.Services.SessionService;
 using electrostore.Services.SmtpService;
 using electrostore.Services.StoreService;
@@ -80,7 +83,7 @@ public static class Program
                 {
                     var modelStateErrors = context.ModelState
                         .Where(ms => ms.Value != null && ms.Value.Errors.Count > 0)
-                        .SelectMany(ms => ms.Value.Errors)
+                        .SelectMany(ms => ms.Value!.Errors)
                         .Select(e => e.ErrorMessage)
                         .ToList();
 
@@ -252,6 +255,8 @@ public static class Program
                 .WithCredentials(
                     builder.Configuration.GetSection("S3:AccessKey").Value ?? "minioadmin",
                     builder.Configuration.GetSection("S3:SecretKey").Value ?? "minioadmin")
+                .WithRegion(builder.Configuration.GetSection("S3:Region").Value ?? "us-east-1")
+                .WithSSL(builder.Configuration.GetSection("S3:Secure").Get<bool>())
                 .Build();
             return minioClient;
         });
@@ -275,7 +280,10 @@ public static class Program
         builder.Services.AddScoped<IProjetCommentaireService, ProjetCommentaireService>();
         builder.Services.AddScoped<IProjetDocumentService, ProjetDocumentService>();
         builder.Services.AddScoped<IProjetItemService, ProjetItemService>();
+        builder.Services.AddScoped<IProjetProjetTagService, ProjetProjetTagService>();
         builder.Services.AddScoped<IProjetService, ProjetService>();
+        builder.Services.AddScoped<IProjetStatusService, ProjetStatusService>();
+        builder.Services.AddScoped<IProjetTagService, ProjetTagService>();
         builder.Services.AddScoped<ISessionService, SessionService>();
         builder.Services.AddScoped<ISmtpService, SmtpService>();
         builder.Services.AddScoped<IStoreService, StoreService>();

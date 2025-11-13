@@ -14,19 +14,19 @@ public class AddTotalCountHeaderFilter : IOperationFilter
 
         if (hasLimit && hasOffset && operation.Responses.ContainsKey("200"))
         {
-            var response = operation.Responses["200"];
-            if (response.Headers is null)
+            var response = operation.Responses.TryGetValue("200", out var resp) ? resp : null;
+            if (response != null)
             {
-                response.Headers = new Dictionary<string, OpenApiHeader>();
-            }
-            response.Headers.Add("X-Total-Count", new OpenApiHeader
-            {
-                Description = "Total number of items",
-                Schema = new OpenApiSchema
+                response.Headers ??= new Dictionary<string, OpenApiHeader>();
+                response.Headers.Add("X-Total-Count", new OpenApiHeader
                 {
-                    Type = "integer"
-                }
-            });
+                    Description = "Total number of items",
+                    Schema = new OpenApiSchema
+                    {
+                        Type = "integer"
+                    }
+                });
+            }
         }
         // description for query parameters
         AddDescriptionsToQueryParameters(operation, parameters);

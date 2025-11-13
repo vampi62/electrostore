@@ -24,5 +24,5 @@ public class CommandsDocuments : BaseEntity
 
     public int id_command { get; set; }
     [ForeignKey("id_command")]
-    public Commands Command { get; set; }
+    public Commands? Command { get; set; }
 }

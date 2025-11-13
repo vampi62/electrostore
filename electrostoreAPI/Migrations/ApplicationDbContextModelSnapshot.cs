@@ -582,6 +582,31 @@ namespace electrostore.Migrations
                     b.ToTable("Leds");
                 });
 
+            modelBuilder.Entity("electrostore.Models.ProjetTags", b =>
+                {
+                    b.Property<int>("id_projet_tag")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("nom_projet_tag")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<int>("poids_projet_tag")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_projet_tag");
+
+                    b.ToTable("ProjetTags");
+                });
+
             modelBuilder.Entity("electrostore.Models.Projets", b =>
                 {
                     b.Property<int>("id_projet")
@@ -594,9 +619,6 @@ namespace electrostore.Migrations
                     b.Property<DateTime>("date_debut_projet")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime?>("date_fin_projet")
-                        .HasColumnType("datetime(6)");
-
                     b.Property<string>("description_projet")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -607,10 +629,8 @@ namespace electrostore.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<string>("status_projet")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                    b.Property<int>("status_projet")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");
@@ -719,6 +739,52 @@ namespace electrostore.Migrations
                     b.HasIndex("id_item");
 
                     b.ToTable("ProjetsItems");
+                });
+
+            modelBuilder.Entity("electrostore.Models.ProjetsProjetTags", b =>
+                {
+                    b.Property<int>("id_projet")
+                        .HasColumnType("int");
+
+                    b.Property<int>("id_projet_tag")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_projet", "id_projet_tag");
+
+                    b.HasIndex("id_projet_tag");
+
+                    b.ToTable("ProjetsProjetTags");
+                });
+
+            modelBuilder.Entity("electrostore.Models.ProjetsStatus", b =>
+                {
+                    b.Property<int>("id_projet_status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("id_projet")
+                        .HasColumnType("int");
+
+                    b.Property<int>("status_projet")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_projet_status");
+
+                    b.HasIndex("id_projet");
+
+                    b.ToTable("ProjetsStatus");
                 });
 
             modelBuilder.Entity("electrostore.Models.Stores", b =>
@@ -1080,6 +1146,36 @@ namespace electrostore.Migrations
                     b.Navigation("Projet");
                 });
 
+            modelBuilder.Entity("electrostore.Models.ProjetsProjetTags", b =>
+                {
+                    b.HasOne("electrostore.Models.Projets", "Projet")
+                        .WithMany("ProjetsProjetTags")
+                        .HasForeignKey("id_projet")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("electrostore.Models.ProjetTags", "ProjetTag")
+                        .WithMany("ProjetsProjetTags")
+                        .HasForeignKey("id_projet_tag")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Projet");
+
+                    b.Navigation("ProjetTag");
+                });
+
+            modelBuilder.Entity("electrostore.Models.ProjetsStatus", b =>
+                {
+                    b.HasOne("electrostore.Models.Projets", "Projet")
+                        .WithMany("ProjetsStatus")
+                        .HasForeignKey("id_projet")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Projet");
+                });
+
             modelBuilder.Entity("electrostore.Models.StoresTags", b =>
                 {
                     b.HasOne("electrostore.Models.Stores", "Store")
@@ -1128,6 +1224,11 @@ namespace electrostore.Migrations
                     b.Navigation("ProjetsItems");
                 });
 
+            modelBuilder.Entity("electrostore.Models.ProjetTags", b =>
+                {
+                    b.Navigation("ProjetsProjetTags");
+                });
+
             modelBuilder.Entity("electrostore.Models.Projets", b =>
                 {
                     b.Navigation("ProjetsCommentaires");
@@ -1135,6 +1236,10 @@ namespace electrostore.Migrations
                     b.Navigation("ProjetsDocuments");
 
                     b.Navigation("ProjetsItems");
+
+                    b.Navigation("ProjetsProjetTags");
+
+                    b.Navigation("ProjetsStatus");
                 });
 
             modelBuilder.Entity("electrostore.Models.Stores", b =>

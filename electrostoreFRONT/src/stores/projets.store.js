@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 
 import { fetchWrapper } from "@/helpers";
 
-import { useUsersStore, useItemsStore } from "@/stores";
+import { useUsersStore, useItemsStore, useProjetTagsStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -27,6 +27,15 @@ export const useProjetsStore = defineStore("projets",{
 		itemsLoading: false,
 		items: {},
 		itemEdition: {},
+
+		projetTagProjetTotalCount: {},
+		projetTagProjetLoading: true,
+		projetTagProjet: {},
+		projetTagProjetEdition: {},
+
+		statusHistoryTotalCount: {},
+		statusHistoryLoading: false,
+		statusHistory: {},
 	}),
 	actions: {
 		async getProjetByInterval(limit = 100, offset = 0, expand = []) {
@@ -41,22 +50,36 @@ export const useProjetsStore = defineStore("projets",{
 				this.commentairesTotalCount[projet.id_projet] = projet.projets_commentaires_count;
 				this.documentsTotalCount[projet.id_projet] = projet.projets_documents_count;
 				this.itemsTotalCount[projet.id_projet] = projet.projets_items_count;
-				if (expand.indexOf("projets_commentaires") > -1) {
+				this.projetTagProjetTotalCount[projet.id_projet] = projet.projets_tags_count;
+				this.statusHistoryTotalCount[projet.id_projet] = projet.projets_status_history_count;
+				if (expand.includes("projets_commentaires")) {
 					this.commentaires[projet.id_projet] = {};
 					for (const commentaire of projet.projets_commentaires) {
 						this.commentaires[projet.id_projet][commentaire.id_projet_commentaire] = commentaire;
 					}
 				}
-				if (expand.indexOf("projets_documents") > -1) {
+				if (expand.includes("projets_documents")) {
 					this.documents[projet.id_projet] = {};
 					for (const document of projet.projets_documents) {
 						this.documents[projet.id_projet][document.id_projet_document] = document;
 					}
 				}
-				if (expand.indexOf("projets_items") > -1) {
+				if (expand.includes("projets_items")) {
 					this.items[projet.id_projet] = {};
 					for (const item of projet.projets_items) {
 						this.items[projet.id_projet][item.id_item] = item;
+					}
+				}
+				if (expand.includes("projets_projet_tags")) {
+					this.projetTagProjet[projet.id_projet] = {};
+					for (const projetTagProjet of projet.projets_projet_tags) {
+						this.projetTagProjet[projet.id_projet][projetTagProjet.id_projet_tag] = projetTagProjet;
+					}
+				}
+				if (expand.includes("projets_status_history")) {
+					this.statusHistory[projet.id_projet] = {};
+					for (const statusHistory of projet.projets_status_history) {
+						this.statusHistory[projet.id_projet][statusHistory.id_status_history] = statusHistory;
 					}
 				}
 			}
@@ -76,22 +99,36 @@ export const useProjetsStore = defineStore("projets",{
 			this.commentairesTotalCount[id] = this.projets[id].projets_commentaires_count;
 			this.documentsTotalCount[id] = this.projets[id].projets_documents_count;
 			this.itemsTotalCount[id] = this.projets[id].projets_items_count;
-			if (expand.indexOf("projets_commentaires") > -1) {
+			this.projetTagProjetTotalCount[id] = this.projets[id].projets_tags_count;
+			this.statusHistoryTotalCount[id] = this.projets[id].projets_status_history_count;
+			if (expand.includes("projets_commentaires")) {
 				this.commentaires[id] = {};
 				for (const commentaire of this.projets[id].projets_commentaires) {
 					this.commentaires[id][commentaire.id_projet_commentaire] = commentaire;
 				}
 			}
-			if (expand.indexOf("projets_documents") > -1) {
+			if (expand.includes("projets_documents")) {
 				this.documents[id] = {};
 				for (const document of this.projets[id].projets_documents) {
 					this.documents[id][document.id_projet_document] = document;
 				}
 			}
-			if (expand.indexOf("projets_items") > -1) {
+			if (expand.includes("projets_items")) {
 				this.items[id] = {};
 				for (const item of this.projets[id].projets_items) {
 					this.items[id][item.id_item] = item;
+				}
+			}
+			if (expand.includes("projets_projet_tags")) {
+				this.projetTagProjet[id] = {};
+				for (const projetTagProjet of this.projets[id].projets_projet_tags) {
+					this.projetTagProjet[id][projetTagProjet.id_projet_tag] = projetTagProjet;
+				}
+			}
+			if (expand.includes("projets_status_history")) {
+				this.statusHistory[id] = {};
+				for (const statusHistory of this.projets[id].projets_status_history) {
+					this.statusHistory[id][statusHistory.id_status_history] = statusHistory;
 				}
 			}
 		},
@@ -136,7 +173,7 @@ export const useProjetsStore = defineStore("projets",{
 			});
 			for (const commentaire of newCommentaireList["data"]) {
 				this.commentaires[idProjet][commentaire.id_projet_commentaire] = commentaire;
-				if (expand.indexOf("user") > -1) {
+				if (expand.includes("user")) {
 					userStore.users[commentaire.id_user] = commentaire.user;
 				}
 			}
@@ -157,7 +194,7 @@ export const useProjetsStore = defineStore("projets",{
 				url: `${baseUrl}/projet/${idProjet}/commentaire/${id}?${expandString}`,
 				useToken: "access",
 			});
-			if (expand.indexOf("user") > -1) {
+			if (expand.includes("user")) {
 				userStore.users[this.commentaires[idProjet][id].id_user] = this.commentaires[idProjet][id].user;
 			}
 		},
@@ -284,28 +321,6 @@ export const useProjetsStore = defineStore("projets",{
 			});
 		},
 
-		async getItemByList(idProjet, idResearch = [], expand = []) {
-			const itemStore = useItemsStore();
-			if (!this.items[idProjet]) {
-				this.items[idProjet] = {};
-			}
-			// query
-			this.itemsLoading = true;
-			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			let newItemList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/item?${idResearchString}&${expandString}`,
-				useToken: "access",
-			});
-			for (const item of newItemList["data"]) {
-				this.items[idProjet][item.id_item] = item;
-				if (expand.indexOf("item") > -1) {
-					itemStore.items[item.id_item] = item.item;
-				}
-			}
-			this.itemsTotalCount[idProjet] = newItemList["count"];
-			this.itemsLoading = false;
-		},
 		async getItemByInterval(idProjet, limit = 100, offset = 0, expand = []) {
 			const itemStore = useItemsStore();
 			if (!this.items[idProjet]) {
@@ -320,7 +335,7 @@ export const useProjetsStore = defineStore("projets",{
 			});
 			for (const item of newItemList["data"]) {
 				this.items[idProjet][item.id_item] = item;
-				if (expand.indexOf("item") > -1) {
+				if (expand.includes("item")) {
 					itemStore.items[item.id_item] = item.item;
 				}
 			}
@@ -341,7 +356,7 @@ export const useProjetsStore = defineStore("projets",{
 				url: `${baseUrl}/projet/${idProjet}/item/${id}&${expandString}`,
 				useToken: "access",
 			});
-			if (expand.indexOf("item") > -1) {
+			if (expand.includes("item")) {
 				itemStore.items[id] = this.items[idProjet][id].item;
 			}
 		},
@@ -388,6 +403,121 @@ export const useProjetsStore = defineStore("projets",{
 			for (const item of this.itemEdition["valide"]) {
 				this.items[idProjet][item.id_item] = item;
 			}
+		},
+
+		async getProjetTagProjetByInterval(idProjet, limit = 100, offset = 0, expand = []) {
+			const projetTagStore = useProjetTagsStore();
+			if (!this.projetTagProjet[idProjet]) {
+				this.projetTagProjet[idProjet] = {};
+			}
+			this.projetTagProjetLoading = true;
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			let newProjetTagProjetList = await fetchWrapper.get({
+				url: `${baseUrl}/projet/${idProjet}/projet-tag?limit=${limit}&offset=${offset}&${expandString}`,
+				useToken: "access",
+			});
+			for (const projetTagProjet of newProjetTagProjetList["data"]) {
+				this.projetTagProjet[idProjet][projetTagProjet.id_projet_tag] = projetTagProjet;
+				if (expand.includes("projet_tag")) {
+					projetTagStore.projetTags[projetTagProjet.id_projet_tag] = projetTagProjet.projet_tag;
+				}
+			}
+			this.projetTagProjetTotalCount[idProjet] = newProjetTagProjetList["count"];
+		},
+		async getProjetTagProjetById(idProjet, idProjetTag, expand = []) {
+			const projetTagStore = useProjetTagsStore();
+			if (!this.projetTagProjet[idProjet]) {
+				this.projetTagProjet[idProjet] = {};
+			}
+			if (!this.projetTagProjet[idProjet][idProjetTag]) {
+				this.projetTagProjet[idProjet][idProjetTag] = {};
+			}
+			this.projetTagProjet[idProjet][idProjetTag] = { ...this.projetTagProjet[idProjet][idProjetTag], loading: true };
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			this.projetTagProjet[idProjet][idProjetTag] = await fetchWrapper.get({
+				url: `${baseUrl}/projet/${idProjet}/projet-tag/${idProjetTag}&${expandString}`,
+				useToken: "access",
+			});
+			if (expand.includes("projet_tag")) {
+				projetTagStore.projetTags[idProjetTag] = this.projetTagProjet[idProjet][idProjetTag].projet_tag;
+			}
+		},
+		async createProjetTagProjet(idProjet, params) {
+			this.projetTagProjetEdition.loading = true;
+			this.projetTagProjetEdition = await fetchWrapper.post({
+				url: `${baseUrl}/projet/${idProjet}/projet-tag`,
+				useToken: "access",
+				body: params,
+			});
+			if (!this.projetTagProjet[idProjet]) {
+				this.projetTagProjet[idProjet] = {};
+			}
+			this.projetTagProjet[idProjet][this.projetTagProjetEdition.id_projet_tag] = this.projetTagProjetEdition;
+		},
+		async deleteProjetTagProjet(idProjet, idProjetTag) {
+			this.projetTagProjetEdition.loading = true;
+			await fetchWrapper.delete({
+				url: `${baseUrl}/projet/${idProjet}/projet-tag/${idProjetTag}`,
+				useToken: "access",
+			});
+			delete this.projetTagProjet[idProjet][idProjetTag];
+			this.projetTagProjetEdition = {};
+		},
+		async createProjetTagProjetBulk(idProjet, params) {
+			this.projetTagProjetEdition.loading = true;
+			this.projetTagProjetEdition = await fetchWrapper.post({
+				url: `${baseUrl}/projet/${idProjet}/projet-tag/bulk`,
+				useToken: "access",
+				body: params,
+			});
+			if (!this.projetTagProjet[idProjet]) {
+				this.projetTagProjet[idProjet] = {};
+			}
+			for (const projetTagProjet of this.projetTagProjetEdition["valide"]) {
+				this.projetTagProjet[idProjet][projetTagProjet.id_projet_tag] = projetTagProjet;
+			}
+		},
+		async deleteProjetTagProjetBulk(idProjet, params) {
+			this.projetTagProjetEdition.loading = true;
+			this.projetTagProjetEdition = fetchWrapper.delete({
+				url: `${baseUrl}/projet/${idProjet}/projet-tag/bulk`,
+				useToken: "access",
+				body: params,
+			});
+			for (const idProjetTag of this.projetTagProjetEdition["valide"]) {
+				delete this.projetTagProjet[idProjet][idProjetTag];
+			}
+		},
+
+		async getStatusHistoryByInterval(idProjet, limit = 100, offset = 0, expand = []) {
+			if (!this.statusHistory[idProjet]) {
+				this.statusHistory[idProjet] = {};
+			}
+			this.statusHistoryLoading = true;
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			let newStatusHistoryList = await fetchWrapper.get({
+				url: `${baseUrl}/projet/${idProjet}/status-history?limit=${limit}&offset=${offset}&${expandString}`,
+				useToken: "access",
+			});
+			for (const statusHistory of newStatusHistoryList["data"]) {
+				this.statusHistory[idProjet][statusHistory.id_status_history] = statusHistory;
+			}
+			this.statusHistoryTotalCount[idProjet] = newStatusHistoryList["count"];
+			this.statusHistoryLoading = false;
+		},
+		async getStatusHistoryById(idProjet, id, expand = []) {
+			if (!this.statusHistory[idProjet]) {
+				this.statusHistory[idProjet] = {};
+			}
+			if (!this.statusHistory[idProjet][id]) {
+				this.statusHistory[idProjet][id] = {};
+			}
+			this.statusHistory[idProjet][id] = { ...this.statusHistory[idProjet][id], loading: true };
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			this.statusHistory[idProjet][id] = await fetchWrapper.get({
+				url: `${baseUrl}/projet/${idProjet}/status-history/${id}?${expandString}`,
+				useToken: "access",
+			});
 		},
 	},
 });
