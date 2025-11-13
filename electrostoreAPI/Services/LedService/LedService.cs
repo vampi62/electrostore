@@ -4,7 +4,6 @@ using electrostore.Dto;
 using electrostore.Models;
 using electrostore.Enums;
 using MQTTnet;
-using MQTTnet.Client;
 using MQTTnet.Protocol;
 using System.Text.Json;
 using electrostore.Services.SessionService;

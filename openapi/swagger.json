@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.1",
+  "openapi": "3.0.4",
   "info": {
     "title": "ElectroStore API",
     "version": "v1"
@@ -4685,7 +4685,7 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'projets_documents', 'projets_items', 'projets_projet_tags'. Multiple values can be specified by separating them with ','.",
+            "description": "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'projets_documents', 'projets_items', 'projets_projet_tags', 'projets_status_history'. Multiple values can be specified by separating them with ','.",
             "schema": {
               "type": "array",
               "items": {
@@ -4811,7 +4811,7 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'projets_documents', 'projets_items'. Multiple values can be specified by separating them with ','.",
+            "description": "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'projets_documents', 'projets_items', 'projets_projet_tags', 'projets_status_history'. Multiple values can be specified by separating them with ','.",
             "schema": {
               "type": "array",
               "items": {
@@ -6014,17 +6014,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateProjetProjetTagDto"
+                "$ref": "#/components/schemas/CreateProjetProjetTagByProjetDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateProjetProjetTagDto"
+                "$ref": "#/components/schemas/CreateProjetProjetTagByProjetDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateProjetProjetTagDto"
+                "$ref": "#/components/schemas/CreateProjetProjetTagByProjetDto"
               }
             }
           }
@@ -6165,7 +6165,7 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/CreateProjetProjetTagDto"
+                  "$ref": "#/components/schemas/CreateProjetProjetTagByProjetDto"
                 }
               }
             },
@@ -6173,7 +6173,7 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/CreateProjetProjetTagDto"
+                  "$ref": "#/components/schemas/CreateProjetProjetTagByProjetDto"
                 }
               }
             },
@@ -6181,7 +6181,7 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/CreateProjetProjetTagDto"
+                  "$ref": "#/components/schemas/CreateProjetProjetTagByProjetDto"
                 }
               }
             }
@@ -6273,6 +6273,152 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReadBulkProjetProjetTagDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projet/{id_projet}/status-history": {
+      "get": {
+        "tags": [
+          "ProjetStatus"
+        ],
+        "parameters": [
+          {
+            "name": "id_projet",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "description": "(Optional) Fields to expand. Possible values: 'projet'. Multiple values can be specified by separating them with ','.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total number of items",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadExtendedProjetStatusDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadExtendedProjetStatusDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReadExtendedProjetStatusDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projet/{id_projet}/status-history/{id_projet_status}": {
+      "get": {
+        "tags": [
+          "ProjetStatus"
+        ],
+        "parameters": [
+          {
+            "name": "id_projet",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_projet_status",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "description": "(Optional) Fields to expand. Possible values: 'projet'. Multiple values can be specified by separating them with ','.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadExtendedProjetStatusDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadExtendedProjetStatusDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadExtendedProjetStatusDto"
                 }
               }
             }
@@ -6705,17 +6851,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateProjetProjetTagDto"
+                "$ref": "#/components/schemas/CreateProjetProjetTagByProjetTagDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateProjetProjetTagDto"
+                "$ref": "#/components/schemas/CreateProjetProjetTagByProjetTagDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateProjetProjetTagDto"
+                "$ref": "#/components/schemas/CreateProjetProjetTagByProjetTagDto"
               }
             }
           }
@@ -6856,7 +7002,7 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/CreateProjetProjetTagDto"
+                  "$ref": "#/components/schemas/CreateProjetProjetTagByProjetTagDto"
                 }
               }
             },
@@ -6864,7 +7010,7 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/CreateProjetProjetTagDto"
+                  "$ref": "#/components/schemas/CreateProjetProjetTagByProjetTagDto"
                 }
               }
             },
@@ -6872,7 +7018,7 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/CreateProjetProjetTagDto"
+                  "$ref": "#/components/schemas/CreateProjetProjetTagByProjetTagDto"
                 }
               }
             }
@@ -12008,6 +12154,9 @@
   "components": {
     "schemas": {
       "CameraLightDto": {
+        "required": [
+          "state"
+        ],
         "type": "object",
         "properties": {
           "state": {
@@ -12468,7 +12617,6 @@
       },
       "CreateProjetDto": {
         "required": [
-          "date_debut_projet",
           "description_projet",
           "nom_projet",
           "status_projet",
@@ -12492,18 +12640,7 @@
             "type": "string"
           },
           "status_projet": {
-            "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
-          },
-          "date_debut_projet": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "date_fin_projet": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "$ref": "#/components/schemas/ProjetStatus"
           }
         },
         "additionalProperties": false
@@ -12548,18 +12685,26 @@
         },
         "additionalProperties": false
       },
-      "CreateProjetProjetTagDto": {
+      "CreateProjetProjetTagByProjetDto": {
         "required": [
-          "id_projet",
           "id_projet_tag"
         ],
         "type": "object",
         "properties": {
-          "id_projet": {
+          "id_projet_tag": {
             "type": "integer",
             "format": "int32"
-          },
-          "id_projet_tag": {
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateProjetProjetTagByProjetTagDto": {
+        "required": [
+          "id_projet"
+        ],
+        "type": "object",
+        "properties": {
+          "id_projet": {
             "type": "integer",
             "format": "int32"
           }
@@ -12588,6 +12733,9 @@
         "additionalProperties": false
       },
       "CreateStoreCompleteDto": {
+        "required": [
+          "store"
+        ],
         "type": "object",
         "properties": {
           "store": {
@@ -12727,6 +12875,10 @@
         "additionalProperties": false
       },
       "ErrorDetail": {
+        "required": [
+          "data",
+          "reason"
+        ],
         "type": "object",
         "properties": {
           "reason": {
@@ -12754,6 +12906,10 @@
         "additionalProperties": false
       },
       "IAStatusDto": {
+        "required": [
+          "message",
+          "status"
+        ],
         "type": "object",
         "properties": {
           "status": {
@@ -12807,6 +12963,11 @@
         "additionalProperties": false
       },
       "LoginResponse": {
+        "required": [
+          "refresh_token",
+          "token",
+          "user"
+        ],
         "type": "object",
         "properties": {
           "token": {
@@ -12844,6 +13005,18 @@
           }
         },
         "additionalProperties": false
+      },
+      "ProjetStatus": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "type": "integer",
+        "format": "int32"
       },
       "ReadBoxDto": {
         "type": "object",
@@ -12906,6 +13079,10 @@
         "additionalProperties": false
       },
       "ReadBulkBoxDto": {
+        "required": [
+          "error",
+          "valide"
+        ],
         "type": "object",
         "properties": {
           "valide": {
@@ -12926,6 +13103,10 @@
         "additionalProperties": false
       },
       "ReadBulkBoxTagDto": {
+        "required": [
+          "error",
+          "valide"
+        ],
         "type": "object",
         "properties": {
           "valide": {
@@ -12946,6 +13127,10 @@
         "additionalProperties": false
       },
       "ReadBulkCommandItemDto": {
+        "required": [
+          "error",
+          "valide"
+        ],
         "type": "object",
         "properties": {
           "valide": {
@@ -12966,6 +13151,10 @@
         "additionalProperties": false
       },
       "ReadBulkItemTagDto": {
+        "required": [
+          "error",
+          "valide"
+        ],
         "type": "object",
         "properties": {
           "valide": {
@@ -12986,6 +13175,10 @@
         "additionalProperties": false
       },
       "ReadBulkLedDto": {
+        "required": [
+          "error",
+          "valide"
+        ],
         "type": "object",
         "properties": {
           "valide": {
@@ -13006,6 +13199,10 @@
         "additionalProperties": false
       },
       "ReadBulkProjetItemDto": {
+        "required": [
+          "error",
+          "valide"
+        ],
         "type": "object",
         "properties": {
           "valide": {
@@ -13026,6 +13223,10 @@
         "additionalProperties": false
       },
       "ReadBulkProjetProjetTagDto": {
+        "required": [
+          "error",
+          "valide"
+        ],
         "type": "object",
         "properties": {
           "valide": {
@@ -13046,6 +13247,10 @@
         "additionalProperties": false
       },
       "ReadBulkStoreTagDto": {
+        "required": [
+          "error",
+          "valide"
+        ],
         "type": "object",
         "properties": {
           "valide": {
@@ -13066,6 +13271,10 @@
         "additionalProperties": false
       },
       "ReadBulkTagDto": {
+        "required": [
+          "error",
+          "valide"
+        ],
         "type": "object",
         "properties": {
           "valide": {
@@ -13086,6 +13295,10 @@
         "additionalProperties": false
       },
       "ReadCameraDto": {
+        "required": [
+          "nom_camera",
+          "url_camera"
+        ],
         "type": "object",
         "properties": {
           "id_camera": {
@@ -13120,6 +13333,9 @@
         "additionalProperties": false
       },
       "ReadCommandCommentaireDto": {
+        "required": [
+          "contenu_command_commentaire"
+        ],
         "type": "object",
         "properties": {
           "id_command_commentaire": {
@@ -13151,6 +13367,11 @@
         "additionalProperties": false
       },
       "ReadCommandDocumentDto": {
+        "required": [
+          "name_command_document",
+          "type_command_document",
+          "url_command_document"
+        ],
         "type": "object",
         "properties": {
           "id_command_document": {
@@ -13189,6 +13410,10 @@
         "additionalProperties": false
       },
       "ReadCommandDto": {
+        "required": [
+          "status_command",
+          "url_command"
+        ],
         "type": "object",
         "properties": {
           "id_command": {
@@ -13258,6 +13483,9 @@
         "additionalProperties": false
       },
       "ReadConfig": {
+        "required": [
+          "ia_service_status"
+        ],
         "type": "object",
         "properties": {
           "smtp_enabled": {
@@ -13408,6 +13636,9 @@
         "additionalProperties": false
       },
       "ReadExtendedCommandCommentaireDto": {
+        "required": [
+          "contenu_command_commentaire"
+        ],
         "type": "object",
         "properties": {
           "id_command_commentaire": {
@@ -13445,6 +13676,10 @@
         "additionalProperties": false
       },
       "ReadExtendedCommandDto": {
+        "required": [
+          "status_command",
+          "url_command"
+        ],
         "type": "object",
         "properties": {
           "id_command": {
@@ -13589,6 +13824,11 @@
         "additionalProperties": false
       },
       "ReadExtendedItemDto": {
+        "required": [
+          "description_item",
+          "friendly_name_item",
+          "reference_name_item"
+        ],
         "type": "object",
         "properties": {
           "id_item": {
@@ -13711,6 +13951,9 @@
         "additionalProperties": false
       },
       "ReadExtendedProjetCommentaireDto": {
+        "required": [
+          "contenu_projet_commentaire"
+        ],
         "type": "object",
         "properties": {
           "id_projet_commentaire": {
@@ -13748,6 +13991,11 @@
         "additionalProperties": false
       },
       "ReadExtendedProjetDto": {
+        "required": [
+          "description_projet",
+          "nom_projet",
+          "url_projet"
+        ],
         "type": "object",
         "properties": {
           "id_projet": {
@@ -13767,12 +14015,12 @@
             "nullable": true
           },
           "status_projet": {
-            "type": "string",
-            "nullable": true
+            "$ref": "#/components/schemas/ProjetStatus"
           },
           "date_debut_projet": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "date_fin_projet": {
             "type": "string",
@@ -13796,6 +14044,14 @@
             "format": "int32"
           },
           "projets_items_count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "projets_tags_count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "projets_status_history_count": {
             "type": "integer",
             "format": "int32"
           },
@@ -13824,6 +14080,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ReadProjetProjetTagDto"
+            },
+            "nullable": true
+          },
+          "projets_status_history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadProjetStatusDto"
             },
             "nullable": true
           }
@@ -13890,7 +14153,38 @@
         },
         "additionalProperties": false
       },
+      "ReadExtendedProjetStatusDto": {
+        "type": "object",
+        "properties": {
+          "id_projet_status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id_projet": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status_projet": {
+            "$ref": "#/components/schemas/ProjetStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "projet": {
+            "$ref": "#/components/schemas/ReadProjetDto"
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadExtendedProjetTagDto": {
+        "required": [
+          "nom_projet_tag"
+        ],
         "type": "object",
         "properties": {
           "id_projet_tag": {
@@ -13928,6 +14222,10 @@
         "additionalProperties": false
       },
       "ReadExtendedStoreDto": {
+        "required": [
+          "mqtt_name_store",
+          "nom_store"
+        ],
         "type": "object",
         "properties": {
           "id_store": {
@@ -14023,6 +14321,9 @@
         "additionalProperties": false
       },
       "ReadExtendedTagDto": {
+        "required": [
+          "nom_tag"
+        ],
         "type": "object",
         "properties": {
           "id_tag": {
@@ -14082,6 +14383,11 @@
         "additionalProperties": false
       },
       "ReadExtendedUserDto": {
+        "required": [
+          "email_user",
+          "nom_user",
+          "prenom_user"
+        ],
         "type": "object",
         "properties": {
           "id_user": {
@@ -14137,6 +14443,10 @@
         "additionalProperties": false
       },
       "ReadIADto": {
+        "required": [
+          "description_ia",
+          "nom_ia"
+        ],
         "type": "object",
         "properties": {
           "id_ia": {
@@ -14166,6 +14476,12 @@
         "additionalProperties": false
       },
       "ReadImgDto": {
+        "required": [
+          "description_img",
+          "nom_img",
+          "url_picture_img",
+          "url_thumbnail_img"
+        ],
         "type": "object",
         "properties": {
           "id_img": {
@@ -14234,6 +14550,11 @@
         "additionalProperties": false
       },
       "ReadItemDocumentDto": {
+        "required": [
+          "name_item_document",
+          "type_item_document",
+          "url_item_document"
+        ],
         "type": "object",
         "properties": {
           "id_item_document": {
@@ -14272,6 +14593,11 @@
         "additionalProperties": false
       },
       "ReadItemDto": {
+        "required": [
+          "description_item",
+          "friendly_name_item",
+          "reference_name_item"
+        ],
         "type": "object",
         "properties": {
           "id_item": {
@@ -14367,6 +14693,9 @@
         "additionalProperties": false
       },
       "ReadProjetCommentaireDto": {
+        "required": [
+          "contenu_projet_commentaire"
+        ],
         "type": "object",
         "properties": {
           "id_projet_commentaire": {
@@ -14398,6 +14727,11 @@
         "additionalProperties": false
       },
       "ReadProjetDocumentDto": {
+        "required": [
+          "name_projet_document",
+          "type_projet_document",
+          "url_projet_document"
+        ],
         "type": "object",
         "properties": {
           "id_projet_document": {
@@ -14436,6 +14770,11 @@
         "additionalProperties": false
       },
       "ReadProjetDto": {
+        "required": [
+          "description_projet",
+          "nom_projet",
+          "url_projet"
+        ],
         "type": "object",
         "properties": {
           "id_projet": {
@@ -14455,12 +14794,12 @@
             "nullable": true
           },
           "status_projet": {
-            "type": "string",
-            "nullable": true
+            "$ref": "#/components/schemas/ProjetStatus"
           },
           "date_debut_projet": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "date_fin_projet": {
             "type": "string",
@@ -14526,7 +14865,35 @@
         },
         "additionalProperties": false
       },
+      "ReadProjetStatusDto": {
+        "type": "object",
+        "properties": {
+          "id_projet_status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id_projet": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status_projet": {
+            "$ref": "#/components/schemas/ProjetStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadProjetTagDto": {
+        "required": [
+          "nom_projet_tag"
+        ],
         "type": "object",
         "properties": {
           "id_projet_tag": {
@@ -14553,6 +14920,9 @@
         "additionalProperties": false
       },
       "ReadStoreCompleteDto": {
+        "required": [
+          "store"
+        ],
         "type": "object",
         "properties": {
           "store": {
@@ -14568,6 +14938,10 @@
         "additionalProperties": false
       },
       "ReadStoreDto": {
+        "required": [
+          "mqtt_name_store",
+          "nom_store"
+        ],
         "type": "object",
         "properties": {
           "id_store": {
@@ -14624,6 +14998,9 @@
         "additionalProperties": false
       },
       "ReadTagDto": {
+        "required": [
+          "nom_tag"
+        ],
         "type": "object",
         "properties": {
           "id_tag": {
@@ -14650,6 +15027,11 @@
         "additionalProperties": false
       },
       "ReadUserDto": {
+        "required": [
+          "email_user",
+          "nom_user",
+          "prenom_user"
+        ],
         "type": "object",
         "properties": {
           "id_user": {
@@ -14708,6 +15090,10 @@
         "additionalProperties": false
       },
       "SessionDto": {
+        "required": [
+          "auth_method",
+          "created_by_ip"
+        ],
         "type": "object",
         "properties": {
           "session_id": {
@@ -14776,6 +15162,10 @@
         "additionalProperties": false
       },
       "SsoUrlResponse": {
+        "required": [
+          "authUrl",
+          "state"
+        ],
         "type": "object",
         "properties": {
           "authUrl": {
@@ -14835,6 +15225,9 @@
         "additionalProperties": false
       },
       "UpdateBulkBoxByStoreDto": {
+        "required": [
+          "id_box"
+        ],
         "type": "object",
         "properties": {
           "id_box": {
@@ -14882,6 +15275,9 @@
         "additionalProperties": false
       },
       "UpdateBulkLedByStoreDto": {
+        "required": [
+          "id_led"
+        ],
         "type": "object",
         "properties": {
           "id_led": {
@@ -15179,19 +15575,7 @@
             "nullable": true
           },
           "status_projet": {
-            "maxLength": 50,
-            "type": "string",
-            "nullable": true
-          },
-          "date_debut_projet": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "date_fin_projet": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "$ref": "#/components/schemas/ProjetStatus"
           }
         },
         "additionalProperties": false
@@ -15228,6 +15612,9 @@
         "additionalProperties": false
       },
       "UpdateStoreCompleteDto": {
+        "required": [
+          "store"
+        ],
         "type": "object",
         "properties": {
           "store": {

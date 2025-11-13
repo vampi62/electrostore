@@ -25,8 +25,8 @@ namespace electrostore.Controllers
         {
             var projetStatus = await _projetStatusService.GetProjetStatusByProjetId(id_projet, limit, offset, expand);
             var CountList = await _projetStatusService.GetProjetStatusCountByProjetId(id_projet);
-            Response.Headers.Add("X-Total-Count", CountList.ToString());
-            Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
+            Response.Headers["X-Total-Count"] = CountList.ToString();
+            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(projetStatus);
         }
 

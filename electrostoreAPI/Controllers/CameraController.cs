@@ -23,8 +23,8 @@ namespace electrostore.Controllers
         {
             var cameras = await _cameraService.GetCameras(limit, offset, idResearch);
             var CountList = await _cameraService.GetCamerasCount();
-            Response.Headers.Add("X-Total-Count", CountList.ToString());
-            Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
+            Response.Headers["X-Total-Count"] = CountList.ToString();
+            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(cameras);
         }
 
