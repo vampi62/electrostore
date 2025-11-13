@@ -110,8 +110,8 @@ public class ProjetTagService : IProjetTagService
         var projetTagToUpdate = await _context.ProjetTags.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetTag with id {id} not found");
         if (projetTagDto.nom_projet_tag is not null)
         {
-            // check if tag name already exists
-            if (await _context.ProjetTags.AnyAsync(t => t.nom_projet_tag == projetTagDto.nom_projet_tag))
+            // check if another tag with the name already exists
+            if (await _context.ProjetTags.AnyAsync(t => t.nom_projet_tag == projetTagDto.nom_projet_tag && t.id_projet_tag != id))
             {
                 throw new InvalidOperationException($"ProjetTag with name {projetTagDto.nom_projet_tag} already exists");
             }
