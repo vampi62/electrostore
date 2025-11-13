@@ -10,7 +10,8 @@ public record ReadProjetDto
     public required string description_projet { get; init; }
     public required string url_projet { get; init; }
     public ProjetStatus status_projet { get; init; }
-    public DateTime date_debut_projet { get; init; }
+    public DateTime? date_debut_projet { get; init; }
+    public DateTime? date_fin_projet { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
 }
@@ -47,9 +48,6 @@ public record CreateProjetDto
 
     [Required]
     public required ProjetStatus status_projet { get; init; }
-
-    [Required]
-    public required DateTime date_debut_projet { get; init; }
 }
 public record UpdateProjetDto : IValidatableObject
 {
@@ -63,8 +61,6 @@ public record UpdateProjetDto : IValidatableObject
     public string? url_projet { get; init; }
 
     public ProjetStatus? status_projet { get; init; }
-
-    public DateTime? date_debut_projet { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

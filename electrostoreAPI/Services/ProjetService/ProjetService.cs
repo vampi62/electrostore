@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
+using electrostore.Enums;
 using electrostore.Models;
 using electrostore.Services.FileService;
 using electrostore.Services.ProjetStatusService;
@@ -41,6 +42,16 @@ public class ProjetService : IProjetService
                 ProjetsItemsCount = p.ProjetsItems.Count,
                 ProjetsProjetTagsCount = p.ProjetsProjetTags.Count,
                 ProjetsStatusHistoryCount = p.ProjetsStatus.Count,
+                DateDebutProjet = p.ProjetsStatus
+                    .Where(ps => ps.status_projet == ProjetStatus.InProgress)
+                    .OrderBy(ps => ps.created_at)
+                    .Select(ps => (DateTime?)ps.created_at)
+                    .FirstOrDefault(),
+                DateFinProjet = p.ProjetsStatus
+                    .Where(ps => ps.status_projet == ProjetStatus.Completed)
+                    .OrderByDescending(ps => ps.created_at)
+                    .Select(ps => (DateTime?)ps.created_at)
+                    .FirstOrDefault(),
                 ProjetsCommentaires = expand != null && expand.Contains("projets_commentaires") ? p.ProjetsCommentaires.Take(20).ToList() : null,
                 ProjetsDocuments = expand != null && expand.Contains("projets_documents") ? p.ProjetsDocuments.Take(20).ToList() : null,
                 ProjetsItems = expand != null && expand.Contains("projets_items") ? p.ProjetsItems.Take(20).ToList() : null,
@@ -51,6 +62,8 @@ public class ProjetService : IProjetService
         return projet.Select(p => {
             return _mapper.Map<ReadExtendedProjetDto>(p.Projet) with
             {
+                date_debut_projet = p.DateDebutProjet,
+                date_fin_projet = p.DateFinProjet,
                 projets_commentaires_count = p.ProjetsCommentairesCount,
                 projets_documents_count = p.ProjetsDocumentsCount,
                 projets_items_count = p.ProjetsItemsCount,
@@ -83,6 +96,16 @@ public class ProjetService : IProjetService
                 ProjetsItemsCount = p.ProjetsItems.Count,
                 ProjetsProjetsTagsCount = p.ProjetsProjetTags.Count,
                 ProjetsStatusHistoryCount = p.ProjetsStatus.Count,
+                DateDebutProjet = p.ProjetsStatus
+                    .Where(ps => ps.status_projet == ProjetStatus.InProgress)
+                    .OrderBy(ps => ps.created_at)
+                    .Select(ps => (DateTime?)ps.created_at)
+                    .FirstOrDefault(),
+                DateFinProjet = p.ProjetsStatus
+                    .Where(ps => ps.status_projet == ProjetStatus.Completed)
+                    .OrderByDescending(ps => ps.created_at)
+                    .Select(ps => (DateTime?)ps.created_at)
+                    .FirstOrDefault(),
                 ProjetsCommentaires = expand != null && expand.Contains("projets_commentaires") ? p.ProjetsCommentaires.Take(20).ToList() : null,
                 ProjetsDocuments = expand != null && expand.Contains("projets_documents") ? p.ProjetsDocuments.Take(20).ToList() : null,
                 ProjetsItems = expand != null && expand.Contains("projets_items") ? p.ProjetsItems.Take(20).ToList() : null,
@@ -92,6 +115,8 @@ public class ProjetService : IProjetService
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Projet with id {id} not found");
         return _mapper.Map<ReadExtendedProjetDto>(projet.Projet) with
         {
+            date_debut_projet = projet.DateDebutProjet,
+            date_fin_projet = projet.DateFinProjet,
             projets_commentaires_count = projet.ProjetsCommentairesCount,
             projets_documents_count = projet.ProjetsDocumentsCount,
             projets_items_count = projet.ProjetsItemsCount,
@@ -138,10 +163,6 @@ public class ProjetService : IProjetService
         if (projetDto.status_projet is not null)
         {
             projetToUpdate.status_projet = projetDto.status_projet.Value;
-        }
-        if (projetDto.date_debut_projet is not null)
-        {
-            projetToUpdate.date_debut_projet = projetDto.date_debut_projet.Value;
         }
         await _context.SaveChangesAsync();
         if (statusChanged)

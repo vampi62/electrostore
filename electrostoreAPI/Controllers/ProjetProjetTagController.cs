@@ -39,7 +39,7 @@ namespace electrostore.Controllers
 
         [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadProjetProjetTagDto>> CreateProjetProjetTag([FromRoute] int id_projet, [FromBody] CreateProjetProjetTagDto projetProjetTagDto)
+        public async Task<ActionResult<ReadProjetProjetTagDto>> CreateProjetProjetTag([FromRoute] int id_projet, [FromBody] CreateProjetProjetTagByProjetDto projetProjetTagDto)
         {
             var projetProjetTagFull = new CreateProjetProjetTagDto
             {
@@ -52,7 +52,7 @@ namespace electrostore.Controllers
 
         [HttpPost("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkProjetProjetTagDto>> CreateBulkProjetProjetTag([FromRoute] int id_projet, [FromBody] List<CreateProjetProjetTagDto> projetProjetTagsDto)
+        public async Task<ActionResult<ReadBulkProjetProjetTagDto>> CreateBulkProjetProjetTag([FromRoute] int id_projet, [FromBody] List<CreateProjetProjetTagByProjetDto> projetProjetTagsDto)
         {
             var projetProjetTagsDtoFull = projetProjetTagsDto.Select(projetProjetTagDto => new CreateProjetProjetTagDto
             {

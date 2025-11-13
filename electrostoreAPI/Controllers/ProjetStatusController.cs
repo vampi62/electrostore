@@ -8,7 +8,7 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace electrostore.Controllers
 {
     [ApiController]
-    [Route("api/projet/{id_projet}/status")]
+    [Route("api/projet/{id_projet}/status-history")]
 
     public class ProjetStatusController : ControllerBase
     {
