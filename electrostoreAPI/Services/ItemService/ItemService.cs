@@ -131,7 +131,7 @@ public class ItemService : IItemService
         var itemToUpdate = await _context.Items.FindAsync(id) ?? throw new KeyNotFoundException($"Item with id {id} not found");
         if (itemDto.reference_name_item is not null)
         {
-            // check if item already exists
+            // check if another item with the name already exists
             if (await _context.Items.AnyAsync(i => i.reference_name_item == itemDto.reference_name_item && i.id_item != id))
             {
                 throw new InvalidOperationException($"Item with name {itemDto.reference_name_item} already exists");

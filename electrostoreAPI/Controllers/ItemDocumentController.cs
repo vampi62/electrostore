@@ -26,8 +26,8 @@ namespace electrostore.Controllers
         {
             var itemsDocuments = await _itemDocumentService.GetItemsDocumentsByItemId(id_item, limit, offset);
             var CountList = await _itemDocumentService.GetItemsDocumentsCountByItemId(id_item);
-            Response.Headers.Add("X-Total-Count", CountList.ToString());
-            Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
+            Response.Headers["X-Total-Count"] = CountList.ToString();
+            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(itemsDocuments);
         }
 

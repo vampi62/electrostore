@@ -24,8 +24,8 @@ namespace electrostore.Controllers
         {
             var itemTags = await _itemTagService.GetItemsTagsByTagId(id_tag, limit, offset, expand);
             var CountList = await _itemTagService.GetItemsTagsCountByTagId(id_tag);
-            Response.Headers.Add("X-Total-Count", CountList.ToString());
-            Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
+            Response.Headers["X-Total-Count"] = CountList.ToString();
+            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(itemTags);
         }
 

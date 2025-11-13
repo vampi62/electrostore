@@ -1,15 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text;
-using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Minio;
 
 using MQTTnet;
-using MQTTnet.Client;
-
 using electrostore.Dto;
 using electrostore.Enums;
 
@@ -49,6 +47,7 @@ using electrostore.Middleware;
 
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.HttpOverrides;
+using System.Security.Claims;
 
 namespace electrostore;
 
@@ -102,7 +101,7 @@ public static class Program
                 };
             });
 
-        builder.Services.AddAutoMapper(typeof(MappingProfile));
+        builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(Program).Assembly));
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
         {
@@ -135,6 +134,8 @@ public static class Program
         });
 
         builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+
+        builder.Logging.AddFilter("LuckyPennySoftware.AutoMapper.License", LogLevel.None);
 
         AddAuthentication(builder, key);
 
@@ -188,7 +189,7 @@ public static class Program
                     OnTokenValidated = context =>
                     {
                         var jwiService = context.HttpContext.RequestServices.GetRequiredService<IJwiService>();
-                        if (context.SecurityToken is not JwtSecurityToken token)
+                        if (context.SecurityToken is not JsonWebToken token)
                         {
                             context.Fail("Token is invalid");
                         }
@@ -237,7 +238,7 @@ public static class Program
 
         builder.Services.AddSingleton<IMqttClient>(sp =>
         {
-            var factory = new MqttFactory();
+            var factory = new MqttClientFactory();
             var mqttClient = factory.CreateMqttClient();
             var options = new MqttClientOptionsBuilder()
                 .WithClientId(builder.Configuration.GetSection("MQTT:ClientId").Value)

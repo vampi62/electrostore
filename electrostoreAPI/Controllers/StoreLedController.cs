@@ -23,8 +23,8 @@ namespace electrostore.Controllers
         {
             var leds = await _ledService.GetLedsByStoreId(id_store, limit, offset);
             var CountList = await _ledService.GetLedsCountByStoreId(id_store);
-            Response.Headers.Add("X-Total-Count", CountList.ToString());
-            Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
+            Response.Headers["X-Total-Count"] = CountList.ToString();
+            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(leds);
         }
 

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using electrostore;
 
@@ -16,14 +17,18 @@ namespace electrostore.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.16")
+                .HasAnnotation("ProductVersion", "9.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
+
+            MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
             modelBuilder.Entity("electrostore.Models.Boxs", b =>
                 {
                     b.Property<int>("id_box")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_box"));
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
@@ -80,6 +85,8 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_camera"));
+
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
@@ -114,6 +121,8 @@ namespace electrostore.Migrations
                     b.Property<int>("id_command")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_command"));
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
@@ -151,6 +160,8 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_command_commentaire"));
+
                     b.Property<string>("contenu_command_commentaire")
                         .IsRequired()
                         .HasMaxLength(455)
@@ -182,6 +193,8 @@ namespace electrostore.Migrations
                     b.Property<int>("id_command_document")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_command_document"));
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
@@ -250,6 +263,8 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_ia"));
+
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
@@ -279,6 +294,8 @@ namespace electrostore.Migrations
                     b.Property<int>("id_img")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_img"));
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
@@ -321,6 +338,8 @@ namespace electrostore.Migrations
                     b.Property<int>("id_item")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_item"));
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
@@ -388,6 +407,8 @@ namespace electrostore.Migrations
                     b.Property<int>("id_item_document")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_item_document"));
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
@@ -557,6 +578,8 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_led"));
+
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
@@ -588,6 +611,8 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_projet_tag"));
+
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
@@ -613,10 +638,9 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("created_at")
-                        .HasColumnType("datetime(6)");
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_projet"));
 
-                    b.Property<DateTime>("date_debut_projet")
+                    b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("description_projet")
@@ -651,6 +675,8 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_projet_commentaire"));
+
                     b.Property<string>("contenu_projet_commentaire")
                         .IsRequired()
                         .HasMaxLength(455)
@@ -682,6 +708,8 @@ namespace electrostore.Migrations
                     b.Property<int>("id_projet_document")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_projet_document"));
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
@@ -768,6 +796,8 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_projet_status"));
+
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
@@ -792,6 +822,8 @@ namespace electrostore.Migrations
                     b.Property<int>("id_store")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_store"));
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
@@ -847,6 +879,8 @@ namespace electrostore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_tag"));
+
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
@@ -871,6 +905,8 @@ namespace electrostore.Migrations
                     b.Property<int>("id_user")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_user"));
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");

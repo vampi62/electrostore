@@ -25,8 +25,8 @@ namespace electrostore.Controllers
         {
             var commandCommentaires = await _commandCommentaireService.GetCommandsCommentairesByCommandId(id_command, limit, offset, expand);
             var CountList = await _commandCommentaireService.GetCommandsCommentairesCountByCommandId(id_command);
-            Response.Headers.Add("X-Total-Count", CountList.ToString());
-            Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
+            Response.Headers["X-Total-Count"] = CountList.ToString();
+            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(commandCommentaires);
         }
 

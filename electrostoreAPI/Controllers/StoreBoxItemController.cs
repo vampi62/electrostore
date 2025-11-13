@@ -25,8 +25,8 @@ namespace electrostore.Controllers
             await _itemBoxService.CheckIfStoreExists(id_store,id_box);
             var itemsBoxs = await _itemBoxService.GetItemsBoxsByBoxId(id_box, limit, offset, expand);
             var CountList = await _itemBoxService.GetItemsBoxsCountByBoxId(id_box);
-            Response.Headers.Add("X-Total-Count", CountList.ToString());
-            Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
+            Response.Headers["X-Total-Count"] = CountList.ToString();
+            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(itemsBoxs);
         }
 

@@ -1,5 +1,3 @@
-using AutoMapper;
-using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -8,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using electrostore.Models;
 using electrostore.Enums;
 using electrostore.Services.SessionService;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace electrostore.Services.JwiService;
 
@@ -59,9 +58,9 @@ public class JwiService : IJwiService
     }
 
     // build token
-    private JwtSecurityToken ReadToken(string token)
+    private JsonWebToken ReadToken(string token)
     {
-        var tokenHandler = new JwtSecurityTokenHandler();
+        var tokenHandler = new JsonWebTokenHandler();
         var key = Encoding.ASCII.GetBytes(_jwtSettings.Key);
         var tokenValidationParameters = new TokenValidationParameters
         {
@@ -73,9 +72,8 @@ public class JwiService : IJwiService
             ValidAudience = _jwtSettings.Audience,
             ValidateLifetime = true
         };
-        SecurityToken securityToken;
-        tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
-        return (JwtSecurityToken)securityToken;
+        var result = tokenHandler.ValidateTokenAsync(token, tokenValidationParameters).Result;
+        return (JsonWebToken)result.SecurityToken;
     }
 
     public bool ValidateToken(string token, string role)

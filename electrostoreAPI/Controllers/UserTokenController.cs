@@ -24,8 +24,8 @@ namespace electrostore.Controllers
         {
             var sessions = await _jwiService.GetTokenSessionsByUserId(id_user, limit, offset, show_revoked, show_expired);
             var CountList = await _jwiService.GetTokenSessionsCountByUserId(id_user, show_revoked, show_expired);
-            Response.Headers.Add("X-Total-Count", CountList.ToString());
-            Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
+            Response.Headers["X-Total-Count"] = CountList.ToString();
+            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(sessions);
         }
 

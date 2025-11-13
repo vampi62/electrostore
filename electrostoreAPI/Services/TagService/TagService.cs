@@ -126,8 +126,8 @@ public class TagService : ITagService
         var tagToUpdate = await _context.Tags.FindAsync(id) ?? throw new KeyNotFoundException($"Tag with id {id} not found");
         if (tagDto.nom_tag is not null)
         {
-            // check if tag name already exists
-            if (await _context.Tags.AnyAsync(t => t.nom_tag == tagDto.nom_tag))
+            // check if another tag with the name already exists
+            if (await _context.Tags.AnyAsync(t => t.nom_tag == tagDto.nom_tag && t.id_tag != id))
             {
                 throw new InvalidOperationException($"Tag with name {tagDto.nom_tag} already exists");
             }
