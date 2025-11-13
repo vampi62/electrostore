@@ -5,6 +5,7 @@ export * from "./config.store";
 export * from "./ias.store";
 export * from "./items.store";
 export * from "./projets.store";
+export * from "./projettags.store";
 export * from "./stores.store";
 export * from "./tags.store";
 export * from "./users.store";

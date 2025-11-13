@@ -41,13 +41,13 @@ export const useUsersStore = defineStore("users",{
 				this.users[user.id_user] = user;
 				this.projetsCommentaireTotalCount[user.id_user] = user.projets_commentaires_count;
 				this.commandsCommentaireTotalCount[user.id_user] = user.commands_commentaires_count;
-				if (expand.indexOf("projets_commentaires") > -1) {
+				if (expand.includes("projets_commentaires")) {
 					this.projetsCommentaire[user.id_user] = {};
 					for (const projet of user.projets_commentaires) {
 						this.projetsCommentaire[user.id_user][projet.id_projet] = projet;
 					}
 				}
-				if (expand.indexOf("commands_commentaires") > -1) {
+				if (expand.includes("commands_commentaires")) {
 					this.commandsCommentaire[user.id_user] = {};
 					for (const command of user.commands_commentaires) {
 						this.commandsCommentaire[user.id_user][command.id_command] = command;
@@ -68,13 +68,13 @@ export const useUsersStore = defineStore("users",{
 				this.users[user.id_user] = user;
 				this.projetsCommentaireTotalCount[user.id_user] = user.projets_commentaires_count;
 				this.commandsCommentaireTotalCount[user.id_user] = user.commands_commentaires_count;
-				if (expand.indexOf("projets_commentaires") > -1) {
+				if (expand.includes("projets_commentaires")) {
 					this.projetsCommentaire[user.id_user] = {};
 					for (const projet of user.projets_commentaires) {
 						this.projetsCommentaire[user.id_user][projet.id_projet] = projet;
 					}
 				}
-				if (expand.indexOf("commands_commentaires") > -1) {
+				if (expand.includes("commands_commentaires")) {
 					this.commandsCommentaire[user.id_user] = {};
 					for (const command of user.commands_commentaires) {
 						this.commandsCommentaire[user.id_user][command.id_command] = command;
@@ -96,13 +96,13 @@ export const useUsersStore = defineStore("users",{
 			});
 			this.projetsCommentaireTotalCount[id] = this.users[id].projets_commentaires_count;
 			this.commandsCommentaireTotalCount[id] = this.users[id].commands_commentaires_count;
-			if (expand.indexOf("projets_commentaires") > -1) {
+			if (expand.includes("projets_commentaires")) {
 				this.projetsCommentaire[id] = {};
 				for (const projet of this.users[id].projets_commentaires) {
 					this.projetsCommentaire[id][projet.id_projet] = projet;
 				}
 			}
-			if (expand.indexOf("commands_commentaires") > -1) {
+			if (expand.includes("commands_commentaires")) {
 				this.commandsCommentaire[id] = {};
 				for (const command of this.users[id].commands_commentaires) {
 					this.commandsCommentaire[id][command.id_command] = command;
@@ -157,7 +157,7 @@ export const useUsersStore = defineStore("users",{
 			});
 			for (const projetCommentaire of newProjetCommentaireList["data"]) {
 				this.projetsCommentaire[idUser][projetCommentaire.id_projet_commentaire] = projetCommentaire;
-				if (expand.indexOf("projet") > -1) {
+				if (expand.includes("projet")) {
 					projetStore.projets[projetCommentaire.projet.id_projet] = projetCommentaire.projet;
 				}
 			}
@@ -181,7 +181,7 @@ export const useUsersStore = defineStore("users",{
 				url: `${baseUrl}/user/${idUser}/projet_commentaire/${id}?${expandString}`,
 				useToken: "access",
 			});
-			if (expand.indexOf("projet") > -1) {
+			if (expand.includes("projet")) {
 				projetStore.projets[this.projetsCommentaire[idUser][id].id_projet] = this.projetsCommentaire[idUser][id].projet;
 			}
 		},
@@ -232,7 +232,7 @@ export const useUsersStore = defineStore("users",{
 			});
 			for (const commandCommentaire of newCommandCommentaireList["data"]) {
 				this.commandsCommentaire[idUser][commandCommentaire.id_command_commentaire] = commandCommentaire;
-				if (expand.indexOf("command") > -1) {
+				if (expand.includes("command")) {
 					commandStore.commands[commandCommentaire.command.id_command] = commandCommentaire.command;
 				}
 			}
@@ -256,7 +256,7 @@ export const useUsersStore = defineStore("users",{
 				url: `${baseUrl}/user/${idUser}/command_commentaire/${id}?${expandString}`,
 				useToken: "access",
 			});
-			if (expand.indexOf("command") > -1) {
+			if (expand.includes("command")) {
 				commandStore.commands[this.commandsCommentaire[idUser][id].id_command] = this.commandsCommentaire[idUser][id].command;
 			}
 		},

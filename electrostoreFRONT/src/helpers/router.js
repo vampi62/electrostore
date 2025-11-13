@@ -27,6 +27,8 @@ export const router = createRouter({
 		{ path: "/ia/:id", component: () => import("@/views/IAView.vue") },
 		{ path: "/tags", component: () => import("@/views/TagsView.vue") },
 		{ path: "/tags/:id", component: () => import("@/views/TagView.vue") },
+		{ path: "/projet-tags", component: () => import("@/views/ProjetTagsView.vue") },
+		{ path: "/projet-tags/:id", component: () => import("@/views/ProjetTagView.vue") },
 		{ path: "/stores", component: () => import("@/views/StoresView.vue") },
 		{ path: "/stores/:id", component: () => import("@/views/StoreView.vue") },
 	],

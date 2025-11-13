@@ -4,7 +4,6 @@ import { router } from "@/helpers";
 
 const { addNotification } = inject("useNotification");
 
-import { Form, Field } from "vee-validate";
 import * as Yup from "yup";
 
 import { useI18n } from "vue-i18n";
@@ -14,7 +13,7 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 const itemId = ref(route.params.id);
 
-import { getExtension } from "@/utils";
+import { downloadFile, viewFile } from "@/utils";
 
 import { useConfigsStore, useItemsStore, useTagsStore, useStoresStore, useCommandsStore, useProjetsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -89,12 +88,12 @@ const itemDeleteModalShow = ref(false);
 const itemSave = async() => {
 	try {
 		createSchema().validateSync(itemsStore.itemEdition, { abortEarly: false });
-		if (itemId.value !== "new") {
-			await itemsStore.updateItem(itemId.value, { ...itemsStore.itemEdition });
-			addNotification({ message: "item.VItemUpdated", type: "success", i18n: true });
-		} else {
+		if (itemId.value === "new") {
 			await itemsStore.createItem({ ...itemsStore.itemEdition });
 			addNotification({ message: "item.VItemCreated", type: "success", i18n: true });
+		} else {
+			await itemsStore.updateItem(itemId.value, { ...itemsStore.itemEdition });
+			addNotification({ message: "item.VItemUpdated", type: "success", i18n: true });
 		}
 	} catch (e) {
 		if (e.inner) {
@@ -222,30 +221,12 @@ const documentDelete = async() => {
 };
 const documentDownload = async(fileContent) => {
 	const file = await itemsStore.downloadDocument(itemId.value, fileContent.id_item_document);
-	const url = window.URL.createObjectURL(new Blob([file]));
-	const link = document.createElement("a");
-	link.href = url;
-	link.setAttribute("download", fileContent.name_item_document + "." + getExtension(fileContent.type_item_document));
-	document.body.appendChild(link);
-	link.click();
-	document.body.removeChild(link);
+	downloadFile(file, { keyName: fileContent.name_item_document, keyType: fileContent.type_item_document });
 };
 const documentView = async(fileContent) => {
 	const file = await itemsStore.downloadDocument(itemId.value, fileContent.id_item_document);
-	const blob = new Blob([file], { type: fileContent.type_item_document });
-	const url = window.URL.createObjectURL(blob);
-
-	if (["pdf", "png", "jpg", "jpeg", "gif", "bmp"].includes(getExtension(fileContent.type_item_document))) {
-		// Ouvrir directement dans une nouvelle fenêtre
-		window.open(url, "_blank");
-	} else if (["doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt"].includes(getExtension(fileContent.type_item_document))) {
-		// Télécharger automatiquement pour les formats éditables
-		const a = document.createElement("a");
-		a.href = url;
-		a.download = fileContent.name || `document.${getExtension(fileContent.type_item_document)}`;
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
+	if (viewFile(file, { keyName: fileContent.name_item_document, keyType: fileContent.type_item_document })) {
+		addNotification({ message: "item.VItemDocumentOpenInNewTab", type: "success", i18n: true });
 	} else {
 		addNotification({ message: "item.VItemDocumentNotSupported", type: "error", i18n: true });
 	}
@@ -303,42 +284,13 @@ const imageDownload = async(imageContent) => {
 		addNotification({ message: "item.VItemImageDownloadError", type: "error", i18n: true });
 		return;
 	}
-	let url = itemsStore.imagesURL[imageContent.id_img];
-	const link = document.createElement("a");
-	link.href = url;
-	link.setAttribute("download", imageContent.nom_img + ".png");
-	document.body.appendChild(link);
-	link.click();
-	document.body.removeChild(link);
+	downloadFile(itemsStore.imagesURL[imageContent.id_img], { keyName: imageContent.nom_img, keyType: "image/png" });
 };
 
 // tag
-const tagModalShow = ref(false);
-const tagLoad = ref(false);
-const filteredTags = ref([]);
-const updateFilteredTags = (newValue) => {
-	filteredTags.value = newValue;
-};
 const filterTag = ref([
-	{ key: "nom_tag", value: "", type: "text", label: "", placeholder: t("store.VStoreTagFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "nom_tag", value: "", type: "text", label: "", placeholder: t("item.VItemTagFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
-
-const tagOpenAddModal = () => {
-	tagModalShow.value = true;
-	if (!tagLoad.value) {
-		fetchAllTags();
-	}
-};
-async function fetchAllTags() {
-	let offset = 0;
-	const limit = 100;
-	do {
-		await tagsStore.getTagByInterval(limit, offset);
-		offset += limit;
-	} while (offset < tagsStore.tagsTotalCount);
-	tagLoad.value = true;
-}
-
 function tagSave(id_tag) {
 	try {
 		itemsStore.createItemTag(itemId.value,  { id_tag: id_tag });
@@ -574,7 +526,14 @@ const labelTableauProjet = ref([
 				</template>
 			</FormContainer>
 			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="itemId !== 'new' && authStore.user.role_user >= 1"
-				:delete-function="(value) => tagDelete(value)" @openModalTag="tagOpenAddModal"/>
+				:delete-function="(value) => tagDelete(value)"
+				:fetch-function="(offset, limit) => tagsStore.getTagByInterval(limit, offset)"
+				:total-count="Number(tagsStore.tagsTotalCount || 0)"
+				:filter-modal="filterTag"
+				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag' }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
+								, 'loading': tagsStore.tagsLoading }"
+				:meta ="{ 'keyPoids': 'poids_tag', 'keyName': 'nom_tag' }"
+				/>
 		</div>
 		<CollapsibleSection title="item.VitemBoxs"
 			:total-count="Number(itemsStore.itemBoxsTotalCount[itemId] || 0)" :id-page="itemId">
@@ -674,27 +633,6 @@ const labelTableauProjet = ref([
 		<div>{{ $t('item.VItemLoading') }}</div>
 	</div>
 	
-	<div v-if="tagModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
-		@click="tagModalShow = false">
-		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
-			<div class="flex justify-between items-center border-b pb-3">
-				<h2 class="text-2xl font-semibold">{{ $t('store.VStoreAddTag') }}</h2>
-				<button type="button" @click="tagModalShow = false"
-					class="text-gray-500 hover:text-gray-700">&times;</button>
-			</div>
-
-			<!-- Filtres -->
-			<FilterContainer class="my-4 flex gap-4" :filters="filterTag" :store-data="tagsStore.tags" @output-filter="updateFilteredTags" />
-
-			<!-- Tableau Items -->
-			<Tableau :labels="labelTableauModalTag" :meta="{ key: 'id_tag' }"
-				:store-data="[filteredTags, itemsStore.itemTags[itemId]]"
-				:loading="tagsStore.tagsLoading"
-				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
-			/>
-		</div>
-	</div>
-
 	<ModalDeleteConfirm :show-modal="itemDeleteModalShow" @close-modal="itemDeleteModalShow = false"
 		:delete-action="itemDelete" :text-title="'item.VItemDeleteTitle'"
 		:text-p="'item.VItemDeleteText'"/>
