@@ -131,7 +131,7 @@ Complete the `appsettings.json` file with the following content, replacing place
 sudo docker run -d --name electrostoreAPI \
  --restart always \
  --network electrostore \
- -p 5002:80 \
+ -p 5002:8080 \
  -v electrostoreDATA:/app/wwwroot \
  -v /opt/electrostore:/app/config:ro \
  --tmpfs /tmp \

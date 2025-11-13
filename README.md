@@ -146,7 +146,7 @@ sudo docker build -t ghcr.io/vampi62/electrostore/api:local electrostoreAPI
 sudo docker run -d --name electrostoreAPI \
  --restart always \
  --network electrostore \
- -p 5002:80 \
+ -p 5002:8080 \
  -v electrostoreDATADEV:/app/wwwroot \
  -v /opt/electrostore:/app/config:ro \
  --tmpfs /tmp \

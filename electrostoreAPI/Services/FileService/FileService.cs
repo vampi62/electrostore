@@ -1,5 +1,6 @@
 using electrostore.Dto;
 using Minio;
+using Minio.DataModel.Args;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
@@ -269,21 +270,19 @@ public class FileService : IFileService
         if (_s3Enabled)
         {
             // S3 removes objects, so we need to list all objects with the given prefix and delete them
-            var objects = _minioClient.ListObjectsAsync(new ListObjectsArgs()
+            var listArgs = new ListObjectsArgs()
                 .WithBucket(_s3BucketName)
                 .WithPrefix(path)
-                .WithRecursive(true)
-            );
-            // Collect keys from the IObservable<Item> since it does not support await foreach
+                .WithRecursive(true);
+            // Collect keys from the IAsyncEnumerable<Item>
             var keys = new List<string>();
-            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var subscription = objects.Subscribe(
-                item => { if (item?.Key != null) keys.Add(item.Key); },
-                ex => tcs.TrySetException(ex),
-                () => tcs.TrySetResult(true)
-            );
-            await tcs.Task;
-            subscription.Dispose();
+            await foreach (var item in _minioClient.ListObjectsEnumAsync(listArgs))
+            {
+                if (item?.Key != null)
+                {
+                    keys.Add(item.Key);
+                }
+            }
             foreach (var key in keys)
             {
                 await _minioClient.RemoveObjectAsync(new RemoveObjectArgs()

@@ -24,8 +24,8 @@ namespace electrostore.Controllers
         {
             var projetCommentaires = await _projetCommentaireService.GetProjetCommentairesByUserId(id_user, limit, offset, expand);
             var CountList = await _projetCommentaireService.GetProjetCommentairesCountByUserId(id_user);
-            Response.Headers.Add("X-Total-Count", CountList.ToString());
-            Response.Headers.Add("Access-Control-Expose-Headers","X-Total-Count");
+            Response.Headers["X-Total-Count"] = CountList.ToString();
+            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(projetCommentaires);
         }
 

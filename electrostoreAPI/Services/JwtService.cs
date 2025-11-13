@@ -25,30 +25,25 @@ public class JwtService
         var key = Encoding.ASCII.GetBytes(_jwtSettings.Key);
 
         // Access token
+        var userRoleString = user.role_user switch
+        {
+            UserRole.Admin => "admin",
+            UserRole.Moderator => "moderator", 
+            UserRole.User => "user",
+            _ => "guest"
+        };
+
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.id_user.ToString()),
             new(ClaimTypes.NameIdentifier, user.id_user.ToString()),
             new(ClaimTypes.Name, user.email_user),
             new(ClaimTypes.Role, "access"),
+            new("user_role", userRoleString),
             new(ClaimTypes.AuthenticationMethod, reason),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(JwtRegisteredClaimNames.Iat, new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
         };
-        switch (user.role_user)
-        {
-            case UserRole.Admin:
-                claims.Add(new Claim(ClaimTypes.Role, "admin"));
-                break;
-            case UserRole.User:
-                claims.Add(new Claim(ClaimTypes.Role, "user"));
-                break;
-            case UserRole.Moderator:
-                claims.Add(new Claim(ClaimTypes.Role, "moderator"));
-                break;
-            default:
-                claims.Add(new Claim(ClaimTypes.Role, "guest"));
-                break;
-        }
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
@@ -67,8 +62,10 @@ public class JwtService
             new(ClaimTypes.NameIdentifier, user.id_user.ToString()),
             new(ClaimTypes.Name, user.email_user),
             new(ClaimTypes.Role, "refresh"),
+            new("user_role", userRoleString),
             new(ClaimTypes.AuthenticationMethod, reason),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(JwtRegisteredClaimNames.Iat, new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
         };
         var refreshTokenDescriptor = new SecurityTokenDescriptor
         {

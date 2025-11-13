@@ -23,8 +23,8 @@ namespace electrostore.Controllers
         {
             var stores = await _storeService.GetStores(limit, offset, expand, idResearch);
             var CountList = await _storeService.GetStoresCount();
-            Response.Headers.Add("X-Total-Count", CountList.ToString());
-            Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
+            Response.Headers["X-Total-Count"] = CountList.ToString();
+            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(stores);
         }
 

@@ -1,4 +1,4 @@
-using MQTTnet.Client;
+using MQTTnet;
 using electrostore.Dto;
 using System.Text.Json;
 

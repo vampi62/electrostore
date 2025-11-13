@@ -24,8 +24,8 @@ namespace electrostore.Controllers
         {
             var ias = await _iaService.GetIA(limit, offset, idResearch);
             var CountList = await _iaService.GetIACount();
-            Response.Headers.Add("X-Total-Count", CountList.ToString());
-            Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
+            Response.Headers["X-Total-Count"] = CountList.ToString();
+            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(ias);
         }
 

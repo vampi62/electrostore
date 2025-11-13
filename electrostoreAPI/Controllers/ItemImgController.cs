@@ -26,8 +26,8 @@ namespace electrostore.Controllers
         {
             var itemImgs = await _imgService.GetImgsByItemId(id_item, limit, offset);
             var CountList = await _imgService.GetImgsCountByItemId(id_item);
-            Response.Headers.Add("X-Total-Count", CountList.ToString());
-            Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count");
+            Response.Headers["X-Total-Count"] = CountList.ToString();
+            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(itemImgs);
         }
 

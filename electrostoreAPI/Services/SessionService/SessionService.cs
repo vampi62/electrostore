@@ -42,13 +42,18 @@ public class SessionService : ISessionService
         {
             return userRole;
         }
-        if (httpContext.User.IsInRole("admin"))
+        // if "user_role" claim is present, use it
+        var roleClaim = httpContext.User.Claims.FirstOrDefault(c => c.Type == "user_role");
+        if (roleClaim != null)
         {
-            userRole = UserRole.Admin;
-        }
-        else if (httpContext.User.IsInRole("moderator"))
-        {
-            userRole = UserRole.Moderator;
+            userRole = roleClaim.Value switch
+            {
+                "admin" => UserRole.Admin,
+                "moderator" => UserRole.Moderator,
+                "user" => UserRole.User,
+                _ => UserRole.User
+            };
+            return userRole;
         }
         return userRole;
     }
@@ -93,7 +98,7 @@ public class SessionService : ISessionService
         {
             return authMethod;
         }
-        var claim = httpContext.User.Claims.FirstOrDefault(c => c.Type == "auth_method");
+        var claim = httpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.AuthenticationMethod);
         if (claim != null)
         {
             authMethod = claim.Value;
