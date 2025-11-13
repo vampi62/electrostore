@@ -7,25 +7,27 @@ namespace electrostore.Services.FileService;
 
 public class FileService : IFileService
 {
-    private readonly IConfiguration _configuration;
     private readonly IMinioClient _minioClient;
+    private readonly bool _s3Enabled;
+    private readonly string _s3BucketName;
+    private readonly string _localFilesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
     
     public FileService(IConfiguration configuration, IMinioClient minioClient)
     {
-        _configuration = configuration;
         _minioClient = minioClient;
+        _s3Enabled = configuration.GetValue<bool>("S3:Enable");
+        _s3BucketName = configuration.GetValue<string>("S3:BucketName") ?? "electrostore-bucket";
     }
     public async Task<GetFileResult> GetFile(string url)
     {
         // if S3 is used, upload the file to S3 and return the url
-        if (_configuration.GetValue<bool>("S3:Enable"))
+        if (_s3Enabled)
         {
-            var bucketName = _configuration.GetValue<string>("S3:BucketName");
             var objectContent = new MemoryStream();
             try
             {
                 await _minioClient.GetObjectAsync(new GetObjectArgs()
-                    .WithBucket(bucketName)
+                    .WithBucket(_s3BucketName)
                     .WithObject(url)
                     .WithCallbackStream(stream => stream.CopyTo(objectContent))
                 );
@@ -68,7 +70,7 @@ public class FileService : IFileService
         }
         else
         {
-            var localPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", url);
+            var localPath = Path.Combine(_localFilesPath, url);
             if (File.Exists(localPath))
             {
                 // try to get the mime type from the file extension
@@ -128,9 +130,8 @@ public class FileService : IFileService
         var i = 1;
         string fileUrl;
         // if S3 is used, upload the file to S3 and return the url
-        if (_configuration.GetValue<bool>("S3:Enable"))
+        if (_s3Enabled)
         {
-            var bucketName = _configuration.GetValue<string>("S3:BucketName");
             var baseS3Url = basePath + Path.AltDirectorySeparatorChar;
             if (baseS3Url.StartsWith(Path.AltDirectorySeparatorChar))
             {
@@ -144,7 +145,7 @@ public class FileService : IFileService
                 try
                 {
                     await _minioClient.StatObjectAsync(new StatObjectArgs()
-                        .WithBucket(bucketName)
+                        .WithBucket(_s3BucketName)
                         .WithObject(fileUrl)
                     );
                     // si on arrive ici, c'est que le fichier existe deja
@@ -167,7 +168,7 @@ public class FileService : IFileService
                 await file.CopyToAsync(uploadStream);
                 uploadStream.Position = 0;
                 await _minioClient.PutObjectAsync(new PutObjectArgs()
-                    .WithBucket(bucketName)
+                    .WithBucket(_s3BucketName)
                     .WithObject(fileUrl)
                     .WithStreamData(uploadStream)
                     .WithObjectSize(uploadStream.Length)
@@ -179,13 +180,13 @@ public class FileService : IFileService
         {
             // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/commandDocuments"
             // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
-            while (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", basePath, newName)))
+            while (File.Exists(Path.Combine(_localFilesPath, basePath, newName)))
             {
                 newName = $"{fileName}({i}){fileExt}";
                 i++;
             }
             fileUrl = Path.Combine(basePath, newName);
-            var localPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", fileUrl);
+            var localPath = Path.Combine(_localFilesPath, fileUrl);
             using (var fileStream = new FileStream(localPath, FileMode.Create))
             {
                 await file.CopyToAsync(fileStream);
@@ -230,17 +231,16 @@ public class FileService : IFileService
 
     public async Task DeleteFile(string url)
     {
-        if (_configuration.GetValue<bool>("S3:Enable"))
+        if (_s3Enabled)
         {
-            var bucketName = _configuration.GetValue<string>("S3:BucketName");
             await _minioClient.RemoveObjectAsync(new RemoveObjectArgs()
-                .WithBucket(bucketName)
+                .WithBucket(_s3BucketName)
                 .WithObject(url)
             );
         }
         else
         {
-            var localPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", url);
+            var localPath = Path.Combine(_localFilesPath, url);
             if (File.Exists(localPath))
             {
                 File.Delete(localPath);
@@ -250,13 +250,13 @@ public class FileService : IFileService
 
     public async Task CreateDirectory(string path)
     {
-        if (_configuration.GetValue<bool>("S3:Enable"))
+        if (_s3Enabled)
         {
             // S3 does not have directories, so we do nothing here
         }
         else
         {
-            var localPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", path);
+            var localPath = Path.Combine(_localFilesPath, path);
             if (!Directory.Exists(localPath))
             {
                 Directory.CreateDirectory(localPath);
@@ -266,12 +266,11 @@ public class FileService : IFileService
 
     public async Task DeleteDirectory(string path)
     {
-        if (_configuration.GetValue<bool>("S3:Enable"))
+        if (_s3Enabled)
         {
             // S3 removes objects, so we need to list all objects with the given prefix and delete them
-            var bucketName = _configuration.GetValue<string>("S3:BucketName");
             var objects = _minioClient.ListObjectsAsync(new ListObjectsArgs()
-                .WithBucket(bucketName)
+                .WithBucket(_s3BucketName)
                 .WithPrefix(path)
                 .WithRecursive(true)
             );
@@ -288,14 +287,14 @@ public class FileService : IFileService
             foreach (var key in keys)
             {
                 await _minioClient.RemoveObjectAsync(new RemoveObjectArgs()
-                    .WithBucket(bucketName)
+                    .WithBucket(_s3BucketName)
                     .WithObject(key)
                 );
             }
         }
         else
         {
-            var localPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", path);
+            var localPath = Path.Combine(_localFilesPath, path);
             if (Directory.Exists(localPath))
             {
                 Directory.Delete(localPath, true);

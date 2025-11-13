@@ -1,10 +1,9 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, inject } from "vue";
+import { onMounted, onBeforeUnmount, computed, ref, inject } from "vue";
 import { router } from "@/helpers";
 
 const { addNotification } = inject("useNotification");
 
-import { Form, Field } from "vee-validate";
 import * as Yup from "yup";
 
 import { useI18n } from "vue-i18n";
@@ -14,13 +13,14 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 const projetId = ref(route.params.id);
 
-import { getExtension } from "@/utils";
+import { downloadFile, viewFile } from "@/utils";
 
-import { useConfigsStore, useProjetsStore, useUsersStore, useItemsStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useProjetsStore, useUsersStore, useItemsStore, useProjetTagsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
 const projetsStore = useProjetsStore();
 const usersStore = useUsersStore();
 const itemsStore = useItemsStore();
+const projetTagsStore = useProjetTagsStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
@@ -43,6 +43,8 @@ async function fetchAllData() {
 		projetsStore.getCommentaireByInterval(projetId.value, 100, 0, ["user"]);
 		projetsStore.getDocumentByInterval(projetId.value, 100, 0);
 		projetsStore.getItemByInterval(projetId.value, 100, 0, ["item"]);
+		projetsStore.getProjetTagProjetByInterval(projetId.value, 100, 0, ["projet_tag"]);
+		projetsStore.getStatusHistoryByInterval(projetId.value, 100, 0);
 		projetsStore.projetEdition = {
 			loading: false,
 			nom_projet: projetsStore.projets[projetId.value].nom_projet,
@@ -63,10 +65,38 @@ onBeforeUnmount(() => {
 		loading: false,
 	};
 });
+const dateDebut = computed(() => {
+	// don't return the GMT offset to avoid timezone issues
+	return projetsStore.projetEdition.date_debut_projet ? new Date(projetsStore.projetEdition.date_debut_projet).toISOString().replace(/.\d+Z$/, "").replace("T", " ") : null;
+});
+const dateFin = computed(() => {
+	return projetsStore.projetEdition.date_fin_projet ? new Date(projetsStore.projetEdition.date_fin_projet).toISOString().replace(/.\d+Z$/, "").replace("T", " ") : null;
+});
+
+// tag
+const filterTag = ref([
+	{ key: "nom_projet_tag", value: "", type: "text", label: "", placeholder: t("projet.VProjetTagFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+]);
+function tagSave(id_tag) {
+	try {
+		projetsStore.createProjetTagProjet(projetId.value,  { id_projet_tag: id_tag });
+		addNotification({ message: "projet.VProjetTagAdded", type: "success", i18n: true });
+	} catch (e) {
+		addNotification({ message: e, type: "error", i18n: false });
+	}
+}
+function tagDelete(id_tag) {
+	try {
+		projetsStore.deleteProjetTagProjet(projetId.value, id_tag);
+		addNotification({ message: "projet.VProjetTagDeleted", type: "success", i18n: true });
+	} catch (e) {
+		addNotification({ message: e, type: "error", i18n: false });
+	}
+}
 
 // projet
 const projetDeleteModalShow = ref(false);
-const projetTypeStatus = ref([["En attente", t("projet.VProjetStatus1")], ["En cours", t("projet.VProjetStatus2")], ["Terminée", t("projet.VProjetStatus3")], ["Annulée", t("projet.VProjetStatus4")]]);
+const projetTypeStatus = ref([[0, t("projet.VProjetsStatus0")], [1, t("projet.VProjetsStatus1")], [2, t("projet.VProjetsStatus2")], [3, t("projet.VProjetsStatus3")], [4, t("projet.VProjetsStatus4")], [5, t("projet.VProjetsStatus5")]]);
 const projetSave = async() => {
 	try {
 		createSchema().validateSync(projetsStore.projetEdition, { abortEarly: false });
@@ -159,30 +189,12 @@ const documentDelete = async() => {
 };
 const documentDownload = async(fileContent) => {
 	const file = await projetsStore.downloadDocument(projetId.value, fileContent.id_projet_document);
-	const url = window.URL.createObjectURL(new Blob([file]));
-	const link = document.createElement("a");
-	link.href = url;
-	link.setAttribute("download", fileContent.name_projet_document + "." + getExtension(fileContent.type_projet_document));
-	document.body.appendChild(link);
-	link.click();
-	document.body.removeChild(link);
+	downloadFile(file, { keyName: fileContent.name_projet_document, keyType: fileContent.type_projet_document });
 };
 const documentView = async(fileContent) => {
 	const file = await projetsStore.downloadDocument(projetId.value, fileContent.id_projet_document);
-	const blob = new Blob([file], { type: fileContent.type_projet_document });
-	const url = window.URL.createObjectURL(blob);
-
-	if (["pdf", "png", "jpg", "jpeg", "gif", "bmp"].includes(getExtension(fileContent.type_projet_document))) {
-		// Ouvrir directement dans une nouvelle fenêtre
-		window.open(url, "_blank");
-	} else if (["doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt"].includes(getExtension(fileContent.type_projet_document))) {
-		// Télécharger automatiquement pour les formats éditables
-		const a = document.createElement("a");
-		a.href = url;
-		a.download = fileContent.name || `document.${getExtension(fileContent.type_projet_document)}`;
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
+	if (viewFile(file, { keyName: fileContent.name_projet_document, keyType: fileContent.type_projet_document })) {
+		addNotification({ message: "projet.VProjetDocumentOpenInNewTab", type: "success", i18n: true });
 	} else {
 		addNotification({ message: "projet.VProjetDocumentNotSupported", type: "error", i18n: true });
 	}
@@ -270,15 +282,8 @@ const createSchema = () => {
 			.max(configsStore.getConfigByKey("max_length_url"), t("projet.VProjetUrlMaxLength") + " " + configsStore.getConfigByKey("max_length_url") + t("common.VAllCaracters"))
 			.url(t("projet.VProjetUrlInvalid"))
 			.required(t("projet.VProjetUrlRequired")),
-		status_projet: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_status"), t("projet.VProjetStatusMaxLength") + " " + configsStore.getConfigByKey("max_length_status") + t("common.VAllCaracters"))
+		status_projet: Yup.number()
 			.required(t("projet.VProjetStatusRequired")),
-		date_debut_projet: Yup.date()
-			.required(t("projet.VProjetStartDateRequired")),
-		date_fin_projet: Yup.date()
-			.required(t("projet.VProjetEndDateRequired"))
-			.nullable()
-			.optional(),
 	});
 };
 
@@ -308,8 +313,8 @@ const labelForm = ref([
 	{ key: "description_projet", label: "projet.VProjetDescription", type: "textarea", rows: 4 },
 	{ key: "url_projet", label: "projet.VProjetUrl", type: "text" },
 	{ key: "status_projet", label: "projet.VProjetStatus", type: "select", options: projetTypeStatus },
-	{ key: "date_debut_projet", label: "projet.VProjetStartDate", type: "datetime-local" },
-	{ key: "date_fin_projet", label: "projet.VProjetEndDate", type: "datetime-local" },
+	{ key: "date_debut_projet", label: "projet.VProjetStartDate", type: "computed", value: dateDebut },
+	{ key: "date_fin_projet", label: "projet.VProjetEndDate", type: "computed", value: dateFin },
 ]);
 const labelTableauDocument = ref([
 	{ label: "projet.VProjetDocumentName", sortable: true, key: "name_projet_document", type: "text", canEdit: true },
@@ -403,6 +408,25 @@ const labelTableauItem = ref([
 		},
 	] },
 ]);
+const labelTableauModalTag = ref([
+	{ label: "projet.VProjetTagName", sortable: true, key: "nom_projet_tag", type: "text" },
+	{ label: "projet.VProjetTagActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-save",
+			condition: "!store[1]?.[rowData.id_projet_tag]",
+			action: (row) => tagSave(row.id_projet_tag),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			condition: "store[1]?.[rowData.id_projet_tag]",
+			action: (row) => tagDelete(row.id_projet_tag),
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+		},
+	] },
+]);
 const labelTableauModalItem = ref([
 	{ label: "projet.VProjetItemName", sortable: true, key: "reference_name_item", type: "text" },
 	{ label: "projet.VProjetItemQuantity", sortable: true, key: "qte_projet_item", keyStore: "id_item", store: "1", type: "number", canEdit: true },
@@ -457,12 +481,25 @@ const labelTableauModalItem = ref([
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('projet.VProjetTitle') }}</h2>
+		<RouterLink to="/projet-tags"
+			class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded cursor-pointer inline-block">
+			{{ $t('projet.VProjetListTag') }}
+		</RouterLink>
 		<TopButtonEditElement :main-config="{ path: '/projets', save: { roleRequired: 0, loading: projetsStore.projetEdition.loading }, delete: { roleRequired: 0 } }"
 			:id="projetId" :store-user="authStore.user" @button-save="projetSave" @button-delete="projetDeleteModalShow = true"/>
 	</div>
 	<div v-if="projetsStore.projets[projetId] || projetId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="projetsStore.projetEdition"/>
+			<Tags :current-tags="projetsStore.projetTagProjet[projetId] || {}" :tags-store="projetTagsStore.projetTags" :can-edit="projetId !== 'new' && authStore.user.role_user >= 1"
+				:delete-function="(value) => tagDelete(value)"
+				:fetch-function="(offset, limit) => projetTagsStore.getProjetTagByInterval(limit, offset)"
+				:total-count="Number(projetTagsStore.projetTagsTotalCount || 0)"
+				:filter-modal="filterTag"
+				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_projet_tag' }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
+								, 'loading': projetTagsStore.projetTagsLoading }"
+				:meta ="{ 'keyPoids': 'poids_projet_tag', 'keyName': 'nom_projet_tag' }"
+				/>
 		</div>
 		<CollapsibleSection title="projet.VProjetDocuments"
 			:total-count="Number(projetsStore.documentsTotalCount[projetId] || 0)" :id-page="projetId">

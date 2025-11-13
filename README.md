@@ -128,6 +128,7 @@ Complete the `appsettings.json` file with the following content, replacing place
     "AccessKey": "<access-key>",
     "SecretKey": "<secret-key>",
     "BucketName": "electrostore",
+    "Region": "garage",
     "Secure": "false"
   },
   "AllowedOrigins": [

@@ -15,7 +15,7 @@ public class ProjetsCommentaires : BaseEntity
 
     public int id_projet { get; set; }
     [ForeignKey("id_projet")]
-    public Projets Projet { get; set; }
+    public Projets? Projet { get; set; }
 
     [MaxLength(Constants.MaxCommentaireLength)]
     public required string contenu_projet_commentaire { get; set; }

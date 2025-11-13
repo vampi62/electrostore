@@ -51,19 +51,19 @@ export const useStoresStore = defineStore("stores",{
 				this.boxsTotalCount[store.id_store] = store.boxs_count;
 				this.ledsTotalCount[store.id_store] = store.leds_count;
 				this.storeTagsTotalCount[store.id_store] = store.stores_tags_count;
-				if (expand.indexOf("boxs") > -1) {
+				if (expand.includes("boxs")) {
 					this.boxs[store.id_store] = {};
 					for (const box of store.boxs) {
 						this.boxs[store.id_store][box.id_box] = box;
 					}
 				}
-				if (expand.indexOf("leds") > -1) {
+				if (expand.includes("leds")) {
 					this.leds[store.id_store] = {};
 					for (const led of store.leds) {
 						this.leds[store.id_store][led.id_led] = led;
 					}
 				}
-				if (expand.indexOf("stores_tags") > -1) {
+				if (expand.includes("stores_tags")) {
 					this.storeTags[store.id_store] = {};
 					for (const tag of store.stores_tags) {
 						this.storeTags[store.id_store][tag.id_tag] = tag;
@@ -85,19 +85,19 @@ export const useStoresStore = defineStore("stores",{
 				this.boxsTotalCount[store.id_store] = store.boxs_count;
 				this.ledsTotalCount[store.id_store] = store.leds_count;
 				this.storeTagsTotalCount[store.id_store] = store.stores_tags_count;
-				if (expand.indexOf("boxs") > -1) {
+				if (expand.includes("boxs")) {
 					this.boxs[store.id_store] = {};
 					for (const box of store.boxs) {
 						this.boxs[store.id_store][box.id_box] = box;
 					}
 				}
-				if (expand.indexOf("leds") > -1) {
+				if (expand.includes("leds")) {
 					this.leds[store.id_store] = {};
 					for (const led of store.leds) {
 						this.leds[store.id_store][led.id_led] = led;
 					}
 				}
-				if (expand.indexOf("stores_tags") > -1) {
+				if (expand.includes("stores_tags")) {
 					this.storeTags[store.id_store] = {};
 					for (const tag of store.stores_tags) {
 						this.storeTags[store.id_store][tag.id_tag] = tag;
@@ -120,19 +120,19 @@ export const useStoresStore = defineStore("stores",{
 			this.boxsTotalCount[id] = this.stores[id].boxs_count;
 			this.ledsTotalCount[id] = this.stores[id].leds_count;
 			this.storeTagsTotalCount[id] = this.stores[id].stores_tags_count;
-			if (expand.indexOf("boxs") > -1) {
+			if (expand.includes("boxs")) {
 				this.boxs[id] = {};
 				for (const box of this.stores[id].boxs) {
 					this.boxs[id][box.id_box] = box;
 				}
 			}
-			if (expand.indexOf("leds") > -1) {
+			if (expand.includes("leds")) {
 				this.leds[id] = {};
 				for (const led of this.stores[id].leds) {
 					this.leds[id][led.id_led] = led;
 				}
 			}
-			if (expand.indexOf("stores_tags") > -1) {
+			if (expand.includes("stores_tags")) {
 				this.storeTags[id] = {};
 				for (const tag of this.stores[id].stores_tags) {
 					this.storeTags[id][tag.id_tag] = tag;
@@ -200,13 +200,13 @@ export const useStoresStore = defineStore("stores",{
 				this.boxs[idStore][box.id_box] = box;
 				this.boxItemsTotalCount[box.id_box] = box.item_boxs_count;
 				this.boxTagsTotalCount[box.id_box] = box.box_tags_count;
-				if (expand.indexOf("item_boxs") > -1) {
+				if (expand.includes("item_boxs")) {
 					this.boxItems[box.id_box] = {};
 					for (const item of box.item_boxs) {
 						this.boxItems[box.id_box][item.id_item] = item;
 					}
 				}
-				if (expand.indexOf("box_tags") > -1) {
+				if (expand.includes("box_tags")) {
 					this.boxTags[box.id_box] = {};
 					for (const tag of box.box_tags) {
 						this.boxTags[box.id_box][tag.id_tag] = tag;
@@ -232,13 +232,13 @@ export const useStoresStore = defineStore("stores",{
 			});
 			this.boxItemsTotalCount[id] = this.boxs[idStore][id].item_boxs_count;
 			this.boxTagsTotalCount[id] = this.boxs[idStore][id].box_tags_count;
-			if (expand.indexOf("item_boxs") > -1) {
+			if (expand.includes("item_boxs")) {
 				this.boxItems[id] = {};
 				for (const item of this.boxs[idStore][id].item_boxs) {
 					this.boxItems[id][item.id_item] = item;
 				}
 			}
-			if (expand.indexOf("box_tags") > -1) {
+			if (expand.includes("box_tags")) {
 				this.boxTags[id] = {};
 				for (const tag of this.boxs[idStore][id].box_tags) {
 					this.boxTags[id][tag.id_tag] = tag;
@@ -437,7 +437,7 @@ export const useStoresStore = defineStore("stores",{
 			});
 			for (const tag of newTagList["data"]) {
 				this.storeTags[idStore][tag.id_tag] = tag;
-				if (expand.indexOf("tag") > -1) {
+				if (expand.includes("tag")) {
 					tagsStore.tags[tag.id_tag] = tag.tag;
 				}
 			}
@@ -459,7 +459,7 @@ export const useStoresStore = defineStore("stores",{
 				url: `${baseUrl}/store/${idStore}/tag/${id}?${expandString}`,
 				useToken: "access",
 			});
-			if (expand.indexOf("tag") > -1) {
+			if (expand.includes("tag")) {
 				tagsStore.tags[id] = this.storeTags[idStore][id].tag;
 			}
 		},
@@ -523,7 +523,7 @@ export const useStoresStore = defineStore("stores",{
 			});
 			for (const item of newItemList["data"]) {
 				this.boxItems[idBox][item.id_item] = item;
-				if (expand.indexOf("item") > -1) {
+				if (expand.includes("item")) {
 					itemsStore.items[item.id_item] = item.item;
 				}
 			}
@@ -544,7 +544,7 @@ export const useStoresStore = defineStore("stores",{
 			});
 			for (const item of newItemList["data"]) {
 				this.boxItems[idBox][item.id_item] = item;
-				if (expand.indexOf("item") > -1) {
+				if (expand.includes("item")) {
 					itemsStore.items[item.id_item] = item.item;
 				}
 			}
@@ -566,7 +566,7 @@ export const useStoresStore = defineStore("stores",{
 				url: `${baseUrl}/store/${idStore}/box/${idBox}/item/${id}?${expandString}`,
 				useToken: "access",
 			});
-			if (expand.indexOf("item") > -1) {
+			if (expand.includes("item")) {
 				itemsStore.items[id] = this.boxItems[idBox][id].item;
 			}
 		},
@@ -615,7 +615,7 @@ export const useStoresStore = defineStore("stores",{
 			});
 			for (const tag of newTagList["data"]) {
 				this.boxTags[idBox][tag.id_tag] = tag;
-				if (expand.indexOf("tag") > -1) {
+				if (expand.includes("tag")) {
 					tagsStore.tags[tag.id_tag] = tag.tag;
 				}
 			}
@@ -637,7 +637,7 @@ export const useStoresStore = defineStore("stores",{
 				url: `${baseUrl}/store/${idStore}/box/${idBox}/tag/${id}?${expandString}`,
 				useToken: "access",
 			});
-			if (expand.indexOf("tag") > -1) {
+			if (expand.includes("tag")) {
 				tagsStore.tags[id] = this.boxTags[idBox][id].tag;
 			}
 		},

@@ -59,7 +59,7 @@ public class JwiService : IJwiService
     }
 
     // build token
-    private JwtSecurityToken readToken(string token)
+    private JwtSecurityToken ReadToken(string token)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_jwtSettings.Key);
@@ -83,7 +83,7 @@ public class JwiService : IJwiService
         if (string.IsNullOrEmpty(token)) return false;
         try
         {
-            var tokenOBJ = readToken(token);
+            var tokenOBJ = ReadToken(token);
             if (tokenOBJ is null) return false;
             var claims = tokenOBJ.Claims.ToList();
             if (!claims.Any(x => x.Type == "role" && x.Value == role)) return false;

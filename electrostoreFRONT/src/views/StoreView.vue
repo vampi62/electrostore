@@ -249,32 +249,9 @@ const filterItem = ref([
 ]);
 
 // tag
-const tagModalShow = ref(false);
-const tagLoad = ref(false);
-const filteredTags = ref([]);
-const updateFilteredTags = (newValue) => {
-	filteredTags.value = newValue;
-};
 const filterTag = ref([
 	{ key: "nom_tag", value: "", type: "text", label: "", placeholder: t("store.VStoreTagFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
-
-const tagOpenAddModal = () => {
-	tagModalShow.value = true;
-	if (!tagLoad.value) {
-		fetchAllTags();
-	}
-};
-async function fetchAllTags() {
-	let offset = 0;
-	const limit = 100;
-	do {
-		await tagsStore.getTagByInterval(limit, offset);
-		offset += limit;
-	} while (offset < tagsStore.tagsTotalCount);
-	tagLoad.value = true;
-}
-
 function tagSave(id_tag) {
 	try {
 		storesStore.createTagStore(storeId.value,  { id_tag: id_tag });
@@ -390,7 +367,14 @@ const labelTableauModalTag = ref([
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="storesStore.storeEdition[storeId] || {}" :store-user="authStore.user"/>
 			<Tags :current-tags="storesStore.storeTags[storeId] || {}" :tags-store="tagsStore.tags" :can-edit="storeId !== 'new' && authStore.user.role_user >= 1"
-				:delete-function="(value) => tagDelete(value)" @openModalTag="tagOpenAddModal"/>
+				:delete-function="(value) => tagDelete(value)"
+				:fetch-function="(offset, limit) => tagsStore.getTagByInterval(limit, offset)"
+				:total-count="Number(tagsStore.tagsTotalCount || 0)"
+				:filter-modal="filterTag"
+				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag' }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
+								, 'loading': tagsStore.tagsLoading }"
+				:meta ="{ 'keyPoids': 'poids_tag', 'keyName': 'nom_tag' }"
+				/>
 		</div>
 		<div class="mb-6 flex justify-between flex-wrap whitespace-pre">
 			<div class="flex-1">

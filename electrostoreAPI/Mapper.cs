@@ -12,6 +12,7 @@ public class MappingProfile : Profile
         CreateMap<CreateBoxDto, Boxs>();
         CreateMap<Boxs, ReadBoxDto>();
         CreateMap<Boxs, ReadExtendedBoxDto>();
+        CreateMap<UpdateBulkBoxByStoreDto, UpdateBoxDto>();
 
         CreateMap<CreateBoxTagDto, BoxsTags>();
         CreateMap<BoxsTags, ReadBoxTagDto>();
@@ -91,6 +92,21 @@ public class MappingProfile : Profile
         CreateMap<ProjetsItems, ReadExtendedProjetItemDto>()
             .ForMember(dest => dest.projet, opt => opt.MapFrom(src => src.Projet))
             .ForMember(dest => dest.item, opt => opt.MapFrom(src => src.Item));
+        
+        CreateMap<ProjetsStatus, ReadProjetStatusDto>();
+        CreateMap<ProjetsStatus, ReadExtendedProjetStatusDto>()
+            .ForMember(dest => dest.projet, opt => opt.MapFrom(src => src.Projet));
+        CreateMap<CreateProjetStatusDto, ProjetsStatus>();
+
+        CreateMap<CreateProjetTagDto, ProjetTags>();
+        CreateMap<ProjetTags, ReadProjetTagDto>();
+        CreateMap<ProjetTags, ReadExtendedProjetTagDto>();
+
+        CreateMap<CreateProjetProjetTagDto, ProjetsProjetTags>();
+        CreateMap<ProjetsProjetTags, ReadProjetProjetTagDto>();
+        CreateMap<ProjetsProjetTags, ReadExtendedProjetProjetTagDto>()
+            .ForMember(dest => dest.projet_tag, opt => opt.MapFrom(src => src.ProjetTag))
+            .ForMember(dest => dest.projet, opt => opt.MapFrom(src => src.Projet));
 
         CreateMap<CreateStoreDto, Stores>();
         CreateMap<Stores, ReadStoreDto>();

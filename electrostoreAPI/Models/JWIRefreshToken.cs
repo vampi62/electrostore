@@ -32,9 +32,9 @@ public class JwiRefreshTokens : BaseEntity
 
     public int id_user { get; set; }
     [ForeignKey("id_user")]
-    public Users User { get; set; }
+    public Users? User { get; set; }
 
     public Guid id_jwi_access { get; set; }
     [ForeignKey("id_jwi_access")]
-    public JwiAccessTokens JWIAccessToken { get; set; }
+    public JwiAccessTokens? JWIAccessToken { get; set; }
 }
