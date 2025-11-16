@@ -22,7 +22,7 @@ public class ExceptionsHandler
         }
         catch (Exception ex)
         {
-            // ne pas logger les erreurs 4xx
+            // don't log 4xx errors
             if (ex is ArgumentException || ex is KeyNotFoundException || ex is InvalidOperationException)
             {
                 await HandleExceptionAsync(context, ex);

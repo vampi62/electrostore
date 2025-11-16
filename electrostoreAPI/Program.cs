@@ -80,21 +80,21 @@ public static class Program
             {
                 options.InvalidModelStateResponseFactory = context =>
                 {
-                    var modelStateErrors = context.ModelState
+                    // Aggregate validation errors with field names
+                    var validationErrors = context.ModelState
                         .Where(ms => ms.Value != null && ms.Value.Errors.Count > 0)
-                        .SelectMany(ms => ms.Value!.Errors)
-                        .Select(e => e.ErrorMessage)
+                        .Select(kvp => new
+                        {
+                            Field = kvp.Key,
+                            Errors = kvp.Value!.Errors.Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? e.Exception?.Message ?? "Invalid value" : e.ErrorMessage).ToArray()
+                        })
                         .ToList();
 
-
-                    if (modelStateErrors.Any())
+                    if (validationErrors.Count != 0)
                     {
-                        var errorResponse = new
-                        {
-                            Error = "Incorrect call",
-                        };
-
-                        return new BadRequestObjectResult(errorResponse);
+                        // Throw to let the ExceptionsHandler middleware format the response consistently
+                        var ex = new { error = "Validation Failed", details = validationErrors };
+                        return new BadRequestObjectResult(ex);
                     }
 
                     return new BadRequestResult();
@@ -163,9 +163,9 @@ public static class Program
 
         app.UseAuthorization();
 
-        app.MapControllers();
-
         app.UseMiddleware<ExceptionsHandler>();
+
+        app.MapControllers();
 
         InitializeDatabase(app);
 
