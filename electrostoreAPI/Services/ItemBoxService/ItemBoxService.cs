@@ -21,7 +21,7 @@ public class ItemBoxService : IItemBoxService
         // check if the box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
         {
-            throw new KeyNotFoundException($"Box with id {boxId} not found");
+            throw new KeyNotFoundException($"Box with id '{boxId}' not found");
         }
         var query = _context.ItemsBoxs.AsQueryable();
         query = query.Where(ib => ib.id_box == boxId);
@@ -44,7 +44,7 @@ public class ItemBoxService : IItemBoxService
         // check if the box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
         {
-            throw new KeyNotFoundException($"Box with id {boxId} not found");
+            throw new KeyNotFoundException($"Box with id '{boxId}' not found");
         }
         return await _context.ItemsBoxs
             .CountAsync(ib => ib.id_box == boxId);
@@ -55,7 +55,7 @@ public class ItemBoxService : IItemBoxService
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            throw new KeyNotFoundException($"Item with id {itemId} not found");
+            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.ItemsBoxs.AsQueryable();
         query = query.Where(ib => ib.id_item == itemId);
@@ -78,7 +78,7 @@ public class ItemBoxService : IItemBoxService
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            throw new KeyNotFoundException($"Item with id {itemId} not found");
+            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         return await _context.ItemsBoxs
             .CountAsync(ib => ib.id_item == itemId);
@@ -96,7 +96,7 @@ public class ItemBoxService : IItemBoxService
         {
             query = query.Include(ib => ib.Box);
         }
-        var itemBox = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
+        var itemBox = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ItemBox with id '{itemId}' and boxId '{boxId}' not found");
         return _mapper.Map<ReadExtendedItemBoxDto>(itemBox);
     }
 
@@ -105,12 +105,12 @@ public class ItemBoxService : IItemBoxService
         // check if the box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == itemBoxDto.id_box))
         {
-            throw new KeyNotFoundException($"Box with id {itemBoxDto.id_box} not found");
+            throw new KeyNotFoundException($"Box with id '{itemBoxDto.id_box}' not found");
         }
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemBoxDto.id_item))
         {
-            throw new KeyNotFoundException($"Item with id {itemBoxDto.id_item} not found");
+            throw new KeyNotFoundException($"Item with id '{itemBoxDto.id_item}' not found");
         }
         // check if the item is already in the box
         if (await _context.ItemsBoxs.AnyAsync(ib => ib.id_box == itemBoxDto.id_box && ib.id_item == itemBoxDto.id_item))
@@ -125,7 +125,7 @@ public class ItemBoxService : IItemBoxService
 
     public async Task<ReadItemBoxDto> UpdateItemBox(int itemId, int boxId, UpdateItemBoxDto itemBoxDto)
     {
-        var itemBoxToUpdate = await _context.ItemsBoxs.FindAsync(itemId, boxId) ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
+        var itemBoxToUpdate = await _context.ItemsBoxs.FindAsync(itemId, boxId) ?? throw new KeyNotFoundException($"ItemBox with id '{itemId}' and boxId '{boxId}' not found");
         if (itemBoxDto.qte_item_box is not null)
         {
             itemBoxToUpdate.qte_item_box = itemBoxDto.qte_item_box.Value;
@@ -141,7 +141,7 @@ public class ItemBoxService : IItemBoxService
 
     public async Task DeleteItemBox(int itemId, int boxId)
     {
-        var itemBoxToDelete = await _context.ItemsBoxs.FindAsync(itemId, boxId) ?? throw new KeyNotFoundException($"ItemBox with id {itemId} and boxId {boxId} not found");
+        var itemBoxToDelete = await _context.ItemsBoxs.FindAsync(itemId, boxId) ?? throw new KeyNotFoundException($"ItemBox with id '{itemId}' and boxId '{boxId}' not found");
         _context.ItemsBoxs.Remove(itemBoxToDelete);
         await _context.SaveChangesAsync();
     }
@@ -150,7 +150,7 @@ public class ItemBoxService : IItemBoxService
     {
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId && b.id_store == storeId))
         {
-            throw new KeyNotFoundException($"Box with id {boxId} not found in store with id {storeId}");
+            throw new KeyNotFoundException($"Box with id '{boxId}' not found in store with id '{storeId}'");
         }
     }
 }

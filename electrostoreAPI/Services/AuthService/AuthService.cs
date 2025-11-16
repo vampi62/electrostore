@@ -165,7 +165,7 @@ public class AuthService : IAuthService
 
     public async Task<bool> CheckUserPasswordByEmail(string email, string password)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == email) ?? throw new KeyNotFoundException($"User with email {email} not found");
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == email) ?? throw new KeyNotFoundException($"User with email '{email}' not found");
         return BCrypt.Net.BCrypt.Verify(password, user.mdp_user);
     }
 
@@ -232,7 +232,7 @@ public class AuthService : IAuthService
     public async Task<LoginResponse> LoginWithPassword(LoginRequest request)
     {
         // check if user exists
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.Email) ?? throw new KeyNotFoundException($"User with email {request.Email} not found");
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.Email) ?? throw new KeyNotFoundException($"User with email '{request.Email}' not found");
         // check if password is correct
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.mdp_user))
         {
@@ -264,7 +264,7 @@ public class AuthService : IAuthService
         var tokenId = _sessionService.GetTokenId();
         var authMethod = _sessionService.GetTokenAuthMethod();
         var sessionId = await _jwiService.GetSessionIdByTokenId(tokenId, clientId);
-        var user = await _context.Users.FindAsync(clientId) ?? throw new KeyNotFoundException($"User with id {clientId} not found");
+        var user = await _context.Users.FindAsync(clientId) ?? throw new KeyNotFoundException($"User with id '{clientId}' not found");
         var token = _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user), authMethod);
         await _jwiService.RevokePairTokenByRefreshToken(tokenId, "User refresh token", clientId);
         await _jwiService.SaveToken(token, user.id_user, authMethod, sessionId);

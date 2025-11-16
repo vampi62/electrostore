@@ -76,7 +76,7 @@ public class StoreService : IStoreService
                 Leds = expand != null && expand.Contains("leds") ? s.Leds.Take(20).ToList() : null,
                 StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Store with id {id} not found");
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
         return _mapper.Map<ReadExtendedStoreDto>(store.Store) with
         {
             boxs_count = store.BoxsCount,
@@ -108,7 +108,7 @@ public class StoreService : IStoreService
         {
             throw new UnauthorizedAccessException("You do not have permission to update a store");
         }
-        var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id {id} not found");
+        var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
         if (storeDto.nom_store is not null)
         {
             storeToUpdate.nom_store = storeDto.nom_store;
@@ -146,7 +146,7 @@ public class StoreService : IStoreService
         {
             throw new UnauthorizedAccessException("You do not have permission to delete a store");
         }
-        var storeToDelete = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id {id} not found");
+        var storeToDelete = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
         _context.Stores.Remove(storeToDelete);
         await _context.SaveChangesAsync();
     }
@@ -265,7 +265,7 @@ public class StoreService : IStoreService
         {
             throw new UnauthorizedAccessException("You do not have permission to update a store");
         }
-        var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id {id} not found");
+        var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
         if (storeDto.store.nom_store is not null)
         {
             storeToUpdate.nom_store = storeDto.store.nom_store;
@@ -291,20 +291,20 @@ public class StoreService : IStoreService
             {
                 if (led.status == "delete")
                 {
-                    var ledToDelete = await _context.Leds.FindAsync(led.id_led) ?? throw new KeyNotFoundException($"Led with id {led.id_led} not found");
+                    var ledToDelete = await _context.Leds.FindAsync(led.id_led) ?? throw new KeyNotFoundException($"Led with id '{led.id_led}' not found");
                     if (ledToDelete.id_store != storeToUpdate.id_store)
                     {
-                        throw new ArgumentException($"Led with id {led.id_led} does not belong to the store with id {storeToUpdate.id_store}.");
+                        throw new ArgumentException($"Led with id '{led.id_led}' does not belong to the store with id '{storeToUpdate.id_store}'.");
                     }
                     _context.Leds.Remove(ledToDelete);
                     continue;
                 }
                 else if (led.status == "modified")
                 {
-                    var ledToUpdate = await _context.Leds.FindAsync(led.id_led) ?? throw new KeyNotFoundException($"Led with id {led.id_led} not found");
+                    var ledToUpdate = await _context.Leds.FindAsync(led.id_led) ?? throw new KeyNotFoundException($"Led with id '{led.id_led}' not found");
                     if (ledToUpdate.id_store != storeToUpdate.id_store)
                     {
-                        throw new ArgumentException($"Led with id {led.id_led} does not belong to the store with id {storeToUpdate.id_store}.");
+                        throw new ArgumentException($"Led with id '{led.id_led}' does not belong to the store with id '{storeToUpdate.id_store}'.");
                     }
                     if (led.x_led is not null)
                     {
@@ -363,20 +363,20 @@ public class StoreService : IStoreService
             {
                 if (box.status == "delete")
                 {
-                    var boxToDelete = await _context.Boxs.FindAsync(box.id_box) ?? throw new KeyNotFoundException($"Box with id {box.id_box} not found");
+                    var boxToDelete = await _context.Boxs.FindAsync(box.id_box) ?? throw new KeyNotFoundException($"Box with id '{box.id_box}' not found");
                     if (boxToDelete.id_store != storeToUpdate.id_store)
                     {
-                        throw new ArgumentException($"Box with id {box.id_box} does not belong to the store with id {storeToUpdate.id_store}.");
+                        throw new ArgumentException($"Box with id '{box.id_box}' does not belong to the store with id '{storeToUpdate.id_store}'.");
                     }
                     _context.Boxs.Remove(boxToDelete);
                     continue;
                 }
                 else if (box.status == "modified")
                 {
-                    var boxToUpdate = await _context.Boxs.FindAsync(box.id_box) ?? throw new KeyNotFoundException($"Box with id {box.id_box} not found");
+                    var boxToUpdate = await _context.Boxs.FindAsync(box.id_box) ?? throw new KeyNotFoundException($"Box with id '{box.id_box}' not found");
                     if (boxToUpdate.id_store != storeToUpdate.id_store)
                     {
-                        throw new ArgumentException($"Box with id {box.id_box} does not belong to the store with id {storeToUpdate.id_store}.");
+                        throw new ArgumentException($"Box with id '{box.id_box}' does not belong to the store with id '{storeToUpdate.id_store}'.");
                     }
                     if (box.xstart_box is not null)
                     {

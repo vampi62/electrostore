@@ -52,7 +52,7 @@ public class CameraService : ICameraService
 
     public async Task<ReadCameraDto> GetCameraById(int id)
     {
-        var camera = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id {id} not found");
+        var camera = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id '{id}' not found");
         return _mapper.Map<ReadCameraDto>(camera);
     }
 
@@ -76,7 +76,7 @@ public class CameraService : ICameraService
         {
             throw new UnauthorizedAccessException("You do not have permission to update a camera");
         }
-        var cameraToUpdate = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id {id} not found");
+        var cameraToUpdate = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id '{id}' not found");
         if (cameraDto.nom_camera is not null)
         {
             cameraToUpdate.nom_camera = cameraDto.nom_camera;
@@ -104,14 +104,14 @@ public class CameraService : ICameraService
         {
             throw new UnauthorizedAccessException("You do not have permission to delete a camera");
         }
-        var cameraToDelete = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id {id} not found");
+        var cameraToDelete = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id '{id}' not found");
         _context.Cameras.Remove(cameraToDelete);
         await _context.SaveChangesAsync();
     }
 
     public async Task<CameraStatusDto> GetCameraStatus(int id_camera)
     {
-        var camera = await _context.Cameras.FindAsync(id_camera) ?? throw new KeyNotFoundException($"Camera with id {id_camera} not found");
+        var camera = await _context.Cameras.FindAsync(id_camera) ?? throw new KeyNotFoundException($"Camera with id '{id_camera}' not found");
         try
         {
             if (_configuration.GetValue<bool>(DemoModeKey))
@@ -197,7 +197,7 @@ public class CameraService : ICameraService
 
     public async Task<ActionResult> GetCameraCapture(int id_camera)
     {
-        var camera = await _context.Cameras.FindAsync(id_camera) ?? throw new KeyNotFoundException($"Camera with id {id_camera} not found");
+        var camera = await _context.Cameras.FindAsync(id_camera) ?? throw new KeyNotFoundException($"Camera with id '{id_camera}' not found");
         try
         {
             if (_configuration.GetValue<bool>(DemoModeKey))
@@ -235,7 +235,7 @@ public class CameraService : ICameraService
 
     public async Task<CameraLightDto> SwitchCameraLight(int id_camera, CameraLightDto reqCamera)
     {
-        var camera = await _context.Cameras.FindAsync(id_camera) ?? throw new KeyNotFoundException($"Camera with id {id_camera} not found");
+        var camera = await _context.Cameras.FindAsync(id_camera) ?? throw new KeyNotFoundException($"Camera with id '{id_camera}' not found");
         try
         {
             if (_configuration.GetValue<bool>(DemoModeKey))
@@ -277,7 +277,7 @@ public class CameraService : ICameraService
         {
             throw new UnauthorizedAccessException("Invalid token");
         }
-        var camera = await _context.Cameras.FindAsync(id_camera) ?? throw new KeyNotFoundException($"Camera with id {id_camera} not found");
+        var camera = await _context.Cameras.FindAsync(id_camera) ?? throw new KeyNotFoundException($"Camera with id '{id_camera}' not found");
         try
         {
             if (_configuration.GetValue<bool>(DemoModeKey))

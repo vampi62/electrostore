@@ -43,7 +43,7 @@ public class IAService : IIAService
 
     public async Task<ReadIADto> GetIAById(int id)
     {
-        var ia = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");
+        var ia = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id '{id}' not found");
         return _mapper.Map<ReadIADto>(ia);
     }
 
@@ -67,7 +67,7 @@ public class IAService : IIAService
         {
             throw new UnauthorizedAccessException("You are not authorized to update IA");
         }
-        var iaToUpdate = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");
+        var iaToUpdate = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id '{id}' not found");
         if (iaDto.nom_ia is not null)
         {
             iaToUpdate.nom_ia = iaDto.nom_ia;
@@ -96,7 +96,7 @@ public class IAService : IIAService
         {
             throw new UnauthorizedAccessException("You are not authorized to delete IA");
         }
-        var iaToDelete = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");
+        var iaToDelete = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id '{id}' not found");
         // remove model if exists
         if (File.Exists(GetModelFilePath(id)))
         {
@@ -114,7 +114,7 @@ public class IAService : IIAService
     {
         if (await _context.IA.FindAsync(id) == null)
         {
-            throw new KeyNotFoundException($"IA with id {id} not found");
+            throw new KeyNotFoundException($"IA with id '{id}' not found");
         }
         try
         {
@@ -158,7 +158,7 @@ public class IAService : IIAService
         }
         if (await _context.IA.FindAsync(id) == null)
         {
-            throw new KeyNotFoundException($"IA with id {id} not found");
+            throw new KeyNotFoundException($"IA with id '{id}' not found");
         }
         try
         {
@@ -179,7 +179,7 @@ public class IAService : IIAService
 
     public async Task<PredictionOutput> IADetectItem(int id, DetecDto detecDto)
     {
-        var ia = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id {id} not found");
+        var ia = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id '{id}' not found");
         if (!ia.trained_ia)
         {
             throw new InvalidOperationException("IA is not trained");

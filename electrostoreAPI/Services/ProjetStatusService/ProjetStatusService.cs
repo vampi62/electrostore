@@ -22,7 +22,7 @@ public class ProjetStatusService : IProjetStatusService
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
         {
-            throw new KeyNotFoundException($"Projet with id {projetId} not found");
+            throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsStatus.AsQueryable();
         query = query.Where(p => p.id_projet == projetId);
@@ -41,7 +41,7 @@ public class ProjetStatusService : IProjetStatusService
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
         {
-            throw new KeyNotFoundException($"Projet with id {projetId} not found");
+            throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         return await _context.ProjetsStatus
             .CountAsync(p => p.id_projet == projetId);
@@ -55,7 +55,7 @@ public class ProjetStatusService : IProjetStatusService
         {
             query = query.Include(pc => pc.Projet);
         }
-        var projetStatus = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetStatus with id {id} not found");
+        var projetStatus = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetStatus with id '{id}' not found");
         return _mapper.Map<ReadExtendedProjetStatusDto>(projetStatus);
     }
 
@@ -64,7 +64,7 @@ public class ProjetStatusService : IProjetStatusService
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetStatusDto.id_projet))
         {
-            throw new KeyNotFoundException($"Projet with id {projetStatusDto.id_projet} not found");
+            throw new KeyNotFoundException($"Projet with id '{projetStatusDto.id_projet}' not found");
         }
         var newProjetStatus = _mapper.Map<ProjetsStatus>(projetStatusDto);
         _context.ProjetsStatus.Add(newProjetStatus);

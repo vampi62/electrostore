@@ -74,7 +74,7 @@ public class CommandService : ICommandService
                 CommandsDocuments = expand != null && expand.Contains("commands_documents") ? c.CommandsDocuments.Take(20).ToList() : null,
                 CommandsItems = expand != null && expand.Contains("commands_items") ? c.CommandsItems.Take(20).ToList() : null
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Command with id {id} not found");
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Command with id '{id}' not found");
         return _mapper.Map<ReadExtendedCommandDto>(command.Command) with
         {
             commands_commentaires_count = command.CommandsCommentairesCount,
@@ -99,7 +99,7 @@ public class CommandService : ICommandService
 
     public async Task<ReadCommandDto> UpdateCommand(int id, UpdateCommandDto commandDto)
     {
-        var commandToUpdate = await _context.Commands.FindAsync(id) ?? throw new KeyNotFoundException($"Command with id {id} not found");
+        var commandToUpdate = await _context.Commands.FindAsync(id) ?? throw new KeyNotFoundException($"Command with id '{id}' not found");
         if (commandDto.prix_command is not null)
         {
             commandToUpdate.prix_command = commandDto.prix_command.Value;
@@ -128,7 +128,7 @@ public class CommandService : ICommandService
 
     public async Task DeleteCommand(int id)
     {
-        var commandToDelete = await _context.Commands.FindAsync(id) ?? throw new KeyNotFoundException($"Command with id {id} not found");
+        var commandToDelete = await _context.Commands.FindAsync(id) ?? throw new KeyNotFoundException($"Command with id '{id}' not found");
         _context.Commands.Remove(commandToDelete);
         await _fileService.DeleteDirectory(Path.Combine(_commandDocumentsPath, id.ToString()));
         await _context.SaveChangesAsync();
