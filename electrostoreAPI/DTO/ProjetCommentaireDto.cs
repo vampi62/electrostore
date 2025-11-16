@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using electrostore.Validators;
 
 namespace electrostore.Dto;
 
@@ -18,44 +19,34 @@ public record ReadExtendedProjetCommentaireDto : ReadProjetCommentaireDto
 }
 public record CreateProjetCommentaireByUserDto
 {
-    [Required]
-    public required int id_projet { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    public int id_projet { get; init; }
 
-    [Required]
-    [MinLength(1, ErrorMessage = "contenu_projet_commentaire cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_projet_commentaire cannot exceed 455 characters")]
-    public required string contenu_projet_commentaire { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    public string? contenu_projet_commentaire { get; init; }
 }
 public record CreateProjetCommentaireByProjetDto
 {
-    [Required]
-    [MinLength(1, ErrorMessage = "contenu_projet_commentaire cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_projet_commentaire cannot exceed 455 characters")]
-    public required string contenu_projet_commentaire { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    public string? contenu_projet_commentaire { get; init; }
 }
 public record CreateProjetCommentaireDto
 {
-    [Required]
-    public required int id_projet { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    public int id_projet { get; init; }
 
-    [Required]
-    public required int id_user { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    public int id_user { get; init; }
 
-    [Required]
-    [MinLength(1, ErrorMessage = "contenu_projet_commentaire cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_projet_commentaire cannot exceed 455 characters")]
-    public required string contenu_projet_commentaire { get; init; }
-}
-public record UpdateProjetCommentaireDto : IValidatableObject
-{
-    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_projet_commentaire cannot exceed 455 characters")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? contenu_projet_commentaire { get; init; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (contenu_projet_commentaire is not null && string.IsNullOrWhiteSpace(contenu_projet_commentaire))
-        {
-            yield return new ValidationResult("contenu_projet_commentaire cannot be empty or whitespace.", new[] { nameof(contenu_projet_commentaire) });
-        }
-    }
+}
+public record UpdateProjetCommentaireDto
+{
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
+    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    public string? contenu_projet_commentaire { get; init; }
 }

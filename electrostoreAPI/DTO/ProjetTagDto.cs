@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using electrostore.Validators;
 
 namespace electrostore.Dto;
 
@@ -24,28 +25,20 @@ public record ReadBulkProjetTagDto
 
 public record CreateProjetTagDto
 {
-    [Required]
-    [MinLength(1, ErrorMessage = "nom_projet_tag cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_projet_tag cannot exceed 50 characters")]
-    public required string nom_projet_tag { get; init; }
-
-    [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "poids_projet_tag must be greater than or equal to 0.")]
-    public required int? poids_projet_tag { get; init; } = 0;
-}
-public record UpdateProjetTagDto : IValidatableObject
-{
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_projet_tag cannot exceed 50 characters")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? nom_projet_tag { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "poids_projet_tag must be greater than or equal to 0.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? poids_projet_tag { get; init; }
+}
+public record UpdateProjetTagDto
+{
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
+    public string? nom_projet_tag { get; init; }
 
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (nom_projet_tag is not null && string.IsNullOrWhiteSpace(nom_projet_tag))
-        {
-            yield return new ValidationResult("nom_projet_tag cannot be empty or whitespace.", new[] { nameof(nom_projet_tag) });
-        }
-    }
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public int? poids_projet_tag { get; init; }
 }

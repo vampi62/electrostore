@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using electrostore.Validators;
 
 namespace electrostore.Dto;
 
@@ -25,48 +26,38 @@ public record ReadExtendedCommandDto : ReadCommandDto
 public record CreateCommandDto
 {
     [Required]
-    [Range(0.0, float.MaxValue, ErrorMessage = "prix_command must be greater than 0.")]
-    public required float prix_command { get; init; }
+    [Range(0.0, float.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public float prix_command { get; init; }
 
-    [Required]
-    [MinLength(1, ErrorMessage = "url_command cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "url_command cannot exceed 150 characters")]
-    public required string url_command { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [Url(ErrorMessage = "{0} must be a valid URL.")]
+    public string? url_command { get; init; }
 
-    [Required]
-    [MinLength(1, ErrorMessage = "status_command cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxStatusLength, ErrorMessage = "status_command cannot exceed 50 characters")]
-    public required string status_command { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxStatusLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    public string? status_command { get; init; }
 
-    [Required]
-    public required DateTime date_command { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    public DateTime date_command { get; init; }
 
     public DateTime? date_livraison_command { get; init; }
 }
-public record UpdateCommandDto : IValidatableObject
+public record UpdateCommandDto
 {
-    [Range(0.0, float.MaxValue, ErrorMessage = "prix_command must be greater than 0.")]
+    [Range(0.0, float.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public float? prix_command { get; init; }
 
-    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "url_command cannot exceed 150 characters")]
+    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
+    [Url(ErrorMessage = "{0} must be a valid URL.")]
     public string? url_command { get; init; }
 
-    [MaxLength(Constants.MaxStatusLength, ErrorMessage = "status_command cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxStatusLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? status_command { get; init; }
 
     public DateTime? date_command { get; init; }
 
     public DateTime? date_livraison_command { get; init; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (url_command is not null && string.IsNullOrWhiteSpace(url_command))
-        {
-            yield return new ValidationResult("url_command cannot be empty or whitespace.", new[] { nameof(url_command) });
-        }
-        if (status_command is not null && string.IsNullOrWhiteSpace(status_command))
-        {
-            yield return new ValidationResult("status_command cannot be empty or whitespace.", new[] { nameof(status_command) });
-        }
-    }
 }

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using electrostore.Validators;
 
 namespace electrostore.Dto;
 
@@ -24,51 +25,38 @@ public record ReadExtendedStoreDto : ReadStoreDto
 
 public record CreateStoreDto
 {
-    [Required]
-    [MinLength(1, ErrorMessage = "nom_store cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_store cannot exceed 50 characters")]
-    public required string nom_store { get; init; }
-
-    [Required]
-    [Range(1, int.MaxValue, ErrorMessage = "xlength_store must be greater than 0.")]
-    public required int xlength_store { get; init; }
-
-    [Required]
-    [Range(1, int.MaxValue, ErrorMessage = "ylength_store must be greater than 0.")]
-    public required int ylength_store { get; init; }
-
-    [Required]
-    [MinLength(1, ErrorMessage = "mqtt_name_store cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "mqtt_name_store cannot exceed 50 characters")]
-    public required string mqtt_name_store { get; init; }
-}
-
-public record UpdateStoreDto : IValidatableObject
-{
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_store cannot exceed 50 characters.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     public string? nom_store { get; init; }
 
-    [Range(1, int.MaxValue, ErrorMessage = "xlength_store must be greater than 0.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public int xlength_store { get; init; }
+
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public int ylength_store { get; init; }
+
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    public string? mqtt_name_store { get; init; }
+}
+
+public record UpdateStoreDto
+{
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
+    public string? nom_store { get; init; }
+
+    [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? xlength_store { get; init; }
 
-    [Range(1, int.MaxValue, ErrorMessage = "ylength_store must be greater than 0.")]
+    [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? ylength_store { get; init; }
 
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "mqtt_name_store cannot exceed 50 characters.")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? mqtt_name_store { get; init; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (nom_store is not null && string.IsNullOrWhiteSpace(nom_store))
-        {
-            yield return new ValidationResult("nom_store cannot be empty or whitespace.", new[] { nameof(nom_store) });
-        }
-
-        if (mqtt_name_store is not null && string.IsNullOrWhiteSpace(mqtt_name_store))
-        {
-            yield return new ValidationResult("mqtt_name_store cannot be empty or whitespace.", new[] { nameof(mqtt_name_store) });
-        }
-    }
 }
 
 public record ReadStoreCompleteDto

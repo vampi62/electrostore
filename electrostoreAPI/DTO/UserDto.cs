@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using electrostore.Enums;
+using electrostore.Validators;
 
 namespace electrostore.Dto;
 
@@ -20,81 +21,53 @@ public record ReadExtendedUserDto : ReadUserDto
     public IEnumerable<ReadProjetCommentaireDto>? projets_commentaires { get; init; }
     public IEnumerable<ReadCommandCommentaireDto>? commands_commentaires { get; init; }
 }
-public record CreateUserDto : IValidatableObject
+public record CreateUserDto
 {
-    [Required]
-    [MinLength(1, ErrorMessage = "nom_user cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_user cannot exceed 50 characters")]
-    public required string nom_user { get; init; }
-
-    [Required]
-    [MinLength(1, ErrorMessage = "prenom_user cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "prenom_user cannot exceed 50 characters")]
-    public required string prenom_user { get; init; }
-
-    [Required]
-    [MinLength(1, ErrorMessage = "email_user cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxEmailLength, ErrorMessage = "email_user cannot exceed 100 characters")]
-    public required string email_user { get; init; }
-
-    [Required]
-    [MinLength(1, ErrorMessage = "mdp_user cannot be empty or whitespace.")]
-    public required string mdp_user { get; init; }
-
-    [Required]
-    public required UserRole role_user { get; init; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (!new EmailAddressAttribute().IsValid(email_user))
-        {
-            yield return new ValidationResult("email_user has an Invalid email format", new[] { nameof(email_user) });
-        }
-        if (!new RegularExpressionAttribute(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$").IsValid(mdp_user))
-        {
-            yield return new ValidationResult("mdp_user must contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long", new[] { nameof(mdp_user) });
-        }
-    }
-}
-public record UpdateUserDto : IValidatableObject
-{
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_user cannot exceed 50 characters")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     public string? nom_user { get; init; }
 
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "prenom_user cannot exceed 50 characters")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     public string? prenom_user { get; init; }
 
-    [MaxLength(Constants.MaxEmailLength, ErrorMessage = "email_user cannot exceed 100 characters")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxEmailLength, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [EmailAddress(ErrorMessage = "{0} must be a valid email address.")]
     public string? email_user { get; init; }
 
+    [Required(ErrorMessage = "{0} is required.")]
+    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$",
+        ErrorMessage = "{0} must contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long")]
     public string? mdp_user { get; init; }
 
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, (int)UserRole.Admin, ErrorMessage = "{0} must be a valid role, between {1} and {2}.")]
+    public UserRole role_user { get; init; }
+}
+public record UpdateUserDto
+{
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
+    public string? nom_user { get; init; }
+
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
+    public string? prenom_user { get; init; }
+
+    [MaxLength(Constants.MaxEmailLength, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
+    [EmailAddress(ErrorMessage = "{0} must be a valid email address.")]
+    public string? email_user { get; init; }
+
+    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$",
+        ErrorMessage = "mdp_user must contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
+    public string? mdp_user { get; init; }
+
+    [Range(0, (int)UserRole.Admin, ErrorMessage = "{0} must be a valid role, between {1} and {2}.")]
     public UserRole? role_user { get; init; }
 
-    [Required]
-    public required string current_mdp_user { get; init; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (nom_user is not null && string.IsNullOrWhiteSpace(nom_user))
-        {
-            yield return new ValidationResult("nom_user cannot be empty or whitespace.", new[] { nameof(nom_user) });
-        }
-        if (prenom_user is not null && string.IsNullOrWhiteSpace(prenom_user))
-        {
-            yield return new ValidationResult("prenom_user cannot be empty or whitespace.", new[] { nameof(prenom_user) });
-        }
-        if (email_user is not null && string.IsNullOrWhiteSpace(email_user))
-        {
-            yield return new ValidationResult("email_user cannot be empty or whitespace.", new[] { nameof(email_user) });
-        }
-        else if (email_user is not null && !new EmailAddressAttribute().IsValid(email_user))
-        {
-            yield return new ValidationResult("email_user has an Invalid email format", new[] { nameof(email_user) });
-        }
-        if (mdp_user is not null && !new RegularExpressionAttribute(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$").IsValid(mdp_user))
-        {
-            yield return new ValidationResult("mdp_user must contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long", new[] { nameof(mdp_user) });
-        }
-    }
+    [Required(ErrorMessage = "{0} is required.")]
+    public string? current_mdp_user { get; init; }
 }

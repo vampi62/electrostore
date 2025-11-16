@@ -21,19 +21,19 @@ public record ReadBulkItemTagDto
 }
 public record CreateItemTagByTagDto
 {
-    [Required]
-    public required int id_item { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    public int id_item { get; init; }
 }
 public record CreateItemTagByItemDto
 {
-    [Required]
-    public required int id_tag { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    public int id_tag { get; init; }
 }
 public record CreateItemTagDto
 {
-    [Required]
-    public required int id_item { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    public int id_item { get; init; }
 
-    [Required]
-    public required int id_tag { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    public int id_tag { get; init; }
 }

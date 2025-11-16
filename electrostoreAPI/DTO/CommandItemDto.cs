@@ -23,51 +23,51 @@ public record ReadBulkCommandItemDto
 }
 public record CreateCommandItemByCommandDto
 {
-    [Required]
-    public required int id_item { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    public int id_item { get; init; }
 
-    [Required]
-    [Range(1, int.MaxValue, ErrorMessage = "qte_projet_item must be greater than 0.")]
-    public required int qte_command_item { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public int qte_command_item { get; init; }
 
-    [Required]
-    [Range(0.0, float.MaxValue, ErrorMessage = "prix_command_item must be greater than 0.")]
-    public required float prix_command_item { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0.0, float.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public float prix_command_item { get; init; }
 }
 public record CreateCommandItemByItemDto
 {
-    [Required]
-    public required int id_command { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    public int id_command { get; init; }
 
-    [Required]
-    [Range(1, int.MaxValue, ErrorMessage = "qte_projet_item must be greater than 0.")]
-    public required int qte_command_item { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public int qte_command_item { get; init; }
 
-    [Required]
-    [Range(0.0, float.MaxValue, ErrorMessage = "prix_command_item must be greater than 0.")]
-    public required float prix_command_item { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0.0, float.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public float prix_command_item { get; init; }
 }
 public record CreateCommandItemDto
 {
-    [Required]
-    public required int id_item { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    public int id_item { get; init; }
 
-    [Required]
-    public required int id_command { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    public int id_command { get; init; }
 
-    [Required]
-    [Range(1, int.MaxValue, ErrorMessage = "qte_projet_item must be greater than 0.")]
-    public required int qte_command_item { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public int qte_command_item { get; init; }
 
-    [Required]
-    [Range(0.0, float.MaxValue, ErrorMessage = "prix_command_item must be greater than or equal to 0.")]
-    public required float prix_command_item { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0.0, float.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public float prix_command_item { get; init; }
 }
 public record UpdateCommandItemDto
 {
-    [Range(1, int.MaxValue, ErrorMessage = "qte_projet_item must be greater than 0.")]
+    [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? qte_command_item { get; init; }
 
-    [Range(0.0, float.MaxValue, ErrorMessage = "prix_command_item must be greater than or equal to 0.")]
+    [Range(0.0, float.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public float? prix_command_item { get; init; }
 }
