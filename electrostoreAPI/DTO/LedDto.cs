@@ -73,7 +73,7 @@ public record UpdateLedDto
 public record UpdateBulkLedByStoreDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    public int id_led { get; init; }
+    public required int id_led { get; init; }
 
     [Range(0, int.MaxValue, ErrorMessage = "x_led must be greater than or equal to 0.")]
     public int? x_led { get; init; }

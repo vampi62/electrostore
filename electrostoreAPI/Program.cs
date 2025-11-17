@@ -87,8 +87,6 @@ public static class Program
                             Errors = kvp.Value!.Errors.Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? e.Exception?.Message ?? "Invalid value" : e.ErrorMessage).ToArray()
                         })
                         .ToList();
-                    Console.WriteLine("Model state errors: " + string.Join(", ", validationErrors.SelectMany(e => e.Errors).ToArray()));
-
                     // if first error contain "JSON deserialization"
                     // this issue comes from a bad JSON format in the request body
                     // so we search in the error the missing field (found after ":" and separate by ";") and return a specific message with it
@@ -98,7 +96,7 @@ public static class Program
                             .Where(e => e.Contains("JSON deserialization", StringComparison.OrdinalIgnoreCase))
                             .SelectMany(e =>
                             {
-                                var parts = e.Split(':', ';');
+                                var parts = e.Split(':').Last().Split(';');
                                 if (parts.Length > 1)
                                 {
                                     return parts.Skip(1).Select(p => p.Trim());
@@ -228,13 +226,11 @@ public static class Program
                     }
                 };
             });
-        builder.Services.AddAuthorization(options =>
-        {
-            options.AddPolicy("RefreshToken", policy =>
-                policy.RequireRole("refresh"));
-            options.AddPolicy("AccessToken", policy =>
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy("RefreshToken", policy =>
+                policy.RequireRole("refresh"))
+            .AddPolicy("AccessToken", policy =>
                 policy.RequireRole("access"));
-        });
 
         builder.Services.AddCors(options =>
         {

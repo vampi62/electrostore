@@ -283,7 +283,7 @@ public class LedService : ILedService
                      x.led.y_led >= x.box.ystart_box && x.led.y_led <= x.box.yend_box)
             .Select(x => x.led)
             .ToListAsync();
-        if (!ledsDB.Any())
+        if (ledsDB.Count == 0)
         {
             throw new KeyNotFoundException($"No leds found in store with id '{storeId}' and box with id '{boxId}'");
         }

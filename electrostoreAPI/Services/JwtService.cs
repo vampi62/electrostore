@@ -19,7 +19,7 @@ public class JwtService
 
     public Jwt GenerateToken(ReadUserDto user, string reason)
     {
-        if (user is null) throw new ArgumentNullException(nameof(user));
+        ArgumentNullException.ThrowIfNull(user);
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_jwtSettings.Key);
