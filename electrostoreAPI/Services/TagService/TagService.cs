@@ -70,7 +70,7 @@ public class TagService : ITagService
                 ItemsTags = expand != null && expand.Contains("items_tags") ? t.ItemsTags.Take(20).ToList() : null,
                 BoxsTags = expand != null && expand.Contains("boxs_tags") ? t.BoxsTags.Take(20).ToList() : null
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Tag with id {id} not found");
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Tag with id '{id}' not found");
         return _mapper.Map<ReadExtendedTagDto>(tag.Tag) with
         {
             stores_tags_count = tag.StoresTagsCount,
@@ -87,7 +87,7 @@ public class TagService : ITagService
         // check if tag name already exists
         if (await _context.Tags.AnyAsync(t => t.nom_tag == tagDto.nom_tag))
         {
-            throw new InvalidOperationException($"Tag with name {tagDto.nom_tag} already exists");
+            throw new InvalidOperationException($"Tag with name '{tagDto.nom_tag}' already exists");
         }
         var newTag = _mapper.Map<Tags>(tagDto);
         _context.Tags.Add(newTag);
@@ -123,13 +123,13 @@ public class TagService : ITagService
 
     public async Task<ReadTagDto> UpdateTag(int id, UpdateTagDto tagDto)
     {
-        var tagToUpdate = await _context.Tags.FindAsync(id) ?? throw new KeyNotFoundException($"Tag with id {id} not found");
+        var tagToUpdate = await _context.Tags.FindAsync(id) ?? throw new KeyNotFoundException($"Tag with id '{id}' not found");
         if (tagDto.nom_tag is not null)
         {
             // check if another tag with the name already exists
             if (await _context.Tags.AnyAsync(t => t.nom_tag == tagDto.nom_tag && t.id_tag != id))
             {
-                throw new InvalidOperationException($"Tag with name {tagDto.nom_tag} already exists");
+                throw new InvalidOperationException($"Tag with name '{tagDto.nom_tag}' already exists");
             }
             tagToUpdate.nom_tag = tagDto.nom_tag;
         }
@@ -143,7 +143,7 @@ public class TagService : ITagService
 
     public async Task DeleteTag(int id)
     {
-        var tagToDelete = await _context.Tags.FindAsync(id) ?? throw new KeyNotFoundException($"Tag with id {id} not found");
+        var tagToDelete = await _context.Tags.FindAsync(id) ?? throw new KeyNotFoundException($"Tag with id '{id}' not found");
         _context.Tags.Remove(tagToDelete);
         await _context.SaveChangesAsync();
     }

@@ -21,7 +21,7 @@ public class ItemTagService : IItemTagService
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            throw new KeyNotFoundException($"Item with id {itemId} not found");
+            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.ItemsTags.AsQueryable();
         query = query.Where(it => it.id_item == itemId);
@@ -44,7 +44,7 @@ public class ItemTagService : IItemTagService
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            throw new KeyNotFoundException($"Item with id {itemId} not found");
+            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         return await _context.ItemsTags
             .Where(it => it.id_item == itemId)
@@ -56,7 +56,7 @@ public class ItemTagService : IItemTagService
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
         {
-            throw new KeyNotFoundException($"Tag with id {tagId} not found");
+            throw new KeyNotFoundException($"Tag with id '{tagId}' not found");
         }
         var query = _context.ItemsTags.AsQueryable();
         query = query.Where(it => it.id_tag == tagId);
@@ -79,7 +79,7 @@ public class ItemTagService : IItemTagService
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
         {
-            throw new KeyNotFoundException($"Tag with id {tagId} not found");
+            throw new KeyNotFoundException($"Tag with id '{tagId}' not found");
         }
         return await _context.ItemsTags
             .Where(it => it.id_tag == tagId)
@@ -98,7 +98,7 @@ public class ItemTagService : IItemTagService
         {
             query = query.Include(it => it.Item);
         }
-        var itemTag = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ItemTag with id_item {itemId} and id_tag {tagId} not found");
+        var itemTag = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ItemTag with id_item '{itemId}' and id_tag '{tagId}' not found");
         return _mapper.Map<ReadExtendedItemTagDto>(itemTag);
     }
 
@@ -107,17 +107,17 @@ public class ItemTagService : IItemTagService
         // check if item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemTagDto.id_item))
         {
-            throw new KeyNotFoundException($"Item with id {itemTagDto.id_item} not found");
+            throw new KeyNotFoundException($"Item with id '{itemTagDto.id_item}' not found");
         }
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == itemTagDto.id_tag))
         {
-            throw new KeyNotFoundException($"Tag with id {itemTagDto.id_tag} not found");
+            throw new KeyNotFoundException($"Tag with id '{itemTagDto.id_tag}' not found");
         }
         // check if itemTag already exists
         if (await _context.ItemsTags.AnyAsync(it => it.id_item == itemTagDto.id_item && it.id_tag == itemTagDto.id_tag))
         {
-            throw new InvalidOperationException($"ItemTag with id_item {itemTagDto.id_item} and id_tag {itemTagDto.id_tag} already exists");
+            throw new InvalidOperationException($"ItemTag with id_item '{itemTagDto.id_item}' and id_tag '{itemTagDto.id_tag}' already exists");
         }
         var itemTag = _mapper.Map<ItemsTags>(itemTagDto);
         _context.ItemsTags.Add(itemTag);
@@ -153,7 +153,7 @@ public class ItemTagService : IItemTagService
 
     public async Task DeleteItemTag(int itemId, int tagId)
     {
-        var itemTagToDelete = await _context.ItemsTags.FindAsync(itemId, tagId) ?? throw new KeyNotFoundException($"ItemTag with id_item {itemId} and id_tag {tagId} not found");
+        var itemTagToDelete = await _context.ItemsTags.FindAsync(itemId, tagId) ?? throw new KeyNotFoundException($"ItemTag with id_item '{itemId}' and id_tag '{tagId}' not found");
         _context.ItemsTags.Remove(itemTagToDelete);
         await _context.SaveChangesAsync();
     }

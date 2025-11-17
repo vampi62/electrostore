@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using electrostore.Validators;
 
 namespace electrostore.Dto;
 
@@ -18,44 +19,34 @@ public record ReadExtendedCommandCommentaireDto : ReadCommandCommentaireDto
 }
 public record CreateCommandCommentaireByCommandDto
 {
-    [Required]
-    [MinLength(1, ErrorMessage = "contenu_command_commentaire cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string contenu_command_commentaire { get; init; }
 }
 public record CreateCommandCommentaireByUserDto
 {
-    [Required]
+    [Required(ErrorMessage = "{0} is required.")]
     public required int id_command { get; init; }
 
-    [Required]
-    [MinLength(1, ErrorMessage = "contenu_command_commentaire cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string contenu_command_commentaire { get; init; }
 }
 public record CreateCommandCommentaireDto
 {
-    [Required]
+    [Required(ErrorMessage = "{0} is required.")]
     public required int id_command { get; init; }
 
-    [Required]
+    [Required(ErrorMessage = "{0} is required.")]
     public required int id_user { get; init; }
 
-    [Required]
-    [MinLength(1, ErrorMessage = "contenu_command_commentaire cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string contenu_command_commentaire { get; init; }
 }
-public record UpdateCommandCommentaireDto : IValidatableObject
+public record UpdateCommandCommentaireDto
 {
-    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "contenu_command_commentaire cannot exceed 455 characters")]
+    [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? contenu_command_commentaire { get; init; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (contenu_command_commentaire is not null && string.IsNullOrWhiteSpace(contenu_command_commentaire))
-        {
-            yield return new ValidationResult("contenu_command_commentaire cannot be empty or whitespace.", new[] { nameof(contenu_command_commentaire) });
-        }
-    }
 }

@@ -22,6 +22,12 @@ public class AuthService : IAuthService
     private readonly JwtService.JwtService _jwtService;
     private readonly IJwiService _jwiService;
     private static readonly Dictionary<string, DateTime> _stateStore = new();
+    private static readonly char[] separator = new char[] { '_', '-' };
+    private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     // In-memory store for state parameters, if you want persistence or use duplication across instances, consider using a distributed cache like Redis
 
     public AuthService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, ISmtpService smtpService, ISessionService sessionService, IUserService userService, JwtService.JwtService jwtService, IJwiService jwiService)
@@ -118,10 +124,7 @@ public class AuthService : IAuthService
             throw new HttpRequestException($"Error exchanging code for token: {response.StatusCode}");
         }
         var jsonResponse = await response.Content.ReadAsStringAsync();
-        var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(jsonResponse, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
+        var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(jsonResponse, JsonOptions);
         return tokenResponse ?? throw new InvalidOperationException("Invalid token response");
     }
 
@@ -138,10 +141,7 @@ public class AuthService : IAuthService
             throw new HttpRequestException($"Error retrieving user info: {response.StatusCode}");
         }
         var jsonResponse = await response.Content.ReadAsStringAsync();
-        var userInfo = JsonSerializer.Deserialize<UserInfoResponse>(jsonResponse, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
+        var userInfo = JsonSerializer.Deserialize<UserInfoResponse>(jsonResponse, JsonOptions);
         return userInfo ?? throw new InvalidOperationException("Invalid user info response");
     }
 
@@ -165,7 +165,7 @@ public class AuthService : IAuthService
 
     public async Task<bool> CheckUserPasswordByEmail(string email, string password)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == email) ?? throw new KeyNotFoundException($"User with email {email} not found");
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == email) ?? throw new KeyNotFoundException($"User with email '{email}' not found");
         return BCrypt.Net.BCrypt.Verify(password, user.mdp_user);
     }
 
@@ -232,7 +232,7 @@ public class AuthService : IAuthService
     public async Task<LoginResponse> LoginWithPassword(LoginRequest request)
     {
         // check if user exists
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.Email) ?? throw new KeyNotFoundException($"User with email {request.Email} not found");
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.Email) ?? throw new KeyNotFoundException($"User with email '{request.Email}' not found");
         // check if password is correct
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.mdp_user))
         {
@@ -264,7 +264,7 @@ public class AuthService : IAuthService
         var tokenId = _sessionService.GetTokenId();
         var authMethod = _sessionService.GetTokenAuthMethod();
         var sessionId = await _jwiService.GetSessionIdByTokenId(tokenId, clientId);
-        var user = await _context.Users.FindAsync(clientId) ?? throw new KeyNotFoundException($"User with id {clientId} not found");
+        var user = await _context.Users.FindAsync(clientId) ?? throw new KeyNotFoundException($"User with id '{clientId}' not found");
         var token = _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user), authMethod);
         await _jwiService.RevokePairTokenByRefreshToken(tokenId, "User refresh token", clientId);
         await _jwiService.SaveToken(token, user.id_user, authMethod, sessionId);
@@ -313,7 +313,7 @@ public class AuthService : IAuthService
         if (string.IsNullOrEmpty(text))
             return text;
 
-        var words = text.Split(new char[] { '_', '-' }, StringSplitOptions.RemoveEmptyEntries);
+        var words = text.Split(separator, StringSplitOptions.RemoveEmptyEntries);
         for (int i = 0; i < words.Length; i++)
         {
             words[i] = char.ToUpper(words[i][0]) + words[i].Substring(1).ToLower();

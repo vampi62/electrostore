@@ -25,7 +25,7 @@ public class ProjetCommentaireService : IProjetCommentaireService
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
         {
-            throw new KeyNotFoundException($"Projet with id {projetId} not found");
+            throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsCommentaires.AsQueryable();
         query = query.Where(p => p.id_projet == projetId);
@@ -48,7 +48,7 @@ public class ProjetCommentaireService : IProjetCommentaireService
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
         {
-            throw new KeyNotFoundException($"Projet with id {projetId} not found");
+            throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         return await _context.ProjetsCommentaires
             .CountAsync(p => p.id_projet == projetId);
@@ -59,7 +59,7 @@ public class ProjetCommentaireService : IProjetCommentaireService
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
         {
-            throw new KeyNotFoundException($"User with id {userId} not found");
+            throw new KeyNotFoundException($"User with id '{userId}' not found");
         }
         var query = _context.ProjetsCommentaires.AsQueryable();
         query = query.Where(pc => pc.id_user == userId);
@@ -82,7 +82,7 @@ public class ProjetCommentaireService : IProjetCommentaireService
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
         {
-            throw new KeyNotFoundException($"User with id {userId} not found");
+            throw new KeyNotFoundException($"User with id '{userId}' not found");
         }
         return await _context.ProjetsCommentaires
             .CountAsync(p => p.id_user == userId);
@@ -100,7 +100,7 @@ public class ProjetCommentaireService : IProjetCommentaireService
         {
             query = query.Include(pc => pc.User);
         }
-        var projetCommentaire = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetCommentaire with id {id} not found");
+        var projetCommentaire = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetCommentaire with id '{id}' not found");
         return _mapper.Map<ReadExtendedProjetCommentaireDto>(projetCommentaire);
     }
 
@@ -109,12 +109,12 @@ public class ProjetCommentaireService : IProjetCommentaireService
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetCommentaireDto.id_projet))
         {
-            throw new KeyNotFoundException($"Projet with id {projetCommentaireDto.id_projet} not found");
+            throw new KeyNotFoundException($"Projet with id '{projetCommentaireDto.id_projet}' not found");
         }
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == projetCommentaireDto.id_user))
         {
-            throw new KeyNotFoundException($"User with id {projetCommentaireDto.id_user} not found");
+            throw new KeyNotFoundException($"User with id '{projetCommentaireDto.id_user}' not found");
         }
         var newProjetCommentaire = _mapper.Map<ProjetsCommentaires>(projetCommentaireDto);
         _context.ProjetsCommentaires.Add(newProjetCommentaire);
@@ -127,7 +127,7 @@ public class ProjetCommentaireService : IProjetCommentaireService
         var projetCommentaireToUpdate = await _context.ProjetsCommentaires.FindAsync(id);
         if ((projetCommentaireToUpdate is null) || (projetId is not null && projetCommentaireToUpdate.id_projet != projetId) || (userId is not null && projetCommentaireToUpdate.id_user != userId))
         {
-            throw new KeyNotFoundException($"Commentaire with id {id} not found");
+            throw new KeyNotFoundException($"Commentaire with id '{id}' not found");
         }
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
@@ -145,7 +145,7 @@ public class ProjetCommentaireService : IProjetCommentaireService
         var projetCommentaireToDelete = await _context.ProjetsCommentaires.FindAsync(id);
         if ((projetCommentaireToDelete is null) || (projetId is not null && projetCommentaireToDelete.id_projet != projetId) || (userId is not null && projetCommentaireToDelete.id_user != userId))
         {
-            throw new KeyNotFoundException($"ProjetCommentaire with id {id} not found");
+            throw new KeyNotFoundException($"ProjetCommentaire with id '{id}' not found");
         }
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();

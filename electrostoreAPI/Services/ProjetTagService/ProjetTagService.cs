@@ -58,7 +58,7 @@ public class ProjetTagService : IProjetTagService
                 ProjetsProjetTagsCount = t.ProjetsProjetTags.Count,
                 ProjetsProjetTags = expand != null && expand.Contains("stores_tags") ? t.ProjetsProjetTags.Take(20).ToList() : null
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetTag with id {id} not found");
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetTag with id '{id}' not found");
         return _mapper.Map<ReadExtendedProjetTagDto>(projetTag.ProjetTags) with
         {
             projets_projet_tags_count = projetTag.ProjetsProjetTagsCount,
@@ -71,7 +71,7 @@ public class ProjetTagService : IProjetTagService
         // check if tag name already exists
         if (await _context.ProjetTags.AnyAsync(t => t.nom_projet_tag == projetTagDto.nom_projet_tag))
         {
-            throw new InvalidOperationException($"ProjetTag with name {projetTagDto.nom_projet_tag} already exists");
+            throw new InvalidOperationException($"ProjetTag with name '{projetTagDto.nom_projet_tag}' already exists");
         }
         var newProjetTag = _mapper.Map<ProjetTags>(projetTagDto);
         _context.ProjetTags.Add(newProjetTag);
@@ -113,7 +113,7 @@ public class ProjetTagService : IProjetTagService
             // check if another tag with the name already exists
             if (await _context.ProjetTags.AnyAsync(t => t.nom_projet_tag == projetTagDto.nom_projet_tag && t.id_projet_tag != id))
             {
-                throw new InvalidOperationException($"ProjetTag with name {projetTagDto.nom_projet_tag} already exists");
+                throw new InvalidOperationException($"ProjetTag with name '{projetTagDto.nom_projet_tag}' already exists");
             }
             projetTagToUpdate.nom_projet_tag = projetTagDto.nom_projet_tag;
         }
@@ -127,7 +127,7 @@ public class ProjetTagService : IProjetTagService
 
     public async Task DeleteProjetTag(int id)
     {
-        var projetTagToDelete = await _context.ProjetTags.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetTag with id {id} not found");
+        var projetTagToDelete = await _context.ProjetTags.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetTag with id '{id}' not found");
         _context.ProjetTags.Remove(projetTagToDelete);
         await _context.SaveChangesAsync();
     }

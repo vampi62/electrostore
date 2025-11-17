@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace electrostore.Dto;
 
@@ -28,87 +29,88 @@ public record ReadBulkBoxDto
 }
 public record CreateBoxByStoreDto
 {
-    [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be between {1} and {2}.")]
     public required int xstart_box { get; init; }
 
-    [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be between {1} and {2}.")]
     public required int ystart_box { get; init; }
 
-    [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be between {1} and {2}.")]
     public required int xend_box { get; init; }
 
-    [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be between {1} and {2}.")]
     public required int yend_box { get; init; }
 }
 public record CreateBoxDto
 {
-    [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public required int xstart_box { get; init; }
 
-    [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public required int ystart_box { get; init; }
 
-    [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public required int xend_box { get; init; }
 
-    [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public required int yend_box { get; init; }
 
-    [Required]
+    [Required(ErrorMessage = "{0} is required.")]
     public required int id_store { get; init; }
 }
 public record UpdateBoxByStoreDto
 {
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? xstart_box { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? ystart_box { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? xend_box { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? yend_box { get; init; }
 }
 public record UpdateBoxDto
 {
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? xstart_box { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? ystart_box { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? xend_box { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? yend_box { get; init; }
 
     public int? new_id_store { get; init; }
 }
 public record UpdateBulkBoxByStoreDto
 {
+    [Required(ErrorMessage = "{0} is required.")]
     public required int id_box { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? xstart_box { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? ystart_box { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? xend_box { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "ylength_store must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? yend_box { get; init; }
     
     public int? new_id_store { get; init; }

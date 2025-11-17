@@ -21,7 +21,7 @@ public class CommandItemService : ICommandItemService
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commandId))
         {
-            throw new KeyNotFoundException($"Command with id {commandId} not found");
+            throw new KeyNotFoundException($"Command with id '{commandId}' not found");
         }
         var query = _context.CommandsItems.AsQueryable();
         query = query.Where(ci => ci.id_command == commandId);
@@ -44,7 +44,7 @@ public class CommandItemService : ICommandItemService
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commandId))
         {
-            throw new KeyNotFoundException($"Command with id {commandId} not found");
+            throw new KeyNotFoundException($"Command with id '{commandId}' not found");
         }
         return await _context.CommandsItems
             .CountAsync(ci => ci.id_command == commandId);
@@ -55,7 +55,7 @@ public class CommandItemService : ICommandItemService
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            throw new KeyNotFoundException($"Item with id {itemId} not found");
+            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.CommandsItems.AsQueryable();
         query = query.Where(ci => ci.id_item == itemId);
@@ -78,7 +78,7 @@ public class CommandItemService : ICommandItemService
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            throw new KeyNotFoundException($"Item with id {itemId} not found");
+            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         return await _context.CommandsItems
             .CountAsync(ci => ci.id_item == itemId);
@@ -96,7 +96,7 @@ public class CommandItemService : ICommandItemService
         {
             query = query.Include(ci => ci.Command);
         }
-        var commandItem = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"CommandItem with commandId {commandId} and itemId {itemId} not found");
+        var commandItem = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"CommandItem with commandId '{commandId}' and itemId '{itemId}' not found");
         return _mapper.Map<ReadExtendedCommandItemDto>(commandItem);
     }
 
@@ -105,17 +105,17 @@ public class CommandItemService : ICommandItemService
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == commandItemDto.id_item))
         {
-            throw new KeyNotFoundException($"Item with id {commandItemDto.id_item} not found");
+            throw new KeyNotFoundException($"Item with id '{commandItemDto.id_item}' not found");
         }
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commandItemDto.id_command))
         {
-            throw new KeyNotFoundException($"Command with id {commandItemDto.id_command} not found");
+            throw new KeyNotFoundException($"Command with id '{commandItemDto.id_command}' not found");
         }
         // check if the command item already exists
         if (await _context.CommandsItems.AnyAsync(ci => ci.id_command == commandItemDto.id_command && ci.id_item == commandItemDto.id_item))
         {
-            throw new ArgumentException($"CommandItem with commandId {commandItemDto.id_command} and itemId {commandItemDto.id_item} already exists");
+            throw new ArgumentException($"CommandItem with commandId '{commandItemDto.id_command}' and itemId '{commandItemDto.id_item}' already exists");
         }
         var newCommandItem = _mapper.Map<CommandsItems>(commandItemDto);
         _context.CommandsItems.Add(newCommandItem);
@@ -153,13 +153,13 @@ public class CommandItemService : ICommandItemService
     {
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            throw new KeyNotFoundException($"Item with id {itemId} not found");
+            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         if (!await _context.Commands.AnyAsync(c => c.id_command == commandId))
         {
-            throw new KeyNotFoundException($"Command with id {commandId} not found");
+            throw new KeyNotFoundException($"Command with id '{commandId}' not found");
         }
-        var commandItemToUpdate = await _context.CommandsItems.FindAsync(commandId, itemId) ?? throw new KeyNotFoundException($"CommandItem with commandId {commandId} and itemId {itemId} not found");
+        var commandItemToUpdate = await _context.CommandsItems.FindAsync(commandId, itemId) ?? throw new KeyNotFoundException($"CommandItem with commandId '{commandId}' and itemId '{itemId}' not found");
         if (commandItemDto.qte_command_item is not null)
         {
             if (commandItemDto.qte_command_item <= 0)
@@ -182,7 +182,7 @@ public class CommandItemService : ICommandItemService
 
     public async Task DeleteCommandItem(int commandId, int itemId)
     {
-        var commandItemToDelete = await _context.CommandsItems.FindAsync(commandId, itemId) ?? throw new KeyNotFoundException($"CommandItem with commandId {commandId} and itemId {itemId} not found");
+        var commandItemToDelete = await _context.CommandsItems.FindAsync(commandId, itemId) ?? throw new KeyNotFoundException($"CommandItem with commandId '{commandId}' and itemId '{itemId}' not found");
         _context.CommandsItems.Remove(commandItemToDelete);
         await _context.SaveChangesAsync();
     }

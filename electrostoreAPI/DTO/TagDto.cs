@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using electrostore.Validators;
+using System.Text.Json.Serialization;
 
 namespace electrostore.Dto;
 
@@ -28,28 +30,20 @@ public record ReadBulkTagDto
 
 public record CreateTagDto
 {
-    [Required]
-    [MinLength(1, ErrorMessage = "nom_tag cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_tag cannot exceed 50 characters")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string nom_tag { get; init; }
 
-    [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "poids_tag must be greater than or equal to 0.")]
-    public required int? poids_tag { get; init; } = 0;
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public required int poids_tag { get; init; }
 }
-public record UpdateTagDto : IValidatableObject
+public record UpdateTagDto
 {
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_tag cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? nom_tag { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "poids_tag must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? poids_tag { get; init; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (nom_tag is not null && string.IsNullOrWhiteSpace(nom_tag))
-        {
-            yield return new ValidationResult("nom_tag cannot be empty or whitespace.", new[] { nameof(nom_tag) });
-        }
-    }
 }

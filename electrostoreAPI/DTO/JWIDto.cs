@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using electrostore.Validators;
 
 namespace electrostore.Dto;
 
@@ -46,16 +47,9 @@ public record SessionDto
     public int id_user { get; init; }
     public DateTime first_created_at { get; init; }
 }
-public record UpdateAccessTokenDto : IValidatableObject
+public record UpdateAccessTokenDto
 {
-    [MaxLength(Constants.MaxReasonLength, ErrorMessage = "revoked_reason cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? revoked_reason { get; init; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (revoked_reason is not null && string.IsNullOrWhiteSpace(revoked_reason))
-        {
-            yield return new ValidationResult("revoked_reason cannot be empty or whitespace.", new[] { nameof(revoked_reason) });
-        }
-    }
 }

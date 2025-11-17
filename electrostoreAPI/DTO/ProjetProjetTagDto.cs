@@ -21,19 +21,19 @@ public record ReadBulkProjetProjetTagDto
 }
 public record CreateProjetProjetTagByProjetTagDto
 {
-    [Required]
+    [Required(ErrorMessage = "{0} is required.")]
     public required int id_projet { get; init; }
 }
 public record CreateProjetProjetTagByProjetDto
 {
-    [Required]
+    [Required(ErrorMessage = "{0} is required.")]
     public required int id_projet_tag { get; init; }
 }
 public record CreateProjetProjetTagDto
 {
-    [Required]
+    [Required(ErrorMessage = "{0} is required.")]
     public required int id_projet { get; init; }
 
-    [Required]
+    [Required(ErrorMessage = "{0} is required.")]
     public required int id_projet_tag { get; init; }
 }

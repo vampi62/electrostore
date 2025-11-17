@@ -25,7 +25,7 @@ public class StoreTagService : IStoreTagService
         // check if store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
         {
-            throw new KeyNotFoundException($"Store with id {storeId} not found");
+            throw new KeyNotFoundException($"Store with id '{storeId}' not found");
         }
         var query = _context.StoresTags.AsQueryable();
         query = query.Where(st => st.id_store == storeId);
@@ -48,7 +48,7 @@ public class StoreTagService : IStoreTagService
         // check if store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
         {
-            throw new KeyNotFoundException($"Store with id {storeId} not found");
+            throw new KeyNotFoundException($"Store with id '{storeId}' not found");
         }
         return await _context.StoresTags
             .CountAsync(st => st.id_store == storeId);
@@ -59,7 +59,7 @@ public class StoreTagService : IStoreTagService
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
         {
-            throw new KeyNotFoundException($"Tag with id {tagId} not found");
+            throw new KeyNotFoundException($"Tag with id '{tagId}' not found");
         }
         var query = _context.StoresTags.AsQueryable();
         query = query.Where(st => st.id_tag == tagId);
@@ -82,7 +82,7 @@ public class StoreTagService : IStoreTagService
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
         {
-            throw new KeyNotFoundException($"Tag with id {tagId} not found");
+            throw new KeyNotFoundException($"Tag with id '{tagId}' not found");
         }
         return await _context.StoresTags
             .CountAsync(st => st.id_tag == tagId);
@@ -100,7 +100,7 @@ public class StoreTagService : IStoreTagService
         {
             query = query.Include(st => st.Store);
         }
-        var storeTag = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"StoreTag with storeId {storeId} and tagId {tagId} not found");
+        var storeTag = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"StoreTag with storeId '{storeId}' and tagId '{tagId}' not found");
         return _mapper.Map<ReadExtendedStoreTagDto>(storeTag);
     }
 
@@ -114,17 +114,17 @@ public class StoreTagService : IStoreTagService
         // check if store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeTagDto.id_store))
         {
-            throw new KeyNotFoundException($"Store with id {storeTagDto.id_store} not found");
+            throw new KeyNotFoundException($"Store with id '{storeTagDto.id_store}' not found");
         }
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == storeTagDto.id_tag))
         {
-            throw new KeyNotFoundException($"Tag with id {storeTagDto.id_tag} not found");
+            throw new KeyNotFoundException($"Tag with id '{storeTagDto.id_tag}' not found");
         }
         // check if store tag already exists
         if (await _context.StoresTags.AnyAsync(st => st.id_store == storeTagDto.id_store && st.id_tag == storeTagDto.id_tag))
         {
-            throw new InvalidOperationException($"StoreTag with storeId {storeTagDto.id_store} and tagId {storeTagDto.id_tag} already exists");
+            throw new InvalidOperationException($"StoreTag with storeId '{storeTagDto.id_store}' and tagId '{storeTagDto.id_tag}' already exists");
         }
         var newStoreTag = _mapper.Map<StoresTags>(storeTagDto);
         _context.StoresTags.Add(newStoreTag);
@@ -170,7 +170,7 @@ public class StoreTagService : IStoreTagService
         {
             throw new UnauthorizedAccessException("You are not authorized to delete StoreTag");
         }
-        var storeTag = await _context.StoresTags.FindAsync(storeId, tagId) ?? throw new KeyNotFoundException($"StoreTag with storeId {storeId} and tagId {tagId} not found");
+        var storeTag = await _context.StoresTags.FindAsync(storeId, tagId) ?? throw new KeyNotFoundException($"StoreTag with storeId '{storeId}' and tagId '{tagId}' not found");
         _context.StoresTags.Remove(storeTag);
         await _context.SaveChangesAsync();
     }

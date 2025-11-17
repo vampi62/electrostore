@@ -88,7 +88,7 @@ public class ItemService : IItemService
                 ProjetsItems = expand != null && expand.Contains("projet_items") ? i.ProjetsItems.Take(20).ToList() : null,
                 ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Item with id {id} not found");
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Item with id '{id}' not found");
         return _mapper.Map<ReadExtendedItemDto>(item.Item) with
         {
             item_tags_count = item.ItemsTagsCount,
@@ -109,12 +109,12 @@ public class ItemService : IItemService
         // check if img exists
         if (itemDto.id_img is not null && !await _context.Imgs.AnyAsync(i => i.id_img == itemDto.id_img))
         {
-            throw new KeyNotFoundException($"Img with id {itemDto.id_img} not found");
+            throw new KeyNotFoundException($"Img with id '{itemDto.id_img}' not found");
         }
         // check if item already exists
         if (await _context.Items.AnyAsync(i => i.reference_name_item == itemDto.reference_name_item))
         {
-            throw new InvalidOperationException($"Item with name {itemDto.reference_name_item} already exists");
+            throw new InvalidOperationException($"Item with name '{itemDto.reference_name_item}' already exists");
         }
         var item = _mapper.Map<Items>(itemDto);
         _context.Items.Add(item);
@@ -128,13 +128,13 @@ public class ItemService : IItemService
     public async Task<ReadItemDto> UpdateItem(int id, UpdateItemDto itemDto)
     {
         // check if img exists
-        var itemToUpdate = await _context.Items.FindAsync(id) ?? throw new KeyNotFoundException($"Item with id {id} not found");
+        var itemToUpdate = await _context.Items.FindAsync(id) ?? throw new KeyNotFoundException($"Item with id '{id}' not found");
         if (itemDto.reference_name_item is not null)
         {
             // check if another item with the name already exists
             if (await _context.Items.AnyAsync(i => i.reference_name_item == itemDto.reference_name_item && i.id_item != id))
             {
-                throw new InvalidOperationException($"Item with name {itemDto.reference_name_item} already exists");
+                throw new InvalidOperationException($"Item with name '{itemDto.reference_name_item}' already exists");
             }
             itemToUpdate.reference_name_item = itemDto.reference_name_item;
         }
@@ -155,7 +155,7 @@ public class ItemService : IItemService
             var img = await _context.Imgs.FindAsync(itemDto.id_img);
             if ((img is null) || (id != img.id_item))
             {
-                throw new KeyNotFoundException($"Img with id {itemDto.id_img} not found");
+                throw new KeyNotFoundException($"Img with id '{itemDto.id_img}' not found");
             }
             itemToUpdate.id_img = itemDto.id_img;
         }
@@ -165,7 +165,7 @@ public class ItemService : IItemService
 
     public async Task DeleteItem(int id)
     {
-        var itemToDelete = await _context.Items.FindAsync(id) ?? throw new KeyNotFoundException($"Item with id {id} not found");
+        var itemToDelete = await _context.Items.FindAsync(id) ?? throw new KeyNotFoundException($"Item with id '{id}' not found");
         _context.Items.Remove(itemToDelete);
         await _fileService.DeleteDirectory(Path.Combine(_imagesPath, id.ToString()));
         await _fileService.DeleteDirectory(Path.Combine(_imagesThumbnailsPath, id.ToString()));

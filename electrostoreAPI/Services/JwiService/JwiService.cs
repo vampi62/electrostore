@@ -222,7 +222,7 @@ public class JwiService : IJwiService
                 id_user = group.OrderByDescending(jwi => jwi.expires_at).First().id_user,
                 first_created_at = group.OrderBy(jwi => jwi.expires_at).First().created_at
             });
-        return await groupedQuery.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Session with id {id} not found for user {userId}");
+        return await groupedQuery.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Session with id '{id}' not found for user '{userId}'");
     }
 
     public async Task<Guid> GetSessionIdByTokenId(string id, int userId)
@@ -286,7 +286,7 @@ public class JwiService : IJwiService
                 id_user = group.OrderByDescending(jwi => jwi.expires_at).First().id_user,
                 first_created_at = group.OrderBy(jwi => jwi.expires_at).First().created_at
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Session with id {id} not found for user {userId}");     
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Session with id '{id}' not found for user '{userId}'");     
     }
 
     public async Task RevokePairTokenByRefreshToken(string refreshToken, string reason, int? userId = null)
@@ -300,14 +300,14 @@ public class JwiService : IJwiService
         }
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
         {
-            throw new KeyNotFoundException($"User with id {userId} not found");
+            throw new KeyNotFoundException($"User with id '{userId}' not found");
         }
         var jwi_refresh = await _context.JwiRefreshTokens.FindAsync(Guid.Parse(refreshToken));
         if ((jwi_refresh is null) || (userId is not null && jwi_refresh.id_user != userId))
         {
-            throw new KeyNotFoundException($"RefreshToken with id {refreshToken} not found");
+            throw new KeyNotFoundException($"RefreshToken with id '{refreshToken}' not found");
         }
-        var jwi_access = await _context.JwiAccessTokens.FindAsync(jwi_refresh.id_jwi_access) ?? throw new KeyNotFoundException($"AccessToken with id {jwi_refresh.id_jwi_access} not found");
+        var jwi_access = await _context.JwiAccessTokens.FindAsync(jwi_refresh.id_jwi_access) ?? throw new KeyNotFoundException($"AccessToken with id '{jwi_refresh.id_jwi_access}' not found");
         jwi_refresh.is_revoked = true;
         jwi_refresh.revoked_at = DateTime.UtcNow;
         jwi_refresh.revoked_by_ip = clientIp;

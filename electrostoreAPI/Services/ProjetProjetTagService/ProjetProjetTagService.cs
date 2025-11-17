@@ -25,7 +25,7 @@ public class ProjetProjetTagService : IProjetProjetTagService
         // check if projet exists
         if (!await _context.Projets.AnyAsync(s => s.id_projet == projetId))
         {
-            throw new KeyNotFoundException($"Projet with id {projetId} not found");
+            throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsProjetTags.AsQueryable();
         query = query.Where(st => st.id_projet == projetId);
@@ -48,7 +48,7 @@ public class ProjetProjetTagService : IProjetProjetTagService
         // check if projet exists
         if (!await _context.Projets.AnyAsync(s => s.id_projet == projetId))
         {
-            throw new KeyNotFoundException($"Projet with id {projetId} not found");
+            throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         return await _context.ProjetsProjetTags
             .CountAsync(st => st.id_projet == projetId);
@@ -59,7 +59,7 @@ public class ProjetProjetTagService : IProjetProjetTagService
         // check if projetTag exists
         if (!await _context.ProjetTags.AnyAsync(t => t.id_projet_tag == projetTagId))
         {
-            throw new KeyNotFoundException($"ProjetTag with id {projetTagId} not found");
+            throw new KeyNotFoundException($"ProjetTag with id '{projetTagId}' not found");
         }
         var query = _context.ProjetsProjetTags.AsQueryable();
         query = query.Where(st => st.id_projet_tag == projetTagId);
@@ -82,7 +82,7 @@ public class ProjetProjetTagService : IProjetProjetTagService
         // check if projetTag exists
         if (!await _context.ProjetTags.AnyAsync(t => t.id_projet_tag == projetTagId))
         {
-            throw new KeyNotFoundException($"ProjetTag with id {projetTagId} not found");
+            throw new KeyNotFoundException($"ProjetTag with id '{projetTagId}' not found");
         }
         return await _context.ProjetsProjetTags
             .CountAsync(st => st.id_projet_tag == projetTagId);
@@ -100,7 +100,7 @@ public class ProjetProjetTagService : IProjetProjetTagService
         {
             query = query.Include(st => st.Projet);
         }
-        var projetProjetTag = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetProjetTag with projetId {projetId} and projetTagId {projetTagId} not found");
+        var projetProjetTag = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetProjetTag with projetId '{projetId}' and projetTagId '{projetTagId}' not found");
         return _mapper.Map<ReadExtendedProjetProjetTagDto>(projetProjetTag);
     }
 
@@ -114,17 +114,17 @@ public class ProjetProjetTagService : IProjetProjetTagService
         // check if store exists
         if (!await _context.Projets.AnyAsync(s => s.id_projet == projetProjetTagDto.id_projet))
         {
-            throw new KeyNotFoundException($"Projet with id {projetProjetTagDto.id_projet} not found");
+            throw new KeyNotFoundException($"Projet with id '{projetProjetTagDto.id_projet}' not found");
         }
         // check if tag exists
         if (!await _context.ProjetTags.AnyAsync(t => t.id_projet_tag == projetProjetTagDto.id_projet_tag))
         {
-            throw new KeyNotFoundException($"Tag with id {projetProjetTagDto.id_projet_tag} not found");
+            throw new KeyNotFoundException($"Tag with id '{projetProjetTagDto.id_projet_tag}' not found");
         }
         // check if store tag already exists
         if (await _context.ProjetsProjetTags.AnyAsync(st => st.id_projet == projetProjetTagDto.id_projet && st.id_projet_tag == projetProjetTagDto.id_projet_tag))
         {
-            throw new InvalidOperationException($"ProjetProjetTag with projetId {projetProjetTagDto.id_projet} and projetTagId {projetProjetTagDto.id_projet_tag} already exists");
+            throw new InvalidOperationException($"ProjetProjetTag with projetId '{projetProjetTagDto.id_projet}' and projetTagId '{projetProjetTagDto.id_projet_tag}' already exists");
         }
         var newProjetProjetTag = _mapper.Map<ProjetsProjetTags>(projetProjetTagDto);
         _context.ProjetsProjetTags.Add(newProjetProjetTag);
@@ -170,7 +170,7 @@ public class ProjetProjetTagService : IProjetProjetTagService
         {
             throw new UnauthorizedAccessException("You are not authorized to delete ProjetProjetTag");
         }
-        var projetProjetTag = await _context.ProjetsProjetTags.FindAsync(projetId, projetTagId) ?? throw new KeyNotFoundException($"ProjetProjetTag with projetId {projetId} and projetTagId {projetTagId} not found");
+        var projetProjetTag = await _context.ProjetsProjetTags.FindAsync(projetId, projetTagId) ?? throw new KeyNotFoundException($"ProjetProjetTag with projetId '{projetId}' and projetTagId '{projetTagId}' not found");
         _context.ProjetsProjetTags.Remove(projetProjetTag);
         await _context.SaveChangesAsync();
     }

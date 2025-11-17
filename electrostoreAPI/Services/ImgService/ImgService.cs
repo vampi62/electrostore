@@ -26,7 +26,7 @@ public class ImgService : IImgService
         //check if item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            throw new KeyNotFoundException($"Item with id {itemId} not found");
+            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.Imgs.AsQueryable();
         query = query.Where(im => im.id_item == itemId);
@@ -41,7 +41,7 @@ public class ImgService : IImgService
         //check if item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            throw new KeyNotFoundException($"Item with id {itemId} not found");
+            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         return await _context.Imgs
             .Where(img => img.id_item == itemId)
@@ -53,7 +53,7 @@ public class ImgService : IImgService
         var img = await _context.Imgs.FindAsync(id);
         if ((img is null) || (itemId is not null && img.id_item != itemId))
         {
-            throw new KeyNotFoundException($"Image with id {id} not found");
+            throw new KeyNotFoundException($"Image with id '{id}' not found");
         }
         return _mapper.Map<ReadImgDto>(img);
     }
@@ -63,7 +63,7 @@ public class ImgService : IImgService
         // check if item exists
         if (await _context.Items.FindAsync(imgDto.id_item) is null)
         {
-            throw new KeyNotFoundException($"Item with id {imgDto.id_item} not found");
+            throw new KeyNotFoundException($"Item with id '{imgDto.id_item}' not found");
         }
         var savedImg = await _fileService.SaveFile(Path.Combine(_imagesPath, imgDto.id_item.ToString()), imgDto.img_file);
         var savedThumbnail = await _fileService.GenerateThumbnail(
@@ -88,7 +88,7 @@ public class ImgService : IImgService
         var imgToUpdate = await _context.Imgs.FindAsync(id);
         if ((imgToUpdate is null) || (itemId is not null && imgToUpdate.id_item != itemId))
         {
-            throw new KeyNotFoundException($"Image with id {id} not found");
+            throw new KeyNotFoundException($"Image with id '{id}' not found");
         }
         if (imgDto.nom_img is not null)
         {
@@ -107,7 +107,7 @@ public class ImgService : IImgService
         var imgToDelete = await _context.Imgs.FindAsync(id);
         if ((imgToDelete is null) || (itemId is not null && imgToDelete.id_item != itemId))
         {
-            throw new KeyNotFoundException($"Image with id {id} not found");
+            throw new KeyNotFoundException($"Image with id '{id}' not found");
         }
         await _fileService.DeleteFile(imgToDelete.url_picture_img);
         await _fileService.DeleteFile(imgToDelete.url_thumbnail_img);

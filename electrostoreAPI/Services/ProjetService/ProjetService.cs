@@ -112,7 +112,7 @@ public class ProjetService : IProjetService
                 ProjetsProjetTags = expand != null && expand.Contains("projets_projet_tags") ? p.ProjetsProjetTags.Take(20).ToList() : null,
                 ProjetsStatus = expand != null && expand.Contains("projets_status_history") ? p.ProjetsStatus.Take(20).ToList() : null
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Projet with id {id} not found");
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Projet with id '{id}' not found");
         return _mapper.Map<ReadExtendedProjetDto>(projet.Projet) with
         {
             date_debut_projet = projet.DateDebutProjet,
@@ -146,7 +146,7 @@ public class ProjetService : IProjetService
 
     public async Task<ReadProjetDto> UpdateProjet(int id, UpdateProjetDto projetDto)
     {
-        var projetToUpdate = await _context.Projets.FindAsync(id) ?? throw new KeyNotFoundException($"Projet with id {id} not found");
+        var projetToUpdate = await _context.Projets.FindAsync(id) ?? throw new KeyNotFoundException($"Projet with id '{id}' not found");
         var statusChanged = projetDto.status_projet.HasValue && projetDto.status_projet.Value != projetToUpdate.status_projet;
         if (projetDto.nom_projet is not null)
         {
@@ -178,7 +178,7 @@ public class ProjetService : IProjetService
 
     public async Task DeleteProjet(int id)
     {
-        var projetToDelete = await _context.Projets.FindAsync(id) ?? throw new KeyNotFoundException($"Projet with id {id} not found");
+        var projetToDelete = await _context.Projets.FindAsync(id) ?? throw new KeyNotFoundException($"Projet with id '{id}' not found");
         _context.Projets.Remove(projetToDelete);
         await _fileService.DeleteDirectory(Path.Combine(_projetDocumentsPath, id.ToString()));
         await _context.SaveChangesAsync();
