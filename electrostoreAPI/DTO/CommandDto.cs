@@ -27,19 +27,19 @@ public record CreateCommandDto
 {
     [Required]
     [Range(0.0, float.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public float prix_command { get; init; }
+    public required float prix_command { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [Url(ErrorMessage = "{0} must be a valid URL.")]
-    public string? url_command { get; init; }
+    public required string url_command { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxStatusLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? status_command { get; init; }
+    public required string status_command { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    public DateTime date_command { get; init; }
+    public required DateTime date_command { get; init; }
 
     public DateTime? date_livraison_command { get; init; }
 }

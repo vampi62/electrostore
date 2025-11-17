@@ -27,11 +27,11 @@ public record CreateProjetTagDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? nom_projet_tag { get; init; }
+    public required string nom_projet_tag { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int? poids_projet_tag { get; init; }
+    public required int poids_projet_tag { get; init; }
 }
 public record UpdateProjetTagDto
 {

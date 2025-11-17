@@ -17,29 +17,29 @@ public record ReadProjetDocumentDto
 public record CreateProjetDocumentDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    public int id_projet { get; init; }
+    public required int id_projet { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? name_projet_document { get; init; }
+    public required string name_projet_document { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [FileSize(Constants.MaxDocumentSizeMB, ErrorMessage = "{0} cannot exceed {1} MB in size.")]
     [FileExtension([".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".bmp"],
         ErrorMessage = "{0} has an invalid file type, allowed types are: [{1}].")]
-    public IFormFile? document { get; init; }
+    public required IFormFile document { get; init; }
 }
 public record CreateProjetDocumentByProjetDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? name_projet_document { get; init; }
+    public required string name_projet_document { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [FileSize(Constants.MaxDocumentSizeMB, ErrorMessage = "{0} cannot exceed {1} MB in size.")]
     [FileExtension([".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".bmp"],
         ErrorMessage = "{0} has an invalid file type, allowed types are: [{1}].")]
-    public IFormFile? document { get; init; }
+    public required IFormFile document { get; init; }
 }
 public record UpdateProjetDocumentDto
 {

@@ -16,11 +16,11 @@ public record CreateIADto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? nom_ia { get; init; }
+    public required string nom_ia { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? description_ia { get; init; }
+    public required string description_ia { get; init; }
 }
 public record UpdateIADto
 {
@@ -39,7 +39,7 @@ public record DetecDto
     [FileSize(Constants.MaxDocumentSizeMB, ErrorMessage = "{0} cannot exceed {1} MB in size.")]
     [FileExtension([".png", ".jpg", ".jpeg", ".gif", ".bmp"],
         ErrorMessage = "{0} has an invalid file type, allowed types are: [{1}].")]
-    public IFormFile? img_file { get; init; }
+    public required IFormFile img_file { get; init; }
 }
 public record PredictionOutput
 {

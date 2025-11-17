@@ -27,19 +27,19 @@ public record CreateStoreDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
-    public string? nom_store { get; init; }
+    public required string nom_store { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int xlength_store { get; init; }
+    public required int xlength_store { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int ylength_store { get; init; }
+    public required int ylength_store { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? mqtt_name_store { get; init; }
+    public required string mqtt_name_store { get; init; }
 }
 
 public record UpdateStoreDto

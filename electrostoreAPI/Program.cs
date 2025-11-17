@@ -47,7 +47,6 @@ using electrostore.Middleware;
 
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.HttpOverrides;
-using System.Security.Claims;
 
 namespace electrostore;
 
@@ -80,7 +79,6 @@ public static class Program
             {
                 options.InvalidModelStateResponseFactory = context =>
                 {
-                    // Aggregate validation errors with field names
                     var validationErrors = context.ModelState
                         .Where(ms => ms.Value != null && ms.Value.Errors.Count > 0)
                         .Select(kvp => new
@@ -89,10 +87,31 @@ public static class Program
                             Errors = kvp.Value!.Errors.Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? e.Exception?.Message ?? "Invalid value" : e.ErrorMessage).ToArray()
                         })
                         .ToList();
+                    Console.WriteLine("Model state errors: " + string.Join(", ", validationErrors.SelectMany(e => e.Errors).ToArray()));
 
-                    if (validationErrors.Count != 0)
+                    // if first error contain "JSON deserialization"
+                    // this issue comes from a bad JSON format in the request body
+                    // so we search in the error the missing field (found after ":" and separate by ";") and return a specific message with it
+                    if (validationErrors.Count > 0 && validationErrors[0].Errors.Any(e => e.Contains("JSON deserialization", StringComparison.OrdinalIgnoreCase)))
                     {
-                        // Throw to let the ExceptionsHandler middleware format the response consistently
+                        var missingsField = validationErrors[0].Errors
+                            .Where(e => e.Contains("JSON deserialization", StringComparison.OrdinalIgnoreCase))
+                            .SelectMany(e =>
+                            {
+                                var parts = e.Split(':', ';');
+                                if (parts.Length > 1)
+                                {
+                                    return parts.Skip(1).Select(p => p.Trim());
+                                }
+                                return Array.Empty<string>();
+                            })
+                            .ToList();
+                        var errorMessage = "Malformed JSON request body.";
+                        var ex = new { error = errorMessage, details = $"Please check the format of the following field(s): {string.Join(", ", missingsField)}" };
+                        return new BadRequestObjectResult(ex);
+                    }
+                    else if (validationErrors.Count != 0)
+                    {
                         var ex = new { error = "Validation Failed", details = validationErrors };
                         return new BadRequestObjectResult(ex);
                     }

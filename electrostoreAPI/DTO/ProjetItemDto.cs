@@ -23,32 +23,32 @@ public record ReadBulkProjetItemDto
 public record CreateProjetItemByProjetDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    public int id_item { get; init; }
+    public required int id_item { get; init; }
     
     [Required(ErrorMessage = "{0} is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int qte_projet_item { get; init; }
+    public required int qte_projet_item { get; init; }
 }
 public record CreateProjetItemByItemDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    public int id_projet { get; init; }
+    public required int id_projet { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int qte_projet_item { get; init; }
+    public required int qte_projet_item { get; init; }
 }
 public record CreateProjetItemDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    public int id_projet { get; init; }
+    public required int id_projet { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    public int id_item { get; init; }
+    public required int id_item { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int qte_projet_item { get; init; }
+    public required int qte_projet_item { get; init; }
 }
 public record UpdateProjetItemDto
 {

@@ -34,19 +34,19 @@ public record CreateProjetDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? nom_projet { get; init; }
+    public required string nom_projet { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? description_projet { get; init; }
+    public required string description_projet { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? url_projet { get; init; }
+    public required string url_projet { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, (int)ProjetStatus.Archived, ErrorMessage = "{0} must be a valid status, between {1} and {2}.")]
-    public ProjetStatus status_projet { get; init; }
+    public required ProjetStatus status_projet { get; init; }
 }
 public record UpdateProjetDto
 {

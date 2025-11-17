@@ -24,44 +24,44 @@ public record ReadBulkCommandItemDto
 public record CreateCommandItemByCommandDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    public int id_item { get; init; }
+    public required int id_item { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int qte_command_item { get; init; }
+    public required int qte_command_item { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0.0, float.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public float prix_command_item { get; init; }
+    public required float prix_command_item { get; init; }
 }
 public record CreateCommandItemByItemDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    public int id_command { get; init; }
+    public required int id_command { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int qte_command_item { get; init; }
+    public required int qte_command_item { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0.0, float.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public float prix_command_item { get; init; }
+    public required float prix_command_item { get; init; }
 }
 public record CreateCommandItemDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    public int id_item { get; init; }
+    public required int id_item { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    public int id_command { get; init; }
+    public required int id_command { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int qte_command_item { get; init; }
+    public required int qte_command_item { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0.0, float.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public float prix_command_item { get; init; }
+    public required float prix_command_item { get; init; }
 }
 public record UpdateCommandItemDto
 {

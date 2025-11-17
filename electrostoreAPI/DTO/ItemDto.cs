@@ -31,19 +31,19 @@ public record CreateItemDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? reference_name_item { get; init; }
+    public required string reference_name_item { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? friendly_name_item { get; init; }
+    public required string friendly_name_item { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int seuil_min_item { get; init; }
+    public required int seuil_min_item { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? description_item { get; init; }
+    public required string description_item { get; init; }
 
     public int? id_img { get; init; }
 }

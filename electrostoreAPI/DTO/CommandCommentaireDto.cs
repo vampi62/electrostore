@@ -21,28 +21,28 @@ public record CreateCommandCommentaireByCommandDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? contenu_command_commentaire { get; init; }
+    public required string contenu_command_commentaire { get; init; }
 }
 public record CreateCommandCommentaireByUserDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    public int id_command { get; init; }
+    public required int id_command { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? contenu_command_commentaire { get; init; }
+    public required string contenu_command_commentaire { get; init; }
 }
 public record CreateCommandCommentaireDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    public int id_command { get; init; }
+    public required int id_command { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    public int id_user { get; init; }
+    public required int id_user { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxCommentaireLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? contenu_command_commentaire { get; init; }
+    public required string contenu_command_commentaire { get; init; }
 }
 public record UpdateCommandCommentaireDto
 {

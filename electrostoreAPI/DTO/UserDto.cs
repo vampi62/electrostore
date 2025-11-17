@@ -25,25 +25,25 @@ public record CreateUserDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
-    public string? nom_user { get; init; }
+    public required string nom_user { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
-    public string? prenom_user { get; init; }
+    public required string prenom_user { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxEmailLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     [EmailAddress(ErrorMessage = "{0} must be a valid email address.")]
-    public string? email_user { get; init; }
+    public required string email_user { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$",
         ErrorMessage = "{0} must contain a number and a special character and a uppercase letter and a lowercase letter and if it's at least 8 characters long")]
-    public string? mdp_user { get; init; }
+    public required string mdp_user { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, (int)UserRole.Admin, ErrorMessage = "{0} must be a valid role, between {1} and {2}.")]
-    public UserRole role_user { get; init; }
+    public required UserRole role_user { get; init; }
 }
 public record UpdateUserDto
 {

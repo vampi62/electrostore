@@ -17,11 +17,11 @@ public record CreateCameraDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? nom_camera { get; init; }
+    public required string nom_camera { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? url_camera { get; init; }
+    public required string url_camera { get; init; }
 
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? user_camera { get; init; }

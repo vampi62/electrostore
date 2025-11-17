@@ -19,11 +19,11 @@ public record CreateProjetStatusDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int id_projet { get; init; }
+    public required int id_projet { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, (int)ProjetStatus.Completed, ErrorMessage = "{0} must be a valid ProjetStatus value, between {1} and {2}.")]
-    public ProjetStatus status_projet { get; init; }
+    public required ProjetStatus status_projet { get; init; }
 }
 public record UpdateProjetStatusDto
 {

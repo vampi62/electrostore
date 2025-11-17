@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace electrostore.Dto;
 
@@ -30,40 +31,40 @@ public record CreateBoxByStoreDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be between {1} and {2}.")]
-    public int xstart_box { get; init; }
+    public required int xstart_box { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be between {1} and {2}.")]
-    public int ystart_box { get; init; }
+    public required int ystart_box { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be between {1} and {2}.")]
-    public int xend_box { get; init; }
+    public required int xend_box { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be between {1} and {2}.")]
-    public int yend_box { get; init; }
+    public required int yend_box { get; init; }
 }
 public record CreateBoxDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int xstart_box { get; init; }
+    public required int xstart_box { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int ystart_box { get; init; }
+    public required int ystart_box { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int xend_box { get; init; }
+    public required int xend_box { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int yend_box { get; init; }
+    public required int yend_box { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    public int id_store { get; init; }
+    public required int id_store { get; init; }
 }
 public record UpdateBoxByStoreDto
 {
@@ -98,7 +99,7 @@ public record UpdateBoxDto
 public record UpdateBulkBoxByStoreDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    public int id_box { get; init; }
+    public required int id_box { get; init; }
 
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? xstart_box { get; init; }

@@ -18,27 +18,27 @@ public record CreateImgByItemDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? nom_img { get; init; }
+    public required string nom_img { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? description_img { get; init; }
+    public required string description_img { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [FileSize(Constants.MaxDocumentSizeMB, ErrorMessage = "{0} cannot exceed {1} MB in size.")]
     [FileExtension([".png", ".webp", ".jpg", ".jpeg", ".gif", ".bmp"],
         ErrorMessage = "{0} has an invalid file type, allowed types are: [{1}].")]
-    public IFormFile? img_file { get; init; }
+    public required IFormFile img_file { get; init; }
 }
 public record CreateImgDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? nom_img { get; init; }
+    public required string nom_img { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? description_img { get; init; }
+    public required string description_img { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     public int id_item { get; init; }
@@ -47,7 +47,7 @@ public record CreateImgDto
     [FileSize(Constants.MaxDocumentSizeMB, ErrorMessage = "{0} cannot exceed {1} MB in size.")]
     [FileExtension([".png", ".webp", ".jpg", ".jpeg", ".gif", ".bmp"],
         ErrorMessage = "{0} has an invalid file type, allowed types are: [{1}].")]
-    public IFormFile? img_file { get; init; }
+    public required IFormFile img_file { get; init; }
 }
 public record UpdateImgDto
 {
