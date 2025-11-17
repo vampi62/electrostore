@@ -96,7 +96,7 @@ public static class Program
                             .Where(e => e.Contains("JSON deserialization", StringComparison.OrdinalIgnoreCase))
                             .SelectMany(e =>
                             {
-                                var parts = e.Split(':').Last().Split(';');
+                                var parts = e.Split(':', ';');
                                 if (parts.Length > 1)
                                 {
                                     return parts.Skip(1).Select(p => p.Trim());
