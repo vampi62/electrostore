@@ -25,7 +25,7 @@ public class ProjetDocumentService : IProjetDocumentService
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
         {
-            throw new KeyNotFoundException($"Projet with id {projetId} not found");
+            throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsDocuments.AsQueryable();
         query = query.Where(pd => pd.id_projet == projetId);
@@ -40,7 +40,7 @@ public class ProjetDocumentService : IProjetDocumentService
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
         {
-            throw new KeyNotFoundException($"Projet with id {projetId} not found");
+            throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         return await _context.ProjetsDocuments
             .CountAsync(pd => pd.id_projet == projetId);
@@ -48,10 +48,10 @@ public class ProjetDocumentService : IProjetDocumentService
 
     public async Task<ReadProjetDocumentDto> GetProjetDocumentById(int id, int? projetId = null)
     {
-        var projetDocument = await _context.ProjetsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetDocument with id {id} not found");
+        var projetDocument = await _context.ProjetsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found");
         if (projetId is not null && projetDocument.id_projet != projetId)
         {
-            throw new KeyNotFoundException($"ProjetDocument with id {id} not found for projet with id {projetId}");
+            throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found for projet with id '{projetId}'");
         }
         return _mapper.Map<ReadProjetDocumentDto>(projetDocument);
     }
@@ -61,7 +61,7 @@ public class ProjetDocumentService : IProjetDocumentService
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetDocumentDto.id_projet))
         {
-            throw new KeyNotFoundException($"Projet with id {projetDocumentDto.id_projet} not found");
+            throw new KeyNotFoundException($"Projet with id '{projetDocumentDto.id_projet}' not found");
         }
         var savedFile = await _fileService.SaveFile(Path.Combine(_projetDocumentsPath, projetDocumentDto.id_projet.ToString()), projetDocumentDto.document);
         var projetDocument = new ProjetsDocuments
@@ -79,10 +79,10 @@ public class ProjetDocumentService : IProjetDocumentService
 
     public async Task<ReadProjetDocumentDto> UpdateProjetDocument(int id, UpdateProjetDocumentDto projetDocumentDto, int? projetId = null)
     {
-        var projetDocument = await _context.ProjetsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetDocument with id {id} not found");
+        var projetDocument = await _context.ProjetsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found");
         if (projetId is not null && projetDocument.id_projet != projetId)
         {
-            throw new KeyNotFoundException($"ProjetDocument with id {id} not found for projet with id {projetId}");
+            throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found for projet with id '{projetId}'");
         }
         if (projetDocumentDto.name_projet_document is not null)
         {
@@ -94,10 +94,10 @@ public class ProjetDocumentService : IProjetDocumentService
 
     public async Task DeleteProjetDocument(int id, int? projetId = null)
     {
-        var projetDocument = await _context.ProjetsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetDocument with id {id} not found");
+        var projetDocument = await _context.ProjetsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found");
         if (projetId is not null && projetDocument.id_projet != projetId)
         {
-            throw new KeyNotFoundException($"ProjetDocument with id {id} not found for projet with id {projetId}");
+            throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found for projet with id '{projetId}'");
         }
         await _fileService.DeleteFile(projetDocument.url_projet_document);
         _context.ProjetsDocuments.Remove(projetDocument);

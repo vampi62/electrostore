@@ -25,7 +25,7 @@ public class BoxService : IBoxService
         // check if the store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
         {
-            throw new KeyNotFoundException($"Store with id {storeId} not found");
+            throw new KeyNotFoundException($"Store with id '{storeId}' not found");
         }
         var query = _context.Boxs.AsQueryable();
         query = query.Where(b => b.id_store == storeId);
@@ -37,7 +37,7 @@ public class BoxService : IBoxService
                 Box = b,
                 BoxsTagsCount = b.BoxsTags.Count,
                 ItemsBoxsCount = b.ItemsBoxs.Count,
-                b.Store,
+                Store = expand != null && expand.Contains("store") ? b.Store : null,
                 BoxsTags = expand != null && expand.Contains("box_tags") ? b.BoxsTags.Take(20).ToList() : null,
                 ItemsBoxs = expand != null && expand.Contains("item_boxs") ? b.ItemsBoxs.Take(20).ToList() : null
             })
@@ -59,7 +59,7 @@ public class BoxService : IBoxService
         // check if the store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
         {
-            throw new KeyNotFoundException($"Store with id {storeId} not found");
+            throw new KeyNotFoundException($"Store with id '{storeId}' not found");
         }
         return await _context.Boxs
             .Where(b => b.id_store == storeId)
@@ -76,11 +76,11 @@ public class BoxService : IBoxService
                 Box = b,
                 BoxsTagsCount = b.BoxsTags.Count,
                 ItemsBoxsCount = b.ItemsBoxs.Count,
-                b.Store,
+                Store = expand != null && expand.Contains("store") ? b.Store : null,
                 BoxsTags = expand != null && expand.Contains("box_tags") ? b.BoxsTags.Take(20).ToList() : null,
                 ItemsBoxs = expand != null && expand.Contains("item_boxs") ? b.ItemsBoxs.Take(20).ToList() : null
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Box with id {id} not found");
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Box with id '{id}' not found");
         return _mapper.Map<ReadExtendedBoxDto>(box.Box) with
         {
             box_tags_count = box.BoxsTagsCount,
@@ -99,7 +99,7 @@ public class BoxService : IBoxService
             throw new UnauthorizedAccessException("You are not authorized to create a box");
         }
         // check if the store exists
-        var store = await _context.Stores.FindAsync(boxDto.id_store) ?? throw new KeyNotFoundException($"Store with id {boxDto.id_store} not found");
+        var store = await _context.Stores.FindAsync(boxDto.id_store) ?? throw new KeyNotFoundException($"Store with id '{boxDto.id_store}' not found");
         await CheckCreateBoxPositionOverlap(boxDto);
         var newBox = _mapper.Map<Boxs>(boxDto);
         ValidateBoxPosition(newBox, store);
@@ -113,7 +113,7 @@ public class BoxService : IBoxService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
-            throw new UnauthorizedAccessException("You are not authorized to create boxes");
+            throw new UnauthorizedAccessException("You are not authorized to create boxs");
         }
         var validQuery = new List<ReadBoxDto>();
         var errorQuery = new List<ErrorDetail>();
@@ -121,13 +121,8 @@ public class BoxService : IBoxService
         {
             try
             {
-                // end position must be greater than start position
-                if (boxDto.xend_box <= boxDto.xstart_box || boxDto.yend_box <= boxDto.ystart_box)
-                {
-                    throw new ArgumentException("End position must be greater than start position");
-                }
                 // check if the store exists
-                var store = await _context.Stores.FindAsync(boxDto.id_store) ?? throw new KeyNotFoundException($"Store with id {boxDto.id_store} not found");
+                var store = await _context.Stores.FindAsync(boxDto.id_store) ?? throw new KeyNotFoundException($"Store with id '{boxDto.id_store}' not found");
                 await CheckCreateBoxPositionOverlap(boxDto);
                 var newBox = _mapper.Map<Boxs>(boxDto);
                 ValidateBoxPosition(newBox, store);
@@ -164,10 +159,10 @@ public class BoxService : IBoxService
         var boxToUpdate = await _context.Boxs.FindAsync(id);
         if ((boxToUpdate is null) || (storeId is not null && boxToUpdate.id_store != storeId))
         {
-            throw new KeyNotFoundException($"Box with id {id} not found");
+            throw new KeyNotFoundException($"Box with id '{id}' not found");
         }
         await UpdateBoxInformations(boxToUpdate, boxDto);
-        var store = await _context.Stores.FindAsync(boxToUpdate.id_store) ?? throw new KeyNotFoundException($"Store with id {boxToUpdate.id_store} not found");
+        var store = await _context.Stores.FindAsync(boxToUpdate.id_store) ?? throw new KeyNotFoundException($"Store with id '{boxToUpdate.id_store}' not found");
         ValidateBoxPosition(boxToUpdate, store);
         await CheckUpdateBoxPositionOverlap(boxToUpdate, boxDto);
         await _context.SaveChangesAsync();
@@ -190,11 +185,11 @@ public class BoxService : IBoxService
                 var boxToUpdate = await _context.Boxs.FindAsync(boxDto.id_box);
                 if ((boxToUpdate is null) || (storeId is not null && boxToUpdate.id_store != storeId))
                 {
-                    throw new KeyNotFoundException($"Box with id {boxDto.id_box} not found");
+                    throw new KeyNotFoundException($"Box with id '{boxDto.id_box}' not found");
                 }
                 await UpdateBoxInformations(boxToUpdate, _mapper.Map<UpdateBoxDto>(boxDto));
                 // check if the box XY position is not bigger than the store XY length
-                var store = await _context.Stores.FindAsync(boxToUpdate.id_store) ?? throw new KeyNotFoundException($"Store with id {boxToUpdate.id_store} not found");
+                var store = await _context.Stores.FindAsync(boxToUpdate.id_store) ?? throw new KeyNotFoundException($"Store with id '{boxToUpdate.id_store}' not found");
                 ValidateBoxPosition(boxToUpdate, store);
                 validQuery.Add(_mapper.Map<ReadBoxDto>(boxToUpdate));
             }
@@ -214,7 +209,7 @@ public class BoxService : IBoxService
             {
                 try
                 {
-                    var boxToUpdate = await _context.Boxs.FindAsync(boxDto.id_box) ?? throw new KeyNotFoundException($"Box with id {boxDto.id_box} not found");
+                    var boxToUpdate = await _context.Boxs.FindAsync(boxDto.id_box) ?? throw new KeyNotFoundException($"Box with id '{boxDto.id_box}' not found");
                     await CheckUpdateBoxPositionOverlap(boxToUpdate, _mapper.Map<UpdateBoxDto>(boxDto));
                 }
                 catch (Exception e)
@@ -248,12 +243,12 @@ public class BoxService : IBoxService
         var boxToDelete = await _context.Boxs.FindAsync(id);
         if ((boxToDelete is null) || (storeId is not null && boxToDelete.id_store != storeId))
         {
-            throw new KeyNotFoundException($"Box with id {id} not found");
+            throw new KeyNotFoundException($"Box with id '{id}' not found");
         }
         // check if the box has a item in it (ItemsBoxs) with qte_item_box > 0
         if (await _context.ItemsBoxs.AnyAsync(ib => ib.id_box == id && ib.qte_item_box > 0))
         {
-            throw new InvalidOperationException($"Box with id {id} has items in it");
+            throw new InvalidOperationException($"Box with id '{id}' has items in it");
         }
         _context.Boxs.Remove(boxToDelete);
         await _context.SaveChangesAsync();
@@ -328,7 +323,7 @@ public class BoxService : IBoxService
         {
             if (!await _context.Stores.AnyAsync(s => s.id_store == boxDto.new_id_store))
             {
-                throw new KeyNotFoundException($"Store with id {boxDto.new_id_store} not found");
+                throw new KeyNotFoundException($"Store with id '{boxDto.new_id_store}' not found");
             }
             boxToUpdate.id_store = boxDto.new_id_store.Value;
         }

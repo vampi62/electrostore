@@ -19,59 +19,60 @@ public record ReadBulkLedDto
 }
 public record CreateLedByStoreDto
 {
-    [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "x_led must be greater than or equal to 0.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public required int x_led { get; init; }
 
-    [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "y_led must be greater than or equal to 0.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public required int y_led { get; init; }
 
-    [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "mqtt_led_id must be greater than or equal to 0.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public required int mqtt_led_id { get; init; }
 }
 public record CreateLedDto
 {
-    [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "x_led must be greater than or equal to 0.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public required int x_led { get; init; }
 
-    [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "y_led must be greater than or equal to 0.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public required int y_led { get; init; }
 
-    [Required]
+    [Required(ErrorMessage = "{0} is required.")]
     public required int id_store { get; init; }
 
-    [Required]
-    [Range(0, int.MaxValue, ErrorMessage = "mqtt_led_id must be greater than or equal to 0.")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public required int mqtt_led_id { get; init; }
 }
 public record UpdateLedByStoreDto
 {
-    [Range(0, int.MaxValue, ErrorMessage = "x_led must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? x_led { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "y_led must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? y_led { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "mqtt_led_id must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? mqtt_led_id { get; init; }
 }
 public record UpdateLedDto
 {
-    [Range(0, int.MaxValue, ErrorMessage = "x_led must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? x_led { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "y_led must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? y_led { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "mqtt_led_id must be greater than or equal to 0.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? mqtt_led_id { get; init; }
 }
 public record UpdateBulkLedByStoreDto
 {
+    [Required(ErrorMessage = "{0} is required.")]
     public required int id_led { get; init; }
 
     [Range(0, int.MaxValue, ErrorMessage = "x_led must be greater than or equal to 0.")]

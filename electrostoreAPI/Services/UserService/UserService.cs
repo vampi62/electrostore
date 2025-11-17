@@ -73,7 +73,7 @@ public class UserService : IUserService
         var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user);
         if (user is not null)
         {
-            throw new InvalidOperationException($"Email {userDto.email_user} is already used");
+            throw new InvalidOperationException($"Email '{userDto.email_user}' is already used");
         }
         var newUser = new Users
         {
@@ -100,7 +100,7 @@ public class UserService : IUserService
         var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user);
         if (user is not null)
         {
-            throw new InvalidOperationException($"Email {userDto.email_user} is already used");
+            throw new InvalidOperationException($"Email '{userDto.email_user}' is already used");
         }
         var newUser = new Users
         {
@@ -128,7 +128,7 @@ public class UserService : IUserService
                 ProjetsCommentaires = expand != null && expand.Contains("projets_commentaires") ? u.ProjetsCommentaires.Take(20).ToList() : null,
                 CommandsCommentaires = expand != null && expand.Contains("commands_commentaires") ? u.CommandsCommentaires.Take(20).ToList() : null
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"User with id {id} not found");
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"User with id '{id}' not found");
         return _mapper.Map<ReadExtendedUserDto>(user.User) with
         {
             projets_commentaires_count = user.ProjetsCommentairesCount,
@@ -146,7 +146,7 @@ public class UserService : IUserService
         {
             throw new UnauthorizedAccessException("You are not allowed to update this user");
         }
-        var userToUpdate = await _context.Users.FindAsync(id) ?? throw new KeyNotFoundException($"User with id {id} not found");
+        var userToUpdate = await _context.Users.FindAsync(id) ?? throw new KeyNotFoundException($"User with id '{id}' not found");
         if (userDto.nom_user is not null)
         {
             userToUpdate.nom_user = userDto.nom_user;
@@ -162,7 +162,7 @@ public class UserService : IUserService
             var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user && u.id_user != id);
             if (existingUser != null)
             {
-                throw new InvalidOperationException($"Email {userDto.email_user} is already used by another user");
+                throw new InvalidOperationException($"Email '{userDto.email_user}' is already used by another user");
             }
             userToUpdate.email_user = userDto.email_user;
         }
@@ -194,7 +194,7 @@ public class UserService : IUserService
         {
             throw new UnauthorizedAccessException("You are not allowed to delete this user");
         }
-        var userToDelete = await _context.Users.FindAsync(id) ?? throw new KeyNotFoundException($"User with id {id} not found");
+        var userToDelete = await _context.Users.FindAsync(id) ?? throw new KeyNotFoundException($"User with id '{id}' not found");
         if (userToDelete.role_user == UserRole.Admin && await _context.Users.CountAsync(u => u.role_user == UserRole.Admin) == 1)
         {
             throw new InvalidOperationException("You can't delete the last admin");

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using electrostore.Validators;
 
 namespace electrostore.Dto;
 
@@ -14,47 +15,35 @@ public record ReadCameraDto
 }
 public record CreateCameraDto
 {
-    [Required]
-    [MinLength(1, ErrorMessage = "nom_camera cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_camera cannot exceed 50 characters")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string nom_camera { get; init; }
 
-    [Required]
-    [MinLength(1, ErrorMessage = "url_camera cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "url_camera cannot exceed 150 characters")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string url_camera { get; init; }
 
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "user_camera cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? user_camera { get; init; }
 
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "mdp_camera cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? mdp_camera { get; init; }
 }
-public record UpdateCameraDto : IValidatableObject
+public record UpdateCameraDto
 {
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_camera cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? nom_camera { get; init; }
 
-    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "url_camera cannot exceed 150 characters")]
+    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? url_camera { get; init; }
 
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "user_camera cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? user_camera { get; init; }
 
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "mdp_camera cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? mdp_camera { get; init; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (nom_camera is not null && string.IsNullOrWhiteSpace(nom_camera))
-        {
-            yield return new ValidationResult("nom_camera cannot be empty or whitespace.", new[] { nameof(nom_camera) });
-        }
-        if (url_camera is not null && string.IsNullOrWhiteSpace(url_camera))
-        {
-            yield return new ValidationResult("url_camera cannot be empty or whitespace.", new[] { nameof(url_camera) });
-        }
-    }
 }
 public record CameraLightDto
 {

@@ -25,7 +25,7 @@ public class BoxTagService : IBoxTagService
         // check if box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
         {
-            throw new KeyNotFoundException($"Box with id {boxId} not found");
+            throw new KeyNotFoundException($"Box with id '{boxId}' not found");
         }
         var query = _context.BoxsTags.AsQueryable();
         query = query.Where(bt => bt.id_box == boxId);
@@ -48,7 +48,7 @@ public class BoxTagService : IBoxTagService
         // check if box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
         {
-            throw new KeyNotFoundException($"Box with id {boxId} not found");
+            throw new KeyNotFoundException($"Box with id '{boxId}' not found");
         }
         return await _context.BoxsTags
             .Where(bt => bt.id_box == boxId)
@@ -60,7 +60,7 @@ public class BoxTagService : IBoxTagService
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
         {
-            throw new KeyNotFoundException($"Tag with id {tagId} not found");
+            throw new KeyNotFoundException($"Tag with id '{tagId}' not found");
         }
         var query = _context.BoxsTags.AsQueryable();
         query = query.Where(bt => bt.id_tag == tagId);
@@ -83,7 +83,7 @@ public class BoxTagService : IBoxTagService
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
         {
-            throw new KeyNotFoundException($"Tag with id {tagId} not found");
+            throw new KeyNotFoundException($"Tag with id '{tagId}' not found");
         }
         return await _context.BoxsTags
             .Where(s => s.id_tag == tagId)
@@ -102,7 +102,7 @@ public class BoxTagService : IBoxTagService
         {
             query = query.Include(bt => bt.Box);
         }
-        var boxTag = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"BoxTag with id {boxId} and {tagId} not found");
+        var boxTag = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"BoxTag with id '{boxId}' and '{tagId}' not found");
         return _mapper.Map<ReadExtendedBoxTagDto>(boxTag);
     }
 
@@ -116,17 +116,17 @@ public class BoxTagService : IBoxTagService
         // check if box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxTagDto.id_box))
         {
-            throw new KeyNotFoundException($"Box with id {boxTagDto.id_box} not found");
+            throw new KeyNotFoundException($"Box with id '{boxTagDto.id_box}' not found");
         }
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == boxTagDto.id_tag))
         {
-            throw new KeyNotFoundException($"Tag with id {boxTagDto.id_tag} not found");
+            throw new KeyNotFoundException($"Tag with id '{boxTagDto.id_tag}' not found");
         }
         // check if the boxtag already exists
         if (await _context.BoxsTags.AnyAsync(bt => bt.id_box == boxTagDto.id_box && bt.id_tag == boxTagDto.id_tag))
         {
-            throw new InvalidOperationException($"BoxTag with id {boxTagDto.id_box} and {boxTagDto.id_tag} already exists");
+            throw new InvalidOperationException($"BoxTag with id '{boxTagDto.id_box}' and '{boxTagDto.id_tag}' already exists");
         }
         var newBoxTag = _mapper.Map<BoxsTags>(boxTagDto);
         _context.BoxsTags.Add(newBoxTag);
@@ -172,7 +172,7 @@ public class BoxTagService : IBoxTagService
         {
             throw new UnauthorizedAccessException("You are not authorized to delete BoxTag");
         }
-        var boxTagToDelete = await _context.BoxsTags.FindAsync(boxId, tagId) ?? throw new KeyNotFoundException($"BoxTag with id {boxId} and {tagId} not found");
+        var boxTagToDelete = await _context.BoxsTags.FindAsync(boxId, tagId) ?? throw new KeyNotFoundException($"BoxTag with id '{boxId}' and '{tagId}' not found");
         _context.BoxsTags.Remove(boxTagToDelete);
         await _context.SaveChangesAsync();
     }
@@ -181,7 +181,7 @@ public class BoxTagService : IBoxTagService
     {
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId && b.id_store == storeId))
         {
-            throw new KeyNotFoundException($"Box with id {boxId} not found in store with id {storeId}");
+            throw new KeyNotFoundException($"Box with id '{boxId}' not found in store with id '{storeId}'");
         }
     }
 

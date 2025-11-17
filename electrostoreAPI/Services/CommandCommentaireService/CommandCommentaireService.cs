@@ -25,7 +25,7 @@ public class CommandCommentaireService : ICommandCommentaireService
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == CommandId))
         {
-            throw new KeyNotFoundException($"Command with id {CommandId} not found");
+            throw new KeyNotFoundException($"Command with id '{CommandId}' not found");
         }
         var query = _context.CommandsCommentaires.AsQueryable();
         query = query.Where(cc => cc.id_command == CommandId);
@@ -48,7 +48,7 @@ public class CommandCommentaireService : ICommandCommentaireService
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == CommandId))
         {
-            throw new KeyNotFoundException($"Command with id {CommandId} not found");
+            throw new KeyNotFoundException($"Command with id '{CommandId}' not found");
         }
         return await _context.CommandsCommentaires
             .Where(c => c.id_command == CommandId)
@@ -60,7 +60,7 @@ public class CommandCommentaireService : ICommandCommentaireService
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
         {
-            throw new KeyNotFoundException($"User with id {userId} not found");
+            throw new KeyNotFoundException($"User with id '{userId}' not found");
         }
         var query = _context.CommandsCommentaires.AsQueryable();
         query = query.Where(cc => cc.id_user == userId);
@@ -83,7 +83,7 @@ public class CommandCommentaireService : ICommandCommentaireService
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
         {
-            throw new KeyNotFoundException($"User with id {userId} not found");
+            throw new KeyNotFoundException($"User with id '{userId}' not found");
         }
         return await _context.CommandsCommentaires
             .Where(c => c.id_user == userId)
@@ -102,7 +102,7 @@ public class CommandCommentaireService : ICommandCommentaireService
         {
             query = query.Include(cc => cc.User);
         }
-        var commandCommentaire = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Commentaire with id {id} not found");
+        var commandCommentaire = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Commentaire with id '{id}' not found");
         return _mapper.Map<ReadExtendedCommandCommentaireDto>(commandCommentaire);
     }
 
@@ -111,12 +111,12 @@ public class CommandCommentaireService : ICommandCommentaireService
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commandCommentaireDto.id_command))
         {
-            throw new KeyNotFoundException($"Command with id {commandCommentaireDto.id_command} not found");
+            throw new KeyNotFoundException($"Command with id '{commandCommentaireDto.id_command}' not found");
         }
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == commandCommentaireDto.id_user))
         {
-            throw new KeyNotFoundException($"User with id {commandCommentaireDto.id_user} not found");
+            throw new KeyNotFoundException($"User with id '{commandCommentaireDto.id_user}' not found");
         }
         var newCommandCommentaire = _mapper.Map<CommandsCommentaires>(commandCommentaireDto);
         _context.CommandsCommentaires.Add(newCommandCommentaire);
@@ -129,7 +129,7 @@ public class CommandCommentaireService : ICommandCommentaireService
         var commandCommentaireToUpdate = await _context.CommandsCommentaires.FindAsync(id);
         if ((commandCommentaireToUpdate is null) || (CommandId is not null && commandCommentaireToUpdate.id_command != CommandId) || (userId is not null && commandCommentaireToUpdate.id_user != userId))
         {
-            throw new KeyNotFoundException($"Commentaire with id {id} not found");
+            throw new KeyNotFoundException($"Commentaire with id '{id}' not found");
         }
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
@@ -147,7 +147,7 @@ public class CommandCommentaireService : ICommandCommentaireService
         var commandCommentaireToDelete = await _context.CommandsCommentaires.FindAsync(id);
         if ((commandCommentaireToDelete is null) || (CommandId is not null && commandCommentaireToDelete.id_command != CommandId) || (userId is not null && commandCommentaireToDelete.id_user != userId))
         {
-            throw new KeyNotFoundException($"Commentaire with id {id} not found");
+            throw new KeyNotFoundException($"Commentaire with id '{id}' not found");
         }
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();

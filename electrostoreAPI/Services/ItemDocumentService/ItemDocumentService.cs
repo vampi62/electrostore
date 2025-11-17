@@ -25,7 +25,7 @@ public class ItemDocumentService : IItemDocumentService
         // check if item exists
         if (!await _context.Items.AnyAsync(item => item.id_item == itemId))
         {
-            throw new KeyNotFoundException($"Item with id {itemId} not found");
+            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.ItemsDocuments.AsQueryable();
         query = query.Where(id => id.id_item == itemId);
@@ -40,7 +40,7 @@ public class ItemDocumentService : IItemDocumentService
         // check if item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
-            throw new KeyNotFoundException($"Item with id {itemId} not found");
+            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         return await _context.ItemsDocuments
             .Where(id => id.id_item == itemId)
@@ -49,10 +49,10 @@ public class ItemDocumentService : IItemDocumentService
 
     public async Task<ReadItemDocumentDto> GetItemDocumentById(int id, int? itemId = null)
     {
-        var itemDocument = await _context.ItemsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ItemDocument with id {id} not found");
+        var itemDocument = await _context.ItemsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ItemDocument with id '{id}' not found");
         if (itemId is not null && itemDocument.id_item != itemId)
         {
-            throw new KeyNotFoundException($"ItemDocument with id {id} not found for item with id {itemId}");
+            throw new KeyNotFoundException($"ItemDocument with id '{id}' not found for item with id '{itemId}'");
         }
         return _mapper.Map<ReadItemDocumentDto>(itemDocument);
     }
@@ -62,7 +62,7 @@ public class ItemDocumentService : IItemDocumentService
         // check if item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemDocumentDto.id_item))
         {
-            throw new KeyNotFoundException($"Item with id {itemDocumentDto.id_item} not found");
+            throw new KeyNotFoundException($"Item with id '{itemDocumentDto.id_item}' not found");
         }
         var savedFile = await _fileService.SaveFile(Path.Combine(_itemDocumentsPath, itemDocumentDto.id_item.ToString()), itemDocumentDto.document);
         var itemDocument = new ItemsDocuments
@@ -80,10 +80,10 @@ public class ItemDocumentService : IItemDocumentService
 
     public async Task<ReadItemDocumentDto> UpdateItemDocument(int id, UpdateItemDocumentDto itemDocumentDto, int? itemId = null)
     {
-        var itemDocument = await _context.ItemsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ItemDocument with id {id} not found");
+        var itemDocument = await _context.ItemsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ItemDocument with id '{id}' not found");
         if (itemId is not null && itemDocument.id_item != itemId)
         {
-            throw new KeyNotFoundException($"ItemDocument with id {id} not found for item with id {itemId}");
+            throw new KeyNotFoundException($"ItemDocument with id '{id}' not found for item with id '{itemId}'");
         }
         if (itemDocumentDto.name_item_document is not null)
         {
@@ -95,10 +95,10 @@ public class ItemDocumentService : IItemDocumentService
 
     public async Task DeleteItemDocument(int id, int? itemId = null)
     {
-        var itemDocument = await _context.ItemsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ItemDocument with id {id} not found");
+        var itemDocument = await _context.ItemsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ItemDocument with id '{id}' not found");
         if (itemId is not null && itemDocument.id_item != itemId)
         {
-            throw new KeyNotFoundException($"ItemDocument with id {id} not found for item with id {itemId}");
+            throw new KeyNotFoundException($"ItemDocument with id '{id}' not found for item with id '{itemId}'");
         }
         await _fileService.DeleteFile(itemDocument.url_item_document);
         _context.ItemsDocuments.Remove(itemDocument);

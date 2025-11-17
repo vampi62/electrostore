@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using electrostore.Enums;
+using electrostore.Validators;
 
 namespace electrostore.Dto;
 
@@ -31,50 +32,36 @@ public record ReadExtendedProjetDto : ReadProjetDto
 }
 public record CreateProjetDto
 {
-    [Required]
-    [MinLength(1, ErrorMessage = "nom_projet cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_projet cannot exceed 50 characters")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string nom_projet { get; init; }
 
-    [Required]
-    [MinLength(1, ErrorMessage = "description_projet cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "description_projet cannot exceed 500 characters")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string description_projet { get; init; }
 
-    [Required]
-    [MinLength(1, ErrorMessage = "url_projet cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "url_projet cannot exceed 150 characters")]
+    [Required(ErrorMessage = "{0} is required.")]
+    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string url_projet { get; init; }
 
-    [Required]
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, (int)ProjetStatus.Archived, ErrorMessage = "{0} must be a valid status, between {1} and {2}.")]
     public required ProjetStatus status_projet { get; init; }
 }
-public record UpdateProjetDto : IValidatableObject
+public record UpdateProjetDto
 {
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "nom_projet cannot exceed 50 characters")]
+    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? nom_projet { get; init; }
 
-    [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "description_projet cannot exceed 500 characters")]
+    [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? description_projet { get; init; }
 
-    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "url_projet cannot exceed 150 characters")]
+    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? url_projet { get; init; }
 
+    [Range(0, (int)ProjetStatus.Archived, ErrorMessage = "{0} must be a valid status, between {1} and {2}.")]
     public ProjetStatus? status_projet { get; init; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (nom_projet is not null && string.IsNullOrWhiteSpace(nom_projet))
-        {
-            yield return new ValidationResult("nom_projet cannot be empty or whitespace.", new[] { nameof(nom_projet) });
-        }
-        if (description_projet is not null && string.IsNullOrWhiteSpace(description_projet))
-        {
-            yield return new ValidationResult("description_projet cannot be empty or whitespace.", new[] { nameof(description_projet) });
-        }
-        if (url_projet is not null && string.IsNullOrWhiteSpace(url_projet))
-        {
-            yield return new ValidationResult("url_projet cannot be empty or whitespace.", new[] { nameof(url_projet) });
-        }
-    }
 }
