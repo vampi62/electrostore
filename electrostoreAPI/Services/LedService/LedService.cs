@@ -7,6 +7,7 @@ using MQTTnet;
 using MQTTnet.Protocol;
 using System.Text.Json;
 using electrostore.Services.SessionService;
+using electrostore.Services.ValidateStoreService;
 
 namespace electrostore.Services.LedService;
 
@@ -16,13 +17,16 @@ public class LedService : ILedService
     private readonly ApplicationDbContext _context;
     private readonly IMqttClient _mqttClient;
     private readonly ISessionService _sessionService;
+    private readonly IValidateStoreService _validateStoreService;
+    private readonly static int numberLedSentPerMessage = 10;
 
-    public LedService(IMapper mapper, ApplicationDbContext context, IMqttClient mqttClient, ISessionService sessionService)
+    public LedService(IMapper mapper, ApplicationDbContext context, IMqttClient mqttClient, ISessionService sessionService, IValidateStoreService validateStoreService)
     {
         _mapper = mapper;
         _context = context;
         _mqttClient = mqttClient;
         _sessionService = sessionService;
+        _validateStoreService = validateStoreService;
     }
 
     public async Task<IEnumerable<ReadLedDto>> GetLedsByStoreId(int storeId, int limit = 100, int offset = 0)
@@ -75,6 +79,8 @@ public class LedService : ILedService
             throw new KeyNotFoundException($"Store with id '{ledDto.id_store}' not found");
         }
         var newLed = _mapper.Map<Leds>(ledDto);
+        var store = await _context.Stores.FindAsync(newLed.id_store) ?? throw new KeyNotFoundException($"Store with id '{newLed.id_store}' not found");
+        _validateStoreService.ValidateLedPosition(newLed, store);
         _context.Leds.Add(newLed);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadLedDto>(newLed);
@@ -123,18 +129,9 @@ public class LedService : ILedService
         {
             throw new KeyNotFoundException($"Led with id '{id}' not found in store with id '{storeId}'");
         }
-        if (ledDto.x_led is not null)
-        {
-            ledToUpdate.x_led = ledDto.x_led.Value;
-        }
-        if (ledDto.y_led is not null)
-        {
-            ledToUpdate.y_led = ledDto.y_led.Value;
-        }
-        if (ledDto.mqtt_led_id is not null)
-        {
-            ledToUpdate.mqtt_led_id = ledDto.mqtt_led_id.Value;
-        }
+        await _validateStoreService.UpdateLedInformations(ledToUpdate, ledDto);
+        var store = await _context.Stores.FindAsync(ledToUpdate.id_store) ?? throw new KeyNotFoundException($"Store with id '{ledToUpdate.id_store}' not found");
+        _validateStoreService.ValidateLedPosition(ledToUpdate, store);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadLedDto>(ledToUpdate);
     }
@@ -293,23 +290,30 @@ public class LedService : ILedService
         }
         var store = await _context.Stores.FindAsync(storeId) ?? throw new KeyNotFoundException($"Store with id '{storeId}' not found");
         var topic = "electrostore/" + store.mqtt_name_store;
-        var message = new MqttApplicationMessageBuilder()
-            .WithTopic(topic)
-            .WithPayload(JsonSerializer.Serialize(new
-            {
-                leds = ledsDB.Select(led => new
+
+        // sent led 10 per 10
+        for (int i = 0; i <= ledsDB.Count; i+=numberLedSentPerMessage)
+        {
+            var message = new MqttApplicationMessageBuilder()
+                .WithTopic(topic)
+                .WithPayload(JsonSerializer.Serialize(new
                 {
-                    index = led.mqtt_led_id,
-                    red = redColor,
-                    blue = blueColor,
-                    green = greenColor,
-                    module = animation,
-                    delay = timeshow
-                })
-            }))
-            .WithQualityOfServiceLevel(MqttQualityOfServiceLevel.ExactlyOnce)
-            .WithRetainFlag(false)
-            .Build();
-        await _mqttClient.PublishAsync(message);
+                    leds = ledsDB
+                        .Skip(i).Take(numberLedSentPerMessage)
+                        .Select(led => new
+                    {
+                        index = led.mqtt_led_id,
+                        red = redColor,
+                        blue = blueColor,
+                        green = greenColor,
+                        module = animation,
+                        delay = timeshow
+                    })
+                }))
+                .WithQualityOfServiceLevel(MqttQualityOfServiceLevel.ExactlyOnce)
+                .WithRetainFlag(false)
+                .Build();
+            await _mqttClient.PublishAsync(message);
+        }
     }
 }
