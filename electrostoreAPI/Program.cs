@@ -11,6 +11,7 @@ using MQTTnet;
 using electrostore.Dto;
 using electrostore.Enums;
 
+using electrostore.Services.AuthService;
 using electrostore.Services.BoxService;
 using electrostore.Services.BoxTagService;
 using electrostore.Services.CameraService;
@@ -19,6 +20,7 @@ using electrostore.Services.CommandDocumentService;
 using electrostore.Services.CommandItemService;
 using electrostore.Services.CommandService;
 using electrostore.Services.ConfigService;
+using electrostore.Services.FileService;
 using electrostore.Services.IAService;
 using electrostore.Services.ImgService;
 using electrostore.Services.ItemBoxService;
@@ -40,9 +42,8 @@ using electrostore.Services.StoreService;
 using electrostore.Services.StoreTagService;
 using electrostore.Services.TagService;
 using electrostore.Services.UserService;
+using electrostore.Services.ValidateStoreService;
 using electrostore.Services.JwtService;
-using electrostore.Services.FileService;
-using electrostore.Services.AuthService;
 using electrostore.Middleware;
 
 using Microsoft.OpenApi.Models;
@@ -277,6 +278,7 @@ public static class Program
             return minioClient;
         });
 
+        builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IBoxService, BoxService>();
         builder.Services.AddScoped<IBoxTagService, BoxTagService>();
         builder.Services.AddScoped<ICameraService, CameraService>();
@@ -306,8 +308,8 @@ public static class Program
         builder.Services.AddScoped<IStoreTagService, StoreTagService>();
         builder.Services.AddScoped<ITagService, TagService>();
         builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IValidateStoreService, ValidateStoreService>();
         builder.Services.AddScoped<IJwiService, JwiService>();
-        builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddSingleton<JwtService>();
     }
 
