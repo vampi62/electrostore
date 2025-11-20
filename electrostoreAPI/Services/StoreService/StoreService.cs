@@ -219,6 +219,7 @@ public class StoreService : IStoreService
             }
         };
     }
+    
     public async Task<ReadStoreCompleteDto> UpdateStoreComplete(int id, UpdateStoreCompleteDto storeDto)
     {
         var clientRole = _sessionService.GetClientRole();
@@ -229,9 +230,57 @@ public class StoreService : IStoreService
         var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
         await _validateStoreService.UpdateStoreInformations(storeToUpdate, storeDto.store);
         // Add leds and boxs, if status field indicate the new status "delete", "modified", "new"
+        (var validQueryLed, var errorQueryLed) = await UpdateLedList(storeToUpdate, storeDto.leds ?? []);
+        (var validQueryBox, var errorQueryBox) = await UpdateBoxList(storeToUpdate, storeDto.boxs ?? []);
+        await _validateStoreService.CheckUpdateStoreOutsideElement(storeToUpdate);
+        if (errorQueryBox.Count == 0)
+        {
+            // Check for overlapping boxs after all modifications
+            foreach (var box in storeDto.boxs ?? [])
+            {
+                try
+                {
+                    if (box.status == "new" || box.status == "modified")
+                    {
+                        var boxToUpdate = await _context.Boxs.FindAsync(box.id_box) ?? throw new KeyNotFoundException($"Box with id '{box.id_box}' not found");
+                        await _validateStoreService.CheckUpdateBoxPositionOverlap(boxToUpdate);
+                    }
+                }
+                catch (Exception e)
+                {
+                    errorQueryBox.Add(new ErrorDetail
+                    {
+                        Reason = e.Message,
+                        Data = box
+                    });
+                }
+            }
+        }
+        if (errorQueryLed.Count == 0 && errorQueryBox.Count == 0)
+        {
+            await _context.SaveChangesAsync();
+        }
+        return new ReadStoreCompleteDto
+        {
+            store = _mapper.Map<ReadStoreDto>(storeToUpdate),
+            leds = new ReadBulkLedDto
+            {
+                Valide = validQueryLed,
+                Error = errorQueryLed
+            },
+            boxs = new ReadBulkBoxDto
+            {
+                Valide = validQueryBox,
+                Error = errorQueryBox
+            }
+        };
+    }
+
+    private async Task<(List<ReadLedDto>, List<ErrorDetail>)> UpdateLedList(Stores storeToUpdate, IEnumerable<UpdateBulkLedByStoreDto> ledListDto)
+    {
         var validQueryLed = new List<ReadLedDto>();
         var errorQueryLed = new List<ErrorDetail>();
-        foreach (var led in storeDto.leds ?? Enumerable.Empty<UpdateBulkLedByStoreDto>())
+        foreach (var led in ledListDto)
         {
             try
             {
@@ -280,9 +329,14 @@ public class StoreService : IStoreService
                 });
             }
         }
+        return (validQueryLed, errorQueryLed);
+    }
+    
+    private async Task<(List<ReadBoxDto>, List<ErrorDetail>)> UpdateBoxList(Stores storeToUpdate, IEnumerable<UpdateBulkBoxByStoreDto> boxListDto)
+    {
         var validQueryBox = new List<ReadBoxDto>();
         var errorQueryBox = new List<ErrorDetail>();
-        foreach (var box in storeDto.boxs ?? Enumerable.Empty<UpdateBulkBoxByStoreDto>())
+        foreach (var box in boxListDto)
         {
             try
             {
@@ -332,47 +386,6 @@ public class StoreService : IStoreService
                 });
             }
         }
-        await _validateStoreService.CheckUpdateStoreOutsideElement(storeToUpdate);
-        if (errorQueryBox.Count == 0)
-        {
-            // Check for overlapping boxs after all modifications
-            foreach (var box in storeDto.boxs ?? Enumerable.Empty<UpdateBulkBoxByStoreDto>())
-            {
-                try
-                {
-                    if (box.status == "new" || box.status == "modified")
-                    {
-                        var boxToUpdate = await _context.Boxs.FindAsync(box.id_box) ?? throw new KeyNotFoundException($"Box with id '{box.id_box}' not found");
-                        await _validateStoreService.CheckUpdateBoxPositionOverlap(boxToUpdate);
-                    }
-                }
-                catch (Exception e)
-                {
-                    errorQueryBox.Add(new ErrorDetail
-                    {
-                        Reason = e.Message,
-                        Data = box
-                    });
-                }
-            }
-        }
-        if (errorQueryLed.Count == 0 && errorQueryBox.Count == 0)
-        {
-            await _context.SaveChangesAsync();
-        }
-        return new ReadStoreCompleteDto
-        {
-            store = _mapper.Map<ReadStoreDto>(storeToUpdate),
-            leds = new ReadBulkLedDto
-            {
-                Valide = validQueryLed,
-                Error = errorQueryLed
-            },
-            boxs = new ReadBulkBoxDto
-            {
-                Valide = validQueryBox,
-                Error = errorQueryBox
-            }
-        };
+        return (validQueryBox, errorQueryBox);
     }
 }
