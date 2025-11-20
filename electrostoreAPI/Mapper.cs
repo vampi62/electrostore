@@ -73,6 +73,7 @@ public class MappingProfile : Profile
 
         CreateMap<CreateLedDto, Leds>();
         CreateMap<Leds, ReadLedDto>();
+        CreateMap<UpdateBulkLedByStoreDto, UpdateLedDto>();
 
         CreateMap<CreateProjetCommentaireDto, ProjetsCommentaires>();
         CreateMap<ProjetsCommentaires, ReadProjetCommentaireDto>();
