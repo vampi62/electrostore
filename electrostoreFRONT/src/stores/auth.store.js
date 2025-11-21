@@ -11,6 +11,7 @@ export const useAuthStore = defineStore("auth",{
 		accessToken: JSON.parse(localStorage.getItem("accessToken")) || null,
 		refreshToken: JSON.parse(localStorage.getItem("refreshToken")) || null,
 		isSSOUser: JSON.parse(localStorage.getItem("isSSOUser")) || false,
+		selectedProvider: JSON.parse(localStorage.getItem("selectedProvider")) || null,
 	}),
 	actions: {
 		setToken(user, accessToken, refreshToken, isSSOUser = false) {
@@ -62,14 +63,14 @@ export const useAuthStore = defineStore("auth",{
 			);
 			router.push("/");
 		},
-		async loginSSO() {
+		async loginSSO(provider) {
 			const request = await fetchWrapper.get({
-				url: `${baseUrl}/auth/authentik/url`,
+				url: `${baseUrl}/auth/${provider}/url`,
 			});
+			this.selectedProvider = provider;
+			localStorage.setItem("selectedProvider", JSON.stringify(provider));
 			// open small window to the url
-			//window.open(request.url, "SSO Login", "width=600,height=600");
-			// redirect to the url
-			window.location.href = request.authUrl;
+			window.open(request.authUrl, "SSO Login", "width=600,height=600");
 		},
 		async handleSSOCallback() {
 			const params = new URLSearchParams(window.location.search);
@@ -77,7 +78,7 @@ export const useAuthStore = defineStore("auth",{
 			const state = params.get("state");
 			if (token && state) {
 				const request = await fetchWrapper.post({
-					url: `${baseUrl}/auth/authentik/callback`,
+					url: `${baseUrl}/auth/${this.selectedProvider}/callback`,
 					body: { "Code": token, "State": state },
 				});
 				this.setToken(
@@ -86,9 +87,10 @@ export const useAuthStore = defineStore("auth",{
 					{ "token": request?.refresh_token, "date_expire": request?.expire_date_refresh_token },
 					true,
 				);
-				localStorage.removeItem("ssoState");
-				// redirect to previous url or default to home page if no previous url or if previous url is login page
-				router.push((this.returnUrl && this.returnUrl !== "/login") ? this.returnUrl : "/");
+				localStorage.removeItem("selectedProvider");
+				// close small window and refresh parent window
+				window.opener.location.reload();
+				window.close();
 			}
 		},
 		async register(email, password, prenom, nom) {
