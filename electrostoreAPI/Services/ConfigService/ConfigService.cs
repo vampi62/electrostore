@@ -57,7 +57,13 @@ public class ConfigService : IConfigService
             max_length_ip = Constants.MaxIpLength,
             max_length_reason = Constants.MaxReasonLength,
             max_length_status = Constants.MaxStatusLength,
-            max_size_document_in_mb = Constants.MaxDocumentSizeMB
+            max_size_document_in_mb = Constants.MaxDocumentSizeMB,
+            sso_available_providers = _configuration.GetSection("OAuth").GetChildren().Select(provider => new SSOAvailableProvider
+            {
+                provider = provider.Key,
+                display_name = provider.GetValue<string>("DisplayName") ?? string.Empty,
+                icon_url = provider.GetValue<string>("IconUrl") ?? string.Empty
+            }).ToList()
         };
     }
 }

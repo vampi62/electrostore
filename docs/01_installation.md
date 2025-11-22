@@ -105,7 +105,9 @@ Complete the `appsettings.json` file with the following content, replacing place
       "ClientSecret": "<client-secret>",
       "Authority": "https://<sso-server-url>/application/o/authorize/",
       "RedirectUri": "https://<frontend-url>/auth/callback",
-      "Scope": "openid profile email"
+      "Scope": "openid profile email",
+      "DisplayName": "<method-name>",
+      "IconUrl": "<method-icon-url>"
     }
   },
   "S3": {
