@@ -1,18 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.IO;
-using AutoMapper;
 using electrostore;
 using electrostore.Dto;
 using electrostore.Models;
 using electrostore.Services.ItemService;
 using electrostore.Services.FileService;
 using electrostore.Tests.Utils;
-using System.Reflection.Metadata;
 
 namespace electrostore.Tests.Services
 {
