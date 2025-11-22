@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
@@ -19,6 +20,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Linq;
+using AutoMapper;
 using electrostore;
 using electrostore.Dto;
 using electrostore.Enums;
@@ -236,9 +238,16 @@ namespace electrostore.Tests
         public TestStartup(IConfiguration configuration)
         {
             Configuration = configuration;
+            var loggerFactory = LoggerFactory.Create(builder => { });
+            var mapperConfig = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile<MappingProfile>();
+            }, loggerFactory);
+            _mapper = mapperConfig.CreateMapper();
         }
 
         public IConfiguration Configuration { get; }
+        public IMapper _mapper { get; }
 
         public void ConfigureServices(IServiceCollection services)
         {
@@ -268,9 +277,6 @@ namespace electrostore.Tests
                 options.AddPolicy("AccessToken", policy =>
                     policy.RequireRole("access"));
             });
-            
-            // Register services - in tests, these will be replaced with mocks where needed
-            services.AddScoped<IUserService, UserService>();
             
             // Add HttpContextAccessor for SessionService
             services.AddHttpContextAccessor();
