@@ -11,24 +11,17 @@ using electrostore.Dto;
 using electrostore.Models;
 using electrostore.Services.ItemService;
 using electrostore.Services.FileService;
+using electrostore.Tests.Utils;
+using System.Reflection.Metadata;
 
 namespace electrostore.Tests.Services
 {
-    public class ItemServiceTests
+    public class ItemServiceTests : TestBase
     {
-        private readonly Mock<IMapper> _mockMapper;
-        private readonly DbContextOptions<ApplicationDbContext> _dbContextOptions;
         private readonly Mock<IFileService> _mockFileService;
 
         public ItemServiceTests()
         {
-            _mockMapper = new Mock<IMapper>();
-
-            // Set up in-memory database for testing
-            _dbContextOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-                .Options;
-            
             _mockFileService = new Mock<IFileService>();
             _mockFileService.Setup(fs => fs.CreateDirectory(It.IsAny<string>())).Returns(Task.CompletedTask);
             _mockFileService.Setup(fs => fs.DeleteDirectory(It.IsAny<string>())).Returns(Task.CompletedTask);
@@ -54,17 +47,8 @@ namespace electrostore.Tests.Services
             }
             await context.SaveChangesAsync();
 
-            var itemService = new ItemService(_mockMapper.Object, context, _mockFileService.Object);
+            var itemService = new ItemService(_mapper, context, _mockFileService.Object);
 
-            _mockMapper.Setup(m => m.Map<ReadExtendedItemDto>(It.IsAny<Items>()))
-                .Returns((Items i) => new ReadExtendedItemDto
-                {
-                    id_item = i.id_item,
-                    reference_name_item = i.reference_name_item,
-                    friendly_name_item = i.friendly_name_item,
-                    description_item = i.description_item,
-                    seuil_min_item = i.seuil_min_item
-                });
 
             // Act
             var result = await itemService.GetItems(5, 0);
@@ -72,6 +56,35 @@ namespace electrostore.Tests.Services
             // Assert
             Assert.NotNull(result);
             Assert.Equal(5, result.Count());
+        }
+
+        [Fact]
+        public async Task GetItemsCount_ShouldReturnCorrectCount()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            
+            // Add test items to the database
+            for (int i = 1; i <= 3; i++)
+            {
+                context.Items.Add(new Items
+                {
+                    id_item = i,
+                    reference_name_item = $"REF-{i}",
+                    friendly_name_item = $"Item {i}",
+                    description_item = $"Description for item {i}",
+                    seuil_min_item = 10
+                });
+            }
+            await context.SaveChangesAsync();
+
+            var itemService = new ItemService(_mapper, context, _mockFileService.Object);
+
+            // Act
+            var result = await itemService.GetItemsCount();
+
+            // Assert
+            Assert.Equal(3, result);
         }
 
         [Fact]
@@ -92,7 +105,7 @@ namespace electrostore.Tests.Services
             context.Items.Add(item);
             await context.SaveChangesAsync();
 
-            var itemService = new ItemService(_mockMapper.Object, context, _mockFileService.Object);
+            var itemService = new ItemService(_mapper, context, _mockFileService.Object);
 
             var expectedItem = new ReadExtendedItemDto
             {
@@ -102,9 +115,6 @@ namespace electrostore.Tests.Services
                 description_item = "Test Description",
                 seuil_min_item = 10
             };
-
-            _mockMapper.Setup(m => m.Map<ReadExtendedItemDto>(It.IsAny<Items>()))
-                .Returns(expectedItem);
 
             // Act
             var result = await itemService.GetItemById(1);
@@ -124,7 +134,7 @@ namespace electrostore.Tests.Services
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
             
-            var itemService = new ItemService(_mockMapper.Object, context, _mockFileService.Object);
+            var itemService = new ItemService(_mapper, context, _mockFileService.Object);
 
             var createItemDto = new CreateItemDto
             {
@@ -142,18 +152,6 @@ namespace electrostore.Tests.Services
                 description_item = "Test Description",
                 seuil_min_item = 10
             };
-
-            _mockMapper.Setup(m => m.Map<Items>(It.IsAny<CreateItemDto>()))
-                .Returns(new Items
-                {
-                    reference_name_item = createItemDto.reference_name_item,
-                    friendly_name_item = createItemDto.friendly_name_item,
-                    description_item = createItemDto.description_item,
-                    seuil_min_item = createItemDto.seuil_min_item
-                });
-
-            _mockMapper.Setup(m => m.Map<ReadItemDto>(It.IsAny<Items>()))
-                .Returns(expectedItem);
             
             // Act
             var result = await itemService.CreateItem(createItemDto);
@@ -188,7 +186,7 @@ namespace electrostore.Tests.Services
             context.Items.Add(item);
             await context.SaveChangesAsync();
 
-            var itemService = new ItemService(_mockMapper.Object, context, _mockFileService.Object);
+            var itemService = new ItemService(_mapper, context, _mockFileService.Object);
 
             var updateItemDto = new UpdateItemDto
             {
@@ -205,9 +203,6 @@ namespace electrostore.Tests.Services
                 description_item = "Updated Description",
                 seuil_min_item = 20
             };
-
-            _mockMapper.Setup(m => m.Map<ReadItemDto>(It.IsAny<Items>()))
-                .Returns(expectedItem);
 
             // Act
             var result = await itemService.UpdateItem(1, updateItemDto);
@@ -245,7 +240,7 @@ namespace electrostore.Tests.Services
             context.Items.Add(item);
             await context.SaveChangesAsync();
 
-            var itemService = new ItemService(_mockMapper.Object, context, _mockFileService.Object);
+            var itemService = new ItemService(_mapper, context, _mockFileService.Object);
 
             // Act
             await itemService.DeleteItem(1);
@@ -276,17 +271,7 @@ namespace electrostore.Tests.Services
             }
             await context.SaveChangesAsync();
 
-            var itemService = new ItemService(_mockMapper.Object, context, _mockFileService.Object);
-
-            _mockMapper.Setup(m => m.Map<ReadExtendedItemDto>(It.IsAny<Items>()))
-                .Returns((Items i) => new ReadExtendedItemDto
-                {
-                    id_item = i.id_item,
-                    reference_name_item = i.reference_name_item,
-                    friendly_name_item = i.friendly_name_item,
-                    description_item = i.description_item,
-                    seuil_min_item = i.seuil_min_item
-                });
+            var itemService = new ItemService(_mapper, context, _mockFileService.Object);
 
             // Act
             var startTime = DateTime.Now;
