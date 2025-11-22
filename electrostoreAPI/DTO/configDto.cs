@@ -18,8 +18,16 @@ public record ReadConfig
     public int max_length_reason { get; init; }
     public int max_length_status { get; init; }
     public int max_size_document_in_mb { get; init; }
-
+    public List<SSOAvailableProvider>? sso_available_providers { get; init; }
 }
+
+public record SSOAvailableProvider
+{
+    public required string provider { get; init; }
+    public required string display_name { get; init; }
+    public required string icon_url { get; init; }
+}
+
 public static class Constants
 {
     public const int MaxUrlLength = 150;
