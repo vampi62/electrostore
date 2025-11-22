@@ -68,32 +68,32 @@ function onSubmit(values, { setErrors }) {
 					{{ $t('common.VLoginSubmit') }}
 				</button>
 			</div>
-			
-			<!-- horizontal separation-->
-			<hr class="my-4" />
-
-			<!-- available SSO providers in config -->
-			<div v-if="configsStore.configs.loading" class="flex items-center justify-center my-4">
-				<div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin">
-					<span class="sr-only">{{ $t('common.VLoginLoadingSSO') }}</span>
-				</div>
-			</div>
-			<div v-else>
-				<div v-if="configsStore.configs.sso_available_providers.length > 0" class="space-y-2 mb-4">
-					<div v-for="provider in configsStore.configs.sso_available_providers" :key="provider.provider">
-						<button @click="authStore.loginSSO(provider.provider)"
-							class="w-full flex items-center justify-center border border-gray-300 rounded px-4 py-2 hover:bg-gray-100">
-							<img :src="provider.icon_url" :alt="provider.display_name" class="h-6 w-6 mr-2" />
-							<span>{{ $t('common.VLoginSSOLoginWith', { provider: provider.display_name }) }}</span>
-						</button>
-					</div>
-				</div>
-				<div v-else class="text-gray-500 italic mb-4">{{ $t('common.VLoginNoSSOProviders') }}</div>
-			</div>
 
 			<!-- API Error Message -->
 			<div v-if="errors.apiError" class="bg-red-100 text-red-600 p-3 rounded mt-3">{{ errors.apiError }}</div>
 		</Form>
+			
+		<!-- horizontal separation-->
+		<hr class="my-4" />
+
+		<!-- available SSO providers in config -->
+		<div v-if="configsStore.configs.loading" class="flex items-center justify-center my-4">
+			<div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin">
+				<span class="sr-only">{{ $t('common.VLoginLoadingSSO') }}</span>
+			</div>
+		</div>
+		<div v-else>
+			<div v-if="configsStore.configs.sso_available_providers.length > 0" class="space-y-2 mb-4">
+				<div v-for="provider in configsStore.configs.sso_available_providers" :key="provider.provider">
+					<button @click="authStore.loginSSO(provider.provider)"
+						class="w-full flex items-center justify-center border border-gray-300 rounded px-4 py-2 hover:bg-gray-100">
+						<img :src="provider.icon_url" :alt="provider.display_name" class="h-6 w-6 mr-2" />
+						<span>{{ $t('common.VLoginSSOLoginWith', { provider: provider.display_name }) }}</span>
+					</button>
+				</div>
+			</div>
+			<div v-else class="text-gray-500 italic mb-4">{{ $t('common.VLoginNoSSOProviders') }}</div>
+		</div>
 
 		<!-- Links -->
 		<div class="mt-4 flex justify-between">

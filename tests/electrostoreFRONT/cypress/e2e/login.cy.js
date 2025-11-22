@@ -36,6 +36,7 @@ describe("Login Page", () => {
 				"max_length_reason": 50,
 				"max_length_status": 50,
 				"max_size_document_in_mb": 5,
+				"sso_available_providers": [],// e.g : [{"provider":"authentik","display_name":"Authentik","icon_url":"https://example.com/icon.png"}]
 			},
 		}).as("getConfig");
 		
