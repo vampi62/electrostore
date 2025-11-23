@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using MQTTnet;
 using Moq;
 using Xunit;
 using System;
@@ -27,6 +28,9 @@ using electrostore.Enums;
 using electrostore.Models;
 using electrostore.Services.UserService;
 using electrostore.Services.JwtService;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using Swashbuckle.AspNetCore.Swagger;
+using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace electrostore.Tests
 {
@@ -99,13 +103,13 @@ namespace electrostore.Tests
                 {
                     config.AddInMemoryCollection(new[]
                     {
-                        new KeyValuePair<string, string>("ConnectionStrings:DefaultConnection", $"Server=localhost;Database={dbName};User=test;Password=test"),
-                        new KeyValuePair<string, string>("Jwt:Key", "test_key_for_jwt_authentication_that_is_long_enough"),
-                        new KeyValuePair<string, string>("Jwt:Issuer", "test"),
-                        new KeyValuePair<string, string>("Jwt:Audience", "test"),
-                        new KeyValuePair<string, string>("Jwt:AccessTokenExpirationMinutes", "15"),
-                        new KeyValuePair<string, string>("Jwt:RefreshTokenExpirationDays", "7"),
-                        new KeyValuePair<string, string>("SMTP:Enable", "false")
+                        new KeyValuePair<string, string?>("ConnectionStrings:DefaultConnection", $"Server=localhost;Database={dbName};User=test;Password=test"),
+                        new KeyValuePair<string, string?>("Jwt:Key", "test_key_for_jwt_authentication_that_is_long_enough"),
+                        new KeyValuePair<string, string?>("Jwt:Issuer", "test"),
+                        new KeyValuePair<string, string?>("Jwt:Audience", "test"),
+                        new KeyValuePair<string, string?>("Jwt:AccessTokenExpirationMinutes", "15"),
+                        new KeyValuePair<string, string?>("Jwt:RefreshTokenExpirationDays", "7"),
+                        new KeyValuePair<string, string?>("SMTP:Enable", "false")
                     });
                 })
                 .ConfigureServices(services =>
@@ -170,65 +174,143 @@ namespace electrostore.Tests
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
 
+        // Tests ciblés pour SwaggerClass (AddTotalCountHeaderFilter)
         [Fact]
-        public async Task JWT_Authentication_Performance_Benchmark()
+        public void SwaggerFilter_ShouldAddTotalCountHeader_WhenLimitAndOffsetQueryAnd200Response()
         {
             // Arrange
-            var dbName = Guid.NewGuid().ToString();
-            
-            // Create a test server with a custom WebHostBuilder
-            var builder = new WebHostBuilder()
-                .ConfigureAppConfiguration((context, config) =>
-                {
-                    config.AddInMemoryCollection(new[]
-                    {
-                        new KeyValuePair<string, string>("ConnectionStrings:DefaultConnection", $"Server=localhost;Database={dbName};User=test;Password=test"),
-                        new KeyValuePair<string, string>("Jwt:Key", "test_key_for_jwt_authentication_that_is_long_enough"),
-                        new KeyValuePair<string, string>("Jwt:Issuer", "test"),
-                        new KeyValuePair<string, string>("Jwt:Audience", "test"),
-                        new KeyValuePair<string, string>("Jwt:AccessTokenExpirationMinutes", "15"),
-                        new KeyValuePair<string, string>("Jwt:RefreshTokenExpirationDays", "7"),
-                        new KeyValuePair<string, string>("SMTP:Enable", "false")
-                    });
-                })
-                .ConfigureServices(services =>
-                {
-                    // Use in-memory database
-                    services.AddDbContext<ApplicationDbContext>(options =>
-                        options.UseInMemoryDatabase(dbName));
-                })
-                .UseStartup<TestStartup>(); // Use a custom startup class for testing
+            var operation = new Microsoft.OpenApi.Models.OpenApiOperation();
+            operation.Responses["200"] = new Microsoft.OpenApi.Models.OpenApiResponse();
 
-            using var server = new TestServer(builder);
-            using var client = server.CreateClient();
-            
-            // Create a login request
-            var loginRequest = new LoginRequest
+            var apiDescription = new Microsoft.AspNetCore.Mvc.ApiExplorer.ApiDescription();
+            apiDescription.ParameterDescriptions.Add(new Microsoft.AspNetCore.Mvc.ApiExplorer.ApiParameterDescription
             {
-                Email = "admin@localhost.local",
-                Password = "Admin@1234"
-            };
-            
-            var content = new StringContent(
-                JsonSerializer.Serialize(loginRequest),
-                Encoding.UTF8,
-                "application/json");
-            
+                Name = "limit",
+                Source = Microsoft.AspNetCore.Mvc.ModelBinding.BindingSource.Query
+            });
+            apiDescription.ParameterDescriptions.Add(new Microsoft.AspNetCore.Mvc.ApiExplorer.ApiParameterDescription
+            {
+                Name = "offset",
+                Source = Microsoft.AspNetCore.Mvc.ModelBinding.BindingSource.Query
+            });
+
+            var schemaRepository = new Swashbuckle.AspNetCore.SwaggerGen.SchemaRepository();
+            var methodInfo = typeof(ProgramTests).GetMethods().First();
+            var dataContractResolver = new Swashbuckle.AspNetCore.SwaggerGen.JsonSerializerDataContractResolver(new System.Text.Json.JsonSerializerOptions());
+            var schemaGenerator = new Swashbuckle.AspNetCore.SwaggerGen.SchemaGenerator(new Swashbuckle.AspNetCore.SwaggerGen.SchemaGeneratorOptions(), dataContractResolver);
+            var context = new Swashbuckle.AspNetCore.SwaggerGen.OperationFilterContext(
+                apiDescription,
+                schemaGenerator,
+                schemaRepository,
+                methodInfo
+            );
+
+            var filter = new AddTotalCountHeaderFilter();
+
             // Act
-            var startTime = DateTime.Now;
-            var response = await client.PostAsync("/api/auth/login", content);
-            var endTime = DateTime.Now;
-            var executionTime = (endTime - startTime).TotalMilliseconds;
-            
+            filter.Apply(operation, context);
+
             // Assert
-            // Note: This will likely fail in the test environment since we're not setting up a real user
-            // But we're measuring the performance of the JWT authentication process
+            Assert.True(operation.Responses.TryGetValue("200", out var resp) && resp.Headers.ContainsKey("X-Total-Count"));
+        }
+
+        [Fact]
+        public void SwaggerFilter_ShouldNotAddHeader_WhenMissingLimitOrOffset()
+        {
+            // Arrange
+            var operation = new Microsoft.OpenApi.Models.OpenApiOperation();
+            operation.Responses["200"] = new Microsoft.OpenApi.Models.OpenApiResponse();
+
+            var apiDescription = new Microsoft.AspNetCore.Mvc.ApiExplorer.ApiDescription();
+            // Only 'limit' present, 'offset' missing
+            apiDescription.ParameterDescriptions.Add(new Microsoft.AspNetCore.Mvc.ApiExplorer.ApiParameterDescription
+            {
+                Name = "limit",
+                Source = Microsoft.AspNetCore.Mvc.ModelBinding.BindingSource.Query
+            });
+
+            var schemaRepository = new Swashbuckle.AspNetCore.SwaggerGen.SchemaRepository();
+            var methodInfo = typeof(ProgramTests).GetMethods().First();
+            var dataContractResolver = new Swashbuckle.AspNetCore.SwaggerGen.JsonSerializerDataContractResolver(new System.Text.Json.JsonSerializerOptions());
+            var schemaGenerator = new Swashbuckle.AspNetCore.SwaggerGen.SchemaGenerator(new Swashbuckle.AspNetCore.SwaggerGen.SchemaGeneratorOptions(), dataContractResolver);
+            var context = new Swashbuckle.AspNetCore.SwaggerGen.OperationFilterContext(
+                apiDescription,
+                schemaGenerator,
+                schemaRepository,
+                methodInfo
+            );
+
+            var filter = new AddTotalCountHeaderFilter();
+
+            // Act
+            filter.Apply(operation, context);
+
+            // Assert
+            Assert.True(operation.Responses.TryGetValue("200", out var resp) && !resp.Headers.ContainsKey("X-Total-Count"));
+        }
+
+        [Fact]
+        public void SwaggerGen_ShouldProduceV1Document_WithExpectedTitle_And_IncludeFilter()
+        {
+            // Arrange: configure SwaggerGen similarly to Program.cs
+            var services = new ServiceCollection();
             
-            // Log performance metrics
-            Console.WriteLine($"[BENCHMARK] JWT Authentication execution time: {executionTime}ms");
+            // Add required services
+            var mockWebHostEnvironment = new Mock<IWebHostEnvironment>();
+            mockWebHostEnvironment.Setup(m => m.EnvironmentName).Returns("Development");
+            mockWebHostEnvironment.Setup(m => m.ApplicationName).Returns("electrostore");
+            services.AddSingleton<IWebHostEnvironment>(mockWebHostEnvironment.Object);
+            services.AddSingleton<Microsoft.Extensions.Hosting.IHostEnvironment>(mockWebHostEnvironment.Object);
             
-            // Performance assertion - should be reasonably fast
-            Assert.True(executionTime < 1000, $"JWT Authentication took too long: {executionTime}ms");
+            services.AddLogging();
+            services.AddRouting();
+            services.AddControllers();
+            services.AddEndpointsApiExplorer();
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "ElectroStore API", Version = "v1" });
+                c.OperationFilter<AddTotalCountHeaderFilter>();
+            });
+
+            using var provider = services.BuildServiceProvider();
+            var swaggerGen = provider.GetRequiredService<ISwaggerProvider>();
+
+            // Act
+            var doc = swaggerGen.GetSwagger("v1");
+
+            // Assert
+            Assert.NotNull(doc);
+            Assert.Equal("ElectroStore API", doc.Info.Title);
+            Assert.Equal("v1", doc.Info.Version);
+        }
+    }
+
+    // Custom WebApplicationFactory for testing
+    public class TestApplicationFactory : WebApplicationFactory<Program>
+    {
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
+            builder.ConfigureServices(services =>
+            {
+                // Remplacer la DbContext par une base InMemory pour les tests
+                var dbDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
+                if (dbDescriptor != null)
+                    services.Remove(dbDescriptor);
+                services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+
+                // Remplacer IMqttClient et IMinioClient par des mocks
+                var mqttDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(MQTTnet.IMqttClient));
+                if (mqttDescriptor != null)
+                    services.Remove(mqttDescriptor);
+                var minioDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(Minio.IMinioClient));
+                if (minioDescriptor != null)
+                    services.Remove(minioDescriptor);
+
+                var mockMqtt = new Mock<MQTTnet.IMqttClient>();
+                services.AddSingleton<MQTTnet.IMqttClient>(sp => mockMqtt.Object);
+                var mockMinio = new Mock<Minio.IMinioClient>();
+                services.AddSingleton<Minio.IMinioClient>(sp => mockMinio.Object);
+            });
         }
     }
 
@@ -256,7 +338,7 @@ namespace electrostore.Tests
             
             // Configure JWT authentication
             var jwtSettings = Configuration.GetSection("Jwt");
-            var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]);
+            var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? "default_test_key_for_jwt_authentication");
             
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>

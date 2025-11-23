@@ -103,8 +103,8 @@ namespace electrostore.Tests.Services
             Assert.Equal("UpdatedTag", result.nom_tag);
             Assert.Equal(10, result.poids_tag);
             var tagInDb = await context.Tags.FindAsync(1);
-            Assert.Equal("UpdatedTag", tagInDb.nom_tag);
-            Assert.Equal(10, tagInDb.poids_tag);
+            Assert.Equal("UpdatedTag", tagInDb?.nom_tag);
+            Assert.Equal(10, tagInDb?.poids_tag);
         }
 
         [Fact]

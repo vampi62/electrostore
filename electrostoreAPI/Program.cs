@@ -51,7 +51,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 
 namespace electrostore;
 
-public static class Program
+public partial class Program
 {
     public static void Main(string[] args)
     {
@@ -152,6 +152,7 @@ public static class Program
         });
 
         builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+        builder.Services.AddHttpClient();
 
         builder.Logging.AddFilter("LuckyPennySoftware.AutoMapper.License", LogLevel.None);
 
