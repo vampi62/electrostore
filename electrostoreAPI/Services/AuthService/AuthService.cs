@@ -5,6 +5,7 @@ using electrostore.Services.SmtpService;
 using electrostore.Services.SessionService;
 using electrostore.Services.UserService;
 using electrostore.Services.JwiService;
+using electrostore.Services.JwtService;
 using System.Security.Cryptography;
 using System.Web;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +20,7 @@ public class AuthService : IAuthService
     private readonly ISmtpService _smtpService;
     private readonly ISessionService _sessionService;
     private readonly IUserService _userService;
-    private readonly JwtService.JwtService _jwtService;
+    private readonly IJwtService _jwtService;
     private readonly IJwiService _jwiService;
     private static readonly Dictionary<string, DateTime> _stateStore = new();
     private static readonly char[] separator = new char[] { '_', '-' };
@@ -30,7 +31,7 @@ public class AuthService : IAuthService
 
     // In-memory store for state parameters, if you want persistence or use duplication across instances, consider using a distributed cache like Redis
 
-    public AuthService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, ISmtpService smtpService, ISessionService sessionService, IUserService userService, JwtService.JwtService jwtService, IJwiService jwiService)
+    public AuthService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, ISmtpService smtpService, ISessionService sessionService, IUserService userService, IJwtService jwtService, IJwiService jwiService)
     {
         _mapper = mapper;
         _context = context;
@@ -86,7 +87,7 @@ public class AuthService : IAuthService
         var tokenResponse = await ExchangeCodeForToken(request.Code, clientId!, clientSecret!, authority!, redirectUri!);
         var userInfo = await GetUserInfo(tokenResponse.access_token, authority!);
         var user = await GetOrCreateUser(userInfo);
-        var jwt = _jwtService.GenerateToken(user, "sso_" + sso_method);
+        var jwt = await _jwtService.GenerateToken(user, "sso_" + sso_method);
         await _jwiService.SaveToken(jwt, user.id_user, "sso_" + sso_method);
         await _smtpService.SendEmailAsync(
             user.email_user,
@@ -232,14 +233,14 @@ public class AuthService : IAuthService
     public async Task<LoginResponse> LoginWithPassword(LoginRequest request)
     {
         // check if user exists
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.Email) ?? throw new KeyNotFoundException($"User with email '{request.Email}' not found");
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.Email) ?? throw new UnauthorizedAccessException("Invalid password"); // do not reveal if email exists
         // check if password is correct
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.mdp_user))
         {
             throw new UnauthorizedAccessException("Invalid password");
         }
         // generate tokens
-        var token = _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user), "user_password");
+        var token = await _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user), "user_password");
         await _jwiService.SaveToken(token, user.id_user, "user_password");
         // send email to the user
         await _smtpService.SendEmailAsync(
@@ -265,7 +266,7 @@ public class AuthService : IAuthService
         var authMethod = _sessionService.GetTokenAuthMethod();
         var sessionId = await _jwiService.GetSessionIdByTokenId(tokenId, clientId);
         var user = await _context.Users.FindAsync(clientId) ?? throw new KeyNotFoundException($"User with id '{clientId}' not found");
-        var token = _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user), authMethod);
+        var token = await _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user), authMethod);
         await _jwiService.RevokePairTokenByRefreshToken(tokenId, "User refresh token", clientId);
         await _jwiService.SaveToken(token, user.id_user, authMethod, sessionId);
         // return tokens
@@ -278,6 +279,14 @@ public class AuthService : IAuthService
             user = _mapper.Map<ReadUserDto>(user)
         };
     }
+
+    /* public async Task Logout()
+    {
+        var clientId = _sessionService.GetClientId();
+        var tokenId = _sessionService.GetTokenId();
+        await _jwiService.RevokeAllAccessTokenByUser(clientId, "User logout");
+        await _jwiService.RevokeAllRefreshTokenByUser(clientId, "User logout");
+    } */
 
     private static string GenerateSecureRandomString(int length)
     {

@@ -311,7 +311,7 @@ public partial class Program
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IValidateStoreService, ValidateStoreService>();
         builder.Services.AddScoped<IJwiService, JwiService>();
-        builder.Services.AddSingleton<JwtService>();
+        builder.Services.AddSingleton<IJwtService, JwtService>();
     }
 
     private static void CreateRequiredDirectories()
