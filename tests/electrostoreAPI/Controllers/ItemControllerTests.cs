@@ -80,5 +80,57 @@ namespace electrostore.Tests.Controllers
             var returnedItem = Assert.IsType<ReadExtendedItemDto>(okResult.Value);
             Assert.Equal(itemId, returnedItem.id_item);
         }
+
+        [Fact]
+        public async Task CreateItem_ReturnsCreatedAtActionResult_WithCreatedItem()
+        {
+            // Arrange
+            var createItemDto = new CreateItemDto { reference_name_item = "NewItem", friendly_name_item = "New Friendly Item", seuil_min_item = 15, description_item = "New Description", id_img = 3 };
+            var createdItem = new ReadItemDto { id_item = 3, reference_name_item = "NewItem", friendly_name_item = "New Friendly Item", seuil_min_item = 15, description_item = "New Description", id_img = 3, created_at = DateTime.Now, updated_at = DateTime.Now };
+            _mockItemService.Setup(service => service.CreateItem(createItemDto))
+                .ReturnsAsync(createdItem);
+
+            // Act
+            var result = await _controller.CreateItem(createItemDto);
+
+            // Assert
+            var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+            var returnedItem = Assert.IsType<ReadItemDto>(createdAtActionResult.Value);
+            Assert.Equal(createdItem.id_item, returnedItem.id_item);
+        }
+
+        [Fact]
+        public async Task UpdateItem_ReturnsOkResult_WithUpdatedItem()
+        {
+            // Arrange
+            var itemId = 1;
+            var updateItemDto = new UpdateItemDto { reference_name_item = "UpdatedItem", friendly_name_item = "Updated Friendly Item", seuil_min_item = 20, description_item = "Updated Description", id_img = 4 };
+            var updatedItem = new ReadItemDto { id_item = itemId, reference_name_item = "UpdatedItem", friendly_name_item = "Updated Friendly Item", seuil_min_item = 20, description_item = "Updated Description", id_img = 4, created_at = DateTime.Now.AddDays(-1), updated_at = DateTime.Now };
+            _mockItemService.Setup(service => service.UpdateItem(itemId, updateItemDto))
+                .ReturnsAsync(updatedItem);
+
+            // Act
+            var result = await _controller.UpdateItem(itemId, updateItemDto);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var returnedItem = Assert.IsType<ReadItemDto>(okResult.Value);
+            Assert.Equal(updatedItem.id_item, returnedItem.id_item);
+        }
+
+        [Fact]
+        public async Task DeleteItem_ReturnsNoContentResult()
+        {
+            // Arrange
+            var itemId = 1;
+            _mockItemService.Setup(service => service.DeleteItem(itemId))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _controller.DeleteItem(itemId);
+
+            // Assert
+            Assert.IsType<NoContentResult>(result);
+        }
     }
 }
