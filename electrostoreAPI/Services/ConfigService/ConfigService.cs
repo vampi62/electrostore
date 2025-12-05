@@ -8,12 +8,14 @@ public class ConfigService : IConfigService
 {
     private readonly IMqttClient _mqttClient;
     private readonly IConfiguration _configuration;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _iaServiceUrl = "http://electrostoreIA:5000/health";
 
-    public ConfigService(IMqttClient mqttClient, IConfiguration configuration)
+    public ConfigService(IMqttClient mqttClient, IConfiguration configuration, IHttpClientFactory httpClientFactory)
     {
         _mqttClient = mqttClient;
         _configuration = configuration;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<ReadConfig> getAllConfig()
@@ -21,7 +23,7 @@ public class ConfigService : IConfigService
         Dictionary<string, JsonElement> status;
         try
         {
-            var httpClient = new HttpClient();
+            var httpClient = _httpClientFactory.CreateClient();
             var response = await httpClient.GetAsync(_iaServiceUrl);
             var content = await response.Content.ReadAsStringAsync();
             status = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content) ?? throw new InvalidOperationException("Error while getting IA health status");

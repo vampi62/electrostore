@@ -101,13 +101,13 @@ public class JwiService : IJwiService
         {
             var jwi_access = _context.JwiAccessTokens.FirstOrDefault(jwi => jwi.id_jwi_access == Guid.Parse(tokenId));
             if (jwi_access is null) return true;
-            return jwi_access.is_revoked;
+            return jwi_access.is_revoked || jwi_access.expires_at <= DateTime.UtcNow;
         }
         else if (role == "refresh")
         {
             var jwi_refresh = _context.JwiRefreshTokens.FirstOrDefault(jwi => jwi.id_jwi_refresh == Guid.Parse(tokenId));
             if (jwi_refresh is null) return true;
-            return jwi_refresh.is_revoked;
+            return jwi_refresh.is_revoked || jwi_refresh.expires_at <= DateTime.UtcNow;
         }
         return true;
     }

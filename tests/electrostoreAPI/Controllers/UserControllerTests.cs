@@ -82,5 +82,84 @@ namespace electrostore.Tests.Controllers
             var returnedUser = Assert.IsType<ReadExtendedUserDto>(okResult.Value);
             Assert.Equal(userId, returnedUser.id_user);
         }
+
+        [Fact]
+        public async Task CreateUser_ReturnsCreatedAtActionResult_WithCreatedUser()
+        {
+            // Arrange
+            var createUserDto = new CreateUserDto
+            {
+                nom_user = "New User",
+                prenom_user = "User",
+                email_user = "test@test.com",
+                mdp_user = "Password123",
+                role_user = UserRole.User
+            };
+            var createdUser = new ReadUserDto
+            {
+                id_user = 3,
+                nom_user = "New User",
+                prenom_user = "User",
+                email_user = "test@test.com",
+                role_user = UserRole.User,
+                created_at = DateTime.Now,
+                updated_at = DateTime.Now
+            };
+            _mockUserService.Setup(service => service.CreateUser(createUserDto))
+                .ReturnsAsync(createdUser);
+            // Act
+            var result = await _controller.CreateUser(createUserDto);
+            // Assert
+            var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+            var returnedUser = Assert.IsType<ReadUserDto>(createdAtActionResult.Value);
+            Assert.Equal(createdUser.id_user, returnedUser.id_user);
+        }
+
+        [Fact]
+        public async Task UpdateUser_ReturnsOkResult_WithUpdatedUser()
+        {
+            // Arrange
+            var userId = 1;
+            var updateUserDto = new UpdateUserDto
+            {
+                nom_user = "Updated User",
+                prenom_user = "User",
+                email_user = "test@test.com",
+                role_user = UserRole.Admin
+            };
+            var updatedUser = new ReadUserDto
+            {
+                id_user = userId,
+                nom_user = "Updated User",
+                prenom_user = "User",
+                email_user = "test@test.com",
+                role_user = UserRole.Admin,
+                created_at = DateTime.Now.AddDays(-1),
+                updated_at = DateTime.Now
+            };
+            _mockUserService.Setup(service => service.UpdateUser(userId, updateUserDto))
+                .ReturnsAsync(updatedUser);
+            // Act
+            var result = await _controller.UpdateUser(userId, updateUserDto);
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var returnedUser = Assert.IsType<ReadUserDto>(okResult.Value);
+            Assert.Equal(updatedUser.id_user, returnedUser.id_user);
+        }
+
+        [Fact]
+        public async Task DeleteUser_ReturnsNoContentResult()
+        {
+            // Arrange
+            var userId = 1;
+            _mockUserService.Setup(service => service.DeleteUser(userId))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _controller.DeleteUser(userId);
+
+            // Assert
+            Assert.IsType<NoContentResult>(result);
+        }
     }
 }

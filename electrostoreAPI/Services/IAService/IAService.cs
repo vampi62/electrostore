@@ -13,14 +13,16 @@ public class IAService : IIAService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _iaServiceUrl = "http://electrostoreIA:5000";
     private readonly string _modelsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models");
 
-    public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService)
+    public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IHttpClientFactory httpClientFactory)
     {
         _mapper = mapper;
         _context = context;
         _sessionService = sessionService;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<IEnumerable<ReadIADto>> GetIA(int limit = 100, int offset = 0, List<int>? idResearch = null)
@@ -118,7 +120,7 @@ public class IAService : IIAService
         }
         try
         {
-            var httpClient = new HttpClient();
+            var httpClient = _httpClientFactory.CreateClient();
             var response = await httpClient.GetAsync(_iaServiceUrl + "/status/" + id);
             var content = await response.Content.ReadAsStringAsync();
             var status = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content) ?? new Dictionary<string, JsonElement>();
@@ -162,7 +164,7 @@ public class IAService : IIAService
         }
         try
         {
-            var httpClient = new HttpClient();
+            var httpClient = _httpClientFactory.CreateClient();
             var response = await httpClient.PostAsync(_iaServiceUrl + "/train/" + id, null);
             // check if 200 OK
             if (response.StatusCode != System.Net.HttpStatusCode.OK)
@@ -186,7 +188,7 @@ public class IAService : IIAService
         }
         try
         {
-            var httpClient = new HttpClient();
+            var httpClient = _httpClientFactory.CreateClient();
             PredictionOutput newDetecResult;
             // requete POST avec l'image à scanner
             var response = await httpClient.PostAsync(_iaServiceUrl + "/detect/" + id,

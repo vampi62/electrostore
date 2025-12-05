@@ -200,10 +200,10 @@ public class FileService : IFileService
         };
     }
 
-    public async Task<SaveFileResult> GenerateThumbnail(string sourcePath, string destPath, int width, int height)
+    public async Task<SaveFileResult> GenerateThumbnail(string sourceFilePath, string destPath, int width, int height)
     {
         // if S3 is used, get the file from S3, generate the thumbnail and upload it back to S3
-        var file = await GetFile(sourcePath);
+        var file = await GetFile(sourceFilePath);
         if (!file.Success || file.FileStream == null)
         {
             return new SaveFileResult
@@ -222,7 +222,7 @@ public class FileService : IFileService
         var ms = new MemoryStream();
         await image.SaveAsJpegAsync(ms);
         ms.Position = 0;
-        IFormFile imageFile = new FormFile(ms, 0, ms.Length, "", Path.GetFileName(destPath))
+        IFormFile imageFile = new FormFile(ms, 0, ms.Length, "", Path.GetFileName(sourceFilePath))
         {
             Headers = new HeaderDictionary(),
             ContentType = "image/jpeg"

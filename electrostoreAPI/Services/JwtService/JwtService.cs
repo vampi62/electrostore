@@ -8,7 +8,7 @@ using electrostore.Enums;
 
 namespace electrostore.Services.JwtService;
 
-public class JwtService
+public class JwtService : IJwtService
 {
     private readonly JwtSettings _jwtSettings;
 
@@ -17,7 +17,7 @@ public class JwtService
         _jwtSettings = jwtSettings.Value ?? throw new ArgumentNullException(nameof(jwtSettings));
     }
 
-    public Jwt GenerateToken(ReadUserDto user, string reason)
+    public Task<Jwt> GenerateToken(ReadUserDto user, string reason)
     {
         ArgumentNullException.ThrowIfNull(user);
 
@@ -79,7 +79,7 @@ public class JwtService
         var refreshTokenString = tokenHandler.WriteToken(refreshToken);
 
         // return token
-        return new Jwt
+        return Task.FromResult(new Jwt
         {
             token = tokenString,
             expire_date_token = tokenDescriptor.Expires ?? DateTime.UtcNow.AddDays(_jwtSettings.ExpireDays),
@@ -88,6 +88,6 @@ public class JwtService
             token_id = Guid.Parse(token.Id),
             refresh_token_id = Guid.Parse(refreshToken.Id),
             created_at = DateTime.UtcNow
-        };
+        });
     }
 }

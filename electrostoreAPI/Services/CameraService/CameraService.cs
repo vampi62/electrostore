@@ -19,16 +19,18 @@ public class CameraService : ICameraService
     private readonly ISessionService _sessionService;
     private readonly IJwiService _jwiService;
     private readonly IConfiguration _configuration;
+    private readonly IHttpClientFactory _httpClientFactory;
     private const string DemoModeKey = "DemoMode";
     private const string camAuthMethod = "Basic";
 
-    public CameraService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IJwiService jwiService, IConfiguration configuration)
+    public CameraService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IJwiService jwiService, IConfiguration configuration, IHttpClientFactory httpClientFactory)
     {
         _mapper = mapper;
         _context = context;
         _sessionService = sessionService;
         _jwiService = jwiService;
         _configuration = configuration;
+        _httpClientFactory = httpClientFactory;
     }
 
     // limit the number of camera to 100 and add offset and search parameters
@@ -136,7 +138,7 @@ public class CameraService : ICameraService
                     wifiSignalStrength = "-70dBm"
                 };
             }
-            var client = new HttpClient();
+            var client = _httpClientFactory.CreateClient();
             var urlFluxStream = camera.url_camera.EndsWith('/') ? camera.url_camera.Substring(0, camera.url_camera.Length - 1) : camera.url_camera;
             var request = new HttpRequestMessage(HttpMethod.Get, urlFluxStream);
             if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.mdp_camera))
@@ -209,7 +211,7 @@ public class CameraService : ICameraService
                 }
                 return new FileStreamResult(new FileStream(demoImagePath, FileMode.Open, FileAccess.Read), "image/jpeg");
             }
-            var client = new HttpClient();
+            var client = _httpClientFactory.CreateClient();
             var urlFluxStream = camera.url_camera.EndsWith('/') ? camera.url_camera.Substring(0, camera.url_camera.Length - 1) : camera.url_camera;
             var request = new HttpRequestMessage(HttpMethod.Get, urlFluxStream + "/capture");
             if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.mdp_camera))
@@ -242,7 +244,7 @@ public class CameraService : ICameraService
             {
                 return new CameraLightDto { state = reqCamera.state };
             }
-            var client = new HttpClient();
+            var client = _httpClientFactory.CreateClient();
             var urlFluxStream = camera.url_camera.EndsWith('/') ? camera.url_camera.Substring(0, camera.url_camera.Length - 1) : camera.url_camera;
             var request = new HttpRequestMessage(HttpMethod.Get, urlFluxStream + "/light?state=" + (reqCamera.state ? "on" : "off"));
             if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.mdp_camera))
@@ -290,7 +292,7 @@ public class CameraService : ICameraService
                 var demoContentStream = new FileStream(demoStreamPath, FileMode.Open, FileAccess.Read);
                 return new FileStreamResult(demoContentStream, "multipart/x-mixed-replace; boundary=--myboundary");
             }
-            var client = new HttpClient();
+            var client = _httpClientFactory.CreateClient();
             var urlFluxStream = camera.url_camera.EndsWith('/') ? camera.url_camera.Substring(0, camera.url_camera.Length - 1) : camera.url_camera;
             var request = new HttpRequestMessage(HttpMethod.Get, urlFluxStream + "/stream");
             if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.mdp_camera))
