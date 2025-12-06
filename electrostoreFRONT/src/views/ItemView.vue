@@ -96,12 +96,6 @@ const itemSave = async() => {
 			addNotification({ message: "item.VItemUpdated", type: "success", i18n: true });
 		}
 	} catch (e) {
-		if (e.inner) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
-			return;
-		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -137,12 +131,6 @@ const boxSave = async(box) => {
 			addNotification({ message: "item.VItemBoxUpdated", type: "success", i18n: true });
 			box.tmp = null;
 		} catch (e) {
-			if (e.inner) {
-				e.inner.forEach((error) => {
-					addNotification({ message: error.message, type: "error", i18n: false });
-				});
-				return;
-			}
 			addNotification({ message: e, type: "error", i18n: false });
 			return;
 		}
@@ -153,12 +141,6 @@ const boxSave = async(box) => {
 			addNotification({ message: "item.VItemBoxAdded", type: "success", i18n: true });
 			box.tmp = null;
 		} catch (e) {
-			if (e.inner) {
-				e.inner.forEach((error) => {
-					addNotification({ message: error.message, type: "error", i18n: false });
-				});
-				return;
-			}
 			addNotification({ message: e, type: "error", i18n: false });
 			return;
 		}
@@ -184,12 +166,6 @@ const documentAdd = async() => {
 		addNotification({ message: "item.VItemDocumentAdded", type: "success", i18n: true });
 		documentAddModalShow.value = false;
 	} catch (e) {
-		if (e.inner) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
-			return;
-		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -200,12 +176,6 @@ const documentEdit = async(row) => {
 		await itemsStore.updateDocument(itemId.value, row.id_item_document, row);
 		addNotification({ message: "item.VItemDocumentUpdated", type: "success", i18n: true });
 	} catch (e) {
-		if (e.inner) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
-			return;
-		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}

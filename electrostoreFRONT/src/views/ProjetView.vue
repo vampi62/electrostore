@@ -108,12 +108,6 @@ const projetSave = async() => {
 			addNotification({ message: "projet.VProjetUpdated", type: "success", i18n: true });
 		}
 	} catch (e) {
-		if (e.inner) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
-			return;
-		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -152,12 +146,6 @@ const documentAdd = async() => {
 		addNotification({ message: "projet.VProjetDocumentAdded", type: "success", i18n: true });
 		documentAddModalShow.value = false;
 	} catch (e) {
-		if (e.inner) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
-			return;
-		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -168,12 +156,6 @@ const documentEdit = async(row) => {
 		await projetsStore.updateDocument(projetId.value, row.id_projet_document, row);
 		addNotification({ message: "projet.VProjetDocumentUpdated", type: "success", i18n: true });
 	} catch (e) {
-		if (e.inner) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
-			return;
-		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
@@ -226,12 +208,6 @@ const itemSave = async(item) => {
 			addNotification({ message: "projet.VProjetItemUpdated", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
-			if (e.inner) {
-				e.inner.forEach((error) => {
-					addNotification({ message: error.message, type: "error", i18n: false });
-				});
-				return;
-			}
 			addNotification({ message: e, type: "error", i18n: false });
 			return;
 		}
@@ -242,12 +218,6 @@ const itemSave = async(item) => {
 			addNotification({ message: "projet.VProjetItemAdded", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
-			if (e.inner) {
-				e.inner.forEach((error) => {
-					addNotification({ message: error.message, type: "error", i18n: false });
-				});
-				return;
-			}
 			addNotification({ message: e, type: "error", i18n: false });
 			return;
 		}

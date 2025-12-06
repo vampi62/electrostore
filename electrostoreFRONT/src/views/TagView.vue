@@ -68,12 +68,6 @@ const tagSave = async() => {
 			addNotification({ message: "tag.VTagUpdated", type: "success", i18n: true });
 		}
 	} catch (e) {
-		if (e.inner) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
-			return;
-		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}

@@ -214,7 +214,7 @@ export default {
 			return max;
 		},
 		isNumber(value) {
-			return typeof value === "number" && !isNaN(value);
+			return typeof value === "number" && !Number.isNaN(value);
 		},
 		showMenuModal(event, isNewElement = false) {
 			if (isNewElement && !this.canEdit) {
