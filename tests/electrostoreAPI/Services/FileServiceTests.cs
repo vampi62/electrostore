@@ -196,7 +196,7 @@ namespace electrostore.Tests.Services
 
             _minioClient
                 .Setup(m => m.StatObjectAsync(It.IsAny<StatObjectArgs>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Minio.DataModel.ObjectStat());
+                .ReturnsAsync((Minio.DataModel.ObjectStat)null!);
 
             var fileService = new FileService(configurationRoot, _minioClient.Object);
 
