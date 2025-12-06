@@ -182,6 +182,107 @@ namespace electrostore.Tests.Services
         }
 
         [Fact]
+        public async Task FileExists_ShouldReturnTrue_WhenS3FileExists()
+        {
+            // Arrange
+            var inMemorySettings = new Dictionary<string, string?>
+            {
+                ["S3:Enable"] = "true",
+                ["S3:BucketName"] = "test-bucket"
+            };
+            IConfiguration configurationRoot = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemorySettings!)
+                .Build();
+
+            _minioClient
+                .Setup(m => m.StatObjectAsync(It.IsAny<StatObjectArgs>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Minio.DataModel.ObjectStat)null!);
+
+            var fileService = new FileService(configurationRoot, _minioClient.Object);
+
+            // Act
+            var exists = await fileService.FileExists("existing-s3-file.txt");
+
+            // Assert
+            Assert.True(exists);
+        }
+
+        [Fact]
+        public async Task FileExists_ShouldReturnFalse_WhenS3FileDoesNotExist()
+        {
+            // Arrange
+            var inMemorySettings = new Dictionary<string, string?>
+            {
+                ["S3:Enable"] = "true",
+                ["S3:BucketName"] = "test-bucket"
+            };
+            IConfiguration configurationRoot = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemorySettings!)
+                .Build();
+
+            _minioClient
+                .Setup(m => m.StatObjectAsync(It.IsAny<StatObjectArgs>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Minio.Exceptions.ObjectNotFoundException("File not found"));
+
+            var fileService = new FileService(configurationRoot, _minioClient.Object);
+
+            // Act
+            var exists = await fileService.FileExists("non-existent-s3-file.txt");
+
+            // Assert
+            Assert.False(exists);
+        }
+
+        [Fact]
+        public async Task FileExists_ShouldReturnTrue_WhenLocalFileExists()
+        {
+            // Arrange
+            var inMemorySettings = new Dictionary<string, string?>
+            {
+                ["S3:Enable"] = "false"
+            };
+            IConfiguration configurationRoot = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemorySettings!)
+                .Build();
+
+            var fileService = new FileService(configurationRoot, _minioClient.Object);
+
+            var testFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "existing-local-file.txt");
+            Directory.CreateDirectory(Path.GetDirectoryName(testFilePath)!);
+            await File.WriteAllTextAsync(testFilePath, "local file content");
+
+            // Act
+            var exists = await fileService.FileExists("existing-local-file.txt");
+
+            // Assert
+            Assert.True(exists);
+
+            // Cleanup
+            File.Delete(testFilePath);
+        }
+
+        [Fact]
+        public async Task FileExists_ShouldReturnFalse_WhenLocalFileDoesNotExist()
+        {
+            // Arrange
+            var inMemorySettings = new Dictionary<string, string?>
+            {
+                ["S3:Enable"] = "false"
+            };
+            IConfiguration configurationRoot = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemorySettings!)
+                .Build();
+
+            var fileService = new FileService(configurationRoot, _minioClient.Object);
+
+            // Act
+            var exists = await fileService.FileExists("non-existent-local-file.txt");
+
+            // Assert
+            Assert.False(exists);
+        }
+
+        [Fact]
         public async Task SaveFile_ShouldSaveS3File_WhenS3Enabled()
         {
             // Arrange
