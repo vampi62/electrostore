@@ -64,9 +64,9 @@ export default {
 							case "bool":
 								return element[f.key] === (f.value === "true");
 							case "int":
-								return parseInt(element[f.key]) === parseInt(f.value);
+								return Number.parseInt(element[f.key]) === Number.parseInt(f.value);
 							case "float":
-								return parseFloat(element[f.key]) === parseFloat(f.value);
+								return Number.parseFloat(element[f.key]) === Number.parseFloat(f.value);
 							case "string":
 								return element[f.key].toLowerCase() === f.value.toLowerCase();
 							}
@@ -87,12 +87,12 @@ export default {
 	emits: ["outputFilter"],
 	methods: {
 		updateText(key, value) {
-			this.filters.forEach((filter, index) => {
+			for (const [index, filter] of this.filters.entries()) {
 				if (index === key) {
 					switch (filter.type) {
 					case "number":
-						value = parseFloat(value);
-						if (isNaN(value)) {
+						value = Number.parseFloat(value);
+						if (Number.isNaN(value)) {
 							value = "";
 						}
 						break;
@@ -102,13 +102,13 @@ export default {
 					case "select":
 						switch (filter.typeData) {
 						case "int":
-							value = parseInt(value);
-							if (isNaN(value)) {
+							value = Number.parseInt(value);
+							if (Number.isNaN(value)) {
 								value = "";
 							}
 							break;
 						case "float":
-							value = parseFloat(value);
+							value = Number.parseFloat(value);
 							break;
 						case "string":
 							value = value.toLowerCase();
@@ -117,12 +117,12 @@ export default {
 					}
 					filter.value = value;
 				}
-			});
+			}
 		},
 		filterOption(filter) {
 			if ((filter.type === "select" || filter.type === "datalist") && filter.options.length > 0) {
 				const optionsSet = new Set();
-				filter.options.forEach((option) => {
+				for (const [index, option] of filter.options.entries()) {
 					Object.values(this.storeData).forEach((element) => {
 						if (filter.subPath) {
 							if (Array.isArray(element[filter.subPath]) && (element[filter.subPath].some((subElement) => subElement[filter.key] === option[0]))) {
@@ -132,7 +132,7 @@ export default {
 							optionsSet.add(option);
 						}
 					});
-				});
+				}
 				return Array.from(optionsSet);
 			}
 			return filter.options;

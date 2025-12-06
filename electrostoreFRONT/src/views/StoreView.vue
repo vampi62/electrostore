@@ -100,13 +100,6 @@ const storeSave = async() => {
 		}
 		storesStore.storeEdition[storeId.value].loading = false;
 	} catch (e) {
-		if (e.inner) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
-			storesStore.storeEdition[storeId.value].loading = false;
-			return;
-		}
 		addNotification({ message: e, type: "error", i18n: false });
 		storesStore.storeEdition[storeId.value].loading = false;
 		return;

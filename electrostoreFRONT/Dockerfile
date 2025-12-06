@@ -12,24 +12,28 @@ COPY [ ".env", ".eslintrc.cjs", "index.html", "postcss.config.js", "tailwind.con
 
 RUN npm run build
 
-FROM httpd:alpine
+FROM nginx:alpine
 
-COPY --from=build /app/dist /usr/local/apache2/htdocs/
+COPY --from=build /app/dist /usr/share/nginx/html
 
-COPY .htaccess /usr/local/apache2/htdocs/
+WORKDIR /usr/share/nginx/html
 
-COPY httpd.conf /usr/local/apache2/conf/httpd.conf
+COPY nginx.conf /etc/nginx/nginx.conf
 
-COPY entrypoint.sh /usr/local/apache2/
+COPY entrypoint.sh /entrypoint.sh
 
-RUN chmod +x /usr/local/apache2/entrypoint.sh && \
-    chown -R 3216:3216 /usr/local/apache2/htdocs && \
-    chown -R 3216:3216 /usr/local/apache2/conf && \
-    chown -R 3216:3216 /usr/local/apache2/entrypoint.sh && \
-    chown -R 3216:3216 /usr/local/apache2/logs
+RUN chmod +x /entrypoint.sh && \
+    chown -R 3216:3216 /usr/share/nginx/html && \
+    chown -R 3216:3216 /var/cache/nginx && \
+    chown -R 3216:3216 /var/log/nginx && \
+    chown -R 3216:3216 /etc/nginx/conf.d && \
+    touch /var/run/nginx.pid && \
+    chown 3216:3216 /var/run/nginx.pid
 
 USER 3216:3216
 
-ENTRYPOINT ["/usr/local/apache2/entrypoint.sh"]
+EXPOSE 80
 
-CMD ["httpd-foreground"]
+ENTRYPOINT ["/entrypoint.sh"]
+
+CMD ["nginx", "-g", "daemon off;"]

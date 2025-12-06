@@ -91,12 +91,6 @@ const userSave = async() => {
 		usersStore.userEdition.confirm_mdp_user = "";
 		usersStore.userEdition.current_mdp_user = "";
 	} catch (e) {
-		if (e.inner) {
-			e.inner.forEach((error) => {
-				addNotification({ message: error.message, type: "error", i18n: false });
-			});
-			return;
-		}
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
