@@ -5,6 +5,7 @@ using electrostore.Models;
 using electrostore.Enums;
 using System.Text.Json;
 using electrostore.Services.SessionService;
+using electrostore.Services.FileService;
 
 namespace electrostore.Services.IAService;
 
@@ -13,15 +14,17 @@ public class IAService : IIAService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
+    private readonly IFileService _fileService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _iaServiceUrl = "http://electrostoreIA:5000";
-    private readonly string _modelsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models");
+    private readonly string _modelsPath = "models";
 
-    public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IHttpClientFactory httpClientFactory)
+    public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IFileService fileService, IHttpClientFactory httpClientFactory)
     {
         _mapper = mapper;
         _context = context;
         _sessionService = sessionService;
+        _fileService = fileService;
         _httpClientFactory = httpClientFactory;
     }
 
@@ -79,11 +82,11 @@ public class IAService : IIAService
             iaToUpdate.description_ia = iaDto.description_ia;
         }
         // if model exists set trained_ia to true
-        if (File.Exists(Path.Combine(_modelsPath, GetModelFilePath(id))) && !iaToUpdate.trained_ia)
+        if (await _fileService.FileExists(GetModelFilePath(id)) && !iaToUpdate.trained_ia)
         {
             iaToUpdate.trained_ia = true;
         }
-        else if (!File.Exists(Path.Combine(_modelsPath, GetModelFilePath(id))) && iaToUpdate.trained_ia)
+        else if (!await _fileService.FileExists(GetModelFilePath(id)) && iaToUpdate.trained_ia)
         {
             iaToUpdate.trained_ia = false;
         }
@@ -100,14 +103,8 @@ public class IAService : IIAService
         }
         var iaToDelete = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id '{id}' not found");
         // remove model if exists
-        if (File.Exists(GetModelFilePath(id)))
-        {
-            File.Delete(GetModelFilePath(id));
-        }
-        if (File.Exists(GetModelItemListFilePath(id)))
-        {
-            File.Delete(GetModelItemListFilePath(id));
-        }
+        await _fileService.DeleteFile(GetModelFilePath(id));
+        await _fileService.DeleteFile(GetModelItemListFilePath(id));
         _context.IA.Remove(iaToDelete);
         await _context.SaveChangesAsync();
     }
@@ -223,13 +220,13 @@ public class IAService : IIAService
         }
     }
 
-    private string GetModelFilePath(int id)
+    private static string GetModelFilePath(int id)
     {
-        return Path.Combine(_modelsPath, "Model" + id.ToString() + ".keras");
+        return "Model" + id.ToString() + ".keras";
     }
-    private string GetModelItemListFilePath(int id)
+    private static string GetModelItemListFilePath(int id)
     {
-        return Path.Combine(_modelsPath, "ItemList" + id.ToString() + ".txt");
+        return "ItemList" + id.ToString() + ".txt";
     }
 
     private static string GetStringValue(Dictionary<string, JsonElement> dict, string key, string defaultValue)

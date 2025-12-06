@@ -118,6 +118,30 @@ public class FileService : IFileService
         }
     }
 
+    public async Task<bool> FileExists(string url)
+    {
+        if (_s3Enabled)
+        {
+            try
+            {
+                await _minioClient.StatObjectAsync(new StatObjectArgs()
+                    .WithBucket(_s3BucketName)
+                    .WithObject(url)
+                );
+                return true;
+            }
+            catch (Minio.Exceptions.ObjectNotFoundException)
+            {
+                return false;
+            }
+        }
+        else
+        {
+            var localPath = Path.Combine(_localFilesPath, url);
+            return File.Exists(localPath);
+        }
+    }
+
     public async Task<SaveFileResult> SaveFile(string basePath, IFormFile file)
     {
         var fileName = Path.GetFileNameWithoutExtension(file.FileName);
