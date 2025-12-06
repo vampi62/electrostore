@@ -1,43 +1,78 @@
 name: deploy OVH
 
 on:
-  workflow_call:
-    inputs:
-      version:
-        description: 'The main version that is build.'
-        required: true
-        type: string
-      branch:
-        description: 'The branch that triggered this workflow.'
-        required: true
-        type: string
-      release:
-        description: 'If this is a release build.'
-        required: false
-        default: "false"
-        type: string
+  workflow_run:
+    workflows: ["arch"]
+    types:
+      - completed
 
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'The main version that is build.'
-        required: true
-        type: string
-      branch:
-        description: 'The branch that triggered this workflow.'
-        required: true
-        type: string
-      release:
-        description: 'If this is a release build.'
-        required: false
-        default: "false"
-        type: string
-
+concurrency: ci-deploy-${{ github.ref }}
 
 jobs:
+  init-work:
+    name: Init work
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    outputs:
+        VERSION: ${{ env.VERSION }}
+        BRANCH: ${{ env.BRANCH }}
+        BUILD: ${{ env.BUILD }}
+        DEPLOY: ${{ env.DEPLOY }}
+        RELEASE: ${{ env.RELEASE }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract branch name
+        shell: bash
+        run: |
+          echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
+      - name: Init for main branch
+        if: env.BRANCH == 'main'
+        shell: bash
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          echo "VERSION=pr-${COMMIT_SHA:0:8}" >> $GITHUB_ENV
+          echo "BUILD=true" >> $GITHUB_ENV
+          echo "DEPLOY=true" >> $GITHUB_ENV
+          echo "RELEASE=false" >> $GITHUB_ENV
+
+      - name: Init for v* branches
+        if: startsWith(env.BRANCH, 'v')
+        id: deploy
+        shell: bash
+        run: |
+          version=$( git tag --sort=version:refname --list "${{ env.BRANCH }}.*" | tail -1  );
+          root_version=${version%.*};
+          patch_version=${version##*.};
+          if [ "$patch_version" == "" ]; then 
+            pinned_version=${{ env.BRANCH }}.0;
+          else
+            pinned_version=$root_version.$(expr $patch_version + 1);
+          fi;
+          echo "VERSION=$pinned_version" >> $GITHUB_ENV
+          echo "BUILD=true" >> $GITHUB_ENV
+          echo "DEPLOY=true" >> $GITHUB_ENV
+          echo "RELEASE=true" >> $GITHUB_ENV
+
+      - name: Debug var
+        shell: bash
+        run: |
+          echo "BRANCH: ${{ env.BRANCH }}"
+          echo "VERSION: ${{ env.VERSION }}"
+          echo "BUILD: ${{ env.BUILD }}"
+          echo "DEPLOY: ${{ env.DEPLOY }}"
+          echo "RELEASE: ${{ env.RELEASE }}"
+
   OVH-deployment:
     runs-on: ubuntu-latest
     continue-on-error: true
+    needs:
+      - init-work
+    if: needs.init-work.outputs.DEPLOY == 'true'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -47,7 +82,7 @@ jobs:
       with:
         string: ${{ github.repository }}
     - name: DEMO deployment
-      if: ${{ inputs.release == 'true' }}
+      if: ${{ needs.init-work.outputs.release == 'true' }}
       uses: appleboy/ssh-action@v1
       with:
         host: ${{ secrets.OVH_HOST }}
@@ -59,7 +94,7 @@ jobs:
           docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/front:latest
           docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/ia:latest
     - name: TEST deployment
-      if: ${{ inputs.release != 'true' }}
+      if: ${{ needs.init-work.outputs.release != 'true' }}
       uses: appleboy/ssh-action@v1
       with:
         host: ${{ secrets.OVH_HOST }}
@@ -67,7 +102,7 @@ jobs:
         password: ${{ secrets.OVH_PASSWORD }}
         port: ${{ secrets.OVH_PORT }}
         script: |
-          docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/api:${{ inputs.version }}
-          docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/front:${{ inputs.version }}
-          docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/ia:${{ inputs.version }}
+          docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/api:${{ needs.init-work.outputs.version }}
+          docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/front:${{ needs.init-work.outputs.version }}
+          docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/ia:${{ needs.init-work.outputs.version }}
           
