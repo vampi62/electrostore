@@ -64,9 +64,9 @@ export default {
 							case "bool":
 								return element[f.key] === (f.value === "true");
 							case "int":
-								return parseInt(element[f.key]) === parseInt(f.value);
+								return Number.parseInt(element[f.key]) === Number.parseInt(f.value);
 							case "float":
-								return parseFloat(element[f.key]) === parseFloat(f.value);
+								return Number.parseFloat(element[f.key]) === Number.parseFloat(f.value);
 							case "string":
 								return element[f.key].toLowerCase() === f.value.toLowerCase();
 							}
@@ -91,8 +91,8 @@ export default {
 				if (index === key) {
 					switch (filter.type) {
 					case "number":
-						value = parseFloat(value);
-						if (isNaN(value)) {
+						value = Number.parseFloat(value);
+						if (Number.isNaN(value)) {
 							value = "";
 						}
 						break;
@@ -102,13 +102,13 @@ export default {
 					case "select":
 						switch (filter.typeData) {
 						case "int":
-							value = parseInt(value);
-							if (isNaN(value)) {
+							value = Number.parseInt(value);
+							if (Number.isNaN(value)) {
 								value = "";
 							}
 							break;
 						case "float":
-							value = parseFloat(value);
+							value = Number.parseFloat(value);
 							break;
 						case "string":
 							value = value.toLowerCase();
