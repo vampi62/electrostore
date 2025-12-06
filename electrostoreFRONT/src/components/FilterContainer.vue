@@ -87,7 +87,7 @@ export default {
 	emits: ["outputFilter"],
 	methods: {
 		updateText(key, value) {
-			this.filters.forEach((filter, index) => {
+			for (const [index, filter] of this.filters.entries()) {
 				if (index === key) {
 					switch (filter.type) {
 					case "number":
@@ -117,12 +117,12 @@ export default {
 					}
 					filter.value = value;
 				}
-			});
+			}
 		},
 		filterOption(filter) {
 			if ((filter.type === "select" || filter.type === "datalist") && filter.options.length > 0) {
 				const optionsSet = new Set();
-				filter.options.forEach((option) => {
+				for (const [index, option] of filter.options.entries()) {
 					Object.values(this.storeData).forEach((element) => {
 						if (filter.subPath) {
 							if (Array.isArray(element[filter.subPath]) && (element[filter.subPath].some((subElement) => subElement[filter.key] === option[0]))) {
@@ -132,7 +132,7 @@ export default {
 							optionsSet.add(option);
 						}
 					});
-				});
+				}
 				return Array.from(optionsSet);
 			}
 			return filter.options;
