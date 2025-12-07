@@ -79,7 +79,7 @@ export const useProjetsStore = defineStore("projets",{
 				if (expand.includes("projets_status_history")) {
 					this.statusHistory[projet.id_projet] = {};
 					for (const statusHistory of projet.projets_status_history) {
-						this.statusHistory[projet.id_projet][statusHistory.id_status_history] = statusHistory;
+						this.statusHistory[projet.id_projet][statusHistory.id_projet_status] = statusHistory;
 					}
 				}
 			}
@@ -128,7 +128,7 @@ export const useProjetsStore = defineStore("projets",{
 			if (expand.includes("projets_status_history")) {
 				this.statusHistory[id] = {};
 				for (const statusHistory of this.projets[id].projets_status_history) {
-					this.statusHistory[id][statusHistory.id_status_history] = statusHistory;
+					this.statusHistory[id][statusHistory.id_projet_status] = statusHistory;
 				}
 			}
 		},
@@ -500,7 +500,7 @@ export const useProjetsStore = defineStore("projets",{
 				useToken: "access",
 			});
 			for (const statusHistory of newStatusHistoryList["data"]) {
-				this.statusHistory[idProjet][statusHistory.id_status_history] = statusHistory;
+				this.statusHistory[idProjet][statusHistory.id_projet_status] = statusHistory;
 			}
 			this.statusHistoryTotalCount[idProjet] = newStatusHistoryList["count"];
 			this.statusHistoryLoading = false;

@@ -286,6 +286,10 @@ const labelForm = ref([
 	{ key: "date_debut_projet", label: "projet.VProjetStartDate", type: "computed", value: dateDebut },
 	{ key: "date_fin_projet", label: "projet.VProjetEndDate", type: "computed", value: dateFin },
 ]);
+const labelTableauHistoryStatus = ref([
+	{ label: "projet.VProjetStatusType", sortable: false, key: "status_projet", type: "enum", options: { 0: t("projet.VProjetsStatus0"), 1: t("projet.VProjetsStatus1"), 2: t("projet.VProjetsStatus2"), 3: t("projet.VProjetsStatus3"), 4: t("projet.VProjetsStatus4"), 5: t("projet.VProjetsStatus5") } },
+	{ label: "projet.VProjetStatusDate", sortable: true, key: "created_at", type: "datetime" },
+]);
 const labelTableauDocument = ref([
 	{ label: "projet.VProjetDocumentName", sortable: true, key: "name_projet_document", type: "text", canEdit: true },
 	{ label: "projet.VProjetDocumentType", sortable: true, key: "type_projet_document", type: "text" },
@@ -471,6 +475,19 @@ const labelTableauModalItem = ref([
 				:meta ="{ 'keyPoids': 'poids_projet_tag', 'keyName': 'nom_projet_tag' }"
 				/>
 		</div>
+		<CollapsibleSection title="projet.VProjetHistoryStatus"
+			:total-count="Number(projetsStore.statusHistoryTotalCount[projetId] || 0)" :id-page="projetId">
+			<template #append-row>
+				<Tableau :labels="labelTableauHistoryStatus" :meta="{ key: 'id_projet_status' }"
+					:store-data="[projetsStore.statusHistory[projetId]]"
+					:loading="projetsStore.statusHistoryLoading"
+					:total-count="Number(projetsStore.statusHistoryTotalCount[projetId])"
+					:loaded-count="Object.keys(projetsStore.statusHistory[projetId] || {}).length"
+					:fetch-function="(offset, limit) => projetsStore.getStatusHistoryByInterval(projetId, limit, offset)"
+					:tableau-css="{ component: 'max-h-64' }"
+				/>
+			</template>
+		</CollapsibleSection>
 		<CollapsibleSection title="projet.VProjetDocuments"
 			:total-count="Number(projetsStore.documentsTotalCount[projetId] || 0)" :id-page="projetId">
 			<template #append-row>
