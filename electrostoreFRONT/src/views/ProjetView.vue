@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, onBeforeUnmount, computed, ref, inject } from "vue";
-import { router } from "@/helpers";
+import router from "@/router";
 
 const { addNotification } = inject("useNotification");
 

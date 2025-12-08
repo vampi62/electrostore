@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 
 import { useAuthStore } from "@/stores";
 
-export const router = createRouter({
+const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
 	linkActiveClass: "active",
 	routes: [
@@ -62,3 +62,4 @@ router.beforeEach(async(to) => {
 		return "/";
 	}
 });
+export default router;
