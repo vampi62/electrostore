@@ -27,10 +27,11 @@ Object.defineProperty(window, 'localStorage', {
 vi.mock('@/helpers', () => ({
   fetchWrapper: {
     post: vi.fn()
-  },
-  router: {
-    push: vi.fn()
   }
+}))
+// Mock router
+vi.mock('@/router', () => ({
+  push: vi.fn()
 }))
 
 describe('Auth Store', () => {

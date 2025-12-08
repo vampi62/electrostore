@@ -6,6 +6,7 @@ export { default as FormContainer } from "./FormContainer.vue";
 export { default as ModalAddFile } from "./ModalAddFile.vue";
 export { default as ModalDeleteConfirm } from "./ModalDeleteConfirm.vue";
 export { default as ModalFinder } from "./ModalFinder.vue";
+export { default as NavBar } from "./NavBar.vue";
 export { default as Notification } from "./Notification.vue";
 export { default as NotificationContainer } from "./NotificationContainer.vue";
 export { default as StatusDisplay } from "./StatusDisplay.vue";
