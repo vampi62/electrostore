@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from "vue";
 
-import { RouterView, RouterLink, useRoute } from "vue-router";
+import { RouterView, useRoute } from "vue-router";
 const route = useRoute();
 
 import { useAuthStore, useConfigsStore } from "@/stores";
@@ -14,7 +14,6 @@ configsStore.getConfig();
 const isIframe = computed(() => typeof route.query.iframe !== "undefined");
 
 const reduceLeftSideBar = ref(false);
-const showTopBar = ref(false);
 const listNav = [
 	{ name: "common.VAppInventory", path: "/inventory", roleRequired: "user", faIcon: "fa-solid fa-box" },
 	{ name: "common.VAppProjet", path: "/projets", roleRequired: "user", faIcon: "fa-solid fa-project-diagram" },
@@ -31,126 +30,20 @@ const containerClasses = computed(() => [
 	!reduceLeftSideBar.value && authStore.user && !isIframe.value ? "sm:ml-64" : "",
 	authStore.user && !isIframe.value ? "top-16" : "top-0",
 ]);
+const modalFinderRef = ref(null);
 
 const showAboutModal = ref(false);
 </script>
 
 <template>
 	<div v-show="authStore.user && !isIframe">
-		<nav class="flex justify-between p-5 bg-gray-800 border-b-2 border-blue-400 fixed w-full top-0 h-16">
-			<div class="flex items-center space-x-4">
-				<RouterLink to="/" class="text-white hover:text-blue-400">{{ $t('common.VAppHome') }}</RouterLink>
-				<button @click="$refs.modalFinder.loadPageFind()"
-					class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded cursor-pointer inline-block">
-					{{ $t('common.VAppFind') }}
-				</button>
-			</div>
-			<div v-if="configsStore.getConfigByKey('demo_mode') === true" class="text-red-500 text-center">
-				{{ $t('common.VAppDemoMode') }}
-			</div>
-			<a href="https://github.com/vampi62/electrostore" class="block sm:hidden text-white hover:text-blue-400"
-				target="_blank" rel="noopener noreferrer"><!-- for mobile -->
-				<p class="space-x-4">
-					<font-awesome-icon icon="fa-brands fa-github" size="lg" />
-					<span>ElectroStore</span>
-				</p>
-			</a>
-			<button @click="showTopBar = !showTopBar"
-				class="block sm:hidden text-white hover:text-blue-400"><!-- for mobile -->
-				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-					xmlns="http://www.w3.org/2000/svg">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-						d="M4 6h16M4 12h16m-7 6h7">
-					</path>
-				</svg>
-			</button>
-			<div class="hidden sm:flex"><!-- for desktop -->
-				<div class="flex space-x-4 justify-end">
-					<RouterLink :to="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400">
-						{{ $t('common.VAppProfile') }}
-					</RouterLink>
-					<RouterLink v-if="authStore.user?.role_user === 1 || authStore.user?.role_user === 2" to="/users"
-						class="text-white hover:text-blue-400">
-						{{ $t('common.VAppAdmin') }}
-					</RouterLink>
-					<button v-if="authStore.user" @click="authStore.logout()"
-						class="cursor-pointer text-white hover:text-blue-400">
-						{{ $t('common.VAppLogout') }}
-					</button>
-					<button @click="showAboutModal = true"
-						class="cursor-pointer text-white hover:text-blue-400 text-left">
-						{{ $t('common.VAppAbout') }}
-					</button>
-				</div>
-			</div>
-		</nav>
-		<div class="fixed sm:hidden top-12 w-full z-10"><!-- for mobile -->
-			<div v-show="showTopBar" class="flex flex-col space-y-4 bg-gray-800 p-4">
-				<RouterLink :to="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400">
-					{{ $t('common.VAppProfile') }}
-				</RouterLink>
-				<RouterLink v-if="authStore.user?.role_user === 1 || authStore.user?.role_user === 2 " to="/users"
-					class="text-white hover:text-blue-400">
-					{{ $t('common.VAppAdmin') }}
-				</RouterLink>
-				<button v-if="authStore.user" @click="authStore.logout()"
-					class="cursor-pointer text-white hover:text-blue-400 text-left">
-					{{ $t('common.VAppLogout') }}
-				</button>
-				<button @click="showAboutModal = true"
-					class="cursor-pointer text-white hover:text-blue-400 text-left">
-					{{ $t('common.VAppAbout') }}
-				</button>
-				<div class="border-t-2 border-blue-400"></div>
-				<ul class="mt-6 space-y-4">
-					<li v-for="nav in listNav" :key="nav.name">
-						<RouterLink :to="nav.path" :class="['flex items-center space-x-4 hover:text-blue-400',
-							route.path.includes(nav.path) ? 'text-blue-400' : 'text-white']">
-							<font-awesome-icon :icon="nav.faIcon" />
-							<span>{{ $t(nav.name) }}</span>
-						</RouterLink>
-					</li>
-				</ul>
-			</div>
-		</div>
-		<div :class="['hidden sm:flex flex-col justify-between p-4 bg-gray-800 fixed left-0 top-16 bottom-12',
-			reduceLeftSideBar ? 'w-16' : 'w-64']"><!-- for desktop -->
-			<div class="flex flex-col space-y-4 overflow-x-auto no-scrollbar">
-				<ul class="mt-2 space-y-4">
-					<li v-for="nav in listNav" :key="nav.name" class="min-h-6">
-						<RouterLink :to="nav.path" :class="['flex items-center space-x-4 hover:text-blue-400',
-							route.path.includes(nav.path) ? 'text-blue-400' : 'text-white']">
-							<div class="flex items-center justify-center w-8 h-8">
-								<font-awesome-icon :icon="nav.faIcon" size="lg" />
-							</div>
-							<span v-if="!reduceLeftSideBar" class="whitespace-nowrap">{{ $t(nav.name) }}</span>
-						</RouterLink>
-					</li>
-				</ul>
-			</div>
-			<div v-if="configsStore.getConfigByKey('demo_mode') === true" class="text-red-500 text-center mt-4">
-				{{ $t('common.VAppDemoMode') }}
-			</div>
-			<a href="https://github.com/vampi62/electrostore" class="block text-white hover:text-blue-400"
-				target="_blank" rel="noopener noreferrer">
-				<div class="text-center mt-4">
-					<p class="space-x-4">
-						<font-awesome-icon icon="fa-brands fa-github" size="lg" />
-						<span v-if="!reduceLeftSideBar">ElectroStore</span>
-					</p>
-				</div>
-			</a>
-		</div>
-		<button :class="['hidden sm:flex justify-center p-4 bg-gray-700 text-white hover:text-blue-400 fixed left-0 bottom-0 h-12',
-			reduceLeftSideBar ? 'w-16' : 'w-64']" @click="reduceLeftSideBar = !reduceLeftSideBar">
-			<font-awesome-icon v-if="reduceLeftSideBar" icon="fa-solid fa-arrow-right" size="lg" />
-			<font-awesome-icon v-else icon="fa-solid fa-arrow-left" size="lg" />
-		</button>
+		<NavBar :list-nav="listNav" :load-page-find="modalFinderRef?.loadPageFind || (() => {})"
+			@update:reduce-left-side-bar="reduceLeftSideBar = $event" @show-about-modal="showAboutModal = true" />
 	</div>
 	<div :class="containerClasses">
 		<RouterView />
 	</div>
-	<ModalFinder ref="modalFinder" />
+	<ModalFinder ref="modalFinderRef" />
 	<NotificationContainer />
 	<div v-if="showAboutModal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-20" @click="showAboutModal = false">
 		<div class="bg-white rounded-lg shadow-lg w-3/4 h-3/4 p-6" @click.stop>
