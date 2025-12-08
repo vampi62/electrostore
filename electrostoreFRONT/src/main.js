@@ -64,6 +64,10 @@ app.component(
 	defineAsyncComponent(() => import("@/components/ModalFinder.vue")),
 );
 app.component(
+	"NavBar",
+	defineAsyncComponent(() => import("@/components/NavBar.vue")),
+);
+app.component(
 	"NotificationContainer",
 	defineAsyncComponent(() => import("@/components/NotificationContainer.vue")),
 );
