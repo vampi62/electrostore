@@ -25,7 +25,7 @@ public record CreateCommandDocumentDto
 
     [Required(ErrorMessage = "{0} is required.")]
     [FileSize(Constants.MaxDocumentSizeMB, ErrorMessage = "{0} cannot exceed {1} MB in size.")]
-    [FileExtension([".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".bmp"],
+    [FileType(nameof(MimeTypes.AllowedDocumentMimeTypes),
         ErrorMessage = "{0} has an invalid file type, allowed types are: [{1}].")]
     public required IFormFile document { get; init; }
 }
@@ -37,7 +37,7 @@ public record CreateCommandDocumentByCommandDto
 
     [Required(ErrorMessage = "{0} is required.")]
     [FileSize(Constants.MaxDocumentSizeMB, ErrorMessage = "{0} cannot exceed {1} MB in size.")]
-    [FileExtension([".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".bmp"],
+    [FileType(nameof(MimeTypes.AllowedDocumentMimeTypes),
         ErrorMessage = "{0} has an invalid file type, allowed types are: [{1}].")]
     public required IFormFile document { get; init; }
 }

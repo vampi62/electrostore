@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+using System.Collections.Immutable;
 
 namespace electrostore.Dto;
 
@@ -19,6 +19,8 @@ public record ReadConfig
     public int max_length_status { get; init; }
     public int max_size_document_in_mb { get; init; }
     public List<SSOAvailableProvider>? sso_available_providers { get; init; }
+    public string[]? allowed_image_mime_types { get; init; }
+    public string[]? allowed_document_mime_types { get; init; }
 }
 
 public record SSOAvailableProvider
@@ -40,4 +42,28 @@ public static class Constants
     public const int MaxReasonLength = 50;
     public const int MaxStatusLength = 50;
     public const int MaxDocumentSizeMB = 5; // in MB
+}
+public static class MimeTypes
+{
+    public static readonly string[] AllowedImageMimeTypes = {
+        "image/png",
+        "image/webp",
+        "image/jpg",
+        "image/jpeg",
+        "image/gif",
+        "image/bmp"
+    };
+    public static readonly string[] AllowedDocumentMimeTypes = {
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "text/plain",
+        "application/zip",
+        "application/x-rar-compressed",
+        "application/octet-stream"
+    };
 }

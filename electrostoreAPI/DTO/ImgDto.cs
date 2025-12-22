@@ -26,7 +26,7 @@ public record CreateImgByItemDto
 
     [Required(ErrorMessage = "{0} is required.")]
     [FileSize(Constants.MaxDocumentSizeMB, ErrorMessage = "{0} cannot exceed {1} MB in size.")]
-    [FileExtension([".png", ".webp", ".jpg", ".jpeg", ".gif", ".bmp"],
+    [FileType(nameof(MimeTypes.AllowedImageMimeTypes),
         ErrorMessage = "{0} has an invalid file type, allowed types are: [{1}].")]
     public required IFormFile img_file { get; init; }
 }
@@ -45,7 +45,7 @@ public record CreateImgDto
 
     [Required(ErrorMessage = "{0} is required.")]
     [FileSize(Constants.MaxDocumentSizeMB, ErrorMessage = "{0} cannot exceed {1} MB in size.")]
-    [FileExtension([".png", ".webp", ".jpg", ".jpeg", ".gif", ".bmp"],
+    [FileType(nameof(MimeTypes.AllowedImageMimeTypes),
         ErrorMessage = "{0} has an invalid file type, allowed types are: [{1}].")]
     public required IFormFile img_file { get; init; }
 }

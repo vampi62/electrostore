@@ -27,12 +27,12 @@
 					</button>
 					<div class="relative">
 						<button type="button" @click="addFile"
-							class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+							class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
 							:disabled="loading">
 							{{ $t('components.VModalAddFileAdd') }}
 						</button>
 						<div v-if="loading" 
-							class="absolute inset-0 bg-red-500 bg-opacity-90 rounded-lg flex items-center justify-center">
+							class="absolute inset-0 bg-blue-500 bg-opacity-90 rounded-lg flex items-center justify-center">
 							<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 						</div>
 					</div>

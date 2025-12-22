@@ -120,6 +120,11 @@ Complete the `appsettings.json` file with the following content, replacing place
       "Authority": "https://<sso-server-url>/application/o/authorize/",
       "RedirectUri": "https://<frontend-url>/auth/callback",
       "Scope": "openid profile email",
+      "GroupMapping": {
+        "User": "electrostore Users",
+        "Moderator": "electrostore Moderators",
+        "Admin": "electrostore Admins"
+      },
       "DisplayName": "<method-name>",
       "IconUrl": "<method-icon-url>"
     }

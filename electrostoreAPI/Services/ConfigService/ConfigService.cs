@@ -65,7 +65,9 @@ public class ConfigService : IConfigService
                 provider = provider.Key,
                 display_name = provider.GetValue<string>("DisplayName") ?? string.Empty,
                 icon_url = provider.GetValue<string>("IconUrl") ?? string.Empty
-            }).ToList()
+            }).ToList(),
+            allowed_image_mime_types = MimeTypes.AllowedImageMimeTypes,
+            allowed_document_mime_types = MimeTypes.AllowedDocumentMimeTypes
         };
     }
 }
