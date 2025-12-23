@@ -52,7 +52,7 @@
 								{{ $t('item.VInventoryNoCameraOrUploadAnImage') }}
 							</div>
 						</template>
-						<input type="file" @change="handleFileUpload" class="hidden" ref="fileInput" />
+						<input type="file" @change="handleFileUpload" class="hidden" ref="fileInput" :accept="allowedExtensions.join(',') || ''" />
 					</div>
 					<div class="flex w-full border-y border-r justify-between">
 						<div class="flex flex-col mx-2">
@@ -117,7 +117,7 @@
 <script>
 import { inject } from "vue";
 import { useI18n } from "vue-i18n";
-import { useItemsStore, useIasStore, useCamerasStore } from "@/stores";
+import { useConfigsStore, useItemsStore, useIasStore, useCamerasStore } from "@/stores";
 export default {
 	name: "ModalFinder",
 	methods: {
@@ -220,12 +220,14 @@ export default {
 	setup() {
 		const { addNotification } = inject("useNotification"); 
 		const { t } = useI18n();
+		const configsStore = useConfigsStore();
 		const iasStore = useIasStore();
 		const itemsStore = useItemsStore();
 		const camerasStore = useCamerasStore();
 		return {
 			addNotification,
 			t,
+			configsStore,
 			iasStore,
 			itemsStore,
 			camerasStore,
@@ -236,6 +238,7 @@ export default {
 			selectedPageFind: { ia: null, camera: null, image: null, imageBlob: null },
 			fileInput: null,
 			showPageFind: false,
+			allowedExtensions: this.configsStore.imageExtAllowed || [],
 		};
 	},
 };

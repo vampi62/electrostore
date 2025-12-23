@@ -482,6 +482,7 @@ const labelTableauModalItem = ref([
 		:modal-data="documentModalData" :add-action="documentAdd" :key-name-document="'name_command_document'" :key-file-document="'document'"
 		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
 		:text-max-size="'command.VCommandDocumentSize'" :text-placeholder-document="'command.VCommandDocumentNamePlaceholder'"
+		file-type="document"
 	/>
 
 	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"

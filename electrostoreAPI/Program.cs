@@ -266,18 +266,23 @@ public partial class Program
             mqttClient.ConnectAsync(options);
             return mqttClient;
         });
-        builder.Services.AddSingleton<IMinioClient>(sp =>
+        
+        // Only register MinIO client if S3 is enabled
+        if (builder.Configuration.GetSection("S3:Enable").Get<bool>())
         {
-            var minioClient = new MinioClient()
-                .WithEndpoint(builder.Configuration.GetSection("S3:Endpoint").Value ?? "localhost:9000")
-                .WithCredentials(
-                    builder.Configuration.GetSection("S3:AccessKey").Value ?? "minioadmin",
-                    builder.Configuration.GetSection("S3:SecretKey").Value ?? "minioadmin")
-                .WithRegion(builder.Configuration.GetSection("S3:Region").Value ?? "us-east-1")
-                .WithSSL(builder.Configuration.GetSection("S3:Secure").Get<bool>())
-                .Build();
-            return minioClient;
-        });
+            builder.Services.AddSingleton<IMinioClient>(sp =>
+            {
+                var minioClient = new MinioClient()
+                    .WithEndpoint(builder.Configuration.GetSection("S3:Endpoint").Value ?? "localhost:9000")
+                    .WithCredentials(
+                        builder.Configuration.GetSection("S3:AccessKey").Value ?? "minioadmin",
+                        builder.Configuration.GetSection("S3:SecretKey").Value ?? "minioadmin")
+                    .WithRegion(builder.Configuration.GetSection("S3:Region").Value ?? "us-east-1")
+                    .WithSSL(builder.Configuration.GetSection("S3:Secure").Get<bool>())
+                    .Build();
+                return minioClient;
+            });
+        }
 
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IBoxService, BoxService>();

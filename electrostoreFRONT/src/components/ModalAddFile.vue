@@ -14,8 +14,8 @@
 						<span class="text-red-500 h-5 w-full text-sm">{{ errors[keyNameDocument] || ' ' }}</span>
 					</div>
 					<div class="flex flex-col">
-						<Field :name="keyFileDocument" type="file" @change="handleFileUpload" class="w-full p-2"
-							:class="{ 'border-red-500': errors[keyFileDocument] }" />
+						<Field :name="keyFileDocument" type="file" @change="handleFileUpload" :accept="allowedExtensions.join(',') || ''"
+							class="w-full p-2" :class="{ 'border-red-500': errors[keyFileDocument] }" />
 						<span class="h-5 w-80 text-sm">{{ $t(textMaxSize) }} ({{ maxSizeInMb }}Mo)</span>
 						<span class="text-red-500 h-5 w-full text-sm">{{ errors[keyFileDocument] || ' ' }}</span>
 					</div>
@@ -44,6 +44,7 @@
 
 <script>
 import { Form, Field } from "vee-validate";
+import { useConfigsStore } from "@/stores";
 export default {
 	name: "ModalAddFile",
 	props: {
@@ -103,12 +104,27 @@ export default {
 			// This function will be called when the add file is confirmed
 			default: null,
 		},
+		fileType: {
+			type: String,
+			required: false,
+			// This should be the type of file being added (e.g., "image", "document")
+			default: "document",
+		},
 	},
 	emits: ["closeModal"],
+	setup() {
+		const configsStore = useConfigsStore();
+		return {
+			configsStore,
+		};
+	},
 	data() {
 		return {
 			loading: false,
 			file: null,
+			allowedExtensions: this.configsStore?.[
+				this.fileType === "image" ? "imageExtAllowed" : "documentExtAllowed"
+			] || [],
 		};
 	},
 	components: {

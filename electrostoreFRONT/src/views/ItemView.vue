@@ -641,6 +641,7 @@ const labelTableauProjet = ref([
 		:modal-data="documentModalData" :add-action="documentAdd" :key-name-document="'name_item_document'" :key-file-document="'document'"
 		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
 		:text-max-size="'item.VItemDocumentSize'" :text-placeholder-document="'item.VItemDocumentNamePlaceholder'"
+		file-type="document"
 	/>
 
 	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
@@ -652,6 +653,7 @@ const labelTableauProjet = ref([
 		:modal-data="imageModalData" :add-action="imageAdd" :key-name-document="'nom_img'" :key-file-document="'image'"
 		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
 		:text-max-size="'item.VItemImageSize'" :text-placeholder-document="'item.VItemImageNamePlaceholder'"
+		file-type="image"
 	/>
 
 	<ModalDeleteConfirm :show-modal="imageDeleteModalShow" @close-modal="imageDeleteModalShow = false"
