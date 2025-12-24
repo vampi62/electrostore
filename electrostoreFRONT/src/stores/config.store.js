@@ -35,6 +35,14 @@ export const useConfigsStore = defineStore("configs",{
 				"image/gif",
 				"image/bmp",
 			],
+			"allowed_image_extensions": [
+				".png",
+				".webp",
+				".jpg",
+				".jpeg",
+				".gif",
+				".bmp",
+			],
 			"allowed_document_mime_types": [
 				"application/pdf",
 				"application/msword",
@@ -46,7 +54,6 @@ export const useConfigsStore = defineStore("configs",{
 				"text/plain",
 				"application/zip",
 				"application/x-rar-compressed",
-				"application/octet-stream",
 				"image/png",
 				"image/webp",
 				"image/jpg",
@@ -54,9 +61,25 @@ export const useConfigsStore = defineStore("configs",{
 				"image/gif",
 				"image/bmp",
 			],
+			"allowed_document_extensions": [
+				".pdf",
+				".doc",
+				".docx",
+				".xls",
+				".xlsx",
+				".ppt",
+				".pptx",
+				".txt",
+				".zip",
+				".rar",
+				".png",
+				".webp",
+				".jpg",
+				".jpeg",
+				".gif",
+				".bmp",
+			],
 		},
-		imageExtAllowed: [],
-		documentExtAllowed: [],
 	}),
 	actions: {
 		async getConfig() {
@@ -64,24 +87,7 @@ export const useConfigsStore = defineStore("configs",{
 			this.configs = await fetchWrapper.get({
 				url: `${baseUrl}/config`,
 			});
-			this.convertMimeTypesToExtensions();
 			this.configs.loading = false;
-		},
-		convertMimeTypesToExtensions() {
-			const imageMimeTypes = this.getConfigByKey("allowed_image_mime_types");
-			const documentMimeTypes = this.getConfigByKey("allowed_document_mime_types");
-			for (const mimeType of imageMimeTypes) {
-				const ext = "." + getExtension(mimeType);
-				if (!this.imageExtAllowed.includes(ext)) {
-					this.imageExtAllowed.push(ext);
-				}
-			}
-			for (const mimeType of documentMimeTypes) {
-				const ext = "." + getExtension(mimeType);
-				if (!this.documentExtAllowed.includes(ext)) {
-					this.documentExtAllowed.push(ext);
-				}
-			}
 		},
 	},
 	getters: {

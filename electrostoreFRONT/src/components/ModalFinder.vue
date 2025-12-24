@@ -238,7 +238,7 @@ export default {
 			selectedPageFind: { ia: null, camera: null, image: null, imageBlob: null },
 			fileInput: null,
 			showPageFind: false,
-			allowedExtensions: this.configsStore.imageExtAllowed || [],
+			allowedExtensions: this.configsStore.getConfigByKey("allowed_image_extensions") || [],
 		};
 	},
 };

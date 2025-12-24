@@ -20,7 +20,9 @@ public record ReadConfig
     public int max_size_document_in_mb { get; init; }
     public List<SSOAvailableProvider>? sso_available_providers { get; init; }
     public string[]? allowed_image_mime_types { get; init; }
+    public string[]? allowed_image_extensions { get; init; }
     public string[]? allowed_document_mime_types { get; init; }
+    public string[]? allowed_document_extensions { get; init; }
 }
 
 public record SSOAvailableProvider
@@ -42,28 +44,32 @@ public static class Constants
     public const int MaxReasonLength = 50;
     public const int MaxStatusLength = 50;
     public const int MaxDocumentSizeMB = 5; // in MB
-}
-public static class MimeTypes
-{
-    public static readonly string[] AllowedImageMimeTypes = {
-        "image/png",
-        "image/webp",
-        "image/jpg",
-        "image/jpeg",
-        "image/gif",
-        "image/bmp"
-    };
-    public static readonly string[] AllowedDocumentMimeTypes = {
-        "application/pdf",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "application/vnd.ms-excel",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "application/vnd.ms-powerpoint",
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        "text/plain",
-        "application/zip",
-        "application/x-rar-compressed",
-        "application/octet-stream"
-    };
+    public static readonly ImmutableDictionary<string, string> AllowedImageMimeTypes = ImmutableDictionary.CreateRange<string, string>(new[]
+    {
+        KeyValuePair.Create("image/png", ".png"),
+        KeyValuePair.Create("image/webp", ".webp"),
+        KeyValuePair.Create("image/jpg", ".jpg"),
+        KeyValuePair.Create("image/jpeg", ".jpeg"),
+        KeyValuePair.Create("image/gif", ".gif"),
+        KeyValuePair.Create("image/bmp", ".bmp")
+    });
+    public static readonly ImmutableDictionary<string, string> AllowedDocumentMimeTypes = ImmutableDictionary.CreateRange<string, string>(new[]
+    {
+        KeyValuePair.Create("application/pdf", ".pdf"),
+        KeyValuePair.Create("application/msword", ".doc"),
+        KeyValuePair.Create("application/vnd.openxmlformats-officedocument.wordprocessingml.document", ".docx"),
+        KeyValuePair.Create("application/vnd.ms-excel", ".xls"),
+        KeyValuePair.Create("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx"),
+        KeyValuePair.Create("application/vnd.ms-powerpoint", ".ppt"),
+        KeyValuePair.Create("application/vnd.openxmlformats-officedocument.presentationml.presentation", ".pptx"),
+        KeyValuePair.Create("text/plain", ".txt"),
+        KeyValuePair.Create("application/zip", ".zip"),
+        KeyValuePair.Create("application/x-rar-compressed", ".rar"),
+        KeyValuePair.Create("image/png", ".png"),
+        KeyValuePair.Create("image/webp", ".webp"),
+        KeyValuePair.Create("image/jpg", ".jpg"),
+        KeyValuePair.Create("image/jpeg", ".jpeg"),
+        KeyValuePair.Create("image/gif", ".gif"),
+        KeyValuePair.Create("image/bmp", ".bmp")
+    });
 }

@@ -1321,7 +1321,6 @@
                 "properties": {
                   "name_command_document": {
                     "maxLength": 50,
-                    "minLength": 1,
                     "type": "string"
                   },
                   "document": {
@@ -3337,7 +3336,6 @@
                 "properties": {
                   "name_item_document": {
                     "maxLength": 50,
-                    "minLength": 1,
                     "type": "string"
                   },
                   "document": {
@@ -3660,12 +3658,10 @@
                 "properties": {
                   "nom_img": {
                     "maxLength": 50,
-                    "minLength": 1,
                     "type": "string"
                   },
                   "description_img": {
                     "maxLength": 500,
-                    "minLength": 1,
                     "type": "string"
                   },
                   "img_file": {
@@ -5322,7 +5318,6 @@
                 "properties": {
                   "name_projet_document": {
                     "maxLength": 50,
-                    "minLength": 1,
                     "type": "string"
                   },
                   "document": {
@@ -12363,7 +12358,8 @@
           "url_command": {
             "maxLength": 150,
             "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "format": "uri"
           },
           "status_command": {
             "maxLength": 50,
@@ -12474,7 +12470,7 @@
           },
           "seuil_max_item_item_box": {
             "maximum": 2147483647,
-            "minimum": 1,
+            "minimum": 0,
             "type": "integer",
             "format": "int32"
           }
@@ -12501,7 +12497,7 @@
           },
           "seuil_max_item_item_box": {
             "maximum": 2147483647,
-            "minimum": 1,
+            "minimum": 0,
             "type": "integer",
             "format": "int32"
           }
@@ -12862,10 +12858,12 @@
           "email_user": {
             "maxLength": 100,
             "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "format": "email"
           },
           "mdp_user": {
             "minLength": 1,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z0-9]).{8,}$",
             "type": "string"
           },
           "role_user": {
@@ -12898,7 +12896,6 @@
         "type": "object",
         "properties": {
           "email": {
-            "maxLength": 100,
             "minLength": 1,
             "type": "string"
           }
@@ -12951,7 +12948,6 @@
         "type": "object",
         "properties": {
           "email": {
-            "maxLength": 100,
             "minLength": 1,
             "type": "string"
           },
@@ -13540,6 +13536,41 @@
           "max_size_document_in_mb": {
             "type": "integer",
             "format": "int32"
+          },
+          "sso_available_providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SSOAvailableProvider"
+            },
+            "nullable": true
+          },
+          "allowed_image_mime_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "allowed_image_extensions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "allowed_document_mime_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "allowed_document_extensions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -15073,18 +15104,40 @@
         "type": "object",
         "properties": {
           "email": {
-            "maxLength": 100,
             "minLength": 1,
             "type": "string"
           },
           "token": {
-            "maxLength": 50,
             "minLength": 1,
             "type": "string"
           },
           "password": {
             "minLength": 1,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z0-9]).{8,}$",
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SSOAvailableProvider": {
+        "required": [
+          "display_name",
+          "icon_url",
+          "provider"
+        ],
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "nullable": true
+          },
+          "display_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "icon_url": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -15372,6 +15425,7 @@
           "url_command": {
             "maxLength": 150,
             "type": "string",
+            "format": "uri",
             "nullable": true
           },
           "status_command": {
@@ -15455,7 +15509,7 @@
           },
           "seuil_max_item_item_box": {
             "maximum": 2147483647,
-            "minimum": 1,
+            "minimum": 0,
             "type": "integer",
             "format": "int32",
             "nullable": true
@@ -15704,9 +15758,11 @@
           "email_user": {
             "maxLength": 100,
             "type": "string",
+            "format": "email",
             "nullable": true
           },
           "mdp_user": {
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z0-9]).{8,}$",
             "type": "string",
             "nullable": true
           },

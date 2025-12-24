@@ -1,31 +1,27 @@
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using electrostore.Dto;
+using System.Collections.Immutable;
 
 namespace electrostore.Validators;
 
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
 public class FileTypeAttribute : ValidationAttribute
 {
-    private readonly string _mimeTypesPropertyName;
+    private readonly string[] _allowedMimeTypes;
+    private readonly string[] _allowedExtensions;
     public FileTypeAttribute(string mimeTypesPropertyName)
     {
-        _mimeTypesPropertyName = mimeTypesPropertyName;
+        var _mimeTypesField = (typeof(Constants).GetField(
+                mimeTypesPropertyName,
+                BindingFlags.Public | BindingFlags.Static
+            ) ?? null) ?? throw new InvalidOperationException($"Field '{mimeTypesPropertyName}' not found in Constants class.");
+        _allowedMimeTypes = [.. ((ImmutableDictionary<string, string>)_mimeTypesField.GetValue(null)!).Keys];
+        _allowedExtensions = [.. ((ImmutableDictionary<string, string>)_mimeTypesField.GetValue(null)!).Values];
     }
     public override bool IsValid(object? value)
     {
-        var mimeTypesField = typeof(MimeTypes).GetField(
-                _mimeTypesPropertyName,
-                BindingFlags.Public | BindingFlags.Static
-            );
-            
-        if (mimeTypesField == null)
-        {
-            return false;
-        }
-        var allowedMimeTypes = (string[])mimeTypesField.GetValue(null)!;
-
-        if (value is IFormFile file && allowedMimeTypes.Contains(file.ContentType))
+        if (value is IFormFile file && _allowedMimeTypes.Contains(file.ContentType) && _allowedExtensions.Contains(Path.GetExtension(file.FileName).ToLower()))
         {
             return true;
         }
@@ -34,6 +30,6 @@ public class FileTypeAttribute : ValidationAttribute
 
     public override string FormatErrorMessage(string name)
     {
-        return $"The file type of {name} is not allowed.";
+        return string.Format(ErrorMessageString, name, string.Join(", ", _allowedMimeTypes), string.Join(", ", _allowedExtensions));
     }
 }

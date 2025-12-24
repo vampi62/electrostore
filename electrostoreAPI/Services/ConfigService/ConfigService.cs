@@ -60,14 +60,16 @@ public class ConfigService : IConfigService
             max_length_reason = Constants.MaxReasonLength,
             max_length_status = Constants.MaxStatusLength,
             max_size_document_in_mb = Constants.MaxDocumentSizeMB,
-            sso_available_providers = _configuration.GetSection("OAuth").GetChildren().Select(provider => new SSOAvailableProvider
+            sso_available_providers = [.. _configuration.GetSection("OAuth").GetChildren().Select(provider => new SSOAvailableProvider
             {
                 provider = provider.Key,
                 display_name = provider.GetValue<string>("DisplayName") ?? string.Empty,
                 icon_url = provider.GetValue<string>("IconUrl") ?? string.Empty
-            }).ToList(),
-            allowed_image_mime_types = MimeTypes.AllowedImageMimeTypes,
-            allowed_document_mime_types = MimeTypes.AllowedDocumentMimeTypes
+            })],
+            allowed_image_mime_types = [.. Constants.AllowedImageMimeTypes.Keys],
+            allowed_image_extensions = [.. Constants.AllowedImageMimeTypes.Values],
+            allowed_document_mime_types = [.. Constants.AllowedDocumentMimeTypes.Keys],
+            allowed_document_extensions = [.. Constants.AllowedDocumentMimeTypes.Values]
         };
     }
 }

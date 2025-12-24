@@ -27,6 +27,6 @@ public class FileSizeAttribute : ValidationAttribute
 
     public override string FormatErrorMessage(string name)
     {
-        return $"The file size of {name} exceeds the maximum allowed size of {_maxSizeInMB} MB.";
+        return string.Format(ErrorMessageString, name, _maxSizeInMB);
     }
 }

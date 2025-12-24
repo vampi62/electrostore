@@ -122,9 +122,8 @@ export default {
 		return {
 			loading: false,
 			file: null,
-			allowedExtensions: this.configsStore?.[
-				this.fileType === "image" ? "imageExtAllowed" : "documentExtAllowed"
-			] || [],
+			allowedExtensions: this.configsStore.getConfigByKey(
+				this.fileType === "image" ? "allowed_image_extensions" : "allowed_document_extensions") || [],
 		};
 	},
 	components: {
