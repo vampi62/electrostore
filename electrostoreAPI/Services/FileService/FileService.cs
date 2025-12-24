@@ -8,12 +8,12 @@ namespace electrostore.Services.FileService;
 
 public class FileService : IFileService
 {
-    private readonly IMinioClient _minioClient;
+    private readonly IMinioClient? _minioClient;
     private readonly bool _s3Enabled;
     private readonly string _s3BucketName;
     private readonly string _localFilesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
     
-    public FileService(IConfiguration configuration, IMinioClient minioClient)
+    public FileService(IConfiguration configuration, IMinioClient? minioClient = null)
     {
         _minioClient = minioClient;
         _s3Enabled = configuration.GetValue<bool>("S3:Enable");
@@ -24,6 +24,15 @@ public class FileService : IFileService
         // if S3 is used, upload the file to S3 and return the url
         if (_s3Enabled)
         {
+            if (_minioClient == null)
+            {
+                return new GetFileResult
+                {
+                    Success = false,
+                    ErrorMessage = "S3 is enabled but MinIO client is not configured",
+                    MimeType = ""
+                };
+            }
             var objectContent = new MemoryStream();
             try
             {
@@ -122,6 +131,10 @@ public class FileService : IFileService
     {
         if (_s3Enabled)
         {
+            if (_minioClient == null)
+            {
+                return false;
+            }
             try
             {
                 await _minioClient.StatObjectAsync(new StatObjectArgs()
@@ -157,6 +170,10 @@ public class FileService : IFileService
         // if S3 is used, upload the file to S3 and return the url
         if (_s3Enabled)
         {
+            if (_minioClient == null)
+            {
+                throw new InvalidOperationException("S3 is enabled but MinIO client is not configured");
+            }
             var baseS3Url = basePath + Path.AltDirectorySeparatorChar;
             if (baseS3Url.StartsWith(Path.AltDirectorySeparatorChar))
             {
@@ -258,6 +275,10 @@ public class FileService : IFileService
     {
         if (_s3Enabled)
         {
+            if (_minioClient == null)
+            {
+                throw new InvalidOperationException("S3 is enabled but MinIO client is not configured");
+            }
             await _minioClient.RemoveObjectAsync(new RemoveObjectArgs()
                 .WithBucket(_s3BucketName)
                 .WithObject(url)
@@ -293,6 +314,10 @@ public class FileService : IFileService
     {
         if (_s3Enabled)
         {
+            if (_minioClient == null)
+            {
+                throw new InvalidOperationException("S3 is enabled but MinIO client is not configured");
+            }
             // S3 removes objects, so we need to list all objects with the given prefix and delete them
             var listArgs = new ListObjectsArgs()
                 .WithBucket(_s3BucketName)
