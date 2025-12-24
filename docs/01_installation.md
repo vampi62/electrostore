@@ -86,7 +86,7 @@ Complete the `appsettings.json` file with the following content, replacing place
     "ClientId": "electroapi"
   },
   "SMTP": {
-    "Enable": "false",
+    "Enable": false,
     "Host": "<your-smtp-server (optional)>",
     "Port": 587,
     "Username": "<your-email (optional)>",
@@ -106,18 +106,23 @@ Complete the `appsettings.json` file with the following content, replacing place
       "Authority": "https://<sso-server-url>/application/o/authorize/",
       "RedirectUri": "https://<frontend-url>/auth/callback",
       "Scope": "openid profile email",
+      "GroupMapping": {
+        "User": "electrostore Users",
+        "Moderator": "electrostore Moderators",
+        "Admin": "electrostore Admins"
+      },
       "DisplayName": "<method-name>",
       "IconUrl": "<method-icon-url>"
     }
   },
   "S3": {
-    "Enable": "false",
+    "Enable": false,
     "Endpoint": "<minio-url>:9000",
     "AccessKey": "<access-key>",
     "SecretKey": "<secret-key>",
     "BucketName": "electrostore",
     "Region": "garage",
-    "Secure": "false"
+    "Secure": false
   },
   "AllowedOrigins": [
     "https://<your-frontend-domain1>",

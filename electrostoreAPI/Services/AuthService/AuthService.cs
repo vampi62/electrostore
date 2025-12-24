@@ -84,9 +84,16 @@ public class AuthService : IAuthService
         var clientSecret = ssoModuleConfig["ClientSecret"];
         var authority = ssoModuleConfig["Authority"];
         var redirectUri = ssoModuleConfig["RedirectUri"];
+        var groupMappingSection = ssoModuleConfig.GetSection("GroupMapping");
+        if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret) || 
+            string.IsNullOrEmpty(authority) || string.IsNullOrEmpty(redirectUri))
+        {
+            throw new ArgumentException("SSO method configuration is invalid");
+        }
         var tokenResponse = await ExchangeCodeForToken(request.Code, clientId!, clientSecret!, authority!, redirectUri!);
         var userInfo = await GetUserInfo(tokenResponse.access_token, authority!);
-        var user = await GetOrCreateUser(userInfo);
+        Console.WriteLine($"User Info: {JsonSerializer.Serialize(userInfo)}");
+        var user = await GetOrCreateUser(userInfo, groupMappingSection);
         var jwt = await _jwtService.GenerateToken(user, "sso_" + sso_method);
         await _jwiService.SaveToken(jwt, user.id_user, "sso_" + sso_method);
         await _smtpService.SendEmailAsync(
@@ -146,11 +153,29 @@ public class AuthService : IAuthService
         return userInfo ?? throw new InvalidOperationException("Invalid user info response");
     }
 
-    private async Task<ReadUserDto> GetOrCreateUser(UserInfoResponse userInfo)
+    private async Task<ReadUserDto> GetOrCreateUser(UserInfoResponse userInfo, IConfigurationSection groupMappingSection = null!)
     {
+        var userRole = Enums.UserRole.User;
+        if (groupMappingSection != null)
+        {
+            foreach (var role in Enum.GetValues<Enums.UserRole>())
+            {
+                var mappedGroup = groupMappingSection[role.ToString()];
+                if ((!string.IsNullOrEmpty(mappedGroup)) && userInfo.Groups.Contains(mappedGroup) && (role > userRole)) // Assign the highest role found
+                {
+                    userRole = role;
+                }
+            }
+        }
         var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userInfo.Email);
         if (existingUser != null)
         {
+            if ((groupMappingSection != null) && (existingUser.role_user != userRole))
+            {
+                // Update user role if it has changed
+                existingUser.role_user = userRole;
+                await _context.SaveChangesAsync();
+            }
             return _mapper.Map<ReadUserDto>(existingUser);
         }
         var newUserDto = new CreateUserDto
@@ -159,7 +184,7 @@ public class AuthService : IAuthService
             prenom_user = userInfo.GivenName ?? "User",
             email_user = userInfo.Email,
             mdp_user = GenerateSecureRandomString(32),
-            role_user = Enums.UserRole.User
+            role_user = userRole
         };
         return await _userService.CreateUser(newUserDto);
     }
@@ -346,5 +371,6 @@ public class AuthService : IAuthService
         public string FamilyName { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string PreferredUsername { get; set; } = string.Empty;
+        public string[] Groups { get; set; } = [];
     }
 }

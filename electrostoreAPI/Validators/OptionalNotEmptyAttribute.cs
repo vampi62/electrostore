@@ -20,6 +20,6 @@ public class OptionalNotEmptyAttribute : ValidationAttribute
 
     public override string FormatErrorMessage(string name)
     {
-        return base.FormatErrorMessage(name);
+        return string.Format(ErrorMessageString, name);
     }
 }
