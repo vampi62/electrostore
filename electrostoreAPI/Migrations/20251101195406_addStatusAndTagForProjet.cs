@@ -16,6 +16,25 @@ namespace electrostore.Migrations
                 name: "date_fin_projet",
                 table: "Projets");
 
+            migrationBuilder.Sql(@"UPDATE Projets SET status_projet = 
+                CASE 
+                    WHEN status_projet = 'En attente' THEN '1'
+                    WHEN status_projet = 'En cours' THEN '2'
+                    WHEN status_projet = 'Terminée' THEN '3'
+                    WHEN status_projet = 'Annulée' THEN '5'
+                    ELSE '4'
+                END");
+
+            migrationBuilder.AlterColumn<int>(
+                name: "status_projet",
+                table: "Projets",
+                type: "int",
+                nullable: false,
+                oldClrType: typeof(string),
+                oldType: "varchar(50)",
+                oldMaxLength: 50)
+                .OldAnnotation("MySql:CharSet", "utf8mb4");
+
             migrationBuilder.CreateTable(
                 name: "ProjetsStatus",
                 columns: table => new
@@ -112,6 +131,33 @@ namespace electrostore.Migrations
                 table: "Projets",
                 type: "datetime(6)",
                 nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "status_projet_Temp",
+                table: "Projets",
+                type: "varchar(50)",
+                maxLength: 50,
+                nullable: false,
+                defaultValue: "")
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.Sql(@"UPDATE Projets SET status_projet_Temp = 
+                CASE 
+                    WHEN status_projet = 1 THEN 'En attente'
+                    WHEN status_projet = 2 THEN 'En cours'
+                    WHEN status_projet = 3 THEN 'Terminée'
+                    WHEN status_projet = 5 THEN 'Annulée'
+                    ELSE 'Autre'
+                END");
+
+            migrationBuilder.DropColumn(
+                name: "status_projet",
+                table: "Projets");
+
+            migrationBuilder.RenameColumn(
+                name: "status_projet_Temp",
+                table: "Projets",
+                newName: "status_projet");
         }
     }
 }

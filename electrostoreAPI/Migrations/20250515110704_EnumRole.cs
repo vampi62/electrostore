@@ -20,6 +20,14 @@ namespace electrostore.Migrations
                 table: "Imgs",
                 newName: "url_picture_img");
 
+            
+
+            migrationBuilder.Sql(@"UPDATE Users SET role_user = 
+                CASE 
+                    WHEN role_user = 'admin' THEN '3'
+                    ELSE '1'
+                END");
+
             migrationBuilder.AlterColumn<int>(
                 name: "role_user",
                 table: "Users",
@@ -106,15 +114,28 @@ namespace electrostore.Migrations
                 table: "Imgs",
                 newName: "url_img");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "role_user",
+            migrationBuilder.AddColumn<string>(
+                name: "role_user_Temp",
                 table: "Users",
                 type: "varchar(50)",
                 maxLength: 50,
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "int")
+                nullable: true)
                 .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.Sql(@"UPDATE Users SET role_user_Temp = 
+                CASE 
+                    WHEN role_user = 3 THEN 'admin'
+                    ELSE 'user'
+                END");
+
+            migrationBuilder.DropColumn(
+                name: "role_user",
+                table: "Users");
+
+            migrationBuilder.RenameColumn(
+                name: "role_user_Temp",
+                table: "Users",
+                newName: "role_user");
 
             migrationBuilder.AlterColumn<string>(
                 name: "type_projet_document",

@@ -14,8 +14,8 @@
 						<span class="text-red-500 h-5 w-full text-sm">{{ errors[keyNameDocument] || ' ' }}</span>
 					</div>
 					<div class="flex flex-col">
-						<Field :name="keyFileDocument" type="file" @change="handleFileUpload" class="w-full p-2"
-							:class="{ 'border-red-500': errors[keyFileDocument] }" />
+						<Field :name="keyFileDocument" type="file" @change="handleFileUpload" :accept="allowedExtensions.join(',') || ''"
+							class="w-full p-2" :class="{ 'border-red-500': errors[keyFileDocument] }" />
 						<span class="h-5 w-80 text-sm">{{ $t(textMaxSize) }} ({{ maxSizeInMb }}Mo)</span>
 						<span class="text-red-500 h-5 w-full text-sm">{{ errors[keyFileDocument] || ' ' }}</span>
 					</div>
@@ -27,12 +27,12 @@
 					</button>
 					<div class="relative">
 						<button type="button" @click="addFile"
-							class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+							class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
 							:disabled="loading">
 							{{ $t('components.VModalAddFileAdd') }}
 						</button>
 						<div v-if="loading" 
-							class="absolute inset-0 bg-red-500 bg-opacity-90 rounded-lg flex items-center justify-center">
+							class="absolute inset-0 bg-blue-500 bg-opacity-90 rounded-lg flex items-center justify-center">
 							<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 						</div>
 					</div>
@@ -44,6 +44,7 @@
 
 <script>
 import { Form, Field } from "vee-validate";
+import { useConfigsStore } from "@/stores";
 export default {
 	name: "ModalAddFile",
 	props: {
@@ -103,12 +104,26 @@ export default {
 			// This function will be called when the add file is confirmed
 			default: null,
 		},
+		fileType: {
+			type: String,
+			required: false,
+			// This should be the type of file being added (e.g., "image", "document")
+			default: "document",
+		},
 	},
 	emits: ["closeModal"],
+	setup() {
+		const configsStore = useConfigsStore();
+		return {
+			configsStore,
+		};
+	},
 	data() {
 		return {
 			loading: false,
 			file: null,
+			allowedExtensions: this.configsStore.getConfigByKey(
+				this.fileType === "image" ? "allowed_image_extensions" : "allowed_document_extensions") || [],
 		};
 	},
 	components: {
