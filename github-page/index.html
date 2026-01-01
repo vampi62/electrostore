@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ElectroStore - Générateur de Configuration Docker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -35,6 +36,19 @@
                         <label for="allowedOrigins">Autres Origines autorisées (CORS)</label>
                         <textarea id="allowedOrigins" name="allowedOrigins" rows="3" placeholder="https://autre-domaine.com&#10;https://app.mobile.com"></textarea>
                         <small class="help-text">Une origine par ligne. L'URL du frontend sera automatiquement ajoutée.</small>
+                    </div>
+                </section>
+
+                <!-- Sélection des Versions -->
+                <section class="form-section">
+                    <h2>Version des Images Docker</h2>
+                    
+                    <div class="form-group">
+                        <label for="appVersion">Version ElectroStore</label>
+                        <select id="appVersion" name="appVersion">
+                            <option value="latest">latest (développement)</option>
+                        </select>
+                        <small class="help-text">Sélectionnez la version pour tous les services (API, Frontend, IA)</small>
                     </div>
                 </section>
 
@@ -427,16 +441,39 @@
                     <button class="btn-download" onclick="downloadFile('.env', 'envFile')">⬇Télécharger</button>
                 </div>
 
+                <div class="file-output">
+                    <div class="file-header">
+                        <h3>setup.sh</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('setupScript')">Copier</button>
+                    </div>
+                    <pre id="setupScript"></pre>
+                    <button class="btn-download" onclick="downloadFile('setup.sh', 'setupScript')">⬇️ Télécharger</button>
+                    <p class="help-text" style="margin-top: 1rem; padding: 1rem; background: #e3f2fd; border-left: 4px solid #2196f3;">
+                        <strong>ℹ️ Utilisation:</strong> Ce script automatise la configuration de Garage S3 et MQTT.<br>
+                        Rendez-le exécutable avec : <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">chmod +x setup.sh</code><br>
+                        Puis exécutez : <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">./setup.sh</code>
+                    </p>
+                </div>
+
                 <div class="instructions">
+                    <h3>Téléchargement rapide</h3>
+                    <button class="btn-primary" onclick="downloadAllAsZip()" style="font-size: 1.1rem; padding: 1rem 2rem; margin-bottom: 2rem;">
+                        📦 Télécharger tout en ZIP
+                    </button>
+                    
                     <h3>Instructions d'utilisation</h3>
                     <ol>
-                        <li>Téléchargez les trois fichiers générés</li>
-                        <li>Placez <code>docker-compose.yml</code> et <code>.env</code> à la racine du projet</li>
-                        <li>Placez <code>appsettings.json</code> dans <code>electrostoreAPI/config/</code></li>
+                        <li>Cliquez sur "Télécharger tout en ZIP" ou téléchargez chaque fichier individuellement</li>
+                        <li>Extrayez le contenu du ZIP dans un dossier de votre choix</li>
                         <li>Assurez-vous que Docker et Docker Compose sont installés</li>
-                        <li>Exécutez : <code>docker-compose up -d</code></li>
+                        <li>Rendez le script exécutable : <code>chmod +x setup.sh</code></li>
+                        <li>Exécutez le script de configuration : <code>./setup.sh</code></li>
                         <li>Accédez à l'application sur : <code id="appUrl"></code></li>
                     </ol>
+                    <div style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                        <strong>💡 Astuce :</strong> Le fichier docker-compose.yml utilise les variables d'environnement du fichier .env. 
+                        Vous pouvez modifier les valeurs dans le .env sans toucher au docker-compose.yml.
+                    </div>
                 </div>
             </div>
         </main>

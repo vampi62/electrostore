@@ -4,6 +4,7 @@ let oauthProvidersCount = 0;
 // Initialisation au chargement
 document.addEventListener('DOMContentLoaded', function() {
     initializeForm();
+    loadGitHubTags();
 });
 
 // Gestion du formulaire
@@ -17,6 +18,33 @@ function initializeForm() {
     // Initialiser les sections visibles
     toggleSection('mariadb');
     toggleSection('mqtt');
+}
+
+// Charger les tags depuis GitHub
+async function loadGitHubTags() {
+    try {
+        const response = await fetch('https://api.github.com/repos/vampi62/electrostore/tags');
+        if (!response.ok) {
+            console.warn('Impossible de récupérer les tags GitHub');
+            return;
+        }
+        
+        const tags = await response.json();
+        
+        // Créer les options pour le sélecteur
+        const options = tags.map(tag => 
+            `<option value="${tag.name}">${tag.name}</option>`
+        ).join('');
+        
+        // Ajouter les options au sélecteur de version
+        const select = document.getElementById('appVersion');
+        if (select) {
+            // Conserver l'option "latest" et ajouter les tags
+            select.innerHTML = '<option value="latest">latest (développement)</option>' + options;
+        }
+    } catch (error) {
+        console.error('Erreur lors du chargement des tags GitHub:', error);
+    }
 }
 
 // Basculer l'affichage des sections selon les checkboxes
@@ -169,6 +197,16 @@ function resetForm() {
     initializeForm();
 }
 
+// générer un mot de passe aléatoire
+function generateRandomPassword(length) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+}
+
 
 // Génération des fichiers
 function generateFiles() {
@@ -179,10 +217,12 @@ function generateFiles() {
     const dockerCompose = generateDockerCompose(config);
     const appsettings = generateAppsettings(config);
     const envFile = generateEnvFile(config);
+    const setupScript = generateSetupScript(config);
     
     document.getElementById('dockerCompose').textContent = dockerCompose;
     document.getElementById('appsettingsFile').textContent = appsettings;
     document.getElementById('envFile').textContent = envFile;
+    document.getElementById('setupScript').textContent = setupScript;
     
     const appUrl = config.useTraefik 
         ? `http://${config.traefikFrontDomain}`
@@ -203,6 +243,7 @@ function collectConfig(formData) {
         enableS3: document.getElementById('enableS3').checked,
         useS3: document.getElementById('useS3').checked,
         enableSMTP: document.getElementById('enableSMTP').checked,
+        appVersion: formData.get('appVersion') || 'latest',
         
         // OAuth Providers
         oauthProviders: []
@@ -261,7 +302,7 @@ function collectConfig(formData) {
             config.s3 = {
                 accessKey: formData.get('s3AccessKey') || generateRandomPassword(20),
                 secretKey: formData.get('s3SecretKey') || generateRandomPassword(40),
-                bucket: formData.get('s3Bucket') || 'electrostore-images',
+                bucket: formData.get('s3Bucket') || 'electrostore',
                 region: formData.get('s3Region') || 'garage'
             };
         } else {
@@ -385,16 +426,19 @@ function generateTraefikRule(url) {
 
 // Génération du fichier docker-compose.yml
 function generateDockerCompose(config) {
-    let compose = `version: '3.8'
+    let compose = `# docker-compose.yml pour ElectroStore
+# Ce fichier utilise des variables d'environnement définies dans le fichier .env
+# Pour utiliser ce fichier, créez un fichier .env à la racine du projet
+# Les valeurs par défaut sont fournies avec la syntaxe \${VAR:-valeur_par_defaut}
+
+version: '3.8'
 
 services:`;
 
     // API Backend
     compose += `
   api:
-    build:
-      context: ./electrostoreAPI
-      dockerfile: Dockerfile
+    image: ghcr.io/vampi62/electrostore/api:\${API_VERSION:-latest}
     container_name: electrostore-api`;
     
     if (config.useTraefik) {
@@ -422,7 +466,7 @@ services:`;
     } else {
         compose += `
     ports:
-      - "${config.apiPort}:80"`;
+      - "\${API_PORT:-${config.apiPort}}:80"`;
     }
     
     compose += `
@@ -436,7 +480,7 @@ services:`;
     
     compose += `
     volumes:
-      - ./electrostoreAPI/config/appsettings.json:/app/config/appsettings.json:ro`;
+      - ./config/appsettings.json:/app/config/appsettings.json:ro`;
     
     if (!config.enableS3) {
         compose += `\n      - api-wwwroot:/app/wwwroot`;
@@ -444,7 +488,7 @@ services:`;
     
     compose += `
     networks:
-      - electrostore-network`;
+      - electrostore`;
     
     if (config.useTraefik) {
         compose += `
@@ -458,11 +502,7 @@ services:`;
     // Frontend
     compose += `
   frontend:
-    build:
-      context: ./electrostoreFRONT
-      dockerfile: Dockerfile
-      args:
-        - VITE_API_URL=${config.apiUrl || 'http://localhost:5000'}
+    image: ghcr.io/vampi62/electrostore/front:\${FRONTEND_VERSION:-latest}
     container_name: electrostore-frontend`;
     
     if (config.useTraefik) {
@@ -491,14 +531,14 @@ services:`;
     } else {
         compose += `
     ports:
-      - "${config.frontendPort}:80"`;
+      - "\${FRONTEND_PORT:-${config.frontendPort}}:80"`;
     }
     
     compose += `
     depends_on:
       - api
     networks:
-      - electrostore-network`;
+      - electrostore`;
     
     if (config.useTraefik) {
         compose += `
@@ -512,15 +552,13 @@ services:`;
     // Service IA
     compose += `
   ia:
-    build:
-      context: ./electrostoreIA
-      dockerfile: Dockerfile
+    image: ghcr.io/vampi62/electrostore/ia:\${IA_VERSION:-latest}
     container_name: electrostore-ia`;
     
     if (!config.useTraefik) {
         compose += `
     ports:
-      - "${config.iaPort}:8000"`;
+      - "\${IA_PORT:-${config.iaPort}}:8000"`;
     }
     
     compose += `
@@ -533,7 +571,7 @@ services:`;
     volumes:
       - ia-models:/app/models
     networks:
-      - electrostore-network`;
+      - electrostore`;
     
     if (config.useTraefik) {
         compose += `
@@ -548,17 +586,17 @@ services:`;
     if (config.useMariaDB) {
         compose += `
   mariadb:
-    image: mariadb:11
+    image: mariadb:\${MARIADB_VERSION:-11.7.2}
     container_name: electrostore-mariadb
     environment:
-      - MYSQL_ROOT_PASSWORD=${config.mariadb.rootPassword}
-      - MYSQL_DATABASE=${config.mariadb.database}
-      - MYSQL_USER=${config.mariadb.user}
-      - MYSQL_PASSWORD=${config.mariadb.password}
+      - MYSQL_ROOT_PASSWORD=\${MARIADB_ROOT_PASSWORD:-changeme_root_password}
+      - MYSQL_DATABASE=\${MARIADB_DATABASE:-electrostore_db}
+      - MYSQL_USER=\${MARIADB_USER:-electrostore_user}
+      - MYSQL_PASSWORD=\${MARIADB_PASSWORD:-changeme_password}
     volumes:
       - mariadb-data:/var/lib/mysql
     networks:
-      - electrostore-network
+      - electrostore
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
@@ -572,16 +610,16 @@ services:`;
     if (config.useMQTT) {
         compose += `
   mqtt:
-    image: eclipse-mosquitto:2
+    image: eclipse-mosquitto:\${MQTT_VERSION:-2.0.20}
     container_name: electrostore-mqtt
     ports:
       - "1883:1883"
       - "9001:9001"
     volumes:
-      - ./MQTTCONF:/mosquitto/config
+      - ./MQTTCONF:/mosquitto/config:ro
       - mqtt-data:/mosquitto/data
     networks:
-      - electrostore-network
+      - electrostore
     restart: unless-stopped
 `;
     }
@@ -590,19 +628,19 @@ services:`;
     if (config.enableS3 && config.useS3) {
         compose += `
   garage:
-    image: dxflrs/garage:v0.9
+    image: dxflrs/garage:\${GARAGE_VERSION:-v0.9}
     container_name: electrostore-garage
     ports:
       - "3900:3900"
       - "3901:3901"
       - "3902:3902"
     environment:
-      - GARAGE_RPC_SECRET=${config.s3.secretKey}
+      - GARAGE_RPC_SECRET=\${S3_SECRET_KEY:-changeme_s3_secret_key}
     volumes:
       - garage-data:/data
       - garage-meta:/meta
     networks:
-      - electrostore-network
+      - electrostore
     restart: unless-stopped
 `;
     }
@@ -610,14 +648,8 @@ services:`;
     // Networks et Volumes
     compose += `
 networks:
-  electrostore-network:
+  electrostore:
     driver: bridge`;
-    
-    if (config.useTraefik) {
-        compose += `
-  traefik:
-    external: true`;
-    }
 
     compose += `
 
@@ -720,7 +752,7 @@ function generateAppsettings(config) {
     };
 
     // JWT
-    settings.JWT = {
+    settings.Jwt = {
         "Key": config.jwt.key,
         "Issuer": config.jwt.issuer,
         "Audience": config.jwt.audience,
@@ -729,29 +761,27 @@ function generateAppsettings(config) {
 
     // OAuth
     if (config.oauthProviders.length > 0) {
-        settings.OAuth = {
-            "Providers": config.oauthProviders.map(provider => ({
-                "DisplayName": provider.displayName,
+        settings.OAuth = {};
+        config.oauthProviders.forEach(provider => {
+            settings.OAuth[provider.displayName] = {
                 "ClientId": provider.clientId,
                 "ClientSecret": provider.clientSecret,
                 "Authority": provider.authority,
                 "RedirectUri": provider.redirectUri,
                 "Scope": provider.scope,
-                "IconUrl": provider.iconUrl,
                 "GroupMapping": {
                     "User": provider.groupMapping.user,
                     "Moderator": provider.groupMapping.moderator,
                     "Admin": provider.groupMapping.admin
-                }
-            }))
-        };
+                },
+                "DisplayName": provider.displayName,
+                "IconUrl": provider.iconUrl
+            };
+        });
     }
 
     // URLs
-    settings.Urls = {
-        "API": config.apiUrl,
-        "Frontend": config.frontUrl
-    };
+    settings.FrontendUrl = config.frontUrl;
 
     // CORS
     settings.AllowedOrigins = config.allowedOrigins;
@@ -761,11 +791,33 @@ function generateAppsettings(config) {
 
 // Génération du .env
 function generateEnvFile(config) {
-    let env = `# Généré le ${new Date().toLocaleDateString('fr-FR')}\n\n`;
+    let env = `# Fichier .env pour ElectroStore\n`;
+    env += `# Généré le ${new Date().toLocaleDateString('fr-FR')}\n`;
+    env += `# Ce fichier contient les variables d'environnement utilisées par docker-compose.yml\n`;
+    env += `# IMPORTANT: Ne pas versionner ce fichier dans Git (ajouter à .gitignore)\n\n`;
     
     env += `# Configuration générale\n`;
     env += `PROJECT_NAME=electrostore\n`;
     env += `ENVIRONMENT=Production\n\n`;
+    
+    env += `# Versions des images Docker\n`;
+    env += `API_VERSION=${config.appVersion}\n`;
+    env += `FRONTEND_VERSION=${config.appVersion}\n`;
+    env += `IA_VERSION=${config.appVersion}\n`;
+    if (config.useMariaDB) {
+        env += `MARIADB_VERSION=11.7.2\n`;
+    }
+    if (config.useMQTT) {
+        env += `MQTT_VERSION=2.0.20\n`;
+    }
+    if (config.enableS3 && config.useS3) {
+        env += `GARAGE_VERSION=v0.9\n`;
+    }
+    env += `\n`;
+    
+    env += `# URLs\n`;
+    env += `API_URL=${config.apiUrl || 'http://localhost:5000'}\n`;
+    env += `FRONTEND_URL=${config.frontUrl || 'http://localhost:8080'}\n\n`;
     
     if (!config.useTraefik) {
         env += `# Ports\n`;
@@ -779,7 +831,7 @@ function generateEnvFile(config) {
     }
     
     if (config.useMariaDB) {
-        env += `# MariaDB\n`;
+        env += `# MariaDB (service intégré)\n`;
         env += `MARIADB_DATABASE=${config.mariadb.database}\n`;
         env += `MARIADB_USER=${config.mariadb.user}\n`;
         env += `MARIADB_PASSWORD=${config.mariadb.password}\n`;
@@ -787,13 +839,13 @@ function generateEnvFile(config) {
     }
     
     if (config.useMQTT) {
-        env += `# MQTT\n`;
+        env += `# MQTT (service intégré)\n`;
         env += `MQTT_USER=${config.mqtt.user}\n`;
         env += `MQTT_PASSWORD=${config.mqtt.password}\n\n`;
     }
     
-    if (config.useS3) {
-        env += `# S3 Garage\n`;
+    if (config.enableS3 && config.useS3) {
+        env += `# S3 Garage (service intégré)\n`;
         env += `S3_ACCESS_KEY=${config.s3.accessKey}\n`;
         env += `S3_SECRET_KEY=${config.s3.secretKey}\n`;
         env += `S3_BUCKET=${config.s3.bucket}\n`;
@@ -801,6 +853,152 @@ function generateEnvFile(config) {
     }
     
     return env;
+}
+
+// Génération du script setup.sh
+function generateSetupScript(config) {
+    let script = `#!/bin/bash
+# Script de configuration ElectroStore
+# Généré le ${new Date().toLocaleDateString('fr-FR')}
+
+set -e
+
+echo "====================================="
+echo "Configuration ElectroStore"
+echo "====================================="
+echo ""
+
+`;
+
+    // Configuration S3 Garage si activé
+    if (config.enableS3 && config.useS3) {
+        script += `# Configuration S3 Garage
+echo "Configuration de Garage S3..."
+
+# Démarrer uniquement le service garage
+docker-compose up -d garage
+
+echo "Attente du démarrage de Garage (10 secondes)..."
+sleep 10
+
+# Configurer le cluster Garage
+echo "Configuration du cluster Garage..."
+docker exec electrostore-garage garage status || true
+docker exec electrostore-garage garage layout assign -z dc1 -c 1 \$(docker exec electrostore-garage garage status | grep -oP '[0-9a-f]{16}' | head -n 1) || true
+
+# Créer un utilisateur et obtenir les clés
+echo "Création des clés d'accès S3..."
+docker exec electrostore-garage garage key new electrostore-key > /tmp/garage_keys.txt
+GARAGE_ACCESS_KEY=\$(grep 'Key ID' /tmp/garage_keys.txt | awk '{print \$3}')
+GARAGE_SECRET_KEY=\$(grep 'Secret key' /tmp/garage_keys.txt | awk '{print \$3}')
+
+echo "Access Key: \$GARAGE_ACCESS_KEY"
+echo "Secret Key: \$GARAGE_SECRET_KEY"
+
+# Créer le bucket
+echo "Création du bucket ${config.s3.bucket}..."
+docker exec electrostore-garage garage bucket create ${config.s3.bucket}
+
+# Donner les permissions
+echo "Attribution des permissions..."
+docker exec electrostore-garage garage bucket allow --read --write ${config.s3.bucket} --key electrostore-key
+
+# Mettre à jour le fichier .env avec les vraies clés
+echo "Mise à jour du fichier .env..."
+sed -i "s/S3_ACCESS_KEY=.*/S3_ACCESS_KEY=\$GARAGE_ACCESS_KEY/" .env
+sed -i "s/S3_SECRET_KEY=.*/S3_SECRET_KEY=\$GARAGE_SECRET_KEY/" .env
+
+rm /tmp/garage_keys.txt
+
+echo "✅ Configuration Garage terminée"
+echo ""
+
+`;
+    }
+
+    // Configuration MQTT si activé
+    if (config.useMQTT) {
+        script += `# Configuration MQTT
+echo "Configuration de Mosquitto MQTT..."
+
+# Créer le dossier MQTTCONF s'il n'existe pas
+mkdir -p MQTTCONF
+
+# Créer le fichier mosquitto.conf
+cat > MQTTCONF/mosquitto.conf << 'EOF'
+listener 1883
+persistence true
+persistence_location /mosquitto/data/
+password_file /mosquitto/config/mosquitto.passwd
+allow_anonymous false
+EOF
+
+# Créer le fichier mosquitto.passwd avec le mot de passe en clair
+cat > MQTTCONF/mosquitto.passwd << 'EOF'
+${config.mqtt.user}:${config.mqtt.password}
+EOF
+
+echo "Fichiers MQTT créés dans MQTTCONF/"
+
+# Démarrer MQTT pour hasher le mot de passe
+echo "Démarrage de Mosquitto..."
+docker-compose up -d mqtt
+
+echo "Attente du démarrage de Mosquitto (5 secondes)..."
+sleep 5
+
+# Hasher le mot de passe
+echo "Hashage du mot de passe..."
+docker exec electrostore-mqtt mosquitto_passwd -U /mosquitto/config/mosquitto.passwd
+
+# Copier le fichier hashé
+docker cp electrostore-mqtt:/mosquitto/config/mosquitto.passwd MQTTCONF/mosquitto.passwd
+
+# Redémarrer MQTT
+echo "Redémarrage de Mosquitto avec le mot de passe hashé..."
+docker-compose restart mqtt
+
+echo "✅ Configuration MQTT terminée"
+echo ""
+
+`;
+    }
+
+    script += `# Démarrer tous les services
+echo "Démarrage de tous les services..."
+docker-compose up -d
+
+echo ""
+echo "====================================="
+echo "✅ Configuration terminée !"
+echo "====================================="
+echo ""
+echo "Accès à l'application :"
+echo "${config.useTraefik ? 'Frontend: http://' + config.traefikFrontDomain : 'Frontend: http://localhost:' + config.frontendPort}"
+echo "${config.useTraefik ? 'API: http://' + config.traefikApiDomain : 'API: http://localhost:' + config.apiPort}"
+echo ""
+`;
+
+    if (config.enableS3 && config.useS3) {
+        script += `echo "S3 Garage:"
+echo "  Endpoint: http://localhost:3900"
+echo "  Bucket: ${config.s3.bucket}"
+echo "  Access Key: (voir .env)"
+echo "  Secret Key: (voir .env)"
+echo ""
+`;
+    }
+
+    if (config.useMQTT) {
+        script += `echo "MQTT:"
+echo "  Host: localhost:1883"
+echo "  User: ${config.mqtt.user}"
+echo "  Password: (voir .env)"
+echo ""
+`;
+    }
+
+    return script;
 }
 
 // Copier dans le presse-papiers
@@ -827,6 +1025,84 @@ function downloadFile(filename, elementId) {
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+// Télécharger tous les fichiers dans un ZIP
+async function downloadAllAsZip() {
+    // Importer JSZip dynamiquement depuis CDN
+    if (typeof JSZip === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+        document.head.appendChild(script);
+        
+        await new Promise((resolve) => {
+            script.onload = resolve;
+        });
+    }
+    
+    const zip = new JSZip();
+    
+    // Ajouter les fichiers principaux
+    zip.file('docker-compose.yml', document.getElementById('dockerCompose').textContent);
+    zip.file('.env', document.getElementById('envFile').textContent);
+    zip.file('setup.sh', document.getElementById('setupScript').textContent);
+    
+    // Créer le dossier config et ajouter appsettings.json
+    zip.folder('config');
+    zip.file('config/appsettings.json', document.getElementById('appsettingsFile').textContent);
+    
+    // Ajouter un README
+    const readme = `# ElectroStore - Configuration Docker
+
+Ce fichier contient tous les fichiers nécessaires pour déployer ElectroStore avec Docker.
+
+## Structure des fichiers
+
+- \`docker-compose.yml\` : Configuration Docker Compose
+- \`.env\` : Variables d'environnement
+- \`setup.sh\` : Script de configuration automatique
+- \`config/appsettings.json\` : Configuration de l'API
+
+## Installation
+
+1. Assurez-vous que Docker et Docker Compose sont installés
+2. Rendez le script exécutable :
+   \`\`\`bash
+   chmod +x setup.sh
+   \`\`\`
+3. Exécutez le script de configuration :
+   \`\`\`bash
+   ./setup.sh
+   \`\`\`
+
+Le script configurera automatiquement :
+- Garage S3 (si activé) : création du bucket et des clés d'accès
+- MQTT (si activé) : configuration et hashage du mot de passe
+- Tous les services seront démarrés automatiquement
+
+## Accès à l'application
+
+Après le démarrage, l'application sera accessible aux URLs configurées.
+Consultez la sortie du script setup.sh pour les détails.
+
+## Support
+
+Pour plus d'informations, consultez : https://github.com/vampi62/electrostore
+`;
+    zip.file('README.md', readme);
+    
+    // Générer le ZIP
+    const content = await zip.generateAsync({ type: 'blob' });
+    
+    // Télécharger
+    const url = window.URL.createObjectURL(content);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'electrostore-config.zip';
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);

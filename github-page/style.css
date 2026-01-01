@@ -111,7 +111,7 @@ main {
 .form-group button.btn-secondary {
     position: absolute;
     right: 0.5rem;
-    top: 2.2rem;
+    top: 50%;
     padding: 0.5rem 0.75rem;
     font-size: 0.85rem;
 }
