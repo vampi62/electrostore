@@ -1,0 +1,572 @@
+// Génération du fichier docker-compose.yml
+function generateDockerCompose(config) {
+    let compose = `# docker-compose.yml pour ElectroStore
+# Ce fichier utilise des variables d'environnement définies dans le fichier .env
+# Pour utiliser ce fichier, créez un fichier .env à la racine du projet
+# Les valeurs par défaut sont fournies avec la syntaxe \${VAR:-valeur_par_defaut}
+
+version: '3.8'
+
+services:`;
+
+    // API Backend
+    compose += `
+  api:
+    image: ghcr.io/vampi62/electrostore/api:\${API_VERSION:-latest}
+    container_name: electrostore-api`;
+    
+    if (config.useTraefik) {
+        const apiRule = generateTraefikRule(config.apiUrl);
+        const entrypoint = config.traefik.tlsEnable ? config.traefik.tlsEntrypoint : config.traefik.entrypoint;
+        
+        compose += `
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=${apiRule}"
+      - "traefik.http.routers.api.entrypoints=${entrypoint}"
+      - "traefik.http.services.api.loadbalancer.server.port=80"`;
+      
+        if (config.traefik.middlewares) {
+            compose += `
+      - "traefik.http.routers.api.middlewares=${config.traefik.middlewares}"`;
+        }
+        
+        if (config.traefik.tlsEnable) {
+            compose += `
+      - "traefik.http.routers.api.tls.certresolver=${config.traefik.certResolver}"`;
+        }
+    } else {
+        compose += `
+    ports:
+      - "\${API_PORT:-${config.apiPort}}:80"`;
+    }
+    
+    compose += `
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    depends_on:`;
+    
+    if (config.useMariaDB) compose += `\n      - mariadb`;
+    if (config.useMQTT) compose += `\n      - mqtt`;
+    if (config.enableS3 && config.useS3) compose += `\n      - garage`;
+    
+    compose += `
+    volumes:
+      - ./config/appsettings.json:/app/config/appsettings.json:ro`;
+    
+    if (!config.enableS3) {
+        compose += `\n      - api-wwwroot:/app/wwwroot`;
+    }
+    
+    compose += `
+    networks:
+      - electrostore`;
+    
+    if (config.useTraefik) {
+        compose += `
+      - traefik`;
+    }
+    
+    compose += `
+    restart: unless-stopped
+`;
+
+    // Frontend
+    compose += `
+  frontend:
+    image: ghcr.io/vampi62/electrostore/front:\${FRONTEND_VERSION:-latest}
+    container_name: electrostore-frontend`;
+    
+    if (config.useTraefik) {
+        const frontendRule = generateTraefikRule(config.frontUrl);
+        const entrypoint = config.traefik.tlsEnable ? config.traefik.tlsEntrypoint : config.traefik.entrypoint;
+        
+        compose += `
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=${frontendRule}"
+      - "traefik.http.routers.frontend.entrypoints=${entrypoint}"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"`;
+      
+        if (config.traefik.middlewares) {
+            compose += `
+      - "traefik.http.routers.frontend.middlewares=${config.traefik.middlewares}"`;
+        }
+        
+        if (config.traefik.tlsEnable) {
+            compose += `
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.routers.frontend.tls.certresolver=${config.traefik.certResolver}"`;
+        }
+    } else {
+        compose += `
+    ports:
+      - "\${FRONTEND_PORT:-${config.frontendPort}}:80"`;
+    }
+    
+    compose += `
+    depends_on:
+      - api
+    networks:
+      - electrostore`;
+    
+    if (config.useTraefik) {
+        compose += `
+      - traefik`;
+    }
+    
+    compose += `
+    restart: unless-stopped
+`;
+
+    // Service IA
+    compose += `
+  ia:
+    image: ghcr.io/vampi62/electrostore/ia:\${IA_VERSION:-latest}
+    container_name: electrostore-ia`;
+    
+    if (!config.useTraefik) {
+        compose += `
+    ports:
+      - "\${IA_PORT:-${config.iaPort}}:8000"`;
+    }
+    
+    compose += `
+    depends_on:`;
+    
+    if (config.useMariaDB) compose += `\n      - mariadb`;
+    if (config.enableS3 && config.useS3) compose += `\n      - garage`;
+    
+    compose += `
+    volumes:
+      - ia-models:/app/models
+    networks:
+      - electrostore`;
+    
+    if (config.useTraefik) {
+        compose += `
+      - traefik`;
+    }
+    
+    compose += `
+    restart: unless-stopped
+`;
+
+    // MariaDB
+    if (config.useMariaDB) {
+        compose += `
+  mariadb:
+    image: mariadb:\${MARIADB_VERSION:-11.7.2}
+    container_name: electrostore-mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=\${MARIADB_ROOT_PASSWORD:-changeme_root_password}
+      - MYSQL_DATABASE=\${MARIADB_DATABASE:-electrostore_db}
+      - MYSQL_USER=\${MARIADB_USER:-electrostore_user}
+      - MYSQL_PASSWORD=\${MARIADB_PASSWORD:-changeme_password}
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    networks:
+      - electrostore
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+`;
+    }
+
+    // MQTT
+    if (config.useMQTT) {
+        compose += `
+  mqtt:
+    image: eclipse-mosquitto:\${MQTT_VERSION:-2.0.20}
+    container_name: electrostore-mqtt
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./MQTTCONF:/mosquitto/config:ro
+      - mqtt-data:/mosquitto/data
+    networks:
+      - electrostore
+    restart: unless-stopped
+`;
+    }
+
+    // S3 Garage
+    if (config.enableS3 && config.useS3) {
+        compose += `
+  garage:
+    image: dxflrs/garage:\${GARAGE_VERSION:-v0.9}
+    container_name: electrostore-garage
+    ports:
+      - "3900:3900"
+      - "3901:3901"
+      - "3902:3902"
+    environment:
+      - GARAGE_RPC_SECRET=\${S3_SECRET_KEY:-changeme_s3_secret_key}
+    volumes:
+      - garage-data:/data
+      - garage-meta:/meta
+    networks:
+      - electrostore
+    restart: unless-stopped
+`;
+    }
+
+    // Networks et Volumes
+    compose += `
+networks:
+  electrostore:
+    driver: bridge`;
+
+    compose += `
+
+volumes:
+  ia-models:`;
+    
+    if (!config.enableS3) {
+        compose += `\n  api-wwwroot:`;
+    }
+    if (config.useMariaDB) compose += `\n  mariadb-data:`;
+    if (config.useMQTT) compose += `\n  mqtt-data:`;
+    if (config.enableS3 && config.useS3) {
+        compose += `\n  garage-data:\n  garage-meta:`;
+    }
+    
+    return compose;
+}
+
+// Génération du appsettings.json
+function generateAppsettings(config) {
+    const settings = {
+        "Logging": {
+            "LogLevel": {
+                "Default": "Information",
+                "Microsoft.AspNetCore": "Warning"
+            }
+        },
+        "AllowedHosts": "*"
+    };
+
+    let connectionString;
+    if (config.useMariaDB) {
+        connectionString = `Server=mariadb;Port=3306;Database=${config.mariadb.database};User=${config.mariadb.user};Password=${config.mariadb.password};`;
+    } else {
+        const db = config.mariadbExternal;
+        connectionString = `Server=${db.host};Port=${db.port};Database=${db.database};User=${db.user};Password=${db.password};`;
+    }
+    
+    settings.ConnectionStrings = {
+        "DefaultConnection": connectionString
+    };
+
+    if (config.useMQTT) {
+        settings.MQTT = {
+            "Server": "mqtt",
+            "Port": 1883,
+            "Username": config.mqtt.user,
+            "Password": config.mqtt.password
+        };
+    } else {
+        const mqtt = config.mqttExternal;
+        settings.MQTT = {
+            "Server": mqtt.host,
+            "Port": parseInt(mqtt.port),
+            "Username": mqtt.user,
+            "Password": mqtt.password
+        };
+    }
+
+    if (config.enableS3) {
+        if (config.useS3) {
+            settings.S3 = {
+                "Enable": true,
+                "Endpoint": "http://garage:3900",
+                "AccessKey": config.s3.accessKey,
+                "SecretKey": config.s3.secretKey,
+                "Bucket": config.s3.bucket,
+                "Region": config.s3.region,
+                "Secure": false
+            };
+        } else if (config.s3External) {
+            settings.S3 = {
+                "Enable": true,
+                "Endpoint": config.s3External.endpoint,
+                "AccessKey": config.s3External.accessKey,
+                "SecretKey": config.s3External.secretKey,
+                "Bucket": config.s3External.bucket,
+                "Region": config.s3External.region,
+                "Secure": config.s3External.secure
+            };
+        }
+    } else {
+        settings.S3 = {
+            "Enable": false
+        };
+    }
+
+    if (config.enableSMTP && config.smtp) {
+        settings.SMTP = {
+            "Host": config.smtp.host,
+            "Port": parseInt(config.smtp.port),
+            "Username": config.smtp.user,
+            "Password": config.smtp.password,
+            "From": config.smtp.from
+        };
+    }
+
+    settings.Jwt = {
+        "Key": config.jwt.key,
+        "Issuer": config.jwt.issuer,
+        "Audience": config.jwt.audience,
+        "ExpireDays": parseInt(config.jwt.expireDays)
+    };
+
+    if (config.oauthProviders.length > 0) {
+        settings.OAuth = {};
+        config.oauthProviders.forEach(provider => {
+            settings.OAuth[provider.displayName] = {
+                "ClientId": provider.clientId,
+                "ClientSecret": provider.clientSecret,
+                "Authority": provider.authority,
+                "RedirectUri": provider.redirectUri,
+                "Scope": provider.scope,
+                "GroupMapping": {
+                    "User": provider.groupMapping.user,
+                    "Moderator": provider.groupMapping.moderator,
+                    "Admin": provider.groupMapping.admin
+                },
+                "DisplayName": provider.displayName,
+                "IconUrl": provider.iconUrl
+            };
+        });
+    }
+
+    settings.FrontendUrl = config.frontUrl;
+    settings.AllowedOrigins = config.allowedOrigins;
+
+    return JSON.stringify(settings, null, 2);
+}
+
+// Génération du .env
+function generateEnvFile(config) {
+    let env = `# Fichier .env pour ElectroStore\n`;
+    env += `# Généré le ${new Date().toLocaleDateString('fr-FR')}\n`;
+    env += `# Ce fichier contient les variables d'environnement utilisées par docker-compose.yml\n`;
+    env += `# IMPORTANT: Ne pas versionner ce fichier dans Git (ajouter à .gitignore)\n\n`;
+    
+    env += `# Configuration générale\n`;
+    env += `PROJECT_NAME=electrostore\n`;
+    env += `ENVIRONMENT=Production\n\n`;
+    
+    env += `# Versions des images Docker\n`;
+    env += `API_VERSION=${config.appVersion}\n`;
+    env += `FRONTEND_VERSION=${config.appVersion}\n`;
+    env += `IA_VERSION=${config.appVersion}\n`;
+    if (config.useMariaDB) {
+        env += `MARIADB_VERSION=11.7.2\n`;
+    }
+    if (config.useMQTT) {
+        env += `MQTT_VERSION=2.0.20\n`;
+    }
+    if (config.enableS3 && config.useS3) {
+        env += `GARAGE_VERSION=v0.9\n`;
+    }
+    env += `\n`;
+    
+    env += `# URLs\n`;
+    env += `API_URL=${config.apiUrl || 'http://localhost:5000'}\n`;
+    env += `FRONTEND_URL=${config.frontUrl || 'http://localhost:8080'}\n\n`;
+    
+    if (!config.useTraefik) {
+        env += `# Ports\n`;
+        env += `API_PORT=${config.apiPort}\n`;
+        env += `FRONTEND_PORT=${config.frontendPort}\n`;
+        env += `IA_PORT=${config.iaPort}\n\n`;
+    } else {
+        env += `# Traefik Domains\n`;
+        env += `API_DOMAIN=${config.traefikApiDomain}\n`;
+        env += `FRONTEND_DOMAIN=${config.traefikFrontDomain}\n\n`;
+    }
+    
+    if (config.useMariaDB) {
+        env += `# MariaDB (service intégré)\n`;
+        env += `MARIADB_DATABASE=${config.mariadb.database}\n`;
+        env += `MARIADB_USER=${config.mariadb.user}\n`;
+        env += `MARIADB_PASSWORD=${config.mariadb.password}\n`;
+        env += `MARIADB_ROOT_PASSWORD=${config.mariadb.rootPassword}\n\n`;
+    }
+    
+    if (config.useMQTT) {
+        env += `# MQTT (service intégré)\n`;
+        env += `MQTT_USER=${config.mqtt.user}\n`;
+        env += `MQTT_PASSWORD=${config.mqtt.password}\n\n`;
+    }
+    
+    if (config.enableS3 && config.useS3) {
+        env += `# S3 Garage (service intégré)\n`;
+        env += `S3_ACCESS_KEY=${config.s3.accessKey}\n`;
+        env += `S3_SECRET_KEY=${config.s3.secretKey}\n`;
+        env += `S3_BUCKET=${config.s3.bucket}\n`;
+        env += `S3_REGION=${config.s3.region}\n\n`;
+    }
+    
+    return env;
+}
+
+// Génération du script setup.sh
+function generateSetupScript(config) {
+    let script = `#!/bin/bash
+# Script de configuration ElectroStore
+# Généré le ${new Date().toLocaleDateString('fr-FR')}
+
+set -e
+
+echo "====================================="
+echo "Configuration ElectroStore"
+echo "====================================="
+echo ""
+
+`;
+
+    if (config.enableS3 && config.useS3) {
+        script += `# Configuration S3 Garage
+echo "Configuration de Garage S3..."
+
+docker-compose up -d garage
+
+echo "Attente du démarrage de Garage (10 secondes)..."
+sleep 10
+
+echo "Configuration du cluster Garage..."
+docker exec electrostore-garage garage status || true
+docker exec electrostore-garage garage layout assign -z dc1 -c 1 \$(docker exec electrostore-garage garage status | grep -oP '[0-9a-f]{16}' | head -n 1) || true
+
+echo "Création des clés d'accès S3..."
+docker exec electrostore-garage garage key new electrostore-key > /tmp/garage_keys.txt
+GARAGE_ACCESS_KEY=\$(grep 'Key ID' /tmp/garage_keys.txt | awk '{print \$3}')
+GARAGE_SECRET_KEY=\$(grep 'Secret key' /tmp/garage_keys.txt | awk '{print \$3}')
+
+echo "Access Key: \$GARAGE_ACCESS_KEY"
+echo "Secret Key: \$GARAGE_SECRET_KEY"
+
+echo "Création du bucket ${config.s3.bucket}..."
+docker exec electrostore-garage garage bucket create ${config.s3.bucket}
+
+echo "Attribution des permissions..."
+docker exec electrostore-garage garage bucket allow --read --write ${config.s3.bucket} --key electrostore-key
+
+echo "Mise à jour du fichier .env..."
+sed -i "s/S3_ACCESS_KEY=.*/S3_ACCESS_KEY=\$GARAGE_ACCESS_KEY/" .env
+sed -i "s/S3_SECRET_KEY=.*/S3_SECRET_KEY=\$GARAGE_SECRET_KEY/" .env
+
+rm /tmp/garage_keys.txt
+
+echo "✅ Configuration Garage terminée"
+echo ""
+
+`;
+    }
+
+    if (config.useMQTT) {
+        script += `# Configuration MQTT
+echo "Configuration de Mosquitto MQTT..."
+
+mkdir -p MQTTCONF
+
+cat > MQTTCONF/mosquitto.conf << 'EOF'
+listener 1883
+persistence true
+persistence_location /mosquitto/data/
+password_file /mosquitto/config/mosquitto.passwd
+allow_anonymous false
+EOF
+
+cat > MQTTCONF/mosquitto.passwd << 'EOF'
+${config.mqtt.user}:${config.mqtt.password}
+EOF
+
+echo "Fichiers MQTT créés dans MQTTCONF/"
+
+echo "Démarrage de Mosquitto..."
+docker-compose up -d mqtt
+
+echo "Attente du démarrage de Mosquitto (5 secondes)..."
+sleep 5
+
+echo "Hashage du mot de passe..."
+docker exec electrostore-mqtt mosquitto_passwd -U /mosquitto/config/mosquitto.passwd
+
+docker cp electrostore-mqtt:/mosquitto/config/mosquitto.passwd MQTTCONF/mosquitto.passwd
+
+echo "Redémarrage de Mosquitto avec le mot de passe hashé..."
+docker-compose restart mqtt
+
+echo "✅ Configuration MQTT terminée"
+echo ""
+
+`;
+    }
+
+    script += `# Démarrer tous les services
+echo "Démarrage de tous les services..."
+docker-compose up -d
+
+echo ""
+echo "====================================="
+echo "✅ Configuration terminée !"
+echo "====================================="
+echo ""
+echo "Accès à l'application :"
+echo "${config.useTraefik ? 'Frontend: http://' + config.traefikFrontDomain : 'Frontend: http://localhost:' + config.frontendPort}"
+echo "${config.useTraefik ? 'API: http://' + config.traefikApiDomain : 'API: http://localhost:' + config.apiPort}"
+echo ""
+`;
+
+    if (config.enableS3 && config.useS3) {
+        script += `echo "S3 Garage:"
+echo "  Endpoint: http://localhost:3900"
+echo "  Bucket: ${config.s3.bucket}"
+echo "  Access Key: (voir .env)"
+echo "  Secret Key: (voir .env)"
+echo ""
+`;
+    }
+
+    if (config.useMQTT) {
+        script += `echo "MQTT:"
+echo "  Host: localhost:1883"
+echo "  User: ${config.mqtt.user}"
+echo "  Password: (voir .env)"
+echo ""
+`;
+    }
+
+    return script;
+}
+
+// Générer une règle Traefik complète à partir d'une URL
+function generateTraefikRule(url) {
+    try {
+        const urlObj = new URL(url);
+        let rules = [];
+        
+        rules.push(`Host(\`${urlObj.hostname}\`)`);
+        
+        const port = urlObj.port;
+        if (port && port !== '80' && port !== '443') {
+            rules.push(`ClientIP(\`0.0.0.0/0\`)`);
+        }
+        
+        const path = urlObj.pathname;
+        if (path && path !== '/' && path !== '') {
+            rules.push(`PathPrefix(\`${path}\`)`);
+        }
+        
+        return rules.join(' && ');
+    } catch (e) {
+        return `Host(\`localhost\`)`;
+    }
+}
