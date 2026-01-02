@@ -60,14 +60,7 @@ services:`;
     
     compose += `
     networks:
-      - electrostore`;
-    
-    if (config.useTraefik) {
-        compose += `
-      - traefik`;
-    }
-    
-    compose += `
+      - electrostore
     restart: unless-stopped
 `;
 
@@ -108,14 +101,7 @@ services:`;
     depends_on:
       - api
     networks:
-      - electrostore`;
-    
-    if (config.useTraefik) {
-        compose += `
-      - traefik`;
-    }
-    
-    compose += `
+      - electrostore
     restart: unless-stopped
 `;
 
@@ -124,12 +110,6 @@ services:`;
   ia:
     image: ghcr.io/vampi62/electrostore/ia:\${IA_VERSION:-latest}
     container_name: electrostore-ia`;
-    
-    if (!config.useTraefik) {
-        compose += `
-    ports:
-      - "\${IA_PORT:-${config.iaPort}}:8000"`;
-    }
     
     compose += `
     depends_on:`;
@@ -141,14 +121,7 @@ services:`;
     volumes:
       - ia-models:/app/models
     networks:
-      - electrostore`;
-    
-    if (config.useTraefik) {
-        compose += `
-      - traefik`;
-    }
-    
-    compose += `
+      - electrostore
     restart: unless-stopped
 `;
 
@@ -184,7 +157,6 @@ services:`;
     container_name: electrostore-mqtt
     ports:
       - "1883:1883"
-      - "9001:9001"
     volumes:
       - ./MQTTCONF:/mosquitto/config:ro
       - mqtt-data:/mosquitto/data
@@ -354,8 +326,7 @@ function generateAppsettings(config) {
 function generateEnvFile(config) {
     let env = `# Fichier .env pour ElectroStore\n`;
     env += `# Généré le ${new Date().toLocaleDateString('fr-FR')}\n`;
-    env += `# Ce fichier contient les variables d'environnement utilisées par docker-compose.yml\n`;
-    env += `# IMPORTANT: Ne pas versionner ce fichier dans Git (ajouter à .gitignore)\n\n`;
+    env += `# Ce fichier contient les variables d'environnement utilisées par docker-compose.yml\n\n`;
     
     env += `# Configuration générale\n`;
     env += `PROJECT_NAME=electrostore\n`;
@@ -376,19 +347,10 @@ function generateEnvFile(config) {
     }
     env += `\n`;
     
-    env += `# URLs\n`;
-    env += `API_URL=${config.apiUrl || 'http://localhost:5000'}\n`;
-    env += `FRONTEND_URL=${config.frontUrl || 'http://localhost:8080'}\n\n`;
-    
     if (!config.useTraefik) {
         env += `# Ports\n`;
         env += `API_PORT=${config.apiPort}\n`;
-        env += `FRONTEND_PORT=${config.frontendPort}\n`;
-        env += `IA_PORT=${config.iaPort}\n\n`;
-    } else {
-        env += `# Traefik Domains\n`;
-        env += `API_DOMAIN=${config.traefikApiDomain}\n`;
-        env += `FRONTEND_DOMAIN=${config.traefikFrontDomain}\n\n`;
+        env += `FRONTEND_PORT=${config.frontendPort}\n\n`;
     }
     
     if (config.useMariaDB) {
@@ -520,8 +482,8 @@ echo "✅ Configuration terminée !"
 echo "====================================="
 echo ""
 echo "Accès à l'application :"
-echo "${config.useTraefik ? 'Frontend: http://' + config.traefikFrontDomain : 'Frontend: http://localhost:' + config.frontendPort}"
-echo "${config.useTraefik ? 'API: http://' + config.traefikApiDomain : 'API: http://localhost:' + config.apiPort}"
+echo "${config.useTraefik ? 'Frontend: ' + returnUrlString(config.frontUrlObj) : 'Frontend: http://localhost:' + config.frontendPort}"
+echo "${config.useTraefik ? 'API: ' + config.apiUrlObj.protocol + '//' + config.apiUrlObj.host : 'API: http://localhost:' + config.apiPort}"
 echo ""
 `;
 
@@ -569,4 +531,45 @@ function generateTraefikRule(url) {
     } catch (e) {
         return `Host(\`localhost\`)`;
     }
+}
+
+// Génération du fichier README
+function generateReadme() {
+    return `# ElectroStore - Configuration Docker
+
+Ce fichier contient tous les fichiers nécessaires pour déployer ElectroStore avec Docker.
+
+## Structure des fichiers
+
+- \`docker-compose.yml\` : Configuration Docker Compose
+- \`.env\` : Variables d'environnement
+- \`setup.sh\` : Script de configuration automatique
+- \`config/appsettings.json\` : Configuration de l'API
+
+## Installation
+
+1. Assurez-vous que Docker et Docker Compose sont installés
+2. Rendez le script exécutable :
+   \`\`\`bash
+   chmod +x setup.sh
+   \`\`\`
+3. Exécutez le script de configuration :
+   \`\`\`bash
+   ./setup.sh
+   \`\`\`
+
+Le script configurera automatiquement :
+- Garage S3 (si activé) : création du bucket et des clés d'accès
+- MQTT (si activé) : configuration et hashage du mot de passe
+- Tous les services seront démarrés automatiquement
+
+## Accès à l'application
+
+Après le démarrage, l'application sera accessible aux URLs configurées.
+Consultez la sortie du script setup.sh pour les détails.
+
+## Support
+
+Pour plus d'informations, consultez : https://github.com/vampi62/electrostore
+`;
 }

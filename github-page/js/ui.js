@@ -171,8 +171,8 @@ function generateFiles() {
     document.getElementById('envFile').textContent = envFile;
     document.getElementById('setupScript').textContent = setupScript;
     
-    const appUrl = config.useTraefik 
-        ? `http://${config.traefikFrontDomain}`
+    const appUrl = config.useTraefik
+        ? returnUrlString(config.frontUrlObj)
         : `http://localhost:${config.frontendPort}`;
     document.getElementById('appUrl').textContent = appUrl;
     

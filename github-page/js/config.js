@@ -11,6 +11,7 @@ function collectConfig(formData) {
         enableS3: document.getElementById('enableS3').checked,
         useS3: document.getElementById('useS3').checked,
         enableSMTP: document.getElementById('enableSMTP').checked,
+        appVersion: formData.get('appVersion') || 'latest',
         
         // OAuth Providers
         oauthProviders: []
@@ -100,7 +101,7 @@ function collectConfig(formData) {
         key: formData.get('jwtKey'),
         issuer: formData.get('jwtIssuer') || 'ElectroStoreAPI',
         audience: formData.get('jwtAudience') || 'ElectroStoreClient',
-        expireDays: formData.get('jwtExpireDays') || '7'
+        expireDays: formData.get('jwtExpireDays') || '1'
     };
     
     // URLs
@@ -111,17 +112,15 @@ function collectConfig(formData) {
     const additionalOrigins = formData.get('allowedOrigins')?.split('\n').filter(o => o.trim()) || [];
     config.allowedOrigins = [config.frontUrl, ...additionalOrigins].filter(o => o);
     
-    // Extraire les domaines pour Traefik depuis les URLs
+    // Extraire les URLs complètes pour Traefik
     if (config.useTraefik) {
         try {
-            const apiUrlObj = new URL(config.apiUrl || 'http://api.electrostore.local');
-            const frontUrlObj = new URL(config.frontUrl || 'http://electrostore.local');
-            config.traefikApiDomain = apiUrlObj.hostname;
-            config.traefikFrontDomain = frontUrlObj.hostname;
+            config.apiUrlObj = new URL(config.apiUrl || 'http://api.electrostore.local');
+            config.frontUrlObj = new URL(config.frontUrl || 'http://electrostore.local');
         } catch (e) {
             // Fallback si les URLs ne sont pas valides
-            config.traefikApiDomain = 'api.electrostore.local';
-            config.traefikFrontDomain = 'electrostore.local';
+            config.apiUrlObj = new URL('http://api.electrostore.local');
+            config.frontUrlObj = new URL('http://electrostore.local');
         }
     } else {
         // Extraire les ports des URLs si pas de Traefik
@@ -130,11 +129,9 @@ function collectConfig(formData) {
             const frontUrlObj = new URL(config.frontUrl || 'http://localhost:8080');
             config.apiPort = apiUrlObj.port || '5000';
             config.frontendPort = frontUrlObj.port || '8080';
-            config.iaPort = formData.get('iaPort') || '8001';
         } catch (e) {
             config.apiPort = '5000';
             config.frontendPort = '8080';
-            config.iaPort = '8001';
         }
     }
     
@@ -172,4 +169,8 @@ function generateRandomPassword(length) {
         password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return password;
+}
+
+function returnUrlString(urlObj) {
+    return urlObj.protocol + '//' + urlObj.hostname + (urlObj.port ? `:${urlObj.port}` : '') + urlObj.pathname;
 }
