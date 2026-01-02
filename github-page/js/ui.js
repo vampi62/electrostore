@@ -165,16 +165,38 @@ function generateFiles() {
     const appsettings = generateAppsettings(config);
     const envFile = generateEnvFile(config);
     const setupScript = generateSetupScript(config);
+    const garageConfig = config.enableS3 && config.useS3 ? generateGarageConfig(config) : null;
+    const mosquittoConfig = config.useMQTT ? generateMosquittoConfig(config) : null;
+    const mosquittoPasswd = config.useMQTT ? generateMosquittoPasswd(config) : null;
     
     document.getElementById('dockerCompose').textContent = dockerCompose;
     document.getElementById('appsettingsFile').textContent = appsettings;
     document.getElementById('envFile').textContent = envFile;
     document.getElementById('setupScript').textContent = setupScript;
     
-    const appUrl = config.useTraefik
-        ? returnUrlString(config.frontUrlObj)
-        : `http://localhost:${config.frontendPort}`;
-    document.getElementById('appUrl').textContent = appUrl;
+    // Afficher ou masquer le fichier garage.toml
+    const garageConfigSection = document.getElementById('garageConfigSection');
+    if (garageConfig) {
+        document.getElementById('garageConfigFile').textContent = garageConfig;
+        garageConfigSection.classList.remove('hidden');
+    } else {
+        garageConfigSection.classList.add('hidden');
+    }
+    
+    // Afficher ou masquer les fichiers MQTT
+    const mosquittoConfigSection = document.getElementById('mosquittoConfigSection');
+    const mosquittoPasswdSection = document.getElementById('mosquittoPasswdSection');
+    if (mosquittoConfig) {
+        document.getElementById('mosquittoConfigFile').textContent = mosquittoConfig;
+        document.getElementById('mosquittoPasswdFile').textContent = mosquittoPasswd;
+        mosquittoConfigSection.classList.remove('hidden');
+        mosquittoPasswdSection.classList.remove('hidden');
+    } else {
+        mosquittoConfigSection.classList.add('hidden');
+        mosquittoPasswdSection.classList.add('hidden');
+    }
+    
+    document.getElementById('appUrl').textContent = config.frontUrlObj.toString();
     
     document.getElementById('result').classList.remove('hidden');
     document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });

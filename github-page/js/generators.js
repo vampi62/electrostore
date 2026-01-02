@@ -13,10 +13,24 @@ services:`;
     compose += `
   api:
     image: ghcr.io/vampi62/electrostore/api:\${API_VERSION:-latest}
-    container_name: electrostore-api`;
+    container_name: electrostore-api
+    cap_add:
+      - CHOWN
+    cap_drop:
+      - ALL
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G`;
     
     if (config.useTraefik) {
-        const apiRule = generateTraefikRule(config.apiUrl);
+        const apiRule = generateTraefikRule(config.apiUrlObj);
         const entrypoint = config.traefik.tlsEnable ? config.traefik.tlsEntrypoint : config.traefik.entrypoint;
         
         compose += `
@@ -43,7 +57,9 @@ services:`;
     
     compose += `
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_ENVIRONMENT=\${ENVIRONMENT:-Production}`;
+
+    compose += `
     depends_on:`;
     
     if (config.useMariaDB) compose += `\n      - mariadb`;
@@ -68,10 +84,21 @@ services:`;
     compose += `
   frontend:
     image: ghcr.io/vampi62/electrostore/front:\${FRONTEND_VERSION:-latest}
-    container_name: electrostore-frontend`;
+    container_name: electrostore-frontend
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+    environment:
+      - VUE_API_URL=${config.apiUrlObj.toString()}`;
     
     if (config.useTraefik) {
-        const frontendRule = generateTraefikRule(config.frontUrl);
+        const frontendRule = generateTraefikRule(config.frontUrlObj);
         const entrypoint = config.traefik.tlsEnable ? config.traefik.tlsEntrypoint : config.traefik.entrypoint;
         
         compose += `
@@ -109,7 +136,21 @@ services:`;
     compose += `
   ia:
     image: ghcr.io/vampi62/electrostore/ia:\${IA_VERSION:-latest}
-    container_name: electrostore-ia`;
+    container_name: electrostore-ia
+    cap_add:
+      - CHOWN
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G`;
     
     compose += `
     depends_on:`;
@@ -117,9 +158,13 @@ services:`;
     if (config.useMariaDB) compose += `\n      - mariadb`;
     if (config.enableS3 && config.useS3) compose += `\n      - garage`;
     
-    compose += `
+    if (!config.enableS3) {
+        compose += `
     volumes:
-      - ia-models:/app/models
+      - api-wwwroot:/data
+      - ./config/appsettings.json:/app/config/appsettings.json:ro`;
+    }
+    compose += `
     networks:
       - electrostore
     restart: unless-stopped
@@ -158,7 +203,8 @@ services:`;
     ports:
       - "1883:1883"
     volumes:
-      - ./MQTTCONF:/mosquitto/config:ro
+      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./config/mosquitto.passwd:/mosquitto/config/mosquitto.passwd:ro
       - mqtt-data:/mosquitto/data
     networks:
       - electrostore
@@ -170,15 +216,14 @@ services:`;
     if (config.enableS3 && config.useS3) {
         compose += `
   garage:
-    image: dxflrs/garage:\${GARAGE_VERSION:-v0.9}
+    image: dxflrs/garage:\${GARAGE_VERSION:-v2.0.0}
     container_name: electrostore-garage
     ports:
       - "3900:3900"
       - "3901:3901"
       - "3902:3902"
-    environment:
-      - GARAGE_RPC_SECRET=\${S3_SECRET_KEY:-changeme_s3_secret_key}
     volumes:
+      - ./config/garage.toml:/etc/garage.toml:ro
       - garage-data:/data
       - garage-meta:/meta
     networks:
@@ -193,11 +238,11 @@ networks:
   electrostore:
     driver: bridge`;
 
+if (!config.enableS3 || config.useMQTT || config.useMariaDB || (config.enableS3 && config.useS3)) {
     compose += `
+volumes:`;
+}
 
-volumes:
-  ia-models:`;
-    
     if (!config.enableS3) {
         compose += `\n  api-wwwroot:`;
     }
@@ -330,7 +375,7 @@ function generateEnvFile(config) {
     
     env += `# Configuration générale\n`;
     env += `PROJECT_NAME=electrostore\n`;
-    env += `ENVIRONMENT=Production\n\n`;
+    env += `ENVIRONMENT=${config.appVersion == 'latest' ? 'Development' : 'Production'}\n\n`;
     
     env += `# Versions des images Docker\n`;
     env += `API_VERSION=${config.appVersion}\n`;
@@ -343,7 +388,7 @@ function generateEnvFile(config) {
         env += `MQTT_VERSION=2.0.20\n`;
     }
     if (config.enableS3 && config.useS3) {
-        env += `GARAGE_VERSION=v0.9\n`;
+        env += `GARAGE_VERSION=v2.0.0\n`;
     }
     env += `\n`;
     
@@ -397,17 +442,19 @@ echo ""
         script += `# Configuration S3 Garage
 echo "Configuration de Garage S3..."
 
-docker-compose up -d garage
+echo "Démarrage de Garage..."
+docker compose up -d garage
 
 echo "Attente du démarrage de Garage (10 secondes)..."
 sleep 10
 
 echo "Configuration du cluster Garage..."
-docker exec electrostore-garage garage status || true
-docker exec electrostore-garage garage layout assign -z dc1 -c 1 \$(docker exec electrostore-garage garage status | grep -oP '[0-9a-f]{16}' | head -n 1) || true
+docker exec electrostore-garage /garage status || true
+docker exec electrostore-garage /garage layout assign -z dc1 -c 1 \$(docker exec electrostore-garage garage status | grep -oP '[0-9a-f]{16}' | head -n 1) || true
+docker exec electrostore-garage /garage layout apply --version 1
 
 echo "Création des clés d'accès S3..."
-docker exec electrostore-garage garage key new electrostore-key > /tmp/garage_keys.txt
+docker exec electrostore-garage /garage key create electrostore-key > /tmp/garage_keys.txt
 GARAGE_ACCESS_KEY=\$(grep 'Key ID' /tmp/garage_keys.txt | awk '{print \$3}')
 GARAGE_SECRET_KEY=\$(grep 'Secret key' /tmp/garage_keys.txt | awk '{print \$3}')
 
@@ -415,18 +462,22 @@ echo "Access Key: \$GARAGE_ACCESS_KEY"
 echo "Secret Key: \$GARAGE_SECRET_KEY"
 
 echo "Création du bucket ${config.s3.bucket}..."
-docker exec electrostore-garage garage bucket create ${config.s3.bucket}
+docker exec electrostore-garage /garage bucket create ${config.s3.bucket}
 
 echo "Attribution des permissions..."
-docker exec electrostore-garage garage bucket allow --read --write ${config.s3.bucket} --key electrostore-key
+docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.bucket} --key electrostore-key
 
 echo "Mise à jour du fichier .env..."
 sed -i "s/S3_ACCESS_KEY=.*/S3_ACCESS_KEY=\$GARAGE_ACCESS_KEY/" .env
 sed -i "s/S3_SECRET_KEY=.*/S3_SECRET_KEY=\$GARAGE_SECRET_KEY/" .env
 
+echo "Mise à jour du fichier de configuration appsettings.json..."
+sed -i "s/\"AccessKey\": \".*\"/\"AccessKey\": \"$GARAGE_ACCESS_KEY\"/" config/appsettings.json
+sed -i "s/\"SecretKey\": \".*\"/\"SecretKey\": \"$GARAGE_SECRET_KEY\"/" config/appsettings.json
+
 rm /tmp/garage_keys.txt
 
-echo "✅ Configuration Garage terminée"
+echo "Configuration Garage terminée"
 echo ""
 
 `;
@@ -436,37 +487,13 @@ echo ""
         script += `# Configuration MQTT
 echo "Configuration de Mosquitto MQTT..."
 
-mkdir -p MQTTCONF
-
-cat > MQTTCONF/mosquitto.conf << 'EOF'
-listener 1883
-persistence true
-persistence_location /mosquitto/data/
-password_file /mosquitto/config/mosquitto.passwd
-allow_anonymous false
-EOF
-
-cat > MQTTCONF/mosquitto.passwd << 'EOF'
-${config.mqtt.user}:${config.mqtt.password}
-EOF
-
-echo "Fichiers MQTT créés dans MQTTCONF/"
+echo "Hashage du mot de passe MQTT avec un conteneur temporaire..."
+docker run --rm -v "./config:/temp" eclipse-mosquitto:\${MQTT_VERSION:-2.0.20} sh -c "cp /temp/mosquitto.passwd /tmp/mosquitto.passwd && mosquitto_passwd -U /tmp/mosquitto.passwd && cat /tmp/mosquitto.passwd > /temp/mosquitto.passwd"
 
 echo "Démarrage de Mosquitto..."
-docker-compose up -d mqtt
+docker compose up -d mqtt
 
-echo "Attente du démarrage de Mosquitto (5 secondes)..."
-sleep 5
-
-echo "Hashage du mot de passe..."
-docker exec electrostore-mqtt mosquitto_passwd -U /mosquitto/config/mosquitto.passwd
-
-docker cp electrostore-mqtt:/mosquitto/config/mosquitto.passwd MQTTCONF/mosquitto.passwd
-
-echo "Redémarrage de Mosquitto avec le mot de passe hashé..."
-docker-compose restart mqtt
-
-echo "✅ Configuration MQTT terminée"
+echo "Configuration MQTT terminée"
 echo ""
 
 `;
@@ -474,16 +501,16 @@ echo ""
 
     script += `# Démarrer tous les services
 echo "Démarrage de tous les services..."
-docker-compose up -d
+docker compose up -d
 
 echo ""
 echo "====================================="
-echo "✅ Configuration terminée !"
+echo "Configuration terminée !"
 echo "====================================="
 echo ""
 echo "Accès à l'application :"
-echo "${config.useTraefik ? 'Frontend: ' + returnUrlString(config.frontUrlObj) : 'Frontend: http://localhost:' + config.frontendPort}"
-echo "${config.useTraefik ? 'API: ' + config.apiUrlObj.protocol + '//' + config.apiUrlObj.host : 'API: http://localhost:' + config.apiPort}"
+echo "${'Frontend: ' + config.frontUrlObj.toString()}"
+echo "${'API: ' + config.apiUrlObj.toString()}"
 echo ""
 `;
 
@@ -509,28 +536,44 @@ echo ""
     return script;
 }
 
-// Générer une règle Traefik complète à partir d'une URL
-function generateTraefikRule(url) {
-    try {
-        const urlObj = new URL(url);
-        let rules = [];
-        
-        rules.push(`Host(\`${urlObj.hostname}\`)`);
-        
-        const port = urlObj.port;
-        if (port && port !== '80' && port !== '443') {
-            rules.push(`ClientIP(\`0.0.0.0/0\`)`);
-        }
-        
-        const path = urlObj.pathname;
-        if (path && path !== '/' && path !== '') {
-            rules.push(`PathPrefix(\`${path}\`)`);
-        }
-        
-        return rules.join(' && ');
-    } catch (e) {
-        return `Host(\`localhost\`)`;
-    }
+// Génération du fichier de configuration Garage
+function generateGarageConfig(config) {
+    const rpcSecret = generateGarageRpcSecret();
+    return `metadata_dir = "/meta"
+data_dir = "/data"
+db_engine = "sqlite"
+replication_factor = 1
+
+rpc_bind_addr = "[::]:3901"
+rpc_public_addr = "127.0.0.1:3901"
+rpc_secret = "${rpcSecret}"
+
+[s3_api]
+s3_region = "${config.s3.region}"
+api_bind_addr = "[::]:3900"
+root_domain = ".s3.garage.localhost"
+
+[s3_web]
+bind_addr = "[::]:3902"
+root_domain = ".web.garage.localhost"
+index = "index.html"
+`;
+}
+
+// Génération du fichier de configuration Mosquitto
+function generateMosquittoConfig(config) {
+    return `listener 1883
+persistence true
+persistence_location /mosquitto/data/
+password_file /mosquitto/config/mosquitto.passwd
+allow_anonymous false
+`;
+}
+
+// Génération du fichier de mots de passe Mosquitto
+function generateMosquittoPasswd(config) {
+    return `${config.mqtt.user}:${config.mqtt.password}
+`;
 }
 
 // Génération du fichier README

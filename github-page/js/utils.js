@@ -52,6 +52,19 @@ async function downloadAllAsZip() {
     zip.folder('config');
     zip.file('config/appsettings.json', document.getElementById('appsettingsFile').textContent);
     
+    // Ajouter garage.toml si présent
+    const garageConfigSection = document.getElementById('garageConfigSection');
+    if (!garageConfigSection.classList.contains('hidden')) {
+        zip.file('config/garage.toml', document.getElementById('garageConfigFile').textContent);
+    }
+    
+    // Ajouter les fichiers MQTT si présents
+    const mosquittoConfigSection = document.getElementById('mosquittoConfigSection');
+    if (!mosquittoConfigSection.classList.contains('hidden')) {
+        zip.file('config/mosquitto.conf', document.getElementById('mosquittoConfigFile').textContent);
+        zip.file('config/mosquitto.passwd', document.getElementById('mosquittoPasswdFile').textContent);
+    }
+    
     // Ajouter un README
     zip.file('README.md', generateReadme());
     

@@ -68,8 +68,8 @@ function collectConfig(formData) {
     if (config.enableS3) {
         if (config.useS3) {
             config.s3 = {
-                accessKey: formData.get('s3AccessKey') || generateRandomPassword(20),
-                secretKey: formData.get('s3SecretKey') || generateRandomPassword(40),
+                accessKey: 'XXXXXXXXXXXXXXXXXXXXXXXXXX',
+                secretKey: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
                 bucket: formData.get('s3Bucket') || 'electrostore',
                 region: formData.get('s3Region') || 'garage'
             };
@@ -118,18 +118,19 @@ function collectConfig(formData) {
             config.apiUrlObj = new URL(config.apiUrl || 'http://api.electrostore.local');
             config.frontUrlObj = new URL(config.frontUrl || 'http://electrostore.local');
         } catch (e) {
-            // Fallback si les URLs ne sont pas valides
             config.apiUrlObj = new URL('http://api.electrostore.local');
             config.frontUrlObj = new URL('http://electrostore.local');
         }
     } else {
         // Extraire les ports des URLs si pas de Traefik
         try {
-            const apiUrlObj = new URL(config.apiUrl || 'http://localhost:5000');
-            const frontUrlObj = new URL(config.frontUrl || 'http://localhost:8080');
-            config.apiPort = apiUrlObj.port || '5000';
-            config.frontendPort = frontUrlObj.port || '8080';
+            config.apiUrlObj = new URL(config.apiUrl || 'http://localhost:5000');
+            config.frontUrlObj = new URL(config.frontUrl || 'http://localhost:8080');
+            config.apiPort = config.apiUrlObj.port || '5000';
+            config.frontendPort = config.frontUrlObj.port || '8080';
         } catch (e) {
+            config.apiUrlObj = new URL('http://localhost:5000');
+            config.frontUrlObj = new URL('http://localhost:8080');
             config.apiPort = '5000';
             config.frontendPort = '8080';
         }
@@ -163,7 +164,7 @@ function collectConfig(formData) {
 
 // Générer un mot de passe aléatoire
 function generateRandomPassword(length) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*_+-|;,.<>?';
     let password = '';
     for (let i = 0; i < length; i++) {
         password += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -171,6 +172,35 @@ function generateRandomPassword(length) {
     return password;
 }
 
-function returnUrlString(urlObj) {
-    return urlObj.protocol + '//' + urlObj.hostname + (urlObj.port ? `:${urlObj.port}` : '') + urlObj.pathname;
+// Génération d'une clé RPC hexadécimale valide pour Garage (32 bytes = 64 caractères hex)
+function generateGarageRpcSecret() {
+    const chars = '0123456789abcdef';
+    let result = '';
+    for (let i = 0; i < 64; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+// Générer une règle Traefik complète à partir d'une URL
+function generateTraefikRule(urlObj) {
+    try {
+        let rules = [];
+        
+        rules.push(`Host(\`${urlObj.hostname}\`)`);
+        
+        const port = urlObj.port;
+        if (port && port !== '80' && port !== '443') {
+            rules.push(`ClientIP(\`0.0.0.0/0\`)`);
+        }
+        
+        const path = urlObj.pathname;
+        if (path && path !== '/' && path !== '') {
+            rules.push(`PathPrefix(\`${path}\`)`);
+        }
+        
+        return rules.join(' && ');
+    } catch (e) {
+        return `Host(\`localhost\`)`;
+    }
 }

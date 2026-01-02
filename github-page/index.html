@@ -259,7 +259,7 @@
                             <h3 style="margin: 1.5rem 0 1rem 0; color: #4caf50;">Configuration S3 Intégré (Garage)</h3>
                             <p class="help-text" style="font-size: 1rem; margin: 1rem 0; padding: 1rem; background: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 4px;">Le service Garage S3 sera automatiquement configuré avec des valeurs par défaut sécurisées.</p>
                             
-                            <div class="form-group" style="display: none;">
+                            <!-- <div class="form-group" style="display: none;">
                                 <label for="s3AccessKey">Access Key</label>
                                 <input type="text" id="s3AccessKey" name="s3AccessKey">
                                 <button type="button" class="btn-secondary" onclick="generatePassword('s3AccessKey', 20)">Générer</button>
@@ -269,11 +269,11 @@
                                 <label for="s3SecretKey">Secret Key</label>
                                 <input type="password" id="s3SecretKey" name="s3SecretKey">
                                 <button type="button" class="btn-secondary" onclick="generatePassword('s3SecretKey', 40)">Générer</button>
-                            </div>
+                            </div> -->
 
                             <div class="form-group" style="display: none;">
                                 <label for="s3Bucket">Bucket</label>
-                                <input type="text" id="s3Bucket" name="s3Bucket" value="electrostore-images">
+                                <input type="text" id="s3Bucket" name="s3Bucket" value="electrostore">
                             </div>
 
                             <div class="form-group" style="display: none;">
@@ -356,8 +356,8 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="smtpFrom">Email expéditeur</label>
-                            <input type="email" id="smtpFrom" name="smtpFrom" placeholder="noreply@electrostore.com">
+                            <label for="smtpFrom">Adresse "From"</label>
+                            <input type="text" id="smtpFrom" name="smtpFrom" placeholder="noreply@electrostore.com">
                         </div>
                     </div>
                 </section>
@@ -429,6 +429,43 @@
                     </div>
                     <pre id="envFile"></pre>
                     <button class="btn-download" onclick="downloadFile('.env', 'envFile')">⬇Télécharger</button>
+                </div>
+
+                <div id="garageConfigSection" class="file-output hidden">
+                    <div class="file-header">
+                        <h3>garage.toml</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('garageConfigFile')">Copier</button>
+                    </div>
+                    <pre id="garageConfigFile"></pre>
+                    <button class="btn-download" onclick="downloadFile('garage.toml', 'garageConfigFile')">Télécharger</button>
+                    <p class="help-text" style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107;">
+                        <strong>Important:</strong> Ce fichier doit être placé dans <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">config/garage.toml</code>
+                    </p>
+                </div>
+
+                <div id="mosquittoConfigSection" class="file-output hidden">
+                    <div class="file-header">
+                        <h3>mosquitto.conf</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('mosquittoConfigFile')">Copier</button>
+                    </div>
+                    <pre id="mosquittoConfigFile"></pre>
+                    <button class="btn-download" onclick="downloadFile('mosquitto.conf', 'mosquittoConfigFile')">Télécharger</button>
+                    <p class="help-text" style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107;">
+                        <strong>Important:</strong> Ce fichier doit être placé dans <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">config/mosquitto.conf</code>
+                    </p>
+                </div>
+
+                <div id="mosquittoPasswdSection" class="file-output hidden">
+                    <div class="file-header">
+                        <h3>mosquitto.passwd</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('mosquittoPasswdFile')">Copier</button>
+                    </div>
+                    <pre id="mosquittoPasswdFile"></pre>
+                    <button class="btn-download" onclick="downloadFile('mosquitto.passwd', 'mosquittoPasswdFile')">Télécharger</button>
+                    <p class="help-text" style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107;">
+                        <strong>Important:</strong> Ce fichier doit être placé dans <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">config/mosquitto.passwd</code><br>
+                        <strong>Note:</strong> Le script setup.sh se chargera de hasher automatiquement ce mot de passe
+                    </p>
                 </div>
 
                 <div class="file-output">
