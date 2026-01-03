@@ -1,9 +1,9 @@
-// Génération du fichier docker-compose.yml
+// Generate docker-compose.yml file
 function generateDockerCompose(config) {
-    let compose = `# docker-compose.yml pour ElectroStore
-# Ce fichier utilise des variables d'environnement définies dans le fichier .env
-# Pour utiliser ce fichier, créez un fichier .env à la racine du projet
-# Les valeurs par défaut sont fournies avec la syntaxe \${VAR:-valeur_par_defaut}
+    let compose = `# docker-compose.yml for ElectroStore
+# This file uses environment variables defined in the .env file
+# To use this file, create a .env file at the project root
+# Default values are provided with the syntax \${VAR:-default_value}
 
 version: '3.8'
 
@@ -76,7 +76,13 @@ services:`;
     
     compose += `
     networks:
-      - electrostore
+      - electrostore`;
+    
+    if (config.useTraefik) {
+        compose += `\n      - ${config.traefik.network}`;
+    }
+    
+    compose += `
     restart: unless-stopped
 `;
 
@@ -128,7 +134,13 @@ services:`;
     depends_on:
       - api
     networks:
-      - electrostore
+      - electrostore`;
+    
+    if (config.useTraefik) {
+        compose += `\n      - ${config.traefik.network}`;
+    }
+    
+    compose += `
     restart: unless-stopped
 `;
 
@@ -203,8 +215,8 @@ services:`;
     ports:
       - "1883:1883"
     volumes:
-      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-      - ./config/mosquitto.passwd:/mosquitto/config/mosquitto.passwd:ro
+      - ./config/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./config/mosquitto/mosquitto.passwd:/mosquitto/config/mosquitto.passwd:ro
       - mqtt-data:/mosquitto/data
     networks:
       - electrostore
@@ -223,7 +235,7 @@ services:`;
       - "3901:3901"
       - "3902:3902"
     volumes:
-      - ./config/garage.toml:/etc/garage.toml:ro
+      - ./config/garage/garage.toml:/etc/garage.toml:ro
       - garage-data:/data
       - garage-meta:/meta
     networks:
@@ -237,25 +249,29 @@ services:`;
 networks:
   electrostore:
     driver: bridge`;
+    
+    if (config.useTraefik) {
+        compose += `
+  ${config.traefik.network}:
+    external: true`;
+    }
 
-if (!config.enableS3 || config.useMQTT || config.useMariaDB || (config.enableS3 && config.useS3)) {
+if (!config.enableS3 || config.useMQTT || config.useMariaDB || 
+    (config.enableS3 && config.useS3) || (config.useVault && config.vault.integrated)) {
     compose += `
 volumes:`;
 }
 
-    if (!config.enableS3) {
-        compose += `\n  api-wwwroot:`;
-    }
+    if (!config.enableS3) compose += `\n  api-wwwroot:`;
     if (config.useMariaDB) compose += `\n  mariadb-data:`;
     if (config.useMQTT) compose += `\n  mqtt-data:`;
-    if (config.enableS3 && config.useS3) {
-        compose += `\n  garage-data:\n  garage-meta:`;
-    }
-    
+    if (config.enableS3 && config.useS3) compose += `\n  garage-data:\n  garage-meta:`;
+    if (config.useVault && config.vault.integrated) compose += `\n  vault-data:`;
+
     return compose;
 }
 
-// Génération du appsettings.json
+// Generate appsettings.json
 function generateAppsettings(config) {
     const settings = {
         "Logging": {
@@ -269,10 +285,12 @@ function generateAppsettings(config) {
 
     let connectionString;
     if (config.useMariaDB) {
-        connectionString = `Server=mariadb;Port=3306;Database=${config.mariadb.database};User=${config.mariadb.user};Password=${config.mariadb.password};`;
+        connectionString = `Server=mariadb;Port=3306;Database=${config.mariadb.database};User=${config.mariadb.user};Password=
+        ${config.useVault ? '{{vault:mariadb_password}}' : config.mariadb.password};`;
     } else {
         const db = config.mariadbExternal;
-        connectionString = `Server=${db.host};Port=${db.port};Database=${db.database};User=${db.user};Password=${db.password};`;
+        connectionString = `Server=${db.host};Port=${db.port};Database=${db.database};User=${db.user};Password=
+        ${config.useVault ? '{{vault:mariadb_password}}' : db.password};`;
     }
     
     settings.ConnectionStrings = {
@@ -284,7 +302,7 @@ function generateAppsettings(config) {
             "Server": "mqtt",
             "Port": 1883,
             "Username": config.mqtt.user,
-            "Password": config.mqtt.password
+            "Password": config.useVault ? "{{vault:mqtt_password}}" : config.mqtt.password
         };
     } else {
         const mqtt = config.mqttExternal;
@@ -292,7 +310,7 @@ function generateAppsettings(config) {
             "Server": mqtt.host,
             "Port": parseInt(mqtt.port),
             "Username": mqtt.user,
-            "Password": mqtt.password
+            "Password": config.useVault ? "{{vault:mqtt_password}}" : config.mqtt.password
         };
     }
 
@@ -301,8 +319,8 @@ function generateAppsettings(config) {
             settings.S3 = {
                 "Enable": true,
                 "Endpoint": "http://garage:3900",
-                "AccessKey": config.s3.accessKey,
-                "SecretKey": config.s3.secretKey,
+                "AccessKey": config.useVault ? "{{vault:s3_access_key}}" : config.s3.accessKey,
+                "SecretKey": config.useVault ? "{{vault:s3_secret_key}}" : config.s3.secretKey,
                 "Bucket": config.s3.bucket,
                 "Region": config.s3.region,
                 "Secure": false
@@ -311,8 +329,8 @@ function generateAppsettings(config) {
             settings.S3 = {
                 "Enable": true,
                 "Endpoint": config.s3External.endpoint,
-                "AccessKey": config.s3External.accessKey,
-                "SecretKey": config.s3External.secretKey,
+                "AccessKey": config.useVault ? "{{vault:s3_access_key}}" : config.s3External.accessKey,
+                "SecretKey": config.useVault ? "{{vault:s3_secret_key}}" : config.s3External.secretKey,
                 "Bucket": config.s3External.bucket,
                 "Region": config.s3External.region,
                 "Secure": config.s3External.secure
@@ -329,13 +347,13 @@ function generateAppsettings(config) {
             "Host": config.smtp.host,
             "Port": parseInt(config.smtp.port),
             "Username": config.smtp.user,
-            "Password": config.smtp.password,
+            "Password": config.useVault ? "{{vault:smtp_password}}" : config.smtp.password,
             "From": config.smtp.from
         };
     }
 
     settings.Jwt = {
-        "Key": config.jwt.key,
+        "Key": config.useVault ? "{{vault:jwt_key}}" : config.jwt.key,
         "Issuer": config.jwt.issuer,
         "Audience": config.jwt.audience,
         "ExpireDays": parseInt(config.jwt.expireDays)
@@ -344,9 +362,10 @@ function generateAppsettings(config) {
     if (config.oauthProviders.length > 0) {
         settings.OAuth = {};
         config.oauthProviders.forEach(provider => {
-            settings.OAuth[provider.displayName] = {
-                "ClientId": provider.clientId,
-                "ClientSecret": provider.clientSecret,
+            const name = toSnakeCase(provider.displayName);
+            settings.OAuth[toCamelCase(provider.displayName)] = {
+                "ClientId": config.useVault ? `{{vault:oauth_${name}_client_id}}` : provider.clientId,
+                "ClientSecret": config.useVault ? `{{vault:oauth_${name}_client_secret}}` : provider.clientSecret,
                 "Authority": provider.authority,
                 "RedirectUri": provider.redirectUri,
                 "Scope": provider.scope,
@@ -367,17 +386,17 @@ function generateAppsettings(config) {
     return JSON.stringify(settings, null, 2);
 }
 
-// Génération du .env
+// Generate .env file
 function generateEnvFile(config) {
-    let env = `# Fichier .env pour ElectroStore\n`;
-    env += `# Généré le ${new Date().toLocaleDateString('fr-FR')}\n`;
-    env += `# Ce fichier contient les variables d'environnement utilisées par docker-compose.yml\n\n`;
+    let env = `# .env file for ElectroStore\n`;
+    env += `# Generated on ${new Date().toLocaleDateString('en-US')}\n`;
+    env += `# This file contains environment variables used by docker-compose.yml\n\n`;
     
-    env += `# Configuration générale\n`;
+    env += `# General configuration\n`;
     env += `PROJECT_NAME=electrostore\n`;
     env += `ENVIRONMENT=${config.appVersion == 'latest' ? 'Development' : 'Production'}\n\n`;
     
-    env += `# Versions des images Docker\n`;
+    env += `# Docker image versions\n`;
     env += `API_VERSION=${config.appVersion}\n`;
     env += `FRONTEND_VERSION=${config.appVersion}\n`;
     env += `IA_VERSION=${config.appVersion}\n`;
@@ -399,7 +418,7 @@ function generateEnvFile(config) {
     }
     
     if (config.useMariaDB) {
-        env += `# MariaDB (service intégré)\n`;
+        env += `# MariaDB (integrated service)\n`;
         env += `MARIADB_DATABASE=${config.mariadb.database}\n`;
         env += `MARIADB_USER=${config.mariadb.user}\n`;
         env += `MARIADB_PASSWORD=${config.mariadb.password}\n`;
@@ -407,53 +426,101 @@ function generateEnvFile(config) {
     }
     
     if (config.useMQTT) {
-        env += `# MQTT (service intégré)\n`;
+        env += `# MQTT (integrated service)\n`;
         env += `MQTT_USER=${config.mqtt.user}\n`;
         env += `MQTT_PASSWORD=${config.mqtt.password}\n\n`;
     }
     
     if (config.enableS3 && config.useS3) {
-        env += `# S3 Garage (service intégré)\n`;
+        env += `# S3 Garage (integrated service)\n`;
         env += `S3_ACCESS_KEY=${config.s3.accessKey}\n`;
         env += `S3_SECRET_KEY=${config.s3.secretKey}\n`;
         env += `S3_BUCKET=${config.s3.bucket}\n`;
         env += `S3_REGION=${config.s3.region}\n\n`;
     }
     
+    if (config.useVault) {
+        env += `# HashiCorp Vault\n`;
+        env += `VAULT_TOKEN=${config.vault.token}\n`;
+        if (config.vault.integrated) {
+            env += `VAULT_VERSION=1.18\n`;
+        }
+        env += `\n`;
+    }
+    
     return env;
 }
 
-// Génération du script setup.sh
+// Generate setup.sh script
 function generateSetupScript(config) {
     let script = `#!/bin/bash
-# Script de configuration ElectroStore
-# Généré le ${new Date().toLocaleDateString('fr-FR')}
+# ElectroStore Configuration Script
+# Generated on ${new Date().toLocaleDateString('en-US')}
 
 set -e
 
 echo "====================================="
-echo "Configuration ElectroStore"
+echo "ElectroStore Configuration"
 echo "====================================="
 echo ""
 
 `;
 
-    if (config.enableS3 && config.useS3) {
-        script += `# Configuration S3 Garage
-echo "Configuration de Garage S3..."
+    if (config.useVault && config.vault.integrated) {
+        script += `# Vault Configuration
+echo "Configuring HashiCorp Vault..."
 
-echo "Démarrage de Garage..."
+echo "Starting Vault..."
+docker compose up -d vault
+
+echo "Waiting for Vault to start (5 seconds)..."
+sleep 5
+
+echo "Enabling KV v2 engine..."
+docker exec electrostore-vault vault secrets enable -version=2 -path=secret kv || echo "KV engine already enabled"
+
+echo "Storing secrets in Vault..."
+`;
+
+        script += `docker exec electrostore-vault vault kv put ${config.vault.path} mariadb_password="
+        ${config.useMariaDB ? config.mariadb.password : config.mariadbExternal.password}"
+`;
+
+        script += `docker exec electrostore-vault vault kv patch ${config.vault.path} mqtt_password="
+        ${config.useMQTT ? config.mqtt.password : config.mqttExternal.password}
+`;
+
+        if (config.enableSMTP && config.smtp) {
+            script += `docker exec electrostore-vault vault kv patch ${config.vault.path} smtp_password="
+            ${config.smtp.password}"
+`;
+        }
+
+        script += `docker exec electrostore-vault vault kv patch ${config.vault.path} jwt_key="
+        ${config.jwt.key}"
+
+echo "Vault configuration completed"
+echo ""
+
+`;
+    }
+
+    if (config.enableS3 && config.useS3) {
+        script += `# S3 Garage Configuration
+echo "Configuring Garage S3..."
+
+echo "Starting Garage..."
 docker compose up -d garage
 
-echo "Attente du démarrage de Garage (10 secondes)..."
+echo "Waiting for Garage to start (10 seconds)..."
 sleep 10
 
-echo "Configuration du cluster Garage..."
+echo "Configuring Garage cluster..."
 docker exec electrostore-garage /garage status || true
 docker exec electrostore-garage /garage layout assign -z dc1 -c 1 \$(docker exec electrostore-garage garage status | grep -oP '[0-9a-f]{16}' | head -n 1) || true
 docker exec electrostore-garage /garage layout apply --version 1
 
-echo "Création des clés d'accès S3..."
+echo "Creating S3 access keys..."
 docker exec electrostore-garage /garage key create electrostore-key > /tmp/garage_keys.txt
 GARAGE_ACCESS_KEY=\$(grep 'Key ID' /tmp/garage_keys.txt | awk '{print \$3}')
 GARAGE_SECRET_KEY=\$(grep 'Secret key' /tmp/garage_keys.txt | awk '{print \$3}')
@@ -461,54 +528,78 @@ GARAGE_SECRET_KEY=\$(grep 'Secret key' /tmp/garage_keys.txt | awk '{print \$3}')
 echo "Access Key: \$GARAGE_ACCESS_KEY"
 echo "Secret Key: \$GARAGE_SECRET_KEY"
 
-echo "Création du bucket ${config.s3.bucket}..."
+echo "Creating bucket ${config.s3.bucket}..."
 docker exec electrostore-garage /garage bucket create ${config.s3.bucket}
 
-echo "Attribution des permissions..."
+echo "Assigning permissions..."
 docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.bucket} --key electrostore-key
+`;
 
-echo "Mise à jour du fichier .env..."
+        if (config.useVault) {
+            script += `
+echo "Storing S3 keys in Vault..."
+docker exec electrostore-vault vault kv patch ${config.vault.path} s3_access_key="\$GARAGE_ACCESS_KEY" s3_secret_key="\$GARAGE_SECRET_KEY"
+`;
+        } else {
+            script += `
+echo "Updating .env file..."
 sed -i "s/S3_ACCESS_KEY=.*/S3_ACCESS_KEY=\$GARAGE_ACCESS_KEY/" .env
 sed -i "s/S3_SECRET_KEY=.*/S3_SECRET_KEY=\$GARAGE_SECRET_KEY/" .env
 
-echo "Mise à jour du fichier de configuration appsettings.json..."
+echo "Updating appsettings.json configuration file..."
 sed -i "s/\"AccessKey\": \".*\"/\"AccessKey\": \"$GARAGE_ACCESS_KEY\"/" config/appsettings.json
 sed -i "s/\"SecretKey\": \".*\"/\"SecretKey\": \"$GARAGE_SECRET_KEY\"/" config/appsettings.json
+`;
+        }
 
+        script += `
 rm /tmp/garage_keys.txt
 
-echo "Configuration Garage terminée"
+echo "Garage configuration completed"
 echo ""
 
 `;
     }
 
     if (config.useMQTT) {
-        script += `# Configuration MQTT
-echo "Configuration de Mosquitto MQTT..."
+        script += `# MQTT Configuration
+echo "Configuring Mosquitto MQTT..."
 
-echo "Hashage du mot de passe MQTT avec un conteneur temporaire..."
-docker run --rm -v "./config:/temp" eclipse-mosquitto:\${MQTT_VERSION:-2.0.20} sh -c "cp /temp/mosquitto.passwd /tmp/mosquitto.passwd && mosquitto_passwd -U /tmp/mosquitto.passwd && cat /tmp/mosquitto.passwd > /temp/mosquitto.passwd"
+echo "Hashing MQTT password with temporary container..."
+docker run --rm -v "./config/mosquitto:/temp" eclipse-mosquitto:\${MQTT_VERSION:-2.0.20} sh -c "cp /temp/mosquitto.passwd /tmp/mosquitto.passwd && mosquitto_passwd -U /tmp/mosquitto.passwd && cat /tmp/mosquitto.passwd > /temp/mosquitto.passwd"
 
-echo "Démarrage de Mosquitto..."
+echo "Starting Mosquitto..."
 docker compose up -d mqtt
 
-echo "Configuration MQTT terminée"
+echo "MQTT configuration completed"
 echo ""
 
 `;
     }
 
-    script += `# Démarrer tous les services
-echo "Démarrage de tous les services..."
+    script += `# Start all services
+echo "Starting all services..."
 docker compose up -d
+`;
 
+/*     if (config.useTraefik) {
+        script += `
+echo "Checking and creating Traefik network if needed..."
+docker network inspect ${config.traefik.network} >/dev/null 2>&1 || docker network create ${config.traefik.network}
+
+echo "Connecting containers to Traefik network..."
+docker network connect ${config.traefik.network} electrostore-api 2>/dev/null || echo "API déjà connecté au réseau Traefik"
+docker network connect ${config.traefik.network} electrostore-frontend 2>/dev/null || echo "Frontend déjà connecté au réseau Traefik"
+`;
+    } */
+
+    script += `
 echo ""
 echo "====================================="
-echo "Configuration terminée !"
+echo "Configuration completed!"
 echo "====================================="
 echo ""
-echo "Accès à l'application :"
+echo "Application access:"
 echo "${'Frontend: ' + config.frontUrlObj.toString()}"
 echo "${'API: ' + config.apiUrlObj.toString()}"
 echo ""
@@ -518,8 +609,8 @@ echo ""
         script += `echo "S3 Garage:"
 echo "  Endpoint: http://localhost:3900"
 echo "  Bucket: ${config.s3.bucket}"
-echo "  Access Key: (voir .env)"
-echo "  Secret Key: (voir .env)"
+echo "  Access Key: (see .env)"
+echo "  Secret Key: (see .env)"
 echo ""
 `;
     }
@@ -528,7 +619,7 @@ echo ""
         script += `echo "MQTT:"
 echo "  Host: localhost:1883"
 echo "  User: ${config.mqtt.user}"
-echo "  Password: (voir .env)"
+echo "  Password: (see .env)"
 echo ""
 `;
     }
@@ -536,7 +627,7 @@ echo ""
     return script;
 }
 
-// Génération du fichier de configuration Garage
+// Generate Garage configuration file
 function generateGarageConfig(config) {
     const rpcSecret = generateGarageRpcSecret();
     return `metadata_dir = "/meta"
@@ -560,7 +651,7 @@ index = "index.html"
 `;
 }
 
-// Génération du fichier de configuration Mosquitto
+// Generate Mosquitto configuration file
 function generateMosquittoConfig(config) {
     return `listener 1883
 persistence true
@@ -570,49 +661,49 @@ allow_anonymous false
 `;
 }
 
-// Génération du fichier de mots de passe Mosquitto
+// Generate Mosquitto password file
 function generateMosquittoPasswd(config) {
     return `${config.mqtt.user}:${config.mqtt.password}
 `;
 }
 
-// Génération du fichier README
+// Generate README file
 function generateReadme() {
-    return `# ElectroStore - Configuration Docker
+    return `# ElectroStore - Docker Configuration
 
-Ce fichier contient tous les fichiers nécessaires pour déployer ElectroStore avec Docker.
+This file contains all necessary files to deploy ElectroStore with Docker.
 
-## Structure des fichiers
+## File Structure
 
-- \`docker-compose.yml\` : Configuration Docker Compose
-- \`.env\` : Variables d'environnement
-- \`setup.sh\` : Script de configuration automatique
-- \`config/appsettings.json\` : Configuration de l'API
+- \`docker-compose.yml\` : Docker Compose configuration
+- \`.env\` : Environment variables
+- \`setup.sh\` : Automatic configuration script
+- \`config/appsettings.json\` : API configuration
 
 ## Installation
 
-1. Assurez-vous que Docker et Docker Compose sont installés
-2. Rendez le script exécutable :
+1. Make sure Docker and Docker Compose are installed
+2. Make the script executable:
    \`\`\`bash
    chmod +x setup.sh
    \`\`\`
-3. Exécutez le script de configuration :
+3. Run the configuration script:
    \`\`\`bash
    ./setup.sh
    \`\`\`
 
-Le script configurera automatiquement :
-- Garage S3 (si activé) : création du bucket et des clés d'accès
-- MQTT (si activé) : configuration et hashage du mot de passe
-- Tous les services seront démarrés automatiquement
+The script will automatically configure:
+- Garage S3 (if enabled): bucket creation and access keys
+- MQTT (if enabled): configuration and password hashing
+- All services will be started automatically
 
-## Accès à l'application
+## Application Access
 
-Après le démarrage, l'application sera accessible aux URLs configurées.
-Consultez la sortie du script setup.sh pour les détails.
+After startup, the application will be accessible at the configured URLs.
+Check the setup.sh script output for details.
 
 ## Support
 
-Pour plus d'informations, consultez : https://github.com/vampi62/electrostore
+For more information, visit: https://github.com/vampi62/electrostore
 `;
 }

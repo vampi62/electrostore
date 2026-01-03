@@ -1,13 +1,14 @@
-// Point d'entrée principal de l'application
-// Ce fichier initialise l'application au chargement de la page
+// Main application entry point
+// This file initializes the application on page load
 
-// Initialisation au chargement
+// Initialization on load
 document.addEventListener('DOMContentLoaded', function() {
     initializeForm();
     loadGitHubTags();
+    document.getElementById('jwtKey').value = generateRandomPassword(64);
 });
 
-// Gestion du formulaire
+// Form handling
 document.getElementById('configForm').addEventListener('submit', function(e) {
     e.preventDefault();
     generateFiles();

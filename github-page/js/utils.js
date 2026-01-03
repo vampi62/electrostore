@@ -1,10 +1,10 @@
-// Copier dans le presse-papiers
+// Copy to clipboard
 function copyToClipboard(elementId) {
     const text = document.getElementById(elementId).textContent;
     navigator.clipboard.writeText(text).then(() => {
         const button = event.target;
         const originalText = button.textContent;
-        button.textContent = '✅ Copié !';
+        button.textContent = 'Copied!';
         button.style.background = '#059669';
         
         setTimeout(() => {
@@ -14,7 +14,33 @@ function copyToClipboard(elementId) {
     });
 }
 
-// Télécharger le fichier
+// Show/Hide password field
+function togglePasswordVisibility(fieldId) {
+    const field = document.getElementById(fieldId);
+    const button = event.target;
+    
+    if (field.type === 'password') {
+        field.type = 'text';
+        button.textContent = 'Hide';
+    } else {
+        field.type = 'password';
+        button.textContent = 'Show';
+    }
+}
+
+// Convert string to camelCase
+function toCamelCase(str) {
+  return str.replace(/(?:^\w|[A-Z]|\b\w)/g, function(word, index) {
+    return index === 0 ? word.toLowerCase() : word.toUpperCase();
+  }).replace(/\s+/g, '');
+}
+
+// Convert string to snake_case
+function toSnakeCase(str) {
+    return str.replace(/\s+/g, '_').toLowerCase();
+}
+
+// Download file
 function downloadFile(filename, elementId) {
     const text = document.getElementById(elementId).textContent;
     const blob = new Blob([text], { type: 'text/plain' });
@@ -28,9 +54,9 @@ function downloadFile(filename, elementId) {
     document.body.removeChild(a);
 }
 
-// Télécharger tous les fichiers dans un ZIP
+// Download all files as ZIP
 async function downloadAllAsZip() {
-    // Importer JSZip dynamiquement depuis CDN
+    // Dynamically import JSZip from CDN
     if (typeof JSZip === 'undefined') {
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
@@ -43,39 +69,41 @@ async function downloadAllAsZip() {
     
     const zip = new JSZip();
     
-    // Ajouter les fichiers principaux
+    // Add main files
     zip.file('docker-compose.yml', document.getElementById('dockerCompose').textContent);
     zip.file('.env', document.getElementById('envFile').textContent);
     zip.file('setup.sh', document.getElementById('setupScript').textContent);
     
-    // Créer le dossier config et ajouter appsettings.json
+    // Create config folder and add appsettings.json
     zip.folder('config');
     zip.file('config/appsettings.json', document.getElementById('appsettingsFile').textContent);
     
-    // Ajouter garage.toml si présent
+    // Add garage.toml if present
     const garageConfigSection = document.getElementById('garageConfigSection');
     if (!garageConfigSection.classList.contains('hidden')) {
-        zip.file('config/garage.toml', document.getElementById('garageConfigFile').textContent);
+        zip.folder('config/garage');
+        zip.file('config/garage/garage.toml', document.getElementById('garageConfigFile').textContent);
     }
     
-    // Ajouter les fichiers MQTT si présents
+    // Add MQTT files if present
     const mosquittoConfigSection = document.getElementById('mosquittoConfigSection');
     if (!mosquittoConfigSection.classList.contains('hidden')) {
-        zip.file('config/mosquitto.conf', document.getElementById('mosquittoConfigFile').textContent);
-        zip.file('config/mosquitto.passwd', document.getElementById('mosquittoPasswdFile').textContent);
+        zip.folder('config/mosquitto');
+        zip.file('config/mosquitto/mosquitto.conf', document.getElementById('mosquittoConfigFile').textContent);
+        zip.file('config/mosquitto/mosquitto.passwd', document.getElementById('mosquittoPasswdFile').textContent);
     }
     
-    // Ajouter un README
+    // Add README
     zip.file('README.md', generateReadme());
     
-    // Générer le ZIP
+    // Generate ZIP
     const content = await zip.generateAsync({ type: 'blob' });
     
-    // Télécharger
+    // Download
     const url = window.URL.createObjectURL(content);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'electrostore-config.zip';
+    a.download = 'electrostore.zip';
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);

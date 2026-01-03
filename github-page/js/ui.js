@@ -1,4 +1,4 @@
-// Basculer l'affichage des sections selon les checkboxes
+// Toggle section display based on checkboxes
 function toggleSection(section) {
     console.log(`Toggling section: ${section}`);
     console.log(`use${section.charAt(0).toUpperCase() + section.slice(1)}`);
@@ -22,37 +22,40 @@ function toggleSection(section) {
             document.getElementById('section-s3-integrated').style.display = isChecked ? 'block' : 'none';
             document.getElementById('section-s3-external').style.display = isChecked ? 'none' : 'block';
             break;
+        case 'vault':
+            document.getElementById('section-vault').style.display = isChecked ? 'block' : 'none';
+            break;
     }
 }
 
-// Basculer l'activation S3
+// Toggle S3 activation
 function toggleS3Enable() {
     const enabled = document.getElementById('enableS3').checked;
     document.getElementById('section-s3-choice').style.display = enabled ? 'block' : 'none';
     
     if (enabled) {
-        // Si S3 est activé, afficher la section appropriée selon le toggle useS3
+        // If S3 is enabled, show appropriate section based on useS3 toggle
         toggleSection('s3');
     } else {
-        // Si S3 est désactivé, masquer toutes les sections S3
+        // If S3 is disabled, hide all S3 sections
         document.getElementById('section-s3-integrated').style.display = 'none';
         document.getElementById('section-s3-external').style.display = 'none';
     }
 }
 
-// Basculer SMTP
+// Toggle SMTP
 function toggleSMTP() {
     const enabled = document.getElementById('enableSMTP').checked;
     document.getElementById('section-smtp').style.display = enabled ? 'block' : 'none';
 }
 
-// Basculer Traefik TLS
+// Toggle Traefik TLS
 function toggleTraefikTLS() {
     const enabled = document.getElementById('traefikTlsEnable').checked;
     document.getElementById('section-traefik-tls').style.display = enabled ? 'block' : 'none';
 }
 
-// Génération de mot de passe aléatoire dans un champ
+// Generate random password in field
 function generatePassword(fieldId, length = 32) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
     let password = '';
@@ -64,7 +67,7 @@ function generatePassword(fieldId, length = 32) {
     document.getElementById(fieldId).value = password;
 }
 
-// Ajouter un provider OAuth
+// Add OAuth provider
 function addOAuthProvider() {
     oauthProvidersCount++;
     const providerId = `oauth-${oauthProvidersCount}`;
@@ -72,12 +75,12 @@ function addOAuthProvider() {
     const providerHtml = `
         <div class="oauth-provider" id="${providerId}">
             <div class="oauth-provider-header">
-                <h4>Provider OAuth #${oauthProvidersCount}</h4>
-                <button type="button" class="btn-remove" onclick="removeOAuthProvider('${providerId}')">Supprimer</button>
+                <h4>OAuth Provider #${oauthProvidersCount}</h4>
+                <button type="button" class="btn-remove" onclick="removeOAuthProvider('${providerId}')">Remove</button>
             </div>
             
             <div class="form-group">
-                <label>Nom d'affichage</label>
+                <label>Display Name</label>
                 <input type="text" name="${providerId}_displayName" placeholder="Google, GitHub, Azure AD...">
             </div>
             
@@ -112,7 +115,7 @@ function addOAuthProvider() {
             </div>
             
             <div class="form-group">
-                <label>Mapping des groupes</label>
+                <label>Group Mapping</label>
                 <div class="oauth-group-mapping">
                     <div class="form-group">
                         <label>User</label>
@@ -134,12 +137,12 @@ function addOAuthProvider() {
     document.getElementById('oauthProviders').insertAdjacentHTML('beforeend', providerHtml);
 }
 
-// Supprimer un provider OAuth
+// Remove OAuth provider
 function removeOAuthProvider(providerId) {
     document.getElementById(providerId).remove();
 }
 
-// Réinitialisation du formulaire
+// Reset form
 function resetForm() {
     document.getElementById('configForm').reset();
     document.getElementById('oauthProviders').innerHTML = '';
@@ -148,18 +151,18 @@ function resetForm() {
     initializeForm();
 }
 
-// Initialisation du formulaire
+// Initialize form
 function initializeForm() {
-    // Initialiser les sections visibles
+    // Initialize visible sections
     toggleSection('mariadb');
     toggleSection('mqtt');
 }
 
-// Génération des fichiers - Point d'entrée principal
+// File generation - Main entry point
 function generateFiles() {
     const formData = new FormData(document.getElementById('configForm'));
     const config = collectConfig(formData);
-    console.log('Configuration collectée :', config);
+    console.log('Configuration collected:', config);
     
     const dockerCompose = generateDockerCompose(config);
     const appsettings = generateAppsettings(config);
@@ -174,7 +177,7 @@ function generateFiles() {
     document.getElementById('envFile').textContent = envFile;
     document.getElementById('setupScript').textContent = setupScript;
     
-    // Afficher ou masquer le fichier garage.toml
+    // Show or hide garage.toml file
     const garageConfigSection = document.getElementById('garageConfigSection');
     if (garageConfig) {
         document.getElementById('garageConfigFile').textContent = garageConfig;
@@ -183,7 +186,7 @@ function generateFiles() {
         garageConfigSection.classList.add('hidden');
     }
     
-    // Afficher ou masquer les fichiers MQTT
+    // Show or hide mosquitto files
     const mosquittoConfigSection = document.getElementById('mosquittoConfigSection');
     const mosquittoPasswdSection = document.getElementById('mosquittoPasswdSection');
     if (mosquittoConfig) {

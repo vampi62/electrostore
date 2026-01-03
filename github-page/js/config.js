@@ -1,25 +1,27 @@
-// Variables globales
+// Global variables
 let oauthProvidersCount = 0;
 
-// Collecter toutes les données du formulaire
+// Collect all form data
 function collectConfig(formData) {
     const config = {
-        // Services intégrés
+        // Integrated services
         useTraefik: document.getElementById('useTraefik').checked,
         useMariaDB: document.getElementById('useMariadb').checked,
         useMQTT: document.getElementById('useMqtt').checked,
         enableS3: document.getElementById('enableS3').checked,
         useS3: document.getElementById('useS3').checked,
         enableSMTP: document.getElementById('enableSMTP').checked,
+        useVault: document.getElementById('useVault').checked,
         appVersion: formData.get('appVersion') || 'latest',
         
         // OAuth Providers
         oauthProviders: []
     };
     
-    // Traefik configuration avancée
+    // Traefik configuration
     if (config.useTraefik) {
         config.traefik = {
+            network: formData.get('traefikNetwork') || 'traefik',
             entrypoint: formData.get('traefikEntrypoint') || 'web',
             middlewares: formData.get('traefikMiddlewares') || '',
             tlsEnable: document.getElementById('traefikTlsEnable') ? document.getElementById('traefikTlsEnable').checked : false
@@ -96,9 +98,18 @@ function collectConfig(formData) {
         };
     }
     
+    // Vault
+    if (config.useVault) {
+        config.vault = {
+            addr: formData.get('vaultAddr') || 'http://vault:8200',
+            token: formData.get('vaultToken'),
+            path: formData.get('vaultPath') || 'secret/electrostore'
+        };
+    }
+    
     // JWT
     config.jwt = {
-        key: formData.get('jwtKey'),
+        key: formData.get('jwtKey') || generateRandomPassword(64),
         issuer: formData.get('jwtIssuer') || 'ElectroStoreAPI',
         audience: formData.get('jwtAudience') || 'ElectroStoreClient',
         expireDays: formData.get('jwtExpireDays') || '1'
@@ -162,7 +173,7 @@ function collectConfig(formData) {
     return config;
 }
 
-// Générer un mot de passe aléatoire
+// Generate random password
 function generateRandomPassword(length) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*_+-|;,.<>?';
     let password = '';
@@ -172,7 +183,7 @@ function generateRandomPassword(length) {
     return password;
 }
 
-// Génération d'une clé RPC hexadécimale valide pour Garage (32 bytes = 64 caractères hex)
+// Generate valid hexadecimal RPC key for Garage (32 bytes = 64 hex characters)
 function generateGarageRpcSecret() {
     const chars = '0123456789abcdef';
     let result = '';
@@ -182,7 +193,7 @@ function generateGarageRpcSecret() {
     return result;
 }
 
-// Générer une règle Traefik complète à partir d'une URL
+// Generate complete Traefik rule from URL
 function generateTraefikRule(urlObj) {
     try {
         let rules = [];
