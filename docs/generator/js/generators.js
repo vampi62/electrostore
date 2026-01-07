@@ -344,11 +344,16 @@ function generateAppsettings(config) {
 
     if (config.enableSMTP && config.smtp) {
         settings.SMTP = {
+            "Enable": true,
             "Host": config.smtp.host,
             "Port": parseInt(config.smtp.port),
             "Username": config.smtp.user,
             "Password": config.useVault ? "{{vault:smtp_password}}" : config.smtp.password,
             "From": config.smtp.from
+        };
+    } else {
+        settings.SMTP = {
+            "Enable": false
         };
     }
 
@@ -521,9 +526,10 @@ docker exec electrostore-garage /garage layout assign -z dc1 -c 1 \$(docker exec
 docker exec electrostore-garage /garage layout apply --version 1
 
 echo "Creating S3 access keys..."
-docker exec electrostore-garage /garage key create electrostore-key > /tmp/garage_keys.txt
-GARAGE_ACCESS_KEY=\$(grep 'Key ID' /tmp/garage_keys.txt | awk '{print \$3}')
-GARAGE_SECRET_KEY=\$(grep 'Secret key' /tmp/garage_keys.txt | awk '{print \$3}')
+
+docker exec electrostore-garage /garage key import --name electrostore-key ${config.s3.accessKey} ${config.s3.secretKey}
+GARAGE_ACCESS_KEY="${config.s3.accessKey}"
+GARAGE_SECRET_KEY="${config.s3.secretKey}"
 
 echo "Access Key: \$GARAGE_ACCESS_KEY"
 echo "Secret Key: \$GARAGE_SECRET_KEY"
@@ -539,16 +545,6 @@ docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.
             script += `
 echo "Storing S3 keys in Vault..."
 docker exec electrostore-vault vault kv patch ${config.vault.path} s3_access_key="\$GARAGE_ACCESS_KEY" s3_secret_key="\$GARAGE_SECRET_KEY"
-`;
-        } else {
-            script += `
-echo "Updating .env file..."
-sed -i "s/S3_ACCESS_KEY=.*/S3_ACCESS_KEY=\$GARAGE_ACCESS_KEY/" .env
-sed -i "s/S3_SECRET_KEY=.*/S3_SECRET_KEY=\$GARAGE_SECRET_KEY/" .env
-
-echo "Updating appsettings.json configuration file..."
-sed -i "s/\"AccessKey\": \".*\"/\"AccessKey\": \"$GARAGE_ACCESS_KEY\"/" config/appsettings.json
-sed -i "s/\"SecretKey\": \".*\"/\"SecretKey\": \"$GARAGE_SECRET_KEY\"/" config/appsettings.json
 `;
         }
 
@@ -629,7 +625,7 @@ echo ""
 
 // Generate Garage configuration file
 function generateGarageConfig(config) {
-    const rpcSecret = generateGarageRpcSecret();
+    const rpcSecret = generateHexaKey(64);
     return `metadata_dir = "/meta"
 data_dir = "/data"
 db_engine = "sqlite"

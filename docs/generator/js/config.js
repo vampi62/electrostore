@@ -70,8 +70,8 @@ function collectConfig(formData) {
     if (config.enableS3) {
         if (config.useS3) {
             config.s3 = {
-                accessKey: 'XXXXXXXXXXXXXXXXXXXXXXXXXX',
-                secretKey: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+                accessKey: 'GK' + generateHexaKey(24),
+                secretKey: generateHexaKey(64),
                 bucket: formData.get('s3Bucket') || 'electrostore',
                 region: formData.get('s3Region') || 'garage'
             };
@@ -183,11 +183,11 @@ function generateRandomPassword(length) {
     return password;
 }
 
-// Generate valid hexadecimal RPC key for Garage (32 bytes = 64 hex characters)
-function generateGarageRpcSecret() {
+// Generate valid hexadecimal key
+function generateHexaKey(length) {
     const chars = '0123456789abcdef';
     let result = '';
-    for (let i = 0; i < 64; i++) {
+    for (let i = 0; i < length; i++) {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return result;

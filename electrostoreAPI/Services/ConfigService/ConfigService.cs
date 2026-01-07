@@ -41,7 +41,7 @@ public class ConfigService : IConfigService
         return new ReadConfig
         {
             // get if the smtp is enabled
-            smtp_enabled = _configuration["SMTP:Enable"] == "true",
+            smtp_enabled = bool.TryParse(_configuration["SMTP:Enable"], out var smtpEnabled) && smtpEnabled,
             // check if the mqtt is connected
             mqtt_connected = _mqttClient.IsConnected,
             // return the IA service status
