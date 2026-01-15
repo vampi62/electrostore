@@ -6,3 +6,4 @@ pillow==11.1.0
 mysql-connector-python==9.2.0
 gunicorn==23.0.0
 minio==7.2.9
+hvac==2.1.0
