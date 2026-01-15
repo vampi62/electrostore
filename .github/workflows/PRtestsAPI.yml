@@ -37,6 +37,8 @@ jobs:
         PR_ID="${{ github.event.pull_request.number }}"
         echo "pr_id=$PR_ID" >> $GITHUB_OUTPUT
     - name: Run SonarQube scan
+      id: sonarqube
+      continue-on-error: true
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -52,3 +54,7 @@ jobs:
           /d:sonar.cs.opencover.reportsPaths=../electrostoreAPI/TestResults/**/coverage.opencover.xml
         dotnet build
         dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+    - name: SonarQube Status
+      if: steps.sonarqube.outcome == 'failure'
+      run: |
+        echo "::warning::SonarQube scan failed - server may be unreachable"

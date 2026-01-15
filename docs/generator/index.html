@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElectroStore - Docker Configuration Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ElectroStore</h1>
+            <p class="subtitle">Docker Configuration Generator</p>
+        </header>
+
+        <main>
+            <form id="configForm">
+                <!-- URLs and CORS -->
+                <section class="form-section">
+                    <h2>URLs and CORS</h2>
+                    
+                    <div class="form-group">
+                        <label for="apiUrl">API URL</label>
+                        <input type="text" id="apiUrl" name="apiUrl" placeholder="http://localhost:5000">
+                        <small class="help-text">Example: http://localhost:5000 or https://api.electrostore.com</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="frontUrl">Frontend URL</label>
+                        <input type="text" id="frontUrl" name="frontUrl" placeholder="http://localhost:8080">
+                        <small class="help-text">Example: http://localhost:8080 or https://electrostore.com</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="allowedOrigins">Other Allowed Origins (CORS)</label>
+                        <textarea id="allowedOrigins" name="allowedOrigins" rows="3" placeholder="https://other-domain.com&#10;https://app.mobile.com"></textarea>
+                        <small class="help-text">One origin per line. Frontend URL will be automatically added.</small>
+                    </div>
+                </section>
+
+                <!-- Docker Image Versions -->
+                <section class="form-section">
+                    <h2>Docker Image Version</h2>
+                    
+                    <div class="form-group">
+                        <label for="appVersion">ElectroStore Version</label>
+                        <select id="appVersion" name="appVersion">
+                            <option value="latest">latest (development)</option>
+                        </select>
+                        <small class="help-text">Select version for all services (API, Frontend, IA)</small>
+                    </div>
+                </section>
+
+                <!-- Traefik Configuration -->
+                <section class="form-section">
+                    <h2>Reverse Proxy</h2>
+                    
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="useTraefik" name="useTraefik" onchange="toggleSection('traefik')">
+                            <strong>Use Traefik</strong> - Automatic Reverse Proxy with Docker labels
+                        </label>
+                        <small class="help-text">Domains will be automatically extracted from configured URLs above</small>
+                    </div>
+
+                    <div class="conditional-section" id="section-traefik" style="display: none;">
+                        <h3 style="margin: 1.5rem 0 1rem 0; color: #4caf50;">Advanced Traefik Configuration</h3>
+                        
+                        <div class="form-group">
+                            <label for="traefikNetwork">Traefik Docker Network</label>
+                            <input type="text" id="traefikNetwork" name="traefikNetwork" placeholder="traefik" value="traefik">
+                            <small class="help-text">Docker network name used by Traefik (e.g.: traefik, traefik_default)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="traefikEntrypoint">Entrypoint</label>
+                            <input type="text" id="traefikEntrypoint" name="traefikEntrypoint" placeholder="websecure" value="websecure">
+                            <small class="help-text">Traefik entrypoint (e.g.: web, websecure)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="traefikMiddlewares">Middlewares (optional)</label>
+                            <input type="text" id="traefikMiddlewares" name="traefikMiddlewares" placeholder="redirect-https@file,rate-limit@file">
+                            <small class="help-text">Comma-separated list of middlewares (e.g.: redirect-https@file,compress@file)</small>
+                        </div>
+
+                        <div class="form-group checkbox-group">
+                            <label>
+                                <input type="checkbox" id="traefikTlsEnable" name="traefikTlsEnable" onchange="toggleTraefikTLS()">
+                                <strong>Enable TLS/HTTPS</strong>
+                            </label>
+                            <small class="help-text">Enable HTTPS with cert resolver</small>
+                        </div>
+
+                        <div class="conditional-section" id="section-traefik-tls" style="display: none;">
+                            <div class="form-group">
+                                <label for="traefikCertResolver">Cert Resolver</label>
+                                <input type="text" id="traefikCertResolver" name="traefikCertResolver" placeholder="letsencrypt" value="letsencrypt">
+                                <small class="help-text">Cert resolver name configured in Traefik (e.g.: letsencrypt)</small>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Port Configuration (without Traefik) -->
+                    <div class="conditional-section" id="section-ports" style="display: block;">
+                        <h2>Port Configuration</h2>
+                        
+                        <div class="form-group">
+                            <label for="apiPort">API Port</label>
+                            <input type="number" id="apiPort" name="apiPort" value="5000">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="frontendPort">Frontend Port</label>
+                            <input type="number" id="frontendPort" name="frontendPort" value="8080">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Database Configuration -->
+                <section class="form-section">
+                    <h2>Database</h2>
+                    
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="useMariadb" name="useMariadb" checked onchange="toggleSection('mariadb')">
+                            <strong>Include MariaDB in Docker</strong> - Containerized database
+                        </label>
+                        <small class="help-text">If disabled, you will need to configure an external database</small>
+                    </div>
+
+                    <div class="conditional-section" id="section-mariadb-integrated" style="display: block;">
+                        <h3 style="margin: 1.5rem 0 1rem 0; color: #4caf50;">Integrated MariaDB Configuration</h3>
+                        <p class="help-text" style="font-size: 1rem; margin: 1rem 0; padding: 1rem; background: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 4px;">MariaDB service will be automatically configured with secure default values.</p>
+                        
+                        <div class="form-group" style="display: none;">
+                            <label for="mariadbDatabase">Database Name</label>
+                            <input type="text" id="mariadbDatabase" name="mariadbDatabase" value="electrostore_db">
+                        </div>
+
+                        <div class="form-group" style="display: none;">
+                            <label for="mariadbUser">User</label>
+                            <input type="text" id="mariadbUser" name="mariadbUser" value="electrostore_user">
+                        </div>
+
+                        <div class="form-group" style="display: none;">
+                            <label for="mariadbPassword">Password</label>
+                            <input type="password" id="mariadbPassword" name="mariadbPassword">
+                            <button type="button" class="btn-secondary" onclick="generatePassword('mariadbPassword')">Generate</button>
+                        </div>
+
+                        <div class="form-group" style="display: none;">
+                            <label for="mariadbRootPassword">Root Password</label>
+                            <input type="password" id="mariadbRootPassword" name="mariadbRootPassword">
+                            <button type="button" class="btn-secondary" onclick="generatePassword('mariadbRootPassword')">Generate</button>
+                        </div>
+                    </div>
+
+                    <div class="conditional-section" id="section-mariadb-external" style="display: none;">
+                        <h3 style="margin: 1.5rem 0 1rem 0; color: #2196f3;">External MariaDB Configuration</h3>
+                        
+                        <div class="form-group">
+                            <label for="mariadbExternalHost">Host</label>
+                            <input type="text" id="mariadbExternalHost" name="mariadbExternalHost" placeholder="db.example.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mariadbExternalPort">Port</label>
+                            <input type="number" id="mariadbExternalPort" name="mariadbExternalPort" value="3306">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mariadbExternalDatabase">Database Name</label>
+                            <input type="text" id="mariadbExternalDatabase" name="mariadbExternalDatabase" placeholder="electrostore_db">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mariadbExternalUser">User</label>
+                            <input type="text" id="mariadbExternalUser" name="mariadbExternalUser">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mariadbExternalPassword">Password</label>
+                            <input type="password" id="mariadbExternalPassword" name="mariadbExternalPassword">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- MQTT Configuration -->
+                <section class="form-section">
+                    <h2>MQTT Broker</h2>
+                    
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="useMqtt" name="useMqtt" checked onchange="toggleSection('mqtt')">
+                            <strong>Include Mosquitto in Docker</strong> - MQTT Broker for IoT
+                        </label>
+                        <small class="help-text">If disabled, you will need to configure an external MQTT broker</small>
+                    </div>
+
+                    <div class="conditional-section" id="section-mqtt-integrated" style="display: none;">
+                        <h3 style="margin: 1.5rem 0 1rem 0; color: #4caf50;">Integrated MQTT Configuration</h3>
+                        <p class="help-text" style="font-size: 1rem; margin: 1rem 0; padding: 1rem; background: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 4px;">MQTT service (Mosquitto) will be automatically configured with secure default values.</p>
+                        
+                        <div class="form-group" style="display: none;">
+                            <label for="mqttUser">User</label>
+                            <input type="text" id="mqttUser" name="mqttUser" value="electrostore_mqtt">
+                        </div>
+
+                        <div class="form-group" style="display: none;">
+                            <label for="mqttPassword">Password</label>
+                            <input type="password" id="mqttPassword" name="mqttPassword">
+                            <button type="button" class="btn-secondary" onclick="generatePassword('mqttPassword')">Generate</button>
+                        </div>
+                    </div>
+
+                    <div class="conditional-section" id="section-mqtt-external" style="display: none;">
+                        <h3 style="margin: 1.5rem 0 1rem 0; color: #2196f3;">External MQTT Configuration</h3>
+                        
+                        <div class="form-group">
+                            <label for="mqttExternalHost">Host</label>
+                            <input type="text" id="mqttExternalHost" name="mqttExternalHost" placeholder="mqtt.example.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mqttExternalPort">Port</label>
+                            <input type="number" id="mqttExternalPort" name="mqttExternalPort" value="1883">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mqttExternalUser">User</label>
+                            <input type="text" id="mqttExternalUser" name="mqttExternalUser">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mqttExternalPassword">Password</label>
+                            <input type="password" id="mqttExternalPassword" name="mqttExternalPassword">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- S3 Storage Configuration -->
+                <section class="form-section">
+                    <h2>File Storage</h2>
+                    
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="enableS3" name="enableS3" onchange="toggleS3Enable()">
+                            <strong>Enable S3 storage</strong> - Cloud storage for images and documents
+                        </label>
+                        <small class="help-text">If disabled, files will be stored in a local Docker volume (/app/wwwroot)</small>
+                    </div>
+
+                    <div class="conditional-section" id="section-s3-choice" style="display: none;">
+                        <div class="form-group checkbox-group" style="margin-top: 1rem;">
+                            <label>
+                                <input type="checkbox" id="useS3" name="useS3" checked onchange="toggleSection('s3')">
+                                <strong>Use integrated Garage S3</strong> - Containerized S3 service
+                            </label>
+                            <small class="help-text">If disabled, you will need to configure an external S3 service (AWS, MinIO, etc.)</small>
+                        </div>
+
+                        <div class="conditional-section" id="section-s3-integrated" style="display: none;">
+                            <h3 style="margin: 1.5rem 0 1rem 0; color: #4caf50;">Integrated S3 Configuration (Garage)</h3>
+                            <p class="help-text" style="font-size: 1rem; margin: 1rem 0; padding: 1rem; background: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 4px;">Garage S3 service will be automatically configured with secure default values.</p>
+                            
+                            <div class="form-group" style="display: none;">
+                                <label for="s3Bucket">Bucket</label>
+                                <input type="text" id="s3Bucket" name="s3Bucket" value="electrostore">
+                            </div>
+
+                            <div class="form-group" style="display: none;">
+                                <label for="s3Region">Region</label>
+                                <input type="text" id="s3Region" name="s3Region" value="garage">
+                            </div>
+                        </div>
+
+                        <div class="conditional-section" id="section-s3-external" style="display: none;">
+                            <h3 style="margin: 1.5rem 0 1rem 0; color: #2196f3;">External S3 Configuration</h3>
+                            
+                            <div class="form-group">
+                                <label for="s3ExternalEndpoint">Endpoint</label>
+                                <input type="text" id="s3ExternalEndpoint" name="s3ExternalEndpoint" placeholder="s3.amazonaws.com or s3.region.amazonaws.com">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="s3ExternalAccessKey">Access Key</label>
+                                <input type="text" id="s3ExternalAccessKey" name="s3ExternalAccessKey">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="s3ExternalSecretKey">Secret Key</label>
+                                <input type="password" id="s3ExternalSecretKey" name="s3ExternalSecretKey">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="s3ExternalBucket">Bucket</label>
+                                <input type="text" id="s3ExternalBucket" name="s3ExternalBucket">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="s3ExternalRegion">Region</label>
+                                <input type="text" id="s3ExternalRegion" name="s3ExternalRegion" placeholder="us-east-1">
+                            </div>
+
+                            <div class="form-group checkbox-group">
+                                <label>
+                                    <input type="checkbox" id="s3ExternalSecure" name="s3ExternalSecure" checked>
+                                    Use HTTPS
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SMTP Configuration -->
+                <section class="form-section">
+                    <h2>Email Service (SMTP)</h2>
+                    
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="enableSMTP" name="enableSMTP" onchange="toggleSMTP()">
+                            <strong>Enable email sending</strong> - For notifications and authentication
+                        </label>
+                        <small class="help-text">If disabled, email features will be disabled</small>
+                    </div>
+
+                    <div class="conditional-section" id="section-smtp" style="display: none;">
+                        <h2>SMTP Configuration</h2>
+                        
+                        <div class="form-group">
+                            <label for="smtpHost">SMTP Host</label>
+                            <input type="text" id="smtpHost" name="smtpHost" placeholder="smtp.gmail.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="smtpPort">SMTP Port</label>
+                            <input type="number" id="smtpPort" name="smtpPort" value="587">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="smtpUser">SMTP User</label>
+                            <input type="text" id="smtpUser" name="smtpUser">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="smtpPassword">SMTP Password</label>
+                            <input type="password" id="smtpPassword" name="smtpPassword">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="smtpFrom">"From" Address</label>
+                            <input type="text" id="smtpFrom" name="smtpFrom" placeholder="noreply@electrostore.com">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Secrets Manager -->
+                <section class="form-section">
+                    <h2>Secrets Management</h2>
+                    
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="useVault" name="useVault" onchange="toggleSection('vault')">
+                            <strong>Use HashiCorp Vault</strong> - Secure secret storage
+                        </label>
+                        <small class="help-text">Secrets will be retrieved from Vault instead of being in plain text in environment variables</small>
+                    </div>
+
+                    <div class="conditional-section" id="section-vault" style="display: none;">
+                        <h3 style="margin: 1.5rem 0 1rem 0; color: #4caf50;">HashiCorp Vault Configuration</h3>
+                        
+                        <div class="form-group">
+                            <label for="vaultAddr">Vault URL</label>
+                            <input type="text" id="vaultAddr" name="vaultAddr" placeholder="http://vault:8200" value="http://vault:8200">
+                            <small class="help-text">Vault server address</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vaultToken">Vault Token</label>
+                            <input type="password" id="vaultToken" name="vaultToken">
+                            <small class="help-text">Token with appropriate permissions</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vaultPath">Secrets Path</label>
+                            <input type="text" id="vaultPath" name="vaultPath" placeholder="secret/electrostore" value="secret/electrostore">
+                            <small class="help-text">Path in Vault where secrets are stored</small>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- JWT Configuration -->
+                <section class="form-section">
+                    <h2>JWT Configuration</h2>
+                    
+                    <div class="form-group">
+                        <label for="jwtKey">JWT Secret Key</label>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="password" id="jwtKey" name="jwtKey" style="flex: 1;">
+                            <button type="button" class="btn-secondary" onclick="generatePassword('jwtKey', 64)" style="position: static;">Generate</button>
+                            <button type="button" class="btn-secondary" onclick="togglePasswordVisibility('jwtKey')" style="position: static;">Show</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="jwtIssuer">Issuer</label>
+                        <input type="text" id="jwtIssuer" name="jwtIssuer" value="ElectroStoreAPI">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="jwtAudience">Audience</label>
+                        <input type="text" id="jwtAudience" name="jwtAudience" value="ElectroStoreClient">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="jwtExpireDays">Validity Duration (days)</label>
+                        <input type="number" id="jwtExpireDays" name="jwtExpireDays" value="1">
+                    </div>
+                </section>
+
+                <!-- OAuth Configuration -->
+                <section class="form-section">
+                    <h2>OAuth Configuration</h2>
+                    <div id="oauthProviders"></div>
+                    <button type="button" class="btn-secondary" onclick="addOAuthProvider()">Add OAuth provider</button>
+                </section>
+
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">Generate files</button>
+                    <button type="button" class="btn-secondary" onclick="resetForm()">Reset</button>
+                </div>
+            </form>
+
+            <div id="result" class="result hidden">
+                <h2>Generated Files</h2>
+                
+                <div class="file-output">
+                    <div class="file-header">
+                        <h3>docker-compose.yml</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('dockerCompose')">Copy</button>
+                    </div>
+                    <pre id="dockerCompose"></pre>
+                    <button class="btn-download" onclick="downloadFile('docker-compose.yml', 'dockerCompose')">Download</button>
+                </div>
+
+                <div class="file-output">
+                    <div class="file-header">
+                        <h3>appsettings.json</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('appsettingsFile')">Copy</button>
+                    </div>
+                    <pre id="appsettingsFile"></pre>
+                    <button class="btn-download" onclick="downloadFile('appsettings.json', 'appsettingsFile')">Download</button>
+                </div>
+
+                <div class="file-output">
+                    <div class="file-header">
+                        <h3>.env</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('envFile')">Copy</button>
+                    </div>
+                    <pre id="envFile"></pre>
+                    <button class="btn-download" onclick="downloadFile('.env', 'envFile')">Download</button>
+                </div>
+
+                <div id="garageConfigSection" class="file-output hidden">
+                    <div class="file-header">
+                        <h3>garage.toml</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('garageConfigFile')">Copy</button>
+                    </div>
+                    <pre id="garageConfigFile"></pre>
+                    <button class="btn-download" onclick="downloadFile('garage.toml', 'garageConfigFile')">Download</button>
+                    <p class="help-text" style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107;">
+                        <strong>Important:</strong> This file must be placed in <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">config/garage/garage.toml</code>
+                    </p>
+                </div>
+
+                <div id="mosquittoConfigSection" class="file-output hidden">
+                    <div class="file-header">
+                        <h3>mosquitto.conf</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('mosquittoConfigFile')">Copy</button>
+                    </div>
+                    <pre id="mosquittoConfigFile"></pre>
+                    <button class="btn-download" onclick="downloadFile('mosquitto.conf', 'mosquittoConfigFile')">Download</button>
+                    <p class="help-text" style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107;">
+                        <strong>Important:</strong> This file must be placed in <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">config/mosquitto/mosquitto.conf</code>
+                    </p>
+                </div>
+
+                <div id="mosquittoPasswdSection" class="file-output hidden">
+                    <div class="file-header">
+                        <h3>mosquitto.passwd</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('mosquittoPasswdFile')">Copy</button>
+                    </div>
+                    <pre id="mosquittoPasswdFile"></pre>
+                    <button class="btn-download" onclick="downloadFile('mosquitto.passwd', 'mosquittoPasswdFile')">Download</button>
+                    <p class="help-text" style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107;">
+                        <strong>Important:</strong> This file must be placed in <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">config/mosquitto/mosquitto.passwd</code><br>
+                        <strong>Note:</strong> The setup.sh script will automatically hash this password
+                    </p>
+                </div>
+
+                <div class="file-output">
+                    <div class="file-header">
+                        <h3>setup.sh</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('setupScript')">Copy</button>
+                    </div>
+                    <pre id="setupScript"></pre>
+                    <button class="btn-download" onclick="downloadFile('setup.sh', 'setupScript')">Download</button>
+                    <p class="help-text" style="margin-top: 1rem; padding: 1rem; background: #e3f2fd; border-left: 4px solid #2196f3;">
+                        <strong>Usage:</strong> This script automates Garage S3 and MQTT configuration.<br>
+                        Make it executable with: <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">chmod +x setup.sh</code><br>
+                        Then run: <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">./setup.sh</code>
+                    </p>
+                </div>
+
+                <div class="instructions">
+                    <h3>Quick Download</h3>
+                    <button class="btn-primary" onclick="downloadAllAsZip()" style="font-size: 1.1rem; padding: 1rem 2rem; margin-bottom: 2rem;">
+                        Download all as ZIP
+                    </button>
+                    
+                    <h3>Usage Instructions</h3>
+                    <ol>
+                        <li>Click on "Download all as ZIP" or download each file individually</li>
+                        <li>Extract the ZIP contents to a folder of your choice</li>
+                        <li>Ensure Docker and Docker Compose are installed</li>
+                        <li>Make the script executable: <code>chmod +x setup.sh</code></li>
+                        <li>Run the configuration script: <code>./setup.sh</code></li>
+                        <li>Access the application at: <code id="appUrl"></code></li>
+                    </ol>
+                    <div style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                        <strong>💡 Tip:</strong> The docker-compose.yml file uses environment variables from the .env file. 
+                        You can modify values in the .env without touching docker-compose.yml.
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>ElectroStore Configuration Generator - 2025</p>
+        </footer>
+    </div>
+
+    <!-- Module scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/generators.js"></script>
+    <script src="js/github.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

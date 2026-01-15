@@ -42,6 +42,8 @@ jobs:
           -- \
           DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
     - name: Run SonarQube scan
+      id: sonarqube
+      continue-on-error: true
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -57,6 +59,10 @@ jobs:
           /d:sonar.cs.opencover.reportsPaths=../electrostoreAPI/TestResults/**/coverage.opencover.xml
         dotnet build
         dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+    - name: SonarQube Status
+      if: steps.sonarqube.outcome == 'failure'
+      run: |
+        echo "::warning::SonarQube scan failed - server may be unreachable"
 
   test-front:
     name: tests - FRONT
@@ -96,6 +102,8 @@ jobs:
         name: cypress-screenshots
         path: tests/electrostoreFRONT/cypress/screenshots
     - name: SonarScanner
+      id: sonarqube
+      continue-on-error: true
       uses: SonarSource/sonarqube-scan-action@v6
       env:
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -107,6 +115,10 @@ jobs:
           -Dsonar.sources=electrostoreFRONT
           -Dsonar.javascript.lcov.reportPaths=tests/electrostoreFRONT/coverage/lcov.info
           -Dsonar.cfamily.cache.enabled=false
+    - name: SonarQube Status
+      if: steps.sonarqube.outcome == 'failure'
+      run: |
+        echo "::warning::SonarQube scan failed - server may be unreachable"
 
   test-IA:
     name: tests - IA
@@ -132,6 +144,8 @@ jobs:
       run: |
         python -m pytest ../tests/electrostoreIA --cov=electrostoreIA --cov-report=xml:coverage.xml
     - name: SonarScanner
+      id: sonarqube
+      continue-on-error: true
       uses: SonarSource/sonarqube-scan-action@v6
       env:
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -143,3 +157,7 @@ jobs:
           -Dsonar.sources=electrostoreIA
           -Dsonar.python.coverage.reportPaths=electrostoreIA/coverage.xml
           -Dsonar.cfamily.cache.enabled=false
+    - name: SonarQube Status
+      if: steps.sonarqube.outcome == 'failure'
+      run: |
+        echo "::warning::SonarQube scan failed - server may be unreachable"

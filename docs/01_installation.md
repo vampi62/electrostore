@@ -1,6 +1,9 @@
 
 # Installation
 
+## configuration page
+A page to generate the configuration files and the setup script is available here: [generator page](https://vampi62.github.io/electrostore/docs/generator/index.html)
+
 ## start database server
 if you have already a mariadb server and a mqtt server, you can skip this step, just make sure that the database is named `electrostore` with a user with the permissions to access it.
 ```bash

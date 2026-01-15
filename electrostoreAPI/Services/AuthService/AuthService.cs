@@ -96,11 +96,18 @@ public class AuthService : IAuthService
         var user = await GetOrCreateUser(userInfo, groupMappingSection);
         var jwt = await _jwtService.GenerateToken(user, "sso_" + sso_method);
         await _jwiService.SaveToken(jwt, user.id_user, "sso_" + sso_method);
-        await _smtpService.SendEmailAsync(
-            user.email_user,
-            "Login",
-            "A new login has been detected on your account. If this was not you, please change your password."
-        );
+        try
+        {
+            await _smtpService.SendEmailAsync(
+                user.email_user,
+                "Login",
+                "A new login has been detected on your account. If this was not you, please change your password."
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+        }
         return new LoginResponse
         {
             token = jwt.token,
@@ -208,7 +215,7 @@ public class AuthService : IAuthService
     public async Task ForgotPassword(ForgotPasswordRequest request)
     {
         //check if SMTP is Enabled
-        if (_configuration["SMTP:Enable"] != "true")
+        if (bool.TryParse(_configuration["SMTP:Enable"], out var isEnabled) && !isEnabled)
         {
             throw new InvalidOperationException("SMTP is not enabled");
         }
@@ -221,18 +228,25 @@ public class AuthService : IAuthService
             user.reset_token_expiration = DateTime.Now.AddHours(1);
             await _context.SaveChangesAsync();
             // send email with reset_token
-            await _smtpService.SendEmailAsync(
-                request.Email,
-                "Reset password",
-                "Click on the following link to reset your password: " + _configuration["FrontendUrl"] + "/reset-password?token=" + user.reset_token.ToString() + "&email=" + user.email_user
-            );
+            try
+            {
+                await _smtpService.SendEmailAsync(
+                    request.Email,
+                    "Reset password",
+                    "Click on the following link to reset your password: " + _configuration["FrontendUrl"] + "/reset-password?token=" + user.reset_token.ToString() + "&email=" + user.email_user
+                );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"SMTP Error: Unable to send password reset email - {ex.Message}");
+            }
         }
     }
 
     public async Task ResetPassword(ResetPasswordRequest request)
     {
         //check if SMTP is Enabled
-        if (_configuration["SMTP:Enable"] != "true")
+        if (bool.TryParse(_configuration["SMTP:Enable"], out var isEnabled) && !isEnabled)
         {
             throw new InvalidOperationException("SMTP is not enabled");
         }
@@ -248,11 +262,18 @@ public class AuthService : IAuthService
         await _jwiService.RevokeAllAccessTokenByUser(user.id_user, "User reset password");
         await _jwiService.RevokeAllRefreshTokenByUser(user.id_user, "User reset password");
         // send email to the user
-        await _smtpService.SendEmailAsync(
-            user.email_user,
-            "Password changed",
-            "Your password has been changed"
-        );
+        try
+        {
+            await _smtpService.SendEmailAsync(
+                user.email_user,
+                "Password changed",
+                "Your password has been changed"
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SMTP Error: Unable to send password changed notification email - {ex.Message}");
+        }
     }
 
     public async Task<LoginResponse> LoginWithPassword(LoginRequest request)
@@ -268,11 +289,18 @@ public class AuthService : IAuthService
         var token = await _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user), "user_password");
         await _jwiService.SaveToken(token, user.id_user, "user_password");
         // send email to the user
-        await _smtpService.SendEmailAsync(
-            user.email_user,
-            "Login",
-            "A new login has been detected on your account. If this was not you, please change your password."
-        );
+        try
+        {
+            await _smtpService.SendEmailAsync(
+                user.email_user,
+                "Login",
+                "A new login has been detected on your account. If this was not you, please change your password."
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+        }
         // return tokens
         return new LoginResponse
         {

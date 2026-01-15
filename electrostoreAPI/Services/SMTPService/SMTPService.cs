@@ -11,7 +11,7 @@ public class SmtpService : ISmtpService
     public SmtpService(IConfiguration configuration)
     {
         _configuration = configuration;
-        _smtpClient = _configuration["SMTP:Enable"] == "true"
+        _smtpClient = bool.TryParse(_configuration["SMTP:Enable"], out var isEnabled) && isEnabled
             ? new SmtpClient(_configuration["SMTP:Host"])
             {
                 Port = int.Parse(_configuration["SMTP:Port"] ?? "587"),
@@ -23,7 +23,7 @@ public class SmtpService : ISmtpService
     public async Task SendEmailAsync(string to, string subject, string body)
     {
         // check if SMTP is Enable
-        if (_configuration["SMTP:Enable"] != "true")
+        if (!bool.TryParse(_configuration["SMTP:Enable"], out var isEnabled) || !isEnabled)
         {
             return;
         }
@@ -42,11 +42,19 @@ public class SmtpService : ISmtpService
         mailMessage.To.Add(to);
         // send email
         var sendEmailTask = SendMailAsync(mailMessage);
-        await sendEmailTask;
-        if (sendEmailTask.IsFaulted)
+        try
         {
-            // server error
-            throw new InvalidOperationException("An error occured while sending the email");
+            await sendEmailTask;
+        }
+        catch (SmtpException ex)
+        {
+            // client error
+            throw new InvalidOperationException("Failed to send email. Please check the email address and try again.", ex);
+        }
+        catch (Exception ex)
+        {
+            // other errors
+            throw new InvalidOperationException("An error occurred while sending the email.", ex);
         }
     }
     

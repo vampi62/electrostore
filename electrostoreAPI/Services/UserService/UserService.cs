@@ -86,11 +86,18 @@ public class UserService : IUserService
         _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
         // send email to the user
-        await _smtpService.SendEmailAsync(
-            newUser.email_user,
-            "Account created",
-            "Your account has been created. Your role is " + newUser.role_user.ToString()
-        );
+        try
+        {
+            await _smtpService.SendEmailAsync(
+                newUser.email_user,
+                "Account created",
+                "Your account has been created. Your role is " + newUser.role_user.ToString()
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+        }
         return _mapper.Map<ReadUserDto>(newUser);
     }
 
@@ -204,44 +211,72 @@ public class UserService : IUserService
         _context.Users.Remove(userToDelete);
         await _context.SaveChangesAsync();
         // send email to the user
-        await _smtpService.SendEmailAsync(
-            userToDelete.email_user,
-            "Account deleted",
-            "Your account has been deleted"
-        );
+        try
+        {
+            await _smtpService.SendEmailAsync(
+                userToDelete.email_user,
+                "Account deleted",
+                "Your account has been deleted"
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+        }
     }
 
     private async Task AlerteUpdateUser(Users userToUpdate, UpdateUserDto userDto, string oldUserEmail)
     {
         if (userDto.email_user is not null && userToUpdate.email_user != userDto.email_user)
         {
-            await _smtpService.SendEmailAsync(
-                userToUpdate.email_user,
-                "Email changed",
-                "Your email has been changed from " + oldUserEmail + " to " + userDto.email_user
-            );
-            await _smtpService.SendEmailAsync(
-                oldUserEmail,
-                "Email changed",
-                "Your email has been changed from " + oldUserEmail + " to " + userDto.email_user
-            );
+            try
+            {
+                await _smtpService.SendEmailAsync(
+                    userToUpdate.email_user,
+                    "Email changed",
+                    "Your email has been changed from " + oldUserEmail + " to " + userDto.email_user
+                );
+                await _smtpService.SendEmailAsync(
+                    oldUserEmail,
+                    "Email changed",
+                    "Your email has been changed from " + oldUserEmail + " to " + userDto.email_user
+                );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+            }
         }
         else if (userDto.mdp_user is not null)
         {
-            await _smtpService.SendEmailAsync(
-                userToUpdate.email_user,
-                "Password changed",
-                "Your password has been changed"
-            );
+            try
+            {
+                await _smtpService.SendEmailAsync(
+                    userToUpdate.email_user,
+                    "Password changed",
+                    "Your password has been changed"
+                );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+            }
         }
         // send email to the user if any other field has changed
         else
         {
-            await _smtpService.SendEmailAsync(
-                userToUpdate.email_user,
-                "Account updated",
-                "Your account has been updated"
-            );
+            try
+            {
+                await _smtpService.SendEmailAsync(
+                    userToUpdate.email_user,
+                    "Account updated",
+                    "Your account has been updated"
+                );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+            }
         }
     }
 }
