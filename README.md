@@ -28,7 +28,12 @@ https://www.lidl.fr/p/parkside-casiers-a-tiroirs/p100377898
 - 1 - WS2812 LED controller for esp01
 
 ### Server Installation
-for using a stable version follow the instructions in the [docs/01_installation.md](docs/01_installation.md) file, otherwise you can follow the instructions below to install the development version.
+This section describes how to install the development version of Electrostore.  
+For using a stable version follow the instructions in the [docs/01_installation.md](docs/01_installation.md) file,
+and use the configuration generator page to create the configuration files and setup script:  
+[generator page](https://vampi62.github.io/electrostore/docs/generator/index.html)
+
+otherwise you can follow the instructions below to install the development version.
 
 prerequisites:
 - docker + docker-compose
