@@ -49,7 +49,7 @@ def get_secret_from_vault(vault_client, secret_path, mount_point="secret"):
 
 def process_vault_secrets(config, vault_client, vault_config):
     """Recursively process configuration and replace vault placeholders with actual secrets."""
-    vault_pattern = re.compile(r'\{vault:([^}]+)\}')
+    vault_pattern = re.compile(r'\{{vault:([^}]+)\}}')
     mount_point = vault_config.get("MountPoint", "secret")
     
     def replace_vault_placeholder(value):

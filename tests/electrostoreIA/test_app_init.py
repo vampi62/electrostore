@@ -316,7 +316,7 @@ class TestVaultIntegration:
         mock_get_secret.return_value = {'value': 'secret-value'}
         
         config = {
-            "ApiKey": "{vault:api/key}"
+            "ApiKey": "{{vault:api/key}}"
         }
         
         # Act
@@ -340,8 +340,8 @@ class TestVaultIntegration:
         
         config = {
             "Database": {
-                "Username": "{vault:database/credentials:username}",
-                "Password": "{vault:database/credentials:password}"
+                "Username": "{{vault:database/credentials:username}}",
+                "Password": "{{vault:database/credentials:password}}"
             }
         }
         
@@ -369,7 +369,7 @@ class TestVaultIntegration:
         
         config = {
             "ConnectionStrings": {
-                "DefaultConnection": "Server=localhost;Uid={vault:database/credentials:username};Pwd={vault:database/credentials:password};"
+                "DefaultConnection": "Server=localhost;Uid={{vault:database/credentials:username}};Pwd={{vault:database/credentials:password}};"
             }
         }
         
@@ -392,7 +392,7 @@ class TestVaultIntegration:
             "Level1": {
                 "Level2": {
                     "Level3": {
-                        "ApiKey": "{vault:api/key}"
+                        "ApiKey": "{{vault:api/key}}"
                     }
                 }
             }
@@ -414,7 +414,7 @@ class TestVaultIntegration:
         mock_get_secret.return_value = {'value': 'secret-token'}
         
         config = {
-            "Tokens": ["{vault:token1}", "{vault:token2}", "plain-token"]
+            "Tokens": ["{{vault:token1}}", "{{vault:token2}}", "plain-token"]
         }
         
         # Act
@@ -433,14 +433,14 @@ class TestVaultIntegration:
         mock_get_secret.side_effect = ValueError("Secret not found")
         
         config = {
-            "ApiKey": "{vault:api/key}"
+            "ApiKey": "{{vault:api/key}}"
         }
         
         # Act
         result = process_vault_secrets(config, mock_vault_client, vault_config)
         
         # Assert - original placeholder should be retained
-        assert result["ApiKey"] == "{vault:api/key}"
+        assert result["ApiKey"] == "{{vault:api/key}}"
     
     @patch('electrostoreIA.app_init.get_secret_from_vault')
     def test_process_vault_secrets_non_string_values(self, mock_get_secret):
@@ -476,7 +476,7 @@ class TestVaultIntegration:
         mock_get_secret.return_value = {'value': 'secret-value'}
         
         config = {
-            "ApiKey": "{vault:api/key}"
+            "ApiKey": "{{vault:api/key}}"
         }
         
         # Act
