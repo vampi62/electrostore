@@ -311,12 +311,12 @@ class TestVaultIntegration:
         """Test processing simple vault placeholder."""
         # Arrange
         mock_vault_client = MagicMock()
-        vault_config = {"MountPoint": "secret"}
+        vault_config = {"MountPoint": "secret", "Path": "key"}
         
         mock_get_secret.return_value = {'value': 'secret-value'}
         
         config = {
-            "ApiKey": "{{vault:api/key}}"
+            "ApiKey": "{{vault:value}}"
         }
         
         # Act
@@ -324,14 +324,14 @@ class TestVaultIntegration:
         
         # Assert
         assert result["ApiKey"] == "secret-value"
-        mock_get_secret.assert_called_once_with(mock_vault_client, "api/key", "secret")
+        mock_get_secret.assert_called_once_with(mock_vault_client, "key", "secret")
     
     @patch('electrostoreIA.app_init.get_secret_from_vault')
     def test_process_vault_secrets_with_field(self, mock_get_secret):
         """Test processing vault placeholder with specific field."""
         # Arrange
         mock_vault_client = MagicMock()
-        vault_config = {"MountPoint": "secret"}
+        vault_config = {"MountPoint": "secret", "Path": ""}
         
         mock_get_secret.return_value = {
             'username': 'test-user',
@@ -340,8 +340,8 @@ class TestVaultIntegration:
         
         config = {
             "Database": {
-                "Username": "{{vault:database/credentials:username}}",
-                "Password": "{{vault:database/credentials:password}}"
+                "Username": "{{vault:username}}",
+                "Password": "{{vault:password}}"
             }
         }
         
@@ -358,18 +358,23 @@ class TestVaultIntegration:
         """Test processing vault placeholders in connection string."""
         # Arrange
         mock_vault_client = MagicMock()
-        vault_config = {"MountPoint": "secret"}
+        vault_config = {"MountPoint": "secret", "Path": "database/credentials"}
         
-        def get_secret_side_effect(client, path, mount):
-            if path == "database/credentials":
-                return {'username': 'dbuser', 'password': 'dbpass'}
-            return {}
-        
-        mock_get_secret.side_effect = get_secret_side_effect
+        mock_get_secret.return_value = {
+            'username': 'dbuser',
+            'password': 'dbpass'
+        }
         
         config = {
             "ConnectionStrings": {
-                "DefaultConnection": "Server=localhost;Uid={{vault:database/credentials:username}};Pwd={{vault:database/credentials:password}};"
+                "DefaultConnection": "Server=localhost;Uid={{vault:username}};Pwd={{vault:password}};"
+            },
+            "Vault": {
+                "Enabled": True,
+                "Addr": "http://vault:8200",
+                "Token": "test-token",
+                "MountPoint": "secret",
+                "Path": "electrostore"
             }
         }
         
@@ -384,7 +389,7 @@ class TestVaultIntegration:
         """Test processing vault placeholders in nested dictionaries."""
         # Arrange
         mock_vault_client = MagicMock()
-        vault_config = {"MountPoint": "secret"}
+        vault_config = {"MountPoint": "secret", "Path": ""}
         
         mock_get_secret.return_value = {'value': 'secret-key'}
         
@@ -392,7 +397,7 @@ class TestVaultIntegration:
             "Level1": {
                 "Level2": {
                     "Level3": {
-                        "ApiKey": "{{vault:api/key}}"
+                        "ApiKey": "{{vault:value}}"
                     }
                 }
             }
@@ -409,9 +414,9 @@ class TestVaultIntegration:
         """Test processing vault placeholders in lists."""
         # Arrange
         mock_vault_client = MagicMock()
-        vault_config = {"MountPoint": "secret"}
+        vault_config = {"MountPoint": "secret", "Path": ""}
         
-        mock_get_secret.return_value = {'value': 'secret-token'}
+        mock_get_secret.return_value = {'token1': 'secret-token', 'token2': 'secret-token'}
         
         config = {
             "Tokens": ["{{vault:token1}}", "{{vault:token2}}", "plain-token"]
@@ -428,26 +433,23 @@ class TestVaultIntegration:
         """Test error handling when secret retrieval fails."""
         # Arrange
         mock_vault_client = MagicMock()
-        vault_config = {"MountPoint": "secret"}
+        vault_config = {"MountPoint": "secret", "Path": ""}
         
-        mock_get_secret.side_effect = ValueError("Secret not found")
-        
+        mock_get_secret.side_effect = ValueError("Failed to retrieve secret 'key'")
         config = {
-            "ApiKey": "{{vault:api/key}}"
+            "ApiKey": "{{vault:key}}"
         }
+        # Act & Assert
+        with pytest.raises(ValueError, match="Failed to retrieve secret 'key'"):
+            process_vault_secrets(config, mock_vault_client, vault_config)
         
-        # Act
-        result = process_vault_secrets(config, mock_vault_client, vault_config)
-        
-        # Assert - original placeholder should be retained
-        assert result["ApiKey"] == "{{vault:api/key}}"
     
     @patch('electrostoreIA.app_init.get_secret_from_vault')
     def test_process_vault_secrets_non_string_values(self, mock_get_secret):
         """Test processing config with non-string values."""
         # Arrange
         mock_vault_client = MagicMock()
-        vault_config = {"MountPoint": "secret"}
+        vault_config = {"MountPoint": "secret", "Path": ""}
         
         config = {
             "Port": 8080,
@@ -471,12 +473,12 @@ class TestVaultIntegration:
         """Test processing vault placeholders with custom mount point."""
         # Arrange
         mock_vault_client = MagicMock()
-        vault_config = {"MountPoint": "custom-kv"}
+        vault_config = {"MountPoint": "custom-kv", "Path": "key"}
         
         mock_get_secret.return_value = {'value': 'secret-value'}
         
         config = {
-            "ApiKey": "{{vault:api/key}}"
+            "ApiKey": "{{vault:value}}"
         }
         
         # Act
@@ -484,4 +486,4 @@ class TestVaultIntegration:
         
         # Assert
         assert result["ApiKey"] == "secret-value"
-        mock_get_secret.assert_called_once_with(mock_vault_client, "api/key", "custom-kv")
+        mock_get_secret.assert_called_once_with(mock_vault_client, "key", "custom-kv")
