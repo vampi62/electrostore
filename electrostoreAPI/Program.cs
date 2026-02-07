@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Minio;
 
+using VaultSharp;
+using VaultSharp.V1.AuthMethods.Token;
+
 using MQTTnet;
 using electrostore.Dto;
 using electrostore.Enums;
@@ -45,6 +48,7 @@ using electrostore.Services.UserService;
 using electrostore.Services.ValidateStoreService;
 using electrostore.Services.JwtService;
 using electrostore.Middleware;
+using electrostore.Extensions;
 
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -249,10 +253,18 @@ public partial class Program
 
     private static void AddScopes(WebApplicationBuilder builder)
     {
-        // Add services to the container.
+        if (builder.Configuration.GetSection("Vault:Enable").Get<bool>())
+        {
+            var authMethod = new TokenAuthMethodInfo(builder.Configuration.GetSection("Vault:Token").Value);
+            var vaultConfig = new VaultClientSettings(builder.Configuration.GetSection("Vault:Addr").Value, authMethod);
+            builder.Services.AddSingleton<IVaultClient>(new VaultClient(vaultConfig));
+            builder.Configuration.AddVaultConfiguration();
+        }
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), new MySqlServerVersion(new Version(11, 4, 7))));
-
+            options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
+                new MySqlServerVersion(new Version(11, 4, 7))
+            )
+        );
         builder.Services.AddSingleton<IMqttClient>(sp =>
         {
             var factory = new MqttClientFactory();
@@ -266,8 +278,6 @@ public partial class Program
             mqttClient.ConnectAsync(options);
             return mqttClient;
         });
-        
-        // Only register MinIO client if S3 is enabled
         if (builder.Configuration.GetSection("S3:Enable").Get<bool>())
         {
             builder.Services.AddSingleton<IMinioClient>(sp =>
@@ -283,7 +293,6 @@ public partial class Program
                 return minioClient;
             });
         }
-
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IBoxService, BoxService>();
         builder.Services.AddScoped<IBoxTagService, BoxTagService>();
@@ -349,29 +358,27 @@ public partial class Program
 
     private static void InitializeDatabase(WebApplication app)
     {
-        using (var serviceScope = app.Services.CreateScope())
+        using var serviceScope = app.Services.CreateScope();
+        var context = serviceScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        // check if the database is up to date with the migrations
+        var pendingMigrations = context.Database.GetPendingMigrations();
+        if (pendingMigrations.Any())
         {
-            var context = serviceScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            // check if the database is up to date with the migrations
-            var pendingMigrations = context.Database.GetPendingMigrations();
-            if (pendingMigrations.Any())
+            context.Database.Migrate();
+        }
+        // check if the database is empty
+        if (!context.Users.Any())
+        {
+            var userService = serviceScope.ServiceProvider.GetRequiredService<IUserService>();
+            userService.CreateFirstAdminUser(new CreateUserDto
             {
-                // Appliquer les migrations si nécessaire
-                context.Database.Migrate();
-            }
-            // check if the database is empty
-            if (!context.Users.Any())
-            {
-                var userService = serviceScope.ServiceProvider.GetRequiredService<IUserService>();
-                userService.CreateFirstAdminUser(new CreateUserDto
-                {
-                    nom_user = "Admin",
-                    prenom_user = "Admin",
-                    email_user = "admin@localhost.local",
-                    mdp_user = "Admin@1234",
-                    role_user = UserRole.Admin
-                }).Wait();
-            }
+                nom_user = "Admin",
+                prenom_user = "Admin",
+                email_user = "admin@localhost.local",
+                mdp_user = "Admin@1234",
+                role_user = UserRole.Admin
+            }).Wait();
+
         }
     }
 }

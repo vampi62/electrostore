@@ -384,8 +384,14 @@
 
                         <div class="form-group">
                             <label for="vaultPath">Secrets Path</label>
-                            <input type="text" id="vaultPath" name="vaultPath" placeholder="secret/electrostore" value="secret/electrostore">
+                            <input type="text" id="vaultPath" name="vaultPath" placeholder="electrostore" value="secret/electrostore">
                             <small class="help-text">Path in Vault where secrets are stored</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vaultMountPoint">Mount Point</label>
+                            <input type="text" id="vaultMountPoint" name="vaultMountPoint" placeholder="secret" value="secret">
+                            <small class="help-text">Mount point of the KV secrets engine</small>
                         </div>
                     </div>
                 </section>

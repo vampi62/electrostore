@@ -103,7 +103,8 @@ function collectConfig(formData) {
         config.vault = {
             addr: formData.get('vaultAddr') || 'http://vault:8200',
             token: formData.get('vaultToken'),
-            path: formData.get('vaultPath') || 'secret/electrostore'
+            path: formData.get('vaultPath') || 'electrostore',
+            mountPoint: formData.get('vaultMountPoint') || 'secret'
         };
     }
     
