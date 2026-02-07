@@ -257,7 +257,7 @@ networks:
     }
 
 if (!config.enableS3 || config.useMQTT || config.useMariaDB || 
-    (config.enableS3 && config.useS3) || (config.useVault && config.vault.integrated)) {
+    (config.enableS3 && config.useS3)) {
     compose += `
 volumes:`;
 }
@@ -266,7 +266,6 @@ volumes:`;
     if (config.useMariaDB) compose += `\n  mariadb-data:`;
     if (config.useMQTT) compose += `\n  mqtt-data:`;
     if (config.enableS3 && config.useS3) compose += `\n  garage-data:\n  garage-meta:`;
-    if (config.useVault && config.vault.integrated) compose += `\n  vault-data:`;
 
     return compose;
 }
@@ -385,6 +384,20 @@ function generateAppsettings(config) {
         });
     }
 
+    if (config.useVault) {
+        settings.Vault = {
+            "Enable": true,
+            "Addr": config.vault.addr,
+            "Token": config.vault.token,
+            "Path": config.vault.path,
+            "MountPoint": config.vault.mountPoint
+        };
+    } else {
+        settings.Vault = {
+            "Enable": false
+        };
+    }
+
     settings.FrontendUrl = config.frontUrl;
     settings.AllowedOrigins = config.allowedOrigins;
 
@@ -444,15 +457,6 @@ function generateEnvFile(config) {
         env += `S3_REGION=${config.s3.region}\n\n`;
     }
     
-    if (config.useVault) {
-        env += `# HashiCorp Vault\n`;
-        env += `VAULT_TOKEN=${config.vault.token}\n`;
-        if (config.vault.integrated) {
-            env += `VAULT_VERSION=1.18\n`;
-        }
-        env += `\n`;
-    }
-    
     return env;
 }
 
@@ -471,37 +475,31 @@ echo ""
 
 `;
 
-    if (config.useVault && config.vault.integrated) {
+    if (config.useVault) {
         script += `# Vault Configuration
 echo "Configuring HashiCorp Vault..."
 
-echo "Starting Vault..."
-docker compose up -d vault
-
-echo "Waiting for Vault to start (5 seconds)..."
-sleep 5
-
 echo "Enabling KV v2 engine..."
-docker exec electrostore-vault vault secrets enable -version=2 -path=secret kv || echo "KV engine already enabled"
+docker exec vault vault secrets enable -version=2 -path=${config.vault.mountPoint} kv || echo "KV engine already enabled"
 
 echo "Storing secrets in Vault..."
 `;
 
-        script += `docker exec electrostore-vault vault kv put ${config.vault.path} mariadb_password="
+        script += `docker exec vault vault kv put ${config.vault.mountPoint}/${config.vault.path} mariadb_password="
         ${config.useMariaDB ? config.mariadb.password : config.mariadbExternal.password}"
 `;
 
-        script += `docker exec electrostore-vault vault kv patch ${config.vault.path} mqtt_password="
+        script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password="
         ${config.useMQTT ? config.mqtt.password : config.mqttExternal.password}
 `;
 
         if (config.enableSMTP && config.smtp) {
-            script += `docker exec electrostore-vault vault kv patch ${config.vault.path} smtp_password="
+            script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} smtp_password="
             ${config.smtp.password}"
 `;
         }
 
-        script += `docker exec electrostore-vault vault kv patch ${config.vault.path} jwt_key="
+        script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} jwt_key="
         ${config.jwt.key}"
 
 echo "Vault configuration completed"
@@ -544,7 +542,7 @@ docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.
         if (config.useVault) {
             script += `
 echo "Storing S3 keys in Vault..."
-docker exec electrostore-vault vault kv patch ${config.vault.path} s3_access_key="\$GARAGE_ACCESS_KEY" s3_secret_key="\$GARAGE_SECRET_KEY"
+docker exec vault vault kv patch ${config.vault.path} s3_access_key="\$GARAGE_ACCESS_KEY" s3_secret_key="\$GARAGE_SECRET_KEY"
 `;
         }
 

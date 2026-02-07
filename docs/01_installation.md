@@ -79,7 +79,7 @@ Complete the `appsettings.json` file with the following content, replacing place
     }
   },
   "ConnectionStrings": {
-    "DefaultConnection": "Server=mariadb;Port=3306;Database=electrostore;Uid=electrostore;Pwd=password;"
+    "DefaultConnection": "Server=mariadb;Port=3306;Database=electrostore;Uid=electrostore;Pwd=electrostore;"
   },
   "MQTT": {
     "Username": "electrostore",
@@ -94,7 +94,7 @@ Complete the `appsettings.json` file with the following content, replacing place
     "Port": 587,
     "Username": "<your-email (optional)>",
     "Password": "<your-email-password (optional)>",
-    "From": "<your-email (optional)>",
+    "From": "<your-email (optional)>"
   },
   "Jwt": {
     "Key": "<your-random-key>",
@@ -126,6 +126,13 @@ Complete the `appsettings.json` file with the following content, replacing place
     "BucketName": "electrostore",
     "Region": "garage",
     "Secure": false
+  },
+  "Vault": {
+    "Enable": false,
+    "Address": "http://<vault-server-url>:8200",
+    "Token": "<vault-access-token>",
+    "Path": "electrostore",
+    "MountPoint": "secret"
   },
   "AllowedOrigins": [
     "https://<your-frontend-domain1>",
