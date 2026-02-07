@@ -4,16 +4,18 @@ bool setupWiFi()
   Serial.print("Connecting to Wi-Fi network: ");
   Serial.println(wifiSSID);
   WiFi.mode(WIFI_STA);
+  wl_status_t status;
   do
   {
     WiFi.begin(wifiSSID.c_str(), wifiPassword.c_str());
     startTimeWIFI = millis();
-    while (WiFi.status() != WL_CONNECTED && millis() - startTimeWIFI < connectionTimeoutWIFI)
+    status = WiFi.status();
+    while (status != WL_CONNECTED && millis() - startTimeWIFI < connectionTimeoutWIFI)
     {
       delay(500);
       Serial.print(".");
     }
-    if (WiFi.status() == WL_CONNECTED)
+    if (status == WL_CONNECTED)
     {
       Serial.println("");
       Serial.println("Wi-Fi connected!");
@@ -27,8 +29,8 @@ bool setupWiFi()
       Serial.println("Wi-Fi connection failed.");
       nbrErreurWifiConnect++;
     }
-  } while ((WiFi.status() != WL_CONNECTED) && (nbrErreurWifiConnect <= 3));
-  if (WiFi.status() == WL_CONNECTED)
+  } while ((status != WL_CONNECTED) && (nbrErreurWifiConnect <= 3));
+  if (status == WL_CONNECTED)
   {
     return true;
   }
