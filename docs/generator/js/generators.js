@@ -38,7 +38,7 @@ services:`;
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=${apiRule}"
       - "traefik.http.routers.api.entrypoints=${entrypoint}"
-      - "traefik.http.services.api.loadbalancer.server.port=80"`;
+      - "traefik.http.services.api.loadbalancer.server.port=8080"`;
       
         if (config.traefik.middlewares) {
             compose += `
@@ -52,7 +52,7 @@ services:`;
     } else {
         compose += `
     ports:
-      - "\${API_PORT:-${config.apiPort}}:80"`;
+      - "\${API_PORT:-${config.apiPort}}:8080"`;
     }
     
     compose += `
@@ -234,6 +234,7 @@ services:`;
       - "3900:3900"
       - "3901:3901"
       - "3902:3902"
+      - "3903:3903"
     volumes:
       - ./config/garage/garage.toml:/etc/garage.toml:ro
       - garage-data:/data
@@ -284,12 +285,10 @@ function generateAppsettings(config) {
 
     let connectionString;
     if (config.useMariaDB) {
-        connectionString = `Server=mariadb;Port=3306;Database=${config.mariadb.database};User=${config.mariadb.user};Password=
-        ${config.useVault ? '{{vault:mariadb_password}}' : config.mariadb.password};`;
+        connectionString = `Server=mariadb;Port=3306;Database=${config.mariadb.database};User=${config.mariadb.user};Password=${config.useVault ? '{{vault:mariadb_password}}' : config.mariadb.password};`;
     } else {
         const db = config.mariadbExternal;
-        connectionString = `Server=${db.host};Port=${db.port};Database=${db.database};User=${db.user};Password=
-        ${config.useVault ? '{{vault:mariadb_password}}' : db.password};`;
+        connectionString = `Server=${db.host};Port=${db.port};Database=${db.database};User=${db.user};Password=${config.useVault ? '{{vault:mariadb_password}}' : db.password};`;
     }
     
     settings.ConnectionStrings = {
@@ -317,7 +316,7 @@ function generateAppsettings(config) {
         if (config.useS3) {
             settings.S3 = {
                 "Enable": true,
-                "Endpoint": "http://garage:3900",
+                "Endpoint": "garage:3900",
                 "AccessKey": config.useVault ? "{{vault:s3_access_key}}" : config.s3.accessKey,
                 "SecretKey": config.useVault ? "{{vault:s3_secret_key}}" : config.s3.secretKey,
                 "Bucket": config.s3.bucket,
@@ -485,23 +484,31 @@ docker exec vault vault secrets enable -version=2 -path=${config.vault.mountPoin
 echo "Storing secrets in Vault..."
 `;
 
-        script += `docker exec vault vault kv put ${config.vault.mountPoint}/${config.vault.path} mariadb_password="
-        ${config.useMariaDB ? config.mariadb.password : config.mariadbExternal.password}"
+        script += `docker exec vault vault kv put ${config.vault.mountPoint}/${config.vault.path} mariadb_password="${config.useMariaDB ? config.mariadb.password : config.mariadbExternal.password}"
 `;
 
-        script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password="
-        ${config.useMQTT ? config.mqtt.password : config.mqttExternal.password}
+        script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password="${config.useMQTT ? config.mqtt.password : config.mqttExternal.password}"
 `;
 
         if (config.enableSMTP && config.smtp) {
-            script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} smtp_password="
-            ${config.smtp.password}"
+            script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} smtp_password="${config.smtp.password}"
 `;
         }
 
-        script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} jwt_key="
-        ${config.jwt.key}"
+        script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} jwt_key="${config.jwt.key}"
+`;
 
+        if (config.oauthProviders.length > 0) {
+            config.oauthProviders.forEach(provider => {
+                const name = toSnakeCase(provider.displayName);
+                script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_id="${provider.clientId}"
+`;
+                script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_secret="${provider.clientSecret}"
+`;
+            });
+        }
+
+`    
 echo "Vault configuration completed"
 echo ""
 
@@ -519,13 +526,14 @@ echo "Waiting for Garage to start (10 seconds)..."
 sleep 10
 
 echo "Configuring Garage cluster..."
-docker exec electrostore-garage /garage status || true
-docker exec electrostore-garage /garage layout assign -z dc1 -c 1 \$(docker exec electrostore-garage garage status | grep -oP '[0-9a-f]{16}' | head -n 1) || true
+GARAGE_NODE_ID=$(docker exec electrostore-garage /garage status | grep -oP '[0-9a-f]{16}' | head -n 1)
+GARAGE_CAPACITY=5000000000 # 5GB, adjust as needed
+docker exec electrostore-garage /garage layout assign $GARAGE_NODE_ID -z dc1 --capacity $GARAGE_CAPACITY $ $(docker exec electrostore-garage garage status | grep -oP '[0-9a-f]{16}' | head -n 1) || true
 docker exec electrostore-garage /garage layout apply --version 1
 
 echo "Creating S3 access keys..."
 
-docker exec electrostore-garage /garage key import --name electrostore-key ${config.s3.accessKey} ${config.s3.secretKey}
+docker exec electrostore-garage /garage key import -n electrostore-key --yes ${config.s3.accessKey} ${config.s3.secretKey}
 GARAGE_ACCESS_KEY="${config.s3.accessKey}"
 GARAGE_SECRET_KEY="${config.s3.secretKey}"
 
@@ -542,12 +550,12 @@ docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.
         if (config.useVault) {
             script += `
 echo "Storing S3 keys in Vault..."
-docker exec vault vault kv patch ${config.vault.path} s3_access_key="\$GARAGE_ACCESS_KEY" s3_secret_key="\$GARAGE_SECRET_KEY"
+docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} s3_access_key="\$GARAGE_ACCESS_KEY" s3_secret_key="\$GARAGE_SECRET_KEY"
 `;
         }
 
         script += `
-rm /tmp/garage_keys.txt
+#rm /tmp/garage_keys.txt
 
 echo "Garage configuration completed"
 echo ""

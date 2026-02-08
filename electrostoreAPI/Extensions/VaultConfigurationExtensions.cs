@@ -4,6 +4,22 @@ using VaultSharp.V1.AuthMethods.Token;
 
 namespace electrostore.Extensions;
 
+interface vaultConfiguration
+{
+    public string Addr { get; set; }
+    public string Token { get; set; }
+    public string Path { get; set; }
+    public string MountPoint { get; set; }
+}
+
+class VaultConfigurationImpl : vaultConfiguration
+{
+    public required string Addr { get; set; }
+    public required string Token { get; set; }
+    public required string Path { get; set; }
+    public required string MountPoint { get; set; }
+}
+
 public static class VaultConfigurationExtensions
 {
     public static IConfigurationBuilder AddVaultConfiguration(this IConfigurationBuilder builder)
@@ -21,36 +37,62 @@ public static class VaultConfigurationExtensions
             // in all config sections, replace values with vault secrets if they are in the format {{vault:<key>}}
             foreach (var section in tempConfig.GetChildren())
             {
-                foreach (var child in section.GetChildren())
+                SearchInConfigBranch(builder, vaultClient,
+                new VaultConfigurationImpl
                 {
-                    if (child.Value != null && child.Value.Contains("{{vault:") && child.Value.Contains("}}"))
-                    {
-                        Console.WriteLine($"Checking key: {child.Key} with value: {child.Value}");
-                        // for all occurrences of {{vault:<key>}} in the value, replace with the corresponding vault secret
-                        var newValue = child.Value;
-                        int startIndex = 0;
-                        while (true)
-                        {
-                            int vaultStart = newValue.IndexOf("{{vault:", startIndex);
-                            if (vaultStart == -1) break;
-                            int vaultEnd = newValue.IndexOf("}}", vaultStart);
-                            if (vaultEnd == -1) break;
-                            var vaultKey = newValue.Substring(vaultStart + 8, vaultEnd - vaultStart - 8);
-                            var secretValue = GetVaultSecret(vaultClient, vaultPath, vaultMountPoint, vaultKey);
-                            newValue = string.Concat(newValue.AsSpan(0, vaultStart), secretValue, newValue.AsSpan(vaultEnd + 2));
-                            startIndex = vaultStart + secretValue.Length;
-                        }
-                        // update the configuration with the new value
-                        builder.AddInMemoryCollection(new Dictionary<string, string?>
-                        {
-                            { child.Path, newValue }
-                        });
-                    }
-                }
+                    Addr = vaultAddr,
+                    Token = vaultToken,
+                    Path = vaultPath,
+                    MountPoint = vaultMountPoint
+                }, section);
             }
         }
         return builder;
     }
+
+    private static void SearchInConfigBranch(IConfigurationBuilder builder, VaultClient vaultClient, vaultConfiguration vaultConfig, IConfigurationSection section)
+    {
+        foreach (var child in section.GetChildren())
+        {
+            // if the section has a value, check if it contains a vault reference and replace it with the secret value
+            if (child.Value != null)            {
+                FindSecretInConfigValue(builder, vaultClient, vaultConfig, child);
+            }
+            else
+            {
+                // if the section has no value, it might be a branch, so we need to search in its children
+                SearchInConfigBranch(builder, vaultClient, vaultConfig, child);
+            }
+        }
+    }
+
+    private static void FindSecretInConfigValue(IConfigurationBuilder builder, VaultClient vaultClient, vaultConfiguration vaultConfig, IConfigurationSection section)
+    {
+        if (section.Value != null && section.Value.Contains("{{vault:") && section.Value.Contains("}}"))
+        {
+            Console.WriteLine($"Checking key: {section.Key} with value: {section.Value}");
+            // for all occurrences of {{vault:<key>}} in the value, replace with the corresponding vault secret
+            var newValue = section.Value;
+            int startIndex = 0;
+            while (true)
+            {
+                int vaultStart = newValue.IndexOf("{{vault:", startIndex);
+                if (vaultStart == -1) break;
+                int vaultEnd = newValue.IndexOf("}}", vaultStart);
+                if (vaultEnd == -1) break;
+                var vaultKey = newValue.Substring(vaultStart + 8, vaultEnd - vaultStart - 8);
+                var secretValue = GetVaultSecret(vaultClient, vaultConfig.Path, vaultConfig.MountPoint, vaultKey);
+                newValue = string.Concat(newValue.AsSpan(0, vaultStart), secretValue, newValue.AsSpan(vaultEnd + 2));
+                startIndex = vaultStart + secretValue.Length;
+            }
+            builder.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { section.Path, newValue }
+            });
+            Console.WriteLine($"Updated key: {section.Key} with new value: {newValue}");
+        }
+    }
+
     private static string GetVaultSecret(VaultClient vaultClient, string path, string mountPoint, string key)
     {
         try
