@@ -87,7 +87,6 @@ export const useConfigsStore = defineStore("configs",{
 			this.configs = await fetchWrapper.get({
 				url: `${baseUrl}/config`,
 			});
-			this.configs.loading = false;
 		},
 	},
 	getters: {

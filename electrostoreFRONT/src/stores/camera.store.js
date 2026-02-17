@@ -18,7 +18,7 @@ export const useCamerasStore = defineStore("cameras",{
 		async getCameraByList(idResearch = []) {
 			this.loading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			let newCameraList = await fetchWrapper.get({
+			const newCameraList = await fetchWrapper.get({
 				url: `${baseUrl}/camera?${idResearchString}`,
 				useToken: "access",
 			});
@@ -31,7 +31,7 @@ export const useCamerasStore = defineStore("cameras",{
 		},
 		async getCameraByInterval(limit = 100, offset = 0) {
 			this.loading = true;
-			let newCameraList = await fetchWrapper.get({
+			const newCameraList = await fetchWrapper.get({
 				url: `${baseUrl}/camera?limit=${limit}&offset=${offset}`,
 				useToken: "access",
 			});
@@ -46,7 +46,7 @@ export const useCamerasStore = defineStore("cameras",{
 			if (!this.cameras[id]) {
 				this.cameras[id] = {};
 			}
-			this.cameras[id] = { ...this.cameras[id], loading: true };
+			this.cameras[id].loading = true;
 			this.cameras[id] = await fetchWrapper.get({
 				url: `${baseUrl}/camera/${id}`,
 				useToken: "access",
@@ -54,7 +54,10 @@ export const useCamerasStore = defineStore("cameras",{
 			this.getStatus(id);
 		},
 		async toggleLight(id) {
-			this.cameraEdition.loading = true;
+			if (!this.status[id]) {
+				this.status[id] = {};
+			}
+			this.status[id].loading = true;
 			if (this.status[id]?.ringLightPower > 0) {
 				await fetchWrapper.post({
 					url: `${baseUrl}/camera/${id}/light`,
@@ -68,7 +71,7 @@ export const useCamerasStore = defineStore("cameras",{
 					body: { "state": true },
 				});
 			}
-			this.cameraEdition.loading = false;
+			delete this.status[id].loading;
 		},
 		async getStream(id) {
 			this.stream[id] = await fetchWrapper.stream({
@@ -83,7 +86,7 @@ export const useCamerasStore = defineStore("cameras",{
 			if (!this.status[id]) {
 				this.status[id] = {};
 			}
-			this.status[id] = { ...this.status[id], loading: true };
+			this.status[id].loading = true;
 			this.status[id] = await fetchWrapper.get({
 				url: `${baseUrl}/camera/${id}/status`,
 				useToken: "access",
@@ -102,31 +105,26 @@ export const useCamerasStore = defineStore("cameras",{
 			}
 		},
 		async createCamera(params) {
-			this.cameraEdition.loading = true;
-			this.cameraEdition = await fetchWrapper.post({
+			const camera = await fetchWrapper.post({
 				url: `${baseUrl}/camera`,
 				useToken: "access",
 				body: params,
 			});
-			this.cameras[this.cameraEdition.id_camera] = this.cameraEdition;
+			this.cameras[camera.id_camera] = camera;
 		},
 		async updateCamera(id, params) {
-			this.cameraEdition.loading = true;
-			this.cameraEdition = await fetchWrapper.put({
+			this.cameras[id] = await fetchWrapper.put({
 				url: `${baseUrl}/camera/${id}`,
 				useToken: "access",
 				body: params,
 			});
-			this.cameras[id] = this.cameraEdition;
 		},
 		async deleteCamera(id) {
-			this.cameraEdition.loading = true;
 			await fetchWrapper.delete({
 				url: `${baseUrl}/camera/${id}`,
 				useToken: "access",
 			});
 			delete this.cameras[id];
-			this.cameraEdition = {};
 		},
 	},
 });

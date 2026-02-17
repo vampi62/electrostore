@@ -16,7 +16,7 @@ export const useIasStore = defineStore("ias", {
 		async getIaByList(idResearch = []) {
 			this.loading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			let newIaList = await fetchWrapper.get({
+			const newIaList = await fetchWrapper.get({
 				url: `${baseUrl}/ia?${idResearchString}`,
 				useToken: "access",
 			});
@@ -28,7 +28,7 @@ export const useIasStore = defineStore("ias", {
 		},
 		async getIaByInterval(limit = 100, offset = 0) {
 			this.loading = true;
-			let newIaList = await fetchWrapper.get({
+			const newIaList = await fetchWrapper.get({
 				url: `${baseUrl}/ia?limit=${limit}&offset=${offset}`,
 				useToken: "access",
 			});
@@ -42,38 +42,33 @@ export const useIasStore = defineStore("ias", {
 			if (!this.ias[id]) {
 				this.ias[id] = {};
 			}
-			this.ias[id] = { ...this.ias[id], loading: true };
+			this.ias[id].loading = true;
 			this.ias[id] = await fetchWrapper.get({
 				url: `${baseUrl}/ia/${id}`,
 				useToken: "access",
 			});
 		},
 		async createIa(params) {
-			this.iaEdition.loading = true;
-			this.iaEdition = await fetchWrapper.post({
+			const ia = await fetchWrapper.post({
 				url: `${baseUrl}/ia`,
 				useToken: "access",
 				body: params,
 			});
-			this.ias[this.iaEdition.id_ia] = this.iaEdition;
+			this.ias[ia.id_ia] = ia;
 		},
 		async updateIa(id, params) {
-			this.iaEdition.loading = true;
-			this.iaEdition = await fetchWrapper.put({
+			this.ias[id] = await fetchWrapper.put({
 				url: `${baseUrl}/ia/${id}`,
 				useToken: "access",
 				body: params,
 			});
-			this.ias[id] = this.iaEdition;
 		},
 		async deleteIa(id) {
-			this.iaEdition.loading = true;
 			await fetchWrapper.delete({
 				url: `${baseUrl}/ia/${id}`,
 				useToken: "access",
 			});
 			delete this.ias[id];
-			this.iaEdition = {};
 		},
 		async getTrainStatus(id) {
 			this.status.train.loading = true;
@@ -91,7 +86,6 @@ export const useIasStore = defineStore("ias", {
 		},
 		async detectItem(id, params) {
 			this.status.detect.loading = true;
-			// if params is a Blob, convert it to a File
 			if (params instanceof Blob) {
 				params = new File([params], "img_file.jpg", { type: params.type });
 			}

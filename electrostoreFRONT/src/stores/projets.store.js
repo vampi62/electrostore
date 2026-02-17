@@ -38,10 +38,59 @@ export const useProjetsStore = defineStore("projets",{
 		statusHistory: {},
 	}),
 	actions: {
+		async getProjetByList(idResearch = [], expand = []) {
+			this.projetsLoading = true;
+			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const newProjetList = await fetchWrapper.get({
+				url: `${baseUrl}/projet?${idResearchString}&${expandString}`,
+				useToken: "access",
+			});
+			for (const projet of newProjetList["data"]) {
+				this.projets[projet.id_projet] = projet;
+				this.commentairesTotalCount[projet.id_projet] = projet.projets_commentaires_count;
+				this.documentsTotalCount[projet.id_projet] = projet.projets_documents_count;
+				this.itemsTotalCount[projet.id_projet] = projet.projets_items_count;
+				this.projetTagProjetTotalCount[projet.id_projet] = projet.projets_tags_count;
+				this.statusHistoryTotalCount[projet.id_projet] = projet.projets_status_history_count;
+				if (expand.includes("projets_commentaires")) {
+					this.commentaires[projet.id_projet] = {};
+					for (const commentaire of projet.projets_commentaires) {
+						this.commentaires[projet.id_projet][commentaire.id_projet_commentaire] = commentaire;
+					}
+				}
+				if (expand.includes("projets_documents")) {
+					this.documents[projet.id_projet] = {};
+					for (const document of projet.projets_documents) {
+						this.documents[projet.id_projet][document.id_projet_document] = document;
+					}
+				}
+				if (expand.includes("projets_items")) {
+					this.items[projet.id_projet] = {};
+					for (const item of projet.projets_items) {
+						this.items[projet.id_projet][item.id_item] = item;
+					}
+				}
+				if (expand.includes("projets_projet_tags")) {
+					this.projetTagProjet[projet.id_projet] = {};
+					for (const projetTagProjet of projet.projets_projet_tags) {
+						this.projetTagProjet[projet.id_projet][projetTagProjet.id_projet_tag] = projetTagProjet;
+					}
+				}
+				if (expand.includes("projets_status_history")) {
+					this.statusHistory[projet.id_projet] = {};
+					for (const statusHistory of projet.projets_status_history) {
+						this.statusHistory[projet.id_projet][statusHistory.id_projet_status] = statusHistory;
+					}
+				}
+			}
+			this.projetsTotalCount = newProjetList["count"];
+			this.projetsLoading = false;
+		},
 		async getProjetByInterval(limit = 100, offset = 0, expand = []) {
 			this.projetsLoading = true;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			let newProjetList = await fetchWrapper.get({
+			const newProjetList = await fetchWrapper.get({
 				url: `${baseUrl}/projet?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
@@ -90,7 +139,7 @@ export const useProjetsStore = defineStore("projets",{
 			if (!this.projets[id]) {
 				this.projets[id] = {};
 			}
-			this.projets[id] = { ...this.projets[id], loading: true };
+			this.projets[id].loading = true;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.projets[id] = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${id}?${expandString}`,
@@ -133,41 +182,36 @@ export const useProjetsStore = defineStore("projets",{
 			}
 		},
 		async createProjet(params) {
-			this.projetEdition.loading = true;
-			this.projetEdition = await fetchWrapper.post({
+			const projet = await fetchWrapper.post({
 				url: `${baseUrl}/projet`,
 				useToken: "access",
 				body: params,
 			});
-			this.projets[this.projetEdition.id_projet] = this.projetEdition;
+			this.projets[projet.id_projet] = projet;
 		},
 		async updateProjet(id, params) {
-			this.projetEdition.loading = true;
-			this.projetEdition = await fetchWrapper.put({
+			this.projets[id] = await fetchWrapper.put({
 				url: `${baseUrl}/projet/${id}`,
 				useToken: "access",
 				body: params,
 			});
-			this.projets[id] = this.projetEdition;
 		},
 		async deleteProjet(id) {
-			this.projetEdition.loading = true;
 			await fetchWrapper.delete({
 				url: `${baseUrl}/projet/${id}`,
 				useToken: "access",
 			});
 			delete this.projets[id];
-			this.projetEdition = {};
 		},
 
 		async getCommentaireByInterval(idProjet, limit = 100, offset = 0, expand = []) {
-			const userStore = useUsersStore();
 			if (!this.commentaires[idProjet]) {
 				this.commentaires[idProjet] = {};
 			}
 			this.commentairesLoading = true;
+			const userStore = useUsersStore();
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			let newCommentaireList = await fetchWrapper.get({
+			const newCommentaireList = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/commentaire?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
@@ -181,14 +225,14 @@ export const useProjetsStore = defineStore("projets",{
 			this.commentairesLoading = false;
 		},
 		async getCommentaireById(idProjet, id, expand = []) {
-			const userStore = useUsersStore();
 			if (!this.commentaires[idProjet]) {
 				this.commentaires[idProjet] = {};
 			}
 			if (!this.commentaires[idProjet][id]) {
 				this.commentaires[idProjet][id] = {};
 			}
-			this.commentaires[idProjet][id] = { ...this.commentaires[idProjet][id], loading: true };
+			this.commentaires[idProjet][id].loading = true;
+			const userStore = useUsersStore();
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.commentaires[idProjet][id] = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/commentaire/${id}?${expandString}`,
@@ -199,47 +243,46 @@ export const useProjetsStore = defineStore("projets",{
 			}
 		},
 		async createCommentaire(idProjet, params) {
-			this.commentaireEdition.loading = true;
-			this.commentaireEdition = await fetchWrapper.post({
+			if (!this.commentaires[idProjet]) {
+				this.commentaires[idProjet] = {};
+			}
+			const commentaire = await fetchWrapper.post({
 				url: `${baseUrl}/projet/${idProjet}/commentaire`,
 				useToken: "access",
 				body: params,
 			});
-			if (!this.commentaires[idProjet]) {
-				this.commentaires[idProjet] = {};
-			}
-			this.commentaires[idProjet][this.commentaireEdition.id_projet_commentaire] = this.commentaireEdition;
+			this.commentaires[idProjet][commentaire.id_projet_commentaire] = commentaire;
 			this.commentairesTotalCount[idProjet] += 1;
 		},
 		async updateCommentaire(idProjet, id, params) {
-			this.commentaireEdition.loading = true;
-			this.commentaireEdition = await fetchWrapper.put({
+			if (!this.commentaires[idProjet]) {
+				this.commentaires[idProjet] = {};
+			}
+			this.commentaires[idProjet][id] = await fetchWrapper.put({
 				url: `${baseUrl}/projet/${idProjet}/commentaire/${id}`,
 				useToken: "access",
 				body: params,
 			});
-			this.commentaires[idProjet][id] = this.commentaireEdition;
 		},
 		async deleteCommentaire(idProjet, id) {
-			this.commentaireEdition.loading = true;
+			if (!this.commentaires[idProjet]) {
+				this.commentaires[idProjet] = {};
+			}
 			await fetchWrapper.delete({
 				url: `${baseUrl}/projet/${idProjet}/commentaire/${id}`,
 				useToken: "access",
 			});
 			delete this.commentaires[idProjet][id];
-			this.commentaireEdition = {};
 		},
 
 		async getDocumentByList(idProjet, idResearch = [], expand = []) {
-			// init list if not exist
 			if (!this.documents[idProjet]) {
 				this.documents[idProjet] = {};
 			}
-			// query
 			this.documentsLoading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			let newDocumentList = await fetchWrapper.get({
+			const newDocumentList = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/document?${idResearchString}&${expandString}`,
 				useToken: "access",
 			});
@@ -250,14 +293,12 @@ export const useProjetsStore = defineStore("projets",{
 			this.documentsLoading = false;
 		},
 		async getDocumentByInterval(idProjet, limit = 100, offset = 0, expand = []) {
-			// init list if not exist
 			if (!this.documents[idProjet]) {
 				this.documents[idProjet] = {};
 			}
-			// query
 			this.documentsLoading = true;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			let newDocumentList = await fetchWrapper.get({
+			const newDocumentList = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/document?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
@@ -274,39 +315,41 @@ export const useProjetsStore = defineStore("projets",{
 			if (!this.documents[idProjet][id]) {
 				this.documents[idProjet][id] = {};
 			}
-			this.documents[idProjet][id] = { ...this.documents[idProjet][id], loading: true };
+			this.documents[idProjet][id].loading = true;
 			this.documents[idProjet][id] = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/document/${id}`,
 				useToken: "access",
 			});
 		},
 		async createDocument(idProjet, params) {
-			this.documentEdition.loading = true;
+			if (!this.documents[idProjet]) {
+				this.documents[idProjet] = {};
+			}
 			const formData = new FormData();
 			formData.append("name_projet_document", params.name_projet_document);
 			formData.append("document", params.document);
-			this.documentEdition = await fetchWrapper.post({
+			const document = await fetchWrapper.post({
 				url: `${baseUrl}/projet/${idProjet}/document`,
 				useToken: "access",
 				body: formData,
 				contentFile: true,
 			});
+			this.documents[idProjet][document.id_projet_document] = document;
+		},
+		async updateDocument(idProjet, id, params) {
 			if (!this.documents[idProjet]) {
 				this.documents[idProjet] = {};
 			}
-			this.documents[idProjet][this.documentEdition.id_projet_document] = this.documentEdition;
-		},
-		async updateDocument(idProjet, id, params) {
-			this.documents[idProjet][id].loading = true;
-			this.documentEdition = await fetchWrapper.put({
+			this.documents[idProjet][id] = await fetchWrapper.put({
 				url: `${baseUrl}/projet/${idProjet}/document/${id}`,
 				useToken: "access",
 				body: params,
 			});
-			this.documents[idProjet][id] = this.documentEdition;
 		},
 		async deleteDocument(idProjet, id) {
-			this.documentEdition.loading = true;
+			if (!this.documents[idProjet]) {
+				this.documents[idProjet] = {};
+			}
 			await fetchWrapper.delete({
 				url: `${baseUrl}/projet/${idProjet}/document/${id}`,
 				useToken: "access",
@@ -322,14 +365,13 @@ export const useProjetsStore = defineStore("projets",{
 		},
 
 		async getItemByInterval(idProjet, limit = 100, offset = 0, expand = []) {
-			const itemStore = useItemsStore();
 			if (!this.items[idProjet]) {
 				this.items[idProjet] = {};
 			}
-			// query
 			this.itemsLoading = true;
+			const itemStore = useItemsStore();
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			let newItemList = await fetchWrapper.get({
+			const newItemList = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/item?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
@@ -343,14 +385,14 @@ export const useProjetsStore = defineStore("projets",{
 			this.itemsLoading = false;
 		},
 		async getItemById(idProjet, id, expand = []) {
-			const itemStore = useItemsStore();
 			if (!this.items[idProjet]) {
 				this.items[idProjet] = {};
 			}
 			if (!this.items[idProjet][id]) {
 				this.items[idProjet][id] = {};
 			}
-			this.items[idProjet][id] = { ...this.items[idProjet][id], loading: true };
+			this.items[idProjet][id].loading = true;
+			const itemStore = useItemsStore();
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.items[idProjet][id] = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/item/${id}&${expandString}`,
@@ -361,58 +403,58 @@ export const useProjetsStore = defineStore("projets",{
 			}
 		},
 		async createItem(idProjet, params) {
-			this.itemEdition.loading = true;
-			this.itemEdition = await fetchWrapper.post({
+			if (!this.items[idProjet]) {
+				this.items[idProjet] = {};
+			}
+			const item = await fetchWrapper.post({
 				url: `${baseUrl}/projet/${idProjet}/item`,
 				useToken: "access",
 				body: params,
 			});
+			this.items[idProjet][item.id_item] = item;
+		},
+		async updateItem(idProjet, id, params) {
 			if (!this.items[idProjet]) {
 				this.items[idProjet] = {};
 			}
-			this.items[idProjet][this.itemEdition.id_item] = this.itemEdition;
-		},
-		async updateItem(idProjet, id, params) {
-			this.itemEdition.loading = true;
-			this.itemEdition = await fetchWrapper.put({
+			this.items[idProjet][id] = await fetchWrapper.put({
 				url: `${baseUrl}/projet/${idProjet}/item/${id}`,
 				useToken: "access",
 				body: params,
 			});
-			this.items[idProjet][id] = this.itemEdition;
 		},
 		async deleteItem(idProjet, id) {
-			this.itemEdition.loading = true;
+			if (!this.items[idProjet]) {
+				this.items[idProjet] = {};
+			}
 			await fetchWrapper.delete({
 				url: `${baseUrl}/projet/${idProjet}/item/${id}`,
 				useToken: "access",
 			});
 			delete this.items[idProjet][id];
-			this.itemEdition = {};
 		},
 		async createItemBulk(idProjet, params) {
-			this.itemEdition.loading = true;
-			this.itemEdition = await fetchWrapper.post({
+			if (!this.items[idProjet]) {
+				this.items[idProjet] = {};
+			}
+			const itemBulk = await fetchWrapper.post({
 				url: `${baseUrl}/projet/${idProjet}/item/bulk`,
 				useToken: "access",
 				body: params,
 			});
-			if (!this.items[idProjet]) {
-				this.items[idProjet] = {};
-			}
-			for (const item of this.itemEdition["valide"]) {
+			for (const item of itemBulk["valide"]) {
 				this.items[idProjet][item.id_item] = item;
 			}
 		},
 
 		async getProjetTagProjetByInterval(idProjet, limit = 100, offset = 0, expand = []) {
-			const projetTagStore = useProjetTagsStore();
 			if (!this.projetTagProjet[idProjet]) {
 				this.projetTagProjet[idProjet] = {};
 			}
 			this.projetTagProjetLoading = true;
+			const projetTagStore = useProjetTagsStore();
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			let newProjetTagProjetList = await fetchWrapper.get({
+			const newProjetTagProjetList = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/projet-tag?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
@@ -425,14 +467,14 @@ export const useProjetsStore = defineStore("projets",{
 			this.projetTagProjetTotalCount[idProjet] = newProjetTagProjetList["count"];
 		},
 		async getProjetTagProjetById(idProjet, idProjetTag, expand = []) {
-			const projetTagStore = useProjetTagsStore();
 			if (!this.projetTagProjet[idProjet]) {
 				this.projetTagProjet[idProjet] = {};
 			}
 			if (!this.projetTagProjet[idProjet][idProjetTag]) {
 				this.projetTagProjet[idProjet][idProjetTag] = {};
 			}
-			this.projetTagProjet[idProjet][idProjetTag] = { ...this.projetTagProjet[idProjet][idProjetTag], loading: true };
+			this.projetTagProjet[idProjet][idProjetTag].loading = true;
+			const projetTagStore = useProjetTagsStore();
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.projetTagProjet[idProjet][idProjetTag] = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/projet-tag/${idProjetTag}&${expandString}`,
@@ -443,48 +485,49 @@ export const useProjetsStore = defineStore("projets",{
 			}
 		},
 		async createProjetTagProjet(idProjet, params) {
-			this.projetTagProjetEdition.loading = true;
-			this.projetTagProjetEdition = await fetchWrapper.post({
+			if (!this.projetTagProjet[idProjet]) {
+				this.projetTagProjet[idProjet] = {};
+			}
+			const projetTag = await fetchWrapper.post({
 				url: `${baseUrl}/projet/${idProjet}/projet-tag`,
 				useToken: "access",
 				body: params,
 			});
+			this.projetTagProjet[idProjet][projetTag.id_projet_tag] = projetTag;
+		},
+		async deleteProjetTagProjet(idProjet, idProjetTag) {
 			if (!this.projetTagProjet[idProjet]) {
 				this.projetTagProjet[idProjet] = {};
 			}
-			this.projetTagProjet[idProjet][this.projetTagProjetEdition.id_projet_tag] = this.projetTagProjetEdition;
-		},
-		async deleteProjetTagProjet(idProjet, idProjetTag) {
-			this.projetTagProjetEdition.loading = true;
 			await fetchWrapper.delete({
 				url: `${baseUrl}/projet/${idProjet}/projet-tag/${idProjetTag}`,
 				useToken: "access",
 			});
 			delete this.projetTagProjet[idProjet][idProjetTag];
-			this.projetTagProjetEdition = {};
 		},
 		async createProjetTagProjetBulk(idProjet, params) {
-			this.projetTagProjetEdition.loading = true;
-			this.projetTagProjetEdition = await fetchWrapper.post({
+			if (!this.projetTagProjet[idProjet]) {
+				this.projetTagProjet[idProjet] = {};
+			}
+			const projetTagBulk = await fetchWrapper.post({
 				url: `${baseUrl}/projet/${idProjet}/projet-tag/bulk`,
 				useToken: "access",
 				body: params,
 			});
-			if (!this.projetTagProjet[idProjet]) {
-				this.projetTagProjet[idProjet] = {};
-			}
-			for (const projetTagProjet of this.projetTagProjetEdition["valide"]) {
+			for (const projetTagProjet of projetTagBulk["valide"]) {
 				this.projetTagProjet[idProjet][projetTagProjet.id_projet_tag] = projetTagProjet;
 			}
 		},
 		async deleteProjetTagProjetBulk(idProjet, params) {
-			this.projetTagProjetEdition.loading = true;
-			this.projetTagProjetEdition = fetchWrapper.delete({
+			if (!this.projetTagProjet[idProjet]) {
+				this.projetTagProjet[idProjet] = {};
+			}
+			const projetTagBulk = await fetchWrapper.delete({
 				url: `${baseUrl}/projet/${idProjet}/projet-tag/bulk`,
 				useToken: "access",
 				body: params,
 			});
-			for (const idProjetTag of this.projetTagProjetEdition["valide"]) {
+			for (const idProjetTag of projetTagBulk["valide"]) {
 				delete this.projetTagProjet[idProjet][idProjetTag];
 			}
 		},
@@ -495,7 +538,7 @@ export const useProjetsStore = defineStore("projets",{
 			}
 			this.statusHistoryLoading = true;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			let newStatusHistoryList = await fetchWrapper.get({
+			const newStatusHistoryList = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/status-history?limit=${limit}&offset=${offset}&${expandString}`,
 				useToken: "access",
 			});
@@ -512,7 +555,7 @@ export const useProjetsStore = defineStore("projets",{
 			if (!this.statusHistory[idProjet][id]) {
 				this.statusHistory[idProjet][id] = {};
 			}
-			this.statusHistory[idProjet][id] = { ...this.statusHistory[idProjet][id], loading: true };
+			this.statusHistory[idProjet][id].loading = true;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.statusHistory[idProjet][id] = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/status-history/${id}?${expandString}`,
