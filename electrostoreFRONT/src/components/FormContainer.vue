@@ -104,6 +104,14 @@ export default {
 			default: () => ({}),
 			// This should be an object containing the data for the form fields
 		},
+		storeFunction: {
+			type: Object,
+			required: false,
+			// This should contain functions related to the form, such as permission checks. For example:
+			default: () => ({
+				hasPermission: () => {},
+			}),
+		},
 		storeUser: {
 			type: Object,
 			default: () => ({}),
@@ -122,7 +130,7 @@ export default {
 	methods: {
 		evaluateCondition(condition) {
 			try {
-				return new Function(["session","edition","form"], `return ${condition}`)(this.storeUser, this.storeData, this.labels);
+				return new Function(["session","edition","form", "func"], `return ${condition}`)(this.storeUser, this.storeData, this.labels, this.storeFunction);
 			} catch (error) {
 				console.error("Erreur lors de l'évaluation de la condition :", error);
 				return false;

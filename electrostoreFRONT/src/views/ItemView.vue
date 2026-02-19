@@ -470,8 +470,8 @@ const labelTableauProjet = ref([
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('item.VItemTitle') }}</h2>
-		<TopButtonEditElement :main-config="{ path: '/inventory', save: { roleRequired: 0, loading: itemsStore.itemEdition.loading }, delete: { roleRequired: 0 } }"
-			:id="itemId" :store-user="authStore.user" @button-save="itemSave" @button-delete="itemDeleteModalShow = true"/>
+		<TopButtonEditElement :main-config="{ path: '/inventory', save: { roleRequired: authStore.hasPermission([0, 1, 2]), loading: itemsStore.itemEdition.loading }, delete: { roleRequired: authStore.hasPermission([0, 1, 2]) } }"
+			:id="itemId" @button-save="itemSave" @button-delete="itemDeleteModalShow = true"/>
 	</div>
 	<div v-if="itemsStore.items[itemId] || itemId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
@@ -495,7 +495,7 @@ const labelTableauProjet = ref([
 					</div>
 				</template>
 			</FormContainer>
-			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="itemId !== 'new' && authStore.user.role_user >= 1"
+			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="itemId !== 'new' && authStore.hasPermission([1, 2])"
 				:delete-function="(value) => tagDelete(value)"
 				:fetch-function="(offset, limit) => tagsStore.getTagByInterval(limit, offset)"
 				:total-count="Number(tagsStore.tagsTotalCount || 0)"

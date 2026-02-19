@@ -459,13 +459,13 @@ const labelTableauModalItem = ref([
 			class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded cursor-pointer inline-block">
 			{{ $t('projet.VProjetListTag') }}
 		</RouterLink>
-		<TopButtonEditElement :main-config="{ path: '/projets', save: { roleRequired: 0, loading: projetsStore.projetEdition.loading }, delete: { roleRequired: 0 } }"
+		<TopButtonEditElement :main-config="{ path: '/projets', save: { roleRequired: authStore.hasPermission([0, 1, 2]), loading: projetsStore.projetEdition.loading }, delete: { roleRequired: authStore.hasPermission([0, 1, 2]) } }"
 			:id="projetId" :store-user="authStore.user" @button-save="projetSave" @button-delete="projetDeleteModalShow = true"/>
 	</div>
 	<div v-if="projetsStore.projets[projetId] || projetId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="projetsStore.projetEdition"/>
-			<Tags :current-tags="projetsStore.projetTagProjet[projetId] || {}" :tags-store="projetTagsStore.projetTags" :can-edit="projetId !== 'new' && authStore.user.role_user >= 1"
+			<Tags :current-tags="projetsStore.projetTagProjet[projetId] || {}" :tags-store="projetTagsStore.projetTags" :can-edit="projetId !== 'new' && authStore.hasPermission([2])"
 				:delete-function="(value) => tagDelete(value)"
 				:fetch-function="(offset, limit) => projetTagsStore.getProjetTagByInterval(limit, offset)"
 				:total-count="Number(projetTagsStore.projetTagsTotalCount || 0)"
@@ -525,8 +525,9 @@ const labelTableauModalItem = ref([
 		<CollapsibleSection title="projet.VProjetCommentaires"
 			:total-count="Number(projetsStore.commentairesTotalCount[projetId] || 0)" :id-page="projetId">
 			<template #append-row>
-				<Commentaire :meta="{ contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: true }"
-					:store-data="[projetsStore.commentaires[projetId],usersStore.users,authStore.user,configsStore]"
+				<Commentaire :meta="{ contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: true, roleRequired: authStore.hasPermission([1, 2]) }"
+					:store-data="[projetsStore.commentaires[projetId], usersStore.users, configsStore]"
+					:store-user="authStore.user"
 					:store-function="{ create: (data) => projetsStore.createCommentaire(projetId, data), update: (id, data) => projetsStore.updateCommentaire(projetId, id, data), delete: (id) => projetsStore.deleteCommentaire(projetId, id) }"
 					:loading="projetsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'projet.VProjetCommentDeleteTitle', textP: 'projet.VProjetCommentDeleteText' }"
 					:total-count="Number(projetsStore.commentairesTotalCount[projetId])"

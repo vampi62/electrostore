@@ -13,10 +13,9 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 const iaId = ref(route.params.id);
 
-import { useConfigsStore, useIasStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useIasStore } from "@/stores";
 const configsStore = useConfigsStore();
 const iasStore = useIasStore();
-const authStore = useAuthStore();
 
 async function fetchAllData() {
 	if (iaId.value === "new") {
@@ -110,24 +109,25 @@ const createSchema = () => {
 	});
 };
 const labelForm = [
-	{ key: "nom_ia", label: "ia.VIaName", type: "text", condition: "session.role_user === 2" },
-	{ key: "description_ia", label: "ia.VIaDescription", type: "textarea", rows: 4, condition: "session.role_user === 2" },
+	{ key: "nom_ia", label: "ia.VIaName", type: "text", condition: "func.hasPermission([2])" },
+	{ key: "description_ia", label: "ia.VIaDescription", type: "textarea", rows: 4, condition: "func.hasPermission([2])" },
 ];
 </script>
 
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('ia.VIaTitle') }}</h2>
-		<TopButtonEditElement :main-config="{ path: '/ia', save: { roleRequired: 2, loading: iasStore.iaEdition.loading }, delete: { roleRequired: 2 } }"
+		<TopButtonEditElement :main-config="{ path: '/ia', save: { roleRequired: authStore.hasPermission([2]), loading: iasStore.iaEdition.loading }, delete: { roleRequired: authStore.hasPermission([2]) } }"
 			:optional-config="[
-				{ label: 'ia.VIaTrain', roleRequired: 2, loading: iasStore.status.start?.loading, bgColor: 'bg-green-500', hoverColor: 'hover:bg-green-600', action: iaTrain },
-				{ label: 'ia.VIaRefresh', roleRequired: 0, loading: iasStore.status.train?.loading, bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => iasStore.getTrainStatus(iaId) },
+				{ label: 'ia.VIaTrain', roleRequired: authStore.hasPermission([2]), loading: iasStore.status.start?.loading, bgColor: 'bg-green-500', hoverColor: 'hover:bg-green-600', action: iaTrain },
+				{ label: 'ia.VIaRefresh', roleRequired: authStore.hasPermission([0, 1, 2]), loading: iasStore.status.train?.loading, bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => iasStore.getTrainStatus(iaId) },
 			]"
 			:id="iaId" :store-user="authStore.user" @button-save="iaSave" @button-delete="iaDeleteModalShow = true"/>
 	</div>
 	<div v-if="iasStore.ias[iaId] || iaId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="iasStore.iaEdition" :store-user="authStore.user"/>
+			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="iasStore.iaEdition" :store-user="authStore.user"
+				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
 			<StatusDisplay :data-store="iasStore.status.train" />
 		</div>
 	</div>

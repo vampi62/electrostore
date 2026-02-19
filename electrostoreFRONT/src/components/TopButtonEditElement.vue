@@ -2,7 +2,7 @@
 	<div class="hidden md:flex flex-wrap gap-2 justify-end">
 		<!-- Desktop -->
 		<template v-for="(button, index) in optionalConfig" :key="index">
-			<div v-if="id != 'new' && storeUser?.role_user >= button.roleRequired" class="relative">
+			<div v-if="id != 'new' && button.roleRequired" class="relative">
 				<button type="button" @click="button.action"
 					:class="['text-white px-4 py-2 rounded flex items-center',
 					button.bgColor ? button.bgColor : 'bg-gray-500',
@@ -16,7 +16,7 @@
 				</div>
 			</div>
 		</template>
-		<div v-if="id == 'new' && ((storeUser?.role_user >= mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))" class="relative">
+		<div v-if="id == 'new' && ((mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))" class="relative">
 			<button type="button" @click="$emit('buttonSave')"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				{{ $t('components.VModalTopButtonAdd') }}
@@ -26,7 +26,7 @@
 				<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 			</div>
 		</div>
-		<div v-if="id != 'new' && ((storeUser?.role_user >= mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))" class="relative">
+		<div v-if="id != 'new' && ((mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))" class="relative">
 			<button type="button" @click="$emit('buttonSave')"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
 				{{ $t('components.VModalTopButtonUpdate') }}
@@ -36,7 +36,7 @@
 				<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 			</div>
 		</div>
-		<button type="button" @click="$emit('buttonDelete')" v-if="id != 'new' && ((storeUser?.role_user >= mainConfig.delete.roleRequired) || (mainConfig.delete?.sameUserId && storeUser?.id_user == id))"
+		<button type="button" @click="$emit('buttonDelete')" v-if="id != 'new' && ((mainConfig.delete.roleRequired) || (mainConfig.delete?.sameUserId && storeUser?.id_user == id))"
 			class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
 			{{ $t('components.VModalTopButtonDelete') }}
 		</button>
@@ -65,7 +65,7 @@
 		<div v-if="showMobileMenu"
 			class="absolute right-0 mt-2 w-48 rounded-md shadow-lg border border-gray-200">
 			<template v-for="(button, index) in optionalConfig" :key="index">
-				<div v-if="id != 'new' && storeUser?.role_user >= button.roleRequired" class="relative">
+				<div v-if="id != 'new' && button.roleRequired" class="relative">
 					<button @click="button.action"
 						:class="['relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white text-gray-700 hover:bg-gray-100 border-b border-gray-200',
 						button.bgColor ? button.bgColor : 'bg-gray-500',
@@ -79,7 +79,7 @@
 					</div>
 				</div>
 			</template>
-			<div v-if="id == 'new' && ((storeUser?.role_user >= mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))" class="relative">
+			<div v-if="id == 'new' && ((mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))" class="relative">
 				<button @click="$emit('buttonSave')"
 					class="relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-blue-500 hover:bg-blue-600 border-b border-gray-200">
 					{{ $t('components.VModalTopButtonAdd') }}
@@ -89,7 +89,7 @@
 					<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 				</div>
 			</div>
-			<div v-if="id != 'new' && ((storeUser?.role_user >= mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))" class="relative">
+			<div v-if="id != 'new' && ((mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))" class="relative">
 				<button @click="$emit('buttonSave')"
 					class="relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-blue-500 hover:bg-blue-600 border-b border-gray-200">
 					{{ $t('components.VModalTopButtonUpdate') }}
@@ -99,7 +99,7 @@
 					<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 				</div>
 			</div>
-			<button v-if="id != 'new' && ((storeUser?.role_user >= mainConfig.delete.roleRequired) || (mainConfig.delete?.sameUserId && storeUser?.id_user == id))"
+			<button v-if="id != 'new' && ((mainConfig.delete.roleRequired) || (mainConfig.delete?.sameUserId && storeUser?.id_user == id))"
 				@click="$emit('buttonDelete')"
 				class="relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-red-500 hover:bg-red-600 border-b border-gray-200">
 				{{ $t('components.VModalTopButtonDelete') }}
@@ -121,15 +121,15 @@ export default {
 			required: true,
 			// main configuration object with properties:
 			// path: string (default "/"),
-			// save: { roleRequired: number, loading: boolean, sameUserId: boolean } // configuration for save button
-			// delete: { roleRequired: number, sameUserId: boolean } // configuration for delete button
+			// save: { roleRequired: boolean, loading: boolean, sameUserId: boolean } // configuration for save button
+			// delete: { roleRequired: boolean, sameUserId: boolean } // configuration for delete button
 			// sameUserId: boolean (if true, the button is only visible if the user ID matches the current user ID)
-			// roleRequired: number (minimum user role required to see the button)
+			// roleRequired: boolean (number or string depending on your role system) (the button is only visible if the user's role is included in this list)
 			// loading: boolean (if true, the button shows a loading spinner) must be linked to a boolean that indicates if the function is currently processing
 			default: () => ({
 				path: "/",
-				save: { roleRequired: 0, loading: false, sameUserId: false },
-				delete: { roleRequired: 0, sameUserId: false },
+				save: { roleRequired: false, loading: false, sameUserId: false },
+				delete: { roleRequired: false, sameUserId: false },
 			}),
 		},
 		id: {
@@ -142,7 +142,7 @@ export default {
 			type: Array,
 			required: false,
 			// array of optional buttons with properties: label, action, roleRequired, bgColor, hoverColor, loading
-			// Example: [{ label: 'components.VModalTopButtonCustom', action: customFucntionCall, roleRequired: 1, bgColor: 'bg-green-500', hoverColor: 'hover:bg-green-600', loading: false }]
+			// Example: [{ label: 'components.VModalTopButtonCustom', action: customFucntionCall, roleRequired: false, bgColor: 'bg-green-500', hoverColor: 'hover:bg-green-600', loading: false }]
 			// loading is a link to a boolean that indicates if the function is currently processing
 			default: () => [],
 		},

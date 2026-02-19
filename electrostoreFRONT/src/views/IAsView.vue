@@ -4,7 +4,7 @@ import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
-import { useAuthStore, useIasStore } from "@/stores";
+import { useIasStore, useAuthStore } from "@/stores";
 const IAStore = useIasStore();
 const authStore = useAuthStore();
 
@@ -47,11 +47,11 @@ const updateFilteredIas = (newValue) => {
 	</div>
 	<div>
 		<div :class="{
-				'bg-blue-500 hover:bg-blue-600 cursor-pointer': authStore.user?.role_user === 2,
-				'bg-gray-400 cursor-not-allowed': authStore.user?.role_user !== 2
+				'bg-blue-500 hover:bg-blue-600 cursor-pointer': authStore.hasPermission([2]),
+				'bg-gray-400 cursor-not-allowed': !authStore.hasPermission([2])
 			}"
 			class="text-white px-4 py-2 rounded inline-block mb-2">
-			<RouterLink v-if="authStore.user?.role_user === 2" :to="'/ia/new'">
+			<RouterLink v-if="authStore.hasPermission([2])" :to="'/ia/new'">
 				{{ $t('ia.VIasAdd') }}
 			</RouterLink>
 			<span v-else class="pointer-events-none">

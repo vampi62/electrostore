@@ -183,8 +183,8 @@ const labelTableauModalProjet = ref([
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('projetTag.VProjetTagTitle') }}</h2>
-		<TopButtonEditElement :main-config="{ path: '/projet-tags', save: { roleRequired: 0, loading: projetTagsStore.projetTagEdition.loading }, delete: { roleRequired: 0 } }"
-			:id="projetTagId" :store-user="authStore.user" @button-save="projetTagSave" @button-delete="projetTagDeleteModalShow = true"/>
+		<TopButtonEditElement :main-config="{ path: '/projet-tags', save: { roleRequired: authStore.hasPermission([0, 1, 2]), loading: projetTagsStore.projetTagEdition.loading }, delete: { roleRequired: authStore.hasPermission([0, 1, 2]) } }"
+			:id="projetTagId" @button-save="projetTagSave" @button-delete="projetTagDeleteModalShow = true"/>
 	</div>
 	<div v-if="projetTagsStore.projetTags[projetTagId] || projetTagId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">

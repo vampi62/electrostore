@@ -126,26 +126,27 @@ const createSchema = (isChecked) => {
 };
 
 const labelForm = ref([
-	{ key: "nom_camera", label: "camera.VCameraName", type: "text", condition: "session.role_user === 2" },
-	{ key: "url_camera", label: "camera.VCameraURL", type: "text", condition: "session.role_user === 2" },
-	{ key: "check", label: "camera.VCameraCheck", type: "checkbox", model: isChecked, condition: "session.role_user === 2" },
-	{ key: "user_camera", label: "camera.VCameraUser", type: "text", condition: "session.role_user === 2 && form[2].model" },
-	{ key: "mdp_camera", label: "camera.VCameraPassword", type: "password", condition: "session.role_user === 2 && form[2].model" },
+	{ key: "nom_camera", label: "camera.VCameraName", type: "text", condition: "func.hasPermission([2])" },
+	{ key: "url_camera", label: "camera.VCameraURL", type: "text", condition: "func.hasPermission([2])" },
+	{ key: "check", label: "camera.VCameraCheck", type: "checkbox", model: isChecked, condition: "func.hasPermission([2])" },
+	{ key: "user_camera", label: "camera.VCameraUser", type: "text", condition: "func.hasPermission([2]) && form[2].model" },
+	{ key: "mdp_camera", label: "camera.VCameraPassword", type: "password", condition: "func.hasPermission([2]) && form[2].model" },
 ]);
 </script>
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('camera.VCameraTitle') }}</h2>
-		<TopButtonEditElement :main-config="{ path: '/cameras', save: { roleRequired: 2, loading: camerasStore.cameraEdition.loading }, delete: { roleRequired: 2 } }"
+		<TopButtonEditElement :main-config="{ path: '/cameras', save: { roleRequired: authStore.hasPermission([2]), loading: camerasStore.cameraEdition.loading }, delete: { roleRequired: authStore.hasPermission([2]) } }"
 			:optional-config="[
-				{ label: 'camera.VCameraOnOff', roleRequired: 2, bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => cameraUpdateLight(cameraId) },
-				{ label: 'camera.VCameraRefresh', roleRequired: 2, loading: camerasStore.status[cameraId]?.loading, bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => camerasStore.getStatus(cameraId) }
+				{ label: 'camera.VCameraOnOff', roleRequired: authStore.hasPermission([2]), bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => cameraUpdateLight(cameraId) },
+				{ label: 'camera.VCameraRefresh', roleRequired: authStore.hasPermission([2]), loading: camerasStore.status[cameraId]?.loading, bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => camerasStore.getStatus(cameraId) }
 			]"
-			:id="cameraId" :store-user="authStore.user" @button-save="cameraSave" @button-delete="cameraDeleteModalShow = true"/>
+			:id="cameraId" @button-save="cameraSave" @button-delete="cameraDeleteModalShow = true"/>
 	</div>
 	<div v-if="camerasStore.cameras[cameraId] || cameraId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full gap-y-4 gap-x-4">
-			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="camerasStore.cameraEdition" :store-user="authStore.user"/>
+			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="camerasStore.cameraEdition" :store-user="authStore.user"
+				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
 			<div class="flex-1 min-w-64 min-h-80 bg-gray-200 px-4 py-2 rounded">
 				<img :src="camerasStore.stream[cameraId]" alt="Camera Stream" />
 			</div>

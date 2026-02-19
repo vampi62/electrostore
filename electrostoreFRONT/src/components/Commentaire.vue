@@ -22,8 +22,8 @@
 		<div v-for="commentaire in storeData[0]"
 			:key="commentaire[meta.key]" class="flex flex-col border p-4 rounded-lg">
 			<div :class="{
-				'text-right': meta.canEdit && commentaire.id_user === storeData[2].id_user,
-				'text-left': meta.canEdit && commentaire.id_user !== storeData[2].id_user
+				'text-right': meta.canEdit && commentaire.id_user === storeUser.id_user,
+				'text-left': meta.canEdit && commentaire.id_user !== storeUser.id_user
 			}" class="text-sm text-gray-600">
 				<span class="font-semibold">
 					{{ storeData[1][commentaire.id_user].nom_user }} {{
@@ -60,12 +60,12 @@
 				</template>
 				<template v-else>
 					<div :class="{
-						'text-right': commentaire.id_user === storeData[2].id_user,
-						'text-left': commentaire.id_user !== storeData[2].id_user
+						'text-right': commentaire.id_user === storeUser.id_user,
+						'text-left': commentaire.id_user !== storeUser.id_user
 					}">
 						{{ commentaire[meta.contenu] }}
 					</div>
-					<div v-if="meta.canEdit && (commentaire.id_user === storeData[2].id_user || storeData[2].role_user === 1 || storeData[2].role_user === 2)"
+					<div v-if="meta.canEdit && (commentaire.id_user === storeUser.id_user || meta.roleRequired)"
 						class="flex justify-end space-x-2">
 						<button type="button" @click="commentaire.tmp = { ...commentaire }"
 							class="px-3 py-1 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500">
@@ -111,8 +111,7 @@ export default {
 			// This should be an array containing:
 			// [0] - store with all commentaires
 			// [1] - store with all users
-			// [2] - current user session data
-			// [3] - store with configuration data
+			// [2] - store with configuration data
 			default: () => [],
 		},
 		storeFunction: {
@@ -125,6 +124,11 @@ export default {
 				delete: () => Promise.resolve(),
 			}),
 		},
+		storeUser: {
+			type: Object,
+			default: () => ({}),
+			// This should be an object containing the user session data
+		},
 		meta: {
 			type: Object,
 			required: true,
@@ -134,14 +138,15 @@ export default {
 			// - canEdit: boolean indicating if the user can edit comments
 			// - idRessource: identifier for the resource linked to the comment
 			// - link: URL for the resource linked to the comment
+			// - roleRequired: boolean indicating if a specific role is required to edit/delete all comments (not just the user's own comments)
 			default: () => ({
 				key: "id_commentaire",
 				contenu: "contenu_commentaire",
 				canEdit: false,
 				idRessource: "id_ressource",
 				link: "/ressource/",
+				roleRequired: false,
 			}),
-
 		},
 		loading: {
 			type: Boolean,
@@ -195,7 +200,7 @@ export default {
 		schemaCommentaire() {
 			return Yup.object().shape({
 				[this.meta.contenu]: Yup.string()
-					.max(this.storeData[3].getConfigByKey("max_length_commentaire"), this.$t("components.VModalCommentaireMaxLength") + " " + this.storeData[3].getConfigByKey("max_length_commentaire") + this.$t("common.VAllCaracters"))
+					.max(this.storeData[2].getConfigByKey("max_length_commentaire"), this.$t("components.VModalCommentaireMaxLength") + " " + this.storeData[2].getConfigByKey("max_length_commentaire") + this.$t("common.VAllCaracters"))
 					.required(this.$t("components.VModalCommentaireRequired")),
 			});
 		},

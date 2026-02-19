@@ -323,10 +323,10 @@ const labelTableauModalItem = ref([
 	] },
 ]);
 const labelForm = ref([
-	{ key: "nom_store", label: "store.VStoreName", tledEditionype: "text", condition: "session?.role_user === 2" },
-	{ key: "mqtt_name_store", label: "store.VStoreMQTTName", type: "text", condition: "session?.role_user === 2" },
-	{ key: "xlength_store", label: "store.VStoreXLength", type: "number", condition: "session?.role_user === 2" },
-	{ key: "ylength_store", label: "store.VStoreYLength", type: "number", condition: "session?.role_user === 2" },
+	{ key: "nom_store", label: "store.VStoreName", tledEditionype: "text", condition: "func.hasPermission([2])" },
+	{ key: "mqtt_name_store", label: "store.VStoreMQTTName", type: "text", condition: "func.hasPermission([2])" },
+	{ key: "xlength_store", label: "store.VStoreXLength", type: "number", condition: "func.hasPermission([2])" },
+	{ key: "ylength_store", label: "store.VStoreYLength", type: "number", condition: "func.hasPermission([2])" },
 ]);
 const labelTableauModalTag = ref([
 	{ label: "store.VStoreTagName", sortable: true, key: "nom_tag", type: "text" },
@@ -353,13 +353,14 @@ const labelTableauModalTag = ref([
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('store.VStoreTitle') }}</h2>
-		<TopButtonEditElement :main-config="{ path: '/stores', save: { roleRequired: 2, loading: storesStore.storeEdition[storeId]?.loading }, delete: { roleRequired: 2 } }"
+		<TopButtonEditElement :main-config="{ path: '/stores', save: { roleRequired: authStore.hasPermission([2]), loading: storesStore.storeEdition[storeId]?.loading }, delete: { roleRequired: authStore.hasPermission([2]) } }"
 			:id="storeId" :store-user="authStore.user" @button-save="storeSave" @button-delete="storeDeleteModalShow = true"/>
 	</div>
 	<div v-if="storesStore.stores[storeId] || storeId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="storesStore.storeEdition[storeId] || {}" :store-user="authStore.user"/>
-			<Tags :current-tags="storesStore.storeTags[storeId] || {}" :tags-store="tagsStore.tags" :can-edit="storeId !== 'new' && authStore.user.role_user >= 1"
+			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="storesStore.storeEdition[storeId] || {}" :store-user="authStore.user"
+				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
+			<Tags :current-tags="storesStore.storeTags[storeId] || {}" :tags-store="tagsStore.tags" :can-edit="storeId !== 'new' && authStore.hasPermission([1, 2])"
 				:delete-function="(value) => tagDelete(value)"
 				:fetch-function="(offset, limit) => tagsStore.getTagByInterval(limit, offset)"
 				:total-count="Number(tagsStore.tagsTotalCount || 0)"
@@ -375,7 +376,7 @@ const labelTableauModalTag = ref([
 					:store-data="storesStore.storeEdition[storeId] || {}"
 					:led-edition="storesStore.ledEdition[storeId] || {}"
 					:box-edition="storesStore.boxEdition[storeId] || {}"
-					:can-edit="storeId !== 'new' && authStore.user?.role_user === 2"
+					:can-edit="storeId !== 'new' && authStore.hasPermission([2])"
 					:store-func="{ showLedById: (id,data) => storesStore.showLedById(storeId, id, data), showBoxById: (id,data) => storesStore.showBoxById(storeId, id, data) }"
 					@open-box-content="(id) => showBoxContent(id)"
 				/>

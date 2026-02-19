@@ -20,7 +20,7 @@ const commandsStore = useCommandsStore();
 const projetsStore = useProjetsStore();
 const authStore = useAuthStore();
 
-if (authStore.user?.role_user !== 2 && authStore.user?.role_user !== 1 && authStore.user?.id_user !== Number(userId.value)) {
+if ((!authStore.hasPermission([1, 2])) && authStore.user?.id_user !== Number(userId.value)) {
 	addNotification({ message: "vous n'avez pas la permission d'acceder a cette page", type: "error", i18n: false });
 	if (window.history.length > 1) {
 		router.back();
@@ -157,17 +157,17 @@ const createSchema = (isChecked) => {
 };
 
 const labelForm = ref([
-	{ key: "nom_user", label: "user.VUserName", type: "text", condition: "edition?.id_user === session?.id_user || session?.role_user === 2" },
-	{ key: "prenom_user", label: "user.VUserFirstName", type: "text", condition: "edition?.id_user === session?.id_user || session?.role_user === 2" },
-	{ key: "email_user", label: "user.VUserEmail", type: "text", condition: "edition?.id_user === session?.id_user || session?.role_user === 2" },
-	{ key: "role_user", label: "user.VUserRole", type: "select", options: userTypeRole, condition: "session?.role_user === 2" },
+	{ key: "nom_user", label: "user.VUserName", type: "text", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+	{ key: "prenom_user", label: "user.VUserFirstName", type: "text", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+	{ key: "email_user", label: "user.VUserEmail", type: "text", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+	{ key: "role_user", label: "user.VUserRole", type: "select", options: userTypeRole, condition: "func.hasPermission([2])" },
 ]);
 if (!authStore.isSSOUser || authStore.user?.id_user !== Number(userId.value)) {
 	labelForm.value.push(
-		{ key: "check", label: "user.VUserCheck", type: "checkbox", model: isChecked, condition: "edition?.id_user === session?.id_user || session?.role_user === 2" },
-		{ key: "mdp_user", label: "user.VUserPassword", type: "password", condition: "(edition?.id_user === session?.id_user || session?.role_user === 2) && form[4].model" },
-		{ key: "confirm_mdp_user", label: "user.VUserConfirmPassword", type: "password", condition: "(edition?.id_user === session?.id_user || session?.role_user === 2) && form[4].model" },
-		{ key: "current_mdp_user", label: "user.VUserCurrentPassword", type: "password", condition: "edition?.id_user === session?.id_user || session?.role_user === 2" },
+		{ key: "check", label: "user.VUserCheck", type: "checkbox", model: isChecked, condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+		{ key: "mdp_user", label: "user.VUserPassword", type: "password", condition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && form[4].model" },
+		{ key: "confirm_mdp_user", label: "user.VUserConfirmPassword", type: "password", condition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && form[4].model" },
+		{ key: "current_mdp_user", label: "user.VUserCurrentPassword", type: "password", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 	);
 }
 
@@ -197,12 +197,13 @@ const labelTableauSession = ref([
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('user.VUserTitle') }}</h2>
-		<TopButtonEditElement :main-config="{ path: '/users', save: { sameUserId: true, roleRequired: 1, loading: usersStore.userEdition.loading }, delete: { sameUserId: true, roleRequired: 1 } }"
+		<TopButtonEditElement :main-config="{ path: '/users', save: { sameUserId: true, roleRequired: authStore.hasPermission([1, 2]), loading: usersStore.userEdition.loading }, delete: { sameUserId: true, roleRequired: authStore.hasPermission([1, 2]) } }"
 			:id="userId" :store-user="authStore.user" @button-save="userSave" @button-delete="userDeleteModalShow = true"/>
 	</div>
 	<div v-if="usersStore.users[userId] || userId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="usersStore.userEdition" :store-user="authStore.user"/>
+			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="usersStore.userEdition" :store-user="authStore.user"
+				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
 		</div>
 		<CollapsibleSection title="user.VUserParticipation"
 			:id-page="userId">
@@ -210,8 +211,9 @@ const labelTableauSession = ref([
 				<CollapsibleSection title="user.VUserCommandsCommentaires" :disable-margin="true"
 					:total-count="Number(usersStore.commandsCommentaireTotalCount[userId] || 0)" :id-page="userId">
 					<template #append-row>
-						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: false }"
-							:store-data="[usersStore.commandsCommentaire[userId],usersStore.users,authStore.user,configsStore]"
+						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: false, roleRequired: false }"
+							:store-data="[usersStore.commandsCommentaire[userId], usersStore.users, configsStore]"
+							:store-user="authStore.user"
 							:loading="usersStore.commandsCommentaireLoading"
 							:total-count="Number(usersStore.commandsCommentaireTotalCount[userId]) || 0"
 							:loaded-count="Object.keys(usersStore.commandsCommentaire[userId] || {}).length"
@@ -222,8 +224,9 @@ const labelTableauSession = ref([
 				<CollapsibleSection title="user.VUserProjetsCommentaires" :disable-margin="true"
 					:total-count="Number(usersStore.projetsCommentaireTotalCount[userId] || 0)" :id-page="userId">
 					<template #append-row>
-						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: false }"
-							:store-data="[usersStore.projetsCommentaire[userId],usersStore.users,authStore.user,configsStore]"
+						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: false, roleRequired: false }"
+							:store-data="[usersStore.projetsCommentaire[userId], usersStore.users, configsStore]"
+							:store-user="authStore.user"
 							:loading="usersStore.projetsCommentaireLoading"
 							:total-count="Number(usersStore.projetsCommentaireTotalCount[userId]) || 0"
 							:loaded-count="Object.keys(usersStore.projetsCommentaire[userId] || {}).length"

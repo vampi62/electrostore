@@ -411,8 +411,8 @@ const labelTableauModalItem = ref([
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('command.VCommandTitle') }}</h2>
-		<TopButtonEditElement :main-config="{ path: '/commands', save: { roleRequired: 0, loading: commandsStore.commandEdition.loading }, delete: { roleRequired: 0 } }"
-			:id="commandId" :store-user="authStore.user" @button-save="commandSave" @button-delete="commandDeleteModalShow = true"/>
+		<TopButtonEditElement :main-config="{ path: '/commands', save: { roleRequired: authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition.loading }, delete: { roleRequired: authStore.hasPermission([0, 1, 2]) } }"
+			:id="commandId" @button-save="commandSave" @button-delete="commandDeleteModalShow = true"/>
 	</div>
 	<div v-if="commandsStore.commands[commandId] || commandId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
@@ -458,8 +458,9 @@ const labelTableauModalItem = ref([
 		<CollapsibleSection title="command.VCommandCommentaires"
 			:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)" :id-page="commandId">
 			<template #append-row>
-				<Commentaire :meta="{ contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: true }"
-					:store-data="[commandsStore.commentaires[commandId],usersStore.users,authStore.user,configsStore]"
+				<Commentaire :meta="{ contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: true, roleRequired: authStore.hasPermission([1, 2]) }"
+					:store-data="[commandsStore.commentaires[commandId], usersStore.users, configsStore]"
+					:store-user="authStore.user"
 					:store-function="{ create: (data) => commandsStore.createCommentaire(commandId, data), update: (id, data) => commandsStore.updateCommentaire(commandId, id, data), delete: (id) => commandsStore.deleteCommentaire(commandId, id) }"
 					:loading="commandsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'command.VCommandCommentDeleteTitle', textP: 'command.VCommandCommentDeleteText' }"
 					:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)"
