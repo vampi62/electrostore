@@ -66,10 +66,7 @@ const tableauMeta = ref({
 	key: "id_item",
 	path: "/inventory/",
 });
-const filteredItems = ref([]);
-const updateFilteredItems = (newValue) => {
-	filteredItems.value = newValue;
-};
+document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
 
 <template>
@@ -83,10 +80,11 @@ const updateFilteredItems = (newValue) => {
 				{{ $t('item.VInventoryAdd') }}
 			</RouterLink>
 		</div>
-		<FilterContainer :filters="filter" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
+		<FilterContainer :filters="filter" :store-data="itemsStore.items" />
 	</div>
 	<Tableau :labels="tableauLabel" :meta="tableauMeta"
-		:store-data="[filteredItems,itemsStore.itemTags,tagsStore.tags,itemsStore.thumbnailsURL,itemsStore.items]"
+		:store-data="[itemsStore.items,itemsStore.itemTags,tagsStore.tags,itemsStore.thumbnailsURL,itemsStore.items]"
+		:filters="filter"
 		:loading="itemsStore.itemsLoading"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>

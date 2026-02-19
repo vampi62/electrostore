@@ -123,10 +123,6 @@ const itemDelete = async(item) => {
 	}
 };
 
-const filteredItems = ref([]);
-const updateFilteredItems = (newValue) => {
-	filteredItems.value = newValue;
-};
 const filterItem = ref([
 	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("tag.VTagItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
@@ -167,10 +163,6 @@ const storeDelete = async(store) => {
 	}
 };
 
-const filteredStores = ref([]);
-const updateFilteredStores = (newValue) => {
-	filteredStores.value = newValue;
-};
 const filterStore = ref([
 	{ key: "nom_store", value: "", type: "text", label: "", placeholder: t("tag.VTagStoreFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
@@ -290,6 +282,7 @@ const labelTableauModalStore = ref([
 		},
 	] },
 ]);
+document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
 
 <template>
@@ -313,7 +306,6 @@ const labelTableauModalStore = ref([
 					:store-data="[tagsStore.tagsItem[tagId],itemsStore.items]"
 					:loading="tagsStore.tagsItemLoading"
 					:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)"
-					:loaded-count="Object.keys(tagsStore.tagsItem[tagId] || {}).length"
 					:fetch-function="(offset, limit) => tagsStore.getTagItemByInterval(tagId, limit, offset, ['item'])"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
@@ -330,7 +322,6 @@ const labelTableauModalStore = ref([
 					:store-data="[tagsStore.tagsStore[tagId],storesStore.stores]"
 					:loading="tagsStore.tagsStoreLoading"
 					:total-count="Number(tagsStore.tagsStoreTotalCount[tagId] || 0)"
-					:loaded-count="Object.keys(tagsStore.tagsStore[tagId] || {}).length"
 					:fetch-function="(offset, limit) => tagsStore.getTagStoreByInterval(tagId, limit, offset, ['store'])"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
@@ -347,7 +338,6 @@ const labelTableauModalStore = ref([
 					:store-data="[tagsStore.tagsBox[tagId],storesStore.boxs]"
 					:loading="tagsStore.tagsBoxLoading"
 					:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)"
-					:loaded-count="Object.keys(tagsStore.tagsBox[tagId] || {}).length"
 					:fetch-function="(offset, limit) => tagsStore.getTagBoxByInterval(tagId, limit, offset, ['box'])"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
@@ -371,11 +361,12 @@ const labelTableauModalStore = ref([
 			</div>
 
 			<!-- Filtres -->
-			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
+			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" />
 
 			<!-- Tableau Items -->
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
-				:store-data="[filteredItems, tagsStore.tagsItem[tagId]]"
+				:store-data="[itemsStore.items, tagsStore.tagsItem[tagId]]"
+				:filters="filterItem"
 				:loading="tagsStore.tagsItemLoading"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
@@ -392,11 +383,12 @@ const labelTableauModalStore = ref([
 			</div>
 
 			<!-- Filtres -->
-			<FilterContainer class="my-4 flex gap-4" :filters="filterStore" :store-data="storesStore.stores" @output-filter="updateFilteredStores" />
+			<FilterContainer class="my-4 flex gap-4" :filters="filterStore" :store-data="storesStore.stores" />
 
 			<!-- Tableau Stores -->
 			<Tableau :labels="labelTableauModalStore" :meta="{ key: 'id_store' }"
-				:store-data="[filteredStores, tagsStore.tagsStore[tagId]]"
+				:store-data="[storesStore.stores, tagsStore.tagsStore[tagId]]"
+				:filters="filterStore"
 				:loading="tagsStore.tagsStoreLoading"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>

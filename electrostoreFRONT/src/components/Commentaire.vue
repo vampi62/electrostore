@@ -111,7 +111,6 @@ export default {
 			// This should be an array containing:
 			// [0] - store with all commentaires
 			// [1] - store with all users
-			// [2] - store with configuration data
 			default: () => [],
 		},
 		storeFunction: {
@@ -128,6 +127,11 @@ export default {
 			type: Object,
 			default: () => ({}),
 			// This should be an object containing the user session data
+		},
+		storeConfig: {
+			type: Object,
+			default: () => ({}),
+			// This should be an object containing the configuration store, used to get max length for validation
 		},
 		meta: {
 			type: Object,
@@ -152,10 +156,6 @@ export default {
 			type: Boolean,
 			default: true,
 			// Indicates if the component is loading data
-		},
-		loadedCount: {
-			type: Number,
-			default: 0,
 		},
 		totalCount: {
 			type: Number,
@@ -182,6 +182,9 @@ export default {
 		Field,
 		ModalDeleteConfirm: defineAsyncComponent(() => import("@/components/ModalDeleteConfirm.vue")),
 	},
+	created() {
+		this.loadNext;
+	},
 	setup() {
 		const { addNotification } = inject("useNotification"); 
 		return {
@@ -194,13 +197,16 @@ export default {
 			selectedCommentaire: null,
 			deleteModalShow: false,
 			createLoading: false,
+			nextOffset: 0,
+			hasMore: true,
+			isInitializing: true,
 		};
 	},
 	computed: {
 		schemaCommentaire() {
 			return Yup.object().shape({
 				[this.meta.contenu]: Yup.string()
-					.max(this.storeData[2].getConfigByKey("max_length_commentaire"), this.$t("components.VModalCommentaireMaxLength") + " " + this.storeData[2].getConfigByKey("max_length_commentaire") + this.$t("common.VAllCaracters"))
+					.max(this.storeConfig.getConfigByKey("max_length_commentaire"), this.$t("components.VModalCommentaireMaxLength") + " " + this.storeConfig.getConfigByKey("max_length_commentaire") + this.$t("common.VAllCaracters"))
 					.required(this.$t("components.VModalCommentaireRequired")),
 			});
 		},
@@ -255,17 +261,14 @@ export default {
 			this.deleteModalShow = false;
 		},
 		async loadNext(e) {
-			if (this.totalCount === 0) {
-				return;
-			}
-			if (this.loading) {
+			if (this.totalCount === 0 || this.loading || !this.hasMore) {
 				return;
 			}
 			if (e.target.scrollTop + e.target.clientHeight >= e.target.scrollHeight - 10) {
-				if (this.totalCount === this.loadedCount) {
+				if (this.totalCount === this.nextOffset) {
 					return;
 				}
-				await this.fetchFunction(this.loadedCount + 100, this.loadedCount);
+				[this.nextOffset, this.hasMore] = await this.fetchFunction(this.nextOffset, 100);
 			}
 		},
 	},

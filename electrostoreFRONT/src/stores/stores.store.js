@@ -41,9 +41,11 @@ export const useStoresStore = defineStore("stores",{
 	actions: {
 		async getStoreByList(idResearch = [], expand = []) {
 			this.storesLoading = true;
+			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = [idResearchString, expandString].filter((str) => str).join("&");
 			const newStoreList = await fetchWrapper.get({
-				url: `${baseUrl}/store?&idResearch=${idResearch}&${expandString}`,
+				url: `${baseUrl}/store?${paramString}`,
 				useToken: "access",
 			});
 			for (const store of newStoreList["data"]) {
@@ -73,11 +75,19 @@ export const useStoresStore = defineStore("stores",{
 			this.storesTotalCount = newStoreList["count"];
 			this.storesLoading = false;
 		},
-		async getStoreByInterval(limit = 100, offset = 0, expand = []) {
+		async getStoreByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			this.storesLoading = true;
+			if (clear) {
+				this.stores = {};
+			}
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newStoreList = await fetchWrapper.get({
-				url: `${baseUrl}/store?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/store?${paramString}`,
 				useToken: "access",
 			});
 			for (const store of newStoreList["data"]) {
@@ -177,14 +187,19 @@ export const useStoresStore = defineStore("stores",{
 			});
 		},
 
-		async getBoxByInterval(idStore, limit = 100, offset = 0, expand = []) {
-			if (!this.boxs[idStore]) {
+		async getBoxByInterval(idStore, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.boxs[idStore] || clear) {
 				this.boxs[idStore] = {};
 			}
 			this.boxsLoading = true;
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newBoxList = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/box?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/store/${idStore}/box?${paramString}`,
 				useToken: "access",
 			});
 			for (const box of newBoxList["data"]) {
@@ -313,13 +328,19 @@ export const useStoresStore = defineStore("stores",{
 			});
 		},
 
-		async getLedByInterval(idStore, limit = 100, offset = 0) {
-			if (!this.leds[idStore]) {
+		async getLedByInterval(idStore, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.leds[idStore] || clear) {
 				this.leds[idStore] = {};
 			}
 			this.ledsLoading = true;
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newLedList = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/led?limit=${limit}&offset=${offset}`,
+				url: `${baseUrl}/store/${idStore}/led?${paramString}`,
 				useToken: "access",
 			});
 			for (const led of newLedList["data"]) {
@@ -419,15 +440,20 @@ export const useStoresStore = defineStore("stores",{
 			});
 		},
 
-		async getTagStoreByInterval(idStore, limit = 100, offset = 0, expand = []) {
-			if (!this.storeTags[idStore]) {
+		async getTagStoreByInterval(idStore, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.storeTags[idStore] || clear) {
 				this.storeTags[idStore] = {};
 			}
 			const tagsStore = useTagsStore();
 			this.storeTagsLoading = true;
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newTagList = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/tag?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/store/${idStore}/tag?${paramString}`,
 				useToken: "access",
 			});
 			for (const tag of newTagList["data"]) {
@@ -505,36 +531,20 @@ export const useStoresStore = defineStore("stores",{
 			}
 		},
 
-		async getBoxItemByList(idStore, idBox, idResearch = [], expand = []) {
-			if (!this.boxItems[idBox]) {
+		async getBoxItemByInterval(idStore, idBox, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.boxItems[idBox] || clear) {
 				this.boxItems[idBox] = {};
 			}
 			this.boxItemsLoading = true;
 			const itemsStore = useItemsStore();
-			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newItemList = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/box/${idBox}/item?${idResearchString}&${expandString}`,
-				useToken: "access",
-			});
-			for (const item of newItemList["data"]) {
-				this.boxItems[idBox][item.id_item] = item;
-				if (expand.includes("item")) {
-					itemsStore.items[item.id_item] = item.item;
-				}
-			}
-			this.boxItemsTotalCount[idBox] = newItemList["count"];
-			this.boxItemsLoading = false;
-		},
-		async getBoxItemByInterval(idStore, idBox, limit = 100, offset = 0, expand = []) {
-			if (!this.boxItems[idBox]) {
-				this.boxItems[idBox] = {};
-			}
-			this.boxItemsLoading = true;
-			const itemsStore = useItemsStore();
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const newItemList = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/box/${idBox}/item?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/store/${idStore}/box/${idBox}/item?${paramString}`,
 				useToken: "access",
 			});
 			for (const item of newItemList["data"]) {
@@ -596,15 +606,20 @@ export const useStoresStore = defineStore("stores",{
 			delete this.boxItems[idBox][id];
 		},
 
-		async getBoxTagByInterval(idStore, idBox, limit = 100, offset = 0, expand = []) {
-			if (!this.boxTags[idBox]) {
+		async getBoxTagByInterval(idStore, idBox, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.boxTags[idBox] || clear) {
 				this.boxTags[idBox] = {};
 			}
 			this.boxTagsLoading = true;
 			const tagsStore = useTagsStore();
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newTagList = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/box/${idBox}/tag?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/store/${idStore}/box/${idBox}/tag?${paramString}`,
 				useToken: "access",
 			});
 			for (const tag of newTagList["data"]) {

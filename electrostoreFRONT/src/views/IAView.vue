@@ -112,6 +112,7 @@ const labelForm = [
 	{ key: "nom_ia", label: "ia.VIaName", type: "text", condition: "func.hasPermission([2])" },
 	{ key: "description_ia", label: "ia.VIaDescription", type: "textarea", rows: 4, condition: "func.hasPermission([2])" },
 ];
+document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
 
 <template>

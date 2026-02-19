@@ -199,10 +199,6 @@ const itemDelete = async(item) => {
 	}
 };
 
-const filteredItems = ref([]);
-const updateFilteredItems = (newValue) => {
-	filteredItems.value = newValue;
-};
 const filterItem = ref([
 	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("command.VCommandItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
@@ -407,6 +403,7 @@ const labelTableauModalItem = ref([
 		},
 	] },
 ]);
+document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
 <template>
 	<div class="flex items-center justify-between mb-4">
@@ -432,7 +429,6 @@ const labelTableauModalItem = ref([
 					:store-data="[commandsStore.documents[commandId]]"
 					:loading="commandsStore.documentsLoading"
 					:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)"
-					:loaded-count="Object.keys(commandsStore.documents[commandId] || {}).length"
 					:fetch-function="(offset, limit) => commandsStore.getDocumentByInterval(commandId, limit, offset)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
@@ -449,7 +445,6 @@ const labelTableauModalItem = ref([
 					:store-data="[commandsStore.items[commandId],itemsStore.items]"
 					:loading="commandsStore.itemsLoading" :schema="schemaItem"
 					:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)"
-					:loaded-count="Object.keys(commandsStore.items[commandId] || {}).length"
 					:fetch-function="(offset, limit) => commandsStore.getItemByInterval(commandId, limit, offset, ['item'])"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
@@ -459,12 +454,11 @@ const labelTableauModalItem = ref([
 			:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)" :id-page="commandId">
 			<template #append-row>
 				<Commentaire :meta="{ contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: true, roleRequired: authStore.hasPermission([1, 2]) }"
-					:store-data="[commandsStore.commentaires[commandId], usersStore.users, configsStore]"
-					:store-user="authStore.user"
+					:store-data="[commandsStore.commentaires[commandId], usersStore.users]"
+					:store-user="authStore.user" :store-config="configsStore"
 					:store-function="{ create: (data) => commandsStore.createCommentaire(commandId, data), update: (id, data) => commandsStore.updateCommentaire(commandId, id, data), delete: (id) => commandsStore.deleteCommentaire(commandId, id) }"
 					:loading="commandsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'command.VCommandCommentDeleteTitle', textP: 'command.VCommandCommentDeleteText' }"
 					:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)"
-					:loaded-count="Object.keys(commandsStore.commentaires[commandId] || {}).length"
 					:fetch-function="(offset, limit) => commandsStore.getCommentaireByInterval(commandId, limit, offset, ['user'])"
 				/>
 			</template>
@@ -500,11 +494,12 @@ const labelTableauModalItem = ref([
 			</div>
 
 			<!-- Filtres -->
-			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
+			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" />
 
 			<!-- Tableau Items -->
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
-				:store-data="[filteredItems,commandsStore.items[commandId]]"
+				:store-data="[itemsStore.items,commandsStore.items[commandId]]"
+				:filters="filterItem"
 				:loading="commandsStore.itemsLoading" :schema="schemaItem"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>

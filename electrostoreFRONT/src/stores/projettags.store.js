@@ -23,8 +23,9 @@ export const useProjetTagsStore = defineStore("projetTags",{
 			this.projetTagsLoading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = [idResearchString, expandString].filter((str) => str).join("&");
 			const newProjetTagList = await fetchWrapper.get({
-				url: `${baseUrl}/projet-tag?${idResearchString}&${expandString}`,
+				url: `${baseUrl}/projet-tag?${paramString}`,
 				useToken: "access",
 			});
 			for (const projetTag of newProjetTagList["data"]) {
@@ -40,11 +41,19 @@ export const useProjetTagsStore = defineStore("projetTags",{
 			this.projetTagsTotalCount = newProjetTagList["count"];
 			this.projetTagsLoading = false;
 		},
-		async getProjetTagByInterval(limit = 100, offset = 0, expand = []) {
+		async getProjetTagByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			this.projetTagsLoading = true;
+			if (clear) {
+				this.projetTags = {};
+			}
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newProjetTagList = await fetchWrapper.get({
-				url: `${baseUrl}/projet-tag?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/projet-tag?${paramString}`,
 				useToken: "access",
 			});
 			for (const projetTag of newProjetTagList["data"]) {
@@ -114,15 +123,20 @@ export const useProjetTagsStore = defineStore("projetTags",{
 			}
 		},
 
-		async getProjetTagProjetByInterval(idProjetTag, limit = 100, offset = 0, expand = []) {
-			if (!this.projetTagsProjet[idProjetTag]) {
+		async getProjetTagProjetByInterval(idProjetTag, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.projetTagsProjet[idProjetTag] || clear) {
 				this.projetTagsProjet[idProjetTag] = {};
 			}
 			this.projetTagsProjetLoading = true;
 			const projetsStore = useProjetsStore();
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newProjetTagProjetList = await fetchWrapper.get({
-				url: `${baseUrl}/projet-tag/${idProjetTag}/projet?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/projet-tag/${idProjetTag}/projet?${paramString}`,
 				useToken: "access",
 			});
 			this.projetTagsProjetTotalCount[idProjetTag] = newProjetTagProjetList["count"];

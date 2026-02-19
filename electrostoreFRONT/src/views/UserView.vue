@@ -121,7 +121,7 @@ const revokeToken = async(tokenId) => {
 };
 const isCheckedTokens = ref(false);
 function watchIsCheckedTokens() {
-	usersStore.getTokenByInterval(userId.value, 100, 0, isCheckedTokens.value, isCheckedTokens.value);
+	usersStore.getTokenByInterval(userId.value, 100, 0, [], "", "", false, isCheckedTokens.value, isCheckedTokens.value);
 }
 watch(isCheckedTokens, watchIsCheckedTokens);
 
@@ -162,7 +162,7 @@ const labelForm = ref([
 	{ key: "email_user", label: "user.VUserEmail", type: "text", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 	{ key: "role_user", label: "user.VUserRole", type: "select", options: userTypeRole, condition: "func.hasPermission([2])" },
 ]);
-if (!authStore.isSSOUser || authStore.user?.id_user !== Number(userId.value)) {
+if (!authStore.isSSOUser && (authStore.user?.id_user === Number(userId.value) || authStore.hasPermission([2]))) {
 	labelForm.value.push(
 		{ key: "check", label: "user.VUserCheck", type: "checkbox", model: isChecked, condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 		{ key: "mdp_user", label: "user.VUserPassword", type: "password", condition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && form[4].model" },
@@ -192,6 +192,7 @@ const labelTableauSession = ref([
 		},
 	] },
 ]);
+document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
 
 <template>
@@ -212,11 +213,10 @@ const labelTableauSession = ref([
 					:total-count="Number(usersStore.commandsCommentaireTotalCount[userId] || 0)" :id-page="userId">
 					<template #append-row>
 						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: false, roleRequired: false }"
-							:store-data="[usersStore.commandsCommentaire[userId], usersStore.users, configsStore]"
-							:store-user="authStore.user"
+							:store-data="[usersStore.commandsCommentaire[userId], usersStore.users]"
+							:store-user="authStore.user" :store-config="configsStore"
 							:loading="usersStore.commandsCommentaireLoading"
 							:total-count="Number(usersStore.commandsCommentaireTotalCount[userId]) || 0"
-							:loaded-count="Object.keys(usersStore.commandsCommentaire[userId] || {}).length"
 							:fetch-function="(offset, limit) => usersStore.getCommandCommentaireByInterval(userId, limit, offset, ['command'])"
 						/>
 					</template>
@@ -225,11 +225,10 @@ const labelTableauSession = ref([
 					:total-count="Number(usersStore.projetsCommentaireTotalCount[userId] || 0)" :id-page="userId">
 					<template #append-row>
 						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: false, roleRequired: false }"
-							:store-data="[usersStore.projetsCommentaire[userId], usersStore.users, configsStore]"
-							:store-user="authStore.user"
+							:store-data="[usersStore.projetsCommentaire[userId], usersStore.users]"
+							:store-user="authStore.user" :store-config="configsStore"
 							:loading="usersStore.projetsCommentaireLoading"
 							:total-count="Number(usersStore.projetsCommentaireTotalCount[userId]) || 0"
-							:loaded-count="Object.keys(usersStore.projetsCommentaire[userId] || {}).length"
 							:fetch-function="(offset, limit) => usersStore.getProjetCommentaireByInterval(userId, limit, offset, ['projet'])"
 						/>
 					</template>
@@ -250,8 +249,7 @@ const labelTableauSession = ref([
 					:store-data="[usersStore.tokens[userId]]"
 					:loading="usersStore.tokensLoading"
 					:total-count="Number(usersStore.tokensTotalCount[userId]) || 0"
-					:loaded-count="Object.keys(usersStore.tokens[userId] || {}).length"
-					:fetch-function="(offset, limit) => usersStore.getTokenByInterval(userId, limit, offset, isCheckedTokens, isCheckedTokens)"
+					:fetch-function="(offset, limit) => usersStore.getTokenByInterval(userId, limit, offset, [], '', '', false, isCheckedTokens, isCheckedTokens)"
 					:tableau-css="{ component: 'min-h-64 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>

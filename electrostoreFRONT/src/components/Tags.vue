@@ -26,11 +26,12 @@
 				</div>
 
 				<!-- Filtres -->
-				<FilterContainer class="my-4 flex gap-4" :filters="filterModal" :store-data="tagsStore" @output-filter="updateFilteredTags" />
+				<FilterContainer class="my-4 flex gap-4" :filters="filterModal" :store-data="tagsStore" />
 
 				<!-- Tableau Items -->
 				<Tableau :labels="tableauModal['label']" :meta="tableauModal['meta']"
-					:store-data="[filteredTags, currentTags, ...otherStore]"
+					:store-data="[tagsStore, currentTags, ...otherStore]"
+					:filter="filterModal"
 					:loading="tableauModal['loading']"
 					:tableau-css="tableauModal['css']"
 				/>
@@ -102,7 +103,6 @@ export default {
 		return {
 			tagModalShow: false,
 			tagLoad: false,
-			filteredTags: [],
 		};
 	},
 	methods: {
@@ -120,9 +120,6 @@ export default {
 			if (!this.tagLoad) {
 				this.fetchAllTags();
 			}
-		},
-		updateFilteredTags(newValue) {
-			this.filteredTags = newValue;
 		},
 	},
 };

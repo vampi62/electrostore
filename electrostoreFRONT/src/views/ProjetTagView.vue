@@ -120,10 +120,6 @@ const projetDelete = async(projet) => {
 	}
 };
 
-const filteredProjets = ref([]);
-const updateFilteredProjets = (newValue) => {
-	filteredProjets.value = newValue;
-};
 const filterProjet = ref([
 	{ key: "nom_projet", value: "", type: "text", label: "", placeholder: t("projetTag.VProjetTagProjetFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
@@ -178,6 +174,7 @@ const labelTableauModalProjet = ref([
 		},
 	] },
 ]);
+document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
 
 <template>
@@ -201,7 +198,6 @@ const labelTableauModalProjet = ref([
 					:store-data="[projetTagsStore.projetTagsProjet[projetTagId],projetsStore.projets]"
 					:loading="projetTagsStore.projetTagsProjetLoading"
 					:total-count="Number(projetTagsStore.projetTagsProjetTotalCount[projetTagId] || 0)"
-					:loaded-count="Object.keys(projetTagsStore.projetTagsProjet[projetTagId] || {}).length"
 					:fetch-function="(offset, limit) => projetTagsStore.getProjetTagProjetByInterval(projetTagId, limit, offset, ['projet'])"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
@@ -225,11 +221,12 @@ const labelTableauModalProjet = ref([
 			</div>
 
 			<!-- Filtres -->
-			<FilterContainer class="my-4 flex gap-4" :filters="filterProjet" :store-data="projetsStore.projets" @output-filter="updateFilteredProjets" />
+			<FilterContainer class="my-4 flex gap-4" :filters="filterProjet" :store-data="projetsStore.projets" />
 
 			<!-- Tableau Projets -->
 			<Tableau :labels="labelTableauModalProjet" :meta="{ key: 'id_projet' }"
-				:store-data="[filteredProjets, projetTagsStore.projetTagsProjet[projetTagId]]"
+				:store-data="[projetsStore.projets, projetTagsStore.projetTagsProjet[projetTagId]]"
+				:filters="filterProjet"
 				:loading="projetTagsStore.projetTagsProjetLoading"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>

@@ -233,10 +233,6 @@ const itemDelete = async(item) => {
 	}
 };
 
-const filteredItems = ref([]);
-const updateFilteredItems = (newValue) => {
-	filteredItems.value = newValue;
-};
 const filterItem = ref([
 	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("store.VStoreItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
@@ -349,6 +345,7 @@ const labelTableauModalTag = ref([
 		},
 	] },
 ]);
+document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
 <template>
 	<div class="flex items-center justify-between mb-4">
@@ -392,7 +389,6 @@ const labelTableauModalTag = ref([
 						:store-data="[storesStore.boxItems[boxId],itemsStore.items,itemsStore.thumbnailsURL]"
 						:loading="storesStore.boxItemsLoading"
 						:total-count="Number(storesStore.boxItemsTotalCount[boxId] || 0)"
-						:loaded-count="Object.keys(storesStore.boxItems[boxId] || {}).length"
 						:fetch-function="(offset, limit) => storesStore.getBoxItems(storeId, boxId, offset, limit)"
 						:tableau-css="{ component: 'max-h-80', tr: 'transition duration-150 ease-in-out cursor-pointer hover:bg-gray-300 even:bg-gray-100' }"
 					>
@@ -427,11 +423,12 @@ const labelTableauModalTag = ref([
 			</div>
 
 			<!-- Filtres -->
-			<FilterContainer class="my-4 flex gap-4" :filters="filterTag" :store-data="tagsStore.tags" @output-filter="updateFilteredTags" />
+			<FilterContainer class="my-4 flex gap-4" :filters="filterTag" :store-data="tagsStore.tags" />
 
 			<!-- Tableau Items -->
 			<Tableau :labels="labelTableauModalTag" :meta="{ key: 'id_tag' }"
-				:store-data="[filteredTags,storesStore.storeTags[storeId]]"
+				:store-data="[tagsStore.tags,storesStore.storeTags[storeId]]"
+				:filters="filterTag"
 				:loading="tagsStore.tagsLoading"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
@@ -447,10 +444,11 @@ const labelTableauModalTag = ref([
 					class="text-gray-500 hover:text-gray-700">&times;</button>
 			</div>
 
-			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
+			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" />
 
 			<Tableau id="storeItemTable" :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
-				:store-data="[filteredItems,storesStore.boxItems[boxId]]"
+				:store-data="[itemsStore.items,storesStore.boxItems[boxId]]"
+				:filters="filterItem"
 				:loading="itemsStore.itemsLoading" :schema="schemaItem"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>

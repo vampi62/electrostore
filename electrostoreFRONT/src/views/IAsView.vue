@@ -35,10 +35,7 @@ const tableauMeta = ref({
 	key: "id_ia",
 	path: "/ia/",
 });
-const filteredIas = ref([]);
-const updateFilteredIas = (newValue) => {
-	filteredIas.value = newValue;
-};
+document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
 
 <template>
@@ -58,10 +55,11 @@ const updateFilteredIas = (newValue) => {
 				{{ $t('ia.VIasAdd') }}
 			</span>
 		</div>
-		<FilterContainer :filters="filter" :store-data="IAStore.ias" @output-filter="updateFilteredIas" />
+		<FilterContainer :filters="filter" :store-data="IAStore.ias" />
 	</div>
 	<Tableau :labels="tableauLabel" :meta="tableauMeta"
-		:store-data="[filteredIas]"
+		:store-data="[IAStore.ias]"
+		:filters="filter"
 		:loading="IAStore.loading"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>

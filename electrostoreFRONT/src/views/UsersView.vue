@@ -44,10 +44,7 @@ const tableauMeta = ref({
 	key: "id_user",
 	path: "/users/",
 });
-const filteredUsers = ref([]);
-const updateFilteredUsers = (newValue) => {
-	filteredUsers.value = newValue;
-};
+document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
 
 <template>
@@ -67,11 +64,14 @@ const updateFilteredUsers = (newValue) => {
 				{{ $t('user.VUsersAdd') }}
 			</span>
 		</div>
-		<FilterContainer :filters="filter" :store-data="usersStore.users" @output-filter="updateFilteredUsers" />
+		<FilterContainer :filters="filter" :store-data="usersStore.users" />
 	</div>
 	<Tableau :labels="tableauLabel" :meta="tableauMeta"
-		:store-data="[filteredUsers]"
+		:store-data="[usersStore.users]"
+		:filters="filter"
 		:loading="usersStore.usersLoading"
+		:total-count="Number(usersStore.usersTotalCount) || 0"
+		:fetch-function="(offset, limit, expand, filter, sort, clear) => usersStore.getUserByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

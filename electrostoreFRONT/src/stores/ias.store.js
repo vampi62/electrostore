@@ -16,8 +16,9 @@ export const useIasStore = defineStore("ias", {
 		async getIaByList(idResearch = []) {
 			this.loading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
+			const paramString = [idResearchString].filter((str) => str).join("&");
 			const newIaList = await fetchWrapper.get({
-				url: `${baseUrl}/ia?${idResearchString}`,
+				url: `${baseUrl}/ia?${paramString}`,
 				useToken: "access",
 			});
 			for (const ia of newIaList["data"]) {
@@ -26,10 +27,19 @@ export const useIasStore = defineStore("ias", {
 			this.TotalCount = newIaList["count"];
 			this.loading = false;
 		},
-		async getIaByInterval(limit = 100, offset = 0) {
+		async getIaByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			this.loading = true;
+			if (clear) {
+				this.ias = {};
+			}
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newIaList = await fetchWrapper.get({
-				url: `${baseUrl}/ia?limit=${limit}&offset=${offset}`,
+				url: `${baseUrl}/ia?${paramString}`,
 				useToken: "access",
 			});
 			for (const ia of newIaList["data"]) {

@@ -465,6 +465,7 @@ const labelTableauProjet = ref([
 	{ label: "item.VItemProjetStatus", sortable: true, key: "status_projet", keyStore: "id_projet", store: "1", type: "text" },
 	{ label: "item.VItemProjetQte", sortable: true, key: "qte_projet_item", type: "number" },
 ]);
+document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
 
 <template>
@@ -512,7 +513,6 @@ const labelTableauProjet = ref([
 					:store-data="[itemsStore.itemBoxs[itemId]]"
 					:loading="itemsStore.itemBoxsLoading" :schema="schemaBox"
 					:total-count="Number(itemsStore.itemBoxsTotalCount[itemId])"
-					:loaded-count="Object.keys(itemsStore.itemBoxs[itemId] || {}).length"
 					:fetch-function="(offset, limit) => itemsStore.getItemBoxByInterval(itemId, limit, offset)"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
@@ -529,7 +529,6 @@ const labelTableauProjet = ref([
 					:store-data="[itemsStore.documents[itemId]]"
 					:loading="itemsStore.documentsLoading"
 					:total-count="Number(itemsStore.documentsTotalCount[itemId])"
-					:loaded-count="Object.keys(itemsStore.documents[itemId] || {}).length"
 					:fetch-function="(offset, limit) => itemsStore.getDocumentByInterval(itemId, limit, offset)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
@@ -579,7 +578,6 @@ const labelTableauProjet = ref([
 					:store-data="[itemsStore.itemCommands[itemId],commandsStore.commands]"
 					:loading="itemsStore.itemCommandsLoading"
 					:total-count="Number(itemsStore.itemCommandsTotalCount[itemId])"
-					:loaded-count="Object.keys(itemsStore.itemCommands[itemId] || {}).length"
 					:fetch-function="(offset, limit) => itemsStore.getItemCommandByInterval(itemId, limit, offset)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
@@ -592,7 +590,6 @@ const labelTableauProjet = ref([
 					:store-data="[itemsStore.itemProjets[itemId],projetsStore.projets]"
 					:loading="itemsStore.itemProjetsLoading"
 					:total-count="Number(itemsStore.itemProjetsTotalCount[itemId])"
-					:loaded-count="Object.keys(itemsStore.itemProjets[itemId] || {}).length"
 					:fetch-function="(offset, limit) => itemsStore.getItemProjetByInterval(itemId, limit, offset)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>

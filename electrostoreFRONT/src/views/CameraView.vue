@@ -132,6 +132,7 @@ const labelForm = ref([
 	{ key: "user_camera", label: "camera.VCameraUser", type: "text", condition: "func.hasPermission([2]) && form[2].model" },
 	{ key: "mdp_camera", label: "camera.VCameraPassword", type: "password", condition: "func.hasPermission([2]) && form[2].model" },
 ]);
+document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
 <template>
 	<div class="flex items-center justify-between mb-4">

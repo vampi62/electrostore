@@ -33,8 +33,9 @@ export const useTagsStore = defineStore("tags",{
 			this.tagsLoading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = [idResearchString, expandString].filter((str) => str).join("&");
 			const newTagList = await fetchWrapper.get({
-				url: `${baseUrl}/tag?${idResearchString}&${expandString}`,
+				url: `${baseUrl}/tag?${paramString}`,
 				useToken: "access",
 			});
 			for (const tag of newTagList["data"]) {
@@ -64,11 +65,19 @@ export const useTagsStore = defineStore("tags",{
 			this.tagsTotalCount = newTagList["count"];
 			this.tagsLoading = false;
 		},
-		async getTagByInterval(limit = 100, offset = 0, expand = []) {
+		async getTagByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			this.tagsLoading = true;
+			if (clear) {
+				this.tags = {};
+			}
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newTagList = await fetchWrapper.get({
-				url: `${baseUrl}/tag?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/tag?${paramString}`,
 				useToken: "access",
 			});
 			for (const tag of newTagList["data"]) {
@@ -166,15 +175,20 @@ export const useTagsStore = defineStore("tags",{
 			}
 		},
 
-		async getTagStoreByInterval(idTag, limit = 100, offset = 0, expand = []) {
-			if (!this.tagsStore[idTag]) {
+		async getTagStoreByInterval(idTag, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.tagsStore[idTag] || clear) {
 				this.tagsStore[idTag] = {};
 			}
 			this.tagsStoreLoading = true;
 			const storesStore = useStoresStore();
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newTagStoreList = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/store?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/tag/${idTag}/store?${paramString}`,
 				useToken: "access",
 			});
 			this.tagsStoreTotalCount[idTag] = newTagStoreList["count"];
@@ -249,15 +263,20 @@ export const useTagsStore = defineStore("tags",{
 			}
 		},
 
-		async getTagBoxByInterval(idTag, limit = 100, offset = 0, expand = []) {
-			if (!this.tagsBox[idTag]) {
+		async getTagBoxByInterval(idTag, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.tagsBox[idTag] || clear) {
 				this.tagsBox[idTag] = {};
 			}
 			this.tagsBoxLoading = true;
 			const storesStore = useStoresStore();
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newTagBoxList = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/box?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/tag/${idTag}/box?${paramString}`,
 				useToken: "access",
 			});
 			this.tagsBoxTotalCount[idTag] = newTagBoxList["count"];
@@ -335,15 +354,20 @@ export const useTagsStore = defineStore("tags",{
 			}
 		},
 
-		async getTagItemByInterval(idTag, limit = 100, offset = 0, expand = []) {
-			if (!this.tagsItem[idTag]) {
+		async getTagItemByInterval(idTag, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.tagsItem[idTag] || clear) {
 				this.tagsItem[idTag] = {};
 			}
 			this.tagsItemLoading = true;
 			const itemsStore = useItemsStore();
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newTagItemList = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/item?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/tag/${idTag}/item?${paramString}`,
 				useToken: "access",
 			});
 			this.tagsItemTotalCount[idTag] = newTagItemList["count"];

@@ -232,10 +232,6 @@ const itemDelete = async(item) => {
 	}
 };
 
-const filteredItems = ref([]);
-const updateFilteredItems = (newValue) => {
-	filteredItems.value = newValue;
-};
 const filterItem = ref([
 	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("command.VCommandItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
@@ -450,6 +446,7 @@ const labelTableauModalItem = ref([
 		},
 	] },
 ]);
+document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
 
 <template>
@@ -482,7 +479,6 @@ const labelTableauModalItem = ref([
 					:store-data="[projetsStore.statusHistory[projetId]]"
 					:loading="projetsStore.statusHistoryLoading"
 					:total-count="Number(projetsStore.statusHistoryTotalCount[projetId])"
-					:loaded-count="Object.keys(projetsStore.statusHistory[projetId] || {}).length"
 					:fetch-function="(offset, limit) => projetsStore.getStatusHistoryByInterval(projetId, limit, offset)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
@@ -499,7 +495,6 @@ const labelTableauModalItem = ref([
 					:store-data="[projetsStore.documents[projetId]]"
 					:loading="projetsStore.documentsLoading"
 					:total-count="Number(projetsStore.documentsTotalCount[projetId])"
-					:loaded-count="Object.keys(projetsStore.documents[projetId] || {}).length"
 					:fetch-function="(offset, limit) => projetsStore.getDocumentByInterval(projetId, limit, offset)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
@@ -516,7 +511,6 @@ const labelTableauModalItem = ref([
 					:store-data="[projetsStore.items[projetId],itemsStore.items]"
 					:loading="projetsStore.itemsLoading" :schema="schemaItem"
 					:total-count="Number(projetsStore.itemsTotalCount[projetId])"
-					:loaded-count="Object.keys(projetsStore.items[projetId] || {}).length"
 					:fetch-function="(offset, limit) => projetsStore.getItemByInterval(projetId, limit, offset, ['item'])"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
@@ -526,12 +520,11 @@ const labelTableauModalItem = ref([
 			:total-count="Number(projetsStore.commentairesTotalCount[projetId] || 0)" :id-page="projetId">
 			<template #append-row>
 				<Commentaire :meta="{ contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: true, roleRequired: authStore.hasPermission([1, 2]) }"
-					:store-data="[projetsStore.commentaires[projetId], usersStore.users, configsStore]"
-					:store-user="authStore.user"
+					:store-data="[projetsStore.commentaires[projetId], usersStore.users]"
+					:store-user="authStore.user" :store-config="configsStore"
 					:store-function="{ create: (data) => projetsStore.createCommentaire(projetId, data), update: (id, data) => projetsStore.updateCommentaire(projetId, id, data), delete: (id) => projetsStore.deleteCommentaire(projetId, id) }"
 					:loading="projetsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'projet.VProjetCommentDeleteTitle', textP: 'projet.VProjetCommentDeleteText' }"
 					:total-count="Number(projetsStore.commentairesTotalCount[projetId])"
-					:loaded-count="Object.keys(projetsStore.commentaires[projetId] || {}).length"
 					:fetch-function="(offset, limit) => projetsStore.getCommentaireByInterval(projetId, limit, offset)"
 				/>
 			</template>
@@ -567,11 +560,12 @@ const labelTableauModalItem = ref([
 			</div>
 
 			<!-- Filtres -->
-			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" @output-filter="updateFilteredItems" />
+			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" />
 
 			<!-- Tableau Items -->
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
-				:store-data="[filteredItems,projetsStore.items[projetId]]"
+				:store-data="[itemsStore.items,projetsStore.items[projetId]]"
+				:filters="filterItem"
 				:loading="projetsStore.itemsLoading" :schema="schemaItem"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>

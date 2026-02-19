@@ -18,8 +18,9 @@ export const useCamerasStore = defineStore("cameras",{
 		async getCameraByList(idResearch = []) {
 			this.loading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
+			const paramString = [idResearchString].filter((str) => str).join("&");
 			const newCameraList = await fetchWrapper.get({
-				url: `${baseUrl}/camera?${idResearchString}`,
+				url: `${baseUrl}/camera?${paramString}`,
 				useToken: "access",
 			});
 			for (const camera of newCameraList["data"]) {
@@ -29,10 +30,19 @@ export const useCamerasStore = defineStore("cameras",{
 			this.TotalCount = newCameraList["count"];
 			this.loading = false;
 		},
-		async getCameraByInterval(limit = 100, offset = 0) {
+		async getCameraByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			this.loading = true;
+			if (clear) {
+				this.cameras = {};
+			}
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newCameraList = await fetchWrapper.get({
-				url: `${baseUrl}/camera?limit=${limit}&offset=${offset}`,
+				url: `${baseUrl}/camera?${paramString}`,
 				useToken: "access",
 			});
 			for (const camera of newCameraList["data"]) {

@@ -57,10 +57,7 @@ const tableauMeta = ref({
 	key: "id_command",
 	path: "/commands/",
 });
-const filteredCommands = ref([]);
-const updateFilteredCommands = (newValue) => {
-	filteredCommands.value = newValue;
-};
+document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
 
 <template>
@@ -74,10 +71,11 @@ const updateFilteredCommands = (newValue) => {
 				{{ $t('command.VCommandsAdd') }}
 			</RouterLink>
 		</div>
-		<FilterContainer :filters="filter" :store-data="commandsStore.commands" @output-filter="updateFilteredCommands" />
+		<FilterContainer :filters="filter" :store-data="commandsStore.commands" />
 	</div>
 	<Tableau :labels="tableauLabel" :meta="tableauMeta"
-		:store-data="[filteredCommands,commandsStore.items,itemsStore.items]"
+		:store-data="[commandsStore.commands,commandsStore.items,itemsStore.items]"
+		:filters="filter"
 		:loading="commandsStore.commandsLoading"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>

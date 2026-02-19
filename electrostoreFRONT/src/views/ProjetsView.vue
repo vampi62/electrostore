@@ -76,10 +76,7 @@ const tableauMeta = ref({
 	key: "id_projet",
 	path: "/projets/",
 });
-const filteredProjets = ref([]);
-const updateFilteredProjets = (newValue) => {
-	filteredProjets.value = newValue;
-};
+document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
 
 <template>
@@ -93,10 +90,11 @@ const updateFilteredProjets = (newValue) => {
 				{{ t('projet.VProjetsAdd') }}
 			</RouterLink>
 		</div>
-		<FilterContainer :filters="filter" :store-data="projetsStore.projets" @output-filter="updateFilteredProjets" />
+		<FilterContainer :filters="filter" :store-data="projetsStore.projets" />
 	</div>
 	<Tableau :labels="tableauLabel" :meta="tableauMeta"
-		:store-data="[filteredProjets,projetsStore.items,itemsStore.items,projetsStore.projetTagProjet,projetTagsStore.projetTags]"
+		:store-data="[projetsStore.projets,projetsStore.items,itemsStore.items,projetsStore.projetTagProjet,projetTagsStore.projetTags]"
+		:filters="filter"
 		:loading="projetsStore.projetsLoading"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>

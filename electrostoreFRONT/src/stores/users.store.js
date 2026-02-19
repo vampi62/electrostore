@@ -33,8 +33,9 @@ export const useUsersStore = defineStore("users",{
 			this.usersLoading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = [idResearchString, expandString].filter((str) => str).join("&");
 			const newUserList = await fetchWrapper.get({
-				url: `${baseUrl}/user?${idResearchString}&${expandString}`,
+				url: `${baseUrl}/user?${paramString}`,
 				useToken: "access",
 			});
 			for (const user of newUserList["data"]) {
@@ -57,11 +58,19 @@ export const useUsersStore = defineStore("users",{
 			this.usersTotalCount = newUserList["count"];
 			this.usersLoading = false;
 		},
-		async getUserByInterval(limit = 100, offset = 0, expand = []) {
+		async getUserByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			this.usersLoading = true;
+			if (clear) {
+				this.users = {};
+			}
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newUserList = await fetchWrapper.get({
-				url: `${baseUrl}/user?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/user?${paramString}`,
 				useToken: "access",
 			});
 			for (const user of newUserList["data"]) {
@@ -136,15 +145,20 @@ export const useUsersStore = defineStore("users",{
 			delete this.users[id];
 		},
 
-		async getProjetCommentaireByInterval(idUser, limit = 100, offset = 0, expand = []) {
-			if (!this.projetsCommentaire[idUser]) {
+		async getProjetCommentaireByInterval(idUser, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.projetsCommentaire[idUser] || clear) {
 				this.projetsCommentaire[idUser] = {};
 			}
 			this.projetsCommentaireLoading = true;
 			const projetStore = useProjetsStore();
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newProjetCommentaireList = await fetchWrapper.get({
-				url: `${baseUrl}/user/${idUser}/projet_commentaire?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/user/${idUser}/projet_commentaire?${paramString}`,
 				useToken: "access",
 			});
 			for (const projetCommentaire of newProjetCommentaireList["data"]) {
@@ -206,15 +220,20 @@ export const useUsersStore = defineStore("users",{
 			delete this.projetsCommentaire[idUser][id];
 		},
 
-		async getCommandCommentaireByInterval(idUser, limit = 100, offset = 0, expand = []) {
-			if (!this.commandsCommentaire[idUser]) {
+		async getCommandCommentaireByInterval(idUser, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.commandsCommentaire[idUser] || clear) {
 				this.commandsCommentaire[idUser] = {};
 			}
 			this.commandsCommentaireLoading = true;
 			const commandStore = useCommandsStore();
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newCommandCommentaireList = await fetchWrapper.get({
-				url: `${baseUrl}/user/${idUser}/command_commentaire?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/user/${idUser}/command_commentaire?${paramString}`,
 				useToken: "access",
 			});
 			for (const commandCommentaire of newCommandCommentaireList["data"]) {
@@ -276,13 +295,21 @@ export const useUsersStore = defineStore("users",{
 			delete this.commandsCommentaire[idUser][id];
 		},
 
-		async getTokenByInterval(idUser, limit = 100, offset = 0, showExpired = false, showRevoked = false) {
-			if (!this.tokens[idUser]) {
+		async getTokenByInterval(idUser, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false, showExpired = false, showRevoked = false) {
+			if (!this.tokens[idUser] || clear) {
 				this.tokens[idUser] = {};
 			}
 			this.tokensLoading = true;
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const showExpiredString = showExpired ? "show_expired=" + showExpired : "";
+			const showRevokedString = showRevoked ? "show_revoked=" + showRevoked : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString, showExpiredString, showRevokedString].filter((str) => str).join("&");
 			const newTokenList = await fetchWrapper.get({
-				url: `${baseUrl}/user/${idUser}/sessions?limit=${limit}&offset=${offset}&show_expired=${showExpired}&show_revoked=${showRevoked}`,
+				url: `${baseUrl}/user/${idUser}/sessions?${paramString}`,
 				useToken: "access",
 			});
 			for (const token of newTokenList["data"]) {

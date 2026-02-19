@@ -32,11 +32,7 @@ const tableauMeta = ref({
 	key: "id_camera",
 	path: "/cameras/",
 });
-// recupere les donne filtrer du component FilterContainer.filteredData
-const filteredCameras = ref([]);
-const updateFilteredCameras = (newValue) => {
-	filteredCameras.value = newValue;
-};
+document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
 
 <template>
@@ -56,10 +52,11 @@ const updateFilteredCameras = (newValue) => {
 				{{ $t('camera.VCamerasAdd') }}
 			</span>
 		</div>
-		<FilterContainer :filters="filter" :store-data="camerasStore.cameras" @output-filter="updateFilteredCameras" />
+		<FilterContainer :filters="filter" :store-data="camerasStore.cameras" />
 	</div>
 	<Tableau :labels="tableauLabel" :meta="tableauMeta"
-		:store-data="[filteredCameras,camerasStore.status]"
+		:store-data="[camerasStore.cameras,camerasStore.status]"
+		:filters="filter"
 		:loading="camerasStore.loading"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>

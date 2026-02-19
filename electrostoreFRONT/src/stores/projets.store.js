@@ -42,8 +42,9 @@ export const useProjetsStore = defineStore("projets",{
 			this.projetsLoading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = [idResearchString, expandString].filter((str) => str).join("&");
 			const newProjetList = await fetchWrapper.get({
-				url: `${baseUrl}/projet?${idResearchString}&${expandString}`,
+				url: `${baseUrl}/projet?${paramString}`,
 				useToken: "access",
 			});
 			for (const projet of newProjetList["data"]) {
@@ -87,11 +88,19 @@ export const useProjetsStore = defineStore("projets",{
 			this.projetsTotalCount = newProjetList["count"];
 			this.projetsLoading = false;
 		},
-		async getProjetByInterval(limit = 100, offset = 0, expand = []) {
+		async getProjetByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			this.projetsLoading = true;
+			if (clear) {
+				this.projets = {};
+			}
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newProjetList = await fetchWrapper.get({
-				url: `${baseUrl}/projet?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/projet?${paramString}`,
 				useToken: "access",
 			});
 			for (const projet of newProjetList["data"]) {
@@ -204,15 +213,20 @@ export const useProjetsStore = defineStore("projets",{
 			delete this.projets[id];
 		},
 
-		async getCommentaireByInterval(idProjet, limit = 100, offset = 0, expand = []) {
-			if (!this.commentaires[idProjet]) {
+		async getCommentaireByInterval(idProjet, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.commentaires[idProjet] || clear) {
 				this.commentaires[idProjet] = {};
 			}
 			this.commentairesLoading = true;
 			const userStore = useUsersStore();
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newCommentaireList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/commentaire?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/projet/${idProjet}/commentaire?${paramString}`,
 				useToken: "access",
 			});
 			for (const commentaire of newCommentaireList["data"]) {
@@ -275,31 +289,19 @@ export const useProjetsStore = defineStore("projets",{
 			delete this.commentaires[idProjet][id];
 		},
 
-		async getDocumentByList(idProjet, idResearch = [], expand = []) {
-			if (!this.documents[idProjet]) {
+		async getDocumentByInterval(idProjet, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.documents[idProjet] || clear) {
 				this.documents[idProjet] = {};
 			}
 			this.documentsLoading = true;
-			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newDocumentList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/document?${idResearchString}&${expandString}`,
-				useToken: "access",
-			});
-			for (const document of newDocumentList["data"]) {
-				this.documents[idProjet][document.id_projet_document] = document;
-			}
-			this.documentsTotalCount[idProjet] = newDocumentList["count"];
-			this.documentsLoading = false;
-		},
-		async getDocumentByInterval(idProjet, limit = 100, offset = 0, expand = []) {
-			if (!this.documents[idProjet]) {
-				this.documents[idProjet] = {};
-			}
-			this.documentsLoading = true;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const newDocumentList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/document?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/projet/${idProjet}/document?${paramString}`,
 				useToken: "access",
 			});
 			for (const document of newDocumentList["data"]) {
@@ -364,15 +366,20 @@ export const useProjetsStore = defineStore("projets",{
 			});
 		},
 
-		async getItemByInterval(idProjet, limit = 100, offset = 0, expand = []) {
-			if (!this.items[idProjet]) {
+		async getItemByInterval(idProjet, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.items[idProjet] || clear) {
 				this.items[idProjet] = {};
 			}
 			this.itemsLoading = true;
 			const itemStore = useItemsStore();
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newItemList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/item?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/projet/${idProjet}/item?${paramString}`,
 				useToken: "access",
 			});
 			for (const item of newItemList["data"]) {
@@ -447,15 +454,20 @@ export const useProjetsStore = defineStore("projets",{
 			}
 		},
 
-		async getProjetTagProjetByInterval(idProjet, limit = 100, offset = 0, expand = []) {
-			if (!this.projetTagProjet[idProjet]) {
+		async getProjetTagProjetByInterval(idProjet, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.projetTagProjet[idProjet] || clear) {
 				this.projetTagProjet[idProjet] = {};
 			}
 			this.projetTagProjetLoading = true;
 			const projetTagStore = useProjetTagsStore();
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newProjetTagProjetList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/projet-tag?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/projet/${idProjet}/projet-tag?${paramString}`,
 				useToken: "access",
 			});
 			for (const projetTagProjet of newProjetTagProjetList["data"]) {
@@ -532,14 +544,19 @@ export const useProjetsStore = defineStore("projets",{
 			}
 		},
 
-		async getStatusHistoryByInterval(idProjet, limit = 100, offset = 0, expand = []) {
-			if (!this.statusHistory[idProjet]) {
+		async getStatusHistoryByInterval(idProjet, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.statusHistory[idProjet] || clear) {
 				this.statusHistory[idProjet] = {};
 			}
 			this.statusHistoryLoading = true;
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
 			const newStatusHistoryList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/status-history?limit=${limit}&offset=${offset}&${expandString}`,
+				url: `${baseUrl}/projet/${idProjet}/status-history?${paramString}`,
 				useToken: "access",
 			});
 			for (const statusHistory of newStatusHistoryList["data"]) {

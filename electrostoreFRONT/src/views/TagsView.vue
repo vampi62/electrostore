@@ -32,10 +32,7 @@ const tableauMeta = ref({
 	key: "id_tag",
 	path: "/tags/",
 });
-const filteredTags = ref([]);
-const updateFilteredTags = (newValue) => {
-	filteredTags.value = newValue;
-};
+document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
 
 <template>
@@ -49,10 +46,11 @@ const updateFilteredTags = (newValue) => {
 				{{ $t('tag.VTagsAdd') }}
 			</RouterLink>
 		</div>
-		<FilterContainer :filters="filter" :store-data="tagsStore.tags" @output-filter="updateFilteredTags" />
+		<FilterContainer :filters="filter" :store-data="tagsStore.tags" />
 	</div>
 	<Tableau :labels="tableauLabel" :meta="tableauMeta"
-		:store-data="[filteredTags]"
+		:store-data="[tagsStore.tags]"
+		:filters="filter"
 		:loading="tagsStore.tagsLoading"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
