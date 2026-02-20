@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, inject } from "vue";
+import { ref, inject } from "vue";
 import router from "@/router";
 
 const { addNotification } = inject("useNotification");
@@ -17,18 +17,6 @@ if (!authStore.hasPermission([1, 2])) {
 	addNotification({ message: "vous n'avez pas la permission d'acceder a cette page", type: "error", i18n: false });
 	router.push("/");
 }
-
-async function fetchAllData() {
-	let offset = 0;
-	const limit = 100;
-	do {
-		await usersStore.getUserByInterval(limit, offset);
-		offset += limit;
-	} while (offset < usersStore.usersTotalCount);
-}
-onMounted(() => {
-	fetchAllData();
-});
 
 const userTypeRole = ref({ [UserRole.User]: t("user.VUsersFilterRole0"), [UserRole.Moderator]: t("user.VUsersFilterRole1"), [UserRole.Admin]: t("user.VUsersFilterRole2") });
 
@@ -75,7 +63,7 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 		:filters="filter"
 		:loading="usersStore.usersLoading"
 		:total-count="Number(usersStore.usersTotalCount) || 0"
-		:fetch-function="(offset, limit, expand, filter, sort, clear) => usersStore.getUserByInterval(limit, offset, expand, filter, sort, clear)"
+		:fetch-function="(limit, offset, expand, filter, sort, clear) => usersStore.getUserByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

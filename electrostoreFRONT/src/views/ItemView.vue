@@ -41,11 +41,7 @@ async function fetchAllData() {
 			router.push("/inventory");
 			return;
 		}
-		itemsStore.getItemBoxByInterval(itemId.value, 100, 0, ["box"]);
 		itemsStore.getItemTagByInterval(itemId.value, 100, 0, ["tag"]);
-		itemsStore.getDocumentByInterval(itemId.value, 100, 0);
-		itemsStore.getItemCommandByInterval(itemId.value, 100, 0, ["command"]);
-		itemsStore.getItemProjetByInterval(itemId.value, 100, 0, ["projet"]);
 		itemsStore.getImageByInterval(itemId.value, 100, 0);
 		itemsStore.itemEdition = {
 			loading: false,
@@ -498,8 +494,8 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</FormContainer>
 			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="itemId !== 'new' && authStore.hasPermission([1, 2])"
 				:delete-function="(value) => tagDelete(value)"
-				:fetch-function="(offset, limit) => tagsStore.getTagByInterval(limit, offset)"
 				:total-count="Number(tagsStore.tagsTotalCount || 0)"
+				:fetch-function="(limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag' }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'loading': tagsStore.tagsLoading }"
@@ -509,11 +505,11 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="item.VitemBoxs"
 			:total-count="Number(itemsStore.itemBoxsTotalCount[itemId] || 0)" :id-page="itemId">
 			<template #append-row>
-				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box' }"
+				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box', expand: ['box'] }"
 					:store-data="[itemsStore.itemBoxs[itemId]]"
 					:loading="itemsStore.itemBoxsLoading" :schema="schemaBox"
 					:total-count="Number(itemsStore.itemBoxsTotalCount[itemId])"
-					:fetch-function="(offset, limit) => itemsStore.getItemBoxByInterval(itemId, limit, offset)"
+					:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemBoxByInterval(itemId, limit, offset, expand, filter, sort, clear)"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -529,7 +525,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[itemsStore.documents[itemId]]"
 					:loading="itemsStore.documentsLoading"
 					:total-count="Number(itemsStore.documentsTotalCount[itemId])"
-					:fetch-function="(offset, limit) => itemsStore.getDocumentByInterval(itemId, limit, offset)"
+					:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getDocumentByInterval(itemId, limit, offset, expand, filter, sort, clear)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
@@ -574,11 +570,11 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="item.VItemCommands"
 			:total-count="Number(itemsStore.itemCommandsTotalCount[itemId] || 0)" :id-page="itemId">
 			<template #append-row>
-				<Tableau :labels="labelTableauCommand" :meta="{ key: 'id_item', path: '/commands/' }"
+				<Tableau :labels="labelTableauCommand" :meta="{ key: 'id_item', path: '/commands/', expand: ['command'] }"
 					:store-data="[itemsStore.itemCommands[itemId],commandsStore.commands]"
 					:loading="itemsStore.itemCommandsLoading"
 					:total-count="Number(itemsStore.itemCommandsTotalCount[itemId])"
-					:fetch-function="(offset, limit) => itemsStore.getItemCommandByInterval(itemId, limit, offset)"
+					:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemCommandByInterval(itemId, limit, offset, expand, filter, sort, clear)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
@@ -586,11 +582,11 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="item.VItemProjets"
 			:total-count="Number(itemsStore.itemProjetsTotalCount[itemId] || 0)" :id-page="itemId">
 			<template #append-row>
-				<Tableau :labels="labelTableauProjet" :meta="{ key: 'id_projet', path: '/projets/' }"
+				<Tableau :labels="labelTableauProjet" :meta="{ key: 'id_projet', path: '/projets/', expand: ['projet'] }"
 					:store-data="[itemsStore.itemProjets[itemId],projetsStore.projets]"
 					:loading="itemsStore.itemProjetsLoading"
 					:total-count="Number(itemsStore.itemProjetsTotalCount[itemId])"
-					:fetch-function="(offset, limit) => itemsStore.getItemProjetByInterval(itemId, limit, offset)"
+					:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemProjetByInterval(itemId, limit, offset, expand, filter, sort, clear)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>

@@ -37,9 +37,6 @@ async function fetchAllData() {
 			router.push("/tags");
 			return;
 		}
-		tagsStore.getTagItemByInterval(tagId.value, 100, 0, ["item"]);
-		tagsStore.getTagStoreByInterval(tagId.value, 100, 0, ["store"]);
-		tagsStore.getTagBoxByInterval(tagId.value, 100, 0, ["box"]);
 		tagsStore.tagEdition = {
 			loading: false,
 			nom_tag: tagsStore.tags[tagId.value].nom_tag,
@@ -302,11 +299,11 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('tag.VTagAddItem') }}
 				</button>
-				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item' }"
+				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
 					:store-data="[tagsStore.tagsItem[tagId],itemsStore.items]"
 					:loading="tagsStore.tagsItemLoading"
 					:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)"
-					:fetch-function="(offset, limit) => tagsStore.getTagItemByInterval(tagId, limit, offset, ['item'])"
+					:fetch-function="(limit, offset, expand, filter, sort, clear) => tagsStore.getTagItemByInterval(tagId, limit, offset, expand, filter, sort, clear)"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -318,11 +315,11 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('tag.VTagAddStore') }}
 				</button>
-				<Tableau :labels="labelTableauStore" :meta="{ key: 'id_store' }"
+				<Tableau :labels="labelTableauStore" :meta="{ key: 'id_store', expand: ['store'] }"
 					:store-data="[tagsStore.tagsStore[tagId],storesStore.stores]"
 					:loading="tagsStore.tagsStoreLoading"
 					:total-count="Number(tagsStore.tagsStoreTotalCount[tagId] || 0)"
-					:fetch-function="(offset, limit) => tagsStore.getTagStoreByInterval(tagId, limit, offset, ['store'])"
+					:fetch-function="(limit, offset, expand, filter, sort, clear) => tagsStore.getTagStoreByInterval(tagId, limit, offset, expand, filter, sort, clear)"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -334,11 +331,11 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('tag.VTagAddBox') }}
 				</button> -->
-				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box' }"
+				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box', expand: ['box'] }"
 					:store-data="[tagsStore.tagsBox[tagId],storesStore.boxs]"
 					:loading="tagsStore.tagsBoxLoading"
 					:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)"
-					:fetch-function="(offset, limit) => tagsStore.getTagBoxByInterval(tagId, limit, offset, ['box'])"
+					:fetch-function="(limit, offset, expand, filter, sort, clear) => tagsStore.getTagBoxByInterval(tagId, limit, offset, expand, filter, sort, clear)"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -364,10 +361,12 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" />
 
 			<!-- Tableau Items -->
-			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
+			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item', preventClear: true }"
 				:store-data="[itemsStore.items, tagsStore.tagsItem[tagId]]"
 				:filters="filterItem"
 				:loading="tagsStore.tagsItemLoading"
+				:total-count="Number(itemsStore.itemsTotalCount || 0)"
+				:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
@@ -386,10 +385,12 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FilterContainer class="my-4 flex gap-4" :filters="filterStore" :store-data="storesStore.stores" />
 
 			<!-- Tableau Stores -->
-			<Tableau :labels="labelTableauModalStore" :meta="{ key: 'id_store' }"
+			<Tableau :labels="labelTableauModalStore" :meta="{ key: 'id_store', preventClear: true }"
 				:store-data="[storesStore.stores, tagsStore.tagsStore[tagId]]"
 				:filters="filterStore"
 				:loading="tagsStore.tagsStoreLoading"
+				:total-count="Number(storesStore.storesTotalCount || 0)"
+				:fetch-function="(limit, offset, expand, filter, sort, clear) => storesStore.getStoreByInterval(limit, offset, expand, filter, sort, clear)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

@@ -9,7 +9,7 @@
 			</span>
 		</span>
 		<span v-if="canEdit" class="bg-gray-300 p-1 rounded mr-2 mb-2">
-			<span @click="tagOpenAddModal"
+			<span @click="tagModalShow = true"
 				class="text-green-500 cursor-pointer hover:text-green-600">
 				<font-awesome-icon icon="fa-solid fa-plus" />
 			</span>
@@ -33,6 +33,8 @@
 					:store-data="[tagsStore, currentTags, ...otherStore]"
 					:filter="filterModal"
 					:loading="tableauModal['loading']"
+					:fetch-function="tableauModal['fetchFunction']"
+					:total-count="totalCount"
 					:tableau-css="tableauModal['css']"
 				/>
 			</div>
@@ -104,23 +106,6 @@ export default {
 			tagModalShow: false,
 			tagLoad: false,
 		};
-	},
-	methods: {
-		async fetchAllTags() {
-			let offset = 0;
-			const limit = 100;
-			do {
-				await this.fetchFunction(offset, limit);
-				offset += limit;
-			} while (offset < this.totalCount);
-			this.tagLoad = true;
-		},
-		tagOpenAddModal() {
-			this.tagModalShow = true;
-			if (!this.tagLoad) {
-				this.fetchAllTags();
-			}
-		},
 	},
 };
 </script>

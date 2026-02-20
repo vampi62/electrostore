@@ -90,7 +90,7 @@ export default {
 			type: Object,
 			required: true,
 			// meta object containing additional information like path for RouterLink
-			// e.g. { path: '/product/', key: 'id', sort: 'name', sortOrder: 'asc', preventClear: false }
+			// e.g. { path: '/product/', key: 'id', sort: 'name', sortOrder: 'asc', preventClear: false, expand: ['category'] }
 		},
 		storeData: {
 			type: Array,
@@ -115,7 +115,13 @@ export default {
 		},
 		fetchFunction: {
 			type: Function,
-			default: () => {},
+			default: (limit, offset, expand, filter, sort, clear) => {},
+			// fetchFunction is a function that will be called to fetch the data for the table, it should accept the parameters limit, offset, expand, filter, sort, and clear
+			// e.g. (limit, offset, expand, filter, sort, clear) => { store.fetchData(offset, limit, expand, filter, sort, clear) }
+		},
+		listFetchFunction: {
+			type: Array,
+			default: () => [],
 		},
 		tableauCss: {
 			type: Object,
@@ -233,7 +239,9 @@ export default {
 			this.sort.column = this.labels.find((col) => col.key === this.meta.sort);
 			this.sort.order = this.meta.sortOrder || "asc";
 		}
-		[this.nextOffset, this.hasMore] = await this.fetchFunction(0, 100, [], buildRSQLFilter(this.filters), buildRSQLSort(this.sort));
+		let intervalOffset = this.nextOffset;
+		[this.nextOffset, this.hasMore] = await this.fetchFunction(100, 0, this.meta?.expand || [], buildRSQLFilter(this.filters), buildRSQLSort(this.sort));
+		await this.refetchListData(intervalOffset, this.nextOffset);
 		this.isInitializing = false;
 	},
 	watch: {
@@ -274,14 +282,25 @@ export default {
 				if (this.totalCount === this.nextOffset) {
 					return;
 				}
-				[this.nextOffset, this.hasMore] = await this.fetchFunction(this.nextOffset, 100, [], buildRSQLFilter(this.filters), buildRSQLSort(this.sort));
+				let intervalOffset = this.nextOffset;
+				[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], buildRSQLFilter(this.filters), buildRSQLSort(this.sort));
+				await this.refetchListData(intervalOffset, this.nextOffset);
 			}
 		},
 		async refetchData() {
 			// Reset l'état et refetch les données depuis le début
 			this.nextOffset = 0;
 			this.hasMore = true;
-			[this.nextOffset, this.hasMore] = await this.fetchFunction(0, 100, [], buildRSQLFilter(this.filters), buildRSQLSort(this.sort), this.meta?.preventClear ? false : true);
+			let intervalOffset = this.nextOffset;
+			[this.nextOffset, this.hasMore] = await this.fetchFunction(100, 0, this.meta?.expand || [], buildRSQLFilter(this.filters), buildRSQLSort(this.sort), this.meta?.preventClear ? false : true);
+			await this.refetchListData(intervalOffset, this.nextOffset);
+		},
+		async refetchListData(minOffset, maxOffset) {
+			for (let index = 0; index < this.listFetchFunction.length; index++) {
+				if (this.listFetchFunction[index]) {
+					await this.listFetchFunction[index](minOffset, maxOffset);
+				}
+			}
 		},
 	},
 };

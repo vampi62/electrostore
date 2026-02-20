@@ -5,37 +5,28 @@ import { useItemsStore, useTagsStore } from "@/stores";
 const itemsStore = useItemsStore();
 const tagsStore = useTagsStore();
 
-async function fetchAllData() {
-	let tagsLink = new Set();
-	let offset = 0;
-	const limit = 100;
-	do {
-		await itemsStore.getItemByInterval(limit, offset, ["item_boxs", "item_tags"]);
-		offset += limit;
-	} while (offset < itemsStore.itemsTotalCount);
-	for (const item of Object.values(itemsStore.items)) {
-		item.custom_quantity_item = getTotalQuantity(item.item_boxs);
-	}
-
-	for (const item in itemsStore.items) {
-		for (const tag in itemsStore.itemTags[item]) {
-			tagsLink.add(tag);
+async function updateQuantityData(minOffset, maxOffset) {
+	for (const id = minOffset; id < maxOffset; id++) {
+		const item = itemsStore.items[id];
+		if (item) {
+			item.custom_quantity_item = getTotalQuantity(item.item_boxs);
 		}
 	}
+}
+async function fetchTagData(minOffset, maxOffset) {
 	let tagsNotFound = [];
-	for (const tag of Array.from(tagsLink)) {
-		if (!tagsStore.tags[tag]) {
-			tagsNotFound.push(tag);
+	for (const id = minOffset; id < maxOffset; id++) {
+		for (const tag in itemsStore.itemTags[id]) {
+			if (!tagsStore.tags[tag]) {
+				tagsNotFound.push(tag);
+			}
 		}
 	}
 	if (tagsNotFound.length > 0) {
 		await tagsStore.getTagByList(tagsNotFound);
 	}
-	filter.value[6].options = Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]);
+	filter.value[6].options = Object.fromEntries(Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]));
 }
-onMounted(() => {
-	fetchAllData();
-});
 
 function getTotalQuantity(itembox) {
 	if (!itembox) {
@@ -51,7 +42,7 @@ const filter = ref([
 	{ key: "seuil_min_item", value: "", type: "number", label: "item.VInventoryFilterSeuilMax", compareMethod: "<=" },
 	{ key: "qte_item_box", subPath: "item_boxs", value: "", type: "number", label: "item.VInventoryFilterQuantityMin", compareMethod: ">=" },
 	{ key: "qte_item_box", subPath: "item_boxs", value: "", type: "number", label: "item.VInventoryFilterQuantityMax", compareMethod: "<=" },
-	{ key: "id_tag", subPath: "item_tags", value: "", type: "datalist", typeData: "int", options: Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]), label: "item.VInventoryFilterTag", compareMethod: "=" },
+	{ key: "id_tag", subPath: "item_tags", value: "", type: "datalist", typeData: "int", options: Object.fromEntries(Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag])), label: "item.VInventoryFilterTag", compareMethod: "=" },
 ]);
 const tableauLabel = ref([
 	{ label: "item.VInventoryName", sortable: true, key: "reference_name_item", type: "text" },
@@ -65,6 +56,7 @@ const tableauLabel = ref([
 const tableauMeta = ref({
 	key: "id_item",
 	path: "/inventory/",
+	expand: ["item_boxs", "item_tags"],
 });
 document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
@@ -86,6 +78,9 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 		:store-data="[itemsStore.items,itemsStore.itemTags,tagsStore.tags,itemsStore.thumbnailsURL,itemsStore.items]"
 		:filters="filter"
 		:loading="itemsStore.itemsLoading"
+		:total-count="Number(itemsStore.itemsTotalCount) || 0"
+		:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
+		:list-fetch-function="[(minOffset, maxOffset) => fetchTagData(minOffset, maxOffset), (minOffset, maxOffset) => updateQuantityData(minOffset, maxOffset)]"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

@@ -52,9 +52,6 @@ async function fetchAllData() {
 			}
 			return;
 		}
-		usersStore.getProjetCommentaireByInterval(userId.value, 100, 0, ["projet"]);
-		usersStore.getCommandCommentaireByInterval(userId.value, 100, 0, ["command"]);
-		usersStore.getTokenByInterval(userId.value, 100, 0);
 		usersStore.userEdition = {
 			loading: false,
 			id_user: usersStore.users[userId.value].id_user,
@@ -214,24 +211,24 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				<CollapsibleSection title="user.VUserCommandsCommentaires" :disable-margin="true"
 					:total-count="Number(usersStore.commandsCommentaireTotalCount[userId] || 0)" :id-page="userId">
 					<template #append-row>
-						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: false, roleRequired: false }"
+						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: false, roleRequired: false, expand: ['command'] }"
 							:store-data="[usersStore.commandsCommentaire[userId], usersStore.users]"
 							:store-user="authStore.user" :store-config="configsStore"
 							:loading="usersStore.commandsCommentaireLoading"
 							:total-count="Number(usersStore.commandsCommentaireTotalCount[userId]) || 0"
-							:fetch-function="(offset, limit) => usersStore.getCommandCommentaireByInterval(userId, limit, offset, ['command'])"
+							:fetch-function="(limit, offset, expand, filter, sort, clear) => usersStore.getCommandCommentaireByInterval(userId, limit, offset, expand, filter, sort, clear)"
 						/>
 					</template>
 				</CollapsibleSection>
 				<CollapsibleSection title="user.VUserProjetsCommentaires" :disable-margin="true"
 					:total-count="Number(usersStore.projetsCommentaireTotalCount[userId] || 0)" :id-page="userId">
 					<template #append-row>
-						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: false, roleRequired: false }"
+						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: false, roleRequired: false, expand: ['projet'] }"
 							:store-data="[usersStore.projetsCommentaire[userId], usersStore.users]"
 							:store-user="authStore.user" :store-config="configsStore"
 							:loading="usersStore.projetsCommentaireLoading"
 							:total-count="Number(usersStore.projetsCommentaireTotalCount[userId]) || 0"
-							:fetch-function="(offset, limit) => usersStore.getProjetCommentaireByInterval(userId, limit, offset, ['projet'])"
+							:fetch-function="(limit, offset, expand, filter, sort, clear) => usersStore.getProjetCommentaireByInterval(userId, limit, offset, expand, filter, sort, clear)"
 						/>
 					</template>
 				</CollapsibleSection>
@@ -251,7 +248,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[usersStore.tokens[userId]]"
 					:loading="usersStore.tokensLoading"
 					:total-count="Number(usersStore.tokensTotalCount[userId]) || 0"
-					:fetch-function="(offset, limit) => usersStore.getTokenByInterval(userId, limit, offset, [], '', '', false, isCheckedTokens, isCheckedTokens)"
+					:fetch-function="(limit, offset, expand, filter, sort, clear) => usersStore.getTokenByInterval(userId, limit, offset, expand, filter, sort, clear, isCheckedTokens, isCheckedTokens)"
 					:tableau-css="{ component: 'min-h-64 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>

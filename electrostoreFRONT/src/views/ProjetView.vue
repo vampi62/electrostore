@@ -42,11 +42,7 @@ async function fetchAllData() {
 			router.push("/projets");
 			return;
 		}
-		projetsStore.getCommentaireByInterval(projetId.value, 100, 0, ["user"]);
-		projetsStore.getDocumentByInterval(projetId.value, 100, 0);
-		projetsStore.getItemByInterval(projetId.value, 100, 0, ["item"]);
 		projetsStore.getProjetTagProjetByInterval(projetId.value, 100, 0, ["projet_tag"]);
-		projetsStore.getStatusHistoryByInterval(projetId.value, 100, 0);
 		projetsStore.projetEdition = {
 			loading: false,
 			nom_projet: projetsStore.projets[projetId.value].nom_projet,
@@ -188,22 +184,6 @@ const documentView = async(fileContent) => {
 
 // item
 const itemModalShow = ref(false);
-const itemLoaded = ref(false);
-const itemOpenAddModal = () => {
-	itemModalShow.value = true;
-	if (!itemLoaded.value) {
-		fetchAllItems();
-	}
-};
-async function fetchAllItems() {
-	let offset = 0;
-	const limit = 100;
-	do {
-		await itemsStore.getItemByInterval(limit, offset);
-		offset += limit;
-	} while (offset < itemsStore.itemsTotalCount);
-	itemLoaded.value = true;
-}
 const itemSave = async(item) => {
 	if (projetsStore.items[projetId.value][item.id_item]) {
 		try {
@@ -468,7 +448,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="projetsStore.projetEdition"/>
 			<Tags :current-tags="projetsStore.projetTagProjet[projetId] || {}" :tags-store="projetTagsStore.projetTags" :can-edit="projetId !== 'new' && authStore.hasPermission([2])"
 				:delete-function="(value) => tagDelete(value)"
-				:fetch-function="(offset, limit) => projetTagsStore.getProjetTagByInterval(limit, offset)"
+				:fetch-function="(limit, offset, expand, filter, sort, clear) => projetTagsStore.getProjetTagByInterval(limit, offset, expand, filter, sort, clear)"
 				:total-count="Number(projetTagsStore.projetTagsTotalCount || 0)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_projet_tag' }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
@@ -483,7 +463,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[projetsStore.statusHistory[projetId]]"
 					:loading="projetsStore.statusHistoryLoading"
 					:total-count="Number(projetsStore.statusHistoryTotalCount[projetId])"
-					:fetch-function="(offset, limit) => projetsStore.getStatusHistoryByInterval(projetId, limit, offset)"
+					:fetch-function="(limit, offset, expand, filter, sort, clear) => projetsStore.getStatusHistoryByInterval(projetId, limit, offset, expand, filter, sort, clear)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
@@ -499,7 +479,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[projetsStore.documents[projetId]]"
 					:loading="projetsStore.documentsLoading"
 					:total-count="Number(projetsStore.documentsTotalCount[projetId])"
-					:fetch-function="(offset, limit) => projetsStore.getDocumentByInterval(projetId, limit, offset)"
+					:fetch-function="(limit, offset, expand, filter, sort, clear) => projetsStore.getDocumentByInterval(projetId, limit, offset, expand, filter, sort, clear)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
@@ -507,15 +487,15 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="projet.VProjetItems"
 			:total-count="Number(projetsStore.itemsTotalCount[projetId] || 0)" :id-page="projetId">
 			<template #append-row>
-				<button type="button" @click="itemOpenAddModal"
+				<button type="button" @click="itemModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('projet.VProjetAddItem') }}
 				</button>
-				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item' }"
-					:store-data="[projetsStore.items[projetId],itemsStore.items]"
+				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
+					:store-data="[projetsStore.items[projetId], itemsStore.items]"
 					:loading="projetsStore.itemsLoading" :schema="schemaItem"
-					:total-count="Number(projetsStore.itemsTotalCount[projetId])"
-					:fetch-function="(offset, limit) => projetsStore.getItemByInterval(projetId, limit, offset, ['item'])"
+					:total-count="Number(projetsStore.itemsTotalCount[projetId] || 0)"
+					:fetch-function="(limit, offset, expand, filter, sort, clear) => projetsStore.getItemByInterval(projetId, limit, offset, expand, filter, sort, clear)"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -523,13 +503,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="projet.VProjetCommentaires"
 			:total-count="Number(projetsStore.commentairesTotalCount[projetId] || 0)" :id-page="projetId">
 			<template #append-row>
-				<Commentaire :meta="{ contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: true, roleRequired: authStore.hasPermission([1, 2]) }"
+				<Commentaire :meta="{ contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[projetsStore.commentaires[projetId], usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
 					:store-function="{ create: (data) => projetsStore.createCommentaire(projetId, data), update: (id, data) => projetsStore.updateCommentaire(projetId, id, data), delete: (id) => projetsStore.deleteCommentaire(projetId, id) }"
 					:loading="projetsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'projet.VProjetCommentDeleteTitle', textP: 'projet.VProjetCommentDeleteText' }"
 					:total-count="Number(projetsStore.commentairesTotalCount[projetId])"
-					:fetch-function="(offset, limit) => projetsStore.getCommentaireByInterval(projetId, limit, offset)"
+					:fetch-function="(limit, offset, expand, filter, sort, clear) => projetsStore.getCommentaireByInterval(projetId, limit, offset, expand, filter, sort, clear)"
 				/>
 			</template>
 		</CollapsibleSection>
@@ -563,14 +543,14 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					class="text-gray-500 hover:text-gray-700">&times;</button>
 			</div>
 
-			<!-- Filtres -->
 			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" />
 
-			<!-- Tableau Items -->
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
-				:store-data="[itemsStore.items,projetsStore.items[projetId]]"
+				:store-data="[itemsStore.items, projetsStore.items[projetId]]"
 				:filters="filterItem"
 				:loading="projetsStore.itemsLoading" :schema="schemaItem"
+				:total-count="Number(itemsStore.itemsTotalCount || 0)"
+				:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
 
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
@@ -7,18 +7,6 @@ const { t } = useI18n();
 import { useIasStore, useAuthStore } from "@/stores";
 const IAStore = useIasStore();
 const authStore = useAuthStore();
-
-async function fetchAllData() {
-	let offset = 0;
-	const limit = 100;
-	do {
-		await IAStore.getIaByInterval(limit, offset);
-		offset += limit;
-	} while (offset < IAStore.TotalCount);
-}
-onMounted(() => {
-	fetchAllData();
-});
 
 const filter = ref([
 	{ key: "trained_ia", value: undefined, type: "datalist", dataType: "bool", options: [["false", t("ia.VIasFilterTrained1")], ["true", t("ia.VIasFilterTrained2")]], label: "ia.VIasFilterTrained", compareMethod: "=" },
@@ -61,6 +49,8 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 		:store-data="[IAStore.ias]"
 		:filters="filter"
 		:loading="IAStore.loading"
+		:total-count="Number(IAStore.TotalCount) || 0"
+		:fetch-function="(limit, offset, expand, filter, sort, clear) => IAStore.getIaByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

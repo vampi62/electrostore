@@ -1,21 +1,9 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
 
 import { useAuthStore, useCamerasStore } from "@/stores";
 const camerasStore = useCamerasStore();
 const authStore = useAuthStore();
-
-async function fetchAllData() {
-	let offset = 0;
-	const limit = 100;
-	do {
-		await camerasStore.getCameraByInterval(limit, offset);
-		offset += limit;
-	} while (offset < camerasStore.TotalCount);
-}
-onMounted(() => {
-	fetchAllData();
-});
 
 const filter = ref([
 	{ key: "nom_camera", value: "", type: "text", label: "camera.VCamerasFilterName", compareMethod: "contain" },
@@ -58,6 +46,8 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 		:store-data="[camerasStore.cameras,camerasStore.status]"
 		:filters="filter"
 		:loading="camerasStore.loading"
+		:total-count="Number(camerasStore.TotalCount) || 0"
+		:fetch-function="(limit, offset, expand, filter, sort, clear) => camerasStore.getCameraByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

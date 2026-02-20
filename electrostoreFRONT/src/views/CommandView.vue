@@ -39,9 +39,6 @@ async function fetchAllData() {
 			router.push("/commands");
 			return;
 		}
-		commandsStore.getCommentaireByInterval(commandId.value, 100, 0, ["user"]);
-		commandsStore.getDocumentByInterval(commandId.value, 100, 0);
-		commandsStore.getItemByInterval(commandId.value, 100, 0, ["item"]);
 		commandsStore.commandEdition = {
 			prix_command: commandsStore.commands[commandId.value].prix_command,
 			url_command: commandsStore.commands[commandId.value].url_command,
@@ -64,7 +61,7 @@ onBeforeUnmount(() => {
 
 // commande
 const commandDeleteModalShow = ref(false);
-const commandTypeStatus = ref([["En attente", t("command.VCommandStatus1")], ["En cours", t("command.VCommandStatus2")], ["Terminée", t("command.VCommandStatus3")], ["Annulée", t("command.VCommandStatus4")]]);
+const commandTypeStatus = ref({ ["En attente"]: t("command.VCommandStatus1"), ["En cours"]: t("command.VCommandStatus2"), ["Terminée"]: t("command.VCommandStatus3"), ["Annulée"]: t("command.VCommandStatus4") });
 const commandSave = async() => {
 	try {
 		createSchema().validateSync(commandsStore.commandEdition, { abortEarly: false });
@@ -151,22 +148,6 @@ const documentView = async(fileContent) => {
 
 // item
 const itemModalShow = ref(false);
-const itemLoaded = ref(false);
-const itemOpenAddModal = () => {
-	itemModalShow.value = true;
-	if (!itemLoaded.value) {
-		fetchAllItems();
-	}
-};
-async function fetchAllItems() {
-	let offset = 0;
-	const limit = 100;
-	do {
-		await itemsStore.getItemByInterval(limit, offset);
-		offset += limit;
-	} while (offset < itemsStore.itemsTotalCount);
-	itemLoaded.value = true;
-}
 const itemSave = async(item) => {
 	if (commandsStore.items[commandId.value][item.id_item]) {
 		try {
@@ -429,7 +410,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[commandsStore.documents[commandId]]"
 					:loading="commandsStore.documentsLoading"
 					:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)"
-					:fetch-function="(offset, limit) => commandsStore.getDocumentByInterval(commandId, limit, offset)"
+					:fetch-function="(limit, offset, expand, filter, sort, clear) => commandsStore.getDocumentByInterval(commandId, limit, offset, expand, filter, sort, clear)"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
@@ -437,15 +418,15 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="command.VCommandItems"
 			:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)" :id-page="commandId">
 			<template #append-row>
-				<button type="button" @click="itemOpenAddModal"
+				<button type="button" @click="itemModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('command.VCommandAddItem') }}
 				</button>
-				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item' }"
+				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
 					:store-data="[commandsStore.items[commandId],itemsStore.items]"
 					:loading="commandsStore.itemsLoading" :schema="schemaItem"
 					:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)"
-					:fetch-function="(offset, limit) => commandsStore.getItemByInterval(commandId, limit, offset, ['item'])"
+					:fetch-function="(limit, offset, expand, filter, sort, clear) => commandsStore.getItemByInterval(commandId, limit, offset, expand, filter, sort, clear)"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -453,13 +434,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="command.VCommandCommentaires"
 			:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)" :id-page="commandId">
 			<template #append-row>
-				<Commentaire :meta="{ contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: true, roleRequired: authStore.hasPermission([1, 2]) }"
+				<Commentaire :meta="{ contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[commandsStore.commentaires[commandId], usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
 					:store-function="{ create: (data) => commandsStore.createCommentaire(commandId, data), update: (id, data) => commandsStore.updateCommentaire(commandId, id, data), delete: (id) => commandsStore.deleteCommentaire(commandId, id) }"
 					:loading="commandsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'command.VCommandCommentDeleteTitle', textP: 'command.VCommandCommentDeleteText' }"
 					:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)"
-					:fetch-function="(offset, limit) => commandsStore.getCommentaireByInterval(commandId, limit, offset, ['user'])"
+					:fetch-function="(limit, offset, expand, filter, sort, clear) => commandsStore.getCommentaireByInterval(commandId, limit, offset, expand, filter, sort, clear)"
 				/>
 			</template>
 		</CollapsibleSection>
@@ -493,14 +474,14 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					class="text-gray-500 hover:text-gray-700">&times;</button>
 			</div>
 
-			<!-- Filtres -->
 			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" />
 
-			<!-- Tableau Items -->
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
 				:store-data="[itemsStore.items,commandsStore.items[commandId]]"
 				:filters="filterItem"
 				:loading="commandsStore.itemsLoading" :schema="schemaItem"
+				:total-count="Number(itemsStore.itemsTotalCount || 0)"
+				:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

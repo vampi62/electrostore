@@ -1,20 +1,8 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
 
 import { useProjetTagsStore } from "@/stores";
 const projetTagsStore = useProjetTagsStore();
-
-async function fetchAllData() {
-	let offset = 0;
-	const limit = 100;
-	do {
-		await projetTagsStore.getProjetTagByInterval(limit, offset);
-		offset += limit;
-	} while (offset < projetTagsStore.projetTagsTotalCount);
-}
-onMounted(() => {
-	fetchAllData();
-});
 
 const filter = ref([
 	{ key: "nom_projet_tag", value: "", type: "text", label: "projetTag.VProjetTagsFilterName", compareMethod: "contain" },
@@ -50,6 +38,8 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 		:store-data="[projetTagsStore.projetTags]"
 		:filters="filter"
 		:loading="projetTagsStore.projetTagsLoading"
+		:total-count="Number(projetTagsStore.projetTagsTotalCount) || 0"
+		:fetch-function="(limit, offset, expand, filter, sort, clear) => projetTagsStore.getProjetTagByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

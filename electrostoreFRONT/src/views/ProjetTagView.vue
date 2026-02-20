@@ -36,7 +36,6 @@ async function fetchAllData() {
 			router.push("/projet-tags");
 			return;
 		}
-		projetTagsStore.getProjetTagProjetByInterval(projetTagId.value, 100, 0, ["projet"]);
 		projetTagsStore.projetTagEdition = {
 			loading: false,
 			nom_projet_tag: projetTagsStore.projetTags[projetTagId.value].nom_projet_tag,
@@ -194,11 +193,11 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('projetTag.VProjetTagAddProjet') }}
 				</button>
-				<Tableau :labels="labelTableauProjet" :meta="{ key: 'id_projet' }"
+				<Tableau :labels="labelTableauProjet" :meta="{ key: 'id_projet', expand: ['projet'] }"
 					:store-data="[projetTagsStore.projetTagsProjet[projetTagId],projetsStore.projets]"
 					:loading="projetTagsStore.projetTagsProjetLoading"
 					:total-count="Number(projetTagsStore.projetTagsProjetTotalCount[projetTagId] || 0)"
-					:fetch-function="(offset, limit) => projetTagsStore.getProjetTagProjetByInterval(projetTagId, limit, offset, ['projet'])"
+					:fetch-function="(limit, offset, expand, filter, sort, clear) => projetTagsStore.getProjetTagProjetByInterval(projetTagId, limit, offset, expand, filter, sort, clear)"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -228,6 +227,8 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:store-data="[projetsStore.projets, projetTagsStore.projetTagsProjet[projetTagId]]"
 				:filters="filterProjet"
 				:loading="projetTagsStore.projetTagsProjetLoading"
+				:total-count="Number(projetsStore.projetsTotalCount || 0)"
+				:fetch-function="(limit, offset, expand, filter, sort, clear) => projetsStore.getProjetByInterval(limit, offset, expand, filter, sort, clear)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

@@ -1,20 +1,8 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
 
 import { useTagsStore } from "@/stores";
 const tagsStore = useTagsStore();
-
-async function fetchAllData() {
-	let offset = 0;
-	const limit = 100;
-	do {
-		await tagsStore.getTagByInterval(limit, offset);
-		offset += limit;
-	} while (offset < tagsStore.tagsTotalCount);
-}
-onMounted(() => {
-	fetchAllData();
-});
 
 const filter = ref([
 	{ key: "nom_tag", value: "", type: "text", label: "tag.VTagsFilterName", compareMethod: "contain" },
@@ -52,6 +40,8 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 		:store-data="[tagsStore.tags]"
 		:filters="filter"
 		:loading="tagsStore.tagsLoading"
+		:total-count="Number(tagsStore.tagsTotalCount) || 0"
+		:fetch-function="(limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

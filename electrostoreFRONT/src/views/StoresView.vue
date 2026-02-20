@@ -1,45 +1,32 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
 
 import { useStoresStore, useTagsStore, useAuthStore } from "@/stores";
 const storesStore = useStoresStore();
 const tagsStore = useTagsStore();
 const authStore = useAuthStore();
 
-async function fetchAllData() {
-	let tagsLink = new Set();
-	let offset = 0;
-	const limit = 100;
-	do {
-		await storesStore.getStoreByInterval(limit, offset, ["stores_tags"]);
-		offset += limit;
-	} while (offset < storesStore.storesTotalCount);
-	for (const store in storesStore.stores) {
-		for (const tag in storesStore.storeTags[store]) {
-			tagsLink.add(tag);
-		}
-	}
+async function fetchTagData(minOffset, maxOffset) {
 	let tagsNotFound = [];
-	for (const tag of Array.from(tagsLink)) {
-		if (!tagsStore.tags[tag]) {
-			tagsNotFound.push(tag);
+	for (const id = minOffset; id < maxOffset; id++) {
+		for (const tag in storesStore.storeTags[id]) {
+			if (!tagsStore.tags[tag]) {
+				tagsNotFound.push(tag);
+			}
 		}
 	}
 	if (tagsNotFound.length > 0) {
 		await tagsStore.getTagByList(tagsNotFound);
 	}
-	filter.value[4].options = Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]);
+	filter.value[6].options = Object.fromEntries(Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]));
 }
-onMounted(() => {
-	fetchAllData();
-});
 
 const filter = ref([
 	{ key: "nom_store", value: "", type: "text", label: "store.VStoresFilterName", compareMethod: "contain" },
 	{ key: "mqtt_name_store", value: "", type: "text", label: "store.VStoresFilterMqttName", compareMethod: "contain" },
 	{ key: "xlength_store", value: "", type: "number", label: "store.VStoresFilterXLength", compareMethod: "<=" },
 	{ key: "ylength_store", value: "", type: "number", label: "store.VStoresFilterYLength", compareMethod: "<=" },
-	{ key: "id_tag", subPath: "stores_tags", value: "", type: "datalist", typeData: "int", options: Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]), label: "store.VStoresFilterTag", compareMethod: "=" },
+	{ key: "id_tag", subPath: "stores_tags", value: "", type: "datalist", typeData: "int", options: Object.fromEntries(Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag])), label: "store.VStoresFilterTag", compareMethod: "=" },
 ]);
 const tableauLabel = ref([
 	{ label: "store.VStoresName", sortable: true, key: "nom_store", type: "text" },
@@ -51,6 +38,7 @@ const tableauLabel = ref([
 const tableauMeta = ref({
 	key: "id_store",
 	path: "/stores/",
+	expand: ["stores_tags"],
 });
 document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
@@ -78,6 +66,9 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 		:store-data="[storesStore.stores,storesStore.storeTags,tagsStore.tags]"
 		:filters="filter"
 		:loading="storesStore.storesLoading"
+		:total-count="Number(storesStore.storesTotalCount) || 0"
+		:fetch-function="(limit, offset, expand, filter, sort, clear) => storesStore.getStoreByInterval(limit, offset, expand, filter, sort, clear)"
+		:list-fetch-function="[(minOffset, maxOffset) => fetchTagData(minOffset, maxOffset)]"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

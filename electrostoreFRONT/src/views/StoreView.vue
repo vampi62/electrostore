@@ -185,22 +185,6 @@ const showBoxContent = async(idBox) => {
 	}
 	storeBoxEditModalShow.value = true;
 };
-const itemLoaded = ref(false);
-const itemOpenAddModal = () => {
-	storeItemAddModalShow.value = true;
-	if (!itemLoaded.value) {
-		fetchAllItems();
-	}
-};
-async function fetchAllItems() {
-	let offset = 0;
-	const limit = 100;
-	do {
-		await itemsStore.getItemByInterval(limit, offset);
-		offset += limit;
-	} while (offset < itemsStore.itemsTotalCount);
-	itemLoaded.value = true;
-}
 const itemSave = async(item) => {
 	if (storesStore.boxItems[boxId.value][item.id_item]) {
 		try {
@@ -267,6 +251,7 @@ const labelTableauBoxItem = ref([
 const metaTableauBoxItem = ref({
 	key: "id_item",
 	path: "/inventory/",
+	expand: ["item"],
 });
 const labelTableauModalItem = ref([
 	{ label: "store.VStoreItemName", sortable: true, key: "reference_name_item", type: "text" },
@@ -359,7 +344,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
 			<Tags :current-tags="storesStore.storeTags[storeId] || {}" :tags-store="tagsStore.tags" :can-edit="storeId !== 'new' && authStore.hasPermission([1, 2])"
 				:delete-function="(value) => tagDelete(value)"
-				:fetch-function="(offset, limit) => tagsStore.getTagByInterval(limit, offset)"
+				:fetch-function="(limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)"
 				:total-count="Number(tagsStore.tagsTotalCount || 0)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag' }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
@@ -389,11 +374,11 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 						:store-data="[storesStore.boxItems[boxId],itemsStore.items,itemsStore.thumbnailsURL]"
 						:loading="storesStore.boxItemsLoading"
 						:total-count="Number(storesStore.boxItemsTotalCount[boxId] || 0)"
-						:fetch-function="(offset, limit) => storesStore.getBoxItems(storeId, boxId, offset, limit)"
+						:fetch-function="(limit, offset, expand, filter, sort, clear) => storesStore.getBoxItemByInterval(storeId, boxId, limit, offset, expand, filter, sort, clear)"
 						:tableau-css="{ component: 'max-h-80', tr: 'transition duration-150 ease-in-out cursor-pointer hover:bg-gray-300 even:bg-gray-100' }"
 					>
 						<template #append-row>
-							<tr @click="itemOpenAddModal()"
+							<tr @click="storeItemAddModalShow = true"
 								class="transition duration-150 ease-in-out hover:bg-gray-300 cursor-pointer">
 								<td colspan="4" class="text-center">
 									{{ $t('store.VStoreAddItem') }}
@@ -422,14 +407,14 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					class="text-gray-500 hover:text-gray-700">&times;</button>
 			</div>
 
-			<!-- Filtres -->
 			<FilterContainer class="my-4 flex gap-4" :filters="filterTag" :store-data="tagsStore.tags" />
 
-			<!-- Tableau Items -->
 			<Tableau :labels="labelTableauModalTag" :meta="{ key: 'id_tag' }"
 				:store-data="[tagsStore.tags,storesStore.storeTags[storeId]]"
 				:filters="filterTag"
 				:loading="tagsStore.tagsLoading"
+				:total-count="Number(tagsStore.tagsTotalCount || 0)"
+				:fetch-function="(limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
@@ -447,9 +432,11 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" />
 
 			<Tableau id="storeItemTable" :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
-				:store-data="[itemsStore.items,storesStore.boxItems[boxId]]"
+				:store-data="[itemsStore.items, storesStore.boxItems[boxId]]"
 				:filters="filterItem"
 				:loading="itemsStore.itemsLoading" :schema="schemaItem"
+				:total-count="Number(itemsStore.itemsTotalCount || 0)"
+				:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
