@@ -27,7 +27,6 @@ export const useCamerasStore = defineStore("cameras",{
 				this.cameras[camera.id_camera] = camera;
 				this.getStatus(camera.id_camera);
 			}
-			this.TotalCount = newCameraList["count"];
 			this.loading = false;
 		},
 		async getCameraByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
@@ -49,8 +48,9 @@ export const useCamerasStore = defineStore("cameras",{
 				this.cameras[camera.id_camera] = camera;
 				this.getStatus(camera.id_camera);
 			}
-			this.TotalCount = newCameraList["count"];
+			this.TotalCount = newCameraList["pagination"]?.["total"] || 0;
 			this.loading = false;
+			return [newCameraList["pagination"]?.["nextOffset"] || 0, newCameraList["pagination"]?.["hasMore"] || false];
 		},
 		async getCameraById(id) {
 			if (!this.cameras[id]) {

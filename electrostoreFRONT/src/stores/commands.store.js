@@ -62,7 +62,6 @@ export const useCommandsStore = defineStore("commands",{
 					}
 				}
 			}
-			this.commandsTotalCount = newCommandList["count"];
 			this.commandsLoading = false;
 		},
 		async getCommandByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
@@ -104,8 +103,9 @@ export const useCommandsStore = defineStore("commands",{
 					}
 				}
 			}
-			this.commandsTotalCount = newCommandList["count"];
+			this.commandsTotalCount = newCommandList["pagination"]?.["total"] || 0;
 			this.commandsLoading = false;
+			return [newCommandList["pagination"]?.["nextOffset"] || 0, newCommandList["pagination"]?.["hasMore"] || false];
 		},
 		async getCommandById(id, expand = []) {
 			if (!this.commands[id]) {
@@ -184,8 +184,9 @@ export const useCommandsStore = defineStore("commands",{
 					userStore.users[commentaire.id_user] = commentaire.user;
 				}
 			}
-			this.commentairesTotalCount[idCommand] = newCommentaireList["count"];
+			this.commentairesTotalCount[idCommand] = newCommentaireList["pagination"]?.["total"] || 0;
 			this.commentairesLoading = false;
+			return [newCommentaireList["pagination"]?.["nextOffset"] || 0, newCommentaireList["pagination"]?.["hasMore"] || false];
 		},
 		async getCommentaireById(idCommand, id, expand = []) {
 			if (!this.commentaires[idCommand]) {
@@ -255,8 +256,9 @@ export const useCommandsStore = defineStore("commands",{
 			for (const document of newDocumentList["data"]) {
 				this.documents[idCommand][document.id_command_document] = document;
 			}
-			this.documentsTotalCount[idCommand] = newDocumentList["count"];
+			this.documentsTotalCount[idCommand] = newDocumentList["pagination"]?.["total"] || 0;
 			this.documentsLoading = false;
+			return [newDocumentList["pagination"]?.["nextOffset"] || 0, newDocumentList["pagination"]?.["hasMore"] || false];
 		},
 		async getDocumentById(idCommand, id, expand = []) {
 			if (!this.documents[idCommand]) {
@@ -336,8 +338,9 @@ export const useCommandsStore = defineStore("commands",{
 					itemStore.items[item.id_item] = item.item;
 				}
 			}
-			this.itemsTotalCount[idCommand] = newItemList["count"];
+			this.itemsTotalCount[idCommand] = newItemList["pagination"]?.["total"] || 0;
 			this.itemsLoading = false;
+			return [newItemList["pagination"]?.["nextOffset"] || 0, newItemList["pagination"]?.["hasMore"] || false];
 		},
 		async getItemById(idCommand, id, expand = []) {
 			if (!this.items[idCommand]) {

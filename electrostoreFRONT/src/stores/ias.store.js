@@ -24,7 +24,6 @@ export const useIasStore = defineStore("ias", {
 			for (const ia of newIaList["data"]) {
 				this.ias[ia.id_ia] = ia;
 			}
-			this.TotalCount = newIaList["count"];
 			this.loading = false;
 		},
 		async getIaByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
@@ -45,8 +44,9 @@ export const useIasStore = defineStore("ias", {
 			for (const ia of newIaList["data"]) {
 				this.ias[ia.id_ia] = ia;
 			}
-			this.TotalCount = newIaList["count"];
+			this.TotalCount = newIaList["pagination"]?.["total"] || 0;
 			this.loading = false;
+			return [newIaList["pagination"]?.["nextOffset"] || 0, newIaList["pagination"]?.["hasMore"] || false];
 		},
 		async getIaById(id) {
 			if (!this.ias[id]) {

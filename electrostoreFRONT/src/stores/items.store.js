@@ -96,7 +96,6 @@ export const useItemsStore = defineStore("items",{
 					}
 				}
 			}
-			this.itemsTotalCount = newItemList["count"];
 			this.itemsLoading = false;
 		},
 		async getItemByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
@@ -155,8 +154,9 @@ export const useItemsStore = defineStore("items",{
 					}
 				}
 			}
-			this.itemsTotalCount = newItemList["count"];
+			this.itemsTotalCount = newItemList["pagination"]?.["total"] || 0;
 			this.itemsLoading = false;
+			return [newItemList["pagination"]?.["nextOffset"] || 0, newItemList["pagination"]?.["hasMore"] || false];
 		},
 		async getItemById(id, expand = []) {
 			if (!this.items[id]) {
@@ -251,8 +251,9 @@ export const useItemsStore = defineStore("items",{
 			for (const document of newDocumentList["data"]) {
 				this.documents[idItem][document.id_item_document] = document;
 			}
-			this.documentsTotalCount[idItem] = newDocumentList["count"];
+			this.documentsTotalCount[idItem] = newDocumentList["pagination"]?.["total"] || 0;
 			this.documentsLoading = false;
+			return [newDocumentList["pagination"]?.["nextOffset"] || 0, newDocumentList["pagination"]?.["hasMore"] || false];
 		},
 		async getDocumentById(idItem, id) {
 			if (!this.documents[idItem]) {
@@ -334,8 +335,9 @@ export const useItemsStore = defineStore("items",{
 					storeStore.boxs[itemBox["box"].id_store][itemBox.id_box] = itemBox["box"];
 				}
 			}
-			this.itemBoxsTotalCount[idItem] = newItemBoxList["count"];
+			this.itemBoxsTotalCount[idItem] = newItemBoxList["pagination"]?.["total"] || 0;
 			this.itemBoxsLoading = false;
+			return [newItemBoxList["pagination"]?.["nextOffset"] || 0, newItemBoxList["pagination"]?.["hasMore"] || false];
 		},
 		async getItemBoxById(idItem, id, expand = []) {
 			if (!this.itemBoxs[idItem]) {
@@ -409,8 +411,9 @@ export const useItemsStore = defineStore("items",{
 					tagsStore.tags[itemTag.id_tag] = itemTag["tag"];
 				}
 			}
-			this.itemTagsTotalCount[idItem] = newItemTagList["count"];
+			this.itemTagsTotalCount[idItem] = newItemTagList["pagination"]?.["total"] || 0;
 			this.itemTagsLoading = false;
+			return [newItemTagList["pagination"]?.["nextOffset"] || 0, newItemTagList["pagination"]?.["hasMore"] || false];
 		},
 		async getItemTagById(idItem, id, expand = []) {
 			if (!this.itemTags[idItem]) {
@@ -500,8 +503,9 @@ export const useItemsStore = defineStore("items",{
 					commandsStore.commands[itemCommand.id_command] = itemCommand["command"];
 				}
 			}
-			this.itemCommandsTotalCount[idItem] = newItemCommandList["count"];
+			this.itemCommandsTotalCount[idItem] = newItemCommandList["pagination"]?.["total"] || 0;
 			this.itemCommandsLoading = false;
+			return [newItemCommandList["pagination"]?.["nextOffset"] || 0, newItemCommandList["pagination"]?.["hasMore"] || false];
 		},
 		async getItemCommandById(idItem, id, expand = []) {
 			if (!this.itemCommands[idItem]) {
@@ -588,8 +592,9 @@ export const useItemsStore = defineStore("items",{
 					projetsStore.projets[itemProjet.id_projet] = itemProjet["projet"];
 				}
 			}
-			this.itemProjetsTotalCount[idItem] = newItemProjetList["count"];
+			this.itemProjetsTotalCount[idItem] = newItemProjetList["pagination"]?.["total"] || 0;
 			this.itemProjetsLoading = false;
+			return [newItemProjetList["pagination"]?.["nextOffset"] || 0, newItemProjetList["pagination"]?.["hasMore"] || false];
 		},
 		async getItemProjetById(idItem, id, expand = []) {
 			if (!this.itemProjets[idItem]) {
@@ -678,8 +683,9 @@ export const useItemsStore = defineStore("items",{
 					this.showThumbnailById(idItem, img.id_img);
 				}
 			}
-			this.imagesTotalCount[idItem] = newImagesList["count"];
+			this.imagesTotalCount[idItem] = newImagesList["pagination"]?.["total"] || 0;
 			this.imagesLoading = false;
+			return [newImagesList["pagination"]?.["nextOffset"] || 0, newImagesList["pagination"]?.["hasMore"] || false];
 		},
 		async getImageById(idItem, id, loadThumbnails = true, loadImages = false) {
 			if (!this.images[idItem]) {

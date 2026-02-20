@@ -85,7 +85,6 @@ export const useProjetsStore = defineStore("projets",{
 					}
 				}
 			}
-			this.projetsTotalCount = newProjetList["count"];
 			this.projetsLoading = false;
 		},
 		async getProjetByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
@@ -141,8 +140,9 @@ export const useProjetsStore = defineStore("projets",{
 					}
 				}
 			}
-			this.projetsTotalCount = newProjetList["count"];
+			this.projetsTotalCount = newProjetList["pagination"]?.["total"] || 0;
 			this.projetsLoading = false;
+			return [newProjetList["pagination"]?.["nextOffset"] || 0, newProjetList["pagination"]?.["hasMore"] || false];
 		},
 		async getProjetById(id, expand = []) {
 			if (!this.projets[id]) {
@@ -235,8 +235,9 @@ export const useProjetsStore = defineStore("projets",{
 					userStore.users[commentaire.id_user] = commentaire.user;
 				}
 			}
-			this.commentairesTotalCount[idProjet] = newCommentaireList["count"];
+			this.commentairesTotalCount[idProjet] = newCommentaireList["pagination"]?.["total"] || 0;
 			this.commentairesLoading = false;
+			return [newCommentaireList["pagination"]?.["nextOffset"] || 0, newCommentaireList["pagination"]?.["hasMore"] || false];
 		},
 		async getCommentaireById(idProjet, id, expand = []) {
 			if (!this.commentaires[idProjet]) {
@@ -307,8 +308,9 @@ export const useProjetsStore = defineStore("projets",{
 			for (const document of newDocumentList["data"]) {
 				this.documents[idProjet][document.id_projet_document] = document;
 			}
-			this.documentsTotalCount[idProjet] = newDocumentList["count"];
+			this.documentsTotalCount[idProjet] = newDocumentList["pagination"]?.["total"] || 0;
 			this.documentsLoading = false;
+			return [newDocumentList["pagination"]?.["nextOffset"] || 0, newDocumentList["pagination"]?.["hasMore"] || false];
 		},
 		async getDocumentById(idProjet, id) {
 			if (!this.documents[idProjet]) {
@@ -388,8 +390,9 @@ export const useProjetsStore = defineStore("projets",{
 					itemStore.items[item.id_item] = item.item;
 				}
 			}
-			this.itemsTotalCount[idProjet] = newItemList["count"];
+			this.itemsTotalCount[idProjet] = newItemList["pagination"]?.["total"] || 0;
 			this.itemsLoading = false;
+			return [newItemList["pagination"]?.["nextOffset"] || 0, newItemList["pagination"]?.["hasMore"] || false];
 		},
 		async getItemById(idProjet, id, expand = []) {
 			if (!this.items[idProjet]) {
@@ -476,7 +479,9 @@ export const useProjetsStore = defineStore("projets",{
 					projetTagStore.projetTags[projetTagProjet.id_projet_tag] = projetTagProjet.projet_tag;
 				}
 			}
-			this.projetTagProjetTotalCount[idProjet] = newProjetTagProjetList["count"];
+			this.projetTagProjetTotalCount[idProjet] = newProjetTagProjetList["pagination"]?.["total"] || 0;
+			this.projetTagProjetLoading = false;
+			return [newProjetTagProjetList["pagination"]?.["nextOffset"] || 0, newProjetTagProjetList["pagination"]?.["hasMore"] || false];
 		},
 		async getProjetTagProjetById(idProjet, idProjetTag, expand = []) {
 			if (!this.projetTagProjet[idProjet]) {
@@ -562,8 +567,9 @@ export const useProjetsStore = defineStore("projets",{
 			for (const statusHistory of newStatusHistoryList["data"]) {
 				this.statusHistory[idProjet][statusHistory.id_projet_status] = statusHistory;
 			}
-			this.statusHistoryTotalCount[idProjet] = newStatusHistoryList["count"];
+			this.statusHistoryTotalCount[idProjet] = newStatusHistoryList["pagination"]?.["total"] || 0;
 			this.statusHistoryLoading = false;
+			return [newStatusHistoryList["pagination"]?.["nextOffset"] || 0, newStatusHistoryList["pagination"]?.["hasMore"] || false];
 		},
 		async getStatusHistoryById(idProjet, id, expand = []) {
 			if (!this.statusHistory[idProjet]) {

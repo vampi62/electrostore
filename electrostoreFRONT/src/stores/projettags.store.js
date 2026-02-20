@@ -38,7 +38,6 @@ export const useProjetTagsStore = defineStore("projetTags",{
 					}
 				}
 			}
-			this.projetTagsTotalCount = newProjetTagList["count"];
 			this.projetTagsLoading = false;
 		},
 		async getProjetTagByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
@@ -66,8 +65,9 @@ export const useProjetTagsStore = defineStore("projetTags",{
 					}
 				}
 			}
-			this.projetTagsTotalCount = newProjetTagList["count"];
+			this.projetTagsTotalCount = newProjetTagList["pagination"]?.["total"] || 0;
 			this.projetTagsLoading = false;
+			return [newProjetTagList["pagination"]?.["nextOffset"] || 0, newProjetTagList["pagination"]?.["hasMore"] || false];
 		},
 		async getProjetTagById(id, expand = []) {
 			if (!this.projetTags[id]) {
@@ -139,14 +139,15 @@ export const useProjetTagsStore = defineStore("projetTags",{
 				url: `${baseUrl}/projet-tag/${idProjetTag}/projet?${paramString}`,
 				useToken: "access",
 			});
-			this.projetTagsProjetTotalCount[idProjetTag] = newProjetTagProjetList["count"];
 			for (const projetTagProjet of newProjetTagProjetList["data"]) {
 				this.projetTagsProjet[idProjetTag][projetTagProjet.id_projet] = projetTagProjet;
 				if (expand.includes("projet")) {
 					projetsStore.projets[projetTagProjet.id_projet] = projetTagProjet.projet;
 				}
 			}
+			this.projetTagsProjetTotalCount[idProjetTag] = newProjetTagProjetList["pagination"]?.["total"] || 0;
 			this.projetTagsProjetLoading = false;
+			return [newProjetTagProjetList["pagination"]?.["nextOffset"] || 0, newProjetTagProjetList["pagination"]?.["hasMore"] || false];
 		},
 		async getProjetTagProjetById(idProjetTag, idProjet, expand = []) {
 			if (!this.projetTagsProjet[idProjetTag]) {

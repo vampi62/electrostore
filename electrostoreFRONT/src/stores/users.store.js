@@ -55,7 +55,6 @@ export const useUsersStore = defineStore("users",{
 					}
 				}
 			}
-			this.usersTotalCount = newUserList["count"];
 			this.usersLoading = false;
 		},
 		async getUserByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
@@ -90,8 +89,9 @@ export const useUsersStore = defineStore("users",{
 					}
 				}
 			}
-			this.usersTotalCount = newUserList["count"];
+			this.usersTotalCount = newUserList["pagination"]?.["total"] || 0;
 			this.usersLoading = false;
+			return [newUserList["pagination"]?.["nextOffset"] || 0, newUserList["pagination"]?.["hasMore"] || false];
 		},
 		async getUserById(id, expand = []) {
 			if (!this.users[id]) {
@@ -167,8 +167,9 @@ export const useUsersStore = defineStore("users",{
 					projetStore.projets[projetCommentaire.projet.id_projet] = projetCommentaire.projet;
 				}
 			}
-			this.projetsCommentaireTotalCount[idUser] = newProjetCommentaireList["count"];
+			this.projetsCommentaireTotalCount[idUser] = newProjetCommentaireList["pagination"]?.["total"] || 0;
 			this.projetsCommentaireLoading = false;
+			return [newProjetCommentaireList["pagination"]?.["nextOffset"] || 0, newProjetCommentaireList["pagination"]?.["hasMore"] || false];
 		},
 		async getProjetCommentaireById(idUser, id, expand = []) {
 			if (!this.projetsCommentaire[idUser]) {
@@ -242,8 +243,9 @@ export const useUsersStore = defineStore("users",{
 					commandStore.commands[commandCommentaire.command.id_command] = commandCommentaire.command;
 				}
 			}
-			this.commandsCommentaireTotalCount[idUser] = newCommandCommentaireList["count"];
+			this.commandsCommentaireTotalCount[idUser] = newCommandCommentaireList["pagination"]?.["total"] || 0;
 			this.commandsCommentaireLoading = false;
+			return [newCommandCommentaireList["pagination"]?.["nextOffset"] || 0, newCommandCommentaireList["pagination"]?.["hasMore"] || false];
 		},
 		async getCommandCommentaireById(idUser, id, expand = []) {
 			if (!this.commandsCommentaire[idUser]) {
@@ -315,8 +317,9 @@ export const useUsersStore = defineStore("users",{
 			for (const token of newTokenList["data"]) {
 				this.tokens[idUser][token.session_id] = token;
 			}
-			this.tokensTotalCount[idUser] = newTokenList["count"];
+			this.tokensTotalCount[idUser] = newTokenList["pagination"]?.["total"] || 0;
 			this.tokensLoading = false;
+			return [newTokenList["pagination"]?.["nextOffset"] || 0, newTokenList["pagination"]?.["hasMore"] || false];
 		},
 		async getTokenById(idUser, id) {
 			if (!this.tokens[idUser]) {

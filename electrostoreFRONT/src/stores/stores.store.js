@@ -72,7 +72,6 @@ export const useStoresStore = defineStore("stores",{
 					}
 				}
 			}
-			this.storesTotalCount = newStoreList["count"];
 			this.storesLoading = false;
 		},
 		async getStoreByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
@@ -114,8 +113,9 @@ export const useStoresStore = defineStore("stores",{
 					}
 				}
 			}
-			this.storesTotalCount = newStoreList["count"];
+			this.storesTotalCount = newStoreList["pagination"]?.["total"] || 0;
 			this.storesLoading = false;
+			return [newStoreList["pagination"]?.["nextOffset"] || 0, newStoreList["pagination"]?.["hasMore"] || false];
 		},
 		async getStoreById(id, expand = []) {
 			if (!this.stores[id]) {
@@ -219,8 +219,9 @@ export const useStoresStore = defineStore("stores",{
 					}
 				}
 			}
-			this.boxsTotalCount = newBoxList["count"];
+			this.boxsTotalCount[idStore] = newBoxList["pagination"]?.["total"] || 0;
 			this.boxsLoading = false;
+			return [newBoxList["pagination"]?.["nextOffset"] || 0, newBoxList["pagination"]?.["hasMore"] || false];
 		},
 		async getBoxById(idStore, id, expand = []) {
 			if (!this.boxs[idStore]) {
@@ -346,8 +347,9 @@ export const useStoresStore = defineStore("stores",{
 			for (const led of newLedList["data"]) {
 				this.leds[idStore][led.id_led] = led;
 			}
-			this.ledsTotalCount = newLedList["count"];
+			this.ledsTotalCount[idStore] = newLedList["pagination"]?.["total"] || 0;
 			this.ledsLoading = false;
+			return [newLedList["pagination"]?.["nextOffset"] || 0, newLedList["pagination"]?.["hasMore"] || false];
 		},
 		async getLedById(idStore, id) {
 			if (!this.leds[idStore]) {
@@ -462,8 +464,9 @@ export const useStoresStore = defineStore("stores",{
 					tagsStore.tags[tag.id_tag] = tag.tag;
 				}
 			}
-			this.storeTagsTotalCount[idStore] = newTagList["count"];
+			this.storeTagsTotalCount[idStore] = newTagList["pagination"]?.["total"] || 0;
 			this.storeTagsLoading = false;
+			return [newTagList["pagination"]?.["nextOffset"] || 0, newTagList["pagination"]?.["hasMore"] || false];
 		},
 		async getTagStoreById(idStore, id, expand = []) {
 			if (!this.storeTags[idStore]) {
@@ -553,8 +556,9 @@ export const useStoresStore = defineStore("stores",{
 					itemsStore.items[item.id_item] = item.item;
 				}
 			}
-			this.boxItemsTotalCount = newItemList["count"];
+			this.boxItemsTotalCount[idBox] = newItemList["pagination"]?.["total"] || 0;
 			this.boxItemsLoading = false;
+			return [newItemList["pagination"]?.["nextOffset"] || 0, newItemList["pagination"]?.["hasMore"] || false];
 		},
 		async getBoxItemById(idStore, idBox, id, expand = []) {
 			if (!this.boxItems[idBox]) {
@@ -628,8 +632,9 @@ export const useStoresStore = defineStore("stores",{
 					tagsStore.tags[tag.id_tag] = tag.tag;
 				}
 			}
-			this.boxTagsTotalCount = newTagList["count"];
+			this.boxTagsTotalCount[idBox] = newTagList["pagination"]?.["total"] || 0;
 			this.boxTagsLoading = false;
+			return [newTagList["pagination"]?.["nextOffset"] || 0, newTagList["pagination"]?.["hasMore"] || false];
 		},
 		async getBoxTagById(idStore, idBox, id, expand = []) {
 			if (!this.boxTags[idBox]) {
