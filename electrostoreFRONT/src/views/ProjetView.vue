@@ -223,13 +223,13 @@ const filterItem = ref([
 const createSchema = () => {
 	return Yup.object().shape({
 		nom_projet: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("projet.NameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_name"), t("projet.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 			.required(t("projet.NameRequired")),
 		description_projet: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_description"), t("projet.DescriptionMaxLength") + " " + configsStore.getConfigByKey("max_length_description") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_description"), t("projet.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }))
 			.required(t("projet.DescriptionRequired")),
 		url_projet: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_url"), t("projet.UrlMaxLength") + " " + configsStore.getConfigByKey("max_length_url") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_url"), t("projet.UrlMaxLength", { count: configsStore.getConfigByKey("max_length_url") }))
 			.url(t("projet.UrlInvalid"))
 			.required(t("projet.UrlRequired")),
 		status_projet: Yup.number()
@@ -239,15 +239,15 @@ const createSchema = () => {
 
 const schemaAddDocument = Yup.object().shape({
 	name_projet_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("projet.DocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+		.max(configsStore.getConfigByKey("max_length_name"), t("projet.DocumentNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("projet.DocumentNameRequired")),
 	document: Yup.mixed()
 		.required(t("projet.DocumentRequired"))
-		.test("fileSize", t("projet.DocumentSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
+		.test("fileSize", t("projet.DocumentSize", { count: configsStore.getConfigByKey("max_size_document_in_mb") }), (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 const schemaEditDocument = Yup.object().shape({
 	name_projet_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("projet.DocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+		.max(configsStore.getConfigByKey("max_length_name"), t("projet.DocumentNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("projet.DocumentNameRequired")),
 });
 

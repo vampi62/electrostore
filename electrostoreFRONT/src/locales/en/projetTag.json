@@ -6,7 +6,7 @@
     "ProjetAdded": "Project added to tag successfully",
     "ProjetDeleted": "Project removed from tag successfully",
     "ProjetFilterPlaceholder": "Search for projects to add...",
-    "NameMaxLength": "The tag name must be at most ",
+    "NameMaxLength": "The tag name must be at most {count} characters",
     "NameRequired": "The tag name is required",
     "PoidsMin": "The weight must be at least ",
     "PoidsNumber": "The weight must be a number",

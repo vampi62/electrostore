@@ -288,13 +288,13 @@ const schemaBox = Yup.object().shape({
 const createSchema = () => {
 	return Yup.object().shape({
 		reference_name_item: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("item.NameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_name"), t("item.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 			.required(t("item.NameRequired")),
 		friendly_name_item: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("item.FriendlyNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_name"), t("item.FriendlyNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 			.required(t("item.FriendlyNameRequired")),
 		description_item: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_description"), t("item.DescriptionMaxLength") + " " + configsStore.getConfigByKey("max_length_description") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_description"), t("item.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }))
 			.required(t("item.DescriptionRequired")),
 		seuil_min_item: Yup.number()
 			.min(0, t("item.SeuilMinMin"))
@@ -307,21 +307,21 @@ const createSchema = () => {
 
 const schemaAddDocument = Yup.object().shape({
 	name_item_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("item.DocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+		.max(configsStore.getConfigByKey("max_length_name"), t("item.DocumentNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("item.DocumentNameRequired")),
 	document: Yup.mixed()
 		.required(t("item.DocumentRequired"))
-		.test("fileSize", t("item.DocumentSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
+		.test("fileSize", t("item.DocumentSize", { count: configsStore.getConfigByKey("max_size_document_in_mb") }), (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 const schemaEditDocument = Yup.object().shape({
 	name_item_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("item.DocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+		.max(configsStore.getConfigByKey("max_length_name"), t("item.DocumentNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("item.DocumentNameRequired")),
 });
 
 const schemaAddImage = Yup.object().shape({
 	nom_img: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("item.ImageNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+		.max(configsStore.getConfigByKey("max_length_name"), t("item.ImageNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("item.ImageNameRequired")),
 	image: Yup.mixed()
 		.required(t("item.ImageRequired"))

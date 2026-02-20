@@ -135,10 +135,10 @@ const storeDelete = async() => {
 const createSchema = () => {
 	return Yup.object().shape({
 		nom_store: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("store.NameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_name"), t("store.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 			.required(t("store.NameRequired")),
 		mqtt_name_store: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("store.MQTTNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_name"), t("store.MQTTNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 			.required(t("store.MQTTNameRequired")),
 		xlength_store: Yup.number()
 			.min(1, t("store.XLengthMin"))

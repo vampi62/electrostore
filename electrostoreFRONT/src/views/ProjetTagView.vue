@@ -126,7 +126,7 @@ const filterProjet = ref([
 const createSchema = () => {
 	return Yup.object().shape({
 		nom_projet_tag: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("projetTag.NameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_name"), t("projetTag.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 			.required(t("projetTag.NameRequired")),
 		poids_projet_tag: Yup.number()
 			.min(0, t("projetTag.PoidsMin"))

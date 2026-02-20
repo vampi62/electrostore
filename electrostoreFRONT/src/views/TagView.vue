@@ -187,7 +187,7 @@ const boxDelete = async(box) => {
 const createSchema = () => {
 	return Yup.object().shape({
 		nom_tag: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("tag.NameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_name"), t("tag.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 			.required(t("tag.NameRequired")),
 		poids_tag: Yup.number()
 			.min(0, t("tag.PoidsMin"))

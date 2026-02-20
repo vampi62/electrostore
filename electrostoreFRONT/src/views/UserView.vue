@@ -128,13 +128,13 @@ const isChecked = ref(false);
 const createSchema = (isChecked) => {
 	return Yup.object().shape({
 		nom_user: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("user.NameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_name"), t("user.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 			.required(t("user.NameRequired")),
 		prenom_user: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("user.FirstNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_name"), t("user.FirstNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 			.required(t("user.FirstNameRequired")),
 		email_user: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_email"), t("user.EmailMaxLength") + " " + configsStore.getConfigByKey("max_length_email") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_email"), t("user.EmailMaxLength", { count: configsStore.getConfigByKey("max_length_email") }))
 			.required(t("user.EmailRequired"))
 			.email(t("user.EmailInvalid")),
 		mdp_user: isChecked // if isChecked is true, then mdp_user is required and must be different from current_mdp_user and contain at least 8 characters, special characters, numbers and upper and lower letters

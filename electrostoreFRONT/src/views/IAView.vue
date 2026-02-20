@@ -101,10 +101,10 @@ const iaTrain = async() => {
 const createSchema = () => {
 	return Yup.object().shape({
 		nom_ia: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("ia.NameMaxLength") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_name"), t("ia.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 			.required(t("ia.NameRequired")),
 		description_ia: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_description"), t("ia.DescriptionMaxLength") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_description"), t("ia.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }))
 			.required(t("ia.DescriptionRequired")),
 	});
 };

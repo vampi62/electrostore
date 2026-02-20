@@ -191,14 +191,14 @@ const createSchema = () => {
 			.typeError(t("command.PriceNumber"))
 			.required(t("command.PriceRequired")),
 		url_command: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_url"), t("command.UrlMaxLength") + " " + configsStore.getConfigByKey("max_length_url") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_url"), t("command.UrlMaxLength", { count: configsStore.getConfigByKey("max_length_url") }))
 			.url(t("command.UrlInvalid"))
 			.required(t("command.UrlRequired")),
 		date_command: Yup.date()
 			.typeError(t("command.DateInvalid"))
 			.required(t("command.DateRequired")),
 		status_command: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_status"), t("command.StatusMaxLength") + " " + configsStore.getConfigByKey("max_length_status") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_status"), t("command.StatusMaxLength", { count: configsStore.getConfigByKey("max_length_status") }))
 			.required(t("command.StatusRequired")),
 		date_livraison_command: Yup.date()
 			.nullable()
@@ -208,15 +208,15 @@ const createSchema = () => {
 
 const schemaAddDocument = Yup.object().shape({
 	name_command_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("command.DocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+		.max(configsStore.getConfigByKey("max_length_name"), t("command.DocumentNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("command.DocumentNameRequired")),
 	document: Yup.mixed()
 		.required(t("command.DocumentRequired"))
-		.test("fileSize", t("command.DocumentSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
+		.test("fileSize", t("command.DocumentSize", { count: configsStore.getConfigByKey("max_size_document_in_mb") }), (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 const schemaEditDocument = Yup.object().shape({
 	name_command_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("command.DocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+		.max(configsStore.getConfigByKey("max_length_name"), t("command.DocumentNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("command.DocumentNameRequired")),
 });
 const schemaItem = Yup.object().shape({

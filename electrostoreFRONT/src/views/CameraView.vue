@@ -111,16 +111,16 @@ const isChecked = ref(false);
 const createSchema = (isChecked) => {
 	return Yup.object().shape({
 		nom_camera: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("camera.NameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_name"), t("camera.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 			.required(t("camera.NameRequired")),
 		url_camera: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_url"), t("camera.URLMaxLength") + " " + configsStore.getConfigByKey("max_length_url") + t("common.VAllCaracters"))
+			.max(configsStore.getConfigByKey("max_length_url"), t("camera.URLMaxLength", { count: configsStore.getConfigByKey("max_length_url") }))
 			.required(t("camera.DescriptionRequired")),
 		user_camera: isChecked
-			? Yup.string().required(t("camera.UserRequired")).max(configsStore.getConfigByKey("max_length_name"), t("camera.UserMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			? Yup.string().required(t("camera.UserRequired")).max(configsStore.getConfigByKey("max_length_name"), t("camera.UserMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 			: Yup.string().nullable(),
 		mdp_camera: isChecked
-			? Yup.string().required(t("camera.PasswordRequired")).max(configsStore.getConfigByKey("max_length_name"), t("camera.PasswordMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			? Yup.string().required(t("camera.PasswordRequired")).max(configsStore.getConfigByKey("max_length_name"), t("camera.PasswordMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 			: Yup.string().nullable(),
 	});
 };

@@ -13,7 +13,7 @@
 	"BoxAdded": "Box added",
 	"BoxDeleted": "Box deleted",
 	"BoxDeleteError": "Error deleting box",
-	"NameMaxLength": "Name must be at most ",
+	"NameMaxLength": "Name must be at most {count} characters",
 	"NameRequired": "Tag name required",
 	"PoidsMin": "Weight must be greater than 0",
 	"PoidsNumber": "Weight must be a number",
