@@ -20,6 +20,8 @@ const commandsStore = useCommandsStore();
 const projetsStore = useProjetsStore();
 const authStore = useAuthStore();
 
+import { UserRole } from "@/enums";
+
 if ((!authStore.hasPermission([1, 2])) && authStore.user?.id_user !== Number(userId.value)) {
 	addNotification({ message: "vous n'avez pas la permission d'acceder a cette page", type: "error", i18n: false });
 	if (window.history.length > 1) {
@@ -76,7 +78,7 @@ onBeforeUnmount(() => {
 });
 
 const userDeleteModalShow = ref(false);
-const userTypeRole = ref([[0, t("user.VUserFilterRole0")], [1, t("user.VUserFilterRole1")], [2, t("user.VUserFilterRole2")]]);
+const userTypeRole = ref({ [UserRole.User]: t("user.VUserFilterRole0"), [UserRole.Moderator]: t("user.VUserFilterRole1"), [UserRole.Admin]: t("user.VUserFilterRole2") });
 const userSave = async() => {
 	try {
 		createSchema(isChecked).validateSync(usersStore.userEdition, { abortEarly: false });

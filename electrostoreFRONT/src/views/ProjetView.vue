@@ -15,6 +15,8 @@ const projetId = ref(route.params.id);
 
 import { downloadFile, viewFile } from "@/utils";
 
+import { ProjetStatus } from "@/enums";
+
 import { useConfigsStore, useProjetsStore, useUsersStore, useItemsStore, useProjetTagsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
 const projetsStore = useProjetsStore();
@@ -96,7 +98,9 @@ function tagDelete(id_tag) {
 
 // projet
 const projetDeleteModalShow = ref(false);
-const projetTypeStatus = ref([[0, t("projet.VProjetsStatus0")], [1, t("projet.VProjetsStatus1")], [2, t("projet.VProjetsStatus2")], [3, t("projet.VProjetsStatus3")], [4, t("projet.VProjetsStatus4")], [5, t("projet.VProjetsStatus5")]]);
+const projetTypeStatus = ref({ [ProjetStatus.NotStarted]: t("projet.VProjetsStatus0"), [ProjetStatus.InProgress]: t("projet.VProjetsStatus1"),
+	[ProjetStatus.Completed]: t("projet.VProjetsStatus2"), [ProjetStatus.OnHold]: t("projet.VProjetsStatus3"),
+	[ProjetStatus.Cancelled]: t("projet.VProjetsStatus4"), [ProjetStatus.Archived]: t("projet.VProjetsStatus5") });
 const projetSave = async() => {
 	try {
 		createSchema().validateSync(projetsStore.projetEdition, { abortEarly: false });
@@ -283,7 +287,7 @@ const labelForm = ref([
 	{ key: "date_fin_projet", label: "projet.VProjetEndDate", type: "computed", value: dateFin },
 ]);
 const labelTableauHistoryStatus = ref([
-	{ label: "projet.VProjetStatusType", sortable: false, key: "status_projet", type: "enum", options: { 0: t("projet.VProjetsStatus0"), 1: t("projet.VProjetsStatus1"), 2: t("projet.VProjetsStatus2"), 3: t("projet.VProjetsStatus3"), 4: t("projet.VProjetsStatus4"), 5: t("projet.VProjetsStatus5") } },
+	{ label: "projet.VProjetStatusType", sortable: false, key: "status_projet", type: "enum", options: projetTypeStatus },
 	{ label: "projet.VProjetStatusDate", sortable: true, key: "created_at", type: "datetime" },
 ]);
 const labelTableauDocument = ref([

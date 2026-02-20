@@ -9,6 +9,8 @@ const projetsStore = useProjetsStore();
 const itemsStore = useItemsStore();
 const projetTagsStore = useProjetTagsStore();
 
+import { ProjetStatus } from "@/enums";
+
 async function fetchAllData() {
 	let itemsLink = new Set();
 	let projetTagsLink = new Set();
@@ -53,8 +55,12 @@ onMounted(() => {
 	fetchAllData();
 });
 
+const projetTypeStatus = ref({ [ProjetStatus.NotStarted]: t("projet.VProjetsStatus0"), [ProjetStatus.InProgress]: t("projet.VProjetsStatus1"),
+	[ProjetStatus.Completed]: t("projet.VProjetsStatus2"), [ProjetStatus.OnHold]: t("projet.VProjetsStatus3"),
+	[ProjetStatus.Cancelled]: t("projet.VProjetsStatus4"), [ProjetStatus.Archived]: t("projet.VProjetsStatus5") });
+
 const filter = ref([
-	{ key: "status_projet", value: "", type: "datalist", options: [[0, t("projet.VProjetsStatus0")], [1, t("projet.VProjetsStatus1")], [2, t("projet.VProjetsStatus2")], [3, t("projet.VProjetsStatus3")], [4, t("projet.VProjetsStatus4")], [5, t("projet.VProjetsStatus5")]], label: "projet.VProjetsFilterStatus", compareMethod: "=" },
+	{ key: "status_projet", value: "", type: "datalist", options: projetTypeStatus, label: "projet.VProjetsFilterStatus", compareMethod: "=" },
 	{ key: "nom_projet", value: "", type: "text", label: "projet.VprojetFilterNom", compareMethod: "contain" },
 	{ key: "url_projet", value: "", type: "text", label: "projet.VprojetFilterUrl", compareMethod: "contain" },
 	{ key: "date_debut_projet", value: "", type: "date", label: "projet.VprojetFilterDate", compareMethod: ">=" },
@@ -66,7 +72,7 @@ const tableauLabel = ref([
 	{ label: "projet.VProjetsName", sortable: true, key: "nom_projet", type: "text" },
 	{ label: "projet.VProjetsDescription", sortable: false, key: "description_projet", type: "text" },
 	{ label: "projet.VProjetsUrl", sortable: true, key: "url_projet", type: "text" },
-	{ label: "projet.VProjetsStatus", sortable: true, key: "status_projet", type: "enum", options: { 0: t("projet.VProjetsStatus0"), 1: t("projet.VProjetsStatus1"), 2: t("projet.VProjetsStatus2"), 3: t("projet.VProjetsStatus3"), 4: t("projet.VProjetsStatus4"), 5: t("projet.VProjetsStatus5") } },
+	{ label: "projet.VProjetsStatus", sortable: true, key: "status_projet", type: "enum", options: projetTypeStatus },
 	{ label: "projet.VProjetsItems", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, key: "id_projet", keyStoreLink: "id_item", ressourcePrint: [{ type: "link", key: "qte_projet_item" }, { type: "text", key: " - " }, { type: "ressource", key: "reference_name_item" }] } },
 	{ label: "projet.VProjetsTags", sortable: false, key: "", type: "list", list: { idStoreLink: 3, idStoreRessource: 4, key: "id_projet", keyStoreLink: "id_projet_tag", ressourcePrint: [{ type: "ressource", key: "nom_projet_tag" }] } },
 	{ label: "projet.VProjetsDateStart", sortable: true, key: "date_debut_projet", type: "date" },

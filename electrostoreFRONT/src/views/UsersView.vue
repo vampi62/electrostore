@@ -11,6 +11,8 @@ import { useUsersStore, useAuthStore } from "@/stores";
 const usersStore = useUsersStore();
 const authStore = useAuthStore();
 
+import { UserRole } from "@/enums";
+
 if (!authStore.hasPermission([1, 2])) {
 	addNotification({ message: "vous n'avez pas la permission d'acceder a cette page", type: "error", i18n: false });
 	router.push("/");
@@ -28,17 +30,19 @@ onMounted(() => {
 	fetchAllData();
 });
 
+const userTypeRole = ref({ [UserRole.User]: t("user.VUsersFilterRole0"), [UserRole.Moderator]: t("user.VUsersFilterRole1"), [UserRole.Admin]: t("user.VUsersFilterRole2") });
+
 const filter = ref([
 	{ key: "nom_user", value: "", type: "text", label: "user.VUsersFilterName", compareMethod: "contain" },
 	{ key: "prenom_user", value: "", type: "text", label: "user.VUsersFilterFirstName", compareMethod: "contain" },
 	{ key: "email_user", value: "", type: "text", label: "user.VUsersFilterEmail", compareMethod: "contain" },
-	{ key: "role_user", value: "", type: "datalist", typeData: "int", options: [[0, t("user.VUsersFilterRole0")], [1, t("user.VUsersFilterRole1")], [2, t("user.VUsersFilterRole2")]], label: "user.VUsersFilterRole", compareMethod: "=" },
+	{ key: "role_user", value: "", type: "datalist", typeData: "int", options: userTypeRole, label: "user.VUsersFilterRole", compareMethod: "=" },
 ]);
 const tableauLabel = ref([
 	{ label: "user.VUsersName", sortable: true, key: "nom_user", type: "text" },
 	{ label: "user.VUsersFirstName", sortable: true, key: "prenom_user", type: "text" },
 	{ label: "user.VUsersEmail", sortable: true, key: "email_user", type: "text" },
-	{ label: "user.VUsersRole", sortable: true, key: "role_user", type: "enum", options: [t("user.VUsersFilterRole0"), t("user.VUsersFilterRole1"), t("user.VUsersFilterRole2")] },
+	{ label: "user.VUsersRole", sortable: true, key: "role_user", type: "enum", options: userTypeRole },
 ]);
 const tableauMeta = ref({
 	key: "id_user",
