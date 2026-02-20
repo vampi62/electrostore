@@ -66,8 +66,10 @@ const commandSave = async() => {
 	try {
 		createSchema().validateSync(commandsStore.commandEdition, { abortEarly: false });
 		if (commandId.value === "new") {
-			await commandsStore.createCommand({ ...commandsStore.commandEdition });
+			const newId = await commandsStore.createCommand({ ...commandsStore.commandEdition });
 			addNotification({ message: "command.Created", type: "success", i18n: true });
+			commandId.value = String(newId);
+			router.push("/commands/" + commandId.value);
 		} else {
 			await commandsStore.updateCommand(commandId.value, { ...commandsStore.commandEdition });
 			addNotification({ message: "command.Updated", type: "success", i18n: true });
@@ -75,10 +77,6 @@ const commandSave = async() => {
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
-	}
-	if (commandId.value === "new") {
-		commandId.value = String(commandsStore.commandEdition.id_command);
-		router.push("/commands/" + commandId.value);
 	}
 };
 const commandDelete = async() => {

@@ -73,12 +73,26 @@ const storeSave = async() => {
 			return;
 		}
 		if (storeId.value === "new") {
-			await storesStore.createStoreComplete(storeId.value, { 
+			const newId = await storesStore.createStoreComplete(storeId.value, { 
 				store: storesStore.storeEdition[storeId.value],
 				leds: Object.values(storesStore.ledEdition[storeId.value]),
 				boxs: Object.values(storesStore.boxEdition[storeId.value]),
 			});
 			addNotification({ message: "store.Created", type: "success", i18n: true });
+			storeId.value = String(newId);
+			router.push("/stores/" + storeId.value);
+			// reload the store data
+			await storesStore.getStoreById(storeId.value, ["boxs", "leds"]);
+			storesStore.ledEdition[storeId.value] = { ...storesStore.leds[storeId.value] };
+			storesStore.boxEdition[storeId.value] = { ...storesStore.boxs[storeId.value] };
+			storesStore.storeEdition[storeId.value] = {
+				loading: false,
+				id_store: storesStore.stores[storeId.value].id_store,
+				nom_store: storesStore.stores[storeId.value].nom_store,
+				mqtt_name_store: storesStore.stores[storeId.value].mqtt_name_store,
+				xlength_store: storesStore.stores[storeId.value].xlength_store,
+				ylength_store: storesStore.stores[storeId.value].ylength_store,
+			};
 		} else {
 			await storesStore.updateStoreComplete(storeId.value, { 
 				store: storesStore.storeEdition[storeId.value],
@@ -103,22 +117,6 @@ const storeSave = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 		storesStore.storeEdition[storeId.value].loading = false;
 		return;
-	}
-	if (storeId.value === "new") {
-		storeId.value = String(storesStore.storeEdition[storeId.value].store.id_store);
-		router.push("/stores/" + storeId.value);
-		// reload the store data
-		await storesStore.getStoreById(storesStore.storeEdition[storeId.value].store.id_store, ["boxs", "leds"]);
-		storesStore.ledEdition[storeId.value] = { ...storesStore.leds[storesStore.storeEdition[storeId.value].store.id_store] };
-		storesStore.boxEdition[storeId.value] = { ...storesStore.boxs[storesStore.storeEdition[storeId.value].store.id_store] };
-		storesStore.storeEdition[storeId.value] = {
-			loading: false,
-			id_store: storesStore.storeEdition[storeId.value].store.id_store,
-			nom_store: storesStore.storeEdition[storeId.value].store.nom_store,
-			mqtt_name_store: storesStore.storeEdition[storeId.value].store.mqtt_name_store,
-			xlength_store: storesStore.storeEdition[storeId.value].store.xlength_store,
-			ylength_store: storesStore.storeEdition[storeId.value].store.ylength_store,
-		};
 	}
 };
 const storeDelete = async() => {

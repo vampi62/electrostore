@@ -65,6 +65,7 @@ export const useIasStore = defineStore("ias", {
 				body: params,
 			});
 			this.ias[ia.id_ia] = ia;
+			return ia.id_ia;
 		},
 		async updateIa(id, params) {
 			this.ias[id] = await fetchWrapper.put({

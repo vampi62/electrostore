@@ -214,6 +214,7 @@ export const useItemsStore = defineStore("items",{
 				body: params,
 			});
 			this.items[item.id_item] = item;
+			return item.id_item;
 		},
 		async updateItem(id, params) {
 			this.items[id] = await fetchWrapper.put({

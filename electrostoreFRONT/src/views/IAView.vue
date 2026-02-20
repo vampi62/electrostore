@@ -65,8 +65,10 @@ const iaSave = async() => {
 	try {
 		createSchema().validateSync(iasStore.iaEdition, { abortEarly: false });
 		if (iaId.value === "new") {
-			await iasStore.createIa({ ...iasStore.iaEdition });
+			const newId = await iasStore.createIa({ ...iasStore.iaEdition });
 			addNotification({ message: "ia.Created", type: "success", i18n: true });
+			iaId.value = String(newId);
+			router.push("/ia/" + iaId.value);
 		} else {
 			await iasStore.updateIa(iaId.value, { ...iasStore.iaEdition });
 			addNotification({ message: "ia.Updated", type: "success", i18n: true });
@@ -74,10 +76,6 @@ const iaSave = async() => {
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
-	}
-	if (iaId.value === "new") {
-		iaId.value = String(iasStore.iaEdition.id_ia);
-		router.push("/ia/" + iaId.value);
 	}
 };
 const iaDelete = async() => {

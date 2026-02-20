@@ -94,6 +94,7 @@ export const useProjetTagsStore = defineStore("projetTags",{
 				body: params,
 			});
 			this.projetTags[projetTag.id_projet_tag] = projetTag;
+			return projetTag.id_projet_tag;
 		},
 		async updateProjetTag(id, params) {
 			if (params.nom_projet_tag === this.projetTags[id].nom_projet_tag) {

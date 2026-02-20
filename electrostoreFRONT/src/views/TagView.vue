@@ -58,8 +58,10 @@ const tagSave = async() => {
 	try {
 		createSchema().validateSync(tagsStore.tagEdition, { abortEarly: false });
 		if (tagId.value === "new") {
-			await tagsStore.createTag({ ...tagsStore.tagEdition });
+			const newId = await tagsStore.createTag({ ...tagsStore.tagEdition });
 			addNotification({ message: "tag.Created", type: "success", i18n: true });
+			tagId.value = String(newId);
+			router.push("/tags/" + tagId.value);
 		} else {
 			await tagsStore.updateTag(tagId.value, { ...tagsStore.tagEdition });
 			addNotification({ message: "tag.Updated", type: "success", i18n: true });
@@ -67,10 +69,6 @@ const tagSave = async() => {
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
-	}
-	if (tagId.value === "new") {
-		tagId.value = String(tagsStore.tagEdition.id_tag);
-		router.push("/tags/" + tagId.value);
 	}
 };
 const tagDelete = async() => {

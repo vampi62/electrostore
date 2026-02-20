@@ -156,6 +156,7 @@ export const useStoresStore = defineStore("stores",{
 				body: params,
 			});
 			this.stores[store.id_store] = store;
+			return store.id_store;
 		},
 		async updateStore(id, params) {
 			this.stores[id] = await fetchWrapper.put({
@@ -177,7 +178,8 @@ export const useStoresStore = defineStore("stores",{
 				useToken: "access",
 				body: params,
 			});
-			this.stores[store.id_store] = store;
+			this.stores[store.store.id_store] = store.store;
+			return store.store.id_store;
 		},
 		async updateStoreComplete(id, params) {
 			this.stores[id] = await fetchWrapper.put({

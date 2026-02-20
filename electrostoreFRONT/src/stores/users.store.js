@@ -125,6 +125,7 @@ export const useUsersStore = defineStore("users",{
 				body: params,
 			});
 			this.users[user.id_user] = user;
+			return user.id_user;
 		},
 		async updateUser(id, params) {
 			if (params.mdp_user === "" || params.mdp_user === null) {

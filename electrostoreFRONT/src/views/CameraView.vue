@@ -75,8 +75,10 @@ const cameraSave = async() => {
 	try {
 		createSchema(isChecked).validateSync(camerasStore.cameraEdition, { abortEarly: false });
 		if (cameraId.value === "new") {
-			await camerasStore.createCamera({ ...camerasStore.cameraEdition } );
+			const newId = await camerasStore.createCamera({ ...camerasStore.cameraEdition } );
 			addNotification({ message: "camera.Created", type: "success", i18n: true });
+			cameraId.value = String(newId);
+			router.push("/cameras/" + cameraId.value);
 		} else {
 			await camerasStore.updateCamera(cameraId.value, { ...camerasStore.cameraEdition });
 			camerasStore.getStatus(cameraId.value);
@@ -86,10 +88,6 @@ const cameraSave = async() => {
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
-	}
-	if (cameraId.value === "new") {
-		cameraId.value = String(camerasStore.cameraEdition.id_camera);
-		router.push("/cameras/" + cameraId.value);
 	}
 };
 const cameraDelete = async() => {

@@ -101,8 +101,10 @@ const projetSave = async() => {
 	try {
 		createSchema().validateSync(projetsStore.projetEdition, { abortEarly: false });
 		if (projetId.value === "new") {
-			await projetsStore.createProjet({ ...projetsStore.projetEdition });
+			const newId = await projetsStore.createProjet({ ...projetsStore.projetEdition });
 			addNotification({ message: "projet.Created", type: "success", i18n: true });
+			projetId.value = String(newId);
+			router.push("/projets/" + projetId.value);
 		} else {
 			await projetsStore.updateProjet(projetId.value, { ...projetsStore.projetEdition });
 			addNotification({ message: "projet.Updated", type: "success", i18n: true });
@@ -110,10 +112,6 @@ const projetSave = async() => {
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
-	}
-	if (projetId.value === "new") {
-		projetId.value = String(projetsStore.projetEdition.id_projet);
-		router.push("/projets/" + projetId.value);
 	}
 };
 const projetDelete = async() => {

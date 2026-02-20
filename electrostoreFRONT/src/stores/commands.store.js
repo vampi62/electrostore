@@ -146,6 +146,7 @@ export const useCommandsStore = defineStore("commands",{
 				body: params,
 			});
 			this.commands[command.id_command] = command;
+			return command.id_command;
 		},
 		async updateCommand(id, params) {
 			this.commands[id] = await fetchWrapper.put({

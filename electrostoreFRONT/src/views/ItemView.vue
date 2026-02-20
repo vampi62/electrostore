@@ -85,8 +85,10 @@ const itemSave = async() => {
 	try {
 		createSchema().validateSync(itemsStore.itemEdition, { abortEarly: false });
 		if (itemId.value === "new") {
-			await itemsStore.createItem({ ...itemsStore.itemEdition });
+			const newId = await itemsStore.createItem({ ...itemsStore.itemEdition });
 			addNotification({ message: "item.Created", type: "success", i18n: true });
+			itemId.value = String(newId);
+			router.push("/inventory/" + itemId.value);
 		} else {
 			await itemsStore.updateItem(itemId.value, { ...itemsStore.itemEdition });
 			addNotification({ message: "item.Updated", type: "success", i18n: true });
@@ -94,10 +96,6 @@ const itemSave = async() => {
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
-	}
-	if (itemId.value === "new") {
-		itemId.value = String(itemsStore.itemEdition.id_item);
-		router.push("/inventory/" + itemId.value);
 	}
 };
 const itemDelete = async() => {

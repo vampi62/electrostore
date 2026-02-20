@@ -146,6 +146,7 @@ export const useTagsStore = defineStore("tags",{
 				body: params,
 			});
 			this.tags[tag.id_tag] = tag;
+			return tag.id_tag;
 		},
 		async updateTag(id, params) {
 			if (params?.nom_tag && params?.nom_tag === this.tags[id]?.nom_tag) {

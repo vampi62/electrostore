@@ -80,8 +80,10 @@ const userSave = async() => {
 	try {
 		createSchema(isChecked).validateSync(usersStore.userEdition, { abortEarly: false });
 		if (userId.value === "new") {
-			await usersStore.createUser({ ...usersStore.userEdition });
+			const newId = await usersStore.createUser({ ...usersStore.userEdition });
 			addNotification({ message: "user.Created", type: "success", i18n: true });
+			userId.value = String(newId);
+			router.push("/users/" + userId.value);
 		} else {
 			await usersStore.updateUser(userId.value, { ...usersStore.userEdition });
 			addNotification({ message: "user.Updated", type: "success", i18n: true });
@@ -92,10 +94,6 @@ const userSave = async() => {
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
-	}
-	if (userId.value === "new") {
-		userId.value = String(usersStore.userEdition.id_user);
-		router.push("/users/" + userId.value);
 	}
 };
 const userDelete = async() => {

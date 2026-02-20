@@ -57,8 +57,10 @@ const projetTagSave = async() => {
 	try {
 		createSchema().validateSync(projetTagsStore.projetTagEdition, { abortEarly: false });
 		if (projetTagId.value === "new") {
-			await projetTagsStore.createProjetTag({ ...projetTagsStore.projetTagEdition });
+			const newId = await projetTagsStore.createProjetTag({ ...projetTagsStore.projetTagEdition });
 			addNotification({ message: "projetTag.Created", type: "success", i18n: true });
+			projetTagId.value = String(newId);
+			router.push("/projet-tags/" + projetTagId.value);
 		} else {
 			await projetTagsStore.updateProjetTag(projetTagId.value, { ...projetTagsStore.projetTagEdition });
 			addNotification({ message: "projetTag.Updated", type: "success", i18n: true });
@@ -66,10 +68,6 @@ const projetTagSave = async() => {
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
-	}
-	if (projetTagId.value === "new") {
-		projetTagId.value = String(projetTagsStore.projetTagEdition.id_projet_tag);
-		router.push("/projet-tags/" + projetTagId.value);
 	}
 };
 const projetTagDelete = async() => {

@@ -121,6 +121,7 @@ export const useCamerasStore = defineStore("cameras",{
 				body: params,
 			});
 			this.cameras[camera.id_camera] = camera;
+			return camera.id_camera;
 		},
 		async updateCamera(id, params) {
 			this.cameras[id] = await fetchWrapper.put({

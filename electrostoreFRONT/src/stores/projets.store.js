@@ -197,6 +197,7 @@ export const useProjetsStore = defineStore("projets",{
 				body: params,
 			});
 			this.projets[projet.id_projet] = projet;
+			return projet.id_projet;
 		},
 		async updateProjet(id, params) {
 			this.projets[id] = await fetchWrapper.put({
