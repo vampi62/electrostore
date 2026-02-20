@@ -33,7 +33,7 @@ async function fetchAllData() {
 			await tagsStore.getTagById(tagId.value);
 		} catch {
 			delete tagsStore.tags[tagId.value];
-			addNotification({ message: "tag.VTagNotFound", type: "error", i18n: true });
+			addNotification({ message: "tag.NotFound", type: "error", i18n: true });
 			router.push("/tags");
 			return;
 		}
@@ -59,10 +59,10 @@ const tagSave = async() => {
 		createSchema().validateSync(tagsStore.tagEdition, { abortEarly: false });
 		if (tagId.value === "new") {
 			await tagsStore.createTag({ ...tagsStore.tagEdition });
-			addNotification({ message: "tag.VTagCreated", type: "success", i18n: true });
+			addNotification({ message: "tag.Created", type: "success", i18n: true });
 		} else {
 			await tagsStore.updateTag(tagId.value, { ...tagsStore.tagEdition });
-			addNotification({ message: "tag.VTagUpdated", type: "success", i18n: true });
+			addNotification({ message: "tag.Updated", type: "success", i18n: true });
 		}
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -76,7 +76,7 @@ const tagSave = async() => {
 const tagDelete = async() => {
 	try {
 		await tagsStore.deleteTag(tagId.value);
-		addNotification({ message: "tag.VTagDeleted", type: "success", i18n: true });
+		addNotification({ message: "tag.Deleted", type: "success", i18n: true });
 		router.push("/tags");
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -105,7 +105,7 @@ async function fetchAllItems() {
 const itemSave = async(item) => {
 	try {
 		await tagsStore.createTagItem(tagId.value, item);
-		addNotification({ message: "tag.VTagItemAdded", type: "success", i18n: true });
+		addNotification({ message: "tag.ItemAdded", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
@@ -114,14 +114,14 @@ const itemSave = async(item) => {
 const itemDelete = async(item) => {
 	try {
 		await tagsStore.deleteTagItem(tagId.value, item.id_item);
-		addNotification({ message: "tag.VTagItemDeleted", type: "success", i18n: true });
+		addNotification({ message: "tag.ItemDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
 
 const filterItem = ref([
-	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("tag.VTagItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("tag.ItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
 
 // Stores
@@ -145,7 +145,7 @@ async function fetchAllStores() {
 const storeSave = async(store) => {
 	try {
 		await tagsStore.createTagStore(tagId.value, store);
-		addNotification({ message: "tag.VTagStoreAdded", type: "success", i18n: true });
+		addNotification({ message: "tag.StoreAdded", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
@@ -154,14 +154,14 @@ const storeSave = async(store) => {
 const storeDelete = async(store) => {
 	try {
 		await tagsStore.deleteTagStore(tagId.value, store.id_store);
-		addNotification({ message: "tag.VTagStoreDeleted", type: "success", i18n: true });
+		addNotification({ message: "tag.StoreDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
 
 const filterStore = ref([
-	{ key: "nom_store", value: "", type: "text", label: "", placeholder: t("tag.VTagStoreFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "nom_store", value: "", type: "text", label: "", placeholder: t("tag.StoreFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
 
 // Boxs
@@ -169,7 +169,7 @@ const boxModalShow = ref(false);
 const boxSave = async(box) => {
 	try {
 		await tagsStore.createTagBox(tagId.value, box);
-		addNotification({ message: "tag.VTagBoxAdded", type: "success", i18n: true });
+		addNotification({ message: "tag.BoxAdded", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
@@ -178,7 +178,7 @@ const boxSave = async(box) => {
 const boxDelete = async(box) => {
 	try {
 		await tagsStore.deleteTagBox(tagId.value, box.id_box);
-		addNotification({ message: "tag.VTagBoxDeleted", type: "success", i18n: true });
+		addNotification({ message: "tag.BoxDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
@@ -187,22 +187,22 @@ const boxDelete = async(box) => {
 const createSchema = () => {
 	return Yup.object().shape({
 		nom_tag: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("tag.VTagNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-			.required(t("tag.VTagNameRequired")),
+			.max(configsStore.getConfigByKey("max_length_name"), t("tag.NameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.required(t("tag.NameRequired")),
 		poids_tag: Yup.number()
-			.min(0, t("tag.VTagPoidsMin"))
-			.typeError(t("tag.VTagPoidsNumber"))
-			.required(t("tag.VTagPoidsRequired")),
+			.min(0, t("tag.PoidsMin"))
+			.typeError(t("tag.PoidsNumber"))
+			.required(t("tag.PoidsRequired")),
 	});
 };
 
 const labelForm = [
-	{ key: "nom_tag", label: "tag.VTagName", type: "text" },
-	{ key: "poids_tag", label: "tag.VTagPoids", type: "number" },
+	{ key: "nom_tag", label: "tag.Name", type: "text" },
+	{ key: "poids_tag", label: "tag.Poids", type: "number" },
 ];
 const labelTableauItem = ref([
-	{ label: "tag.VTagItemName", sortable: true, key: "reference_name_item", keyStore: "id_item", store: "1", type: "text" },
-	{ label: "tag.VTagItemActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "tag.ItemName", sortable: true, key: "reference_name_item", keyStore: "id_item", store: "1", type: "text" },
+	{ label: "tag.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
@@ -213,8 +213,8 @@ const labelTableauItem = ref([
 	] },
 ]);
 const labelTableauStore = ref([
-	{ label: "tag.VTagStoreName", sortable: true, key: "nom_store", keyStore: "id_store", store: "1", type: "text" },
-	{ label: "tag.VTagStoreActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "tag.StoreName", sortable: true, key: "nom_store", keyStore: "id_store", store: "1", type: "text" },
+	{ label: "tag.StoreActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
@@ -225,8 +225,8 @@ const labelTableauStore = ref([
 	] },
 ]);
 const labelTableauBox = ref([
-	{ label: "tag.VTagBoxId", sortable: true, key: "id_box", keyStore: "id_box", store: "1", type: "number" },
-	{ label: "tag.VTagBoxActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "tag.BoxId", sortable: true, key: "id_box", keyStore: "id_box", store: "1", type: "number" },
+	{ label: "tag.BoxActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
@@ -238,8 +238,8 @@ const labelTableauBox = ref([
 ]);
 
 const labelTableauModalItem = ref([
-	{ label: "tag.VTagItemName", sortable: true, key: "reference_name_item", type: "text" },
-	{ label: "tag.VTagItemActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "tag.ItemName", sortable: true, key: "reference_name_item", type: "text" },
+	{ label: "tag.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-save",
@@ -259,8 +259,8 @@ const labelTableauModalItem = ref([
 	] },
 ]);
 const labelTableauModalStore = ref([
-	{ label: "tag.VTagStoreName", sortable: true, key: "nom_store", type: "text" },
-	{ label: "tag.VTagStoreActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "tag.StoreName", sortable: true, key: "nom_store", type: "text" },
+	{ label: "tag.StoreActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-save",
@@ -284,7 +284,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 
 <template>
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('tag.VTagTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('tag.Title') }}</h2>
 		<TopButtonEditElement :main-config="{ path: '/tags', save: { roleRequired: authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition.loading }, delete: { roleRequired: authStore.hasPermission([0, 1, 2]) } }"
 			:id="tagId" :store-user="authStore.user" @button-save="tagSave" @button-delete="tagDeleteModalShow = true"/>
 	</div>
@@ -292,12 +292,12 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="tagsStore.tagEdition"/>
 		</div>
-		<CollapsibleSection title="tag.VTagItems"
+		<CollapsibleSection title="tag.Items"
 			:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)" :id-page="tagId">
 			<template #append-row>
 				<button type="button" @click="itemOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
-					{{ $t('tag.VTagAddItem') }}
+					{{ $t('tag.AddItem') }}
 				</button>
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
 					:store-data="[tagsStore.tagsItem[tagId],itemsStore.items]"
@@ -308,12 +308,12 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 			</template>
 		</CollapsibleSection>
-		<CollapsibleSection title="tag.VTagStores"
+		<CollapsibleSection title="tag.Stores"
 			:total-count="Number(tagsStore.tagsStoreTotalCount[tagId] || 0)" :id-page="tagId">
 			<template #append-row>
 				<button type="button" @click="storeOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
-					{{ $t('tag.VTagAddStore') }}
+					{{ $t('tag.AddStore') }}
 				</button>
 				<Tableau :labels="labelTableauStore" :meta="{ key: 'id_store', expand: ['store'] }"
 					:store-data="[tagsStore.tagsStore[tagId],storesStore.stores]"
@@ -324,12 +324,12 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 			</template>
 		</CollapsibleSection>
-		<CollapsibleSection title="tag.VTagBoxs"
+		<CollapsibleSection title="tag.Boxs"
 			:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)" :id-page="tagId">
 			<template #append-row>
 				<!-- <button type="button" @click="boxOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
-					{{ $t('tag.VTagAddBox') }}
+					{{ $t('tag.AddBox') }}
 				</button> -->
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box', expand: ['box'] }"
 					:store-data="[tagsStore.tagsBox[tagId],storesStore.boxs]"
@@ -342,17 +342,17 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		</CollapsibleSection>
 	</div>
 	<div v-else>
-		<div>{{ $t('tag.VTagLoading') }}</div>
+		<div>{{ $t('tag.Loading') }}</div>
 	</div>
 
 	<ModalDeleteConfirm :show-modal="tagDeleteModalShow" @close-modal="tagDeleteModalShow = false"
-		:delete-action="tagDelete" :text-title="'tag.VTagDeleteTitle'" :text-p="'tag.VTagDeleteText'"/>
+		:delete-action="tagDelete" :text-title="'tag.DeleteTitle'" :text-p="'tag.DeleteText'"/>
 
 	<div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
 		@click="itemModalShow = false">
 		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
 			<div class="flex justify-between items-center border-b pb-3">
-				<h2 class="text-2xl font-semibold">{{ $t('tag.VTagItemTitle') }}</h2>
+				<h2 class="text-2xl font-semibold">{{ $t('tag.ItemTitle') }}</h2>
 				<button type="button" @click="itemModalShow = false"
 					class="text-gray-500 hover:text-gray-700">&times;</button>
 			</div>
@@ -376,7 +376,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		@click="storeModalShow = false">
 		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
 			<div class="flex justify-between items-center border-b pb-3">
-				<h2 class="text-2xl font-semibold">{{ $t('tag.VTagStoreTitle') }}</h2>
+				<h2 class="text-2xl font-semibold">{{ $t('tag.StoreTitle') }}</h2>
 				<button type="button" @click="storeModalShow = false"
 					class="text-gray-500 hover:text-gray-700">&times;</button>
 			</div>

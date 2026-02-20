@@ -18,19 +18,19 @@ if (!authStore.hasPermission([1, 2])) {
 	router.push("/");
 }
 
-const userTypeRole = ref({ [UserRole.User]: t("user.VUsersFilterRole0"), [UserRole.Moderator]: t("user.VUsersFilterRole1"), [UserRole.Admin]: t("user.VUsersFilterRole2") });
+const userTypeRole = ref({ [UserRole.User]: t("users.FilterRole0"), [UserRole.Moderator]: t("users.FilterRole1"), [UserRole.Admin]: t("users.FilterRole2") });
 
 const filter = ref([
-	{ key: "nom_user", value: "", type: "text", label: "user.VUsersFilterName", compareMethod: "contain" },
-	{ key: "prenom_user", value: "", type: "text", label: "user.VUsersFilterFirstName", compareMethod: "contain" },
-	{ key: "email_user", value: "", type: "text", label: "user.VUsersFilterEmail", compareMethod: "contain" },
-	{ key: "role_user", value: "", type: "datalist", typeData: "int", options: userTypeRole, label: "user.VUsersFilterRole", compareMethod: "=" },
+	{ key: "nom_user", value: "", type: "text", label: "users.FilterName", compareMethod: "contain" },
+	{ key: "prenom_user", value: "", type: "text", label: "users.FilterFirstName", compareMethod: "contain" },
+	{ key: "email_user", value: "", type: "text", label: "users.FilterEmail", compareMethod: "contain" },
+	{ key: "role_user", value: "", type: "datalist", typeData: "int", options: userTypeRole, label: "users.FilterRole", compareMethod: "=" },
 ]);
 const tableauLabel = ref([
-	{ label: "user.VUsersName", sortable: true, key: "nom_user", type: "text" },
-	{ label: "user.VUsersFirstName", sortable: true, key: "prenom_user", type: "text" },
-	{ label: "user.VUsersEmail", sortable: true, key: "email_user", type: "text" },
-	{ label: "user.VUsersRole", sortable: true, key: "role_user", type: "enum", options: userTypeRole },
+	{ label: "users.Name", sortable: true, key: "nom_user", type: "text" },
+	{ label: "users.FirstName", sortable: true, key: "prenom_user", type: "text" },
+	{ label: "users.Email", sortable: true, key: "email_user", type: "text" },
+	{ label: "users.Role", sortable: true, key: "role_user", type: "enum", options: userTypeRole },
 ]);
 const tableauMeta = ref({
 	key: "id_user",
@@ -41,7 +41,7 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 
 <template>
 	<div>
-		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('user.VUsersTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('users.Title') }}</h2>
 	</div>
 	<div>
 		<div :class="{
@@ -50,10 +50,10 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 			}"
 			class="text-white px-4 py-2 rounded inline-block mb-2">
 			<RouterLink v-if="authStore.hasPermission([2])" :to="'/users/new'">
-				{{ $t('user.VUsersAdd') }}
+				{{ $t('users.Add') }}
 			</RouterLink>
 			<span v-else class="pointer-events-none">
-				{{ $t('user.VUsersAdd') }}
+				{{ $t('users.Add') }}
 			</span>
 		</div>
 		<FilterContainer :filters="filter" :store-data="usersStore.users" />

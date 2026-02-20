@@ -30,7 +30,7 @@ async function fetchAllData() {
 			await iasStore.getIaById(iaId.value);
 		} catch {
 			delete iasStore.ias[iaId.value];
-			addNotification({ message: "ia.VIaNotFound", type: "error", i18n: true });
+			addNotification({ message: "ia.NotFound", type: "error", i18n: true });
 			router.push("/ia");
 			return;
 		}
@@ -66,10 +66,10 @@ const iaSave = async() => {
 		createSchema().validateSync(iasStore.iaEdition, { abortEarly: false });
 		if (iaId.value === "new") {
 			await iasStore.createIa({ ...iasStore.iaEdition });
-			addNotification({ message: "ia.VIaCreated", type: "success", i18n: true });
+			addNotification({ message: "ia.Created", type: "success", i18n: true });
 		} else {
 			await iasStore.updateIa(iaId.value, { ...iasStore.iaEdition });
-			addNotification({ message: "ia.VIaUpdated", type: "success", i18n: true });
+			addNotification({ message: "ia.Updated", type: "success", i18n: true });
 		}
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -83,7 +83,7 @@ const iaSave = async() => {
 const iaDelete = async() => {
 	try {
 		await iasStore.deleteIa(iaId.value);
-		addNotification({ message: "ia.VIaDeleted", type: "success", i18n: true });
+		addNotification({ message: "ia.Deleted", type: "success", i18n: true });
 		router.push("/ia");
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -93,7 +93,7 @@ const iaDelete = async() => {
 const iaTrain = async() => {
 	try {
 		await iasStore.startTrain(iaId.value);
-		addNotification({ message: "ia.VIaTrainStart", type: "success", i18n: true });
+		addNotification({ message: "ia.TrainStart", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
@@ -101,27 +101,27 @@ const iaTrain = async() => {
 const createSchema = () => {
 	return Yup.object().shape({
 		nom_ia: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("ia.VIaNameMaxLength") + t("common.VAllCaracters"))
-			.required(t("ia.VIaNameRequired")),
+			.max(configsStore.getConfigByKey("max_length_name"), t("ia.NameMaxLength") + t("common.VAllCaracters"))
+			.required(t("ia.NameRequired")),
 		description_ia: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_description"), t("ia.VIaDescriptionMaxLength") + t("common.VAllCaracters"))
-			.required(t("ia.VIaDescriptionRequired")),
+			.max(configsStore.getConfigByKey("max_length_description"), t("ia.DescriptionMaxLength") + t("common.VAllCaracters"))
+			.required(t("ia.DescriptionRequired")),
 	});
 };
 const labelForm = [
-	{ key: "nom_ia", label: "ia.VIaName", type: "text", condition: "func.hasPermission([2])" },
-	{ key: "description_ia", label: "ia.VIaDescription", type: "textarea", rows: 4, condition: "func.hasPermission([2])" },
+	{ key: "nom_ia", label: "ia.Name", type: "text", condition: "func.hasPermission([2])" },
+	{ key: "description_ia", label: "ia.Description", type: "textarea", rows: 4, condition: "func.hasPermission([2])" },
 ];
 document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
 
 <template>
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('ia.VIaTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('ia.Title') }}</h2>
 		<TopButtonEditElement :main-config="{ path: '/ia', save: { roleRequired: authStore.hasPermission([2]), loading: iasStore.iaEdition.loading }, delete: { roleRequired: authStore.hasPermission([2]) } }"
 			:optional-config="[
-				{ label: 'ia.VIaTrain', roleRequired: authStore.hasPermission([2]), loading: iasStore.status.start?.loading, bgColor: 'bg-green-500', hoverColor: 'hover:bg-green-600', action: iaTrain },
-				{ label: 'ia.VIaRefresh', roleRequired: authStore.hasPermission([0, 1, 2]), loading: iasStore.status.train?.loading, bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => iasStore.getTrainStatus(iaId) },
+				{ label: 'ia.Train', roleRequired: authStore.hasPermission([2]), loading: iasStore.status.start?.loading, bgColor: 'bg-green-500', hoverColor: 'hover:bg-green-600', action: iaTrain },
+				{ label: 'ia.Refresh', roleRequired: authStore.hasPermission([0, 1, 2]), loading: iasStore.status.train?.loading, bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => iasStore.getTrainStatus(iaId) },
 			]"
 			:id="iaId" :store-user="authStore.user" @button-save="iaSave" @button-delete="iaDeleteModalShow = true"/>
 	</div>
@@ -133,9 +133,9 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		</div>
 	</div>
 	<div v-else>
-		<div>{{ $t('ia.VIaLoading') }}</div>
+		<div>{{ $t('ia.Loading') }}</div>
 	</div>
 
 	<ModalDeleteConfirm :show-modal="iaDeleteModalShow" @close-modal="iaDeleteModalShow = false"
-		:delete-action="iaDelete" :text-title="'ia.VIaDeleteTitle'" :text-p="'ia.VIaDeleteText'"/>
+		:delete-action="iaDelete" :text-title="'ia.DeleteTitle'" :text-p="'ia.DeleteText'"/>
 </template>

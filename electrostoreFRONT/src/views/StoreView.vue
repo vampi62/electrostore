@@ -35,7 +35,7 @@ async function fetchAllData() {
 			await storesStore.getStoreById(storeId.value, ["boxs", "leds"]);
 		} catch {
 			delete storesStore.stores[storeId.value];
-			addNotification({ message: "store.VStoreNotFound", type: "error", i18n: true });
+			addNotification({ message: "store.NotFound", type: "error", i18n: true });
 			router.push("/stores");
 			return;
 		}
@@ -78,14 +78,14 @@ const storeSave = async() => {
 				leds: Object.values(storesStore.ledEdition[storeId.value]),
 				boxs: Object.values(storesStore.boxEdition[storeId.value]),
 			});
-			addNotification({ message: "store.VStoreCreated", type: "success", i18n: true });
+			addNotification({ message: "store.Created", type: "success", i18n: true });
 		} else {
 			await storesStore.updateStoreComplete(storeId.value, { 
 				store: storesStore.storeEdition[storeId.value],
 				leds: Object.values(storesStore.ledEdition[storeId.value]),
 				boxs: Object.values(storesStore.boxEdition[storeId.value]),
 			});
-			addNotification({ message: "store.VStoreUpdated", type: "success", i18n: true });
+			addNotification({ message: "store.Updated", type: "success", i18n: true });
 			await storesStore.getStoreById(storeId.value, ["boxs", "leds"]);
 			storesStore.storeEdition[storeId.value] = {
 				loading: false,
@@ -124,7 +124,7 @@ const storeSave = async() => {
 const storeDelete = async() => {
 	try {
 		await storesStore.deleteStore(storeId.value);
-		addNotification({ message: "store.VStoreDeleted", type: "success", i18n: true });
+		addNotification({ message: "store.Deleted", type: "success", i18n: true });
 		router.push("/stores");
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -135,31 +135,31 @@ const storeDelete = async() => {
 const createSchema = () => {
 	return Yup.object().shape({
 		nom_store: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("store.VStoreNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-			.required(t("store.VStoreNameRequired")),
+			.max(configsStore.getConfigByKey("max_length_name"), t("store.NameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.required(t("store.NameRequired")),
 		mqtt_name_store: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("store.VStoreMQTTNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-			.required(t("store.VStoreMQTTNameRequired")),
+			.max(configsStore.getConfigByKey("max_length_name"), t("store.MQTTNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.required(t("store.MQTTNameRequired")),
 		xlength_store: Yup.number()
-			.min(1, t("store.VStoreXLengthMin"))
-			.typeError(t("store.VStoreXLengthType"))
-			.required(t("store.VStoreXLengthRequired")),
+			.min(1, t("store.XLengthMin"))
+			.typeError(t("store.XLengthType"))
+			.required(t("store.XLengthRequired")),
 		ylength_store: Yup.number()
-			.min(1, t("store.VStoreYLengthMin"))
-			.typeError(t("store.VStoreYLengthType"))
-			.required(t("store.VStoreYLengthRequired")),
+			.min(1, t("store.YLengthMin"))
+			.typeError(t("store.YLengthType"))
+			.required(t("store.YLengthRequired")),
 	});
 };
 
 const schemaItem = Yup.object().shape({
 	qte_item_box: Yup.number()
-		.required(t("store.VStoreItemQuantityRequired"))
-		.typeError(t("store.VStoreItemQuantityNumber"))
-		.min(0, t("store.VStoreItemQuantityMin")),
+		.required(t("store.ItemQuantityRequired"))
+		.typeError(t("store.ItemQuantityNumber"))
+		.min(0, t("store.ItemQuantityMin")),
 	seuil_max_item_item_box: Yup.number()
-		.required(t("store.VStoreItemMaxThresholdRequired"))
-		.typeError(t("store.VStoreItemMaxThresholdNumber"))
-		.min(1, t("store.VStoreItemMaxThresholdMin")),
+		.required(t("store.ItemMaxThresholdRequired"))
+		.typeError(t("store.ItemMaxThresholdNumber"))
+		.min(1, t("store.ItemMaxThresholdMin")),
 });
 
 // box & item
@@ -190,7 +190,7 @@ const itemSave = async(item) => {
 		try {
 			schemaItem.validateSync(item.tmp, { abortEarly: false });
 			await storesStore.updateBoxItem(storeId.value, boxId.value, item.tmp.id_item, item.tmp);
-			addNotification({ message: "store.VStoreItemUpdated", type: "success", i18n: true });
+			addNotification({ message: "store.ItemUpdated", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
 			addNotification({ message: e, type: "error", i18n: false });
@@ -200,7 +200,7 @@ const itemSave = async(item) => {
 		try {
 			schemaItem.validateSync(item.tmp, { abortEarly: false });
 			await storesStore.createBoxItem(storeId.value, boxId.value, item.tmp);
-			addNotification({ message: "store.VStoreItemAdded", type: "success", i18n: true });
+			addNotification({ message: "store.ItemAdded", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
 			addNotification({ message: e, type: "error", i18n: false });
@@ -211,24 +211,24 @@ const itemSave = async(item) => {
 const itemDelete = async(item) => {
 	try {
 		await storesStore.deleteBoxItem(storeId.value, boxId.value, item.id_item);
-		addNotification({ message: "store.VStoreItemDeleted", type: "success", i18n: true });
+		addNotification({ message: "store.ItemDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
 
 const filterItem = ref([
-	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("store.VStoreItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("store.ItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
 
 // tag
 const filterTag = ref([
-	{ key: "nom_tag", value: "", type: "text", label: "", placeholder: t("store.VStoreTagFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "nom_tag", value: "", type: "text", label: "", placeholder: t("store.TagFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
 function tagSave(id_tag) {
 	try {
 		storesStore.createTagStore(storeId.value,  { id_tag: id_tag });
-		addNotification({ message: "store.VStoreTagAdded", type: "success", i18n: true });
+		addNotification({ message: "store.TagAdded", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
@@ -236,17 +236,17 @@ function tagSave(id_tag) {
 function tagDelete(id_tag) {
 	try {
 		storesStore.deleteTagStore(storeId.value, id_tag);
-		addNotification({ message: "store.VStoreTagDeleted", type: "success", i18n: true });
+		addNotification({ message: "store.TagDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
 }
 
 const labelTableauBoxItem = ref([
-	{ label: "store.VStoreItemName", sortable: true, key: "reference_name_item", type: "text", store: 1, keyStore: "id_item" },
-	{ label: "store.VStoreItemQuantity", sortable: true, key: "qte_item_box", type: "number" },
-	{ label: "store.VStoreItemMaxThreshold", sortable: true, key: "seuil_max_item_item_box", type: "number" },
-	{ label: "store.VStoreItemImg", sortable: false, key: "id_img", type: "image", idStoreImg: 2, store: 1, keyStore: "id_item" },
+	{ label: "store.ItemName", sortable: true, key: "reference_name_item", type: "text", store: 1, keyStore: "id_item" },
+	{ label: "store.ItemQuantity", sortable: true, key: "qte_item_box", type: "number" },
+	{ label: "store.ItemMaxThreshold", sortable: true, key: "seuil_max_item_item_box", type: "number" },
+	{ label: "store.ItemImg", sortable: false, key: "id_img", type: "image", idStoreImg: 2, store: 1, keyStore: "id_item" },
 ]);
 const metaTableauBoxItem = ref({
 	key: "id_item",
@@ -254,10 +254,10 @@ const metaTableauBoxItem = ref({
 	expand: ["item"],
 });
 const labelTableauModalItem = ref([
-	{ label: "store.VStoreItemName", sortable: true, key: "reference_name_item", type: "text" },
-	{ label: "store.VStoreItemQuantity", sortable: true, key: "qte_item_box", keyStore: "id_item", store: "1", type: "number", canEdit: true },
-	{ label: "store.VStoreItemMaxThreshold", sortable: true, key: "seuil_max_item_item_box", keyStore: "id_item", store: "1", type: "number", canEdit: true },
-	{ label: "store.VStoreItemActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "store.ItemName", sortable: true, key: "reference_name_item", type: "text" },
+	{ label: "store.ItemQuantity", sortable: true, key: "qte_item_box", keyStore: "id_item", store: "1", type: "number", canEdit: true },
+	{ label: "store.ItemMaxThreshold", sortable: true, key: "seuil_max_item_item_box", keyStore: "id_item", store: "1", type: "number", canEdit: true },
+	{ label: "store.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
@@ -304,14 +304,14 @@ const labelTableauModalItem = ref([
 	] },
 ]);
 const labelForm = ref([
-	{ key: "nom_store", label: "store.VStoreName", tledEditionype: "text", condition: "func.hasPermission([2])" },
-	{ key: "mqtt_name_store", label: "store.VStoreMQTTName", type: "text", condition: "func.hasPermission([2])" },
-	{ key: "xlength_store", label: "store.VStoreXLength", type: "number", condition: "func.hasPermission([2])" },
-	{ key: "ylength_store", label: "store.VStoreYLength", type: "number", condition: "func.hasPermission([2])" },
+	{ key: "nom_store", label: "store.Name", tledEditionype: "text", condition: "func.hasPermission([2])" },
+	{ key: "mqtt_name_store", label: "store.MQTTName", type: "text", condition: "func.hasPermission([2])" },
+	{ key: "xlength_store", label: "store.XLength", type: "number", condition: "func.hasPermission([2])" },
+	{ key: "ylength_store", label: "store.YLength", type: "number", condition: "func.hasPermission([2])" },
 ]);
 const labelTableauModalTag = ref([
-	{ label: "store.VStoreTagName", sortable: true, key: "nom_tag", type: "text" },
-	{ label: "store.VStoreTagActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "store.TagName", sortable: true, key: "nom_tag", type: "text" },
+	{ label: "store.TagActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-save",
@@ -334,7 +334,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
 <template>
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('store.VStoreTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('store.Title') }}</h2>
 		<TopButtonEditElement :main-config="{ path: '/stores', save: { roleRequired: authStore.hasPermission([2]), loading: storesStore.storeEdition[storeId]?.loading }, delete: { roleRequired: authStore.hasPermission([2]) } }"
 			:id="storeId" :store-user="authStore.user" @button-save="storeSave" @button-delete="storeDeleteModalShow = true"/>
 	</div>
@@ -365,7 +365,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</div>
 			<div :class="storeBoxEditModalShow ? 'flex' : 'hidden'" class="flex-col max-w-1/2 min-h-32 bg-gray-200 px-2 py-2 rounded" id="storeInputTag">
 				<div class="flex justify-between items-center border-b pb-3">
-					<h2 class="text-xl mb-4">{{ $t('store.VStoreBoxContent') }} (Id : {{ boxId }})</h2>
+					<h2 class="text-xl mb-4">{{ $t('store.BoxContent') }} (Id : {{ boxId }})</h2>
 					<button type="button" @click="storeBoxEditModalShow = false"
 						class="text-xl text-gray-500 hover:text-gray-700">&times;</button>
 				</div>
@@ -381,7 +381,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 							<tr @click="storeItemAddModalShow = true"
 								class="transition duration-150 ease-in-out hover:bg-gray-300 cursor-pointer">
 								<td colspan="4" class="text-center">
-									{{ $t('store.VStoreAddItem') }}
+									{{ $t('store.AddItem') }}
 								</td>
 							</tr>
 						</template>
@@ -391,18 +391,18 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		</div>
 	</div>
 	<div v-else>
-		{{ $t('store.VStoreLoading') }}
+		{{ $t('store.Loading') }}
 	</div>
 
 	<ModalDeleteConfirm :show-modal="storeDeleteModalShow" @close-modal="storeDeleteModalShow = false"
-		:delete-action="storeDelete" :text-title="'store.VStoreDeleteTitle'"
-		:text-p="'store.VStoreDeleteText'"/>
+		:delete-action="storeDelete" :text-title="'store.DeleteTitle'"
+		:text-p="'store.DeleteText'"/>
 
 	<div v-if="tagModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
 		@click="tagModalShow = false">
 		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
 			<div class="flex justify-between items-center border-b pb-3">
-				<h2 class="text-2xl font-semibold">{{ $t('store.VStoreAddTag') }}</h2>
+				<h2 class="text-2xl font-semibold">{{ $t('store.AddTag') }}</h2>
 				<button type="button" @click="tagModalShow = false"
 					class="text-gray-500 hover:text-gray-700">&times;</button>
 			</div>
@@ -424,7 +424,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		@click="storeItemAddModalShow = false">
 		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
 			<div class="flex justify-between items-center border-b pb-3">
-				<h2 class="text-2xl font-semibold">{{ $t('store.VStoreItemTitle') }}</h2>
+				<h2 class="text-2xl font-semibold">{{ $t('store.ItemTitle') }}</h2>
 				<button type="button" @click="storeItemAddModalShow = false"
 					class="text-gray-500 hover:text-gray-700">&times;</button>
 			</div>

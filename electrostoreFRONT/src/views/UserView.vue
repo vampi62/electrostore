@@ -44,7 +44,7 @@ async function fetchAllData() {
 			await usersStore.getUserById(userId.value);
 		} catch {
 			delete usersStore.users[userId.value];
-			addNotification({ message: "user.VUserNotFound", type: "error", i18n: true });
+			addNotification({ message: "user.NotFound", type: "error", i18n: true });
 			if (window.history.length > 1) {
 				router.back();
 			} else {
@@ -75,16 +75,16 @@ onBeforeUnmount(() => {
 });
 
 const userDeleteModalShow = ref(false);
-const userTypeRole = ref({ [UserRole.User]: t("user.VUserFilterRole0"), [UserRole.Moderator]: t("user.VUserFilterRole1"), [UserRole.Admin]: t("user.VUserFilterRole2") });
+const userTypeRole = ref({ [UserRole.User]: t("user.FilterRole0"), [UserRole.Moderator]: t("user.FilterRole1"), [UserRole.Admin]: t("user.FilterRole2") });
 const userSave = async() => {
 	try {
 		createSchema(isChecked).validateSync(usersStore.userEdition, { abortEarly: false });
 		if (userId.value === "new") {
 			await usersStore.createUser({ ...usersStore.userEdition });
-			addNotification({ message: "user.VUserCreated", type: "success", i18n: true });
+			addNotification({ message: "user.Created", type: "success", i18n: true });
 		} else {
 			await usersStore.updateUser(userId.value, { ...usersStore.userEdition });
-			addNotification({ message: "user.VUserUpdated", type: "success", i18n: true });
+			addNotification({ message: "user.Updated", type: "success", i18n: true });
 		}
 		usersStore.userEdition.mdp_user = "";
 		usersStore.userEdition.confirm_mdp_user = "";
@@ -101,7 +101,7 @@ const userSave = async() => {
 const userDelete = async() => {
 	try {
 		await usersStore.deleteUser(userId.value);
-		addNotification({ message: "user.VUserDeleted", type: "success", i18n: true });
+		addNotification({ message: "user.Deleted", type: "success", i18n: true });
 		router.push("/users");
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -113,7 +113,7 @@ const revokeToken = async(tokenId) => {
 	try {
 		await usersStore.updateToken(userId.value, tokenId, { "revoked_reason": "Revoked by user" });
 		usersStore.getTokenById(userId.value, tokenId);
-		addNotification({ message: "user.VUserTokenRevoked", type: "success", i18n: true });
+		addNotification({ message: "user.TokenRevoked", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
@@ -128,61 +128,61 @@ const isChecked = ref(false);
 const createSchema = (isChecked) => {
 	return Yup.object().shape({
 		nom_user: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("user.VUserNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-			.required(t("user.VUserNameRequired")),
+			.max(configsStore.getConfigByKey("max_length_name"), t("user.NameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.required(t("user.NameRequired")),
 		prenom_user: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("user.VUserFirstNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-			.required(t("user.VUserFirstNameRequired")),
+			.max(configsStore.getConfigByKey("max_length_name"), t("user.FirstNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.required(t("user.FirstNameRequired")),
 		email_user: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_email"), t("user.VUserEmailMaxLength") + " " + configsStore.getConfigByKey("max_length_email") + t("common.VAllCaracters"))
-			.required(t("user.VUserEmailRequired"))
-			.email(t("user.VUserEmailInvalid")),
+			.max(configsStore.getConfigByKey("max_length_email"), t("user.EmailMaxLength") + " " + configsStore.getConfigByKey("max_length_email") + t("common.VAllCaracters"))
+			.required(t("user.EmailRequired"))
+			.email(t("user.EmailInvalid")),
 		mdp_user: isChecked // if isChecked is true, then mdp_user is required and must be different from current_mdp_user and contain at least 8 characters, special characters, numbers and upper and lower letters
-			? Yup.string().required(t("user.VUserPasswordRequired")).notOneOf([Yup.ref("current_mdp_user"), null], t("user.VUserPasswordMatch")).matches(
+			? Yup.string().required(t("user.PasswordRequired")).notOneOf([Yup.ref("current_mdp_user"), null], t("user.PasswordMatch")).matches(
 				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-				t("user.VUserPasswordComplexity"),
+				t("user.PasswordComplexity"),
 			)
 			: Yup.string().nullable(),
 		confirm_mdp_user: isChecked // if isChecked is true, then confirm_mdp_user is required and must match mdp_user and contain at least 8 characters, special characters, numbers and upper and lower letters
-			? Yup.string().required(t("user.VUserConfirmPasswordRequired")).oneOf([Yup.ref("mdp_user"), null], t("user.VUserConfirmPasswordMatch")).matches(
+			? Yup.string().required(t("user.ConfirmPasswordRequired")).oneOf([Yup.ref("mdp_user"), null], t("user.ConfirmPasswordMatch")).matches(
 				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-				t("user.VUserPasswordComplexity"),
+				t("user.PasswordComplexity"),
 			)
 			: Yup.string().nullable(),
 		// current_mdp_user if always required and not nullable
 		current_mdp_user: Yup.string()
-			.required(t("user.VUserCurrentPasswordRequired")),
+			.required(t("user.CurrentPasswordRequired")),
 	});
 };
 
 const labelForm = ref([
-	{ key: "nom_user", label: "user.VUserName", type: "text", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
-	{ key: "prenom_user", label: "user.VUserFirstName", type: "text", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
-	{ key: "email_user", label: "user.VUserEmail", type: "text", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
-	{ key: "role_user", label: "user.VUserRole", type: "select", options: userTypeRole, condition: "func.hasPermission([2])" },
+	{ key: "nom_user", label: "user.Name", type: "text", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+	{ key: "prenom_user", label: "user.FirstName", type: "text", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+	{ key: "email_user", label: "user.Email", type: "text", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+	{ key: "role_user", label: "user.Role", type: "select", options: userTypeRole, condition: "func.hasPermission([2])" },
 ]);
 if (!authStore.isSSOUser && (authStore.user?.id_user === Number(userId.value) || authStore.hasPermission([2]))) {
 	labelForm.value.push(
-		{ key: "check", label: "user.VUserCheck", type: "checkbox", model: isChecked, condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
-		{ key: "mdp_user", label: "user.VUserPassword", type: "password", condition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && form[4].model" },
-		{ key: "confirm_mdp_user", label: "user.VUserConfirmPassword", type: "password", condition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && form[4].model" },
-		{ key: "current_mdp_user", label: "user.VUserCurrentPassword", type: "password", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+		{ key: "check", label: "user.Check", type: "checkbox", model: isChecked, condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+		{ key: "mdp_user", label: "user.Password", type: "password", condition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && form[4].model" },
+		{ key: "confirm_mdp_user", label: "user.ConfirmPassword", type: "password", condition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && form[4].model" },
+		{ key: "current_mdp_user", label: "user.CurrentPassword", type: "password", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 	);
 }
 
 const labelTableauSession = ref([
-	{ label: "user.VUserTokenCreatedDate", sortable: true, key: "first_created_at", type: "datetime" },
-	{ label: "user.VUserTokenLastLoginDate", sortable: true, key: "created_at", type: "datetime" },
-	{ label: "user.VUserTokenCreatedIP", sortable: true, key: "created_by_ip", type: "text" },
-	{ label: "user.VUserTokenExpireDate", sortable: true, key: "expires_at", type: "datetime" },
-	{ label: "user.VUserTokenIsRevoked", sortable: true, key: "is_revoked", type: "text" },
-	{ label: "user.VUserTokenAuthMethod", sortable: true, key: "auth_method", type: "text" },
-	{ label: "user.VUserTokenRevokedDate", sortable: true, key: "revoked_at", type: "datetime" },
-	{ label: "user.VUserTokenRevokedIP", sortable: true, key: "revoked_by_ip", type: "text" },
-	{ label: "user.VUserTokenRevokedReason", sortable: true, key: "revoked_reason", type: "text" },
-	{ label: "user.VUserTokenActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "user.TokenCreatedDate", sortable: true, key: "first_created_at", type: "datetime" },
+	{ label: "user.TokenLastLoginDate", sortable: true, key: "created_at", type: "datetime" },
+	{ label: "user.TokenCreatedIP", sortable: true, key: "created_by_ip", type: "text" },
+	{ label: "user.TokenExpireDate", sortable: true, key: "expires_at", type: "datetime" },
+	{ label: "user.TokenIsRevoked", sortable: true, key: "is_revoked", type: "text" },
+	{ label: "user.TokenAuthMethod", sortable: true, key: "auth_method", type: "text" },
+	{ label: "user.TokenRevokedDate", sortable: true, key: "revoked_at", type: "datetime" },
+	{ label: "user.TokenRevokedIP", sortable: true, key: "revoked_by_ip", type: "text" },
+	{ label: "user.TokenRevokedReason", sortable: true, key: "revoked_reason", type: "text" },
+	{ label: "user.TokenActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
-			label: "user.VUserTokenRevoke",
+			label: "user.TokenRevoke",
 			icon: "fa-solid fa-ban",
 			condition: "!rowData?.is_revoked",
 			action: (row) => revokeToken(row.session_id),
@@ -196,7 +196,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 
 <template>
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('user.VUserTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('user.Title') }}</h2>
 		<TopButtonEditElement :main-config="{ path: '/users', save: { sameUserId: true, roleRequired: authStore.hasPermission([1, 2]), loading: usersStore.userEdition.loading }, delete: { sameUserId: true, roleRequired: authStore.hasPermission([1, 2]) } }"
 			:id="userId" :store-user="authStore.user" @button-save="userSave" @button-delete="userDeleteModalShow = true"/>
 	</div>
@@ -205,10 +205,10 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="usersStore.userEdition" :store-user="authStore.user"
 				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
 		</div>
-		<CollapsibleSection title="user.VUserParticipation"
+		<CollapsibleSection title="user.Participation"
 			:id-page="userId">
 			<template #append-row>
-				<CollapsibleSection title="user.VUserCommandsCommentaires" :disable-margin="true"
+				<CollapsibleSection title="user.CommandsCommentaires" :disable-margin="true"
 					:total-count="Number(usersStore.commandsCommentaireTotalCount[userId] || 0)" :id-page="userId">
 					<template #append-row>
 						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: false, roleRequired: false, expand: ['command'] }"
@@ -220,7 +220,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 						/>
 					</template>
 				</CollapsibleSection>
-				<CollapsibleSection title="user.VUserProjetsCommentaires" :disable-margin="true"
+				<CollapsibleSection title="user.ProjetsCommentaires" :disable-margin="true"
 					:total-count="Number(usersStore.projetsCommentaireTotalCount[userId] || 0)" :id-page="userId">
 					<template #append-row>
 						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: false, roleRequired: false, expand: ['projet'] }"
@@ -234,14 +234,14 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</CollapsibleSection>
 			</template>
 		</CollapsibleSection>
-		<CollapsibleSection title="user.VUserTokens"
+		<CollapsibleSection title="user.Tokens"
 			:total-count="Number(usersStore.tokensTotalCount[userId] || 0)" :id-page="userId">
 			<template #append-row>
 				<div>
 					<!-- bouton pour choisir de charger les revoked et les expired -->
 					<label class="inline-flex items-center mb-4">
 						<input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600" v-model="isCheckedTokens">
-						<span class="ml-2 text-gray-700">{{ $t('user.VUserShowExpiredAndRevokedTokens') }}</span>
+						<span class="ml-2 text-gray-700">{{ $t('user.ShowExpiredAndRevokedTokens') }}</span>
 					</label>
 				</div>
 				<Tableau :labels="labelTableauSession" :meta="{ key: 'session_id' }"
@@ -255,9 +255,9 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		</CollapsibleSection>
 	</div>
 	<div v-else>
-		<div>{{ $t('user.VUserLoading') }}</div>
+		<div>{{ $t('user.Loading') }}</div>
 	</div>
 	<ModalDeleteConfirm :show-modal="userDeleteModalShow" @close-modal="userDeleteModalShow = false"
-		:delete-action="userDelete" :text-title="'user.VUserDeleteTitle'"
-		:text-p="(authStore.user?.id_user !== Number(userId)) ? 'user.VUserDeleteTextAdmin' : 'user.VUserDeleteTextUser'"/>
+		:delete-action="userDelete" :text-title="'user.DeleteTitle'"
+		:text-p="(authStore.user?.id_user !== Number(userId)) ? 'user.DeleteTextAdmin' : 'user.DeleteTextUser'"/>
 </template>

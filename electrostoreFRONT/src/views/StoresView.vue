@@ -22,18 +22,18 @@ async function fetchTagData(minOffset, maxOffset) {
 }
 
 const filter = ref([
-	{ key: "nom_store", value: "", type: "text", label: "store.VStoresFilterName", compareMethod: "contain" },
-	{ key: "mqtt_name_store", value: "", type: "text", label: "store.VStoresFilterMqttName", compareMethod: "contain" },
-	{ key: "xlength_store", value: "", type: "number", label: "store.VStoresFilterXLength", compareMethod: "<=" },
-	{ key: "ylength_store", value: "", type: "number", label: "store.VStoresFilterYLength", compareMethod: "<=" },
-	{ key: "id_tag", subPath: "stores_tags", value: "", type: "datalist", typeData: "int", options: Object.fromEntries(Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag])), label: "store.VStoresFilterTag", compareMethod: "=" },
+	{ key: "nom_store", value: "", type: "text", label: "stores.FilterName", compareMethod: "contain" },
+	{ key: "mqtt_name_store", value: "", type: "text", label: "stores.FilterMqttName", compareMethod: "contain" },
+	{ key: "xlength_store", value: "", type: "number", label: "stores.FilterXLength", compareMethod: "<=" },
+	{ key: "ylength_store", value: "", type: "number", label: "stores.FilterYLength", compareMethod: "<=" },
+	{ key: "id_tag", subPath: "stores_tags", value: "", type: "datalist", typeData: "int", options: Object.fromEntries(Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag])), label: "stores.FilterTag", compareMethod: "=" },
 ]);
 const tableauLabel = ref([
-	{ label: "store.VStoresName", sortable: true, key: "nom_store", type: "text" },
-	{ label: "store.VStoresXLength", sortable: true, key: "xlength_store", type: "number" },
-	{ label: "store.VStoresYLength", sortable: true, key: "ylength_store", type: "number" },
-	{ label: "store.VStoresMqttName", sortable: true, key: "mqtt_name_store", type: "text" },
-	{ label: "store.VStoresTagsList", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, key: "id_store", keyStoreLink: "id_tag", ressourcePrint: [{ type: "ressource", key: "nom_tag" }] } },
+	{ label: "stores.Name", sortable: true, key: "nom_store", type: "text" },
+	{ label: "stores.XLength", sortable: true, key: "xlength_store", type: "number" },
+	{ label: "stores.YLength", sortable: true, key: "ylength_store", type: "number" },
+	{ label: "stores.MqttName", sortable: true, key: "mqtt_name_store", type: "text" },
+	{ label: "stores.TagsList", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, key: "id_store", keyStoreLink: "id_tag", ressourcePrint: [{ type: "ressource", key: "nom_tag" }] } },
 ]);
 const tableauMeta = ref({
 	key: "id_store",
@@ -45,7 +45,7 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 
 <template>
 	<div>
-		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('store.VStoresTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('stores.Title') }}</h2>
 	</div>
 	<div>
 		<div :class="{
@@ -54,10 +54,10 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 			}"
 			class="text-white px-4 py-2 rounded inline-block mb-2">
 			<RouterLink v-if="authStore.hasPermission([2])" :to="'/stores/new'">
-				{{ $t('store.VStoresAdd') }}
+				{{ $t('stores.Add') }}
 			</RouterLink>
 			<span v-else class="pointer-events-none">
-				{{ $t('store.VStoresAdd') }}
+				{{ $t('stores.Add') }}
 			</span>
 		</div>
 		<FilterContainer :filters="filter" :store-data="storesStore.stores" />

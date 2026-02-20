@@ -5,16 +5,16 @@ import { useTagsStore } from "@/stores";
 const tagsStore = useTagsStore();
 
 const filter = ref([
-	{ key: "nom_tag", value: "", type: "text", label: "tag.VTagsFilterName", compareMethod: "contain" },
-	{ key: "poids_tag", value: "", type: "number", label: "tag.VTagsFilterWeightMin", compareMethod: ">=" },
-	{ key: "poids_tag", value: "", type: "number", label: "tag.VTagsFilterWeightMax", compareMethod: "<=" },
+	{ key: "nom_tag", value: "", type: "text", label: "tags.FilterName", compareMethod: "contain" },
+	{ key: "poids_tag", value: "", type: "number", label: "tags.FilterWeightMin", compareMethod: ">=" },
+	{ key: "poids_tag", value: "", type: "number", label: "tags.FilterWeightMax", compareMethod: "<=" },
 ]);
 const tableauLabel = ref([
-	{ label: "tag.VTagsName", sortable: true, key: "nom_tag", type: "text" },
-	{ label: "tag.VTagsWeight", sortable: true, key: "poids_tag", type: "number" },
-	{ label: "tag.VTagsItemsCount", sortable: true, key: "items_tags_count", type: "number" },
-	{ label: "tag.VTagsStoresCount", sortable: true, key: "stores_tags_count", type: "number" },
-	{ label: "tag.VTagsBoxsCount", sortable: true, key: "boxs_tags_count", type: "number" },
+	{ label: "tags.Name", sortable: true, key: "nom_tag", type: "text" },
+	{ label: "tags.Weight", sortable: true, key: "poids_tag", type: "number" },
+	{ label: "tags.ItemsCount", sortable: true, key: "items_tags_count", type: "number" },
+	{ label: "tags.StoresCount", sortable: true, key: "stores_tags_count", type: "number" },
+	{ label: "tags.BoxsCount", sortable: true, key: "boxs_tags_count", type: "number" },
 ]);
 const tableauMeta = ref({
 	key: "id_tag",
@@ -25,13 +25,13 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 
 <template>
 	<div>
-		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('tag.VTagsTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('tags.Title') }}</h2>
 	</div>
 	<div>
 		<div
 			class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded cursor-pointer inline-block mb-2">
 			<RouterLink :to="'/tags/new'">
-				{{ $t('tag.VTagsAdd') }}
+				{{ $t('tags.Add') }}
 			</RouterLink>
 		</div>
 		<FilterContainer :filters="filter" :store-data="tagsStore.tags" />

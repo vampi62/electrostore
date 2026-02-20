@@ -1,0 +1,13 @@
+{
+	"FilterName": "Name",
+	"FilterWeightMin": "Min Weight",
+	"FilterWeightMax": "Max Weight",
+	"Title": "Tags",
+	"Add": "Create Tag",
+	"Name": "Name",
+	"Weight": "Weight",
+	"ItemsCount": "Items Count",
+	"StoresCount": "Stores Count",
+	"BoxsCount": "Boxs Count",
+	"Loading": "Loading"
+}

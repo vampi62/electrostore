@@ -35,7 +35,7 @@ async function fetchAllData() {
 			await commandsStore.getCommandById(commandId.value);
 		} catch {
 			delete commandsStore.commands[commandId.value];
-			addNotification({ message: "command.VCommandNotFound", type: "error", i18n: true });
+			addNotification({ message: "command.NotFound", type: "error", i18n: true });
 			router.push("/commands");
 			return;
 		}
@@ -61,16 +61,16 @@ onBeforeUnmount(() => {
 
 // commande
 const commandDeleteModalShow = ref(false);
-const commandTypeStatus = ref({ ["En attente"]: t("command.VCommandStatus1"), ["En cours"]: t("command.VCommandStatus2"), ["Terminée"]: t("command.VCommandStatus3"), ["Annulée"]: t("command.VCommandStatus4") });
+const commandTypeStatus = ref({ ["En attente"]: t("command.Status1"), ["En cours"]: t("command.Status2"), ["Terminée"]: t("command.Status3"), ["Annulée"]: t("command.Status4") });
 const commandSave = async() => {
 	try {
 		createSchema().validateSync(commandsStore.commandEdition, { abortEarly: false });
 		if (commandId.value === "new") {
 			await commandsStore.createCommand({ ...commandsStore.commandEdition });
-			addNotification({ message: "command.VCommandCreated", type: "success", i18n: true });
+			addNotification({ message: "command.Created", type: "success", i18n: true });
 		} else {
 			await commandsStore.updateCommand(commandId.value, { ...commandsStore.commandEdition });
-			addNotification({ message: "command.VCommandUpdated", type: "success", i18n: true });
+			addNotification({ message: "command.Updated", type: "success", i18n: true });
 		}
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -84,7 +84,7 @@ const commandSave = async() => {
 const commandDelete = async() => {
 	try {
 		await commandsStore.deleteCommand(commandId.value);
-		addNotification({ message: "command.VCommandDeleted", type: "success", i18n: true });
+		addNotification({ message: "command.Deleted", type: "success", i18n: true });
 		router.push("/commands");
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -108,7 +108,7 @@ const documentAdd = async() => {
 	try {
 		schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
 		await commandsStore.createDocument(commandId.value, documentModalData.value);
-		addNotification({ message: "command.VCommandDocumentAdded", type: "success", i18n: true });
+		addNotification({ message: "command.DocumentAdded", type: "success", i18n: true });
 		documentAddModalShow.value = false;
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -119,7 +119,7 @@ const documentEdit = async(row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		await commandsStore.updateDocument(commandId.value, row.id_command_document, row);
-		addNotification({ message: "command.VCommandDocumentUpdated", type: "success", i18n: true });
+		addNotification({ message: "command.DocumentUpdated", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
@@ -127,7 +127,7 @@ const documentEdit = async(row) => {
 const documentDelete = async() => {
 	try {
 		await commandsStore.deleteDocument(commandId.value, documentModalData.value.id_command_document);
-		addNotification({ message: "command.VCommandDocumentDeleted", type: "success", i18n: true });
+		addNotification({ message: "command.DocumentDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
@@ -140,9 +140,9 @@ const documentDownload = async(fileContent) => {
 const documentView = async(fileContent) => {
 	const file = await commandsStore.downloadDocument(commandId.value, fileContent.id_command_document);
 	if (viewFile(file, { keyName: fileContent.name_command_document, keyType: fileContent.type_command_document })) {
-		addNotification({ message: "command.VCommandDocumentOpenInNewTab", type: "success", i18n: true });
+		addNotification({ message: "command.DocumentOpenInNewTab", type: "success", i18n: true });
 	} else {
-		addNotification({ message: "command.VCommandDocumentNotSupported", type: "error", i18n: true });
+		addNotification({ message: "command.DocumentNotSupported", type: "error", i18n: true });
 	}
 };
 
@@ -153,7 +153,7 @@ const itemSave = async(item) => {
 		try {
 			schemaItem.validateSync(item.tmp, { abortEarly: false });
 			await commandsStore.updateItem(commandId.value, item.tmp.id_item, item.tmp);
-			addNotification({ message: "command.VCommandItemUpdated", type: "success", i18n: true });
+			addNotification({ message: "command.ItemUpdated", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
 			addNotification({ message: e, type: "error", i18n: false });
@@ -163,7 +163,7 @@ const itemSave = async(item) => {
 		try {
 			schemaItem.validateSync(item.tmp, { abortEarly: false });
 			await commandsStore.createItem(commandId.value, item.tmp);
-			addNotification({ message: "command.VCommandItemAdded", type: "success", i18n: true });
+			addNotification({ message: "command.ItemAdded", type: "success", i18n: true });
 			item.tmp = null;
 		} catch (e) {
 			addNotification({ message: e, type: "error", i18n: false });
@@ -174,32 +174,32 @@ const itemSave = async(item) => {
 const itemDelete = async(item) => {
 	try {
 		await commandsStore.deleteItem(commandId.value, item.id_item);
-		addNotification({ message: "command.VCommandItemDeleted", type: "success", i18n: true });
+		addNotification({ message: "command.ItemDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
 
 const filterItem = ref([
-	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("command.VCommandItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("command.ItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
 
 const createSchema = () => {
 	return Yup.object().shape({
 		prix_command: Yup.number()
-			.min(0, t("command.VCommandPriceMin"))
-			.typeError(t("command.VCommandPriceNumber"))
-			.required(t("command.VCommandPriceRequired")),
+			.min(0, t("command.PriceMin"))
+			.typeError(t("command.PriceNumber"))
+			.required(t("command.PriceRequired")),
 		url_command: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_url"), t("command.VCommandUrlMaxLength") + " " + configsStore.getConfigByKey("max_length_url") + t("common.VAllCaracters"))
-			.url(t("command.VCommandUrlInvalid"))
-			.required(t("command.VCommandUrlRequired")),
+			.max(configsStore.getConfigByKey("max_length_url"), t("command.UrlMaxLength") + " " + configsStore.getConfigByKey("max_length_url") + t("common.VAllCaracters"))
+			.url(t("command.UrlInvalid"))
+			.required(t("command.UrlRequired")),
 		date_command: Yup.date()
-			.typeError(t("command.VCommandDateInvalid"))
-			.required(t("command.VCommandDateRequired")),
+			.typeError(t("command.DateInvalid"))
+			.required(t("command.DateRequired")),
 		status_command: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_status"), t("command.VCommandStatusMaxLength") + " " + configsStore.getConfigByKey("max_length_status") + t("common.VAllCaracters"))
-			.required(t("command.VCommandStatusRequired")),
+			.max(configsStore.getConfigByKey("max_length_status"), t("command.StatusMaxLength") + " " + configsStore.getConfigByKey("max_length_status") + t("common.VAllCaracters"))
+			.required(t("command.StatusRequired")),
 		date_livraison_command: Yup.date()
 			.nullable()
 			.optional(),
@@ -208,40 +208,40 @@ const createSchema = () => {
 
 const schemaAddDocument = Yup.object().shape({
 	name_command_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("command.VCommandDocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-		.required(t("command.VCommandDocumentNameRequired")),
+		.max(configsStore.getConfigByKey("max_length_name"), t("command.DocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+		.required(t("command.DocumentNameRequired")),
 	document: Yup.mixed()
-		.required(t("command.VCommandDocumentRequired"))
-		.test("fileSize", t("command.VCommandDocumentSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
+		.required(t("command.DocumentRequired"))
+		.test("fileSize", t("command.DocumentSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 const schemaEditDocument = Yup.object().shape({
 	name_command_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("command.VCommandDocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-		.required(t("command.VCommandDocumentNameRequired")),
+		.max(configsStore.getConfigByKey("max_length_name"), t("command.DocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+		.required(t("command.DocumentNameRequired")),
 });
 const schemaItem = Yup.object().shape({
 	qte_command_item: Yup.number()
-		.required(t("command.VCommandItemQuantityRequired"))
-		.typeError(t("command.VCommandItemQuantityNumber"))
-		.min(1, t("command.VCommandItemQuantityMin")),
+		.required(t("command.ItemQuantityRequired"))
+		.typeError(t("command.ItemQuantityNumber"))
+		.min(1, t("command.ItemQuantityMin")),
 	prix_command_item: Yup.number()
-		.required(t("command.VCommandItemPriceRequired"))
-		.typeError(t("command.VCommandItemPriceNumber"))
-		.min(1, t("command.VCommandItemPriceMin")),
+		.required(t("command.ItemPriceRequired"))
+		.typeError(t("command.ItemPriceNumber"))
+		.min(1, t("command.ItemPriceMin")),
 });
 
 const labelForm = ref([
-	{ key: "prix_command", label: "command.VCommandPrice", type: "number" },
-	{ key: "url_command", label: "command.VCommandUrl", type: "text" },
-	{ key: "date_command", label: "command.VCommandDate", type: "datetime-local" },
-	{ key: "status_command", label: "command.VCommandStatus", type: "select", options: commandTypeStatus },
-	{ key: "date_livraison_command", label: "command.VCommandDeliveryDate", type: "datetime-local" },
+	{ key: "prix_command", label: "command.Price", type: "number" },
+	{ key: "url_command", label: "command.Url", type: "text" },
+	{ key: "date_command", label: "command.Date", type: "datetime-local" },
+	{ key: "status_command", label: "command.Status", type: "select", options: commandTypeStatus },
+	{ key: "date_livraison_command", label: "command.DeliveryDate", type: "datetime-local" },
 ]);
 const labelTableauDocument = ref([
-	{ label: "command.VCommandDocumentName", sortable: true, key: "name_command_document", type: "text", canEdit: true },
-	{ label: "command.VCommandDocumentType", sortable: true, key: "type_command_document", type: "text" },
-	{ label: "command.VCommandDocumentDate", sortable: true, key: "created_at", type: "datetime" },
-	{ label: "command.VCommandDocumentActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "command.DocumentName", sortable: true, key: "name_command_document", type: "text", canEdit: true },
+	{ label: "command.DocumentType", sortable: true, key: "type_command_document", type: "text" },
+	{ label: "command.DocumentDate", sortable: true, key: "created_at", type: "datetime" },
+	{ label: "command.DocumentActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
@@ -291,10 +291,10 @@ const labelTableauDocument = ref([
 	] },
 ]);
 const labelTableauItem = ref([
-	{ label: "command.VCommandItemName", sortable: true, key: "reference_name_item", keyStore: "id_item", store: "1", type: "text" },
-	{ label: "command.VCommandItemQuantity", sortable: true, key: "qte_command_item", type: "number", canEdit: true },
-	{ label: "command.VCommandItemPrice", sortable: true, key: "prix_command_item", type: "number", canEdit: true },
-	{ label: "command.VCommandItemActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "command.ItemName", sortable: true, key: "reference_name_item", keyStore: "id_item", store: "1", type: "text" },
+	{ label: "command.ItemQuantity", sortable: true, key: "qte_command_item", type: "number", canEdit: true },
+	{ label: "command.ItemPrice", sortable: true, key: "prix_command_item", type: "number", canEdit: true },
+	{ label: "command.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
@@ -335,10 +335,10 @@ const labelTableauItem = ref([
 	] },
 ]);
 const labelTableauModalItem = ref([
-	{ label: "command.VCommandItemName", sortable: true, key: "reference_name_item", type: "text" },
-	{ label: "command.VCommandItemQuantity", sortable: true, key: "qte_command_item", keyStore: "id_item", store: "1", type: "number", canEdit: true },
-	{ label: "command.VCommandItemPrice", sortable: true, key: "prix_command_item", keyStore: "id_item", store: "1", type: "number", canEdit: true },
-	{ label: "command.VCommandItemActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "command.ItemName", sortable: true, key: "reference_name_item", type: "text" },
+	{ label: "command.ItemQuantity", sortable: true, key: "qte_command_item", keyStore: "id_item", store: "1", type: "number", canEdit: true },
+	{ label: "command.ItemPrice", sortable: true, key: "prix_command_item", keyStore: "id_item", store: "1", type: "number", canEdit: true },
+	{ label: "command.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
@@ -388,7 +388,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
 <template>
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('command.VCommandTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('command.Title') }}</h2>
 		<TopButtonEditElement :main-config="{ path: '/commands', save: { roleRequired: authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition.loading }, delete: { roleRequired: authStore.hasPermission([0, 1, 2]) } }"
 			:id="commandId" @button-save="commandSave" @button-delete="commandDeleteModalShow = true"/>
 	</div>
@@ -399,12 +399,12 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				<!-- TODO suivie commande -->
 			</div>
 		</div>
-		<CollapsibleSection title="command.VCommandDocuments"
+		<CollapsibleSection title="command.Documents"
 			:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)" :id-page="commandId">
 			<template #append-row>
 				<button type="button" @click="documentAddOpenModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
-					{{ $t('command.VCommandAddDocument') }}
+					{{ $t('command.AddDocument') }}
 				</button>
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_command_document' }"
 					:store-data="[commandsStore.documents[commandId]]"
@@ -415,12 +415,12 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 			</template>
 		</CollapsibleSection>
-		<CollapsibleSection title="command.VCommandItems"
+		<CollapsibleSection title="command.Items"
 			:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)" :id-page="commandId">
 			<template #append-row>
 				<button type="button" @click="itemModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
-					{{ $t('command.VCommandAddItem') }}
+					{{ $t('command.AddItem') }}
 				</button>
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
 					:store-data="[commandsStore.items[commandId],itemsStore.items]"
@@ -431,14 +431,14 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 			</template>
 		</CollapsibleSection>
-		<CollapsibleSection title="command.VCommandCommentaires"
+		<CollapsibleSection title="command.Commentaires"
 			:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)" :id-page="commandId">
 			<template #append-row>
 				<Commentaire :meta="{ contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[commandsStore.commentaires[commandId], usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
 					:store-function="{ create: (data) => commandsStore.createCommentaire(commandId, data), update: (id, data) => commandsStore.updateCommentaire(commandId, id, data), delete: (id) => commandsStore.deleteCommentaire(commandId, id) }"
-					:loading="commandsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'command.VCommandCommentDeleteTitle', textP: 'command.VCommandCommentDeleteText' }"
+					:loading="commandsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"
 					:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)"
 					:fetch-function="(limit, offset, expand, filter, sort, clear) => commandsStore.getCommentaireByInterval(commandId, limit, offset, expand, filter, sort, clear)"
 				/>
@@ -446,30 +446,30 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		</CollapsibleSection>
 	</div>
 	<div v-else>
-		<div>{{ $t('command.VCommandLoading') }}</div>
+		<div>{{ $t('command.Loading') }}</div>
 	</div>
 
 	<ModalDeleteConfirm :show-modal="commandDeleteModalShow" @close-modal="commandDeleteModalShow = false"
-		:delete-action="commandDelete" :text-title="'command.VCommandDeleteTitle'"
-		:text-p="'command.VCommandDeleteText'"/>
+		:delete-action="commandDelete" :text-title="'command.DeleteTitle'"
+		:text-p="'command.DeleteText'"/>
 
 	<ModalAddFile :show-modal="documentAddModalShow" @close-modal="documentAddModalShow = false"
-		:text-title="'command.VCommandDocumentAddTitle'" :schema-add="schemaAddDocument"
+		:text-title="'command.DocumentAddTitle'" :schema-add="schemaAddDocument"
 		:modal-data="documentModalData" :add-action="documentAdd" :key-name-document="'name_command_document'" :key-file-document="'document'"
 		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
-		:text-max-size="'command.VCommandDocumentSize'" :text-placeholder-document="'command.VCommandDocumentNamePlaceholder'"
+		:text-max-size="'command.DocumentSize'" :text-placeholder-document="'command.DocumentNamePlaceholder'"
 		file-type="document"
 	/>
 
 	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
-		:delete-action="documentDelete" :text-title="'command.VCommandDocumentDeleteTitle'"
-		:text-p="'command.VCommandDocumentDeleteText'"/>
+		:delete-action="documentDelete" :text-title="'command.DocumentDeleteTitle'"
+		:text-p="'command.DocumentDeleteText'"/>
 
 	<div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
 		@click="itemModalShow = false">
 		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
 			<div class="flex justify-between items-center border-b pb-3">
-				<h2 class="text-2xl font-semibold">{{ $t('command.VCommandItemTitle') }}</h2>
+				<h2 class="text-2xl font-semibold">{{ $t('command.ItemTitle') }}</h2>
 				<button type="button" @click="itemModalShow = false"
 					class="text-gray-500 hover:text-gray-700">&times;</button>
 			</div>

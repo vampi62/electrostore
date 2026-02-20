@@ -6,15 +6,15 @@ const camerasStore = useCamerasStore();
 const authStore = useAuthStore();
 
 const filter = ref([
-	{ key: "nom_camera", value: "", type: "text", label: "camera.VCamerasFilterName", compareMethod: "contain" },
-	{ key: "url_camera", value: "", type: "text", label: "camera.VCamerasFilterUrl", compareMethod: "contain" },
+	{ key: "nom_camera", value: "", type: "text", label: "cameras.FilterName", compareMethod: "contain" },
+	{ key: "url_camera", value: "", type: "text", label: "cameras.FilterUrl", compareMethod: "contain" },
 ]);
 const tableauLabel = ref([
-	{ label: "camera.VCamerasName", sortable: true, key: "nom_camera", type: "text" },
-	{ label: "camera.VCamerasUrl", sortable: true, key: "url_camera", type: "text" },
-	{ label: "camera.VCamerasUser", sortable: false, key: "", type: "bool", condition: "rowData?.user_camera == '' && rowData?.mdp_camera == ''" },
-	{ label: "camera.VCamerasNetwork", sortable: false, key: "", type: "bool", condition: "store[1]?.[rowData.id_camera]?.network" },
-	{ label: "camera.VCamerasStatus", sortable: false, key: "", type: "bool", condition: "store[1]?.[rowData.id_camera]?.statusCode == 200" },
+	{ label: "cameras.Name", sortable: true, key: "nom_camera", type: "text" },
+	{ label: "cameras.Url", sortable: true, key: "url_camera", type: "text" },
+	{ label: "cameras.User", sortable: false, key: "", type: "bool", condition: "rowData?.user_camera == '' && rowData?.mdp_camera == ''" },
+	{ label: "cameras.Network", sortable: false, key: "", type: "bool", condition: "store[1]?.[rowData.id_camera]?.network" },
+	{ label: "cameras.Status", sortable: false, key: "", type: "bool", condition: "store[1]?.[rowData.id_camera]?.statusCode == 200" },
 ]);
 const tableauMeta = ref({
 	key: "id_camera",
@@ -25,7 +25,7 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 
 <template>
 	<div>
-		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('camera.VCamerasTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('cameras.Title') }}</h2>
 	</div>
 	<div>
 		<div :class="{
@@ -34,10 +34,10 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 			}"
 			class="text-white px-4 py-2 rounded inline-block mb-2">
 			<RouterLink v-if="authStore.hasPermission([2])" :to="'/cameras/new'">
-				{{ $t('camera.VCamerasAdd') }}
+				{{ $t('cameras.Add') }}
 			</RouterLink>
 			<span v-else class="pointer-events-none">
-				{{ $t('camera.VCamerasAdd') }}
+				{{ $t('cameras.Add') }}
 			</span>
 		</div>
 		<FilterContainer :filters="filter" :store-data="camerasStore.cameras" />

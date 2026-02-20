@@ -37,7 +37,7 @@ async function fetchAllData() {
 			await itemsStore.getItemById(itemId.value);
 		} catch {
 			delete itemsStore.items[itemId.value];
-			addNotification({ message: "item.VItemNotFound", type: "error", i18n: true });
+			addNotification({ message: "item.NotFound", type: "error", i18n: true });
 			router.push("/inventory");
 			return;
 		}
@@ -73,7 +73,7 @@ const toggleBoxLed = async(boxId) => {
 	let storeId = itemsStore.itemBoxs[itemId.value][boxId]["box"].id_store;
 	try {
 		await storesStore.showBoxById(storeId, boxId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
-		addNotification({ message: "item.VItemBoxShowSuccess", type: "success", i18n: true });
+		addNotification({ message: "item.BoxShowSuccess", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
@@ -86,10 +86,10 @@ const itemSave = async() => {
 		createSchema().validateSync(itemsStore.itemEdition, { abortEarly: false });
 		if (itemId.value === "new") {
 			await itemsStore.createItem({ ...itemsStore.itemEdition });
-			addNotification({ message: "item.VItemCreated", type: "success", i18n: true });
+			addNotification({ message: "item.Created", type: "success", i18n: true });
 		} else {
 			await itemsStore.updateItem(itemId.value, { ...itemsStore.itemEdition });
-			addNotification({ message: "item.VItemUpdated", type: "success", i18n: true });
+			addNotification({ message: "item.Updated", type: "success", i18n: true });
 		}
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -103,7 +103,7 @@ const itemSave = async() => {
 const itemDelete = async() => {
 	try {
 		await itemsStore.deleteItem(itemId.value);
-		addNotification({ message: "item.VItemDeleted", type: "success", i18n: true });
+		addNotification({ message: "item.Deleted", type: "success", i18n: true });
 		router.push("/inventory");
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -124,7 +124,7 @@ const boxSave = async(box) => {
 		try {
 			schemaBox.validateSync(box.tmp, { abortEarly: false });
 			await itemsStore.updateItemBox(itemId.value, box.tmp.id_box, box.tmp);
-			addNotification({ message: "item.VItemBoxUpdated", type: "success", i18n: true });
+			addNotification({ message: "item.BoxUpdated", type: "success", i18n: true });
 			box.tmp = null;
 		} catch (e) {
 			addNotification({ message: e, type: "error", i18n: false });
@@ -134,7 +134,7 @@ const boxSave = async(box) => {
 		try {
 			createSchema().validateSync(box.tmp, { abortEarly: false });
 			await itemsStore.createItemBox(itemId.value, box.tmp);
-			addNotification({ message: "item.VItemBoxAdded", type: "success", i18n: true });
+			addNotification({ message: "item.BoxAdded", type: "success", i18n: true });
 			box.tmp = null;
 		} catch (e) {
 			addNotification({ message: e, type: "error", i18n: false });
@@ -159,7 +159,7 @@ const documentAdd = async() => {
 	try {
 		schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
 		await itemsStore.createDocument(itemId.value, documentModalData.value);
-		addNotification({ message: "item.VItemDocumentAdded", type: "success", i18n: true });
+		addNotification({ message: "item.DocumentAdded", type: "success", i18n: true });
 		documentAddModalShow.value = false;
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -170,7 +170,7 @@ const documentEdit = async(row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		await itemsStore.updateDocument(itemId.value, row.id_item_document, row);
-		addNotification({ message: "item.VItemDocumentUpdated", type: "success", i18n: true });
+		addNotification({ message: "item.DocumentUpdated", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
@@ -179,7 +179,7 @@ const documentEdit = async(row) => {
 const documentDelete = async() => {
 	try {
 		await itemsStore.deleteDocument(itemId.value, documentModalData.value.id_item_document);
-		addNotification({ message: "item.VItemDocumentDeleted", type: "success", i18n: true });
+		addNotification({ message: "item.DocumentDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
@@ -192,9 +192,9 @@ const documentDownload = async(fileContent) => {
 const documentView = async(fileContent) => {
 	const file = await itemsStore.downloadDocument(itemId.value, fileContent.id_item_document);
 	if (viewFile(file, { keyName: fileContent.name_item_document, keyType: fileContent.type_item_document })) {
-		addNotification({ message: "item.VItemDocumentOpenInNewTab", type: "success", i18n: true });
+		addNotification({ message: "item.DocumentOpenInNewTab", type: "success", i18n: true });
 	} else {
-		addNotification({ message: "item.VItemDocumentNotSupported", type: "error", i18n: true });
+		addNotification({ message: "item.DocumentNotSupported", type: "error", i18n: true });
 	}
 };
 
@@ -209,7 +209,7 @@ const imageSelectOpenModal = () => {
 		return;
 	}
 	if (Object.keys(itemsStore.images[itemId.value]).length === 0) {
-		addNotification({ message: "item.VItemImageEmpty", type: "error", i18n: true });
+		addNotification({ message: "item.ImageEmpty", type: "error", i18n: true });
 		return;
 	}
 	if (itemsStore.images[itemId.value]) {
@@ -227,7 +227,7 @@ const imageDeleteOpenModal = (doc) => {
 const imageAdd = async() => {
 	try {
 		await itemsStore.createImage(itemId.value, imageModalData.value);
-		addNotification({ message: "item.VItemImageAdded", type: "success", i18n: true });
+		addNotification({ message: "item.ImageAdded", type: "success", i18n: true });
 		imageAddModalShow.value = false;
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -236,7 +236,7 @@ const imageAdd = async() => {
 const imageDelete = async() => {
 	try {
 		await itemsStore.deleteImage(itemId.value, imageModalData.value.id_img);
-		addNotification({ message: "item.VItemImageDeleted", type: "success", i18n: true });
+		addNotification({ message: "item.ImageDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
@@ -247,7 +247,7 @@ const imageDownload = async(imageContent) => {
 		await itemsStore.showImageById(itemId.value, imageContent.id_img);
 	}
 	if (!itemsStore.imagesURL[imageContent.id_img]) {
-		addNotification({ message: "item.VItemImageDownloadError", type: "error", i18n: true });
+		addNotification({ message: "item.ImageDownloadError", type: "error", i18n: true });
 		return;
 	}
 	downloadFile(itemsStore.imagesURL[imageContent.id_img], { keyName: imageContent.nom_img, keyType: "image/png" });
@@ -255,12 +255,12 @@ const imageDownload = async(imageContent) => {
 
 // tag
 const filterTag = ref([
-	{ key: "nom_tag", value: "", type: "text", label: "", placeholder: t("item.VItemTagFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "nom_tag", value: "", type: "text", label: "", placeholder: t("item.TagFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
 function tagSave(id_tag) {
 	try {
 		itemsStore.createItemTag(itemId.value,  { id_tag: id_tag });
-		addNotification({ message: "item.VItemTagAdded", type: "success", i18n: true });
+		addNotification({ message: "item.TagAdded", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
@@ -268,7 +268,7 @@ function tagSave(id_tag) {
 function tagDelete(id_tag) {
 	try {
 		itemsStore.deleteItemTag(itemId.value, id_tag);
-		addNotification({ message: "item.VItemTagDeleted", type: "success", i18n: true });
+		addNotification({ message: "item.TagDeleted", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
@@ -276,30 +276,30 @@ function tagDelete(id_tag) {
 
 const schemaBox = Yup.object().shape({
 	qte_item_box: Yup.number()
-		.required(t("item.VItemBoxQuantityRequired"))
-		.typeError(t("item.VItemBoxQuantityNumber"))
-		.min(0, t("item.VItemBoxQuantityMin")),
+		.required(t("item.BoxQuantityRequired"))
+		.typeError(t("item.BoxQuantityNumber"))
+		.min(0, t("item.BoxQuantityMin")),
 	seuil_max_item_item_box: Yup.number()
-		.required(t("item.VItemBoxMaxThresholdRequired"))
-		.typeError(t("item.VItemBoxMaxThresholdNumber"))
-		.min(1, t("item.VItemBoxMaxThresholdMin")),
+		.required(t("item.BoxMaxThresholdRequired"))
+		.typeError(t("item.BoxMaxThresholdNumber"))
+		.min(1, t("item.BoxMaxThresholdMin")),
 });
 
 const createSchema = () => {
 	return Yup.object().shape({
 		reference_name_item: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-			.required(t("item.VItemNameRequired")),
+			.max(configsStore.getConfigByKey("max_length_name"), t("item.NameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.required(t("item.NameRequired")),
 		friendly_name_item: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemFriendlyNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-			.required(t("item.VItemFriendlyNameRequired")),
+			.max(configsStore.getConfigByKey("max_length_name"), t("item.FriendlyNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+			.required(t("item.FriendlyNameRequired")),
 		description_item: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_description"), t("item.VItemDescriptionMaxLength") + " " + configsStore.getConfigByKey("max_length_description") + t("common.VAllCaracters"))
-			.required(t("item.VItemDescriptionRequired")),
+			.max(configsStore.getConfigByKey("max_length_description"), t("item.DescriptionMaxLength") + " " + configsStore.getConfigByKey("max_length_description") + t("common.VAllCaracters"))
+			.required(t("item.DescriptionRequired")),
 		seuil_min_item: Yup.number()
-			.min(0, t("item.VItemSeuilMinMin"))
-			.typeError(t("item.VItemSeuilMinType"))
-			.required(t("item.VItemSeuilMinRequired")),
+			.min(0, t("item.SeuilMinMin"))
+			.typeError(t("item.SeuilMinType"))
+			.required(t("item.SeuilMinRequired")),
 		id_img: Yup.string()
 			.nullable(),
 	});
@@ -307,38 +307,38 @@ const createSchema = () => {
 
 const schemaAddDocument = Yup.object().shape({
 	name_item_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemDocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-		.required(t("item.VItemDocumentNameRequired")),
+		.max(configsStore.getConfigByKey("max_length_name"), t("item.DocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+		.required(t("item.DocumentNameRequired")),
 	document: Yup.mixed()
-		.required(t("item.VItemDocumentRequired"))
-		.test("fileSize", t("item.VItemDocumentSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
+		.required(t("item.DocumentRequired"))
+		.test("fileSize", t("item.DocumentSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 const schemaEditDocument = Yup.object().shape({
 	name_item_document: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemDocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-		.required(t("item.VItemDocumentNameRequired")),
+		.max(configsStore.getConfigByKey("max_length_name"), t("item.DocumentNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+		.required(t("item.DocumentNameRequired")),
 });
 
 const schemaAddImage = Yup.object().shape({
 	nom_img: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("item.VItemImageNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-		.required(t("item.VItemImageNameRequired")),
+		.max(configsStore.getConfigByKey("max_length_name"), t("item.ImageNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
+		.required(t("item.ImageNameRequired")),
 	image: Yup.mixed()
-		.required(t("item.VItemImageRequired"))
-		.test("fileSize", t("item.VItemImageSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
+		.required(t("item.ImageRequired"))
+		.test("fileSize", t("item.ImageSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 
 const labelForm = [
-	{ key: "reference_name_item", label: "item.VItemName", type: "text" },
-	{ key: "friendly_name_item", label: "item.VItemFriendlyName", type: "text" },
-	{ key: "description_item", label: "item.VItemDescription", type: "textarea" },
-	{ key: "seuil_min_item", label: "item.VItemSeuilMin", type: "number" },
-	{ key: "quantity", label: "item.VItemTotalQuantity", type: "computed", value: getTotalQuantity },
-	{ key: "id_img", label: "item.VItemImage", type: "custom" },
+	{ key: "reference_name_item", label: "item.Name", type: "text" },
+	{ key: "friendly_name_item", label: "item.FriendlyName", type: "text" },
+	{ key: "description_item", label: "item.Description", type: "textarea" },
+	{ key: "seuil_min_item", label: "item.SeuilMin", type: "number" },
+	{ key: "quantity", label: "item.TotalQuantity", type: "computed", value: getTotalQuantity },
+	{ key: "id_img", label: "item.Image", type: "custom" },
 ];
 const labelTableauModalTag = ref([
-	{ label: "item.VItemTagName", sortable: true, key: "nom_tag", type: "text" },
-	{ label: "item.VItemTagActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "item.TagName", sortable: true, key: "nom_tag", type: "text" },
+	{ label: "item.TagActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-save",
@@ -356,10 +356,10 @@ const labelTableauModalTag = ref([
 	] },
 ]);
 const labelTableauDocument = ref([
-	{ label: "item.VItemDocumentName", sortable: true, key: "name_item_document", type: "text", canEdit: true },
-	{ label: "item.VItemDocumentType", sortable: true, key: "type_item_document", type: "text" },
-	{ label: "item.VItemDocumentDate", sortable: true, key: "created_at", type: "datetime" },
-	{ label: "item.VItemDocumentActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "item.DocumentName", sortable: true, key: "name_item_document", type: "text", canEdit: true },
+	{ label: "item.DocumentType", sortable: true, key: "type_item_document", type: "text" },
+	{ label: "item.DocumentDate", sortable: true, key: "created_at", type: "datetime" },
+	{ label: "item.DocumentActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
@@ -409,10 +409,10 @@ const labelTableauDocument = ref([
 	] },
 ]);
 const labelTableauBox = ref([
-	{ label: "item.VItemBoxId", sortable: true, key: "id_box", type: "text" },
-	{ label: "item.VItemBoxQuantity", sortable: true, key: "qte_item_box", type: "number", canEdit: true },
-	{ label: "item.VItemBoxMaxThreshold", sortable: true, key: "seuil_max_item_item_box", type: "number", canEdit: true },
-	{ label: "item.VItemBoxActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "item.BoxId", sortable: true, key: "id_box", type: "text" },
+	{ label: "item.BoxQuantity", sortable: true, key: "qte_item_box", type: "number", canEdit: true },
+	{ label: "item.BoxMaxThreshold", sortable: true, key: "seuil_max_item_item_box", type: "number", canEdit: true },
+	{ label: "item.BoxActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
@@ -449,24 +449,24 @@ const labelTableauBox = ref([
 	] },
 ]);
 const labelTableauCommand = ref([
-	{ label: "item.VItemCommandDate", sortable: true, key: "date_command", keyStore: "id_command", store: "1", type: "datetime" },
-	{ label: "item.VItemCommandStatus", sortable: true, key: "status_command", keyStore: "id_command", store: "1", type: "text" },
-	{ label: "item.VItemCommandQte", sortable: true, key: "qte_command_item", type: "number" },
-	{ label: "item.VItemCommandPrice", sortable: true, key: "prix_command_item", type: "number" },
+	{ label: "item.CommandDate", sortable: true, key: "date_command", keyStore: "id_command", store: "1", type: "datetime" },
+	{ label: "item.CommandStatus", sortable: true, key: "status_command", keyStore: "id_command", store: "1", type: "text" },
+	{ label: "item.CommandQte", sortable: true, key: "qte_command_item", type: "number" },
+	{ label: "item.CommandPrice", sortable: true, key: "prix_command_item", type: "number" },
 ]);
 const labelTableauProjet = ref([
-	{ label: "item.VItemProjetName", sortable: true, key: "nom_projet", keyStore: "id_projet", store: "1", type: "text" },
-	{ label: "item.VItemProjetDate", sortable: true, key: "date_debut_projet", keyStore: "id_projet", store: "1", type: "datetime" },
-	{ label: "item.VItemProjetDateFin", sortable: true, key: "date_fin_projet", keyStore: "id_projet", store: "1", type: "datetime" },
-	{ label: "item.VItemProjetStatus", sortable: true, key: "status_projet", keyStore: "id_projet", store: "1", type: "text" },
-	{ label: "item.VItemProjetQte", sortable: true, key: "qte_projet_item", type: "number" },
+	{ label: "item.ProjetName", sortable: true, key: "nom_projet", keyStore: "id_projet", store: "1", type: "text" },
+	{ label: "item.ProjetDate", sortable: true, key: "date_debut_projet", keyStore: "id_projet", store: "1", type: "datetime" },
+	{ label: "item.ProjetDateFin", sortable: true, key: "date_fin_projet", keyStore: "id_projet", store: "1", type: "datetime" },
+	{ label: "item.ProjetStatus", sortable: true, key: "status_projet", keyStore: "id_projet", store: "1", type: "text" },
+	{ label: "item.ProjetQte", sortable: true, key: "qte_projet_item", type: "number" },
 ]);
 document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
 
 <template>
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('item.VItemTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('item.Title') }}</h2>
 		<TopButtonEditElement :main-config="{ path: '/inventory', save: { roleRequired: authStore.hasPermission([0, 1, 2]), loading: itemsStore.itemEdition.loading }, delete: { roleRequired: authStore.hasPermission([0, 1, 2]) } }"
 			:id="itemId" @button-save="itemSave" @button-delete="itemDeleteModalShow = true"/>
 	</div>
@@ -502,7 +502,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:meta ="{ 'keyPoids': 'poids_tag', 'keyName': 'nom_tag' }"
 				/>
 		</div>
-		<CollapsibleSection title="item.VitemBoxs"
+		<CollapsibleSection title="item.Boxs"
 			:total-count="Number(itemsStore.itemBoxsTotalCount[itemId] || 0)" :id-page="itemId">
 			<template #append-row>
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box', expand: ['box'] }"
@@ -514,12 +514,12 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 			</template>
 		</CollapsibleSection>
-		<CollapsibleSection title="item.VItemDocuments"
+		<CollapsibleSection title="item.Documents"
 			:total-count="Number(itemsStore.documentsTotalCount[itemId] || 0)" :id-page="itemId">
 			<template #append-row>
 				<button type="button" @click="documentAddOpenModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
-					{{ $t('item.VItemAddDocument') }}
+					{{ $t('item.AddDocument') }}
 				</button>
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_item_document' }"
 					:store-data="[itemsStore.documents[itemId]]"
@@ -530,12 +530,12 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 			</template>
 		</CollapsibleSection>
-		<CollapsibleSection title="item.VItemImages"
+		<CollapsibleSection title="item.Images"
 			:total-count="Number(itemsStore.imagesTotalCount[itemId] || 0)" :id-page="itemId">
 			<template #append-row>
 				<button type="button" @click="imageAddOpenModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
-					{{ $t('item.VItemAddImage') }}
+					{{ $t('item.AddImage') }}
 				</button>
 				<div class="flex flex-wrap relative">
 					<template v-if="itemsStore.images[itemId]">
@@ -547,7 +547,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 									@click="selectedImageId === image.id_img ? selectedImageId = null : selectedImageId = image.id_img" />
 							</template>
 							<template v-else>
-								{{ $t('item.VItemImageLoading') }}
+								{{ $t('item.ImageLoading') }}
 							</template>
 							<div v-if="selectedImageId === image.id_img"
 								class="absolute inset-0 flex flex-col justify-center items-center bg-black bg-opacity-75 text-white p-2 rounded">
@@ -567,7 +567,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</div>
 			</template>
 		</CollapsibleSection>
-		<CollapsibleSection title="item.VItemCommands"
+		<CollapsibleSection title="item.Commands"
 			:total-count="Number(itemsStore.itemCommandsTotalCount[itemId] || 0)" :id-page="itemId">
 			<template #append-row>
 				<Tableau :labels="labelTableauCommand" :meta="{ key: 'id_item', path: '/commands/', expand: ['command'] }"
@@ -579,7 +579,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 			</template>
 		</CollapsibleSection>
-		<CollapsibleSection title="item.VItemProjets"
+		<CollapsibleSection title="item.Projets"
 			:total-count="Number(itemsStore.itemProjetsTotalCount[itemId] || 0)" :id-page="itemId">
 			<template #append-row>
 				<Tableau :labels="labelTableauProjet" :meta="{ key: 'id_projet', path: '/projets/', expand: ['projet'] }"
@@ -593,18 +593,18 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		</CollapsibleSection>
 	</div>
 	<div v-else>
-		<div>{{ $t('item.VItemLoading') }}</div>
+		<div>{{ $t('item.Loading') }}</div>
 	</div>
 	
 	<ModalDeleteConfirm :show-modal="itemDeleteModalShow" @close-modal="itemDeleteModalShow = false"
-		:delete-action="itemDelete" :text-title="'item.VItemDeleteTitle'"
-		:text-p="'item.VItemDeleteText'"/>
+		:delete-action="itemDelete" :text-title="'item.DeleteTitle'"
+		:text-p="'item.DeleteText'"/>
 
 	<div v-if="imageSelectModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
 		@click="imageSelectModalShow = false">
 		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
 			<div class="flex justify-between items-center mb-2">
-				<h2 class="text-xl">{{ $t('item.VItemImageSelectTitle') }}</h2>
+				<h2 class="text-xl">{{ $t('item.ImageSelectTitle') }}</h2>
 				<div class="flex space-x-2 items-center cursor-pointer bg-gray-200 p-2 rounded" @click="imageSelectModalShow = false">
 					<font-awesome-icon icon="fa-solid fa-times"
 					class="cursor-pointer" />
@@ -621,7 +621,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 								@click="itemsStore.itemEdition.id_img = image.id_img" />
 						</template>
 						<template v-else>
-							{{ $t('item.VItemImageLoading') }}
+							{{ $t('item.ImageLoading') }}
 						</template>
 					</div>
 				</template>
@@ -630,26 +630,26 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 	</div>
 
 	<ModalAddFile :show-modal="documentAddModalShow" @close-modal="documentAddModalShow = false"
-		:text-title="'item.VItemDocumentAddTitle'" :schema-add="schemaAddDocument"
+		:text-title="'item.DocumentAddTitle'" :schema-add="schemaAddDocument"
 		:modal-data="documentModalData" :add-action="documentAdd" :key-name-document="'name_item_document'" :key-file-document="'document'"
 		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
-		:text-max-size="'item.VItemDocumentSize'" :text-placeholder-document="'item.VItemDocumentNamePlaceholder'"
+		:text-max-size="'item.DocumentSize'" :text-placeholder-document="'item.DocumentNamePlaceholder'"
 		file-type="document"
 	/>
 
 	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
-		:delete-action="documentDelete" :text-title="'item.VItemDocumentDeleteTitle'"
-		:text-p="'item.VItemDocumentDeleteText'"/>
+		:delete-action="documentDelete" :text-title="'item.DocumentDeleteTitle'"
+		:text-p="'item.DocumentDeleteText'"/>
 
 	<ModalAddFile :show-modal="imageAddModalShow" @close-modal="imageAddModalShow = false"
-		:text-title="'item.VItemImageAddTitle'" :schema-add="schemaAddImage"
+		:text-title="'item.ImageAddTitle'" :schema-add="schemaAddImage"
 		:modal-data="imageModalData" :add-action="imageAdd" :key-name-document="'nom_img'" :key-file-document="'image'"
 		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
-		:text-max-size="'item.VItemImageSize'" :text-placeholder-document="'item.VItemImageNamePlaceholder'"
+		:text-max-size="'item.ImageSize'" :text-placeholder-document="'item.ImageNamePlaceholder'"
 		file-type="image"
 	/>
 
 	<ModalDeleteConfirm :show-modal="imageDeleteModalShow" @close-modal="imageDeleteModalShow = false"
-		:delete-action="imageDelete" :text-title="'item.VItemImageDeleteTitle'"
-		:text-p="'item.VItemImageDeleteText'"/>
+		:delete-action="imageDelete" :text-title="'item.ImageDeleteTitle'"
+		:text-p="'item.ImageDeleteText'"/>
 </template>
