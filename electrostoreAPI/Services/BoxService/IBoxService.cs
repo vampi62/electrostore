@@ -4,9 +4,7 @@ namespace electrostore.Services.BoxService;
 
 public interface IBoxService
 {
-    public Task<IEnumerable<ReadExtendedBoxDto>> GetBoxsByStoreId(int storeId, int limit = 100, int offset = 0, List<string>? expand = null);
-
-    public Task<int> GetBoxsCountByStoreId(int storeId);
+    public Task<PaginatedResponseDto<ReadExtendedBoxDto>> GetBoxsByStoreId(int storeId, int limit = 100, int offset = 0, List<string>? expand = null);
 
     public Task<ReadExtendedBoxDto> GetBoxById(int id, int? storeId = null, List<string>? expand = null);
 

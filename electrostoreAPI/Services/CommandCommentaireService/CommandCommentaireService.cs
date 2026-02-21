@@ -20,7 +20,7 @@ public class CommandCommentaireService : ICommandCommentaireService
         _sessionService = sessionService;
     }
 
-    public async Task<IEnumerable<ReadExtendedCommandCommentaireDto>> GetCommandsCommentairesByCommandId(int CommandId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedCommandCommentaireDto>> GetCommandsCommentairesByCommandId(int CommandId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == CommandId))
@@ -40,22 +40,21 @@ public class CommandCommentaireService : ICommandCommentaireService
             query = query.Include(cc => cc.User);
         }
         var commandCommentaire = await query.ToListAsync();
-        return _mapper.Map<IEnumerable<ReadExtendedCommandCommentaireDto>>(commandCommentaire);
-    }
-
-    public async Task<int> GetCommandsCommentairesCountByCommandId(int CommandId)
-    {
-        // check if the command exists
-        if (!await _context.Commands.AnyAsync(c => c.id_command == CommandId))
+        return new PaginatedResponseDto<ReadExtendedCommandCommentaireDto>
         {
-            throw new KeyNotFoundException($"Command with id '{CommandId}' not found");
-        }
-        return await _context.CommandsCommentaires
-            .Where(c => c.id_command == CommandId)
-            .CountAsync();
+            data = _mapper.Map<IEnumerable<ReadExtendedCommandCommentaireDto>>(commandCommentaire),
+            pagination = new PaginationDto
+            {
+                total = await _context.CommandsCommentaires.Where(cc => cc.id_command == CommandId).CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.CommandsCommentaires.Where(cc => cc.id_command == CommandId).Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
-    public async Task<IEnumerable<ReadExtendedCommandCommentaireDto>> GetCommandsCommentairesByUserId(int userId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedCommandCommentaireDto>> GetCommandsCommentairesByUserId(int userId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
@@ -75,19 +74,18 @@ public class CommandCommentaireService : ICommandCommentaireService
             query = query.Include(cc => cc.User);
         }
         var commandCommentaire = await query.ToListAsync();
-        return _mapper.Map<IEnumerable<ReadExtendedCommandCommentaireDto>>(commandCommentaire);
-    }
-
-    public async Task<int> GetCommandsCommentairesCountByUserId(int userId)
-    {
-        // check if the user exists
-        if (!await _context.Users.AnyAsync(u => u.id_user == userId))
+        return new PaginatedResponseDto<ReadExtendedCommandCommentaireDto>
         {
-            throw new KeyNotFoundException($"User with id '{userId}' not found");
-        }
-        return await _context.CommandsCommentaires
-            .Where(c => c.id_user == userId)
-            .CountAsync();
+            data = _mapper.Map<IEnumerable<ReadExtendedCommandCommentaireDto>>(commandCommentaire),
+            pagination = new PaginationDto
+            {
+                total = await _context.CommandsCommentaires.Where(cc => cc.id_user == userId).CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.CommandsCommentaires.Where(cc => cc.id_user == userId).Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadExtendedCommandCommentaireDto> GetCommandsCommentaireById(int id, int? userId = null, int? CommandId = null, List<string>? expand = null)

@@ -16,7 +16,7 @@ public class ItemTagService : IItemTagService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadExtendedItemTagDto>> GetItemsTagsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedItemTagDto>> GetItemsTagsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
@@ -36,22 +36,21 @@ public class ItemTagService : IItemTagService
             query = query.Include(it => it.Item);
         }
         var itemTag = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedItemTagDto>>(itemTag);
-    }
-
-    public async Task<int> GetItemsTagsCountByItemId(int itemId)
-    {
-        // check if the item exists
-        if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
+        return new PaginatedResponseDto<ReadExtendedItemTagDto>
         {
-            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
-        }
-        return await _context.ItemsTags
-            .Where(it => it.id_item == itemId)
-            .CountAsync();
+            data = _mapper.Map<List<ReadExtendedItemTagDto>>(itemTag),
+            pagination = new PaginationDto
+            {
+                total = await _context.ItemsTags.Where(it => it.id_item == itemId).CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.ItemsTags.Where(it => it.id_item == itemId).Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
-    public async Task<IEnumerable<ReadExtendedItemTagDto>> GetItemsTagsByTagId(int tagId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedItemTagDto>> GetItemsTagsByTagId(int tagId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
@@ -71,19 +70,18 @@ public class ItemTagService : IItemTagService
             query = query.Include(it => it.Item);
         }
         var itemTag = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedItemTagDto>>(itemTag);
-    }
-
-    public async Task<int> GetItemsTagsCountByTagId(int tagId)
-    {
-        // check if tag exists
-        if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
+        return new PaginatedResponseDto<ReadExtendedItemTagDto>
         {
-            throw new KeyNotFoundException($"Tag with id '{tagId}' not found");
-        }
-        return await _context.ItemsTags
-            .Where(it => it.id_tag == tagId)
-            .CountAsync();
+            data = _mapper.Map<List<ReadExtendedItemTagDto>>(itemTag),
+            pagination = new PaginationDto
+            {
+                total = await _context.ItemsTags.Where(it => it.id_tag == tagId).CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.ItemsTags.Where(it => it.id_tag == tagId).Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadExtendedItemTagDto> GetItemTagById(int itemId, int tagId, List<string>? expand = null)

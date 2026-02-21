@@ -4,9 +4,7 @@ namespace electrostore.Services.ImgService;
 
 public interface IImgService
 {
-    public Task<IEnumerable<ReadImgDto>> GetImgsByItemId(int itemId, int limit = 100, int offset = 0);
-
-    public Task<int> GetImgsCountByItemId(int itemId);
+    public Task<PaginatedResponseDto<ReadImgDto>> GetImgsByItemId(int itemId, int limit = 100, int offset = 0);
 
     public Task<ReadImgDto> GetImgById(int id, int? itemId = null);
 

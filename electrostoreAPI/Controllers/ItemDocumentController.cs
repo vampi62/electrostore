@@ -22,12 +22,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadItemDocumentDto>>> GetItemsDocumentsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
+        public async Task<ActionResult<PaginatedResponseDto<ReadItemDocumentDto>>> GetItemsDocumentsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
         {
             var itemsDocuments = await _itemDocumentService.GetItemsDocumentsByItemId(id_item, limit, offset);
-            var CountList = await _itemDocumentService.GetItemsDocumentsCountByItemId(id_item);
-            Response.Headers["X-Total-Count"] = CountList.ToString();
-            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(itemsDocuments);
         }
 

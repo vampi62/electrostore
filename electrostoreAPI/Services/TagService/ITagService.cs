@@ -4,9 +4,7 @@ namespace electrostore.Services.TagService;
 
 public interface ITagService
 {
-    public Task<IEnumerable<ReadExtendedTagDto>> GetTags(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null);
-
-    public Task<int> GetTagsCount();
+    public Task<PaginatedResponseDto<ReadExtendedTagDto>> GetTags(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null);
 
     public Task<ReadExtendedTagDto> GetTagById(int id, List<string>? expand = null);
 

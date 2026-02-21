@@ -19,13 +19,10 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<SessionDto>>> GetSessions([FromRoute] int id_user, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        public async Task<ActionResult<PaginatedResponseDto<SessionDto>>> GetSessions([FromRoute] int id_user, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
             [FromQuery] bool show_revoked = false, [FromQuery] bool show_expired = false)
         {
             var sessions = await _jwiService.GetTokenSessionsByUserId(id_user, limit, offset, show_revoked, show_expired);
-            var CountList = await _jwiService.GetTokenSessionsCountByUserId(id_user, show_revoked, show_expired);
-            Response.Headers["X-Total-Count"] = CountList.ToString();
-            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(sessions);
         }
 
