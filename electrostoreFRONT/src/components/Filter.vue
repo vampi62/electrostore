@@ -125,6 +125,9 @@ export default {
 	emits: ["updateText"],
 	computed: {
 		filterOption() {
+			if (!this.options) {
+				return [];
+			}
 			return Object.entries(this.options).filter(([index, element]) => {
 				if (this.inputText !== "") {
 					return element.toLowerCase().includes(this.inputText.toLowerCase());
@@ -141,6 +144,11 @@ export default {
 			this.$refs.filterInput.blur();
 		},
 		validateInput(){
+			if (!this.options) {
+				this.inputText = "";
+				this.$emit("updateText", "");
+				return;
+			}
 			let result = Object.entries(this.options).find(([index, option]) => {
 				return option.toLowerCase() === this.inputText.toLowerCase();
 			});

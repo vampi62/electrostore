@@ -492,11 +492,10 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</FormContainer>
 			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="itemId !== 'new' && authStore.hasPermission([1, 2])"
 				:delete-function="(value) => tagDelete(value)"
-				:total-count="Number(tagsStore.tagsTotalCount || 0)"
-				:fetch-function="(limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag' }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
-								, 'loading': tagsStore.tagsLoading }"
+								, 'loading': tagsStore.tagsLoading, 'fetchFunction': (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
+								, 'totalCount': Number(tagsStore.tagsTotalCount || 0) }"
 				:meta ="{ 'keyPoids': 'poids_tag', 'keyName': 'nom_tag' }"
 				/>
 		</div>

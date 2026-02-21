@@ -8,7 +8,7 @@ const authStore = useAuthStore();
 
 async function fetchTagData(minOffset, maxOffset) {
 	let tagsNotFound = [];
-	for (const id = minOffset; id < maxOffset; id++) {
+	for (let id = minOffset; id < maxOffset; id++) {
 		for (const tag in storesStore.storeTags[id]) {
 			if (!tagsStore.tags[tag]) {
 				tagsNotFound.push(tag);

@@ -34,7 +34,7 @@
 					:filter="filterModal"
 					:loading="tableauModal['loading']"
 					:fetch-function="tableauModal['fetchFunction']"
-					:total-count="totalCount"
+					:total-count="tableauModal['totalCount']"
 					:tableau-css="tableauModal['css']"
 				/>
 			</div>
@@ -65,10 +65,6 @@ export default {
 		fetchFunction: {
 			type: Function,
 			default: () => {},
-		},
-		totalCount: {
-			type: Number,
-			default: 0,
 		},
 		canEdit: {
 			type: Boolean,

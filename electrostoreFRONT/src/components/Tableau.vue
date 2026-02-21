@@ -101,6 +101,7 @@ export default {
 		filters: {
 			type: Array,
 			required: false,
+			default: () => [],
 			// filters is an array of filter objects, each object should have a key, value, type, dataType, compareMethod, and optional subPath, placeholder, class, and options properties
 			// e.g. { key: 'name', value: '', type: 'text', dataType: 'string', compareMethod: 'contain', placeholder: 'Search by name', class: 'mb-2' }
 		},
@@ -149,6 +150,12 @@ export default {
 	},
 	computed: {
 		filteredData() {
+			if (!this.storeData[0]) {
+				return [];
+			}
+			if (!this.filters || this.filters.length === 0) {
+				return this.storeData[0];
+			}
 			return Object.values(this.storeData[0]).filter((element) => {
 				return this.filters.every((f) => {
 					if (f.value !== "" && f.value !== null && f.value !== undefined) {

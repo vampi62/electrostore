@@ -13,7 +13,7 @@ import { ProjetStatus } from "@/enums";
 
 async function fetchItemData(minOffset, maxOffset) {
 	let itemsNotFound = [];
-	for (const id = minOffset; id < maxOffset; id++) {
+	for (let id = minOffset; id < maxOffset; id++) {
 		for (const item in projetsStore.items[id]) {
 			if (!itemsStore.items[item]) {
 				itemsNotFound.push(item);
@@ -27,7 +27,7 @@ async function fetchItemData(minOffset, maxOffset) {
 }
 async function fetchTagData(minOffset, maxOffset) {
 	let tagsNotFound = [];
-	for (const id = minOffset; id < maxOffset; id++) {
+	for (let id = minOffset; id < maxOffset; id++) {
 		for (const tag in projetsStore.projetTagProjet[id]) {
 			if (!projetTagsStore.projetTags[tag]) {
 				tagsNotFound.push(tag);

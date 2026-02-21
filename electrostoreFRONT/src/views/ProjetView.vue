@@ -215,7 +215,7 @@ const itemDelete = async(item) => {
 };
 
 const filterItem = ref([
-	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("command.VCommandItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("command.ItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
 
 const createSchema = () => {
@@ -446,11 +446,10 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="projetsStore.projetEdition"/>
 			<Tags :current-tags="projetsStore.projetTagProjet[projetId] || {}" :tags-store="projetTagsStore.projetTags" :can-edit="projetId !== 'new' && authStore.hasPermission([2])"
 				:delete-function="(value) => tagDelete(value)"
-				:fetch-function="(limit, offset, expand, filter, sort, clear) => projetTagsStore.getProjetTagByInterval(limit, offset, expand, filter, sort, clear)"
-				:total-count="Number(projetTagsStore.projetTagsTotalCount || 0)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_projet_tag' }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
-								, 'loading': projetTagsStore.projetTagsLoading }"
+								, 'loading': projetTagsStore.projetTagsLoading, 'fetchFunction': (limit, offset, expand, filter, sort, clear) => projetTagsStore.getProjetTagByInterval(limit, offset, expand, filter, sort, clear)
+								, 'totalCount': Number(projetTagsStore.projetTagsTotalCount || 0) }"
 				:meta ="{ 'keyPoids': 'poids_projet_tag', 'keyName': 'nom_projet_tag' }"
 				/>
 		</div>

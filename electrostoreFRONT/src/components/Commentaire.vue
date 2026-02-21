@@ -165,6 +165,11 @@ export default {
 			type: Function,
 			default: () => {},
 		},
+		listFetchFunction: {
+			type: Array,
+			default: () => [],
+			// This should be an array of functions to refetch related lists when a comment is created, updated, or deleted
+		},
 		texteModalDelete: {
 			type: Object,
 			required: false,
@@ -182,8 +187,8 @@ export default {
 		Field,
 		ModalDeleteConfirm: defineAsyncComponent(() => import("@/components/ModalDeleteConfirm.vue")),
 	},
-	created() {
-		this.loadNext;
+	async created() {
+		await this.refetchData();
 	},
 	setup() {
 		const { addNotification } = inject("useNotification"); 
@@ -268,7 +273,22 @@ export default {
 				if (this.totalCount === this.nextOffset) {
 					return;
 				}
-				[this.nextOffset, this.hasMore] = await this.fetchFunction(this.nextOffset, 100);
+				[this.nextOffset, this.hasMore] = await this.fetchFunction(this.nextOffset, 100, this.meta?.expand || []);
+			}
+		},
+		async refetchData() {
+			// Reset l'état et refetch les données depuis le début
+			this.nextOffset = 0;
+			this.hasMore = true;
+			let intervalOffset = this.nextOffset;
+			[this.nextOffset, this.hasMore] = await this.fetchFunction(100, 0, this.meta?.expand || []);
+			await this.refetchListData(intervalOffset, this.nextOffset);
+		},
+		async refetchListData(minOffset, maxOffset) {
+			for (let index = 0; index < this.listFetchFunction.length; index++) {
+				if (this.listFetchFunction[index]) {
+					await this.listFetchFunction[index](minOffset, maxOffset);
+				}
 			}
 		},
 	},

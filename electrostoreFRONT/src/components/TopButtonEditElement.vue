@@ -148,7 +148,7 @@ export default {
 		},
 		storeUser: {
 			type: Object,
-			required: true,
+			required: false,
 			// current store user session data
 			default: null,
 		},

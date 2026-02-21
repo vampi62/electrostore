@@ -6,7 +6,7 @@ const itemsStore = useItemsStore();
 const tagsStore = useTagsStore();
 
 async function updateQuantityData(minOffset, maxOffset) {
-	for (const id = minOffset; id < maxOffset; id++) {
+	for (let id = minOffset; id < maxOffset; id++) {
 		const item = itemsStore.items[id];
 		if (item) {
 			item.custom_quantity_item = getTotalQuantity(item.item_boxs);
@@ -15,7 +15,7 @@ async function updateQuantityData(minOffset, maxOffset) {
 }
 async function fetchTagData(minOffset, maxOffset) {
 	let tagsNotFound = [];
-	for (const id = minOffset; id < maxOffset; id++) {
+	for (let id = minOffset; id < maxOffset; id++) {
 		for (const tag in itemsStore.itemTags[id]) {
 			if (!tagsStore.tags[tag]) {
 				tagsNotFound.push(tag);
