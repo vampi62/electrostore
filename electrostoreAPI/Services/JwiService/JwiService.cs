@@ -144,7 +144,7 @@ public class JwiService : IJwiService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<SessionDto>> GetTokenSessionsByUserId(int userId, int limit, int offset, bool showRevoked = false, bool showExpired = false)
+    public async Task<PaginatedResponseDto<SessionDto>> GetTokenSessionsByUserId(int userId, int limit, int offset, bool showRevoked = false, bool showExpired = false)
     {
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
@@ -182,19 +182,20 @@ public class JwiService : IJwiService
         {
             sessions = sessions.Where(s => s.expires_at > DateTime.UtcNow).ToList();
         }
-        return sessions;
+        return new PaginatedResponseDto<SessionDto>
+        {
+            data = sessions,
+            pagination = new PaginationDto
+            {
+                total = await query.Select(jwi => jwi.session_id).Distinct().CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await query.Select(jwi => jwi.session_id).Distinct().Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
-    public async Task<int> GetTokenSessionsCountByUserId(int userId, bool showRevoked = false, bool showExpired = false)
-    {
-        var count = await _context.JwiRefreshTokens
-            .Where(jwi => jwi.id_user == userId &&
-                (showRevoked || !jwi.is_revoked) &&
-                (showExpired || jwi.expires_at > DateTime.UtcNow))
-            .GroupBy(jwi => jwi.session_id)
-            .CountAsync();
-        return count;
-    }
 
     public async Task<SessionDto> GetTokenSessionById(string id, int userId, bool showRevoked = false, bool showExpired = false)
     {

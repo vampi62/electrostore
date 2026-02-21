@@ -4,9 +4,7 @@ namespace electrostore.Services.LedService;
 
 public interface ILedService
 {
-    public Task<IEnumerable<ReadLedDto>> GetLedsByStoreId(int storeId, int limit = 100, int offset = 0);
-
-    public Task<int> GetLedsCountByStoreId(int storeId);
+    public Task<PaginatedResponseDto<ReadLedDto>> GetLedsByStoreId(int storeId, int limit = 100, int offset = 0);
 
     public Task<ReadLedDto> GetLedById(int id, int? storeId = null);
 

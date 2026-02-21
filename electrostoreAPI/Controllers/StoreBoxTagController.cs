@@ -20,13 +20,10 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedBoxTagDto>>> GetBoxsTagsByBoxId([FromRoute] int id_store, [FromRoute] int id_box, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedBoxTagDto>>> GetBoxsTagsByBoxId([FromRoute] int id_store, [FromRoute] int id_box, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             await _boxTagService.CheckIfStoreExists(id_store,id_box);
             var boxsTags = await _boxTagService.GetBoxsTagsByBoxId(id_box, limit, offset, expand);
-            var CountList = await _boxTagService.GetBoxsTagsCountByBoxId(id_box);
-            Response.Headers["X-Total-Count"] = CountList.ToString();
-            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(boxsTags);
         }
 

@@ -4,9 +4,7 @@ namespace electrostore.Services.ItemDocumentService;
 
 public interface IItemDocumentService
 {
-    public Task<IEnumerable<ReadItemDocumentDto>> GetItemsDocumentsByItemId(int itemId, int limit = 100, int offset = 0);
-
-    public Task<int> GetItemsDocumentsCountByItemId(int itemId);
+    public Task<PaginatedResponseDto<ReadItemDocumentDto>> GetItemsDocumentsByItemId(int itemId, int limit = 100, int offset = 0);
 
     public Task<ReadItemDocumentDto> GetItemDocumentById(int id, int? itemId = null);
 

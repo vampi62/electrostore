@@ -20,7 +20,7 @@ public class ProjetDocumentService : IProjetDocumentService
         _fileService = fileService;
     }
 
-    public async Task<IEnumerable<ReadProjetDocumentDto>> GetProjetDocumentsByProjetId(int projetId, int limit = 100, int offset = 0)
+    public async Task<PaginatedResponseDto<ReadProjetDocumentDto>> GetProjetDocumentsByProjetId(int projetId, int limit = 100, int offset = 0)
     {
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
@@ -32,18 +32,18 @@ public class ProjetDocumentService : IProjetDocumentService
         query = query.Skip(offset).Take(limit);
         query = query.OrderBy(pd => pd.id_projet_document);
         var projetDocument = await query.ToListAsync();
-        return _mapper.Map<List<ReadProjetDocumentDto>>(projetDocument);
-    }
-
-    public async Task<int> GetProjetDocumentsCountByProjetId(int projetId)
-    {
-        // check if the projet exists
-        if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
+        return new PaginatedResponseDto<ReadProjetDocumentDto>
         {
-            throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
-        }
-        return await _context.ProjetsDocuments
-            .CountAsync(pd => pd.id_projet == projetId);
+            data = _mapper.Map<List<ReadProjetDocumentDto>>(projetDocument),
+            pagination = new PaginationDto
+            {
+                total = await _context.ProjetsDocuments.CountAsync(pd => pd.id_projet == projetId),
+                nextOffset = offset + limit,
+                hasMore = await _context.ProjetsDocuments.Skip(offset + limit).AnyAsync(pd => pd.id_projet == projetId)
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadProjetDocumentDto> GetProjetDocumentById(int id, int? projetId = null)

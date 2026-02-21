@@ -16,7 +16,7 @@ public class ProjetTagService : IProjetTagService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadExtendedProjetTagDto>> GetProjetTags(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
+    public async Task<PaginatedResponseDto<ReadExtendedProjetTagDto>> GetProjetTags(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.ProjetTags.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
@@ -33,13 +33,29 @@ public class ProjetTagService : IProjetTagService
                 ProjetsProjetTags = expand != null && expand.Contains("stores_tags") ? t.ProjetsProjetTags.Take(20).ToList() : null
             })
             .ToListAsync();
-        return projetTag.Select(t => {
+        /* return projetTag.Select(t => {
             return _mapper.Map<ReadExtendedProjetTagDto>(t.ProjetTags) with
             {
                 projets_projet_tags_count = t.ProjetsProjetTagsCount,
                 projets_projet_tags = _mapper.Map<IEnumerable<ReadProjetProjetTagDto>>(t.ProjetsProjetTags)
             };
-        }).ToList();
+        }).ToList(); */
+        return new PaginatedResponseDto<ReadExtendedProjetTagDto>
+        {
+            data = projetTag.Select(t => _mapper.Map<ReadExtendedProjetTagDto>(t.ProjetTags) with
+            {
+                projets_projet_tags_count = t.ProjetsProjetTagsCount,
+                projets_projet_tags = _mapper.Map<IEnumerable<ReadProjetProjetTagDto>>(t.ProjetsProjetTags)
+            }).ToList(),
+            pagination = new PaginationDto
+            {
+                total = await _context.ProjetTags.CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.ProjetTags.Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<int> GetProjetTagsCount()

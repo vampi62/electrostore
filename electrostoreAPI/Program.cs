@@ -158,7 +158,6 @@ public partial class Program
                 }
             });
             c.SwaggerDoc("v1", new OpenApiInfo { Title = "ElectroStore API", Version = "v1" });
-            // api can return in the header "X-Total-Count" the total number of items
             c.OperationFilter<AddTotalCountHeaderFilter>();
         });
 

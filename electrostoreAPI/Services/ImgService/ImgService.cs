@@ -21,7 +21,7 @@ public class ImgService : IImgService
         _fileService = fileService;
     }
 
-    public async Task<IEnumerable<ReadImgDto>> GetImgsByItemId(int itemId, int limit = 100, int offset = 0)
+    public async Task<PaginatedResponseDto<ReadImgDto>> GetImgsByItemId(int itemId, int limit = 100, int offset = 0)
     {
         //check if item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
@@ -33,19 +33,18 @@ public class ImgService : IImgService
         query = query.Skip(offset).Take(limit);
         query = query.OrderBy(im => im.id_img);
         var img = await query.ToListAsync();
-        return _mapper.Map<List<ReadImgDto>>(img);
-    }
-
-    public async Task<int> GetImgsCountByItemId(int itemId)
-    {
-        //check if item exists
-        if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
+        return new PaginatedResponseDto<ReadImgDto>
         {
-            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
-        }
-        return await _context.Imgs
-            .Where(img => img.id_item == itemId)
-            .CountAsync();
+            data = _mapper.Map<List<ReadImgDto>>(img),
+            pagination = new PaginationDto
+            {
+                total = await _context.Imgs.Where(im => im.id_item == itemId).CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.Imgs.Where(im => im.id_item == itemId).Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadImgDto> GetImgById(int id, int? itemId = null)

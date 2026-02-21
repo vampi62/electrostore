@@ -20,7 +20,7 @@ public class ItemDocumentService : IItemDocumentService
         _fileService = fileService;
     }
 
-    public async Task<IEnumerable<ReadItemDocumentDto>> GetItemsDocumentsByItemId(int itemId, int limit = 100, int offset = 0)
+    public async Task<PaginatedResponseDto<ReadItemDocumentDto>> GetItemsDocumentsByItemId(int itemId, int limit = 100, int offset = 0)
     {
         // check if item exists
         if (!await _context.Items.AnyAsync(item => item.id_item == itemId))
@@ -32,19 +32,18 @@ public class ItemDocumentService : IItemDocumentService
         query = query.Skip(offset).Take(limit);
         query = query.OrderBy(id => id.id_item_document);
         var itemDocument = await query.ToListAsync();
-        return _mapper.Map<List<ReadItemDocumentDto>>(itemDocument);
-    }
-
-    public async Task<int> GetItemsDocumentsCountByItemId(int itemId)
-    {
-        // check if item exists
-        if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
+        return new PaginatedResponseDto<ReadItemDocumentDto>
         {
-            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
-        }
-        return await _context.ItemsDocuments
-            .Where(id => id.id_item == itemId)
-            .CountAsync();
+            data = _mapper.Map<List<ReadItemDocumentDto>>(itemDocument),
+            pagination = new PaginationDto
+            {
+                total = await _context.ItemsDocuments.Where(id => id.id_item == itemId).CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.ItemsDocuments.Where(id => id.id_item == itemId).Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadItemDocumentDto> GetItemDocumentById(int id, int? itemId = null)

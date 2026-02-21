@@ -16,7 +16,7 @@ public class TagService : ITagService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadExtendedTagDto>> GetTags(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
+    public async Task<PaginatedResponseDto<ReadExtendedTagDto>> GetTags(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Tags.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
@@ -37,22 +37,28 @@ public class TagService : ITagService
                 BoxsTags = expand != null && expand.Contains("boxs_tags") ? t.BoxsTags.Take(20).ToList() : null
             })
             .ToListAsync();
-        return tags.Select(t => {
-            return _mapper.Map<ReadExtendedTagDto>(t.Tag) with
+        return new PaginatedResponseDto<ReadExtendedTagDto>
+        {
+            data = tags.Select(t => {
+                return _mapper.Map<ReadExtendedTagDto>(t.Tag) with
+                {
+                    stores_tags_count = t.StoresTagsCount,
+                    items_tags_count = t.ItemsTagsCount,
+                    boxs_tags_count = t.BoxsTagsCount,
+                    stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(t.StoresTags),
+                    items_tags = _mapper.Map<IEnumerable<ReadItemTagDto>>(t.ItemsTags),
+                    boxs_tags = _mapper.Map<IEnumerable<ReadBoxTagDto>>(t.BoxsTags)
+                };
+            }).ToList(),
+            pagination = new PaginationDto
             {
-                stores_tags_count = t.StoresTagsCount,
-                items_tags_count = t.ItemsTagsCount,
-                boxs_tags_count = t.BoxsTagsCount,
-                stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(t.StoresTags),
-                items_tags = _mapper.Map<IEnumerable<ReadItemTagDto>>(t.ItemsTags),
-                boxs_tags = _mapper.Map<IEnumerable<ReadBoxTagDto>>(t.BoxsTags)
-            };
-        }).ToList();
-    }
-
-    public async Task<int> GetTagsCount()
-    {
-        return await _context.Tags.CountAsync();
+                total = await _context.Tags.CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.Tags.Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadExtendedTagDto> GetTagById(int id, List<string>? expand = null)

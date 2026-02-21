@@ -20,7 +20,7 @@ public class CommandService : ICommandService
         _fileService = fileService;
     }
 
-    public async Task<IEnumerable<ReadExtendedCommandDto>> GetCommands(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
+    public async Task<PaginatedResponseDto<ReadExtendedCommandDto>> GetCommands(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Commands.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
@@ -41,22 +41,28 @@ public class CommandService : ICommandService
                 CommandsItems = expand != null && expand.Contains("commands_items") ? c.CommandsItems.Take(20).ToList() : null
             })
             .ToListAsync();
-        return command.Select(c => {
-            return _mapper.Map<ReadExtendedCommandDto>(c.Command) with
+        return new PaginatedResponseDto<ReadExtendedCommandDto>
+        {
+            data = command.Select(c => {
+                return _mapper.Map<ReadExtendedCommandDto>(c.Command) with
+                {
+                    commands_commentaires_count = c.CommandsCommentairesCount,
+                    commands_documents_count = c.CommandsDocumentsCount,
+                    commands_items_count = c.CommandsItemsCount,
+                    commands_commentaires = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(c.CommandsCommentaires),
+                    commands_documents = _mapper.Map<IEnumerable<ReadCommandDocumentDto>>(c.CommandsDocuments),
+                    commands_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(c.CommandsItems)
+                };
+            }).ToList(),
+            pagination = new PaginationDto
             {
-                commands_commentaires_count = c.CommandsCommentairesCount,
-                commands_documents_count = c.CommandsDocumentsCount,
-                commands_items_count = c.CommandsItemsCount,
-                commands_commentaires = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(c.CommandsCommentaires),
-                commands_documents = _mapper.Map<IEnumerable<ReadCommandDocumentDto>>(c.CommandsDocuments),
-                commands_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(c.CommandsItems)
-            };
-        }).ToList();
-    }
-
-    public async Task<int> GetCommandsCount()
-    {
-        return await _context.Commands.CountAsync();
+                total = await _context.Commands.CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.Commands.Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadExtendedCommandDto> GetCommandById(int id, List<string>? expand = null)

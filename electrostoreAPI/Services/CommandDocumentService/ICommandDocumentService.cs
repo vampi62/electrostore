@@ -5,9 +5,7 @@ namespace electrostore.Services.CommandDocumentService;
 
 public interface ICommandDocumentService
 {
-    public Task<IEnumerable<ReadCommandDocumentDto>> GetCommandsDocumentsByCommandId(int commandId, int limit = 100, int offset = 0);
-
-    public Task<int> GetCommandsDocumentsCountByCommandId(int commandId);
+    public Task<PaginatedResponseDto<ReadCommandDocumentDto>> GetCommandsDocumentsByCommandId(int commandId, int limit = 100, int offset = 0);
 
     public Task<ReadCommandDocumentDto> GetCommandDocumentById(int id, int? commandId = null);
 

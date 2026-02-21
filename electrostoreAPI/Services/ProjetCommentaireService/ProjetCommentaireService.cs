@@ -20,7 +20,7 @@ public class ProjetCommentaireService : IProjetCommentaireService
         _sessionService = sessionService;
     }
 
-    public async Task<IEnumerable<ReadExtendedProjetCommentaireDto>> GetProjetCommentairesByProjetId(int projetId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedProjetCommentaireDto>> GetProjetCommentairesByProjetId(int projetId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
@@ -40,21 +40,21 @@ public class ProjetCommentaireService : IProjetCommentaireService
             query = query.Include(p => p.User);
         }
         var projetCommentaire = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedProjetCommentaireDto>>(projetCommentaire);
-    }
-
-    public async Task<int> GetProjetCommentairesCountByProjetId(int projetId)
-    {
-        // check if the projet exists
-        if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
+        return new PaginatedResponseDto<ReadExtendedProjetCommentaireDto>
         {
-            throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
-        }
-        return await _context.ProjetsCommentaires
-            .CountAsync(p => p.id_projet == projetId);
+            data = _mapper.Map<List<ReadExtendedProjetCommentaireDto>>(projetCommentaire),
+            pagination = new PaginationDto
+            {
+                total = await _context.ProjetsCommentaires.CountAsync(p => p.id_projet == projetId),
+                nextOffset = offset + limit,
+                hasMore = await _context.ProjetsCommentaires.Skip(offset + limit).AnyAsync(p => p.id_projet == projetId)
+            },
+            filter = null,
+            sort = null
+        };
     }
 
-    public async Task<IEnumerable<ReadExtendedProjetCommentaireDto>> GetProjetCommentairesByUserId(int userId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedProjetCommentaireDto>> GetProjetCommentairesByUserId(int userId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
@@ -74,18 +74,18 @@ public class ProjetCommentaireService : IProjetCommentaireService
             query = query.Include(pc => pc.User);
         }
         var projetCommentaire = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedProjetCommentaireDto>>(projetCommentaire);
-    }
-
-    public async Task<int> GetProjetCommentairesCountByUserId(int userId)
-    {
-        // check if the user exists
-        if (!await _context.Users.AnyAsync(u => u.id_user == userId))
+        return new PaginatedResponseDto<ReadExtendedProjetCommentaireDto>
         {
-            throw new KeyNotFoundException($"User with id '{userId}' not found");
-        }
-        return await _context.ProjetsCommentaires
-            .CountAsync(p => p.id_user == userId);
+            data = _mapper.Map<List<ReadExtendedProjetCommentaireDto>>(projetCommentaire),
+            pagination = new PaginationDto
+            {
+                total = await _context.ProjetsCommentaires.CountAsync(pc => pc.id_user == userId),
+                nextOffset = offset + limit,
+                hasMore = await _context.ProjetsCommentaires.Skip(offset + limit).AnyAsync(pc => pc.id_user == userId)
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadExtendedProjetCommentaireDto> GetProjetCommentairesById(int id, int? userId = null, int? projetId = null, List<string>? expand = null)

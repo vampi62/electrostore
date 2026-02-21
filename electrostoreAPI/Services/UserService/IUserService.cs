@@ -4,9 +4,7 @@ namespace electrostore.Services.UserService;
 
 public interface IUserService
 {
-    public Task<IEnumerable<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null);
-
-    public Task<int> GetUsersCount();
+    public Task<PaginatedResponseDto<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null, string? rsql = null);
 
     public Task<ReadUserDto> CreateUser(CreateUserDto userDto);
     

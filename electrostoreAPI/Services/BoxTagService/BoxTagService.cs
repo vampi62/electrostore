@@ -20,7 +20,7 @@ public class BoxTagService : IBoxTagService
         _sessionService = sessionService;
     }
 
-    public async Task<IEnumerable<ReadExtendedBoxTagDto>> GetBoxsTagsByBoxId(int boxId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedBoxTagDto>> GetBoxsTagsByBoxId(int boxId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
@@ -40,22 +40,21 @@ public class BoxTagService : IBoxTagService
             query = query.Include(bt => bt.Box);
         }
         var boxTag = await query.ToListAsync();
-        return _mapper.Map<IEnumerable<ReadExtendedBoxTagDto>>(boxTag);
-    }
-
-    public async Task<int> GetBoxsTagsCountByBoxId(int boxId)
-    {
-        // check if box exists
-        if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
+        return new PaginatedResponseDto<ReadExtendedBoxTagDto>
         {
-            throw new KeyNotFoundException($"Box with id '{boxId}' not found");
-        }
-        return await _context.BoxsTags
-            .Where(bt => bt.id_box == boxId)
-            .CountAsync();
+            data = _mapper.Map<IEnumerable<ReadExtendedBoxTagDto>>(boxTag),
+            pagination = new PaginationDto
+            {
+                total = await _context.BoxsTags.CountAsync(bt => bt.id_box == boxId),
+                nextOffset = offset + limit,
+                hasMore = await _context.BoxsTags.Skip(offset + limit).AnyAsync(bt => bt.id_box == boxId)
+            },
+            filter = null,
+            sort = null
+        };
     }
 
-    public async Task<IEnumerable<ReadExtendedBoxTagDto>> GetBoxsTagsByTagId(int tagId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedBoxTagDto>> GetBoxsTagsByTagId(int tagId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
@@ -75,19 +74,18 @@ public class BoxTagService : IBoxTagService
             query = query.Include(bt => bt.Box);
         }
         var boxTag = await query.ToListAsync();
-        return _mapper.Map<IEnumerable<ReadExtendedBoxTagDto>>(boxTag);
-    }
-
-    public async Task<int> GetBoxsTagsCountByTagId(int tagId)
-    {
-        // check if tag exists
-        if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
+        return new PaginatedResponseDto<ReadExtendedBoxTagDto>
         {
-            throw new KeyNotFoundException($"Tag with id '{tagId}' not found");
-        }
-        return await _context.BoxsTags
-            .Where(s => s.id_tag == tagId)
-            .CountAsync();
+            data = _mapper.Map<IEnumerable<ReadExtendedBoxTagDto>>(boxTag),
+            pagination = new PaginationDto
+            {
+                total = await _context.BoxsTags.CountAsync(bt => bt.id_tag == tagId),
+                nextOffset = offset + limit,
+                hasMore = await _context.BoxsTags.Skip(offset + limit).AnyAsync(bt => bt.id_tag == tagId)
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadExtendedBoxTagDto> GetBoxTagById(int boxId, int tagId, List<string>? expand = null)

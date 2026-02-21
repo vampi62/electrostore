@@ -23,7 +23,7 @@ public class BoxService : IBoxService
         _validateStoreService = validateStoreService;
     }
 
-    public async Task<IEnumerable<ReadExtendedBoxDto>> GetBoxsByStoreId(int storeId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedBoxDto>> GetBoxsByStoreId(int storeId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
@@ -45,28 +45,25 @@ public class BoxService : IBoxService
                 ItemsBoxs = expand != null && expand.Contains("item_boxs") ? b.ItemsBoxs.Take(20).ToList() : null
             })
             .ToListAsync();
-        return box.Select(b => {
-            return _mapper.Map<ReadExtendedBoxDto>(b.Box) with
+        return new PaginatedResponseDto<ReadExtendedBoxDto>
+        {
+            data = box.Select(b => _mapper.Map<ReadExtendedBoxDto>(b.Box) with
             {
                 box_tags_count = b.BoxsTagsCount,
                 item_boxs_count = b.ItemsBoxsCount,
                 store = _mapper.Map<ReadStoreDto>(b.Store),
                 box_tags = _mapper.Map<IEnumerable<ReadBoxTagDto>>(b.BoxsTags),
                 item_boxs = _mapper.Map<IEnumerable<ReadItemBoxDto>>(b.ItemsBoxs)
-            };
-        }).ToList();
-    }
-
-    public async Task<int> GetBoxsCountByStoreId(int storeId)
-    {
-        // check if the store exists
-        if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
-        {
-            throw new KeyNotFoundException($"Store with id '{storeId}' not found");
-        }
-        return await _context.Boxs
-            .Where(b => b.id_store == storeId)
-            .CountAsync();
+            }),
+            pagination = new PaginationDto
+            {
+                total = await _context.Boxs.Where(b => b.id_store == storeId).CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.Boxs.Where(b => b.id_store == storeId).Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadExtendedBoxDto> GetBoxById(int id, int? storeId = null, List<string>? expand = null)

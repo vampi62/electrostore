@@ -4,13 +4,9 @@ namespace electrostore.Services.ProjetItemService;
 
 public interface IProjetItemService
 {
-    public Task<IEnumerable<ReadExtendedProjetItemDto>> GetProjetItemsByProjetId(int projetId, int limit = 100, int offset = 0, List<string>? expand = null);
+    public Task<PaginatedResponseDto<ReadExtendedProjetItemDto>> GetProjetItemsByProjetId(int projetId, int limit = 100, int offset = 0, List<string>? expand = null);
 
-    public Task<int> GetProjetItemsCountByProjetId(int projetId);
-
-    public Task<IEnumerable<ReadExtendedProjetItemDto>> GetProjetItemsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null);
-
-    public Task<int> GetProjetItemsCountByItemId(int itemId);
+    public Task<PaginatedResponseDto<ReadExtendedProjetItemDto>> GetProjetItemsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null);
 
     public Task<ReadExtendedProjetItemDto> GetProjetItemById(int projetId, int itemId, List<string>? expand = null);
 

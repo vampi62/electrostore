@@ -9,26 +9,6 @@ public class AddTotalCountHeaderFilter : IOperationFilter
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
         var parameters = context.ApiDescription.ParameterDescriptions;
-        var hasLimit = parameters.Any(p => p.Name == "limit" && p.Source.Id == "Query");
-        var hasOffset = parameters.Any(p => p.Name == "offset" && p.Source.Id == "Query");
-
-        if (hasLimit && hasOffset && operation.Responses.ContainsKey("200"))
-        {
-            var response = operation.Responses.TryGetValue("200", out var resp) ? resp : null;
-            if (response != null)
-            {
-                response.Headers ??= new Dictionary<string, OpenApiHeader>();
-                response.Headers.Add("X-Total-Count", new OpenApiHeader
-                {
-                    Description = "Total number of items",
-                    Schema = new OpenApiSchema
-                    {
-                        Type = "integer"
-                    }
-                });
-            }
-        }
-        // description for query parameters
         AddDescriptionsToQueryParameters(operation, parameters);
     }
     

@@ -4,13 +4,9 @@ namespace electrostore.Services.BoxTagService;
 
 public interface IBoxTagService
 {
-    public Task<IEnumerable<ReadExtendedBoxTagDto>> GetBoxsTagsByBoxId(int boxId, int limit = 100, int offset = 0, List<string>? expand = null);
+    public Task<PaginatedResponseDto<ReadExtendedBoxTagDto>> GetBoxsTagsByBoxId(int boxId, int limit = 100, int offset = 0, List<string>? expand = null);
 
-    public Task<int> GetBoxsTagsCountByBoxId(int boxId);
-
-    public Task<IEnumerable<ReadExtendedBoxTagDto>> GetBoxsTagsByTagId(int tagId, int limit = 100, int offset = 0, List<string>? expand = null);
-
-    public Task<int> GetBoxsTagsCountByTagId(int tagId);
+    public Task<PaginatedResponseDto<ReadExtendedBoxTagDto>> GetBoxsTagsByTagId(int tagId, int limit = 100, int offset = 0, List<string>? expand = null);
 
     public Task<ReadExtendedBoxTagDto> GetBoxTagById(int boxId, int tagId, List<string>? expand = null);
 

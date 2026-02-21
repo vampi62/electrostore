@@ -29,7 +29,7 @@ public class LedService : ILedService
         _validateStoreService = validateStoreService;
     }
 
-    public async Task<IEnumerable<ReadLedDto>> GetLedsByStoreId(int storeId, int limit = 100, int offset = 0)
+    public async Task<PaginatedResponseDto<ReadLedDto>> GetLedsByStoreId(int storeId, int limit = 100, int offset = 0)
     {
         // check if the store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
@@ -41,19 +41,18 @@ public class LedService : ILedService
         query = query.Skip(offset).Take(limit);
         query = query.OrderBy(l => l.id_led);
         var led = await query.ToListAsync();
-        return _mapper.Map<List<ReadLedDto>>(led);
-    }
-
-    public async Task<int> GetLedsCountByStoreId(int storeId)
-    {
-        // check if the store exists
-        if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
+        return new PaginatedResponseDto<ReadLedDto>
         {
-            throw new KeyNotFoundException($"Store with id '{storeId}' not found");
-        }
-        return await _context.Leds
-            .Where(led => led.id_store == storeId)
-            .CountAsync();
+            data = _mapper.Map<List<ReadLedDto>>(led),
+            pagination = new PaginationDto
+            {
+                total = await _context.Leds.Where(l => l.id_store == storeId).CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.Leds.Where(l => l.id_store == storeId).Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadLedDto> GetLedById(int id, int? storeId = null)
