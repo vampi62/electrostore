@@ -214,7 +214,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 							:store-user="authStore.user" :store-config="configsStore"
 							:loading="usersStore.commandsCommentaireLoading"
 							:total-count="Number(usersStore.commandsCommentaireTotalCount[userId]) || 0"
-							:fetch-function="(limit, offset, expand, filter, sort, clear) => usersStore.getCommandCommentaireByInterval(userId, limit, offset, expand, filter, sort, clear)"
+							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getCommandCommentaireByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>
@@ -226,7 +226,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 							:store-user="authStore.user" :store-config="configsStore"
 							:loading="usersStore.projetsCommentaireLoading"
 							:total-count="Number(usersStore.projetsCommentaireTotalCount[userId]) || 0"
-							:fetch-function="(limit, offset, expand, filter, sort, clear) => usersStore.getProjetCommentaireByInterval(userId, limit, offset, expand, filter, sort, clear)"
+							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getProjetCommentaireByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>
@@ -246,7 +246,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[usersStore.tokens[userId]]"
 					:loading="usersStore.tokensLoading"
 					:total-count="Number(usersStore.tokensTotalCount[userId]) || 0"
-					:fetch-function="(limit, offset, expand, filter, sort, clear) => usersStore.getTokenByInterval(userId, limit, offset, expand, filter, sort, clear, isCheckedTokens, isCheckedTokens)"
+					:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getTokenByInterval(userId, limit, offset, expand, filter, sort, clear, isCheckedTokens, isCheckedTokens) : undefined"
 					:tableau-css="{ component: 'min-h-64 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>

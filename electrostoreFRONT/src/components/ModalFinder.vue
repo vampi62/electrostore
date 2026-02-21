@@ -3,14 +3,14 @@
 	<div v-if="showPageFind" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center" @click="showPageFind = false">
 		<div class="bg-white p-2 rounded shadow-lg w-2/3" @click.stop>
 			<div class="flex justify-between items-center p-2">
-				<h2 class="text-xl font-bold mb-4">{{ $t('item.VInventoryFindTitle') }}</h2>
+				<h2 class="text-xl font-bold mb-4">{{ $t('items.FindTitle') }}</h2>
 				<button @click="showPageFind = false" class="text-red-500 hover:text-red-600">
 					<font-awesome-icon icon="fa-solid fa-times" />
 				</button>
 			</div>
 			<div class="flex justify-between">
 				<div class="flex-1 border max-w-40">
-					<span class="text-lg font-bold">{{ $t('item.VInventoryFindCameraList') }}</span>
+					<span class="text-lg font-bold">{{ $t('items.FindCameraList') }}</span>
 					<div class="max-h-40 overflow-y-auto">
 						<div v-for="camera in camerasStore.cameras" :key="camera.id_camera" @click="camerasStore.status[camera.id_camera]?.statusCode == 200 ? changeCamera(camera) : null"
 							class="p-1 border"
@@ -23,7 +23,7 @@
 							<span class="h-4 text-xs">{{ camera.url_camera }}</span>
 						</div>
 					</div>
-					<span class="text-lg font-bold">{{ $t('item.VInventoryFindIAList') }}</span>
+					<span class="text-lg font-bold">{{ $t('items.FindIAList') }}</span>
 					<div class="max-h-40 overflow-y-auto">
 						<div v-for="ia in iasStore.ias" :key="ia.id_ia" @click="ia.trained_ia ? selectedPageFind.ia = ia : null"
 							class="p-1 border"
@@ -49,7 +49,7 @@
 						</template>
 						<template v-else>
 							<div class="flex justify-center items-center h-full cursor-pointer" @click="$refs.fileInput.click()">
-								{{ $t('item.VInventoryNoCameraOrUploadAnImage') }}
+								{{ $t('items.NoCameraOrUploadAnImage') }}
 							</div>
 						</template>
 						<input type="file" @change="handleFileUpload" class="hidden" ref="fileInput" :accept="allowedExtensions.join(',') || ''" />
@@ -59,44 +59,44 @@
 							<button @click="startDetection()"
 							class="px-3 py-1 rounded text-sm inline-block my-2"
 							:class="selectedPageFind.ia && (selectedPageFind.camera || selectedPageFind.image) ? 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer' : 'bg-blue-200 text-gray-500 cursor-not-allowed'">
-								{{ $t('item.VInventoryDetect') }}
+								{{ $t('items.Detect') }}
 							</button>
 							<button @click="cameraUpdateLight()"
 							class="px-3 py-1 rounded text-sm inline-block my-2"
 							:class="selectedPageFind.camera ? 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer' : 'bg-blue-200 text-gray-500 cursor-not-allowed'">
-								{{ $t('item.VInventoryLight') }}
+								{{ $t('items.Light') }}
 							</button>
 						</div>
 						<div class="flex justify-around flex-grow items-center h-full border-l">
 							<div class="flex flex-col items-center">
 								<template v-if="iasStore.status.detect.loading">
-									<span>{{ $t('item.VInventoryLoading') }}</span>
+									<span>{{ $t('items.Loading') }}</span>
 								</template>
 								<template v-else-if="iasStore.status.detect.predictedLabel == -1">
-									<span>{{ $t('item.VInventoryNoItem') }}</span>
+									<span>{{ $t('items.NoItem') }}</span>
 								</template>
 								<template v-else-if="iasStore.status.detect.predictedLabel > -1">
 									<div>
-										<span>{{ $t('item.VInventoryItem') }}: </span>
+										<span>{{ $t('items.Item') }}: </span>
 										<span>{{ itemsStore.items[iasStore.status.detect.predictedLabel].reference_name_item }}</span>
 									</div>
 									<div>
-										<span>{{ $t('item.VInventoryScore') }}: </span>
+										<span>{{ $t('items.Score') }}: </span>
 										<span>{{ iasStore.status.detect.score }} %</span>
 									</div>
 								</template>
 								<template v-else>
-									<span>{{ $t('item.VInventoryNoDetection') }}</span>
+									<span>{{ $t('items.NoDetection') }}</span>
 								</template>
 								<template v-if="iasStore.status.detect?.predictedLabel > -1">
 									<button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm cursor-pointer inline-block mb-2 mr-2"
 										@click="openNewPage('/inventory/' + iasStore.status.detect.predictedLabel)">
-										{{ $t('item.VInventoryGoToItem') }}
+										{{ $t('items.GoToItem') }}
 									</button>
 								</template>
 								<template v-else>
 									<button class="bg-blue-200 text-gray-500 px-3 py-1 rounded text-sm cursor-not-allowed inline-block mb-2 mr-2">
-										{{ $t('item.VInventoryGoToItem') }}
+										{{ $t('items.GoToItem') }}
 									</button>
 								</template>
 							</div>
@@ -150,19 +150,19 @@ export default {
 				this.iasStore.status.detect = { loading: true };
 				await this.camerasStore.getCapture(this.selectedPageFind.camera.id_camera,true);
 				if (!this.camerasStore.capture[this.selectedPageFind.camera.id_camera]) {
-					this.addNotification("error", this.t("item.VInventoryErrorCapture"));
+					this.addNotification("error", this.t("items.ErrorCapture"));
 					return;
 				}
 				await this.iasStore.detectItem(this.selectedPageFind.ia.id_ia, this.camerasStore.capture[this.selectedPageFind.camera.id_camera]);
 				if (!this.iasStore.status.detect.predictedLabel) {
-					this.addNotification("error", this.t("item.VInventoryErrorDetect"));
+					this.addNotification("error", this.t("items.ErrorDetect"));
 					return;
 				}
 			} else if (this.selectedPageFind.image) {
 				this.iasStore.status.detect = { loading: true };
 				await this.iasStore.detectItem(this.selectedPageFind.ia.id_ia, this.selectedPageFind.image);
 				if (!this.iasStore.status.detect.predictedLabel) {
-					this.addNotification("error", this.t("item.VInventoryErrorDetect"));
+					this.addNotification("error", this.t("items.ErrorDetect"));
 					return;
 				}
 			}

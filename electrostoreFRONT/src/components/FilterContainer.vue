@@ -26,7 +26,7 @@ export default {
 			// - key: string (the key in the storeData to filter on)
 			// - label: string (translation key for the label)
 			// - type: string (input type, e.g., 'text', 'number', 'select')
-			// - dataType: string (type of data, e.g., 'int', 'float', 'string', 'bool')
+			// - typeData: string (type of data, e.g., 'int', 'float', 'string', 'bool')
 			// - compareMethod: string (comparison method, e.g., '=', '>=', '<=', 'contain')
 			// - value: any (the value to filter by, can be empty)
 			// - subPath: string (optional, for nested data filtering)

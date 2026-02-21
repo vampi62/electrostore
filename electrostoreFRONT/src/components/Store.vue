@@ -78,37 +78,37 @@
 				<div class="flex flex-col">
 					<template v-if="!selectedElement.type">
 						<button @click="addLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
-							{{ $t('store.VStoreAddLed') }}
+							{{ $t('store.AddLed') }}
 						</button>
 						<button @click="addBox" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
-							{{ $t('store.VStoreAddBox') }}
+							{{ $t('store.AddBox') }}
 						</button>
 					</template>
 					<template v-if="selectedElement.type == 'led'">
 						<button v-if="canEdit" @click="deleteElement" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600">
-							{{ $t('store.VStoreDeleteLed') }}
+							{{ $t('store.DeleteLed') }}
 						</button>
 						<button v-if="ledEdition[selectedElement.key.id_led].status != 'new'" @click="toggleLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
-							{{ $t('store.VStoreToggleLed') }}
+							{{ $t('store.ToggleLed') }}
 						</button>
 						<div class="flex space-x-4">
-							<span>{{ $t('store.VStoreMqttLedId') }}</span>
+							<span>{{ $t('store.MqttLedId') }}</span>
 							<input type="number" v-model="ledEdition[selectedElement.key.id_led].mqtt_led_id" class="w-16" :disabled="!canEdit" />
 						</div>
 						<!-- TODO : add color weel and select animation and light duration -->
 					</template>
 					<template v-if="selectedElement.type == 'box'">
 						<button v-if="canEdit" @click="deleteElement" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600">
-							{{ $t('store.VStoreDeleteBox') }}
+							{{ $t('store.DeleteBox') }}
 						</button>
 						<button v-if="boxEdition[selectedElement.key.id_box].status != 'new'" @click="$emit('openBoxContent', selectedElement.key.id_box)" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
-							{{ $t('store.VStoreShowBoxContent') }}
+							{{ $t('store.ShowBoxContent') }}
 						</button>
 						<button v-if="boxEdition[selectedElement.key.id_box].status != 'new'" @click="toggleBoxLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
-							{{ $t('store.VStoreToggleBoxLed') }}
+							{{ $t('store.ToggleBoxLed') }}
 						</button>
 						<button v-if="canEdit" @click="addLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
-							{{ $t('store.VStoreAddLed') }}
+							{{ $t('store.AddLed') }}
 						</button>
 					</template>
 				</div>
@@ -120,7 +120,7 @@
 				<strong>{{ mousePos.Y }}</strong>
 				<label class="ml-4">
 					<input type="checkbox" v-model="showLedId" />
-					{{ $t('store.VStoreShowLedId') }}
+					{{ $t('store.ShowLedId') }}
 				</label>
 			</div>
 		</template>
@@ -350,7 +350,7 @@ export default {
 		async toggleLed(ledId) {
 			try {
 				await this.storeFunc.showLedById(ledId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
-				this.addNotification({ message: "store.VStoreLedShowSuccess", type: "success", i18n: true });
+				this.addNotification({ message: "store.LedShowSuccess", type: "success", i18n: true });
 			} catch (e) {
 				this.addNotification({ message: e, type: "error", i18n: false });
 			}
@@ -358,7 +358,7 @@ export default {
 		async toggleBoxLed(boxId) {
 			try {
 				await this.storeFunc.showBoxById(boxId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
-				this.addNotification({ message: "store.VStoreBoxShowSuccess", type: "success", i18n: true });
+				this.addNotification({ message: "store.BoxShowSuccess", type: "success", i18n: true });
 			} catch (e) {
 				this.addNotification({ message: e, type: "error", i18n: false });
 			}
@@ -466,7 +466,7 @@ export default {
 				try {
 					Object.values(this.boxEdition).forEach((box) => {
 						if (this.$refs["BOX" + box.id_box][0].classList.contains("conflict")) {
-							this.addNotification({ message: "store.VStoreBoxConflict", type: "error", i18n: true });
+							this.addNotification({ message: "store.BoxConflict", type: "error", i18n: true });
 							throw BreakException;
 						}
 					});
@@ -486,7 +486,7 @@ export default {
 				}
 			});
 			if (errorLed) {
-				this.addNotification({ message: "store.VStoreLedOutOfGrid", type: "error", i18n: true });
+				this.addNotification({ message: "store.LedOutOfGrid", type: "error", i18n: true });
 				return false;
 			}
 			let errorBox = false;
@@ -498,7 +498,7 @@ export default {
 				}
 			});
 			if (errorBox) {
-				this.addNotification({ message: "store.VStoreBoxOutOfGrid", type: "error", i18n: true });
+				this.addNotification({ message: "store.BoxOutOfGrid", type: "error", i18n: true });
 				return false;
 			}
 			return true;

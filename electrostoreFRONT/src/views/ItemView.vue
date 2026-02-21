@@ -493,7 +493,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="itemId !== 'new' && authStore.hasPermission([1, 2])"
 				:delete-function="(value) => tagDelete(value)"
 				:filter-modal="filterTag"
-				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag' }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
+				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'loading': tagsStore.tagsLoading, 'fetchFunction': (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
 								, 'totalCount': Number(tagsStore.tagsTotalCount || 0) }"
 				:meta ="{ 'keyPoids': 'poids_tag', 'keyName': 'nom_tag' }"
@@ -506,7 +506,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[itemsStore.itemBoxs[itemId]]"
 					:loading="itemsStore.itemBoxsLoading" :schema="schemaBox"
 					:total-count="Number(itemsStore.itemBoxsTotalCount[itemId])"
-					:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemBoxByInterval(itemId, limit, offset, expand, filter, sort, clear)"
+					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemBoxByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -522,7 +522,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[itemsStore.documents[itemId]]"
 					:loading="itemsStore.documentsLoading"
 					:total-count="Number(itemsStore.documentsTotalCount[itemId])"
-					:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getDocumentByInterval(itemId, limit, offset, expand, filter, sort, clear)"
+					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getDocumentByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
@@ -571,7 +571,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[itemsStore.itemCommands[itemId],commandsStore.commands]"
 					:loading="itemsStore.itemCommandsLoading"
 					:total-count="Number(itemsStore.itemCommandsTotalCount[itemId])"
-					:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemCommandByInterval(itemId, limit, offset, expand, filter, sort, clear)"
+					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemCommandByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
@@ -583,7 +583,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[itemsStore.itemProjets[itemId],projetsStore.projets]"
 					:loading="itemsStore.itemProjetsLoading"
 					:total-count="Number(itemsStore.itemProjetsTotalCount[itemId])"
-					:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemProjetByInterval(itemId, limit, offset, expand, filter, sort, clear)"
+					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemProjetByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>

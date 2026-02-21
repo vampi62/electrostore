@@ -18,7 +18,7 @@ async function fetchTagData(minOffset, maxOffset) {
 	if (tagsNotFound.length > 0) {
 		await tagsStore.getTagByList(tagsNotFound);
 	}
-	filter.value[6].options = Object.fromEntries(Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]));
+	filter.value[4].options = Object.fromEntries(Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]));
 }
 
 const filter = ref([

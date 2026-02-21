@@ -408,7 +408,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[commandsStore.documents[commandId]]"
 					:loading="commandsStore.documentsLoading"
 					:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)"
-					:fetch-function="(limit, offset, expand, filter, sort, clear) => commandsStore.getDocumentByInterval(commandId, limit, offset, expand, filter, sort, clear)"
+					:fetch-function="commandId !== 'new' ? (limit, offset, expand, filter, sort, clear) => commandsStore.getDocumentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
@@ -424,7 +424,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[commandsStore.items[commandId],itemsStore.items]"
 					:loading="commandsStore.itemsLoading" :schema="schemaItem"
 					:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)"
-					:fetch-function="(limit, offset, expand, filter, sort, clear) => commandsStore.getItemByInterval(commandId, limit, offset, expand, filter, sort, clear)"
+					:fetch-function="commandId !== 'new' ? (limit, offset, expand, filter, sort, clear) => commandsStore.getItemByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -438,7 +438,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-function="{ create: (data) => commandsStore.createCommentaire(commandId, data), update: (id, data) => commandsStore.updateCommentaire(commandId, id, data), delete: (id) => commandsStore.deleteCommentaire(commandId, id) }"
 					:loading="commandsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"
 					:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)"
-					:fetch-function="(limit, offset, expand, filter, sort, clear) => commandsStore.getCommentaireByInterval(commandId, limit, offset, expand, filter, sort, clear)"
+					:fetch-function="commandId !== 'new' ? (limit, offset, expand, filter, sort, clear) => commandsStore.getCommentaireByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
 				/>
 			</template>
 		</CollapsibleSection>
@@ -479,7 +479,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:filters="filterItem"
 				:loading="commandsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
-				:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
+				:fetch-function="commandId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

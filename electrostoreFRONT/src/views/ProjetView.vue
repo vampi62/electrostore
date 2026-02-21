@@ -447,7 +447,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<Tags :current-tags="projetsStore.projetTagProjet[projetId] || {}" :tags-store="projetTagsStore.projetTags" :can-edit="projetId !== 'new' && authStore.hasPermission([2])"
 				:delete-function="(value) => tagDelete(value)"
 				:filter-modal="filterTag"
-				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_projet_tag' }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
+				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_projet_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'loading': projetTagsStore.projetTagsLoading, 'fetchFunction': (limit, offset, expand, filter, sort, clear) => projetTagsStore.getProjetTagByInterval(limit, offset, expand, filter, sort, clear)
 								, 'totalCount': Number(projetTagsStore.projetTagsTotalCount || 0) }"
 				:meta ="{ 'keyPoids': 'poids_projet_tag', 'keyName': 'nom_projet_tag' }"
@@ -460,7 +460,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[projetsStore.statusHistory[projetId]]"
 					:loading="projetsStore.statusHistoryLoading"
 					:total-count="Number(projetsStore.statusHistoryTotalCount[projetId])"
-					:fetch-function="(limit, offset, expand, filter, sort, clear) => projetsStore.getStatusHistoryByInterval(projetId, limit, offset, expand, filter, sort, clear)"
+					:fetch-function="projetId !== 'new' ? (limit, offset, expand, filter, sort, clear) => projetsStore.getStatusHistoryByInterval(projetId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
@@ -476,7 +476,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[projetsStore.documents[projetId]]"
 					:loading="projetsStore.documentsLoading"
 					:total-count="Number(projetsStore.documentsTotalCount[projetId])"
-					:fetch-function="(limit, offset, expand, filter, sort, clear) => projetsStore.getDocumentByInterval(projetId, limit, offset, expand, filter, sort, clear)"
+					:fetch-function="projetId !== 'new' ? (limit, offset, expand, filter, sort, clear) => projetsStore.getDocumentByInterval(projetId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
@@ -492,7 +492,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[projetsStore.items[projetId], itemsStore.items]"
 					:loading="projetsStore.itemsLoading" :schema="schemaItem"
 					:total-count="Number(projetsStore.itemsTotalCount[projetId] || 0)"
-					:fetch-function="(limit, offset, expand, filter, sort, clear) => projetsStore.getItemByInterval(projetId, limit, offset, expand, filter, sort, clear)"
+					:fetch-function="projetId !== 'new' ? (limit, offset, expand, filter, sort, clear) => projetsStore.getItemByInterval(projetId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -506,7 +506,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-function="{ create: (data) => projetsStore.createCommentaire(projetId, data), update: (id, data) => projetsStore.updateCommentaire(projetId, id, data), delete: (id) => projetsStore.deleteCommentaire(projetId, id) }"
 					:loading="projetsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'projet.CommentDeleteTitle', textP: 'projet.CommentDeleteText' }"
 					:total-count="Number(projetsStore.commentairesTotalCount[projetId])"
-					:fetch-function="(limit, offset, expand, filter, sort, clear) => projetsStore.getCommentaireByInterval(projetId, limit, offset, expand, filter, sort, clear)"
+					:fetch-function="projetId !== 'new' ? (limit, offset, expand, filter, sort, clear) => projetsStore.getCommentaireByInterval(projetId, limit, offset, expand, filter, sort, clear) : undefined"
 				/>
 			</template>
 		</CollapsibleSection>
@@ -547,7 +547,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:filters="filterItem"
 				:loading="projetsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
-				:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
+				:fetch-function="projetId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

@@ -102,8 +102,8 @@ export default {
 			type: Array,
 			required: false,
 			default: () => [],
-			// filters is an array of filter objects, each object should have a key, value, type, dataType, compareMethod, and optional subPath, placeholder, class, and options properties
-			// e.g. { key: 'name', value: '', type: 'text', dataType: 'string', compareMethod: 'contain', placeholder: 'Search by name', class: 'mb-2' }
+			// filters is an array of filter objects, each object should have a key, value, type, typeData, compareMethod, and optional subPath, placeholder, class, and options properties
+			// e.g. { key: 'name', value: '', type: 'text', typeData: 'string', compareMethod: 'contain', placeholder: 'Search by name', class: 'mb-2' }
 		},
 		loading: {
 			type: Boolean,
@@ -116,7 +116,9 @@ export default {
 		},
 		fetchFunction: {
 			type: Function,
-			default: (limit, offset, expand, filter, sort, clear) => {},
+			default: (limit, offset, expand, filter, sort, clear) => { 
+				return [0, false];
+			},
 			// fetchFunction is a function that will be called to fetch the data for the table, it should accept the parameters limit, offset, expand, filter, sort, and clear
 			// e.g. (limit, offset, expand, filter, sort, clear) => { store.fetchData(offset, limit, expand, filter, sort, clear) }
 		},
@@ -171,7 +173,7 @@ export default {
 						}
 						switch (f.compareMethod) {
 						case "=":
-							switch (f.dataType) {
+							switch (f.typeData) {
 							case "bool":
 								return element[f.key] === (f.value === "true");
 							case "int":

@@ -163,7 +163,9 @@ export default {
 		},
 		fetchFunction: {
 			type: Function,
-			default: () => {},
+			default: () => { 
+				return [0, false];
+			},
 		},
 		listFetchFunction: {
 			type: Array,

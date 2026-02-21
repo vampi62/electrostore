@@ -220,6 +220,7 @@ const filterItem = ref([
 ]);
 
 // tag
+const tagModalShow = ref(false);
 const filterTag = ref([
 	{ key: "nom_tag", value: "", type: "text", label: "", placeholder: t("store.TagFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
 ]);
@@ -343,7 +344,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<Tags :current-tags="storesStore.storeTags[storeId] || {}" :tags-store="tagsStore.tags" :can-edit="storeId !== 'new' && authStore.hasPermission([1, 2])"
 				:delete-function="(value) => tagDelete(value)"
 				:filter-modal="filterTag"
-				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag' }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
+				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'loading': tagsStore.tagsLoading, 'fetchFunction': (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
 								, 'totalCount': Number(tagsStore.tagsTotalCount || 0) }"
 				:meta ="{ 'keyPoids': 'poids_tag', 'keyName': 'nom_tag' }"
@@ -355,7 +356,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="storesStore.storeEdition[storeId] || {}"
 					:led-edition="storesStore.ledEdition[storeId] || {}"
 					:box-edition="storesStore.boxEdition[storeId] || {}"
-					:can-edit="storeId !== 'new' && authStore.hasPermission([2])"
+					:can-edit="authStore.hasPermission([2])"
 					:store-func="{ showLedById: (id,data) => storesStore.showLedById(storeId, id, data), showBoxById: (id,data) => storesStore.showBoxById(storeId, id, data) }"
 					@open-box-content="(id) => showBoxContent(id)"
 				/>
@@ -371,7 +372,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 						:store-data="[storesStore.boxItems[boxId],itemsStore.items,itemsStore.thumbnailsURL]"
 						:loading="storesStore.boxItemsLoading"
 						:total-count="Number(storesStore.boxItemsTotalCount[boxId] || 0)"
-						:fetch-function="(limit, offset, expand, filter, sort, clear) => storesStore.getBoxItemByInterval(storeId, boxId, limit, offset, expand, filter, sort, clear)"
+						:fetch-function="storeId !== 'new' ? (limit, offset, expand, filter, sort, clear) => storesStore.getBoxItemByInterval(storeId, boxId, limit, offset, expand, filter, sort, clear) : undefined"
 						:tableau-css="{ component: 'max-h-80', tr: 'transition duration-150 ease-in-out cursor-pointer hover:bg-gray-300 even:bg-gray-100' }"
 					>
 						<template #append-row>
@@ -411,7 +412,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:filters="filterTag"
 				:loading="tagsStore.tagsLoading"
 				:total-count="Number(tagsStore.tagsTotalCount || 0)"
-				:fetch-function="(limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)"
+				:fetch-function="storeId !== 'new' ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
@@ -433,7 +434,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:filters="filterItem"
 				:loading="itemsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
-				:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
+				:fetch-function="storeId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

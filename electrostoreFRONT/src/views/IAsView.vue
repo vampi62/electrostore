@@ -9,7 +9,7 @@ const IAStore = useIasStore();
 const authStore = useAuthStore();
 
 const filter = ref([
-	{ key: "trained_ia", value: undefined, type: "datalist", dataType: "bool", options: [["false", t("ias.FilterTrained1")], ["true", t("ias.FilterTrained2")]], label: "ias.FilterTrained", compareMethod: "=" },
+	{ key: "trained_ia", value: undefined, type: "datalist", typeData: "bool", options: [["false", t("ias.FilterTrained1")], ["true", t("ias.FilterTrained2")]], label: "ias.FilterTrained", compareMethod: "=" },
 	{ key: "updated_at", value: "", type: "date", label: "ias.FilterDate", compareMethod: ">=" },
 	{ key: "nom_ia", value: "", type: "text", label: "ias.FilterNom", compareMethod: "contain" },
 ]);

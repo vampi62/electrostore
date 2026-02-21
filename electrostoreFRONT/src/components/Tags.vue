@@ -31,7 +31,7 @@
 				<!-- Tableau Items -->
 				<Tableau :labels="tableauModal['label']" :meta="tableauModal['meta']"
 					:store-data="[tagsStore, currentTags, ...otherStore]"
-					:filter="filterModal"
+					:filters="filterModal"
 					:loading="tableauModal['loading']"
 					:fetch-function="tableauModal['fetchFunction']"
 					:total-count="tableauModal['totalCount']"

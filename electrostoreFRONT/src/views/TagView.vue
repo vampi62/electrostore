@@ -301,7 +301,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[tagsStore.tagsItem[tagId],itemsStore.items]"
 					:loading="tagsStore.tagsItemLoading"
 					:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)"
-					:fetch-function="(limit, offset, expand, filter, sort, clear) => tagsStore.getTagItemByInterval(tagId, limit, offset, expand, filter, sort, clear)"
+					:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagItemByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -317,7 +317,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[tagsStore.tagsStore[tagId],storesStore.stores]"
 					:loading="tagsStore.tagsStoreLoading"
 					:total-count="Number(tagsStore.tagsStoreTotalCount[tagId] || 0)"
-					:fetch-function="(limit, offset, expand, filter, sort, clear) => tagsStore.getTagStoreByInterval(tagId, limit, offset, expand, filter, sort, clear)"
+					:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagStoreByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -333,7 +333,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[tagsStore.tagsBox[tagId],storesStore.boxs]"
 					:loading="tagsStore.tagsBoxLoading"
 					:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)"
-					:fetch-function="(limit, offset, expand, filter, sort, clear) => tagsStore.getTagBoxByInterval(tagId, limit, offset, expand, filter, sort, clear)"
+					:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagBoxByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -364,7 +364,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:filters="filterItem"
 				:loading="tagsStore.tagsItemLoading"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
-				:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
+				:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
@@ -388,7 +388,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:filters="filterStore"
 				:loading="tagsStore.tagsStoreLoading"
 				:total-count="Number(storesStore.storesTotalCount || 0)"
-				:fetch-function="(limit, offset, expand, filter, sort, clear) => storesStore.getStoreByInterval(limit, offset, expand, filter, sort, clear)"
+				:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => storesStore.getStoreByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

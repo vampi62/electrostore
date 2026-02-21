@@ -13,9 +13,10 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 const iaId = ref(route.params.id);
 
-import { useConfigsStore, useIasStore } from "@/stores";
+import { useConfigsStore, useIasStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
 const iasStore = useIasStore();
+const authStore = useAuthStore();
 
 async function fetchAllData() {
 	if (iaId.value === "new") {
