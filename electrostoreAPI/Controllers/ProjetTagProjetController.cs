@@ -20,12 +20,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedProjetProjetTagDto>>> GetProjetsProjetTagsByprojetTagId([FromRoute] int id_projet_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet_tag', 'projet'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjetProjetTagDto>>> GetProjetsProjetTagsByprojetTagId([FromRoute] int id_projet_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet_tag', 'projet'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             var projetProjetTags = await _projetProjetTagService.GetProjetsProjetTagsByprojetTagId(id_projet_tag, limit, offset, expand);
-            var CountList = await _projetProjetTagService.GetProjetsProjetTagsCountByprojetTagId(id_projet_tag);
-            Response.Headers["X-Total-Count"] = CountList.ToString();
-            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(projetProjetTags);
         }
 

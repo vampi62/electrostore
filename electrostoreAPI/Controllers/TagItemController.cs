@@ -20,12 +20,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedItemTagDto>>> GetItemsTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedItemTagDto>>> GetItemsTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             var itemTags = await _itemTagService.GetItemsTagsByTagId(id_tag, limit, offset, expand);
-            var CountList = await _itemTagService.GetItemsTagsCountByTagId(id_tag);
-            Response.Headers["X-Total-Count"] = CountList.ToString();
-            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(itemTags);
         }
 

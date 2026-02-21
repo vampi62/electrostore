@@ -4,9 +4,7 @@ namespace electrostore.Services.ProjetDocumentService;
 
 public interface IProjetDocumentService
 {
-    public Task<IEnumerable<ReadProjetDocumentDto>> GetProjetDocumentsByProjetId(int projetId, int limit = 100, int offset = 0);
-
-    public Task<int> GetProjetDocumentsCountByProjetId(int projetId);
+    public Task<PaginatedResponseDto<ReadProjetDocumentDto>> GetProjetDocumentsByProjetId(int projetId, int limit = 100, int offset = 0);
 
     public Task<ReadProjetDocumentDto> GetProjetDocumentById(int id, int? projetId = null);
 

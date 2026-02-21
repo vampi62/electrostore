@@ -34,7 +34,7 @@ public class CameraService : ICameraService
     }
 
     // limit the number of camera to 100 and add offset and search parameters
-    public async Task<IEnumerable<ReadCameraDto>> GetCameras(int limit = 100, int offset = 0, List<int>? idResearch = null)
+    public async Task<PaginatedResponseDto<ReadCameraDto>> GetCameras(int limit = 100, int offset = 0, List<int>? idResearch = null)
     {
         var query = _context.Cameras.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
@@ -44,12 +44,18 @@ public class CameraService : ICameraService
         query = query.Skip(offset).Take(limit);
         query = query.OrderBy(c => c.id_camera);
         var camera = await query.ToListAsync();
-        return _mapper.Map<List<ReadCameraDto>>(camera);
-    }
-
-    public async Task<int> GetCamerasCount()
-    {
-        return await _context.Cameras.CountAsync();
+        return new PaginatedResponseDto<ReadCameraDto>
+        {
+            data = _mapper.Map<IEnumerable<ReadCameraDto>>(camera),
+            pagination = new PaginationDto
+            {
+                total = await _context.Cameras.CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.Cameras.Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadCameraDto> GetCameraById(int id)

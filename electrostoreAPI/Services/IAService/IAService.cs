@@ -28,7 +28,7 @@ public class IAService : IIAService
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<IEnumerable<ReadIADto>> GetIA(int limit = 100, int offset = 0, List<int>? idResearch = null)
+    public async Task<PaginatedResponseDto<ReadIADto>> GetIA(int limit = 100, int offset = 0, List<int>? idResearch = null)
     {
         var query = _context.IA.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
@@ -38,12 +38,18 @@ public class IAService : IIAService
         query = query.Skip(offset).Take(limit);
         query = query.OrderBy(ia => ia.id_ia);
         var ia = await query.ToListAsync();
-        return _mapper.Map<List<ReadIADto>>(ia);
-    }
-
-    public async Task<int> GetIACount()
-    {
-        return await _context.IA.CountAsync();
+        return new PaginatedResponseDto<ReadIADto>
+        {
+            data = _mapper.Map<List<ReadIADto>>(ia),
+            pagination = new PaginationDto
+            {
+                total = await _context.IA.CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.IA.Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadIADto> GetIAById(int id)

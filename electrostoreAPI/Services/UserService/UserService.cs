@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Models;
 using electrostore.Enums;
+using electrostore.Extensions;
 using electrostore.Services.SmtpService;
 using electrostore.Services.SessionService;
 using electrostore.Services.JwiService;
@@ -25,7 +26,7 @@ public class UserService : IUserService
         _jwiService = jwiService;
     }
 
-    public async Task<IEnumerable<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
+    public async Task<PaginatedResponseDto<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null, string? rsql = null)
     {
         var query = _context.Users.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
@@ -44,21 +45,27 @@ public class UserService : IUserService
                 CommandsCommentaires = expand != null && expand.Contains("commands_commentaires") ? u.CommandsCommentaires.Take(20).ToList() : null
             })
             .ToListAsync();
-        return user.Select(u =>
+        return new PaginatedResponseDto<ReadExtendedUserDto>
         {
-            return _mapper.Map<ReadExtendedUserDto>(u.User) with
+            data = user.Select(u =>
             {
-                projets_commentaires_count = u.ProjetsCommentairesCount,
-                commands_commentaires_count = u.CommandsCommentairesCount,
-                projets_commentaires = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(u.ProjetsCommentaires),
-                commands_commentaires = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(u.CommandsCommentaires)
-            };
-        }).ToList();
-    }
-
-    public async Task<int> GetUsersCount()
-    {
-        return await _context.Users.CountAsync();
+                return _mapper.Map<ReadExtendedUserDto>(u.User) with
+                {
+                    projets_commentaires_count = u.ProjetsCommentairesCount,
+                    commands_commentaires_count = u.CommandsCommentairesCount,
+                    projets_commentaires = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(u.ProjetsCommentaires),
+                    commands_commentaires = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(u.CommandsCommentaires)
+                };
+            }).ToList(),
+            pagination = new PaginationDto
+            {
+                total = await _context.Users.CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.Users.Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadUserDto> CreateUser(CreateUserDto userDto)

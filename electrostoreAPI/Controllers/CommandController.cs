@@ -20,12 +20,9 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<IEnumerable<ReadExtendedCommandDto>>> GetCommands([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_items'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null)
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedCommandDto>>> GetCommands([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_items'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null)
         {
             var commands = await _commandService.GetCommands(limit, offset, expand, idResearch);
-            var CountList = await _commandService.GetCommandsCount();
-            Response.Headers["X-Total-Count"] = CountList.ToString();
-            Response.Headers.AccessControlExposeHeaders = "X-Total-Count";
             return Ok(commands);
         }
 

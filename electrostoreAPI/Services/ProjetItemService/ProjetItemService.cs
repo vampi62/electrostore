@@ -16,7 +16,7 @@ public class ProjetItemService : IProjetItemService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadExtendedProjetItemDto>> GetProjetItemsByProjetId(int projetId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedProjetItemDto>> GetProjetItemsByProjetId(int projetId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
@@ -36,21 +36,21 @@ public class ProjetItemService : IProjetItemService
             query = query.Include(pi => pi.Projet);
         }
         var projetItem = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedProjetItemDto>>(projetItem);
-    }
-
-    public async Task<int> GetProjetItemsCountByProjetId(int projetId)
-    {
-        // check if the projet exists
-        if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
+        return new PaginatedResponseDto<ReadExtendedProjetItemDto>
         {
-            throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
-        }
-        return await _context.ProjetsItems
-            .CountAsync(p => p.id_projet == projetId);
+            data = _mapper.Map<List<ReadExtendedProjetItemDto>>(projetItem),
+            pagination = new PaginationDto
+            {
+                total = await _context.ProjetsItems.CountAsync(pi => pi.id_projet == projetId),
+                nextOffset = offset + limit,
+                hasMore = await _context.ProjetsItems.Skip(offset + limit).AnyAsync(pi => pi.id_projet == projetId)
+            },
+            filter = null,
+            sort = null
+        };
     }
 
-    public async Task<IEnumerable<ReadExtendedProjetItemDto>> GetProjetItemsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedProjetItemDto>> GetProjetItemsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
@@ -70,18 +70,18 @@ public class ProjetItemService : IProjetItemService
             query = query.Include(pi => pi.Projet);
         }
         var projetItem = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedProjetItemDto>>(projetItem);
-    }
-
-    public async Task<int> GetProjetItemsCountByItemId(int itemId)
-    {
-        // check if the item exists
-        if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
+        return new PaginatedResponseDto<ReadExtendedProjetItemDto>
         {
-            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
-        }
-        return await _context.ProjetsItems
-            .CountAsync(pi => pi.id_item == itemId);
+            data = _mapper.Map<List<ReadExtendedProjetItemDto>>(projetItem),
+            pagination = new PaginationDto
+            {
+                total = await _context.ProjetsItems.CountAsync(pi => pi.id_item == itemId),
+                nextOffset = offset + limit,
+                hasMore = await _context.ProjetsItems.Skip(offset + limit).AnyAsync(pi => pi.id_item == itemId)
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadExtendedProjetItemDto> GetProjetItemById(int projetId, int itemId, List<string>? expand = null)

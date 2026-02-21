@@ -24,7 +24,7 @@ public class ProjetService : IProjetService
         _projetStatusService = projetStatusService;
     }
 
-    public async Task<IEnumerable<ReadExtendedProjetDto>> GetProjets(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
+    public async Task<PaginatedResponseDto<ReadExtendedProjetDto>> GetProjets(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Projets.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
@@ -59,7 +59,7 @@ public class ProjetService : IProjetService
                 ProjetsStatus = expand != null && expand.Contains("projets_status_history") ? p.ProjetsStatus.Take(20).ToList() : null
             })
             .ToListAsync();
-        return projet.Select(p => {
+        /* return projet.Select(p => {
             return _mapper.Map<ReadExtendedProjetDto>(p.Projet) with
             {
                 date_debut_projet = p.DateDebutProjet,
@@ -75,12 +75,35 @@ public class ProjetService : IProjetService
                 projets_projet_tags = _mapper.Map<IEnumerable<ReadProjetProjetTagDto>>(p.ProjetsProjetTags),
                 projets_status_history = _mapper.Map<IEnumerable<ReadProjetStatusDto>>(p.ProjetsStatus)
             };
-        }).ToList();
-    }
-
-    public async Task<int> GetProjetsCount()
-    {
-        return await _context.Projets.CountAsync();
+        }).ToList(); */
+        return new PaginatedResponseDto<ReadExtendedProjetDto>
+        {
+            data = projet.Select(p => {
+                return _mapper.Map<ReadExtendedProjetDto>(p.Projet) with
+                {
+                    date_debut_projet = p.DateDebutProjet,
+                    date_fin_projet = p.DateFinProjet,
+                    projets_commentaires_count = p.ProjetsCommentairesCount,
+                    projets_documents_count = p.ProjetsDocumentsCount,
+                    projets_items_count = p.ProjetsItemsCount,
+                    projets_tags_count = p.ProjetsProjetTagsCount,
+                    projets_status_history_count = p.ProjetsStatusHistoryCount,
+                    projets_commentaires = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(p.ProjetsCommentaires),
+                    projets_documents = _mapper.Map<IEnumerable<ReadProjetDocumentDto>>(p.ProjetsDocuments),
+                    projets_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(p.ProjetsItems),
+                    projets_projet_tags = _mapper.Map<IEnumerable<ReadProjetProjetTagDto>>(p.ProjetsProjetTags),
+                    projets_status_history = _mapper.Map<IEnumerable<ReadProjetStatusDto>>(p.ProjetsStatus)
+                };
+            }).ToList(),
+            pagination = new PaginationDto
+            {
+                total = await _context.Projets.CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.Projets.Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadExtendedProjetDto> GetProjetById(int id, List<string>? expand = null)

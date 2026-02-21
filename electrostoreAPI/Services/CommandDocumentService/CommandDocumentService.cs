@@ -20,7 +20,7 @@ public class CommandDocumentService : ICommandDocumentService
         _fileService = fileService;
     }
 
-    public async Task<IEnumerable<ReadCommandDocumentDto>> GetCommandsDocumentsByCommandId(int commandId, int limit = 100, int offset = 0)
+    public async Task<PaginatedResponseDto<ReadCommandDocumentDto>> GetCommandsDocumentsByCommandId(int commandId, int limit = 100, int offset = 0)
     {
         // check if command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commandId))
@@ -32,19 +32,18 @@ public class CommandDocumentService : ICommandDocumentService
         query = query.Skip(offset).Take(limit);
         query = query.OrderBy(cd => cd.id_command_document);
         var commandDocument = await query.ToListAsync();
-        return _mapper.Map<List<ReadCommandDocumentDto>>(commandDocument);
-    }
-
-    public async Task<int> GetCommandsDocumentsCountByCommandId(int commandId)
-    {
-        // check if command exists
-        if (!await _context.Commands.AnyAsync(c => c.id_command == commandId))
+        return new PaginatedResponseDto<ReadCommandDocumentDto>
         {
-            throw new KeyNotFoundException($"Command with id '{commandId}' not found");
-        }
-        return await _context.CommandsDocuments
-            .Where(cd => cd.id_command == commandId)
-            .CountAsync();
+            data = _mapper.Map<IEnumerable<ReadCommandDocumentDto>>(commandDocument),
+            pagination = new PaginationDto
+            {
+                total = await _context.CommandsDocuments.Where(cd => cd.id_command == commandId).CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.CommandsDocuments.Where(cd => cd.id_command == commandId).Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadCommandDocumentDto> GetCommandDocumentById(int id, int? commandId = null)

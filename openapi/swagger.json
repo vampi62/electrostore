@@ -303,37 +303,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadCameraDto"
-                  }
+                  "$ref": "#/components/schemas/ReadCameraDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadCameraDto"
-                  }
+                  "$ref": "#/components/schemas/ReadCameraDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadCameraDto"
-                  }
+                  "$ref": "#/components/schemas/ReadCameraDtoPaginatedResponseDto"
                 }
               }
             }
@@ -708,37 +691,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedCommandDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedCommandDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedCommandDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedCommandDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedCommandDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedCommandDtoPaginatedResponseDto"
                 }
               }
             }
@@ -969,37 +935,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedCommandCommentaireDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedCommandCommentaireDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedCommandCommentaireDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedCommandCommentaireDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedCommandCommentaireDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedCommandCommentaireDtoPaginatedResponseDto"
                 }
               }
             }
@@ -1257,37 +1206,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadCommandDocumentDto"
-                  }
+                  "$ref": "#/components/schemas/ReadCommandDocumentDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadCommandDocumentDto"
-                  }
+                  "$ref": "#/components/schemas/ReadCommandDocumentDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadCommandDocumentDto"
-                  }
+                  "$ref": "#/components/schemas/ReadCommandDocumentDtoPaginatedResponseDto"
                 }
               }
             }
@@ -1589,37 +1521,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedCommandItemDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedCommandItemDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedCommandItemDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedCommandItemDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedCommandItemDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedCommandItemDtoPaginatedResponseDto"
                 }
               }
             }
@@ -1977,37 +1892,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadIADto"
-                  }
+                  "$ref": "#/components/schemas/ReadIADtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadIADto"
-                  }
+                  "$ref": "#/components/schemas/ReadIADtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadIADto"
-                  }
+                  "$ref": "#/components/schemas/ReadIADtoPaginatedResponseDto"
                 }
               }
             }
@@ -2356,37 +2254,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedItemDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedItemDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedItemDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedItemDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedItemDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedItemDtoPaginatedResponseDto"
                 }
               }
             }
@@ -2617,37 +2498,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedItemBoxDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedItemBoxDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedItemBoxDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedItemBoxDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedItemBoxDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedItemBoxDtoPaginatedResponseDto"
                 }
               }
             }
@@ -2916,37 +2780,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedCommandItemDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedCommandItemDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedCommandItemDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedCommandItemDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedCommandItemDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedCommandItemDtoPaginatedResponseDto"
                 }
               }
             }
@@ -3272,37 +3119,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadItemDocumentDto"
-                  }
+                  "$ref": "#/components/schemas/ReadItemDocumentDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadItemDocumentDto"
-                  }
+                  "$ref": "#/components/schemas/ReadItemDocumentDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadItemDocumentDto"
-                  }
+                  "$ref": "#/components/schemas/ReadItemDocumentDtoPaginatedResponseDto"
                 }
               }
             }
@@ -3593,37 +3423,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadImgDto"
-                  }
+                  "$ref": "#/components/schemas/ReadImgDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadImgDto"
-                  }
+                  "$ref": "#/components/schemas/ReadImgDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadImgDto"
-                  }
+                  "$ref": "#/components/schemas/ReadImgDtoPaginatedResponseDto"
                 }
               }
             }
@@ -3965,37 +3778,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetItemDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetItemDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetItemDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetItemDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetItemDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetItemDtoPaginatedResponseDto"
                 }
               }
             }
@@ -4332,37 +4128,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedItemTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedItemTagDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedItemTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedItemTagDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedItemTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedItemTagDtoPaginatedResponseDto"
                 }
               }
             }
@@ -4705,37 +4484,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetDtoPaginatedResponseDto"
                 }
               }
             }
@@ -4966,37 +4728,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetCommentaireDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetCommentaireDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetCommentaireDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetCommentaireDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetCommentaireDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetCommentaireDtoPaginatedResponseDto"
                 }
               }
             }
@@ -5254,37 +4999,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadProjetDocumentDto"
-                  }
+                  "$ref": "#/components/schemas/ReadProjetDocumentDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadProjetDocumentDto"
-                  }
+                  "$ref": "#/components/schemas/ReadProjetDocumentDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadProjetDocumentDto"
-                  }
+                  "$ref": "#/components/schemas/ReadProjetDocumentDtoPaginatedResponseDto"
                 }
               }
             }
@@ -5586,37 +5314,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetItemDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetItemDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetItemDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetItemDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetItemDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetItemDtoPaginatedResponseDto"
                 }
               }
             }
@@ -5953,37 +5664,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetProjetTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetProjetTagDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetProjetTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetProjetTagDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetProjetTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetProjetTagDtoPaginatedResponseDto"
                 }
               }
             }
@@ -6323,37 +6017,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetStatusDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetStatusDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetStatusDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetStatusDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetStatusDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetStatusDtoPaginatedResponseDto"
                 }
               }
             }
@@ -6472,37 +6149,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetTagDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetTagDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetTagDtoPaginatedResponseDto"
                 }
               }
             }
@@ -6790,37 +6450,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetProjetTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetProjetTagDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetProjetTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetProjetTagDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetProjetTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetProjetTagDtoPaginatedResponseDto"
                 }
               }
             }
@@ -7160,37 +6803,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedBoxDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedBoxDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedBoxDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedBoxDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedBoxDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedBoxDtoPaginatedResponseDto"
                 }
               }
             }
@@ -7743,37 +7369,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedItemBoxDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedItemBoxDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedItemBoxDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedItemBoxDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedItemBoxDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedItemBoxDtoPaginatedResponseDto"
                 }
               }
             }
@@ -8087,37 +7696,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedBoxTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedBoxTagDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedBoxTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedBoxTagDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedBoxTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedBoxTagDtoPaginatedResponseDto"
                 }
               }
             }
@@ -8490,37 +8082,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadLedDto"
-                  }
+                  "$ref": "#/components/schemas/ReadLedDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadLedDto"
-                  }
+                  "$ref": "#/components/schemas/ReadLedDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadLedDto"
-                  }
+                  "$ref": "#/components/schemas/ReadLedDtoPaginatedResponseDto"
                 }
               }
             }
@@ -9056,37 +8631,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedStoreDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedStoreDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedStoreDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedStoreDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedStoreDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedStoreDtoPaginatedResponseDto"
                 }
               }
             }
@@ -9424,37 +8982,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedStoreTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedStoreTagDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedStoreTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedStoreTagDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedStoreTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedStoreTagDtoPaginatedResponseDto"
                 }
               }
             }
@@ -9797,37 +9338,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedTagDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedTagDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedTagDtoPaginatedResponseDto"
                 }
               }
             }
@@ -10115,37 +9639,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedBoxTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedBoxTagDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedBoxTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedBoxTagDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedBoxTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedBoxTagDtoPaginatedResponseDto"
                 }
               }
             }
@@ -10485,37 +9992,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedItemTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedItemTagDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedItemTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedItemTagDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedItemTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedItemTagDtoPaginatedResponseDto"
                 }
               }
             }
@@ -10855,37 +10345,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedStoreTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedStoreTagDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedStoreTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedStoreTagDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedStoreTagDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedStoreTagDtoPaginatedResponseDto"
                 }
               }
             }
@@ -11223,42 +10696,33 @@
                 "format": "int32"
               }
             }
+          },
+          {
+            "name": "rsql",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'age=gt=30;name==John'.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedUserDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedUserDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedUserDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedUserDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedUserDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedUserDtoPaginatedResponseDto"
                 }
               }
             }
@@ -11489,37 +10953,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedCommandCommentaireDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedCommandCommentaireDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedCommandCommentaireDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedCommandCommentaireDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedCommandCommentaireDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedCommandCommentaireDtoPaginatedResponseDto"
                 }
               }
             }
@@ -11731,37 +11178,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetCommentaireDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetCommentaireDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetCommentaireDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetCommentaireDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReadExtendedProjetCommentaireDto"
-                  }
+                  "$ref": "#/components/schemas/ReadExtendedProjetCommentaireDtoPaginatedResponseDto"
                 }
               }
             }
@@ -11978,37 +11408,20 @@
         "responses": {
           "200": {
             "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items",
-                "schema": {
-                  "type": "integer"
-                }
-              }
-            },
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SessionDto"
-                  }
+                  "$ref": "#/components/schemas/SessionDtoPaginatedResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SessionDto"
-                  }
+                  "$ref": "#/components/schemas/SessionDtoPaginatedResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SessionDto"
-                  }
+                  "$ref": "#/components/schemas/SessionDtoPaginatedResponseDto"
                 }
               }
             }
@@ -12988,6 +12401,23 @@
         },
         "additionalProperties": false
       },
+      "PaginationDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextOffset": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "PredictionOutput": {
         "type": "object",
         "properties": {
@@ -13328,6 +12758,42 @@
         },
         "additionalProperties": false
       },
+      "ReadCameraDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadCameraDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadCommandCommentaireDto": {
         "required": [
           "contenu_command_commentaire"
@@ -13401,6 +12867,42 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadCommandDocumentDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadCommandDocumentDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -13638,6 +13140,42 @@
         },
         "additionalProperties": false
       },
+      "ReadExtendedBoxDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedBoxDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadExtendedBoxTagDto": {
         "type": "object",
         "properties": {
@@ -13662,6 +13200,42 @@
           },
           "box": {
             "$ref": "#/components/schemas/ReadBoxDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadExtendedBoxTagDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedBoxTagDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -13702,6 +13276,42 @@
           },
           "user": {
             "$ref": "#/components/schemas/ReadUserDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadExtendedCommandCommentaireDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedCommandCommentaireDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -13782,6 +13392,42 @@
         },
         "additionalProperties": false
       },
+      "ReadExtendedCommandDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedCommandDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadExtendedCommandItemDto": {
         "type": "object",
         "properties": {
@@ -13818,6 +13464,42 @@
         },
         "additionalProperties": false
       },
+      "ReadExtendedCommandItemDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedCommandItemDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadExtendedItemBoxDto": {
         "type": "object",
         "properties": {
@@ -13850,6 +13532,42 @@
           },
           "box": {
             "$ref": "#/components/schemas/ReadBoxDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadExtendedItemBoxDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedItemBoxDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -13953,6 +13671,42 @@
         },
         "additionalProperties": false
       },
+      "ReadExtendedItemDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedItemDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadExtendedItemTagDto": {
         "type": "object",
         "properties": {
@@ -13977,6 +13731,42 @@
           },
           "tag": {
             "$ref": "#/components/schemas/ReadTagDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadExtendedItemTagDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedItemTagDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -14017,6 +13807,42 @@
           },
           "user": {
             "$ref": "#/components/schemas/ReadUserDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadExtendedProjetCommentaireDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedProjetCommentaireDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -14124,6 +13950,42 @@
         },
         "additionalProperties": false
       },
+      "ReadExtendedProjetDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedProjetDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadExtendedProjetItemDto": {
         "type": "object",
         "properties": {
@@ -14156,6 +14018,42 @@
         },
         "additionalProperties": false
       },
+      "ReadExtendedProjetItemDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedProjetItemDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadExtendedProjetProjetTagDto": {
         "type": "object",
         "properties": {
@@ -14184,6 +14082,42 @@
         },
         "additionalProperties": false
       },
+      "ReadExtendedProjetProjetTagDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedProjetProjetTagDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadExtendedProjetStatusDto": {
         "type": "object",
         "properties": {
@@ -14208,6 +14142,42 @@
           },
           "projet": {
             "$ref": "#/components/schemas/ReadProjetDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadExtendedProjetStatusDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedProjetStatusDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -14246,6 +14216,42 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ReadProjetProjetTagDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadExtendedProjetTagDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedProjetTagDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
             },
             "nullable": true
           }
@@ -14323,6 +14329,42 @@
         },
         "additionalProperties": false
       },
+      "ReadExtendedStoreDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedStoreDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadExtendedStoreTagDto": {
         "type": "object",
         "properties": {
@@ -14347,6 +14389,42 @@
           },
           "store": {
             "$ref": "#/components/schemas/ReadStoreDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadExtendedStoreTagDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedStoreTagDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -14413,6 +14491,42 @@
         },
         "additionalProperties": false
       },
+      "ReadExtendedTagDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedTagDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadExtendedUserDto": {
         "required": [
           "email_user",
@@ -14473,6 +14587,42 @@
         },
         "additionalProperties": false
       },
+      "ReadExtendedUserDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedUserDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadIADto": {
         "required": [
           "description_ia",
@@ -14502,6 +14652,42 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadIADtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadIADto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -14546,6 +14732,42 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadImgDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadImgDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -14619,6 +14841,42 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadItemDocumentDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadItemDocumentDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -14723,6 +14981,42 @@
         },
         "additionalProperties": false
       },
+      "ReadLedDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadLedDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadProjetCommentaireDto": {
         "required": [
           "contenu_projet_commentaire"
@@ -14796,6 +15090,42 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadProjetDocumentDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadProjetDocumentDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -15192,6 +15522,42 @@
           "first_created_at": {
             "type": "string",
             "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SessionDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filter",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false

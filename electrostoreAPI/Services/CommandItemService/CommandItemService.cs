@@ -16,7 +16,7 @@ public class CommandItemService : ICommandItemService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadExtendedCommandItemDto>> GetCommandsItemsByCommandId(int commandId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedCommandItemDto>> GetCommandsItemsByCommandId(int commandId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commandId))
@@ -36,21 +36,21 @@ public class CommandItemService : ICommandItemService
             query = query.Include(ci => ci.Command);
         }
         var commandItem = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedCommandItemDto>>(commandItem);
-    }
-
-    public async Task<int> GetCommandsItemsCountByCommandId(int commandId)
-    {
-        // check if the command exists
-        if (!await _context.Commands.AnyAsync(c => c.id_command == commandId))
+        return new PaginatedResponseDto<ReadExtendedCommandItemDto>
         {
-            throw new KeyNotFoundException($"Command with id '{commandId}' not found");
-        }
-        return await _context.CommandsItems
-            .CountAsync(ci => ci.id_command == commandId);
+            data = _mapper.Map<List<ReadExtendedCommandItemDto>>(commandItem),
+            pagination = new PaginationDto
+            {
+                total = await _context.CommandsItems.Where(ci => ci.id_command == commandId).CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.CommandsItems.Where(ci => ci.id_command == commandId).Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
-    public async Task<IEnumerable<ReadExtendedCommandItemDto>> GetCommandsItemsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedCommandItemDto>> GetCommandsItemsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
@@ -70,18 +70,18 @@ public class CommandItemService : ICommandItemService
             query = query.Include(ci => ci.Command);
         }
         var commandItem = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedCommandItemDto>>(commandItem);
-    }
-
-    public async Task<int> GetCommandsItemsCountByItemId(int itemId)
-    {
-        // check if the item exists
-        if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
+        return new PaginatedResponseDto<ReadExtendedCommandItemDto>
         {
-            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
-        }
-        return await _context.CommandsItems
-            .CountAsync(ci => ci.id_item == itemId);
+            data = _mapper.Map<List<ReadExtendedCommandItemDto>>(commandItem),
+            pagination = new PaginationDto
+            {
+                total = await _context.CommandsItems.Where(ci => ci.id_item == itemId).CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.CommandsItems.Where(ci => ci.id_item == itemId).Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadExtendedCommandItemDto> GetCommandItemById(int commandId, int itemId, List<string>? expand = null)

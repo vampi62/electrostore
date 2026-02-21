@@ -24,7 +24,7 @@ public class StoreService : IStoreService
     }
 
     // limit the number of store to 100 and add offset and search parameters
-    public async Task<IEnumerable<ReadExtendedStoreDto>> GetStores(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
+    public async Task<PaginatedResponseDto<ReadExtendedStoreDto>> GetStores(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Stores.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
@@ -45,23 +45,29 @@ public class StoreService : IStoreService
                 StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null
             })
             .ToListAsync();
-        return store.Select(s =>
+        return new PaginatedResponseDto<ReadExtendedStoreDto>
         {
-            return _mapper.Map<ReadExtendedStoreDto>(s.Store) with
+            data = store.Select(s =>
             {
-                boxs_count = s.BoxsCount,
-                leds_count = s.LedsCount,
-                stores_tags_count = s.StoresTagsCount,
-                boxs = _mapper.Map<IEnumerable<ReadBoxDto>>(s.Boxs),
-                leds = _mapper.Map<IEnumerable<ReadLedDto>>(s.Leds),
-                stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(s.StoresTags)
-            };
-        }).ToList();
-    }
-
-    public async Task<int> GetStoresCount()
-    {
-        return await _context.Stores.CountAsync();
+                return _mapper.Map<ReadExtendedStoreDto>(s.Store) with
+                {
+                    boxs_count = s.BoxsCount,
+                    leds_count = s.LedsCount,
+                    stores_tags_count = s.StoresTagsCount,
+                    boxs = _mapper.Map<IEnumerable<ReadBoxDto>>(s.Boxs),
+                    leds = _mapper.Map<IEnumerable<ReadLedDto>>(s.Leds),
+                    stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(s.StoresTags)
+                };
+            }).ToList(),
+            pagination = new PaginationDto
+            {
+                total = await _context.Stores.CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.Stores.Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadExtendedStoreDto> GetStoreById(int id, List<string>? expand = null)

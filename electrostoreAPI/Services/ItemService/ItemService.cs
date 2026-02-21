@@ -22,7 +22,7 @@ public class ItemService : IItemService
         _fileService = fileService;
     }
 
-    public async Task<IEnumerable<ReadExtendedItemDto>> GetItems(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
+    public async Task<PaginatedResponseDto<ReadExtendedItemDto>> GetItems(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Items.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
@@ -47,26 +47,32 @@ public class ItemService : IItemService
                 ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null
             })
             .ToListAsync();
-        return item.Select(i => {
-            return _mapper.Map<ReadExtendedItemDto>(i.Item) with
+        return new PaginatedResponseDto<ReadExtendedItemDto>
+        {
+            data = item.Select(i => {
+                return _mapper.Map<ReadExtendedItemDto>(i.Item) with
+                {
+                    item_tags_count = i.ItemsTagsCount,
+                    item_boxs_count = i.ItemsBoxsCount,
+                    command_items_count = i.CommandsItemsCount,
+                    projet_items_count = i.ProjetsItemsCount,
+                    item_documents_count = i.ItemsDocumentsCount,
+                    item_tags = _mapper.Map<IEnumerable<ReadItemTagDto>>(i.ItemsTags),
+                    item_boxs = _mapper.Map<IEnumerable<ReadItemBoxDto>>(i.ItemsBoxs),
+                    command_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(i.CommandsItems),
+                    projet_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(i.ProjetsItems),
+                    item_documents = _mapper.Map<IEnumerable<ReadItemDocumentDto>>(i.ItemsDocuments)
+                };
+            }).ToList(),
+            pagination = new PaginationDto
             {
-                item_tags_count = i.ItemsTagsCount,
-                item_boxs_count = i.ItemsBoxsCount,
-                command_items_count = i.CommandsItemsCount,
-                projet_items_count = i.ProjetsItemsCount,
-                item_documents_count = i.ItemsDocumentsCount,
-                item_tags = _mapper.Map<IEnumerable<ReadItemTagDto>>(i.ItemsTags),
-                item_boxs = _mapper.Map<IEnumerable<ReadItemBoxDto>>(i.ItemsBoxs),
-                command_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(i.CommandsItems),
-                projet_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(i.ProjetsItems),
-                item_documents = _mapper.Map<IEnumerable<ReadItemDocumentDto>>(i.ItemsDocuments)
-            };
-        }).ToList();
-    }
-
-    public async Task<int> GetItemsCount()
-    {
-        return await _context.Items.CountAsync();
+                total = await _context.Items.CountAsync(),
+                nextOffset = offset + limit,
+                hasMore = await _context.Items.Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadExtendedItemDto> GetItemById(int id, List<string>? expand = null)

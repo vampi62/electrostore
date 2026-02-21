@@ -4,13 +4,9 @@ namespace electrostore.Services.StoreTagService;
 
 public interface IStoreTagService
 {
-    public Task<IEnumerable<ReadExtendedStoreTagDto>> GetStoresTagsByStoreId(int storeId, int limit = 100, int offset = 0, List<string>? expand = null);
+    public Task<PaginatedResponseDto<ReadExtendedStoreTagDto>> GetStoresTagsByStoreId(int storeId, int limit = 100, int offset = 0, List<string>? expand = null);
 
-    public Task<int> GetStoresTagsCountByStoreId(int storeId);
-
-    public Task<IEnumerable<ReadExtendedStoreTagDto>> GetStoresTagsByTagId(int tagId, int limit = 100, int offset = 0, List<string>? expand = null);
-
-    public Task<int> GetStoresTagsCountByTagId(int tagId);
+    public Task<PaginatedResponseDto<ReadExtendedStoreTagDto>> GetStoresTagsByTagId(int tagId, int limit = 100, int offset = 0, List<string>? expand = null);
 
     public Task<ReadExtendedStoreTagDto> GetStoreTagById(int storeId, int tagId, List<string>? expand = null);
 

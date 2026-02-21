@@ -20,7 +20,7 @@ public class StoreTagService : IStoreTagService
         _sessionService = sessionService;
     }
 
-    public async Task<IEnumerable<ReadExtendedStoreTagDto>> GetStoresTagsByStoreId(int storeId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedStoreTagDto>> GetStoresTagsByStoreId(int storeId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
@@ -40,21 +40,21 @@ public class StoreTagService : IStoreTagService
             query = query.Include(st => st.Store);
         }
         var storeTag = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedStoreTagDto>>(storeTag);
-    }
-
-    public async Task<int> GetStoresTagsCountByStoreId(int storeId)
-    {
-        // check if store exists
-        if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
+        return new PaginatedResponseDto<ReadExtendedStoreTagDto>
         {
-            throw new KeyNotFoundException($"Store with id '{storeId}' not found");
-        }
-        return await _context.StoresTags
-            .CountAsync(st => st.id_store == storeId);
+            data = _mapper.Map<List<ReadExtendedStoreTagDto>>(storeTag),
+            pagination = new PaginationDto
+            {
+                total = await _context.StoresTags.CountAsync(st => st.id_store == storeId),
+                nextOffset = offset + limit,
+                hasMore = await _context.StoresTags.Skip(offset + limit).AnyAsync(st => st.id_store == storeId)
+            },
+            filter = null,
+            sort = null
+        };
     }
 
-    public async Task<IEnumerable<ReadExtendedStoreTagDto>> GetStoresTagsByTagId(int tagId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedStoreTagDto>> GetStoresTagsByTagId(int tagId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
@@ -74,18 +74,18 @@ public class StoreTagService : IStoreTagService
             query = query.Include(st => st.Store);
         }
         var storeTag = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedStoreTagDto>>(storeTag);
-    }
-
-    public async Task<int> GetStoresTagsCountByTagId(int tagId)
-    {
-        // check if tag exists
-        if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
+        return new PaginatedResponseDto<ReadExtendedStoreTagDto>
         {
-            throw new KeyNotFoundException($"Tag with id '{tagId}' not found");
-        }
-        return await _context.StoresTags
-            .CountAsync(st => st.id_tag == tagId);
+            data = _mapper.Map<List<ReadExtendedStoreTagDto>>(storeTag),
+            pagination = new PaginationDto
+            {
+                total = await _context.StoresTags.CountAsync(st => st.id_tag == tagId),
+                nextOffset = offset + limit,
+                hasMore = await _context.StoresTags.Skip(offset + limit).AnyAsync(st => st.id_tag == tagId)
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadExtendedStoreTagDto> GetStoreTagById(int storeId, int tagId, List<string>? expand = null)

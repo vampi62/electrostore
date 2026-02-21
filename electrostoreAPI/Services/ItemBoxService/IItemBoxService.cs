@@ -4,13 +4,9 @@ namespace electrostore.Services.ItemBoxService;
 
 public interface IItemBoxService
 {
-    public Task<IEnumerable<ReadExtendedItemBoxDto>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0, List<string>? expand = null);
+    public Task<PaginatedResponseDto<ReadExtendedItemBoxDto>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0, List<string>? expand = null);
 
-    public Task<int> GetItemsBoxsCountByBoxId(int boxId);
-
-    public Task<IEnumerable<ReadExtendedItemBoxDto>> GetItemsBoxsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null);
-
-    public Task<int> GetItemsBoxsCountByItemId(int itemId);
+    public Task<PaginatedResponseDto<ReadExtendedItemBoxDto>> GetItemsBoxsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null);
 
     public Task<ReadExtendedItemBoxDto> GetItemBoxById(int itemId, int boxId, List<string>? expand = null);
 

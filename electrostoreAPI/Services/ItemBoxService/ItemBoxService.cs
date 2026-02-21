@@ -16,7 +16,7 @@ public class ItemBoxService : IItemBoxService
         _context = context;
     }
 
-    public async Task<IEnumerable<ReadExtendedItemBoxDto>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedItemBoxDto>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
@@ -36,21 +36,21 @@ public class ItemBoxService : IItemBoxService
             query = query.Include(ib => ib.Box);
         }
         var itemBox = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedItemBoxDto>>(itemBox);
-    }
-
-    public async Task<int> GetItemsBoxsCountByBoxId(int boxId)
-    {
-        // check if the box exists
-        if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
+        return new PaginatedResponseDto<ReadExtendedItemBoxDto>
         {
-            throw new KeyNotFoundException($"Box with id '{boxId}' not found");
-        }
-        return await _context.ItemsBoxs
-            .CountAsync(ib => ib.id_box == boxId);
+            data = _mapper.Map<List<ReadExtendedItemBoxDto>>(itemBox),
+            pagination = new PaginationDto
+            {
+                total = await _context.ItemsBoxs.CountAsync(ib => ib.id_box == boxId),
+                nextOffset = offset + limit,
+                hasMore = await _context.ItemsBoxs.Where(ib => ib.id_box == boxId).Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
-    public async Task<IEnumerable<ReadExtendedItemBoxDto>> GetItemsBoxsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedItemBoxDto>> GetItemsBoxsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null)
     {
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
@@ -70,18 +70,18 @@ public class ItemBoxService : IItemBoxService
             query = query.Include(ib => ib.Box);
         }
         var itemBox = await query.ToListAsync();
-        return _mapper.Map<List<ReadExtendedItemBoxDto>>(itemBox);
-    }
-
-    public async Task<int> GetItemsBoxsCountByItemId(int itemId)
-    {
-        // check if the item exists
-        if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
+        return new PaginatedResponseDto<ReadExtendedItemBoxDto>
         {
-            throw new KeyNotFoundException($"Item with id '{itemId}' not found");
-        }
-        return await _context.ItemsBoxs
-            .CountAsync(ib => ib.id_item == itemId);
+            data = _mapper.Map<List<ReadExtendedItemBoxDto>>(itemBox),
+            pagination = new PaginationDto
+            {
+                total = await _context.ItemsBoxs.CountAsync(ib => ib.id_item == itemId),
+                nextOffset = offset + limit,
+                hasMore = await _context.ItemsBoxs.Where(ib => ib.id_item == itemId).Skip(offset + limit).AnyAsync()
+            },
+            filter = null,
+            sort = null
+        };
     }
 
     public async Task<ReadExtendedItemBoxDto> GetItemBoxById(int itemId, int boxId, List<string>? expand = null)
