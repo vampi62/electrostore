@@ -1,8 +1,9 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
-using electrostore.Models;
 using electrostore.Enums;
+using electrostore.Extensions;
+using electrostore.Models;
 using electrostore.Services.SessionService;
 
 namespace electrostore.Services.ProjetProjetTagService;
@@ -29,9 +30,32 @@ public class ProjetProjetTagService : IProjetProjetTagService
             throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsProjetTags.AsQueryable();
-        query = query.Where(st => st.id_projet == projetId);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_projet", SearchType = "eq", Value = projetId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<ProjetsProjetTags>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<ProjetsProjetTags>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "id_projet_tag", Order = "asc" };
+                query = query.OrderBy(st => st.id_projet_tag);
+            }
+        }
+        else
+        {
+            query = query.OrderBy(st => st.id_projet_tag);
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(st => st.id_projet_tag);
         if (expand != null && expand.Contains("projet"))
         {
             query = query.Include(st => st.Projet);
@@ -66,9 +90,32 @@ public class ProjetProjetTagService : IProjetProjetTagService
             throw new KeyNotFoundException($"ProjetTag with id '{projetTagId}' not found");
         }
         var query = _context.ProjetsProjetTags.AsQueryable();
-        query = query.Where(st => st.id_projet_tag == projetTagId);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_projet_tag", SearchType = "eq", Value = projetTagId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<ProjetsProjetTags>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<ProjetsProjetTags>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "id_projet", Order = "asc" };
+                query = query.OrderBy(st => st.id_projet);
+            }
+        }
+        else
+        {
+            query = query.OrderBy(st => st.id_projet);
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(st => st.id_projet);
         if (expand != null && expand.Contains("projet_tag"))
         {
             query = query.Include(st => st.ProjetTag);

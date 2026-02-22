@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
+using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.FileService;
 
@@ -29,9 +30,32 @@ public class CommandDocumentService : ICommandDocumentService
             throw new KeyNotFoundException($"Command with id '{commandId}' not found");
         }
         var query = _context.CommandsDocuments.AsQueryable();
-        query = query.Where(cd => cd.id_command == commandId);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_command", SearchType = "eq", Value = commandId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<CommandsDocuments>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<CommandsDocuments>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "id_command_document", Order = "asc" };
+                query = query.OrderBy(cd => cd.id_command_document);
+            }
+        }
+        else
+        {
+            query = query.OrderBy(cd => cd.id_command_document);
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(cd => cd.id_command_document);
         var commandDocument = await query.ToListAsync();
         return new PaginatedResponseDto<ReadCommandDocumentDto>
         {

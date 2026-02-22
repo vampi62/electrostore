@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
+using electrostore.Extensions;
 using electrostore.Models;
 
 namespace electrostore.Services.ProjetTagService;
@@ -24,8 +25,33 @@ public class ProjetTagService : IProjetTagService
         {
             query = query.Where(t => idResearch.Contains(t.id_projet_tag));
         }
+        else
+        {
+            if (rsql != null && rsql.Count > 0)
+            {
+                var filterResult = RsqlParserExtensions.ToFilterExpression<ProjetTags>(rsql);
+                query = query.Where(filterResult.Item1);
+                rsql = filterResult.Item2;
+            }
+            if (!string.IsNullOrEmpty(sort?.Field))
+            {
+                var sortResult = RsqlParserExtensions.ToSortExpression<ProjetTags>(sort);
+                if (sortResult.Item1 != null)
+                {
+                    query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+                }
+                else
+                {
+                    sort = new SorterDto { Field = "id_projet_tag", Order = "asc" };
+                    query = query.OrderBy(t => t.id_projet_tag);
+                }
+            }
+            else
+            {
+                query = query.OrderBy(t => t.id_projet_tag);
+            }
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(t => t.id_projet_tag);
         var projetTag = await query
             .Select(t => new
             {
