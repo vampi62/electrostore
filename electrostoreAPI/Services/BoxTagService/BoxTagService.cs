@@ -20,7 +20,8 @@ public class BoxTagService : IBoxTagService
         _sessionService = sessionService;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedBoxTagDto>> GetBoxsTagsByBoxId(int boxId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedBoxTagDto>> GetBoxsTagsByBoxId(int boxId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
@@ -45,16 +46,19 @@ public class BoxTagService : IBoxTagService
             data = _mapper.Map<IEnumerable<ReadExtendedBoxTagDto>>(boxTag),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.BoxsTags.CountAsync(bt => bt.id_box == boxId),
                 nextOffset = offset + limit,
                 hasMore = await _context.BoxsTags.Skip(offset + limit).AnyAsync(bt => bt.id_box == boxId)
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedBoxTagDto>> GetBoxsTagsByTagId(int tagId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedBoxTagDto>> GetBoxsTagsByTagId(int tagId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
@@ -79,12 +83,14 @@ public class BoxTagService : IBoxTagService
             data = _mapper.Map<IEnumerable<ReadExtendedBoxTagDto>>(boxTag),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.BoxsTags.CountAsync(bt => bt.id_tag == tagId),
                 nextOffset = offset + limit,
                 hasMore = await _context.BoxsTags.Skip(offset + limit).AnyAsync(bt => bt.id_tag == tagId)
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

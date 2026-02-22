@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.ProjetTagService;
 using Swashbuckle.AspNetCore.Annotations;
+using electrostore.Extensions;
 
 namespace electrostore.Controllers
 {
@@ -20,15 +21,22 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjetTagDto>>> GetProjetTags([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projets_projet_tags'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null)
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjetTagDto>>> GetProjetTags([FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projets_projet_tags'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'nom_projet_tag=like=example'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'id_projet_tag,asc' or 'id_projet_tag,desc'.")] string? sort = null)
         {
-            var projetTags = await _projetTagService.GetProjetTags(limit, offset, expand, idResearch);
+            var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
+            var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
+            var projetTags = await _projetTagService.GetProjetTags(limit, offset, rsqlDto, sortDto, expand, idResearch);
             return Ok(projetTags);
         }
 
         [HttpGet("{id_projet_tag}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedTagDto>> GetProjetTagById([FromRoute] int id_projet_tag, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projets_projet_tags'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<ReadExtendedTagDto>> GetProjetTagById([FromRoute] int id_projet_tag,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projets_projet_tags'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             var projetTags = await _projetTagService.GetProjetTagById(id_projet_tag, expand);
             return Ok(projetTags);

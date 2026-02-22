@@ -21,7 +21,8 @@ public class ImgService : IImgService
         _fileService = fileService;
     }
 
-    public async Task<PaginatedResponseDto<ReadImgDto>> GetImgsByItemId(int itemId, int limit = 100, int offset = 0)
+    public async Task<PaginatedResponseDto<ReadImgDto>> GetImgsByItemId(int itemId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
         //check if item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
@@ -38,12 +39,14 @@ public class ImgService : IImgService
             data = _mapper.Map<List<ReadImgDto>>(img),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.Imgs.Where(im => im.id_item == itemId).CountAsync(),
                 nextOffset = offset + limit,
                 hasMore = await _context.Imgs.Where(im => im.id_item == itemId).Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.CommandDocumentService;
 using electrostore.Services.FileService;
+using Swashbuckle.AspNetCore.Annotations;
+using electrostore.Extensions;
 
 namespace electrostore.Controllers
 {
@@ -22,9 +24,13 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadCommandDocumentDto>>> GetCommandsDocumentsByCommandId([FromRoute] int id_command, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
+        public async Task<ActionResult<PaginatedResponseDto<ReadCommandDocumentDto>>> GetCommandsDocumentsByCommandId([FromRoute] int id_command, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'name_command_document=like=example'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'name_command_document,asc' or 'name_command_document,desc'.")] string? sort = null)
         {
-            var commandsDocuments = await _commandDocumentService.GetCommandsDocumentsByCommandId(id_command, limit, offset);
+            var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
+            var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
+            var commandsDocuments = await _commandDocumentService.GetCommandsDocumentsByCommandId(id_command, limit, offset, rsqlDto, sortDto);
             return Ok(commandsDocuments);
         }
 

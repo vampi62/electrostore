@@ -4,6 +4,7 @@ using electrostore.Dto;
 using electrostore.Services.ProjetStatusService;
 using System.Security.Claims;
 using Swashbuckle.AspNetCore.Annotations;
+using electrostore.Extensions;
 
 namespace electrostore.Controllers
 {
@@ -21,17 +22,21 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjetStatusDto>>> GetProjetStatusByProjetId([FromRoute] int id_projet, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjetStatusDto>>> GetProjetStatusByProjetId([FromRoute] int id_projet, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL filter. Example: 'status_projet==0'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string. Example: 'created_at,asc' or 'created_at,desc'.")] string? sort = null)
         {
-            var projetStatus = await _projetStatusService.GetProjetStatusByProjetId(id_projet, limit, offset, expand);
+            var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
+            var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
+            var projetStatus = await _projetStatusService.GetProjetStatusByProjetId(id_projet, limit, offset, rsqlDto, sortDto);
             return Ok(projetStatus);
         }
 
         [HttpGet("{id_projet_status}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedProjetStatusDto>> GetProjetStatusById([FromRoute] int id_projet, [FromRoute] int id_projet_status, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<ReadExtendedProjetStatusDto>> GetProjetStatusById([FromRoute] int id_projet, [FromRoute] int id_projet_status)
         {
-            var projetStatus = await _projetStatusService.GetProjetStatusById(id_projet_status, null, id_projet, expand);
+            var projetStatus = await _projetStatusService.GetProjetStatusById(id_projet_status, id_projet);
             return Ok(projetStatus);
         }
     }

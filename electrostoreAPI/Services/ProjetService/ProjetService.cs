@@ -24,7 +24,8 @@ public class ProjetService : IProjetService
         _projetStatusService = projetStatusService;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedProjetDto>> GetProjets(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
+    public async Task<PaginatedResponseDto<ReadExtendedProjetDto>> GetProjets(int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Projets.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
@@ -97,12 +98,14 @@ public class ProjetService : IProjetService
             }).ToList(),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.Projets.CountAsync(),
                 nextOffset = offset + limit,
                 hasMore = await _context.Projets.Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

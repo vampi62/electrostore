@@ -4,6 +4,7 @@ using electrostore.Dto;
 using electrostore.Services.ProjetCommentaireService;
 using System.Security.Claims;
 using Swashbuckle.AspNetCore.Annotations;
+using electrostore.Extensions;
 
 namespace electrostore.Controllers
 {
@@ -21,15 +22,21 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjetCommentaireDto>>> GetProjetCommentairesByProjetId([FromRoute] int id_projet, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjetCommentaireDto>>> GetProjetCommentairesByProjetId([FromRoute] int id_projet, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL filter. Example: 'contenu_projet_commentaire=like=test'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string. Example: 'created_at,asc' or 'created_at,desc'.")] string? sort = null)
         {
-            var projetCommentaires = await _projetCommentaireService.GetProjetCommentairesByProjetId(id_projet, limit, offset, expand);
+            var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
+            var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
+            var projetCommentaires = await _projetCommentaireService.GetProjetCommentairesByProjetId(id_projet, limit, offset, rsqlDto, sortDto, expand);
             return Ok(projetCommentaires);
         }
 
         [HttpGet("{id_projet_commentaire}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedProjetCommentaireDto>> GetProjetCommentairesById([FromRoute] int id_projet, [FromRoute] int id_projet_commentaire, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<ReadExtendedProjetCommentaireDto>> GetProjetCommentairesById([FromRoute] int id_projet, [FromRoute] int id_projet_commentaire,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet', 'user'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             var projetCommentaire = await _projetCommentaireService.GetProjetCommentairesById(id_projet_commentaire, null, id_projet, expand);
             return Ok(projetCommentaire);

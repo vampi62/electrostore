@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.CommandItemService;
 using Swashbuckle.AspNetCore.Annotations;
+using electrostore.Extensions;
 
 namespace electrostore.Controllers
 {
@@ -20,15 +21,21 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedCommandItemDto>>> GetCommandsItemsByCommandId([FromRoute] int id_command, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedCommandItemDto>>> GetCommandsItemsByCommandId([FromRoute] int id_command, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'prix_command_item=gt=100'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'prix_command_item,asc' or 'prix_command_item,desc'.")] string? sort = null)
         {
-            var commandItems = await _commandItemService.GetCommandsItemsByCommandId(id_command, limit, offset, expand);
+            var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
+            var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
+            var commandItems = await _commandItemService.GetCommandsItemsByCommandId(id_command, limit, offset, rsqlDto, sortDto, expand);
             return Ok(commandItems);
         }
 
         [HttpGet("{id_item}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedCommandItemDto>> GetCommandItemById([FromRoute] int id_command, [FromRoute] int id_item, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<ReadExtendedCommandItemDto>> GetCommandItemById([FromRoute] int id_command, [FromRoute] int id_item,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             var commandItem = await _commandItemService.GetCommandItemById(id_command, id_item, expand);
             return Ok(commandItem);

@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.LedService;
+using Swashbuckle.AspNetCore.Annotations;
+using electrostore.Extensions;
 
 namespace electrostore.Controllers
 {
@@ -19,9 +21,13 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadLedDto>>> GetLedsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
+        public async Task<ActionResult<PaginatedResponseDto<ReadLedDto>>> GetLedsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'x_led=gt=10'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'x_led,asc' or 'x_led,desc'.")] string? sort = null)
         {
-            var leds = await _ledService.GetLedsByStoreId(id_store, limit, offset);
+            var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
+            var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
+            var leds = await _ledService.GetLedsByStoreId(id_store, limit, offset, rsqlDto, sortDto);
             return Ok(leds);
         }
 

@@ -26,15 +26,31 @@ public class UserService : IUserService
         _jwiService = jwiService;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null, string? rsql = null)
+    public async Task<PaginatedResponseDto<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Users.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(u => idResearch.Contains(u.id_user));
         }
-        query = query.Skip(offset).Take(limit);
+        /* var filterResult;
+        if (!string.IsNullOrEmpty(rsql))
+        {
+            filterResult = RsqlParserExtensions.ToFilterExpression<Users>(rsql);
+            query = query.Where(RsqlParserExtensions.ToFilterExpression<Users>(rsql));
+        }
+        var sortResult;
+        if (!string.IsNullOrEmpty(sort))
+        {
+            sortResult = RsqlParserExtensions.ToSortExpression<Users>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+        } */
         query = query.OrderBy(u => u.id_user);
+        query = query.Skip(offset).Take(limit);
         var user = await query
             .Select(u => new
             {
@@ -59,12 +75,14 @@ public class UserService : IUserService
             }).ToList(),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.Users.CountAsync(),
                 nextOffset = offset + limit,
                 hasMore = await _context.Users.Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

@@ -16,7 +16,8 @@ public class ProjetItemService : IProjetItemService
         _context = context;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedProjetItemDto>> GetProjetItemsByProjetId(int projetId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedProjetItemDto>> GetProjetItemsByProjetId(int projetId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
@@ -41,16 +42,19 @@ public class ProjetItemService : IProjetItemService
             data = _mapper.Map<List<ReadExtendedProjetItemDto>>(projetItem),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.ProjetsItems.CountAsync(pi => pi.id_projet == projetId),
                 nextOffset = offset + limit,
                 hasMore = await _context.ProjetsItems.Skip(offset + limit).AnyAsync(pi => pi.id_projet == projetId)
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedProjetItemDto>> GetProjetItemsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedProjetItemDto>> GetProjetItemsByItemId(int itemId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
@@ -75,12 +79,14 @@ public class ProjetItemService : IProjetItemService
             data = _mapper.Map<List<ReadExtendedProjetItemDto>>(projetItem),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.ProjetsItems.CountAsync(pi => pi.id_item == itemId),
                 nextOffset = offset + limit,
                 hasMore = await _context.ProjetsItems.Skip(offset + limit).AnyAsync(pi => pi.id_item == itemId)
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

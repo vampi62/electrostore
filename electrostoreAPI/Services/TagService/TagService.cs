@@ -16,7 +16,8 @@ public class TagService : ITagService
         _context = context;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedTagDto>> GetTags(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null)
+    public async Task<PaginatedResponseDto<ReadExtendedTagDto>> GetTags(int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Tags.AsQueryable();
         if (idResearch is not null && idResearch.Count > 0)
@@ -52,12 +53,14 @@ public class TagService : ITagService
             }).ToList(),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.Tags.CountAsync(),
                 nextOffset = offset + limit,
                 hasMore = await _context.Tags.Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

@@ -20,7 +20,8 @@ public class CommandCommentaireService : ICommandCommentaireService
         _sessionService = sessionService;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedCommandCommentaireDto>> GetCommandsCommentairesByCommandId(int CommandId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedCommandCommentaireDto>> GetCommandsCommentairesByCommandId(int CommandId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == CommandId))
@@ -45,16 +46,19 @@ public class CommandCommentaireService : ICommandCommentaireService
             data = _mapper.Map<IEnumerable<ReadExtendedCommandCommentaireDto>>(commandCommentaire),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.CommandsCommentaires.Where(cc => cc.id_command == CommandId).CountAsync(),
                 nextOffset = offset + limit,
                 hasMore = await _context.CommandsCommentaires.Where(cc => cc.id_command == CommandId).Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedCommandCommentaireDto>> GetCommandsCommentairesByUserId(int userId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedCommandCommentaireDto>> GetCommandsCommentairesByUserId(int userId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
@@ -79,12 +83,14 @@ public class CommandCommentaireService : ICommandCommentaireService
             data = _mapper.Map<IEnumerable<ReadExtendedCommandCommentaireDto>>(commandCommentaire),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.CommandsCommentaires.Where(cc => cc.id_user == userId).CountAsync(),
                 nextOffset = offset + limit,
                 hasMore = await _context.CommandsCommentaires.Where(cc => cc.id_user == userId).Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.ProjetItemService;
 using Swashbuckle.AspNetCore.Annotations;
+using electrostore.Extensions;
 
 namespace electrostore.Controllers
 {
@@ -20,15 +21,21 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjetItemDto>>> GetProjetItemsByProjetId([FromRoute] int id_projet, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjetItemDto>>> GetProjetItemsByProjetId([FromRoute] int id_projet, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL filter. Example: 'qte_projet_item=gt=5'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string. Example: 'qte_projet_item,asc' or 'qte_projet_item,desc'.")] string? sort = null)
         {
-            var projetItems = await _projetItemService.GetProjetItemsByProjetId(id_projet, limit, offset, expand);
+            var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
+            var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
+            var projetItems = await _projetItemService.GetProjetItemsByProjetId(id_projet, limit, offset, rsqlDto, sortDto, expand);
             return Ok(projetItems);
         }
 
         [HttpGet("{id_item}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedProjetItemDto>> GetProjetItemById([FromRoute] int id_projet, [FromRoute] int id_item, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<ReadExtendedProjetItemDto>> GetProjetItemById([FromRoute] int id_projet, [FromRoute] int id_item,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             var projetItem = await _projetItemService.GetProjetItemById(id_projet, id_item, expand);
             return Ok(projetItem);

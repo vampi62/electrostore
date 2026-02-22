@@ -29,7 +29,8 @@ public class LedService : ILedService
         _validateStoreService = validateStoreService;
     }
 
-    public async Task<PaginatedResponseDto<ReadLedDto>> GetLedsByStoreId(int storeId, int limit = 100, int offset = 0)
+    public async Task<PaginatedResponseDto<ReadLedDto>> GetLedsByStoreId(int storeId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
         // check if the store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
@@ -46,12 +47,14 @@ public class LedService : ILedService
             data = _mapper.Map<List<ReadLedDto>>(led),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.Leds.Where(l => l.id_store == storeId).CountAsync(),
                 nextOffset = offset + limit,
                 hasMore = await _context.Leds.Where(l => l.id_store == storeId).Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

@@ -20,7 +20,8 @@ public class CommandDocumentService : ICommandDocumentService
         _fileService = fileService;
     }
 
-    public async Task<PaginatedResponseDto<ReadCommandDocumentDto>> GetCommandsDocumentsByCommandId(int commandId, int limit = 100, int offset = 0)
+    public async Task<PaginatedResponseDto<ReadCommandDocumentDto>> GetCommandsDocumentsByCommandId(int commandId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
         // check if command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commandId))
@@ -37,12 +38,14 @@ public class CommandDocumentService : ICommandDocumentService
             data = _mapper.Map<IEnumerable<ReadCommandDocumentDto>>(commandDocument),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.CommandsDocuments.Where(cd => cd.id_command == commandId).CountAsync(),
                 nextOffset = offset + limit,
                 hasMore = await _context.CommandsDocuments.Where(cd => cd.id_command == commandId).Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

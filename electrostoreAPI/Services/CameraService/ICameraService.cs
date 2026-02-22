@@ -5,7 +5,7 @@ namespace electrostore.Services.CameraService;
 
 public interface ICameraService
 {
-    public Task<PaginatedResponseDto<ReadCameraDto>> GetCameras(int limit = 100, int offset = 0, List<int>? idResearch = null);
+    public Task<PaginatedResponseDto<ReadCameraDto>> GetCameras(int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<int>? idResearch = null);
 
     public Task<ReadCameraDto> GetCameraById(int id);
 

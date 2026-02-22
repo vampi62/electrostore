@@ -20,7 +20,8 @@ public class ProjetProjetTagService : IProjetProjetTagService
         _sessionService = sessionService;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedProjetProjetTagDto>> GetProjetsProjetTagsByProjetId(int projetId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedProjetProjetTagDto>> GetProjetsProjetTagsByProjetId(int projetId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if projet exists
         if (!await _context.Projets.AnyAsync(s => s.id_projet == projetId))
@@ -45,16 +46,19 @@ public class ProjetProjetTagService : IProjetProjetTagService
             data = _mapper.Map<List<ReadExtendedProjetProjetTagDto>>(projetProjetTag),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.ProjetsProjetTags.CountAsync(st => st.id_projet == projetId),
                 nextOffset = offset + limit,
                 hasMore = await _context.ProjetsProjetTags.Skip(offset + limit).AnyAsync(st => st.id_projet == projetId)
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedProjetProjetTagDto>> GetProjetsProjetTagsByprojetTagId(int projetTagId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedProjetProjetTagDto>> GetProjetsProjetTagsByprojetTagId(int projetTagId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if projetTag exists
         if (!await _context.ProjetTags.AnyAsync(t => t.id_projet_tag == projetTagId))
@@ -79,12 +83,14 @@ public class ProjetProjetTagService : IProjetProjetTagService
             data = _mapper.Map<List<ReadExtendedProjetProjetTagDto>>(projetProjetTag),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.ProjetsProjetTags.CountAsync(st => st.id_projet_tag == projetTagId),
                 nextOffset = offset + limit,
                 hasMore = await _context.ProjetsProjetTags.Skip(offset + limit).AnyAsync(st => st.id_projet_tag == projetTagId)
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

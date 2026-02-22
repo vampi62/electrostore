@@ -4,7 +4,7 @@ namespace electrostore.Services.StoreService;
 
 public interface IStoreService
 {
-    public Task<PaginatedResponseDto<ReadExtendedStoreDto>> GetStores(int limit = 100, int offset = 0, List<string>? expand = null, List<int>? idResearch = null);
+    public Task<PaginatedResponseDto<ReadExtendedStoreDto>> GetStores(int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null);
 
     public Task<ReadExtendedStoreDto> GetStoreById(int id, List<string>? expand = null);
 

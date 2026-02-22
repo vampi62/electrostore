@@ -16,7 +16,8 @@ public class ItemBoxService : IItemBoxService
         _context = context;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedItemBoxDto>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedItemBoxDto>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if the box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
@@ -41,16 +42,19 @@ public class ItemBoxService : IItemBoxService
             data = _mapper.Map<List<ReadExtendedItemBoxDto>>(itemBox),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.ItemsBoxs.CountAsync(ib => ib.id_box == boxId),
                 nextOffset = offset + limit,
                 hasMore = await _context.ItemsBoxs.Where(ib => ib.id_box == boxId).Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedItemBoxDto>> GetItemsBoxsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedItemBoxDto>> GetItemsBoxsByItemId(int itemId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
@@ -75,12 +79,14 @@ public class ItemBoxService : IItemBoxService
             data = _mapper.Map<List<ReadExtendedItemBoxDto>>(itemBox),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.ItemsBoxs.CountAsync(ib => ib.id_item == itemId),
                 nextOffset = offset + limit,
                 hasMore = await _context.ItemsBoxs.Where(ib => ib.id_item == itemId).Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

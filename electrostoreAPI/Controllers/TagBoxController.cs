@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.BoxTagService;
 using Swashbuckle.AspNetCore.Annotations;
+using electrostore.Extensions;
 
 namespace electrostore.Controllers
 {
@@ -20,15 +21,21 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedBoxTagDto>>> GetBoxsTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedBoxTagDto>>> GetBoxsTagsByTagId([FromRoute] int id_tag, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'id_box==1'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'id_box,asc'.")] string? sort = null)
         {
-            var boxTags = await _boxTagService.GetBoxsTagsByTagId(id_tag, limit, offset, expand);
+            var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
+            var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
+            var boxTags = await _boxTagService.GetBoxsTagsByTagId(id_tag, limit, offset, rsqlDto, sortDto);
             return Ok(boxTags);
         }
 
         [HttpGet("{id_box}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedBoxTagDto>> GetBoxTagById([FromRoute] int id_tag, [FromRoute] int id_box, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<ReadExtendedBoxTagDto>> GetBoxTagById([FromRoute] int id_tag, [FromRoute] int id_box,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'box'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             var boxTag = await _boxTagService.GetBoxTagById(id_box, id_tag, expand);
             return Ok(boxTag);

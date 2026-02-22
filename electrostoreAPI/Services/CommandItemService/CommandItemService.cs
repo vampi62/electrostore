@@ -16,7 +16,8 @@ public class CommandItemService : ICommandItemService
         _context = context;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedCommandItemDto>> GetCommandsItemsByCommandId(int commandId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedCommandItemDto>> GetCommandsItemsByCommandId(int commandId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commandId))
@@ -41,16 +42,19 @@ public class CommandItemService : ICommandItemService
             data = _mapper.Map<List<ReadExtendedCommandItemDto>>(commandItem),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.CommandsItems.Where(ci => ci.id_command == commandId).CountAsync(),
                 nextOffset = offset + limit,
                 hasMore = await _context.CommandsItems.Where(ci => ci.id_command == commandId).Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedCommandItemDto>> GetCommandsItemsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedCommandItemDto>> GetCommandsItemsByItemId(int itemId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
@@ -75,12 +79,14 @@ public class CommandItemService : ICommandItemService
             data = _mapper.Map<List<ReadExtendedCommandItemDto>>(commandItem),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.CommandsItems.Where(ci => ci.id_item == itemId).CountAsync(),
                 nextOffset = offset + limit,
                 hasMore = await _context.CommandsItems.Where(ci => ci.id_item == itemId).Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.StoreTagService;
 using Swashbuckle.AspNetCore.Annotations;
+using electrostore.Extensions;
 
 namespace electrostore.Controllers
 {
@@ -20,15 +21,21 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedStoreTagDto>>> GetStoresTagsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedStoreTagDto>>> GetStoresTagsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'id_tag==1'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'id_tag,asc'.")] string? sort = null)
         {
-            var storeTags = await _storeTagService.GetStoresTagsByStoreId(id_store, limit, offset, expand);
+            var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
+            var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
+            var storeTags = await _storeTagService.GetStoresTagsByStoreId(id_store, limit, offset, rsqlDto, sortDto, expand);
             return Ok(storeTags);
         }
         
         [HttpGet("{id_tag}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedStoreTagDto>> GetStoreTagById([FromRoute] int id_store, [FromRoute] int id_tag, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<ReadExtendedStoreTagDto>> GetStoreTagById([FromRoute] int id_store, [FromRoute] int id_tag,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'tag', 'store'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             var storeTag = await _storeTagService.GetStoreTagById(id_store, id_tag, expand);
             return Ok(storeTag);

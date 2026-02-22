@@ -23,7 +23,8 @@ public class BoxService : IBoxService
         _validateStoreService = validateStoreService;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedBoxDto>> GetBoxsByStoreId(int storeId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedBoxDto>> GetBoxsByStoreId(int storeId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if the store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
@@ -61,8 +62,8 @@ public class BoxService : IBoxService
                 nextOffset = offset + limit,
                 hasMore = await _context.Boxs.Where(b => b.id_store == storeId).Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

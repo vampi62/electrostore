@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.ImgService;
 using electrostore.Services.FileService;
+using Swashbuckle.AspNetCore.Annotations;
+using electrostore.Extensions;
 
 namespace electrostore.Controllers
 {
@@ -22,9 +24,13 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadImgDto>>> GetImgsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0)
+        public async Task<ActionResult<PaginatedResponseDto<ReadImgDto>>> GetImgsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'nom_img=like=example'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'nom_img,asc' or 'nom_img,desc'.")] string? sort = null)
         {
-            var itemImgs = await _imgService.GetImgsByItemId(id_item, limit, offset);
+            var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
+            var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
+            var itemImgs = await _imgService.GetImgsByItemId(id_item, limit, offset, rsqlDto, sortDto);
             return Ok(itemImgs);
         }
 

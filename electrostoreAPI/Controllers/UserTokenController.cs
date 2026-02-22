@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.JwiService;
+using Swashbuckle.AspNetCore.Annotations;
+using electrostore.Extensions;
 
 namespace electrostore.Controllers
 {
@@ -20,18 +22,20 @@ namespace electrostore.Controllers
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<PaginatedResponseDto<SessionDto>>> GetSessions([FromRoute] int id_user, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
-            [FromQuery] bool show_revoked = false, [FromQuery] bool show_expired = false)
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'is_revoked==true' or 'is_revoked==false'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'created_at,asc' or 'created_at,desc'.")] string? sort = null)
         {
-            var sessions = await _jwiService.GetTokenSessionsByUserId(id_user, limit, offset, show_revoked, show_expired);
+            var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
+            var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
+            var sessions = await _jwiService.GetTokenSessionsByUserId(id_user, limit, offset, rsqlDto, sortDto);
             return Ok(sessions);
         }
 
         [HttpGet("{session_id}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<SessionDto>> GetSessionById([FromRoute] int id_user, [FromRoute] string session_id,
-            [FromQuery] bool show_revoked = false, [FromQuery] bool show_expired = false)
+        public async Task<ActionResult<SessionDto>> GetSessionById([FromRoute] int id_user, [FromRoute] string session_id)
         {
-            var session = await _jwiService.GetTokenSessionById(session_id, id_user, show_revoked, show_expired);
+            var session = await _jwiService.GetTokenSessionById(session_id, id_user);
             return Ok(session);
         }
 
