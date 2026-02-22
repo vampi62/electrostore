@@ -17,7 +17,8 @@ public class ProjetStatusService : IProjetStatusService
         _context = context;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedProjetStatusDto>> GetProjetStatusByProjetId(int projetId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedProjetStatusDto>> GetProjetStatusByProjetId(int projetId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
@@ -28,33 +29,27 @@ public class ProjetStatusService : IProjetStatusService
         query = query.Where(p => p.id_projet == projetId);
         query = query.Skip(offset).Take(limit);
         query = query.OrderByDescending(p => p.created_at);
-        if (expand != null && expand.Contains("projet"))
-        {
-            query = query.Include(p => p.Projet);
-        }
         var projetStatus = await query.ToListAsync();
         return new PaginatedResponseDto<ReadExtendedProjetStatusDto>
         {
             data = _mapper.Map<List<ReadExtendedProjetStatusDto>>(projetStatus),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.ProjetsStatus.CountAsync(p => p.id_projet == projetId),
                 nextOffset = offset + limit,
                 hasMore = await _context.ProjetsStatus.Skip(offset + limit).AnyAsync(p => p.id_projet == projetId)
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 
-    public async Task<ReadExtendedProjetStatusDto> GetProjetStatusById(int id, int? userId = null, int? projetId = null, List<string>? expand = null)
+    public async Task<ReadExtendedProjetStatusDto> GetProjetStatusById(int id, int? projetId = null)
     {
         var query = _context.ProjetsStatus.AsQueryable();
         query = query.Where(pc => pc.id_projet_status == id && (projetId == null || pc.id_projet == projetId));
-        if (expand != null && expand.Contains("projet"))
-        {
-            query = query.Include(pc => pc.Projet);
-        }
         var projetStatus = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetStatus with id '{id}' not found");
         return _mapper.Map<ReadExtendedProjetStatusDto>(projetStatus);
     }

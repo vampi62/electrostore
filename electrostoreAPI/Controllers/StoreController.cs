@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.StoreService;
 using Swashbuckle.AspNetCore.Annotations;
+using electrostore.Extensions;
 
 namespace electrostore.Controllers
 {
@@ -19,15 +20,22 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedStoreDto>>> GetStores([FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null)
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedStoreDto>>> GetStores([FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'nom_store=like=example'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'nom_store,asc' or 'nom_store,desc'.")] string? sort = null)
         {
-            var stores = await _storeService.GetStores(limit, offset, expand, idResearch);
+            var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
+            var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
+            var stores = await _storeService.GetStores(limit, offset, rsqlDto, sortDto, expand, idResearch);
             return Ok(stores);
         }
 
         [HttpGet("{id_store}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedStoreDto>> GetStoreById([FromRoute] int id_store, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<ReadExtendedStoreDto>> GetStoreById([FromRoute] int id_store,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'boxs', 'leds', 'stores_tags'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             var store = await _storeService.GetStoreById(id_store, expand);
             return Ok(store);

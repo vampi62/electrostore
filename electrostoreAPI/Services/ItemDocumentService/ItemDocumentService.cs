@@ -20,7 +20,8 @@ public class ItemDocumentService : IItemDocumentService
         _fileService = fileService;
     }
 
-    public async Task<PaginatedResponseDto<ReadItemDocumentDto>> GetItemsDocumentsByItemId(int itemId, int limit = 100, int offset = 0)
+    public async Task<PaginatedResponseDto<ReadItemDocumentDto>> GetItemsDocumentsByItemId(int itemId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
         // check if item exists
         if (!await _context.Items.AnyAsync(item => item.id_item == itemId))
@@ -37,12 +38,14 @@ public class ItemDocumentService : IItemDocumentService
             data = _mapper.Map<List<ReadItemDocumentDto>>(itemDocument),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.ItemsDocuments.Where(id => id.id_item == itemId).CountAsync(),
                 nextOffset = offset + limit,
                 hasMore = await _context.ItemsDocuments.Where(id => id.id_item == itemId).Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

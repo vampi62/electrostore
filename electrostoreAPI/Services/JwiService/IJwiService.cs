@@ -14,9 +14,9 @@ public interface IJwiService
 
     public Task RevokeAllRefreshTokenByUser(int userId, string reason);
 
-    public Task<PaginatedResponseDto<SessionDto>> GetTokenSessionsByUserId(int userId, int limit, int offset, bool showRevoked = false, bool showExpired = false);
+    public Task<PaginatedResponseDto<SessionDto>> GetTokenSessionsByUserId(int userId, int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null);
 
-    public Task<SessionDto> GetTokenSessionById(string id, int userId, bool showRevoked = false, bool showExpired = false);
+    public Task<SessionDto> GetTokenSessionById(string id, int userId);
 
     public Task<Guid> GetSessionIdByTokenId(string id, int userId);
 

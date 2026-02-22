@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using electrostore.Dto;
 using electrostore.Services.ItemBoxService;
 using Swashbuckle.AspNetCore.Annotations;
+using electrostore.Extensions;
 
 namespace electrostore.Controllers
 {
@@ -20,16 +21,22 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedItemBoxDto>>> GetItemsBoxsByBoxId([FromRoute] int id_store, [FromRoute] int id_box, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedItemBoxDto>>> GetItemsBoxsByBoxId([FromRoute] int id_store, [FromRoute] int id_box, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'qte_item_box=gt=1'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'qte_item_box,asc'.")] string? sort = null)
         {
+            var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
+            var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
             await _itemBoxService.CheckIfStoreExists(id_store,id_box);
-            var itemsBoxs = await _itemBoxService.GetItemsBoxsByBoxId(id_box, limit, offset, expand);
+            var itemsBoxs = await _itemBoxService.GetItemsBoxsByBoxId(id_box, limit, offset, rsqlDto, sortDto, expand);
             return Ok(itemsBoxs);
         }
 
         [HttpGet("{id_item}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedItemBoxDto>> GetItemBoxById([FromRoute] int id_store, [FromRoute] int id_box, [FromRoute] int id_item, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<ReadExtendedItemBoxDto>> GetItemBoxById([FromRoute] int id_store, [FromRoute] int id_box, [FromRoute] int id_item,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             await _itemBoxService.CheckIfStoreExists(id_store,id_box);
             var itemBox = await _itemBoxService.GetItemBoxById(id_item, id_box, expand);

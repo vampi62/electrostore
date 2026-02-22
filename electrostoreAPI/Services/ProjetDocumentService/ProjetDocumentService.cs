@@ -20,7 +20,8 @@ public class ProjetDocumentService : IProjetDocumentService
         _fileService = fileService;
     }
 
-    public async Task<PaginatedResponseDto<ReadProjetDocumentDto>> GetProjetDocumentsByProjetId(int projetId, int limit = 100, int offset = 0)
+    public async Task<PaginatedResponseDto<ReadProjetDocumentDto>> GetProjetDocumentsByProjetId(int projetId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
@@ -37,12 +38,14 @@ public class ProjetDocumentService : IProjetDocumentService
             data = _mapper.Map<List<ReadProjetDocumentDto>>(projetDocument),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.ProjetsDocuments.CountAsync(pd => pd.id_projet == projetId),
                 nextOffset = offset + limit,
                 hasMore = await _context.ProjetsDocuments.Skip(offset + limit).AnyAsync(pd => pd.id_projet == projetId)
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

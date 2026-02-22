@@ -4,7 +4,7 @@ namespace electrostore.Services.LedService;
 
 public interface ILedService
 {
-    public Task<PaginatedResponseDto<ReadLedDto>> GetLedsByStoreId(int storeId, int limit = 100, int offset = 0);
+    public Task<PaginatedResponseDto<ReadLedDto>> GetLedsByStoreId(int storeId, int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null);
 
     public Task<ReadLedDto> GetLedById(int id, int? storeId = null);
 

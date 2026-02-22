@@ -20,7 +20,8 @@ public class StoreTagService : IStoreTagService
         _sessionService = sessionService;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedStoreTagDto>> GetStoresTagsByStoreId(int storeId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedStoreTagDto>> GetStoresTagsByStoreId(int storeId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
@@ -45,16 +46,19 @@ public class StoreTagService : IStoreTagService
             data = _mapper.Map<List<ReadExtendedStoreTagDto>>(storeTag),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.StoresTags.CountAsync(st => st.id_store == storeId),
                 nextOffset = offset + limit,
                 hasMore = await _context.StoresTags.Skip(offset + limit).AnyAsync(st => st.id_store == storeId)
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedStoreTagDto>> GetStoresTagsByTagId(int tagId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedStoreTagDto>> GetStoresTagsByTagId(int tagId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
@@ -79,12 +83,14 @@ public class StoreTagService : IStoreTagService
             data = _mapper.Map<List<ReadExtendedStoreTagDto>>(storeTag),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.StoresTags.CountAsync(st => st.id_tag == tagId),
                 nextOffset = offset + limit,
                 hasMore = await _context.StoresTags.Skip(offset + limit).AnyAsync(st => st.id_tag == tagId)
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

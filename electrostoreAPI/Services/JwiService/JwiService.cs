@@ -144,7 +144,8 @@ public class JwiService : IJwiService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<PaginatedResponseDto<SessionDto>> GetTokenSessionsByUserId(int userId, int limit, int offset, bool showRevoked = false, bool showExpired = false)
+    public async Task<PaginatedResponseDto<SessionDto>> GetTokenSessionsByUserId(int userId, int limit, int offset,
+    List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
@@ -174,30 +175,32 @@ public class JwiService : IJwiService
             .Skip(offset)
             .Take(limit);
         var sessions = await groupedQuery.ToListAsync();
-        if (!showRevoked)
+        /* if (!showRevoked)
         {
             sessions = sessions.Where(s => !s.is_revoked).ToList();
         }
         if (!showExpired)
         {
             sessions = sessions.Where(s => s.expires_at > DateTime.UtcNow).ToList();
-        }
+        } */
         return new PaginatedResponseDto<SessionDto>
         {
             data = sessions,
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await query.Select(jwi => jwi.session_id).Distinct().CountAsync(),
                 nextOffset = offset + limit,
                 hasMore = await query.Select(jwi => jwi.session_id).Distinct().Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 
 
-    public async Task<SessionDto> GetTokenSessionById(string id, int userId, bool showRevoked = false, bool showExpired = false)
+    public async Task<SessionDto> GetTokenSessionById(string id, int userId)
     {
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
