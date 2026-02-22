@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
+using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.FileService;
 
@@ -29,9 +30,32 @@ public class ProjetDocumentService : IProjetDocumentService
             throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsDocuments.AsQueryable();
-        query = query.Where(pd => pd.id_projet == projetId);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_projet", SearchType = "eq", Value = projetId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<ProjetsDocuments>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<ProjetsDocuments>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "id_projet_document", Order = "asc" };
+                query = query.OrderBy(pd => pd.id_projet_document);
+            }
+        }
+        else
+        {
+            query = query.OrderBy(pd => pd.id_projet_document);
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(pd => pd.id_projet_document);
         var projetDocument = await query.ToListAsync();
         return new PaginatedResponseDto<ReadProjetDocumentDto>
         {

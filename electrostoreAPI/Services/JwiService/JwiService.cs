@@ -1,12 +1,13 @@
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using electrostore.Dto;
-using Microsoft.EntityFrameworkCore;
-using electrostore.Models;
-using electrostore.Enums;
-using electrostore.Services.SessionService;
 using Microsoft.IdentityModel.JsonWebTokens;
+using electrostore.Dto;
+using electrostore.Enums;
+using electrostore.Extensions;
+using electrostore.Models;
+using electrostore.Services.SessionService;
 
 namespace electrostore.Services.JwiService;
 
@@ -153,8 +154,32 @@ public class JwiService : IJwiService
         {
             throw new UnauthorizedAccessException("You are not authorized to view this session.");
         }
-        var query = _context.JwiRefreshTokens
-            .Where(jwi => jwi.id_user == userId);
+        var query = _context.JwiRefreshTokens.AsQueryable();
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_user", SearchType = "eq", Value = userId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<JwiRefreshTokens>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<JwiRefreshTokens>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "created_at", Order = "desc" };
+                query = query.OrderByDescending(jwi => jwi.created_at);
+            }
+        }
+        else
+        {
+            query = query.OrderByDescending(jwi => jwi.created_at);
+        }
         var groupedQuery = query
             .GroupBy(jwi => jwi.session_id)
             .Select(group => new SessionDto
@@ -171,21 +196,11 @@ public class JwiService : IJwiService
                 id_user = group.OrderByDescending(jwi => jwi.expires_at).First().id_user,
                 first_created_at = group.OrderBy(jwi => jwi.expires_at).First().created_at
             })
-            .OrderByDescending(jwi => jwi.created_at)
             .Skip(offset)
             .Take(limit);
-        var sessions = await groupedQuery.ToListAsync();
-        /* if (!showRevoked)
-        {
-            sessions = sessions.Where(s => !s.is_revoked).ToList();
-        }
-        if (!showExpired)
-        {
-            sessions = sessions.Where(s => s.expires_at > DateTime.UtcNow).ToList();
-        } */
         return new PaginatedResponseDto<SessionDto>
         {
-            data = sessions,
+            data = await groupedQuery.ToListAsync(),
             pagination = new PaginationDto
             {
                 offset = offset,

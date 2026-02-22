@@ -1,8 +1,9 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
-using electrostore.Models;
 using electrostore.Enums;
+using electrostore.Extensions;
+using electrostore.Models;
 using electrostore.Services.SessionService;
 
 namespace electrostore.Services.StoreTagService;
@@ -29,9 +30,32 @@ public class StoreTagService : IStoreTagService
             throw new KeyNotFoundException($"Store with id '{storeId}' not found");
         }
         var query = _context.StoresTags.AsQueryable();
-        query = query.Where(st => st.id_store == storeId);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_store", SearchType = "eq", Value = storeId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<StoresTags>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<StoresTags>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "id_tag", Order = "asc" };
+                query = query.OrderBy(st => st.id_tag);
+            }
+        }
+        else
+        {
+            query = query.OrderBy(st => st.id_tag);
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(st => st.id_tag);
         if (expand != null && expand.Contains("tag"))
         {
             query = query.Include(st => st.Tag);
@@ -66,9 +90,32 @@ public class StoreTagService : IStoreTagService
             throw new KeyNotFoundException($"Tag with id '{tagId}' not found");
         }
         var query = _context.StoresTags.AsQueryable();
-        query = query.Where(st => st.id_tag == tagId);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_tag", SearchType = "eq", Value = tagId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<StoresTags>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<StoresTags>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "id_store", Order = "asc" };
+                query = query.OrderBy(st => st.id_store);
+            }
+        }
+        else
+        {
+            query = query.OrderBy(st => st.id_store);
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(st => st.id_store);
         if (expand != null && expand.Contains("tag"))
         {
             query = query.Include(st => st.Tag);

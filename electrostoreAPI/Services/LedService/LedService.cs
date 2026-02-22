@@ -1,8 +1,9 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
-using electrostore.Models;
 using electrostore.Enums;
+using electrostore.Extensions;
+using electrostore.Models;
 using MQTTnet;
 using MQTTnet.Protocol;
 using System.Text.Json;
@@ -38,9 +39,32 @@ public class LedService : ILedService
             throw new KeyNotFoundException($"Store with id '{storeId}' not found");
         }
         var query = _context.Leds.AsQueryable();
-        query = query.Where(l => l.id_store == storeId);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_store", SearchType = "eq", Value = storeId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<Leds>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<Leds>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "id_led", Order = "asc" };
+                query = query.OrderBy(l => l.id_led);
+            }
+        }
+        else
+        {
+            query = query.OrderBy(l => l.id_led);
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(l => l.id_led);
         var led = await query.ToListAsync();
         return new PaginatedResponseDto<ReadLedDto>
         {
