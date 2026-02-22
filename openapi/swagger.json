@@ -298,6 +298,22 @@
                 "format": "int32"
               }
             }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'nom_camera=like=example'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'nom_camera,asc' or 'nom_camera,desc'.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -686,6 +702,22 @@
                 "format": "int32"
               }
             }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'nom_command=like=example'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'nom_command,asc' or 'nom_command,desc'.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -929,6 +961,22 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'contenu_command_commentaire=like=example'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'created_at,asc' or 'created_at,desc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -1200,6 +1248,22 @@
               "type": "integer",
               "format": "int32",
               "default": 0
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'name_command_document=like=example'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'name_command_document,asc' or 'name_command_document,desc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -1515,6 +1579,22 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'prix_command_item=gt=100'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'prix_command_item,asc' or 'prix_command_item,desc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -1887,6 +1967,22 @@
                 "format": "int32"
               }
             }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'nom_ia=like=example'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'nom_ia,asc' or 'nom_ia,desc'.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2249,6 +2345,22 @@
                 "format": "int32"
               }
             }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'nom_item=like=example'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'nom_item,asc' or 'nom_item,desc'.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2492,6 +2604,22 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'qte_item_box=gt=1'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'qte_item_box,asc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -2774,6 +2902,22 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'prix_command_item=gt=100'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'prix_command_item,asc' or 'prix_command_item,desc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -3114,6 +3258,22 @@
               "format": "int32",
               "default": 0
             }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'name_item_document=like=example'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'name_item_document,asc' or 'name_item_document,desc'.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -3417,6 +3577,22 @@
               "type": "integer",
               "format": "int32",
               "default": 0
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'nom_img=like=example'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'nom_img,asc' or 'nom_img,desc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -3773,6 +3949,22 @@
                 "type": "string"
               }
             }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL filter. Example: 'qte_projet_item=gt=5'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string. Example: 'qte_projet_item,asc' or 'qte_projet_item,desc'.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4122,6 +4314,22 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL filter. Example: 'id_tag==5'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string. Example: 'id_tag,asc' or 'id_tag,desc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -4479,6 +4687,22 @@
                 "format": "int32"
               }
             }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'nom_projet=like=example'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'nom_projet,asc' or 'nom_projet,desc'.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4722,6 +4946,22 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL filter. Example: 'contenu_projet_commentaire=like=test'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string. Example: 'created_at,asc' or 'created_at,desc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -4993,6 +5233,22 @@
               "type": "integer",
               "format": "int32",
               "default": 0
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'name_projet_document=like=example'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'name_projet_document,asc' or 'name_projet_document,desc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -5308,6 +5564,22 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL filter. Example: 'qte_projet_item=gt=5'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string. Example: 'qte_projet_item,asc' or 'qte_projet_item,desc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -5659,6 +5931,22 @@
                 "type": "string"
               }
             }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL filter. Example: 'id_projet_tag==5'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string. Example: 'id_projet_tag,asc' or 'id_projet_tag,desc'.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -6003,14 +6291,19 @@
             }
           },
           {
-            "name": "expand",
+            "name": "filter",
             "in": "query",
-            "description": "(Optional) Fields to expand. Possible values: 'projet'. Multiple values can be specified by separating them with ','.",
+            "description": "(Optional) RSQL filter. Example: 'status_projet==0'.",
             "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string. Example: 'created_at,asc' or 'created_at,desc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -6060,17 +6353,6 @@
             "schema": {
               "type": "integer",
               "format": "int32"
-            }
-          },
-          {
-            "name": "expand",
-            "in": "query",
-            "description": "(Optional) Fields to expand. Possible values: 'projet'. Multiple values can be specified by separating them with ','.",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
             }
           }
         ],
@@ -6143,6 +6425,22 @@
                 "type": "integer",
                 "format": "int32"
               }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'nom_projet_tag=like=example'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'id_projet_tag,asc' or 'id_projet_tag,desc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -6444,6 +6742,22 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL filter. Example: 'id_projet==5'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string. Example: 'id_projet,asc' or 'id_projet,desc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -6797,6 +7111,22 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'xstart_box=gt=10'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'xstart_box,asc' or 'xstart_box,desc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -7364,6 +7694,22 @@
                 "type": "string"
               }
             }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'qte_item_box=gt=1'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'qte_item_box,asc'.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -7690,6 +8036,22 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'id_tag==1'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'id_tag,asc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -8076,6 +8438,22 @@
               "type": "integer",
               "format": "int32",
               "default": 0
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'x_led=gt=10'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'x_led,asc' or 'x_led,desc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -8626,6 +9004,22 @@
                 "format": "int32"
               }
             }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'nom_store=like=example'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'nom_store,asc' or 'nom_store,desc'.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -8976,6 +9370,22 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'id_tag==1'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'id_tag,asc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -9333,6 +9743,22 @@
                 "format": "int32"
               }
             }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'nom_tag=like=example'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'nom_tag,asc' or 'nom_tag,desc'.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -9633,6 +10059,22 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'id_box==1'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'id_box,asc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -9987,6 +10429,22 @@
                 "type": "string"
               }
             }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'id_item==1'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'id_item,asc'.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -10339,6 +10797,22 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'id_store==1'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'id_store,asc'.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -10698,9 +11172,17 @@
             }
           },
           {
-            "name": "rsql",
+            "name": "filter",
             "in": "query",
-            "description": "(Optional) RSQL string to filter results. Example: 'age=gt=30;name==John'.",
+            "description": "(Optional) RSQL string to filter results. Example: 'role_user==1;nom_user=like=John'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'nom_user,asc' or 'nom_user,desc'.",
             "schema": {
               "type": "string"
             }
@@ -10948,6 +11430,22 @@
                 "type": "string"
               }
             }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'contenu_command_commentaire=like=example'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'created_at,asc' or 'created_at,desc'.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -11173,6 +11671,22 @@
                 "type": "string"
               }
             }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'projet_id==1;contenu_projet_commentaire=like=comment'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'created_at,asc' or 'created_at,desc'.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -11389,19 +11903,19 @@
             }
           },
           {
-            "name": "show_revoked",
+            "name": "filter",
             "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'is_revoked==true' or 'is_revoked==false'.",
             "schema": {
-              "type": "boolean",
-              "default": false
+              "type": "string"
             }
           },
           {
-            "name": "show_expired",
+            "name": "sort",
             "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'created_at,asc' or 'created_at,desc'.",
             "schema": {
-              "type": "boolean",
-              "default": false
+              "type": "string"
             }
           }
         ],
@@ -11450,22 +11964,6 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "show_revoked",
-            "in": "query",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          },
-          {
-            "name": "show_expired",
-            "in": "query",
-            "schema": {
-              "type": "boolean",
-              "default": false
             }
           }
         ],
@@ -12302,6 +12800,29 @@
         },
         "additionalProperties": false
       },
+      "FilterDto": {
+        "required": [
+          "field",
+          "searchType",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "nullable": true
+          },
+          "searchType": {
+            "type": "string",
+            "nullable": true
+          },
+          "value": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ForgotPasswordRequest": {
         "required": [
           "email"
@@ -12404,6 +12925,14 @@
       "PaginationDto": {
         "type": "object",
         "properties": {
+          "limit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int32"
+          },
           "total": {
             "type": "integer",
             "format": "int32"
@@ -12761,7 +13290,7 @@
       "ReadCameraDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -12777,17 +13306,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -12874,7 +13403,7 @@
       "ReadCommandDocumentDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -12890,17 +13419,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -13143,7 +13672,7 @@
       "ReadExtendedBoxDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -13159,17 +13688,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -13207,7 +13736,7 @@
       "ReadExtendedBoxTagDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -13223,17 +13752,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -13283,7 +13812,7 @@
       "ReadExtendedCommandCommentaireDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -13299,17 +13828,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -13395,7 +13924,7 @@
       "ReadExtendedCommandDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -13411,17 +13940,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -13467,7 +13996,7 @@
       "ReadExtendedCommandItemDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -13483,17 +14012,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -13539,7 +14068,7 @@
       "ReadExtendedItemBoxDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -13555,17 +14084,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -13674,7 +14203,7 @@
       "ReadExtendedItemDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -13690,17 +14219,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -13738,7 +14267,7 @@
       "ReadExtendedItemTagDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -13754,17 +14283,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -13814,7 +14343,7 @@
       "ReadExtendedProjetCommentaireDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -13830,17 +14359,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -13953,7 +14482,7 @@
       "ReadExtendedProjetDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -13969,17 +14498,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -14021,7 +14550,7 @@
       "ReadExtendedProjetItemDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -14037,17 +14566,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -14085,7 +14614,7 @@
       "ReadExtendedProjetProjetTagDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -14101,17 +14630,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -14149,7 +14678,7 @@
       "ReadExtendedProjetStatusDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -14165,17 +14694,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -14225,7 +14754,7 @@
       "ReadExtendedProjetTagDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -14241,17 +14770,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -14332,7 +14861,7 @@
       "ReadExtendedStoreDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -14348,17 +14877,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -14396,7 +14925,7 @@
       "ReadExtendedStoreTagDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -14412,17 +14941,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -14494,7 +15023,7 @@
       "ReadExtendedTagDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -14510,17 +15039,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -14590,7 +15119,7 @@
       "ReadExtendedUserDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -14606,17 +15135,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -14659,7 +15188,7 @@
       "ReadIADtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -14675,17 +15204,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -14739,7 +15268,7 @@
       "ReadImgDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -14755,17 +15284,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -14848,7 +15377,7 @@
       "ReadItemDocumentDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -14864,17 +15393,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -14984,7 +15513,7 @@
       "ReadLedDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -15000,17 +15529,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -15097,7 +15626,7 @@
       "ReadProjetDocumentDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -15113,17 +15642,17 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -15529,7 +16058,7 @@
       "SessionDtoPaginatedResponseDto": {
         "required": [
           "data",
-          "filter",
+          "filters",
           "pagination",
           "sort"
         ],
@@ -15545,18 +16074,36 @@
           "pagination": {
             "$ref": "#/components/schemas/PaginationDto"
           },
-          "filter": {
+          "filters": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FilterDto"
             },
             "nullable": true
           },
           "sort": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SorterDto"
             },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SorterDto": {
+        "required": [
+          "field",
+          "order"
+        ],
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "nullable": true
+          },
+          "order": {
+            "type": "string",
             "nullable": true
           }
         },

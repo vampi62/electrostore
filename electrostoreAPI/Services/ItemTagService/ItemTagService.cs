@@ -16,7 +16,8 @@ public class ItemTagService : IItemTagService
         _context = context;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedItemTagDto>> GetItemsTagsByItemId(int itemId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedItemTagDto>> GetItemsTagsByItemId(int itemId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
@@ -41,16 +42,19 @@ public class ItemTagService : IItemTagService
             data = _mapper.Map<List<ReadExtendedItemTagDto>>(itemTag),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.ItemsTags.Where(it => it.id_item == itemId).CountAsync(),
                 nextOffset = offset + limit,
                 hasMore = await _context.ItemsTags.Where(it => it.id_item == itemId).Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedItemTagDto>> GetItemsTagsByTagId(int tagId, int limit = 100, int offset = 0, List<string>? expand = null)
+    public async Task<PaginatedResponseDto<ReadExtendedItemTagDto>> GetItemsTagsByTagId(int tagId, int limit = 100, int offset = 0,
+    List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
@@ -75,12 +79,14 @@ public class ItemTagService : IItemTagService
             data = _mapper.Map<List<ReadExtendedItemTagDto>>(itemTag),
             pagination = new PaginationDto
             {
+                offset = offset,
+                limit = limit,
                 total = await _context.ItemsTags.Where(it => it.id_tag == tagId).CountAsync(),
                 nextOffset = offset + limit,
                 hasMore = await _context.ItemsTags.Where(it => it.id_tag == tagId).Skip(offset + limit).AnyAsync()
             },
-            filter = null,
-            sort = null
+            filters = rsql,
+            sort = sort != null ? [sort] : null
         };
     }
 

@@ -4,7 +4,7 @@ namespace electrostore.Services.ItemDocumentService;
 
 public interface IItemDocumentService
 {
-    public Task<PaginatedResponseDto<ReadItemDocumentDto>> GetItemsDocumentsByItemId(int itemId, int limit = 100, int offset = 0);
+    public Task<PaginatedResponseDto<ReadItemDocumentDto>> GetItemsDocumentsByItemId(int itemId, int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null);
 
     public Task<ReadItemDocumentDto> GetItemDocumentById(int id, int? itemId = null);
 

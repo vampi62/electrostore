@@ -4,6 +4,7 @@ using electrostore.Dto;
 using electrostore.Services.BoxService;
 using electrostore.Services.LedService;
 using Swashbuckle.AspNetCore.Annotations;
+using electrostore.Extensions;
 
 namespace electrostore.Controllers
 {
@@ -23,15 +24,21 @@ namespace electrostore.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedBoxDto>>> GetBoxsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedBoxDto>>> GetBoxsByStoreId([FromRoute] int id_store, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'xstart_box=gt=10'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'xstart_box,asc' or 'xstart_box,desc'.")] string? sort = null)
         {
-            var boxs = await _boxService.GetBoxsByStoreId(id_store, limit, offset, expand);
+            var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
+            var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
+            var boxs = await _boxService.GetBoxsByStoreId(id_store, limit, offset, rsqlDto, sortDto, expand);
             return Ok(boxs);
         }
 
         [HttpGet("{id_box}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedBoxDto>> GetBoxById([FromRoute] int id_store, [FromRoute] int id_box, [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        public async Task<ActionResult<ReadExtendedBoxDto>> GetBoxById([FromRoute] int id_store, [FromRoute] int id_box,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'store', 'box_tags', 'item_boxs'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             var box = await _boxService.GetBoxById(id_box, id_store, expand);
             return Ok(box);

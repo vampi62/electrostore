@@ -4,7 +4,7 @@ namespace electrostore.Services.IAService;
 
 public interface IIAService
 {
-    Task<PaginatedResponseDto<ReadIADto>> GetIA(int limit = 100, int offset = 0, List<int>? idResearch = null);
+    Task<PaginatedResponseDto<ReadIADto>> GetIA(int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<int>? idResearch = null);
 
     Task<ReadIADto> GetIAById(int id);
 
