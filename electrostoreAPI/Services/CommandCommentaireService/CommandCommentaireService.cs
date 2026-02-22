@@ -1,8 +1,9 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
-using electrostore.Models;
 using electrostore.Enums;
+using electrostore.Extensions;
+using electrostore.Models;
 using electrostore.Services.SessionService;
 
 namespace electrostore.Services.CommandCommentaireService;
@@ -29,8 +30,31 @@ public class CommandCommentaireService : ICommandCommentaireService
             throw new KeyNotFoundException($"Command with id '{CommandId}' not found");
         }
         var query = _context.CommandsCommentaires.AsQueryable();
-        query = query.Where(cc => cc.id_command == CommandId);
-        query = query.OrderByDescending(cc => cc.created_at);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_command", SearchType = "eq", Value = CommandId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<CommandsCommentaires>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<CommandsCommentaires>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "created_at", Order = "desc" };
+                query = query.OrderByDescending(cc => cc.created_at);
+            }
+        }
+        else
+        {
+            query = query.OrderByDescending(cc => cc.created_at);
+        }
         query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("command")) // check if the command is included in the expand list
         {
@@ -66,8 +90,31 @@ public class CommandCommentaireService : ICommandCommentaireService
             throw new KeyNotFoundException($"User with id '{userId}' not found");
         }
         var query = _context.CommandsCommentaires.AsQueryable();
-        query = query.Where(cc => cc.id_user == userId);
-        query = query.OrderByDescending(cc => cc.created_at);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_user", SearchType = "eq", Value = userId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<CommandsCommentaires>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<CommandsCommentaires>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "created_at", Order = "desc" };
+                query = query.OrderByDescending(cc => cc.created_at);
+            }
+        }
+        else
+        {
+            query = query.OrderByDescending(cc => cc.created_at);
+        }
         query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("command")) // check if the command is included in the expand list
         {

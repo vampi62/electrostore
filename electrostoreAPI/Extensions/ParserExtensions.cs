@@ -41,12 +41,12 @@ public static class ParserExtensions
     {
         if (string.IsNullOrEmpty(sort))
         {
-            return new SorterDto { Field = "Id", Order = "asc" };
+            return new SorterDto { Field = "", Order = "asc" };
         }
         var parts = sort.Split(',', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length != 2)
         {
-            return new SorterDto { Field = "Id", Order = "asc" };
+            return new SorterDto { Field = "", Order = "asc" };
         }
 
         var field = parts[0].Trim();

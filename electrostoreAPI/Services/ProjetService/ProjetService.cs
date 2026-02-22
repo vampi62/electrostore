@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Enums;
+using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.FileService;
 using electrostore.Services.ProjetStatusService;
@@ -32,8 +33,33 @@ public class ProjetService : IProjetService
         {
             query = query.Where(p => idResearch.Contains(p.id_projet));
         }
+        else
+        {
+            if (rsql != null && rsql.Count > 0)
+            {
+                var filterResult = RsqlParserExtensions.ToFilterExpression<Projets>(rsql);
+                query = query.Where(filterResult.Item1);
+                rsql = filterResult.Item2;
+            }
+            if (!string.IsNullOrEmpty(sort?.Field))
+            {
+                var sortResult = RsqlParserExtensions.ToSortExpression<Projets>(sort);
+                if (sortResult.Item1 != null)
+                {
+                    query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+                }
+                else
+                {
+                    sort = new SorterDto { Field = "id_projet", Order = "asc" };
+                    query = query.OrderBy(p => p.id_projet);
+                }
+            }
+            else
+            {
+                query = query.OrderBy(p => p.id_projet);
+            }
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(p => p.id_projet);
         var projet = await query
             .Select(p => new
             {

@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
+using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.FileService;
 
@@ -30,9 +31,32 @@ public class ImgService : IImgService
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.Imgs.AsQueryable();
-        query = query.Where(im => im.id_item == itemId);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_item", SearchType = "eq", Value = itemId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<Imgs>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<Imgs>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "id_img", Order = "asc" };
+                query = query.OrderBy(im => im.id_img);
+            }
+        }
+        else
+        {
+            query = query.OrderBy(im => im.id_img);
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(im => im.id_img);
         var img = await query.ToListAsync();
         return new PaginatedResponseDto<ReadImgDto>
         {

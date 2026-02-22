@@ -1,9 +1,9 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
-using electrostore.Models;
 using electrostore.Enums;
 using electrostore.Extensions;
+using electrostore.Models;
 using electrostore.Services.SmtpService;
 using electrostore.Services.SessionService;
 using electrostore.Services.JwiService;
@@ -34,22 +34,32 @@ public class UserService : IUserService
         {
             query = query.Where(u => idResearch.Contains(u.id_user));
         }
-        /* var filterResult;
-        if (!string.IsNullOrEmpty(rsql))
+        else
         {
-            filterResult = RsqlParserExtensions.ToFilterExpression<Users>(rsql);
-            query = query.Where(RsqlParserExtensions.ToFilterExpression<Users>(rsql));
-        }
-        var sortResult;
-        if (!string.IsNullOrEmpty(sort))
-        {
-            sortResult = RsqlParserExtensions.ToSortExpression<Users>(sort);
-            if (sortResult.Item1 != null)
+            if (rsql != null && rsql.Count > 0)
             {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+                var filterResult = RsqlParserExtensions.ToFilterExpression<Users>(rsql);
+                query = query.Where(filterResult.Item1);
+                rsql = filterResult.Item2;
             }
-        } */
-        query = query.OrderBy(u => u.id_user);
+            if (!string.IsNullOrEmpty(sort?.Field))
+            {
+                var sortResult = RsqlParserExtensions.ToSortExpression<Users>(sort);
+                if (sortResult.Item1 != null)
+                {
+                    query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+                }
+                else
+                {
+                    sort = new SorterDto { Field = "id_user", Order = "asc" };
+                    query = query.OrderBy(u => u.id_user);
+                }
+            }
+            else
+            {
+                query = query.OrderBy(u => u.id_user);
+            }
+        }
         query = query.Skip(offset).Take(limit);
         var user = await query
             .Select(u => new

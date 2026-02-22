@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
+using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.FileService;
 
@@ -28,8 +29,33 @@ public class CommandService : ICommandService
         {
             query = query.Where(c => idResearch.Contains(c.id_command));
         }
+        else
+        {
+            if (rsql != null && rsql.Count > 0)
+            {
+                var filterResult = RsqlParserExtensions.ToFilterExpression<Commands>(rsql);
+                query = query.Where(filterResult.Item1);
+                rsql = filterResult.Item2;
+            }
+            if (!string.IsNullOrEmpty(sort?.Field))
+            {
+                var sortResult = RsqlParserExtensions.ToSortExpression<Commands>(sort);
+                if (sortResult.Item1 != null)
+                {
+                    query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+                }
+                else
+                {
+                    sort = new SorterDto { Field = "id_command", Order = "asc" };
+                    query = query.OrderBy(c => c.id_command);
+                }
+            }
+            else
+            {
+                query = query.OrderBy(c => c.id_command);
+            }
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(c => c.id_command);
         var command = await query
             .Select(c => new
             {

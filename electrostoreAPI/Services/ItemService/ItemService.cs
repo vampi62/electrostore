@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
+using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.FileService;
 
@@ -30,8 +31,33 @@ public class ItemService : IItemService
         {
             query = query.Where(i => idResearch.Contains(i.id_item));
         }
+        else
+        {
+            if (rsql != null && rsql.Count > 0)
+            {
+                var filterResult = RsqlParserExtensions.ToFilterExpression<Items>(rsql);
+                query = query.Where(filterResult.Item1);
+                rsql = filterResult.Item2;
+            }
+            if (!string.IsNullOrEmpty(sort?.Field))
+            {
+                var sortResult = RsqlParserExtensions.ToSortExpression<Items>(sort);
+                if (sortResult.Item1 != null)
+                {
+                    query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+                }
+                else
+                {
+                    sort = new SorterDto { Field = "id_item", Order = "asc" };
+                    query = query.OrderBy(i => i.id_item);
+                }
+            }
+            else
+            {
+                query = query.OrderBy(i => i.id_item);
+            }
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(i => i.id_item);
         var item = await query
             .Select(i => new
             {

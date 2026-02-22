@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
+using electrostore.Extensions;
 using electrostore.Models;
 
 namespace electrostore.Services.CommandItemService;
@@ -25,9 +26,32 @@ public class CommandItemService : ICommandItemService
             throw new KeyNotFoundException($"Command with id '{commandId}' not found");
         }
         var query = _context.CommandsItems.AsQueryable();
-        query = query.Where(ci => ci.id_command == commandId);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_command", SearchType = "eq", Value = commandId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<CommandsItems>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<CommandsItems>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "id_item", Order = "asc" };
+                query = query.OrderBy(ci => ci.id_item);
+            }
+        }
+        else
+        {
+            query = query.OrderBy(ci => ci.id_item);
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(ci => ci.id_item);
         if (expand != null && expand.Contains("item"))
         {
             query = query.Include(ci => ci.Item);
@@ -62,9 +86,32 @@ public class CommandItemService : ICommandItemService
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.CommandsItems.AsQueryable();
-        query = query.Where(ci => ci.id_item == itemId);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_item", SearchType = "eq", Value = itemId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<CommandsItems>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<CommandsItems>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "id_command", Order = "asc" };
+                query = query.OrderBy(ci => ci.id_command);
+            }
+        }
+        else
+        {
+            query = query.OrderBy(ci => ci.id_command);
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(ci => ci.id_command);
         if (expand != null && expand.Contains("item"))
         {
             query = query.Include(ci => ci.Item);

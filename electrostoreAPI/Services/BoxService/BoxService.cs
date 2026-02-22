@@ -1,8 +1,9 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
-using electrostore.Models;
 using electrostore.Enums;
+using electrostore.Extensions;
+using electrostore.Models;
 using electrostore.Services.SessionService;
 using electrostore.Services.ValidateStoreService;
 
@@ -32,9 +33,32 @@ public class BoxService : IBoxService
             throw new KeyNotFoundException($"Store with id '{storeId}' not found");
         }
         var query = _context.Boxs.AsQueryable();
-        query = query.Where(b => b.id_store == storeId);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_store", SearchType = "eq", Value = storeId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<Boxs>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<Boxs>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "id_box", Order = "asc" };
+                query = query.OrderBy(b => b.id_box);
+            }
+        }
+        else
+        {
+            query = query.OrderBy(b => b.id_box);
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(b => b.id_box);
         var box = await query
             .Select(b => new
             {

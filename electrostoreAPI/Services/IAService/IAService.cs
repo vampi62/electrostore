@@ -1,8 +1,9 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
-using electrostore.Models;
 using electrostore.Enums;
+using electrostore.Extensions;
+using electrostore.Models;
 using System.Text.Json;
 using electrostore.Services.SessionService;
 using electrostore.Services.FileService;
@@ -36,8 +37,33 @@ public class IAService : IIAService
         {
             query = query.Where(ia => idResearch.Contains(ia.id_ia));
         }
+        else
+        {
+            if (rsql != null && rsql.Count > 0)
+            {
+                var filterResult = RsqlParserExtensions.ToFilterExpression<IA>(rsql);
+                query = query.Where(filterResult.Item1);
+                rsql = filterResult.Item2;
+            }
+            if (!string.IsNullOrEmpty(sort?.Field))
+            {
+                var sortResult = RsqlParserExtensions.ToSortExpression<IA>(sort);
+                if (sortResult.Item1 != null)
+                {
+                    query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+                }
+                else
+                {
+                    sort = new SorterDto { Field = "id_ia", Order = "asc" };
+                    query = query.OrderBy(ia => ia.id_ia);
+                }
+            }
+            else
+            {
+                query = query.OrderBy(ia => ia.id_ia);
+            }
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(ia => ia.id_ia);
         var ia = await query.ToListAsync();
         return new PaginatedResponseDto<ReadIADto>
         {

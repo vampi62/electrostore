@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
+using electrostore.Extensions;
 using electrostore.Models;
 
 namespace electrostore.Services.ProjetItemService;
@@ -25,9 +26,32 @@ public class ProjetItemService : IProjetItemService
             throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsItems.AsQueryable();
-        query = query.Where(pi => pi.id_projet == projetId);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_projet", SearchType = "eq", Value = projetId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<ProjetsItems>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<ProjetsItems>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "id_item", Order = "asc" };
+                query = query.OrderBy(pi => pi.id_item);
+            }
+        }
+        else
+        {
+            query = query.OrderBy(pi => pi.id_item);
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(pi => pi.id_item);
         if (expand != null && expand.Contains("item"))
         {
             query = query.Include(pi => pi.Item);
@@ -62,9 +86,32 @@ public class ProjetItemService : IProjetItemService
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.ProjetsItems.AsQueryable();
-        query = query.Where(pi => pi.id_item == itemId);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_item", SearchType = "eq", Value = itemId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<ProjetsItems>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<ProjetsItems>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "id_projet", Order = "asc" };
+                query = query.OrderBy(pi => pi.id_projet);
+            }
+        }
+        else
+        {
+            query = query.OrderBy(pi => pi.id_projet);
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(pi => pi.id_projet);
         if (expand != null && expand.Contains("item"))
         {
             query = query.Include(pi => pi.Item);

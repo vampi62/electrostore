@@ -1,8 +1,9 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
-using electrostore.Models;
 using electrostore.Enums;
+using electrostore.Extensions;
+using electrostore.Models;
 using electrostore.Services.SessionService;
 
 namespace electrostore.Services.BoxTagService;
@@ -29,9 +30,32 @@ public class BoxTagService : IBoxTagService
             throw new KeyNotFoundException($"Box with id '{boxId}' not found");
         }
         var query = _context.BoxsTags.AsQueryable();
-        query = query.Where(bt => bt.id_box == boxId);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_box", SearchType = "eq", Value = boxId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<BoxsTags>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<BoxsTags>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "id_tag", Order = "asc" };
+                query = query.OrderBy(bt => bt.id_tag);
+            }
+        }
+        else
+        {
+            query = query.OrderBy(bt => bt.id_tag);
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(bt => bt.id_tag);
         if (expand != null && expand.Contains("tag"))
         {
             query = query.Include(bt => bt.Tag);
@@ -66,9 +90,32 @@ public class BoxTagService : IBoxTagService
             throw new KeyNotFoundException($"Tag with id '{tagId}' not found");
         }
         var query = _context.BoxsTags.AsQueryable();
-        query = query.Where(bt => bt.id_tag == tagId);
+        rsql ??= [];
+        rsql.Add(new FilterDto { Field = "id_tag", SearchType = "eq", Value = tagId.ToString() });
+        if (rsql != null && rsql.Count > 0)
+        {
+            var filterResult = RsqlParserExtensions.ToFilterExpression<BoxsTags>(rsql);
+            query = query.Where(filterResult.Item1);
+            rsql = filterResult.Item2;
+        }
+        if (!string.IsNullOrEmpty(sort?.Field))
+        {
+            var sortResult = RsqlParserExtensions.ToSortExpression<BoxsTags>(sort);
+            if (sortResult.Item1 != null)
+            {
+                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
+            }
+            else
+            {
+                sort = new SorterDto { Field = "id_box", Order = "asc" };
+                query = query.OrderBy(bt => bt.id_box);
+            }
+        }
+        else
+        {
+            query = query.OrderBy(bt => bt.id_box);
+        }
         query = query.Skip(offset).Take(limit);
-        query = query.OrderBy(bt => bt.id_box);
         if (expand != null && expand.Contains("tag"))
         {
             query = query.Include(bt => bt.Tag);
