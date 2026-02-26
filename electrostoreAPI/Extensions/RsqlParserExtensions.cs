@@ -52,7 +52,7 @@ public static class RsqlParserExtensions
             
             current = Expression.PropertyOrField(current, part);
             
-            // Si c'est une collection et qu'il reste des parties, on doit utiliser Any()
+            // if it's a collection and there are more parts, we need to use Any()
             if (IsCollectionType(current.Type) && i < parts.Length - 1)
             {
                 isCollection = true;
@@ -90,7 +90,7 @@ public static class RsqlParserExtensions
 
             if (isCollection && collectionElementType != null && collectionProperty != null)
             {
-                // Construire une expression Any() pour les collections
+                // Expression for collection properties using Any()
                 var collectionParam = Expression.Parameter(collectionElementType, "item");
                 var itemProperty = BuildNestedPropertyAccess(collectionParam, collectionProperty, out _, out _, out _);
                 
@@ -127,7 +127,7 @@ public static class RsqlParserExtensions
             }
             else
             {
-                // Expression normale pour les propriétés simples
+                // Expression for non-collection properties
                 Expression right = Expression.Constant(Convert.ChangeType(value, left.Type));
 
                 binaryExpression = searchType switch
