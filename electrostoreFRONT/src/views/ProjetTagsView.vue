@@ -1,57 +1,45 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
 
 import { useProjetTagsStore } from "@/stores";
 const projetTagsStore = useProjetTagsStore();
 
-async function fetchAllData() {
-	let offset = 0;
-	const limit = 100;
-	do {
-		await projetTagsStore.getProjetTagByInterval(limit, offset);
-		offset += limit;
-	} while (offset < projetTagsStore.projetTagsTotalCount);
-}
-onMounted(() => {
-	fetchAllData();
-});
-
 const filter = ref([
-	{ key: "nom_projet_tag", value: "", type: "text", label: "projetTag.VProjetTagsFilterName", compareMethod: "contain" },
-	{ key: "poids_projet_tag", value: "", type: "number", label: "projetTag.VProjetTagsFilterWeightMin", compareMethod: ">=" },
-	{ key: "poids_projet_tag", value: "", type: "number", label: "projetTag.VProjetTagsFilterWeightMax", compareMethod: "<=" },
+	{ key: "nom_projet_tag", value: "", type: "text", label: "projetTags.FilterName", compareMethod: "contain" },
+	{ key: "poids_projet_tag", value: "", type: "number", label: "projetTags.FilterWeightMin", compareMethod: ">=" },
+	{ key: "poids_projet_tag", value: "", type: "number", label: "projetTags.FilterWeightMax", compareMethod: "<=" },
 ]);
 const tableauLabel = ref([
-	{ label: "projetTag.VProjetTagsName", sortable: true, key: "nom_projet_tag", type: "text" },
-	{ label: "projetTag.VProjetTagsWeight", sortable: true, key: "poids_projet_tag", type: "number" },
-	{ label: "projetTag.VProjetTagsProjetsCount", sortable: true, key: "projets_projet_tags_count", type: "number" },
+	{ label: "projetTags.Name", sortable: true, key: "nom_projet_tag", type: "text" },
+	{ label: "projetTags.Weight", sortable: true, key: "poids_projet_tag", type: "number" },
+	{ label: "projetTags.ProjetsCount", sortable: true, key: "projets_projet_tags_count", type: "number" },
 ]);
 const tableauMeta = ref({
 	key: "id_projet_tag",
 	path: "/projet-tags/",
 });
-const filteredProjetTags = ref([]);
-const updateFilteredProjetTags = (newValue) => {
-	filteredProjetTags.value = newValue;
-};
+document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
 
 <template>
 	<div>
-		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('projetTag.VProjetTagsTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('projetTags.Title') }}</h2>
 	</div>
 	<div>
 		<div
 			class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded cursor-pointer inline-block mb-2">
 			<RouterLink :to="'/projet-tags/new'">
-				{{ $t('projetTag.VProjetTagsAdd') }}
+				{{ $t('projetTags.Add') }}
 			</RouterLink>
 		</div>
-		<FilterContainer :filters="filter" :store-data="projetTagsStore.projetTags" @output-filter="updateFilteredProjetTags" />
+		<FilterContainer :filters="filter" :store-data="projetTagsStore.projetTags" />
 	</div>
 	<Tableau :labels="tableauLabel" :meta="tableauMeta"
-		:store-data="[filteredProjetTags]"
+		:store-data="[projetTagsStore.projetTags]"
+		:filters="filter"
 		:loading="projetTagsStore.projetTagsLoading"
+		:total-count="Number(projetTagsStore.projetTagsTotalCount) || 0"
+		:fetch-function="(limit, offset, expand, filter, sort, clear) => projetTagsStore.getProjetTagByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

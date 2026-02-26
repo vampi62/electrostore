@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, inject } from "vue";
+import { ref, inject } from "vue";
 import router from "@/router";
 
 const { addNotification } = inject("useNotification");
@@ -7,71 +7,63 @@ const { addNotification } = inject("useNotification");
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
-import { useAuthStore, useUsersStore } from "@/stores";
+import { useUsersStore, useAuthStore } from "@/stores";
 const usersStore = useUsersStore();
 const authStore = useAuthStore();
 
-if (authStore.user?.role_user !== 2 && authStore.user?.role_user !== 1) {
+import { UserRole } from "@/enums";
+
+if (!authStore.hasPermission([1, 2])) {
 	addNotification({ message: "vous n'avez pas la permission d'acceder a cette page", type: "error", i18n: false });
 	router.push("/");
 }
 
-async function fetchAllData() {
-	let offset = 0;
-	const limit = 100;
-	do {
-		await usersStore.getUserByInterval(limit, offset);
-		offset += limit;
-	} while (offset < usersStore.usersTotalCount);
-}
-onMounted(() => {
-	fetchAllData();
-});
+const userTypeRole = ref({ [UserRole.User]: t("users.FilterRole0"), [UserRole.Moderator]: t("users.FilterRole1"), [UserRole.Admin]: t("users.FilterRole2") });
 
 const filter = ref([
-	{ key: "nom_user", value: "", type: "text", label: "user.VUsersFilterName", compareMethod: "contain" },
-	{ key: "prenom_user", value: "", type: "text", label: "user.VUsersFilterFirstName", compareMethod: "contain" },
-	{ key: "email_user", value: "", type: "text", label: "user.VUsersFilterEmail", compareMethod: "contain" },
-	{ key: "role_user", value: "", type: "datalist", typeData: "int", options: [[0, t("user.VUsersFilterRole0")], [1, t("user.VUsersFilterRole1")], [2, t("user.VUsersFilterRole2")]], label: "user.VUsersFilterRole", compareMethod: "=" },
+	{ key: "nom_user", value: "", type: "text", label: "users.FilterName", compareMethod: "contain" },
+	{ key: "prenom_user", value: "", type: "text", label: "users.FilterFirstName", compareMethod: "contain" },
+	{ key: "email_user", value: "", type: "text", label: "users.FilterEmail", compareMethod: "contain" },
+	{ key: "role_user", value: "", type: "datalist", typeData: "int", options: userTypeRole, label: "users.FilterRole", compareMethod: "=" },
 ]);
 const tableauLabel = ref([
-	{ label: "user.VUsersName", sortable: true, key: "nom_user", type: "text" },
-	{ label: "user.VUsersFirstName", sortable: true, key: "prenom_user", type: "text" },
-	{ label: "user.VUsersEmail", sortable: true, key: "email_user", type: "text" },
-	{ label: "user.VUsersRole", sortable: true, key: "role_user", type: "enum", options: [t("user.VUsersFilterRole0"), t("user.VUsersFilterRole1"), t("user.VUsersFilterRole2")] },
+	{ label: "users.Name", sortable: true, key: "nom_user", type: "text" },
+	{ label: "users.FirstName", sortable: true, key: "prenom_user", type: "text" },
+	{ label: "users.Email", sortable: true, key: "email_user", type: "text" },
+	{ label: "users.Role", sortable: true, key: "role_user", type: "enum", options: userTypeRole },
 ]);
 const tableauMeta = ref({
 	key: "id_user",
 	path: "/users/",
 });
-const filteredUsers = ref([]);
-const updateFilteredUsers = (newValue) => {
-	filteredUsers.value = newValue;
-};
+document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
 
 <template>
 	<div>
-		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('user.VUsersTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('users.Title') }}</h2>
 	</div>
 	<div>
 		<div :class="{
-				'bg-blue-500 hover:bg-blue-600 cursor-pointer': authStore.user?.role_user === 2,
-				'bg-gray-400 cursor-not-allowed': authStore.user?.role_user !== 2
+				'bg-blue-500 hover:bg-blue-600 cursor-pointer': authStore.hasPermission([2]),
+				'bg-gray-400 cursor-not-allowed': !authStore.hasPermission([2])
 			}"
 			class="text-white px-4 py-2 rounded inline-block mb-2">
-			<RouterLink v-if="authStore.user?.role_user === 2" :to="'/users/new'">
-				{{ $t('user.VUsersAdd') }}
+			<RouterLink v-if="authStore.hasPermission([2])" :to="'/users/new'">
+				{{ $t('users.Add') }}
 			</RouterLink>
 			<span v-else class="pointer-events-none">
-				{{ $t('user.VUsersAdd') }}
+				{{ $t('users.Add') }}
 			</span>
 		</div>
-		<FilterContainer :filters="filter" :store-data="usersStore.users" @output-filter="updateFilteredUsers" />
+		<FilterContainer :filters="filter" :store-data="usersStore.users" />
 	</div>
 	<Tableau :labels="tableauLabel" :meta="tableauMeta"
-		:store-data="[filteredUsers]"
+		:store-data="[usersStore.users]"
+		:filters="filter"
 		:loading="usersStore.usersLoading"
+		:total-count="Number(usersStore.usersTotalCount) || 0"
+		:fetch-function="(limit, offset, expand, filter, sort, clear) => usersStore.getUserByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

@@ -33,8 +33,9 @@ export const useTagsStore = defineStore("tags",{
 			this.tagsLoading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			let newTagList = await fetchWrapper.get({
-				url: `${baseUrl}/tag?${idResearchString}&${expandString}`,
+			const paramString = [idResearchString, expandString].filter((str) => str).join("&");
+			const newTagList = await fetchWrapper.get({
+				url: `${baseUrl}/tag?${paramString}`,
 				useToken: "access",
 			});
 			for (const tag of newTagList["data"]) {
@@ -61,14 +62,21 @@ export const useTagsStore = defineStore("tags",{
 					}
 				}
 			}
-			this.tagsTotalCount = newTagList["count"];
 			this.tagsLoading = false;
 		},
-		async getTagByInterval(limit = 100, offset = 0, expand = []) {
+		async getTagByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			this.tagsLoading = true;
+			if (clear) {
+				this.tags = {};
+			}
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			let newTagList = await fetchWrapper.get({
-				url: `${baseUrl}/tag?limit=${limit}&offset=${offset}&${expandString}`,
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const newTagList = await fetchWrapper.get({
+				url: `${baseUrl}/tag?${paramString}`,
 				useToken: "access",
 			});
 			for (const tag of newTagList["data"]) {
@@ -95,14 +103,15 @@ export const useTagsStore = defineStore("tags",{
 					}
 				}
 			}
-			this.tagsTotalCount = newTagList["count"];
+			this.tagsTotalCount = newTagList["pagination"]?.["total"] || 0;
 			this.tagsLoading = false;
+			return [newTagList["pagination"]?.["nextOffset"] || 0, newTagList["pagination"]?.["hasMore"] || false];
 		},
 		async getTagById(id, expand = []) {
 			if (!this.tags[id]) {
 				this.tags[id] = {};
 			}
-			this.tags[id] = { ...this.tags[id], loading: true };
+			this.tags[id].loading = true;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.tags[id] = await fetchWrapper.get({
 				url: `${baseUrl}/tag/${id}?${expandString}`,
@@ -131,66 +140,67 @@ export const useTagsStore = defineStore("tags",{
 			}
 		},
 		async createTag(params) {
-			this.tagEdition.loading = true;
-			this.tagEdition = await fetchWrapper.post({
+			const tag = await fetchWrapper.post({
 				url: `${baseUrl}/tag`,
 				useToken: "access",
 				body: params,
 			});
-			this.tags[this.tagEdition.id_tag] = this.tagEdition;
+			this.tags[tag.id_tag] = tag;
+			return tag.id_tag;
 		},
 		async updateTag(id, params) {
-			this.tagEdition.loading = true;
-			if (params.nom_tag === this.tags[id].nom_tag) {
+			if (params?.nom_tag && params?.nom_tag === this.tags[id]?.nom_tag) {
 				delete params.nom_tag;
 			}
-			this.tagEdition = await fetchWrapper.put({
+			this.tags[id] = await fetchWrapper.put({
 				url: `${baseUrl}/tag/${id}`,
 				useToken: "access",
 				body: params,
 			});
-			this.tags[id] = this.tagEdition;
 		},
 		async deleteTag(id) {
-			this.tagEdition.loading = true;
 			await fetchWrapper.delete({
 				url: `${baseUrl}/tag/${id}`,
 				useToken: "access",
 			});
 			delete this.tags[id];
-			this.tagEdition = {};
 		},
 		async createTagBulk(params) {
-			this.tagEdition.loading = true;
-			this.tagEdition = await fetchWrapper.post({
+			const tagBulk = await fetchWrapper.post({
 				url: `${baseUrl}/tag/bulk`,
 				useToken: "access",
 				body: params,
 			});
-			for (const tag of this.tagEdition["valide"]) {
+			for (const tag of tagBulk["valide"]) {
 				this.tags[tag.id_tag] = tag;
 			}
 		},
 
-		async getTagStoreByInterval(idTag, limit = 100, offset = 0, expand = []) {
-			this.tagsStoreLoading = true;
-			const storesStore = useStoresStore();
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			if (!this.tagsStore[idTag]) {
+		async getTagStoreByInterval(idTag, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.tagsStore[idTag] || clear) {
 				this.tagsStore[idTag] = {};
 			}
-			let newTagStoreList = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/store?limit=${limit}&offset=${offset}&${expandString}`,
+			this.tagsStoreLoading = true;
+			const storesStore = useStoresStore();
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const newTagStoreList = await fetchWrapper.get({
+				url: `${baseUrl}/tag/${idTag}/store?${paramString}`,
 				useToken: "access",
 			});
-			this.tagsStoreTotalCount[idTag] = newTagStoreList["count"];
 			for (const tagStore of newTagStoreList["data"]) {
 				this.tagsStore[idTag][tagStore.id_store] = tagStore;
 				if (expand.includes("store")) {
 					storesStore.stores[tagStore.id_store] = tagStore.store;
 				}
 			}
+			this.tagsStoreTotalCount[idTag] = newTagStoreList["pagination"]?.["total"] || 0;
 			this.tagsStoreLoading = false;
+			return [newTagStoreList["pagination"]?.["nextOffset"] || 0, newTagStoreList["pagination"]?.["hasMore"] || false];
 		},
 		async getTagStoreById(idTag, idStore, expand = []) {
 			if (!this.tagsStore[idTag]) {
@@ -199,7 +209,7 @@ export const useTagsStore = defineStore("tags",{
 			if (!this.tagsStore[idTag][idStore]) {
 				this.tagsStore[idTag][idStore] = {};
 			}
-			this.tagsStore[idTag][idStore] = { ...this.tagsStore[idTag][idStore], loading: true };
+			this.tagsStore[idTag][idStore].loading = true;
 			const storesStore = useStoresStore();
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.tagsStore[idTag][idStore] = await fetchWrapper.get({
@@ -211,8 +221,7 @@ export const useTagsStore = defineStore("tags",{
 			}
 		},
 		async createTagStore(idTag, params) {
-			this.tagStoreEdition.loading = true;
-			this.tagStoreEdition = await fetchWrapper.post({
+			const tagStore = await fetchWrapper.post({
 				url: `${baseUrl}/tag/${idTag}/store`,
 				useToken: "access",
 				body: params,
@@ -220,20 +229,20 @@ export const useTagsStore = defineStore("tags",{
 			if (!this.tagsStore[idTag]) {
 				this.tagsStore[idTag] = {};
 			}
-			this.tagsStore[idTag][params.id_store] = this.tagStoreEdition;
+			this.tagsStore[idTag][tagStore.id_store] = tagStore;
 		},
 		async deleteTagStore(idTag, idStore) {
-			this.tagStoreEdition.loading = true;
+			if (!this.tagsStore[idTag]) {
+				this.tagsStore[idTag] = {};
+			}
 			await fetchWrapper.delete({
 				url: `${baseUrl}/tag/${idTag}/store/${idStore}`,
 				useToken: "access",
 			});
 			delete this.tagsStore[idTag][idStore];
-			this.tagStoreEdition = {};
 		},
 		async createTagStoreBulk(idTag, params) {
-			this.tagStoreEdition.loading = true;
-			this.tagStoreEdition = await fetchWrapper.post({
+			const tagStoreBulk = await fetchWrapper.post({
 				url: `${baseUrl}/tag/${idTag}/store/bulk`,
 				useToken: "access",
 				body: params,
@@ -241,41 +250,46 @@ export const useTagsStore = defineStore("tags",{
 			if (!this.tagsStore[idTag]) {
 				this.tagsStore[idTag] = {};
 			}
-			for (const tagStore of this.tagStoreEdition["valide"]) {
+			for (const tagStore of tagStoreBulk["valide"]) {
 				this.tagsStore[idTag][tagStore.id_store] = tagStore;
 			}
 		},
 		async deleteTagStoreBulk(idTag, params) {
-			this.tagStoreEdition.loading = true;
-			this.tagStoreEdition = await fetchWrapper.delete({
+			const tagStoreBulk = await fetchWrapper.delete({
 				url: `${baseUrl}/tag/${idTag}/store/bulk`,
 				useToken: "access",
 				body: params,
 			});
-			for (const tagStore of this.tagStoreEdition["valide"]) {
+			for (const tagStore of tagStoreBulk["valide"]) {
 				delete this.tagsStore[idTag][tagStore.id_store];
 			}
 		},
 
-		async getTagBoxByInterval(idTag, limit = 100, offset = 0, expand = []) {
-			this.tagsBoxLoading = true;
-			const storesStore = useStoresStore();
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			if (!this.tagsBox[idTag]) {
+		async getTagBoxByInterval(idTag, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.tagsBox[idTag] || clear) {
 				this.tagsBox[idTag] = {};
 			}
-			let newTagBoxList = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/box?limit=${limit}&offset=${offset}&${expandString}`,
+			this.tagsBoxLoading = true;
+			const storesStore = useStoresStore();
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const newTagBoxList = await fetchWrapper.get({
+				url: `${baseUrl}/tag/${idTag}/box?${paramString}`,
 				useToken: "access",
 			});
-			this.tagsBoxTotalCount[idTag] = newTagBoxList["count"];
 			for (const tagBox of newTagBoxList["data"]) {
 				this.tagsBox[idTag][tagBox.id_box] = tagBox;
 				if (expand.includes("box")) {
 					storesStore.boxs[tagBox.id_box] = tagBox.box;
 				}
 			}
+			this.tagsBoxTotalCount[idTag] = newTagBoxList["pagination"]?.["total"] || 0;
 			this.tagsBoxLoading = false;
+			return [newTagBoxList["pagination"]?.["nextOffset"] || 0, newTagBoxList["pagination"]?.["hasMore"] || false];
 		},
 		async getTagBoxById(idTag, idBox, expand = []) {
 			if (!this.tagsBox[idTag]) {
@@ -284,7 +298,7 @@ export const useTagsStore = defineStore("tags",{
 			if (!this.tagsBox[idTag][idBox]) {
 				this.tagsBox[idTag][idBox] = {};
 			}
-			this.tagsBox[idTag][idBox] = { ...this.tagsBox[idTag][idBox], loading: true };
+			this.tagsBox[idTag][idBox].loading = true;
 			const storesStore = useStoresStore();
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.tagsBox[idTag][idBox] = await fetchWrapper.get({
@@ -296,71 +310,78 @@ export const useTagsStore = defineStore("tags",{
 			}
 		},
 		async createTagBox(idTag, params) {
-			this.tagBoxEdition.loading = true;
-			this.tagBoxEdition = await fetchWrapper.post({
+			if (!this.tagsBox[idTag]) {
+				this.tagsBox[idTag] = {};
+			}
+			const tagBox = await fetchWrapper.post({
 				url: `${baseUrl}/tag/${idTag}/box`,
 				useToken: "access",
 				body: params,
 			});
+			this.tagsBox[idTag][tagBox.id_box] = tagBox;
+		},
+		async deleteTagBox(idTag, idBox) {
 			if (!this.tagsBox[idTag]) {
 				this.tagsBox[idTag] = {};
 			}
-			this.tagsBox[idTag][params.id_box] = this.tagBoxEdition;
-		},
-		async deleteTagBox(idTag, idBox) {
-			this.tagBoxEdition.loading = true;
 			await fetchWrapper.delete({
 				url: `${baseUrl}/tag/${idTag}/box/${idBox}`,
 				useToken: "access",
 			});
 			delete this.tagsBox[idTag][idBox];
-			this.tagBoxEdition = {};
 		},
 		async createTagBoxBulk(idTag, params) {
-			this.tagBoxEdition.loading = true;
-			this.tagBoxEdition = await fetchWrapper.post({
+			if (!this.tagsBox[idTag]) {
+				this.tagsBox[idTag] = {};
+			}
+			const tagBoxBulk = await fetchWrapper.post({
 				url: `${baseUrl}/tag/${idTag}/box/bulk`,
 				useToken: "access",
 				body: params,
 			});
-			if (!this.tagsBox[idTag]) {
-				this.tagsBox[idTag] = {};
-			}
-			for (const tagBox of this.tagBoxEdition["valide"]) {
+			for (const tagBox of tagBoxBulk["valide"]) {
 				this.tagsBox[idTag][tagBox.id_box] = tagBox;
 			}
 		},
 		async deleteTagBoxBulk(idTag, params) {
-			this.tagBoxEdition.loading = true;
-			this.tagBoxEdition = await fetchWrapper.delete({
+			if (!this.tagsBox[idTag]) {
+				this.tagsBox[idTag] = {};
+			}
+			const tagBoxBulk = await fetchWrapper.delete({
 				url: `${baseUrl}/tag/${idTag}/box/bulk`,
 				useToken: "access",
 				body: params,
 			});
-			for (const tagBox of this.tagBoxEdition["valide"]) {
+			for (const tagBox of tagBoxBulk["valide"]) {
 				delete this.tagsBox[idTag][tagBox.id_box];
 			}
 		},
 
-		async getTagItemByInterval(idTag, limit = 100, offset = 0, expand = []) {
-			this.tagsItemLoading = true;
-			const itemsStore = useItemsStore();
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			if (!this.tagsItem[idTag]) {
+		async getTagItemByInterval(idTag, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.tagsItem[idTag] || clear) {
 				this.tagsItem[idTag] = {};
 			}
-			let newTagItemList = await fetchWrapper.get({
-				url: `${baseUrl}/tag/${idTag}/item?limit=${limit}&offset=${offset}&${expandString}`,
+			this.tagsItemLoading = true;
+			const itemsStore = useItemsStore();
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const newTagItemList = await fetchWrapper.get({
+				url: `${baseUrl}/tag/${idTag}/item?${paramString}`,
 				useToken: "access",
 			});
-			this.tagsItemTotalCount[idTag] = newTagItemList["count"];
 			for (const tagItem of newTagItemList["data"]) {
 				this.tagsItem[idTag][tagItem.id_item] = tagItem;
 				if (expand.includes("item")) {
 					itemsStore.items[tagItem.id_item] = tagItem.item;
 				}
 			}
+			this.tagsItemTotalCount[idTag] = newTagItemList["pagination"]?.["total"] || 0;
 			this.tagsItemLoading = false;
+			return [newTagItemList["pagination"]?.["nextOffset"] || 0, newTagItemList["pagination"]?.["hasMore"] || false];
 		},
 		async getTagItemById(idTag, idItem, expand = []) {
 			if (!this.tagsItem[idTag]) {
@@ -369,7 +390,7 @@ export const useTagsStore = defineStore("tags",{
 			if (!this.tagsItem[idTag][idItem]) {
 				this.tagsItem[idTag][idItem] = {};
 			}
-			this.tagsItem[idTag][idItem] = { ...this.tagsItem[idTag][idItem], loading: true };
+			this.tagsItem[idTag][idItem].loading = true;
 			const itemsStore = useItemsStore();
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			this.tagsItem[idTag][idItem] = await fetchWrapper.get({
@@ -381,48 +402,49 @@ export const useTagsStore = defineStore("tags",{
 			}
 		},
 		async createTagItem(idTag, params) {
-			this.tagItemEdition.loading = true;
-			this.tagItemEdition = await fetchWrapper.post({
+			if (!this.tagsItem[idTag]) {
+				this.tagsItem[idTag] = {};
+			}
+			const tagItem = await fetchWrapper.post({
 				url: `${baseUrl}/tag/${idTag}/item`,
 				useToken: "access",
 				body: params,
 			});
+			this.tagsItem[idTag][tagItem.id_item] = tagItem;
+		},
+		async deleteTagItem(idTag, idItem) {
 			if (!this.tagsItem[idTag]) {
 				this.tagsItem[idTag] = {};
 			}
-			this.tagsItem[idTag][params.id_item] = this.tagItemEdition;
-		},
-		async deleteTagItem(idTag, idItem) {
-			this.tagItemEdition.loading = true;
 			await fetchWrapper.delete({
 				url: `${baseUrl}/tag/${idTag}/item/${idItem}`,
 				useToken: "access",
 			});
 			delete this.tagsItem[idTag][idItem];
-			this.tagItemEdition = {};
 		},
 		async createTagItemBulk(idTag, params) {
-			this.tagItemEdition.loading = true;
-			this.tagItemEdition = await fetchWrapper.post({
+			if (!this.tagsItem[idTag]) {
+				this.tagsItem[idTag] = {};
+			}
+			const tagItemBulk = await fetchWrapper.post({
 				url: `${baseUrl}/tag/${idTag}/item/bulk`,
 				useToken: "access",
 				body: params,
 			});
-			if (!this.tagsItem[idTag]) {
-				this.tagsItem[idTag] = {};
-			}
-			for (const tagItem of this.tagItemEdition["valide"]) {
+			for (const tagItem of tagItemBulk["valide"]) {
 				this.tagsItem[idTag][tagItem.id_item] = tagItem;
 			}
 		},
 		async deleteTagItemBulk(idTag, params) {
-			this.tagItemEdition.loading = true;
-			this.tagItemEdition = await fetchWrapper.delete({
+			if (!this.tagsItem[idTag]) {
+				this.tagsItem[idTag] = {};
+			}
+			const tagItemBulk = await fetchWrapper.delete({
 				url: `${baseUrl}/tag/${idTag}/item/bulk`,
 				useToken: "access",
 				body: params,
 			});
-			for (const tagItem of this.tagItemEdition["valide"]) {
+			for (const tagItem of tagItemBulk["valide"]) {
 				delete this.tagsItem[idTag][tagItem.id_item];
 			}
 		},

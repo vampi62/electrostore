@@ -16,64 +16,70 @@ export const useIasStore = defineStore("ias", {
 		async getIaByList(idResearch = []) {
 			this.loading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			let newIaList = await fetchWrapper.get({
-				url: `${baseUrl}/ia?${idResearchString}`,
+			const paramString = [idResearchString].filter((str) => str).join("&");
+			const newIaList = await fetchWrapper.get({
+				url: `${baseUrl}/ia?${paramString}`,
 				useToken: "access",
 			});
 			for (const ia of newIaList["data"]) {
 				this.ias[ia.id_ia] = ia;
 			}
-			this.TotalCount = newIaList["count"];
 			this.loading = false;
 		},
-		async getIaByInterval(limit = 100, offset = 0) {
+		async getIaByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			this.loading = true;
-			let newIaList = await fetchWrapper.get({
-				url: `${baseUrl}/ia?limit=${limit}&offset=${offset}`,
+			if (clear) {
+				this.ias = {};
+			}
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const newIaList = await fetchWrapper.get({
+				url: `${baseUrl}/ia?${paramString}`,
 				useToken: "access",
 			});
 			for (const ia of newIaList["data"]) {
 				this.ias[ia.id_ia] = ia;
 			}
-			this.TotalCount = newIaList["count"];
+			this.TotalCount = newIaList["pagination"]?.["total"] || 0;
 			this.loading = false;
+			return [newIaList["pagination"]?.["nextOffset"] || 0, newIaList["pagination"]?.["hasMore"] || false];
 		},
 		async getIaById(id) {
 			if (!this.ias[id]) {
 				this.ias[id] = {};
 			}
-			this.ias[id] = { ...this.ias[id], loading: true };
+			this.ias[id].loading = true;
 			this.ias[id] = await fetchWrapper.get({
 				url: `${baseUrl}/ia/${id}`,
 				useToken: "access",
 			});
 		},
 		async createIa(params) {
-			this.iaEdition.loading = true;
-			this.iaEdition = await fetchWrapper.post({
+			const ia = await fetchWrapper.post({
 				url: `${baseUrl}/ia`,
 				useToken: "access",
 				body: params,
 			});
-			this.ias[this.iaEdition.id_ia] = this.iaEdition;
+			this.ias[ia.id_ia] = ia;
+			return ia.id_ia;
 		},
 		async updateIa(id, params) {
-			this.iaEdition.loading = true;
-			this.iaEdition = await fetchWrapper.put({
+			this.ias[id] = await fetchWrapper.put({
 				url: `${baseUrl}/ia/${id}`,
 				useToken: "access",
 				body: params,
 			});
-			this.ias[id] = this.iaEdition;
 		},
 		async deleteIa(id) {
-			this.iaEdition.loading = true;
 			await fetchWrapper.delete({
 				url: `${baseUrl}/ia/${id}`,
 				useToken: "access",
 			});
 			delete this.ias[id];
-			this.iaEdition = {};
 		},
 		async getTrainStatus(id) {
 			this.status.train.loading = true;
@@ -91,7 +97,6 @@ export const useIasStore = defineStore("ias", {
 		},
 		async detectItem(id, params) {
 			this.status.detect.loading = true;
-			// if params is a Blob, convert it to a File
 			if (params instanceof Blob) {
 				params = new File([params], "img_file.jpg", { type: params.type });
 			}
