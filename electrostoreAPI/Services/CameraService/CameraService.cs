@@ -10,6 +10,7 @@ using electrostore.Services.JwiService;
 using System.Text.Json;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.CameraService;
 
@@ -39,6 +40,7 @@ public class CameraService : ICameraService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<int>? idResearch = null)
     {
         var query = _context.Cameras.AsQueryable();
+        var filterResult = default(Expression<Func<Cameras, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(c => idResearch.Contains(c.id_camera));
@@ -47,9 +49,8 @@ public class CameraService : ICameraService
         {
             if (rsql != null && rsql.Count > 0)
             {
-                var filterResult = RsqlParserExtensions.ToFilterExpression<Cameras>(rsql);
-                query = query.Where(filterResult.Item1);
-                rsql = filterResult.Item2;
+                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Cameras>(rsql);
+                query = query.Where(filterResult);
             }
             if (!string.IsNullOrEmpty(sort?.Field))
             {
@@ -78,9 +79,9 @@ public class CameraService : ICameraService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.Cameras.CountAsync(),
+                total = await _context.Cameras.CountAsync(filterResult ?? (c => true)),
                 nextOffset = offset + limit,
-                hasMore = await _context.Cameras.Skip(offset + limit).AnyAsync()
+                hasMore = await _context.Cameras.Skip(offset + limit).AnyAsync(filterResult ?? (c => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

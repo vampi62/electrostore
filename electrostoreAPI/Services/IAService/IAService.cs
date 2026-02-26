@@ -7,6 +7,7 @@ using electrostore.Models;
 using System.Text.Json;
 using electrostore.Services.SessionService;
 using electrostore.Services.FileService;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.IAService;
 
@@ -33,6 +34,7 @@ public class IAService : IIAService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<int>? idResearch = null)
     {
         var query = _context.IA.AsQueryable();
+        var filterResult = default(Expression<Func<IA, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(ia => idResearch.Contains(ia.id_ia));
@@ -41,9 +43,8 @@ public class IAService : IIAService
         {
             if (rsql != null && rsql.Count > 0)
             {
-                var filterResult = RsqlParserExtensions.ToFilterExpression<IA>(rsql);
-                query = query.Where(filterResult.Item1);
-                rsql = filterResult.Item2;
+                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<IA>(rsql);
+                query = query.Where(filterResult);
             }
             if (!string.IsNullOrEmpty(sort?.Field))
             {
@@ -72,9 +73,9 @@ public class IAService : IIAService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.IA.CountAsync(),
+                total = await _context.IA.CountAsync(filterResult ?? (ia => true)),
                 nextOffset = offset + limit,
-                hasMore = await _context.IA.Skip(offset + limit).AnyAsync()
+                hasMore = await _context.IA.Skip(offset + limit).AnyAsync(filterResult ?? (ia => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

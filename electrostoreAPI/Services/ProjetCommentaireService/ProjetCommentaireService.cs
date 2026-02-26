@@ -5,6 +5,7 @@ using electrostore.Enums;
 using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.SessionService;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.ProjetCommentaireService;
 
@@ -30,13 +31,13 @@ public class ProjetCommentaireService : IProjetCommentaireService
             throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsCommentaires.AsQueryable();
+        var filterResult = default(Expression<Func<ProjetsCommentaires, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_projet", SearchType = "eq", Value = projetId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<ProjetsCommentaires>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjetsCommentaires>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -72,9 +73,9 @@ public class ProjetCommentaireService : IProjetCommentaireService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ProjetsCommentaires.CountAsync(p => p.id_projet == projetId),
+                total = await _context.ProjetsCommentaires.CountAsync(filterResult ?? (pc => pc.id_projet == projetId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.ProjetsCommentaires.Skip(offset + limit).AnyAsync(p => p.id_projet == projetId)
+                hasMore = await _context.ProjetsCommentaires.Skip(offset + limit).AnyAsync(filterResult ?? (pc => pc.id_projet == projetId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -90,13 +91,13 @@ public class ProjetCommentaireService : IProjetCommentaireService
             throw new KeyNotFoundException($"User with id '{userId}' not found");
         }
         var query = _context.ProjetsCommentaires.AsQueryable();
+        var filterResult = default(Expression<Func<ProjetsCommentaires, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_user", SearchType = "eq", Value = userId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<ProjetsCommentaires>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjetsCommentaires>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -132,9 +133,9 @@ public class ProjetCommentaireService : IProjetCommentaireService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ProjetsCommentaires.CountAsync(pc => pc.id_user == userId),
+                total = await _context.ProjetsCommentaires.CountAsync(filterResult ?? (pc => pc.id_user == userId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.ProjetsCommentaires.Skip(offset + limit).AnyAsync(pc => pc.id_user == userId)
+                hasMore = await _context.ProjetsCommentaires.Skip(offset + limit).AnyAsync(filterResult ?? (pc => pc.id_user == userId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

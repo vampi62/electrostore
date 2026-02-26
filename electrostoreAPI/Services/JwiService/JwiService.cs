@@ -8,6 +8,7 @@ using electrostore.Enums;
 using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.SessionService;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.JwiService;
 
@@ -155,13 +156,13 @@ public class JwiService : IJwiService
             throw new UnauthorizedAccessException("You are not authorized to view this session.");
         }
         var query = _context.JwiRefreshTokens.AsQueryable();
+        var filterResult = default(Expression<Func<JwiRefreshTokens, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_user", SearchType = "eq", Value = userId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<JwiRefreshTokens>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<JwiRefreshTokens>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {

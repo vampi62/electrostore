@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Extensions;
 using electrostore.Models;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.ProjetTagService;
 
@@ -21,6 +22,7 @@ public class ProjetTagService : IProjetTagService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.ProjetTags.AsQueryable();
+        var filterResult = default(Expression<Func<ProjetTags, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(t => idResearch.Contains(t.id_projet_tag));
@@ -29,9 +31,8 @@ public class ProjetTagService : IProjetTagService
         {
             if (rsql != null && rsql.Count > 0)
             {
-                var filterResult = RsqlParserExtensions.ToFilterExpression<ProjetTags>(rsql);
-                query = query.Where(filterResult.Item1);
-                rsql = filterResult.Item2;
+                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjetTags>(rsql);
+                query = query.Where(filterResult);
             }
             if (!string.IsNullOrEmpty(sort?.Field))
             {
@@ -57,16 +58,9 @@ public class ProjetTagService : IProjetTagService
             {
                 ProjetTags = t,
                 ProjetsProjetTagsCount = t.ProjetsProjetTags.Count,
-                ProjetsProjetTags = expand != null && expand.Contains("stores_tags") ? t.ProjetsProjetTags.Take(20).ToList() : null
+                ProjetsProjetTags = expand != null && expand.Contains("projets_projet_tags") ? t.ProjetsProjetTags.Take(20).ToList() : null
             })
             .ToListAsync();
-        /* return projetTag.Select(t => {
-            return _mapper.Map<ReadExtendedProjetTagDto>(t.ProjetTags) with
-            {
-                projets_projet_tags_count = t.ProjetsProjetTagsCount,
-                projets_projet_tags = _mapper.Map<IEnumerable<ReadProjetProjetTagDto>>(t.ProjetsProjetTags)
-            };
-        }).ToList(); */
         return new PaginatedResponseDto<ReadExtendedProjetTagDto>
         {
             data = projetTag.Select(t => _mapper.Map<ReadExtendedProjetTagDto>(t.ProjetTags) with
@@ -78,18 +72,13 @@ public class ProjetTagService : IProjetTagService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ProjetTags.CountAsync(),
+                total = await _context.ProjetTags.CountAsync(filterResult ?? (t => true)),
                 nextOffset = offset + limit,
-                hasMore = await _context.ProjetTags.Skip(offset + limit).AnyAsync()
+                hasMore = await _context.ProjetTags.Skip(offset + limit).AnyAsync(filterResult ?? (t => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
         };
-    }
-
-    public async Task<int> GetProjetTagsCount()
-    {
-        return await _context.ProjetTags.CountAsync();
     }
 
     public async Task<ReadExtendedProjetTagDto> GetProjetTagById(int id, List<string>? expand = null)
@@ -101,7 +90,7 @@ public class ProjetTagService : IProjetTagService
             {
                 ProjetTags = t,
                 ProjetsProjetTagsCount = t.ProjetsProjetTags.Count,
-                ProjetsProjetTags = expand != null && expand.Contains("stores_tags") ? t.ProjetsProjetTags.Take(20).ToList() : null
+                ProjetsProjetTags = expand != null && expand.Contains("projets_projet_tags") ? t.ProjetsProjetTags.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetTag with id '{id}' not found");
         return _mapper.Map<ReadExtendedProjetTagDto>(projetTag.ProjetTags) with
