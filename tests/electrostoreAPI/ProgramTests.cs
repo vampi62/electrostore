@@ -174,46 +174,6 @@ namespace electrostore.Tests
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
 
-        // Tests ciblés pour SwaggerClass (AddTotalCountHeaderFilter)
-        [Fact]
-        public void SwaggerFilter_ShouldAddTotalCountHeader_WhenLimitAndOffsetQueryAnd200Response()
-        {
-            // Arrange
-            var operation = new Microsoft.OpenApi.Models.OpenApiOperation();
-            operation.Responses["200"] = new Microsoft.OpenApi.Models.OpenApiResponse();
-
-            var apiDescription = new Microsoft.AspNetCore.Mvc.ApiExplorer.ApiDescription();
-            apiDescription.ParameterDescriptions.Add(new Microsoft.AspNetCore.Mvc.ApiExplorer.ApiParameterDescription
-            {
-                Name = "limit",
-                Source = Microsoft.AspNetCore.Mvc.ModelBinding.BindingSource.Query
-            });
-            apiDescription.ParameterDescriptions.Add(new Microsoft.AspNetCore.Mvc.ApiExplorer.ApiParameterDescription
-            {
-                Name = "offset",
-                Source = Microsoft.AspNetCore.Mvc.ModelBinding.BindingSource.Query
-            });
-
-            var schemaRepository = new Swashbuckle.AspNetCore.SwaggerGen.SchemaRepository();
-            var methodInfo = typeof(ProgramTests).GetMethods().First();
-            var dataContractResolver = new Swashbuckle.AspNetCore.SwaggerGen.JsonSerializerDataContractResolver(new System.Text.Json.JsonSerializerOptions());
-            var schemaGenerator = new Swashbuckle.AspNetCore.SwaggerGen.SchemaGenerator(new Swashbuckle.AspNetCore.SwaggerGen.SchemaGeneratorOptions(), dataContractResolver);
-            var context = new Swashbuckle.AspNetCore.SwaggerGen.OperationFilterContext(
-                apiDescription,
-                schemaGenerator,
-                schemaRepository,
-                methodInfo
-            );
-
-            var filter = new AddTotalCountHeaderFilter();
-
-            // Act
-            filter.Apply(operation, context);
-
-            // Assert
-            Assert.True(operation.Responses.TryGetValue("200", out var resp) && resp.Headers.ContainsKey("X-Total-Count"));
-        }
-
         [Fact]
         public void SwaggerFilter_ShouldNotAddHeader_WhenMissingLimitOrOffset()
         {

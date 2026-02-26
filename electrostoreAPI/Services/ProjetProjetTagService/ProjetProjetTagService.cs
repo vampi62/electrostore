@@ -5,6 +5,7 @@ using electrostore.Enums;
 using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.SessionService;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.ProjetProjetTagService;
 
@@ -30,13 +31,13 @@ public class ProjetProjetTagService : IProjetProjetTagService
             throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsProjetTags.AsQueryable();
+        var filterResult = default(Expression<Func<ProjetsProjetTags, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_projet", SearchType = "eq", Value = projetId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<ProjetsProjetTags>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjetsProjetTags>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -72,9 +73,9 @@ public class ProjetProjetTagService : IProjetProjetTagService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ProjetsProjetTags.CountAsync(st => st.id_projet == projetId),
+                total = await _context.ProjetsProjetTags.CountAsync(filterResult ?? (st => st.id_projet == projetId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.ProjetsProjetTags.Skip(offset + limit).AnyAsync(st => st.id_projet == projetId)
+                hasMore = await _context.ProjetsProjetTags.Skip(offset + limit).AnyAsync(filterResult ?? (st => st.id_projet == projetId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -90,13 +91,13 @@ public class ProjetProjetTagService : IProjetProjetTagService
             throw new KeyNotFoundException($"ProjetTag with id '{projetTagId}' not found");
         }
         var query = _context.ProjetsProjetTags.AsQueryable();
+        var filterResult = default(Expression<Func<ProjetsProjetTags, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_projet_tag", SearchType = "eq", Value = projetTagId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<ProjetsProjetTags>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjetsProjetTags>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -132,9 +133,9 @@ public class ProjetProjetTagService : IProjetProjetTagService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ProjetsProjetTags.CountAsync(st => st.id_projet_tag == projetTagId),
+                total = await _context.ProjetsProjetTags.CountAsync(filterResult ?? (st => st.id_projet_tag == projetTagId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.ProjetsProjetTags.Skip(offset + limit).AnyAsync(st => st.id_projet_tag == projetTagId)
+                hasMore = await _context.ProjetsProjetTags.Skip(offset + limit).AnyAsync(filterResult ?? (st => st.id_projet_tag == projetTagId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

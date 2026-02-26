@@ -5,6 +5,7 @@ using electrostore.Enums;
 using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.SessionService;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.CommandCommentaireService;
 
@@ -30,13 +31,13 @@ public class CommandCommentaireService : ICommandCommentaireService
             throw new KeyNotFoundException($"Command with id '{CommandId}' not found");
         }
         var query = _context.CommandsCommentaires.AsQueryable();
+        var filterResult = default(Expression<Func<CommandsCommentaires, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_command", SearchType = "eq", Value = CommandId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<CommandsCommentaires>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsCommentaires>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -72,9 +73,9 @@ public class CommandCommentaireService : ICommandCommentaireService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.CommandsCommentaires.Where(cc => cc.id_command == CommandId).CountAsync(),
+                total = await _context.CommandsCommentaires.CountAsync(filterResult ?? (cc => cc.id_command == CommandId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.CommandsCommentaires.Where(cc => cc.id_command == CommandId).Skip(offset + limit).AnyAsync()
+                hasMore = await _context.CommandsCommentaires.Skip(offset + limit).AnyAsync(filterResult ?? (cc => cc.id_command == CommandId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -90,13 +91,13 @@ public class CommandCommentaireService : ICommandCommentaireService
             throw new KeyNotFoundException($"User with id '{userId}' not found");
         }
         var query = _context.CommandsCommentaires.AsQueryable();
+        var filterResult = default(Expression<Func<CommandsCommentaires, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_user", SearchType = "eq", Value = userId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<CommandsCommentaires>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsCommentaires>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -132,9 +133,9 @@ public class CommandCommentaireService : ICommandCommentaireService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.CommandsCommentaires.Where(cc => cc.id_user == userId).CountAsync(),
+                total = await _context.CommandsCommentaires.CountAsync(filterResult ?? (cc => cc.id_user == userId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.CommandsCommentaires.Where(cc => cc.id_user == userId).Skip(offset + limit).AnyAsync()
+                hasMore = await _context.CommandsCommentaires.Skip(offset + limit).AnyAsync(filterResult ?? (cc => cc.id_user == userId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

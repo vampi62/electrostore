@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Extensions;
 using electrostore.Models;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.TagService;
 
@@ -21,6 +22,7 @@ public class TagService : ITagService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Tags.AsQueryable();
+        var filterResult = default(Expression<Func<Tags, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(t => idResearch.Contains(t.id_tag));
@@ -29,9 +31,8 @@ public class TagService : ITagService
         {
             if (rsql != null && rsql.Count > 0)
             {
-                var filterResult = RsqlParserExtensions.ToFilterExpression<Tags>(rsql);
-                query = query.Where(filterResult.Item1);
-                rsql = filterResult.Item2;
+                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Tags>(rsql);
+                query = query.Where(filterResult);
             }
             if (!string.IsNullOrEmpty(sort?.Field))
             {
@@ -81,9 +82,9 @@ public class TagService : ITagService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.Tags.CountAsync(),
+                total = await _context.Tags.CountAsync(filterResult ?? (t => true)),
                 nextOffset = offset + limit,
-                hasMore = await _context.Tags.Skip(offset + limit).AnyAsync()
+                hasMore = await _context.Tags.Skip(offset + limit).AnyAsync(filterResult ?? (t => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
