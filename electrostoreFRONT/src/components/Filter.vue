@@ -10,7 +10,7 @@
 				@change="$emit('updateText', $event.target.value)">
 				<option value=""></option>
 				<template v-if="options">
-					<option v-for="option in options" :key="option[0]" :value="option[0]">{{ option[1] }}
+					<option v-for="[index, option] in options" :key="index" :value="index" :selected="preset === index">{{ option }}
 					</option>
 				</template>
 			</select>
@@ -46,10 +46,10 @@
 				<div v-show="isOpen"
 					:ref="`filterList`"
 					class="absolute border max-h-48 overflow-y-auto bg-white left-0" style="width: calc(100% - 8px);">
-					<div v-for="option in filterOption" :key="option[0]"
-						@mousedown.prevent="selectOption(option)"
+					<div v-for="[index, option] in filterOption" :key="index"
+						@mousedown.prevent="selectOption(index, option)"
 						class="flex flex-col p-2 hover:bg-gray-100 cursor-pointer">
-						<span class="text-sm">{{ option[1] }}</span>
+						<span class="text-sm">{{ option }}</span>
 					</div>
 				</div>
 			</teleport>
@@ -58,9 +58,10 @@
 			<input
 				:id="`filter-input-${this.$.uid}`"
 				:type="type"
+				:placeholder="placeholder"
+				:value="preset"
 				class="border border-gray-300 rounded px-2 py-1"
 				:class="[classCss, label.length > 0 ? 'mr-2' : '']"
-				:placeholder="placeholder"
 				@input="$emit('updateText', $event.target.value)" />
 		</template>
 		</div>
@@ -93,6 +94,12 @@ export default {
 			// e.g., 'write here your text'
 			default: "",
 		},
+		preset: {
+			type: [String, Number],
+			required: false,
+			// This should be the value to preset the input with
+			default: "",
+		},
 		classCss: {
 			type: String,
 			required: false,
@@ -100,42 +107,50 @@ export default {
 			default: "",
 		},
 		options: {
-			type: Array,
+			type: Object,
 			required: false,
 			// This should be an array of options for select input
-			// e.g., [['value1', 'Label 1'], ['value2', 'Label 2']]
+			// e.g., {[id]: 'Option 1', [id2]: 'Option 2'}
 			// translate the labels before passing
 			// to the component
-			default: () => [],
+			default: () => ({}),
 		},
 	},
 	data() {
 		return {
 			isOpen: false,
-			inputText: "",
+			inputText: this.preset,
 		};
 	},
 	emits: ["updateText"],
 	computed: {
 		filterOption() {
-			return Object.values(this.options).filter((element) => {
+			if (!this.options) {
+				return [];
+			}
+			return Object.entries(this.options).filter(([index, element]) => {
 				if (this.inputText !== "") {
-					return element[1].toLowerCase().includes(this.inputText.toLowerCase());
+					return element.toLowerCase().includes(this.inputText.toLowerCase());
 				}
 				return true;
 			});
 		},
 	},
 	methods: {
-		selectOption(option){
-			this.inputText = option[1];
+		selectOption(index, option){
+			this.inputText = option;
 			this.isOpen = false;
-			this.$emit("updateText", option[0]);
+			this.$emit("updateText", index);
 			this.$refs.filterInput.blur();
 		},
 		validateInput(){
-			let result = Object.values(this.options).find((option) => {
-				return option[1].toLowerCase() === this.inputText.toLowerCase();
+			if (!this.options) {
+				this.inputText = "";
+				this.$emit("updateText", "");
+				return;
+			}
+			let result = Object.entries(this.options).find(([index, option]) => {
+				return option.toLowerCase() === this.inputText.toLowerCase();
 			});
 			if (result) {
 				this.inputText = result[1];

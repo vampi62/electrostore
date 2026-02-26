@@ -22,8 +22,8 @@
 		<div v-for="commentaire in storeData[0]"
 			:key="commentaire[meta.key]" class="flex flex-col border p-4 rounded-lg">
 			<div :class="{
-				'text-right': meta.canEdit && commentaire.id_user === storeData[2].id_user,
-				'text-left': meta.canEdit && commentaire.id_user !== storeData[2].id_user
+				'text-right': meta.canEdit && commentaire.id_user === storeUser.id_user,
+				'text-left': meta.canEdit && commentaire.id_user !== storeUser.id_user
 			}" class="text-sm text-gray-600">
 				<span class="font-semibold">
 					{{ storeData[1][commentaire.id_user].nom_user }} {{
@@ -60,12 +60,12 @@
 				</template>
 				<template v-else>
 					<div :class="{
-						'text-right': commentaire.id_user === storeData[2].id_user,
-						'text-left': commentaire.id_user !== storeData[2].id_user
+						'text-right': commentaire.id_user === storeUser.id_user,
+						'text-left': commentaire.id_user !== storeUser.id_user
 					}">
 						{{ commentaire[meta.contenu] }}
 					</div>
-					<div v-if="meta.canEdit && (commentaire.id_user === storeData[2].id_user || storeData[2].role_user === 1 || storeData[2].role_user === 2)"
+					<div v-if="meta.canEdit && (commentaire.id_user === storeUser.id_user || meta.roleRequired)"
 						class="flex justify-end space-x-2">
 						<button type="button" @click="commentaire.tmp = { ...commentaire }"
 							class="px-3 py-1 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500">
@@ -111,8 +111,6 @@ export default {
 			// This should be an array containing:
 			// [0] - store with all commentaires
 			// [1] - store with all users
-			// [2] - current user session data
-			// [3] - store with configuration data
 			default: () => [],
 		},
 		storeFunction: {
@@ -125,6 +123,16 @@ export default {
 				delete: () => Promise.resolve(),
 			}),
 		},
+		storeUser: {
+			type: Object,
+			default: () => ({}),
+			// This should be an object containing the user session data
+		},
+		storeConfig: {
+			type: Object,
+			default: () => ({}),
+			// This should be an object containing the configuration store, used to get max length for validation
+		},
 		meta: {
 			type: Object,
 			required: true,
@@ -134,23 +142,20 @@ export default {
 			// - canEdit: boolean indicating if the user can edit comments
 			// - idRessource: identifier for the resource linked to the comment
 			// - link: URL for the resource linked to the comment
+			// - roleRequired: boolean indicating if a specific role is required to edit/delete all comments (not just the user's own comments)
 			default: () => ({
 				key: "id_commentaire",
 				contenu: "contenu_commentaire",
 				canEdit: false,
 				idRessource: "id_ressource",
 				link: "/ressource/",
+				roleRequired: false,
 			}),
-
 		},
 		loading: {
 			type: Boolean,
 			default: true,
 			// Indicates if the component is loading data
-		},
-		loadedCount: {
-			type: Number,
-			default: 0,
 		},
 		totalCount: {
 			type: Number,
@@ -158,7 +163,14 @@ export default {
 		},
 		fetchFunction: {
 			type: Function,
-			default: () => {},
+			default: () => { 
+				return [0, false];
+			},
+		},
+		listFetchFunction: {
+			type: Array,
+			default: () => [],
+			// This should be an array of functions to refetch related lists when a comment is created, updated, or deleted
 		},
 		texteModalDelete: {
 			type: Object,
@@ -177,6 +189,9 @@ export default {
 		Field,
 		ModalDeleteConfirm: defineAsyncComponent(() => import("@/components/ModalDeleteConfirm.vue")),
 	},
+	async created() {
+		await this.refetchData();
+	},
 	setup() {
 		const { addNotification } = inject("useNotification"); 
 		return {
@@ -189,13 +204,16 @@ export default {
 			selectedCommentaire: null,
 			deleteModalShow: false,
 			createLoading: false,
+			nextOffset: 0,
+			hasMore: true,
+			isInitializing: true,
 		};
 	},
 	computed: {
 		schemaCommentaire() {
 			return Yup.object().shape({
 				[this.meta.contenu]: Yup.string()
-					.max(this.storeData[3].getConfigByKey("max_length_commentaire"), this.$t("components.VModalCommentaireMaxLength") + " " + this.storeData[3].getConfigByKey("max_length_commentaire") + this.$t("common.VAllCaracters"))
+					.max(this.storeConfig.getConfigByKey("max_length_commentaire"), this.$t("components.VModalCommentaireMaxLength") + " " + this.storeConfig.getConfigByKey("max_length_commentaire") + this.$t("common.VAllCaracters"))
 					.required(this.$t("components.VModalCommentaireRequired")),
 			});
 		},
@@ -250,17 +268,29 @@ export default {
 			this.deleteModalShow = false;
 		},
 		async loadNext(e) {
-			if (this.totalCount === 0) {
-				return;
-			}
-			if (this.loading) {
+			if (this.totalCount === 0 || this.loading || !this.hasMore) {
 				return;
 			}
 			if (e.target.scrollTop + e.target.clientHeight >= e.target.scrollHeight - 10) {
-				if (this.totalCount === this.loadedCount) {
+				if (this.totalCount === this.nextOffset) {
 					return;
 				}
-				await this.fetchFunction(this.loadedCount + 100, this.loadedCount);
+				[this.nextOffset, this.hasMore] = await this.fetchFunction(this.nextOffset, 100, this.meta?.expand || []);
+			}
+		},
+		async refetchData() {
+			// Reset l'état et refetch les données depuis le début
+			this.nextOffset = 0;
+			this.hasMore = true;
+			let intervalOffset = this.nextOffset;
+			[this.nextOffset, this.hasMore] = await this.fetchFunction(100, 0, this.meta?.expand || []);
+			await this.refetchListData(intervalOffset, this.nextOffset);
+		},
+		async refetchListData(minOffset, maxOffset) {
+			for (let index = 0; index < this.listFetchFunction.length; index++) {
+				if (this.listFetchFunction[index]) {
+					await this.listFetchFunction[index](minOffset, maxOffset);
+				}
 			}
 		},
 	},

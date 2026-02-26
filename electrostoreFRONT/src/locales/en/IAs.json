@@ -1,0 +1,14 @@
+{
+	"FilterTrained1": "false",
+	"FilterTrained2": "true",
+	"FilterTrained": "trained",
+	"FilterDate": "date",
+	"FilterNom": "name",
+	"Title": "IA",
+	"Add": "Create IA",
+	"Name": "Name",
+	"Description": "Description",
+	"Date": "Date",
+	"Trained": "Trained",
+	"Loading": "Loading"
+}

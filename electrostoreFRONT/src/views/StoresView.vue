@@ -1,85 +1,74 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
 
-import { useAuthStore, useStoresStore, useTagsStore } from "@/stores";
+import { useStoresStore, useTagsStore, useAuthStore } from "@/stores";
 const storesStore = useStoresStore();
 const tagsStore = useTagsStore();
 const authStore = useAuthStore();
 
-async function fetchAllData() {
-	let tagsLink = new Set();
-	let offset = 0;
-	const limit = 100;
-	do {
-		await storesStore.getStoreByInterval(limit, offset, ["stores_tags"]);
-		offset += limit;
-	} while (offset < storesStore.storesTotalCount);
-	for (const store in storesStore.stores) {
-		for (const tag in storesStore.storeTags[store]) {
-			tagsLink.add(tag);
-		}
-	}
+async function fetchTagData(minOffset, maxOffset) {
 	let tagsNotFound = [];
-	for (const tag of Array.from(tagsLink)) {
-		if (!tagsStore.tags[tag]) {
-			tagsNotFound.push(tag);
+	for (let id = minOffset; id < maxOffset; id++) {
+		for (const tag in storesStore.storeTags[id]) {
+			if (!tagsStore.tags[tag]) {
+				tagsNotFound.push(tag);
+			}
 		}
 	}
 	if (tagsNotFound.length > 0) {
 		await tagsStore.getTagByList(tagsNotFound);
 	}
-	filter.value[4].options = Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]);
+	filter.value[4].options = Object.fromEntries(Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]));
 }
-onMounted(() => {
-	fetchAllData();
-});
 
 const filter = ref([
-	{ key: "nom_store", value: "", type: "text", label: "store.VStoresFilterName", compareMethod: "contain" },
-	{ key: "mqtt_name_store", value: "", type: "text", label: "store.VStoresFilterMqttName", compareMethod: "contain" },
-	{ key: "xlength_store", value: "", type: "number", label: "store.VStoresFilterXLength", compareMethod: "<=" },
-	{ key: "ylength_store", value: "", type: "number", label: "store.VStoresFilterYLength", compareMethod: "<=" },
-	{ key: "id_tag", subPath: "stores_tags", value: "", type: "datalist", typeData: "int", options: Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]), label: "store.VStoresFilterTag", compareMethod: "=" },
+	{ key: "nom_store", value: "", type: "text", label: "stores.FilterName", compareMethod: "contain" },
+	{ key: "mqtt_name_store", value: "", type: "text", label: "stores.FilterMqttName", compareMethod: "contain" },
+	{ key: "xlength_store", value: "", type: "number", label: "stores.FilterXLength", compareMethod: "<=" },
+	{ key: "ylength_store", value: "", type: "number", label: "stores.FilterYLength", compareMethod: "<=" },
+	{ key: "id_tag", subPath: "stores_tags", value: "", type: "datalist", typeData: "int", options: Object.fromEntries(Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag])), label: "stores.FilterTag", compareMethod: "=" },
 ]);
 const tableauLabel = ref([
-	{ label: "store.VStoresName", sortable: true, key: "nom_store", type: "text" },
-	{ label: "store.VStoresXLength", sortable: true, key: "xlength_store", type: "number" },
-	{ label: "store.VStoresYLength", sortable: true, key: "ylength_store", type: "number" },
-	{ label: "store.VStoresMqttName", sortable: true, key: "mqtt_name_store", type: "text" },
-	{ label: "store.VStoresTagsList", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, key: "id_store", keyStoreLink: "id_tag", ressourcePrint: [{ type: "ressource", key: "nom_tag" }] } },
+	{ label: "stores.Name", sortable: true, key: "nom_store", type: "text" },
+	{ label: "stores.XLength", sortable: true, key: "xlength_store", type: "number" },
+	{ label: "stores.YLength", sortable: true, key: "ylength_store", type: "number" },
+	{ label: "stores.MqttName", sortable: true, key: "mqtt_name_store", type: "text" },
+	{ label: "stores.TagsList", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, key: "id_store", keyStoreLink: "id_tag", ressourcePrint: [{ type: "ressource", key: "nom_tag" }] } },
 ]);
 const tableauMeta = ref({
 	key: "id_store",
 	path: "/stores/",
+	expand: ["stores_tags"],
 });
-const filteredStores = ref([]);
-const updateFilteredStores = (newValue) => {
-	filteredStores.value = newValue;
-};
+document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
 
 <template>
 	<div>
-		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('store.VStoresTitle') }}</h2>
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('stores.Title') }}</h2>
 	</div>
 	<div>
 		<div :class="{
-				'bg-blue-500 hover:bg-blue-600 cursor-pointer': authStore.user?.role_user === 2,
-				'bg-gray-400 cursor-not-allowed': authStore.user?.role_user !== 2
+				'bg-blue-500 hover:bg-blue-600 cursor-pointer': authStore.hasPermission([2]),
+				'bg-gray-400 cursor-not-allowed': !authStore.hasPermission([2])
 			}"
 			class="text-white px-4 py-2 rounded inline-block mb-2">
-			<RouterLink v-if="authStore.user?.role_user === 2" :to="'/stores/new'">
-				{{ $t('store.VStoresAdd') }}
+			<RouterLink v-if="authStore.hasPermission([2])" :to="'/stores/new'">
+				{{ $t('stores.Add') }}
 			</RouterLink>
 			<span v-else class="pointer-events-none">
-				{{ $t('store.VStoresAdd') }}
+				{{ $t('stores.Add') }}
 			</span>
 		</div>
-		<FilterContainer :filters="filter" :store-data="storesStore.stores" @output-filter="updateFilteredStores" />
+		<FilterContainer :filters="filter" :store-data="storesStore.stores" />
 	</div>
 	<Tableau :labels="tableauLabel" :meta="tableauMeta"
-		:store-data="[filteredStores,storesStore.storeTags,tagsStore.tags]"
+		:store-data="[storesStore.stores,storesStore.storeTags,tagsStore.tags]"
+		:filters="filter"
 		:loading="storesStore.storesLoading"
+		:total-count="Number(storesStore.storesTotalCount) || 0"
+		:fetch-function="(limit, offset, expand, filter, sort, clear) => storesStore.getStoreByInterval(limit, offset, expand, filter, sort, clear)"
+		:list-fetch-function="[(minOffset, maxOffset) => fetchTagData(minOffset, maxOffset)]"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

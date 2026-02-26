@@ -5,9 +5,10 @@
 			:label="filter.label"
 			:type="filter.type"
 			:placeholder="filter?.placeholder"
+			:preset="filter.value"
 			:class-css="filter?.class"
 			:class="filter?.class"
-			:options="filter?.options && filter.options.length > 0 ? filterOption(filter) : []"
+			:options="filter?.options && Object.keys(filter.options).length > 0 ? filterOption(filter) : null"
 			@update-text="(value) => updateText(index, value)"
 		/>
 	</div>
@@ -25,7 +26,7 @@ export default {
 			// - key: string (the key in the storeData to filter on)
 			// - label: string (translation key for the label)
 			// - type: string (input type, e.g., 'text', 'number', 'select')
-			// - dataType: string (type of data, e.g., 'int', 'float', 'string', 'bool')
+			// - typeData: string (type of data, e.g., 'int', 'float', 'string', 'bool')
 			// - compareMethod: string (comparison method, e.g., '=', '>=', '<=', 'contain')
 			// - value: any (the value to filter by, can be empty)
 			// - subPath: string (optional, for nested data filtering)
@@ -43,48 +44,6 @@ export default {
 	components: {
 		Filter: defineAsyncComponent(() => import("@/components/Filter.vue")),
 	},
-	computed: {
-		filteredData() {
-			return Object.values(this.storeData).filter((element) => {
-				return this.filters.every((f) => {
-					if (f.value !== "" && f.value !== null && f.value !== undefined) {
-						if (f.subPath) {
-							switch (f.compareMethod) {
-							case "=":
-								return element[f.subPath].some((subElement) => subElement[f.key] === f.value);
-							case ">=":
-								return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) >= f.value;
-							case "<=":
-								return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) <= f.value;
-							}
-						}
-						switch (f.compareMethod) {
-						case "=":
-							switch (f.dataType) {
-							case "bool":
-								return element[f.key] === (f.value === "true");
-							case "int":
-								return Number.parseInt(element[f.key]) === Number.parseInt(f.value);
-							case "float":
-								return Number.parseFloat(element[f.key]) === Number.parseFloat(f.value);
-							case "string":
-								return element[f.key].toLowerCase() === f.value.toLowerCase();
-							}
-							return element[f.key] === f.value;
-						case ">=":
-							return element[f.key] >= f.value;
-						case "<=":
-							return element[f.key] <= f.value;
-						case "contain":
-							return element[f.key].includes(f.value);
-						}
-					}
-					return true;
-				});
-			});
-		},
-	},
-	emits: ["outputFilter"],
 	methods: {
 		updateText(key, value) {
 			for (const [index, filter] of this.filters.entries()) {
@@ -120,15 +79,15 @@ export default {
 			}
 		},
 		filterOption(filter) {
-			if ((filter.type === "select" || filter.type === "datalist") && filter.options.length > 0) {
+			if (filter?.onlyUsed && (filter.type === "select" || filter.type === "datalist") && Object.keys(filter.options).length > 0) {
 				const optionsSet = new Set();
-				for (const [index, option] of filter.options.entries()) {
+				for (const [index, option] of Object.entries(filter.options)) {
 					Object.values(this.storeData).forEach((element) => {
 						if (filter.subPath) {
-							if (Array.isArray(element[filter.subPath]) && (element[filter.subPath].some((subElement) => subElement[filter.key] === option[0]))) {
+							if (Array.isArray(element[filter.subPath]) && (element[filter.subPath].some((subElement) => subElement[filter.key] === index))) {
 								optionsSet.add(option);
 							}
-						} else if (element[filter.key] === option[0]) {
+						} else if (element[filter.key] === index) {
 							optionsSet.add(option);
 						}
 					});
@@ -136,14 +95,6 @@ export default {
 				return Array.from(optionsSet);
 			}
 			return filter.options;
-		},
-	},
-	watch: {
-		filteredData: {
-			handler(newValue) {
-				this.$emit("outputFilter", newValue);
-			},
-			deep: true,
 		},
 	},
 };

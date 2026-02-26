@@ -1,0 +1,16 @@
+{
+	"FilterName": "Nom",
+	"FilterFirstName": "Prénom",
+	"FilterEmail": "Email",
+	"FilterRole0": "Utilisateur",
+	"FilterRole1": "Modérateur",
+	"FilterRole2": "Administrateur",
+	"FilterRole": "Rôle",
+	"Title": "Utilisateurs",
+	"Add": "Créer un utilisateur",
+	"Name": "Nom",
+	"FirstName": "Prénom",
+	"Email": "Email",
+	"Role": "Rôle",
+	"Loading": "Chargement"
+}

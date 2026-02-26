@@ -36,7 +36,6 @@ function request(method) {
 			}
 			const response = await fetch(url, requestOptions);
 			const text = await response.text();
-			const totalCount = response.headers.get("X-Total-Count");
 			const data = text && JSON.parse(text);
 			if (!response.ok) {
 				if (response.status === 401 && authStore.user) {
@@ -55,9 +54,6 @@ function request(method) {
 				}
 				const error = data?.errors || response.statusText;
 				throw new Error(error);
-			}
-			if (totalCount) {
-				return { "data": data, "count": totalCount };
 			}
 			return data;
 		} catch (error) {

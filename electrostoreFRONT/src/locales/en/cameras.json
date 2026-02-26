@@ -1,0 +1,12 @@
+{
+	"FilterName": "name",
+	"FilterUrl": "URL",
+	"Title": "Cameras",
+	"Add": "Create Camera",
+	"Name": "Name",
+	"Url": "URL",
+	"User": "User",
+	"Network": "Network",
+	"Status": "Status",
+	"Loading": "Loading"
+}

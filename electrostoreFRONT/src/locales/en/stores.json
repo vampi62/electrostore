@@ -1,0 +1,15 @@
+{
+	"FilterName": "Name",
+	"FilterMqttName": "MQTT Name",
+	"FilterXLength": "X Length",
+	"FilterYLength": "Y Length",
+	"FilterTag": "Tag",
+	"Title": "Stores",
+	"Add": "Add a store",
+	"Name": "Name",
+	"XLength": "X Length",
+	"YLength": "Y Length",
+	"MqttName": "MQTT Name",
+	"TagsList": "Tags",
+	"Loading": "Loading"
+}

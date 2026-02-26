@@ -20,7 +20,9 @@ const commandsStore = useCommandsStore();
 const projetsStore = useProjetsStore();
 const authStore = useAuthStore();
 
-if (authStore.user?.role_user !== 2 && authStore.user?.role_user !== 1 && authStore.user?.id_user !== Number(userId.value)) {
+import { UserRole } from "@/enums";
+
+if ((!authStore.hasPermission([1, 2])) && authStore.user?.id_user !== Number(userId.value)) {
 	addNotification({ message: "vous n'avez pas la permission d'acceder a cette page", type: "error", i18n: false });
 	if (window.history.length > 1) {
 		router.back();
@@ -42,7 +44,7 @@ async function fetchAllData() {
 			await usersStore.getUserById(userId.value);
 		} catch {
 			delete usersStore.users[userId.value];
-			addNotification({ message: "user.VUserNotFound", type: "error", i18n: true });
+			addNotification({ message: "user.NotFound", type: "error", i18n: true });
 			if (window.history.length > 1) {
 				router.back();
 			} else {
@@ -50,9 +52,6 @@ async function fetchAllData() {
 			}
 			return;
 		}
-		usersStore.getProjetCommentaireByInterval(userId.value, 100, 0, ["projet"]);
-		usersStore.getCommandCommentaireByInterval(userId.value, 100, 0, ["command"]);
-		usersStore.getTokenByInterval(userId.value, 100, 0);
 		usersStore.userEdition = {
 			loading: false,
 			id_user: usersStore.users[userId.value].id_user,
@@ -76,16 +75,18 @@ onBeforeUnmount(() => {
 });
 
 const userDeleteModalShow = ref(false);
-const userTypeRole = ref([[0, t("user.VUserFilterRole0")], [1, t("user.VUserFilterRole1")], [2, t("user.VUserFilterRole2")]]);
+const userTypeRole = ref({ [UserRole.User]: t("user.FilterRole0"), [UserRole.Moderator]: t("user.FilterRole1"), [UserRole.Admin]: t("user.FilterRole2") });
 const userSave = async() => {
 	try {
 		createSchema(isChecked).validateSync(usersStore.userEdition, { abortEarly: false });
 		if (userId.value === "new") {
-			await usersStore.createUser({ ...usersStore.userEdition });
-			addNotification({ message: "user.VUserCreated", type: "success", i18n: true });
+			const newId = await usersStore.createUser({ ...usersStore.userEdition });
+			addNotification({ message: "user.Created", type: "success", i18n: true });
+			userId.value = String(newId);
+			router.push("/users/" + userId.value);
 		} else {
 			await usersStore.updateUser(userId.value, { ...usersStore.userEdition });
-			addNotification({ message: "user.VUserUpdated", type: "success", i18n: true });
+			addNotification({ message: "user.Updated", type: "success", i18n: true });
 		}
 		usersStore.userEdition.mdp_user = "";
 		usersStore.userEdition.confirm_mdp_user = "";
@@ -94,15 +95,11 @@ const userSave = async() => {
 		addNotification({ message: e, type: "error", i18n: false });
 		return;
 	}
-	if (userId.value === "new") {
-		userId.value = String(usersStore.userEdition.id_user);
-		router.push("/users/" + userId.value);
-	}
 };
 const userDelete = async() => {
 	try {
 		await usersStore.deleteUser(userId.value);
-		addNotification({ message: "user.VUserDeleted", type: "success", i18n: true });
+		addNotification({ message: "user.Deleted", type: "success", i18n: true });
 		router.push("/users");
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
@@ -114,14 +111,14 @@ const revokeToken = async(tokenId) => {
 	try {
 		await usersStore.updateToken(userId.value, tokenId, { "revoked_reason": "Revoked by user" });
 		usersStore.getTokenById(userId.value, tokenId);
-		addNotification({ message: "user.VUserTokenRevoked", type: "success", i18n: true });
+		addNotification({ message: "user.TokenRevoked", type: "success", i18n: true });
 	} catch (e) {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
 const isCheckedTokens = ref(false);
 function watchIsCheckedTokens() {
-	usersStore.getTokenByInterval(userId.value, 100, 0, isCheckedTokens.value, isCheckedTokens.value);
+	usersStore.getTokenByInterval(userId.value, 100, 0, [], "", "", false, isCheckedTokens.value, isCheckedTokens.value);
 }
 watch(isCheckedTokens, watchIsCheckedTokens);
 
@@ -129,61 +126,61 @@ const isChecked = ref(false);
 const createSchema = (isChecked) => {
 	return Yup.object().shape({
 		nom_user: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("user.VUserNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-			.required(t("user.VUserNameRequired")),
+			.max(configsStore.getConfigByKey("max_length_name"), t("user.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+			.required(t("user.NameRequired")),
 		prenom_user: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("user.VUserFirstNameMaxLength") + " " + configsStore.getConfigByKey("max_length_name") + t("common.VAllCaracters"))
-			.required(t("user.VUserFirstNameRequired")),
+			.max(configsStore.getConfigByKey("max_length_name"), t("user.FirstNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+			.required(t("user.FirstNameRequired")),
 		email_user: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_email"), t("user.VUserEmailMaxLength") + " " + configsStore.getConfigByKey("max_length_email") + t("common.VAllCaracters"))
-			.required(t("user.VUserEmailRequired"))
-			.email(t("user.VUserEmailInvalid")),
+			.max(configsStore.getConfigByKey("max_length_email"), t("user.EmailMaxLength", { count: configsStore.getConfigByKey("max_length_email") }))
+			.required(t("user.EmailRequired"))
+			.email(t("user.EmailInvalid")),
 		mdp_user: isChecked // if isChecked is true, then mdp_user is required and must be different from current_mdp_user and contain at least 8 characters, special characters, numbers and upper and lower letters
-			? Yup.string().required(t("user.VUserPasswordRequired")).notOneOf([Yup.ref("current_mdp_user"), null], t("user.VUserPasswordMatch")).matches(
+			? Yup.string().required(t("user.PasswordRequired")).notOneOf([Yup.ref("current_mdp_user"), null], t("user.PasswordMatch")).matches(
 				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-				t("user.VUserPasswordComplexity"),
+				t("user.PasswordComplexity"),
 			)
 			: Yup.string().nullable(),
 		confirm_mdp_user: isChecked // if isChecked is true, then confirm_mdp_user is required and must match mdp_user and contain at least 8 characters, special characters, numbers and upper and lower letters
-			? Yup.string().required(t("user.VUserConfirmPasswordRequired")).oneOf([Yup.ref("mdp_user"), null], t("user.VUserConfirmPasswordMatch")).matches(
+			? Yup.string().required(t("user.ConfirmPasswordRequired")).oneOf([Yup.ref("mdp_user"), null], t("user.ConfirmPasswordMatch")).matches(
 				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-				t("user.VUserPasswordComplexity"),
+				t("user.PasswordComplexity"),
 			)
 			: Yup.string().nullable(),
 		// current_mdp_user if always required and not nullable
 		current_mdp_user: Yup.string()
-			.required(t("user.VUserCurrentPasswordRequired")),
+			.required(t("user.CurrentPasswordRequired")),
 	});
 };
 
 const labelForm = ref([
-	{ key: "nom_user", label: "user.VUserName", type: "text", condition: "edition?.id_user === session?.id_user || session?.role_user === 2" },
-	{ key: "prenom_user", label: "user.VUserFirstName", type: "text", condition: "edition?.id_user === session?.id_user || session?.role_user === 2" },
-	{ key: "email_user", label: "user.VUserEmail", type: "text", condition: "edition?.id_user === session?.id_user || session?.role_user === 2" },
-	{ key: "role_user", label: "user.VUserRole", type: "select", options: userTypeRole, condition: "session?.role_user === 2" },
+	{ key: "nom_user", label: "user.Name", type: "text", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+	{ key: "prenom_user", label: "user.FirstName", type: "text", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+	{ key: "email_user", label: "user.Email", type: "text", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+	{ key: "role_user", label: "user.Role", type: "select", options: userTypeRole, condition: "func.hasPermission([2])" },
 ]);
-if (!authStore.isSSOUser || authStore.user?.id_user !== Number(userId.value)) {
+if (!authStore.isSSOUser && (authStore.user?.id_user === Number(userId.value) || authStore.hasPermission([2]))) {
 	labelForm.value.push(
-		{ key: "check", label: "user.VUserCheck", type: "checkbox", model: isChecked, condition: "edition?.id_user === session?.id_user || session?.role_user === 2" },
-		{ key: "mdp_user", label: "user.VUserPassword", type: "password", condition: "(edition?.id_user === session?.id_user || session?.role_user === 2) && form[4].model" },
-		{ key: "confirm_mdp_user", label: "user.VUserConfirmPassword", type: "password", condition: "(edition?.id_user === session?.id_user || session?.role_user === 2) && form[4].model" },
-		{ key: "current_mdp_user", label: "user.VUserCurrentPassword", type: "password", condition: "edition?.id_user === session?.id_user || session?.role_user === 2" },
+		{ key: "check", label: "user.Check", type: "checkbox", model: isChecked, condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+		{ key: "mdp_user", label: "user.Password", type: "password", condition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && form[4].model" },
+		{ key: "confirm_mdp_user", label: "user.ConfirmPassword", type: "password", condition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && form[4].model" },
+		{ key: "current_mdp_user", label: "user.CurrentPassword", type: "password", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 	);
 }
 
 const labelTableauSession = ref([
-	{ label: "user.VUserTokenCreatedDate", sortable: true, key: "first_created_at", type: "datetime" },
-	{ label: "user.VUserTokenLastLoginDate", sortable: true, key: "created_at", type: "datetime" },
-	{ label: "user.VUserTokenCreatedIP", sortable: true, key: "created_by_ip", type: "text" },
-	{ label: "user.VUserTokenExpireDate", sortable: true, key: "expires_at", type: "datetime" },
-	{ label: "user.VUserTokenIsRevoked", sortable: true, key: "is_revoked", type: "text" },
-	{ label: "user.VUserTokenAuthMethod", sortable: true, key: "auth_method", type: "text" },
-	{ label: "user.VUserTokenRevokedDate", sortable: true, key: "revoked_at", type: "datetime" },
-	{ label: "user.VUserTokenRevokedIP", sortable: true, key: "revoked_by_ip", type: "text" },
-	{ label: "user.VUserTokenRevokedReason", sortable: true, key: "revoked_reason", type: "text" },
-	{ label: "user.VUserTokenActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "user.TokenCreatedDate", sortable: true, key: "first_created_at", type: "datetime" },
+	{ label: "user.TokenLastLoginDate", sortable: true, key: "created_at", type: "datetime" },
+	{ label: "user.TokenCreatedIP", sortable: true, key: "created_by_ip", type: "text" },
+	{ label: "user.TokenExpireDate", sortable: true, key: "expires_at", type: "datetime" },
+	{ label: "user.TokenIsRevoked", sortable: true, key: "is_revoked", type: "text" },
+	{ label: "user.TokenAuthMethod", sortable: true, key: "auth_method", type: "text" },
+	{ label: "user.TokenRevokedDate", sortable: true, key: "revoked_at", type: "datetime" },
+	{ label: "user.TokenRevokedIP", sortable: true, key: "revoked_by_ip", type: "text" },
+	{ label: "user.TokenRevokedReason", sortable: true, key: "revoked_reason", type: "text" },
+	{ label: "user.TokenActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
-			label: "user.VUserTokenRevoke",
+			label: "user.TokenRevoke",
 			icon: "fa-solid fa-ban",
 			condition: "!rowData?.is_revoked",
 			action: (row) => revokeToken(row.session_id),
@@ -192,72 +189,73 @@ const labelTableauSession = ref([
 		},
 	] },
 ]);
+document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
 
 <template>
 	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('user.VUserTitle') }}</h2>
-		<TopButtonEditElement :main-config="{ path: '/users', save: { sameUserId: true, roleRequired: 1, loading: usersStore.userEdition.loading }, delete: { sameUserId: true, roleRequired: 1 } }"
+		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('user.Title') }}</h2>
+		<TopButtonEditElement :main-config="{ path: '/users', save: { sameUserId: true, roleRequired: authStore.hasPermission([1, 2]), loading: usersStore.userEdition.loading }, delete: { sameUserId: true, roleRequired: authStore.hasPermission([1, 2]) } }"
 			:id="userId" :store-user="authStore.user" @button-save="userSave" @button-delete="userDeleteModalShow = true"/>
 	</div>
 	<div v-if="usersStore.users[userId] || userId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="usersStore.userEdition" :store-user="authStore.user"/>
+			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="usersStore.userEdition" :store-user="authStore.user"
+				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
 		</div>
-		<CollapsibleSection title="user.VUserParticipation"
+		<CollapsibleSection title="user.Participation"
 			:id-page="userId">
 			<template #append-row>
-				<CollapsibleSection title="user.VUserCommandsCommentaires" :disable-margin="true"
+				<CollapsibleSection title="user.CommandsCommentaires" :disable-margin="true"
 					:total-count="Number(usersStore.commandsCommentaireTotalCount[userId] || 0)" :id-page="userId">
 					<template #append-row>
-						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: false }"
-							:store-data="[usersStore.commandsCommentaire[userId],usersStore.users,authStore.user,configsStore]"
+						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: false, roleRequired: false, expand: ['command'] }"
+							:store-data="[usersStore.commandsCommentaire[userId], usersStore.users]"
+							:store-user="authStore.user" :store-config="configsStore"
 							:loading="usersStore.commandsCommentaireLoading"
 							:total-count="Number(usersStore.commandsCommentaireTotalCount[userId]) || 0"
-							:loaded-count="Object.keys(usersStore.commandsCommentaire[userId] || {}).length"
-							:fetch-function="(offset, limit) => usersStore.getCommandCommentaireByInterval(userId, limit, offset, ['command'])"
+							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getCommandCommentaireByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>
-				<CollapsibleSection title="user.VUserProjetsCommentaires" :disable-margin="true"
+				<CollapsibleSection title="user.ProjetsCommentaires" :disable-margin="true"
 					:total-count="Number(usersStore.projetsCommentaireTotalCount[userId] || 0)" :id-page="userId">
 					<template #append-row>
-						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: false }"
-							:store-data="[usersStore.projetsCommentaire[userId],usersStore.users,authStore.user,configsStore]"
+						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: false, roleRequired: false, expand: ['projet'] }"
+							:store-data="[usersStore.projetsCommentaire[userId], usersStore.users]"
+							:store-user="authStore.user" :store-config="configsStore"
 							:loading="usersStore.projetsCommentaireLoading"
 							:total-count="Number(usersStore.projetsCommentaireTotalCount[userId]) || 0"
-							:loaded-count="Object.keys(usersStore.projetsCommentaire[userId] || {}).length"
-							:fetch-function="(offset, limit) => usersStore.getProjetCommentaireByInterval(userId, limit, offset, ['projet'])"
+							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getProjetCommentaireByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>
 			</template>
 		</CollapsibleSection>
-		<CollapsibleSection title="user.VUserTokens"
+		<CollapsibleSection title="user.Tokens"
 			:total-count="Number(usersStore.tokensTotalCount[userId] || 0)" :id-page="userId">
 			<template #append-row>
 				<div>
 					<!-- bouton pour choisir de charger les revoked et les expired -->
 					<label class="inline-flex items-center mb-4">
 						<input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600" v-model="isCheckedTokens">
-						<span class="ml-2 text-gray-700">{{ $t('user.VUserShowExpiredAndRevokedTokens') }}</span>
+						<span class="ml-2 text-gray-700">{{ $t('user.ShowExpiredAndRevokedTokens') }}</span>
 					</label>
 				</div>
 				<Tableau :labels="labelTableauSession" :meta="{ key: 'session_id' }"
 					:store-data="[usersStore.tokens[userId]]"
 					:loading="usersStore.tokensLoading"
 					:total-count="Number(usersStore.tokensTotalCount[userId]) || 0"
-					:loaded-count="Object.keys(usersStore.tokens[userId] || {}).length"
-					:fetch-function="(offset, limit) => usersStore.getTokenByInterval(userId, limit, offset, isCheckedTokens, isCheckedTokens)"
+					:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getTokenByInterval(userId, limit, offset, expand, filter, sort, clear, isCheckedTokens, isCheckedTokens) : undefined"
 					:tableau-css="{ component: 'min-h-64 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 	</div>
 	<div v-else>
-		<div>{{ $t('user.VUserLoading') }}</div>
+		<div>{{ $t('user.Loading') }}</div>
 	</div>
 	<ModalDeleteConfirm :show-modal="userDeleteModalShow" @close-modal="userDeleteModalShow = false"
-		:delete-action="userDelete" :text-title="'user.VUserDeleteTitle'"
-		:text-p="(authStore.user?.id_user !== Number(userId)) ? 'user.VUserDeleteTextAdmin' : 'user.VUserDeleteTextUser'"/>
+		:delete-action="userDelete" :text-title="'user.DeleteTitle'"
+		:text-p="(authStore.user?.id_user !== Number(userId)) ? 'user.DeleteTextAdmin' : 'user.DeleteTextUser'"/>
 </template>

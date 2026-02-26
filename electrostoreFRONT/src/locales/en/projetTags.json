@@ -1,0 +1,10 @@
+{
+    "Name": "Name",
+    "Weight": "Weight",
+    "ProjetsCount": "Projects Count",
+    "FilterName": "Tag Name",
+    "FilterWeightMin": "Weight Min",
+    "FilterWeightMax": "Weight Max",
+    "Title": "Project Tags",
+    "Add": "Add a Project Tag"
+}

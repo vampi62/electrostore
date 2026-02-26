@@ -31,7 +31,7 @@
 				<RouterLink :to="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400">
 					{{ $t('common.VAppProfile') }}
 				</RouterLink>
-				<RouterLink v-if="authStore.user?.role_user === 1 || authStore.user?.role_user === 2" to="/users"
+				<RouterLink v-if="authStore.hasPermission([1, 2])" to="/users"
 					class="text-white hover:text-blue-400">
 					{{ $t('common.VAppAdmin') }}
 				</RouterLink>
@@ -51,7 +51,7 @@
 			<RouterLink :to="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400">
 				{{ $t('common.VAppProfile') }}
 			</RouterLink>
-			<RouterLink v-if="authStore.user?.role_user === 1 || authStore.user?.role_user === 2 " to="/users"
+			<RouterLink v-if="authStore.hasPermission([1, 2])" to="/users"
 				class="text-white hover:text-blue-400">
 				{{ $t('common.VAppAdmin') }}
 			</RouterLink>

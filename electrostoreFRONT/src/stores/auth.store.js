@@ -15,6 +15,20 @@ export const useAuthStore = defineStore("auth",{
 		selectedProvider: JSON.parse(localStorage.getItem("selectedProvider")) || null,
 	}),
 	actions: {
+		hasPermission(requiredPermission) {
+			if (!this.user?.role_user) {
+				return false;
+			}
+			const userPermissions = this.user.role_user || [];
+			// check if the permission user is a list or a single string
+			if (Array.isArray(userPermissions)) {
+				// check if the user has at least one of the required permissions
+				return requiredPermission.some((permission) => userPermissions.includes(permission));
+			} else {
+				// if the user permissions is a single string, check if it matches any of the required permissions
+				return requiredPermission.includes(userPermissions);
+			}
+		},
 		setToken(user, accessToken, refreshToken, isSSOUser = false) {
 			this.accessToken = accessToken;
 			this.refreshToken = refreshToken;

@@ -9,7 +9,7 @@
 			</span>
 		</span>
 		<span v-if="canEdit" class="bg-gray-300 p-1 rounded mr-2 mb-2">
-			<span @click="tagOpenAddModal"
+			<span @click="tagModalShow = true"
 				class="text-green-500 cursor-pointer hover:text-green-600">
 				<font-awesome-icon icon="fa-solid fa-plus" />
 			</span>
@@ -26,12 +26,15 @@
 				</div>
 
 				<!-- Filtres -->
-				<FilterContainer class="my-4 flex gap-4" :filters="filterModal" :store-data="tagsStore" @output-filter="updateFilteredTags" />
+				<FilterContainer class="my-4 flex gap-4" :filters="filterModal" :store-data="tagsStore" />
 
 				<!-- Tableau Items -->
 				<Tableau :labels="tableauModal['label']" :meta="tableauModal['meta']"
-					:store-data="[filteredTags, currentTags, ...otherStore]"
+					:store-data="[tagsStore, currentTags, ...otherStore]"
+					:filters="filterModal"
 					:loading="tableauModal['loading']"
+					:fetch-function="tableauModal['fetchFunction']"
+					:total-count="tableauModal['totalCount']"
 					:tableau-css="tableauModal['css']"
 				/>
 			</div>
@@ -62,10 +65,6 @@ export default {
 		fetchFunction: {
 			type: Function,
 			default: () => {},
-		},
-		totalCount: {
-			type: Number,
-			default: 0,
 		},
 		canEdit: {
 			type: Boolean,
@@ -102,28 +101,7 @@ export default {
 		return {
 			tagModalShow: false,
 			tagLoad: false,
-			filteredTags: [],
 		};
-	},
-	methods: {
-		async fetchAllTags() {
-			let offset = 0;
-			const limit = 100;
-			do {
-				await this.fetchFunction(offset, limit);
-				offset += limit;
-			} while (offset < this.totalCount);
-			this.tagLoad = true;
-		},
-		tagOpenAddModal() {
-			this.tagModalShow = true;
-			if (!this.tagLoad) {
-				this.fetchAllTags();
-			}
-		},
-		updateFilteredTags(newValue) {
-			this.filteredTags = newValue;
-		},
 	},
 };
 </script>

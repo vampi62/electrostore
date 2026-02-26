@@ -1,0 +1,15 @@
+{
+	"FilterName": "Nom",
+	"FilterMqttName": "Nom MQTT",
+	"FilterXLength": "Longueur X",
+	"FilterYLength": "Longueur Y",
+	"FilterTag": "Tag",
+	"Title": "Rangements",
+	"Add": "Créer un rangement",
+	"Name": "Nom",
+	"XLength": "Longueur X",
+	"YLength": "Longueur Y",
+	"MqttName": "Nom MQTT",
+	"TagsList": "Tags",
+	"Loading": "Chargement"
+}

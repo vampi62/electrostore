@@ -25,7 +25,7 @@ const listNav = [
 ];
 
 const containerClasses = computed(() => [
-	"px-4 pt-4 overflow-y-scroll fixed bottom-0 right-0 left-0 flex flex-col",
+	"px-4 pt-4 fixed bottom-0 right-0 left-0 flex flex-col",
 	reduceLeftSideBar.value && authStore.user && !isIframe.value ? "sm:ml-16" : "",
 	!reduceLeftSideBar.value && authStore.user && !isIframe.value ? "sm:ml-64" : "",
 	authStore.user && !isIframe.value ? "top-16" : "top-0",
@@ -40,7 +40,7 @@ const showAboutModal = ref(false);
 		<NavBar :list-nav="listNav" :load-page-find="modalFinderRef?.loadPageFind || (() => {})"
 			@update:reduce-left-side-bar="reduceLeftSideBar = $event" @show-about-modal="showAboutModal = true" />
 	</div>
-	<div :class="containerClasses">
+	<div id="view" :class="containerClasses">
 		<RouterView />
 	</div>
 	<ModalFinder ref="modalFinderRef" />
@@ -49,7 +49,6 @@ const showAboutModal = ref(false);
 		<div class="bg-white rounded-lg shadow-lg w-3/4 h-3/4 p-6" @click.stop>
 		</div>
 	</div>
-
 </template>
 
 <style>

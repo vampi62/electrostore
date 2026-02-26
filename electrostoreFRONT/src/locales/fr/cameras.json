@@ -1,0 +1,12 @@
+{
+	"FilterName": "nom",
+	"FilterUrl": "URL",
+	"Title": "Caméras",
+	"Add": "Créer une caméra",
+	"Name": "Nom",
+	"Url": "URL",
+	"User": "Utilisateur",
+	"Network": "Réseau",
+	"Status": "Statut",
+	"Loading": "Chargement"
+}

@@ -1,0 +1,22 @@
+{
+	"FilterStatus": "Status",
+	"FilterStatus1": "Pending",
+	"FilterStatus2": "In progress",
+	"FilterStatus3": "Completed",
+	"FilterStatus4": "Cancelled",
+	"FilterDate": "Date",
+	"FilterURL": "URL",
+	"FilterPriceMin": "Min price",
+	"FilterPriceMax": "Max price",
+	"FilterDateL": "Delivery date",
+	"FilterItem": "Item",
+	"Title": "Commands",
+	"Add": "Create command",
+	"Status": "Status",
+	"Date": "Date",
+	"URL": "URL",
+	"Prix": "Price",
+	"ItemList": "Item list",
+	"DateL": "Delivery date",
+	"Loading": "Loading"
+}
