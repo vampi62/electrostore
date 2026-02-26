@@ -6,6 +6,7 @@ using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.SessionService;
 using electrostore.Services.ValidateStoreService;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.BoxService;
 
@@ -33,13 +34,13 @@ public class BoxService : IBoxService
             throw new KeyNotFoundException($"Store with id '{storeId}' not found");
         }
         var query = _context.Boxs.AsQueryable();
+        var filterResult = default(Expression<Func<Boxs, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_store", SearchType = "eq", Value = storeId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<Boxs>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Boxs>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -82,9 +83,9 @@ public class BoxService : IBoxService
             }),
             pagination = new PaginationDto
             {
-                total = await _context.Boxs.Where(b => b.id_store == storeId).CountAsync(),
+                total = await _context.Boxs.CountAsync(filterResult ?? (b => b.id_store == storeId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.Boxs.Where(b => b.id_store == storeId).Skip(offset + limit).AnyAsync()
+                hasMore = await _context.Boxs.Skip(offset + limit).AnyAsync(filterResult ?? (b => b.id_store == storeId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

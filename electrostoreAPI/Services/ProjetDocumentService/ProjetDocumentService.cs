@@ -4,6 +4,7 @@ using electrostore.Dto;
 using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.FileService;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.ProjetDocumentService;
 
@@ -30,13 +31,13 @@ public class ProjetDocumentService : IProjetDocumentService
             throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsDocuments.AsQueryable();
+        var filterResult = default(Expression<Func<ProjetsDocuments, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_projet", SearchType = "eq", Value = projetId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<ProjetsDocuments>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjetsDocuments>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -64,9 +65,9 @@ public class ProjetDocumentService : IProjetDocumentService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ProjetsDocuments.CountAsync(pd => pd.id_projet == projetId),
+                total = await _context.ProjetsDocuments.CountAsync(filterResult ?? (pd => pd.id_projet == projetId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.ProjetsDocuments.Skip(offset + limit).AnyAsync(pd => pd.id_projet == projetId)
+                hasMore = await _context.ProjetsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (pd => pd.id_projet == projetId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

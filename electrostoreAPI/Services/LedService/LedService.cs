@@ -9,6 +9,7 @@ using MQTTnet.Protocol;
 using System.Text.Json;
 using electrostore.Services.SessionService;
 using electrostore.Services.ValidateStoreService;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.LedService;
 
@@ -39,13 +40,13 @@ public class LedService : ILedService
             throw new KeyNotFoundException($"Store with id '{storeId}' not found");
         }
         var query = _context.Leds.AsQueryable();
+        var filterResult = default(Expression<Func<Leds, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_store", SearchType = "eq", Value = storeId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<Leds>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Leds>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -73,9 +74,9 @@ public class LedService : ILedService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.Leds.Where(l => l.id_store == storeId).CountAsync(),
+                total = await _context.Leds.CountAsync(filterResult ?? (l => l.id_store == storeId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.Leds.Where(l => l.id_store == storeId).Skip(offset + limit).AnyAsync()
+                hasMore = await _context.Leds.Skip(offset + limit).AnyAsync(filterResult ?? (l => l.id_store == storeId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

@@ -7,6 +7,7 @@ using electrostore.Models;
 using electrostore.Services.SmtpService;
 using electrostore.Services.SessionService;
 using electrostore.Services.JwiService;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.UserService;
 
@@ -30,6 +31,7 @@ public class UserService : IUserService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Users.AsQueryable();
+        var filterResult = default(Expression<Func<Users, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(u => idResearch.Contains(u.id_user));
@@ -38,9 +40,8 @@ public class UserService : IUserService
         {
             if (rsql != null && rsql.Count > 0)
             {
-                var filterResult = RsqlParserExtensions.ToFilterExpression<Users>(rsql);
-                query = query.Where(filterResult.Item1);
-                rsql = filterResult.Item2;
+                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Users>(rsql);
+                query = query.Where(filterResult);
             }
             if (!string.IsNullOrEmpty(sort?.Field))
             {
@@ -87,9 +88,9 @@ public class UserService : IUserService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.Users.CountAsync(),
+                total = await _context.Users.CountAsync(filterResult ?? (u => true)),
                 nextOffset = offset + limit,
-                hasMore = await _context.Users.Skip(offset + limit).AnyAsync()
+                hasMore = await _context.Users.Skip(offset + limit).AnyAsync(filterResult ?? (u => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

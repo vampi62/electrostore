@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Extensions;
 using electrostore.Models;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.ItemTagService;
 
@@ -26,13 +27,13 @@ public class ItemTagService : IItemTagService
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.ItemsTags.AsQueryable();
+        var filterResult = default(Expression<Func<ItemsTags, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_item", SearchType = "eq", Value = itemId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<ItemsTags>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ItemsTags>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -68,9 +69,9 @@ public class ItemTagService : IItemTagService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ItemsTags.Where(it => it.id_item == itemId).CountAsync(),
+                total = await _context.ItemsTags.CountAsync(filterResult ?? (it => it.id_item == itemId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.ItemsTags.Where(it => it.id_item == itemId).Skip(offset + limit).AnyAsync()
+                hasMore = await _context.ItemsTags.Skip(offset + limit).AnyAsync(filterResult ?? (it => it.id_item == itemId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -86,13 +87,13 @@ public class ItemTagService : IItemTagService
             throw new KeyNotFoundException($"Tag with id '{tagId}' not found");
         }
         var query = _context.ItemsTags.AsQueryable();
+        var filterResult = default(Expression<Func<ItemsTags, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_tag", SearchType = "eq", Value = tagId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<ItemsTags>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ItemsTags>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -128,9 +129,9 @@ public class ItemTagService : IItemTagService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ItemsTags.Where(it => it.id_tag == tagId).CountAsync(),
+                total = await _context.ItemsTags.CountAsync(filterResult ?? (it => it.id_tag == tagId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.ItemsTags.Where(it => it.id_tag == tagId).Skip(offset + limit).AnyAsync()
+                hasMore = await _context.ItemsTags.Skip(offset + limit).AnyAsync(filterResult ?? (it => it.id_tag == tagId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

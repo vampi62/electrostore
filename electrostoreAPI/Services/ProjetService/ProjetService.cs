@@ -6,6 +6,7 @@ using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.FileService;
 using electrostore.Services.ProjetStatusService;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.ProjetService;
 
@@ -29,6 +30,7 @@ public class ProjetService : IProjetService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Projets.AsQueryable();
+        var filterResult = default(Expression<Func<Projets, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(p => idResearch.Contains(p.id_projet));
@@ -37,9 +39,8 @@ public class ProjetService : IProjetService
         {
             if (rsql != null && rsql.Count > 0)
             {
-                var filterResult = RsqlParserExtensions.ToFilterExpression<Projets>(rsql);
-                query = query.Where(filterResult.Item1);
-                rsql = filterResult.Item2;
+                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Projets>(rsql);
+                query = query.Where(filterResult);
             }
             if (!string.IsNullOrEmpty(sort?.Field))
             {
@@ -86,23 +87,6 @@ public class ProjetService : IProjetService
                 ProjetsStatus = expand != null && expand.Contains("projets_status_history") ? p.ProjetsStatus.Take(20).ToList() : null
             })
             .ToListAsync();
-        /* return projet.Select(p => {
-            return _mapper.Map<ReadExtendedProjetDto>(p.Projet) with
-            {
-                date_debut_projet = p.DateDebutProjet,
-                date_fin_projet = p.DateFinProjet,
-                projets_commentaires_count = p.ProjetsCommentairesCount,
-                projets_documents_count = p.ProjetsDocumentsCount,
-                projets_items_count = p.ProjetsItemsCount,
-                projets_tags_count = p.ProjetsProjetTagsCount,
-                projets_status_history_count = p.ProjetsStatusHistoryCount,
-                projets_commentaires = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(p.ProjetsCommentaires),
-                projets_documents = _mapper.Map<IEnumerable<ReadProjetDocumentDto>>(p.ProjetsDocuments),
-                projets_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(p.ProjetsItems),
-                projets_projet_tags = _mapper.Map<IEnumerable<ReadProjetProjetTagDto>>(p.ProjetsProjetTags),
-                projets_status_history = _mapper.Map<IEnumerable<ReadProjetStatusDto>>(p.ProjetsStatus)
-            };
-        }).ToList(); */
         return new PaginatedResponseDto<ReadExtendedProjetDto>
         {
             data = projet.Select(p => {
@@ -126,9 +110,9 @@ public class ProjetService : IProjetService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.Projets.CountAsync(),
+                total = await _context.Projets.CountAsync(filterResult ?? (p => true)),
                 nextOffset = offset + limit,
-                hasMore = await _context.Projets.Skip(offset + limit).AnyAsync()
+                hasMore = await _context.Projets.Skip(offset + limit).AnyAsync(filterResult ?? (p => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

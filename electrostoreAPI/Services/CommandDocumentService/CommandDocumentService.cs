@@ -4,6 +4,7 @@ using electrostore.Dto;
 using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.FileService;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.CommandDocumentService;
 
@@ -30,13 +31,13 @@ public class CommandDocumentService : ICommandDocumentService
             throw new KeyNotFoundException($"Command with id '{commandId}' not found");
         }
         var query = _context.CommandsDocuments.AsQueryable();
+        var filterResult = default(Expression<Func<CommandsDocuments, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_command", SearchType = "eq", Value = commandId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<CommandsDocuments>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsDocuments>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -64,9 +65,9 @@ public class CommandDocumentService : ICommandDocumentService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.CommandsDocuments.Where(cd => cd.id_command == commandId).CountAsync(),
+                total = await _context.CommandsDocuments.CountAsync(filterResult ?? (cd => cd.id_command == commandId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.CommandsDocuments.Where(cd => cd.id_command == commandId).Skip(offset + limit).AnyAsync()
+                hasMore = await _context.CommandsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (cd => cd.id_command == commandId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

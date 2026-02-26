@@ -4,6 +4,7 @@ using electrostore.Dto;
 using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.FileService;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.ItemDocumentService;
 
@@ -30,13 +31,13 @@ public class ItemDocumentService : IItemDocumentService
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.ItemsDocuments.AsQueryable();
+        var filterResult = default(Expression<Func<ItemsDocuments, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_item", SearchType = "eq", Value = itemId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<ItemsDocuments>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ItemsDocuments>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -64,9 +65,9 @@ public class ItemDocumentService : IItemDocumentService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ItemsDocuments.Where(id => id.id_item == itemId).CountAsync(),
+                total = await _context.ItemsDocuments.CountAsync(filterResult ?? (id => id.id_item == itemId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.ItemsDocuments.Where(id => id.id_item == itemId).Skip(offset + limit).AnyAsync()
+                hasMore = await _context.ItemsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (id => id.id_item == itemId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Extensions;
 using electrostore.Models;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.ProjetItemService;
 
@@ -26,13 +27,13 @@ public class ProjetItemService : IProjetItemService
             throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsItems.AsQueryable();
+        var filterResult = default(Expression<Func<ProjetsItems, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_projet", SearchType = "eq", Value = projetId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<ProjetsItems>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjetsItems>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -68,9 +69,9 @@ public class ProjetItemService : IProjetItemService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ProjetsItems.CountAsync(pi => pi.id_projet == projetId),
+                total = await _context.ProjetsItems.CountAsync(filterResult ?? (pi => pi.id_projet == projetId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.ProjetsItems.Skip(offset + limit).AnyAsync(pi => pi.id_projet == projetId)
+                hasMore = await _context.ProjetsItems.Skip(offset + limit).AnyAsync(filterResult ?? (pi => pi.id_projet == projetId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -86,13 +87,13 @@ public class ProjetItemService : IProjetItemService
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.ProjetsItems.AsQueryable();
+        var filterResult = default(Expression<Func<ProjetsItems, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_item", SearchType = "eq", Value = itemId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<ProjetsItems>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjetsItems>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -128,9 +129,9 @@ public class ProjetItemService : IProjetItemService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ProjetsItems.CountAsync(pi => pi.id_item == itemId),
+                total = await _context.ProjetsItems.CountAsync(filterResult ?? (pi => pi.id_item == itemId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.ProjetsItems.Skip(offset + limit).AnyAsync(pi => pi.id_item == itemId)
+                hasMore = await _context.ProjetsItems.Skip(offset + limit).AnyAsync(filterResult ?? (pi => pi.id_item == itemId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

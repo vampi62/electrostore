@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using electrostore.Dto;
 using electrostore.Extensions;
 using electrostore.Models;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.CommandItemService;
 
@@ -26,13 +27,13 @@ public class CommandItemService : ICommandItemService
             throw new KeyNotFoundException($"Command with id '{commandId}' not found");
         }
         var query = _context.CommandsItems.AsQueryable();
+        var filterResult = default(Expression<Func<CommandsItems, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_command", SearchType = "eq", Value = commandId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<CommandsItems>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsItems>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -68,9 +69,9 @@ public class CommandItemService : ICommandItemService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.CommandsItems.Where(ci => ci.id_command == commandId).CountAsync(),
+                total = await _context.CommandsItems.CountAsync(filterResult ?? (ci => ci.id_command == commandId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.CommandsItems.Where(ci => ci.id_command == commandId).Skip(offset + limit).AnyAsync()
+                hasMore = await _context.CommandsItems.Skip(offset + limit).AnyAsync(filterResult ?? (ci => ci.id_command == commandId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -86,13 +87,13 @@ public class CommandItemService : ICommandItemService
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.CommandsItems.AsQueryable();
+        var filterResult = default(Expression<Func<CommandsItems, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_item", SearchType = "eq", Value = itemId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<CommandsItems>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsItems>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -128,9 +129,9 @@ public class CommandItemService : ICommandItemService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.CommandsItems.Where(ci => ci.id_item == itemId).CountAsync(),
+                total = await _context.CommandsItems.CountAsync(filterResult ?? (ci => ci.id_item == itemId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.CommandsItems.Where(ci => ci.id_item == itemId).Skip(offset + limit).AnyAsync()
+                hasMore = await _context.CommandsItems.Skip(offset + limit).AnyAsync(filterResult ?? (ci => ci.id_item == itemId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

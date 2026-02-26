@@ -6,6 +6,65 @@ namespace electrostore.Extensions;
 
 public static class RsqlParserExtensions
 {
+    private static bool IsCollectionType(Type type)
+    {
+        return type.IsGenericType && 
+               (type.GetGenericTypeDefinition() == typeof(ICollection<>) ||
+                type.GetGenericTypeDefinition() == typeof(IEnumerable<>) ||
+                type.GetGenericTypeDefinition() == typeof(List<>) ||
+                type.GetInterfaces().Any(i => i.IsGenericType && 
+                    (i.GetGenericTypeDefinition() == typeof(ICollection<>) ||
+                     i.GetGenericTypeDefinition() == typeof(IEnumerable<>))));
+    }
+
+    private static Type? GetCollectionElementType(Type collectionType)
+    {
+        if (collectionType.IsGenericType)
+        {
+            return collectionType.GetGenericArguments()[0];
+        }
+        
+        var enumerable = collectionType.GetInterfaces()
+            .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+        
+        return enumerable?.GetGenericArguments()[0];
+    }
+
+    private static Expression? BuildNestedPropertyAccess(Expression parameter, string field, out bool isCollection, out Type? collectionElementType, out string? collectionProperty)
+    {
+        isCollection = false;
+        collectionElementType = null;
+        collectionProperty = null;
+        
+        var parts = field.Split('.');
+        Expression current = parameter;
+        
+        for (int i = 0; i < parts.Length; i++)
+        {
+            var part = parts[i];
+            var propertyInfo = current.Type.GetProperty(part, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+            var fieldInfo = current.Type.GetField(part, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+            
+            if (propertyInfo == null && fieldInfo == null)
+            {
+                return null;
+            }
+            
+            current = Expression.PropertyOrField(current, part);
+            
+            // Si c'est une collection et qu'il reste des parties, on doit utiliser Any()
+            if (IsCollectionType(current.Type) && i < parts.Length - 1)
+            {
+                isCollection = true;
+                collectionElementType = GetCollectionElementType(current.Type);
+                collectionProperty = string.Join(".", parts.Skip(i + 1));
+                return current;
+            }
+        }
+        
+        return current;
+    }
+
     public static (Expression<Func<T, bool>>, List<FilterDto>?) ToFilterExpression<T>(List<FilterDto>? rsql)
     {
         if (rsql == null || rsql.Count == 0)
@@ -20,29 +79,71 @@ public static class RsqlParserExtensions
             var searchType = condition.SearchType;
             var value = condition.Value;
 
-            var propertyInfo = typeof(T).GetProperty(field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-            var fieldInfo = typeof(T).GetField(field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-            if (propertyInfo == null && fieldInfo == null)
+            var left = BuildNestedPropertyAccess(param, field, out bool isCollection, out Type? collectionElementType, out string? collectionProperty);
+            
+            if (left == null)
             {
                 continue;
             }
 
-            Expression left = Expression.PropertyOrField(param, field);
-            Expression right = Expression.Constant(Convert.ChangeType(value, left.Type));
+            Expression? binaryExpression = null;
 
-            Expression? binaryExpression = searchType switch
+            if (isCollection && collectionElementType != null && collectionProperty != null)
             {
-                "eq" => Expression.Equal(left, right),
-                "ne" => Expression.NotEqual(left, right),
-                "gt" => Expression.GreaterThan(left, right),
-                "lt" => Expression.LessThan(left, right),
-                "ge" => Expression.GreaterThanOrEqual(left, right),
-                "le" => Expression.LessThanOrEqual(left, right),
-                "like" => Expression.Call(left, typeof(string).GetMethod("Contains", new[] { typeof(string) })!, right),
-                "null" => Expression.Equal(left, Expression.Constant(null)),
-                "notnull" => Expression.NotEqual(left, Expression.Constant(null)),
-                _ => null
-            };
+                // Construire une expression Any() pour les collections
+                var collectionParam = Expression.Parameter(collectionElementType, "item");
+                var itemProperty = BuildNestedPropertyAccess(collectionParam, collectionProperty, out _, out _, out _);
+                
+                if (itemProperty == null)
+                {
+                    continue;
+                }
+                
+                Expression right = Expression.Constant(Convert.ChangeType(value, itemProperty.Type));
+                
+                Expression? itemCondition = searchType switch
+                {
+                    "eq" => Expression.Equal(itemProperty, right),
+                    "ne" => Expression.NotEqual(itemProperty, right),
+                    "gt" => Expression.GreaterThan(itemProperty, right),
+                    "lt" => Expression.LessThan(itemProperty, right),
+                    "ge" => Expression.GreaterThanOrEqual(itemProperty, right),
+                    "le" => Expression.LessThanOrEqual(itemProperty, right),
+                    "like" => Expression.Call(itemProperty, typeof(string).GetMethod("Contains", new[] { typeof(string) })!, right),
+                    "null" => Expression.Equal(itemProperty, Expression.Constant(null)),
+                    "notnull" => Expression.NotEqual(itemProperty, Expression.Constant(null)),
+                    _ => null
+                };
+                
+                if (itemCondition != null)
+                {
+                    var lambda = Expression.Lambda(itemCondition, collectionParam);
+                    var anyMethod = typeof(Enumerable).GetMethods()
+                        .First(m => m.Name == "Any" && m.GetParameters().Length == 2)
+                        .MakeGenericMethod(collectionElementType);
+                    
+                    binaryExpression = Expression.Call(anyMethod, left, lambda);
+                }
+            }
+            else
+            {
+                // Expression normale pour les propriétés simples
+                Expression right = Expression.Constant(Convert.ChangeType(value, left.Type));
+
+                binaryExpression = searchType switch
+                {
+                    "eq" => Expression.Equal(left, right),
+                    "ne" => Expression.NotEqual(left, right),
+                    "gt" => Expression.GreaterThan(left, right),
+                    "lt" => Expression.LessThan(left, right),
+                    "ge" => Expression.GreaterThanOrEqual(left, right),
+                    "le" => Expression.LessThanOrEqual(left, right),
+                    "like" => Expression.Call(left, typeof(string).GetMethod("Contains", new[] { typeof(string) })!, right),
+                    "null" => Expression.Equal(left, Expression.Constant(null)),
+                    "notnull" => Expression.NotEqual(left, Expression.Constant(null)),
+                    _ => null
+                };
+            }
 
             if (binaryExpression != null)
             {
@@ -65,15 +166,14 @@ public static class RsqlParserExtensions
         var field = sort.Field;
         var direction = sort.Order?.ToLower() == "desc" ? "desc" : "asc";
 
-        var propertyInfo = typeof(T).GetProperty(field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-        var fieldInfo = typeof(T).GetField(field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-        if (propertyInfo == null && fieldInfo == null)
+        ParameterExpression param = Expression.Parameter(typeof(T), "x");
+        var property = BuildNestedPropertyAccess(param, field, out bool isCollection, out _, out _);
+        
+        if (property == null || isCollection)
         {
             return (null, "asc");
         }
 
-        ParameterExpression param = Expression.Parameter(typeof(T), "x");
-        Expression property = Expression.PropertyOrField(param, field);
         Expression converted = Expression.Convert(property, typeof(object));
 
         return (Expression.Lambda<Func<T, object>>(converted, param), direction);

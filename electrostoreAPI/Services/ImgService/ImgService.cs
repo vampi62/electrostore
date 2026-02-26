@@ -4,6 +4,7 @@ using electrostore.Dto;
 using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.FileService;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.ImgService;
 
@@ -31,13 +32,13 @@ public class ImgService : IImgService
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.Imgs.AsQueryable();
+        var filterResult = default(Expression<Func<Imgs, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_item", SearchType = "eq", Value = itemId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<Imgs>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Imgs>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -65,9 +66,9 @@ public class ImgService : IImgService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.Imgs.Where(im => im.id_item == itemId).CountAsync(),
+                total = await _context.Imgs.CountAsync(filterResult ?? (im => im.id_item == itemId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.Imgs.Where(im => im.id_item == itemId).Skip(offset + limit).AnyAsync()
+                hasMore = await _context.Imgs.Skip(offset + limit).AnyAsync(filterResult ?? (im => im.id_item == itemId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

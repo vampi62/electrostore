@@ -4,6 +4,7 @@ using electrostore.Dto;
 using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.FileService;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.ItemService;
 
@@ -27,6 +28,7 @@ public class ItemService : IItemService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Items.AsQueryable();
+        var filterResult = default(Expression<Func<Items, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(i => idResearch.Contains(i.id_item));
@@ -35,9 +37,8 @@ public class ItemService : IItemService
         {
             if (rsql != null && rsql.Count > 0)
             {
-                var filterResult = RsqlParserExtensions.ToFilterExpression<Items>(rsql);
-                query = query.Where(filterResult.Item1);
-                rsql = filterResult.Item2;
+                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Items>(rsql);
+                query = query.Where(filterResult);
             }
             if (!string.IsNullOrEmpty(sort?.Field))
             {
@@ -95,9 +96,9 @@ public class ItemService : IItemService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.Items.CountAsync(),
+                total = await _context.Items.CountAsync(filterResult ?? (i => true)),
                 nextOffset = offset + limit,
-                hasMore = await _context.Items.Skip(offset + limit).AnyAsync()
+                hasMore = await _context.Items.Skip(offset + limit).AnyAsync(filterResult ?? (i => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

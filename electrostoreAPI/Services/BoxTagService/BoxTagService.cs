@@ -5,6 +5,7 @@ using electrostore.Enums;
 using electrostore.Extensions;
 using electrostore.Models;
 using electrostore.Services.SessionService;
+using System.Linq.Expressions;
 
 namespace electrostore.Services.BoxTagService;
 
@@ -32,11 +33,11 @@ public class BoxTagService : IBoxTagService
         var query = _context.BoxsTags.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_box", SearchType = "eq", Value = boxId.ToString() });
+        var filterResult = default(Expression<Func<BoxsTags, bool>>);
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<BoxsTags>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<BoxsTags>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -72,9 +73,9 @@ public class BoxTagService : IBoxTagService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.BoxsTags.CountAsync(bt => bt.id_box == boxId),
+                total = await _context.BoxsTags.CountAsync(filterResult ?? (bt => true)),
                 nextOffset = offset + limit,
-                hasMore = await _context.BoxsTags.Skip(offset + limit).AnyAsync(bt => bt.id_box == boxId)
+                hasMore = await _context.BoxsTags.Skip(offset + limit).AnyAsync(filterResult ?? (bt => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -92,11 +93,11 @@ public class BoxTagService : IBoxTagService
         var query = _context.BoxsTags.AsQueryable();
         rsql ??= [];
         rsql.Add(new FilterDto { Field = "id_tag", SearchType = "eq", Value = tagId.ToString() });
+        var filterResult = default(Expression<Func<BoxsTags, bool>>);
         if (rsql != null && rsql.Count > 0)
         {
-            var filterResult = RsqlParserExtensions.ToFilterExpression<BoxsTags>(rsql);
-            query = query.Where(filterResult.Item1);
-            rsql = filterResult.Item2;
+            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<BoxsTags>(rsql);
+            query = query.Where(filterResult);
         }
         if (!string.IsNullOrEmpty(sort?.Field))
         {
@@ -132,9 +133,9 @@ public class BoxTagService : IBoxTagService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.BoxsTags.CountAsync(bt => bt.id_tag == tagId),
+                total = await _context.BoxsTags.CountAsync(filterResult ?? (bt => true)),
                 nextOffset = offset + limit,
-                hasMore = await _context.BoxsTags.Skip(offset + limit).AnyAsync(bt => bt.id_tag == tagId)
+                hasMore = await _context.BoxsTags.Skip(offset + limit).AnyAsync(filterResult ?? (bt => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
