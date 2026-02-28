@@ -6,11 +6,11 @@
 					<th v-for="(column,index) in labels"
 						:key="index"
 						:class="[mergedCss.th, column.sortable ? 'cursor-pointer' : '']"
-						@click="changeSort(column)">
+						@click="column.sortable && changeSort(column.key)">
 						<div class="flex justify-between items-center">
 							<span class="flex-1">{{ $t(column.label) }}</span>
 							<template v-if="column.sortable">
-								<template v-if="sort.column?.key === column.key">
+								<template v-if="sort.key === column.key">
 									<template v-if="sort.order === 'asc'">
 										<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
 									</template>
@@ -30,13 +30,7 @@
 				<tr v-for="row in sortedData" :key="row[meta.key]" v-memo="[row.updated_at]"
 					:class="mergedCss.tr"
 					@click="meta?.path && $router.push(meta.path + row[meta.key])">
-					<TableauRow
-						:labels="labels"
-						:row="row"
-						:schema="schema"
-						:store-data="storeData"
-						:css="mergedCss.td"
-					/>
+					<TableauRow :labels="labels" :row="row" :css="mergedCss.td" :schema="schema" />
 				</tr>
 				<slot name="append-row"></slot>
 				<template v-if="loading">
@@ -136,14 +130,51 @@ export default {
 		TableauRow: defineAsyncComponent(() => import("@/components/TableauRow.vue")),
 	},
 	computed: {
-		filteredData() {
+		evaluateCondition(condition,rowData) {
+			try {
+				return new Function(["store","rowData"], `return ${condition}`)(this.storeData,rowData);
+			} catch (error) {
+				console.error("Erreur lors de l'évaluation de la condition :", error);
+				return false;
+			}
+		},
+		compileStoreData() {
 			if (!this.storeData[0]) {
 				return [];
 			}
+			// Compile the stores data into a single list of objects with the id as key for easier print
+			return Object.values(this.storeData[0]).map((item) => {
+				const compiledItem = { ...item };
+				this.labels.forEach((label) => {
+					if (label.type === "link-list") {
+						compiledItem[label.key] = Object.values(this.storeData[label.storeLinkId]?.[item[label.sourceKey]] || {}).map((linkedItem) => {
+							let printedRessource = "";
+							label.ressourcePrint.forEach((print) => {
+								if (print.from === "ressource") {
+									printedRessource += this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
+								} else if (print.from === "link") {
+									printedRessource += linkedItem?.[print.valueKey] || "";
+								} else if (print.from === "text") {
+									printedRessource += print.text || "";
+								}
+							});
+							return printedRessource;
+						});
+					} else if (label.storeRessourceId && !label.storeLinkId) {
+						compiledItem[label.key] = this.storeData[label.storeRessourceId]?.[item[label.sourceKey]]?.[label.valueKey];
+					} else {
+						compiledItem[label.key] = item?.[label.valueKey];
+					}
+				});
+				console.log("Compiled item:", compiledItem);
+				return compiledItem;
+			});
+		},
+		filteredData() {
 			if (!this.filters || this.filters.length === 0) {
-				return this.storeData[0];
+				return this.compileStoreData;
 			}
-			return Object.values(this.storeData[0]).filter((element) => {
+			return this.compileStoreData.filter((element) => {
 				return this.filters.every((f) => {
 					if (f.value !== "" && f.value !== null && f.value !== undefined) {
 						switch (f.compareMethod) {
@@ -156,7 +187,11 @@ export default {
 							case "float":
 								return Number.parseFloat(element[f.key]) === Number.parseFloat(f.value);
 							case "string":
-								//return element[f.key].toLowerCase() === f.value.toLowerCase();
+								if (Array.isArray(element[f.key])) {
+									return element[f.key].some((item) => 
+										toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(f.value)),
+									);
+								}
 								return toLowerCaseWithoutAccents(element[f.key]) === toLowerCaseWithoutAccents(f.value);
 							}
 							return element[f.key] === f.value;
@@ -165,6 +200,11 @@ export default {
 						case "=le=":
 							return element[f.key] <= f.value;
 						case "=like=":
+							if (Array.isArray(element[f.key])) {
+								return element[f.key].some((item) => 
+									toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(f.value)),
+								);
+							}
 							return toLowerCaseWithoutAccents(element[f.key]).includes(toLowerCaseWithoutAccents(f.value));
 						}
 					}
@@ -173,19 +213,12 @@ export default {
 			});
 		},
 		sortedData() {
-			if (this.sort.column) {
-				return [...Object.values(this.filteredData)].sort((a, b) => {
-					if (this.sort.column?.store) {
-						if (this.sort.order === "asc") {
-							return this.storeData[this.sort.column.store][a[this.sort.column.keyStore]]?.[this.sort.column.key] > this.storeData[this.sort.column.store][b[this.sort.column.keyStore]]?.[this.sort.column.key] ? 1 : -1;
-						} else {
-							return this.storeData[this.sort.column.store][a[this.sort.column.keyStore]]?.[this.sort.column.key] < this.storeData[this.sort.column.store][b[this.sort.column.keyStore]]?.[this.sort.column.key] ? 1 : -1;
-						}
-					}
+			if (this.sort.key) {
+				return [...this.filteredData].sort((a, b) => {
 					if (this.sort.order === "asc") {
-						return a[this.sort.column.key] > b[this.sort.column.key] ? 1 : -1;
+						return a[this.sort.key] > b[this.sort.key] ? 1 : -1;
 					} else {
-						return a[this.sort.column.key] < b[this.sort.column.key] ? 1 : -1;
+						return a[this.sort.key] < b[this.sort.key] ? 1 : -1;
 					}
 				});
 			}
@@ -207,7 +240,7 @@ export default {
 	data() {
 		return {
 			sort: {
-				column: null,
+				key: null,
 				order: "asc",
 			},
 			nextOffset: 0,
@@ -219,8 +252,8 @@ export default {
 		this.debouncedRefetchData = debounce(this.refetchData, 500);
 	},
 	async mounted() {
-		if (this.meta?.sort) {
-			this.sort.column = this.labels.find((col) => col.key === this.meta.sort);
+		if (this.meta?.sort && this.labels.find((label) => label.key === this.meta.sort)) {
+			this.sort.key = this.meta.sort;
 			this.sort.order = this.meta.sortOrder || "asc";
 		}
 		let intervalOffset = this.nextOffset;
@@ -247,14 +280,11 @@ export default {
 		},
 	},
 	methods: {
-		changeSort(column) {
-			if (!column.sortable) {
-				return;
-			}
-			if (this.sort.column === column) {
+		changeSort(key) {
+			if (this.sort.key === key) {
 				this.sort.order = this.sort.order === "asc" ? "desc" : "asc";
 			} else {
-				this.sort.column = column;
+				this.sort.key = key;
 				this.sort.order = "asc";
 			}
 		},

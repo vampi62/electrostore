@@ -4,32 +4,22 @@
 		:class="[css, column.type == 'text' ? 'text-left' : 'text-center']"
 	>
 		<template v-if="column.type == 'bool'">
-			<template v-if="evaluateCondition(column.condition, row)">
+			<template v-if="row[column.key]">
 				<font-awesome-icon icon="fa-solid fa-check" class="text-green-500" />
 			</template>
 			<template v-else>
 				<font-awesome-icon icon="fa-solid fa-times" class="text-red-500" />
 			</template>
 		</template>
-		<template v-else-if="column.type == 'list'">
+		<template v-else-if="column.type == 'list' || column.type == 'link-list'">
 			<ul>
-				<li v-for="(item, itemIndex) in this.storeData[column.list.idStoreLink]?.[row[column.list.key]] || []"
+				<li v-for="(item, itemIndex) in row[column.key] || []"
 					:key="itemIndex">
-					<template v-for="(ressource, ressourceIndex) in column.list.ressourcePrint" :key="ressourceIndex">
-						<template v-if="ressource.type === 'link'">
-							{{ item?.[ressource.key] || 'Unknown' }}
-						</template>
-						<template v-else-if="ressource.type === 'text'">
-							{{ ressource.key }}
-						</template>
-						<template v-else-if="ressource.type === 'ressource'">
-							{{ this.storeData[column.list.idStoreRessource][item[column.list.keyStoreLink]]?.[ressource.key] || 'Unknown' }}
-						</template>
-					</template>
+					{{ item }}
 				</li>
 			</ul>
 		</template>
-		<template v-else-if="column.type == 'image'">
+		<!-- <template v-else-if="column.type == 'image'">
 			<div class="flex justify-center items-center">
 				<template v-if="this.storeData[column.store][row[column.keyStore]]?.[column.key]">
 					<img v-if="this.storeData[column.idStoreImg]?.[this.storeData[column.store][row[column.keyStore]]?.[column.key]]"
@@ -43,7 +33,7 @@
 					<img src="../assets/nopicture.webp" alt="Unavailable" class="w-16 h-16 object-cover rounded" />
 				</template>
 			</div>
-		</template>
+		</template> -->
 		<template v-else-if="column.type == 'buttons'">
 			<div class="flex justify-center items-center">
 				<template v-for="(button, buttonIndex) in column.buttons" :key="buttonIndex">
@@ -66,7 +56,7 @@
 			</Form>
 		</template>
 		<template v-else>
-			<span v-html="formatCellValue(column, row)"></span>
+			<span v-html="formatCellValue(column, row[column.key])"></span>
 		</template>
 	</td>
 </template>
@@ -88,12 +78,6 @@ export default {
 			required: true,
 			// row pass by the parent component, containing the data for the current row
 		},
-		storeData: {
-			type: Object,
-			required: true,
-			// storeData pass by the parent component, containing all the data needed for the row
-			default: () => ({}),
-		},
 		css: {
 			type: String,
 			required: false,
@@ -113,33 +97,18 @@ export default {
 		TableauActionButton: defineAsyncComponent(() => import("@/components/TableauActionButton.vue")),
 	},
 	methods: {
-		evaluateCondition(condition,rowData) {
-			try {
-				return new Function(["store","rowData"], `return ${condition}`)(this.storeData,rowData);
-			} catch (error) {
-				console.error("Erreur lors de l'évaluation de la condition :", error);
-				return false;
-			}
-		},
-		formatCellValue(column, row) {
-			let value = "";
-			if (column?.store) {
-				value = this.storeData[column.store]?.[row[column.keyStore]]?.[column.key] || "";
-				row[column.key] = value; // Update the row with the fetched value
-			} else {
-				value = row[column.key];
-			}
+		formatCellValue(column, data) {
 			switch (column.type) {
 			case "text":
-				return value;
+				return data;
 			case "enum":
-				return column.options[value];
+				return column.options[data];
 			case "date":
-				return value ? new Date(value).toLocaleDateString() : "";
+				return data ? new Date(data).toLocaleDateString() : "";
 			case "datetime":
-				return value ? new Date(value).toLocaleString() : "";
+				return data ? new Date(data).toLocaleString() : "";
 			default:
-				return value;
+				return data;
 			}
 		},
 	},

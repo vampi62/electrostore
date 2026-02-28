@@ -58,11 +58,11 @@ const tableauLabel = ref([
 	{ label: "projets.Status", sortable: true, key: "status_projet", sourceKey: "status_projet", type: "enum", options: projetTypeStatus },
 
 	{ label: "projets.Items", sortable: false, key: "", sourceKey: "id_projet", type: "link-list", 
-		StoreLinkId: 1, storeRessourceId: 2, StoreLinkKeyJoinSource: "id_projet", StoreLinkKeyJoinRessource: "id_item", valueKey: "reference_name_item",
+		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_projet", storeLinkKeyJoinRessource: "id_item", valueKey: "reference_name_item",
 		ressourcePrint: [{ from: "link", valueKey: "qte_projet_item" }, { from: "text", text: " - " }, { from: "ressource", valueKey: "reference_name_item" }] },
 		
 	{ label: "projets.Tags", sortable: false, key: "", sourceKey: "id_projet", type: "link-list", 
-		StoreLinkId: 3, storeRessourceId: 4, StoreLinkKeyJoinSource: "id_projet", StoreLinkKeyJoinRessource: "id_projet_tag", valueKey: "nom_projet_tag",
+		storeLinkId: 3, storeRessourceId: 4, storeLinkKeyJoinSource: "id_projet", storeLinkKeyJoinRessource: "id_projet_tag", valueKey: "nom_projet_tag",
 		ressourcePrint: [{ from: "ressource", valueKey: "nom_projet_tag" }] },
 
 	{ label: "projets.DateStart", sortable: true, key: "date_debut_projet", type: "date" },

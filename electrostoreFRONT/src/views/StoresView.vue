@@ -34,7 +34,7 @@ const tableauLabel = ref([
 	{ label: "stores.MqttName", sortable: true, key: "mqtt_name_store", sourceKey: "mqtt_name_store", type: "text" },
 
 	{ label: "stores.TagsList", sortable: false, key: "", sourceKey: "id_store", type: "link-list", 
-		StoreLinkId: 1, storeRessourceId: 2, StoreLinkKeyJoinSource: "id_store", StoreLinkKeyJoinRessource: "id_tag", valueKey: "nom_tag",
+		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_store", storeLinkKeyJoinRessource: "id_tag", valueKey: "nom_tag",
 		ressourcePrint: [{ from: "ressource", valueKey: "nom_tag" }] },
 ]);
 const tableauMeta = ref({

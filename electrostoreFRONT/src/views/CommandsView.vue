@@ -37,8 +37,8 @@ const tableauLabel = ref([
 	{ label: "commands.URL", sortable: true, key: "url_command", valueKey: "url_command", type: "text" },
 	{ label: "commands.Prix", sortable: true, key: "prix_command", valueKey: "prix_command", type: "text" },
 
-	{ label: "commands.ItemList", sortable: false, key: "", sourceKey: "id_command", type: "link-list", 
-		StoreLinkId: 1, storeRessourceId: 2, StoreLinkKeyJoinSource: "id_command", StoreLinkKeyJoinRessource: "id_item", valueKey: "reference_name_item",
+	{ label: "commands.ItemList", sortable: false, key: "commands.ItemList", sourceKey: "id_command", type: "link-list", 
+		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_command", storeLinkKeyJoinRessource: "id_item", valueKey: "reference_name_item",
 		ressourcePrint: [{ from: "link", valueKey: "qte_command_item" }, { from: "text", text: " - " }, { from: "ressource", valueKey: "reference_name_item" }] },
 
 	{ label: "commands.DateL", sortable: true, key: "date_livraison_command", valueKey: "date_livraison_command", type: "date" },
