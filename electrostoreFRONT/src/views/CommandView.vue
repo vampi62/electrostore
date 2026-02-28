@@ -179,7 +179,7 @@ const itemDelete = async(item) => {
 };
 
 const filterItem = ref([
-	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("command.ItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "reference_name_item", tableauId: "0", value: "", type: "text", label: "", placeholder: t("command.ItemFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 const createSchema = () => {
@@ -236,10 +236,10 @@ const labelForm = ref([
 	{ key: "date_livraison_command", label: "command.DeliveryDate", type: "datetime-local" },
 ]);
 const labelTableauDocument = ref([
-	{ label: "command.DocumentName", sortable: true, key: "name_command_document", type: "text", canEdit: true },
-	{ label: "command.DocumentType", sortable: true, key: "type_command_document", type: "text" },
-	{ label: "command.DocumentDate", sortable: true, key: "created_at", type: "datetime" },
-	{ label: "command.DocumentActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "command.DocumentName", sortable: true, key: "name_command_document", valueKey: "name_command_document", type: "text", canEdit: true },
+	{ label: "command.DocumentType", sortable: true, key: "type_command_document", valueKey: "type_command_document", type: "text" },
+	{ label: "command.DocumentDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
+	{ label: "command.DocumentActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
@@ -289,10 +289,12 @@ const labelTableauDocument = ref([
 	] },
 ]);
 const labelTableauItem = ref([
-	{ label: "command.ItemName", sortable: true, key: "reference_name_item", keyStore: "id_item", store: "1", type: "text" },
-	{ label: "command.ItemQuantity", sortable: true, key: "qte_command_item", type: "number", canEdit: true },
-	{ label: "command.ItemPrice", sortable: true, key: "prix_command_item", type: "number", canEdit: true },
-	{ label: "command.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "command.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text", 
+		storeRessourceId: 1, valueKey: "reference_name_item" },
+
+	{ label: "command.ItemQuantity", sortable: true, key: "qte_command_item", valueKey: "qte_command_item", type: "number", canEdit: true },
+	{ label: "command.ItemPrice", sortable: true, key: "prix_command_item", valueKey: "prix_command_item", type: "number", canEdit: true },
+	{ label: "command.ItemActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
@@ -333,10 +335,15 @@ const labelTableauItem = ref([
 	] },
 ]);
 const labelTableauModalItem = ref([
-	{ label: "command.ItemName", sortable: true, key: "reference_name_item", type: "text" },
-	{ label: "command.ItemQuantity", sortable: true, key: "qte_command_item", keyStore: "id_item", store: "1", type: "number", canEdit: true },
-	{ label: "command.ItemPrice", sortable: true, key: "prix_command_item", keyStore: "id_item", store: "1", type: "number", canEdit: true },
-	{ label: "command.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "command.ItemName", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
+
+	{ label: "command.ItemQuantity", sortable: true, key: "Item.qte_command_item", sourceKey: "id_item", type: "text", 
+		storeRessourceId: 1, valueKey: "qte_command_item", canEdit: true },
+
+	{ label: "command.ItemPrice", sortable: true, key: "Item.prix_command_item", sourceKey: "id_item", type: "text", 
+		storeRessourceId: 1, valueKey: "prix_command_item", canEdit: true },
+
+	{ label: "command.ItemActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-plus",

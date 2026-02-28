@@ -118,7 +118,7 @@ const projetDelete = async(projet) => {
 };
 
 const filterProjet = ref([
-	{ key: "nom_projet", value: "", type: "text", label: "", placeholder: t("projetTag.ProjetFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "nom_projet", tableauId: "0", value: "", type: "text", label: "", placeholder: t("projetTag.ProjetFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 const createSchema = () => {
@@ -138,8 +138,10 @@ const labelForm = [
 	{ key: "poids_projet_tag", label: "projetTag.Poids", type: "number" },
 ];
 const labelTableauProjet = ref([
-	{ label: "projetTag.ProjetName", sortable: true, key: "nom_projet", keyStore: "id_projet", store: "1", type: "text" },
-	{ label: "projetTag.ProjetActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "projetTag.ProjetName", sortable: true, key: "Projet.nom_projet", sourceKey: "id_projet", type: "text", 
+		storeRessourceId: 1, valueKey: "nom_projet" },
+		
+	{ label: "projetTag.ProjetActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
@@ -151,8 +153,8 @@ const labelTableauProjet = ref([
 ]);
 
 const labelTableauModalProjet = ref([
-	{ label: "projetTag.ProjetName", sortable: true, key: "nom_projet", type: "text" },
-	{ label: "projetTag.ProjetActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "projetTag.ProjetName", sortable: true, key: "nom_projet", valueKey: "nom_projet", type: "text" },
+	{ label: "projetTag.ProjetActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-save",

@@ -18,7 +18,7 @@ export const useCamerasStore = defineStore("cameras",{
 		async getCameraByList(idResearch = []) {
 			this.loading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			const paramString = [idResearchString].filter((str) => str).join("&");
+			const paramString = [idResearchString].join("&");
 			const newCameraList = await fetchWrapper.get({
 				url: `${baseUrl}/camera?${paramString}`,
 				useToken: "access",
@@ -39,7 +39,7 @@ export const useCamerasStore = defineStore("cameras",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newCameraList = await fetchWrapper.get({
 				url: `${baseUrl}/camera?${paramString}`,
 				useToken: "access",

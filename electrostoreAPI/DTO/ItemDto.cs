@@ -9,6 +9,7 @@ public record ReadItemDto
     public required string reference_name_item { get; init; }
     public required string friendly_name_item { get; init; }
     public int seuil_min_item { get; init; }
+    public int quantity_item { get; init; }
     public required string description_item { get; init; }
     public int? id_img { get; init; }
     public DateTime created_at { get; init; }

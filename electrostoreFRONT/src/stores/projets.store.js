@@ -42,7 +42,7 @@ export const useProjetsStore = defineStore("projets",{
 			this.projetsLoading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const paramString = [idResearchString, expandString].filter((str) => str).join("&");
+			const paramString = [idResearchString, expandString].join("&");
 			const newProjetList = await fetchWrapper.get({
 				url: `${baseUrl}/projet?${paramString}`,
 				useToken: "access",
@@ -97,7 +97,7 @@ export const useProjetsStore = defineStore("projets",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newProjetList = await fetchWrapper.get({
 				url: `${baseUrl}/projet?${paramString}`,
 				useToken: "access",
@@ -225,7 +225,7 @@ export const useProjetsStore = defineStore("projets",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newCommentaireList = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/commentaire?${paramString}`,
 				useToken: "access",
@@ -301,7 +301,7 @@ export const useProjetsStore = defineStore("projets",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newDocumentList = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/document?${paramString}`,
 				useToken: "access",
@@ -380,7 +380,7 @@ export const useProjetsStore = defineStore("projets",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newItemList = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/item?${paramString}`,
 				useToken: "access",
@@ -469,7 +469,7 @@ export const useProjetsStore = defineStore("projets",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newProjetTagProjetList = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/projet-tag?${paramString}`,
 				useToken: "access",
@@ -560,7 +560,7 @@ export const useProjetsStore = defineStore("projets",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newStatusHistoryList = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${idProjet}/status-history?${paramString}`,
 				useToken: "access",

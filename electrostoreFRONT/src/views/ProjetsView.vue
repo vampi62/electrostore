@@ -23,7 +23,6 @@ async function fetchItemData(minOffset, maxOffset) {
 	if (itemsNotFound.length > 0) {
 		await itemsStore.getItemByList(itemsNotFound);
 	}
-	filter.value[5].options = Object.fromEntries(Object.values(itemsStore.items).map((item) => [item.id_item, item.reference_name_item]));
 }
 async function fetchTagData(minOffset, maxOffset) {
 	let tagsNotFound = [];
@@ -37,7 +36,6 @@ async function fetchTagData(minOffset, maxOffset) {
 	if (tagsNotFound.length > 0) {
 		await projetTagsStore.getProjetTagByList(tagsNotFound);
 	}
-	filter.value[6].options = Object.fromEntries(Object.values(projetTagsStore.projetTags).map((tag) => [tag.id_projet_tag, tag.nom_projet_tag]));
 }
 
 const projetTypeStatus = ref({ [ProjetStatus.NotStarted]: t("projets.Status0"), [ProjetStatus.InProgress]: t("projets.Status1"),
@@ -45,21 +43,28 @@ const projetTypeStatus = ref({ [ProjetStatus.NotStarted]: t("projets.Status0"), 
 	[ProjetStatus.Cancelled]: t("projets.Status4"), [ProjetStatus.Archived]: t("projets.Status5") });
 
 const filter = ref([
-	{ key: "status_projet", value: "", type: "datalist", options: projetTypeStatus, label: "projets.FilterStatus", compareMethod: "=" },
-	{ key: "nom_projet", value: "", type: "text", label: "projets.FilterNom", compareMethod: "contain" },
-	{ key: "url_projet", value: "", type: "text", label: "projets.FilterUrl", compareMethod: "contain" },
-	{ key: "date_debut_projet", value: "", type: "date", label: "projets.FilterDate", compareMethod: ">=" },
-	{ key: "date_fin_projet", value: "", type: "date", label: "projets.FilterDateEnd", compareMethod: ">=" },
-	{ key: "id_item", subPath: "projets_items", value: "", type: "datalist", typeData: "int", options: Object.fromEntries(Object.values(itemsStore.items).map((item) => [item.id_item, item.reference_name_item])), label: "projets.FilterItem", compareMethod: "=" },
-	{ key: "id_projet_tag", subPath: "projets_projet_tags", value: "", type: "datalist", typeData: "int", options: Object.fromEntries(Object.values(projetTagsStore.projetTags).map((tag) => [tag.id_projet_tag, tag.nom_projet_tag])), label: "projets.FilterTag", compareMethod: "=" },
+	{ key: "status_projet", tableauId: "3", value: "", type: "datalist", options: projetTypeStatus, label: "projets.FilterStatus", compareMethod: "==" },
+	{ key: "nom_projet", tableauId: "0", value: "", type: "text", label: "projets.FilterNom", compareMethod: "=like=" },
+	{ key: "url_projet", tableauId: "2", value: "", type: "text", label: "projets.FilterUrl", compareMethod: "=like=" },
+	{ key: "date_debut_projet", tableauId: "6", value: "", type: "date", label: "projets.FilterDate", compareMethod: "=ge=" },
+	{ key: "date_fin_projet", tableauId: "7", value: "", type: "date", label: "projets.FilterDateEnd", compareMethod: "=ge=" },
+	{ key: "ProjetsItems.Item.reference_name_item", tableauId: "4", value: "", type: "text", label: "projets.FilterItem", compareMethod: "=like=" },
+	{ key: "ProjetsProjetTags.ProjetTag.nom_projet_tag", tableauId: "5", value: "", type: "text", label: "projets.FilterTag", compareMethod: "=like=" },
 ]);
 const tableauLabel = ref([
-	{ label: "projets.Name", sortable: true, key: "nom_projet", type: "text" },
-	{ label: "projets.Description", sortable: false, key: "description_projet", type: "text" },
-	{ label: "projets.Url", sortable: true, key: "url_projet", type: "text" },
-	{ label: "projets.Status", sortable: true, key: "status_projet", type: "enum", options: projetTypeStatus },
-	{ label: "projets.Items", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, key: "id_projet", keyStoreLink: "id_item", ressourcePrint: [{ type: "link", key: "qte_projet_item" }, { type: "text", key: " - " }, { type: "ressource", key: "reference_name_item" }] } },
-	{ label: "projets.Tags", sortable: false, key: "", type: "list", list: { idStoreLink: 3, idStoreRessource: 4, key: "id_projet", keyStoreLink: "id_projet_tag", ressourcePrint: [{ type: "ressource", key: "nom_projet_tag" }] } },
+	{ label: "projets.Name", sortable: true, key: "nom_projet", sourceKey: "nom_projet", type: "text" },
+	{ label: "projets.Description", sortable: false, key: "description_projet", sourceKey: "description_projet", type: "text" },
+	{ label: "projets.Url", sortable: true, key: "url_projet", sourceKey: "url_projet", type: "text" },
+	{ label: "projets.Status", sortable: true, key: "status_projet", sourceKey: "status_projet", type: "enum", options: projetTypeStatus },
+
+	{ label: "projets.Items", sortable: false, key: "", sourceKey: "id_projet", type: "link-list", 
+		StoreLinkId: 1, storeRessourceId: 2, StoreLinkKeyJoinSource: "id_projet", StoreLinkKeyJoinRessource: "id_item", valueKey: "reference_name_item",
+		ressourcePrint: [{ from: "link", valueKey: "qte_projet_item" }, { from: "text", text: " - " }, { from: "ressource", valueKey: "reference_name_item" }] },
+		
+	{ label: "projets.Tags", sortable: false, key: "", sourceKey: "id_projet", type: "link-list", 
+		StoreLinkId: 3, storeRessourceId: 4, StoreLinkKeyJoinSource: "id_projet", StoreLinkKeyJoinRessource: "id_projet_tag", valueKey: "nom_projet_tag",
+		ressourcePrint: [{ from: "ressource", valueKey: "nom_projet_tag" }] },
+
 	{ label: "projets.DateStart", sortable: true, key: "date_debut_projet", type: "date" },
 	{ label: "projets.DateEnd", sortable: true, key: "date_fin_projet", type: "date" },
 ]);

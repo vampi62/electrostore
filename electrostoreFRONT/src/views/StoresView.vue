@@ -18,22 +18,24 @@ async function fetchTagData(minOffset, maxOffset) {
 	if (tagsNotFound.length > 0) {
 		await tagsStore.getTagByList(tagsNotFound);
 	}
-	filter.value[4].options = Object.fromEntries(Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag]));
 }
 
 const filter = ref([
-	{ key: "nom_store", value: "", type: "text", label: "stores.FilterName", compareMethod: "contain" },
-	{ key: "mqtt_name_store", value: "", type: "text", label: "stores.FilterMqttName", compareMethod: "contain" },
-	{ key: "xlength_store", value: "", type: "number", label: "stores.FilterXLength", compareMethod: "<=" },
-	{ key: "ylength_store", value: "", type: "number", label: "stores.FilterYLength", compareMethod: "<=" },
-	{ key: "id_tag", subPath: "stores_tags", value: "", type: "datalist", typeData: "int", options: Object.fromEntries(Object.values(tagsStore.tags).map((tag) => [tag.id_tag, tag.nom_tag])), label: "stores.FilterTag", compareMethod: "=" },
+	{ key: "nom_store", tableauId: "0", value: "", type: "text", label: "stores.FilterName", compareMethod: "=like=" },
+	{ key: "mqtt_name_store", tableauId: "3", value: "", type: "text", label: "stores.FilterMqttName", compareMethod: "=like=" },
+	{ key: "xlength_store", tableauId: "1", value: "", type: "number", label: "stores.FilterXLength", compareMethod: "=le=" },
+	{ key: "ylength_store", tableauId: "2", value: "", type: "number", label: "stores.FilterYLength", compareMethod: "=le=" },
+	{ key: "StoresTags.Tag.nom_tag", tableauId: "4", value: "", type: "text", label: "stores.FilterTag", compareMethod: "=like=" },
 ]);
 const tableauLabel = ref([
-	{ label: "stores.Name", sortable: true, key: "nom_store", type: "text" },
-	{ label: "stores.XLength", sortable: true, key: "xlength_store", type: "number" },
-	{ label: "stores.YLength", sortable: true, key: "ylength_store", type: "number" },
-	{ label: "stores.MqttName", sortable: true, key: "mqtt_name_store", type: "text" },
-	{ label: "stores.TagsList", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, key: "id_store", keyStoreLink: "id_tag", ressourcePrint: [{ type: "ressource", key: "nom_tag" }] } },
+	{ label: "stores.Name", sortable: true, key: "nom_store", sourceKey: "nom_store", type: "text" },
+	{ label: "stores.XLength", sortable: true, key: "xlength_store", sourceKey: "xlength_store", type: "number" },
+	{ label: "stores.YLength", sortable: true, key: "ylength_store", sourceKey: "ylength_store", type: "number" },
+	{ label: "stores.MqttName", sortable: true, key: "mqtt_name_store", sourceKey: "mqtt_name_store", type: "text" },
+
+	{ label: "stores.TagsList", sortable: false, key: "", sourceKey: "id_store", type: "link-list", 
+		StoreLinkId: 1, storeRessourceId: 2, StoreLinkKeyJoinSource: "id_store", StoreLinkKeyJoinRessource: "id_tag", valueKey: "nom_tag",
+		ressourcePrint: [{ from: "ressource", valueKey: "nom_tag" }] },
 ]);
 const tableauMeta = ref({
 	key: "id_store",

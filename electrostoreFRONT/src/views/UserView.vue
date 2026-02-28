@@ -135,13 +135,13 @@ const createSchema = (isChecked) => {
 			.max(configsStore.getConfigByKey("max_length_email"), t("user.EmailMaxLength", { count: configsStore.getConfigByKey("max_length_email") }))
 			.required(t("user.EmailRequired"))
 			.email(t("user.EmailInvalid")),
-		mdp_user: isChecked // if isChecked is true, then mdp_user is required and must be different from current_mdp_user and contain at least 8 characters, special characters, numbers and upper and lower letters
+		mdp_user: isChecked // if isChecked is true, then mdp_user is required and must be different from current_mdp_user and =like= at least 8 characters, special characters, numbers and upper and lower letters
 			? Yup.string().required(t("user.PasswordRequired")).notOneOf([Yup.ref("current_mdp_user"), null], t("user.PasswordMatch")).matches(
 				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
 				t("user.PasswordComplexity"),
 			)
 			: Yup.string().nullable(),
-		confirm_mdp_user: isChecked // if isChecked is true, then confirm_mdp_user is required and must match mdp_user and contain at least 8 characters, special characters, numbers and upper and lower letters
+		confirm_mdp_user: isChecked // if isChecked is true, then confirm_mdp_user is required and must match mdp_user and =like= at least 8 characters, special characters, numbers and upper and lower letters
 			? Yup.string().required(t("user.ConfirmPasswordRequired")).oneOf([Yup.ref("mdp_user"), null], t("user.ConfirmPasswordMatch")).matches(
 				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
 				t("user.PasswordComplexity"),
@@ -169,16 +169,16 @@ if (!authStore.isSSOUser && (authStore.user?.id_user === Number(userId.value) ||
 }
 
 const labelTableauSession = ref([
-	{ label: "user.TokenCreatedDate", sortable: true, key: "first_created_at", type: "datetime" },
-	{ label: "user.TokenLastLoginDate", sortable: true, key: "created_at", type: "datetime" },
-	{ label: "user.TokenCreatedIP", sortable: true, key: "created_by_ip", type: "text" },
-	{ label: "user.TokenExpireDate", sortable: true, key: "expires_at", type: "datetime" },
-	{ label: "user.TokenIsRevoked", sortable: true, key: "is_revoked", type: "text" },
-	{ label: "user.TokenAuthMethod", sortable: true, key: "auth_method", type: "text" },
-	{ label: "user.TokenRevokedDate", sortable: true, key: "revoked_at", type: "datetime" },
-	{ label: "user.TokenRevokedIP", sortable: true, key: "revoked_by_ip", type: "text" },
-	{ label: "user.TokenRevokedReason", sortable: true, key: "revoked_reason", type: "text" },
-	{ label: "user.TokenActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "user.TokenCreatedDate", sortable: true, key: "first_created_at", valueKey: "first_created_at", type: "datetime" },
+	{ label: "user.TokenLastLoginDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
+	{ label: "user.TokenCreatedIP", sortable: true, key: "created_by_ip", valueKey: "created_by_ip", type: "text" },
+	{ label: "user.TokenExpireDate", sortable: true, key: "expires_at", valueKey: "expires_at", type: "datetime" },
+	{ label: "user.TokenIsRevoked", sortable: true, key: "is_revoked", valueKey: "is_revoked", type: "text" },
+	{ label: "user.TokenAuthMethod", sortable: true, key: "auth_method", valueKey: "auth_method", type: "text" },
+	{ label: "user.TokenRevokedDate", sortable: true, key: "revoked_at", valueKey: "revoked_at", type: "datetime" },
+	{ label: "user.TokenRevokedIP", sortable: true, key: "revoked_by_ip", valueKey: "revoked_by_ip", type: "text" },
+	{ label: "user.TokenRevokedReason", sortable: true, key: "revoked_reason", valueKey: "revoked_reason", type: "text" },
+	{ label: "user.TokenActions", sortable: false, key: "", type: "buttons", valueKey: "", buttons: [
 		{
 			label: "user.TokenRevoke",
 			icon: "fa-solid fa-ban",

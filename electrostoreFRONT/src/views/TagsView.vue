@@ -5,16 +5,16 @@ import { useTagsStore } from "@/stores";
 const tagsStore = useTagsStore();
 
 const filter = ref([
-	{ key: "nom_tag", value: "", type: "text", label: "tags.FilterName", compareMethod: "contain" },
-	{ key: "poids_tag", value: "", type: "number", label: "tags.FilterWeightMin", compareMethod: ">=" },
-	{ key: "poids_tag", value: "", type: "number", label: "tags.FilterWeightMax", compareMethod: "<=" },
+	{ key: "nom_tag", tableauId: "0", value: "", type: "text", label: "tags.FilterName", compareMethod: "=like=" },
+	{ key: "poids_tag", tableauId: "1", value: "", type: "number", label: "tags.FilterWeightMin", compareMethod: "=ge=" },
+	{ key: "poids_tag", tableauId: "1", value: "", type: "number", label: "tags.FilterWeightMax", compareMethod: "=le=" },
 ]);
 const tableauLabel = ref([
-	{ label: "tags.Name", sortable: true, key: "nom_tag", type: "text" },
-	{ label: "tags.Weight", sortable: true, key: "poids_tag", type: "number" },
-	{ label: "tags.ItemsCount", sortable: true, key: "items_tags_count", type: "number" },
-	{ label: "tags.StoresCount", sortable: true, key: "stores_tags_count", type: "number" },
-	{ label: "tags.BoxsCount", sortable: true, key: "boxs_tags_count", type: "number" },
+	{ label: "tags.Name", sortable: true, key: "nom_tag", valueKey: "nom_tag", type: "text" },
+	{ label: "tags.Weight", sortable: true, key: "poids_tag", valueKey: "poids_tag", type: "number" },
+	{ label: "tags.ItemsCount", sortable: true, key: "ItemsTags.Count", valueKey: "items_tags_count", type: "number" },
+	{ label: "tags.StoresCount", sortable: true, key: "StoresTags.Count", valueKey: "stores_tags_count", type: "number" },
+	{ label: "tags.BoxsCount", sortable: true, key: "BoxsTags.Count", valueKey: "boxs_tags_count", type: "number" },
 ]);
 const tableauMeta = ref({
 	key: "id_tag",

@@ -27,32 +27,17 @@
 				</tr>
 			</thead>
 			<tbody :class="mergedCss.tbody">
-				<template v-if="meta?.path">
-					<RouterLink v-for="row in sortedData" :key="row[meta.key]" :to="meta.path + row[meta.key]"
-						custom v-slot="{ navigate }">
-						<tr @click="navigate" :class="mergedCss.tr">
-							<TableauRow
-								:labels="labels"
-								:row="row"
-								:schema="schema"
-								:store-data="storeData"
-								:css="mergedCss.td"
-							/>
-						</tr>
-					</RouterLink>
-				</template>
-				<template v-else>
-					<tr v-for="row in sortedData" :key="row[meta.key]"
-						:class="mergedCss.tr">
-						<TableauRow
-							:labels="labels"
-							:row="row"
-							:schema="schema"
-							:store-data="storeData"
-							:css="mergedCss.td"
-						/>
-					</tr>
-				</template>
+				<tr v-for="row in sortedData" :key="row[meta.key]" v-memo="[row.updated_at]"
+					:class="mergedCss.tr"
+					@click="meta?.path && $router.push(meta.path + row[meta.key])">
+					<TableauRow
+						:labels="labels"
+						:row="row"
+						:schema="schema"
+						:store-data="storeData"
+						:css="mergedCss.td"
+					/>
+				</tr>
 				<slot name="append-row"></slot>
 				<template v-if="loading">
 					<tr>
@@ -101,9 +86,9 @@ export default {
 		filters: {
 			type: Array,
 			required: false,
-			default: () => [],
-			// filters is an array of filter objects, each object should have a key, value, type, typeData, compareMethod, and optional subPath, placeholder, class, and options properties
+			// filters is an array of filter objects, each object should have a key, value, type, typeData, compareMethod, placeholder, class, and options properties
 			// e.g. { key: 'name', value: '', type: 'text', typeData: 'string', compareMethod: 'contain', placeholder: 'Search by name', class: 'mb-2' }
+			default: () => [],
 		},
 		loading: {
 			type: Boolean,
@@ -120,7 +105,7 @@ export default {
 				return [0, false];
 			},
 			// fetchFunction is a function that will be called to fetch the data for the table, it should accept the parameters limit, offset, expand, filter, sort, and clear
-			// e.g. (limit, offset, expand, filter, sort, clear) => { store.fetchData(offset, limit, expand, filter, sort, clear) }
+			// e.g. (limit, offset, expand, filter, sort, clear) => { store.fetchData(limit, offset, expand, filter, sort, clear) }
 		},
 		listFetchFunction: {
 			type: Array,
@@ -161,18 +146,8 @@ export default {
 			return Object.values(this.storeData[0]).filter((element) => {
 				return this.filters.every((f) => {
 					if (f.value !== "" && f.value !== null && f.value !== undefined) {
-						if (f.subPath) {
-							switch (f.compareMethod) {
-							case "=":
-								return element[f.subPath].some((subElement) => subElement[f.key] === f.value);
-							case ">=":
-								return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) >= f.value;
-							case "<=":
-								return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) <= f.value;
-							}
-						}
 						switch (f.compareMethod) {
-						case "=":
+						case "==":
 							switch (f.typeData) {
 							case "bool":
 								return element[f.key] === (f.value === "true");
@@ -185,11 +160,11 @@ export default {
 								return toLowerCaseWithoutAccents(element[f.key]) === toLowerCaseWithoutAccents(f.value);
 							}
 							return element[f.key] === f.value;
-						case ">=":
+						case "=ge=":
 							return element[f.key] >= f.value;
-						case "<=":
+						case "=le=":
 							return element[f.key] <= f.value;
-						case "contain":
+						case "=like=":
 							return toLowerCaseWithoutAccents(element[f.key]).includes(toLowerCaseWithoutAccents(f.value));
 						}
 					}
@@ -249,7 +224,7 @@ export default {
 			this.sort.order = this.meta.sortOrder || "asc";
 		}
 		let intervalOffset = this.nextOffset;
-		[this.nextOffset, this.hasMore] = await this.fetchFunction(100, 0, this.meta?.expand || [], buildRSQLFilter(this.filters), buildRSQLSort(this.sort));
+		[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], buildRSQLFilter(this.filters), buildRSQLSort(this.sort));
 		await this.refetchListData(intervalOffset, this.nextOffset);
 		this.isInitializing = false;
 	},
