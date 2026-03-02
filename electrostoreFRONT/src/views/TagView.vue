@@ -12,6 +12,7 @@ import * as Yup from "yup";
 import { useRoute } from "vue-router";
 const route = useRoute();
 const tagId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
 
 import { useConfigsStore, useTagsStore, useStoresStore, useItemsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -25,6 +26,14 @@ async function fetchAllData() {
 		tagsStore.tagEdition = {
 			loading: false,
 		};
+		if (preset.value) {
+			preset.value.split(";").forEach((pair) => {
+				const [key, value] = pair.split(":");
+				if (key && value) {
+					tagsStore.tagEdition[key] = value;
+				}
+			});
+		}
 	} else {
 		tagsStore.tagEdition = {
 			loading: true,

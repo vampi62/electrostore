@@ -12,6 +12,7 @@ const { t } = useI18n();
 import { useRoute } from "vue-router";
 const route = useRoute();
 const commandId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
 
 import { downloadFile, viewFile } from "@/utils";
 
@@ -27,6 +28,14 @@ async function fetchAllData() {
 		commandsStore.commandEdition = {
 			loading: false,
 		};
+		if (preset.value) {
+			preset.value.split(";").forEach((pair) => {
+				const [key, value] = pair.split(":");
+				if (key && value) {
+					commandsStore.commandEdition[key] = value;
+				}
+			});
+		}
 	} else {
 		commandsStore.commandEdition = {
 			loading: true,

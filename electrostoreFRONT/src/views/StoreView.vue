@@ -12,6 +12,7 @@ const { t } = useI18n();
 import { useRoute } from "vue-router";
 const route = useRoute();
 const storeId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
 
 import { useConfigsStore, useStoresStore, useTagsStore, useItemsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -27,6 +28,14 @@ async function fetchAllData() {
 		};
 		storesStore.ledEdition[storeId.value] = {};
 		storesStore.boxEdition[storeId.value] = {};
+		if (preset.value) {
+			preset.value.split(";").forEach((pair) => {
+				const [key, value] = pair.split(":");
+				if (key && value) {
+					storesStore.storeEdition[key] = value;
+				}
+			});
+		}
 	} else {
 		storesStore.storeEdition[storeId.value] = {
 			loading: true,

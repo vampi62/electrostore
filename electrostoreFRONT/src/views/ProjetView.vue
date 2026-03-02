@@ -12,6 +12,7 @@ const { t } = useI18n();
 import { useRoute } from "vue-router";
 const route = useRoute();
 const projetId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
 
 import { downloadFile, viewFile } from "@/utils";
 
@@ -30,6 +31,14 @@ async function fetchAllData() {
 		projetsStore.projetEdition = {
 			loading: false,
 		};
+		if (preset.value) {
+			preset.value.split(";").forEach((pair) => {
+				const [key, value] = pair.split(":");
+				if (key && value) {
+					projetsStore.projetEdition[key] = value;
+				}
+			});
+		}
 	} else {
 		projetsStore.projetEdition = {
 			loading: true,

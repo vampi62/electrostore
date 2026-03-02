@@ -12,6 +12,7 @@ import * as Yup from "yup";
 import { useRoute } from "vue-router";
 const route = useRoute();
 const userId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
 
 import { useConfigsStore, useUsersStore, useCommandsStore, useProjetsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -36,6 +37,14 @@ async function fetchAllData() {
 		usersStore.userEdition = {
 			loading: false,
 		};
+		if (preset.value) {
+			preset.value.split(";").forEach((pair) => {
+				const [key, value] = pair.split(":");
+				if (key && value) {
+					usersStore.userEdition[key] = value;
+				}
+			});
+		}
 	} else {
 		usersStore.userEdition = {
 			loading: true,
