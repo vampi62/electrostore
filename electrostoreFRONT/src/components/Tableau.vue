@@ -27,7 +27,7 @@
 				</tr>
 			</thead>
 			<tbody :class="mergedCss.tbody">
-				<tr v-for="row in sortedData" :key="row[meta.key]" v-memo="[row.updated_at]"
+				<tr v-for="row in sortedData" :key="row[meta.key]" v-memo="[row]"
 					:class="mergedCss.tr"
 					@click="meta?.path && $router.push(meta.path + row[meta.key])">
 					<TableauRow :labels="labels" :row="row" :css="mergedCss.td" :schema="schema" />
@@ -46,7 +46,7 @@
 </template>
 
 <script>
-import { defineAsyncComponent } from "vue";
+import { compile, defineAsyncComponent } from "vue";
 import { debounce } from "lodash-es";
 import { buildRSQLFilter, buildRSQLSort } from "@/utils";
 import { toLowerCaseWithoutAccents } from "@/utils";
@@ -76,6 +76,18 @@ export default {
 			required: true,
 			// storeData is an array of objects, each object should contain the data for a row
 			// storeData[0] is the main data array
+		},
+		storeEdition: {
+			type: Object,
+			required: false,
+			// storeEdition is an object containing the store and key to edit a resource when clicking on a row, it should have the properties storeEditionKey and storeEditionStore
+			// e.g. { storeEditionKey: "id", storeEditionStore: 1 }
+		},
+		storeReady: {
+			type: Object,
+			required: false,
+			// storeReady is an object containing the store and key containing unsaved changes to prevent leaving the page, it should have the properties storeReadyKey and storeReadyStore
+			// e.g. { storeReadyKey: "hasUnsavedChanges", storeReadyStore: 1 }
 		},
 		filters: {
 			type: Array,
@@ -130,14 +142,6 @@ export default {
 		TableauRow: defineAsyncComponent(() => import("@/components/TableauRow.vue")),
 	},
 	computed: {
-		evaluateCondition(condition,rowData) {
-			try {
-				return new Function(["store","rowData"], `return ${condition}`)(this.storeData,rowData);
-			} catch (error) {
-				console.error("Erreur lors de l'évaluation de la condition :", error);
-				return false;
-			}
-		},
 		compileStoreData() {
 			if (!this.storeData[0]) {
 				return [];
@@ -160,13 +164,24 @@ export default {
 							});
 							return printedRessource;
 						});
+					} else if (label.type === "image") {
+						compiledItem[label.imgKey] = this.storeData[label.storeRessourceId]?.[item[label.sourceKey]]?.[label.valueKey];
+					} else if (label.type === "buttons") {
+						compiledItem[label.btKey] = label.buttons.map((button) => {
+							if (button.condition) {
+								return {
+									...button,
+									show: this.evaluateCondition(button.condition, item) || false,
+								};
+							}
+							return { ...button, show: true };
+						});
 					} else if (label.storeRessourceId && !label.storeLinkId) {
 						compiledItem[label.key] = this.storeData[label.storeRessourceId]?.[item[label.sourceKey]]?.[label.valueKey];
 					} else {
 						compiledItem[label.key] = item?.[label.valueKey];
 					}
 				});
-				console.log("Compiled item:", compiledItem);
 				return compiledItem;
 			});
 		},
@@ -280,6 +295,14 @@ export default {
 		},
 	},
 	methods: {
+		evaluateCondition(condition,rowData) {
+			try {
+				return new Function(["store","rowData"], `return ${condition}`)(this.storeData,rowData);
+			} catch (error) {
+				console.error("Erreur lors de l'évaluation de la condition :", error);
+				return false;
+			}
+		},
 		changeSort(key) {
 			if (this.sort.key === key) {
 				this.sort.order = this.sort.order === "asc" ? "desc" : "asc";

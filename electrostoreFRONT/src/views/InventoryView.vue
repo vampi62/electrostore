@@ -36,10 +36,10 @@ const tableauLabel = ref([
 		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_item", storeLinkKeyJoinRessource: "id_tag", valueKey: "nom_tag",
 		ressourcePrint: [{ from: "ressource", valueKey: "nom_tag" }] },
 
-	{ label: "items.Img", sortable: false, key: "id_img", sourceKey: "id_img", type: "image", 
+	{ label: "items.Img", sortable: false, imgKey: "url_img", key: "id_img", sourceKey: "id_img", type: "image", 
 		storeRessourceId: 3, valueKey: "id_img" },
 
-	{ label: "items.Quantity", sortable: true, key: "quantity_item", valueKey: "quantity_item", type: "number" },
+	{ label: "items.Quantity", sortable: false, key: "quantity_item", valueKey: "quantity_item", type: "number" },
 ]);
 const tableauMeta = ref({
 	key: "id_item",

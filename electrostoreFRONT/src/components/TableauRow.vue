@@ -19,11 +19,11 @@
 				</li>
 			</ul>
 		</template>
-		<!-- <template v-else-if="column.type == 'image'">
+		<template v-else-if="column.type == 'image'">
 			<div class="flex justify-center items-center">
-				<template v-if="this.storeData[column.store][row[column.keyStore]]?.[column.key]">
-					<img v-if="this.storeData[column.idStoreImg]?.[this.storeData[column.store][row[column.keyStore]]?.[column.key]]"
-						:src="this.storeData[column.idStoreImg]?.[this.storeData[column.store][row[column.keyStore]]?.[column.key]]"
+				<template v-if="this.row?.[column.key]">
+					<img v-if="this.row?.[column.imgKey]"
+						:src="this.row?.[column.imgKey]"
 						class="w-16 h-16 object-cover rounded" :alt="`Id ${row[column.key]}`" />
 					<span v-else class="w-16 h-16 object-cover rounded">
 						{{ $t('components.VModalTableauImageLoading') }}
@@ -33,11 +33,11 @@
 					<img src="../assets/nopicture.webp" alt="Unavailable" class="w-16 h-16 object-cover rounded" />
 				</template>
 			</div>
-		</template> -->
+		</template>
 		<template v-else-if="column.type == 'buttons'">
 			<div class="flex justify-center items-center">
-				<template v-for="(button, buttonIndex) in column.buttons" :key="buttonIndex">
-					<template v-if="!button?.condition || evaluateCondition(button.condition, row)">
+				<template v-for="(button, buttonIndex) in row[column.btKey]" :key="buttonIndex">
+					<template v-if="button?.show">
 						<TableauActionButton :button="button" :row="row" />
 					</template>
 				</template>

@@ -336,7 +336,7 @@ const labelForm = [
 ];
 const labelTableauModalTag = ref([
 	{ label: "item.TagName", sortable: true, key: "nom_tag", valueKey: "nom_tag", type: "text" },
-	{ label: "item.TagActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
+	{ label: "item.TagActions", sortable: false, key: "", btKey: "bts", valueKey: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-save",
@@ -357,7 +357,7 @@ const labelTableauDocument = ref([
 	{ label: "item.DocumentName", sortable: true, key: "name_item_document", valueKey: "name_item_document", type: "text", canEdit: true },
 	{ label: "item.DocumentType", sortable: true, key: "type_item_document", valueKey: "type_item_document", type: "text" },
 	{ label: "item.DocumentDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
-	{ label: "item.DocumentActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
+	{ label: "item.DocumentActions", sortable: false, key: "", btKey: "bts", valueKey: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
@@ -410,7 +410,7 @@ const labelTableauBox = ref([
 	{ label: "item.BoxId", sortable: true, key: "id_box", valueKey: "id_box", type: "text" },
 	{ label: "item.BoxQuantity", sortable: true, key: "qte_item_box", valueKey: "qte_item_box", type: "number", canEdit: true },
 	{ label: "item.BoxMaxThreshold", sortable: true, key: "seuil_max_item_item_box", valueKey: "seuil_max_item_item_box", type: "number", canEdit: true },
-	{ label: "item.BoxActions", sortable: false, key: "", type: "buttons", buttons: [
+	{ label: "item.BoxActions", sortable: false, key: "", btKey: "bts", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
