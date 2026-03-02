@@ -5,9 +5,9 @@ import { useProjetTagsStore } from "@/stores";
 const projetTagsStore = useProjetTagsStore();
 
 const filter = ref([
-	{ key: "nom_projet_tag", tableauId: "0", value: "", type: "text", label: "projetTags.FilterName", compareMethod: "=like=" },
-	{ key: "poids_projet_tag", tableauId: "1", value: "", type: "number", label: "projetTags.FilterWeightMin", compareMethod: "=ge=" },
-	{ key: "poids_projet_tag", tableauId: "1", value: "", type: "number", label: "projetTags.FilterWeightMax", compareMethod: "=le=" },
+	{ key: "nom_projet_tag", value: "", type: "text", label: "projetTags.FilterName", compareMethod: "=like=" },
+	{ key: "poids_projet_tag", value: "", type: "number", label: "projetTags.FilterWeightMin", compareMethod: "=ge=" },
+	{ key: "poids_projet_tag", value: "", type: "number", label: "projetTags.FilterWeightMax", compareMethod: "=le=" },
 ]);
 const tableauLabel = ref([
 	{ label: "projetTags.Name", sortable: true, key: "nom_projet_tag", valueKey: "nom_projet_tag", type: "text" },

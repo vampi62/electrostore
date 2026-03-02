@@ -6,8 +6,8 @@ const camerasStore = useCamerasStore();
 const authStore = useAuthStore();
 
 const filter = ref([
-	{ key: "nom_camera", tableauId: "0", value: "", type: "text", label: "cameras.FilterName", compareMethod: "=like=" },
-	{ key: "url_camera", tableauId: "1", value: "", type: "text", label: "cameras.FilterUrl", compareMethod: "=like=" },
+	{ key: "nom_camera", value: "", type: "text", label: "cameras.FilterName", compareMethod: "=like=" },
+	{ key: "url_camera", value: "", type: "text", label: "cameras.FilterUrl", compareMethod: "=like=" },
 ]);
 const tableauLabel = ref([
 	{ label: "cameras.Name", sortable: true, key: "nom_camera", sourceKey: "nom_camera", type: "text" },

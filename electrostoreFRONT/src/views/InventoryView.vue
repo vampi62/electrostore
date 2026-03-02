@@ -20,13 +20,11 @@ async function fetchTagData(minOffset, maxOffset) {
 }
 
 const filter = ref([
-	{ key: "reference_name_item", tableauId: "0", value: "", type: "text", label: "items.FilterName", compareMethod: "=like=" },
-	{ key: "friendly_name_item", tableauId: "1", value: "", type: "text", label: "items.FilterFriendlyName", compareMethod: "=like=" },
-	{ key: "seuil_min_item", tableauId: "2", value: "", type: "number", label: "items.FilterSeuilMin", compareMethod: "=ge=" },
-	{ key: "seuil_min_item", tableauId: "2", value: "", type: "number", label: "items.FilterSeuilMax", compareMethod: "=le=" },
-	{ key: "quantity_item", tableauId: "6", value: "", type: "number", label: "items.FilterQuantityMin", compareMethod: "=ge=" },
-	{ key: "quantity_item", tableauId: "6", value: "", type: "number", label: "items.FilterQuantityMax", compareMethod: "=le=" },
-	{ key: "ItemsTags.Tag.nom_tag", tableauId: "4", value: "", type: "text", label: "items.FilterTag", compareMethod: "=like=" },
+	{ key: "reference_name_item", value: "", type: "text", label: "items.FilterName", compareMethod: "=like=" },
+	{ key: "friendly_name_item", value: "", type: "text", label: "items.FilterFriendlyName", compareMethod: "=like=" },
+	{ key: "seuil_min_item", value: "", type: "number", label: "items.FilterSeuilMin", compareMethod: "=ge=" },
+	{ key: "seuil_min_item", value: "", type: "number", label: "items.FilterSeuilMax", compareMethod: "=le=" },
+	{ key: "ItemsTags.Tag.nom_tag", value: "", type: "text", label: "items.FilterTag", compareMethod: "=like=" },
 ]);
 const tableauLabel = ref([
 	{ label: "items.Name", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },

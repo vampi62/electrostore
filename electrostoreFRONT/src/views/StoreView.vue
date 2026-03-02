@@ -216,13 +216,13 @@ const itemDelete = async(item) => {
 };
 
 const filterItem = ref([
-	{ key: "reference_name_item", tableauId: "0", value: "", type: "text", label: "", placeholder: t("store.ItemFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
+	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("store.ItemFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 // tag
 const tagModalShow = ref(false);
 const filterTag = ref([
-	{ key: "nom_tag", tableauId: "0", value: "", type: "text", label: "", placeholder: t("store.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
+	{ key: "nom_tag", value: "", type: "text", label: "", placeholder: t("store.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 function tagSave(id_tag) {
 	try {

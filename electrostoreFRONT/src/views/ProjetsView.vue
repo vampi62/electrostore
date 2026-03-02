@@ -43,13 +43,13 @@ const projetTypeStatus = ref({ [ProjetStatus.NotStarted]: t("projets.Status0"), 
 	[ProjetStatus.Cancelled]: t("projets.Status4"), [ProjetStatus.Archived]: t("projets.Status5") });
 
 const filter = ref([
-	{ key: "status_projet", tableauId: "3", value: "", type: "datalist", options: projetTypeStatus, label: "projets.FilterStatus", compareMethod: "==" },
-	{ key: "nom_projet", tableauId: "0", value: "", type: "text", label: "projets.FilterNom", compareMethod: "=like=" },
-	{ key: "url_projet", tableauId: "2", value: "", type: "text", label: "projets.FilterUrl", compareMethod: "=like=" },
-	{ key: "date_debut_projet", tableauId: "6", value: "", type: "date", label: "projets.FilterDate", compareMethod: "=ge=" },
-	{ key: "date_fin_projet", tableauId: "7", value: "", type: "date", label: "projets.FilterDateEnd", compareMethod: "=ge=" },
-	{ key: "ProjetsItems.Item.reference_name_item", tableauId: "4", value: "", type: "text", label: "projets.FilterItem", compareMethod: "=like=" },
-	{ key: "ProjetsProjetTags.ProjetTag.nom_projet_tag", tableauId: "5", value: "", type: "text", label: "projets.FilterTag", compareMethod: "=like=" },
+	{ key: "status_projet", value: "", type: "datalist", options: projetTypeStatus, label: "projets.FilterStatus", compareMethod: "==" },
+	{ key: "nom_projet", value: "", type: "text", label: "projets.FilterNom", compareMethod: "=like=" },
+	{ key: "url_projet", value: "", type: "text", label: "projets.FilterUrl", compareMethod: "=like=" },
+	{ key: "date_debut_projet", value: "", type: "date", label: "projets.FilterDate", compareMethod: "=ge=" },
+	{ key: "date_fin_projet", value: "", type: "date", label: "projets.FilterDateEnd", compareMethod: "=ge=" },
+	{ key: "ProjetsItems.Item.reference_name_item", value: "", type: "text", label: "projets.FilterItem", compareMethod: "=like=" },
+	{ key: "ProjetsProjetTags.ProjetTag.nom_projet_tag", value: "", type: "text", label: "projets.FilterTag", compareMethod: "=like=" },
 ]);
 const tableauLabel = ref([
 	{ label: "projets.Name", sortable: true, key: "nom_projet", sourceKey: "nom_projet", type: "text" },

@@ -21,10 +21,10 @@ if (!authStore.hasPermission([1, 2])) {
 const userTypeRole = ref({ [UserRole.User]: t("users.FilterRole0"), [UserRole.Moderator]: t("users.FilterRole1"), [UserRole.Admin]: t("users.FilterRole2") });
 
 const filter = ref([
-	{ key: "nom_user", tableauId: "0", value: "", type: "text", label: "users.FilterName", compareMethod: "=like=" },
-	{ key: "prenom_user", tableauId: "1", value: "", type: "text", label: "users.FilterFirstName", compareMethod: "=like=" },
-	{ key: "email_user", tableauId: "2", value: "", type: "text", label: "users.FilterEmail", compareMethod: "=like=" },
-	{ key: "role_user", tableauId: "3", value: "", type: "datalist", typeData: "int", options: userTypeRole, label: "users.FilterRole", compareMethod: "==" },
+	{ key: "nom_user", value: "", type: "text", label: "users.FilterName", compareMethod: "=like=" },
+	{ key: "prenom_user", value: "", type: "text", label: "users.FilterFirstName", compareMethod: "=like=" },
+	{ key: "email_user", value: "", type: "text", label: "users.FilterEmail", compareMethod: "=like=" },
+	{ key: "role_user", value: "", type: "datalist", typeData: "int", options: userTypeRole, label: "users.FilterRole", compareMethod: "==" },
 ]);
 const tableauLabel = ref([
 	{ label: "users.Name", sortable: true, key: "nom_user", valueKey: "nom_user", type: "text" },

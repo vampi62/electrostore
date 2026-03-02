@@ -23,13 +23,13 @@ async function fetchItemData(minOffset, maxOffset) {
 }
 
 const filter = ref([
-	{ key: "status_command", tableauId: "0", value: "", type: "datalist", options: { ["En attente"]: t("commands.FilterStatus1"), ["En cours"]: t("commands.FilterStatus2"), ["Terminée"]: t("commands.FilterStatus3"), ["Annulée"]: t("commands.FilterStatus4") }, label: "commands.FilterStatus", compareMethod: "==" },
-	{ key: "date_command", tableauId: "1", value: "", type: "date", label: "commands.FilterDate", compareMethod: "=ge=" },
-	{ key: "url_command", tableauId: "2", value: "", type: "text", label: "commands.FilterURL", compareMethod: "=like=" },
-	{ key: "prix_command", tableauId: "3", value: "", type: "number", label: "commands.FilterPriceMin", compareMethod: "=ge=" },
-	{ key: "prix_command", tableauId: "3", value: "", type: "number", label: "commands.FilterPriceMax", compareMethod: "=le=" },
-	{ key: "date_livraison_command", tableauId: "5", value: "", type: "date", label: "commands.FilterDateL", compareMethod: "=ge=" },
-	{ key: "CommandsItems.Item.reference_name_item", tableauId: "4", value: "", type: "text", label: "commands.FilterItem", compareMethod: "=like=" },
+	{ key: "status_command", value: "", type: "datalist", options: { ["En attente"]: t("commands.FilterStatus1"), ["En cours"]: t("commands.FilterStatus2"), ["Terminée"]: t("commands.FilterStatus3"), ["Annulée"]: t("commands.FilterStatus4") }, label: "commands.FilterStatus", compareMethod: "==" },
+	{ key: "date_command", value: "", type: "date", label: "commands.FilterDate", compareMethod: "=ge=" },
+	{ key: "url_command", value: "", type: "text", label: "commands.FilterURL", compareMethod: "=like=" },
+	{ key: "prix_command", value: "", type: "number", label: "commands.FilterPriceMin", compareMethod: "=ge=" },
+	{ key: "prix_command", value: "", type: "number", label: "commands.FilterPriceMax", compareMethod: "=le=" },
+	{ key: "date_livraison_command", value: "", type: "date", label: "commands.FilterDateL", compareMethod: "=ge=" },
+	{ key: "CommandsItems.Item.reference_name_item", value: "", type: "text", label: "commands.FilterItem", compareMethod: "=like=" },
 ]);
 const tableauLabel = ref([
 	{ label: "commands.Status", sortable: true, key: "status_command", valueKey: "status_command", type: "text" },

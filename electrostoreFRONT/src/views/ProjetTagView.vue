@@ -118,7 +118,7 @@ const projetDelete = async(projet) => {
 };
 
 const filterProjet = ref([
-	{ key: "nom_projet", tableauId: "0", value: "", type: "text", label: "", placeholder: t("projetTag.ProjetFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
+	{ key: "nom_projet", value: "", type: "text", label: "", placeholder: t("projetTag.ProjetFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 const createSchema = () => {

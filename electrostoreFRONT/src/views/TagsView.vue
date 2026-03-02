@@ -5,9 +5,9 @@ import { useTagsStore } from "@/stores";
 const tagsStore = useTagsStore();
 
 const filter = ref([
-	{ key: "nom_tag", tableauId: "0", value: "", type: "text", label: "tags.FilterName", compareMethod: "=like=" },
-	{ key: "poids_tag", tableauId: "1", value: "", type: "number", label: "tags.FilterWeightMin", compareMethod: "=ge=" },
-	{ key: "poids_tag", tableauId: "1", value: "", type: "number", label: "tags.FilterWeightMax", compareMethod: "=le=" },
+	{ key: "nom_tag", value: "", type: "text", label: "tags.FilterName", compareMethod: "=like=" },
+	{ key: "poids_tag", value: "", type: "number", label: "tags.FilterWeightMin", compareMethod: "=ge=" },
+	{ key: "poids_tag", value: "", type: "number", label: "tags.FilterWeightMax", compareMethod: "=le=" },
 ]);
 const tableauLabel = ref([
 	{ label: "tags.Name", sortable: true, key: "nom_tag", valueKey: "nom_tag", type: "text" },

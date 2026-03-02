@@ -9,9 +9,9 @@ const IAStore = useIasStore();
 const authStore = useAuthStore();
 
 const filter = ref([
-	{ key: "trained_ia", tableauId: "3", value: undefined, type: "datalist", typeData: "bool", options: { ["false"]: t("ias.FilterTrained1"), ["true"]: t("ias.FilterTrained2") }, label: "ias.FilterTrained", compareMethod: "==" },
-	{ key: "updated_at", tableauId: "2", value: "", type: "date", label: "ias.FilterDate", compareMethod: "=ge=" },
-	{ key: "nom_ia", tableauId: "0", value: "", type: "text", label: "ias.FilterNom", compareMethod: "=like=" },
+	{ key: "trained_ia", value: undefined, type: "datalist", typeData: "bool", options: { ["false"]: t("ias.FilterTrained1"), ["true"]: t("ias.FilterTrained2") }, label: "ias.FilterTrained", compareMethod: "==" },
+	{ key: "updated_at", value: "", type: "date", label: "ias.FilterDate", compareMethod: "=ge=" },
+	{ key: "nom_ia", value: "", type: "text", label: "ias.FilterNom", compareMethod: "=like=" },
 ]);
 const tableauLabel = ref([
 	{ label: "ias.Name", sortable: true, key: "nom_ia", valueKey: "nom_ia", type: "text" },

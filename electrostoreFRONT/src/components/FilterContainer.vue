@@ -26,7 +26,6 @@ export default {
 			required: true,
 			// This should be an array of filter objects, each containing:
 			// - key: string (the key in the storeData to filter on)
-			// - tableauId: string (the id of the column in the tableau to filter on, if different from key)
 			// - label: string (translation key for the label)
 			// - type: string (input type, e.g., 'text', 'number', 'select')
 			// - typeData: string (type of data, e.g., 'int', 'float', 'string', 'bool') required if type is 'select'

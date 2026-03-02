@@ -119,7 +119,7 @@ const itemDelete = async(item) => {
 };
 
 const filterItem = ref([
-	{ key: "reference_name_item", tableauId: "0", value: "", type: "text", label: "", placeholder: t("tag.ItemFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
+	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("tag.ItemFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 // Stores
@@ -159,7 +159,7 @@ const storeDelete = async(store) => {
 };
 
 const filterStore = ref([
-	{ key: "nom_store", tableauId: "0", value: "", type: "text", label: "", placeholder: t("tag.StoreFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
+	{ key: "nom_store", value: "", type: "text", label: "", placeholder: t("tag.StoreFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 // Boxs
