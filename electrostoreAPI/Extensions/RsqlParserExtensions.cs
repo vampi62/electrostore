@@ -102,7 +102,14 @@ public static class RsqlParserExtensions
                 object? convertedValue;
                 try
                 {
-                    convertedValue = Convert.ChangeType(value, itemProperty.Type);
+                    if (itemProperty.Type.IsEnum)
+                    {
+                        convertedValue = Enum.Parse(itemProperty.Type, value?.ToString() ?? "", true);
+                    }
+                    else
+                    {
+                        convertedValue = Convert.ChangeType(value, itemProperty.Type);
+                    }
                 }
                 catch (Exception)
                 {
@@ -142,7 +149,14 @@ public static class RsqlParserExtensions
                 object? convertedValue;
                 try
                 {
-                    convertedValue = Convert.ChangeType(value, left.Type);
+                    if (left.Type.IsEnum)
+                    {
+                        convertedValue = Enum.Parse(left.Type, value?.ToString() ?? "", true);
+                    }
+                    else
+                    {
+                        convertedValue = Convert.ChangeType(value, left.Type);
+                    }
                 }
                 catch (Exception)
                 {
