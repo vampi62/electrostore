@@ -4,7 +4,7 @@
 			:key="index"
 			:label="filter.label"
 			:type="filter.type"
-			:preset="filter.value"
+			:preset="filter?.value"
 			:placeholder="filter?.placeholder"
 			:class-css="filter?.class"
 			:options="filter?.options"
@@ -73,7 +73,12 @@ export default {
 							break;
 						case "bool":
 							value = value === "true";
+							break;
 						}
+						break;
+					case "checkbox":
+						value = value ? filter.valueIfTrue : filter.valueIfFalse;
+						break;
 					}
 					filter.value = value;
 				}

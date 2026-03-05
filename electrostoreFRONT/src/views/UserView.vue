@@ -125,11 +125,6 @@ const revokeToken = async(tokenId) => {
 		addNotification({ message: e, type: "error", i18n: false });
 	}
 };
-const isCheckedTokens = ref(false);
-function watchIsCheckedTokens() {
-	usersStore.getTokenByInterval(userId.value, 100, 0, [], "", "", false, isCheckedTokens.value, isCheckedTokens.value);
-}
-watch(isCheckedTokens, watchIsCheckedTokens);
 
 const isChecked = ref(false);
 const createSchema = (isChecked) => {
@@ -177,12 +172,16 @@ if (!authStore.isSSOUser && (authStore.user?.id_user === Number(userId.value) ||
 	);
 }
 
+const filterSession = ref([
+	{ key: "is_revoked", value: "", valueIfTrue: "true", valueIfFalse: "", preset: false,
+		type: "checkbox", label: "user.ShowExpiredAndRevokedTokens", compareMethod: "==" },
+]);
 const labelTableauSession = ref([
 	{ label: "user.TokenCreatedDate", sortable: true, key: "first_created_at", valueKey: "first_created_at", type: "datetime" },
 	{ label: "user.TokenLastLoginDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
 	{ label: "user.TokenCreatedIP", sortable: true, key: "created_by_ip", valueKey: "created_by_ip", type: "text" },
 	{ label: "user.TokenExpireDate", sortable: true, key: "expires_at", valueKey: "expires_at", type: "datetime" },
-	{ label: "user.TokenIsRevoked", sortable: true, key: "is_revoked", valueKey: "is_revoked", type: "text" },
+	{ label: "user.TokenIsRevoked", sortable: true, key: "is_revoked", valueKey: "is_revoked", type: "bool" },
 	{ label: "user.TokenAuthMethod", sortable: true, key: "auth_method", valueKey: "auth_method", type: "text" },
 	{ label: "user.TokenRevokedDate", sortable: true, key: "revoked_at", valueKey: "revoked_at", type: "datetime" },
 	{ label: "user.TokenRevokedIP", sortable: true, key: "revoked_by_ip", valueKey: "revoked_by_ip", type: "text" },
@@ -243,18 +242,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="user.Tokens"
 			:total-count="Number(usersStore.tokensTotalCount[userId] || 0)" :permission="userId !=='new'">
 			<template #append-row>
-				<div>
-					<!-- bouton pour choisir de charger les revoked et les expired -->
-					<label class="inline-flex items-center mb-4">
-						<input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600" v-model="isCheckedTokens">
-						<span class="ml-2 text-gray-700">{{ $t('user.ShowExpiredAndRevokedTokens') }}</span>
-					</label>
-				</div>
+				<FilterContainer class="my-4 flex gap-4" :filters="filterSession" :store-data="usersStore.tokens[userId]" />
 				<Tableau :labels="labelTableauSession" :meta="{ key: 'session_id' }"
 					:store-data="[usersStore.tokens[userId]]"
+					:filters="filterSession"
 					:loading="usersStore.tokensLoading"
 					:total-count="Number(usersStore.tokensTotalCount[userId]) || 0"
-					:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getTokenByInterval(userId, limit, offset, expand, filter, sort, clear, isCheckedTokens, isCheckedTokens) : undefined"
+					:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getTokenByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'min-h-64 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>

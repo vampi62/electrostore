@@ -54,6 +54,15 @@
 				</div>
 			</teleport>
 		</template>
+		<template v-else-if="type === 'checkbox'">
+			<input
+				:id="`filter-input-${this.$.uid}`"
+				type="checkbox"
+				class="form-checkbox h-5 w-5 text-blue-600"
+				:class="[classCss, label.length > 0 ? 'mr-2' : '']"
+				v-model="inputText"
+				@change="$emit('updateText', $event.target.checked)" />
+		</template>
 		<template v-else>
 			<input
 				:id="`filter-input-${this.$.uid}`"
