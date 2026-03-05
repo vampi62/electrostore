@@ -12,6 +12,7 @@ const { t } = useI18n();
 import { useRoute } from "vue-router";
 const route = useRoute();
 const storeId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
 
 import { useConfigsStore, useStoresStore, useTagsStore, useItemsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -27,6 +28,14 @@ async function fetchAllData() {
 		};
 		storesStore.ledEdition[storeId.value] = {};
 		storesStore.boxEdition[storeId.value] = {};
+		if (preset.value) {
+			preset.value.split(";").forEach((pair) => {
+				const [key, value] = pair.split(":");
+				if (key && value) {
+					storesStore.storeEdition[key] = value;
+				}
+			});
+		}
 	} else {
 		storesStore.storeEdition[storeId.value] = {
 			loading: true,
@@ -216,13 +225,13 @@ const itemDelete = async(item) => {
 };
 
 const filterItem = ref([
-	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("store.ItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("store.ItemFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 // tag
 const tagModalShow = ref(false);
 const filterTag = ref([
-	{ key: "nom_tag", value: "", type: "text", label: "", placeholder: t("store.TagFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "nom_tag", value: "", type: "text", label: "", placeholder: t("store.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 function tagSave(id_tag) {
 	try {

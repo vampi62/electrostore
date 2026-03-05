@@ -33,7 +33,7 @@ export const useTagsStore = defineStore("tags",{
 			this.tagsLoading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const paramString = [idResearchString, expandString].filter((str) => str).join("&");
+			const paramString = [idResearchString, expandString].join("&");
 			const newTagList = await fetchWrapper.get({
 				url: `${baseUrl}/tag?${paramString}`,
 				useToken: "access",
@@ -74,7 +74,7 @@ export const useTagsStore = defineStore("tags",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newTagList = await fetchWrapper.get({
 				url: `${baseUrl}/tag?${paramString}`,
 				useToken: "access",
@@ -187,7 +187,7 @@ export const useTagsStore = defineStore("tags",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newTagStoreList = await fetchWrapper.get({
 				url: `${baseUrl}/tag/${idTag}/store?${paramString}`,
 				useToken: "access",
@@ -276,7 +276,7 @@ export const useTagsStore = defineStore("tags",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newTagBoxList = await fetchWrapper.get({
 				url: `${baseUrl}/tag/${idTag}/box?${paramString}`,
 				useToken: "access",
@@ -368,7 +368,7 @@ export const useTagsStore = defineStore("tags",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newTagItemList = await fetchWrapper.get({
 				url: `${baseUrl}/tag/${idTag}/item?${paramString}`,
 				useToken: "access",

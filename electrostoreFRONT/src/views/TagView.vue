@@ -12,6 +12,7 @@ import * as Yup from "yup";
 import { useRoute } from "vue-router";
 const route = useRoute();
 const tagId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
 
 import { useConfigsStore, useTagsStore, useStoresStore, useItemsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -25,6 +26,14 @@ async function fetchAllData() {
 		tagsStore.tagEdition = {
 			loading: false,
 		};
+		if (preset.value) {
+			preset.value.split(";").forEach((pair) => {
+				const [key, value] = pair.split(":");
+				if (key && value) {
+					tagsStore.tagEdition[key] = value;
+				}
+			});
+		}
 	} else {
 		tagsStore.tagEdition = {
 			loading: true,
@@ -119,7 +128,7 @@ const itemDelete = async(item) => {
 };
 
 const filterItem = ref([
-	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("tag.ItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("tag.ItemFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 // Stores
@@ -159,7 +168,7 @@ const storeDelete = async(store) => {
 };
 
 const filterStore = ref([
-	{ key: "nom_store", value: "", type: "text", label: "", placeholder: t("tag.StoreFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "nom_store", value: "", type: "text", label: "", placeholder: t("tag.StoreFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 // Boxs
@@ -199,7 +208,9 @@ const labelForm = [
 	{ key: "poids_tag", label: "tag.Poids", type: "number" },
 ];
 const labelTableauItem = ref([
-	{ label: "tag.ItemName", sortable: true, key: "reference_name_item", keyStore: "id_item", store: "1", type: "text" },
+	{ label: "tag.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text", 
+		storeRessourceId: 1, valueKey: "reference_name_item" },
+
 	{ label: "tag.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -211,7 +222,9 @@ const labelTableauItem = ref([
 	] },
 ]);
 const labelTableauStore = ref([
-	{ label: "tag.StoreName", sortable: true, key: "nom_store", keyStore: "id_store", store: "1", type: "text" },
+	{ label: "tag.StoreName", sortable: true, key: "Store.nom_store", sourceKey: "id_store", type: "text", 
+		storeRessourceId: 1, valueKey: "nom_store" },
+
 	{ label: "tag.StoreActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -223,7 +236,9 @@ const labelTableauStore = ref([
 	] },
 ]);
 const labelTableauBox = ref([
-	{ label: "tag.BoxId", sortable: true, key: "id_box", keyStore: "id_box", store: "1", type: "number" },
+	{ label: "tag.BoxId", sortable: true, key: "Box.id_box", sourceKey: "id_box", type: "number", 
+		storeRessourceId: 1, valueKey: "id_box" },
+
 	{ label: "tag.BoxActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -236,7 +251,7 @@ const labelTableauBox = ref([
 ]);
 
 const labelTableauModalItem = ref([
-	{ label: "tag.ItemName", sortable: true, key: "reference_name_item", type: "text" },
+	{ label: "tag.ItemName", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
 	{ label: "tag.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -257,7 +272,7 @@ const labelTableauModalItem = ref([
 	] },
 ]);
 const labelTableauModalStore = ref([
-	{ label: "tag.StoreName", sortable: true, key: "nom_store", type: "text" },
+	{ label: "tag.StoreName", sortable: true, key: "nom_store", valueKey: "nom_store", type: "text" },
 	{ label: "tag.StoreActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -291,7 +306,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="tagsStore.tagEdition"/>
 		</div>
 		<CollapsibleSection title="tag.Items"
-			:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)" :id-page="tagId">
+			:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)" :permission="tagId !=='new'">
 			<template #append-row>
 				<button type="button" @click="itemOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -307,7 +322,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="tag.Stores"
-			:total-count="Number(tagsStore.tagsStoreTotalCount[tagId] || 0)" :id-page="tagId">
+			:total-count="Number(tagsStore.tagsStoreTotalCount[tagId] || 0)" :permission="tagId !=='new'">
 			<template #append-row>
 				<button type="button" @click="storeOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -323,7 +338,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="tag.Boxs"
-			:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)" :id-page="tagId">
+			:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)" :permission="tagId !=='new'">
 			<template #append-row>
 				<!-- <button type="button" @click="boxOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">

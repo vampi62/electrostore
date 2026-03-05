@@ -33,7 +33,7 @@ export const useCommandsStore = defineStore("commands",{
 			this.commandsLoading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const paramString = [idResearchString, expandString].filter((str) => str).join("&");
+			const paramString = [idResearchString, expandString].join("&");
 			const newCommandList = await fetchWrapper.get({
 				url: `${baseUrl}/command?${paramString}`,
 				useToken: "access",
@@ -74,7 +74,7 @@ export const useCommandsStore = defineStore("commands",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newCommandList = await fetchWrapper.get({
 				url: `${baseUrl}/command?${paramString}`,
 				useToken: "access",
@@ -174,7 +174,7 @@ export const useCommandsStore = defineStore("commands",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newCommentaireList = await fetchWrapper.get({
 				url: `${baseUrl}/command/${idCommand}/commentaire?${paramString}`,
 				useToken: "access",
@@ -249,7 +249,7 @@ export const useCommandsStore = defineStore("commands",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newDocumentList = await fetchWrapper.get({
 				url: `${baseUrl}/command/${idCommand}/document?${paramString}`,
 				useToken: "access",
@@ -328,7 +328,7 @@ export const useCommandsStore = defineStore("commands",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newItemList = await fetchWrapper.get({
 				url: `${baseUrl}/command/${idCommand}/item?${paramString}`,
 				useToken: "access",

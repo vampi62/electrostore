@@ -6,11 +6,11 @@
 					<th v-for="(column,index) in labels"
 						:key="index"
 						:class="[mergedCss.th, column.sortable ? 'cursor-pointer' : '']"
-						@click="changeSort(column)">
+						@click="column.sortable && changeSort(column.key)">
 						<div class="flex justify-between items-center">
 							<span class="flex-1">{{ $t(column.label) }}</span>
 							<template v-if="column.sortable">
-								<template v-if="sort.column?.key === column.key">
+								<template v-if="sort.key === column.key">
 									<template v-if="sort.order === 'asc'">
 										<font-awesome-icon icon="fa-solid fa-sort-up" class="ml-2" />
 									</template>
@@ -27,32 +27,11 @@
 				</tr>
 			</thead>
 			<tbody :class="mergedCss.tbody">
-				<template v-if="meta?.path">
-					<RouterLink v-for="row in sortedData" :key="row[meta.key]" :to="meta.path + row[meta.key]"
-						custom v-slot="{ navigate }">
-						<tr @click="navigate" :class="mergedCss.tr">
-							<TableauRow
-								:labels="labels"
-								:row="row"
-								:schema="schema"
-								:store-data="storeData"
-								:css="mergedCss.td"
-							/>
-						</tr>
-					</RouterLink>
-				</template>
-				<template v-else>
-					<tr v-for="row in sortedData" :key="row[meta.key]"
-						:class="mergedCss.tr">
-						<TableauRow
-							:labels="labels"
-							:row="row"
-							:schema="schema"
-							:store-data="storeData"
-							:css="mergedCss.td"
-						/>
-					</tr>
-				</template>
+				<tr v-for="row in sortedData" :key="row[meta.key]" v-memo="[row]"
+					:class="mergedCss.tr"
+					@click="meta?.path && $router.push(meta.path + row[meta.key])">
+					<TableauRow :labels="labels" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" />
+				</tr>
 				<slot name="append-row"></slot>
 				<template v-if="loading">
 					<tr>
@@ -98,12 +77,24 @@ export default {
 			// storeData is an array of objects, each object should contain the data for a row
 			// storeData[0] is the main data array
 		},
+		storeEdition: {
+			type: Object,
+			required: false,
+			// storeEdition is an object containing the store and key to edit a resource when clicking on a row, it should have the properties storeEditionKey and storeEditionStore
+			// e.g. { storeEditionKey: "id", storeEditionStore: 1 }
+		},
+		storeReady: {
+			type: Object,
+			required: false,
+			// storeReady is an object containing the store and key containing unsaved changes to prevent leaving the page, it should have the properties storeReadyKey and storeReadyStore
+			// e.g. { storeReadyKey: "hasUnsavedChanges", storeReadyStore: 1 }
+		},
 		filters: {
 			type: Array,
 			required: false,
-			default: () => [],
-			// filters is an array of filter objects, each object should have a key, value, type, typeData, compareMethod, and optional subPath, placeholder, class, and options properties
+			// filters is an array of filter objects, each object should have a key, value, type, typeData, compareMethod, placeholder, class, and options properties
 			// e.g. { key: 'name', value: '', type: 'text', typeData: 'string', compareMethod: 'contain', placeholder: 'Search by name', class: 'mb-2' }
+			default: () => [],
 		},
 		loading: {
 			type: Boolean,
@@ -120,7 +111,7 @@ export default {
 				return [0, false];
 			},
 			// fetchFunction is a function that will be called to fetch the data for the table, it should accept the parameters limit, offset, expand, filter, sort, and clear
-			// e.g. (limit, offset, expand, filter, sort, clear) => { store.fetchData(offset, limit, expand, filter, sort, clear) }
+			// e.g. (limit, offset, expand, filter, sort, clear) => { store.fetchData(limit, offset, expand, filter, sort, clear) }
 		},
 		listFetchFunction: {
 			type: Array,
@@ -156,41 +147,41 @@ export default {
 				return [];
 			}
 			if (!this.filters || this.filters.length === 0) {
-				return this.storeData[0];
+				return Object.values(this.storeData[0]);
 			}
 			return Object.values(this.storeData[0]).filter((element) => {
 				return this.filters.every((f) => {
 					if (f.value !== "" && f.value !== null && f.value !== undefined) {
-						if (f.subPath) {
-							switch (f.compareMethod) {
-							case "=":
-								return element[f.subPath].some((subElement) => subElement[f.key] === f.value);
-							case ">=":
-								return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) >= f.value;
-							case "<=":
-								return element[f.subPath].reduce((total, subElement) => total + subElement[f.key], 0) <= f.value;
-							}
-						}
+						const elementValue = this.getDataValue(element, f.key);
 						switch (f.compareMethod) {
-						case "=":
+						case "==":
 							switch (f.typeData) {
 							case "bool":
-								return element[f.key] === (f.value === "true");
+								return elementValue === (f.value === "true");
 							case "int":
-								return Number.parseInt(element[f.key]) === Number.parseInt(f.value);
+								return Number.parseInt(elementValue) === Number.parseInt(f.value);
 							case "float":
-								return Number.parseFloat(element[f.key]) === Number.parseFloat(f.value);
+								return Number.parseFloat(elementValue) === Number.parseFloat(f.value);
 							case "string":
-								//return element[f.key].toLowerCase() === f.value.toLowerCase();
-								return toLowerCaseWithoutAccents(element[f.key]) === toLowerCaseWithoutAccents(f.value);
+								if (Array.isArray(elementValue)) {
+									return elementValue.some((item) => 
+										toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(f.value)),
+									);
+								}
+								return toLowerCaseWithoutAccents(elementValue) === toLowerCaseWithoutAccents(f.value);
 							}
-							return element[f.key] === f.value;
-						case ">=":
-							return element[f.key] >= f.value;
-						case "<=":
-							return element[f.key] <= f.value;
-						case "contain":
-							return toLowerCaseWithoutAccents(element[f.key]).includes(toLowerCaseWithoutAccents(f.value));
+							return elementValue === f.value;
+						case "=ge=":
+							return elementValue >= f.value;
+						case "=le=":
+							return elementValue <= f.value;
+						case "=like=":
+							if (Array.isArray(elementValue)) {
+								return elementValue.some((item) => 
+									toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(f.value)),
+								);
+							}
+							return toLowerCaseWithoutAccents(elementValue).includes(toLowerCaseWithoutAccents(f.value));
 						}
 					}
 					return true;
@@ -198,23 +189,44 @@ export default {
 			});
 		},
 		sortedData() {
-			if (this.sort.column) {
-				return [...Object.values(this.filteredData)].sort((a, b) => {
-					if (this.sort.column?.store) {
-						if (this.sort.order === "asc") {
-							return this.storeData[this.sort.column.store][a[this.sort.column.keyStore]]?.[this.sort.column.key] > this.storeData[this.sort.column.store][b[this.sort.column.keyStore]]?.[this.sort.column.key] ? 1 : -1;
-						} else {
-							return this.storeData[this.sort.column.store][a[this.sort.column.keyStore]]?.[this.sort.column.key] < this.storeData[this.sort.column.store][b[this.sort.column.keyStore]]?.[this.sort.column.key] ? 1 : -1;
-						}
-					}
-					if (this.sort.order === "asc") {
-						return a[this.sort.column.key] > b[this.sort.column.key] ? 1 : -1;
-					} else {
-						return a[this.sort.column.key] < b[this.sort.column.key] ? 1 : -1;
-					}
-				});
+			if (!this.sort.key) {
+				return this.filteredData;
 			}
-			return this.filteredData;
+			const sortOrder = this.sort.order === "asc" ? 1 : -1;
+			// Transformation de Schwartzian : pré-calculer les valeurs une seule fois
+			return this.filteredData
+				.map((item) => ({
+					item,
+					value: this.getDataValue(item, this.sort.key),
+				}))
+				.sort((a, b) => {
+					const aValue = a.value;
+					const bValue = b.value;
+					
+					// Gérer les valeurs undefined
+					if (aValue === undefined && bValue === undefined) {
+						return 0;
+					}
+					if (aValue === undefined) {
+						return 1;
+					}
+					if (bValue === undefined) {
+						return -1;
+					}
+					
+					// Comparaison typée appropriée
+					let comparison = 0;
+					if (typeof aValue === "string" && typeof bValue === "string") {
+						comparison = aValue.localeCompare(bValue, undefined, { numeric: true });
+					} else if (typeof aValue === "number" && typeof bValue === "number") {
+						comparison = aValue - bValue;
+					} else {
+						comparison = aValue > bValue ? 1 : (aValue < bValue ? -1 : 0);
+					}
+					
+					return comparison * sortOrder;
+				})
+				.map((decorated) => decorated.item);
 		},
 		mergedCss() {
 			// Merges the default CSS with the provided tableauCss prop
@@ -232,7 +244,7 @@ export default {
 	data() {
 		return {
 			sort: {
-				column: null,
+				key: null,
 				order: "asc",
 			},
 			nextOffset: 0,
@@ -244,12 +256,12 @@ export default {
 		this.debouncedRefetchData = debounce(this.refetchData, 500);
 	},
 	async mounted() {
-		if (this.meta?.sort) {
-			this.sort.column = this.labels.find((col) => col.key === this.meta.sort);
+		if (this.meta?.sort && this.labels.find((label) => label.key === this.meta.sort)) {
+			this.sort.key = this.meta.sort;
 			this.sort.order = this.meta.sortOrder || "asc";
 		}
 		let intervalOffset = this.nextOffset;
-		[this.nextOffset, this.hasMore] = await this.fetchFunction(100, 0, this.meta?.expand || [], buildRSQLFilter(this.filters), buildRSQLSort(this.sort));
+		[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], buildRSQLFilter(this.filters), buildRSQLSort(this.sort));
 		await this.refetchListData(intervalOffset, this.nextOffset);
 		this.isInitializing = false;
 	},
@@ -272,14 +284,56 @@ export default {
 		},
 	},
 	methods: {
-		changeSort(column) {
-			if (!column.sortable) {
-				return;
+		getDataValue(row, labelKey) {
+			const label = this.labels.find((l) => l.key === labelKey);
+			if (!label) {
+				return row?.[labelKey];
 			}
-			if (this.sort.column === column) {
+			if (label.type === "link-list") {
+				return Object.values(this.storeData[label.storeLinkId]?.[row[label.sourceKey]] || {}).map((linkedItem) => {
+					let printedRessource = "";
+					label.ressourcePrint.forEach((print) => {
+						if (print.from === "ressource") {
+							printedRessource += this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
+						} else if (print.from === "link") {
+							printedRessource += linkedItem?.[print.valueKey] || "";
+						} else if (print.from === "text") {
+							printedRessource += print.text || "";
+						}
+					});
+					return printedRessource;
+				});
+			} else if (label.type === "image") {
+				return this.storeData[label.storeRessourceId]?.[row[label.sourceKey]]?.[label.valueKey];
+			} else if (label.type === "buttons") {
+				return label.buttons.map((button) => {
+					if (button.condition) {
+						return {
+							...button,
+							show: this.evaluateCondition(button.condition, row) || false,
+						};
+					}
+					return { ...button, show: true };
+				});
+			} else if (label.storeRessourceId && !label.storeLinkId) {
+				return this.storeData[label.storeRessourceId]?.[row[label.sourceKey]]?.[label.valueKey];
+			} else {
+				return row?.[label.valueKey];
+			}
+		},
+		evaluateCondition(condition,rowData) {
+			try {
+				return new Function(["store","rowData"], `return ${condition}`)(this.storeData,rowData);
+			} catch (error) {
+				console.error("Erreur lors de l'évaluation de la condition :", error);
+				return false;
+			}
+		},
+		changeSort(key) {
+			if (this.sort.key === key) {
 				this.sort.order = this.sort.order === "asc" ? "desc" : "asc";
 			} else {
-				this.sort.column = column;
+				this.sort.key = key;
 				this.sort.order = "asc";
 			}
 		},

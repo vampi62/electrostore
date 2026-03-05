@@ -20,25 +20,28 @@ async function fetchItemData(minOffset, maxOffset) {
 	if (itemsNotFound.length > 0) {
 		await itemsStore.getItemByList(itemsNotFound);
 	}
-	filter.value[6].options = Object.fromEntries(Object.values(itemsStore.items).map((item) => [item.id_item, item.reference_name_item]));
 }
 
 const filter = ref([
-	{ key: "status_command", value: "", type: "datalist", options: { ["En attente"]: t("commands.FilterStatus1"), ["En cours"]: t("commands.FilterStatus2"), ["Terminée"]: t("commands.FilterStatus3"), ["Annulée"]: t("commands.FilterStatus4") }, label: "commands.FilterStatus", compareMethod: "=" },
-	{ key: "date_command", value: "", type: "date", label: "commands.FilterDate", compareMethod: ">=" },
-	{ key: "url_command", value: "", type: "text", label: "commands.FilterURL", compareMethod: "contain" },
-	{ key: "prix_command", value: "", type: "number", label: "commands.FilterPriceMin", compareMethod: ">=" },
-	{ key: "prix_command", value: "", type: "number", label: "commands.FilterPriceMax", compareMethod: "<=" },
-	{ key: "date_livraison_command", value: "", type: "date", label: "commands.FilterDateL", compareMethod: ">=" },
-	{ key: "id_item", subPath: "commands_items", value: "", type: "datalist", typeData: "int", options: Object.fromEntries(Object.values(itemsStore.items).map((item) => [item.id_item, item.reference_name_item])), label: "commands.FilterItem", compareMethod: "=" },
+	{ key: "status_command", value: "", type: "datalist", options: { ["En attente"]: t("commands.FilterStatus1"), ["En cours"]: t("commands.FilterStatus2"), ["Terminée"]: t("commands.FilterStatus3"), ["Annulée"]: t("commands.FilterStatus4") }, label: "commands.FilterStatus", compareMethod: "==" },
+	{ key: "date_command", value: "", type: "date", label: "commands.FilterDate", compareMethod: "=ge=" },
+	{ key: "url_command", value: "", type: "text", label: "commands.FilterURL", compareMethod: "=like=" },
+	{ key: "prix_command", value: "", type: "number", label: "commands.FilterPriceMin", compareMethod: "=ge=" },
+	{ key: "prix_command", value: "", type: "number", label: "commands.FilterPriceMax", compareMethod: "=le=" },
+	{ key: "date_livraison_command", value: "", type: "date", label: "commands.FilterDateL", compareMethod: "=ge=" },
+	{ key: "CommandsItems.Item.reference_name_item", value: "", type: "text", label: "commands.FilterItem", compareMethod: "=like=" },
 ]);
 const tableauLabel = ref([
-	{ label: "commands.Status", sortable: true, key: "status_command", type: "text" },
-	{ label: "commands.Date", sortable: true, key: "date_command", type: "date" },
-	{ label: "commands.URL", sortable: true, key: "url_command", type: "text" },
-	{ label: "commands.Prix", sortable: true, key: "prix_command", type: "text" },
-	{ label: "commands.ItemList", sortable: false, key: "", type: "list", list: { idStoreLink: 1, idStoreRessource: 2, key: "id_command", keyStoreLink: "id_item", ressourcePrint: [{ type: "link", key: "qte_command_item" }, { type: "text", key: " - " }, { type: "ressource", key: "reference_name_item" }] } },
-	{ label: "commands.DateL", sortable: true, key: "date_livraison_command", type: "date" },
+	{ label: "commands.Status", sortable: true, key: "status_command", valueKey: "status_command", type: "text" },
+	{ label: "commands.Date", sortable: true, key: "date_command", valueKey: "date_command", type: "date" },
+	{ label: "commands.URL", sortable: true, key: "url_command", valueKey: "url_command", type: "text" },
+	{ label: "commands.Prix", sortable: true, key: "prix_command", valueKey: "prix_command", type: "text" },
+
+	{ label: "commands.ItemList", sortable: false, key: "commands.ItemList", sourceKey: "id_command", type: "link-list", 
+		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_command", storeLinkKeyJoinRessource: "id_item", valueKey: "reference_name_item",
+		ressourcePrint: [{ from: "link", valueKey: "qte_command_item" }, { from: "text", text: " - " }, { from: "ressource", valueKey: "reference_name_item" }] },
+
+	{ label: "commands.DateL", sortable: true, key: "date_livraison_command", valueKey: "date_livraison_command", type: "date" },
 ]);
 const tableauMeta = ref({
 	key: "id_command",

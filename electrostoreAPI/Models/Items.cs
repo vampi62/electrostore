@@ -30,4 +30,13 @@ public class Items : BaseEntity
     public ICollection<ItemsDocuments> ItemsDocuments { get; set; } = new List<ItemsDocuments>();
     public ICollection<ItemsTags> ItemsTags { get; set; } = new List<ItemsTags>();
     public ICollection<ProjetsItems> ProjetsItems { get; set; } = new List<ProjetsItems>();
+
+    [NotMapped]
+    public int quantity_item
+    {
+        get
+        {
+            return ItemsBoxs.Sum(ib => ib.qte_item_box);
+        }
+    }
 }

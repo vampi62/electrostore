@@ -12,6 +12,7 @@ const { t } = useI18n();
 import { useRoute } from "vue-router";
 const route = useRoute();
 const itemId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
 
 import { downloadFile, viewFile } from "@/utils";
 
@@ -29,6 +30,14 @@ async function fetchAllData() {
 		itemsStore.itemEdition = {
 			loading: false,
 		};
+		if (preset.value) {
+			preset.value.split(";").forEach((pair) => {
+				const [key, value] = pair.split(":");
+				if (key && value) {
+					itemsStore.itemEdition[key] = value;
+				}
+			});
+		}
 	} else {
 		itemsStore.itemEdition = {
 			loading: true,
@@ -253,7 +262,7 @@ const imageDownload = async(imageContent) => {
 
 // tag
 const filterTag = ref([
-	{ key: "nom_tag", value: "", type: "text", label: "", placeholder: t("item.TagFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "nom_tag", value: "", type: "text", label: "", placeholder: t("item.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 function tagSave(id_tag) {
 	try {
@@ -335,7 +344,7 @@ const labelForm = [
 	{ key: "id_img", label: "item.Image", type: "custom" },
 ];
 const labelTableauModalTag = ref([
-	{ label: "item.TagName", sortable: true, key: "nom_tag", type: "text" },
+	{ label: "item.TagName", sortable: true, key: "nom_tag", valueKey: "nom_tag", type: "text" },
 	{ label: "item.TagActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -354,9 +363,9 @@ const labelTableauModalTag = ref([
 	] },
 ]);
 const labelTableauDocument = ref([
-	{ label: "item.DocumentName", sortable: true, key: "name_item_document", type: "text", canEdit: true },
-	{ label: "item.DocumentType", sortable: true, key: "type_item_document", type: "text" },
-	{ label: "item.DocumentDate", sortable: true, key: "created_at", type: "datetime" },
+	{ label: "item.DocumentName", sortable: true, key: "name_item_document", valueKey: "name_item_document", type: "text", canEdit: true },
+	{ label: "item.DocumentType", sortable: true, key: "type_item_document", valueKey: "type_item_document", type: "text" },
+	{ label: "item.DocumentDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
 	{ label: "item.DocumentActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -407,9 +416,9 @@ const labelTableauDocument = ref([
 	] },
 ]);
 const labelTableauBox = ref([
-	{ label: "item.BoxId", sortable: true, key: "id_box", type: "text" },
-	{ label: "item.BoxQuantity", sortable: true, key: "qte_item_box", type: "number", canEdit: true },
-	{ label: "item.BoxMaxThreshold", sortable: true, key: "seuil_max_item_item_box", type: "number", canEdit: true },
+	{ label: "item.BoxId", sortable: true, key: "id_box", valueKey: "id_box", type: "text" },
+	{ label: "item.BoxQuantity", sortable: true, key: "qte_item_box", valueKey: "qte_item_box", type: "number", canEdit: true },
+	{ label: "item.BoxMaxThreshold", sortable: true, key: "seuil_max_item_item_box", valueKey: "seuil_max_item_item_box", type: "number", canEdit: true },
 	{ label: "item.BoxActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -447,17 +456,25 @@ const labelTableauBox = ref([
 	] },
 ]);
 const labelTableauCommand = ref([
-	{ label: "item.CommandDate", sortable: true, key: "date_command", keyStore: "id_command", store: "1", type: "datetime" },
-	{ label: "item.CommandStatus", sortable: true, key: "status_command", keyStore: "id_command", store: "1", type: "text" },
-	{ label: "item.CommandQte", sortable: true, key: "qte_command_item", type: "number" },
-	{ label: "item.CommandPrice", sortable: true, key: "prix_command_item", type: "number" },
+	{ label: "item.CommandDate", sortable: true, key: "Command.date_command", sourceKey: "id_command", type: "datetime", 
+		storeRessourceId: 1, valueKey: "date_command" },
+	{ label: "item.CommandStatus", sortable: true, key: "Command.status_command", sourceKey: "id_command", type: "text", 
+		storeRessourceId: 1, valueKey: "status_command" },
+
+	{ label: "item.CommandQte", sortable: true, key: "qte_command_item", valueKey: "qte_command_item", type: "number" },
+	{ label: "item.CommandPrice", sortable: true, key: "prix_command_item", valueKey: "prix_command_item", type: "number" },
 ]);
 const labelTableauProjet = ref([
-	{ label: "item.ProjetName", sortable: true, key: "nom_projet", keyStore: "id_projet", store: "1", type: "text" },
-	{ label: "item.ProjetDate", sortable: true, key: "date_debut_projet", keyStore: "id_projet", store: "1", type: "datetime" },
-	{ label: "item.ProjetDateFin", sortable: true, key: "date_fin_projet", keyStore: "id_projet", store: "1", type: "datetime" },
-	{ label: "item.ProjetStatus", sortable: true, key: "status_projet", keyStore: "id_projet", store: "1", type: "text" },
-	{ label: "item.ProjetQte", sortable: true, key: "qte_projet_item", type: "number" },
+	{ label: "item.ProjetName", sortable: true, key: "Projet.nom_projet", sourceKey: "id_projet", type: "text", 
+		storeRessourceId: 1, valueKey: "nom_projet" },
+	{ label: "item.ProjetDate", sortable: true, key: "Projet.date_debut_projet", sourceKey: "id_projet", type: "datetime", 
+		storeRessourceId: 1, valueKey: "date_debut_projet" },
+	{ label: "item.ProjetDateFin", sortable: true, key: "Projet.date_fin_projet", sourceKey: "id_projet", type: "datetime", 
+		storeRessourceId: 1, valueKey: "date_fin_projet" },
+	{ label: "item.ProjetStatus", sortable: true, key: "Projet.status_projet", sourceKey: "id_projet", type: "text", 
+		storeRessourceId: 1, valueKey: "status_projet" },
+
+	{ label: "item.ProjetQte", sortable: true, key: "qte_projet_item", valueKey: "qte_projet_item", type: "number" },
 ]);
 document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
@@ -500,7 +517,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 		</div>
 		<CollapsibleSection title="item.Boxs"
-			:total-count="Number(itemsStore.itemBoxsTotalCount[itemId] || 0)" :id-page="itemId">
+			:total-count="Number(itemsStore.itemBoxsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
 			<template #append-row>
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box', expand: ['box'] }"
 					:store-data="[itemsStore.itemBoxs[itemId]]"
@@ -512,7 +529,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.Documents"
-			:total-count="Number(itemsStore.documentsTotalCount[itemId] || 0)" :id-page="itemId">
+			:total-count="Number(itemsStore.documentsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
 			<template #append-row>
 				<button type="button" @click="documentAddOpenModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -528,7 +545,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.Images"
-			:total-count="Number(itemsStore.imagesTotalCount[itemId] || 0)" :id-page="itemId">
+			:total-count="Number(itemsStore.imagesTotalCount[itemId] || 0)" :permission="itemId !=='new'">
 			<template #append-row>
 				<button type="button" @click="imageAddOpenModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -565,7 +582,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.Commands"
-			:total-count="Number(itemsStore.itemCommandsTotalCount[itemId] || 0)" :id-page="itemId">
+			:total-count="Number(itemsStore.itemCommandsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
 			<template #append-row>
 				<Tableau :labels="labelTableauCommand" :meta="{ key: 'id_item', path: '/commands/', expand: ['command'] }"
 					:store-data="[itemsStore.itemCommands[itemId],commandsStore.commands]"
@@ -577,7 +594,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.Projets"
-			:total-count="Number(itemsStore.itemProjetsTotalCount[itemId] || 0)" :id-page="itemId">
+			:total-count="Number(itemsStore.itemProjetsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
 			<template #append-row>
 				<Tableau :labels="labelTableauProjet" :meta="{ key: 'id_projet', path: '/projets/', expand: ['projet'] }"
 					:store-data="[itemsStore.itemProjets[itemId],projetsStore.projets]"
