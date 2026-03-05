@@ -33,7 +33,7 @@ export const useUsersStore = defineStore("users",{
 			this.usersLoading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const paramString = [idResearchString, expandString].filter((str) => str).join("&");
+			const paramString = [idResearchString, expandString].join("&");
 			const newUserList = await fetchWrapper.get({
 				url: `${baseUrl}/user?${paramString}`,
 				useToken: "access",
@@ -67,7 +67,7 @@ export const useUsersStore = defineStore("users",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newUserList = await fetchWrapper.get({
 				url: `${baseUrl}/user?${paramString}`,
 				useToken: "access",
@@ -157,7 +157,7 @@ export const useUsersStore = defineStore("users",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newProjetCommentaireList = await fetchWrapper.get({
 				url: `${baseUrl}/user/${idUser}/projet_commentaire?${paramString}`,
 				useToken: "access",
@@ -233,7 +233,7 @@ export const useUsersStore = defineStore("users",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newCommandCommentaireList = await fetchWrapper.get({
 				url: `${baseUrl}/user/${idUser}/command_commentaire?${paramString}`,
 				useToken: "access",
@@ -298,7 +298,7 @@ export const useUsersStore = defineStore("users",{
 			delete this.commandsCommentaire[idUser][id];
 		},
 
-		async getTokenByInterval(idUser, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false, showExpired = false, showRevoked = false) {
+		async getTokenByInterval(idUser, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			if (!this.tokens[idUser] || clear) {
 				this.tokens[idUser] = {};
 			}
@@ -308,9 +308,7 @@ export const useUsersStore = defineStore("users",{
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const showExpiredString = showExpired ? "show_expired=" + showExpired : "";
-			const showRevokedString = showRevoked ? "show_revoked=" + showRevoked : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString, showExpiredString, showRevokedString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newTokenList = await fetchWrapper.get({
 				url: `${baseUrl}/user/${idUser}/sessions?${paramString}`,
 				useToken: "access",

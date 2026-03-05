@@ -12,6 +12,7 @@ import * as Yup from "yup";
 import { useRoute } from "vue-router";
 const route = useRoute();
 const projetTagId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
 
 import { useConfigsStore, useProjetTagsStore, useProjetsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -24,6 +25,14 @@ async function fetchAllData() {
 		projetTagsStore.projetTagEdition = {
 			loading: false,
 		};
+		if (preset.value) {
+			preset.value.split(";").forEach((pair) => {
+				const [key, value] = pair.split(":");
+				if (key && value) {
+					projetTagsStore.projetTagEdition[key] = value;
+				}
+			});
+		}
 	} else {
 		projetTagsStore.projetTagEdition = {
 			loading: true,
@@ -118,7 +127,7 @@ const projetDelete = async(projet) => {
 };
 
 const filterProjet = ref([
-	{ key: "nom_projet", value: "", type: "text", label: "", placeholder: t("projetTag.ProjetFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "nom_projet", value: "", type: "text", label: "", placeholder: t("projetTag.ProjetFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 const createSchema = () => {
@@ -138,7 +147,9 @@ const labelForm = [
 	{ key: "poids_projet_tag", label: "projetTag.Poids", type: "number" },
 ];
 const labelTableauProjet = ref([
-	{ label: "projetTag.ProjetName", sortable: true, key: "nom_projet", keyStore: "id_projet", store: "1", type: "text" },
+	{ label: "projetTag.ProjetName", sortable: true, key: "Projet.nom_projet", sourceKey: "id_projet", type: "text", 
+		storeRessourceId: 1, valueKey: "nom_projet" },
+		
 	{ label: "projetTag.ProjetActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -151,7 +162,7 @@ const labelTableauProjet = ref([
 ]);
 
 const labelTableauModalProjet = ref([
-	{ label: "projetTag.ProjetName", sortable: true, key: "nom_projet", type: "text" },
+	{ label: "projetTag.ProjetName", sortable: true, key: "nom_projet", valueKey: "nom_projet", type: "text" },
 	{ label: "projetTag.ProjetActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -185,7 +196,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="projetTagsStore.projetTagEdition"/>
 		</div>
 		<CollapsibleSection title="projetTag.Projets"
-			:total-count="Number(projetTagsStore.projetTagsProjetTotalCount[projetTagId] || 0)" :id-page="projetTagId">
+			:total-count="Number(projetTagsStore.projetTagsProjetTotalCount[projetTagId] || 0)" :permission="projetTagId !=='new'">
 			<template #append-row>
 				<button type="button" @click="projetOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">

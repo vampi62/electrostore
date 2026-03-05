@@ -5,14 +5,14 @@ import { useProjetTagsStore } from "@/stores";
 const projetTagsStore = useProjetTagsStore();
 
 const filter = ref([
-	{ key: "nom_projet_tag", value: "", type: "text", label: "projetTags.FilterName", compareMethod: "contain" },
-	{ key: "poids_projet_tag", value: "", type: "number", label: "projetTags.FilterWeightMin", compareMethod: ">=" },
-	{ key: "poids_projet_tag", value: "", type: "number", label: "projetTags.FilterWeightMax", compareMethod: "<=" },
+	{ key: "nom_projet_tag", value: "", type: "text", label: "projetTags.FilterName", compareMethod: "=like=" },
+	{ key: "poids_projet_tag", value: "", type: "number", label: "projetTags.FilterWeightMin", compareMethod: "=ge=" },
+	{ key: "poids_projet_tag", value: "", type: "number", label: "projetTags.FilterWeightMax", compareMethod: "=le=" },
 ]);
 const tableauLabel = ref([
-	{ label: "projetTags.Name", sortable: true, key: "nom_projet_tag", type: "text" },
-	{ label: "projetTags.Weight", sortable: true, key: "poids_projet_tag", type: "number" },
-	{ label: "projetTags.ProjetsCount", sortable: true, key: "projets_projet_tags_count", type: "number" },
+	{ label: "projetTags.Name", sortable: true, key: "nom_projet_tag", valueKey: "nom_projet_tag", type: "text" },
+	{ label: "projetTags.Weight", sortable: true, key: "poids_projet_tag", valueKey: "poids_projet_tag", type: "number" },
+	{ label: "projetTags.ProjetsCount", sortable: true, key: "ProjetsProjetTags.Count", valueKey: "projets_projet_tags_count", type: "number" },
 ]);
 const tableauMeta = ref({
 	key: "id_projet_tag",

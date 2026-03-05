@@ -12,6 +12,7 @@ const { t } = useI18n();
 import { useRoute } from "vue-router";
 const route = useRoute();
 const commandId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
 
 import { downloadFile, viewFile } from "@/utils";
 
@@ -27,6 +28,14 @@ async function fetchAllData() {
 		commandsStore.commandEdition = {
 			loading: false,
 		};
+		if (preset.value) {
+			preset.value.split(";").forEach((pair) => {
+				const [key, value] = pair.split(":");
+				if (key && value) {
+					commandsStore.commandEdition[key] = value;
+				}
+			});
+		}
 	} else {
 		commandsStore.commandEdition = {
 			loading: true,
@@ -179,7 +188,7 @@ const itemDelete = async(item) => {
 };
 
 const filterItem = ref([
-	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("command.ItemFilterPlaceholder"), compareMethod: "contain", class: "w-full" },
+	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("command.ItemFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 const createSchema = () => {
@@ -236,9 +245,9 @@ const labelForm = ref([
 	{ key: "date_livraison_command", label: "command.DeliveryDate", type: "datetime-local" },
 ]);
 const labelTableauDocument = ref([
-	{ label: "command.DocumentName", sortable: true, key: "name_command_document", type: "text", canEdit: true },
-	{ label: "command.DocumentType", sortable: true, key: "type_command_document", type: "text" },
-	{ label: "command.DocumentDate", sortable: true, key: "created_at", type: "datetime" },
+	{ label: "command.DocumentName", sortable: true, key: "name_command_document", valueKey: "name_command_document", type: "text", canEdit: true },
+	{ label: "command.DocumentType", sortable: true, key: "type_command_document", valueKey: "type_command_document", type: "text" },
+	{ label: "command.DocumentDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
 	{ label: "command.DocumentActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -289,9 +298,11 @@ const labelTableauDocument = ref([
 	] },
 ]);
 const labelTableauItem = ref([
-	{ label: "command.ItemName", sortable: true, key: "reference_name_item", keyStore: "id_item", store: "1", type: "text" },
-	{ label: "command.ItemQuantity", sortable: true, key: "qte_command_item", type: "number", canEdit: true },
-	{ label: "command.ItemPrice", sortable: true, key: "prix_command_item", type: "number", canEdit: true },
+	{ label: "command.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text", 
+		storeRessourceId: 1, valueKey: "reference_name_item" },
+
+	{ label: "command.ItemQuantity", sortable: true, key: "qte_command_item", valueKey: "qte_command_item", type: "number", canEdit: true },
+	{ label: "command.ItemPrice", sortable: true, key: "prix_command_item", valueKey: "prix_command_item", type: "number", canEdit: true },
 	{ label: "command.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -333,9 +344,14 @@ const labelTableauItem = ref([
 	] },
 ]);
 const labelTableauModalItem = ref([
-	{ label: "command.ItemName", sortable: true, key: "reference_name_item", type: "text" },
-	{ label: "command.ItemQuantity", sortable: true, key: "qte_command_item", keyStore: "id_item", store: "1", type: "number", canEdit: true },
-	{ label: "command.ItemPrice", sortable: true, key: "prix_command_item", keyStore: "id_item", store: "1", type: "number", canEdit: true },
+	{ label: "command.ItemName", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
+
+	{ label: "command.ItemQuantity", sortable: true, key: "Item.qte_command_item", sourceKey: "id_item", type: "text", 
+		storeRessourceId: 1, valueKey: "qte_command_item", canEdit: true },
+
+	{ label: "command.ItemPrice", sortable: true, key: "Item.prix_command_item", sourceKey: "id_item", type: "text", 
+		storeRessourceId: 1, valueKey: "prix_command_item", canEdit: true },
+
 	{ label: "command.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -398,7 +414,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</div>
 		</div>
 		<CollapsibleSection title="command.Documents"
-			:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)" :id-page="commandId">
+			:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)" :permission="commandId !=='new'">
 			<template #append-row>
 				<button type="button" @click="documentAddOpenModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -414,7 +430,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="command.Items"
-			:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)" :id-page="commandId">
+			:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)" :permission="commandId !=='new'">
 			<template #append-row>
 				<button type="button" @click="itemModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -430,7 +446,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="command.Commentaires"
-			:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)" :id-page="commandId">
+			:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)" :permission="commandId !=='new'">
 			<template #append-row>
 				<Commentaire :meta="{ contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[commandsStore.commentaires[commandId], usersStore.users]"

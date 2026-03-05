@@ -12,6 +12,7 @@ const { t } = useI18n();
 import { useRoute } from "vue-router";
 const route = useRoute();
 const cameraId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
 
 import { useConfigsStore, useCamerasStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -23,6 +24,14 @@ async function fetchAllData() {
 		camerasStore.cameraEdition = {
 			loading: false,
 		};
+		if (preset.value) {
+			preset.value.split(";").forEach((pair) => {
+				const [key, value] = pair.split(":");
+				if (key && value) {
+					camerasStore.cameraEdition[key] = value;
+				}
+			});
+		}
 	} else {
 		camerasStore.cameraEdition = {
 			loading: true,

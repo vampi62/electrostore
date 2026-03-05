@@ -2,7 +2,7 @@
 	<div class="bg-gray-100 p-2 rounded"
 		:class="{ 'mb-6': !disableMargin }">
 		<h3 @click="toggleSection" class="text-xl font-semibold  bg-gray-400 p-2 rounded"
-			:class="{ 'cursor-pointer': idPage != 'new', 'cursor-not-allowed': idPage == 'new' }">
+			:class="{ 'cursor-pointer': permission, 'cursor-not-allowed': !permission }">
 			{{ $t(title) }} <span v-if="totalCount >= 0">({{ totalCount }})</span>
 		</h3>
 		<transition @before-enter="beforeEnter" @enter="enter" @leave="leave">
@@ -19,10 +19,10 @@
 export default {
 	name: "CollapsibleSection",
 	props: {
-		idPage: {
-			type: String,
-			required: true,
-			default: "new",
+		permission: {
+			type: Boolean,
+			required: false,
+			default: true,
 		},
 		totalCount: {
 			type: Number,
@@ -42,12 +42,12 @@ export default {
 	},
 	data() {
 		return {
-			showSection: this.idPage !== "new",
+			showSection: this.permission,
 		};
 	},
 	methods: {
 		toggleSection() {
-			if (this.idPage !== "new") {
+			if (this.permission) {
 				this.showSection = !this.showSection;
 			}
 		},

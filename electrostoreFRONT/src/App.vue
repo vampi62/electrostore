@@ -29,6 +29,7 @@ const containerClasses = computed(() => [
 	reduceLeftSideBar.value && authStore.user && !isIframe.value ? "sm:ml-16" : "",
 	!reduceLeftSideBar.value && authStore.user && !isIframe.value ? "sm:ml-64" : "",
 	authStore.user && !isIframe.value ? "top-16" : "top-0",
+	route.meta.overflowYScroll ? "" : "overflow-y-auto",
 ]);
 const modalFinderRef = ref(null);
 

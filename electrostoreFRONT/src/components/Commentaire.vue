@@ -26,11 +26,11 @@
 				'text-left': meta.canEdit && commentaire.id_user !== storeUser.id_user
 			}" class="text-sm text-gray-600">
 				<span class="font-semibold">
-					{{ storeData[1][commentaire.id_user].nom_user }} {{
-						storeData[1][commentaire.id_user].prenom_user }}
+					{{ storeData[1][commentaire.id_user]?.nom_user }} {{
+						storeData[1][commentaire.id_user]?.prenom_user }}
 				</span>
 				<span class="text-xs text-gray-500">
-					- {{ commentaire.created_at }} - {{ commentaire.updated_at }}
+					- {{ new Date(commentaire.created_at).toLocaleString() }} - {{ new Date(commentaire.updated_at).toLocaleString() }}
 				</span>
 			</div>
 			<div v-if="meta.canEdit" class="text-center text-gray-800 mb-2">

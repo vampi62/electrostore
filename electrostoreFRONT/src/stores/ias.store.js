@@ -16,7 +16,7 @@ export const useIasStore = defineStore("ias", {
 		async getIaByList(idResearch = []) {
 			this.loading = true;
 			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			const paramString = [idResearchString].filter((str) => str).join("&");
+			const paramString = [idResearchString].join("&");
 			const newIaList = await fetchWrapper.get({
 				url: `${baseUrl}/ia?${paramString}`,
 				useToken: "access",
@@ -36,7 +36,7 @@ export const useIasStore = defineStore("ias", {
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
 			const filterString = filter ? "filter=" + filter : "";
 			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].filter((str) => str).join("&");
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
 			const newIaList = await fetchWrapper.get({
 				url: `${baseUrl}/ia?${paramString}`,
 				useToken: "access",

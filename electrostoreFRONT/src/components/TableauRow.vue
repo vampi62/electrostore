@@ -4,36 +4,26 @@
 		:class="[css, column.type == 'text' ? 'text-left' : 'text-center']"
 	>
 		<template v-if="column.type == 'bool'">
-			<template v-if="evaluateCondition(column.condition, row)">
+			<template v-if="getDataValue(row, column)">
 				<font-awesome-icon icon="fa-solid fa-check" class="text-green-500" />
 			</template>
 			<template v-else>
 				<font-awesome-icon icon="fa-solid fa-times" class="text-red-500" />
 			</template>
 		</template>
-		<template v-else-if="column.type == 'list'">
+		<template v-else-if="column.type == 'link-list'">
 			<ul>
-				<li v-for="(item, itemIndex) in this.storeData[column.list.idStoreLink]?.[row[column.list.key]] || []"
+				<li v-for="(item, itemIndex) in getDataLinkListValue(row,column) || []"
 					:key="itemIndex">
-					<template v-for="(ressource, ressourceIndex) in column.list.ressourcePrint" :key="ressourceIndex">
-						<template v-if="ressource.type === 'link'">
-							{{ item?.[ressource.key] || 'Unknown' }}
-						</template>
-						<template v-else-if="ressource.type === 'text'">
-							{{ ressource.key }}
-						</template>
-						<template v-else-if="ressource.type === 'ressource'">
-							{{ this.storeData[column.list.idStoreRessource][item[column.list.keyStoreLink]]?.[ressource.key] || 'Unknown' }}
-						</template>
-					</template>
+					{{ item }}
 				</li>
 			</ul>
 		</template>
 		<template v-else-if="column.type == 'image'">
 			<div class="flex justify-center items-center">
-				<template v-if="this.storeData[column.store][row[column.keyStore]]?.[column.key]">
-					<img v-if="this.storeData[column.idStoreImg]?.[this.storeData[column.store][row[column.keyStore]]?.[column.key]]"
-						:src="this.storeData[column.idStoreImg]?.[this.storeData[column.store][row[column.keyStore]]?.[column.key]]"
+				<template v-if="row?.[column.sourceKey]">
+					<img v-if="storeData[column.storeRessourceId]?.[row[column.sourceKey]]"
+						:src="storeData[column.storeRessourceId]?.[row[column.sourceKey]]"
 						class="w-16 h-16 object-cover rounded" :alt="`Id ${row[column.key]}`" />
 					<span v-else class="w-16 h-16 object-cover rounded">
 						{{ $t('components.VModalTableauImageLoading') }}
@@ -66,7 +56,7 @@
 			</Form>
 		</template>
 		<template v-else>
-			<span v-html="formatCellValue(column, row)"></span>
+			<span v-html="formatCellValue(column, getDataValue(row, column))"></span>
 		</template>
 	</td>
 </template>
@@ -88,12 +78,6 @@ export default {
 			required: true,
 			// row pass by the parent component, containing the data for the current row
 		},
-		storeData: {
-			type: Object,
-			required: true,
-			// storeData pass by the parent component, containing all the data needed for the row
-			default: () => ({}),
-		},
 		css: {
 			type: String,
 			required: false,
@@ -104,6 +88,12 @@ export default {
 			type: Object,
 			required: false,
 			// Validation schema for vee-validate
+			default: () => ({}),
+		},
+		storeData: {
+			type: Object,
+			required: false,
+			// storeData pass by the parent component, containing the data from the stores, used for link-list and image types
 			default: () => ({}),
 		},
 	},
@@ -121,25 +111,40 @@ export default {
 				return false;
 			}
 		},
-		formatCellValue(column, row) {
-			let value = "";
-			if (column?.store) {
-				value = this.storeData[column.store]?.[row[column.keyStore]]?.[column.key] || "";
-				row[column.key] = value; // Update the row with the fetched value
-			} else {
-				value = row[column.key];
-			}
+		formatCellValue(column, data) {
 			switch (column.type) {
 			case "text":
-				return value;
+				return data;
 			case "enum":
-				return column.options[value];
+				return column.options[data];
 			case "date":
-				return value ? new Date(value).toLocaleDateString() : "";
+				return data ? new Date(data).toLocaleDateString() : "";
 			case "datetime":
-				return value ? new Date(value).toLocaleString() : "";
+				return data ? new Date(data).toLocaleString() : "";
 			default:
-				return value;
+				return data;
+			}
+		},
+		getDataLinkListValue(row, label) {
+			return Object.values(this.storeData[label.storeLinkId]?.[row[label.sourceKey]] || {}).map((linkedItem) => {
+				let printedRessource = "";
+				label.ressourcePrint.forEach((print) => {
+					if (print.from === "ressource") {
+						printedRessource += this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
+					} else if (print.from === "link") {
+						printedRessource += linkedItem?.[print.valueKey] || "";
+					} else if (print.from === "text") {
+						printedRessource += print.text || "";
+					}
+				});
+				return printedRessource;
+			});
+		},
+		getDataValue(row, label) {
+			if (label.storeRessourceId && !label.storeLinkId) {
+				return this.storeData[label.storeRessourceId]?.[row[label.sourceKey]]?.[label.valueKey];
+			} else {
+				return row?.[label.valueKey];
 			}
 		},
 	},

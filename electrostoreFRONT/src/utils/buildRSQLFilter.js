@@ -4,21 +4,11 @@ export function buildRSQLFilter(filters) {
 	let rsqlFilter = "";
 	for (const filter of filters) {
 		if (filter.value !== "") {
-			let newFilter = "";
-			newFilter = filter.key;
-			if (filter.compareMethod === "contain") {
-				newFilter += "=like=" + filter.value;
-			} else if (filter.compareMethod === "=") {
-				newFilter += "==" + filter.value;
-			} else if (filter.compareMethod === ">=") {
-				newFilter += "=ge=" + filter.value;
-			} else if (filter.compareMethod === "<=") {
-				newFilter += "=le=" + filter.value;
-			}
+			const keyApi = filter?.replaceKeyApi ? filter.replaceKeyApi : filter.key;
 			if (rsqlFilter === "") {
-				rsqlFilter = newFilter;
+				rsqlFilter = keyApi + filter.compareMethod + String(filter.value);
 			} else {
-				rsqlFilter += ";" + newFilter;
+				rsqlFilter += ";" + keyApi + filter.compareMethod + String(filter.value);
 			}
 		}
 	}
@@ -26,8 +16,5 @@ export function buildRSQLFilter(filters) {
 }
 
 export function buildRSQLSort(sort) {
-	if (sort.column) {
-		return sort.column.key + (sort.order === "desc" ? ",desc" : ",asc");
-	}
-	return "";
+	return sort.key + (sort.order === "desc" ? ",desc" : ",asc");
 }

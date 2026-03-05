@@ -99,7 +99,25 @@ public static class RsqlParserExtensions
                     continue;
                 }
                 
-                Expression right = Expression.Constant(Convert.ChangeType(value, itemProperty.Type));
+                object? convertedValue;
+                try
+                {
+                    if (itemProperty.Type.IsEnum)
+                    {
+                        convertedValue = Enum.Parse(itemProperty.Type, value?.ToString() ?? "", true);
+                    }
+                    else
+                    {
+                        convertedValue = Convert.ChangeType(value, itemProperty.Type);
+                    }
+                }
+                catch (Exception)
+                {
+                    // Skip this filter if conversion fails
+                    continue;
+                }
+                
+                Expression right = Expression.Constant(convertedValue);
                 
                 Expression? itemCondition = searchType switch
                 {
@@ -128,7 +146,25 @@ public static class RsqlParserExtensions
             else
             {
                 // Expression for non-collection properties
-                Expression right = Expression.Constant(Convert.ChangeType(value, left.Type));
+                object? convertedValue;
+                try
+                {
+                    if (left.Type.IsEnum)
+                    {
+                        convertedValue = Enum.Parse(left.Type, value?.ToString() ?? "", true);
+                    }
+                    else
+                    {
+                        convertedValue = Convert.ChangeType(value, left.Type);
+                    }
+                }
+                catch (Exception)
+                {
+                    // Skip this filter if conversion fails
+                    continue;
+                }
+                
+                Expression right = Expression.Constant(convertedValue);
 
                 binaryExpression = searchType switch
                 {
