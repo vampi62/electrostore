@@ -414,7 +414,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</div>
 		</div>
 		<CollapsibleSection title="command.Documents"
-			:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)" :id-page="commandId">
+			:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)" :permission="commandId !=='new'">
 			<template #append-row>
 				<button type="button" @click="documentAddOpenModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -430,7 +430,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="command.Items"
-			:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)" :id-page="commandId">
+			:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)" :permission="commandId !=='new'">
 			<template #append-row>
 				<button type="button" @click="itemModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -446,7 +446,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="command.Commentaires"
-			:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)" :id-page="commandId">
+			:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)" :permission="commandId !=='new'">
 			<template #append-row>
 				<Commentaire :meta="{ contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[commandsStore.commentaires[commandId], usersStore.users]"

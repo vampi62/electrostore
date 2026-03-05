@@ -196,7 +196,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="projetTagsStore.projetTagEdition"/>
 		</div>
 		<CollapsibleSection title="projetTag.Projets"
-			:total-count="Number(projetTagsStore.projetTagsProjetTotalCount[projetTagId] || 0)" :id-page="projetTagId">
+			:total-count="Number(projetTagsStore.projetTagsProjetTotalCount[projetTagId] || 0)" :permission="projetTagId !=='new'">
 			<template #append-row>
 				<button type="button" @click="projetOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">

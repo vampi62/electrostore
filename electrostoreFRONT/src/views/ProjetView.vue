@@ -468,7 +468,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 		</div>
 		<CollapsibleSection title="projet.HistoryStatus"
-			:total-count="Number(projetsStore.statusHistoryTotalCount[projetId] || 0)" :id-page="projetId">
+			:total-count="Number(projetsStore.statusHistoryTotalCount[projetId] || 0)" :permission="projetId !=='new'">
 			<template #append-row>
 				<Tableau :labels="labelTableauHistoryStatus" :meta="{ key: 'id_projet_status' }"
 					:store-data="[projetsStore.statusHistory[projetId]]"
@@ -480,7 +480,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="projet.Documents"
-			:total-count="Number(projetsStore.documentsTotalCount[projetId] || 0)" :id-page="projetId">
+			:total-count="Number(projetsStore.documentsTotalCount[projetId] || 0)" :permission="projetId !=='new'">
 			<template #append-row>
 				<button type="button" @click="documentAddOpenModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -496,7 +496,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="projet.Items"
-			:total-count="Number(projetsStore.itemsTotalCount[projetId] || 0)" :id-page="projetId">
+			:total-count="Number(projetsStore.itemsTotalCount[projetId] || 0)" :permission="projetId !=='new'">
 			<template #append-row>
 				<button type="button" @click="itemModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -512,7 +512,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="projet.Commentaires"
-			:total-count="Number(projetsStore.commentairesTotalCount[projetId] || 0)" :id-page="projetId">
+			:total-count="Number(projetsStore.commentairesTotalCount[projetId] || 0)" :permission="projetId !=='new'">
 			<template #append-row>
 				<Commentaire :meta="{ contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[projetsStore.commentaires[projetId], usersStore.users]"

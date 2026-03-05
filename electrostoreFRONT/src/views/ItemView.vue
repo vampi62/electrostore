@@ -517,7 +517,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 		</div>
 		<CollapsibleSection title="item.Boxs"
-			:total-count="Number(itemsStore.itemBoxsTotalCount[itemId] || 0)" :id-page="itemId">
+			:total-count="Number(itemsStore.itemBoxsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
 			<template #append-row>
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box', expand: ['box'] }"
 					:store-data="[itemsStore.itemBoxs[itemId]]"
@@ -529,7 +529,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.Documents"
-			:total-count="Number(itemsStore.documentsTotalCount[itemId] || 0)" :id-page="itemId">
+			:total-count="Number(itemsStore.documentsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
 			<template #append-row>
 				<button type="button" @click="documentAddOpenModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -545,7 +545,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.Images"
-			:total-count="Number(itemsStore.imagesTotalCount[itemId] || 0)" :id-page="itemId">
+			:total-count="Number(itemsStore.imagesTotalCount[itemId] || 0)" :permission="itemId !=='new'">
 			<template #append-row>
 				<button type="button" @click="imageAddOpenModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -582,7 +582,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.Commands"
-			:total-count="Number(itemsStore.itemCommandsTotalCount[itemId] || 0)" :id-page="itemId">
+			:total-count="Number(itemsStore.itemCommandsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
 			<template #append-row>
 				<Tableau :labels="labelTableauCommand" :meta="{ key: 'id_item', path: '/commands/', expand: ['command'] }"
 					:store-data="[itemsStore.itemCommands[itemId],commandsStore.commands]"
@@ -594,7 +594,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.Projets"
-			:total-count="Number(itemsStore.itemProjetsTotalCount[itemId] || 0)" :id-page="itemId">
+			:total-count="Number(itemsStore.itemProjetsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
 			<template #append-row>
 				<Tableau :labels="labelTableauProjet" :meta="{ key: 'id_projet', path: '/projets/', expand: ['projet'] }"
 					:store-data="[itemsStore.itemProjets[itemId],projetsStore.projets]"

@@ -212,11 +212,10 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="usersStore.userEdition" :store-user="authStore.user"
 				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
 		</div>
-		<CollapsibleSection title="user.Participation"
-			:id-page="userId">
+		<CollapsibleSection title="user.Participation" :permission="userId !=='new'">
 			<template #append-row>
 				<CollapsibleSection title="user.CommandsCommentaires" :disable-margin="true"
-					:total-count="Number(usersStore.commandsCommentaireTotalCount[userId] || 0)" :id-page="userId">
+					:total-count="Number(usersStore.commandsCommentaireTotalCount[userId] || 0)" :permission="userId !=='new'">
 					<template #append-row>
 						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: false, roleRequired: false, expand: ['command'] }"
 							:store-data="[usersStore.commandsCommentaire[userId], usersStore.users]"
@@ -228,7 +227,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					</template>
 				</CollapsibleSection>
 				<CollapsibleSection title="user.ProjetsCommentaires" :disable-margin="true"
-					:total-count="Number(usersStore.projetsCommentaireTotalCount[userId] || 0)" :id-page="userId">
+					:total-count="Number(usersStore.projetsCommentaireTotalCount[userId] || 0)" :permission="userId !=='new'">
 					<template #append-row>
 						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: false, roleRequired: false, expand: ['projet'] }"
 							:store-data="[usersStore.projetsCommentaire[userId], usersStore.users]"
@@ -242,7 +241,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="user.Tokens"
-			:total-count="Number(usersStore.tokensTotalCount[userId] || 0)" :id-page="userId">
+			:total-count="Number(usersStore.tokensTotalCount[userId] || 0)" :permission="userId !=='new'">
 			<template #append-row>
 				<div>
 					<!-- bouton pour choisir de charger les revoked et les expired -->

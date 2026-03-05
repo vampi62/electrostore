@@ -306,7 +306,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="tagsStore.tagEdition"/>
 		</div>
 		<CollapsibleSection title="tag.Items"
-			:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)" :id-page="tagId">
+			:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)" :permission="tagId !=='new'">
 			<template #append-row>
 				<button type="button" @click="itemOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -322,7 +322,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="tag.Stores"
-			:total-count="Number(tagsStore.tagsStoreTotalCount[tagId] || 0)" :id-page="tagId">
+			:total-count="Number(tagsStore.tagsStoreTotalCount[tagId] || 0)" :permission="tagId !=='new'">
 			<template #append-row>
 				<button type="button" @click="storeOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -338,7 +338,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="tag.Boxs"
-			:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)" :id-page="tagId">
+			:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)" :permission="tagId !=='new'">
 			<template #append-row>
 				<!-- <button type="button" @click="boxOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
