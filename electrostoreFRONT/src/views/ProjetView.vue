@@ -281,7 +281,7 @@ const labelTableauDocument = ref([
 	{ label: "projet.DocumentName", sortable: true, key: "name_projet_document", valueKey: "name_projet_document", type: "text", canEdit: true },
 	{ label: "projet.DocumentType", sortable: true, key: "type_projet_document", valueKey: "type_projet_document", type: "text" },
 	{ label: "projet.DocumentDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
-	{ label: "projet.DocumentActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
+	{ label: "projet.DocumentActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
@@ -335,7 +335,7 @@ const labelTableauItem = ref([
 		storeRessourceId: 1, valueKey: "reference_name_item" },
 
 	{ label: "projet.ItemQuantity", sortable: true, key: "qte_projet_item", valueKey: "qte_projet_item", type: "number", canEdit: true },
-	{ label: "projet.ItemActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
+	{ label: "projet.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
@@ -373,7 +373,7 @@ const labelTableauItem = ref([
 ]);
 const labelTableauModalTag = ref([
 	{ label: "projet.TagName", sortable: true, key: "nom_projet_tag", valueKey: "nom_projet_tag", type: "text" },
-	{ label: "projet.TagActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
+	{ label: "projet.TagActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-save",
@@ -396,7 +396,7 @@ const labelTableauModalItem = ref([
 	{ label: "projet.ItemQuantity", sortable: true, key: "ProjetsItems.qte_projet_item", sourceKey: "id_projet", type: "number", 
 		storeRessourceId: 1, valueKey: "qte_projet_item", canEdit: true },
 
-	{ label: "projet.ItemActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
+	{ label: "projet.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-plus",

@@ -211,7 +211,7 @@ const labelTableauItem = ref([
 	{ label: "tag.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text", 
 		storeRessourceId: 1, valueKey: "reference_name_item" },
 
-	{ label: "tag.ItemActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
+	{ label: "tag.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
@@ -225,7 +225,7 @@ const labelTableauStore = ref([
 	{ label: "tag.StoreName", sortable: true, key: "Store.nom_store", sourceKey: "id_store", type: "text", 
 		storeRessourceId: 1, valueKey: "nom_store" },
 
-	{ label: "tag.StoreActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
+	{ label: "tag.StoreActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
@@ -239,7 +239,7 @@ const labelTableauBox = ref([
 	{ label: "tag.BoxId", sortable: true, key: "Box.id_box", sourceKey: "id_box", type: "number", 
 		storeRessourceId: 1, valueKey: "id_box" },
 
-	{ label: "tag.BoxActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
+	{ label: "tag.BoxActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
@@ -252,7 +252,7 @@ const labelTableauBox = ref([
 
 const labelTableauModalItem = ref([
 	{ label: "tag.ItemName", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
-	{ label: "tag.ItemActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
+	{ label: "tag.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-save",
@@ -273,7 +273,7 @@ const labelTableauModalItem = ref([
 ]);
 const labelTableauModalStore = ref([
 	{ label: "tag.StoreName", sortable: true, key: "nom_store", valueKey: "nom_store", type: "text" },
-	{ label: "tag.StoreActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
+	{ label: "tag.StoreActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-save",

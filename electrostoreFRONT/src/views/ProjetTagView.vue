@@ -150,7 +150,7 @@ const labelTableauProjet = ref([
 	{ label: "projetTag.ProjetName", sortable: true, key: "Projet.nom_projet", sourceKey: "id_projet", type: "text", 
 		storeRessourceId: 1, valueKey: "nom_projet" },
 		
-	{ label: "projetTag.ProjetActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
+	{ label: "projetTag.ProjetActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
@@ -163,7 +163,7 @@ const labelTableauProjet = ref([
 
 const labelTableauModalProjet = ref([
 	{ label: "projetTag.ProjetName", sortable: true, key: "nom_projet", valueKey: "nom_projet", type: "text" },
-	{ label: "projetTag.ProjetActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
+	{ label: "projetTag.ProjetActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-save",

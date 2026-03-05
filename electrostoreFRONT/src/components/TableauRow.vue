@@ -4,16 +4,16 @@
 		:class="[css, column.type == 'text' ? 'text-left' : 'text-center']"
 	>
 		<template v-if="column.type == 'bool'">
-			<template v-if="row[column.key]">
+			<template v-if="getDataValue(row, column)">
 				<font-awesome-icon icon="fa-solid fa-check" class="text-green-500" />
 			</template>
 			<template v-else>
 				<font-awesome-icon icon="fa-solid fa-times" class="text-red-500" />
 			</template>
 		</template>
-		<template v-else-if="column.type == 'list' || column.type == 'link-list'">
+		<template v-else-if="column.type == 'link-list'">
 			<ul>
-				<li v-for="(item, itemIndex) in row[column.key] || []"
+				<li v-for="(item, itemIndex) in getDataLinkListValue(row,column) || []"
 					:key="itemIndex">
 					{{ item }}
 				</li>
@@ -21,9 +21,9 @@
 		</template>
 		<template v-else-if="column.type == 'image'">
 			<div class="flex justify-center items-center">
-				<template v-if="this.row?.[column.key]">
-					<img v-if="this.row?.[column.imgKey]"
-						:src="this.row?.[column.imgKey]"
+				<template v-if="row?.[column.sourceKey]">
+					<img v-if="storeData[column.storeRessourceId]?.[row[column.sourceKey]]"
+						:src="storeData[column.storeRessourceId]?.[row[column.sourceKey]]"
 						class="w-16 h-16 object-cover rounded" :alt="`Id ${row[column.key]}`" />
 					<span v-else class="w-16 h-16 object-cover rounded">
 						{{ $t('components.VModalTableauImageLoading') }}
@@ -36,8 +36,8 @@
 		</template>
 		<template v-else-if="column.type == 'buttons'">
 			<div class="flex justify-center items-center">
-				<template v-for="(button, buttonIndex) in row[column.btKey]" :key="buttonIndex">
-					<template v-if="button?.show">
+				<template v-for="(button, buttonIndex) in column.buttons" :key="buttonIndex">
+					<template v-if="!button?.condition || evaluateCondition(button.condition, row)">
 						<TableauActionButton :button="button" :row="row" />
 					</template>
 				</template>
@@ -56,7 +56,7 @@
 			</Form>
 		</template>
 		<template v-else>
-			<span v-html="formatCellValue(column, row[column.key])"></span>
+			<span v-html="formatCellValue(column, getDataValue(row, column))"></span>
 		</template>
 	</td>
 </template>
@@ -90,6 +90,12 @@ export default {
 			// Validation schema for vee-validate
 			default: () => ({}),
 		},
+		storeData: {
+			type: Object,
+			required: false,
+			// storeData pass by the parent component, containing the data from the stores, used for link-list and image types
+			default: () => ({}),
+		},
 	},
 	components: {
 		Form,
@@ -97,6 +103,14 @@ export default {
 		TableauActionButton: defineAsyncComponent(() => import("@/components/TableauActionButton.vue")),
 	},
 	methods: {
+		evaluateCondition(condition,rowData) {
+			try {
+				return new Function(["store","rowData"], `return ${condition}`)(this.storeData,rowData);
+			} catch (error) {
+				console.error("Erreur lors de l'évaluation de la condition :", error);
+				return false;
+			}
+		},
 		formatCellValue(column, data) {
 			switch (column.type) {
 			case "text":
@@ -109,6 +123,28 @@ export default {
 				return data ? new Date(data).toLocaleString() : "";
 			default:
 				return data;
+			}
+		},
+		getDataLinkListValue(row, label) {
+			return Object.values(this.storeData[label.storeLinkId]?.[row[label.sourceKey]] || {}).map((linkedItem) => {
+				let printedRessource = "";
+				label.ressourcePrint.forEach((print) => {
+					if (print.from === "ressource") {
+						printedRessource += this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
+					} else if (print.from === "link") {
+						printedRessource += linkedItem?.[print.valueKey] || "";
+					} else if (print.from === "text") {
+						printedRessource += print.text || "";
+					}
+				});
+				return printedRessource;
+			});
+		},
+		getDataValue(row, label) {
+			if (label.storeRessourceId && !label.storeLinkId) {
+				return this.storeData[label.storeRessourceId]?.[row[label.sourceKey]]?.[label.valueKey];
+			} else {
+				return row?.[label.valueKey];
 			}
 		},
 	},

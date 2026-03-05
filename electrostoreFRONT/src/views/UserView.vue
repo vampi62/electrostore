@@ -187,7 +187,7 @@ const labelTableauSession = ref([
 	{ label: "user.TokenRevokedDate", sortable: true, key: "revoked_at", valueKey: "revoked_at", type: "datetime" },
 	{ label: "user.TokenRevokedIP", sortable: true, key: "revoked_by_ip", valueKey: "revoked_by_ip", type: "text" },
 	{ label: "user.TokenRevokedReason", sortable: true, key: "revoked_reason", valueKey: "revoked_reason", type: "text" },
-	{ label: "user.TokenActions", sortable: false, key: "", type: "buttons", valueKey: "", buttons: [
+	{ label: "user.TokenActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "user.TokenRevoke",
 			icon: "fa-solid fa-ban",

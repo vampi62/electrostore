@@ -248,7 +248,7 @@ const labelTableauDocument = ref([
 	{ label: "command.DocumentName", sortable: true, key: "name_command_document", valueKey: "name_command_document", type: "text", canEdit: true },
 	{ label: "command.DocumentType", sortable: true, key: "type_command_document", valueKey: "type_command_document", type: "text" },
 	{ label: "command.DocumentDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
-	{ label: "command.DocumentActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
+	{ label: "command.DocumentActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
@@ -303,7 +303,7 @@ const labelTableauItem = ref([
 
 	{ label: "command.ItemQuantity", sortable: true, key: "qte_command_item", valueKey: "qte_command_item", type: "number", canEdit: true },
 	{ label: "command.ItemPrice", sortable: true, key: "prix_command_item", valueKey: "prix_command_item", type: "number", canEdit: true },
-	{ label: "command.ItemActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
+	{ label: "command.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
@@ -352,7 +352,7 @@ const labelTableauModalItem = ref([
 	{ label: "command.ItemPrice", sortable: true, key: "Item.prix_command_item", sourceKey: "id_item", type: "text", 
 		storeRessourceId: 1, valueKey: "prix_command_item", canEdit: true },
 
-	{ label: "command.ItemActions", sortable: false, key: "", valueKey: "", type: "buttons", buttons: [
+	{ label: "command.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-plus",

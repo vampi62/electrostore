@@ -30,7 +30,7 @@
 				<tr v-for="row in sortedData" :key="row[meta.key]" v-memo="[row]"
 					:class="mergedCss.tr"
 					@click="meta?.path && $router.push(meta.path + row[meta.key])">
-					<TableauRow :labels="labels" :row="row" :css="mergedCss.td" :schema="schema" />
+					<TableauRow :labels="labels" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" />
 				</tr>
 				<slot name="append-row"></slot>
 				<template v-if="loading">
@@ -46,7 +46,7 @@
 </template>
 
 <script>
-import { compile, defineAsyncComponent } from "vue";
+import { defineAsyncComponent } from "vue";
 import { debounce } from "lodash-es";
 import { buildRSQLFilter, buildRSQLSort } from "@/utils";
 import { toLowerCaseWithoutAccents } from "@/utils";
@@ -142,85 +142,47 @@ export default {
 		TableauRow: defineAsyncComponent(() => import("@/components/TableauRow.vue")),
 	},
 	computed: {
-		compileStoreData() {
+		filteredData() {
 			if (!this.storeData[0]) {
 				return [];
 			}
-			// Compile the stores data into a single list of objects with the id as key for easier print
-			return Object.values(this.storeData[0]).map((item) => {
-				const compiledItem = { ...item };
-				this.labels.forEach((label) => {
-					if (label.type === "link-list") {
-						compiledItem[label.key] = Object.values(this.storeData[label.storeLinkId]?.[item[label.sourceKey]] || {}).map((linkedItem) => {
-							let printedRessource = "";
-							label.ressourcePrint.forEach((print) => {
-								if (print.from === "ressource") {
-									printedRessource += this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
-								} else if (print.from === "link") {
-									printedRessource += linkedItem?.[print.valueKey] || "";
-								} else if (print.from === "text") {
-									printedRessource += print.text || "";
-								}
-							});
-							return printedRessource;
-						});
-					} else if (label.type === "image") {
-						compiledItem[label.imgKey] = this.storeData[label.storeRessourceId]?.[item[label.sourceKey]]?.[label.valueKey];
-					} else if (label.type === "buttons") {
-						compiledItem[label.btKey] = label.buttons.map((button) => {
-							if (button.condition) {
-								return {
-									...button,
-									show: this.evaluateCondition(button.condition, item) || false,
-								};
-							}
-							return { ...button, show: true };
-						});
-					} else if (label.storeRessourceId && !label.storeLinkId) {
-						compiledItem[label.key] = this.storeData[label.storeRessourceId]?.[item[label.sourceKey]]?.[label.valueKey];
-					} else {
-						compiledItem[label.key] = item?.[label.valueKey];
-					}
-				});
-				return compiledItem;
-			});
-		},
-		filteredData() {
 			if (!this.filters || this.filters.length === 0) {
-				return this.compileStoreData;
+				return Object.values(this.storeData[0]);
 			}
-			return this.compileStoreData.filter((element) => {
+			return Object.values(this.storeData[0]).filter((element) => {
 				return this.filters.every((f) => {
 					if (f.value !== "" && f.value !== null && f.value !== undefined) {
+						//const elementValue = element[f.key];
+						const elementValue = this.getDataValue(element, f.key);
 						switch (f.compareMethod) {
 						case "==":
 							switch (f.typeData) {
 							case "bool":
-								return element[f.key] === (f.value === "true");
+								return elementValue === (f.value === "true");
 							case "int":
-								return Number.parseInt(element[f.key]) === Number.parseInt(f.value);
+								return Number.parseInt(elementValue) === Number.parseInt(f.value);
 							case "float":
-								return Number.parseFloat(element[f.key]) === Number.parseFloat(f.value);
+								return Number.parseFloat(elementValue) === Number.parseFloat(f.value);
 							case "string":
-								if (Array.isArray(element[f.key])) {
-									return element[f.key].some((item) => 
+								if (Array.isArray(elementValue)) {
+									return elementValue.some((item) => 
 										toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(f.value)),
 									);
 								}
-								return toLowerCaseWithoutAccents(element[f.key]) === toLowerCaseWithoutAccents(f.value);
+								return toLowerCaseWithoutAccents(elementValue) === toLowerCaseWithoutAccents(f.value);
 							}
-							return element[f.key] === f.value;
+							return elementValue === f.value;
 						case "=ge=":
-							return element[f.key] >= f.value;
+							return elementValue >= f.value;
 						case "=le=":
-							return element[f.key] <= f.value;
+							return elementValue <= f.value;
 						case "=like=":
-							if (Array.isArray(element[f.key])) {
-								return element[f.key].some((item) => 
+							if (Array.isArray(elementValue)) {
+								return elementValue.some((item) => 
 									toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(f.value)),
 								);
 							}
-							return toLowerCaseWithoutAccents(element[f.key]).includes(toLowerCaseWithoutAccents(f.value));
+							return toLowerCaseWithoutAccents(elementValue).includes(toLowerCaseWithoutAccents(f.value));
 						}
 					}
 					return true;
@@ -228,16 +190,44 @@ export default {
 			});
 		},
 		sortedData() {
-			if (this.sort.key) {
-				return [...this.filteredData].sort((a, b) => {
-					if (this.sort.order === "asc") {
-						return a[this.sort.key] > b[this.sort.key] ? 1 : -1;
-					} else {
-						return a[this.sort.key] < b[this.sort.key] ? 1 : -1;
-					}
-				});
+			if (!this.sort.key) {
+				return this.filteredData;
 			}
-			return this.filteredData;
+			const sortOrder = this.sort.order === "asc" ? 1 : -1;
+			// Transformation de Schwartzian : pré-calculer les valeurs une seule fois
+			return this.filteredData
+				.map((item) => ({
+					item,
+					value: this.getDataValue(item, this.sort.key),
+				}))
+				.sort((a, b) => {
+					const aValue = a.value;
+					const bValue = b.value;
+					
+					// Gérer les valeurs undefined
+					if (aValue === undefined && bValue === undefined) {
+						return 0;
+					}
+					if (aValue === undefined) {
+						return 1;
+					}
+					if (bValue === undefined) {
+						return -1;
+					}
+					
+					// Comparaison typée appropriée
+					let comparison = 0;
+					if (typeof aValue === "string" && typeof bValue === "string") {
+						comparison = aValue.localeCompare(bValue, undefined, { numeric: true });
+					} else if (typeof aValue === "number" && typeof bValue === "number") {
+						comparison = aValue - bValue;
+					} else {
+						comparison = aValue > bValue ? 1 : (aValue < bValue ? -1 : 0);
+					}
+					
+					return comparison * sortOrder;
+				})
+				.map((decorated) => decorated.item);
 		},
 		mergedCss() {
 			// Merges the default CSS with the provided tableauCss prop
@@ -295,6 +285,43 @@ export default {
 		},
 	},
 	methods: {
+		getDataValue(row, labelKey) {
+			const label = this.labels.find((l) => l.key === labelKey);
+			if (!label) {
+				return row?.[labelKey];
+			}
+			if (label.type === "link-list") {
+				return Object.values(this.storeData[label.storeLinkId]?.[row[label.sourceKey]] || {}).map((linkedItem) => {
+					let printedRessource = "";
+					label.ressourcePrint.forEach((print) => {
+						if (print.from === "ressource") {
+							printedRessource += this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
+						} else if (print.from === "link") {
+							printedRessource += linkedItem?.[print.valueKey] || "";
+						} else if (print.from === "text") {
+							printedRessource += print.text || "";
+						}
+					});
+					return printedRessource;
+				});
+			} else if (label.type === "image") {
+				return this.storeData[label.storeRessourceId]?.[row[label.sourceKey]]?.[label.valueKey];
+			} else if (label.type === "buttons") {
+				return label.buttons.map((button) => {
+					if (button.condition) {
+						return {
+							...button,
+							show: this.evaluateCondition(button.condition, row) || false,
+						};
+					}
+					return { ...button, show: true };
+				});
+			} else if (label.storeRessourceId && !label.storeLinkId) {
+				return this.storeData[label.storeRessourceId]?.[row[label.sourceKey]]?.[label.valueKey];
+			} else {
+				return row?.[label.valueKey];
+			}
+		},
 		evaluateCondition(condition,rowData) {
 			try {
 				return new Function(["store","rowData"], `return ${condition}`)(this.storeData,rowData);
