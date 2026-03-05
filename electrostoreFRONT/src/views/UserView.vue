@@ -173,7 +173,7 @@ if (!authStore.isSSOUser && (authStore.user?.id_user === Number(userId.value) ||
 }
 
 const filterSession = ref([
-	{ key: "is_revoked", value: "", valueIfTrue: "true", valueIfFalse: "", preset: false,
+	{ key: "is_revoked", replaceKeyApi: "is_revoked", value: "", typeData: "bool", valueIfTrue: "true", valueIfFalse: "", preset: false,
 		type: "checkbox", label: "user.ShowExpiredAndRevokedTokens", compareMethod: "==" },
 ]);
 const labelTableauSession = ref([

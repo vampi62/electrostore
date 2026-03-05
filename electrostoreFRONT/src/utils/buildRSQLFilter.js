@@ -4,10 +4,11 @@ export function buildRSQLFilter(filters) {
 	let rsqlFilter = "";
 	for (const filter of filters) {
 		if (filter.value !== "") {
+			const keyApi = filter?.replaceKeyApi ? filter.replaceKeyApi : filter.key;
 			if (rsqlFilter === "") {
-				rsqlFilter = filter.key + filter.compareMethod + String(filter.value);
+				rsqlFilter = keyApi + filter.compareMethod + String(filter.value);
 			} else {
-				rsqlFilter += ";" + filter.key + filter.compareMethod + String(filter.value);
+				rsqlFilter += ";" + keyApi + filter.compareMethod + String(filter.value);
 			}
 		}
 	}

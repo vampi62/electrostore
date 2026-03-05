@@ -152,7 +152,6 @@ export default {
 			return Object.values(this.storeData[0]).filter((element) => {
 				return this.filters.every((f) => {
 					if (f.value !== "" && f.value !== null && f.value !== undefined) {
-						//const elementValue = element[f.key];
 						const elementValue = this.getDataValue(element, f.key);
 						switch (f.compareMethod) {
 						case "==":
