@@ -43,7 +43,7 @@ const projetTypeStatus = ref({ [ProjetStatus.NotStarted]: t("projets.Status0"), 
 	[ProjetStatus.Cancelled]: t("projets.Status4"), [ProjetStatus.Archived]: t("projets.Status5") });
 
 const filter = ref([
-	{ key: "status_projet", value: "", type: "datalist", typeData: "int", options: projetTypeStatus, label: "projets.FilterStatus", compareMethod: "==" },
+	{ key: "status_projet", value: "", type: "datalist", typeData: "number", options: projetTypeStatus, label: "projets.FilterStatus", compareMethod: "==" },
 	{ key: "nom_projet", value: "", type: "text", label: "projets.FilterNom", compareMethod: "=like=" },
 	{ key: "url_projet", value: "", type: "text", label: "projets.FilterUrl", compareMethod: "=like=" },
 	{ key: "date_debut_projet", value: "", type: "date", label: "projets.FilterDate", compareMethod: "=ge=" },
