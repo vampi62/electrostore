@@ -46,7 +46,7 @@ async function fetchAllData() {
 			await itemsStore.getItemById(itemId.value);
 		} catch {
 			delete itemsStore.items[itemId.value];
-			addNotification({ message: "item.NotFound", type: "error", i18n: true });
+			addNotification({ message: t("item.NotFound"), type: "error" });
 			router.push("/inventory");
 			return;
 		}
@@ -82,9 +82,9 @@ const toggleBoxLed = async(boxId) => {
 	let storeId = itemsStore.itemBoxs[itemId.value][boxId]["box"].id_store;
 	try {
 		await storesStore.showBoxById(storeId, boxId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
-		addNotification({ message: "item.BoxShowSuccess", type: "success", i18n: true });
+		addNotification({ message: t("item.BoxShowSuccess"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 };
 
@@ -95,25 +95,25 @@ const itemSave = async() => {
 		createSchema().validateSync(itemsStore.itemEdition, { abortEarly: false });
 		if (itemId.value === "new") {
 			const newId = await itemsStore.createItem({ ...itemsStore.itemEdition });
-			addNotification({ message: "item.Created", type: "success", i18n: true });
+			addNotification({ message: t("item.Created"), type: "success" });
 			itemId.value = String(newId);
 			router.push("/inventory/" + itemId.value);
 		} else {
 			await itemsStore.updateItem(itemId.value, { ...itemsStore.itemEdition });
-			addNotification({ message: "item.Updated", type: "success", i18n: true });
+			addNotification({ message: t("item.Updated"), type: "success" });
 		}
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 		return;
 	}
 };
 const itemDelete = async() => {
 	try {
 		await itemsStore.deleteItem(itemId.value);
-		addNotification({ message: "item.Deleted", type: "success", i18n: true });
+		addNotification({ message: t("item.Deleted"), type: "success" });
 		router.push("/inventory");
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 	itemDeleteModalShow.value = false;
 };
@@ -131,20 +131,20 @@ const boxSave = async(box) => {
 		try {
 			schemaBox.validateSync(box.tmp, { abortEarly: false });
 			await itemsStore.updateItemBox(itemId.value, box.tmp.id_box, box.tmp);
-			addNotification({ message: "item.BoxUpdated", type: "success", i18n: true });
+			addNotification({ message: t("item.BoxUpdated"), type: "success" });
 			box.tmp = null;
 		} catch (e) {
-			addNotification({ message: e, type: "error", i18n: false });
+			addNotification({ message: e, type: "error" });
 			return;
 		}
 	} else {
 		try {
 			createSchema().validateSync(box.tmp, { abortEarly: false });
 			await itemsStore.createItemBox(itemId.value, box.tmp);
-			addNotification({ message: "item.BoxAdded", type: "success", i18n: true });
+			addNotification({ message: t("item.BoxAdded"), type: "success" });
 			box.tmp = null;
 		} catch (e) {
-			addNotification({ message: e, type: "error", i18n: false });
+			addNotification({ message: e, type: "error" });
 			return;
 		}
 	}
@@ -166,10 +166,10 @@ const documentAdd = async() => {
 	try {
 		schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
 		await itemsStore.createDocument(itemId.value, documentModalData.value);
-		addNotification({ message: "item.DocumentAdded", type: "success", i18n: true });
+		addNotification({ message: t("item.DocumentAdded"), type: "success" });
 		documentAddModalShow.value = false;
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 		return;
 	}
 };
@@ -177,18 +177,18 @@ const documentEdit = async(row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		await itemsStore.updateDocument(itemId.value, row.id_item_document, row);
-		addNotification({ message: "item.DocumentUpdated", type: "success", i18n: true });
+		addNotification({ message: t("item.DocumentUpdated"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 		return;
 	}
 };
 const documentDelete = async() => {
 	try {
 		await itemsStore.deleteDocument(itemId.value, documentModalData.value.id_item_document);
-		addNotification({ message: "item.DocumentDeleted", type: "success", i18n: true });
+		addNotification({ message: t("item.DocumentDeleted"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 	documentDeleteModalShow.value = false;
 };
@@ -199,9 +199,9 @@ const documentDownload = async(fileContent) => {
 const documentView = async(fileContent) => {
 	const file = await itemsStore.downloadDocument(itemId.value, fileContent.id_item_document);
 	if (viewFile(file, { keyName: fileContent.name_item_document, keyType: fileContent.type_item_document })) {
-		addNotification({ message: "item.DocumentOpenInNewTab", type: "success", i18n: true });
+		addNotification({ message: t("item.DocumentOpenInNewTab"), type: "success" });
 	} else {
-		addNotification({ message: "item.DocumentNotSupported", type: "error", i18n: true });
+		addNotification({ message: t("item.DocumentNotSupported"), type: "error" });
 	}
 };
 
@@ -216,7 +216,7 @@ const imageSelectOpenModal = () => {
 		return;
 	}
 	if (Object.keys(itemsStore.images[itemId.value]).length === 0) {
-		addNotification({ message: "item.ImageEmpty", type: "error", i18n: true });
+		addNotification({ message: t("item.ImageEmpty"), type: "error" });
 		return;
 	}
 	if (itemsStore.images[itemId.value]) {
@@ -234,18 +234,18 @@ const imageDeleteOpenModal = (doc) => {
 const imageAdd = async() => {
 	try {
 		await itemsStore.createImage(itemId.value, imageModalData.value);
-		addNotification({ message: "item.ImageAdded", type: "success", i18n: true });
+		addNotification({ message: t("item.ImageAdded"), type: "success" });
 		imageAddModalShow.value = false;
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 };
 const imageDelete = async() => {
 	try {
 		await itemsStore.deleteImage(itemId.value, imageModalData.value.id_img);
-		addNotification({ message: "item.ImageDeleted", type: "success", i18n: true });
+		addNotification({ message: t("item.ImageDeleted"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 	imageDeleteModalShow.value = false;
 };
@@ -254,7 +254,7 @@ const imageDownload = async(imageContent) => {
 		await itemsStore.showImageById(itemId.value, imageContent.id_img);
 	}
 	if (!itemsStore.imagesURL[imageContent.id_img]) {
-		addNotification({ message: "item.ImageDownloadError", type: "error", i18n: true });
+		addNotification({ message: t("item.ImageDownloadError"), type: "error" });
 		return;
 	}
 	downloadFile(itemsStore.imagesURL[imageContent.id_img], { keyName: imageContent.nom_img, keyType: "image/png" });
@@ -267,17 +267,17 @@ const filterTag = ref([
 function tagSave(id_tag) {
 	try {
 		itemsStore.createItemTag(itemId.value,  { id_tag: id_tag });
-		addNotification({ message: "item.TagAdded", type: "success", i18n: true });
+		addNotification({ message: t("item.TagAdded"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 }
 function tagDelete(id_tag) {
 	try {
 		itemsStore.deleteItemTag(itemId.value, id_tag);
-		addNotification({ message: "item.TagDeleted", type: "success", i18n: true });
+		addNotification({ message: t("item.TagDeleted"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 }
 
@@ -349,14 +349,14 @@ const labelTableauModalTag = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			condition: "!store[1]?.[rowData.id_tag]",
+			showCondition: "!store[1]?.[rowData.id_tag]",
 			action: (row) => tagSave(row.id_tag),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
-			condition: "store[1]?.[rowData.id_tag]",
+			showCondition: "store[1]?.[rowData.id_tag]",
 			action: (row) => tagDelete(row.id_tag),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
@@ -370,7 +370,7 @@ const labelTableauDocument = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			condition: "!rowData.tmp",
+			showCondition: "!rowData.tmp",
 			action: (row) => {
 				row.tmp = { ...row };
 			},
@@ -379,7 +379,7 @@ const labelTableauDocument = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-times",
-			condition: "rowData.tmp",
+			showCondition: "rowData.tmp",
 			action: (row) => {
 				row.tmp = null;
 			},
@@ -388,7 +388,7 @@ const labelTableauDocument = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			condition: "rowData.tmp",
+			showCondition: "rowData.tmp",
 			action: (row) => documentEdit(row.tmp),
 			class: "text-green-500 cursor-pointer hover:text-green-600",
 			animation: true,
@@ -416,14 +416,14 @@ const labelTableauDocument = ref([
 	] },
 ]);
 const labelTableauBox = ref([
-	{ label: "item.BoxId", sortable: true, key: "id_box", valueKey: "id_box", type: "text" },
+	{ label: "item.BoxId", sortable: true, key: "id_box", valueKey: "id_box", type: "number" },
 	{ label: "item.BoxQuantity", sortable: true, key: "qte_item_box", valueKey: "qte_item_box", type: "number", canEdit: true },
 	{ label: "item.BoxMaxThreshold", sortable: true, key: "seuil_max_item_item_box", valueKey: "seuil_max_item_item_box", type: "number", canEdit: true },
 	{ label: "item.BoxActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			condition: "!rowData.tmp",
+			showCondition: "!rowData.tmp",
 			action: (row) => {
 				row.tmp = { ...row };
 			},
@@ -432,7 +432,7 @@ const labelTableauBox = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			condition: "rowData.tmp",
+			showCondition: "rowData.tmp",
 			action: (row) => boxSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
@@ -440,7 +440,7 @@ const labelTableauBox = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-times",
-			condition: "rowData.tmp",
+			showCondition: "rowData.tmp",
 			action: (row) => {
 				row.tmp = null;
 			},
@@ -540,7 +540,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:loading="itemsStore.documentsLoading"
 					:total-count="Number(itemsStore.documentsTotalCount[itemId])"
 					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getDocumentByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
-					:tableau-css="{ component: 'max-h-64' }"
+					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>

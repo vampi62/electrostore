@@ -6,7 +6,11 @@
 		</span>
 	</template>
 	<template v-else>
-		<button @click="action" :class="button.class" class="m-1">
+		<button 
+			@click="action" 
+			:class="[button.class, { 'disabled-button': disabled }]" 
+			:disabled="disabled"
+			class="m-1">
 			<span v-if="button.icon">
 				<font-awesome-icon :icon="button.icon" />
 				<span v-if="button.label" class="mr-2"></span>
@@ -30,9 +34,16 @@ export default {
 			type: Object,
 			required: true,
 		},
+		disabled: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	methods: {
 		async action() {
+			if (this.disabled) {
+				return;
+			}
 			this.loading = true;
 			await this.button.action(this.row);
 			this.loading = false;
@@ -45,3 +56,15 @@ export default {
 	},
 };
 </script>
+
+<style scoped>
+.disabled-button {
+	background-color: #9ca3af !important;
+	cursor: not-allowed !important;
+	opacity: 0.6;
+}
+
+.disabled-button:hover {
+	background-color: #9ca3af !important;
+}
+</style>

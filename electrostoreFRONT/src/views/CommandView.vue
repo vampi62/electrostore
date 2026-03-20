@@ -252,7 +252,7 @@ const labelTableauDocument = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			condition: "!rowData.tmp",
+			showCondition: "!rowData.tmp",
 			action: (row) => {
 				row.tmp = { ...row };
 			},
@@ -261,7 +261,7 @@ const labelTableauDocument = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-times",
-			condition: "rowData.tmp",
+			showCondition: "rowData.tmp",
 			action: (row) => {
 				row.tmp = null;
 			},
@@ -270,7 +270,7 @@ const labelTableauDocument = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			condition: "rowData.tmp",
+			showCondition: "rowData.tmp",
 			action: (row) => documentEdit(row.tmp),
 			class: "text-green-500 cursor-pointer hover:text-green-600",
 			animation: true,
@@ -307,7 +307,7 @@ const labelTableauItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			condition: "!rowData.tmp",
+			showCondition: "!rowData.tmp",
 			action: (row) => {
 				row.tmp = { ...row };
 			},
@@ -317,7 +317,7 @@ const labelTableauItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			condition: "rowData.tmp",
+			showCondition: "rowData.tmp",
 			action: (row) => itemSave(row),
 			type: "button",
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
@@ -326,7 +326,7 @@ const labelTableauItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-times",
-			condition: "rowData.tmp",
+			showCondition: "rowData.tmp",
 			action: (row) => {
 				row.tmp = null;
 			},
@@ -356,7 +356,7 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
-			condition: "store[1]?.[rowData.id_item] === undefined && !rowData.tmp",
+			showCondition: "store[1]?.[rowData.id_item] === undefined && !rowData.tmp",
 			action: (row) => {
 				row.tmp = { prix_command_item: 1, qte_command_item: 1, id_item: row.id_item };
 			},
@@ -365,7 +365,7 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			condition: "store[1]?.[rowData.id_item] && !rowData.tmp",
+			showCondition: "store[1]?.[rowData.id_item] && !rowData.tmp",
 			action: (row) => {
 				row.tmp = { ...row };
 			},
@@ -374,7 +374,7 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			condition: "rowData.tmp",
+			showCondition: "rowData.tmp",
 			action: (row) => itemSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
@@ -382,7 +382,7 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-times",
-			condition: "rowData.tmp",
+			showCondition: "rowData.tmp",
 			action: (row) => {
 				row.tmp = null;
 			},
@@ -391,7 +391,7 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
-			condition: "store[1]?.[rowData.id_item]",
+			showCondition: "store[1]?.[rowData.id_item]",
 			action: (row) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,

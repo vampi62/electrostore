@@ -33,7 +33,7 @@ const tableauLabel = ref([
 	{ label: "items.Description", sortable: false, key: "description_item", valueKey: "description_item", type: "text" },
 
 	{ label: "items.Tags", sortable: false, key: "ItemsTags.Tag.nom_tag", sourceKey: "id_item", type: "link-list", 
-		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_item", storeLinkKeyJoinRessource: "id_tag", valueKey: "nom_tag",
+		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_item", storeLinkKeyJoinRessource: "id_tag",
 		ressourcePrint: [{ from: "ressource", valueKey: "nom_tag" }] },
 
 	{ label: "items.Img", sortable: false, key: "id_img", sourceKey: "id_img", type: "image", 

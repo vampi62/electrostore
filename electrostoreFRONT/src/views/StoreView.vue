@@ -251,10 +251,12 @@ function tagDelete(id_tag) {
 }
 
 const labelTableauBoxItem = ref([
-	{ label: "store.ItemName", sortable: true, key: "reference_name_item", type: "text", store: 1, keyStore: "id_item" },
-	{ label: "store.ItemQuantity", sortable: true, key: "qte_item_box", type: "number" },
-	{ label: "store.ItemMaxThreshold", sortable: true, key: "seuil_max_item_item_box", type: "number" },
-	{ label: "store.ItemImg", sortable: false, key: "id_img", type: "image", idStoreImg: 2, store: 1, keyStore: "id_item" },
+	{ label: "store.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text", 
+		storeRessourceId: 1,  valueKey: "reference_name_item" },
+	{ label: "store.ItemQuantity", sortable: true, key: "qte_item_box", valueKey: "qte_item_box", type: "number" },
+	{ label: "store.ItemMaxThreshold", sortable: true, key: "seuil_max_item_item_box", valueKey: "seuil_max_item_item_box", type: "number" },
+	{ label: "store.ItemImg", sortable: false, key: "Item.Img.id_img", sourceKey: "id_item", type: "image",
+		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_item", storeLinkKeyJoinRessource: "id_img", valueKey: "id_img" },
 ]);
 const metaTableauBoxItem = ref({
 	key: "id_item",
@@ -262,14 +264,16 @@ const metaTableauBoxItem = ref({
 	expand: ["item"],
 });
 const labelTableauModalItem = ref([
-	{ label: "store.ItemName", sortable: true, key: "reference_name_item", type: "text" },
-	{ label: "store.ItemQuantity", sortable: true, key: "qte_item_box", keyStore: "id_item", store: "1", type: "number", canEdit: true },
-	{ label: "store.ItemMaxThreshold", sortable: true, key: "seuil_max_item_item_box", keyStore: "id_item", store: "1", type: "number", canEdit: true },
+	{ label: "store.ItemName", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
+	{ label: "store.ItemQuantity", sortable: true, key: "ItemsBoxs.qte_item_box", sourceKey: "id_item", type: "number", canEdit: true, 
+		storeRessourceId: 1, valueKey: "qte_item_box" },
+	{ label: "store.ItemMaxThreshold", sortable: true, key: "ItemsBoxs.seuil_max_item_item_box", sourceKey: "id_item", type: "number", canEdit: true, 
+		storeRessourceId: 1, valueKey: "seuil_max_item_item_box" },
 	{ label: "store.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
-			condition: "store[1]?.[rowData.id_item] === undefined",
+			showCondition: "store[1]?.[rowData.id_item] === undefined && !rowData.tmp",
 			action: (row) => {
 				row.tmp = { qte_item_box: 0, seuil_max_item_item_box: 1, id_item: row.id_item };
 			},
@@ -278,7 +282,7 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			condition: "store[1]?.[rowData.id_item] && !rowData.tmp",
+			showCondition: "store[1]?.[rowData.id_item] && !rowData.tmp",
 			action: (row) => {
 				row.tmp = { ...row };
 			},
@@ -287,7 +291,7 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			condition: "rowData.tmp",
+			showCondition: "rowData.tmp",
 			action: (row) => itemSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
@@ -295,7 +299,7 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-times",
-			condition: "rowData.tmp",
+			showCondition: "rowData.tmp",
 			action: (row) => {
 				row.tmp = null;
 			},
@@ -304,7 +308,7 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
-			condition: "store[1]?.[rowData.id_item]",
+			showCondition: "store[1]?.[rowData.id_item]",
 			action: (row) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
@@ -318,12 +322,12 @@ const labelForm = ref([
 	{ key: "ylength_store", label: "store.YLength", type: "number", condition: "func.hasPermission([2])" },
 ]);
 const labelTableauModalTag = ref([
-	{ label: "store.TagName", sortable: true, key: "nom_tag", type: "text" },
+	{ label: "store.TagName", sortable: true, key: "nom_tag", valueKey: "nom_tag", type: "text" },
 	{ label: "store.TagActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			condition: "!store[1]?.[rowData.id_tag]",
+			showCondition: "!store[1]?.[rowData.id_tag]",
 			action: (row) => tagSave(row.id_tag),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
@@ -331,7 +335,7 @@ const labelTableauModalTag = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
-			condition: "store[1]?.[rowData.id_tag]",
+			showCondition: "store[1]?.[rowData.id_tag]",
 			action: (row) => tagDelete(row.id_tag),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
@@ -381,7 +385,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 						:store-data="[storesStore.boxItems[boxId],itemsStore.items,itemsStore.thumbnailsURL]"
 						:loading="storesStore.boxItemsLoading"
 						:total-count="Number(storesStore.boxItemsTotalCount[boxId] || 0)"
-						:fetch-function="storeId !== 'new' ? (limit, offset, expand, filter, sort, clear) => storesStore.getBoxItemByInterval(storeId, boxId, limit, offset, expand, filter, sort, clear) : undefined"
+						:fetch-function="storeId !== 'new' && boxId != null ? (limit, offset, expand, filter, sort, clear) => storesStore.getBoxItemByInterval(storeId, boxId, limit, offset, expand, filter, sort, clear) : undefined"
 						:tableau-css="{ component: 'max-h-80', tr: 'transition duration-150 ease-in-out cursor-pointer hover:bg-gray-300 even:bg-gray-100' }"
 					>
 						<template #append-row>

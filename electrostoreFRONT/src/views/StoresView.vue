@@ -28,13 +28,12 @@ const filter = ref([
 	{ key: "StoresTags.Tag.nom_tag", value: "", type: "text", label: "stores.FilterTag", compareMethod: "=like=" },
 ]);
 const tableauLabel = ref([
-	{ label: "stores.Name", sortable: true, key: "nom_store", sourceKey: "nom_store", type: "text" },
-	{ label: "stores.XLength", sortable: true, key: "xlength_store", sourceKey: "xlength_store", type: "number" },
-	{ label: "stores.YLength", sortable: true, key: "ylength_store", sourceKey: "ylength_store", type: "number" },
-	{ label: "stores.MqttName", sortable: true, key: "mqtt_name_store", sourceKey: "mqtt_name_store", type: "text" },
-
+	{ label: "stores.Name", sortable: true, key: "nom_store", valueKey: "nom_store", type: "text" },
+	{ label: "stores.XLength", sortable: true, key: "xlength_store", valueKey: "xlength_store", type: "number" },
+	{ label: "stores.YLength", sortable: true, key: "ylength_store", valueKey: "ylength_store", type: "number" },
+	{ label: "stores.MqttName", sortable: true, key: "mqtt_name_store", valueKey: "mqtt_name_store", type: "text" },
 	{ label: "stores.TagsList", sortable: false, key: "", sourceKey: "id_store", type: "link-list", 
-		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_store", storeLinkKeyJoinRessource: "id_tag", valueKey: "nom_tag",
+		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_store", storeLinkKeyJoinRessource: "id_tag",
 		ressourcePrint: [{ from: "ressource", valueKey: "nom_tag" }] },
 ]);
 const tableauMeta = ref({
