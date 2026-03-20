@@ -1,7 +1,7 @@
 <template>
 	<div class="fixed bottom-5 right-5 flex flex-col z-[1000]">
 		<Notification v-for="(notification) in notifications" :key="notification.id" :id="notification.id"
-			:message="notification.message" :type="notification.type" :i18n="notification.i18n"
+			:message="notification.message" :type="notification.type"
 			@remove="removeNotification" />
 	</div>
 </template>

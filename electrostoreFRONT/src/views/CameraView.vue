@@ -40,7 +40,7 @@ async function fetchAllData() {
 			await camerasStore.getCameraById(cameraId.value);
 		} catch {
 			delete camerasStore.cameras[cameraId.value];
-			addNotification({ message: "camera.NotFound", type: "error", i18n: true });
+			addNotification({ message: t("camera.NotFound"), type: "error" });
 			router.push("/cameras");
 			return;
 		}
@@ -85,27 +85,27 @@ const cameraSave = async() => {
 		createSchema(isChecked).validateSync(camerasStore.cameraEdition, { abortEarly: false });
 		if (cameraId.value === "new") {
 			const newId = await camerasStore.createCamera({ ...camerasStore.cameraEdition } );
-			addNotification({ message: "camera.Created", type: "success", i18n: true });
+			addNotification({ message: t("camera.Created"), type: "success" });
 			cameraId.value = String(newId);
 			router.push("/cameras/" + cameraId.value);
 		} else {
 			await camerasStore.updateCamera(cameraId.value, { ...camerasStore.cameraEdition });
 			camerasStore.getStatus(cameraId.value);
 			camerasStore.getStream(cameraId.value);
-			addNotification({ message: "camera.Updated", type: "success", i18n: true });
+			addNotification({ message: t("camera.Updated"), type: "success" });
 		}
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 		return;
 	}
 };
 const cameraDelete = async() => {
 	try {
 		await camerasStore.deleteCamera(cameraId.value);
-		addNotification({ message: "camera.Deleted", type: "success", i18n: true });
+		addNotification({ message: t("camera.Deleted"), type: "success" });
 		router.push("/cameras");
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 	cameraDeleteModalShow.value = false;
 };
