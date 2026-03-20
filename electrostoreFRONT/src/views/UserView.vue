@@ -190,7 +190,7 @@ const labelTableauSession = ref([
 		{
 			label: "user.TokenRevoke",
 			icon: "fa-solid fa-ban",
-			condition: "!rowData?.is_revoked",
+			showCondition: "!rowData?.is_revoked",
 			action: (row) => revokeToken(row.session_id),
 			class: "bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600",
 			animation: true,

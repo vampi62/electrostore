@@ -256,7 +256,7 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			condition: "!store[1]?.[rowData.id_item]",
+			showCondition: "!store[1]?.[rowData.id_item]",
 			action: (row) => itemSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
@@ -264,7 +264,7 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
-			condition: "store[1]?.[rowData.id_item]",
+			showCondition: "store[1]?.[rowData.id_item]",
 			action: (row) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
@@ -277,7 +277,7 @@ const labelTableauModalStore = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			condition: "!store[1]?.[rowData.id_store]",
+			showCondition: "!store[1]?.[rowData.id_store]",
 			action: (row) => storeSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
@@ -285,7 +285,7 @@ const labelTableauModalStore = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
-			condition: "store[1]?.[rowData.id_store]",
+			showCondition: "store[1]?.[rowData.id_store]",
 			action: (row) => storeDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
