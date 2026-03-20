@@ -14,7 +14,7 @@ const authStore = useAuthStore();
 import { UserRole } from "@/enums";
 
 if (!authStore.hasPermission([1, 2])) {
-	addNotification({ message: "vous n'avez pas la permission d'acceder a cette page", type: "error", i18n: false });
+	addNotification({ message: t("users.noAccess"), type: "error" });
 	router.push("/");
 }
 

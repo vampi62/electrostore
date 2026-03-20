@@ -24,7 +24,7 @@ const authStore = useAuthStore();
 import { UserRole } from "@/enums";
 
 if ((!authStore.hasPermission([1, 2])) && authStore.user?.id_user !== Number(userId.value)) {
-	addNotification({ message: "vous n'avez pas la permission d'acceder a cette page", type: "error", i18n: false });
+	addNotification({ message: t("user.noAccess"), type: "error" });
 	if (window.history.length > 1) {
 		router.back();
 	} else {
@@ -53,7 +53,7 @@ async function fetchAllData() {
 			await usersStore.getUserById(userId.value);
 		} catch {
 			delete usersStore.users[userId.value];
-			addNotification({ message: "user.NotFound", type: "error", i18n: true });
+			addNotification({ message: t("user.NotFound"), type: "error" });
 			if (window.history.length > 1) {
 				router.back();
 			} else {
@@ -90,28 +90,28 @@ const userSave = async() => {
 		createSchema(isChecked).validateSync(usersStore.userEdition, { abortEarly: false });
 		if (userId.value === "new") {
 			const newId = await usersStore.createUser({ ...usersStore.userEdition });
-			addNotification({ message: "user.Created", type: "success", i18n: true });
+			addNotification({ message: t("user.Created"), type: "success" });
 			userId.value = String(newId);
 			router.push("/users/" + userId.value);
 		} else {
 			await usersStore.updateUser(userId.value, { ...usersStore.userEdition });
-			addNotification({ message: "user.Updated", type: "success", i18n: true });
+			addNotification({ message: t("user.Updated"), type: "success" });
 		}
 		usersStore.userEdition.mdp_user = "";
 		usersStore.userEdition.confirm_mdp_user = "";
 		usersStore.userEdition.current_mdp_user = "";
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 		return;
 	}
 };
 const userDelete = async() => {
 	try {
 		await usersStore.deleteUser(userId.value);
-		addNotification({ message: "user.Deleted", type: "success", i18n: true });
+		addNotification({ message: t("user.Deleted"), type: "success" });
 		router.push("/users");
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 	userDeleteModalShow.value = false;
 };
@@ -120,9 +120,9 @@ const revokeToken = async(tokenId) => {
 	try {
 		await usersStore.updateToken(userId.value, tokenId, { "revoked_reason": "Revoked by user" });
 		usersStore.getTokenById(userId.value, tokenId);
-		addNotification({ message: "user.TokenRevoked", type: "success", i18n: true });
+		addNotification({ message: t("user.TokenRevoked"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 };
 

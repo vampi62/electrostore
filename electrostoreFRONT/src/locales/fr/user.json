@@ -1,4 +1,5 @@
 {
+	"NoAccess": "Vous n'avez pas la permission d'accéder à cette page",
 	"NotFound": "Utilisateur introuvable",
 	"FilterRole0": "Utilisateur",
 	"FilterRole1": "Modérateur",

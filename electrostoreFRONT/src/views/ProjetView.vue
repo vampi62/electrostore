@@ -47,7 +47,7 @@ async function fetchAllData() {
 			await projetsStore.getProjetById(projetId.value);
 		} catch {
 			delete projetsStore.projets[projetId.value];
-			addNotification({ message: "projet.NotFound", type: "error", i18n: true });
+			addNotification({ message: t("projet.NotFound"), type: "error" });
 			router.push("/projets");
 			return;
 		}
@@ -87,17 +87,17 @@ const filterTag = ref([
 function tagSave(id_tag) {
 	try {
 		projetsStore.createProjetTagProjet(projetId.value,  { id_projet_tag: id_tag });
-		addNotification({ message: "projet.TagAdded", type: "success", i18n: true });
+		addNotification({ message: t("projet.TagAdded"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 }
 function tagDelete(id_tag) {
 	try {
 		projetsStore.deleteProjetTagProjet(projetId.value, id_tag);
-		addNotification({ message: "projet.TagDeleted", type: "success", i18n: true });
+		addNotification({ message: t("projet.TagDeleted"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 }
 
@@ -111,25 +111,25 @@ const projetSave = async() => {
 		createSchema().validateSync(projetsStore.projetEdition, { abortEarly: false });
 		if (projetId.value === "new") {
 			const newId = await projetsStore.createProjet({ ...projetsStore.projetEdition });
-			addNotification({ message: "projet.Created", type: "success", i18n: true });
+			addNotification({ message: t("projet.Created"), type: "success" });
 			projetId.value = String(newId);
 			router.push("/projets/" + projetId.value);
 		} else {
 			await projetsStore.updateProjet(projetId.value, { ...projetsStore.projetEdition });
-			addNotification({ message: "projet.Updated", type: "success", i18n: true });
+			addNotification({ message: t("projet.Updated"), type: "success" });
 		}
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 		return;
 	}
 };
 const projetDelete = async() => {
 	try {
 		await projetsStore.deleteProjet(projetId.value);
-		addNotification({ message: "projet.Deleted", type: "success", i18n: true });
+		addNotification({ message: t("projet.Deleted"), type: "success" });
 		router.push("/projets");
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 	projetDeleteModalShow.value = false;
 };
@@ -150,10 +150,10 @@ const documentAdd = async() => {
 	try {
 		schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
 		await projetsStore.createDocument(projetId.value, documentModalData.value);
-		addNotification({ message: "projet.DocumentAdded", type: "success", i18n: true });
+		addNotification({ message: t("projet.DocumentAdded"), type: "success" });
 		documentAddModalShow.value = false;
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 		return;
 	}
 };
@@ -161,18 +161,18 @@ const documentEdit = async(row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		await projetsStore.updateDocument(projetId.value, row.id_projet_document, row);
-		addNotification({ message: "projet.DocumentUpdated", type: "success", i18n: true });
+		addNotification({ message: t("projet.DocumentUpdated"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 		return;
 	}
 };
 const documentDelete = async() => {
 	try {
 		await projetsStore.deleteDocument(projetId.value, documentModalData.value.id_projet_document);
-		addNotification({ message: "projet.DocumentDeleted", type: "success", i18n: true });
+		addNotification({ message: t("projet.DocumentDeleted"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 	documentDeleteModalShow.value = false;
 };
@@ -183,9 +183,9 @@ const documentDownload = async(fileContent) => {
 const documentView = async(fileContent) => {
 	const file = await projetsStore.downloadDocument(projetId.value, fileContent.id_projet_document);
 	if (viewFile(file, { keyName: fileContent.name_projet_document, keyType: fileContent.type_projet_document })) {
-		addNotification({ message: "projet.DocumentOpenInNewTab", type: "success", i18n: true });
+		addNotification({ message: t("projet.DocumentOpenInNewTab"), type: "success" });
 	} else {
-		addNotification({ message: "projet.DocumentNotSupported", type: "error", i18n: true });
+		addNotification({ message: t("projet.DocumentNotSupported"), type: "error" });
 	}
 };
 
@@ -196,20 +196,20 @@ const itemSave = async(item) => {
 		try {
 			schemaItem.validateSync(item.tmp, { abortEarly: false });
 			await projetsStore.updateItem(projetId.value, item.tmp.id_item, item.tmp);
-			addNotification({ message: "projet.ItemUpdated", type: "success", i18n: true });
+			addNotification({ message: t("projet.ItemUpdated"), type: "success" });
 			item.tmp = null;
 		} catch (e) {
-			addNotification({ message: e, type: "error", i18n: false });
+			addNotification({ message: e, type: "error" });
 			return;
 		}
 	} else {
 		try {
 			schemaItem.validateSync(item.tmp, { abortEarly: false });
 			await projetsStore.createItem(projetId.value, item.tmp);
-			addNotification({ message: "projet.ItemAdded", type: "success", i18n: true });
+			addNotification({ message: t("projet.ItemAdded"), type: "success" });
 			item.tmp = null;
 		} catch (e) {
-			addNotification({ message: e, type: "error", i18n: false });
+			addNotification({ message: e, type: "error" });
 			return;
 		}
 	}
@@ -217,9 +217,9 @@ const itemSave = async(item) => {
 const itemDelete = async(item) => {
 	try {
 		await projetsStore.deleteItem(projetId.value, item.id_item);
-		addNotification({ message: "projet.ItemDeleted", type: "success", i18n: true });
+		addNotification({ message: t("projet.ItemDeleted"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 };
 

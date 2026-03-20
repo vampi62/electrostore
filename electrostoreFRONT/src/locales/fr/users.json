@@ -1,4 +1,5 @@
 {
+	"noAccess": "vous n'avez pas la permission d'acceder a cette page",
 	"FilterName": "Nom",
 	"FilterFirstName": "Prénom",
 	"FilterEmail": "Email",

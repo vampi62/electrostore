@@ -6,12 +6,7 @@
 		<div class="flex justify-between items-center p-2.5">
 			<div class="flex flex-col justify-between">
 				<div class="font-bold mb-2">{{ type }}</div>
-				<template v-if="i18n">
-					<div class="text-sm" >{{ $t(message) }}</div>
-				</template>
-				<template v-else>
-					<div class="text-sm">{{ message }}</div>
-				</template>
+				<div class="text-sm">{{ message }}</div>
 			</div>
 			<template v-if="type == 'success'">
 				<svg xmlns="http://www.w3.org/2000/svg" fill="#4caf50" height="24"
@@ -49,10 +44,6 @@ export default {
 		type: {
 			type: String,
 			default: "info", // 'info', 'success', 'error', etc.
-		},
-		i18n: {
-			type: Boolean,
-			default: false,
 		},
 		id: {
 			type: [String, Number],

@@ -41,7 +41,7 @@ async function fetchAllData() {
 			await projetTagsStore.getProjetTagById(projetTagId.value);
 		} catch {
 			delete projetTagsStore.projetTags[projetTagId.value];
-			addNotification({ message: "projetTag.NotFound", type: "error", i18n: true });
+			addNotification({ message: t("projetTag.NotFound"), type: "error" });
 			router.push("/projet-tags");
 			return;
 		}
@@ -67,25 +67,25 @@ const projetTagSave = async() => {
 		createSchema().validateSync(projetTagsStore.projetTagEdition, { abortEarly: false });
 		if (projetTagId.value === "new") {
 			const newId = await projetTagsStore.createProjetTag({ ...projetTagsStore.projetTagEdition });
-			addNotification({ message: "projetTag.Created", type: "success", i18n: true });
+			addNotification({ message: t("projetTag.Created"), type: "success" });
 			projetTagId.value = String(newId);
 			router.push("/projet-tags/" + projetTagId.value);
 		} else {
 			await projetTagsStore.updateProjetTag(projetTagId.value, { ...projetTagsStore.projetTagEdition });
-			addNotification({ message: "projetTag.Updated", type: "success", i18n: true });
+			addNotification({ message: t("projetTag.Updated"), type: "success" });
 		}
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 		return;
 	}
 };
 const projetTagDelete = async() => {
 	try {
 		await projetTagsStore.deleteProjetTag(projetTagId.value);
-		addNotification({ message: "projetTag.Deleted", type: "success", i18n: true });
+		addNotification({ message: t("projetTag.Deleted"), type: "success" });
 		router.push("/projet-tags");
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 	projetTagDeleteModalShow.value = false;
 };
@@ -111,18 +111,18 @@ async function fetchAllProjets() {
 const projetSave = async(projet) => {
 	try {
 		await projetTagsStore.createProjetTagProjet(projetTagId.value, projet);
-		addNotification({ message: "projetTag.ProjetAdded", type: "success", i18n: true });
+		addNotification({ message: t("projetTag.ProjetAdded"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 		return;
 	}
 };
 const projetDelete = async(projet) => {
 	try {
 		await projetTagsStore.deleteProjetTagProjet(projetTagId.value, projet.id_projet);
-		addNotification({ message: "projetTag.ProjetDeleted", type: "success", i18n: true });
+		addNotification({ message: t("projetTag.ProjetDeleted"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 };
 

@@ -42,7 +42,7 @@ async function fetchAllData() {
 			await tagsStore.getTagById(tagId.value);
 		} catch {
 			delete tagsStore.tags[tagId.value];
-			addNotification({ message: "tag.NotFound", type: "error", i18n: true });
+			addNotification({ message: t("tag.NotFound"), type: "error" });
 			router.push("/tags");
 			return;
 		}
@@ -68,25 +68,25 @@ const tagSave = async() => {
 		createSchema().validateSync(tagsStore.tagEdition, { abortEarly: false });
 		if (tagId.value === "new") {
 			const newId = await tagsStore.createTag({ ...tagsStore.tagEdition });
-			addNotification({ message: "tag.Created", type: "success", i18n: true });
+			addNotification({ message: t("tag.Created"), type: "success" });
 			tagId.value = String(newId);
 			router.push("/tags/" + tagId.value);
 		} else {
 			await tagsStore.updateTag(tagId.value, { ...tagsStore.tagEdition });
-			addNotification({ message: "tag.Updated", type: "success", i18n: true });
+			addNotification({ message: t("tag.Updated"), type: "success" });
 		}
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 		return;
 	}
 };
 const tagDelete = async() => {
 	try {
 		await tagsStore.deleteTag(tagId.value);
-		addNotification({ message: "tag.Deleted", type: "success", i18n: true });
+		addNotification({ message: t("tag.Deleted"), type: "success" });
 		router.push("/tags");
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 	tagDeleteModalShow.value = false;
 };
@@ -112,18 +112,18 @@ async function fetchAllItems() {
 const itemSave = async(item) => {
 	try {
 		await tagsStore.createTagItem(tagId.value, item);
-		addNotification({ message: "tag.ItemAdded", type: "success", i18n: true });
+		addNotification({ message: t("tag.ItemAdded"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 		return;
 	}
 };
 const itemDelete = async(item) => {
 	try {
 		await tagsStore.deleteTagItem(tagId.value, item.id_item);
-		addNotification({ message: "tag.ItemDeleted", type: "success", i18n: true });
+		addNotification({ message: t("tag.ItemDeleted"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 };
 
@@ -152,18 +152,18 @@ async function fetchAllStores() {
 const storeSave = async(store) => {
 	try {
 		await tagsStore.createTagStore(tagId.value, store);
-		addNotification({ message: "tag.StoreAdded", type: "success", i18n: true });
+		addNotification({ message: t("tag.StoreAdded"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 		return;
 	}
 };
 const storeDelete = async(store) => {
 	try {
 		await tagsStore.deleteTagStore(tagId.value, store.id_store);
-		addNotification({ message: "tag.StoreDeleted", type: "success", i18n: true });
+		addNotification({ message: t("tag.StoreDeleted"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 };
 
@@ -176,18 +176,18 @@ const boxModalShow = ref(false);
 const boxSave = async(box) => {
 	try {
 		await tagsStore.createTagBox(tagId.value, box);
-		addNotification({ message: "tag.BoxAdded", type: "success", i18n: true });
+		addNotification({ message: t("tag.BoxAdded"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 		return;
 	}
 };
 const boxDelete = async(box) => {
 	try {
 		await tagsStore.deleteTagBox(tagId.value, box.id_box);
-		addNotification({ message: "tag.BoxDeleted", type: "success", i18n: true });
+		addNotification({ message: t("tag.BoxDeleted"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 };
 

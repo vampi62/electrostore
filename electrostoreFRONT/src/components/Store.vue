@@ -132,6 +132,7 @@
 
 <script>
 import { inject } from "vue";
+import { useI18n } from "vue-i18n";
 export default {
 	name: "Tableau",
 	mounted() {
@@ -350,17 +351,17 @@ export default {
 		async toggleLed(ledId) {
 			try {
 				await this.storeFunc.showLedById(ledId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
-				this.addNotification({ message: "store.LedShowSuccess", type: "success", i18n: true });
+				this.addNotification({ message: this.t("store.LedShowSuccess"), type: "success" });
 			} catch (e) {
-				this.addNotification({ message: e, type: "error", i18n: false });
+				this.addNotification({ message: e, type: "error" });
 			}
 		},
 		async toggleBoxLed(boxId) {
 			try {
 				await this.storeFunc.showBoxById(boxId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
-				this.addNotification({ message: "store.BoxShowSuccess", type: "success", i18n: true });
+				this.addNotification({ message: this.t("store.BoxShowSuccess"), type: "success" });
 			} catch (e) {
-				this.addNotification({ message: e, type: "error", i18n: false });
+				this.addNotification({ message: e, type: "error" });
 			}
 		},
 		startDragging(element, type, direction = null) {
@@ -466,7 +467,7 @@ export default {
 				try {
 					Object.values(this.boxEdition).forEach((box) => {
 						if (this.$refs["BOX" + box.id_box][0].classList.contains("conflict")) {
-							this.addNotification({ message: "store.BoxConflict", type: "error", i18n: true });
+							this.addNotification({ message: this.t("store.BoxConflict"), type: "error" });
 							throw BreakException;
 						}
 					});
@@ -486,7 +487,7 @@ export default {
 				}
 			});
 			if (errorLed) {
-				this.addNotification({ message: "store.LedOutOfGrid", type: "error", i18n: true });
+				this.addNotification({ message: this.t("store.LedOutOfGrid"), type: "error" });
 				return false;
 			}
 			let errorBox = false;
@@ -498,7 +499,7 @@ export default {
 				}
 			});
 			if (errorBox) {
-				this.addNotification({ message: "store.BoxOutOfGrid", type: "error", i18n: true });
+				this.addNotification({ message: this.t("store.BoxOutOfGrid"), type: "error" });
 				return false;
 			}
 			return true;
@@ -517,9 +518,11 @@ export default {
 		},
 	},
 	setup() {
-		const { addNotification } = inject("useNotification"); 
+		const { addNotification } = inject("useNotification");
+		const { t } = useI18n();
 		return {
 			addNotification,
+			t,
 		};
 	},
 	data() {
