@@ -1,7 +1,7 @@
 import { fileURLToPath, URL } from "node:url";
 import { mergeConfig, defineConfig } from "vite";
 import { configDefaults } from "vitest/config";
-import viteConfig from "../../electrostoreFRONT/vite.config";
+import viteConfig from "../../electrostoreFRONT/vite.config.mjs";
 import path from "path";
 
 // Get absolute paths
@@ -16,7 +16,7 @@ export default mergeConfig(
 			environment: "jsdom",
 			exclude: [...configDefaults.exclude, "e2e/*"],
 			root: fileURLToPath(new URL("./", import.meta.url)),
-			include: ["./**/*.spec.js"],
+			include: ["./**/*.spec.{js,mjs}"],
 			transformMode: {
 				web: [/\.[jt]sx$/],
 			},
