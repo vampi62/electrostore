@@ -13,8 +13,6 @@
 	"VModalCommentaireUpdateSuccess": "Commentaire mis à jour avec succès",
 	"VModalCommentaireDeleteSuccess": "Commentaire supprimé avec succès",
 
-	"VModalTableauImageLoading": "Chargement de l'image...",
-
 	"VModalAddFileCancel": "Annuler",
 	"VModalAddFileAdd": "Ajouter",
 

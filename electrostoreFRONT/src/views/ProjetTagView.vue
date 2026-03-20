@@ -167,7 +167,7 @@ const labelTableauModalProjet = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			condition: "!store[1]?.[rowData.id_projet]",
+			showCondition: "!store[1]?.[rowData.id_projet]",
 			action: (row) => projetSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
@@ -175,7 +175,7 @@ const labelTableauModalProjet = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
-			condition: "store[1]?.[rowData.id_projet]",
+			showCondition: "store[1]?.[rowData.id_projet]",
 			action: (row) => projetDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,

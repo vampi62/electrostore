@@ -4,7 +4,7 @@
 		:class="[css, column.type == 'text' ? 'text-left' : 'text-center']"
 	>
 		<template v-if="column.type == 'bool'">
-			<template v-if="getDataValue(row, column)">
+			<template v-if="evaluateCondition(column.condition, row)">
 				<font-awesome-icon icon="fa-solid fa-check" class="text-green-500" />
 			</template>
 			<template v-else>
@@ -19,14 +19,29 @@
 				</li>
 			</ul>
 		</template>
+		<template v-else-if="column.type == 'link-data'">
+			{{ getDataLinkValue(row,column) }}
+		</template>
 		<template v-else-if="column.type == 'image'">
 			<div class="flex justify-center items-center">
-				<template v-if="row?.[column.sourceKey]">
+				<template v-if="column.storeLinkId && storeData[column.storeLinkId]?.[row[column.sourceKey]]?.[column.storeLinkKeyJoinRessource] !== null">
+					<img v-if="storeData[column.storeRessourceId]?.[storeData[column.storeLinkId]?.[row[column.sourceKey]]?.[column.storeLinkKeyJoinRessource]]"
+						:src="storeData[column.storeRessourceId]?.[storeData[column.storeLinkId]?.[row[column.sourceKey]]?.[column.storeLinkKeyJoinRessource]]"
+						class="w-16 h-16 object-cover rounded" :alt="`Id ${row[column.key]}`" />
+					<span v-else class="w-16 h-16 object-cover rounded">
+						<div class="loading-spinner">
+							<div class="w-16 h-16 spinner-ring"></div>
+						</div>
+					</span>
+				</template>
+				<template v-else-if="!column.storeLinkId && row?.[column.sourceKey]">
 					<img v-if="storeData[column.storeRessourceId]?.[row[column.sourceKey]]"
 						:src="storeData[column.storeRessourceId]?.[row[column.sourceKey]]"
 						class="w-16 h-16 object-cover rounded" :alt="`Id ${row[column.key]}`" />
 					<span v-else class="w-16 h-16 object-cover rounded">
-						{{ $t('components.VModalTableauImageLoading') }}
+						<div class="loading-spinner">
+							<div class="w-16 h-16 spinner-ring"></div>
+						</div>
 					</span>
 				</template>
 				<template v-else>
@@ -37,8 +52,8 @@
 		<template v-else-if="column.type == 'buttons'">
 			<div class="flex justify-center items-center">
 				<template v-for="(button, buttonIndex) in column.buttons" :key="buttonIndex">
-					<template v-if="!button?.condition || evaluateCondition(button.condition, row)">
-						<TableauActionButton :button="button" :row="row" />
+					<template v-if="!button?.showCondition || evaluateCondition(button.showCondition, row)">
+						<TableauActionButton :button="button" :row="row" :disabled="button?.enableCondition && !evaluateCondition(button.enableCondition)" />
 					</template>
 				</template>
 			</div>
@@ -46,10 +61,10 @@
 		<template v-else-if="column.canEdit && row?.tmp">
 			<Form :validation-schema="schema" v-slot="{ errors }">
 				<Field
-					:name="column.key"
-					v-model="row.tmp[column.key]"
+					:name="column.valueKey"
+					v-model="row.tmp[column.valueKey]"
 					:type="column.type"
-					:class="['w-20 p-2 border rounded-lg', errors[column.key] ? 'border-red-500' : '']"
+					:class="['w-20 p-2 border rounded-lg', errors[column.valueKey] ? 'border-red-500' : '']"
 					:placeholder="column.placeholder || ''"
 					:options="column.options || []"
 				/>
@@ -140,8 +155,25 @@ export default {
 				return printedRessource;
 			});
 		},
+		getDataLinkValue(row, label) {
+			const linkedItem = this.storeData[label.storeLinkId]?.[row[label.sourceKey]];
+			let printedRessource = "";
+			label.ressourcePrint.forEach((print) => {
+				if (print.from === "ressource") {
+					printedRessource += this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
+				} else if (print.from === "link") {
+					printedRessource += linkedItem?.[print.valueKey] || "";
+				} else if (print.from === "text") {
+					printedRessource += print.text || "";
+				}
+			});
+			return printedRessource;
+		},
 		getDataValue(row, label) {
-			if (label.storeRessourceId && !label.storeLinkId) {
+			if (label.storeRessourceId && label.storeLinkId) {
+				const linkedItem = this.storeData[label.storeLinkId]?.[row[label.sourceKey]];
+				return this.storeData[label.storeRessourceId]?.[linkedItem?.[label.storeLinkKeyJoinRessource]]?.[label.valueKey];
+			} else if (label.storeRessourceId && !label.storeLinkId) {
 				return this.storeData[label.storeRessourceId]?.[row[label.sourceKey]]?.[label.valueKey];
 			} else {
 				return row?.[label.valueKey];
@@ -150,3 +182,23 @@ export default {
 	},
 };
 </script>
+
+<style scoped>
+.loading-spinner {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.spinner-ring {
+	border: 3px solid #f3f3f3;
+	border-top: 3px solid #3b82f6;
+	border-radius: 50%;
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
+</style>
