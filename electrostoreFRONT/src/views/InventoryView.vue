@@ -24,7 +24,10 @@ const filter = ref([
 	{ key: "friendly_name_item", value: "", type: "text", label: "items.FilterFriendlyName", compareMethod: "=like=" },
 	{ key: "seuil_min_item", value: "", type: "number", label: "items.FilterSeuilMin", compareMethod: "=ge=" },
 	{ key: "seuil_min_item", value: "", type: "number", label: "items.FilterSeuilMax", compareMethod: "=le=" },
-	{ key: "ItemsTags.Tag.nom_tag", value: "", type: "text", label: "items.FilterTag", compareMethod: "=like=" },
+	{ key: "ItemsTags.Tag.nom_tag", value: "", type: "datalist", label: "items.FilterTag", compareMethod: "=like=",
+		fetchOptions: (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear),
+		storeData: tagsStore.tags, storeKey: "nom_tag",
+	},
 ]);
 const tableauLabel = ref([
 	{ label: "items.Name", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },

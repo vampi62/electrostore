@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<div v-if="type !== 'hidden'">
 		<label v-if="label.length > 0" :for="`filter-input-${this.$.uid}`" class="text-sm text-gray-700 mr-2">{{ $t(label) }}</label>
 		<div>
 		<template v-if="type === 'select'">
@@ -10,7 +10,7 @@
 				@change="$emit('updateText', $event.target.value)">
 				<option value=""></option>
 				<template v-if="options">
-					<option v-for="[index, option] in options" :key="index" :value="index" :selected="preset === index">{{ option }}
+					<option v-for="option in filterOption" :key="option.id" :value="option.id" :selected="preset === option.id">{{ option.value }}
 					</option>
 				</template>
 			</select>
@@ -25,6 +25,7 @@
 					:class="[classCss, label.length > 0 ? 'mr-2' : '']"
 					:placeholder="placeholder"
 					v-model="inputText"
+					@input="storeData && storeKey ? debouncedRefetchData() : null"
 					@focus="isOpen = true; inputText='', startEventUpdatePosition()"
 					@blur="isOpen = false; validateInput(); endEventUpdatePosition()" />
 				<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
@@ -46,11 +47,20 @@
 				<div v-show="isOpen"
 					:ref="`filterList`"
 					class="absolute border max-h-48 overflow-y-auto bg-white left-0" style="width: calc(100% - 8px);">
-					<div v-for="[index, option] in filterOption" :key="index"
-						@mousedown.prevent="selectOption(index, option)"
-						class="flex flex-col p-2 hover:bg-gray-100 cursor-pointer">
-						<span class="text-sm">{{ option }}</span>
-					</div>
+					<template v-if="options && !storeData">
+						<div v-for="option in filterOption" :key="option.id"
+							@mousedown.prevent="selectOption(option.id, option.value)"
+							class="flex flex-col p-2 hover:bg-gray-100 cursor-pointer">
+							<span class="text-sm">{{ option.value }}</span>
+						</div>
+					</template>
+					<template v-else>
+						<div v-for="[index, option] in filterStoreOption" :key="index"
+							@mousedown.prevent="selectOption(index, option)"
+							class="flex flex-col p-2 hover:bg-gray-100 cursor-pointer">
+							<span class="text-sm">{{ option }}</span>
+						</div>
+					</template>
 				</div>
 			</teleport>
 		</template>
@@ -79,6 +89,9 @@
 
 <script>
 import { nextTick } from "vue";
+import { debounce } from "lodash-es";
+import { buildRSQLFilter, buildRSQLSort } from "@/utils";
+import { toLowerCaseWithoutAccents } from "@/utils";
 export default {
 	name: "Filter",
 	props: {
@@ -93,7 +106,7 @@ export default {
 			type: String,
 			required: true,
 			// This should be a valid input type
-			// 'text', 'number', 'select', etc.
+			// 'text', 'number', 'select', 'datalist', etc.
 			default: "text",
 		},
 		placeholder: {
@@ -116,13 +129,40 @@ export default {
 			default: "",
 		},
 		options: {
+			type: Array,
+			required: false,
+			// This should be an array of options for select/datalist input
+			// e.g., [{id: 'id1', value: 'Option 1'}, {id: 'id2', value: 'Option 2'}]
+			// translate the values before passing
+			// to the component
+			default: () => ([]),
+		},
+		sortOptions: {
+			type: String,
+			required: false,
+			// This should be a string indicating how to sort the options, e.g., 'asc' or 'desc'
+			default: null,
+		},
+		fetchOptions: {
+			type: Function,
+			required: false,
+			// This should be a function that returns a promise resolving to an array of options
+			// e.g., () => fetch('/api/options').then(res => res.json())
+			default: (limit, offset, expand, filter, sort, clear) => { 
+				return [0, false];
+			},
+		},
+		storeData: {
 			type: Object,
 			required: false,
-			// This should be an array of options for select input
-			// e.g., {[id]: 'Option 1', [id2]: 'Option 2'}
-			// translate the labels before passing
-			// to the component
-			default: () => ({}),
+			// This should be a pinia store whose data will be received by the fetchOptions function
+			default: null,
+		},
+		storeKey: {
+			type: String,
+			required: false,
+			// This should be the key in storeData to pass to fetchOptions function
+			default: null,
 		},
 	},
 	data() {
@@ -131,17 +171,54 @@ export default {
 			inputText: this.preset,
 		};
 	},
+	created() {
+		this.debouncedRefetchData = debounce(this.refetchData, 500);
+	},
+	mounted() {
+		if (this.type === "datalist" && this.preset) {
+			const found = this.options && this.options.find((o) => String(o.id) === String(this.preset));
+			if (found) {
+				this.inputText = found.value;
+			} else if (this.storeData && this.storeKey) {
+				this.inputText = this.preset;
+			}
+		}
+		if (this.type === "datalist" && this.fetchOptions && this.storeData && this.storeKey) {
+			this.refetchData();
+		}
+	},
 	emits: ["updateText"],
 	computed: {
 		filterOption() {
 			if (!this.options) {
 				return [];
 			}
-			return Object.entries(this.options).filter(([index, element]) => {
+			let result = this.options.filter((option) => {
 				if (this.inputText !== "") {
-					return element.toLowerCase().includes(this.inputText.toLowerCase());
+					return toLowerCaseWithoutAccents(String(option.value)).includes(toLowerCaseWithoutAccents(this.inputText));
 				}
 				return true;
+			});
+			if (this.sortOptions) {
+				result = result.slice().sort((a, b) => {
+					const aVal = toLowerCaseWithoutAccents(String(a.value));
+					const bVal = toLowerCaseWithoutAccents(String(b.value));
+					return this.sortOptions === "desc" ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+				});
+			}
+			return result;
+		},
+		filterStoreOption() {
+			if (!this.storeData || !this.storeKey) {
+				return [];
+			}
+			return Object.entries(this.storeData).filter(([index, element]) => {
+				if (this.inputText !== "") {
+					return toLowerCaseWithoutAccents(element[this.storeKey]).includes(toLowerCaseWithoutAccents(this.inputText));
+				}
+				return true;
+			}).map(([index, element]) => {
+				return [element[this.storeKey], element[this.storeKey]];
 			});
 		},
 	},
@@ -153,20 +230,19 @@ export default {
 			this.$refs.filterInput.blur();
 		},
 		validateInput(){
-			if (!this.options) {
-				this.inputText = "";
-				this.$emit("updateText", "");
-				return;
-			}
-			let result = Object.entries(this.options).find(([index, option]) => {
-				return option.toLowerCase() === this.inputText.toLowerCase();
-			});
-			if (result) {
-				this.inputText = result[1];
-				this.$emit("updateText", result[0]);
-			} else {
-				this.inputText = "";
-				this.$emit("updateText", "");
+			if (this.options && this.options.length > 0 && !this.storeData) {
+				const result = this.options.find((option) => {
+					return toLowerCaseWithoutAccents(String(option.value)) === toLowerCaseWithoutAccents(this.inputText);
+				});
+				if (result) {
+					this.inputText = result.value;
+					this.$emit("updateText", result.id);
+				} else {
+					this.inputText = "";
+					this.$emit("updateText", "");
+				}
+			} else if (this.storeData && this.storeKey) {
+				this.$emit("updateText", this.inputText);
 			}
 		},
 		startEventUpdatePosition(){
@@ -193,7 +269,18 @@ export default {
 				listElement.style.width = `${rect.width}px`;
 			}
 		},
-
+		async refetchData() {
+			const filter = [{
+				key: this.storeKey,
+				compareMethod: "=like=",
+				value: this.inputText,
+			}];
+			const sort = {
+				key: this.storeKey,
+				order: "asc",
+			};
+			await this.fetchOptions(10, 0, [], buildRSQLFilter(filter), buildRSQLSort(sort), false);
+		},
 	},
 };
 </script>

@@ -24,7 +24,7 @@ const filter = ref([
 	{ key: "nom_user", value: "", type: "text", label: "users.FilterName", compareMethod: "=like=" },
 	{ key: "prenom_user", value: "", type: "text", label: "users.FilterFirstName", compareMethod: "=like=" },
 	{ key: "email_user", value: "", type: "text", label: "users.FilterEmail", compareMethod: "=like=" },
-	{ key: "role_user", value: "", type: "datalist", typeData: "int", options: userTypeRole, label: "users.FilterRole", compareMethod: "==" },
+	{ key: "role_user", value: "", type: "datalist", typeData: "number", options: userTypeRole, sortOptions: "asc", label: "users.FilterRole", compareMethod: "==" },
 ]);
 const tableauLabel = ref([
 	{ label: "users.Name", sortable: true, key: "nom_user", valueKey: "nom_user", type: "text" },
