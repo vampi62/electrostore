@@ -40,7 +40,7 @@ async function fetchAllData() {
 			await iasStore.getIaById(iaId.value);
 		} catch {
 			delete iasStore.ias[iaId.value];
-			addNotification({ message: "ia.NotFound", type: "error", i18n: true });
+			addNotification({ message: t("ia.NotFound"), type: "error" });
 			router.push("/ia");
 			return;
 		}
@@ -76,34 +76,34 @@ const iaSave = async() => {
 		createSchema().validateSync(iasStore.iaEdition, { abortEarly: false });
 		if (iaId.value === "new") {
 			const newId = await iasStore.createIa({ ...iasStore.iaEdition });
-			addNotification({ message: "ia.Created", type: "success", i18n: true });
+			addNotification({ message: t("ia.Created"), type: "success" });
 			iaId.value = String(newId);
 			router.push("/ia/" + iaId.value);
 		} else {
 			await iasStore.updateIa(iaId.value, { ...iasStore.iaEdition });
-			addNotification({ message: "ia.Updated", type: "success", i18n: true });
+			addNotification({ message: t("ia.Updated"), type: "success" });
 		}
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 		return;
 	}
 };
 const iaDelete = async() => {
 	try {
 		await iasStore.deleteIa(iaId.value);
-		addNotification({ message: "ia.Deleted", type: "success", i18n: true });
+		addNotification({ message: t("ia.Deleted"), type: "success" });
 		router.push("/ia");
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 	iaDeleteModalShow.value = false;
 };
 const iaTrain = async() => {
 	try {
 		await iasStore.startTrain(iaId.value);
-		addNotification({ message: "ia.TrainStart", type: "success", i18n: true });
+		addNotification({ message: t("ia.TrainStart"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 };
 const createSchema = () => {

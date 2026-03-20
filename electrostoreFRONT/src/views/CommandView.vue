@@ -44,7 +44,7 @@ async function fetchAllData() {
 			await commandsStore.getCommandById(commandId.value);
 		} catch {
 			delete commandsStore.commands[commandId.value];
-			addNotification({ message: "command.NotFound", type: "error", i18n: true });
+			addNotification({ message: t("command.NotFound"), type: "error" });
 			router.push("/commands");
 			return;
 		}
@@ -76,25 +76,25 @@ const commandSave = async() => {
 		createSchema().validateSync(commandsStore.commandEdition, { abortEarly: false });
 		if (commandId.value === "new") {
 			const newId = await commandsStore.createCommand({ ...commandsStore.commandEdition });
-			addNotification({ message: "command.Created", type: "success", i18n: true });
+			addNotification({ message: t("command.Created"), type: "success" });
 			commandId.value = String(newId);
 			router.push("/commands/" + commandId.value);
 		} else {
 			await commandsStore.updateCommand(commandId.value, { ...commandsStore.commandEdition });
-			addNotification({ message: "command.Updated", type: "success", i18n: true });
+			addNotification({ message: t("command.Updated"), type: "success" });
 		}
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e.errors, type: "error" });
 		return;
 	}
 };
 const commandDelete = async() => {
 	try {
 		await commandsStore.deleteCommand(commandId.value);
-		addNotification({ message: "command.Deleted", type: "success", i18n: true });
+		addNotification({ message: t("command.Deleted"), type: "success" });
 		router.push("/commands");
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e.errors, type: "error" });
 	}
 	commandDeleteModalShow.value = false;
 };
@@ -115,10 +115,10 @@ const documentAdd = async() => {
 	try {
 		schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
 		await commandsStore.createDocument(commandId.value, documentModalData.value);
-		addNotification({ message: "command.DocumentAdded", type: "success", i18n: true });
+		addNotification({ message: t("command.DocumentAdded"), type: "success" });
 		documentAddModalShow.value = false;
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e.errors, type: "error" });
 		return;
 	}
 };
@@ -126,17 +126,17 @@ const documentEdit = async(row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		await commandsStore.updateDocument(commandId.value, row.id_command_document, row);
-		addNotification({ message: "command.DocumentUpdated", type: "success", i18n: true });
+		addNotification({ message: t("command.DocumentUpdated"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e.errors, type: "error" });
 	}
 };
 const documentDelete = async() => {
 	try {
 		await commandsStore.deleteDocument(commandId.value, documentModalData.value.id_command_document);
-		addNotification({ message: "command.DocumentDeleted", type: "success", i18n: true });
+		addNotification({ message: t("command.DocumentDeleted"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e.errors, type: "error" });
 	}
 	documentDeleteModalShow.value = false;
 };
@@ -147,9 +147,9 @@ const documentDownload = async(fileContent) => {
 const documentView = async(fileContent) => {
 	const file = await commandsStore.downloadDocument(commandId.value, fileContent.id_command_document);
 	if (viewFile(file, { keyName: fileContent.name_command_document, keyType: fileContent.type_command_document })) {
-		addNotification({ message: "command.DocumentOpenInNewTab", type: "success", i18n: true });
+		addNotification({ message: t("command.DocumentOpenInNewTab"), type: "success" });
 	} else {
-		addNotification({ message: "command.DocumentNotSupported", type: "error", i18n: true });
+		addNotification({ message: t("command.DocumentNotSupported"), type: "error" });
 	}
 };
 
@@ -160,20 +160,20 @@ const itemSave = async(item) => {
 		try {
 			schemaItem.validateSync(item.tmp, { abortEarly: false });
 			await commandsStore.updateItem(commandId.value, item.tmp.id_item, item.tmp);
-			addNotification({ message: "command.ItemUpdated", type: "success", i18n: true });
 			item.tmp = null;
+			addNotification({ message: t("command.ItemUpdated"), type: "success" });
 		} catch (e) {
-			addNotification({ message: e, type: "error", i18n: false });
+			addNotification({ message: e.errors, type: "error" });
 			return;
 		}
 	} else {
 		try {
 			schemaItem.validateSync(item.tmp, { abortEarly: false });
 			await commandsStore.createItem(commandId.value, item.tmp);
-			addNotification({ message: "command.ItemAdded", type: "success", i18n: true });
 			item.tmp = null;
+			addNotification({ message: t("command.ItemAdded"), type: "success" });
 		} catch (e) {
-			addNotification({ message: e, type: "error", i18n: false });
+			addNotification({ message: e.errors, type: "error" });
 			return;
 		}
 	}
@@ -181,9 +181,9 @@ const itemSave = async(item) => {
 const itemDelete = async(item) => {
 	try {
 		await commandsStore.deleteItem(commandId.value, item.id_item);
-		addNotification({ message: "command.ItemDeleted", type: "success", i18n: true });
+		addNotification({ message: t("command.ItemDeleted"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e.errors, type: "error" });
 	}
 };
 

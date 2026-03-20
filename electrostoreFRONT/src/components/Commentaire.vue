@@ -232,7 +232,7 @@ export default {
 				});
 				this.commentaireFormNew = "";
 			} catch (e) {
-				this.addNotification({ message: e, type: "error", i18n: false });
+				this.addNotification({ message: e, type: "error" });
 			} finally {
 				this.createLoading = false;
 			}
@@ -250,7 +250,7 @@ export default {
 				});
 				commentaire = null;
 			} catch (e) {
-				this.addNotification({ message: e, type: "error", i18n: false });
+				this.addNotification({ message: e, type: "error" });
 				return;
 			}
 		},
@@ -263,7 +263,7 @@ export default {
 					});
 				})
 				.catch((e) => {
-					this.addNotification({ message: e, type: "error", i18n: false });
+					this.addNotification({ message: e, type: "error" });
 				});
 			this.deleteModalShow = false;
 		},

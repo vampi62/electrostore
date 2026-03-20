@@ -44,7 +44,7 @@ async function fetchAllData() {
 			await storesStore.getStoreById(storeId.value, ["boxs", "leds"]);
 		} catch {
 			delete storesStore.stores[storeId.value];
-			addNotification({ message: "store.NotFound", type: "error", i18n: true });
+			addNotification({ message: t("store.NotFound"), type: "error" });
 			router.push("/stores");
 			return;
 		}
@@ -87,7 +87,7 @@ const storeSave = async() => {
 				leds: Object.values(storesStore.ledEdition[storeId.value]),
 				boxs: Object.values(storesStore.boxEdition[storeId.value]),
 			});
-			addNotification({ message: "store.Created", type: "success", i18n: true });
+			addNotification({ message: t("store.Created"), type: "success" });
 			storeId.value = String(newId);
 			router.push("/stores/" + storeId.value);
 			// reload the store data
@@ -108,7 +108,7 @@ const storeSave = async() => {
 				leds: Object.values(storesStore.ledEdition[storeId.value]),
 				boxs: Object.values(storesStore.boxEdition[storeId.value]),
 			});
-			addNotification({ message: "store.Updated", type: "success", i18n: true });
+			addNotification({ message: t("store.Updated"), type: "success" });
 			await storesStore.getStoreById(storeId.value, ["boxs", "leds"]);
 			storesStore.storeEdition[storeId.value] = {
 				loading: false,
@@ -123,7 +123,7 @@ const storeSave = async() => {
 		}
 		storesStore.storeEdition[storeId.value].loading = false;
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 		storesStore.storeEdition[storeId.value].loading = false;
 		return;
 	}
@@ -131,10 +131,10 @@ const storeSave = async() => {
 const storeDelete = async() => {
 	try {
 		await storesStore.deleteStore(storeId.value);
-		addNotification({ message: "store.Deleted", type: "success", i18n: true });
+		addNotification({ message: t("store.Deleted"), type: "success" });
 		router.push("/stores");
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 	storeDeleteModalShow.value = false;
 };
@@ -172,7 +172,7 @@ const schemaItem = Yup.object().shape({
 // box & item
 const storeBoxEditModalShow = ref(false);
 const storeItemAddModalShow = ref(false);
-const boxId = ref(0);
+const boxId = ref(null);
 const showBoxContent = async(idBox) => {
 	boxId.value = idBox;
 	try {
@@ -184,11 +184,11 @@ const showBoxContent = async(idBox) => {
 		} while (offset < storesStore.boxItemsTotalCount[idBox]);
 		for (const item of Object.values(itemsStore.items)) {
 			if (item.id_img) {
-				await itemsStore.showImageById(item.id_item, item.id_img);
+				await itemsStore.showThumbnailById(item.id_item, item.id_img);
 			}
 		}
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 	storeBoxEditModalShow.value = true;
 };
@@ -197,20 +197,20 @@ const itemSave = async(item) => {
 		try {
 			schemaItem.validateSync(item.tmp, { abortEarly: false });
 			await storesStore.updateBoxItem(storeId.value, boxId.value, item.tmp.id_item, item.tmp);
-			addNotification({ message: "store.ItemUpdated", type: "success", i18n: true });
+			addNotification({ message: t("store.ItemUpdated"), type: "success" });
 			item.tmp = null;
 		} catch (e) {
-			addNotification({ message: e, type: "error", i18n: false });
+			addNotification({ message: e, type: "error" });
 			return;
 		}
 	} else {
 		try {
 			schemaItem.validateSync(item.tmp, { abortEarly: false });
 			await storesStore.createBoxItem(storeId.value, boxId.value, item.tmp);
-			addNotification({ message: "store.ItemAdded", type: "success", i18n: true });
+			addNotification({ message: t("store.ItemAdded"), type: "success" });
 			item.tmp = null;
 		} catch (e) {
-			addNotification({ message: e, type: "error", i18n: false });
+			addNotification({ message: e, type: "error" });
 			return;
 		}
 	}
@@ -218,9 +218,9 @@ const itemSave = async(item) => {
 const itemDelete = async(item) => {
 	try {
 		await storesStore.deleteBoxItem(storeId.value, boxId.value, item.id_item);
-		addNotification({ message: "store.ItemDeleted", type: "success", i18n: true });
+		addNotification({ message: t("store.ItemDeleted"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 };
 
@@ -236,17 +236,17 @@ const filterTag = ref([
 function tagSave(id_tag) {
 	try {
 		storesStore.createTagStore(storeId.value,  { id_tag: id_tag });
-		addNotification({ message: "store.TagAdded", type: "success", i18n: true });
+		addNotification({ message: t("store.TagAdded"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 }
 function tagDelete(id_tag) {
 	try {
 		storesStore.deleteTagStore(storeId.value, id_tag);
-		addNotification({ message: "store.TagDeleted", type: "success", i18n: true });
+		addNotification({ message: t("store.TagDeleted"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e, type: "error", i18n: false });
+		addNotification({ message: e, type: "error" });
 	}
 }
 
