@@ -5,7 +5,7 @@
 			:class="{ 'cursor-pointer': permission, 'cursor-not-allowed': !permission }">
 			{{ $t(title) }} <span v-if="totalCount >= 0">({{ totalCount }})</span>
 		</h3>
-		<transition @before-enter="beforeEnter" @enter="enter" @leave="leave">
+		<transition @before-enter="beforeEnter" @enter="enter" @after-enter="afterEnter" @leave="leave">
 			<div v-show="showSection" class=" overflow-hidden">
 				<div class="p-2">
 					<slot name="append-row"></slot>
@@ -45,6 +45,11 @@ export default {
 			showSection: this.permission,
 		};
 	},
+	watch: {
+		permission(newVal) {
+			this.showSection = newVal;
+		},
+	},
 	methods: {
 		toggleSection() {
 			if (this.permission) {
@@ -53,6 +58,9 @@ export default {
 		},
 		beforeEnter(el) {
 			el.style.height = "0";
+		},
+		afterEnter(el) {
+			el.style.height = "auto";
 		},
 		enter(el) {
 			el.style.height = "auto";
