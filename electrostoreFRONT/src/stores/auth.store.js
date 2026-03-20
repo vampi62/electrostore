@@ -33,21 +33,18 @@ export const useAuthStore = defineStore("auth",{
 			this.accessToken = accessToken;
 			this.refreshToken = refreshToken;
 			this.user = user;
-			this.isSSOUser = isSSOUser;
+			this.user.isSSOUser = isSSOUser;
 			localStorage.setItem("accessToken", JSON.stringify(accessToken));
 			localStorage.setItem("refreshToken", JSON.stringify(refreshToken));
 			localStorage.setItem("user", JSON.stringify(user));
-			localStorage.setItem("isSSOUser", JSON.stringify(isSSOUser));
 		},
 		clearToken() {
 			this.accessToken = null;
 			this.refreshToken = null;
 			this.user = null;
-			this.isSSOUser = false;
 			localStorage.removeItem("accessToken");
 			localStorage.removeItem("refreshToken");
 			localStorage.removeItem("user");
-			localStorage.removeItem("isSSOUser");
 		},
 		TokenIsExpired() {
 			// if date expire is less than current date + 5 minutes

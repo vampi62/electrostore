@@ -2,7 +2,7 @@
 module.exports = {
 	root: true,
 	extends: ["plugin:vue/vue3-essential", "eslint:recommended"],
-	ignorePatterns: ["tailwind.config.js", "postcss.config.js"],
+	ignorePatterns: ["tailwind.config.mjs", "postcss.config.mjs"],
 	env: {
 		"vue/setup-compiler-macros": true,
 	},
