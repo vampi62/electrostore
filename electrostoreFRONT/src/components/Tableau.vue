@@ -269,10 +269,26 @@ export default {
 			this.sort.key = this.meta.sort;
 			this.sort.order = this.meta.sortOrder === "desc" ? "desc" : "asc";
 		}
+		let savedScrollTop = 0;
+		if (this.meta?.saveState) {
+			const saved = sessionStorage.getItem(this._sessionStateKey());
+			if (saved) {
+				const state = JSON.parse(saved);
+				if (state.sort?.key) {
+					this.sort.key = state.sort.key;
+					this.sort.order = state.sort.order === "desc" ? "desc" : "asc";
+				}
+				savedScrollTop = state.scrollTop || 0;
+			}
+		}
 		let intervalOffset = this.nextOffset;
 		[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], buildRSQLFilter(this.filters), buildRSQLSort(this.sort));
 		await this.refetchListData(intervalOffset, this.nextOffset);
 		this.isInitializing = false;
+		if (this.meta?.saveState && savedScrollTop > 0) {
+			await this.$nextTick();
+			this.$el.scrollTop = savedScrollTop;
+		}
 	},
 	watch: {
 		filtersValue: {
@@ -293,6 +309,13 @@ export default {
 		},
 	},
 	methods: {
+		_sessionStateKey() {
+			return `tableau_state_${this.$route?.path}_${this.meta?.stateKey || this.meta?.path + this.meta?.key || "default"}`;
+		},
+		_saveState(updates) {
+			const current = JSON.parse(sessionStorage.getItem(this._sessionStateKey()) || "{}");
+			sessionStorage.setItem(this._sessionStateKey(), JSON.stringify({ ...current, ...updates }));
+		},
 		getDataValue(row, labelKey) {
 			const label = this.labels.find((l) => l.key === labelKey);
 			if (!label) {
@@ -356,8 +379,14 @@ export default {
 				this.sort.key = key;
 				this.sort.order = "asc";
 			}
+			if (this.meta?.saveState) {
+				this._saveState({ sort: { key: this.sort.key, order: this.sort.order }, scrollTop: 0 });
+			}
 		},
 		async loadNext(e) {
+			if (this.meta?.saveState) {
+				this._saveState({ scrollTop: e.target.scrollTop });
+			}
 			if (this.totalCount === 0 || this.loading || !this.hasMore) {
 				return;
 			}

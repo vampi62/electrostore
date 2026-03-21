@@ -40,7 +40,10 @@ const tableauMeta = ref({
 	key: "id_store",
 	path: "/stores/",
 	expand: ["stores_tags"],
+	saveState: true,
+	stateKey: "storesTableState",
 });
+const filterReady = ref(false);
 document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
 
@@ -61,9 +64,9 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 				{{ $t('stores.Add') }}
 			</span>
 		</div>
-		<FilterContainer :filters="filter" :store-data="storesStore.stores" />
+		<FilterContainer :filters="filter" :store-data="storesStore.stores" @ready="filterReady = true" :save-state="true" state-key="storesFilterState" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta"
+	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[storesStore.stores,storesStore.storeTags,tagsStore.tags]"
 		:filters="filter"
 		:loading="storesStore.storesLoading"

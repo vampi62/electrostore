@@ -22,7 +22,10 @@ const tableauLabel = ref([
 const tableauMeta = ref({
 	key: "id_ia",
 	path: "/ia/",
+	saveState: true,
+	stateKey: "iasTableState",
 });
+const filterReady = ref(false);
 document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
 
@@ -43,9 +46,9 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 				{{ $t('ias.Add') }}
 			</span>
 		</div>
-		<FilterContainer :filters="filter" :store-data="IAStore.ias" />
+		<FilterContainer :filters="filter" :store-data="IAStore.ias" @ready="filterReady = true" :save-state="true" state-key="iasFilterState" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta"
+	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[IAStore.ias]"
 		:filters="filter"
 		:loading="IAStore.loading"

@@ -35,7 +35,10 @@ const tableauLabel = ref([
 const tableauMeta = ref({
 	key: "id_user",
 	path: "/users/",
+	saveState: true,
+	stateKey: "usersTableState",
 });
+const filterReady = ref(false);
 document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
 
@@ -56,9 +59,9 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 				{{ $t('users.Add') }}
 			</span>
 		</div>
-		<FilterContainer :filters="filter" :store-data="usersStore.users" />
+		<FilterContainer :filters="filter" :store-data="usersStore.users" @ready="filterReady = true" :save-state="true" state-key="usersFilterState" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta"
+	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[usersStore.users]"
 		:filters="filter"
 		:loading="usersStore.usersLoading"
