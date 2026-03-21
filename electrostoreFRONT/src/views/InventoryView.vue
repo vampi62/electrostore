@@ -48,7 +48,10 @@ const tableauMeta = ref({
 	key: "id_item",
 	path: "/inventory/",
 	expand: ["item_boxs", "item_tags"],
+	saveState: true,
+	stateKey: "inventoryTableState",
 });
+const filterReady = ref(false);
 document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
 
@@ -63,9 +66,9 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 				{{ $t('items.Add') }}
 			</RouterLink>
 		</div>
-		<FilterContainer :filters="filter" :store-data="itemsStore.items" />
+		<FilterContainer :filters="filter" :store-data="itemsStore.items" @ready="filterReady = true" :save-state="true" state-key="inventoryFilterState" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta"
+	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[itemsStore.items,itemsStore.itemTags,tagsStore.tags,itemsStore.thumbnailsURL]"
 		:filters="filter"
 		:loading="itemsStore.itemsLoading"
