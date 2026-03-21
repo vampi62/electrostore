@@ -19,7 +19,10 @@ const tableauLabel = ref([
 const tableauMeta = ref({
 	key: "id_tag",
 	path: "/tags/",
+	saveState: true,
+	stateKey: "tagsTableState",
 });
+const filterReady = ref(false);
 document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
 
@@ -34,9 +37,9 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 				{{ $t('tags.Add') }}
 			</RouterLink>
 		</div>
-		<FilterContainer :filters="filter" :store-data="tagsStore.tags" />
+		<FilterContainer :filters="filter" :store-data="tagsStore.tags" @ready="filterReady = true" :save-state="true" state-key="tagsFilterState" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta"
+	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[tagsStore.tags]"
 		:filters="filter"
 		:loading="tagsStore.tagsLoading"

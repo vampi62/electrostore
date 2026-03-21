@@ -47,7 +47,10 @@ const tableauMeta = ref({
 	key: "id_command",
 	path: "/commands/",
 	expand: ["commands_items"],
+	saveState: true,
+	stateKey: "commandsTableState",
 });
+const filterReady = ref(false);
 document.querySelector("#view").classList.remove("overflow-y-scroll");
 </script>
 
@@ -62,9 +65,9 @@ document.querySelector("#view").classList.remove("overflow-y-scroll");
 				{{ $t('commands.Add') }}
 			</RouterLink>
 		</div>
-		<FilterContainer :filters="filter" :store-data="commandsStore.commands" />
+		<FilterContainer :filters="filter" :store-data="commandsStore.commands" @ready="filterReady = true" :save-state="true" state-key="commandsFilterState" />
 	</div>
-	<Tableau :labels="tableauLabel" :meta="tableauMeta"
+	<Tableau v-if="filterReady" :labels="tableauLabel" :meta="tableauMeta"
 		:store-data="[commandsStore.commands,commandsStore.items,itemsStore.items]"
 		:filters="filter"
 		:loading="commandsStore.commandsLoading"
