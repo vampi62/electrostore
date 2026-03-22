@@ -425,7 +425,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:loading="commandsStore.documentsLoading"
 					:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)"
 					:fetch-function="commandId !== 'new' ? (limit, offset, expand, filter, sort, clear) => commandsStore.getDocumentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
-					:tableau-css="{ component: 'max-h-64' }"
+					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>

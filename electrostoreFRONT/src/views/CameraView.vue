@@ -133,11 +133,11 @@ const createSchema = (isChecked) => {
 };
 
 const labelForm = ref([
-	{ key: "nom_camera", label: "camera.Name", type: "text", condition: "func.hasPermission([2])" },
-	{ key: "url_camera", label: "camera.URL", type: "text", condition: "func.hasPermission([2])" },
-	{ key: "check", label: "camera.Check", type: "checkbox", model: isChecked, condition: "func.hasPermission([2])" },
-	{ key: "user_camera", label: "camera.User", type: "text", condition: "func.hasPermission([2]) && form[2].model" },
-	{ key: "mdp_camera", label: "camera.Password", type: "password", condition: "func.hasPermission([2]) && form[2].model" },
+	{ key: "nom_camera", label: "camera.Name", type: "text", enableCondition: "func.hasPermission([2])" },
+	{ key: "url_camera", label: "camera.URL", type: "text", enableCondition: "func.hasPermission([2])" },
+	{ key: "check", label: "camera.Check", type: "checkbox", model: isChecked, enableCondition: "func.hasPermission([2])" },
+	{ key: "user_camera", label: "camera.User", type: "text", enableCondition: "func.hasPermission([2]) && form[2].model" },
+	{ key: "mdp_camera", label: "camera.Password", type: "password", enableCondition: "func.hasPermission([2]) && form[2].model" },
 ]);
 document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>

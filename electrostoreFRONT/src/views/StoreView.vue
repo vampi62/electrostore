@@ -316,10 +316,10 @@ const labelTableauModalItem = ref([
 	] },
 ]);
 const labelForm = ref([
-	{ key: "nom_store", label: "store.Name", tledEditionype: "text", condition: "func.hasPermission([2])" },
-	{ key: "mqtt_name_store", label: "store.MQTTName", type: "text", condition: "func.hasPermission([2])" },
-	{ key: "xlength_store", label: "store.XLength", type: "number", condition: "func.hasPermission([2])" },
-	{ key: "ylength_store", label: "store.YLength", type: "number", condition: "func.hasPermission([2])" },
+	{ key: "nom_store", label: "store.Name", tledEditionype: "text", enableCondition: "func.hasPermission([2])" },
+	{ key: "mqtt_name_store", label: "store.MQTTName", type: "text", enableCondition: "func.hasPermission([2])" },
+	{ key: "xlength_store", label: "store.XLength", type: "number", enableCondition: "func.hasPermission([2])" },
+	{ key: "ylength_store", label: "store.YLength", type: "number", enableCondition: "func.hasPermission([2])" },
 ]);
 const labelTableauModalTag = ref([
 	{ label: "store.TagName", sortable: true, key: "nom_tag", valueKey: "nom_tag", type: "text" },
