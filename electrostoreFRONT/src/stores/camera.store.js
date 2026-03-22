@@ -9,8 +9,10 @@ export const useCamerasStore = defineStore("cameras",{
 		loading: true,
 		TotalCount: 0,
 		cameras: {},
-		status: {},
 		cameraEdition: {},
+		cameraReady: {},
+		
+		status: {},
 		stream: {},
 		capture: {},
 	}),
@@ -136,6 +138,68 @@ export const useCamerasStore = defineStore("cameras",{
 				useToken: "access",
 			});
 			delete this.cameras[id];
+		},
+		commitCameraEdition(id, operation = "modified") {
+			if (!this.cameraEdition[id]) {
+				return;
+			}
+			if (!this.cameraReady[id]) {
+				this.cameraReady[id] = {};
+			}
+			if (this.cameraReady[id].status === "new" && operation === "delete") {
+				delete this.cameraReady[id];
+				return;
+			} else if (this.cameraReady[id].status === "modified" && operation === "delete") {
+				this.cameraReady[id].status = "delete";
+			} else if (this.cameraReady[id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.cameraReady[id].status = "modified";
+			} else {
+				this.cameraReady[id].status = operation;
+			}
+			this.cameraReady[id].data = { ...this.cameraEdition[id] };
+		},
+		async pushCameraReady() {
+			for (const id in this.cameraReady) {
+				const change = this.cameraReady[id];
+				if (change.status === "new") {
+					await this.createCamera(change.data);
+					delete this.cameraReady[id];
+				} else if (change.status === "modified") {
+					await this.updateCamera(id, change.data);
+					delete this.cameraReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteCamera(id);
+					delete this.cameraReady[id];
+				}
+			}
+		},
+		clearCameraEditeur() {
+			this.cameraEdition = {};
+			this.cameraReady = {};
+		},
+		async pushCameraById(id) {
+			if (!this.cameraEdition[id]) {
+				return;
+			}
+			let newId = id;
+			if (id.startsWith("new")) {
+				newId = await this.createCamera(this.cameraEdition[id]);
+				this.updateIdCamera(id, newId);
+			} else {
+				await this.updateCamera(id, this.cameraEdition[id]);
+			}
+			return newId;
+		},
+		clearCameraEditionById(id) {
+			delete this.cameraEdition[id];
+			delete this.cameraReady[id];
+		},
+		getAvailableEditionCamera() {
+			// search existing "new{id}" in cameraEdition to find available id for new CAMERA
+			const newIds = Math.max(Object.keys(this.cameraEdition).filter((id) => id.startsWith("new")).map((id) => parseInt(id.replace("new", ""))), 0);
+			return "new" + (newIds + 1);
+		},
+		updateIdCamera(oldId, newId) {
 		},
 	},
 });
