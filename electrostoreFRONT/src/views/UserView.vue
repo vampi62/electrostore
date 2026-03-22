@@ -158,19 +158,19 @@ const createSchema = (isChecked) => {
 };
 
 const labelForm = ref([
-	{ key: "nom_user", label: "user.Name", type: "text", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
-	{ key: "prenom_user", label: "user.FirstName", type: "text", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
-	{ key: "email_user", label: "user.Email", type: "text", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
-	{ key: "role_user", label: "user.Role", type: "select", options: userTypeRole, condition: "func.hasPermission([2])" },
+	{ key: "nom_user", label: "user.Name", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+	{ key: "prenom_user", label: "user.FirstName", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+	{ key: "email_user", label: "user.Email", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+	{ key: "role_user", label: "user.Role", type: "select", options: userTypeRole, enableCondition: "func.hasPermission([2])" },
+	{ key: "check", label: "user.Check", type: "checkbox", model: isChecked, enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])",
+		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
+	{ key: "mdp_user", label: "user.Password", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && form[4].model",
+		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
+	{ key: "confirm_mdp_user", label: "user.ConfirmPassword", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && form[4].model",
+		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
+	{ key: "current_mdp_user", label: "user.CurrentPassword", type: "password", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])",
+		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
 ]);
-if (!authStore.isSSOUser && (authStore.user?.id_user === Number(userId.value) || authStore.hasPermission([2]))) {
-	labelForm.value.push(
-		{ key: "check", label: "user.Check", type: "checkbox", model: isChecked, condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
-		{ key: "mdp_user", label: "user.Password", type: "password", condition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && form[4].model" },
-		{ key: "confirm_mdp_user", label: "user.ConfirmPassword", type: "password", condition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && form[4].model" },
-		{ key: "current_mdp_user", label: "user.CurrentPassword", type: "password", condition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
-	);
-}
 
 const filterSession = ref([
 	{ key: "is_revoked", disableLocalFilter: true, value: "", typeData: "bool", valueIfTrue: "true", valueIfFalse: "", preset: false,

@@ -2,7 +2,7 @@
 	<div class="relative mb-6 w-full sm:w-[490px]">
 		<Form :validation-schema="schema" v-slot="{ errors }" @submit.prevent="">
 			<div class="flex flex-col text-gray-700 space-y-2">
-				<div v-for="field in labels" :key="field.key" class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
+				<div v-for="field in labelsShow" :key="field.key" class="flex flex-col sm:flex-row sm:items-start sm:space-x-2 w-full">
 					<label class="font-semibold sm:min-w-[140px]" :for="`form-input-${this.$.uid}-${field.key}`">{{ $t(field.label) }}:</label>
 					<div class="flex flex-col flex-1 w-full">
 						<template v-if="field.type === 'checkbox'">
@@ -13,15 +13,21 @@
 									type="checkbox"
 									:checked="field.model"
 									class="form-checkbox h-5 w-5 text-blue-600"
-									:disabled="field?.condition && !evaluateCondition(field.condition)"
+									:disabled="field?.enableCondition && !evaluateCondition(field.enableCondition)"
 								/>
 							</Field>
 						</template>
 						<template v-else-if="field.type === 'select'">
-							<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" as="select" v-model="storeData[field.key]"
+							<Field v-if="field?.typeData === 'number'" :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" as="select" v-model.number="storeData[field.key]"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors[field.key] }"
-								:disabled="field?.condition && !evaluateCondition(field.condition)">
+								:disabled="field?.enableCondition && !evaluateCondition(field.enableCondition)">
+								<option v-for="(option, index) in field.options" :key="index" :value="index">{{ option }}</option>
+							</Field>
+							<Field v-else :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" as="select" v-model="storeData[field.key]"
+								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
+								:class="{ 'border-red-500': errors[field.key] }"
+								:disabled="field?.enableCondition && !evaluateCondition(field.enableCondition)">
 								<option v-for="(option, index) in field.options" :key="index" :value="index">{{ option }}</option>
 							</Field>
 							<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
@@ -30,7 +36,7 @@
 							<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" as="textarea" v-model="storeData[field.key]" :rows="field.rows || 3"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors[field.key] }"
-								:disabled="field?.condition && !evaluateCondition(field.condition)" />
+								:disabled="field?.enableCondition && !evaluateCondition(field.enableCondition)" />
 							<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
 						</template>
 						<template v-else-if="field.type === 'computed'">
@@ -46,7 +52,7 @@
 								<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" :type="showPassword ? 'text' : 'password'" v-model="storeData[field.key]"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors[field.key] }"
-									:disabled="field?.condition && !evaluateCondition(field.condition)" />
+									:disabled="field?.enableCondition && !evaluateCondition(field.enableCondition)" />
 								<button type="button" @mouseup="showPassword = false" @mousedown="showPassword = true"
 									class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800">
 									<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,7 +67,7 @@
 							<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" :type="field.type" v-model="storeData[field.key]"
 								class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 								:class="{ 'border-red-500': errors[field.key] }"
-								:disabled="field?.condition && !evaluateCondition(field.condition)" />
+								:disabled="field?.enableCondition && !evaluateCondition(field.enableCondition)" />
 							<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
 						</template>
 					</div>
@@ -95,7 +101,8 @@ export default {
 			// - label: string (translation key for the label)
 			// - type: string (input type, e.g., 'text', 'number', 'select', 'checkbox', 'password', 'textarea', 'computed', 'custom')
 			// - model: any (for checkbox type, the boolean model value)
-			// - condition: string (optional, a JavaScript expression to evaluate whether to enable the field)
+			// - enableCondition: string (optional, a JavaScript expression to evaluate whether to enable the field)
+			// - showCondition: string (optional, a JavaScript expression to evaluate whether to show the field)
 			// - options: array (for select inputs, optional, required if type is 'select')
 			// - rows: number (for textarea inputs, optional)
 		},
@@ -121,6 +128,9 @@ export default {
 	computed: {
 		schema() {
 			return this.schemaBuilder(this.labels.find((field) => field.key === "check")?.model || false);
+		},
+		labelsShow() {
+			return this.labels.filter((field) => !field?.showCondition || this.evaluateCondition(field.showCondition));
 		},
 	},
 	components: {

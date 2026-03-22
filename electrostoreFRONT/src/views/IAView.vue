@@ -117,8 +117,8 @@ const createSchema = () => {
 	});
 };
 const labelForm = [
-	{ key: "nom_ia", label: "ia.Name", type: "text", condition: "func.hasPermission([2])" },
-	{ key: "description_ia", label: "ia.Description", type: "textarea", rows: 4, condition: "func.hasPermission([2])" },
+	{ key: "nom_ia", label: "ia.Name", type: "text", enableCondition: "func.hasPermission([2])" },
+	{ key: "description_ia", label: "ia.Description", type: "textarea", rows: 4, enableCondition: "func.hasPermission([2])" },
 ];
 document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
