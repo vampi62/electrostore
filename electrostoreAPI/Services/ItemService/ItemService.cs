@@ -72,7 +72,8 @@ public class ItemService : IItemService
                 ItemsBoxs = expand != null && expand.Contains("item_boxs") ? i.ItemsBoxs.Take(20).ToList() : null,
                 CommandsItems = expand != null && expand.Contains("command_items") ? i.CommandsItems.Take(20).ToList() : null,
                 ProjetsItems = expand != null && expand.Contains("projet_items") ? i.ProjetsItems.Take(20).ToList() : null,
-                ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null
+                ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null,
+                quantity_item = i.ItemsBoxs.Sum(ib => ib.qte_item_box)
             })
             .ToListAsync();
         return new PaginatedResponseDto<ReadExtendedItemDto>
@@ -89,7 +90,8 @@ public class ItemService : IItemService
                     item_boxs = _mapper.Map<IEnumerable<ReadItemBoxDto>>(i.ItemsBoxs),
                     command_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(i.CommandsItems),
                     projet_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(i.ProjetsItems),
-                    item_documents = _mapper.Map<IEnumerable<ReadItemDocumentDto>>(i.ItemsDocuments)
+                    item_documents = _mapper.Map<IEnumerable<ReadItemDocumentDto>>(i.ItemsDocuments),
+                    quantity_item = i.quantity_item
                 };
             }).ToList(),
             pagination = new PaginationDto
@@ -122,7 +124,8 @@ public class ItemService : IItemService
                 ItemsBoxs = expand != null && expand.Contains("item_boxs") ? i.ItemsBoxs.Take(20).ToList() : null,
                 CommandsItems = expand != null && expand.Contains("command_items") ? i.CommandsItems.Take(20).ToList() : null,
                 ProjetsItems = expand != null && expand.Contains("projet_items") ? i.ProjetsItems.Take(20).ToList() : null,
-                ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null
+                ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null,
+                quantity_item = i.ItemsBoxs.Sum(ib => ib.qte_item_box)
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Item with id '{id}' not found");
         return _mapper.Map<ReadExtendedItemDto>(item.Item) with
@@ -136,7 +139,8 @@ public class ItemService : IItemService
             item_boxs = _mapper.Map<IEnumerable<ReadItemBoxDto>>(item.ItemsBoxs),
             command_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(item.CommandsItems),
             projet_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(item.ProjetsItems),
-            item_documents = _mapper.Map<IEnumerable<ReadItemDocumentDto>>(item.ItemsDocuments)
+            item_documents = _mapper.Map<IEnumerable<ReadItemDocumentDto>>(item.ItemsDocuments),
+            quantity_item = item.quantity_item
         };
     }
 
