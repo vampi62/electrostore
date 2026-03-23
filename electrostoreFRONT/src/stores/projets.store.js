@@ -12,26 +12,31 @@ export const useProjetsStore = defineStore("projets",{
 		projetsTotalCount: 0,
 		projets: {},
 		projetEdition: {},
+		projetReady: {},
 
 		commentairesTotalCount: {},
 		commentairesLoading: false,
 		commentaires: {},
 		commentaireEdition: {},
+		commentaireReady: {},
 
 		documentsTotalCount: {},
 		documentsLoading: false,
 		documents: {},
 		documentEdition: {},
+		documentReady: {},
 
 		itemsTotalCount: {},
 		itemsLoading: false,
 		items: {},
 		itemEdition: {},
+		itemReady: {},
 
 		projetTagProjetTotalCount: {},
 		projetTagProjetLoading: true,
 		projetTagProjet: {},
 		projetTagProjetEdition: {},
+		projetTagProjetReady: {},
 
 		statusHistoryTotalCount: {},
 		statusHistoryLoading: false,
@@ -213,6 +218,106 @@ export const useProjetsStore = defineStore("projets",{
 			});
 			delete this.projets[id];
 		},
+		async pushProjetReady() {
+			for (const id in this.projetReady) {
+				const change = this.projetReady[id];
+				if (change.status === "new") {
+					const newId = await this.createProjet(change.data);
+					this.updateIdProjet(id, newId);
+					this.pushDocumentReady(newId);
+					this.pushItemReady(newId);
+					this.pushProjetTagReady(newId);
+					delete this.projetReady[id];
+				} else if (change.status === "modified") {
+					await this.updateProjet(id, change.data);
+					this.pushDocumentReady(id);
+					this.pushItemReady(id);
+					this.pushProjetTagReady(id);
+					delete this.projetReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteProjet(id);
+					delete this.projetReady[id];
+				}
+			}
+		},
+		async pushProjetById(id) {
+			if (!this.projetEdition[id]) {
+				return;
+			}
+			let newId = id;
+			if (id.startsWith("new")) {
+				newId = await this.createProjet(this.projetEdition[id]);
+				this.updateIdProjet(id, newId);
+			} else {
+				await this.updateProjet(id, this.projetEdition[id]);
+			}
+			this.pushDocumentReady(newId);
+			this.pushItemReady(newId);
+			this.pushProjetTagReady(newId);
+			return newId;
+		},
+		updateIdProjet(oldId, newId) {
+			if (this.documentReady[oldId]) {
+				this.documentReady[newId] = { ...this.documentReady[oldId], id_projet: newId };
+				delete this.documentReady[oldId];
+			}
+			if (this.documentEdition[oldId]) {
+				this.documentEdition[newId] = { ...this.documentEdition[oldId], id_projet: newId };
+				delete this.documentEdition[oldId];
+			}
+			if (this.itemReady[oldId]) {
+				this.itemReady[newId] = { ...this.itemReady[oldId], id_projet: newId };
+				delete this.itemReady[oldId];
+			}
+			if (this.itemEdition[oldId]) {
+				this.itemEdition[newId] = { ...this.itemEdition[oldId], id_projet: newId };
+				delete this.itemEdition[oldId];
+			}
+			if (this.projetTagReady[oldId]) {
+				this.projetTagReady[newId] = { ...this.projetTagReady[oldId], id_projet: newId };
+				delete this.projetTagReady[oldId];
+			}
+			if (this.projetTagEdition[oldId]) {
+				this.projetTagEdition[newId] = { ...this.projetTagEdition[oldId], id_projet: newId };
+				delete this.projetTagEdition[oldId];
+			}
+		},
+		commitProjetEdition(id, operation = "modified") { // return (sucess:bool, newStatus:string)
+			if (!this.projetEdition[id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.projetReady[id]) {
+				this.projetReady[id] = {};
+			}
+			if (this.projetReady[id].status === "new" && operation === "delete") {
+				delete this.projetReady[id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.projetReady[id].status === "modified" && operation === "delete") {
+				this.projetReady[id].status = "delete";
+			} else if (this.projetReady[id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.projetReady[id].status = "modified";
+			} else {
+				this.projetReady[id].status = operation;
+			}
+			this.projetReady[id].data = { ...this.projetEdition[id] };
+			return { success: true, newStatus: this.projetReady[id].status };
+		},
+		getAvailableEditionProjet() {
+			// search existing "new{id}" in projetEdition to find available id for new PROJET
+			const newIds = Math.max(Object.keys(this.projetEdition).filter((id) => id.startsWith("new")).map((id) => parseInt(id.replace("new", ""))), 0);
+			return "new" + (newIds + 1);
+		},
+		clearProjetEdition() {
+			this.projetEdition = {};
+			this.projetReady = {};
+		},
+		clearProjetEditionById(id) {
+			delete this.projetEdition[id];
+			delete this.projetReady[id];
+			this.clearDocumentEdition(id);
+			this.clearItemEdition(id);
+			this.clearProjetTagEdition(id);
+		},
 
 		async getCommentaireByInterval(idProjet, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			if (!this.commentaires[idProjet] || clear) {
@@ -368,6 +473,51 @@ export const useProjetsStore = defineStore("projets",{
 				useToken: "access",
 			});
 		},
+		commitDocumentEdition(idProjet, id, operation = "modified") {
+			if (!this.documentEdition[idProjet] || !this.documentEdition[idProjet][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.documentReady[idProjet]) {
+				this.documentReady[idProjet] = {};
+			}
+			if (!this.documentReady[idProjet][id]) {
+				this.documentReady[idProjet][id] = {};
+			}
+			if (this.documentReady[idProjet][id].status === "new" && operation === "delete") {
+				delete this.documentReady[idProjet][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.documentReady[idProjet][id].status === "modified" && operation === "delete") {
+				this.documentReady[idProjet][id].status = "delete";
+			} else if (this.documentReady[idProjet][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.documentReady[idProjet][id].status = "modified";
+			} else {
+				this.documentReady[idProjet][id].status = operation;
+			}
+			this.documentReady[idProjet][id].data = { ...this.documentEdition[idProjet][id] };
+			return { success: true, newStatus: this.documentReady[id].status };
+		},
+		async pushDocumentReady(idProjet) {
+			if (!this.documentReady[idProjet]) {
+				return;
+			}
+			for (const id in this.documentReady[idProjet]) {
+				const change = this.documentReady[idProjet][id];
+				if (change.status === "new") {
+					await this.createDocument(idProjet, change.data);
+					delete this.documentReady[id];
+				} else if (change.status === "modified") {
+					await this.updateDocument(idProjet, id, change.data);
+					delete this.documentReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteDocument(idProjet, id);
+					delete this.documentReady[id];
+				}
+			}
+		},
+		clearDocumentEdition(idProjet) {
+			this.documentEdition[idProjet] = {};
+			this.documentReady[idProjet] = {};
+		},
 
 		async getItemByInterval(idProjet, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			if (!this.items[idProjet] || clear) {
@@ -456,6 +606,51 @@ export const useProjetsStore = defineStore("projets",{
 			for (const item of itemBulk["valide"]) {
 				this.items[idProjet][item.id_item] = item;
 			}
+		},
+		commitItemEdition(idProjet, id, operation = "modified") {
+			if (!this.itemEdition[idProjet] || !this.itemEdition[idProjet][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.itemReady[idProjet]) {
+				this.itemReady[idProjet] = {};
+			}
+			if (!this.itemReady[idProjet][id]) {
+				this.itemReady[idProjet][id] = {};
+			}
+			if (this.itemReady[idProjet][id].status === "new" && operation === "delete") {
+				delete this.itemReady[idProjet][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.itemReady[idProjet][id].status === "modified" && operation === "delete") {
+				this.itemReady[idProjet][id].status = "delete";
+			} else if (this.itemReady[idProjet][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.itemReady[idProjet][id].status = "modified";
+			} else {
+				this.itemReady[idProjet][id].status = operation;
+			}
+			this.itemReady[idProjet][id].data = { ...this.itemEdition[idProjet][id] };
+			return { success: true, newStatus: this.itemReady[id].status };
+		},
+		async pushItemReady(idProjet) {
+			if (!this.itemReady[idProjet]) {
+				return;
+			}
+			for (const id in this.itemReady[idProjet]) {
+				const change = this.itemReady[idProjet][id];
+				if (change.status === "new") {
+					await this.createItem(idProjet, change.data);
+					delete this.itemReady[id];
+				} else if (change.status === "modified") {
+					await this.updateItem(idProjet, id, change.data);
+					delete this.itemReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteItem(idProjet, id);
+					delete this.itemReady[id];
+				}
+			}
+		},
+		clearItemEdition(idProjet) {
+			this.itemEdition[idProjet] = {};
+			this.itemReady[idProjet] = {};
 		},
 
 		async getProjetTagProjetByInterval(idProjet, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
@@ -548,6 +743,51 @@ export const useProjetsStore = defineStore("projets",{
 			for (const idProjetTag of projetTagBulk["valide"]) {
 				delete this.projetTagProjet[idProjet][idProjetTag];
 			}
+		},
+		commitProjetTagEdition(idProjet, id, operation = "modified") {
+			if (!this.projetTagEdition[idProjet] || !this.projetTagEdition[idProjet][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.projetTagReady[idProjet]) {
+				this.projetTagReady[idProjet] = {};
+			}
+			if (!this.projetTagReady[idProjet][id]) {
+				this.projetTagReady[idProjet][id] = {};
+			}
+			if (this.projetTagReady[idProjet][id].status === "new" && operation === "delete") {
+				delete this.projetTagReady[idProjet][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.projetTagReady[idProjet][id].status === "modified" && operation === "delete") {
+				this.projetTagReady[idProjet][id].status = "delete";
+			} else if (this.projetTagReady[idProjet][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.projetTagReady[idProjet][id].status = "modified";
+			} else {
+				this.projetTagReady[idProjet][id].status = operation;
+			}
+			this.projetTagReady[idProjet][id].data = { ...this.projetTagEdition[idProjet][id] };
+			return { success: true, newStatus: this.projetTagReady[id].status };
+		},
+		async pushProjetTagReady(idProjet) {
+			if (!this.projetTagReady[idProjet]) {
+				return;
+			}
+			for (const id in this.projetTagReady[idProjet]) {
+				const change = this.projetTagReady[idProjet][id];
+				if (change.status === "new") {
+					await this.createProjetTag(idProjet, change.data);
+					delete this.projetTagReady[id];
+				} else if (change.status === "modified") {
+					await this.updateProjetTag(idProjet, id, change.data);
+					delete this.projetTagReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteProjetTag(idProjet, id);
+					delete this.projetTagReady[id];
+				}
+			}
+		},
+		clearProjetTagEdition(idProjet) {
+			this.projetTagEdition[idProjet] = {};
+			this.projetTagReady[idProjet] = {};
 		},
 
 		async getStatusHistoryByInterval(idProjet, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {

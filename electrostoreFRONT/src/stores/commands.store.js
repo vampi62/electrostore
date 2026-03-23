@@ -12,21 +12,25 @@ export const useCommandsStore = defineStore("commands",{
 		commandsTotalCount: 0,
 		commands: {},
 		commandEdition: {},
+		commandReady: {},
 
 		commentairesTotalCount: {},
 		commentairesLoading: false,
 		commentaires: {},
 		commentaireEdition: {},
+		commentaireReady: {},
 
 		documentsTotalCount: {},
 		documentsLoading: false,
 		documents: {},
 		documentEdition: {},
+		documentReady: {},
 
 		itemsTotalCount: {},
 		itemsLoading: false,
 		items: {},
 		itemEdition: {},
+		itemReady: {},
 	}),
 	actions: {
 		async getCommandByList(idResearch = [], expand = []) {
@@ -161,6 +165,94 @@ export const useCommandsStore = defineStore("commands",{
 				useToken: "access",
 			});
 			delete this.commands[id];
+		},
+		async pushCommandReady() {
+			for (const id in this.commandReady) {
+				const change = this.commandReady[id];
+				if (change.status === "new") {
+					const newId = await this.createCommand(change.data);
+					this.updateIdCommand(id, newId);
+					this.pushDocumentReady(newId);
+					this.pushItemReady(newId);
+					delete this.commandReady[id];
+				} else if (change.status === "modified") {
+					await this.updateCommand(id, change.data);
+					this.pushDocumentReady(id);
+					this.pushItemReady(id);
+					delete this.commandReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteCommand(id);
+					delete this.commandReady[id];
+				}
+			}
+		},
+		async pushCommandById(id) {
+			if (!this.commandEdition[id]) {
+				return;
+			}
+			let newId = id;
+			if (id.startsWith("new")) {
+				newId = await this.createCommand(this.commandEdition[id]);
+				this.updateIdCommand(id, newId);
+			} else {
+				await this.updateCommand(id, this.commandEdition[id]);
+			}
+			this.pushDocumentReady(newId);
+			this.pushItemReady(newId);
+			return newId;
+		},
+		updateIdCommand(oldId, newId) {
+			if (this.documentReady[oldId]) {
+				this.documentReady[newId] = { ...this.documentReady[oldId], id_command: newId };
+				delete this.documentReady[oldId];
+			}
+			if (this.documentEdition[oldId]) {
+				this.documentEdition[newId] = { ...this.documentEdition[oldId], id_command: newId };
+				delete this.documentEdition[oldId];
+			}
+			if (this.itemReady[oldId]) {
+				this.itemReady[newId] = { ...this.itemReady[oldId], id_command: newId };
+				delete this.itemReady[oldId];
+			}
+			if (this.itemEdition[oldId]) {
+				this.itemEdition[newId] = { ...this.itemEdition[oldId], id_command: newId };
+				delete this.itemEdition[oldId];
+			}
+		},
+		commitCommandEdition(id, operation = "modified") { // return (sucess:bool, newStatus:string)
+			if (!this.commandEdition[id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.commandReady[id]) {
+				this.commandReady[id] = {};
+			}
+			if (this.commandReady[id].status === "new" && operation === "delete") {
+				delete this.commandReady[id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.commandReady[id].status === "modified" && operation === "delete") {
+				this.commandReady[id].status = "delete";
+			} else if (this.commandReady[id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.commandReady[id].status = "modified";
+			} else {
+				this.commandReady[id].status = operation;
+			}
+			this.commandReady[id].data = { ...this.commandEdition[id] };
+			return { success: true, newStatus: this.commandReady[id].status };
+		},
+		getAvailableEditionCommand() {
+			// search existing "new{id}" in commandEdition to find available id for new COMMAND
+			const newIds = Math.max(Object.keys(this.commandEdition).filter((id) => id.startsWith("new")).map((id) => parseInt(id.replace("new", ""))), 0);
+			return "new" + (newIds + 1);
+		},
+		clearCommandEdition() {
+			this.commandEdition = {};
+			this.commandReady = {};
+		},
+		clearCommandEditionById(id) {
+			delete this.commandEdition[id];
+			delete this.commandReady[id];
+			this.clearDocumentEdition(id);
+			this.clearItemEdition(id);
 		},
 
 		async getCommentaireByInterval(idCommand, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
@@ -316,6 +408,51 @@ export const useCommandsStore = defineStore("commands",{
 				useToken: "access",
 			});
 		},
+		commitDocumentEdition(idCommand, id, operation = "modified") {
+			if (!this.documentEdition[idCommand] || !this.documentEdition[idCommand][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.documentReady[idCommand]) {
+				this.documentReady[idCommand] = {};
+			}
+			if (!this.documentReady[idCommand][id]) {
+				this.documentReady[idCommand][id] = {};
+			}
+			if (this.documentReady[idCommand][id].status === "new" && operation === "delete") {
+				delete this.documentReady[idCommand][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.documentReady[idCommand][id].status === "modified" && operation === "delete") {
+				this.documentReady[idCommand][id].status = "delete";
+			} else if (this.documentReady[idCommand][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.documentReady[idCommand][id].status = "modified";
+			} else {
+				this.documentReady[idCommand][id].status = operation;
+			}
+			this.documentReady[idCommand][id].data = { ...this.documentEdition[idCommand][id] };
+			return { success: true, newStatus: this.documentReady[id].status };
+		},
+		async pushDocumentReady(idCommand) {
+			if (!this.documentReady[idCommand]) {
+				return;
+			}
+			for (const id in this.documentReady[idCommand]) {
+				const change = this.documentReady[idCommand][id];
+				if (change.status === "new") {
+					await this.createDocument(idCommand, change.data);
+					delete this.documentReady[id];
+				} else if (change.status === "modified") {
+					await this.updateDocument(idCommand, id, change.data);
+					delete this.documentReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteDocument(idCommand, id);
+					delete this.documentReady[id];
+				}
+			}
+		},
+		clearDocumentEdition(idCommand) {
+			this.documentEdition[idCommand] = {};
+			this.documentReady[idCommand] = {};
+		},
 
 		async getItemByInterval(idCommand, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			if (!this.items[idCommand] || clear) {
@@ -404,6 +541,51 @@ export const useCommandsStore = defineStore("commands",{
 			for (const item of itemBulk["valide"]) {
 				this.items[idCommand][item.id_item] = item;
 			}
+		},
+		commitItemEdition(idCommand, id, operation = "modified") {
+			if (!this.itemEdition[idCommand] || !this.itemEdition[idCommand][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.itemReady[idCommand]) {
+				this.itemReady[idCommand] = {};
+			}
+			if (!this.itemReady[idCommand][id]) {
+				this.itemReady[idCommand][id] = {};
+			}
+			if (this.itemReady[idCommand][id].status === "new" && operation === "delete") {
+				delete this.itemReady[idCommand][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.itemReady[idCommand][id].status === "modified" && operation === "delete") {
+				this.itemReady[idCommand][id].status = "delete";
+			} else if (this.itemReady[idCommand][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.itemReady[idCommand][id].status = "modified";
+			} else {
+				this.itemReady[idCommand][id].status = operation;
+			}
+			this.itemReady[idCommand][id].data = { ...this.itemEdition[idCommand][id] };
+			return { success: true, newStatus: this.itemReady[id].status };
+		},
+		async pushItemReady(idCommand) {
+			if (!this.itemReady[idCommand]) {
+				return;
+			}
+			for (const id in this.itemReady[idCommand]) {
+				const change = this.itemReady[idCommand][id];
+				if (change.status === "new") {
+					await this.createItem(idCommand, change.data);
+					delete this.itemReady[id];
+				} else if (change.status === "modified") {
+					await this.updateItem(idCommand, id, change.data);
+					delete this.itemReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteItem(idCommand, id);
+					delete this.itemReady[id];
+				}
+			}
+		},
+		clearItemEdition(idCommand) {
+			this.itemEdition[idCommand] = {};
+			this.itemReady[idCommand] = {};
 		},
 	},
 });

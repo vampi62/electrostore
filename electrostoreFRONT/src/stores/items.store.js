@@ -12,31 +12,37 @@ export const useItemsStore = defineStore("items",{
 		itemsTotalCount: 0,
 		items: {},
 		itemEdition: {},
+		itemReady: {},
 
 		documentsTotalCount: {},
 		documentsLoading: false,
 		documents: {},
 		documentEdition: {},
+		documentReady: {},
 
 		itemBoxsTotalCount: {},
 		itemBoxsLoading: false,
 		itemBoxs: {},
 		itemBoxEdition: {},
+		itemBoxReady: {},
 
 		itemTagsLoading: true,
 		itemTagsTotalCount: {},
 		itemTags: {},
 		itemTagEdition: {},
+		itemTagReady: {},
 
 		itemCommandsLoading: true,
 		itemCommandsTotalCount: {},
 		itemCommands: {},
 		itemCommandEdition: {},
+		itemCommandReady: {},
 
 		itemProjetsLoading: true,
 		itemProjetsTotalCount: {},
 		itemProjets: {},
 		itemProjetEdition: {},
+		itemProjetReady: {},
 
 		imagesLoading: true,
 		imagesTotalCount: {},
@@ -44,6 +50,7 @@ export const useItemsStore = defineStore("items",{
 		imagesURL: {},
 		thumbnailsURL: {},
 		imageEdition: {},
+		imageReady: {},
 	}),
 	actions: {
 		async getItemByList(idResearch = [], expand = []) {
@@ -233,6 +240,142 @@ export const useItemsStore = defineStore("items",{
 			});
 			this.items[id] = null;
 		},
+		async pushItemReady() {
+			for (const id in this.itemReady) {
+				const change = this.itemReady[id];
+				if (change.status === "new") {
+					const newId = await this.createItem(change.data);
+					this.updateIdItem(id, newId);
+					this.pushDocumentReady(newId);
+					this.pushItemBoxReady(newId);
+					this.pushItemTagReady(newId);
+					this.pushItemCommandReady(newId);
+					this.pushItemProjetReady(newId);
+					this.pushImageReady(newId);
+					delete this.itemReady[id];
+				} else if (change.status === "modified") {
+					await this.updateItem(id, change.data);
+					this.pushDocumentReady(id);
+					this.pushItemBoxReady(id);
+					this.pushItemTagReady(id);
+					this.pushItemCommandReady(id);
+					this.pushItemProjetReady(id);
+					this.pushImageReady(id);
+					delete this.itemReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteItem(id);
+					delete this.itemReady[id];
+				}
+			}
+		},
+		async pushItemById(id) {
+			if (!this.itemEdition[id]) {
+				return;
+			}
+			let newId = id;
+			if (id.startsWith("new")) {
+				newId = await this.createItem(this.itemEdition[id]);
+				this.updateIdItem(id, newId);
+			} else {
+				await this.updateItem(id, this.itemEdition[id]);
+			}
+			this.pushDocumentReady(newId);
+			this.pushItemBoxReady(newId);
+			this.pushItemTagReady(newId);
+			this.pushItemCommandReady(newId);
+			this.pushItemProjetReady(newId);
+			this.pushImageReady(newId);
+			return newId;
+		},
+		updateIdItem(oldId, newId) {
+			if (this.documentReady[oldId]) {
+				this.documentReady[newId] = { ...this.documentReady[oldId], id_item: newId };
+				delete this.documentReady[oldId];
+			}
+			if (this.documentEdition[oldId]) {
+				this.documentEdition[newId] = { ...this.documentEdition[oldId], id_item: newId };
+				delete this.documentEdition[oldId];
+			}
+			if (this.itemBoxReady[oldId]) {
+				this.itemBoxReady[newId] = { ...this.itemBoxReady[oldId], id_item: newId };
+				delete this.itemBoxReady[oldId];
+			}
+			if (this.itemBoxEdition[oldId]) {
+				this.itemBoxEdition[newId] = { ...this.itemBoxEdition[oldId], id_item: newId };
+				delete this.itemBoxEdition[oldId];
+			}
+			if (this.itemTagReady[oldId]) {
+				this.itemTagReady[newId] = { ...this.itemTagReady[oldId], id_item: newId };
+				delete this.itemTagReady[oldId];
+			}
+			if (this.itemTagEdition[oldId]) {
+				this.itemTagEdition[newId] = { ...this.itemTagEdition[oldId], id_item: newId };
+				delete this.itemTagEdition[oldId];
+			}
+			if (this.itemCommandReady[oldId]) {
+				this.itemCommandReady[newId] = { ...this.itemCommandReady[oldId], id_item: newId };
+				delete this.itemCommandReady[oldId];
+			}
+			if (this.itemCommandEdition[oldId]) {
+				this.itemCommandEdition[newId] = { ...this.itemCommandEdition[oldId], id_item: newId };
+				delete this.itemCommandEdition[oldId];
+			}
+			if (this.itemProjetReady[oldId]) {
+				this.itemProjetReady[newId] = { ...this.itemProjetReady[oldId], id_item: newId };
+				delete this.itemProjetReady[oldId];
+			}
+			if (this.itemProjetEdition[oldId]) {
+				this.itemProjetEdition[newId] = { ...this.itemProjetEdition[oldId], id_item: newId };
+				delete this.itemProjetEdition[oldId];
+			}
+			if (this.imageReady[oldId]) {
+				this.imageReady[newId] = { ...this.imageReady[oldId], id_item: newId };
+				delete this.imageReady[oldId];
+			}
+			if (this.imageEdition[oldId]) {
+				this.imageEdition[newId] = { ...this.imageEdition[oldId], id_item: newId };
+				delete this.imageEdition[oldId];
+			}
+		},
+		commitItemEdition(id, operation = "modified") { // return (sucess:bool, newStatus:string)
+			if (!this.itemEdition[id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.itemReady[id]) {
+				this.itemReady[id] = {};
+			}
+			if (this.itemReady[id].status === "new" && operation === "delete") {
+				delete this.itemReady[id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.itemReady[id].status === "modified" && operation === "delete") {
+				this.itemReady[id].status = "delete";
+			} else if (this.itemReady[id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.itemReady[id].status = "modified";
+			} else {
+				this.itemReady[id].status = operation;
+			}
+			this.itemReady[id].data = { ...this.itemEdition[id] };
+			return { success: true, newStatus: this.itemReady[id].status };
+		},
+		getAvailableEditionItem() {
+			// search existing "new{id}" in itemEdition to find available id for new ITEM
+			const newIds = Math.max(Object.keys(this.itemEdition).filter((id) => id.startsWith("new")).map((id) => parseInt(id.replace("new", ""))), 0);
+			return "new" + (newIds + 1);
+		},
+		clearItemEdition() {
+			this.itemEdition = {};
+			this.itemReady = {};
+		},
+		clearItemEditionById(id) {
+			delete this.itemEdition[id];
+			delete this.itemReady[id];
+			this.clearDocumentEdition(id);
+			this.clearItemBoxEdition(id);
+			this.clearItemTagEdition(id);
+			this.clearItemCommandEdition(id);
+			this.clearItemProjetEdition(id);
+			this.clearImageEdition(id);
+		},
 
 		async getDocumentByInterval(idItem, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			if (!this.documents[idItem] || clear) {
@@ -309,6 +452,51 @@ export const useItemsStore = defineStore("items",{
 				url: `${baseUrl}/item/${idItem}/document/${id}/download`,
 				useToken: "access",
 			});
+		},
+		commitDocumentEdition(idItem, id, operation = "modified") {
+			if (!this.documentEdition[idItem] || !this.documentEdition[idItem][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.documentReady[idItem]) {
+				this.documentReady[idItem] = {};
+			}
+			if (!this.documentReady[idItem][id]) {
+				this.documentReady[idItem][id] = {};
+			}
+			if (this.documentReady[idItem][id].status === "new" && operation === "delete") {
+				delete this.documentReady[idItem][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.documentReady[idItem][id].status === "modified" && operation === "delete") {
+				this.documentReady[idItem][id].status = "delete";
+			} else if (this.documentReady[idItem][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.documentReady[idItem][id].status = "modified";
+			} else {
+				this.documentReady[idItem][id].status = operation;
+			}
+			this.documentReady[idItem][id].data = { ...this.documentEdition[idItem][id] };
+			return { success: true, newStatus: this.documentReady[id].status };
+		},
+		async pushDocumentReady(idItem) {
+			if (!this.documentReady[idItem]) {
+				return;
+			}
+			for (const id in this.documentReady[idItem]) {
+				const change = this.documentReady[idItem][id];
+				if (change.status === "new") {
+					await this.createDocument(idItem, change.data);
+					delete this.documentReady[id];
+				} else if (change.status === "modified") {
+					await this.updateDocument(idItem, id, change.data);
+					delete this.documentReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteDocument(idItem, id);
+					delete this.documentReady[id];
+				}
+			}
+		},
+		clearDocumentEdition(idItem) {
+			this.documentEdition[idItem] = {};
+			this.documentReady[idItem] = {};
 		},
 
 		async getItemBoxByInterval(idItem, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
@@ -388,6 +576,51 @@ export const useItemsStore = defineStore("items",{
 				useToken: "access",
 			});
 			delete this.itemBoxs[idItem][id];
+		},
+		commitItemBoxEdition(idItem, id, operation = "modified") {
+			if (!this.itemBoxEdition[idItem] || !this.itemBoxEdition[idItem][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.itemBoxReady[idItem]) {
+				this.itemBoxReady[idItem] = {};
+			}
+			if (!this.itemBoxReady[idItem][id]) {
+				this.itemBoxReady[idItem][id] = {};
+			}
+			if (this.itemBoxReady[idItem][id].status === "new" && operation === "delete") {
+				delete this.itemBoxReady[idItem][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.itemBoxReady[idItem][id].status === "modified" && operation === "delete") {
+				this.itemBoxReady[idItem][id].status = "delete";
+			} else if (this.itemBoxReady[idItem][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.itemBoxReady[idItem][id].status = "modified";
+			} else {
+				this.itemBoxReady[idItem][id].status = operation;
+			}
+			this.itemBoxReady[idItem][id].data = { ...this.itemBoxEdition[idItem][id] };
+			return { success: true, newStatus: this.itemBoxReady[id].status };
+		},
+		async pushItemBoxReady(idItem) {
+			if (!this.itemBoxReady[idItem]) {
+				return;
+			}
+			for (const id in this.itemBoxReady[idItem]) {
+				const change = this.itemBoxReady[idItem][id];
+				if (change.status === "new") {
+					await this.createItemBox(idItem, change.data);
+					delete this.itemBoxReady[id];
+				} else if (change.status === "modified") {
+					await this.updateItemBox(idItem, id, change.data);
+					delete this.itemBoxReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteItemBox(idItem, id);
+					delete this.itemBoxReady[id];
+				}
+			}
+		},
+		clearItemBoxEdition(idItem) {
+			this.itemBoxEdition[idItem] = {};
+			this.itemBoxReady[idItem] = {};
 		},
 
 		async getItemTagByInterval(idItem, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
@@ -481,6 +714,51 @@ export const useItemsStore = defineStore("items",{
 				delete this.itemTags[idItem][itemTag.id_tag];
 			}
 		},
+		commitItemTagEdition(idItem, id, operation = "modified") {
+			if (!this.itemTagEdition[idItem] || !this.itemTagEdition[idItem][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.itemTagReady[idItem]) {
+				this.itemTagReady[idItem] = {};
+			}
+			if (!this.itemTagReady[idItem][id]) {
+				this.itemTagReady[idItem][id] = {};
+			}
+			if (this.itemTagReady[idItem][id].status === "new" && operation === "delete") {
+				delete this.itemTagReady[idItem][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.itemTagReady[idItem][id].status === "modified" && operation === "delete") {
+				this.itemTagReady[idItem][id].status = "delete";
+			} else if (this.itemTagReady[idItem][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.itemTagReady[idItem][id].status = "modified";
+			} else {
+				this.itemTagReady[idItem][id].status = operation;
+			}
+			this.itemTagReady[idItem][id].data = { ...this.itemTagEdition[idItem][id] };
+			return { success: true, newStatus: this.itemTagReady[id].status };
+		},
+		async pushItemTagReady(idItem) {
+			if (!this.itemTagReady[idItem]) {
+				return;
+			}
+			for (const id in this.itemTagReady[idItem]) {
+				const change = this.itemTagReady[idItem][id];
+				if (change.status === "new") {
+					await this.createItemTag(idItem, change.data);
+					delete this.itemTagReady[id];
+				} else if (change.status === "modified") {
+					await this.updateItemTag(idItem, id, change.data);
+					delete this.itemTagReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteItemTag(idItem, id);
+					delete this.itemTagReady[id];
+				}
+			}
+		},
+		clearItemTagEdition(idItem) {
+			this.itemTagEdition[idItem] = {};
+			this.itemTagReady[idItem] = {};
+		},
 
 		async getItemCommandByInterval(idItem, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			if (!this.itemCommands[idItem] || clear) {
@@ -570,6 +848,51 @@ export const useItemsStore = defineStore("items",{
 				this.itemCommands[idItem][itemCommand.id_command] = itemCommand;
 			}
 		},
+		commitItemCommandEdition(idItem, id, operation = "modified") {
+			if (!this.itemCommandEdition[idItem] || !this.itemCommandEdition[idItem][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.itemCommandReady[idItem]) {
+				this.itemCommandReady[idItem] = {};
+			}
+			if (!this.itemCommandReady[idItem][id]) {
+				this.itemCommandReady[idItem][id] = {};
+			}
+			if (this.itemCommandReady[idItem][id].status === "new" && operation === "delete") {
+				delete this.itemCommandReady[idItem][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.itemCommandReady[idItem][id].status === "modified" && operation === "delete") {
+				this.itemCommandReady[idItem][id].status = "delete";
+			} else if (this.itemCommandReady[idItem][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.itemCommandReady[idItem][id].status = "modified";
+			} else {
+				this.itemCommandReady[idItem][id].status = operation;
+			}
+			this.itemCommandReady[idItem][id].data = { ...this.itemCommandEdition[idItem][id] };
+			return { success: true, newStatus: this.itemCommandReady[id].status };
+		},
+		async pushItemCommandReady(idItem) {
+			if (!this.itemCommandReady[idItem]) {
+				return;
+			}
+			for (const id in this.itemCommandReady[idItem]) {
+				const change = this.itemCommandReady[idItem][id];
+				if (change.status === "new") {
+					await this.createItemCommand(idItem, change.data);
+					delete this.itemCommandReady[id];
+				} else if (change.status === "modified") {
+					await this.updateItemCommand(idItem, id, change.data);
+					delete this.itemCommandReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteItemCommand(idItem, id);
+					delete this.itemCommandReady[id];
+				}
+			}
+		},
+		clearItemCommandEdition(idItem) {
+			this.itemCommandEdition[idItem] = {};
+			this.itemCommandReady[idItem] = {};
+		},
 
 		async getItemProjetByInterval(idItem, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			if (!this.itemProjets[idItem] || clear) {
@@ -658,6 +981,51 @@ export const useItemsStore = defineStore("items",{
 			for (const itemProjet of itemProjetBulk["valide"]) {
 				this.itemProjets[idItem][itemProjet.id_projet] = itemProjet;
 			}
+		},
+		commitItemProjetEdition(idItem, id, operation = "modified") {
+			if (!this.itemProjetEdition[idItem] || !this.itemProjetEdition[idItem][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.itemProjetReady[idItem]) {
+				this.itemProjetReady[idItem] = {};
+			}
+			if (!this.itemProjetReady[idItem][id]) {
+				this.itemProjetReady[idItem][id] = {};
+			}
+			if (this.itemProjetReady[idItem][id].status === "new" && operation === "delete") {
+				delete this.itemProjetReady[idItem][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.itemProjetReady[idItem][id].status === "modified" && operation === "delete") {
+				this.itemProjetReady[idItem][id].status = "delete";
+			} else if (this.itemProjetReady[idItem][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.itemProjetReady[idItem][id].status = "modified";
+			} else {
+				this.itemProjetReady[idItem][id].status = operation;
+			}
+			this.itemProjetReady[idItem][id].data = { ...this.itemProjetEdition[idItem][id] };
+			return { success: true, newStatus: this.itemProjetReady[id].status };
+		},
+		async pushItemProjetReady(idItem) {
+			if (!this.itemProjetReady[idItem]) {
+				return;
+			}
+			for (const id in this.itemProjetReady[idItem]) {
+				const change = this.itemProjetReady[idItem][id];
+				if (change.status === "new") {
+					await this.createItemProjet(idItem, change.data);
+					delete this.itemProjetReady[id];
+				} else if (change.status === "modified") {
+					await this.updateItemProjet(idItem, id, change.data);
+					delete this.itemProjetReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteItemProjet(idItem, id);
+					delete this.itemProjetReady[id];
+				}
+			}
+		},
+		clearItemProjetEdition(idItem) {
+			this.itemProjetEdition[idItem] = {};
+			this.itemProjetReady[idItem] = {};
 		},
 
 		async getImageByInterval(idItem, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false, loadThumbnails = true, loadImages = false) {
@@ -784,6 +1152,51 @@ export const useItemsStore = defineStore("items",{
 			});
 			const url = URL.createObjectURL(response);
 			this.thumbnailsURL[id_img] = url;
+		},
+		commitImageEdition(idItem, id, operation = "modified") {
+			if (!this.imageEdition[idItem] || !this.imageEdition[idItem][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.imageReady[idItem]) {
+				this.imageReady[idItem] = {};
+			}
+			if (!this.imageReady[idItem][id]) {
+				this.imageReady[idItem][id] = {};
+			}
+			if (this.imageReady[idItem][id].status === "new" && operation === "delete") {
+				delete this.imageReady[idItem][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.imageReady[idItem][id].status === "modified" && operation === "delete") {
+				this.imageReady[idItem][id].status = "delete";
+			} else if (this.imageReady[idItem][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.imageReady[idItem][id].status = "modified";
+			} else {
+				this.imageReady[idItem][id].status = operation;
+			}
+			this.imageReady[idItem][id].data = { ...this.imageEdition[idItem][id] };
+			return { success: true, newStatus: this.imageReady[id].status };
+		},
+		async pushImageReady(idItem) {
+			if (!this.imageReady[idItem]) {
+				return;
+			}
+			for (const id in this.imageReady[idItem]) {
+				const change = this.imageReady[idItem][id];
+				if (change.status === "new") {
+					await this.createImage(idItem, change.data);
+					delete this.imageReady[id];
+				} else if (change.status === "modified") {
+					await this.updateImage(idItem, id, change.data);
+					delete this.imageReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteImage(idItem, id);
+					delete this.imageReady[id];
+				}
+			}
+		},
+		clearImageEdition(idItem) {
+			this.imageEdition[idItem] = {};
+			this.imageReady[idItem] = {};
 		},
 	},
 });

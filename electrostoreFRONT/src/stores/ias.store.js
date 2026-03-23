@@ -111,6 +111,36 @@ export const useIasStore = defineStore("ias", {
 				contentFile: true,
 			});
 		},
+		async pushIaReady() {
+			for (const id in this.iaReady) {
+				const change = this.iaReady[id];
+				if (change.status === "new") {
+					await this.createIa(change.data);
+					delete this.iaReady[id];
+				} else if (change.status === "modified") {
+					await this.updateIa(id, change.data);
+					delete this.iaReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteIa(id);
+					delete this.iaReady[id];
+				}
+			}
+		},
+		async pushIaById(id) {
+			if (!this.iaEdition[id]) {
+				return;
+			}
+			let newId = id;
+			if (id.startsWith("new")) {
+				newId = await this.createIa(this.iaEdition[id]);
+				this.updateIdIa(id, newId);
+			} else {
+				await this.updateIa(id, this.iaEdition[id]);
+			}
+			return newId;
+		},
+		updateIdIa(oldId, newId) {
+		},
 		commitIaEdition(id, operation = "modified") {
 			if (!this.iaEdition[id]) {
 				return;
@@ -130,48 +160,18 @@ export const useIasStore = defineStore("ias", {
 			}
 			this.iaReady[id].data = { ...this.iaEdition[id] };
 		},
-		async pushIaReady() {
-			for (const id in this.iaReady) {
-				const change = this.iaReady[id];
-				if (change.status === "new") {
-					await this.createIa(change.data);
-					delete this.iaReady[id];
-				} else if (change.status === "modified") {
-					await this.updateIa(id, change.data);
-					delete this.iaReady[id];
-				} else if (change.status === "delete") {
-					await this.deleteIa(id);
-					delete this.iaReady[id];
-				}
-			}
-		},
-		clearIaEditeur() {
-			this.iaEdition = {};
-			this.iaReady = {};
-		},
-		async pushIaById(id) {
-			if (!this.iaEdition[id]) {
-				return;
-			}
-			let newId = id;
-			if (id.startsWith("new")) {
-				newId = await this.createIa(this.iaEdition[id]);
-				this.updateIdIa(id, newId);
-			} else {
-				await this.updateIa(id, this.iaEdition[id]);
-			}
-			return newId;
-		},
-		clearIaEditionById(id) {
-			delete this.iaEdition[id];
-			delete this.iaReady[id];
-		},
 		getAvailableEditionIa() {
 			// search existing "new{id}" in iaEdition to find available id for new IA
 			const newIds = Math.max(Object.keys(this.iaEdition).filter((id) => id.startsWith("new")).map((id) => parseInt(id.replace("new", ""))), 0);
 			return "new" + (newIds + 1);
 		},
-		updateIdIa(oldId, newId) {
+		clearIaEditeur() {
+			this.iaEdition = {};
+			this.iaReady = {};
+		},
+		clearIaEditionById(id) {
+			delete this.iaEdition[id];
+			delete this.iaReady[id];
 		},
 	},
 });

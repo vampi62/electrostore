@@ -12,31 +12,37 @@ export const useStoresStore = defineStore("stores",{
 		storesTotalCount: 0,
 		stores: {},
 		storeEdition: {},
+		storeReady: {},
 
 		boxsLoading: true,
 		boxsTotalCount: {},
 		boxs: {},
 		boxEdition: {},
+		boxReady: {},
 
 		ledsLoading: true,
 		ledsTotalCount: {},
 		leds: {},
 		ledEdition: {},
+		ledReady: {},
 
 		storeTagsLoading: true,
 		storeTagsTotalCount: {},
 		storeTags: {},
 		storeTagEdition: {},
+		storeTagReady: {},
 
 		boxItemsLoading: true,
 		boxItemsTotalCount: {},
 		boxItems: {},
 		boxItemEdition: {},
+		boxItemReady: {},
 
 		boxTagsLoading: true,
 		boxTagsTotalCount: {},
 		boxTags: {},
 		boxTagEdition: {},
+		boxTagReady: {},
 	}),
 	actions: {
 		async getStoreByList(idResearch = [], expand = []) {
@@ -149,7 +155,7 @@ export const useStoresStore = defineStore("stores",{
 				}
 			}
 		},
-		async createStore(id, params) {
+		async createStore(params) {
 			const store = await fetchWrapper.post({
 				url: `${baseUrl}/store`,
 				useToken: "access",
@@ -187,6 +193,98 @@ export const useStoresStore = defineStore("stores",{
 				useToken: "access",
 				body: params,
 			});
+		},
+		async pushStoreReady() {
+			for (const id in this.storeReady) {
+				const change = this.storeReady[id];
+				if (change.status === "new") {
+					const newId = await this.createStore(change.data);
+					this.updateIdStore(id, newId);
+					this.pushBoxReady(newId);
+					this.pushLedReady(newId);
+					this.pushTagStoreReady(newId);
+					delete this.storeReady[id];
+				} else if (change.status === "modified") {
+					await this.updateStore(id, change.data);
+					this.pushBoxReady(id);
+					this.pushLedReady(id);
+					this.pushTagStoreReady(id);
+					delete this.storeReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteStore(id);
+					delete this.storeReady[id];
+				}
+			}
+		},
+		async pushStoreById(id) {
+			if (!this.storeEdition[id]) {
+				return;
+			}
+			let newId = id;
+			if (id.startsWith("new")) {
+				newId = await this.createStore(this.storeEdition[id]);
+				this.updateIdStore(id, newId);
+			} else {
+				await this.updateStore(id, this.storeEdition[id]);
+			}
+			this.pushBoxReady(newId);
+			this.pushLedReady(newId);
+			this.pushTagStoreReady(newId);
+			return newId;
+		},
+		updateIdStore(oldId, newId) {
+			if (this.boxReady[oldId]) {
+				this.boxReady[newId] = { ...this.boxReady[oldId], id_store: newId };
+				delete this.boxReady[oldId];
+			}
+			if (this.boxEdition[oldId]) {
+				this.boxEdition[newId] = { ...this.boxEdition[oldId], id_store: newId };
+				delete this.boxEdition[oldId];
+			}
+			if (this.ledReady[oldId]) {
+				this.ledReady[newId] = { ...this.ledReady[oldId], id_store: newId };
+				delete this.ledReady[oldId];
+			}
+			if (this.ledEdition[oldId]) {
+				this.ledEdition[newId] = { ...this.ledEdition[oldId], id_store: newId };
+				delete this.ledEdition[oldId];
+			}
+		},
+		commitStoreEdition(id, operation = "modified") { // return (sucess:bool, newStatus:string)
+			if (!this.storeEdition[id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.storeReady[id]) {
+				this.storeReady[id] = {};
+			}
+			if (this.storeReady[id].status === "new" && operation === "delete") {
+				delete this.storeReady[id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.storeReady[id].status === "modified" && operation === "delete") {
+				this.storeReady[id].status = "delete";
+			} else if (this.storeReady[id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.storeReady[id].status = "modified";
+			} else {
+				this.storeReady[id].status = operation;
+			}
+			this.storeReady[id].data = { ...this.storeEdition[id] };
+			return { success: true, newStatus: this.storeReady[id].status };
+		},
+		getAvailableEditionStore() {
+			// search existing "new{id}" in storeEdition to find available id for new STORE
+			const newIds = Math.max(Object.keys(this.storeEdition).filter((id) => id.startsWith("new")).map((id) => parseInt(id.replace("new", ""))), 0);
+			return "new" + (newIds + 1);
+		},
+		clearStoreEdition() {
+			this.storeEdition = {};
+			this.storeReady = {};
+		},
+		clearStoreEditionById(id) {
+			delete this.storeEdition[id];
+			delete this.storeReady[id];
+			this.clearBoxEdition(id);
+			this.clearLedEdition(id);
+			this.clearTagStoreEdition(id);
 		},
 
 		async getBoxByInterval(idStore, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
@@ -330,6 +428,51 @@ export const useStoresStore = defineStore("stores",{
 				body: params,
 			});
 		},
+		commitBoxEdition(idStore, id, operation = "modified") {
+			if (!this.boxEdition[idStore] || !this.boxEdition[idStore][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.boxReady[idStore]) {
+				this.boxReady[idStore] = {};
+			}
+			if (!this.boxReady[idStore][id]) {
+				this.boxReady[idStore][id] = {};
+			}
+			if (this.boxReady[idStore][id].status === "new" && operation === "delete") {
+				delete this.boxReady[idStore][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.boxReady[idStore][id].status === "modified" && operation === "delete") {
+				this.boxReady[idStore][id].status = "delete";
+			} else if (this.boxReady[idStore][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.boxReady[idStore][id].status = "modified";
+			} else {
+				this.boxReady[idStore][id].status = operation;
+			}
+			this.boxReady[idStore][id].data = { ...this.boxEdition[idStore][id] };
+			return { success: true, newStatus: this.boxReady[id].status };
+		},
+		async pushBoxReady(idStore) {
+			if (!this.boxReady[idStore]) {
+				return;
+			}
+			for (const id in this.boxReady[idStore]) {
+				const change = this.boxReady[idStore][id];
+				if (change.status === "new") {
+					await this.createBox(idStore, change.data);
+					delete this.boxReady[id];
+				} else if (change.status === "modified") {
+					await this.updateBox(idStore, id, change.data);
+					delete this.boxReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteBox(idStore, id);
+					delete this.boxReady[id];
+				}
+			}
+		},
+		clearBoxEdition(idStore) {
+			this.boxEdition[idStore] = {};
+			this.boxReady[idStore] = {};
+		},
 
 		async getLedByInterval(idStore, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			if (!this.leds[idStore] || clear) {
@@ -443,6 +586,51 @@ export const useStoresStore = defineStore("stores",{
 				body: params,
 			});
 		},
+		commitLedEdition(idStore, id, operation = "modified") {
+			if (!this.ledEdition[idStore] || !this.ledEdition[idStore][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.ledReady[idStore]) {
+				this.ledReady[idStore] = {};
+			}
+			if (!this.ledReady[idStore][id]) {
+				this.ledReady[idStore][id] = {};
+			}
+			if (this.ledReady[idStore][id].status === "new" && operation === "delete") {
+				delete this.ledReady[idStore][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.ledReady[idStore][id].status === "modified" && operation === "delete") {
+				this.ledReady[idStore][id].status = "delete";
+			} else if (this.ledReady[idStore][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.ledReady[idStore][id].status = "modified";
+			} else {
+				this.ledReady[idStore][id].status = operation;
+			}
+			this.ledReady[idStore][id].data = { ...this.ledEdition[idStore][id] };
+			return { success: true, newStatus: this.ledReady[id].status };
+		},
+		async pushLedReady(idStore) {
+			if (!this.ledReady[idStore]) {
+				return;
+			}
+			for (const id in this.ledReady[idStore]) {
+				const change = this.ledReady[idStore][id];
+				if (change.status === "new") {
+					await this.createLed(idStore, change.data);
+					delete this.ledReady[id];
+				} else if (change.status === "modified") {
+					await this.updateLed(idStore, id, change.data);
+					delete this.ledReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteLed(idStore, id);
+					delete this.ledReady[id];
+				}
+			}
+		},
+		clearLedEdition(idStore) {
+			this.ledEdition[idStore] = {};
+			this.ledReady[idStore] = {};
+		},
 
 		async getTagStoreByInterval(idStore, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			if (!this.storeTags[idStore] || clear) {
@@ -535,6 +723,51 @@ export const useStoresStore = defineStore("stores",{
 				delete this.storeTags[idStore][tag.id_tag];
 			}
 		},
+		commitTagStoreEdition(idStore, id, operation = "modified") {
+			if (!this.tagStoreEdition[idStore] || !this.tagStoreEdition[idStore][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.tagStoreReady[idStore]) {
+				this.tagStoreReady[idStore] = {};
+			}
+			if (!this.tagStoreReady[idStore][id]) {
+				this.tagStoreReady[idStore][id] = {};
+			}
+			if (this.tagStoreReady[idStore][id].status === "new" && operation === "delete") {
+				delete this.tagStoreReady[idStore][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.tagStoreReady[idStore][id].status === "modified" && operation === "delete") {
+				this.tagStoreReady[idStore][id].status = "delete";
+			} else if (this.tagStoreReady[idStore][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.tagStoreReady[idStore][id].status = "modified";
+			} else {
+				this.tagStoreReady[idStore][id].status = operation;
+			}
+			this.tagStoreReady[idStore][id].data = { ...this.tagStoreEdition[idStore][id] };
+			return { success: true, newStatus: this.tagStoreReady[id].status };
+		},
+		async pushTagStoreReady(idStore) {
+			if (!this.tagStoreReady[idStore]) {
+				return;
+			}
+			for (const id in this.tagStoreReady[idStore]) {
+				const change = this.tagStoreReady[idStore][id];
+				if (change.status === "new") {
+					await this.createTagStore(idStore, change.data);
+					delete this.tagStoreReady[id];
+				} else if (change.status === "modified") {
+					await this.updateTagStore(idStore, id, change.data);
+					delete this.tagStoreReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteTagStore(idStore, id);
+					delete this.tagStoreReady[id];
+				}
+			}
+		},
+		clearTagStoreEdition(idStore) {
+			this.tagStoreEdition[idStore] = {};
+			this.tagStoreReady[idStore] = {};
+		},
 
 		async getBoxItemByInterval(idStore, idBox, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			if (!this.boxItems[idBox] || clear) {
@@ -610,6 +843,12 @@ export const useStoresStore = defineStore("stores",{
 				useToken: "access",
 			});
 			delete this.boxItems[idBox][id];
+		},
+		commitBoxItemEdition(idBox, id, operation = "modified") {
+		},
+		async pushBoxItemReady(idBox) {
+		},
+		clearBoxItemEdition(idBox) {
 		},
 
 		async getBoxTagByInterval(idStore, idBox, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
@@ -702,6 +941,12 @@ export const useStoresStore = defineStore("stores",{
 			for (const tag of boxTagBulk["valide"]) {
 				delete this.boxTags[idBox][tag.id_tag];
 			}
+		},
+		commitBoxTagEdition(idBox, id, operation = "modified") {
+		},
+		async pushBoxTagReady(idBox) {
+		},
+		clearBoxTagEdition(idBox) {
 		},
 	},
 });

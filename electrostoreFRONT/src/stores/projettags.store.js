@@ -12,11 +12,13 @@ export const useProjetTagsStore = defineStore("projetTags",{
 		projetTagsTotalCount: 0,
 		projetTags: {},
 		projetTagEdition: {},
+		projetTagReady: {},
 
 		projetTagsProjetLoading: true,
 		projetTagsProjetTotalCount: {},
 		projetTagsProjet: {},
 		projetTagProjetEdition: {},
+		projetTagProjetReady: {},
 	}),
 	actions: {
 		async getProjetTagByList(idResearch = [], expand = []) {
@@ -123,6 +125,82 @@ export const useProjetTagsStore = defineStore("projetTags",{
 				this.projetTags[projetTag.id_projet_tag] = projetTag;
 			}
 		},
+		async pushProjetTagReady() {
+			for (const id in this.projetTagReady) {
+				const change = this.projetTagReady[id];
+				if (change.status === "new") {
+					const newId = await this.createProjetTag(change.data);
+					this.updateIdProjetTag(id, newId);
+					this.pushProjetTagProjetReady(newId);
+					delete this.projetTagReady[id];
+				} else if (change.status === "modified") {
+					await this.updateProjetTag(id, change.data);
+					this.pushProjetTagProjetReady(id);
+					delete this.projetTagReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteProjetTag(id);
+					delete this.projetTagReady[id];
+				}
+			}
+		},
+		async pushProjetTagById(id) {
+			if (!this.projetTagEdition[id]) {
+				return;
+			}
+			let newId = id;
+			if (id.startsWith("new")) {
+				newId = await this.createProjetTag(this.projetTagEdition[id]);
+				this.updateIdProjetTag(id, newId);
+			} else {
+				await this.updateProjetTag(id, this.projetTagEdition[id]);
+			}
+			this.pushProjetTagProjetReady(newId);
+			return newId;
+		},
+		updateIdProjetTag(oldId, newId) {
+			if (this.projetTagsProjetReady[oldId]) {
+				this.projetTagsProjetReady[newId] = { ...this.projetTagsProjetReady[oldId], id_projetTag: newId };
+				delete this.projetTagsProjetReady[oldId];
+			}
+			if (this.projetTagsProjetEdition[oldId]) {
+				this.projetTagsProjetEdition[newId] = { ...this.projetTagsProjetEdition[oldId], id_projetTag: newId };
+				delete this.projetTagsProjetEdition[oldId];
+			}
+		},
+		commitProjetTagEdition(id, operation = "modified") { // return (sucess:bool, newStatus:string)
+			if (!this.projetTagEdition[id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.projetTagReady[id]) {
+				this.projetTagReady[id] = {};
+			}
+			if (this.projetTagReady[id].status === "new" && operation === "delete") {
+				delete this.projetTagReady[id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.projetTagReady[id].status === "modified" && operation === "delete") {
+				this.projetTagReady[id].status = "delete";
+			} else if (this.projetTagReady[id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.projetTagReady[id].status = "modified";
+			} else {
+				this.projetTagReady[id].status = operation;
+			}
+			this.projetTagReady[id].data = { ...this.projetTagEdition[id] };
+			return { success: true, newStatus: this.projetTagReady[id].status };
+		},
+		getAvailableEditionProjetTag() {
+			// search existing "new{id}" in projetTagEdition to find available id for new COMMAND
+			const newIds = Math.max(Object.keys(this.projetTagEdition).filter((id) => id.startsWith("new")).map((id) => parseInt(id.replace("new", ""))), 0);
+			return "new" + (newIds + 1);
+		},
+		clearProjetTagEdition() {
+			this.projetTagEdition = {};
+			this.projetTagReady = {};
+		},
+		clearProjetTagEditionById(id) {
+			delete this.projetTagEdition[id];
+			delete this.projetTagReady[id];
+			this.clearProjetTagProjetEdition(id);
+		},
 
 		async getProjetTagProjetByInterval(idProjetTag, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			if (!this.projetTagsProjet[idProjetTag] || clear) {
@@ -214,6 +292,51 @@ export const useProjetTagsStore = defineStore("projetTags",{
 			for (const projetTagProjet of projetTagProjetBulk["valide"]) {
 				delete this.projetTagsProjet[idProjetTag][projetTagProjet.id_projet];
 			}
+		},
+		async pushProjetTagProjetReady(idProjetTag) {
+			if (!this.projetTagsProjetReady[idProjetTag]) {
+				return;
+			}
+			for (const id in this.projetTagsProjetReady[idProjetTag]) {
+				const change = this.projetTagsProjetReady[idProjetTag][id];
+				if (change.status === "new") {
+					await this.createProjetTagProjet(idProjetTag, change.data);
+					delete this.projetTagsProjetReady[id];
+				} else if (change.status === "modified") {
+					await this.updateProjetTagProjet(idProjetTag, id, change.data);
+					delete this.projetTagsProjetReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteProjetTagProjet(idProjetTag, id);
+					delete this.projetTagsProjetReady[id];
+				}
+			}
+		},
+		commitProjetTagProjetEdition(idProjetTag, id, operation = "modified") {
+			if (!this.projetTagsProjetEdition[idProjetTag] || !this.projetTagsProjetEdition[idProjetTag][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.projetTagsProjetReady[idProjetTag]) {
+				this.projetTagsProjetReady[idProjetTag] = {};
+			}
+			if (!this.projetTagsProjetReady[idProjetTag][id]) {
+				this.projetTagsProjetReady[idProjetTag][id] = {};
+			}
+			if (this.projetTagsProjetReady[idProjetTag][id].status === "new" && operation === "delete") {
+				delete this.projetTagsProjetReady[idProjetTag][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.projetTagsProjetReady[idProjetTag][id].status === "modified" && operation === "delete") {
+				this.projetTagsProjetReady[idProjetTag][id].status = "delete";
+			} else if (this.projetTagsProjetReady[idProjetTag][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.projetTagsProjetReady[idProjetTag][id].status = "modified";
+			} else {
+				this.projetTagsProjetReady[idProjetTag][id].status = operation;
+			}
+			this.projetTagsProjetReady[idProjetTag][id].data = { ...this.projetTagsProjetEdition[idProjetTag][id] };
+			return { success: true, newStatus: this.projetTagsProjetReady[id].status };
+		},
+		clearProjetTagProjetEdition(idProjetTag) {
+			this.projetTagsProjetEdition[idProjetTag] = {};
+			this.projetTagsProjetReady[idProjetTag] = {};
 		},
 	},
 });

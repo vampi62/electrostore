@@ -139,6 +139,36 @@ export const useCamerasStore = defineStore("cameras",{
 			});
 			delete this.cameras[id];
 		},
+		async pushCameraReady() {
+			for (const id in this.cameraReady) {
+				const change = this.cameraReady[id];
+				if (change.status === "new") {
+					await this.createCamera(change.data);
+					delete this.cameraReady[id];
+				} else if (change.status === "modified") {
+					await this.updateCamera(id, change.data);
+					delete this.cameraReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteCamera(id);
+					delete this.cameraReady[id];
+				}
+			}
+		},
+		async pushCameraById(id) {
+			if (!this.cameraEdition[id]) {
+				return;
+			}
+			let newId = id;
+			if (id.startsWith("new")) {
+				newId = await this.createCamera(this.cameraEdition[id]);
+				this.updateIdCamera(id, newId);
+			} else {
+				await this.updateCamera(id, this.cameraEdition[id]);
+			}
+			return newId;
+		},
+		updateIdCamera(oldId, newId) {
+		},
 		commitCameraEdition(id, operation = "modified") {
 			if (!this.cameraEdition[id]) {
 				return;
@@ -158,48 +188,18 @@ export const useCamerasStore = defineStore("cameras",{
 			}
 			this.cameraReady[id].data = { ...this.cameraEdition[id] };
 		},
-		async pushCameraReady() {
-			for (const id in this.cameraReady) {
-				const change = this.cameraReady[id];
-				if (change.status === "new") {
-					await this.createCamera(change.data);
-					delete this.cameraReady[id];
-				} else if (change.status === "modified") {
-					await this.updateCamera(id, change.data);
-					delete this.cameraReady[id];
-				} else if (change.status === "delete") {
-					await this.deleteCamera(id);
-					delete this.cameraReady[id];
-				}
-			}
-		},
-		clearCameraEditeur() {
-			this.cameraEdition = {};
-			this.cameraReady = {};
-		},
-		async pushCameraById(id) {
-			if (!this.cameraEdition[id]) {
-				return;
-			}
-			let newId = id;
-			if (id.startsWith("new")) {
-				newId = await this.createCamera(this.cameraEdition[id]);
-				this.updateIdCamera(id, newId);
-			} else {
-				await this.updateCamera(id, this.cameraEdition[id]);
-			}
-			return newId;
-		},
-		clearCameraEditionById(id) {
-			delete this.cameraEdition[id];
-			delete this.cameraReady[id];
-		},
 		getAvailableEditionCamera() {
 			// search existing "new{id}" in cameraEdition to find available id for new CAMERA
 			const newIds = Math.max(Object.keys(this.cameraEdition).filter((id) => id.startsWith("new")).map((id) => parseInt(id.replace("new", ""))), 0);
 			return "new" + (newIds + 1);
 		},
-		updateIdCamera(oldId, newId) {
+		clearCameraEditeur() {
+			this.cameraEdition = {};
+			this.cameraReady = {};
+		},
+		clearCameraEditionById(id) {
+			delete this.cameraEdition[id];
+			delete this.cameraReady[id];
 		},
 	},
 });

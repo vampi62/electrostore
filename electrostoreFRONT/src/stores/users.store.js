@@ -12,21 +12,25 @@ export const useUsersStore = defineStore("users",{
 		usersTotalCount: 0,
 		users: {},
 		userEdition: {},
+		userReady: {},
 
 		projetsCommentaireLoading: true,
 		projetsCommentaireTotalCount: {},
 		projetsCommentaire: {},
 		projetCommentaireEdition: {},
+		projetCommentaireReady: {},
 
 		commandsCommentaireLoading: true,
 		commandsCommentaireTotalCount: {},
 		commandsCommentaire: {},
 		commandCommentaireEdition: {},
+		commandCommentaireReady: {},
 
 		tokensLoading: true,
 		tokensTotalCount: {},
 		tokens: {},
 		tokensEdition: {},
+		tokensReady: {},
 	}),
 	actions: {
 		async getUserByList(idResearch = [], expand = []) {
@@ -144,6 +148,72 @@ export const useUsersStore = defineStore("users",{
 				useToken: "access",
 			});
 			delete this.users[id];
+		},
+		async pushUserReady() {
+			for (const id in this.userReady) {
+				const change = this.userReady[id];
+				if (change.status === "new") {
+					const newId = await this.createUser(change.data);
+					this.updateIdUser(id, newId);
+					delete this.userReady[id];
+				} else if (change.status === "modified") {
+					await this.updateUser(id, change.data);
+					delete this.userReady[id];
+				} else if (change.status === "delete") {
+					await this.deleteUser(id);
+					delete this.userReady[id];
+				}
+			}
+		},
+		async pushUserById(id) {
+			if (!this.userEdition[id]) {
+				return;
+			}
+			let newId = id;
+			if (id.startsWith("new")) {
+				newId = await this.createUser(this.userEdition[id]);
+				this.updateIdUser(id, newId);
+			} else {
+				await this.updateUser(id, this.userEdition[id]);
+			}
+			this.pushDocumentReady(newId);
+			this.pushItemReady(newId);
+			return newId;
+		},
+		updateIdUser(oldId, newId) {
+		},
+		commitUserEdition(id, operation = "modified") { // return (sucess:bool, newStatus:string)
+			if (!this.userEdition[id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.userReady[id]) {
+				this.userReady[id] = {};
+			}
+			if (this.userReady[id].status === "new" && operation === "delete") {
+				delete this.userReady[id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.userReady[id].status === "modified" && operation === "delete") {
+				this.userReady[id].status = "delete";
+			} else if (this.userReady[id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.userReady[id].status = "modified";
+			} else {
+				this.userReady[id].status = operation;
+			}
+			this.userReady[id].data = { ...this.userEdition[id] };
+			return { success: true, newStatus: this.userReady[id].status };
+		},
+		getAvailableEditionUser() {
+			// search existing "new{id}" in userEdition to find available id for new USER
+			const newIds = Math.max(Object.keys(this.userEdition).filter((id) => id.startsWith("new")).map((id) => parseInt(id.replace("new", ""))), 0);
+			return "new" + (newIds + 1);
+		},
+		clearUserEdition() {
+			this.userEdition = {};
+			this.userReady = {};
+		},
+		clearUserEditionById(id) {
+			delete this.userEdition[id];
+			delete this.userReady[id];
 		},
 
 		async getProjetCommentaireByInterval(idUser, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
