@@ -13,6 +13,7 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 const tagId = ref(route.params.id);
 const preset = ref(route.query.preset || null);
+const editionId = ref(null);
 
 import { useConfigsStore, useTagsStore, useStoresStore, useItemsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
@@ -22,69 +23,79 @@ const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
 async function fetchAllData() {
+	editionId.value = tagId.value === "new" ? tagsStore.getAvailableEditionTag() : tagId.value;
 	if (tagId.value === "new") {
-		tagsStore.tagEdition[tagId.value] = {
-			loading: false,
-		};
+		loadToEdition(editionId.value);
 		if (preset.value) {
 			preset.value.split(";").forEach((pair) => {
 				const [key, value] = pair.split(":");
 				if (key && value) {
-					tagsStore.tagEdition[tagId.value][key] = value;
+					tagsStore.tagEdition[editionId.value][key] = value;
 				}
 			});
 		}
 	} else {
-		tagsStore.tagEdition[tagId.value] = {
+		tagsStore.tagEdition[editionId.value] = {
 			loading: true,
 		};
 		try {
-			await tagsStore.getTagById(tagId.value);
+			await tagsStore.getTagById(editionId.value);
 		} catch {
-			delete tagsStore.tags[tagId.value];
+			delete tagsStore.tags[editionId.value];
 			addNotification({ message: t("tag.NotFound"), type: "error" });
 			router.push("/tags");
 			return;
 		}
-		tagsStore.tagEdition[tagId.value] = {
-			loading: false,
-			nom_tag: tagsStore.tags[tagId.value].nom_tag,
-			poids_tag: tagsStore.tags[tagId.value].poids_tag,
-		};
-		tagsStore.tagItemEdition[tagId.value] = {};
-		tagsStore.tagItemReady[tagId.value] = {};
-		tagsStore.tagStoreEdition[tagId.value] = {};
-		tagsStore.tagStoreReady[tagId.value] = {};
-		tagsStore.tagBoxEdition[tagId.value] = {};
-		tagsStore.tagBoxReady[tagId.value] = {};
+		loadToEdition(editionId.value);
 	}
+}
+function loadToEdition(id) {
+	if (tagId.value === "new") {
+		tagsStore.tagEdition[id] = {
+			loading: false,
+		};
+	} else {
+		tagsStore.tagEdition[id] = {
+			nom_tag: tagsStore.tags[id].nom_tag,
+			poids_tag: tagsStore.tags[id].poids_tag,
+			loading: false,
+		};
+	}
+	tagsStore.tagItemEdition[id] = {};
+	tagsStore.tagItemReady[id] = {};
+	tagsStore.tagStoreEdition[id] = {};
+	tagsStore.tagStoreReady[id] = {};
+	tagsStore.tagBoxEdition[id] = {};
+	tagsStore.tagBoxReady[id] = {};
 }
 onMounted(() => {
 	fetchAllData();
 });
 onBeforeUnmount(() => {
-	tagsStore.tagEdition[tagId.value] = {
+	tagsStore.tagEdition[editionId.value] = {
 		loading: false,
 	};
 });
 
 function debug() {
-	console.log("tagItems:", tagsStore.tagsItem[tagId.value]);
-	console.log("tagItemEdition:", tagsStore.tagItemEdition[tagId.value]);
-	console.log("tagItemReady:", tagsStore.tagItemReady[tagId.value]);
+	console.log("tagItems:", tagsStore.tagsItem);
+	console.log("tagItemEdition:", tagsStore.tagItemEdition);
+	console.log("tagItemReady:", tagsStore.tagItemReady);
 }
 
 const tagDeleteModalShow = ref(false);
 const tagSave = async() => {
 	try {
-		createSchema().validateSync(tagsStore.tagEdition[tagId.value], { abortEarly: false });
+		createSchema().validateSync(tagsStore.tagEdition[editionId.value], { abortEarly: false });
 		if (tagId.value === "new") {
-			const newId = await tagsStore.createTag({ ...tagsStore.tagEdition[tagId.value] });
+			tagsStore.commitTagEdition(editionId.value, "new");
+			const newId = await tagsStore.pushTagById(editionId.value);
 			addNotification({ message: t("tag.Created"), type: "success" });
 			tagId.value = String(newId);
 			router.push("/tags/" + tagId.value);
 		} else {
-			await tagsStore.updateTag(tagId.value, { ...tagsStore.tagEdition[tagId.value] });
+			tagsStore.commitTagEdition(editionId.value, "modified");
+			await tagsStore.pushTagById(editionId.value);
 			addNotification({ message: t("tag.Updated"), type: "success" });
 		}
 	} catch (e) {
@@ -123,9 +134,8 @@ async function fetchAllItems() {
 }
 const itemSave = async(item) => {
 	try {
-		tagsStore.tagItemEdition[tagId.value][item.id_item] = { id_item: item.id_item };
-		//await tagsStore.createTagItem(tagId.value, item);
-		tagsStore.commitTagItemEdition(tagId.value, item.id_item, "new");
+		tagsStore.tagItemEdition[editionId.value][item.id_item] = { id_item: item.id_item };
+		tagsStore.commitTagItemEdition(editionId.value, item.id_item, "new");
 		addNotification({ message: t("tag.ItemAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -134,9 +144,8 @@ const itemSave = async(item) => {
 };
 const itemDelete = async(item) => {
 	try {
-		tagsStore.tagItemEdition[tagId.value][item.id_item] = { id_item: item.id_item };
-		//await tagsStore.deleteTagItem(tagId.value, item.id_item);
-		tagsStore.commitTagItemEdition(tagId.value, item.id_item, "delete");
+		tagsStore.tagItemEdition[editionId.value][item.id_item] = { id_item: item.id_item };
+		tagsStore.commitTagItemEdition(editionId.value, item.id_item, "delete");
 		addNotification({ message: t("tag.ItemDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -314,7 +323,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('tag.Title') }}</h2>
-		<TopButtonEditElement :main-config="{ path: '/tags', save: { roleRequired: authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition[tagId]?.loading }, delete: { roleRequired: authStore.hasPermission([0, 1, 2]) } }"
+		<TopButtonEditElement :main-config="{ path: '/tags', save: { roleRequired: authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition[editionId]?.loading }, delete: { roleRequired: authStore.hasPermission([0, 1, 2]) } }"
 			:id="tagId" :store-user="authStore.user" @button-save="tagSave" @button-delete="tagDeleteModalShow = true"
 			:optional-config="[
 				{ label: 'tag.debug', roleRequired: true, loading: false, bgColor: 'bg-green-500', hoverColor: 'hover:bg-green-600', action: debug },
@@ -323,21 +332,21 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 	</div>
 	<div v-if="tagsStore.tags[tagId] || tagId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="tagsStore.tagEdition[tagId]"/>
+			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="tagsStore.tagEdition[editionId]"/>
 		</div>
 		<CollapsibleSection title="tag.Items"
-			:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)" :permission="tagId !=='new'">
+			:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)">
 			<template #append-row>
 				<button type="button" @click="itemOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('tag.AddItem') }}
 				</button>
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
-					:store-data="[tagsStore.tagsItem[tagId],itemsStore.items]"
-					:store-ready="tagsStore.tagItemReady[tagId]"
-					:store-edition="tagsStore.tagItemEdition[tagId]"
+					:store-data="[tagsStore.tagsItem[editionId],itemsStore.items]"
+					:store-ready="tagsStore.tagItemReady[editionId]"
+					:store-edition="tagsStore.tagItemEdition[editionId]"
 					:loading="tagsStore.tagsItemLoading"
-					:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)"
+					:total-count="Number(tagsStore.tagsItemTotalCount[editionId] || 0)"
 					:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagItemByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
@@ -397,13 +406,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 
 			<!-- Tableau Items -->
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item', preventClear: true }"
-				:store-data="[itemsStore.items, tagsStore.tagsItem[tagId]]"
-				:store-ready="tagsStore.tagItemReady[tagId]"
-				:store-edition="tagsStore.tagItemEdition[tagId]"
+				:store-data="[itemsStore.items, tagsStore.tagsItem[editionId]]"
+				:store-ready="tagsStore.tagItemReady[editionId]"
+				:store-edition="tagsStore.tagItemEdition[editionId]"
 				:filters="filterItem"
 				:loading="tagsStore.tagsItemLoading"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
-				:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
