@@ -27,10 +27,18 @@
 				</tr>
 			</thead>
 			<tbody :class="mergedCss.tbody">
-				<tr v-for="row in sortedData" :key="row[meta.key]" v-memo="[row]"
+				<tr v-for="row in sortedData" :key="row[meta.key]" v-memo="[row, storeEdition[row[meta.key]], storeReady[row[meta.key]]]"
 					:class="mergedCss.tr"
 					@click="meta?.path && $router.push(meta.path + row[meta.key])">
-					<TableauRow :labels="labels" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" />
+					<TableauRow :labels="labels" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" :store-edition="storeEdition[row[meta.key]]" :store-ready="storeReady[row[meta.key]]" />
+				</tr>
+				<tr v-for="row in filterMissingEdition" :key="'edition-' + row[meta.key]"
+					:class="[mergedCss.tr, 'bg-yellow-100']">
+					<TableauRow :labels="labels" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" :store-edition="storeEdition[row[meta.key]]" :store-ready="storeReady[row[meta.key]]" />
+				</tr>
+				<tr v-for="row in filterMissingReady" :key="'ready-' + row[meta.key]"
+					:class="[mergedCss.tr, 'bg-red-100']">
+					<TableauRow :labels="labels" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" :store-edition="storeEdition[row[meta.key]]" :store-ready="storeReady[row[meta.key]]" />
 				</tr>
 				<slot name="append-row"></slot>
 				<template v-if="loading">
@@ -88,14 +96,14 @@ export default {
 		storeEdition: {
 			type: Object,
 			required: false,
-			// storeEdition is an object containing the store and key to edit a resource when clicking on a row, it should have the properties storeEditionKey and storeEditionStore
-			// e.g. { storeEditionKey: "id", storeEditionStore: 1 }
+			default: () => ({}),
+			// storeEdition is an object containing the store to edit a resource
 		},
 		storeReady: {
 			type: Object,
 			required: false,
-			// storeReady is an object containing the store and key containing unsaved changes to prevent leaving the page, it should have the properties storeReadyKey and storeReadyStore
-			// e.g. { storeReadyKey: "hasUnsavedChanges", storeReadyStore: 1 }
+			default: () => ({}),
+			// storeReady is an object containing the ready state of the store for editing a resource
 		},
 		filters: {
 			type: Array,
@@ -248,6 +256,23 @@ export default {
 				tr: this.tableauCss?.tr || "transition duration-150 ease-in-out cursor-pointer hover:bg-gray-200 even:bg-gray-100",
 				td: this.tableauCss?.td || "border-b",
 			};
+		},
+		filterMissingEdition() {
+			if (!this.storeEdition) {
+				return [];
+			}
+			return Object.values(this.storeEdition).filter((edition) => {
+				return !this.storeData[0] || !this.storeData[0][edition[this.meta.key]];
+			});
+		},
+		filterMissingReady() {
+			if (!this.storeReady) {
+				return [];
+			}
+			return Object.values(this.storeReady).filter((ready) => {
+				return !this.storeData[0] || !this.storeData[0][ready.data[this.meta.key]];
+			})
+				.map((ready) => ready.data);
 		},
 	},
 	data() {

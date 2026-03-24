@@ -249,6 +249,7 @@ export const useTagsStore = defineStore("tags",{
 			}
 			if (!this.tagReady[id]) {
 				this.tagReady[id] = {};
+				this.tagReady[id].data = { id_tag: id };
 			}
 			if (this.tagReady[id].status === "new" && operation === "delete") {
 				delete this.tagReady[id];
@@ -368,29 +369,6 @@ export const useTagsStore = defineStore("tags",{
 				delete this.tagsStore[idTag][tagStore.id_store];
 			}
 		},
-		commitTagStoreEdition(idTag, id, operation = "modified") {
-			if (!this.tagStoreEdition[idTag] || !this.tagStoreEdition[idTag][id]) {
-				return { success: false, newStatus: null };
-			}
-			if (!this.tagStoreReady[idTag]) {
-				this.tagStoreReady[idTag] = {};
-			}
-			if (!this.tagStoreReady[idTag][id]) {
-				this.tagStoreReady[idTag][id] = {};
-			}
-			if (this.tagStoreReady[idTag][id].status === "new" && operation === "delete") {
-				delete this.tagStoreReady[idTag][id];
-				return { success: true, newStatus: "delete" };
-			} else if (this.tagStoreReady[idTag][id].status === "modified" && operation === "delete") {
-				this.tagStoreReady[idTag][id].status = "delete";
-			} else if (this.tagStoreReady[idTag][id].status === "delete" && (operation === "modified" || operation === "new")) {
-				this.tagStoreReady[idTag][id].status = "modified";
-			} else {
-				this.tagStoreReady[idTag][id].status = operation;
-			}
-			this.tagStoreReady[idTag][id].data = { ...this.tagStoreEdition[idTag][id] };
-			return { success: true, newStatus: this.tagStoreReady[id].status };
-		},
 		async pushTagStoreReady(idTag) {
 			if (!this.tagStoreReady[idTag]) {
 				return;
@@ -408,6 +386,35 @@ export const useTagsStore = defineStore("tags",{
 					delete this.tagStoreReady[id];
 				}
 			}
+		},
+		commitTagStoreEdition(idTag, id, operation = "modified") {
+			if (!this.tagStoreEdition[idTag] || !this.tagStoreEdition[idTag][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.tagStoreReady[idTag]) {
+				this.tagStoreReady[idTag] = {};
+			}
+			if (!this.tagStoreReady[idTag][id]) {
+				this.tagStoreReady[idTag][id] = {};
+				this.tagStoreReady[idTag][id].data = { id_store: id };
+			}
+			if (this.tagStoreReady[idTag][id].status === "new" && operation === "delete") {
+				delete this.tagStoreReady[idTag][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.tagStoreReady[idTag][id].status === "modified" && operation === "delete") {
+				this.tagStoreReady[idTag][id].status = "delete";
+			} else if (this.tagStoreReady[idTag][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.tagStoreReady[idTag][id].status = "modified";
+			} else {
+				this.tagStoreReady[idTag][id].status = operation;
+			}
+			this.tagStoreReady[idTag][id].data = { ...this.tagStoreEdition[idTag][id] };
+			return { success: true, newStatus: this.tagStoreReady[id].status };
+		},
+		getAvailableEditionTagStore() {
+			// search existing "new{id}" in tagEdition to find available id for new TAG
+			const newIds = Math.max(Object.keys(this.tagStoreEdition).filter((id) => id.startsWith("new")).map((id) => parseInt(id.replace("new", ""))), 0);
+			return "new" + (newIds + 1);
 		},
 		clearTagStoreEdition(idTag) {
 			this.tagStoreEdition[idTag] = {};
@@ -505,29 +512,6 @@ export const useTagsStore = defineStore("tags",{
 				delete this.tagsBox[idTag][tagBox.id_box];
 			}
 		},
-		commitTagBoxEdition(idTag, id, operation = "modified") {
-			if (!this.tagBoxEdition[idTag] || !this.tagBoxEdition[idTag][id]) {
-				return { success: false, newStatus: null };
-			}
-			if (!this.tagBoxReady[idTag]) {
-				this.tagBoxReady[idTag] = {};
-			}
-			if (!this.tagBoxReady[idTag][id]) {
-				this.tagBoxReady[idTag][id] = {};
-			}
-			if (this.tagBoxReady[idTag][id].status === "new" && operation === "delete") {
-				delete this.tagBoxReady[idTag][id];
-				return { success: true, newStatus: "delete" };
-			} else if (this.tagBoxReady[idTag][id].status === "modified" && operation === "delete") {
-				this.tagBoxReady[idTag][id].status = "delete";
-			} else if (this.tagBoxReady[idTag][id].status === "delete" && (operation === "modified" || operation === "new")) {
-				this.tagBoxReady[idTag][id].status = "modified";
-			} else {
-				this.tagBoxReady[idTag][id].status = operation;
-			}
-			this.tagBoxReady[idTag][id].data = { ...this.tagBoxEdition[idTag][id] };
-			return { success: true, newStatus: this.tagBoxReady[id].status };
-		},
 		async pushTagBoxReady(idTag) {
 			if (!this.tagBoxReady[idTag]) {
 				return;
@@ -545,6 +529,35 @@ export const useTagsStore = defineStore("tags",{
 					delete this.tagBoxReady[id];
 				}
 			}
+		},
+		commitTagBoxEdition(idTag, id, operation = "modified") {
+			if (!this.tagBoxEdition[idTag] || !this.tagBoxEdition[idTag][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.tagBoxReady[idTag]) {
+				this.tagBoxReady[idTag] = {};
+			}
+			if (!this.tagBoxReady[idTag][id]) {
+				this.tagBoxReady[idTag][id] = {};
+				this.tagReady[idTag][id].data = { id_box: id };
+			}
+			if (this.tagBoxReady[idTag][id].status === "new" && operation === "delete") {
+				delete this.tagBoxReady[idTag][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.tagBoxReady[idTag][id].status === "modified" && operation === "delete") {
+				this.tagBoxReady[idTag][id].status = "delete";
+			} else if (this.tagBoxReady[idTag][id].status === "delete" && (operation === "modified" || operation === "new")) {
+				this.tagBoxReady[idTag][id].status = "modified";
+			} else {
+				this.tagBoxReady[idTag][id].status = operation;
+			}
+			this.tagBoxReady[idTag][id].data = { ...this.tagBoxEdition[idTag][id] };
+			return { success: true, newStatus: this.tagBoxReady[id].status };
+		},
+		getAvailableEditionTagBox() {
+			// search existing "new{id}" in tagEdition to find available id for new TAG
+			const newIds = Math.max(Object.keys(this.tagBoxEdition).filter((id) => id.startsWith("new")).map((id) => parseInt(id.replace("new", ""))), 0);
+			return "new" + (newIds + 1);
 		},
 		clearTagBoxEdition(idTag) {
 			this.tagBoxEdition[idTag] = {};
@@ -642,29 +655,6 @@ export const useTagsStore = defineStore("tags",{
 				delete this.tagsItem[idTag][tagItem.id_item];
 			}
 		},
-		commitTagItemEdition(idTag, id, operation = "modified") {
-			if (!this.tagItemEdition[idTag] || !this.tagItemEdition[idTag][id]) {
-				return { success: false, newStatus: null };
-			}
-			if (!this.tagItemReady[idTag]) {
-				this.tagItemReady[idTag] = {};
-			}
-			if (!this.tagItemReady[idTag][id]) {
-				this.tagItemReady[idTag][id] = {};
-			}
-			if (this.tagItemReady[idTag][id].status === "new" && operation === "delete") {
-				delete this.tagItemReady[idTag][id];
-				return { success: true, newStatus: "delete" };
-			} else if (this.tagItemReady[idTag][id].status === "modified" && operation === "delete") {
-				this.tagItemReady[idTag][id].status = "delete";
-			} else if (this.tagItemReady[idTag][id].status === "delete" && (operation === "modified" || operation === "new")) {
-				this.tagItemReady[idTag][id].status = "modified";
-			} else {
-				this.tagItemReady[idTag][id].status = operation;
-			}
-			this.tagItemReady[idTag][id].data = { ...this.tagItemEdition[idTag][id] };
-			return { success: true, newStatus: this.tagItemReady[id].status };
-		},
 		async pushTagItemReady(idTag) {
 			if (!this.tagItemReady[idTag]) {
 				return;
@@ -674,14 +664,43 @@ export const useTagsStore = defineStore("tags",{
 				if (change.status === "new") {
 					await this.createTagItem(idTag, change.data);
 					delete this.tagItemReady[id];
-				} else if (change.status === "modified") {
-					await this.updateTagItem(idTag, id, change.data);
-					delete this.tagItemReady[id];
 				} else if (change.status === "delete") {
 					await this.deleteTagItem(idTag, id);
 					delete this.tagItemReady[id];
 				}
 			}
+		},
+		commitTagItemEdition(idTag, id, operation = "modified") {
+			if (!this.tagItemEdition[idTag] || !this.tagItemEdition[idTag][id]) {
+				return { success: false, newStatus: null };
+			}
+			if (!this.tagItemReady[idTag]) {
+				this.tagItemReady[idTag] = {};
+			}
+			if (!this.tagItemReady[idTag][id]) {
+				this.tagItemReady[idTag][id] = {};
+				this.tagItemReady[idTag][id].data = { id_item: id };
+				this.tagItemReady[idTag][id].status = operation;
+			}
+			if (this.tagItemReady[idTag][id].status === "new" && operation === "delete") {
+				delete this.tagItemReady[idTag][id];
+				delete this.tagItemEdition[idTag][id];
+				return { success: true, newStatus: "delete" };
+			} else if (this.tagItemReady[idTag][id].status === "delete" && operation === "new") {
+				delete this.tagItemReady[idTag][id];
+				delete this.tagItemEdition[idTag][id];
+				return { success: true, newStatus: "unchanged" };
+			} else {
+				this.tagItemReady[idTag][id].status = operation;
+			}
+			this.tagItemReady[idTag][id].data = { ...this.tagItemEdition[idTag][id] };
+			delete this.tagItemEdition[idTag][id];
+			return { success: true, newStatus: this.tagItemReady[idTag][id].status };
+		},
+		getAvailableEditionTagItem() {
+			// search existing "new{id}" in tagEdition to find available id for new TAG
+			const newIds = Math.max(Object.keys(this.tagItemEdition).filter((id) => id.startsWith("new")).map((id) => parseInt(id.replace("new", ""))), 0);
+			return "new" + (newIds + 1);
 		},
 		clearTagItemEdition(idTag) {
 			this.tagItemEdition[idTag] = {};

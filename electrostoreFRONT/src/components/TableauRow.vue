@@ -1,10 +1,10 @@
 <template>
 	<td v-for="(column,index) in labels"
 		:key="index"
-		:class="[css, column.type == 'text' ? 'text-left' : 'text-center']"
+		:class="[css, column.type == 'text' ? 'text-left' : 'text-center', rowColorClass]"
 	>
 		<template v-if="column.type == 'bool'">
-			<template v-if="evaluateCondition(column.condition, row)">
+			<template v-if="evaluateCondition(column.condition, effectiveRow)">
 				<font-awesome-icon icon="fa-solid fa-check" class="text-green-500" />
 			</template>
 			<template v-else>
@@ -13,31 +13,31 @@
 		</template>
 		<template v-else-if="column.type == 'link-list'">
 			<ul>
-				<li v-for="(item, itemIndex) in getDataLinkListValue(row,column) || []"
+				<li v-for="(item, itemIndex) in getDataLinkListValue(effectiveRow,column) || []"
 					:key="itemIndex">
 					{{ item }}
 				</li>
 			</ul>
 		</template>
 		<template v-else-if="column.type == 'link-data'">
-			{{ getDataLinkValue(row,column) }}
+			{{ getDataLinkValue(effectiveRow,column) }}
 		</template>
 		<template v-else-if="column.type == 'image'">
 			<div class="flex justify-center items-center">
-				<template v-if="column.storeLinkId && storeData[column.storeLinkId]?.[row[column.sourceKey]]?.[column.storeLinkKeyJoinRessource] !== null">
-					<img v-if="storeData[column.storeRessourceId]?.[storeData[column.storeLinkId]?.[row[column.sourceKey]]?.[column.storeLinkKeyJoinRessource]]"
-						:src="storeData[column.storeRessourceId]?.[storeData[column.storeLinkId]?.[row[column.sourceKey]]?.[column.storeLinkKeyJoinRessource]]"
-						class="w-16 h-16 object-cover rounded" :alt="`Id ${row[column.key]}`" />
+				<template v-if="column.storeLinkId && storeData[column.storeLinkId]?.[effectiveRow[column.sourceKey]]?.[column.storeLinkKeyJoinRessource] !== null">
+					<img v-if="storeData[column.storeRessourceId]?.[storeData[column.storeLinkId]?.[effectiveRow[column.sourceKey]]?.[column.storeLinkKeyJoinRessource]]"
+						:src="storeData[column.storeRessourceId]?.[storeData[column.storeLinkId]?.[effectiveRow[column.sourceKey]]?.[column.storeLinkKeyJoinRessource]]"
+						class="w-16 h-16 object-cover rounded" :alt="`Id ${effectiveRow[column.key]}`" />
 					<span v-else class="w-16 h-16 object-cover rounded">
 						<div class="loading-spinner">
 							<div class="w-16 h-16 spinner-ring"></div>
 						</div>
 					</span>
 				</template>
-				<template v-else-if="!column.storeLinkId && row?.[column.sourceKey]">
-					<img v-if="storeData[column.storeRessourceId]?.[row[column.sourceKey]]"
-						:src="storeData[column.storeRessourceId]?.[row[column.sourceKey]]"
-						class="w-16 h-16 object-cover rounded" :alt="`Id ${row[column.key]}`" />
+				<template v-else-if="!column.storeLinkId && effectiveRow?.[column.sourceKey]">
+					<img v-if="storeData[column.storeRessourceId]?.[effectiveRow[column.sourceKey]]"
+						:src="storeData[column.storeRessourceId]?.[effectiveRow[column.sourceKey]]"
+						class="w-16 h-16 object-cover rounded" :alt="`Id ${effectiveRow[column.key]}`" />
 					<span v-else class="w-16 h-16 object-cover rounded">
 						<div class="loading-spinner">
 							<div class="w-16 h-16 spinner-ring"></div>
@@ -52,17 +52,19 @@
 		<template v-else-if="column.type == 'buttons'">
 			<div class="flex justify-center items-center">
 				<template v-for="(button, buttonIndex) in column.buttons" :key="buttonIndex">
-					<template v-if="!button?.showCondition || evaluateCondition(button.showCondition, row)">
-						<TableauActionButton :button="button" :row="row" :disabled="button?.enableCondition && !evaluateCondition(button.enableCondition)" />
+					<!-- <template v-if="!button?.showCondition || evaluateCondition(button.showCondition, row)">
+						<TableauActionButton :button="button" :row="row" :disabled="button?.enableCondition && !evaluateCondition(button.enableCondition)" /> -->
+					<template v-if="!button?.showCondition || evaluateCondition(button.showCondition, effectiveRow)">
+						<TableauActionButton :button="button" :row="effectiveRow" :disabled="button?.enableCondition && !evaluateCondition(button.enableCondition)" />
 					</template>
 				</template>
 			</div>
 		</template>
-		<template v-else-if="column.canEdit && row?.tmp">
+		<template v-else-if="column.canEdit && storeEdition">
 			<Form :validation-schema="schema" v-slot="{ errors }">
 				<Field
 					:name="column.valueKey"
-					v-model="row.tmp[column.valueKey]"
+					v-model="storeEdition[column.valueKey]"
 					:type="column.type"
 					:class="['w-20 p-2 border rounded-lg', errors[column.valueKey] ? 'border-red-500' : '']"
 					:placeholder="column.placeholder || ''"
@@ -71,7 +73,7 @@
 			</Form>
 		</template>
 		<template v-else>
-			<span v-html="formatCellValue(column, getDataValue(row, column))"></span>
+			<span v-html="formatCellValue(column, getDataValue(effectiveRow, column))"></span>
 		</template>
 	</td>
 </template>
@@ -111,16 +113,52 @@ export default {
 			// storeData pass by the parent component, containing the data from the stores, used for link-list and image types
 			default: () => ({}),
 		},
+		storeEdition: {
+			type: Object,
+			required: false,
+			default: () => ({}),
+			// storeEdition is an object containing the store and key to edit a resource when clicking on a row, it should have the properties storeEditionKey and storeEditionStore
+		},
+		storeReady: {
+			type: Object,
+			required: false,
+			default: () => ({}),
+			// storeReady is an object containing the store and key containing unsaved changes to prevent leaving the page, it should have the properties storeReadyKey and storeReadyStore
+		},
 	},
 	components: {
 		Form,
 		Field,
 		TableauActionButton: defineAsyncComponent(() => import("@/components/TableauActionButton.vue")),
 	},
+	computed: {
+		effectiveRow() {
+			if (!this.storeReady?.status || !this.storeReady?.data) {
+				return this.row;
+			}
+			return {
+				...this.row,
+				...Object.fromEntries(
+					Object.entries(this.storeReady.data).filter(([, v]) => v !== undefined && v !== null),
+				),
+			};
+		},
+		rowColorClass() {
+			if (!this.storeReady?.status) {
+				return "";
+			}
+			switch (this.storeReady.status) {
+			case "delete": return "bg-red-100 text-red-800";
+			case "modified": return "bg-amber-100 text-amber-800";
+			case "new": return "bg-green-100 text-green-800";
+			default: return "";
+			}
+		},
+	},
 	methods: {
 		evaluateCondition(condition,rowData) {
 			try {
-				return new Function(["store","rowData"], `return ${condition}`)(this.storeData,rowData);
+				return new Function(["store", "edition", "ready", "rowData"], `return ${condition}`)(this.storeData, this.storeEdition, this.storeReady, rowData);
 			} catch (error) {
 				console.error("Erreur lors de l'évaluation de la condition :", error);
 				return false;
