@@ -4,6 +4,7 @@
 	"FilterRole0": "Utilisateur",
 	"FilterRole1": "Modérateur",
 	"FilterRole2": "Administrateur",
+	"FormValidationError": "Erreur de validation du formulaire \n {count} erreur(s) à corriger",
 	"Created": "Utilisateur créé",
 	"Updated": "Utilisateur mis à jour",
 	"Deleted": "Utilisateur supprimé",

@@ -4,6 +4,7 @@
 	"Status2": "In progress",
 	"Status3": "Completed",
 	"Status4": "Cancelled",
+	"FormValidationError": "Form validation error \n {count} error(s) to fix",
 	"Created": "Command created successfully",
 	"Updated": "Command updated successfully",
 	"Deleted": "Command deleted successfully",

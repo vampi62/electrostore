@@ -1,5 +1,6 @@
 {
 	"NotFound": "Project not found",
+	"FormValidationError": "Form validation error \n {count} error(s) to fix",
 	"Created": "Project created",
 	"Updated": "Project updated",
 	"Deleted": "Project deleted",

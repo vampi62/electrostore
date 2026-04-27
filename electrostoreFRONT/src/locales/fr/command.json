@@ -4,6 +4,7 @@
 	"Status2": "En cours",
 	"Status3": "Terminée",
 	"Status4": "Annulée",
+	"FormValidationError": "Erreur de validation du formulaire \n {count} erreur(s) à corriger",
 	"Created": "Commande créée avec succès",
 	"Updated": "Commande mise à jour avec succès",
 	"Deleted": "Commande supprimée avec succès",
