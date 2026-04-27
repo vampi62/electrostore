@@ -26,11 +26,11 @@ const itemsStore = useItemsStore();
 const projetTagsStore = useProjetTagsStore();
 const authStore = useAuthStore();
 
+const formContainer = ref(null);
+
 async function fetchAllData() {
 	if (projetId.value === "new") {
-		projetsStore.projetEdition = {
-			loading: false,
-		};
+		loadToEdition(projetId.value);
 		if (preset.value) {
 			preset.value.split(";").forEach((pair) => {
 				const [key, value] = pair.split(":");
@@ -52,6 +52,16 @@ async function fetchAllData() {
 			return;
 		}
 		projetsStore.getProjetTagProjetByInterval(projetId.value, 100, 0, ["projet_tag"]);
+		loadToEdition(projetId.value);
+		usersStore.users[authStore.user.id_user] = authStore.user; // avoids undefined user when the current user posts first comment
+	}
+}
+function loadToEdition(id) {
+	if (id === "new") {
+		projetsStore.projetEdition = {
+			loading: false,
+		};
+	} else {
 		projetsStore.projetEdition = {
 			loading: false,
 			nom_projet: projetsStore.projets[projetId.value].nom_projet,
@@ -61,7 +71,6 @@ async function fetchAllData() {
 			date_debut_projet: projetsStore.projets[projetId.value].date_debut_projet,
 			date_fin_projet: projetsStore.projets[projetId.value].date_fin_projet,
 		};
-		usersStore.users[authStore.user.id_user] = authStore.user; // avoids undefined user when the current user posts first comment
 	}
 }
 onMounted(() => {
@@ -108,19 +117,34 @@ const projetTypeStatus = ref({ [ProjetStatus.NotStarted]: t("projet.Status0"), [
 	[ProjetStatus.Cancelled]: t("projet.Status4"), [ProjetStatus.Archived]: t("projet.Status5") });
 const projetSave = async() => {
 	try {
-		createSchema().validateSync(projetsStore.projetEdition, { abortEarly: false });
+		const validationResults = await Promise.all([
+			formContainer.value?.validate(),
+		]);
+		const allValid = validationResults.every((result) => result && result.valid);
+		if (!allValid) {
+			const nbErrors = validationResults.reduce((sum, result) => sum + (result ? Object.keys(result.errors).length : 0), 0);
+			addNotification({
+				message: t("projet.FormValidationError", { count: nbErrors }),
+				type: "error",
+			});
+			projetsStore.projetEdition.loading = false;
+			return;
+		}
 		if (projetId.value === "new") {
 			const newId = await projetsStore.createProjet({ ...projetsStore.projetEdition });
+			loadToEdition(newId);
 			addNotification({ message: t("projet.Created"), type: "success" });
 			projetId.value = String(newId);
 			router.push("/projets/" + projetId.value);
 		} else {
 			await projetsStore.updateProjet(projetId.value, { ...projetsStore.projetEdition });
+			loadToEdition(projetId.value);
 			addNotification({ message: t("projet.Updated"), type: "success" });
 		}
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
-		return;
+	} finally {
+		projetsStore.projetEdition.loading = false;
 	}
 };
 const projetDelete = async() => {
@@ -228,20 +252,24 @@ const filterItem = ref([
 ]);
 
 const createSchema = () => {
-	return Yup.object().shape({
-		nom_projet: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("projet.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
-			.required(t("projet.NameRequired")),
-		description_projet: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_description"), t("projet.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }))
-			.required(t("projet.DescriptionRequired")),
-		url_projet: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_url"), t("projet.UrlMaxLength", { count: configsStore.getConfigByKey("max_length_url") }))
-			.url(t("projet.UrlInvalid"))
-			.required(t("projet.UrlRequired")),
-		status_projet: Yup.number()
-			.required(t("projet.StatusRequired")),
-	});
+	const edition = projetsStore.projetEdition;
+	const shape = {};
+	if (!edition) {
+		return Yup.object().shape(shape);
+	}
+	shape.nom_projet = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("projet.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.required(t("projet.NameRequired"));
+	shape.description_projet = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_description"), t("projet.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }))
+		.required(t("projet.DescriptionRequired"));
+	shape.url_projet = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_url"), t("projet.UrlMaxLength", { count: configsStore.getConfigByKey("max_length_url") }))
+		.url(t("projet.UrlInvalid"))
+		.required(t("projet.UrlRequired"));
+	shape.status_projet = Yup.number()
+		.required(t("projet.StatusRequired"));
+	return Yup.object().shape(shape);
 };
 
 const schemaAddDocument = Yup.object().shape({
@@ -285,48 +313,48 @@ const labelTableauDocument = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "!rowData.tmp",
+			showCondition: "!edition?.id_projet_document",
 			action: (row) => {
-				row.tmp = { ...row };
+				projetsStore.documentEdition[row.id_projet_document] = { ...row };
 			},
-			class: "text-blue-500 cursor-pointer hover:text-blue-600",
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-times",
-			showCondition: "rowData.tmp",
+			showCondition: "edition?.id_projet_document",
 			action: (row) => {
-				row.tmp = null;
+				delete projetsStore.documentEdition[row.id_projet_document];
 			},
-			class: "text-gray-500 cursor-pointer hover:text-gray-600",
+			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			showCondition: "rowData.tmp",
-			action: (row) => documentEdit(row.tmp),
-			class: "text-green-500 cursor-pointer hover:text-green-600",
+			showCondition: "edition?.id_projet_document",
+			action: (row) => documentEdit(projetsStore.documentEdition[row.id_projet_document]),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-eye",
 			action: (row) => documentView(row),
-			class: "text-green-500 cursor-pointer hover:text-green-600",
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-download",
 			action: (row) => documentDownload(row),
-			class: "text-yellow-500 cursor-pointer hover:text-yellow-600",
+			class: "px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600",
 			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
 			action: (row) => documentDeleteOpenModal(row),
-			class: "text-red-500 cursor-pointer hover:text-red-600",
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
 ]);
@@ -339,26 +367,26 @@ const labelTableauItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "!rowData.tmp",
+			showCondition: "!edition?.id_item",
 			action: (row) => {
-				row.tmp = { ...row };
+				projetsStore.itemEdition[row.id_item] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			showCondition: "rowData.tmp",
-			action: (row) => itemSave(row),
+			showCondition: "edition?.id_item",
+			action: (row) => itemSave(projetsStore.itemEdition[row.id_item]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-times",
-			showCondition: "rowData.tmp",
+			showCondition: "edition?.id_item",
 			action: (row) => {
-				row.tmp = null;
+				delete projetsStore.itemEdition[row.id_item];
 			},
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
 		},
@@ -400,35 +428,35 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
-			showCondition: "store[1]?.[rowData.id_item] === undefined && !rowData.tmp",
+			showCondition: "store[1]?.[rowData.id_item] === undefined && !edition?.id_item",
 			action: (row) => {
-				row.tmp = { qte_projet_item: 1, id_item: row.id_item };
+				projetsStore.itemEdition[row.id_item] = { qte_projet_item: 1, id_item: row.id_item };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "store[1]?.[rowData.id_item] && !rowData.tmp",
+			showCondition: "store[1]?.[rowData.id_item] && !edition?.id_item",
 			action: (row) => {
-				row.tmp = { ...row };
+				projetsStore.itemEdition[row.id_item] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			showCondition: "rowData.tmp",
-			action: (row) => itemSave(row),
+			showCondition: "edition?.id_item",
+			action: (row) => itemSave(projetsStore.itemEdition[row.id_item]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-times",
-			showCondition: "rowData.tmp",
+			showCondition: "edition?.id_item",
 			action: (row) => {
-				row.tmp = null;
+				delete projetsStore.itemEdition[row.id_item];
 			},
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
 		},
@@ -457,7 +485,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 	</div>
 	<div v-if="projetsStore.projets[projetId] || projetId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="projetsStore.projetEdition"/>
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="projetsStore.projetEdition"/>
 			<Tags :current-tags="projetsStore.projetTagProjet[projetId] || {}" :tags-store="projetTagsStore.projetTags" :can-edit="projetId !== 'new' && authStore.hasPermission([2])"
 				:delete-function="(value) => tagDelete(value)"
 				:filter-modal="filterTag"
@@ -488,6 +516,8 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_projet_document' }"
 					:store-data="[projetsStore.documents[projetId]]"
+					:store-edition="projetsStore.documentEdition"
+					:schema="schemaEditDocument"
 					:loading="projetsStore.documentsLoading"
 					:total-count="Number(projetsStore.documentsTotalCount[projetId])"
 					:fetch-function="projetId !== 'new' ? (limit, offset, expand, filter, sort, clear) => projetsStore.getDocumentByInterval(projetId, limit, offset, expand, filter, sort, clear) : undefined"
@@ -504,7 +534,9 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
 					:store-data="[projetsStore.items[projetId], itemsStore.items]"
-					:loading="projetsStore.itemsLoading" :schema="schemaItem"
+					:store-edition="projetsStore.itemEdition"
+					:loading="projetsStore.itemsLoading"
+					:schema="schemaItem"
 					:total-count="Number(projetsStore.itemsTotalCount[projetId] || 0)"
 					:fetch-function="projetId !== 'new' ? (limit, offset, expand, filter, sort, clear) => projetsStore.getItemByInterval(projetId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
@@ -558,6 +590,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
 				:store-data="[itemsStore.items, projetsStore.items[projetId]]"
+				:store-edition="projetsStore.itemEdition"
 				:filters="filterItem"
 				:loading="projetsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"

@@ -19,11 +19,11 @@ const configsStore = useConfigsStore();
 const camerasStore = useCamerasStore();
 const authStore = useAuthStore();
 
+const formContainer = ref(null);
+
 async function fetchAllData() {
 	if (cameraId.value === "new") {
-		camerasStore.cameraEdition = {
-			loading: false,
-		};
+		loadToEdition(cameraId.value);
 		if (preset.value) {
 			preset.value.split(";").forEach((pair) => {
 				const [key, value] = pair.split(":");
@@ -49,6 +49,15 @@ async function fetchAllData() {
 		}, 15000);
 		camerasStore.getStatus(cameraId.value);
 		camerasStore.getStream(cameraId.value);
+		loadToEdition(cameraId.value);
+	}
+}
+function loadToEdition(id) {
+	if (id === "new") {
+		camerasStore.cameraEdition = {
+			loading: false,
+		};
+	} else {
 		camerasStore.cameraEdition = {
 			loading: false,
 			nom_camera: camerasStore.cameras[cameraId.value].nom_camera,
@@ -56,7 +65,7 @@ async function fetchAllData() {
 			user_camera: camerasStore.cameras[cameraId.value].user_camera,
 			mdp_camera: camerasStore.cameras[cameraId.value].mdp_camera,
 		};
-		isChecked.value = (camerasStore.cameras[cameraId.value].user_camera !== "") || (camerasStore.cameras[cameraId.value].mdp_camera !== "");
+		camerasStore.cameraEdition._check = (camerasStore.cameras[cameraId.value].user_camera !== "") || (camerasStore.cameras[cameraId.value].mdp_camera !== "");
 	}
 }
 onMounted(() => {
@@ -77,26 +86,41 @@ onBeforeUnmount(() => {
 let intervalRefreshStatus = null;
 const cameraDeleteModalShow = ref(false);
 const cameraSave = async() => {
-	if (!isChecked.value) {
+	if (!camerasStore.cameraEdition?._check) {
 		camerasStore.cameraEdition.user_camera = "";
 		camerasStore.cameraEdition.mdp_camera = "";
 	}
 	try {
-		createSchema(isChecked).validateSync(camerasStore.cameraEdition, { abortEarly: false });
+		const validationResults = await Promise.all([
+			formContainer.value?.validate(),
+		]);
+		const allValid = validationResults.every((result) => result && result.valid);
+		if (!allValid) {
+			const nbErrors = validationResults.reduce((sum, result) => sum + (result ? Object.keys(result.errors).length : 0), 0);
+			addNotification({
+				message: t("camera.FormValidationError", { count: nbErrors }),
+				type: "error",
+			});
+			camerasStore.cameraEdition.loading = false;
+			return;
+		}
 		if (cameraId.value === "new") {
 			const newId = await camerasStore.createCamera({ ...camerasStore.cameraEdition } );
+			loadToEdition(newId);
 			addNotification({ message: t("camera.Created"), type: "success" });
 			cameraId.value = String(newId);
 			router.push("/cameras/" + cameraId.value);
 		} else {
 			await camerasStore.updateCamera(cameraId.value, { ...camerasStore.cameraEdition });
+			loadToEdition(cameraId.value);
 			camerasStore.getStatus(cameraId.value);
 			camerasStore.getStream(cameraId.value);
 			addNotification({ message: t("camera.Updated"), type: "success" });
 		}
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
-		return;
+	} finally {
+		camerasStore.cameraEdition.loading = false;
 	}
 };
 const cameraDelete = async() => {
@@ -114,30 +138,38 @@ const cameraUpdateLight = async(id) => {
 	camerasStore.getStatus(id);
 };
 
-const isChecked = ref(false);
-const createSchema = (isChecked) => {
-	return Yup.object().shape({
-		nom_camera: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("camera.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
-			.required(t("camera.NameRequired")),
-		url_camera: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_url"), t("camera.URLMaxLength", { count: configsStore.getConfigByKey("max_length_url") }))
-			.required(t("camera.DescriptionRequired")),
-		user_camera: isChecked
-			? Yup.string().required(t("camera.UserRequired")).max(configsStore.getConfigByKey("max_length_name"), t("camera.UserMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
-			: Yup.string().nullable(),
-		mdp_camera: isChecked
-			? Yup.string().required(t("camera.PasswordRequired")).max(configsStore.getConfigByKey("max_length_name"), t("camera.PasswordMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
-			: Yup.string().nullable(),
-	});
+const createSchema = () => {
+	const edition = camerasStore.cameraEdition;
+	const shape = {};
+	if (!edition) {
+		return Yup.object().shape(shape);
+	}
+	shape.nom_camera = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("camera.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.required(t("camera.NameRequired"));
+	shape.url_camera = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_url"), t("camera.URLMaxLength", { count: configsStore.getConfigByKey("max_length_url") }))
+		.required(t("camera.DescriptionRequired"));
+	if (edition?._check) {
+		shape.user_camera = Yup.string()
+			.required(t("camera.UserRequired"))
+			.max(configsStore.getConfigByKey("max_length_name"), t("camera.UserMaxLength", { count: configsStore.getConfigByKey("max_length_name") }));
+		shape.mdp_camera = Yup.string()
+			.required(t("camera.PasswordRequired"))
+			.max(configsStore.getConfigByKey("max_length_name"), t("camera.PasswordMaxLength", { count: configsStore.getConfigByKey("max_length_name") }));
+	} else {
+		shape.user_camera = Yup.string().nullable();
+		shape.mdp_camera = Yup.string().nullable();
+	}
+	return Yup.object().shape(shape);
 };
 
 const labelForm = ref([
 	{ key: "nom_camera", label: "camera.Name", type: "text", enableCondition: "func.hasPermission([2])" },
 	{ key: "url_camera", label: "camera.URL", type: "text", enableCondition: "func.hasPermission([2])" },
-	{ key: "check", label: "camera.Check", type: "checkbox", model: isChecked, enableCondition: "func.hasPermission([2])" },
-	{ key: "user_camera", label: "camera.User", type: "text", enableCondition: "func.hasPermission([2]) && form[2].model" },
-	{ key: "mdp_camera", label: "camera.Password", type: "password", enableCondition: "func.hasPermission([2]) && form[2].model" },
+	{ key: "_check", label: "camera.Check", type: "checkbox", enableCondition: "func.hasPermission([2])" },
+	{ key: "user_camera", label: "camera.User", type: "text", enableCondition: "func.hasPermission([2]) && edition?._check" },
+	{ key: "mdp_camera", label: "camera.Password", type: "password", enableCondition: "func.hasPermission([2]) && edition?._check" },
 ]);
 document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
@@ -153,7 +185,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 	</div>
 	<div v-if="camerasStore.cameras[cameraId] || cameraId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full gap-y-4 gap-x-4">
-			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="camerasStore.cameraEdition" :store-user="authStore.user"
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="camerasStore.cameraEdition" :store-user="authStore.user"
 				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
 			<div class="flex-1 min-w-64 min-h-80 bg-gray-200 px-4 py-2 rounded">
 				<img :src="camerasStore.stream[cameraId]" alt="Camera Stream" />
