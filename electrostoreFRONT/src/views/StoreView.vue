@@ -347,8 +347,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('store.Title') }}</h2>
-		<TopButtonEditElement :main-config="{ path: '/stores', save: { roleRequired: authStore.hasPermission([2]), loading: storesStore.storeEdition[storeId]?.loading }, delete: { roleRequired: authStore.hasPermission([2]) } }"
-			:id="storeId" :store-user="authStore.user" @button-save="storeSave" @button-delete="storeDeleteModalShow = true"/>
+		<TopButtonEditElement
+			:main-config="{ path: '/stores',
+				create: { showCondition: storeId === 'new' && authStore.hasPermission([2]), loading: storesStore.storeEdition[storeId]?.loading },
+				update: { showCondition: storeId !== 'new' && authStore.hasPermission([2]), loading: storesStore.storeEdition[storeId]?.loading },
+				delete: { showCondition: storeId !== 'new' && authStore.hasPermission([2]) }
+			}"
+			@button-create="storeSave" @button-update="storeSave" @button-delete="storeDeleteModalShow = true"/>
 	</div>
 	<div v-if="storesStore.stores[storeId] || storeId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">

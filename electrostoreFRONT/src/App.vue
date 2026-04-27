@@ -11,18 +11,18 @@ const authStore = useAuthStore();
 
 configsStore.getConfig();
 
-const isIframe = computed(() => typeof route.query.iframe !== "undefined");
+const isIframe = computed(() => route.query.iframe !== undefined);
 
 const reduceLeftSideBar = ref(false);
-const listNav = [
-	{ name: "common.VAppInventory", path: "/inventory", roleRequired: "user", faIcon: "fa-solid fa-box" },
-	{ name: "common.VAppProjet", path: "/projets", roleRequired: "user", faIcon: "fa-solid fa-project-diagram" },
-	{ name: "common.VAppCommand", path: "/commands", roleRequired: "user", faIcon: "fa-solid fa-shopping-cart" },
-	{ name: "common.VAppCam", path: "/cameras", roleRequired: "user", faIcon: "fa-solid fa-camera" },
-	{ name: "common.VAppIa", path: "/ia", roleRequired: "user", faIcon: "fa-solid fa-microchip" },
-	{ name: "common.VAppTags", path: "/tags", roleRequired: "user", faIcon: "fa-solid fa-tags" },
-	{ name: "common.VAppStores", path: "/stores", roleRequired: "user", faIcon: "fa-solid fa-store" },
-];
+const listNav = ref([
+	{ name: "common.VAppInventory", path: "/inventory", faIcon: "fa-solid fa-box" },
+	{ name: "common.VAppProjet", path: "/projets", faIcon: "fa-solid fa-project-diagram" },
+	{ name: "common.VAppCommand", path: "/commands", faIcon: "fa-solid fa-shopping-cart" },
+	{ name: "common.VAppCam", path: "/cameras", faIcon: "fa-solid fa-camera" },
+	{ name: "common.VAppIa", path: "/ia", faIcon: "fa-solid fa-microchip" },
+	{ name: "common.VAppTags", path: "/tags", faIcon: "fa-solid fa-tags" },
+	{ name: "common.VAppStores", path: "/stores", faIcon: "fa-solid fa-store" },
+]);
 
 const containerClasses = computed(() => [
 	"px-4 pt-4 fixed bottom-0 right-0 left-0 flex flex-col",

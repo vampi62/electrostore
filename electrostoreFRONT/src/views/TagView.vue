@@ -298,8 +298,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('tag.Title') }}</h2>
-		<TopButtonEditElement :main-config="{ path: '/tags', save: { roleRequired: authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition.loading }, delete: { roleRequired: authStore.hasPermission([0, 1, 2]) } }"
-			:id="tagId" :store-user="authStore.user" @button-save="tagSave" @button-delete="tagDeleteModalShow = true"/>
+		<TopButtonEditElement
+			:main-config="{ path: '/tags',
+				create: { showCondition: tagId === 'new' && authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition?.loading },
+				update: { showCondition: tagId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition?.loading },
+				delete: { showCondition: tagId !== 'new' && authStore.hasPermission([0, 1, 2]) }
+			}"
+			@button-create="tagSave" @button-update="tagSave" @button-delete="tagDeleteModalShow = true"/>
 	</div>
 	<div v-if="tagsStore.tags[tagId] || tagId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">

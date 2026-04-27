@@ -203,8 +203,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('user.Title') }}</h2>
-		<TopButtonEditElement :main-config="{ path: '/users', save: { sameUserId: true, roleRequired: authStore.hasPermission([1, 2]), loading: usersStore.userEdition.loading }, delete: { sameUserId: true, roleRequired: authStore.hasPermission([1, 2]) } }"
-			:id="userId" :store-user="authStore.user" @button-save="userSave" @button-delete="userDeleteModalShow = true"/>
+		<TopButtonEditElement
+			:main-config="{ path: '/users',
+				create: { sameUserId: true, showCondition: userId === 'new' && authStore.hasPermission([1, 2]), loading: usersStore.userEdition?.loading },
+				update: { sameUserId: true, showCondition: userId !== 'new' && authStore.hasPermission([1, 2]), loading: usersStore.userEdition?.loading },
+				delete: { sameUserId: true, showCondition: userId !== 'new' && authStore.hasPermission([1, 2]) }
+			}"
+			@button-create="userSave" @button-update="userSave" @button-delete="userDeleteModalShow = true"/>
 	</div>
 	<div v-if="usersStore.users[userId] || userId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">

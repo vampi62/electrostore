@@ -144,12 +144,17 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('camera.Title') }}</h2>
-		<TopButtonEditElement :main-config="{ path: '/cameras', save: { roleRequired: authStore.hasPermission([2]), loading: camerasStore.cameraEdition.loading }, delete: { roleRequired: authStore.hasPermission([2]) } }"
+		<TopButtonEditElement
+			:main-config="{ path: '/cameras',
+				create: { showCondition: cameraId === 'new' && authStore.hasPermission([2]), loading: camerasStore.cameraEdition?.loading },
+				update: { showCondition: cameraId !== 'new' && authStore.hasPermission([2]), loading: camerasStore.cameraEdition?.loading },
+				delete: { showCondition: cameraId !== 'new' && authStore.hasPermission([2]) }
+			}"
 			:optional-config="[
-				{ label: 'camera.OnOff', roleRequired: authStore.hasPermission([2]), bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => cameraUpdateLight(cameraId) },
-				{ label: 'camera.Refresh', roleRequired: authStore.hasPermission([2]), loading: camerasStore.status[cameraId]?.loading, bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => camerasStore.getStatus(cameraId) }
+				{ label: 'camera.OnOff', showCondition: cameraId !== 'new' && authStore.hasPermission([2]), bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => cameraUpdateLight(cameraId) },
+				{ label: 'camera.Refresh', showCondition: cameraId !== 'new' && authStore.hasPermission([2]), loading: camerasStore.status[cameraId]?.loading, bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => camerasStore.getStatus(cameraId) }
 			]"
-			:id="cameraId" @button-save="cameraSave" @button-delete="cameraDeleteModalShow = true"/>
+			@button-create="cameraSave" @button-update="cameraSave" @button-delete="cameraDeleteModalShow = true"/>
 	</div>
 	<div v-if="camerasStore.cameras[cameraId] || cameraId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full gap-y-4 gap-x-4">
