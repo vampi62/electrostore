@@ -8,28 +8,28 @@ const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export const useProjetsStore = defineStore("projets",{
 	state: () => ({
-		projetsLoading: true,
+		projetsLoading: false,
 		projetsTotalCount: 0,
 		projets: {},
 		projetEdition: {},
 
-		commentairesTotalCount: {},
 		commentairesLoading: false,
+		commentairesTotalCount: {},
 		commentaires: {},
 		commentaireEdition: {},
 
-		documentsTotalCount: {},
 		documentsLoading: false,
+		documentsTotalCount: {},
 		documents: {},
 		documentEdition: {},
 
-		itemsTotalCount: {},
 		itemsLoading: false,
+		itemsTotalCount: {},
 		items: {},
 		itemEdition: {},
 
+		projetTagProjetLoading: false,
 		projetTagProjetTotalCount: {},
-		projetTagProjetLoading: true,
 		projetTagProjet: {},
 		projetTagProjetEdition: {},
 
@@ -360,7 +360,6 @@ export const useProjetsStore = defineStore("projets",{
 				useToken: "access",
 			});
 			delete this.documents[idProjet][id];
-			this.documentEdition = {};
 		},
 		async downloadDocument(idProjet, id) {
 			return await fetchWrapper.image({
