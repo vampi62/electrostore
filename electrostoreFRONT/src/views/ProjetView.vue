@@ -138,29 +138,28 @@ const projetDelete = async() => {
 const documentAddModalShow = ref(false);
 const documentDeleteModalShow = ref(false);
 const documentModalData = ref({ id_projet_document: null, name_projet_document: "", document: null });
-const documentAddOpenModal = () => {
-	documentModalData.value = { name_projet_document: "", document: null };
-	documentAddModalShow.value = true;
-};
 const documentDeleteOpenModal = (doc) => {
 	documentModalData.value = doc;
 	documentDeleteModalShow.value = true;
 };
-const documentAdd = async() => {
-	try {
-		schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
-		await projetsStore.createDocument(projetId.value, documentModalData.value);
-		addNotification({ message: t("projet.DocumentAdded"), type: "success" });
-		documentAddModalShow.value = false;
-	} catch (e) {
-		addNotification({ message: e, type: "error" });
-		return;
+const documentAdd = async(files) => {
+	for (const file of files) {
+		documentModalData.value = { name_projet_document: file.name, document: file.document };
+		try {
+			schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
+			await projetsStore.createDocument(projetId.value, documentModalData.value);
+			addNotification({ message: t("projet.DocumentAdded"), type: "success" });
+		} catch (e) {
+			addNotification({ message: e, type: "error" });
+		}
 	}
+	documentAddModalShow.value = false;
 };
 const documentEdit = async(row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		await projetsStore.updateDocument(projetId.value, row.id_projet_document, row);
+		delete projetsStore.documentEdition[row.id_projet_document];
 		addNotification({ message: t("projet.DocumentUpdated"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -482,7 +481,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="projet.Documents"
 			:total-count="Number(projetsStore.documentsTotalCount[projetId] || 0)" :permission="projetId !=='new'">
 			<template #append-row>
-				<button type="button" @click="documentAddOpenModal"
+				<button type="button" @click="documentAddModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('projet.AddDocument') }}
 				</button>
@@ -533,12 +532,12 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		:delete-action="projetDelete" :text-title="'projet.DeleteTitle'"
 		:text-p="'projet.DeleteText'"/>
 
-	<ModalAddFile :show-modal="documentAddModalShow" @close-modal="documentAddModalShow = false"
-		:text-title="'projet.DocumentAddTitle'" :schema-add="schemaAddDocument"
-		:modal-data="documentModalData" :add-action="documentAdd" :key-name-document="'name_projet_document'" :key-file-document="'document'"
-		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
-		:text-max-size="'projet.DocumentSize'" :text-placeholder-document="'projet.DocumentNamePlaceholder'"
+	<ModalMultipleFiles
+		:show-modal="documentAddModalShow"
+		@close-modal="documentAddModalShow = false"
+		@files-saved="documentAdd"
 		file-type="document"
+		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
 	/>
 
 	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
