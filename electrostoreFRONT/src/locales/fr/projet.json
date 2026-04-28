@@ -74,8 +74,6 @@
 	"Loading": "Chargement",
 	"DeleteTitle": "Supprimer le projet",
 	"DeleteText": "Êtes-vous sûr de vouloir supprimer ce projet?",
-	"DocumentAddTitle": "Ajouter un document",
-	"DocumentNamePlaceholder": "Nom du document",
 	"DocumentCancel": "Annuler",
 	"DocumentAdd": "Ajouter",
 	"DocumentDeleteTitle": "Supprimer le document",

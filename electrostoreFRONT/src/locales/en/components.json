@@ -24,5 +24,19 @@
 	"VModalTopButtonUpdate": "Update",
 	"VModalTopButtonDelete": "Delete",
 	"VModalTopButtonBack": "Back",
-	"VModalTopButtonMenu": "Menu"
+	"VModalTopButtonMenu": "Menu",
+
+	"VModalMultipleFilesTitle": "Add multiple documents",
+	"VModalMultipleFilesClickToUpload": "Click to upload",
+	"VModalMultipleFilesOrDragDrop": "or drag and drop your files",
+	"VModalMultipleFilesMaxSize": "Maximum size per file",
+	"VModalMultipleFilesSelectFiles": "Select files",
+	"VModalMultipleFilesNamePlaceholder": "Document name",
+	"VModalMultipleFilesNoFiles": "No files selected",
+	"VModalMultipleFilesCancel": "Cancel",
+	"VModalMultipleFilesSave": "Save",
+	"VModalMultipleFilesErrorSize": "The file {fileName} exceeds the maximum allowed size ({maxSize}MB)",
+	"VModalMultipleFilesErrorExtension": "The file {fileName} does not have an allowed extension",
+	"VModalMultipleFilesErrorEmptyName": "All files must have a name",
+	"VModalMultipleFilesErrorSaving": "An error occurred while saving the files"
 }

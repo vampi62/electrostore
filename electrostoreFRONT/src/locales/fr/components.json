@@ -24,5 +24,19 @@
 	"VModalTopButtonUpdate": "Modifier",
 	"VModalTopButtonDelete": "Supprimer",
 	"VModalTopButtonBack": "Retour",
-	"VModalTopButtonMenu": "Menu"
+	"VModalTopButtonMenu": "Menu",
+
+	"VModalMultipleFilesTitle": "Ajouter plusieurs documents",
+	"VModalMultipleFilesClickToUpload": "Cliquez pour télécharger",
+	"VModalMultipleFilesOrDragDrop": "ou glissez-déposez vos fichiers",
+	"VModalMultipleFilesMaxSize": "Taille maximale par fichier",
+	"VModalMultipleFilesSelectFiles": "Sélectionner des fichiers",
+	"VModalMultipleFilesNamePlaceholder": "Nom du document",
+	"VModalMultipleFilesNoFiles": "Aucun fichier sélectionné",
+	"VModalMultipleFilesCancel": "Annuler",
+	"VModalMultipleFilesSave": "Enregistrer",
+	"VModalMultipleFilesErrorSize": "Le fichier {fileName} dépasse la taille maximale autorisée ({maxSize}Mo)",
+	"VModalMultipleFilesErrorExtension": "Le fichier {fileName} n'a pas une extension autorisée",
+	"VModalMultipleFilesErrorEmptyName": "Tous les fichiers doivent avoir un nom",
+	"VModalMultipleFilesErrorSaving": "Une erreur est survenue lors de l'enregistrement des fichiers"
 }

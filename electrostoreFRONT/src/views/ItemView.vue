@@ -154,29 +154,28 @@ const boxSave = async(box) => {
 const documentAddModalShow = ref(false);
 const documentDeleteModalShow = ref(false);
 const documentModalData = ref({ id_item_document: null, name_item_document: "", document: null });
-const documentAddOpenModal = () => {
-	documentModalData.value = { name_item_document: "", document: null };
-	documentAddModalShow.value = true;
-};
 const documentDeleteOpenModal = (doc) => {
 	documentModalData.value = doc;
 	documentDeleteModalShow.value = true;
 };
-const documentAdd = async() => {
-	try {
-		schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
-		await itemsStore.createDocument(itemId.value, documentModalData.value);
-		addNotification({ message: t("item.DocumentAdded"), type: "success" });
-		documentAddModalShow.value = false;
-	} catch (e) {
-		addNotification({ message: e, type: "error" });
-		return;
+const documentAdd = async(files) => {
+	for (const file of files) {
+		documentModalData.value = { name_item_document: file.name, document: file.document };
+		try {
+			schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
+			await itemsStore.createDocument(itemId.value, documentModalData.value);
+			addNotification({ message: t("item.DocumentAdded"), type: "success" });
+		} catch (e) {
+			addNotification({ message: e, type: "error" });
+		}
 	}
+	documentAddModalShow.value = false;
 };
 const documentEdit = async(row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		await itemsStore.updateDocument(itemId.value, row.id_item_document, row);
+		delete itemsStore.documentEdition[row.id_item_document];
 		addNotification({ message: t("item.DocumentUpdated"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -223,22 +222,22 @@ const imageSelectOpenModal = () => {
 		imageSelectModalShow.value = true;
 	}
 };
-const imageAddOpenModal = () => {
-	imageModalData.value = { nom_img: "", description_img: "undefined", image: null };
-	imageAddModalShow.value = true;
-};
 const imageDeleteOpenModal = (doc) => {
 	imageModalData.value = doc;
 	imageDeleteModalShow.value = true;
 };
-const imageAdd = async() => {
-	try {
-		await itemsStore.createImage(itemId.value, imageModalData.value);
-		addNotification({ message: t("item.ImageAdded"), type: "success" });
-		imageAddModalShow.value = false;
-	} catch (e) {
-		addNotification({ message: e, type: "error" });
+const imageAdd = async(files) => {
+	for (const file of files) {
+		documentModalData.value = { nom_img: file.name, description_img: "undefined", image: file.document };
+		try {
+			schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
+			await itemsStore.createImage(itemId.value, imageModalData.value);
+			addNotification({ message: t("item.ImageAdded"), type: "success" });
+		} catch (e) {
+			addNotification({ message: e, type: "error" });
+		}
 	}
+	imageAddModalShow.value = false;
 };
 const imageDelete = async() => {
 	try {
@@ -531,7 +530,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="item.Documents"
 			:total-count="Number(itemsStore.documentsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
 			<template #append-row>
-				<button type="button" @click="documentAddOpenModal"
+				<button type="button" @click="documentAddModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('item.AddDocument') }}
 				</button>
@@ -547,7 +546,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="item.Images"
 			:total-count="Number(itemsStore.imagesTotalCount[itemId] || 0)" :permission="itemId !=='new'">
 			<template #append-row>
-				<button type="button" @click="imageAddOpenModal"
+				<button type="button" @click="imageAddModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('item.AddImage') }}
 				</button>
@@ -643,24 +642,24 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		</div>
 	</div>
 
-	<ModalAddFile :show-modal="documentAddModalShow" @close-modal="documentAddModalShow = false"
-		:text-title="'item.DocumentAddTitle'" :schema-add="schemaAddDocument"
-		:modal-data="documentModalData" :add-action="documentAdd" :key-name-document="'name_item_document'" :key-file-document="'document'"
-		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
-		:text-max-size="'item.DocumentSize'" :text-placeholder-document="'item.DocumentNamePlaceholder'"
+	<ModalMultipleFiles
+		:show-modal="documentAddModalShow"
+		@close-modal="documentAddModalShow = false"
+		@files-saved="documentAdd"
 		file-type="document"
+		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
 	/>
 
 	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
 		:delete-action="documentDelete" :text-title="'item.DocumentDeleteTitle'"
 		:text-p="'item.DocumentDeleteText'"/>
 
-	<ModalAddFile :show-modal="imageAddModalShow" @close-modal="imageAddModalShow = false"
-		:text-title="'item.ImageAddTitle'" :schema-add="schemaAddImage"
-		:modal-data="imageModalData" :add-action="imageAdd" :key-name-document="'nom_img'" :key-file-document="'image'"
-		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
-		:text-max-size="'item.ImageSize'" :text-placeholder-document="'item.ImageNamePlaceholder'"
+	<ModalMultipleFiles
+		:show-modal="imageAddModalShow"
+		@close-modal="imageAddModalShow = false"
+		@files-saved="imageAdd"
 		file-type="image"
+		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
 	/>
 
 	<ModalDeleteConfirm :show-modal="imageDeleteModalShow" @close-modal="imageDeleteModalShow = false"

@@ -87,8 +87,6 @@
 	"DeleteTitle": "Supprimer l'article",
 	"DeleteText": "Êtes-vous sûr de vouloir supprimer cet article ?",
 	"ImageSelectTitle": "Sélectionner une image",
-	"DocumentAddTitle": "Ajouter un document",
-	"DocumentNamePlaceholder": "Nom du document",
 	"DocumentCancel": "Annuler",
 	"DocumentAdd": "Ajouter",
 	"DocumentDeleteTitle": "Supprimer le document",

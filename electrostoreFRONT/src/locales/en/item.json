@@ -87,8 +87,6 @@
 	"DeleteTitle": "Delete item",
 	"DeleteText": "Are you sure you want to delete this item?",
 	"ImageSelectTitle": "Select an image",
-	"DocumentAddTitle": "Add document",
-	"DocumentNamePlaceholder": "Document name",
 	"DocumentCancel": "Cancel",
 	"DocumentAdd": "Add",
 	"DocumentDeleteTitle": "Delete document",
