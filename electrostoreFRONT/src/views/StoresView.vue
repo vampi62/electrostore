@@ -25,7 +25,10 @@ const filter = ref([
 	{ key: "mqtt_name_store", value: "", type: "text", label: "stores.FilterMqttName", compareMethod: "=like=" },
 	{ key: "xlength_store", value: "", type: "number", label: "stores.FilterXLength", compareMethod: "=le=" },
 	{ key: "ylength_store", value: "", type: "number", label: "stores.FilterYLength", compareMethod: "=le=" },
-	{ key: "StoresTags.Tag.nom_tag", value: "", type: "text", label: "stores.FilterTag", compareMethod: "=like=" },
+	{ key: "StoresTags.Tag.nom_tag", value: "", type: "datalist", label: "stores.FilterTag", compareMethod: "=like=",
+		fetchOptions: (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear),
+		storeData: tagsStore.tags, storeKey: "nom_tag",
+	},
 ]);
 const tableauLabel = ref([
 	{ label: "stores.Name", sortable: true, key: "nom_store", valueKey: "nom_store", type: "text" },

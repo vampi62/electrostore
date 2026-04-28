@@ -24,6 +24,7 @@ const filter = ref([
 	{ key: "friendly_name_item", value: "", type: "text", label: "items.FilterFriendlyName", compareMethod: "=like=" },
 	{ key: "seuil_min_item", value: "", type: "number", label: "items.FilterSeuilMin", compareMethod: "=ge=" },
 	{ key: "seuil_min_item", value: "", type: "number", label: "items.FilterSeuilMax", compareMethod: "=le=" },
+	{ key: "SUM(ItemsBoxs.qte_item_box)", value: "", type: "number", label: "items.FilterQteTotal", compareMethod: "=ge=" },
 	{ key: "ItemsTags.Tag.nom_tag", value: "", type: "datalist", label: "items.FilterTag", compareMethod: "=like=",
 		fetchOptions: (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear),
 		storeData: tagsStore.tags, storeKey: "nom_tag",
@@ -42,7 +43,7 @@ const tableauLabel = ref([
 	{ label: "items.Img", sortable: false, key: "id_img", sourceKey: "id_img", type: "image", 
 		storeRessourceId: 3, valueKey: "id_img" },
 
-	{ label: "items.Quantity", sortable: false, key: "quantity_item", valueKey: "quantity_item", type: "number" },
+	{ label: "items.Quantity", sortable: true, key: "SUM(ItemsBoxs.qte_item_box)", valueKey: "quantity_item", type: "number" },
 ]);
 const tableauMeta = ref({
 	key: "id_item",
