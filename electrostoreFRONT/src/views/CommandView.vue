@@ -103,29 +103,28 @@ const commandDelete = async() => {
 const documentAddModalShow = ref(false);
 const documentDeleteModalShow = ref(false);
 const documentModalData = ref({ id_command_document: null, name_command_document: "", document: null });
-const documentAddOpenModal = () => {
-	documentModalData.value = { name_command_document: "", document: null };
-	documentAddModalShow.value = true;
-};
 const documentDeleteOpenModal = (doc) => {
 	documentModalData.value = doc;
 	documentDeleteModalShow.value = true;
 };
-const documentAdd = async() => {
-	try {
-		schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
-		await commandsStore.createDocument(commandId.value, documentModalData.value);
-		addNotification({ message: t("command.DocumentAdded"), type: "success" });
-		documentAddModalShow.value = false;
-	} catch (e) {
-		addNotification({ message: e.errors, type: "error" });
-		return;
+const documentAdd = async(files) => {
+	for (const file of files) {
+		documentModalData.value = { name_command_document: file.name, document: file.document };
+		try {
+			schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
+			await commandsStore.createDocument(commandId.value, documentModalData.value);
+			addNotification({ message: t("command.DocumentAdded"), type: "success" });
+		} catch (e) {
+			addNotification({ message: e, type: "error" });
+		}
 	}
+	documentAddModalShow.value = false;
 };
 const documentEdit = async(row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		await commandsStore.updateDocument(commandId.value, row.id_command_document, row);
+		delete commandsStore.documentEdition[row.id_command_document];
 		addNotification({ message: t("command.DocumentUpdated"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e.errors, type: "error" });
@@ -416,7 +415,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="command.Documents"
 			:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)" :permission="commandId !=='new'">
 			<template #append-row>
-				<button type="button" @click="documentAddOpenModal"
+				<button type="button" @click="documentAddModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('command.AddDocument') }}
 				</button>
@@ -467,12 +466,12 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		:delete-action="commandDelete" :text-title="'command.DeleteTitle'"
 		:text-p="'command.DeleteText'"/>
 
-	<ModalAddFile :show-modal="documentAddModalShow" @close-modal="documentAddModalShow = false"
-		:text-title="'command.DocumentAddTitle'" :schema-add="schemaAddDocument"
-		:modal-data="documentModalData" :add-action="documentAdd" :key-name-document="'name_command_document'" :key-file-document="'document'"
-		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
-		:text-max-size="'command.DocumentSize'" :text-placeholder-document="'command.DocumentNamePlaceholder'"
+	<ModalMultipleFiles
+		:show-modal="documentAddModalShow"
+		@close-modal="documentAddModalShow = false"
+		@files-saved="documentAdd"
 		file-type="document"
+		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
 	/>
 
 	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
