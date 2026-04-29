@@ -1,5 +1,6 @@
 {
 	"NotFound": "Caméra introuvable",
+	"FormValidationError": "Erreur de validation du formulaire \n {count} erreur(s) à corriger",
 	"Created": "Caméra créée",
 	"Updated": "Caméra mise à jour",
 	"Deleted": "Caméra supprimée",

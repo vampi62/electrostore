@@ -8,32 +8,32 @@ const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export const useStoresStore = defineStore("stores",{
 	state: () => ({
-		storesLoading: true,
+		storesLoading: false,
 		storesTotalCount: 0,
 		stores: {},
 		storeEdition: {},
 
-		boxsLoading: true,
+		boxsLoading: false,
 		boxsTotalCount: {},
 		boxs: {},
 		boxEdition: {},
 
-		ledsLoading: true,
+		ledsLoading: false,
 		ledsTotalCount: {},
 		leds: {},
 		ledEdition: {},
 
-		storeTagsLoading: true,
+		storeTagsLoading: false,
 		storeTagsTotalCount: {},
 		storeTags: {},
 		storeTagEdition: {},
 
-		boxItemsLoading: true,
+		boxItemsLoading: false,
 		boxItemsTotalCount: {},
 		boxItems: {},
 		boxItemEdition: {},
 
-		boxTagsLoading: true,
+		boxTagsLoading: false,
 		boxTagsTotalCount: {},
 		boxTags: {},
 		boxTagEdition: {},
@@ -149,7 +149,7 @@ export const useStoresStore = defineStore("stores",{
 				}
 			}
 		},
-		async createStore(id, params) {
+		async createStore(params) {
 			const store = await fetchWrapper.post({
 				url: `${baseUrl}/store`,
 				useToken: "access",

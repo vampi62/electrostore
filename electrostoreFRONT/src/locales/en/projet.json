@@ -1,5 +1,6 @@
 {
 	"NotFound": "Project not found",
+	"FormValidationError": "Form validation error \n {count} error(s) to fix",
 	"Created": "Project created",
 	"Updated": "Project updated",
 	"Deleted": "Project deleted",
@@ -74,8 +75,6 @@
 	"Loading": "Loading",
 	"DeleteTitle": "Delete project",
 	"DeleteText": "Are you sure you want to delete this project?",
-	"DocumentAddTitle": "Add a document",
-	"DocumentNamePlaceholder": "Document name",
 	"DocumentCancel": "Cancel",
 	"DocumentAdd": "Add",
 	"DocumentDeleteTitle": "Delete document",

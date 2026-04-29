@@ -1,5 +1,6 @@
 {
 	"NotFound": "Camera not found",
+	"FormValidationError": "Form validation error \n {count} error(s) to fix",
 	"Created": "Camera created",
 	"Updated": "Camera updated",
 	"Deleted": "Camera deleted",

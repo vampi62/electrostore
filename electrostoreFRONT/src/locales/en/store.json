@@ -1,5 +1,6 @@
 {
 	"NotFound": "Store not found",
+	"FormValidationError": "Form validation error \n {count} error(s) to fix",
 	"Created": "Store created",
 	"Updated": "Store updated",
 	"Deleted": "Store deleted",

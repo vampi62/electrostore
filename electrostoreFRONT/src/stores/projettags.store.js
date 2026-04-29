@@ -8,12 +8,12 @@ const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export const useProjetTagsStore = defineStore("projetTags",{
 	state: () => ({
-		projetTagsLoading: true,
+		projetTagsLoading: false,
 		projetTagsTotalCount: 0,
 		projetTags: {},
 		projetTagEdition: {},
 
-		projetTagsProjetLoading: true,
+		projetTagsProjetLoading: false,
 		projetTagsProjetTotalCount: {},
 		projetTagsProjet: {},
 		projetTagProjetEdition: {},

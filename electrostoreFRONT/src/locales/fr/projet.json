@@ -1,5 +1,6 @@
 {
 	"NotFound": "Projet introuvable",
+	"FormValidationError": "Erreur de validation du formulaire \n {count} erreur(s) à corriger",
 	"Created": "Projet créé",
 	"Updated": "Projet mis à jour",
 	"Deleted": "Projet supprimé",
@@ -74,8 +75,6 @@
 	"Loading": "Chargement",
 	"DeleteTitle": "Supprimer le projet",
 	"DeleteText": "Êtes-vous sûr de vouloir supprimer ce projet?",
-	"DocumentAddTitle": "Ajouter un document",
-	"DocumentNamePlaceholder": "Nom du document",
 	"DocumentCancel": "Annuler",
 	"DocumentAdd": "Ajouter",
 	"DocumentDeleteTitle": "Supprimer le document",

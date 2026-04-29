@@ -21,11 +21,11 @@ const storesStore = useStoresStore();
 const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
+const formContainer = ref(null);
+
 async function fetchAllData() {
 	if (tagId.value === "new") {
-		tagsStore.tagEdition = {
-			loading: false,
-		};
+		loadToEdition(tagId.value);
 		if (preset.value) {
 			preset.value.split(";").forEach((pair) => {
 				const [key, value] = pair.split(":");
@@ -46,12 +46,24 @@ async function fetchAllData() {
 			router.push("/tags");
 			return;
 		}
+		loadToEdition(tagId.value);
+	}
+}
+function loadToEdition(id) {
+	if (tagId.value === "new") {
 		tagsStore.tagEdition = {
 			loading: false,
-			nom_tag: tagsStore.tags[tagId.value].nom_tag,
-			poids_tag: tagsStore.tags[tagId.value].poids_tag,
+		};
+	} else {
+		tagsStore.tagEdition = {
+			nom_tag: tagsStore.tags[id].nom_tag,
+			poids_tag: tagsStore.tags[id].poids_tag,
+			loading: false,
 		};
 	}
+	tagsStore.tagItemEdition[id] = {};
+	tagsStore.tagStoreEdition[id] = {};
+	tagsStore.tagBoxEdition[id] = {};
 }
 onMounted(() => {
 	fetchAllData();
@@ -65,19 +77,34 @@ onBeforeUnmount(() => {
 const tagDeleteModalShow = ref(false);
 const tagSave = async() => {
 	try {
-		createSchema().validateSync(tagsStore.tagEdition, { abortEarly: false });
+		const validationResults = await Promise.all([
+			formContainer.value?.validate(),
+		]);
+		const allValid = validationResults.every((result) => result && result.valid);
+		if (!allValid) {
+			const nbErrors = validationResults.reduce((sum, result) => sum + (result ? Object.keys(result.errors).length : 0), 0);
+			addNotification({
+				message: t("tag.FormValidationError", { count: nbErrors }),
+				type: "error",
+			});
+			tagsStore.tagEdition.loading = false;
+			return;
+		}
 		if (tagId.value === "new") {
 			const newId = await tagsStore.createTag({ ...tagsStore.tagEdition });
+			loadToEdition(newId);
 			addNotification({ message: t("tag.Created"), type: "success" });
 			tagId.value = String(newId);
 			router.push("/tags/" + tagId.value);
 		} else {
 			await tagsStore.updateTag(tagId.value, { ...tagsStore.tagEdition });
+			loadToEdition(tagId.value);
 			addNotification({ message: t("tag.Updated"), type: "success" });
 		}
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
-		return;
+	} finally {
+		tagsStore.tagEdition.loading = false;
 	}
 };
 const tagDelete = async() => {
@@ -192,15 +219,19 @@ const boxDelete = async(box) => {
 };
 
 const createSchema = () => {
-	return Yup.object().shape({
-		nom_tag: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("tag.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
-			.required(t("tag.NameRequired")),
-		poids_tag: Yup.number()
-			.min(0, t("tag.PoidsMin"))
-			.typeError(t("tag.PoidsNumber"))
-			.required(t("tag.PoidsRequired")),
-	});
+	const edition = tagsStore.tagEdition;
+	const shape = {};
+	if (!edition) {
+		return Yup.object().shape(shape);
+	}
+	shape.nom_tag = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("tag.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.required(t("tag.NameRequired"));
+	shape.poids_tag = Yup.number()
+		.min(0, t("tag.PoidsMin"))
+		.typeError(t("tag.PoidsNumber"))
+		.required(t("tag.PoidsRequired"));
+	return Yup.object().shape(shape);
 };
 
 const labelForm = [
@@ -308,7 +339,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 	</div>
 	<div v-if="tagsStore.tags[tagId] || tagId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="tagsStore.tagEdition"/>
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="tagsStore.tagEdition"/>
 		</div>
 		<CollapsibleSection title="tag.Items"
 			:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)" :permission="tagId !=='new'">
