@@ -1,5 +1,6 @@
 {
 	"NotFound": "Tag introuvable",
+	"FormValidationError": "Erreur de validation du formulaire \n {count} erreur(s) à corriger",
 	"Created": "Tag créé",
 	"Updated": "Tag mis à jour",
 	"Deleted": "Tag supprimé",

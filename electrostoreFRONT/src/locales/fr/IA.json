@@ -1,5 +1,6 @@
 {
 	"NotFound": "IA non trouvée",
+	"FormValidationError": "Erreur de validation du formulaire \n {count} erreur(s) à corriger",
 	"Created": "IA créée",
 	"Updated": "IA mise à jour",
 	"Deleted": "IA supprimée",

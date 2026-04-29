@@ -1,5 +1,6 @@
 {
 	"NotFound": "Projet introuvable",
+	"FormValidationError": "Erreur de validation du formulaire \n {count} erreur(s) à corriger",
 	"Created": "Projet créé",
 	"Updated": "Projet mis à jour",
 	"Deleted": "Projet supprimé",

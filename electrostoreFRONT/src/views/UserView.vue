@@ -21,6 +21,8 @@ const commandsStore = useCommandsStore();
 const projetsStore = useProjetsStore();
 const authStore = useAuthStore();
 
+const formContainer = ref(null);
+
 import { UserRole } from "@/enums";
 
 if ((!authStore.hasPermission([1, 2])) && authStore.user?.id_user !== Number(userId.value)) {
@@ -34,9 +36,7 @@ if ((!authStore.hasPermission([1, 2])) && authStore.user?.id_user !== Number(use
 
 async function fetchAllData() {
 	if (userId.value === "new") {
-		usersStore.userEdition = {
-			loading: false,
-		};
+		loadToEdition(userId.value);
 		if (preset.value) {
 			preset.value.split(";").forEach((pair) => {
 				const [key, value] = pair.split(":");
@@ -61,6 +61,15 @@ async function fetchAllData() {
 			}
 			return;
 		}
+		loadToEdition(userId.value);
+	}
+}
+function loadToEdition(id) {
+	if (id === "new") {
+		usersStore.userEdition = {
+			loading: false,
+		};
+	} else {
 		usersStore.userEdition = {
 			loading: false,
 			id_user: usersStore.users[userId.value].id_user,
@@ -87,14 +96,29 @@ const userDeleteModalShow = ref(false);
 const userTypeRole = ref({ [UserRole.User]: t("user.FilterRole0"), [UserRole.Moderator]: t("user.FilterRole1"), [UserRole.Admin]: t("user.FilterRole2") });
 const userSave = async() => {
 	try {
-		createSchema(isChecked).validateSync(usersStore.userEdition, { abortEarly: false });
+		usersStore.userEdition.loading = true;
+		const validationResults = await Promise.all([
+			formContainer.value?.validate(),
+		]);
+		const allValid = validationResults.every((result) => result && result.valid);
+		if (!allValid) {
+			const nbErrors = validationResults.reduce((sum, result) => sum + (result ? Object.keys(result.errors).length : 0), 0);
+			addNotification({
+				message: t("user.FormValidationError", { count: nbErrors }),
+				type: "error",
+			});
+			usersStore.userEdition.loading = false;
+			return;
+		}
 		if (userId.value === "new") {
 			const newId = await usersStore.createUser({ ...usersStore.userEdition });
+			loadToEdition(newId);
 			addNotification({ message: t("user.Created"), type: "success" });
 			userId.value = String(newId);
 			router.push("/users/" + userId.value);
 		} else {
 			await usersStore.updateUser(userId.value, { ...usersStore.userEdition });
+			loadToEdition(userId.value);
 			addNotification({ message: t("user.Updated"), type: "success" });
 		}
 		usersStore.userEdition.mdp_user = "";
@@ -102,7 +126,8 @@ const userSave = async() => {
 		usersStore.userEdition.current_mdp_user = "";
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
-		return;
+	} finally {
+		usersStore.userEdition.loading = false;
 	}
 };
 const userDelete = async() => {
@@ -126,35 +151,40 @@ const revokeToken = async(tokenId) => {
 	}
 };
 
-const isChecked = ref(false);
-const createSchema = (isChecked) => {
-	return Yup.object().shape({
-		nom_user: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("user.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
-			.required(t("user.NameRequired")),
-		prenom_user: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("user.FirstNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
-			.required(t("user.FirstNameRequired")),
-		email_user: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_email"), t("user.EmailMaxLength", { count: configsStore.getConfigByKey("max_length_email") }))
-			.required(t("user.EmailRequired"))
-			.email(t("user.EmailInvalid")),
-		mdp_user: isChecked // if isChecked is true, then mdp_user is required and must be different from current_mdp_user and =like= at least 8 characters, special characters, numbers and upper and lower letters
-			? Yup.string().required(t("user.PasswordRequired")).notOneOf([Yup.ref("current_mdp_user"), null], t("user.PasswordMatch")).matches(
+const createSchema = () => {
+	const edition = usersStore.userEdition;
+	const shape = {};
+	if (!edition) {
+		return Yup.object().shape(shape);
+	}
+	shape.nom_user = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("user.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.required(t("user.NameRequired"));
+	shape.prenom_user = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("user.FirstNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.required(t("user.FirstNameRequired"));
+	shape.email_user = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_email"), t("user.EmailMaxLength", { count: configsStore.getConfigByKey("max_length_email") }))
+		.required(t("user.EmailRequired"))
+		.email(t("user.EmailInvalid"));
+	if (edition?._check) {
+		shape.mdp_user = Yup.string()
+			.required(t("user.PasswordRequired")).notOneOf([Yup.ref("current_mdp_user"), null], t("user.PasswordMatch")).matches(
 				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
 				t("user.PasswordComplexity"),
-			)
-			: Yup.string().nullable(),
-		confirm_mdp_user: isChecked // if isChecked is true, then confirm_mdp_user is required and must match mdp_user and =like= at least 8 characters, special characters, numbers and upper and lower letters
-			? Yup.string().required(t("user.ConfirmPasswordRequired")).oneOf([Yup.ref("mdp_user"), null], t("user.ConfirmPasswordMatch")).matches(
+			);
+		shape.confirm_mdp_user = Yup.string()
+			.required(t("user.ConfirmPasswordRequired")).oneOf([Yup.ref("mdp_user"), null], t("user.ConfirmPasswordMatch")).matches(
 				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
 				t("user.PasswordComplexity"),
-			)
-			: Yup.string().nullable(),
-		// current_mdp_user if always required and not nullable
-		current_mdp_user: Yup.string()
-			.required(t("user.CurrentPasswordRequired")),
-	});
+			);
+	} else {
+		shape.mdp_user = Yup.string().nullable();
+		shape.confirm_mdp_user = Yup.string().nullable();
+	}
+	shape.current_mdp_user = Yup.string()
+		.required(t("user.CurrentPasswordRequired"));
+	return Yup.object().shape(shape);
 };
 
 const labelForm = ref([
@@ -162,11 +192,11 @@ const labelForm = ref([
 	{ key: "prenom_user", label: "user.FirstName", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 	{ key: "email_user", label: "user.Email", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 	{ key: "role_user", label: "user.Role", type: "select", options: userTypeRole, enableCondition: "func.hasPermission([2])" },
-	{ key: "check", label: "user.Check", type: "checkbox", model: isChecked, enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])",
+	{ key: "_check", label: "user.Check", type: "checkbox", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
-	{ key: "mdp_user", label: "user.Password", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && form[4].model",
+	{ key: "mdp_user", label: "user.Password", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?._check",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
-	{ key: "confirm_mdp_user", label: "user.ConfirmPassword", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && form[4].model",
+	{ key: "confirm_mdp_user", label: "user.ConfirmPassword", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?._check",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
 	{ key: "current_mdp_user", label: "user.CurrentPassword", type: "password", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
@@ -208,7 +238,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 	</div>
 	<div v-if="usersStore.users[userId] || userId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="usersStore.userEdition" :store-user="authStore.user"
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="usersStore.userEdition" :store-user="authStore.user"
 				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
 		</div>
 		<CollapsibleSection title="user.Participation" :permission="userId !=='new'">

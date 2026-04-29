@@ -2,6 +2,7 @@
 	"NotFound": "Article introuvable",
 	"BoxShowSuccess": "Boîte allumée",
 	"ToggleError": "Impossible d'allumer la boîte",
+	"FormValidationError": "Erreur de validation du formulaire \n {count} erreur(s) à corriger",
 	"Created": "Article créé",
 	"Updated": "Article mis à jour",
 	"Deleted": "Article supprimé",

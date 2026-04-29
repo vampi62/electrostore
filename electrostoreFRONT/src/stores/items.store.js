@@ -8,37 +8,37 @@ const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export const useItemsStore = defineStore("items",{
 	state: () => ({
-		itemsLoading: true,
+		itemsLoading: false,
 		itemsTotalCount: 0,
 		items: {},
 		itemEdition: {},
 
-		documentsTotalCount: {},
 		documentsLoading: false,
+		documentsTotalCount: {},
 		documents: {},
 		documentEdition: {},
 
-		itemBoxsTotalCount: {},
 		itemBoxsLoading: false,
+		itemBoxsTotalCount: {},
 		itemBoxs: {},
 		itemBoxEdition: {},
 
-		itemTagsLoading: true,
+		itemTagsLoading: false,
 		itemTagsTotalCount: {},
 		itemTags: {},
 		itemTagEdition: {},
 
-		itemCommandsLoading: true,
+		itemCommandsLoading: false,
 		itemCommandsTotalCount: {},
 		itemCommands: {},
 		itemCommandEdition: {},
 
-		itemProjetsLoading: true,
+		itemProjetsLoading: false,
 		itemProjetsTotalCount: {},
 		itemProjets: {},
 		itemProjetEdition: {},
 
-		imagesLoading: true,
+		imagesLoading: false,
 		imagesTotalCount: {},
 		images: {},
 		imagesURL: {},
@@ -456,9 +456,6 @@ export const useItemsStore = defineStore("items",{
 			delete this.itemTags[idItem][id];
 		},
 		async createItemTagBulk(idItem, idList) {
-			if (!this.itemTagEdition[idItem]) {
-				this.itemTagEdition[idItem] = {};
-			}
 			const itemTagBulk = await fetchWrapper.post({
 				url: `${baseUrl}/item/${idItem}/tag/bulk`,
 				useToken: "access",
@@ -469,9 +466,6 @@ export const useItemsStore = defineStore("items",{
 			}
 		},
 		async deleteItemTagBulk(idItem, idList) {
-			if (!this.itemTagEdition[idItem]) {
-				this.itemTagEdition[idItem] = {};
-			}
 			const itemTagBulk = await fetchWrapper.delete({
 				url: `${baseUrl}/item/${idItem}/tag/bulk`,
 				useToken: "access",
@@ -647,9 +641,6 @@ export const useItemsStore = defineStore("items",{
 			delete this.itemProjets[idItem][id];
 		},
 		async createItemProjetBulk(idItem, idList) {
-			if (!this.itemProjetEdition[idItem]) {
-				this.itemProjetEdition[idItem] = {};
-			}
 			const itemProjetBulk = await fetchWrapper.post({
 				url: `${baseUrl}/item/${idItem}/projet/bulk`,
 				useToken: "access",
