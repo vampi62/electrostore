@@ -7,6 +7,7 @@
 				:id="`filter-input-${this.$.uid}`"
 				class="border border-gray-300 rounded px-2 py-1"
 				:class="[classCss, label.length > 0 ? 'mr-2' : '']"
+				:disabled="disabled"
 				@change="$emit('updateText', $event.target.value)">
 				<option value=""></option>
 				<template v-if="options">
@@ -24,6 +25,7 @@
 					class="border border-gray-300 rounded px-2 py-1"
 					:class="[classCss, label.length > 0 ? 'mr-2' : '']"
 					:placeholder="placeholder"
+					:disabled="disabled"
 					v-model="inputText"
 					@input="storeData && storeKey ? debouncedRefetchData() : null"
 					@focus="isOpen = true; inputText='', startEventUpdatePosition()"
@@ -70,6 +72,7 @@
 				type="checkbox"
 				class="form-checkbox h-5 w-5 text-blue-600"
 				:class="[classCss, label.length > 0 ? 'mr-2' : '']"
+				:disabled="disabled"
 				v-model="inputText"
 				@change="$emit('updateText', $event.target.checked)" />
 		</template>
@@ -81,6 +84,7 @@
 				:value="preset"
 				class="border border-gray-300 rounded px-2 py-1"
 				:class="[classCss, label.length > 0 ? 'mr-2' : '']"
+				:disabled="disabled"
 				@input="$emit('updateText', $event.target.value)" />
 		</template>
 		</div>
@@ -90,8 +94,7 @@
 <script>
 import { nextTick } from "vue";
 import { debounce } from "lodash-es";
-import { buildRSQLFilter, buildRSQLSort } from "@/utils";
-import { toLowerCaseWithoutAccents } from "@/utils";
+import { buildRSQLFilter, buildRSQLSort, toLowerCaseWithoutAccents } from "@/utils";
 export default {
 	name: "Filter",
 	props: {
@@ -108,6 +111,11 @@ export default {
 			// This should be a valid input type
 			// 'text', 'number', 'select', 'datalist', etc.
 			default: "text",
+		},
+		disabled: {
+			type: Boolean,
+			required: false,
+			default: false,
 		},
 		placeholder: {
 			type: String,
@@ -212,7 +220,7 @@ export default {
 			if (!this.storeData || !this.storeKey) {
 				return [];
 			}
-			return Object.entries(this.storeData).filter(([index, element]) => {
+			let result = Object.entries(this.storeData).filter(([index, element]) => {
 				if (this.inputText !== "") {
 					return toLowerCaseWithoutAccents(element[this.storeKey]).includes(toLowerCaseWithoutAccents(this.inputText));
 				}
@@ -220,6 +228,14 @@ export default {
 			}).map(([index, element]) => {
 				return [element[this.storeKey], element[this.storeKey]];
 			});
+			if (this.sortOptions) {
+				result = result.slice().sort((a, b) => {
+					const aVal = toLowerCaseWithoutAccents(String(a[1]));
+					const bVal = toLowerCaseWithoutAccents(String(b[1]));
+					return this.sortOptions === "desc" ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+				});
+			}
+			return result;
 		},
 	},
 	methods: {

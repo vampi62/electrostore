@@ -65,12 +65,20 @@
 			</button>
 			<div class="border-t-2 border-blue-400"></div>
 			<ul class="mt-6 space-y-4">
-				<li v-for="nav in listNav" :key="nav.name">
-					<RouterLink :to="nav.path" :class="['flex items-center space-x-4 hover:text-blue-400',
-						route.path.includes(nav.path) ? 'text-blue-400' : 'text-white']">
-						<font-awesome-icon :icon="nav.faIcon" />
-						<span>{{ $t(nav.name) }}</span>
-					</RouterLink>
+				<li v-for="nav in listNavShown" :key="nav.name">
+					<template v-if="!nav.enableCondition || eval(nav.enableCondition)">
+						<RouterLink :to="nav.path" :class="['flex items-center space-x-4 hover:text-blue-400',
+							route.path.includes(nav.path) ? 'text-blue-400' : 'text-white']">
+							<font-awesome-icon :icon="nav.faIcon" />
+							<span>{{ $t(nav.name) }}</span>
+						</RouterLink>
+					</template>
+					<template v-else>
+						<div class="flex items-center space-x-4 text-gray-500 cursor-not-allowed">
+							<font-awesome-icon :icon="nav.faIcon" />
+							<span>{{ $t(nav.name) }}</span>
+						</div>
+					</template>
 				</li>
 			</ul>
 		</div>
@@ -79,14 +87,24 @@
 		reduceLeftSideBar ? 'w-16' : 'w-64']"><!-- for desktop -->
 		<div class="flex flex-col space-y-4 overflow-x-auto no-scrollbar">
 			<ul class="mt-2 space-y-4">
-				<li v-for="nav in listNav" :key="nav.name" class="min-h-6">
-					<RouterLink :to="nav.path" :class="['flex items-center space-x-4 hover:text-blue-400',
-						route.path.includes(nav.path) ? 'text-blue-400' : 'text-white']">
-						<div class="flex items-center justify-center w-8 h-8">
-							<font-awesome-icon :icon="nav.faIcon" size="lg" />
+				<li v-for="nav in listNavShown" :key="nav.name" class="min-h-6">
+					<template v-if="!nav.enableCondition || eval(nav.enableCondition)">
+						<RouterLink :to="nav.path" :class="['flex items-center space-x-4 hover:text-blue-400',
+							route.path.includes(nav.path) ? 'text-blue-400' : 'text-white']">
+							<div class="flex items-center justify-center w-8 h-8">
+								<font-awesome-icon :icon="nav.faIcon" size="lg" />
+							</div>
+							<span v-if="!reduceLeftSideBar" class="whitespace-nowrap">{{ $t(nav.name) }}</span>
+						</RouterLink>
+					</template>
+					<template v-else>
+						<div class="flex items-center space-x-4 text-gray-500 cursor-not-allowed">
+							<div class="flex items-center justify-center w-8 h-8">
+								<font-awesome-icon :icon="nav.faIcon" size="lg" />
+							</div>
+							<span v-if="!reduceLeftSideBar" class="whitespace-nowrap">{{ $t(nav.name) }}</span>
 						</div>
-						<span v-if="!reduceLeftSideBar" class="whitespace-nowrap">{{ $t(nav.name) }}</span>
-					</RouterLink>
+					</template>
 				</li>
 			</ul>
 		</div>
@@ -111,7 +129,7 @@
 </template>
 
 <script>
-import { useRoute, RouterLink } from "vue-router";
+import { useRoute } from "vue-router";
 import { useAuthStore, useConfigsStore } from "@/stores";
 export default {
 	name: "NavBar",
@@ -123,6 +141,16 @@ export default {
 		loadPageFind: {
 			type: Function,
 			required: true,
+		},
+	},
+	computed: {
+		listNavShown() {
+			return this.listNav.filter((nav) => {
+				if (nav.showCondition === undefined) {
+					return true;
+				}
+				return eval(nav.showCondition);
+			});
 		},
 	},
 	data() {
