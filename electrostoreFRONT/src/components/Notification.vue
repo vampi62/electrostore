@@ -6,7 +6,7 @@
 		<div class="flex justify-between items-center p-2.5">
 			<div class="flex flex-col justify-between">
 				<div class="font-bold mb-2">{{ type }}</div>
-				<div class="text-sm">{{ message }}</div>
+				<div class="text-sm">{{ messageString }}</div>
 			</div>
 			<template v-if="type == 'success'">
 				<svg xmlns="http://www.w3.org/2000/svg" fill="#4caf50" height="24"
@@ -38,7 +38,7 @@ export default {
 	name: "Notification",
 	props: {
 		message: {
-			type: String,
+			type: [String, Object],
 			required: true,
 		},
 		type: {
@@ -55,6 +55,27 @@ export default {
 		return {
 			timer: null,
 		};
+	},
+	computed: {
+		messageString() {
+			if (typeof this.message === "string") {
+				return this.message;
+			} else if (typeof this.message === "object" && this.message !== null) {
+				const val = this.message.error ?? this.message.message;
+				if (val !== undefined) {
+					if (typeof val === "string") {
+						return val;
+					} else if (Array.isArray(val)) {
+						return val.map((e) => String(e)).join("\n");
+					} else {
+						return String(val);
+					}
+				}
+				return JSON.stringify(this.message);
+			} else {
+				return String(this.message);
+			}
+		},
 	},
 	methods: {
 		close() {

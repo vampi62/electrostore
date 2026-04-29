@@ -3,8 +3,8 @@ import { reactive } from "vue";
 const notifications = reactive([]);
 
 export function useNotification() {
-	function addNotification({ message, type = "info", i18n = false }) {
-		notifications.push({ id: Date.now(), message, type, i18n });
+	function addNotification({ message, type = "info" }) {
+		notifications.push({ id: Date.now(), message, type });
 	}
 
 	function removeNotification(id) {

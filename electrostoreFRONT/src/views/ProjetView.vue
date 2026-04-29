@@ -479,8 +479,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded cursor-pointer inline-block">
 			{{ $t('projet.ListTag') }}
 		</RouterLink>
-		<TopButtonEditElement :main-config="{ path: '/projets', save: { roleRequired: authStore.hasPermission([0, 1, 2]), loading: projetsStore.projetEdition.loading }, delete: { roleRequired: authStore.hasPermission([0, 1, 2]) } }"
-			:id="projetId" :store-user="authStore.user" @button-save="projetSave" @button-delete="projetDeleteModalShow = true"/>
+		<TopButtonEditElement
+			:main-config="{ path: '/projets',
+				create: { showCondition: projetId === 'new' && authStore.hasPermission([0, 1, 2]), loading: projetsStore.projetEdition?.loading },
+				update: { showCondition: projetId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: projetsStore.projetEdition?.loading },
+				delete: { showCondition: projetId !== 'new' && authStore.hasPermission([0, 1, 2]) }
+			}"
+			@button-create="projetSave" @button-update="projetSave" @button-delete="projetDeleteModalShow = true"/>
 	</div>
 	<div v-if="projetsStore.projets[projetId] || projetId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">

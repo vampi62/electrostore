@@ -2,11 +2,12 @@
 	<div class="hidden md:flex flex-wrap gap-2 justify-end">
 		<!-- Desktop -->
 		<template v-for="(button, index) in optionalConfig" :key="index">
-			<div v-if="id != 'new' && button.roleRequired" class="relative">
+			<div v-if="button.showCondition" class="relative">
 				<button type="button" @click="button.action"
+					:disabled="button.enableCondition === false"
 					:class="['text-white px-4 py-2 rounded flex items-center',
 					button.bgColor ? button.bgColor : 'bg-gray-500',
-					button.hoverColor ? button.hoverColor : 'hover:bg-gray-600']">
+					button.enableCondition === false ? 'opacity-50 cursor-not-allowed' : (button.hoverColor ? button.hoverColor : 'hover:bg-gray-600')]">
 					{{ $t(button.label) }}
 				</button>
 				<div v-show="button.loading" 
@@ -16,30 +17,42 @@
 				</div>
 			</div>
 		</template>
-		<div v-if="id == 'new' && ((mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))" class="relative">
-			<button type="button" @click="$emit('buttonSave')"
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
+		<div v-if="mainConfig.create.showCondition" class="relative">
+			<button type="button" @click="$emit('buttonCreate')"
+				:disabled="mainConfig.create.enableCondition === false"
+				:class="['bg-blue-500 text-white px-4 py-2 rounded flex items-center',
+				mainConfig.create.enableCondition === false ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600']">
 				{{ $t('components.VModalTopButtonAdd') }}
 			</button>
-			<div v-show="mainConfig.save.loading" 
+			<div v-show="mainConfig.create.loading" 
 				class="absolute inset-0 bg-blue-500 bg-opacity-90 rounded flex items-center justify-center">
 				<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 			</div>
 		</div>
-		<div v-if="id != 'new' && ((mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))" class="relative">
-			<button type="button" @click="$emit('buttonSave')"
-				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center">
+		<div v-if="mainConfig.update.showCondition" class="relative">
+			<button type="button" @click="$emit('buttonUpdate')"
+				:disabled="mainConfig.update.enableCondition === false"
+				:class="['bg-blue-500 text-white px-4 py-2 rounded flex items-center',
+				mainConfig.update.enableCondition === false ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600']">
 				{{ $t('components.VModalTopButtonUpdate') }}
 			</button>
-			<div v-show="mainConfig.save.loading" 
+			<div v-show="mainConfig.update.loading" 
 				class="absolute inset-0 bg-blue-500 bg-opacity-90 rounded flex items-center justify-center">
 				<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 			</div>
 		</div>
-		<button type="button" @click="$emit('buttonDelete')" v-if="id != 'new' && ((mainConfig.delete.roleRequired) || (mainConfig.delete?.sameUserId && storeUser?.id_user == id))"
-			class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-			{{ $t('components.VModalTopButtonDelete') }}
-		</button>
+		<div v-if="mainConfig.delete.showCondition" class="relative">
+			<button type="button" @click="$emit('buttonDelete')"
+				:disabled="mainConfig.delete.enableCondition === false"
+				:class="['bg-red-500 text-white px-4 py-2 rounded',
+				mainConfig.delete.enableCondition === false ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600']">
+				{{ $t('components.VModalTopButtonDelete') }}
+			</button>
+			<div v-show="mainConfig.delete.loading" 
+				class="absolute inset-0 bg-red-500 bg-opacity-90 rounded flex items-center justify-center">
+				<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+			</div>
+		</div>
 		<button @click="hasHistory() ? (previousPageIsNew() ? $router.push({ path: mainConfig.path }) : $router.go(-1)) : $router.push({ path: mainConfig.path })"
 			class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
 			{{ $t('components.VModalTopButtonBack') }}
@@ -65,11 +78,12 @@
 		<div v-if="showMobileMenu"
 			class="absolute right-0 mt-2 w-48 rounded-md shadow-lg border border-gray-200">
 			<template v-for="(button, index) in optionalConfig" :key="index">
-				<div v-if="id != 'new' && button.roleRequired" class="relative">
+				<div v-if="button.showCondition" class="relative">
 					<button @click="button.action"
-						:class="['relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white text-gray-700 hover:bg-gray-100 border-b border-gray-200',
+						:disabled="button.enableCondition === false"
+						:class="['relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white text-gray-700 border-b border-gray-200',
 						button.bgColor ? button.bgColor : 'bg-gray-500',
-						button.hoverColor ? button.hoverColor : 'hover:bg-gray-600']">
+						button.enableCondition === false ? 'opacity-50 cursor-not-allowed' : (button.hoverColor ? button.hoverColor : 'hover:bg-gray-600')]">
 						{{ $t(button.label) }}
 					</button>
 					<div v-show="button.loading" 
@@ -79,29 +93,35 @@
 					</div>
 				</div>
 			</template>
-			<div v-if="id == 'new' && ((mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))" class="relative">
-				<button @click="$emit('buttonSave')"
-					class="relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-blue-500 hover:bg-blue-600 border-b border-gray-200">
+			<div v-if="mainConfig.create.showCondition" class="relative">
+				<button @click="$emit('buttonCreate')"
+					:disabled="mainConfig.create.enableCondition === false"
+					:class="['relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-blue-500 border-b border-gray-200',
+					mainConfig.create.enableCondition === false ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600']">
 					{{ $t('components.VModalTopButtonAdd') }}
 				</button>
-				<div v-show="mainConfig.save.loading" 
+				<div v-show="mainConfig.create.loading" 
 					class="absolute inset-0 bg-blue-500 bg-opacity-90 flex items-center justify-center">
 					<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 				</div>
 			</div>
-			<div v-if="id != 'new' && ((mainConfig.save.roleRequired) || (mainConfig.save?.sameUserId && storeUser?.id_user == id))" class="relative">
-				<button @click="$emit('buttonSave')"
-					class="relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-blue-500 hover:bg-blue-600 border-b border-gray-200">
+			<div v-if="mainConfig.update.showCondition" class="relative">
+				<button @click="$emit('buttonUpdate')"
+					:disabled="mainConfig.update.enableCondition === false"
+					:class="['relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-blue-500 border-b border-gray-200',
+					mainConfig.update.enableCondition === false ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600']">
 					{{ $t('components.VModalTopButtonUpdate') }}
 				</button>
-				<div v-show="mainConfig.save.loading" 
+				<div v-show="mainConfig.update.loading" 
 					class="absolute inset-0 bg-blue-500 bg-opacity-90 flex items-center justify-center">
 					<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 				</div>
 			</div>
-			<button v-if="id != 'new' && ((mainConfig.delete.roleRequired) || (mainConfig.delete?.sameUserId && storeUser?.id_user == id))"
+			<button v-if="mainConfig.delete.showCondition"
 				@click="$emit('buttonDelete')"
-				class="relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-red-500 hover:bg-red-600 border-b border-gray-200">
+				:disabled="mainConfig.delete.enableCondition === false"
+				:class="['relative flex items-center justify-center w-full text-left px-4 py-2 text-sm text-white bg-red-500 border-b border-gray-200',
+				mainConfig.delete.enableCondition === false ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600']">
 				{{ $t('components.VModalTopButtonDelete') }}
 			</button>
 			<button @click="hasHistory() ? (previousPageIsNew() ? $router.push({ path: mainConfig.path }) : $router.go(-1)) : $router.push({ path: mainConfig.path })"
@@ -121,36 +141,26 @@ export default {
 			required: true,
 			// main configuration object with properties:
 			// path: string (default "/"),
-			// save: { roleRequired: boolean, loading: boolean, sameUserId: boolean } // configuration for save button
-			// delete: { roleRequired: boolean, sameUserId: boolean } // configuration for delete button
-			// sameUserId: boolean (if true, the button is only visible if the user ID matches the current user ID)
-			// roleRequired: boolean (number or string depending on your role system) (the button is only visible if the user's role is included in this list)
+			// create: { showCondition: boolean, enableCondition: boolean, loading: boolean } // configuration for create button
+			// update: { showCondition: boolean, enableCondition: boolean, loading: boolean } // configuration for update button
+			// delete: { showCondition: boolean, enableCondition: boolean, loading: boolean } // configuration for delete button
+			// showCondition: boolean (if true, the button is only visible if the user has the required role, this should be handled in the parent component by checking the user's roles and passing the appropriate value)
 			// loading: boolean (if true, the button shows a loading spinner) must be linked to a boolean that indicates if the function is currently processing
 			default: () => ({
 				path: "/",
-				save: { roleRequired: false, loading: false, sameUserId: false },
-				delete: { roleRequired: false, sameUserId: false },
+				create: { showCondition: false, loading: false },
+				update: { showCondition: false, loading: false },
+				delete: { showCondition: false, loading: false },
 			}),
-		},
-		id: {
-			type: String,
-			required: true,
-			// 'new' for new elements, otherwise the ID of the element
-			default: "new",
 		},
 		optionalConfig: {
 			type: Array,
 			required: false,
-			// array of optional buttons with properties: label, action, roleRequired, bgColor, hoverColor, loading
-			// Example: [{ label: 'components.VModalTopButtonCustom', action: customFucntionCall, roleRequired: false, bgColor: 'bg-green-500', hoverColor: 'hover:bg-green-600', loading: false }]
+			// array of optional buttons with properties: label, action, showCondition, enableCondition, bgColor, hoverColor, loading
+			// Example: [{ label: 'components.VModalTopButtonCustom', action: customFucntionCall, showCondition: false, enableCondition: true, bgColor: 'bg-green-500', hoverColor: 'hover:bg-green-600', loading: false }]
+			// enableCondition: boolean (if false, the button is disabled and grayed out)
 			// loading is a link to a boolean that indicates if the function is currently processing
 			default: () => [],
-		},
-		storeUser: {
-			type: Object,
-			required: false,
-			// current store user session data
-			default: null,
 		},
 	},
 	methods: {
@@ -163,7 +173,8 @@ export default {
 		},
 	},
 	emits: [
-		"buttonSave",
+		"buttonCreate",
+		"buttonUpdate",
 		"buttonDelete",
 	],
 	data() {

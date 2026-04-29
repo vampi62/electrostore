@@ -107,7 +107,7 @@ const commandSave = async() => {
 			addNotification({ message: t("command.Updated"), type: "success" });
 		}
 	} catch (e) {
-		addNotification({ message: e.errors, type: "error" });
+		addNotification({ message: e, type: "error" });
 	} finally {
 		commandsStore.commandEdition.loading = false;
 	}
@@ -118,7 +118,7 @@ const commandDelete = async() => {
 		addNotification({ message: t("command.Deleted"), type: "success" });
 		router.push("/commands");
 	} catch (e) {
-		addNotification({ message: e.errors, type: "error" });
+		addNotification({ message: e, type: "error" });
 	}
 	commandDeleteModalShow.value = false;
 };
@@ -151,7 +151,7 @@ const documentEdit = async(row) => {
 		delete commandsStore.documentEdition[row.id_command_document];
 		addNotification({ message: t("command.DocumentUpdated"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e.errors, type: "error" });
+		addNotification({ message: e, type: "error" });
 	}
 };
 const documentDelete = async() => {
@@ -159,7 +159,7 @@ const documentDelete = async() => {
 		await commandsStore.deleteDocument(commandId.value, documentModalData.value.id_command_document);
 		addNotification({ message: t("command.DocumentDeleted"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e.errors, type: "error" });
+		addNotification({ message: e, type: "error" });
 	}
 	documentDeleteModalShow.value = false;
 };
@@ -186,7 +186,7 @@ const itemSave = async(item) => {
 			item.tmp = null;
 			addNotification({ message: t("command.ItemUpdated"), type: "success" });
 		} catch (e) {
-			addNotification({ message: e.errors, type: "error" });
+			addNotification({ message: e, type: "error" });
 			return;
 		}
 	} else {
@@ -196,7 +196,7 @@ const itemSave = async(item) => {
 			item.tmp = null;
 			addNotification({ message: t("command.ItemAdded"), type: "success" });
 		} catch (e) {
-			addNotification({ message: e.errors, type: "error" });
+			addNotification({ message: e, type: "error" });
 			return;
 		}
 	}
@@ -206,7 +206,7 @@ const itemDelete = async(item) => {
 		await commandsStore.deleteItem(commandId.value, item.id_item);
 		addNotification({ message: t("command.ItemDeleted"), type: "success" });
 	} catch (e) {
-		addNotification({ message: e.errors, type: "error" });
+		addNotification({ message: e, type: "error" });
 	}
 };
 
@@ -430,8 +430,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('command.Title') }}</h2>
-		<TopButtonEditElement :main-config="{ path: '/commands', save: { roleRequired: authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition.loading }, delete: { roleRequired: authStore.hasPermission([0, 1, 2]) } }"
-			:id="commandId" @button-save="commandSave" @button-delete="commandDeleteModalShow = true"/>
+		<TopButtonEditElement
+			:main-config="{ path: '/commands',
+				create: { showCondition: commandId === 'new' && authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition?.loading },
+				update: { showCondition: commandId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition?.loading },
+				delete: { showCondition: commandId !== 'new' && authStore.hasPermission([0, 1, 2]) }
+			}"
+			@button-create="commandSave" @button-update="commandSave" @button-delete="commandDeleteModalShow = true"/>
 	</div>
 	<div v-if="commandsStore.commands[commandId] || commandId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">

@@ -154,12 +154,17 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('ia.Title') }}</h2>
-		<TopButtonEditElement :main-config="{ path: '/ia', save: { roleRequired: authStore.hasPermission([2]), loading: iasStore.iaEdition.loading }, delete: { roleRequired: authStore.hasPermission([2]) } }"
+		<TopButtonEditElement
+			:main-config="{ path: '/ia',
+				create: { showCondition: iaId === 'new' && authStore.hasPermission([2]), loading: iasStore.iaEdition?.loading },
+				update: { showCondition: iaId !== 'new' && authStore.hasPermission([2]), loading: iasStore.iaEdition?.loading },
+				delete: { showCondition: iaId !== 'new' && authStore.hasPermission([2]) }
+			}"
 			:optional-config="[
-				{ label: 'ia.Train', roleRequired: authStore.hasPermission([2]), loading: iasStore.status.start?.loading, bgColor: 'bg-green-500', hoverColor: 'hover:bg-green-600', action: iaTrain },
-				{ label: 'ia.Refresh', roleRequired: authStore.hasPermission([0, 1, 2]), loading: iasStore.status.train?.loading, bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => iasStore.getTrainStatus(iaId) },
+				{ label: 'ia.Train', showCondition: authStore.hasPermission([2]), loading: iasStore.status.start?.loading, bgColor: 'bg-green-500', hoverColor: 'hover:bg-green-600', action: iaTrain },
+				{ label: 'ia.Refresh', showCondition: authStore.hasPermission([0, 1, 2]), loading: iasStore.status.train?.loading, bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600', action: () => iasStore.getTrainStatus(iaId) },
 			]"
-			:id="iaId" :store-user="authStore.user" @button-save="iaSave" @button-delete="iaDeleteModalShow = true"/>
+			@button-create="iaSave" @button-update="iaSave" @button-delete="iaDeleteModalShow = true"/>
 	</div>
 	<div v-if="iasStore.ias[iaId] || iaId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
