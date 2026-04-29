@@ -8,22 +8,22 @@ const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export const useTagsStore = defineStore("tags",{
 	state: () => ({
-		tagsLoading: true,
+		tagsLoading: false,
 		tagsTotalCount: 0,
 		tags: {},
 		tagEdition: {},
 
-		tagsStoreLoading: true,
+		tagsStoreLoading: false,
 		tagsStoreTotalCount: {},
 		tagsStore: {},
 		tagStoreEdition: {},
 
-		tagsBoxLoading: true,
+		tagsBoxLoading: false,
 		tagsBoxTotalCount: {},
 		tagsBox: {},
 		tagBoxEdition: {},
 
-		tagsItemLoading: true,
+		tagsItemLoading: false,
 		tagsItemTotalCount: {},
 		tagsItem: {},
 		tagItemEdition: {},

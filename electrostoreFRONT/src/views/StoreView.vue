@@ -21,18 +21,16 @@ const tagsStore = useTagsStore();
 const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
+const formContainer = ref(null);
+
 async function fetchAllData() {
 	if (storeId.value === "new") {
-		storesStore.storeEdition[storeId.value] = {
-			loading: false,
-		};
-		storesStore.ledEdition[storeId.value] = {};
-		storesStore.boxEdition[storeId.value] = {};
+		loadToEdition(storeId.value);
 		if (preset.value) {
 			preset.value.split(";").forEach((pair) => {
 				const [key, value] = pair.split(":");
 				if (key && value) {
-					storesStore.storeEdition[key] = value;
+					storesStore.storeEdition[storeId.value][key] = value;
 				}
 			});
 		}
@@ -49,6 +47,17 @@ async function fetchAllData() {
 			return;
 		}
 		storesStore.getTagStoreByInterval(storeId.value, 100, 0, ["tag"]);
+		loadToEdition(storeId.value);
+	}
+}
+function loadToEdition(id) {
+	if (id === "new") {
+		storesStore.storeEdition[storeId.value] = {
+			loading: false,
+		};
+		storesStore.ledEdition[storeId.value] = {};
+		storesStore.boxEdition[storeId.value] = {};
+	} else {
 		storesStore.storeEdition[storeId.value] = {
 			loading: false,
 			id_store: storesStore.stores[storeId.value].id_store,
@@ -77,8 +86,21 @@ const storeGrid = ref(null);
 const storeDeleteModalShow = ref(false);
 const storeSave = async() => {
 	try {
-		createSchema().validateSync(storesStore.storeEdition[storeId.value], { abortEarly: false });
+		const validationResults = await Promise.all([
+			formContainer.value?.validate(),
+		]);
+		const allValid = validationResults.every((result) => result && result.valid);
+		if (!allValid) {
+			const nbErrors = validationResults.reduce((sum, result) => sum + (result ? Object.keys(result.errors).length : 0), 0);
+			addNotification({
+				message: t("store.FormValidationError", { count: nbErrors }),
+				type: "error",
+			});
+			storesStore.storeEdition[storeId.value].loading = false;
+			return;
+		}
 		if (!storeGrid.value.checkOutOfGrid()) {
+			storesStore.storeEdition[storeId.value].loading = false;
 			return;
 		}
 		if (storeId.value === "new") {
@@ -87,6 +109,7 @@ const storeSave = async() => {
 				leds: Object.values(storesStore.ledEdition[storeId.value]),
 				boxs: Object.values(storesStore.boxEdition[storeId.value]),
 			});
+			loadToEdition(newId);
 			addNotification({ message: t("store.Created"), type: "success" });
 			storeId.value = String(newId);
 			router.push("/stores/" + storeId.value);
@@ -108,6 +131,7 @@ const storeSave = async() => {
 				leds: Object.values(storesStore.ledEdition[storeId.value]),
 				boxs: Object.values(storesStore.boxEdition[storeId.value]),
 			});
+			loadToEdition(storeId.value);
 			addNotification({ message: t("store.Updated"), type: "success" });
 			await storesStore.getStoreById(storeId.value, ["boxs", "leds"]);
 			storesStore.storeEdition[storeId.value] = {
@@ -121,11 +145,10 @@ const storeSave = async() => {
 			storesStore.ledEdition[storeId.value] = { ...storesStore.leds[storeId.value] };
 			storesStore.boxEdition[storeId.value] = { ...storesStore.boxs[storeId.value] };
 		}
-		storesStore.storeEdition[storeId.value].loading = false;
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
+	} finally {
 		storesStore.storeEdition[storeId.value].loading = false;
-		return;
 	}
 };
 const storeDelete = async() => {
@@ -140,22 +163,26 @@ const storeDelete = async() => {
 };
 
 const createSchema = () => {
-	return Yup.object().shape({
-		nom_store: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("store.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
-			.required(t("store.NameRequired")),
-		mqtt_name_store: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("store.MQTTNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
-			.required(t("store.MQTTNameRequired")),
-		xlength_store: Yup.number()
-			.min(1, t("store.XLengthMin"))
-			.typeError(t("store.XLengthType"))
-			.required(t("store.XLengthRequired")),
-		ylength_store: Yup.number()
-			.min(1, t("store.YLengthMin"))
-			.typeError(t("store.YLengthType"))
-			.required(t("store.YLengthRequired")),
-	});
+	const edition = storesStore.storeEdition[storeId.value];
+	const shape = {};
+	if (!edition) {
+		return Yup.object().shape(shape);
+	}
+	shape.nom_store = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("store.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.required(t("store.NameRequired"));
+	shape.mqtt_name_store = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("store.MQTTNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.required(t("store.MQTTNameRequired"));
+	shape.xlength_store = Yup.number()
+		.min(1, t("store.XLengthMin"))
+		.typeError(t("store.XLengthType"))
+		.required(t("store.XLengthRequired"));
+	shape.ylength_store = Yup.number()
+		.min(1, t("store.YLengthMin"))
+		.typeError(t("store.YLengthType"))
+		.required(t("store.YLengthRequired"));
+	return Yup.object().shape(shape);
 };
 
 const schemaItem = Yup.object().shape({
@@ -273,25 +300,25 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
-			showCondition: "store[1]?.[rowData.id_item] === undefined && !rowData.tmp",
+			showCondition: "store[1]?.[rowData.id_item] === undefined && !edition?.id_item",
 			action: (row) => {
-				row.tmp = { qte_item_box: 0, seuil_max_item_item_box: 1, id_item: row.id_item };
+				itemsStore.itemBoxEdition[row.id_item] = { qte_item_box: 0, seuil_max_item_item_box: 1, id_item: row.id_item };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "store[1]?.[rowData.id_item] && !rowData.tmp",
+			showCondition: "store[1]?.[rowData.id_item] && !edition?.id_item",
 			action: (row) => {
-				row.tmp = { ...row };
+				itemsStore.itemBoxEdition[row.id_item] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			showCondition: "rowData.tmp",
+			showCondition: "edition?.id_item",
 			action: (row) => itemSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
@@ -299,9 +326,9 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-times",
-			showCondition: "rowData.tmp",
+			showCondition: "edition?.id_item",
 			action: (row) => {
-				row.tmp = null;
+				delete itemsStore.itemBoxEdition[row.id_item];
 			},
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
 		},
@@ -352,7 +379,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 	</div>
 	<div v-if="storesStore.stores[storeId] || storeId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="storesStore.storeEdition[storeId] || {}" :store-user="authStore.user"
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="storesStore.storeEdition[storeId] || {}" :store-user="authStore.user"
 				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
 			<Tags :current-tags="storesStore.storeTags[storeId] || {}" :tags-store="tagsStore.tags" :can-edit="storeId !== 'new' && authStore.hasPermission([1, 2])"
 				:delete-function="(value) => tagDelete(value)"
@@ -444,6 +471,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 
 			<Tableau id="storeItemTable" :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
 				:store-data="[itemsStore.items, storesStore.boxItems[boxId]]"
+				:store-edition="itemsStore.itemBoxEdition"
 				:filters="filterItem"
 				:loading="itemsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"

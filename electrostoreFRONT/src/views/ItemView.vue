@@ -25,11 +25,11 @@ const commandsStore = useCommandsStore();
 const projetsStore = useProjetsStore();
 const authStore = useAuthStore();
 
+const formContainer = ref(null);
+
 async function fetchAllData() {
 	if (itemId.value === "new") {
-		itemsStore.itemEdition = {
-			loading: false,
-		};
+		loadToEdition(itemId.value);
 		if (preset.value) {
 			preset.value.split(";").forEach((pair) => {
 				const [key, value] = pair.split(":");
@@ -52,6 +52,15 @@ async function fetchAllData() {
 		}
 		itemsStore.getItemTagByInterval(itemId.value, 100, 0, ["tag"]);
 		itemsStore.getImageByInterval(itemId.value, 100, 0);
+		loadToEdition(itemId.value);
+	}
+}
+function loadToEdition(id) {
+	if (id === "new") {
+		itemsStore.itemEdition = {
+			loading: false,
+		};
+	} else {
 		itemsStore.itemEdition = {
 			loading: false,
 			id_item: itemsStore.items[itemId.value].id_item,
@@ -92,19 +101,34 @@ const toggleBoxLed = async(boxId) => {
 const itemDeleteModalShow = ref(false);
 const itemSave = async() => {
 	try {
-		createSchema().validateSync(itemsStore.itemEdition, { abortEarly: false });
+		const validationResults = await Promise.all([
+			formContainer.value?.validate(),
+		]);
+		const allValid = validationResults.every((result) => result && result.valid);
+		if (!allValid) {
+			const nbErrors = validationResults.reduce((sum, result) => sum + (result ? Object.keys(result.errors).length : 0), 0);
+			addNotification({
+				message: t("item.FormValidationError", { count: nbErrors }),
+				type: "error",
+			});
+			itemsStore.itemEdition.loading = false;
+			return;
+		}
 		if (itemId.value === "new") {
 			const newId = await itemsStore.createItem({ ...itemsStore.itemEdition });
+			loadToEdition(newId);
 			addNotification({ message: t("item.Created"), type: "success" });
 			itemId.value = String(newId);
 			router.push("/inventory/" + itemId.value);
 		} else {
 			await itemsStore.updateItem(itemId.value, { ...itemsStore.itemEdition });
+			loadToEdition(itemId.value);
 			addNotification({ message: t("item.Updated"), type: "success" });
 		}
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
-		return;
+	} finally {
+		itemsStore.itemEdition.loading = false;
 	}
 };
 const itemDelete = async() => {
@@ -292,23 +316,27 @@ const schemaBox = Yup.object().shape({
 });
 
 const createSchema = () => {
-	return Yup.object().shape({
-		reference_name_item: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("item.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
-			.required(t("item.NameRequired")),
-		friendly_name_item: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("item.FriendlyNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
-			.required(t("item.FriendlyNameRequired")),
-		description_item: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_description"), t("item.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }))
-			.required(t("item.DescriptionRequired")),
-		seuil_min_item: Yup.number()
-			.min(0, t("item.SeuilMinMin"))
-			.typeError(t("item.SeuilMinType"))
-			.required(t("item.SeuilMinRequired")),
-		id_img: Yup.string()
-			.nullable(),
-	});
+	const edition = itemsStore.itemEdition;
+	const shape = {};
+	if (!edition) {
+		return Yup.object().shape(shape);
+	}
+	shape.reference_name_item = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("item.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.required(t("item.NameRequired"));
+	shape.friendly_name_item = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("item.FriendlyNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.required(t("item.FriendlyNameRequired"));
+	shape.description_item = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_description"), t("item.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }))
+		.required(t("item.DescriptionRequired"));
+	shape.seuil_min_item = Yup.number()
+		.min(0, t("item.SeuilMinMin"))
+		.typeError(t("item.SeuilMinType"))
+		.required(t("item.SeuilMinRequired"));
+	shape.id_img = Yup.string()
+		.nullable();
+	return Yup.object().shape(shape);
 };
 
 const schemaAddDocument = Yup.object().shape({
@@ -369,48 +397,48 @@ const labelTableauDocument = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "!rowData.tmp",
+			showCondition: "!edition?.id_item_document",
 			action: (row) => {
-				row.tmp = { ...row };
+				itemsStore.documentEdition[row.id_item_document] = { ...row };
 			},
-			class: "text-blue-500 cursor-pointer hover:text-blue-600",
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-times",
-			showCondition: "rowData.tmp",
+			showCondition: "edition?.id_item_document",
 			action: (row) => {
-				row.tmp = null;
+				delete itemsStore.documentEdition[row.id_item_document];
 			},
-			class: "text-gray-500 cursor-pointer hover:text-gray-600",
+			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			showCondition: "rowData.tmp",
-			action: (row) => documentEdit(row.tmp),
-			class: "text-green-500 cursor-pointer hover:text-green-600",
+			showCondition: "edition?.id_item_document",
+			action: (row) => documentEdit(itemsStore.documentEdition[row.id_item_document]),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-eye",
 			action: (row) => documentView(row),
-			class: "text-green-500 cursor-pointer hover:text-green-600",
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-download",
 			action: (row) => documentDownload(row),
-			class: "text-yellow-500 cursor-pointer hover:text-yellow-600",
+			class: "px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600",
 			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
 			action: (row) => documentDeleteOpenModal(row),
-			class: "text-red-500 cursor-pointer hover:text-red-600",
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
 ]);
@@ -422,28 +450,28 @@ const labelTableauBox = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "!rowData.tmp",
+			showCondition: "!edition?.id_box",
 			action: (row) => {
-				row.tmp = { ...row };
+				itemsStore.itemBoxEdition[row.id_box] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
-			icon: "fa-solid fa-save",
-			showCondition: "rowData.tmp",
-			action: (row) => boxSave(row),
-			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
-			animation: true,
+			icon: "fa-solid fa-times",
+			showCondition: "edition?.id_box",
+			action: (row) => {
+				delete itemsStore.itemBoxEdition[row.id_box];
+			},
+			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
 		},
 		{
 			label: "",
-			icon: "fa-solid fa-times",
-			showCondition: "rowData.tmp",
-			action: (row) => {
-				row.tmp = null;
-			},
-			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
+			icon: "fa-solid fa-save",
+			showCondition: "edition?.id_box",
+			action: (row) => boxSave(row),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
 		},
 		{
 			label: "",
@@ -486,10 +514,10 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 	</div>
 	<div v-if="itemsStore.items[itemId] || itemId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="itemsStore.itemEdition">
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="itemsStore.itemEdition">
 				<template #id_img>
 					<div class="flex justify-center items-center"
-						:class="{ 'cursor-pointer': !itemsStore.itemEdition.loading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }"
+						:class="{ 'cursor-pointer': !itemsStore.itemEdition?.loading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }"
 						@click="imageSelectOpenModal">
 						<template v-if="itemsStore.itemEdition.id_img">
 							<img v-if="itemsStore.thumbnailsURL[itemsStore.itemEdition.id_img]"
@@ -520,7 +548,9 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<template #append-row>
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box', expand: ['box'] }"
 					:store-data="[itemsStore.itemBoxs[itemId]]"
-					:loading="itemsStore.itemBoxsLoading" :schema="schemaBox"
+					:store-edition="itemsStore.itemBoxEdition"
+					:loading="itemsStore.itemBoxsLoading"
+					:schema="schemaBox"
 					:total-count="Number(itemsStore.itemBoxsTotalCount[itemId])"
 					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemBoxByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
@@ -536,6 +566,8 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_item_document' }"
 					:store-data="[itemsStore.documents[itemId]]"
+					:store-edition="itemsStore.documentEdition"
+					:schema="schemaEditDocument"
 					:loading="itemsStore.documentsLoading"
 					:total-count="Number(itemsStore.documentsTotalCount[itemId])"
 					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getDocumentByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"

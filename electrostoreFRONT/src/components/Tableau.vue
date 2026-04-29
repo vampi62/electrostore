@@ -3,7 +3,7 @@
 		<table :class="mergedCss.table">
 			<thead :class="mergedCss.thead">
 				<tr>
-					<th v-for="(column,index) in labels"
+					<th v-for="(column,index) in labelsShown"
 						:key="index"
 						:class="[mergedCss.th, column.sortable ? 'cursor-pointer' : '']"
 						@click="column.sortable && changeSort(column.key)">
@@ -27,15 +27,23 @@
 				</tr>
 			</thead>
 			<tbody :class="mergedCss.tbody">
-				<tr v-for="row in sortedData" :key="row[meta.key]" v-memo="[row]"
+				<tr v-for="row in sortedData" :key="row[meta.key]" v-memo="[row, storeEdition[row[meta.key]], storeReady[row[meta.key]]]"
 					:class="mergedCss.tr"
 					@click="meta?.path && $router.push(meta.path + row[meta.key])">
-					<TableauRow :labels="labels" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" />
+					<TableauRow :labels="labelsShown" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" :store-edition="storeEdition[row[meta.key]]" :store-ready="storeReady[row[meta.key]]" />
+				</tr>
+				<tr v-for="row in filterMissingEdition" :key="'edition-' + row[meta.key]"
+					:class="[mergedCss.tr, 'bg-yellow-100']">
+					<TableauRow :labels="labelsShown" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" :store-edition="storeEdition[row[meta.key]]" :store-ready="storeReady[row[meta.key]]" />
+				</tr>
+				<tr v-for="row in filterMissingReady" :key="'ready-' + row[meta.key]"
+					:class="[mergedCss.tr, 'bg-red-100']">
+					<TableauRow :labels="labelsShown" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" :store-edition="storeEdition[row[meta.key]]" :store-ready="storeReady[row[meta.key]]" />
 				</tr>
 				<slot name="append-row"></slot>
 				<template v-if="loading">
 					<tr>
-						<td :colspan="labels.length" class="text-center py-4">
+						<td :colspan="labelsShown.length" class="text-center py-4">
 							<font-awesome-icon icon="fa-solid fa-spinner" spin class="text-gray-500" />
 						</td>
 					</tr>
@@ -48,8 +56,7 @@
 <script>
 import { defineAsyncComponent } from "vue";
 import { debounce } from "lodash-es";
-import { buildRSQLFilter, buildRSQLSort } from "@/utils";
-import { toLowerCaseWithoutAccents } from "@/utils";
+import { buildRSQLFilter, buildRSQLSort, toLowerCaseWithoutAccents } from "@/utils";
 export default {
 	name: "Tableau",
 	props: {
@@ -78,6 +85,7 @@ export default {
 			// expand is an array of strings to pass to the fetchFunction for expanding resources
 			// saveState is a boolean to save the scroll and sort state in sessionStorage
 			// stateKey is a string to identify the state in sessionStorage, required if saveState is true
+			// linkEditionKey is a string to identify the key to link edition and ready stores to the main store, if not provided it will use the main key
 		},
 		storeData: {
 			type: Array,
@@ -88,14 +96,14 @@ export default {
 		storeEdition: {
 			type: Object,
 			required: false,
-			// storeEdition is an object containing the store and key to edit a resource when clicking on a row, it should have the properties storeEditionKey and storeEditionStore
-			// e.g. { storeEditionKey: "id", storeEditionStore: 1 }
+			default: () => ({}),
+			// storeEdition is an object containing the store to edit a resource
 		},
 		storeReady: {
 			type: Object,
 			required: false,
-			// storeReady is an object containing the store and key containing unsaved changes to prevent leaving the page, it should have the properties storeReadyKey and storeReadyStore
-			// e.g. { storeReadyKey: "hasUnsavedChanges", storeReadyStore: 1 }
+			default: () => ({}),
+			// storeReady is an object containing the ready state of the store for editing a resource
 		},
 		filters: {
 			type: Array,
@@ -150,7 +158,15 @@ export default {
 		TableauRow: defineAsyncComponent(() => import("@/components/TableauRow.vue")),
 	},
 	computed: {
-		filtersValue() {
+		labelsShown() {
+			return this.labels.filter((label) => {
+				if (label.showCondition === undefined) {
+					return true;
+				}
+				return eval(label.showCondition);
+			});
+		},
+		filterValues() {
 			return this.filters.map((f) => f.value);
 		},
 		filteredData() {
@@ -240,14 +256,34 @@ export default {
 		mergedCss() {
 			// Merges the default CSS with the provided tableauCss prop
 			return {
-				component: this.tableauCss?.component || "min-h-64 max-h-64",
-				table: this.tableauCss?.table || "min-w-full table-auto",
+				component: this.tableauCss?.component || "min-h-48 max-h-48 md:min-h-64 sm:max-h-64",
+				table: this.tableauCss?.table || "min-w-full table-auto text-xs md:text-sm",
 				thead: this.tableauCss?.thead || "bg-gray-300 sticky top-0",
-				th: this.tableauCss?.th || "px-4 py-2 text-center",
+				th: this.tableauCss?.th || "px-2 py-1 md:px-4 md:py-2 text-center",
 				tbody: this.tableauCss?.tbody || "",
 				tr: this.tableauCss?.tr || "transition duration-150 ease-in-out cursor-pointer hover:bg-gray-200 even:bg-gray-100",
-				td: this.tableauCss?.td || "border-b",
+				td: this.tableauCss?.td || "border-b px-2 py-1 md:px-4 md:py-2",
 			};
+		},
+		filterMissingEdition() {
+			if (!this.storeEdition) {
+				return [];
+			}
+			return Object.values(this.storeEdition).filter((edition) => {
+				return !this.storeData[0] || !this.storeData[0][edition[this.meta.key]];
+			});
+		},
+		filterMissingReady() {
+			if (!this.storeReady) {
+				return [];
+			}
+			return Object.values(this.storeReady).filter((ready) => {
+				if (!this.storeData[0]) {
+					return true;
+				}
+				return Object.values(this.storeData[0]).some((data) => data[this.meta.linkEditionKey || this.meta.key] === ready.data[this.meta.key]);
+			})
+				.map((ready) => ready.data);
 		},
 	},
 	data() {
@@ -291,13 +327,12 @@ export default {
 		}
 	},
 	watch: {
-		filtersValue: {
+		filterValues: {
 			handler() {
 				if (!this.isInitializing) {
 					this.debouncedRefetchData();
 				}
 			},
-			deep: true,
 		},
 		sort: {
 			handler() {
@@ -345,13 +380,11 @@ export default {
 				return this.storeData[label.storeRessourceId]?.[row[label.sourceKey]]?.[label.valueKey];
 			} else if (label.type === "buttons") {
 				return label.buttons.map((button) => {
-					if (button.showCondition) {
-						return {
-							...button,
-							show: this.evaluateCondition(button.showCondition, row) || false,
-						};
-					}
-					return { ...button, show: true };
+					return {
+						...button,
+						show: button?.showCondition ? this.evaluateCondition(button.showCondition, row) : true,
+						enable: button?.enableCondition ? this.evaluateCondition(button.enableCondition, row) : true,
+					};
 				});
 			} else if (label.type === "bool") {
 				return this.evaluateCondition(label.condition, row) || false;
@@ -400,7 +433,7 @@ export default {
 			}
 		},
 		async refetchData() {
-			// Reset l'état et refetch les données depuis le début
+			// Reset to initial state before refetching
 			this.nextOffset = 0;
 			this.hasMore = true;
 			let intervalOffset = this.nextOffset;
@@ -408,9 +441,9 @@ export default {
 			await this.refetchListData(intervalOffset, this.nextOffset);
 		},
 		async refetchListData(minOffset, maxOffset) {
-			for (let index = 0; index < this.listFetchFunction.length; index++) {
-				if (this.listFetchFunction[index]) {
-					await this.listFetchFunction[index](minOffset, maxOffset);
+			for (const fetchFn of this.listFetchFunction) {
+				if (fetchFn) {
+					await fetchFn(minOffset, maxOffset);
 				}
 			}
 		},

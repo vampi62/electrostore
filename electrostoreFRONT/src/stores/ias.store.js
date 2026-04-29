@@ -6,7 +6,7 @@ const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export const useIasStore = defineStore("ias", {
 	state: () => ({
-		loading: true,
+		loading: false,
 		TotalCount: 0,
 		ias: {},
 		iaEdition: {},

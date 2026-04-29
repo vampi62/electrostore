@@ -20,11 +20,11 @@ const projetTagsStore = useProjetTagsStore();
 const projetsStore = useProjetsStore();
 const authStore = useAuthStore();
 
+const formContainer = ref(null);
+
 async function fetchAllData() {
 	if (projetTagId.value === "new") {
-		projetTagsStore.projetTagEdition = {
-			loading: false,
-		};
+		loadToEdition(projetTagId.value);
 		if (preset.value) {
 			preset.value.split(";").forEach((pair) => {
 				const [key, value] = pair.split(":");
@@ -45,6 +45,15 @@ async function fetchAllData() {
 			router.push("/projet-tags");
 			return;
 		}
+		loadToEdition(projetTagId.value);
+	}
+}
+function loadToEdition(id) {
+	if (id === "new") {
+		projetTagsStore.projetTagEdition = {
+			loading: false,
+		};
+	} else {
 		projetTagsStore.projetTagEdition = {
 			loading: false,
 			nom_projet_tag: projetTagsStore.projetTags[projetTagId.value].nom_projet_tag,
@@ -64,19 +73,34 @@ onBeforeUnmount(() => {
 const projetTagDeleteModalShow = ref(false);
 const projetTagSave = async() => {
 	try {
-		createSchema().validateSync(projetTagsStore.projetTagEdition, { abortEarly: false });
+		const validationResults = await Promise.all([
+			formContainer.value?.validate(),
+		]);
+		const allValid = validationResults.every((result) => result && result.valid);
+		if (!allValid) {
+			const nbErrors = validationResults.reduce((sum, result) => sum + (result ? Object.keys(result.errors).length : 0), 0);
+			addNotification({
+				message: t("projetTag.FormValidationError", { count: nbErrors }),
+				type: "error",
+			});
+			projetTagsStore.projetTagEdition.loading = false;
+			return;
+		}
 		if (projetTagId.value === "new") {
 			const newId = await projetTagsStore.createProjetTag({ ...projetTagsStore.projetTagEdition });
+			loadToEdition(newId);
 			addNotification({ message: t("projetTag.Created"), type: "success" });
 			projetTagId.value = String(newId);
 			router.push("/projet-tags/" + projetTagId.value);
 		} else {
 			await projetTagsStore.updateProjetTag(projetTagId.value, { ...projetTagsStore.projetTagEdition });
+			loadToEdition(projetTagId.value);
 			addNotification({ message: t("projetTag.Updated"), type: "success" });
 		}
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
-		return;
+	} finally {
+		projetTagsStore.projetTagEdition.loading = false;
 	}
 };
 const projetTagDelete = async() => {
@@ -131,15 +155,19 @@ const filterProjet = ref([
 ]);
 
 const createSchema = () => {
-	return Yup.object().shape({
-		nom_projet_tag: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_name"), t("projetTag.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
-			.required(t("projetTag.NameRequired")),
-		poids_projet_tag: Yup.number()
-			.min(0, t("projetTag.PoidsMin"))
-			.typeError(t("projetTag.PoidsNumber"))
-			.required(t("projetTag.PoidsRequired")),
-	});
+	const edition = projetTagsStore.projetTagEdition;
+	const shape = {};
+	if (!edition) {
+		return Yup.object().shape(shape);
+	}
+	shape.nom_projet_tag = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("projetTag.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
+		.required(t("projetTag.NameRequired"));
+	shape.poids_projet_tag = Yup.number()
+		.min(0, t("projetTag.PoidsMin"))
+		.typeError(t("projetTag.PoidsNumber"))
+		.required(t("projetTag.PoidsRequired"));
+	return Yup.object().shape(shape);
 };
 
 const labelForm = [
@@ -193,7 +221,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 	</div>
 	<div v-if="projetTagsStore.projetTags[projetTagId] || projetTagId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="projetTagsStore.projetTagEdition"/>
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="projetTagsStore.projetTagEdition"/>
 		</div>
 		<CollapsibleSection title="projetTag.Projets"
 			:total-count="Number(projetTagsStore.projetTagsProjetTotalCount[projetTagId] || 0)" :permission="projetTagId !=='new'">

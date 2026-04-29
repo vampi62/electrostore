@@ -1,5 +1,6 @@
 {
 	"NotFound": "Tag de projet non trouvé",
+	"FormValidationError": "Erreur de validation du formulaire \n {count} erreur(s) à corriger",
 	"Created": "Tag de projet créé avec succès",
 	"Updated": "Tag de projet mis à jour avec succès",
 	"Deleted": "Tag de projet supprimé avec succès",

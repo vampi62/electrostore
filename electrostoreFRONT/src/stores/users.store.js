@@ -8,22 +8,22 @@ const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export const useUsersStore = defineStore("users",{
 	state: () => ({
-		usersLoading: true,
+		usersLoading: false,
 		usersTotalCount: 0,
 		users: {},
 		userEdition: {},
 
-		projetsCommentaireLoading: true,
+		projetsCommentaireLoading: false,
 		projetsCommentaireTotalCount: {},
 		projetsCommentaire: {},
 		projetCommentaireEdition: {},
 
-		commandsCommentaireLoading: true,
+		commandsCommentaireLoading: false,
 		commandsCommentaireTotalCount: {},
 		commandsCommentaire: {},
 		commandCommentaireEdition: {},
 
-		tokensLoading: true,
+		tokensLoading: false,
 		tokensTotalCount: {},
 		tokens: {},
 		tokensEdition: {},

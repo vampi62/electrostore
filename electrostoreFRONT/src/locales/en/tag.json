@@ -1,5 +1,6 @@
 {
 	"NotFound": "Tag not found",
+	"FormValidationError": "Form validation error \n {count} error(s) to fix",
 	"Created": "Tag created",
 	"Updated": "Tag updated",
 	"Deleted": "Tag deleted",

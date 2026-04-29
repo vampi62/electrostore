@@ -2,6 +2,7 @@
 	"NotFound": "Item not found",
 	"BoxShowSuccess": "Box shown",
 	"ToggleError": "Unable to toggle the box",
+	"FormValidationError": "Form validation error \n {count} error(s) to fix",
 	"Created": "Item created",
 	"Updated": "Item updated",
 	"Deleted": "Item deleted",

@@ -23,11 +23,11 @@ const usersStore = useUsersStore();
 const itemsStore = useItemsStore();
 const authStore = useAuthStore();
 
+const formContainer = ref(null);
+
 async function fetchAllData() {
 	if (commandId.value === "new") {
-		commandsStore.commandEdition = {
-			loading: false,
-		};
+		loadToEdition(commandId.value);
 		if (preset.value) {
 			preset.value.split(";").forEach((pair) => {
 				const [key, value] = pair.split(":");
@@ -48,15 +48,24 @@ async function fetchAllData() {
 			router.push("/commands");
 			return;
 		}
+		loadToEdition(commandId.value);
+		usersStore.users[authStore.user.id_user] = authStore.user; // avoids undefined user when the current user posts first comment
+	}
+}
+function loadToEdition(id) {
+	if (id === "new") {
 		commandsStore.commandEdition = {
-			prix_command: commandsStore.commands[commandId.value].prix_command,
-			url_command: commandsStore.commands[commandId.value].url_command,
-			status_command: commandsStore.commands[commandId.value].status_command,
-			date_command: commandsStore.commands[commandId.value].date_command,
-			date_livraison_command: commandsStore.commands[commandId.value].date_livraison_command,
 			loading: false,
 		};
-		usersStore.users[authStore.user.id_user] = authStore.user; // avoids undefined user when the current user posts first comment
+	} else {
+		commandsStore.commandEdition = {
+			prix_command: commandsStore.commands[id].prix_command,
+			url_command: commandsStore.commands[id].url_command,
+			status_command: commandsStore.commands[id].status_command,
+			date_command: commandsStore.commands[id].date_command,
+			date_livraison_command: commandsStore.commands[id].date_livraison_command,
+			loading: false,
+		};
 	}
 }
 onMounted(() => {
@@ -73,19 +82,34 @@ const commandDeleteModalShow = ref(false);
 const commandTypeStatus = ref({ ["En attente"]: t("command.Status1"), ["En cours"]: t("command.Status2"), ["Terminée"]: t("command.Status3"), ["Annulée"]: t("command.Status4") });
 const commandSave = async() => {
 	try {
-		createSchema().validateSync(commandsStore.commandEdition, { abortEarly: false });
+		const validationResults = await Promise.all([
+			formContainer.value?.validate(),
+		]);
+		const allValid = validationResults.every((result) => result && result.valid);
+		if (!allValid) {
+			const nbErrors = validationResults.reduce((sum, result) => sum + (result ? Object.keys(result.errors).length : 0), 0);
+			addNotification({
+				message: t("command.FormValidationError", { count: nbErrors }),
+				type: "error",
+			});
+			commandsStore.commandEdition.loading = false;
+			return;
+		}
 		if (commandId.value === "new") {
 			const newId = await commandsStore.createCommand({ ...commandsStore.commandEdition });
+			loadToEdition(newId);
 			addNotification({ message: t("command.Created"), type: "success" });
 			commandId.value = String(newId);
 			router.push("/commands/" + commandId.value);
 		} else {
 			await commandsStore.updateCommand(commandId.value, { ...commandsStore.commandEdition });
+			loadToEdition(commandId.value);
 			addNotification({ message: t("command.Updated"), type: "success" });
 		}
 	} catch (e) {
 		addNotification({ message: e.errors, type: "error" });
-		return;
+	} finally {
+		commandsStore.commandEdition.loading = false;
 	}
 };
 const commandDelete = async() => {
@@ -191,25 +215,29 @@ const filterItem = ref([
 ]);
 
 const createSchema = () => {
-	return Yup.object().shape({
-		prix_command: Yup.number()
-			.min(0, t("command.PriceMin"))
-			.typeError(t("command.PriceNumber"))
-			.required(t("command.PriceRequired")),
-		url_command: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_url"), t("command.UrlMaxLength", { count: configsStore.getConfigByKey("max_length_url") }))
-			.url(t("command.UrlInvalid"))
-			.required(t("command.UrlRequired")),
-		date_command: Yup.date()
-			.typeError(t("command.DateInvalid"))
-			.required(t("command.DateRequired")),
-		status_command: Yup.string()
-			.max(configsStore.getConfigByKey("max_length_status"), t("command.StatusMaxLength", { count: configsStore.getConfigByKey("max_length_status") }))
-			.required(t("command.StatusRequired")),
-		date_livraison_command: Yup.date()
-			.nullable()
-			.optional(),
-	});
+	const edition = commandsStore.commandEdition;
+	const shape = {};
+	if (!edition) {
+		return Yup.object().shape(shape);
+	}
+	shape.prix_command = Yup.number()
+		.min(0, t("command.PriceMin"))
+		.typeError(t("command.PriceNumber"))
+		.required(t("command.PriceRequired"));
+	shape.url_command = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_url"), t("command.UrlMaxLength", { count: configsStore.getConfigByKey("max_length_url") }))
+		.url(t("command.UrlInvalid"))
+		.required(t("command.UrlRequired"));
+	shape.date_command = Yup.date()
+		.typeError(t("command.DateInvalid"))
+		.required(t("command.DateRequired"));
+	shape.status_command = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_status"), t("command.StatusMaxLength", { count: configsStore.getConfigByKey("max_length_status") }))
+		.required(t("command.StatusRequired"));
+	shape.date_livraison_command = Yup.date()
+		.nullable()
+		.optional();
+	return Yup.object().shape(shape);
 };
 
 const schemaAddDocument = Yup.object().shape({
@@ -251,48 +279,48 @@ const labelTableauDocument = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "!rowData.tmp",
+			showCondition: "!edition?.id_command_document",
 			action: (row) => {
-				row.tmp = { ...row };
+				commandsStore.documentEdition[row.id_command_document] = { ...row };
 			},
-			class: "text-blue-500 cursor-pointer hover:text-blue-600",
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-times",
-			showCondition: "rowData.tmp",
+			showCondition: "edition?.id_command_document",
 			action: (row) => {
-				row.tmp = null;
+				delete commandsStore.documentEdition[row.id_command_document];
 			},
-			class: "text-gray-500 cursor-pointer hover:text-gray-600",
+			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			showCondition: "rowData.tmp",
-			action: (row) => documentEdit(row.tmp),
-			class: "text-green-500 cursor-pointer hover:text-green-600",
+			showCondition: "edition?.id_command_document",
+			action: (row) => documentEdit(commandsStore.documentEdition[row.id_command_document]),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-eye",
 			action: (row) => documentView(row),
-			class: "text-green-500 cursor-pointer hover:text-green-600",
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-download",
 			action: (row) => documentDownload(row),
-			class: "text-yellow-500 cursor-pointer hover:text-yellow-600",
+			class: "px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600",
 			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
 			action: (row) => documentDeleteOpenModal(row),
-			class: "text-red-500 cursor-pointer hover:text-red-600",
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
 ]);
@@ -306,9 +334,9 @@ const labelTableauItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "!rowData.tmp",
+			showCondition: "!edition?.id_item",
 			action: (row) => {
-				row.tmp = { ...row };
+				commandsStore.itemEdition[row.id_item] = { ...row };
 			},
 			type: "button",
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
@@ -316,8 +344,8 @@ const labelTableauItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			showCondition: "rowData.tmp",
-			action: (row) => itemSave(row),
+			showCondition: "edition?.id_item",
+			action: (row) => itemSave(commandsStore.itemEdition[row.id_item]),
 			type: "button",
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
@@ -325,9 +353,9 @@ const labelTableauItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-times",
-			showCondition: "rowData.tmp",
+			showCondition: "edition?.id_item",
 			action: (row) => {
-				row.tmp = null;
+				delete commandsStore.itemEdition[row.id_item];
 			},
 			type: "button",
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
@@ -355,35 +383,35 @@ const labelTableauModalItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
-			showCondition: "store[1]?.[rowData.id_item] === undefined && !rowData.tmp",
+			showCondition: "store[1]?.[rowData.id_item] === undefined && !edition?.id_item",
 			action: (row) => {
-				row.tmp = { prix_command_item: 1, qte_command_item: 1, id_item: row.id_item };
+				commandsStore.itemEdition[row.id_item] = { prix_command_item: 1, qte_command_item: 1, id_item: row.id_item };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "store[1]?.[rowData.id_item] && !rowData.tmp",
+			showCondition: "store[1]?.[rowData.id_item] && !edition?.id_item",
 			action: (row) => {
-				row.tmp = { ...row };
+				commandsStore.itemEdition[row.id_item] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			showCondition: "rowData.tmp",
-			action: (row) => itemSave(row),
+			showCondition: "edition?.id_item",
+			action: (row) => itemSave(commandsStore.itemEdition[row.id_item]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-times",
-			showCondition: "rowData.tmp",
+			showCondition: "edition?.id_item",
 			action: (row) => {
-				row.tmp = null;
+				delete commandsStore.itemEdition[row.id_item];
 			},
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
 		},
@@ -407,7 +435,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 	</div>
 	<div v-if="commandsStore.commands[commandId] || commandId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer :schema-builder="createSchema" :labels="labelForm" :store-data="commandsStore.commandEdition" />
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="commandsStore.commandEdition" />
 			<div>
 				<!-- TODO suivie commande -->
 			</div>
@@ -421,6 +449,8 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_command_document' }"
 					:store-data="[commandsStore.documents[commandId]]"
+					:store-edition="commandsStore.documentEdition"
+					:schema="schemaEditDocument"
 					:loading="commandsStore.documentsLoading"
 					:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)"
 					:fetch-function="commandId !== 'new' ? (limit, offset, expand, filter, sort, clear) => commandsStore.getDocumentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
@@ -437,7 +467,9 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
 					:store-data="[commandsStore.items[commandId],itemsStore.items]"
-					:loading="commandsStore.itemsLoading" :schema="schemaItem"
+					:store-edition="commandsStore.itemEdition"
+					:schema="schemaItem"
+					:loading="commandsStore.itemsLoading"
 					:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)"
 					:fetch-function="commandId !== 'new' ? (limit, offset, expand, filter, sort, clear) => commandsStore.getItemByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
@@ -491,6 +523,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
 				:store-data="[itemsStore.items,commandsStore.items[commandId]]"
+				:store-edition="commandsStore.itemEdition"
 				:filters="filterItem"
 				:loading="commandsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"

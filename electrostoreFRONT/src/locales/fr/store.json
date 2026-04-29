@@ -1,5 +1,6 @@
 {
 	"NotFound": "Rangement introuvable",
+	"FormValidationError": "Erreur de validation du formulaire \n {count} erreur(s) à corriger",
 	"Created": "Rangement créé",
 	"Updated": "Rangement mis à jour",
 	"Deleted": "Rangement supprimé",
