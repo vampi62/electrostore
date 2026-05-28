@@ -1,8 +1,8 @@
-using electrostore.Enums;
-using System.Security.Claims;
+using ElectrostoreAPI.Enums;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
-namespace electrostore.Services.SessionService;
+namespace ElectrostoreAPI.Services.SessionService;
 
 public class SessionService : ISessionService
 {

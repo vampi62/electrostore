@@ -9,7 +9,7 @@ using electrostore.Services.SessionService;
 using electrostore.Services.JwiService;
 using System.Linq.Expressions;
 
-namespace electrostore.Services.UserService;
+namespace ElectrostoreAPI.Services.UserService;
 
 public class UserService : IUserService
 {

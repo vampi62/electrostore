@@ -1,7 +1,7 @@
-using electrostore.Dto;
-using electrostore.Models;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Models;
 
-namespace electrostore.Services.ValidateStoreService;
+namespace ElectrostoreAPI.Services.ValidateStoreService;
 
 public interface IValidateStoreService
 {

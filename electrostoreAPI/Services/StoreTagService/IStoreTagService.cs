@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.StoreTagService;
+namespace ElectrostoreAPI.Services.StoreTagService;
 
 public interface IStoreTagService
 {

@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.CommandCommentaireService;
+namespace ElectrostoreAPI.Services.CommandCommentaireService;
 
 public interface ICommandCommentaireService
 {

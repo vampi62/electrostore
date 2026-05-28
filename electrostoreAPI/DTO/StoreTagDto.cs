@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace electrostore.Dto;
+namespace ElectrostoreAPI.Dto;
 
 public record ReadStoreTagDto
 {

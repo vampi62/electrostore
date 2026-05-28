@@ -1,12 +1,13 @@
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using electrostore.Dto;
-using electrostore.Enums;
 
-namespace electrostore.Services.JwtService;
+
+namespace ElectrostoreAPI.Services.JwtService;
 
 public class JwtService : IJwtService
 {

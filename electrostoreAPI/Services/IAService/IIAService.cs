@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.IAService;
+namespace ElectrostoreAPI.Services.IAService;
 
 public interface IIAService
 {

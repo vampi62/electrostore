@@ -1,14 +1,14 @@
 using AutoMapper;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
+using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Models;
+using ElectrostoreAPI.Services.SessionService;
+using ElectrostoreAPI.Services.ValidateStoreService;
 using Microsoft.EntityFrameworkCore;
-using electrostore.Dto;
-using electrostore.Enums;
-using electrostore.Extensions;
-using electrostore.Models;
-using electrostore.Services.SessionService;
-using electrostore.Services.ValidateStoreService;
 using System.Linq.Expressions;
 
-namespace electrostore.Services.BoxService;
+namespace ElectrostoreAPI.Services.BoxService;
 
 public class BoxService : IBoxService
 {

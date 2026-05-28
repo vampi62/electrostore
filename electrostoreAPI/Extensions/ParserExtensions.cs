@@ -1,8 +1,6 @@
-using System.Linq.Expressions;
-using System.Reflection;
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Extensions;
+namespace ElectrostoreAPI.Extensions;
 
 public static class ParserExtensions
 {

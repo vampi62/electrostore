@@ -10,7 +10,7 @@ using System.Security.Cryptography;
 using System.Web;
 using Microsoft.EntityFrameworkCore;
 
-namespace electrostore.Services.AuthService;
+namespace ElectrostoreAPI.Services.AuthService;
 
 public class AuthService : IAuthService
 {

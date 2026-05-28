@@ -1,7 +1,7 @@
+using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using electrostore.Models;
 
-namespace electrostore;
+namespace ElectrostoreAPI;
 
 public class ApplicationDbContext : DbContext
 {

@@ -9,7 +9,7 @@ using electrostore.Services.SessionService;
 using electrostore.Services.FileService;
 using System.Linq.Expressions;
 
-namespace electrostore.Services.IAService;
+namespace ElectrostoreAPI.Services.IAService;
 
 public class IAService : IIAService
 {

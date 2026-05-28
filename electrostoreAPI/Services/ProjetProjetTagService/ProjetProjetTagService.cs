@@ -1,13 +1,13 @@
 using AutoMapper;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
+using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Models;
+using ElectrostoreAPI.Services.SessionService;
 using Microsoft.EntityFrameworkCore;
-using electrostore.Dto;
-using electrostore.Enums;
-using electrostore.Extensions;
-using electrostore.Models;
-using electrostore.Services.SessionService;
 using System.Linq.Expressions;
 
-namespace electrostore.Services.ProjetProjetTagService;
+namespace ElectrostoreAPI.Services.ProjetProjetTagService;
 
 public class ProjetProjetTagService : IProjetProjetTagService
 {

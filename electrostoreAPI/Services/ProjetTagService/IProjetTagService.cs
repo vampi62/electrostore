@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.ProjetTagService;
+namespace ElectrostoreAPI.Services.ProjetTagService;
 
 public interface IProjetTagService
 {

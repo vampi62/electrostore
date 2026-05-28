@@ -1,7 +1,7 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 using Microsoft.AspNetCore.Mvc;
 
-namespace electrostore.Services.CameraService;
+namespace ElectrostoreAPI.Services.CameraService;
 
 public interface ICameraService
 {

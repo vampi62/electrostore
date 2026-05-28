@@ -1,11 +1,11 @@
-using Microsoft.AspNetCore.Mvc;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Services.ItemBoxService;
 using Microsoft.AspNetCore.Authorization;
-using electrostore.Dto;
-using electrostore.Services.ItemBoxService;
+using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using electrostore.Extensions;
 
-namespace electrostore.Controllers
+namespace ElectrostoreAPI.Controllers
 {
     [ApiController]
     [Route("api/item/{id_item}/box")]

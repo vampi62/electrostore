@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.FileService;
+namespace ElectrostoreAPI.Services.FileService;
 
 public interface IFileService
 {

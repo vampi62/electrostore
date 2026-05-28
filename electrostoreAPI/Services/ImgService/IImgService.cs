@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.ImgService;
+namespace ElectrostoreAPI.Services.ImgService;
 
 public interface IImgService
 {

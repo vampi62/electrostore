@@ -1,8 +1,7 @@
+using ElectrostoreAPI.Dto;
 using MQTTnet;
-using electrostore.Dto;
-using System.Text.Json;
 
-namespace electrostore.Services.ConfigService;
+namespace ElectrostoreAPI.Services.ConfigService;
 
 public class ConfigService : IConfigService
 {
