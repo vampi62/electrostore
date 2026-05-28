@@ -8,19 +8,19 @@ using System.IO;
 using AutoMapper;
 using Minio;
 using Minio.DataModel.Args;
-using electrostore;
-using electrostore.Dto;
-using electrostore.Models;
-using electrostore.Services.FileService;
+using electrostoreAPI;
+using electrostoreAPI.Dto;
+using electrostoreAPI.Models;
+using electrostoreAPI.Services.FileService;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
-using electrostore.Tests.Utils;
+using electrostoreAPI.Tests.Utils;
 using System.Reflection;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 
-namespace electrostore.Tests.Services
+namespace electrostoreAPI.Tests.Services
 {
     public class FileServiceTests : TestBase
     {

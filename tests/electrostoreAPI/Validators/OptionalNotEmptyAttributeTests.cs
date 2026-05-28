@@ -1,7 +1,7 @@
-using electrostore.Validators;
+using electrostoreAPI.Validators;
 using Xunit;
 
-namespace electrostoreAPI.Tests.Validators;
+namespace electrostoreAPIAPI.Tests.Validators;
 
 public class OptionalNotEmptyAttributeTests
 {

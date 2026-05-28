@@ -4,15 +4,15 @@ using Microsoft.Extensions.Configuration;
 using Moq;
 using Moq.Protected;
 using Xunit;
-using electrostore;
-using electrostore.Dto;
-using electrostore.Models;
-using electrostore.Services.ConfigService;
-using electrostore.Tests.Utils;
+using electrostoreAPI;
+using electrostoreAPI.Dto;
+using electrostoreAPI.Models;
+using electrostoreAPI.Services.ConfigService;
+using electrostoreAPI.Tests.Utils;
 using System.Net;
 using System.Net.Http;
 
-namespace electrostore.Tests.Services
+namespace electrostoreAPI.Tests.Services
 {
     public class ConfigServiceTests : TestBase
     {

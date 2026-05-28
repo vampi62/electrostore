@@ -7,12 +7,12 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.IO;
 using AutoMapper;
-using electrostore;
-using electrostore.Dto;
-using electrostore.Enums;
-using electrostore.Services.JwtService;
+using electrostoreAPI;
+using electrostoreAPI.Dto;
+using electrostoreAPI.Enums;
+using electrostoreAPI.Services.JwtService;
 
-namespace electrostore.Tests.Services
+namespace electrostoreAPI.Tests.Services
 {
     public class JwtServiceTests
     {
@@ -23,8 +23,8 @@ namespace electrostore.Tests.Services
             var jwtSettings = new JwtSettings
             {
                 Key = "ThisIsASecretKeyForJwtTokenGeneration12345",
-                Issuer = "electrostore",
-                Audience = "electrostore_users",
+                Issuer = "electrostoreAPI",
+                Audience = "electrostoreAPI_users",
                 ExpireDays = 7
             };
             var jwtService = new JwtService(Microsoft.Extensions.Options.Options.Create(jwtSettings));
