@@ -46,7 +46,6 @@ bool setupWiFi()
 
 bool reconnectMQTT()
 {
-  // Connexion au serveur MQTT
   if (nbrErreurMqttConnect > 3)
   {
     return false;
@@ -57,14 +56,16 @@ bool reconnectMQTT()
   Serial.println();
   Serial.print("Connecting to MQTT server...");
   Serial.println(SessionName);
+  String topicName = "electrostore/" + mqttTopic;
+  String statusTopic = topicName + "/status";
   do
   {
-    if (mqttClient.connect(SessionName.c_str(), mqttUser.c_str(), mqttPassword.c_str()))
+    if (mqttClient.connect(SessionName.c_str(), mqttUser.c_str(), mqttPassword.c_str(), statusTopic.c_str(), 1, true, "offline"))
     {
       Serial.println("connected!");
-      String topicName = "electrostore/" + mqttTopic;
       Serial.println(topicName.c_str());
       mqttClient.subscribe(topicName.c_str());
+      mqttClient.publish(statusTopic.c_str(), "online", true);
       strip.setPixelColor(0, strip.Color(0, 20, 0));
       strip.show();
       nbrErreurMqttConnect = 0;
