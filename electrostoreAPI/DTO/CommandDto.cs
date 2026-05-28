@@ -1,7 +1,7 @@
+using ElectrostoreAPI.Validators;
 using System.ComponentModel.DataAnnotations;
-using electrostore.Validators;
 
-namespace electrostore.Dto;
+namespace ElectrostoreAPI.Dto;
 
 public record ReadCommandDto
 {

@@ -1,10 +1,10 @@
-using Microsoft.AspNetCore.Mvc;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Services.AuthService;
 using Microsoft.AspNetCore.Authorization;
-using electrostore.Dto;
-using electrostore.Services.AuthService;
+using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace electrostore.Controllers
+namespace ElectrostoreAPI.Controllers
 {
     [ApiController]
     [Route("api/auth")]

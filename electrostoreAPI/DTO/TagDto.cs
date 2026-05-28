@@ -1,8 +1,7 @@
+using ElectrostoreAPI.Validators;
 using System.ComponentModel.DataAnnotations;
-using electrostore.Validators;
-using System.Text.Json.Serialization;
 
-namespace electrostore.Dto;
+namespace ElectrostoreAPI.Dto;
 
 public record ReadTagDto
 {

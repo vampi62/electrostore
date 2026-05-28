@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.ProjetCommentaireService;
+namespace ElectrostoreAPI.Services.ProjetCommentaireService;
 
 public interface IProjetCommentaireService
 {

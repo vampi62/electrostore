@@ -1,7 +1,7 @@
+using ElectrostoreAPI.Enums;
 using System.ComponentModel.DataAnnotations;
-using electrostore.Enums;
 
-namespace electrostore.Dto;
+namespace ElectrostoreAPI.Dto;
 
 public record ReadProjetStatusDto
 {

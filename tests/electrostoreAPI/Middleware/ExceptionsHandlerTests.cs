@@ -1,4 +1,4 @@
-using electrostore.Middleware;
+using ElectrostoreAPI.Middleware;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -6,7 +6,7 @@ using System.Net;
 using System.Text.Json;
 using Xunit;
 
-namespace electrostoreAPI.Tests.Middleware
+namespace electrostoreAPIAPI.Tests.Middleware
 {
     public class ExceptionsHandlerTests
     {

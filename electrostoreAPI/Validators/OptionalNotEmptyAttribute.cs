@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace electrostore.Validators;
+namespace ElectrostoreAPI.Validators;
 
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter, AllowMultiple = false)]
 public class OptionalNotEmptyAttribute : ValidationAttribute

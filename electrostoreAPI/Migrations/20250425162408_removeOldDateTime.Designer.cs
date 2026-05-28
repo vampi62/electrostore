@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using electrostore;
+using ElectrostoreAPI;
 
 #nullable disable
 
-namespace electrostore.Migrations
+namespace ElectrostoreAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20250425162408_removeOldDateTime")]
@@ -22,7 +22,7 @@ namespace electrostore.Migrations
                 .HasAnnotation("ProductVersion", "7.0.16")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            modelBuilder.Entity("electrostore.Models.Boxs", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Boxs", b =>
                 {
                     b.Property<int>("id_box")
                         .ValueGeneratedOnAdd()
@@ -56,7 +56,7 @@ namespace electrostore.Migrations
                     b.ToTable("Boxs");
                 });
 
-            modelBuilder.Entity("electrostore.Models.BoxsTags", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.BoxsTags", b =>
                 {
                     b.Property<int>("id_box")
                         .HasColumnType("int");
@@ -77,7 +77,7 @@ namespace electrostore.Migrations
                     b.ToTable("BoxsTags");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Cameras", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Cameras", b =>
                 {
                     b.Property<int>("id_camera")
                         .ValueGeneratedOnAdd()
@@ -112,7 +112,7 @@ namespace electrostore.Migrations
                     b.ToTable("Cameras");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Commands", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Commands", b =>
                 {
                     b.Property<int>("id_command")
                         .ValueGeneratedOnAdd()
@@ -148,7 +148,7 @@ namespace electrostore.Migrations
                     b.ToTable("Commands");
                 });
 
-            modelBuilder.Entity("electrostore.Models.CommandsCommentaires", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.CommandsCommentaires", b =>
                 {
                     b.Property<int>("id_command_commentaire")
                         .ValueGeneratedOnAdd()
@@ -180,7 +180,7 @@ namespace electrostore.Migrations
                     b.ToTable("CommandsCommentaires");
                 });
 
-            modelBuilder.Entity("electrostore.Models.CommandsDocuments", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.CommandsDocuments", b =>
                 {
                     b.Property<int>("id_command_document")
                         .ValueGeneratedOnAdd()
@@ -220,7 +220,7 @@ namespace electrostore.Migrations
                     b.ToTable("CommandsDocuments");
                 });
 
-            modelBuilder.Entity("electrostore.Models.CommandsItems", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.CommandsItems", b =>
                 {
                     b.Property<int>("id_command")
                         .HasColumnType("int");
@@ -247,7 +247,7 @@ namespace electrostore.Migrations
                     b.ToTable("CommandsItems");
                 });
 
-            modelBuilder.Entity("electrostore.Models.IA", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.IA", b =>
                 {
                     b.Property<int>("id_ia")
                         .ValueGeneratedOnAdd()
@@ -277,7 +277,7 @@ namespace electrostore.Migrations
                     b.ToTable("IA");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Imgs", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Imgs", b =>
                 {
                     b.Property<int>("id_img")
                         .ValueGeneratedOnAdd()
@@ -314,7 +314,7 @@ namespace electrostore.Migrations
                     b.ToTable("Imgs");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Items", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Items", b =>
                 {
                     b.Property<int>("id_item")
                         .ValueGeneratedOnAdd()
@@ -349,7 +349,7 @@ namespace electrostore.Migrations
                     b.ToTable("Items");
                 });
 
-            modelBuilder.Entity("electrostore.Models.ItemsBoxs", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.ItemsBoxs", b =>
                 {
                     b.Property<int>("id_item")
                         .HasColumnType("int");
@@ -376,7 +376,7 @@ namespace electrostore.Migrations
                     b.ToTable("ItemsBoxs");
                 });
 
-            modelBuilder.Entity("electrostore.Models.ItemsDocuments", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.ItemsDocuments", b =>
                 {
                     b.Property<int>("id_item_document")
                         .ValueGeneratedOnAdd()
@@ -416,7 +416,7 @@ namespace electrostore.Migrations
                     b.ToTable("ItemsDocuments");
                 });
 
-            modelBuilder.Entity("electrostore.Models.ItemsTags", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.ItemsTags", b =>
                 {
                     b.Property<int>("id_item")
                         .HasColumnType("int");
@@ -437,7 +437,7 @@ namespace electrostore.Migrations
                     b.ToTable("ItemsTags");
                 });
 
-            modelBuilder.Entity("electrostore.Models.JwiAccessTokens", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.JwiAccessTokens", b =>
                 {
                     b.Property<Guid>("id_jwi_access")
                         .ValueGeneratedOnAdd()
@@ -481,7 +481,7 @@ namespace electrostore.Migrations
                     b.ToTable("JwiAccessTokens");
                 });
 
-            modelBuilder.Entity("electrostore.Models.JwiRefreshTokens", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.JwiRefreshTokens", b =>
                 {
                     b.Property<Guid>("id_jwi_refresh")
                         .ValueGeneratedOnAdd()
@@ -530,7 +530,7 @@ namespace electrostore.Migrations
                     b.ToTable("JwiRefreshTokens");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Leds", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Leds", b =>
                 {
                     b.Property<int>("id_led")
                         .ValueGeneratedOnAdd()
@@ -561,7 +561,7 @@ namespace electrostore.Migrations
                     b.ToTable("Leds");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Projets", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Projets", b =>
                 {
                     b.Property<int>("id_projet")
                         .ValueGeneratedOnAdd()
@@ -604,7 +604,7 @@ namespace electrostore.Migrations
                     b.ToTable("Projets");
                 });
 
-            modelBuilder.Entity("electrostore.Models.ProjetsCommentaires", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.ProjetsCommentaires", b =>
                 {
                     b.Property<int>("id_projet_commentaire")
                         .ValueGeneratedOnAdd()
@@ -636,7 +636,7 @@ namespace electrostore.Migrations
                     b.ToTable("ProjetsCommentaires");
                 });
 
-            modelBuilder.Entity("electrostore.Models.ProjetsDocuments", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.ProjetsDocuments", b =>
                 {
                     b.Property<int>("id_projet_document")
                         .ValueGeneratedOnAdd()
@@ -676,7 +676,7 @@ namespace electrostore.Migrations
                     b.ToTable("ProjetsDocuments");
                 });
 
-            modelBuilder.Entity("electrostore.Models.ProjetsItems", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.ProjetsItems", b =>
                 {
                     b.Property<int>("id_projet")
                         .HasColumnType("int");
@@ -700,7 +700,7 @@ namespace electrostore.Migrations
                     b.ToTable("ProjetsItems");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Stores", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Stores", b =>
                 {
                     b.Property<int>("id_store")
                         .ValueGeneratedOnAdd()
@@ -733,7 +733,7 @@ namespace electrostore.Migrations
                     b.ToTable("Stores");
                 });
 
-            modelBuilder.Entity("electrostore.Models.StoresTags", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.StoresTags", b =>
                 {
                     b.Property<int>("id_store")
                         .HasColumnType("int");
@@ -754,7 +754,7 @@ namespace electrostore.Migrations
                     b.ToTable("StoresTags");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Tags", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Tags", b =>
                 {
                     b.Property<int>("id_tag")
                         .ValueGeneratedOnAdd()
@@ -779,7 +779,7 @@ namespace electrostore.Migrations
                     b.ToTable("Tags");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Users", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Users", b =>
                 {
                     b.Property<int>("id_user")
                         .ValueGeneratedOnAdd()
@@ -827,9 +827,9 @@ namespace electrostore.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Boxs", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Boxs", b =>
                 {
-                    b.HasOne("electrostore.Models.Stores", "Store")
+                    b.HasOne("ElectrostoreAPI.Models.Stores", "Store")
                         .WithMany("Boxs")
                         .HasForeignKey("id_store")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -838,15 +838,15 @@ namespace electrostore.Migrations
                     b.Navigation("Store");
                 });
 
-            modelBuilder.Entity("electrostore.Models.BoxsTags", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.BoxsTags", b =>
                 {
-                    b.HasOne("electrostore.Models.Boxs", "Box")
+                    b.HasOne("ElectrostoreAPI.Models.Boxs", "Box")
                         .WithMany("BoxsTags")
                         .HasForeignKey("id_box")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("electrostore.Models.Tags", "Tag")
+                    b.HasOne("ElectrostoreAPI.Models.Tags", "Tag")
                         .WithMany("BoxsTags")
                         .HasForeignKey("id_tag")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -857,15 +857,15 @@ namespace electrostore.Migrations
                     b.Navigation("Tag");
                 });
 
-            modelBuilder.Entity("electrostore.Models.CommandsCommentaires", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.CommandsCommentaires", b =>
                 {
-                    b.HasOne("electrostore.Models.Commands", "Command")
+                    b.HasOne("ElectrostoreAPI.Models.Commands", "Command")
                         .WithMany("CommandsCommentaires")
                         .HasForeignKey("id_command")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("electrostore.Models.Users", "User")
+                    b.HasOne("ElectrostoreAPI.Models.Users", "User")
                         .WithMany("CommandsCommentaires")
                         .HasForeignKey("id_user");
 
@@ -874,9 +874,9 @@ namespace electrostore.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("electrostore.Models.CommandsDocuments", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.CommandsDocuments", b =>
                 {
-                    b.HasOne("electrostore.Models.Commands", "Command")
+                    b.HasOne("ElectrostoreAPI.Models.Commands", "Command")
                         .WithMany("CommandsDocuments")
                         .HasForeignKey("id_command")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -885,15 +885,15 @@ namespace electrostore.Migrations
                     b.Navigation("Command");
                 });
 
-            modelBuilder.Entity("electrostore.Models.CommandsItems", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.CommandsItems", b =>
                 {
-                    b.HasOne("electrostore.Models.Commands", "Command")
+                    b.HasOne("ElectrostoreAPI.Models.Commands", "Command")
                         .WithMany("CommandsItems")
                         .HasForeignKey("id_command")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("electrostore.Models.Items", "Item")
+                    b.HasOne("ElectrostoreAPI.Models.Items", "Item")
                         .WithMany("CommandsItems")
                         .HasForeignKey("id_item")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -904,9 +904,9 @@ namespace electrostore.Migrations
                     b.Navigation("Item");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Imgs", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Imgs", b =>
                 {
-                    b.HasOne("electrostore.Models.Items", "Item")
+                    b.HasOne("ElectrostoreAPI.Models.Items", "Item")
                         .WithMany()
                         .HasForeignKey("id_item")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -915,24 +915,24 @@ namespace electrostore.Migrations
                     b.Navigation("Item");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Items", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Items", b =>
                 {
-                    b.HasOne("electrostore.Models.Imgs", "Img")
+                    b.HasOne("ElectrostoreAPI.Models.Imgs", "Img")
                         .WithMany()
                         .HasForeignKey("id_img");
 
                     b.Navigation("Img");
                 });
 
-            modelBuilder.Entity("electrostore.Models.ItemsBoxs", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.ItemsBoxs", b =>
                 {
-                    b.HasOne("electrostore.Models.Boxs", "Box")
+                    b.HasOne("ElectrostoreAPI.Models.Boxs", "Box")
                         .WithMany("ItemsBoxs")
                         .HasForeignKey("id_box")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("electrostore.Models.Items", "Item")
+                    b.HasOne("ElectrostoreAPI.Models.Items", "Item")
                         .WithMany("ItemsBoxs")
                         .HasForeignKey("id_item")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -943,9 +943,9 @@ namespace electrostore.Migrations
                     b.Navigation("Item");
                 });
 
-            modelBuilder.Entity("electrostore.Models.ItemsDocuments", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.ItemsDocuments", b =>
                 {
-                    b.HasOne("electrostore.Models.Items", "Item")
+                    b.HasOne("ElectrostoreAPI.Models.Items", "Item")
                         .WithMany("ItemsDocuments")
                         .HasForeignKey("id_item")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -954,15 +954,15 @@ namespace electrostore.Migrations
                     b.Navigation("Item");
                 });
 
-            modelBuilder.Entity("electrostore.Models.ItemsTags", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.ItemsTags", b =>
                 {
-                    b.HasOne("electrostore.Models.Items", "Item")
+                    b.HasOne("ElectrostoreAPI.Models.Items", "Item")
                         .WithMany("ItemsTags")
                         .HasForeignKey("id_item")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("electrostore.Models.Tags", "Tag")
+                    b.HasOne("ElectrostoreAPI.Models.Tags", "Tag")
                         .WithMany("ItemsTags")
                         .HasForeignKey("id_tag")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -973,9 +973,9 @@ namespace electrostore.Migrations
                     b.Navigation("Tag");
                 });
 
-            modelBuilder.Entity("electrostore.Models.JwiAccessTokens", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.JwiAccessTokens", b =>
                 {
-                    b.HasOne("electrostore.Models.Users", "User")
+                    b.HasOne("ElectrostoreAPI.Models.Users", "User")
                         .WithMany()
                         .HasForeignKey("id_user")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -984,15 +984,15 @@ namespace electrostore.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("electrostore.Models.JwiRefreshTokens", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.JwiRefreshTokens", b =>
                 {
-                    b.HasOne("electrostore.Models.JwiAccessTokens", "JWIAccessToken")
+                    b.HasOne("ElectrostoreAPI.Models.JwiAccessTokens", "JWIAccessToken")
                         .WithMany()
                         .HasForeignKey("id_jwi_access")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("electrostore.Models.Users", "User")
+                    b.HasOne("ElectrostoreAPI.Models.Users", "User")
                         .WithMany()
                         .HasForeignKey("id_user")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1003,9 +1003,9 @@ namespace electrostore.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Leds", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Leds", b =>
                 {
-                    b.HasOne("electrostore.Models.Stores", "Store")
+                    b.HasOne("ElectrostoreAPI.Models.Stores", "Store")
                         .WithMany("Leds")
                         .HasForeignKey("id_store")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1014,15 +1014,15 @@ namespace electrostore.Migrations
                     b.Navigation("Store");
                 });
 
-            modelBuilder.Entity("electrostore.Models.ProjetsCommentaires", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.ProjetsCommentaires", b =>
                 {
-                    b.HasOne("electrostore.Models.Projets", "Projet")
+                    b.HasOne("ElectrostoreAPI.Models.Projets", "Projet")
                         .WithMany("ProjetsCommentaires")
                         .HasForeignKey("id_projet")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("electrostore.Models.Users", "User")
+                    b.HasOne("ElectrostoreAPI.Models.Users", "User")
                         .WithMany("ProjetsCommentaires")
                         .HasForeignKey("id_user");
 
@@ -1031,9 +1031,9 @@ namespace electrostore.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("electrostore.Models.ProjetsDocuments", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.ProjetsDocuments", b =>
                 {
-                    b.HasOne("electrostore.Models.Projets", "Projet")
+                    b.HasOne("ElectrostoreAPI.Models.Projets", "Projet")
                         .WithMany("ProjetsDocuments")
                         .HasForeignKey("id_projet")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1042,15 +1042,15 @@ namespace electrostore.Migrations
                     b.Navigation("Projet");
                 });
 
-            modelBuilder.Entity("electrostore.Models.ProjetsItems", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.ProjetsItems", b =>
                 {
-                    b.HasOne("electrostore.Models.Items", "Item")
+                    b.HasOne("ElectrostoreAPI.Models.Items", "Item")
                         .WithMany("ProjetsItems")
                         .HasForeignKey("id_item")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("electrostore.Models.Projets", "Projet")
+                    b.HasOne("ElectrostoreAPI.Models.Projets", "Projet")
                         .WithMany("ProjetsItems")
                         .HasForeignKey("id_projet")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1061,15 +1061,15 @@ namespace electrostore.Migrations
                     b.Navigation("Projet");
                 });
 
-            modelBuilder.Entity("electrostore.Models.StoresTags", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.StoresTags", b =>
                 {
-                    b.HasOne("electrostore.Models.Stores", "Store")
+                    b.HasOne("ElectrostoreAPI.Models.Stores", "Store")
                         .WithMany("StoresTags")
                         .HasForeignKey("id_store")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("electrostore.Models.Tags", "Tag")
+                    b.HasOne("ElectrostoreAPI.Models.Tags", "Tag")
                         .WithMany("StoresTags")
                         .HasForeignKey("id_tag")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1080,14 +1080,14 @@ namespace electrostore.Migrations
                     b.Navigation("Tag");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Boxs", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Boxs", b =>
                 {
                     b.Navigation("BoxsTags");
 
                     b.Navigation("ItemsBoxs");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Commands", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Commands", b =>
                 {
                     b.Navigation("CommandsCommentaires");
 
@@ -1096,7 +1096,7 @@ namespace electrostore.Migrations
                     b.Navigation("CommandsItems");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Items", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Items", b =>
                 {
                     b.Navigation("CommandsItems");
 
@@ -1109,7 +1109,7 @@ namespace electrostore.Migrations
                     b.Navigation("ProjetsItems");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Projets", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Projets", b =>
                 {
                     b.Navigation("ProjetsCommentaires");
 
@@ -1118,7 +1118,7 @@ namespace electrostore.Migrations
                     b.Navigation("ProjetsItems");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Stores", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Stores", b =>
                 {
                     b.Navigation("Boxs");
 
@@ -1127,7 +1127,7 @@ namespace electrostore.Migrations
                     b.Navigation("StoresTags");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Tags", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Tags", b =>
                 {
                     b.Navigation("BoxsTags");
 
@@ -1136,7 +1136,7 @@ namespace electrostore.Migrations
                     b.Navigation("StoresTags");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Users", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.Users", b =>
                 {
                     b.Navigation("CommandsCommentaires");
 

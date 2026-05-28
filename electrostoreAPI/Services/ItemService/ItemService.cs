@@ -1,12 +1,12 @@
 using AutoMapper;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Models;
+using ElectrostoreAPI.Services.FileService;
 using Microsoft.EntityFrameworkCore;
-using electrostore.Dto;
-using electrostore.Extensions;
-using electrostore.Models;
-using electrostore.Services.FileService;
 using System.Linq.Expressions;
 
-namespace electrostore.Services.ItemService;
+namespace ElectrostoreAPI.Services.ItemService;
 
 public class ItemService : IItemService
 {

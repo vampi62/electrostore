@@ -1,8 +1,8 @@
+using ElectrostoreAPI.Enums;
+using ElectrostoreAPI.Validators;
 using System.ComponentModel.DataAnnotations;
-using electrostore.Enums;
-using electrostore.Validators;
 
-namespace electrostore.Dto;
+namespace ElectrostoreAPI.Dto;
 
 public record ReadUserDto
 {

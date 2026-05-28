@@ -1,7 +1,6 @@
-using System.Net;
 using System.Text.Json;
 
-namespace electrostore.Middleware;
+namespace ElectrostoreAPI.Middleware;
 
 public class ExceptionsHandler
 {

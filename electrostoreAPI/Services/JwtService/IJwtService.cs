@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.JwtService;
+namespace ElectrostoreAPI.Services.JwtService;
 
 public interface IJwtService
 {

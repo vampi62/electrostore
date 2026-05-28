@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 using System.Numerics;
 
-namespace electrostore.Models;
+namespace ElectrostoreAPI.Models;
 
 public class ItemsDocuments : BaseEntity
 {

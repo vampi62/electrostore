@@ -1,16 +1,16 @@
-using System.Text;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
+using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Models;
+using ElectrostoreAPI.Services.SessionService;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.JsonWebTokens;
-using electrostore.Dto;
-using electrostore.Enums;
-using electrostore.Extensions;
-using electrostore.Models;
-using electrostore.Services.SessionService;
+using Microsoft.IdentityModel.Tokens;
 using System.Linq.Expressions;
+using System.Text;
 
-namespace electrostore.Services.JwiService;
+namespace ElectrostoreAPI.Services.JwiService;
 
 public class JwiService : IJwiService
 {

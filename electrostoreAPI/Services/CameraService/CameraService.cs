@@ -1,18 +1,18 @@
 using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using electrostore.Dto;
-using electrostore.Enums;
-using electrostore.Extensions;
-using electrostore.Models;
-using System.Net.Http.Headers;
-using electrostore.Services.SessionService;
-using electrostore.Services.JwiService;
-using System.Text.Json;
-using System.Text;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
+using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Models;
+using ElectrostoreAPI.Services.SessionService;
+using ElectrostoreAPI.Services.JwiService;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 
-namespace electrostore.Services.CameraService;
+namespace ElectrostoreAPI.Services.CameraService;
 
 public class CameraService : ICameraService
 {

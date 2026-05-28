@@ -1,7 +1,7 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 using Microsoft.AspNetCore.Mvc;
 
-namespace electrostore.Services.CommandDocumentService;
+namespace ElectrostoreAPI.Services.CommandDocumentService;
 
 public interface ICommandDocumentService
 {

@@ -1,4 +1,4 @@
-namespace electrostore.Models;
+namespace ElectrostoreAPI.Models;
 public abstract class BaseEntity
 {
     public DateTime created_at { get; set; }

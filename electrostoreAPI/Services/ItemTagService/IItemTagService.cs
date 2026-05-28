@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.ItemTagService;
+namespace ElectrostoreAPI.Services.ItemTagService;
 
 public interface IItemTagService
 {

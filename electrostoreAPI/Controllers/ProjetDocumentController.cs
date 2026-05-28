@@ -1,12 +1,12 @@
-using Microsoft.AspNetCore.Mvc;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Services.FileService;
+using ElectrostoreAPI.Services.ProjetDocumentService;
 using Microsoft.AspNetCore.Authorization;
-using electrostore.Dto;
-using electrostore.Services.ProjetDocumentService;
-using electrostore.Services.FileService;
+using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using electrostore.Extensions;
 
-namespace electrostore.Controllers
+namespace ElectrostoreAPI.Controllers
 {
     [ApiController]
     [Route("api/projet/{id_projet}/document")]

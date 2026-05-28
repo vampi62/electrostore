@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.ProjetDocumentService;
+namespace ElectrostoreAPI.Services.ProjetDocumentService;
 
 public interface IProjetDocumentService
 {

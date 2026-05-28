@@ -1,10 +1,10 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 using Minio;
 using Minio.DataModel.Args;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
-namespace electrostore.Services.FileService;
+namespace ElectrostoreAPI.Services.FileService;
 
 public class FileService : IFileService
 {

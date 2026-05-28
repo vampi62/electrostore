@@ -1,9 +1,9 @@
+using ElectrostoreAPI.Dto;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using electrostore.Dto;
 
-namespace electrostore.Extensions;
+namespace ElectrostoreAPI.Extensions;
 
 public static class RsqlParserExtensions
 {

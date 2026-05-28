@@ -7,10 +7,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using electrostore;
-using electrostore.Dto;
+using ElectrostoreAPI;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Tests.Utils
+namespace ElectrostoreAPI.Tests.Utils
 {
     public abstract class TestBase
     {

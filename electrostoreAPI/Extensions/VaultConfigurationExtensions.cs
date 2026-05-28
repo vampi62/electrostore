@@ -1,10 +1,9 @@
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
 
+namespace ElectrostoreAPI.Extensions;
 
-namespace electrostore.Extensions;
-
-interface vaultConfiguration
+interface IVaultConfiguration
 {
     public string Addr { get; set; }
     public string Token { get; set; }
@@ -12,7 +11,7 @@ interface vaultConfiguration
     public string MountPoint { get; set; }
 }
 
-class VaultConfigurationImpl : vaultConfiguration
+class VaultConfigurationImpl : IVaultConfiguration
 {
     public required string Addr { get; set; }
     public required string Token { get; set; }
@@ -50,12 +49,13 @@ public static class VaultConfigurationExtensions
         return builder;
     }
 
-    private static void SearchInConfigBranch(IConfigurationBuilder builder, VaultClient vaultClient, vaultConfiguration vaultConfig, IConfigurationSection section)
+    private static void SearchInConfigBranch(IConfigurationBuilder builder, VaultClient vaultClient, IVaultConfiguration vaultConfig, IConfigurationSection section)
     {
         foreach (var child in section.GetChildren())
         {
             // if the section has a value, check if it contains a vault reference and replace it with the secret value
-            if (child.Value != null)            {
+            if (child.Value != null)
+            {
                 FindSecretInConfigValue(builder, vaultClient, vaultConfig, child);
             }
             else
@@ -66,7 +66,7 @@ public static class VaultConfigurationExtensions
         }
     }
 
-    private static void FindSecretInConfigValue(IConfigurationBuilder builder, VaultClient vaultClient, vaultConfiguration vaultConfig, IConfigurationSection section)
+    private static void FindSecretInConfigValue(IConfigurationBuilder builder, VaultClient vaultClient, IVaultConfiguration vaultConfig, IConfigurationSection section)
     {
         if (section.Value != null && section.Value.Contains("{{vault:") && section.Value.Contains("}}"))
         {

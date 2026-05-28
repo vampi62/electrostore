@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.JwiService;
+namespace ElectrostoreAPI.Services.JwiService;
 
 public interface IJwiService
 {

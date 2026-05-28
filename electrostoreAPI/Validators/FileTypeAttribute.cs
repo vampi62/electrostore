@@ -1,9 +1,9 @@
+using ElectrostoreAPI.Dto;
+using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
-using electrostore.Dto;
-using System.Collections.Immutable;
 
-namespace electrostore.Validators;
+namespace ElectrostoreAPI.Validators;
 
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
 public class FileTypeAttribute : ValidationAttribute

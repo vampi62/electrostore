@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 
-namespace electrostore.Dto;
+namespace ElectrostoreAPI.Dto;
 
 public record ReadConfig
 {

@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\electrostoreAPI\electrostore.csproj" />
+    <ProjectReference Include="..\..\electrostoreAPI\electrostoreAPI.csproj" />
   </ItemGroup>
 
 </Project>

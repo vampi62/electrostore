@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 
-namespace electrostore.Dto;
+namespace ElectrostoreAPI.Dto;
 
 public record ReadBoxDto
 {

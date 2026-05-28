@@ -1,11 +1,10 @@
 using AutoMapper;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using electrostore.Dto;
-using electrostore.Enums;
-using electrostore.Extensions;
-using electrostore.Models;
 
-namespace electrostore.Services.ProjetStatusService;
+namespace ElectrostoreAPI.Services.ProjetStatusService;
 
 public class ProjetStatusService : IProjetStatusService
 {

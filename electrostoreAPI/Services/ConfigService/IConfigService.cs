@@ -1,8 +1,10 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.ConfigService;
+namespace ElectrostoreAPI.Services.ConfigService;
 
 public interface IConfigService
 {
     Task<ReadConfig> getAllConfig();
+    bool GetDemoMode();
+    string[] GetAllowedImageExtensions();
 }
