@@ -1,6 +1,6 @@
 using System.Net.Mail;
 
-namespace electrostoreAPI.Services.SmtpService;
+namespace ElectrostoreAPI.Services.SmtpService;
 
 public interface ISmtpService
 {

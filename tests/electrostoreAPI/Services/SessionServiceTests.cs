@@ -3,14 +3,14 @@ using Moq;
 using Xunit;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
-using electrostoreAPI;
-using electrostoreAPI.Dto;
-using electrostoreAPI.Enums;
-using electrostoreAPI.Models;
-using electrostoreAPI.Services.SessionService;
-using electrostoreAPI.Tests.Utils;
+using ElectrostoreAPI;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
+using ElectrostoreAPI.Models;
+using ElectrostoreAPI.Services.SessionService;
+using ElectrostoreAPI.Tests.Utils;
 
-namespace electrostoreAPI.Tests.Services
+namespace ElectrostoreAPI.Tests.Services
 {
     public class SessionServiceTests : TestBase
     {

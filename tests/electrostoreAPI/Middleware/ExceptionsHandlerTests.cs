@@ -1,4 +1,4 @@
-using electrostoreAPI.Middleware;
+using ElectrostoreAPI.Middleware;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;

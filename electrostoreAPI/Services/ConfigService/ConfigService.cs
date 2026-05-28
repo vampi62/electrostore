@@ -1,5 +1,6 @@
 using ElectrostoreAPI.Dto;
 using MQTTnet;
+using System.Text.Json;
 
 namespace ElectrostoreAPI.Services.ConfigService;
 

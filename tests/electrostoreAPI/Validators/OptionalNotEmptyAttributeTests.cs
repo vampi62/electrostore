@@ -1,4 +1,4 @@
-using electrostoreAPI.Validators;
+using ElectrostoreAPI.Validators;
 using Xunit;
 
 namespace electrostoreAPIAPI.Tests.Validators;

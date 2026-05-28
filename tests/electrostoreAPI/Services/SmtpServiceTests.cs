@@ -8,13 +8,13 @@ using System.IO;
 using AutoMapper;
 using System.Net;
 using System.Net.Mail;
-using electrostoreAPI;
-using electrostoreAPI.Dto;
-using electrostoreAPI.Models;
-using electrostoreAPI.Services.SmtpService;
-using electrostoreAPI.Tests.Utils;
+using ElectrostoreAPI;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Models;
+using ElectrostoreAPI.Services.SmtpService;
+using ElectrostoreAPI.Tests.Utils;
 
-namespace electrostoreAPI.Tests.Services
+namespace ElectrostoreAPI.Tests.Services
 {
     public class SmtpServiceTests
     {

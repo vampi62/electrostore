@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Moq;
-using electrostoreAPI.Validators;
-using electrostoreAPI.Dto;
+using ElectrostoreAPI.Validators;
+using ElectrostoreAPI.Dto;
 using Xunit;
 
 namespace electrostoreAPIAPI.Tests.Validators;

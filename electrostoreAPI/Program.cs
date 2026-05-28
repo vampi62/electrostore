@@ -24,6 +24,7 @@ using ElectrostoreAPI.Services.ProjetDocumentService;
 using ElectrostoreAPI.Services.ProjetItemService;
 using ElectrostoreAPI.Services.ProjetProjetTagService;
 using ElectrostoreAPI.Services.ProjetService;
+using ElectrostoreAPI.Services.ProjetStatusService;
 using ElectrostoreAPI.Services.ProjetTagService;
 using ElectrostoreAPI.Services.SessionService;
 using ElectrostoreAPI.Services.StoreService;
@@ -31,7 +32,6 @@ using ElectrostoreAPI.Services.StoreTagService;
 using ElectrostoreAPI.Services.TagService;
 using ElectrostoreAPI.Services.UserService;
 using ElectrostoreAPI.Services.ValidateStoreService;
-using ElectrostoreAPI.Services.StatusService;
 using ElectrostoreAPI.Services.JwtService;
 using ElectrostoreAPI.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -48,7 +48,7 @@ using System.Text;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
 
-using electrostore.Services.SmtpService;
+using ElectrostoreAPI.Services.SmtpService;
 namespace ElectrostoreAPI;
 
 public partial class Program

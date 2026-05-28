@@ -3,7 +3,7 @@ using Moq;
 using System.Net;
 using System.Security.Claims;
 
-namespace electrostoreAPI.Tests.Utils
+namespace ElectrostoreAPI.Tests.Utils
 {
     public static class HttpContextAccessorMockFactory
     {

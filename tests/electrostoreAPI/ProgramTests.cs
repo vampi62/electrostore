@@ -22,17 +22,17 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Linq;
 using AutoMapper;
-using electrostoreAPI;
-using electrostoreAPI.Dto;
-using electrostoreAPI.Enums;
-using electrostoreAPI.Models;
-using electrostoreAPI.Services.UserService;
-using electrostoreAPI.Services.JwtService;
+using ElectrostoreAPI;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
+using ElectrostoreAPI.Models;
+using ElectrostoreAPI.Services.UserService;
+using ElectrostoreAPI.Services.JwtService;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Swashbuckle.AspNetCore.Swagger;
 using Microsoft.AspNetCore.Mvc.Testing;
 
-namespace electrostoreAPI.Tests
+namespace ElectrostoreAPI.Tests
 {
     public class ProgramTests
     {
@@ -218,7 +218,7 @@ namespace electrostoreAPI.Tests
             // Add required services
             var mockWebHostEnvironment = new Mock<IWebHostEnvironment>();
             mockWebHostEnvironment.Setup(m => m.EnvironmentName).Returns("Development");
-            mockWebHostEnvironment.Setup(m => m.ApplicationName).Returns("electrostoreAPI");
+            mockWebHostEnvironment.Setup(m => m.ApplicationName).Returns("ElectrostoreAPI");
             services.AddSingleton<IWebHostEnvironment>(mockWebHostEnvironment.Object);
             services.AddSingleton<Microsoft.Extensions.Hosting.IHostEnvironment>(mockWebHostEnvironment.Object);
             

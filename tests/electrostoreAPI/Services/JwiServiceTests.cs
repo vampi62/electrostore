@@ -12,16 +12,16 @@ using AutoMapper;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using electrostoreAPI;
-using electrostoreAPI.Dto;
-using electrostoreAPI.Enums;
-using electrostoreAPI.Models;
-using electrostoreAPI.Services.JwiService;
-using electrostoreAPI.Services.SessionService;
-using electrostoreAPI.Services.JwtService;
-using electrostoreAPI.Tests.Utils;
+using ElectrostoreAPI;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
+using ElectrostoreAPI.Models;
+using ElectrostoreAPI.Services.JwiService;
+using ElectrostoreAPI.Services.SessionService;
+using ElectrostoreAPI.Services.JwtService;
+using ElectrostoreAPI.Tests.Utils;
 
-namespace electrostoreAPI.Tests.Services
+namespace ElectrostoreAPI.Tests.Services
 {
     public class JwiServiceTests : TestBase
     {
@@ -39,7 +39,7 @@ namespace electrostoreAPI.Tests.Services
             _jwtSettings = new JwtSettings
             {
                 Key = "ThisIsASecretKeyForJwtTokenGeneration12345",
-                Issuer = "electrostoreAPI",
+                Issuer = "ElectrostoreAPI",
                 Audience = "electrostoreAPI_users",
                 ExpireDays = 7
             };
