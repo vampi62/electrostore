@@ -9,33 +9,33 @@ public class ApplicationDbContext : DbContext
         : base(options)
     {
     }
-    public DbSet<electrostore.Models.Boxs> Boxs { get; set; }
-    public DbSet<electrostore.Models.BoxsTags> BoxsTags { get; set; }
-    public DbSet<electrostore.Models.Cameras> Cameras { get; set; }
-    public DbSet<electrostore.Models.Commands> Commands { get; set; }
-    public DbSet<electrostore.Models.CommandsCommentaires> CommandsCommentaires { get; set; }
-    public DbSet<electrostore.Models.CommandsDocuments> CommandsDocuments { get; set; }
-    public DbSet<electrostore.Models.CommandsItems> CommandsItems { get; set; }
-    public DbSet<electrostore.Models.IA> IA { get; set; }
-    public DbSet<electrostore.Models.Imgs> Imgs { get; set; }
-    public DbSet<electrostore.Models.Items> Items { get; set; }
-    public DbSet<electrostore.Models.ItemsBoxs> ItemsBoxs { get; set; }
-    public DbSet<electrostore.Models.ItemsDocuments> ItemsDocuments { get; set; }
-    public DbSet<electrostore.Models.ItemsTags> ItemsTags { get; set; }
-    public DbSet<electrostore.Models.JwiAccessTokens> JwiAccessTokens { get; set; }
-    public DbSet<electrostore.Models.JwiRefreshTokens> JwiRefreshTokens { get; set; }
-    public DbSet<electrostore.Models.Leds> Leds { get; set; }
-    public DbSet<electrostore.Models.Projets> Projets { get; set; }
-    public DbSet<electrostore.Models.ProjetsCommentaires> ProjetsCommentaires { get; set; }
-    public DbSet<electrostore.Models.ProjetsDocuments> ProjetsDocuments { get; set; }
-    public DbSet<electrostore.Models.ProjetsItems> ProjetsItems { get; set; }
-    public DbSet<electrostore.Models.ProjetsProjetTags> ProjetsProjetTags { get; set; }
-    public DbSet<electrostore.Models.ProjetTags> ProjetTags { get; set; }
-    public DbSet<electrostore.Models.ProjetsStatus> ProjetsStatus { get; set; }
-    public DbSet<electrostore.Models.Stores> Stores { get; set; }
-    public DbSet<electrostore.Models.StoresTags> StoresTags { get; set; }
-    public DbSet<electrostore.Models.Tags> Tags { get; set; }
-    public DbSet<electrostore.Models.Users> Users { get; set; }
+    public DbSet<ElectrostoreAPI.Models.Boxs> Boxs { get; set; }
+    public DbSet<ElectrostoreAPI.Models.BoxsTags> BoxsTags { get; set; }
+    public DbSet<ElectrostoreAPI.Models.Cameras> Cameras { get; set; }
+    public DbSet<ElectrostoreAPI.Models.Commands> Commands { get; set; }
+    public DbSet<ElectrostoreAPI.Models.CommandsCommentaires> CommandsCommentaires { get; set; }
+    public DbSet<ElectrostoreAPI.Models.CommandsDocuments> CommandsDocuments { get; set; }
+    public DbSet<ElectrostoreAPI.Models.CommandsItems> CommandsItems { get; set; }
+    public DbSet<ElectrostoreAPI.Models.IA> IA { get; set; }
+    public DbSet<ElectrostoreAPI.Models.Imgs> Imgs { get; set; }
+    public DbSet<ElectrostoreAPI.Models.Items> Items { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ItemsBoxs> ItemsBoxs { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ItemsDocuments> ItemsDocuments { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ItemsTags> ItemsTags { get; set; }
+    public DbSet<ElectrostoreAPI.Models.JwiAccessTokens> JwiAccessTokens { get; set; }
+    public DbSet<ElectrostoreAPI.Models.JwiRefreshTokens> JwiRefreshTokens { get; set; }
+    public DbSet<ElectrostoreAPI.Models.Leds> Leds { get; set; }
+    public DbSet<ElectrostoreAPI.Models.Projets> Projets { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ProjetsCommentaires> ProjetsCommentaires { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ProjetsDocuments> ProjetsDocuments { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ProjetsItems> ProjetsItems { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ProjetsProjetTags> ProjetsProjetTags { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ProjetTags> ProjetTags { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ProjetsStatus> ProjetsStatus { get; set; }
+    public DbSet<ElectrostoreAPI.Models.Stores> Stores { get; set; }
+    public DbSet<ElectrostoreAPI.Models.StoresTags> StoresTags { get; set; }
+    public DbSet<ElectrostoreAPI.Models.Tags> Tags { get; set; }
+    public DbSet<ElectrostoreAPI.Models.Users> Users { get; set; }
 
     public override int SaveChanges()
     {

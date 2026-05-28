@@ -1,13 +1,14 @@
 using AutoMapper;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
+using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Models;
+using ElectrostoreAPI.Services.JwiService;
+using ElectrostoreAPI.Services.SessionService;
+using ElectrostoreAPI.Services.SmtpService;
 using Microsoft.EntityFrameworkCore;
-using electrostore.Dto;
-using electrostore.Enums;
-using electrostore.Extensions;
-using electrostore.Models;
-using electrostore.Services.SmtpService;
-using electrostore.Services.SessionService;
-using electrostore.Services.JwiService;
 using System.Linq.Expressions;
+using System.Text.Json;
 
 namespace ElectrostoreAPI.Services.UserService;
 

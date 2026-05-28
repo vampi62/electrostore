@@ -59,16 +59,29 @@ public class ConfigService : IConfigService
             max_length_reason = Constants.MaxReasonLength,
             max_length_status = Constants.MaxStatusLength,
             max_size_document_in_mb = Constants.MaxDocumentSizeMB,
-            sso_available_providers = [.. _configuration.GetSection("OAuth").GetChildren().Select(provider => new SSOAvailableProvider
-            {
-                provider = provider.Key,
-                display_name = provider.GetValue<string>("DisplayName") ?? string.Empty,
-                icon_url = provider.GetValue<string>("IconUrl") ?? string.Empty
-            })],
-            allowed_image_mime_types = [.. Constants.AllowedImageMimeTypes.Keys],
-            allowed_image_extensions = [.. Constants.AllowedImageMimeTypes.Values],
-            allowed_document_mime_types = [.. Constants.AllowedDocumentMimeTypes.Keys],
-            allowed_document_extensions = [.. Constants.AllowedDocumentMimeTypes.Values]
+            sso_available_providers = GetSSOProviders(),
+            allowed_image_mime_types = GetAllowedImageMimeTypes(),
+            allowed_image_extensions = GetAllowedImageExtensions(),
+            allowed_document_mime_types = GetAllowedDocumentMimeTypes(),
+            allowed_document_extensions = GetAllowedDocumentExtensions()
         };
     }
+
+    public bool GetDemoMode() => _configuration.GetValue<bool>("DemoMode");
+
+    public string[] GetAllowedImageExtensions() => [.. Constants.AllowedImageMimeTypes.Values];
+
+    private string[] GetAllowedImageMimeTypes() => [.. Constants.AllowedImageMimeTypes.Keys];
+
+    private string[] GetAllowedDocumentExtensions() => [.. Constants.AllowedDocumentMimeTypes.Values];
+
+    private string[] GetAllowedDocumentMimeTypes() => [.. Constants.AllowedDocumentMimeTypes.Keys];
+
+    private List<SSOAvailableProvider> GetSSOProviders() =>
+        [.. _configuration.GetSection("OAuth").GetChildren().Select(provider => new SSOAvailableProvider
+        {
+            provider = provider.Key,
+            display_name = provider.GetValue<string>("DisplayName") ?? string.Empty,
+            icon_url = provider.GetValue<string>("IconUrl") ?? string.Empty
+        })];
 }
