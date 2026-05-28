@@ -1,5 +1,5 @@
 
-namespace electrostore.Enums;
+namespace ElectrostoreAPI.Enums;
 
 public enum ProjetStatus
 {

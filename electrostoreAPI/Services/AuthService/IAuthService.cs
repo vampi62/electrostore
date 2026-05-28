@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.AuthService;
+namespace ElectrostoreAPI.Services.AuthService;
 
 public interface IAuthService
 {

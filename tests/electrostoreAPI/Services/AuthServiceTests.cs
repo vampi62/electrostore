@@ -7,20 +7,20 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.IO;
 using AutoMapper;
-using electrostore;
-using electrostore.Dto;
-using electrostore.Enums;
-using electrostore.Models;
-using electrostore.Services.AuthService;
-using electrostore.Services.JwtService;
-using electrostore.Services.JwiService;
-using electrostore.Services.SessionService;
-using electrostore.Services.SmtpService;
-using electrostore.Services.UserService;
+using ElectrostoreAPI;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
+using ElectrostoreAPI.Models;
+using ElectrostoreAPI.Services.AuthService;
+using ElectrostoreAPI.Services.JwtService;
+using ElectrostoreAPI.Services.JwiService;
+using ElectrostoreAPI.Services.SessionService;
+using ElectrostoreAPI.Services.SmtpService;
+using ElectrostoreAPI.Services.UserService;
 
-using electrostore.Tests.Utils;
+using ElectrostoreAPI.Tests.Utils;
 
-namespace electrostore.Tests.Services
+namespace ElectrostoreAPI.Tests.Services
 {
     public class AuthServiceTests : TestBase
     {

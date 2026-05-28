@@ -1,7 +1,7 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 using Microsoft.AspNetCore.Mvc;
 
-namespace electrostore.Services.ItemService;
+namespace ElectrostoreAPI.Services.ItemService;
 
 public interface IItemService
 {

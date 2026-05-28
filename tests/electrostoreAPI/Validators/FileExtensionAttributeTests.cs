@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Http;
 using Moq;
-using electrostore.Validators;
-using electrostore.Dto;
+using ElectrostoreAPI.Validators;
+using ElectrostoreAPI.Dto;
 using Xunit;
 
-namespace electrostoreAPI.Tests.Validators;
+namespace electrostoreAPIAPI.Tests.Validators;
 
 public class FileTypeAttributeTests
 {

@@ -1,6 +1,6 @@
-using electrostore.Enums;
+using ElectrostoreAPI.Enums;
 
-namespace electrostore.Services.SessionService;
+namespace ElectrostoreAPI.Services.SessionService;
 
 public interface ISessionService
 {

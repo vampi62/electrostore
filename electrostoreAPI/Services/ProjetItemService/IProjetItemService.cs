@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.ProjetItemService;
+namespace ElectrostoreAPI.Services.ProjetItemService;
 
 public interface IProjetItemService
 {

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace electrostore.Validators;
+namespace ElectrostoreAPI.Validators;
 
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
 public class FileSizeAttribute : ValidationAttribute

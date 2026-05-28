@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
 WORKDIR /app
 
 COPY ["Controllers/", "DTO/", "Enums/", "Extensions/", "Middleware/", "Migrations/", "Models/", "Services/", "Validators/", \
-        "ApplicationDbContext.cs", "electrostore.csproj", "Mapper.cs", "Program.cs", "SwaggerClass.cs", "./"]
+        "ApplicationDbContext.cs", "electrostoreAPI.csproj", "Mapper.cs", "Program.cs", "SwaggerClass.cs", "./"]
 
 RUN dotnet restore
 
@@ -22,4 +22,4 @@ COPY --from=build /app/out .
 
 EXPOSE 80
 
-CMD ["dotnet", "electrostore.dll"]
+CMD ["dotnet", "electrostoreAPI.dll"]

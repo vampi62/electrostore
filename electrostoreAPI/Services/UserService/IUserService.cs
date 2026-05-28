@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.UserService;
+namespace ElectrostoreAPI.Services.UserService;
 
 public interface IUserService
 {

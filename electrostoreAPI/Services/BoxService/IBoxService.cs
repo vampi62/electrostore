@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.BoxService;
+namespace ElectrostoreAPI.Services.BoxService;
 
 public interface IBoxService
 {

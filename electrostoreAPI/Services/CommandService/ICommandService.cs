@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.CommandService;
+namespace ElectrostoreAPI.Services.CommandService;
 
 public interface ICommandService
 {

@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using electrostore.Dto;
-using electrostore.Enums;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
 
-namespace electrostore.Models;
+namespace ElectrostoreAPI.Models;
 
 public class Projets : BaseEntity
 {

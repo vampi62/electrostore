@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Http;
 using Moq;
-using electrostore.Validators;
+using ElectrostoreAPI.Validators;
 using Xunit;
 
-namespace electrostoreAPI.Tests.Validators;
+namespace electrostoreAPIAPI.Tests.Validators;
 
 public class FileSizeAttributeTests
 {

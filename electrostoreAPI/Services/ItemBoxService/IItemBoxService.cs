@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.ItemBoxService;
+namespace ElectrostoreAPI.Services.ItemBoxService;
 
 public interface IItemBoxService
 {

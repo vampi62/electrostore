@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace electrostore.Migrations
+namespace ElectrostoreAPI.Migrations
 {
     /// <inheritdoc />
     public partial class SSOMethod : Migration

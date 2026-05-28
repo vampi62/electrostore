@@ -1,11 +1,11 @@
 using AutoMapper;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using electrostore.Dto;
-using electrostore.Extensions;
-using electrostore.Models;
 using System.Linq.Expressions;
 
-namespace electrostore.Services.TagService;
+namespace ElectrostoreAPI.Services.TagService;
 
 public class TagService : ITagService
 {

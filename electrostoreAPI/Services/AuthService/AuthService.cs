@@ -1,16 +1,16 @@
 using AutoMapper;
-using System.Text.Json;
-using electrostore.Dto;
-using electrostore.Services.SmtpService;
-using electrostore.Services.SessionService;
-using electrostore.Services.UserService;
-using electrostore.Services.JwiService;
-using electrostore.Services.JwtService;
-using System.Security.Cryptography;
-using System.Web;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Services.JwiService;
+using ElectrostoreAPI.Services.JwtService;
+using ElectrostoreAPI.Services.UserService;
+using ElectrostoreAPI.Services.SessionService;
+using ElectrostoreAPI.Services.SmtpService;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text.Json;
+using System.Web;
 
-namespace electrostore.Services.AuthService;
+namespace ElectrostoreAPI.Services.AuthService;
 
 public class AuthService : IAuthService
 {

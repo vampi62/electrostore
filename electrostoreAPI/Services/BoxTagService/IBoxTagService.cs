@@ -1,6 +1,6 @@
-using electrostore.Dto;
+using ElectrostoreAPI.Dto;
 
-namespace electrostore.Services.BoxTagService;
+namespace ElectrostoreAPI.Services.BoxTagService;
 
 public interface IBoxTagService
 {

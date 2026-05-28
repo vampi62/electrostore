@@ -1,9 +1,8 @@
 using AutoMapper;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Models;
 
-using electrostore.Models;
-using electrostore.Dto;
-
-namespace electrostore;
+namespace ElectrostoreAPI;
 
 public class MappingProfile : Profile
 {
@@ -93,7 +92,7 @@ public class MappingProfile : Profile
         CreateMap<ProjetsItems, ReadExtendedProjetItemDto>()
             .ForMember(dest => dest.projet, opt => opt.MapFrom(src => src.Projet))
             .ForMember(dest => dest.item, opt => opt.MapFrom(src => src.Item));
-        
+
         CreateMap<ProjetsStatus, ReadProjetStatusDto>();
         CreateMap<ProjetsStatus, ReadExtendedProjetStatusDto>()
             .ForMember(dest => dest.projet, opt => opt.MapFrom(src => src.Projet));

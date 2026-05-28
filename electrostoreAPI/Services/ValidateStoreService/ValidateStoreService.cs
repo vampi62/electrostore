@@ -1,9 +1,9 @@
-using electrostore.Dto;
-using electrostore.Models;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
 
-namespace electrostore.Services.ValidateStoreService;
+namespace ElectrostoreAPI.Services.ValidateStoreService;
 
 public class ValidateStoreService : IValidateStoreService
 {

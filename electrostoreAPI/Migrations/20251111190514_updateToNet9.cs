@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace electrostore.Migrations
+namespace ElectrostoreAPI.Migrations
 {
     /// <inheritdoc />
     public partial class updateToNet9 : Migration
