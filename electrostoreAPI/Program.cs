@@ -1,59 +1,56 @@
-using Microsoft.EntityFrameworkCore;
-using System.Text;
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
+using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Services.AuthService;
+using ElectrostoreAPI.Services.BoxService;
+using ElectrostoreAPI.Services.BoxTagService;
+using ElectrostoreAPI.Services.CameraService;
+using ElectrostoreAPI.Services.CommandCommentaireService;
+using ElectrostoreAPI.Services.CommandDocumentService;
+using ElectrostoreAPI.Services.CommandItemService;
+using ElectrostoreAPI.Services.CommandService;
+using ElectrostoreAPI.Services.ConfigService;
+using ElectrostoreAPI.Services.FileService;
+using ElectrostoreAPI.Services.IAService;
+using ElectrostoreAPI.Services.ImgService;
+using ElectrostoreAPI.Services.ItemBoxService;
+using ElectrostoreAPI.Services.ItemDocumentService;
+using ElectrostoreAPI.Services.ItemService;
+using ElectrostoreAPI.Services.ItemTagService;
+using ElectrostoreAPI.Services.JwiService;
+using ElectrostoreAPI.Services.LedService;
+using ElectrostoreAPI.Services.ProjetCommentaireService;
+using ElectrostoreAPI.Services.ProjetDocumentService;
+using ElectrostoreAPI.Services.ProjetItemService;
+using ElectrostoreAPI.Services.ProjetProjetTagService;
+using ElectrostoreAPI.Services.ProjetService;
+using ElectrostoreAPI.Services.ProjetStatusService;
+using ElectrostoreAPI.Services.ProjetTagService;
+using ElectrostoreAPI.Services.SessionService;
+using ElectrostoreAPI.Services.StoreService;
+using ElectrostoreAPI.Services.StoreTagService;
+using ElectrostoreAPI.Services.TagService;
+using ElectrostoreAPI.Services.UserService;
+using ElectrostoreAPI.Services.ValidateStoreService;
+using ElectrostoreAPI.Services.StatusService;
+using ElectrostoreAPI.Services.JwtService;
+using ElectrostoreAPI.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.OpenApi.Models;
 using Minio;
-
+using MQTTnet;
+using System.Text;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
 
-using MQTTnet;
-using electrostore.Dto;
-using electrostore.Enums;
-
-using electrostore.Services.AuthService;
-using electrostore.Services.BoxService;
-using electrostore.Services.BoxTagService;
-using electrostore.Services.CameraService;
-using electrostore.Services.CommandCommentaireService;
-using electrostore.Services.CommandDocumentService;
-using electrostore.Services.CommandItemService;
-using electrostore.Services.CommandService;
-using electrostore.Services.ConfigService;
-using electrostore.Services.FileService;
-using electrostore.Services.IAService;
-using electrostore.Services.ImgService;
-using electrostore.Services.ItemBoxService;
-using electrostore.Services.ItemDocumentService;
-using electrostore.Services.ItemService;
-using electrostore.Services.ItemTagService;
-using electrostore.Services.JwiService;
-using electrostore.Services.LedService;
-using electrostore.Services.ProjetCommentaireService;
-using electrostore.Services.ProjetDocumentService;
-using electrostore.Services.ProjetItemService;
-using electrostore.Services.ProjetProjetTagService;
-using electrostore.Services.ProjetService;
-using electrostore.Services.ProjetStatusService;
-using electrostore.Services.ProjetTagService;
-using electrostore.Services.SessionService;
 using electrostore.Services.SmtpService;
-using electrostore.Services.StoreService;
-using electrostore.Services.StoreTagService;
-using electrostore.Services.TagService;
-using electrostore.Services.UserService;
-using electrostore.Services.ValidateStoreService;
-using electrostore.Services.JwtService;
-using electrostore.Middleware;
-using electrostore.Extensions;
-
-using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.HttpOverrides;
-
-namespace electrostore;
+namespace ElectrostoreAPI;
 
 public partial class Program
 {
@@ -174,11 +171,11 @@ public partial class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
-        app.UseStaticFiles();
 
         // if S3 is not enabled create the required directories
         if (!builder.Configuration.GetSection("S3:Enable").Get<bool>())
         {
+            app.UseStaticFiles();
             CreateRequiredDirectories();
         }
 
