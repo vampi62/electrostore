@@ -1,5 +1,4 @@
 using AutoMapper;
-using electrostore.Services.SmtpService;
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Services.JwiService;
 using ElectrostoreAPI.Services.JwtService;
