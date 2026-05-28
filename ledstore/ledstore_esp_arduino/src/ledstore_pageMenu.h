@@ -23,7 +23,11 @@ void handleStatus(AsyncWebServerRequest *request)
   }
   StaticJsonDocument<500> doc;
   doc["uptime"] = millis() / 1000;
+#if defined(ESP32)
+  doc["espModel"] = ESP.getChipModel();
+#elif defined(ESP8266)
   doc["espModel"] = ESP.getChipId();
+#endif
   doc["OTAWait"] = waitingOTA ? "Waiting" : "Not Waiting";
   doc["OTAUploading"] = updateOTA ? "Uploading" : "Not Uploading";
   doc["OTAError"] = updateOTAError;

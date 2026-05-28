@@ -106,7 +106,11 @@ void handleMenuMqtt(AsyncWebServerRequest *request)
   response += "<a href='/'>Back</a>";
   response += "<div class='info'>";
   response += "<b>LedStore Version:</b> " + String(version_ledstore) + "<br>";
+#if defined(ESP32)
+  response += "<b>ESP Model:</b> " + String(ESP.getChipModel()) + "<br>";
+#elif defined(ESP8266)
   response += "<b>ESP Model:</b> " + String(ESP.getChipId()) + "<br>";
+#endif
   response += "<b>ESP Uptime:</b> <span id='uptime'>" + String(millis() / 1000) + "s</span><br>";
   response += "</div>";
   response += "</body>";
