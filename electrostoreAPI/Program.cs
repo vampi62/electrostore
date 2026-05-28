@@ -24,7 +24,6 @@ using ElectrostoreAPI.Services.ProjetDocumentService;
 using ElectrostoreAPI.Services.ProjetItemService;
 using ElectrostoreAPI.Services.ProjetProjetTagService;
 using ElectrostoreAPI.Services.ProjetService;
-using ElectrostoreAPI.Services.ProjetStatusService;
 using ElectrostoreAPI.Services.ProjetTagService;
 using ElectrostoreAPI.Services.SessionService;
 using ElectrostoreAPI.Services.StoreService;
