@@ -527,11 +527,62 @@
 
                 <div class="file-output">
                     <div class="file-header">
-                        <h3>appsettings.json</h3>
-                        <button class="btn-copy" onclick="copyToClipboard('appsettingsFile')">Copy</button>
+                        <h3>config/api/appsettings.json</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('apiAppsettingsFile')">Copy</button>
                     </div>
-                    <pre id="appsettingsFile"></pre>
-                    <button class="btn-download" onclick="downloadFile('appsettings.json', 'appsettingsFile')">Download</button>
+                    <pre id="apiAppsettingsFile"></pre>
+                    <button class="btn-download" onclick="downloadFile('appsettings.json', 'apiAppsettingsFile')">Download</button>
+                    <p class="help-text" style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107;">
+                        <strong>Path:</strong> <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">config/api/appsettings.json</code>
+                    </p>
+                </div>
+
+                <div class="file-output">
+                    <div class="file-header">
+                        <h3>config/ia/appsettings.json</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('iaAppsettingsFile')">Copy</button>
+                    </div>
+                    <pre id="iaAppsettingsFile"></pre>
+                    <button class="btn-download" onclick="downloadFile('appsettings.json', 'iaAppsettingsFile')">Download</button>
+                    <p class="help-text" style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107;">
+                        <strong>Path:</strong> <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">config/ia/appsettings.json</code>
+                    </p>
+                </div>
+
+                <div class="file-output">
+                    <div class="file-header">
+                        <h3>config/notif/appsettings.json</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('notifAppsettingsFile')">Copy</button>
+                    </div>
+                    <pre id="notifAppsettingsFile"></pre>
+                    <button class="btn-download" onclick="downloadFile('appsettings.json', 'notifAppsettingsFile')">Download</button>
+                    <p class="help-text" style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107;">
+                        <strong>Path:</strong> <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">config/notif/appsettings.json</code>
+                    </p>
+                </div>
+
+                <div class="file-output">
+                    <div class="file-header">
+                        <h3>config/cron/appsettings.json</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('cronAppsettingsFile')">Copy</button>
+                    </div>
+                    <pre id="cronAppsettingsFile"></pre>
+                    <button class="btn-download" onclick="downloadFile('appsettings.json', 'cronAppsettingsFile')">Download</button>
+                    <p class="help-text" style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107;">
+                        <strong>Path:</strong> <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">config/cron/appsettings.json</code>
+                    </p>
+                </div>
+
+                <div class="file-output">
+                    <div class="file-header">
+                        <h3>config/worker/appsettings.json</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('workerAppsettingsFile')">Copy</button>
+                    </div>
+                    <pre id="workerAppsettingsFile"></pre>
+                    <button class="btn-download" onclick="downloadFile('appsettings.json', 'workerAppsettingsFile')">Download</button>
+                    <p class="help-text" style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107;">
+                        <strong>Path:</strong> <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">config/worker/appsettings.json</code>
+                    </p>
                 </div>
 
                 <div class="file-output">

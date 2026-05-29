@@ -171,7 +171,11 @@ function generateFiles() {
     console.log('Configuration collected:', config);
     
     const dockerCompose = generateDockerCompose(config);
-    const appsettings = generateAppsettings(config);
+    const apiAppsettings = generateApiAppsettings(config);
+    const iaAppsettings = generateIaAppsettings(config);
+    const notifAppsettings = generateNotifAppsettings(config);
+    const cronAppsettings = generateCronAppsettings(config);
+    const workerAppsettings = generateWorkerAppsettings(config);
     const envFile = generateEnvFile(config);
     const setupScript = generateSetupScript(config);
     const garageConfig = config.enableS3 && config.useS3 ? generateGarageConfig(config) : null;
@@ -179,7 +183,11 @@ function generateFiles() {
     const mosquittoPasswd = config.useMQTT ? generateMosquittoPasswd(config) : null;
     
     document.getElementById('dockerCompose').textContent = dockerCompose;
-    document.getElementById('appsettingsFile').textContent = appsettings;
+    document.getElementById('apiAppsettingsFile').textContent = apiAppsettings;
+    document.getElementById('iaAppsettingsFile').textContent = iaAppsettings;
+    document.getElementById('notifAppsettingsFile').textContent = notifAppsettings;
+    document.getElementById('cronAppsettingsFile').textContent = cronAppsettings;
+    document.getElementById('workerAppsettingsFile').textContent = workerAppsettings;
     document.getElementById('envFile').textContent = envFile;
     document.getElementById('setupScript').textContent = setupScript;
     

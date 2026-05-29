@@ -157,7 +157,84 @@ Complete the `appsettings.json` file with the following content, replacing place
     "https://<your-frontend-domain2>"
   ],
   "FrontendUrl": "http://<frontend-url>",
-  "AllowedHosts": "*"
+  "AllowedHosts": "*",
+  "DemoMode": false
+}
+```
+
+### IA service configuration
+```bash
+sudo nano /opt/electrostore/ia/appsettings.json
+```
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning",
+      "Microsoft.ML": "Warning"
+    }
+  },
+  "Kafka": {
+    "BootstrapServers": "kafka:9092",
+    "ConsumerGroupId": "ia-service"
+  },
+  "ApiServiceGrpcUrl": "http://electrostoreAPI:5001",
+  "Vault": {
+    "Enable": false,
+    "Addr": "http://vault:8200",
+    "Token": "",
+    "Path": "",
+    "MountPoint": "secret"
+  },
+  "DefaultEpochs": 10,
+  "DefaultBatchSize": 32
+}
+```
+
+### Notification service configuration
+```bash
+sudo nano /opt/electrostore/notif/appsettings.json
+```
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning"
+    }
+  },
+  "Kafka": {
+    "BootstrapServers": "kafka:9092",
+    "ConsumerGroupId": "notif-service"
+  },
+  "ApiServiceGrpcUrl": "http://electrostoreAPI:5001",
+  "Vault": {
+    "Enable": false,
+    "Addr": "http://vault:8200",
+    "Token": "",
+    "Path": "",
+    "MountPoint": "secret"
+  },
+  "SMTP": {
+    "Enable": false,
+    "Host": "<your-smtp-host>",
+    "Port": "587",
+    "Username": "<your-smtp-username>",
+    "Password": "<your-smtp-password>",
+    "From": "noreply@electrostore.local"
+  },
+  "VAPID": {
+    "Subject": "mailto:admin@electrostore.local",
+    "PublicKey": "<your-vapid-public-key>",
+    "PrivateKey": "<your-vapid-private-key>"
+  }
+}
+```
+
+> Generate VAPID keys with: `npx web-push generate-vapid-keys`  
+> The **Public Key** must also be set as `VITE_VAPID_PUBLIC_KEY` in the frontend environment.
+
 }
 ```
 
@@ -168,7 +245,7 @@ sudo docker run -d --name electrostoreAPI \
  --network electrostore \
  -p 5002:8080 \
  -v electrostoreDATA:/app/wwwroot \
- -v /opt/electrostore:/app/config:ro \
+ -v /opt/electrostore/api:/app/config:ro \
  --tmpfs /tmp \
  --security-opt no-new-privileges=true \
  --read-only=true \
@@ -182,7 +259,7 @@ sudo docker run -d --name electrostoreIA \
  --restart always \
  --network electrostore \
  -v electrostoreDATA:/data \
- -v /opt/electrostore:/app/config:ro \
+ -v /opt/electrostore/ia:/app/config:ro \
  --tmpfs /tmp \
  --security-opt no-new-privileges=true \
  --read-only=true \
@@ -191,6 +268,19 @@ sudo docker run -d --name electrostoreIA \
  --cpus=2 \
  --memory=2g \
  ghcr.io/vampi62/electrostore/ia:v1.0
+
+sudo docker run -d --name electrostoreNOTIF \
+ --restart always \
+ --network electrostore \
+ -v /opt/electrostore/notif:/app/config:ro \
+ --tmpfs /tmp \
+ --security-opt no-new-privileges=true \
+ --read-only=true \
+ --cap-drop ALL \
+ --cap-add CHOWN \
+ --cpus=1 \
+ --memory=512m \
+ ghcr.io/vampi62/electrostore/notif:v1.0
 ```
 
 ## start the web interface
