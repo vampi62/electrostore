@@ -91,11 +91,11 @@ public class ItemDocumentService : IItemDocumentService
         {
             throw new KeyNotFoundException($"Item with id '{itemDocumentDto.id_item}' not found");
         }
-        var savedFile = await _fileService.SaveFile(Path.Combine(_itemDocumentsPath, itemDocumentDto.id_item.ToString()), itemDocumentDto.document);
+        var savedFile = await _fileService.SaveFile(Path.Combine(_itemDocumentsPath, itemDocumentDto.id_item.ToString()), itemDocumentDto.document.FileName, itemDocumentDto.document.ContentType, itemDocumentDto.document.OpenReadStream());
         var itemDocument = new ItemsDocuments
         {
             id_item = itemDocumentDto.id_item,
-            url_item_document = savedFile.url,
+            url_item_document = savedFile.path,
             name_item_document = itemDocumentDto.name_item_document,
             type_item_document = savedFile.mimeType,
             size_item_document = itemDocumentDto.document.Length

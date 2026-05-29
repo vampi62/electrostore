@@ -1,10 +1,10 @@
 using AutoMapper;
 using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Kafka.Producer;
+using ElectrostoreAPI.Services.SessionService;
+using ElectrostoreAPI.Services.UserService;
 using ElectrostoreAPI.Services.JwiService;
 using ElectrostoreAPI.Services.JwtService;
-using ElectrostoreAPI.Services.UserService;
-using ElectrostoreAPI.Services.SessionService;
-using ElectrostoreAPI.Services.SmtpService;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -17,7 +17,7 @@ public class AuthService : IAuthService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
-    private readonly ISmtpService _smtpService;
+    private readonly IKafkaProducerService _kafkaProducerService;
     private readonly ISessionService _sessionService;
     private readonly IUserService _userService;
     private readonly IJwtService _jwtService;
@@ -31,12 +31,12 @@ public class AuthService : IAuthService
 
     // In-memory store for state parameters, if you want persistence or use duplication across instances, consider using a distributed cache like Redis
 
-    public AuthService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, ISmtpService smtpService, ISessionService sessionService, IUserService userService, IJwtService jwtService, IJwiService jwiService)
+    public AuthService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, IKafkaProducerService kafkaNotificationService, ISessionService sessionService, IUserService userService, IJwtService jwtService, IJwiService jwiService)
     {
         _mapper = mapper;
         _context = context;
         _configuration = configuration;
-        _smtpService = smtpService;
+        _kafkaProducerService = kafkaNotificationService;
         _sessionService = sessionService;
         _userService = userService;
         _jwtService = jwtService;
@@ -98,10 +98,17 @@ public class AuthService : IAuthService
         await _jwiService.SaveToken(jwt, user.id_user, "sso_" + sso_method);
         try
         {
-            await _smtpService.SendEmailAsync(
+            var notification = new NotificationMessage
+            {
+                Types = new List<string> { "email" },
+                RecipientEmail = user.email_user,
+                Subject = "Login",
+                Body = "A new login has been detected on your account. If this was not you, please change your password.",
+            };
+            await _kafkaProducerService.PublishAsync(
+                "notification-requests",
                 user.email_user,
-                "Login",
-                "A new login has been detected on your account. If this was not you, please change your password."
+                JsonSerializer.Serialize(notification)
             );
         }
         catch (Exception ex)
@@ -230,10 +237,17 @@ public class AuthService : IAuthService
             // send email with reset_token
             try
             {
-                await _smtpService.SendEmailAsync(
-                    request.Email,
-                    "Reset password",
-                    "Click on the following link to reset your password: " + _configuration["FrontendUrl"] + "/reset-password?token=" + user.reset_token.ToString() + "&email=" + user.email_user
+                var notification = new NotificationMessage
+                {
+                    Types = new List<string> { "email" },
+                    RecipientEmail = user.email_user,
+                    Subject = "Reset password",
+                    Body = "Click on the following link to reset your password: " + _configuration["FrontendUrl"] + "/reset-password?token=" + user.reset_token.ToString() + "&email=" + user.email_user,
+                };
+                await _kafkaProducerService.PublishAsync(
+                    "notification-requests",
+                    user.email_user,
+                    JsonSerializer.Serialize(notification)
                 );
             }
             catch (Exception ex)
@@ -264,10 +278,17 @@ public class AuthService : IAuthService
         // send email to the user
         try
         {
-            await _smtpService.SendEmailAsync(
+            var notification = new NotificationMessage
+            {
+                Types = new List<string> { "email" },
+                RecipientEmail = user.email_user,
+                Subject = "Password changed",
+                Body = "Your password has been changed",
+            };
+            await _kafkaProducerService.PublishAsync(
+                "notification-requests",
                 user.email_user,
-                "Password changed",
-                "Your password has been changed"
+                JsonSerializer.Serialize(notification)
             );
         }
         catch (Exception ex)
@@ -291,10 +312,17 @@ public class AuthService : IAuthService
         // send email to the user
         try
         {
-            await _smtpService.SendEmailAsync(
+            var notification = new NotificationMessage
+            {
+                Types = new List<string> { "email" },
+                RecipientEmail = user.email_user,
+                Subject = "Login",
+                Body = "A new login has been detected on your account. If this was not you, please change your password.",
+            };
+            await _kafkaProducerService.PublishAsync(
+                "notification-requests",
                 user.email_user,
-                "Login",
-                "A new login has been detected on your account. If this was not you, please change your password."
+                JsonSerializer.Serialize(notification)
             );
         }
         catch (Exception ex)

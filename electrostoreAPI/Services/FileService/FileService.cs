@@ -17,11 +17,11 @@ public class FileService : IFileService
     {
         _minioClient = minioClient;
         _s3Enabled = configuration.GetValue<bool>("S3:Enable");
-        _s3BucketName = configuration.GetValue<string>("S3:BucketName") ?? "electrostore-bucket";
+        _s3BucketName = configuration.GetValue<string>("S3:BucketName") ?? "ElectrostoreAPI-bucket";
     }
-    public async Task<GetFileResult> GetFile(string url)
+    public async Task<GetFileResult> GetFile(string path)
     {
-        // if S3 is used, upload the file to S3 and return the url
+        // if S3 is used, upload the file to S3 and return the path
         if (_s3Enabled)
         {
             if (_minioClient == null)
@@ -38,12 +38,12 @@ public class FileService : IFileService
             {
                 await _minioClient.GetObjectAsync(new GetObjectArgs()
                     .WithBucket(_s3BucketName)
-                    .WithObject(url)
+                    .WithObject(path)
                     .WithCallbackStream(stream => stream.CopyTo(objectContent))
                 );
                 objectContent.Position = 0;
                 // try to get the mime type from the file extension
-                var ext = Path.GetExtension(url).ToLower();
+                var ext = Path.GetExtension(path).ToLower();
                 var mimeType = ext switch
                 {
                     ".png" => "image/png",
@@ -80,11 +80,11 @@ public class FileService : IFileService
         }
         else
         {
-            var localPath = Path.Combine(_localFilesPath, url);
+            var localPath = Path.Combine(_localFilesPath, path);
             if (File.Exists(localPath))
             {
                 // try to get the mime type from the file extension
-                var ext = Path.GetExtension(url).ToLower();
+                var ext = Path.GetExtension(path).ToLower();
                 var mimeType = ext switch
                 {
                     ".png" => "image/png",
@@ -127,7 +127,7 @@ public class FileService : IFileService
         }
     }
 
-    public async Task<bool> FileExists(string url)
+    public async Task<bool> FileExists(string path)
     {
         if (_s3Enabled)
         {
@@ -139,7 +139,7 @@ public class FileService : IFileService
             {
                 await _minioClient.StatObjectAsync(new StatObjectArgs()
                     .WithBucket(_s3BucketName)
-                    .WithObject(url)
+                    .WithObject(path)
                 );
                 return true;
             }
@@ -150,24 +150,24 @@ public class FileService : IFileService
         }
         else
         {
-            var localPath = Path.Combine(_localFilesPath, url);
+            var localPath = Path.Combine(_localFilesPath, path);
             return File.Exists(localPath);
         }
     }
 
-    public async Task<SaveFileResult> SaveFile(string basePath, IFormFile file)
+    public async Task<SaveFileResult> SaveFile(string basePath, string fullFileName, string contentType, Stream data, bool overwrite = false)
     {
-        var fileName = Path.GetFileNameWithoutExtension(file.FileName);
+        var fileName = Path.GetFileNameWithoutExtension(fullFileName);
         fileName = fileName.Replace(".", "").Replace("/", ""); // remove "." and "/" from the file name to prevent directory traversal attacks
         if (fileName.Length > 100) // cut the file name to 100 characters to prevent too long file names
         {
             fileName = fileName[..100];
         }
-        var fileExt = Path.GetExtension(file.FileName);
+        var fileExt = Path.GetExtension(fullFileName);
         var newName = fileName + fileExt;
         var i = 1;
-        string fileUrl;
-        // if S3 is used, upload the file to S3 and return the url
+        string filePath;
+        // if S3 is used, upload the file to S3 and return the path
         if (_s3Enabled)
         {
             if (_minioClient == null)
@@ -179,65 +179,62 @@ public class FileService : IFileService
             {
                 baseS3Url = baseS3Url[1..];
             }
-            fileUrl = baseS3Url + newName;
-            // verifie si un document avec le meme nom existe deja sur le serveur S3
-            // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
-            while (true)
+            filePath = baseS3Url + newName;
+            while (!overwrite)
             {
                 try
                 {
                     await _minioClient.StatObjectAsync(new StatObjectArgs()
                         .WithBucket(_s3BucketName)
-                        .WithObject(fileUrl)
+                        .WithObject(filePath)
                     );
-                    // si on arrive ici, c'est que le fichier existe deja
                     newName = $"{fileName}({i}){fileExt}";
-                    fileUrl = baseS3Url + newName;
-                    if (fileUrl.StartsWith(Path.AltDirectorySeparatorChar))
+                    filePath = baseS3Url + newName;
+                    if (filePath.StartsWith(Path.AltDirectorySeparatorChar))
                     {
-                        fileUrl = fileUrl[1..];
+                        filePath = filePath[1..];
                     }
                     i++;
                 }
                 catch (Minio.Exceptions.ObjectNotFoundException)
                 {
-                    // le fichier n'existe pas, on peut sortir de la boucle
                     break;
                 }
             }
             using (var uploadStream = new MemoryStream())
             {
-                await file.CopyToAsync(uploadStream);
+                await data.CopyToAsync(uploadStream);
                 uploadStream.Position = 0;
                 await _minioClient.PutObjectAsync(new PutObjectArgs()
                     .WithBucket(_s3BucketName)
-                    .WithObject(fileUrl)
+                    .WithObject(filePath)
                     .WithStreamData(uploadStream)
                     .WithObjectSize(uploadStream.Length)
-                    .WithContentType(file.ContentType)
+                    .WithContentType(contentType)
                 );
             }
         }
         else
         {
-            // verifie si un document avec le meme nom existe deja sur le serveur dans "wwwroot/commandDocuments"
-            // si oui, on ajoute un numero a la fin du nom du document et on recommence la verification jusqu'a trouver un nom disponible
-            while (File.Exists(Path.Combine(_localFilesPath, basePath, newName)))
+            if (!overwrite)
             {
-                newName = $"{fileName}({i}){fileExt}";
-                i++;
+                while (File.Exists(Path.Combine(_localFilesPath, basePath, newName)))
+                {
+                    newName = $"{fileName}({i}){fileExt}";
+                    i++;
+                }
             }
-            fileUrl = Path.Combine(basePath, newName);
-            var localPath = Path.Combine(_localFilesPath, fileUrl);
-            using (var fileStream = new FileStream(localPath, FileMode.Create))
+            filePath = Path.Combine(basePath, newName);
+            var localPath = Path.Combine(_localFilesPath, filePath);
+            using (var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write))
             {
-                await file.CopyToAsync(fileStream);
+                await data.CopyToAsync(fileStream);
             }
         }
         return new SaveFileResult
         {
-            url = fileUrl,
-            mimeType = file.ContentType
+            path = filePath,
+            mimeType = contentType
         };
     }
 
@@ -249,7 +246,7 @@ public class FileService : IFileService
         {
             return new SaveFileResult
             {
-                url = "",
+                path = "",
                 mimeType = ""
             };
         }
@@ -259,19 +256,13 @@ public class FileService : IFileService
             Size = new Size(width, height),
             Mode = ResizeMode.Max
         }));
-        // convert Image to IFormFile
         var ms = new MemoryStream();
         await image.SaveAsJpegAsync(ms);
         ms.Position = 0;
-        IFormFile imageFile = new FormFile(ms, 0, ms.Length, "", Path.GetFileName(sourceFilePath))
-        {
-            Headers = new HeaderDictionary(),
-            ContentType = "image/jpeg"
-        };
-        return await SaveFile(destPath, imageFile);
+        return await SaveFile(destPath, Path.GetFileName(sourceFilePath), "image/jpeg", ms);
     }
 
-    public async Task DeleteFile(string url)
+    public async Task DeleteFile(string path)
     {
         if (_s3Enabled)
         {
@@ -281,12 +272,12 @@ public class FileService : IFileService
             }
             await _minioClient.RemoveObjectAsync(new RemoveObjectArgs()
                 .WithBucket(_s3BucketName)
-                .WithObject(url)
+                .WithObject(path)
             );
         }
         else
         {
-            var localPath = Path.Combine(_localFilesPath, url);
+            var localPath = Path.Combine(_localFilesPath, path);
             if (File.Exists(localPath))
             {
                 File.Delete(localPath);
