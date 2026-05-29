@@ -71,8 +71,6 @@ namespace ElectrostoreAPI.Tests.Services
             // Assert
             Assert.NotNull(result);
             Assert.IsType<ReadConfig>(result);
-            Assert.Equal(_configuration["SMTP:Enable"] == "true", result.smtp_enabled);
-            Assert.Equal(_mqttClient.Object.IsConnected, result.mqtt_connected);
             Assert.Equal(_configuration.GetValue<bool>("DemoMode"), result.demo_mode);
             Assert.Equal(Constants.MaxUrlLength, result.max_length_url);
             Assert.Equal(Constants.MaxCommentaireLength, result.max_length_commentaire);

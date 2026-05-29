@@ -54,6 +54,22 @@ sudo docker attach mqtt
 mosquitto_passwd -b /mosquitto/config/mosquitto.passwd electrostore <new-password>
 ```
 
+## start Kafka
+```bash
+sudo docker run -d --name kafka \
+ --restart always \
+ -p 9092:9092 \
+ -e KAFKA_CFG_NODE_ID=1 \
+ -e KAFKA_CFG_PROCESS_ROLES=broker,controller \
+ -e KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093 \
+ -e KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093 \
+ -e KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092 \
+ -e KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT \
+ -e KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER \
+ -v electrostoreKAFKA:/bitnami/kafka \
+ bitnami/kafka:3.9
+```
+
 ## create network
 ```bash
 sudo docker network create electrostore
@@ -61,6 +77,8 @@ sudo docker network create electrostore
 sudo docker network connect electrostore mariadb
 
 sudo docker network connect electrostore mqtt
+
+sudo docker network connect electrostore kafka
 ```
 
 ## create and Complete config file
@@ -87,14 +105,6 @@ Complete the `appsettings.json` file with the following content, replacing place
     "Server": "mqtt",
     "Port": 1883,
     "ClientId": "electroapi"
-  },
-  "SMTP": {
-    "Enable": false,
-    "Host": "<your-smtp-server (optional)>",
-    "Port": 587,
-    "Username": "<your-email (optional)>",
-    "Password": "<your-email-password (optional)>",
-    "From": "<your-email (optional)>"
   },
   "Jwt": {
     "Key": "<your-random-key>",
@@ -127,6 +137,9 @@ Complete the `appsettings.json` file with the following content, replacing place
     "Region": "garage",
     "Secure": false
   },
+  "Kafka": {
+    "BootstrapServers": "kafka:9092"
+  },
   "Vault": {
     "Enable": false,
     "Address": "http://<vault-server-url>:8200",
@@ -134,6 +147,11 @@ Complete the `appsettings.json` file with the following content, replacing place
     "Path": "electrostore",
     "MountPoint": "secret"
   },
+  "IAServiceGrpcUrl": "http://electrostoreIA:5001",
+  "IAServiceHealthUrl": "http://electrostoreIA:5000/health",
+  "NotifServiceHealthUrl": "http://electrostoreNOTIF:5000/health",
+  "CRONServiceHealthUrl": "http://electrostoreCRON:5000/health",
+  "WORKERServiceHealthUrl": "http://electrostoreWORKER:5000/health",
   "AllowedOrigins": [
     "https://<your-frontend-domain1>",
     "https://<your-frontend-domain2>"
