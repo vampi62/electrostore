@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="Grpc\Protos\NotifToApi.proto" GrpcServices="Client" />
+    <Protobuf Include="Grpc\Protos\notifToApi.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>
