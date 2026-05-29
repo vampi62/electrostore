@@ -53,5 +53,13 @@
 	"Loading": "Chargement",
 	"DeleteTitle": "Supprimer l'utilisateur",
 	"DeleteTextAdmin": "Voulez-vous vraiment supprimer cet utilisateur?",
-	"DeleteTextUser": "Voulez-vous vraiment supprimer votre compte?"
+	"DeleteTextUser": "Voulez-vous vraiment supprimer votre compte?",
+	"PushNotifications": "Notifications push",
+	"PushSubscribe": "Activer les notifications push",
+	"PushUnsubscribe": "Désactiver",
+	"PushSubscribed": "Notifications push activées",
+	"PushSubscribeError": "Erreur lors de l'activation des notifications push",
+	"PushDeleteError": "Erreur lors de la suppression de l'abonnement",
+	"PushNotSupported": "Les notifications push ne sont pas supportées par ce navigateur",
+	"PushDeviceName": "Nom du périphérique"
 }

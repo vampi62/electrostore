@@ -83,9 +83,6 @@ function loadToEdition(id) {
 		};
 	}
 }
-onMounted(() => {
-	fetchAllData();
-});
 onBeforeUnmount(() => {
 	usersStore.userEdition = {
 		loading: false,
@@ -228,7 +225,99 @@ const labelTableauSession = ref([
 	] },
 ]);
 document.querySelector("#view").classList.add("overflow-y-scroll");
-</script>
+
+// --- Push Notifications ---
+const pushSupported = typeof window !== "undefined" && "PushManager" in window && "serviceWorker" in navigator;
+const pushSubscriptionId = ref(null); // id de l'abonnement actuel dans l'API
+const pushLoading = ref(false);
+const pushDeviceName = ref("");
+
+function urlBase64ToUint8Array(base64String) {
+	const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+	const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+	const raw = window.atob(base64);
+	return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+
+async function checkExistingSubscription() {
+	if (!pushSupported || userId.value === "new") {
+		pushSubscriptionId.value = null;
+		return;
+	}
+	try {
+		const reg = await navigator.serviceWorker.ready;
+		const sub = await reg.pushManager.getSubscription();
+		if (!sub) {
+			pushSubscriptionId.value = null;
+			return;
+		}
+		// Cherche si cet endpoint est déjà enregistré côté API pour cet utilisateur
+		await usersStore.getPushSubscriptionsByInterval(userId.value, 100, 0, true);
+		const subs = usersStore.pushSubscriptions[userId.value] || {};
+		const match = Object.values(subs).find((s) => s.endpoint === sub.endpoint);
+		pushSubscriptionId.value = match ? match.id_push_subscription : null;
+	} catch (e) {
+		pushSubscriptionId.value = null;
+	}
+}
+
+async function subscribePush() {
+	if (!pushSupported) {
+		addNotification({ message: t("user.PushNotSupported"), type: "error" });
+		return;
+	}
+	pushLoading.value = true;
+	try {
+		const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+		if (!vapidKey) {
+			addNotification({ message: t("user.PushSubscribeError"), type: "error" });
+			return;
+		}
+		const reg = await navigator.serviceWorker.ready;
+		const sub = await reg.pushManager.subscribe({
+			userVisibleOnly: true,
+			applicationServerKey: urlBase64ToUint8Array(vapidKey),
+		});
+		const json = sub.toJSON();
+		const created = await usersStore.createPushSubscription(userId.value, {
+			endpoint: json.endpoint,
+			p256dh: json.keys.p256dh,
+			auth: json.keys.auth,
+			device_name: pushDeviceName.value || undefined,
+		});
+		pushSubscriptionId.value = created.id_push_subscription;
+		addNotification({ message: t("user.PushSubscribed"), type: "success" });
+	} catch (e) {
+		addNotification({ message: t("user.PushSubscribeError"), type: "error" });
+	} finally {
+		pushLoading.value = false;
+	}
+}
+
+async function unsubscribePush() {
+	if (!pushSupported || !pushSubscriptionId.value) {
+		addNotification({ message: t("user.PushNotSupported"), type: "error" });
+		return;
+	}
+	pushLoading.value = true;
+	try {
+		const reg = await navigator.serviceWorker.ready;
+		const sub = await reg.pushManager.getSubscription();
+		if (sub) {
+			await sub.unsubscribe();
+		}
+		await usersStore.deletePushSubscription(userId.value, pushSubscriptionId.value);
+		pushSubscriptionId.value = null;
+	} catch (e) {
+		addNotification({ message: t("user.PushDeleteError"), type: "error" });
+	} finally {
+		pushLoading.value = false;
+	}
+}
+
+onMounted(() => {
+	fetchAllData().then(() => checkExistingSubscription());
+});</script>
 
 <template>
 	<div class="flex items-center justify-between mb-4">
@@ -286,6 +375,35 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getTokenByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'min-h-64 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
+			</template>
+		</CollapsibleSection>
+		<CollapsibleSection title="user.PushNotifications"
+			:total-count="Number(usersStore.pushSubscriptionsTotalCount[userId] || 0)" :permission="userId !== 'new'">
+			<template #append-row>
+				<div v-if="!pushSupported" class="text-gray-500 italic text-sm">
+					{{ $t('user.PushNotSupported') }}
+				</div>
+				<div v-else class="flex flex-col gap-4 py-2">
+					<div v-if="!pushSubscriptionId" class="flex items-end gap-3 flex-wrap">
+						<div class="flex flex-col gap-1">
+							<label class="text-sm font-medium text-gray-700">{{ $t('user.PushDeviceName') }}</label>
+							<input v-model="pushDeviceName" type="text" maxlength="255"
+								class="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+								:placeholder="$t('user.PushDeviceName')" />
+						</div>
+						<button @click="subscribePush" :disabled="pushLoading"
+							class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 text-sm">
+							{{ $t('user.PushSubscribe') }}
+						</button>
+					</div>
+					<div v-else class="flex items-center gap-4 flex-wrap">
+						<span class="text-green-600 font-medium text-sm">✓ {{ $t('user.PushSubscribed') }}</span>
+						<button @click="unsubscribePush" :disabled="pushLoading"
+							class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50 text-sm">
+							{{ $t('user.PushUnsubscribe') }}
+						</button>
+					</div>
+				</div>
 			</template>
 		</CollapsibleSection>
 	</div>
