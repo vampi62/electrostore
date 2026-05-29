@@ -262,11 +262,16 @@
 
                         <div class="conditional-section" id="section-s3-integrated" style="display: none;">
                             <h3 style="margin: 1.5rem 0 1rem 0; color: #4caf50;">Integrated S3 Configuration (Garage)</h3>
-                            <p class="help-text" style="font-size: 1rem; margin: 1rem 0; padding: 1rem; background: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 4px;">Garage S3 service will be automatically configured with secure default values.</p>
+                            <p class="help-text" style="font-size: 1rem; margin: 1rem 0; padding: 1rem; background: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 4px;">Two separate buckets will be automatically created: one for the API service and one for the IA service, each with its own access keys.</p>
                             
-                            <div class="form-group" style="display: none;">
-                                <label for="s3Bucket">Bucket</label>
-                                <input type="text" id="s3Bucket" name="s3Bucket" value="electrostore">
+                            <div class="form-group">
+                                <label for="s3Bucket">API Bucket Name</label>
+                                <input type="text" id="s3Bucket" name="s3Bucket" value="electrostore-api">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="s3IaBucket">IA Bucket Name</label>
+                                <input type="text" id="s3IaBucket" name="s3IaBucket" value="electrostore-ia">
                             </div>
 
                             <div class="form-group" style="display: none;">
@@ -277,7 +282,8 @@
 
                         <div class="conditional-section" id="section-s3-external" style="display: none;">
                             <h3 style="margin: 1.5rem 0 1rem 0; color: #2196f3;">External S3 Configuration</h3>
-                            
+
+                            <h4 style="margin: 1rem 0 0.5rem 0; color: #1565c0;">API Service</h4>
                             <div class="form-group">
                                 <label for="s3ExternalEndpoint">Endpoint</label>
                                 <input type="text" id="s3ExternalEndpoint" name="s3ExternalEndpoint" placeholder="s3.amazonaws.com or s3.region.amazonaws.com">
@@ -306,6 +312,39 @@
                             <div class="form-group checkbox-group">
                                 <label>
                                     <input type="checkbox" id="s3ExternalSecure" name="s3ExternalSecure" checked>
+                                    Use HTTPS
+                                </label>
+                            </div>
+
+                            <h4 style="margin: 1.5rem 0 0.5rem 0; color: #1565c0;">IA Service</h4>
+                            <div class="form-group">
+                                <label for="s3IaExternalEndpoint">Endpoint</label>
+                                <input type="text" id="s3IaExternalEndpoint" name="s3IaExternalEndpoint" placeholder="s3.amazonaws.com or s3.region.amazonaws.com">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="s3IaExternalAccessKey">Access Key</label>
+                                <input type="text" id="s3IaExternalAccessKey" name="s3IaExternalAccessKey">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="s3IaExternalSecretKey">Secret Key</label>
+                                <input type="password" id="s3IaExternalSecretKey" name="s3IaExternalSecretKey">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="s3IaExternalBucket">Bucket</label>
+                                <input type="text" id="s3IaExternalBucket" name="s3IaExternalBucket">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="s3IaExternalRegion">Region</label>
+                                <input type="text" id="s3IaExternalRegion" name="s3IaExternalRegion" placeholder="us-east-1">
+                            </div>
+
+                            <div class="form-group checkbox-group">
+                                <label>
+                                    <input type="checkbox" id="s3IaExternalSecure" name="s3IaExternalSecure" checked>
                                     Use HTTPS
                                 </label>
                             </div>
@@ -355,6 +394,7 @@
                                 <input type="text" id="smtpFrom" name="smtpFrom" placeholder="noreply@electrostore.com">
                             </div>
                         </div>
+                    </div>
 
                     <!-- Web Push Notifications (VAPID) -->
                     <div class="sub-section">

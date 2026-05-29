@@ -40,7 +40,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Protobuf Include="Grpc\Protos\apiToIa.proto" GrpcServices="Client" />
     <Protobuf Include="Grpc\Protos\notifToApi.proto" GrpcServices="Server" />
+    <Protobuf Include="Grpc\Protos\iaToApi.proto" GrpcServices="Server" />
   </ItemGroup>
 
   <ItemGroup>
