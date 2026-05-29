@@ -1,6 +1,8 @@
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Grpc;
+using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Services.AuthService;
 using ElectrostoreAPI.Services.BoxService;
 using ElectrostoreAPI.Services.BoxTagService;
@@ -33,7 +35,9 @@ using ElectrostoreAPI.Services.TagService;
 using ElectrostoreAPI.Services.UserPushSubscriptionService;
 using ElectrostoreAPI.Services.UserService;
 using ElectrostoreAPI.Services.ValidateStoreService;
+using ElectrostoreAPI.Services.StatusService;
 using ElectrostoreAPI.Services.JwtService;
+using ElectrostoreAPI.Grpc.Services;
 using ElectrostoreAPI.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -49,7 +53,6 @@ using System.Text;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
 
-using ElectrostoreAPI.Services.SmtpService;
 namespace ElectrostoreAPI;
 
 public partial class Program
@@ -161,6 +164,13 @@ public partial class Program
         builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
         builder.Services.AddHttpClient();
 
+        // gRPC server
+        builder.Services.AddGrpc(options =>
+        {
+            //options.Interceptors.Add<AuthInterceptor>();
+            options.MaxReceiveMessageSize = 100 * 1024 * 1024; // 100 MB
+        });
+
         builder.Logging.AddFilter("LuckyPennySoftware.AutoMapper.License", LogLevel.None);
 
         AddAuthentication(builder, key);
@@ -190,6 +200,14 @@ public partial class Program
         app.UseAuthorization();
 
         app.UseMiddleware<ExceptionsHandler>();
+
+        app.MapGrpcService<ElectrostoreNOTIFToApiGrpcService>();
+
+        app.MapGet("/health", (IConfiguration config) =>
+            Results.Ok(new
+            {
+                status = config.GetValue<bool>("DemoMode") ? "demo" : "healthy"
+             })).AllowAnonymous();
 
         app.MapControllers();
 
@@ -289,6 +307,10 @@ public partial class Program
                 return minioClient;
             });
         }
+        builder.Services.AddSingleton<IFileService, FileService>();
+        builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
+        builder.Services.AddSingleton<IJwtService, JwtService>();
+        builder.Services.AddSingleton<ISessionService, SessionService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IBoxService, BoxService>();
         builder.Services.AddScoped<IBoxTagService, BoxTagService>();
@@ -298,7 +320,6 @@ public partial class Program
         builder.Services.AddScoped<ICommandItemService, CommandItemService>();
         builder.Services.AddScoped<ICommandService, CommandService>();
         builder.Services.AddScoped<IConfigService, ConfigService>();
-        builder.Services.AddScoped<IFileService, FileService>();
         builder.Services.AddScoped<IIAService, IAService>();
         builder.Services.AddScoped<IImgService, ImgService>();
         builder.Services.AddScoped<IItemBoxService, ItemBoxService>();
@@ -313,8 +334,6 @@ public partial class Program
         builder.Services.AddScoped<IProjetService, ProjetService>();
         builder.Services.AddScoped<IProjetStatusService, ProjetStatusService>();
         builder.Services.AddScoped<IProjetTagService, ProjetTagService>();
-        builder.Services.AddScoped<ISessionService, SessionService>();
-        builder.Services.AddScoped<ISmtpService, SmtpService>();
         builder.Services.AddScoped<IStoreService, StoreService>();
         builder.Services.AddScoped<IStoreTagService, StoreTagService>();
         builder.Services.AddScoped<ITagService, TagService>();
@@ -322,7 +341,7 @@ public partial class Program
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IValidateStoreService, ValidateStoreService>();
         builder.Services.AddScoped<IJwiService, JwiService>();
-        builder.Services.AddSingleton<IJwtService, JwtService>();
+        builder.Services.AddScoped<IStatusService, StatusService>();
     }
 
     private static void CreateRequiredDirectories()
