@@ -34,7 +34,7 @@ public record SSOAvailableProvider
 
 public static class Constants
 {
-    public const int MaxUrlLength = 150;
+    public const int MaxUrlLength = 2048;
     public const int MaxCommentaireLength = 455;
     public const int MaxDescriptionLength = 500;
     public const int MaxNameLength = 50;

@@ -28,6 +28,16 @@
 		</button>
 		<div class="hidden sm:flex"><!-- for desktop -->
 			<div class="flex space-x-4 justify-end">
+				<div class="flex items-center space-x-4">
+					<button
+						v-if="showPwaPrompt"
+						@click="installPwa"
+						class="bg-white text-[#3f51b5] hover:bg-gray-100 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-2"
+					>
+						<font-awesome-icon icon="fa-solid fa-download" />
+						<span>{{ $t('common.VAppInstall') }}</span>
+					</button>
+				</div>
 				<RouterLink :to="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400">
 					{{ $t('common.VAppProfile') }}
 				</RouterLink>
@@ -48,6 +58,16 @@
 	</nav>
 	<div class="fixed sm:hidden top-12 w-full z-10"><!-- for mobile -->
 		<div v-show="showTopBar" class="flex flex-col space-y-4 bg-gray-800 p-4">
+			<div class="flex items-center space-x-4">
+				<button
+					v-if="showPwaPrompt"
+					@click="installPwa"
+					class="bg-white text-[#3f51b5] hover:bg-gray-100 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-2"
+				>
+					<font-awesome-icon icon="fa-solid fa-download" />
+					<span>{{ $t('common.VAppInstall') }}</span>
+				</button>
+			</div>
 			<RouterLink :to="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400">
 				{{ $t('common.VAppProfile') }}
 			</RouterLink>
@@ -157,6 +177,8 @@ export default {
 		return {
 			showTopBar: false,
 			reduceLeftSideBar: false,
+			installEvent: null,
+			showPwaPrompt: false,
 		};
 	},
 	setup() {
@@ -166,5 +188,35 @@ export default {
 		return { route, authStore, configsStore };
 	},
 	emits: ["update:reduceLeftSideBar", "showAboutModal"],
+	mounted() {
+		window.addEventListener("beforeinstallprompt", this.onBeforeInstallPrompt);
+		window.addEventListener("appinstalled", this.onAppInstalled);
+	},
+	beforeUnmount() {
+		window.removeEventListener("beforeinstallprompt", this.onBeforeInstallPrompt);
+		window.removeEventListener("appinstalled", this.onAppInstalled);
+	},
+	methods: {
+		onBeforeInstallPrompt(e) {
+			e.preventDefault();
+			this.installEvent = e;
+			this.showPwaPrompt = true;
+		},
+		onAppInstalled() {
+			this.showPwaPrompt = false;
+			this.installEvent = null;
+		},
+		async installPwa() {
+			if (!this.installEvent) {
+				return;
+			}
+			this.installEvent.prompt();
+			const { outcome } = await this.installEvent.userChoice;
+			if (outcome === "accepted") {
+				this.showPwaPrompt = false;
+				this.installEvent = null;
+			}
+		},
+	},
 };
 </script>

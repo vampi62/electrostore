@@ -102,6 +102,11 @@ services:`;
           memory: 1G
     environment:
       - VUE_API_URL=${config.apiUrlObj.toString()}`;
+    if (config.enableVapid && config.vapid) {
+        compose += `
+      - VUE_VAPID_PUBLIC_KEY=${config.vapid.publicKey}`;
+    }
+      
     
     if (config.useTraefik) {
         const frontendRule = generateTraefikRule(config.frontUrlObj);

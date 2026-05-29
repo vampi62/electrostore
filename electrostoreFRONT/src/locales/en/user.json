@@ -53,5 +53,13 @@
 	"Loading": "Loading",
 	"DeleteTitle": "Delete user",
 	"DeleteTextAdmin": "Do you really want to delete this user?",
-	"DeleteTextUser": "Do you really want to delete your account?"
+	"DeleteTextUser": "Do you really want to delete your account?",
+	"PushNotifications": "Push notifications",
+	"PushSubscribe": "Enable push notifications",
+	"PushUnsubscribe": "Disable",
+	"PushSubscribed": "Push notifications enabled",
+	"PushSubscribeError": "Error enabling push notifications",
+	"PushDeleteError": "Error deleting subscription",
+	"PushNotSupported": "Push notifications are not supported by this browser",
+	"PushDeviceName": "Device name"
 }
