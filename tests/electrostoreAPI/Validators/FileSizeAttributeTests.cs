@@ -3,7 +3,7 @@ using Moq;
 using ElectrostoreAPI.Validators;
 using Xunit;
 
-namespace electrostoreAPIAPI.Tests.Validators;
+namespace ElectrostoreAPI.Tests.Validators;
 
 public class FileSizeAttributeTests
 {

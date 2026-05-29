@@ -74,9 +74,17 @@ async function downloadAllAsZip() {
     zip.file('.env', document.getElementById('envFile').textContent);
     zip.file('setup.sh', document.getElementById('setupScript').textContent);
     
-    // Create config folder and add appsettings.json
-    zip.folder('config');
-    zip.file('config/appsettings.json', document.getElementById('appsettingsFile').textContent);
+    // Create config folders and add appsettings.json files
+    zip.folder('config/api');
+    zip.file('config/api/appsettings.json', document.getElementById('apiAppsettingsFile').textContent);
+    zip.folder('config/ia');
+    zip.file('config/ia/appsettings.json', document.getElementById('iaAppsettingsFile').textContent);
+    zip.folder('config/notif');
+    zip.file('config/notif/appsettings.json', document.getElementById('notifAppsettingsFile').textContent);
+    zip.folder('config/cron');
+    zip.file('config/cron/appsettings.json', document.getElementById('cronAppsettingsFile').textContent);
+    zip.folder('config/worker');
+    zip.file('config/worker/appsettings.json', document.getElementById('workerAppsettingsFile').textContent);
     
     // Add garage.toml if present
     const garageConfigSection = document.getElementById('garageConfigSection');

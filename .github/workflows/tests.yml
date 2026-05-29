@@ -15,13 +15,23 @@ on:
         type: string
 
 jobs:
-  test-api:
-    name: tests - API
+  test-dotnet:
+    name: tests - ${{ matrix.service_name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service_name: API
+            source_dir: electrostoreAPI
+            sonar_key: electrostore-api
+          - service_name: NOTIF
+            source_dir: electrostoreNOTIF
+            sonar_key: electrostore-notif
     defaults:
       run:
         shell: bash
-        working-directory: ./electrostoreAPI
+        working-directory: ./${{ matrix.source_dir }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -30,12 +40,12 @@ jobs:
     - name: Set up C#
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '7.0.x'
+        dotnet-version: '9.0.x'
     - name: Install dependencies
       run: dotnet restore
     - name: Run tests and collect coverage (OpenCover)
       run: |
-        dotnet test ../tests/electrostoreAPI \
+        dotnet test ../tests/${{ matrix.source_dir }} \
           --collect "XPlat Code Coverage" \
           --logger "trx;LogFileName=test-results.trx" \
           --results-directory ./TestResults \
@@ -47,7 +57,7 @@ jobs:
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        PROJECT_KEY: "${{ inputs.branch }}-electrostore-api"
+        PROJECT_KEY: "${{ inputs.branch }}-${{ matrix.sonar_key }}"
       run: |
         dotnet tool install --global dotnet-sonarscanner
         dotnet sonarscanner begin /k:"$PROJECT_KEY" \
@@ -55,8 +65,8 @@ jobs:
           /d:sonar.token="$SONAR_TOKEN" \
           /d:sonar.exclusions="**/Migrations/**" \
           /d:sonar.cpd.exclusions="**/DTO/**,**/Models/**" \
-          /d:sonar.cs.vstest.reportsPaths=../electrostoreAPI/TestResults/*.trx \
-          /d:sonar.cs.opencover.reportsPaths=../electrostoreAPI/TestResults/**/coverage.opencover.xml
+          /d:sonar.cs.vstest.reportsPaths=../${{ matrix.source_dir }}/TestResults/*.trx \
+          /d:sonar.cs.opencover.reportsPaths=../${{ matrix.source_dir }}/TestResults/**/coverage.opencover.xml
         dotnet build
         dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
     - name: SonarQube Status

@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+option csharp_namespace = "ElectrostoreNOTIF.Grpc";
+
+package notifToApi;
+
+service NOTIFToAPIGrpc {
+  rpc GetUserInfo (GetUserInfoRequest) returns (GetUserInfoReply);
+  rpc GetConfig (NOTIFGetConfigRequest) returns (NOTIFGetConfigReply);
+  rpc GetUserPushSubscriptions (GetUserPushSubscriptionsRequest) returns (GetUserPushSubscriptionsReply);
+}
+
+message GetUserInfoRequest {
+  int32 user_id = 1;
+}
+
+message GetUserInfoReply {
+  bool   found = 1;
+  string email = 2;
+}
+
+// ---- Push subscriptions ----
+
+message GetUserPushSubscriptionsRequest {
+  int32 user_id = 1;
+}
+
+message PushSubscriptionItem {
+  int32  id   = 1;
+  string endpoint = 2;
+  string p256dh   = 3;
+  string auth     = 4;
+}
+
+message GetUserPushSubscriptionsReply {
+  repeated PushSubscriptionItem subscriptions = 1;
+}
+
+// ---- Config ----
+
+message NOTIFGetConfigRequest {}
+
+message NOTIFGetConfigReply {
+  bool demo_mode = 1;
+}

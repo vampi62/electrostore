@@ -91,11 +91,11 @@ public class ProjetDocumentService : IProjetDocumentService
         {
             throw new KeyNotFoundException($"Projet with id '{projetDocumentDto.id_projet}' not found");
         }
-        var savedFile = await _fileService.SaveFile(Path.Combine(_projetDocumentsPath, projetDocumentDto.id_projet.ToString()), projetDocumentDto.document);
+        var savedFile = await _fileService.SaveFile(Path.Combine(_projetDocumentsPath, projetDocumentDto.id_projet.ToString()), projetDocumentDto.document.FileName, projetDocumentDto.document.ContentType, projetDocumentDto.document.OpenReadStream());
         var projetDocument = new ProjetsDocuments
         {
             id_projet = projetDocumentDto.id_projet,
-            url_projet_document = savedFile.url,
+            url_projet_document = savedFile.path,
             name_projet_document = projetDocumentDto.name_projet_document,
             type_projet_document = savedFile.mimeType,
             size_projet_document = projetDocumentDto.document.Length

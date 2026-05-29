@@ -4,7 +4,7 @@ using ElectrostoreAPI.Validators;
 using ElectrostoreAPI.Dto;
 using Xunit;
 
-namespace electrostoreAPIAPI.Tests.Validators;
+namespace ElectrostoreAPI.Tests.Validators;
 
 public class FileTypeAttributeTests
 {

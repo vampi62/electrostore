@@ -92,16 +92,16 @@ public class ImgService : IImgService
         {
             throw new KeyNotFoundException($"Item with id '{imgDto.id_item}' not found");
         }
-        var savedImg = await _fileService.SaveFile(Path.Combine(_imagesPath, imgDto.id_item.ToString()), imgDto.img_file);
+        var savedImg = await _fileService.SaveFile(Path.Combine(_imagesPath, imgDto.id_item.ToString()), imgDto.img_file.FileName, imgDto.img_file.ContentType, imgDto.img_file.OpenReadStream());
         var savedThumbnail = await _fileService.GenerateThumbnail(
-            savedImg.url,
+            savedImg.path,
             Path.Combine(_imagesThumbnailsPath, imgDto.id_item.ToString()),
             256, 256);
         var newImg = new Imgs
         {
             nom_img = imgDto.nom_img,
-            url_picture_img = savedImg.url,
-            url_thumbnail_img = savedThumbnail.url,
+            url_picture_img = savedImg.path,
+            url_thumbnail_img = savedThumbnail.path,
             description_img = imgDto.description_img,
             id_item = imgDto.id_item
         };

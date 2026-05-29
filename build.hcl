@@ -27,7 +27,8 @@ group "default" {
   targets = [
     "api",
     "front",
-    "ia"
+    "ia",
+    "notif",
   ]
 }
 
@@ -111,4 +112,18 @@ target "ia" {
     label("source", "https://github.com/${REPO}"),
     label("version", "${VERSION}")
   )
+}
+
+target "notif" {
+  inherits = ["defaults"]
+  context = "electrostoreNOTIF/"
+  tags = tag("notif")
+  labels = merge(
+    label("url", "https://github.com/${REPO}"),
+    label("title", "Electrostore ia"),
+    label("description", "Electrostore ia image"),
+    label("source", "https://github.com/${REPO}"),
+    label("version", "${VERSION}")
+  )
+}
 }

@@ -2,10 +2,10 @@ using AutoMapper;
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.JwiService;
 using ElectrostoreAPI.Services.SessionService;
-using ElectrostoreAPI.Services.SmtpService;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using System.Text.Json;
@@ -16,14 +16,14 @@ public class UserService : IUserService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
-    private readonly ISmtpService _smtpService;
+    private readonly IKafkaProducerService _kafkaProducerService;
     private readonly ISessionService _sessionService;
     private readonly IJwiService _jwiService;
-    public UserService(IMapper mapper, ApplicationDbContext context, ISmtpService smtpService, ISessionService sessionService, IJwiService jwiService)
+    public UserService(IMapper mapper, ApplicationDbContext context, IKafkaProducerService kafkaNotificationService, ISessionService sessionService, IJwiService jwiService)
     {
         _mapper = mapper;
         _context = context;
-        _smtpService = smtpService;
+        _kafkaProducerService = kafkaNotificationService;
         _sessionService = sessionService;
         _jwiService = jwiService;
     }
@@ -122,13 +122,19 @@ public class UserService : IUserService
         };
         _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
-        // send email to the user
         try
         {
-            await _smtpService.SendEmailAsync(
+            var notification = new NotificationMessage
+            {
+                Types = new List<string> { "email" },
+                RecipientEmail = newUser.email_user,
+                Subject = "Account created",
+                Body = "Your account has been created. Your role is " + newUser.role_user.ToString()
+            };
+            await _kafkaProducerService.PublishAsync(
+                "notification-requests",
                 newUser.email_user,
-                "Account created",
-                "Your account has been created. Your role is " + newUser.role_user.ToString()
+                JsonSerializer.Serialize(notification)
             );
         }
         catch (Exception ex)
@@ -250,10 +256,17 @@ public class UserService : IUserService
         // send email to the user
         try
         {
-            await _smtpService.SendEmailAsync(
+            var notification = new NotificationMessage
+            {
+                Types = new List<string> { "email" },
+                RecipientEmail = userToDelete.email_user,
+                Subject = "Account deleted",
+                Body = "Your account has been deleted"
+            };
+            await _kafkaProducerService.PublishAsync(
+                "notification-requests",
                 userToDelete.email_user,
-                "Account deleted",
-                "Your account has been deleted"
+                JsonSerializer.Serialize(notification)
             );
         }
         catch (Exception ex)
@@ -268,15 +281,29 @@ public class UserService : IUserService
         {
             try
             {
-                await _smtpService.SendEmailAsync(
+                var notificationNew = new NotificationMessage
+                {
+                    Types = new List<string> { "email" },
+                    RecipientEmail = userToUpdate.email_user,
+                    Subject = "Email changed",
+                    Body = "Your email has been changed from " + oldUserEmail + " to " + userDto.email_user
+                };
+                await _kafkaProducerService.PublishAsync(
+                    "notification-requests",
                     userToUpdate.email_user,
-                    "Email changed",
-                    "Your email has been changed from " + oldUserEmail + " to " + userDto.email_user
+                    JsonSerializer.Serialize(notificationNew)
                 );
-                await _smtpService.SendEmailAsync(
+                var notificationOld = new NotificationMessage
+                {
+                    Types = new List<string> { "email" },
+                    RecipientEmail = oldUserEmail,
+                    Subject = "Email changed",
+                    Body = "Your email has been changed from " + oldUserEmail + " to " + userDto.email_user
+                };
+                await _kafkaProducerService.PublishAsync(
+                    "notification-requests",
                     oldUserEmail,
-                    "Email changed",
-                    "Your email has been changed from " + oldUserEmail + " to " + userDto.email_user
+                    JsonSerializer.Serialize(notificationOld)
                 );
             }
             catch (Exception ex)
@@ -288,10 +315,17 @@ public class UserService : IUserService
         {
             try
             {
-                await _smtpService.SendEmailAsync(
+                var notification = new NotificationMessage
+                {
+                    Types = new List<string> { "email" },
+                    RecipientEmail = userToUpdate.email_user,
+                    Subject = "Password changed",
+                    Body = "Your password has been changed"
+                };
+                await _kafkaProducerService.PublishAsync(
+                    "notification-requests",
                     userToUpdate.email_user,
-                    "Password changed",
-                    "Your password has been changed"
+                    JsonSerializer.Serialize(notification)
                 );
             }
             catch (Exception ex)
@@ -304,10 +338,17 @@ public class UserService : IUserService
         {
             try
             {
-                await _smtpService.SendEmailAsync(
+                var notification = new NotificationMessage
+                {
+                    Types = new List<string> { "email" },
+                    RecipientEmail = userToUpdate.email_user,
+                    Subject = "Account updated",
+                    Body = "Your account has been updated"
+                };
+                await _kafkaProducerService.PublishAsync(
+                    "notification-requests",
                     userToUpdate.email_user,
-                    "Account updated",
-                    "Your account has been updated"
+                    JsonSerializer.Serialize(notification)
                 );
             }
             catch (Exception ex)

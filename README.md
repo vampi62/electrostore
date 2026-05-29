@@ -70,6 +70,22 @@ sudo docker run -d --name mqtt \
  eclipse-mosquitto:2.0.20
 ```
 
+#### start Kafka
+```bash
+sudo docker run -d --name kafka \
+ --restart always \
+ -p 9092:9092 \
+ -e KAFKA_CFG_NODE_ID=1 \
+ -e KAFKA_CFG_PROCESS_ROLES=broker,controller \
+ -e KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093 \
+ -e KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093 \
+ -e KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092 \
+ -e KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT \
+ -e KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER \
+ -v electrostoreKAFKA:/bitnami/kafka \
+ bitnami/kafka:3.9
+```
+
 #### create network
 ```bash
 sudo docker network create electrostore
@@ -77,6 +93,8 @@ sudo docker network create electrostore
 sudo docker network connect electrostore mariadb
 
 sudo docker network connect electrostore mqtt
+
+sudo docker network connect electrostore kafka
 ```
 
 #### create and Complete config file

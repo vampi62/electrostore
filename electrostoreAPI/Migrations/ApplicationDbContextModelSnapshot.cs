@@ -104,8 +104,8 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_camera")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)");
+                        .HasMaxLength(2048)
+                        .HasColumnType("varchar(2048)");
 
                     b.Property<string>("user_camera")
                         .HasMaxLength(50)
@@ -146,8 +146,8 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_command")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)");
+                        .HasMaxLength(2048)
+                        .HasColumnType("varchar(2048)");
 
                     b.HasKey("id_command");
 
@@ -220,8 +220,8 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_command_document")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)");
+                        .HasMaxLength(2048)
+                        .HasColumnType("varchar(2048)");
 
                     b.HasKey("id_command_document");
 
@@ -318,13 +318,13 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_picture_img")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)");
+                        .HasMaxLength(2048)
+                        .HasColumnType("varchar(2048)");
 
                     b.Property<string>("url_thumbnail_img")
                         .IsRequired()
-                        .HasMaxLength(165)
-                        .HasColumnType("varchar(165)");
+                        .HasMaxLength(2063)
+                        .HasColumnType("varchar(2063)");
 
                     b.HasKey("id_img");
 
@@ -434,8 +434,8 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_item_document")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)");
+                        .HasMaxLength(2048)
+                        .HasColumnType("varchar(2048)");
 
                     b.HasKey("id_item_document");
 
@@ -661,8 +661,8 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_projet")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)");
+                        .HasMaxLength(2048)
+                        .HasColumnType("varchar(2048)");
 
                     b.HasKey("id_projet");
 
@@ -735,8 +735,8 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_projet_document")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)");
+                        .HasMaxLength(2048)
+                        .HasColumnType("varchar(2048)");
 
                     b.HasKey("id_projet_document");
 
@@ -900,7 +900,50 @@ namespace ElectrostoreAPI.Migrations
                     b.ToTable("Tags");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Users", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.UserPushSubscriptions", b =>
+                {
+                    b.Property<int>("id_push_subscription")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_push_subscription"));
+
+                    b.Property<string>("auth")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("device_name")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("endpoint")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("varchar(2048)");
+
+                    b.Property<int>("id_user")
+                        .HasColumnType("int");
+
+                    b.Property<string>("p256dh")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("varchar(512)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_push_subscription");
+
+                    b.HasIndex("id_user");
+
+                    b.ToTable("UserPushSubscriptions");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.Users", b =>
                 {
                     b.Property<int>("id_user")
                         .ValueGeneratedOnAdd()
@@ -1231,7 +1274,18 @@ namespace ElectrostoreAPI.Migrations
                     b.Navigation("Tag");
                 });
 
-            modelBuilder.Entity("electrostore.Models.Boxs", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.UserPushSubscriptions", b =>
+                {
+                    b.HasOne("ElectrostoreAPI.Models.Users", "User")
+                        .WithMany()
+                        .HasForeignKey("id_user")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.Boxs", b =>
                 {
                     b.Navigation("BoxsTags");
 
