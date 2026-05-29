@@ -313,44 +313,79 @@
                     </div>
                 </section>
 
-                <!-- SMTP Configuration -->
+                <!-- Notifications Configuration -->
                 <section class="form-section">
-                    <h2>Email Service (SMTP)</h2>
-                    
-                    <div class="form-group checkbox-group">
-                        <label>
-                            <input type="checkbox" id="enableSMTP" name="enableSMTP" onchange="toggleSMTP()">
-                            <strong>Enable email sending</strong> - For notifications and authentication
-                        </label>
-                        <small class="help-text">If disabled, email features will be disabled</small>
-                    </div>
+                    <h2>Notifications</h2>
 
-                    <div class="conditional-section" id="section-smtp" style="display: none;">
-                        <h2>SMTP Configuration</h2>
-                        
-                        <div class="form-group">
-                            <label for="smtpHost">SMTP Host</label>
-                            <input type="text" id="smtpHost" name="smtpHost" placeholder="smtp.gmail.com">
+                    <!-- Email Service (SMTP) -->
+                    <div class="sub-section">
+                        <h3>Email Service (SMTP)</h3>
+
+                        <div class="form-group checkbox-group">
+                            <label>
+                                <input type="checkbox" id="enableSMTP" name="enableSMTP" onchange="toggleSMTP()">
+                                <strong>Enable email sending</strong> - For notifications and authentication
+                            </label>
+                            <small class="help-text">If disabled, email features will be disabled</small>
                         </div>
 
-                        <div class="form-group">
-                            <label for="smtpPort">SMTP Port</label>
-                            <input type="number" id="smtpPort" name="smtpPort" value="587">
+                        <div class="conditional-section" id="section-smtp" style="display: none;">
+                            <div class="form-group">
+                                <label for="smtpHost">SMTP Host</label>
+                                <input type="text" id="smtpHost" name="smtpHost" placeholder="smtp.gmail.com">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="smtpPort">SMTP Port</label>
+                                <input type="number" id="smtpPort" name="smtpPort" value="587">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="smtpUser">SMTP User</label>
+                                <input type="text" id="smtpUser" name="smtpUser">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="smtpPassword">SMTP Password</label>
+                                <input type="password" id="smtpPassword" name="smtpPassword">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="smtpFrom">"From" Address</label>
+                                <input type="text" id="smtpFrom" name="smtpFrom" placeholder="noreply@electrostore.com">
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="smtpUser">SMTP User</label>
-                            <input type="text" id="smtpUser" name="smtpUser">
+                    <!-- Web Push Notifications (VAPID) -->
+                    <div class="sub-section">
+                        <h3>Web Push Notifications (VAPID)</h3>
+
+                        <div class="form-group checkbox-group">
+                            <label>
+                                <input type="checkbox" id="enableVapid" name="enableVapid" onchange="toggleVapid()">
+                                <strong>Enable Web Push Notifications</strong> - Push notifications for browsers (PWA)
+                            </label>
+                            <small class="help-text">Generate a key pair with: <code>npx web-push generate-vapid-keys</code></small>
                         </div>
 
-                        <div class="form-group">
-                            <label for="smtpPassword">SMTP Password</label>
-                            <input type="password" id="smtpPassword" name="smtpPassword">
-                        </div>
+                        <div class="conditional-section" id="section-vapid" style="display: none;">
+                            <div class="form-group">
+                                <label for="vapidSubject">Subject</label>
+                                <input type="text" id="vapidSubject" name="vapidSubject" placeholder="mailto:admin@electrostore.local">
+                                <small class="help-text">A mailto: or https: contact address identifying the application owner</small>
+                            </div>
 
-                        <div class="form-group">
-                            <label for="smtpFrom">"From" Address</label>
-                            <input type="text" id="smtpFrom" name="smtpFrom" placeholder="noreply@electrostore.com">
+                            <div class="form-group">
+                                <label for="vapidPublicKey">VAPID Public Key</label>
+                                <input type="text" id="vapidPublicKey" name="vapidPublicKey" placeholder="Base64url-encoded public key">
+                                <small class="help-text">Copied from the output of <code>npx web-push generate-vapid-keys</code> — also used in the frontend <code>VITE_VAPID_PUBLIC_KEY</code></small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="vapidPrivateKey">VAPID Private Key</label>
+                                <input type="text" id="vapidPrivateKey" name="vapidPrivateKey" placeholder="Base64url-encoded private key">
+                                <small class="help-text">Keep this secret — only used server-side by the NOTIF service</small>
+                            </div>
                         </div>
                     </div>
                 </section>

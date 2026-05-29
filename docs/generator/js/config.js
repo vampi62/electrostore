@@ -11,6 +11,7 @@ function collectConfig(formData) {
         enableS3: document.getElementById('enableS3').checked,
         useS3: document.getElementById('useS3').checked,
         enableSMTP: document.getElementById('enableSMTP').checked,
+        enableVapid: document.getElementById('enableVapid').checked,
         useVault: document.getElementById('useVault').checked,
         appVersion: formData.get('appVersion') || 'latest',
         
@@ -95,6 +96,15 @@ function collectConfig(formData) {
             user: formData.get('smtpUser'),
             password: formData.get('smtpPassword'),
             from: formData.get('smtpFrom')
+        };
+    }
+
+    // VAPID (Web Push)
+    if (config.enableVapid) {
+        config.vapid = {
+            subject: formData.get('vapidSubject') || 'mailto:admin@electrostore.local',
+            publicKey: formData.get('vapidPublicKey'),
+            privateKey: formData.get('vapidPrivateKey')
         };
     }
     
