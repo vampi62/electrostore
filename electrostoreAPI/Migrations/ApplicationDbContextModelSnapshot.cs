@@ -268,6 +268,9 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<DateTime?>("date_training_ia")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("description_ia")
                         .IsRequired()
                         .HasMaxLength(500)

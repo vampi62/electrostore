@@ -1,1 +1,4 @@
-/__pycache__
+.vs/
+bin/
+obj/
+wwwroot/

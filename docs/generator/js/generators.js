@@ -60,7 +60,8 @@ services:`;
       - ASPNETCORE_ENVIRONMENT=\${ENVIRONMENT:-Production}`;
 
     compose += `
-    depends_on:`;
+    depends_on:
+      - kafka`;
     
     if (config.useMariaDB) compose += `\n      - mariadb`;
     if (config.useMQTT) compose += `\n      - mqtt`;
@@ -68,7 +69,7 @@ services:`;
     
     compose += `
     volumes:
-      - ./config/appsettings.json:/app/config/appsettings.json:ro`;
+      - ./config/api/appsettings.json:/app/config/appsettings.json:ro`;
     
     if (!config.enableS3) {
         compose += `\n      - api-wwwroot:/app/wwwroot`;
@@ -170,18 +171,111 @@ services:`;
           memory: 2G`;
     
     compose += `
-    depends_on:`;
+    depends_on:
+      - kafka`;
     
     if (config.useMariaDB) compose += `\n      - mariadb`;
     if (config.enableS3 && config.useS3) compose += `\n      - garage`;
     
-    if (!config.enableS3) {
-        compose += `
+    compose += `
     volumes:
-      - api-wwwroot:/data
-      - ./config/appsettings.json:/app/config/appsettings.json:ro`;
+      - ./config/ia/appsettings.json:/app/config/appsettings.json:ro`;
+    if (!config.enableS3) {
+        compose += `\n      - ia-models:/app/models`;
     }
     compose += `
+    networks:
+      - electrostore
+    restart: unless-stopped
+`;
+
+    // NOTIF Service
+    compose += `
+  notif:
+    image: ghcr.io/vampi62/electrostore/notif:\${NOTIF_VERSION:-latest}
+    container_name: electrostore-notif
+    cap_add:
+      - CHOWN
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    depends_on:
+      - kafka
+    volumes:
+      - ./config/notif/appsettings.json:/app/config/appsettings.json:ro
+    networks:
+      - electrostore
+    restart: unless-stopped
+`;
+
+    // CRON Service
+    compose += `
+  cron:
+    image: ghcr.io/vampi62/electrostore/cron:\${CRON_VERSION:-latest}
+    container_name: electrostore-cron
+    cap_add:
+      - CHOWN
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+    depends_on:
+      - kafka
+      - api
+    volumes:
+      - ./config/cron/appsettings.json:/app/config/appsettings.json:ro
+    networks:
+      - electrostore
+    restart: unless-stopped
+`;
+
+    // WORKER Service
+    compose += `
+  worker:
+    image: ghcr.io/vampi62/electrostore/worker:\${WORKER_VERSION:-latest}
+    container_name: electrostore-worker
+    cap_add:
+      - CHOWN
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M`;
+
+    compose += `
+    depends_on:
+      - kafka
+      - api`;
+
+    if (config.useMQTT) compose += `\n      - mqtt`;
+
+    compose += `
+    volumes:
+      - ./config/worker/appsettings.json:/app/config/appsettings.json:ro
     networks:
       - electrostore
     restart: unless-stopped
@@ -250,6 +344,26 @@ services:`;
 `;
     }
 
+    // Kafka
+    compose += `
+  kafka:
+    image: bitnami/kafka:\${KAFKA_VERSION:-3.9}
+    container_name: electrostore-kafka
+    environment:
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+    volumes:
+      - kafka-data:/bitnami/kafka
+    networks:
+      - electrostore
+    restart: unless-stopped
+`;
+
     // Networks et Volumes
     compose += `
 networks:
@@ -262,13 +376,11 @@ networks:
     external: true`;
     }
 
-if (!config.enableS3 || config.useMQTT || config.useMariaDB || 
-    (config.enableS3 && config.useS3)) {
     compose += `
-volumes:`;
-}
+volumes:
+  kafka-data:`;
 
-    if (!config.enableS3) compose += `\n  api-wwwroot:`;
+    if (!config.enableS3) compose += `\n  api-wwwroot:\n  ia-models:`;
     if (config.useMariaDB) compose += `\n  mariadb-data:`;
     if (config.useMQTT) compose += `\n  mqtt-data:`;
     if (config.enableS3 && config.useS3) compose += `\n  garage-data:\n  garage-meta:`;
@@ -276,8 +388,8 @@ volumes:`;
     return compose;
 }
 
-// Generate appsettings.json
-function generateAppsettings(config) {
+// Generate appsettings.json for API service
+function generateApiAppsettings(config) {
     const settings = {
         "Logging": {
             "LogLevel": {
@@ -345,20 +457,9 @@ function generateAppsettings(config) {
         };
     }
 
-    if (config.enableSMTP && config.smtp) {
-        settings.SMTP = {
-            "Enable": true,
-            "Host": config.smtp.host,
-            "Port": parseInt(config.smtp.port),
-            "Username": config.smtp.user,
-            "Password": config.useVault ? "{{vault:smtp_password}}" : config.smtp.password,
-            "From": config.smtp.from
-        };
-    } else {
-        settings.SMTP = {
-            "Enable": false
-        };
-    }
+    settings.Kafka = {
+        "BootstrapServers": "kafka:9092"
+    };
 
     settings.Jwt = {
         "Key": config.useVault ? "{{vault:jwt_key}}" : config.jwt.key,
@@ -402,8 +503,249 @@ function generateAppsettings(config) {
         };
     }
 
+    settings.IAServiceGrpcUrl = "http://electrostoreIA:5001";
+    settings.IAServiceHealthUrl = "http://electrostoreIA:5000/health";
+    settings.NotifServiceHealthUrl = "http://electrostoreNOTIF:5000/health";
+    settings.CRONServiceHealthUrl = "http://electrostoreCRON:5000/health";
+    settings.WORKERServiceHealthUrl = "http://electrostoreWORKER:5000/health";
+    settings.DemoMode = false;
     settings.FrontendUrl = config.frontUrl;
     settings.AllowedOrigins = config.allowedOrigins;
+
+    return JSON.stringify(settings, null, 2);
+}
+
+// Generate appsettings.json for IA service
+function generateIaAppsettings(config) {
+    const settings = {
+        "Logging": {
+            "LogLevel": {
+                "Default": "Information",
+                "Microsoft.AspNetCore": "Warning",
+                "Microsoft.ML": "Warning"
+            }
+        }
+    };
+
+    settings.Kafka = {
+        "BootstrapServers": "kafka:9092",
+        "ConsumerGroupId": "ia-service"
+    };
+
+    settings.ApiServiceGrpcUrl = "http://api:5001";
+
+    if (config.useVault) {
+        settings.Vault = {
+            "Enable": true,
+            "Addr": config.vault.addr,
+            "Token": config.vault.token,
+            "Path": config.vault.path,
+            "MountPoint": config.vault.mountPoint
+        };
+    } else {
+        settings.Vault = {
+            "Enable": false,
+            "Addr": "http://vault:8200",
+            "Token": "",
+            "Path": "",
+            "MountPoint": "secret"
+        };
+    }
+
+    if (config.enableS3) {
+        if (config.useS3) {
+            settings.S3 = {
+                "Enable": true,
+                "Endpoint": "garage:3900",
+                "AccessKey": config.useVault ? "{{vault:s3_ia_access_key}}" : config.s3Ia.accessKey,
+                "SecretKey": config.useVault ? "{{vault:s3_ia_secret_key}}" : config.s3Ia.secretKey,
+                "Bucket": config.s3Ia.bucket,
+                "Region": config.s3Ia.region,
+                "Secure": false
+            };
+        } else if (config.s3IaExternal) {
+            settings.S3 = {
+                "Enable": true,
+                "Endpoint": config.s3IaExternal.endpoint,
+                "AccessKey": config.useVault ? "{{vault:s3_ia_access_key}}" : config.s3IaExternal.accessKey,
+                "SecretKey": config.useVault ? "{{vault:s3_ia_secret_key}}" : config.s3IaExternal.secretKey,
+                "Bucket": config.s3IaExternal.bucket,
+                "Region": config.s3IaExternal.region,
+                "Secure": config.s3IaExternal.secure
+            };
+        }
+    } else {
+        settings.S3 = { "Enable": false };
+    }
+
+    settings.DefaultEpochs = 10;
+    settings.DefaultBatchSize = 32;
+
+    return JSON.stringify(settings, null, 2);
+}
+
+// Generate appsettings.json for NOTIF service
+function generateNotifAppsettings(config) {
+    const settings = {
+        "Logging": {
+            "LogLevel": {
+                "Default": "Information",
+                "Microsoft": "Warning"
+            }
+        }
+    };
+
+    settings.Kafka = {
+        "BootstrapServers": "kafka:9092",
+        "ConsumerGroupId": "notif-service"
+    };
+
+    settings.ApiServiceGrpcUrl = "http://api:5001";
+
+    if (config.useVault) {
+        settings.Vault = {
+            "Enable": true,
+            "Addr": config.vault.addr,
+            "Token": config.vault.token,
+            "Path": config.vault.path,
+            "MountPoint": config.vault.mountPoint
+        };
+    } else {
+        settings.Vault = {
+            "Enable": false,
+            "Addr": "http://vault:8200",
+            "Token": "",
+            "Path": "",
+            "MountPoint": "secret"
+        };
+    }
+
+    if (config.enableSMTP && config.smtp) {
+        settings.SMTP = {
+            "Enable": true,
+            "Host": config.smtp.host,
+            "Port": parseInt(config.smtp.port),
+            "Username": config.smtp.user,
+            "Password": config.useVault ? "{{vault:smtp_password}}" : config.smtp.password,
+            "From": config.smtp.from
+        };
+    } else {
+        settings.SMTP = {
+            "Enable": false
+        };
+    }
+
+    if (config.enableVapid && config.vapid) {
+        settings.VAPID = {
+            "Subject": config.vapid.subject,
+            "PublicKey": config.vapid.publicKey,
+            "PrivateKey": config.useVault ? "{{vault:vapid_private_key}}" : config.vapid.privateKey
+        };
+    } else {
+        settings.VAPID = {
+            "Subject": "mailto:admin@electrostore.local",
+            "PublicKey": "",
+            "PrivateKey": ""
+        };
+    }
+
+    return JSON.stringify(settings, null, 2);
+}
+
+// Generate appsettings.json for CRON service
+function generateCronAppsettings(config) {
+    const settings = {
+        "Logging": {
+            "LogLevel": {
+                "Default": "Information",
+                "Microsoft.AspNetCore": "Warning",
+                "Quartz": "Warning"
+            }
+        }
+    };
+
+    settings.Kafka = {
+        "BootstrapServers": "kafka:9092"
+    };
+
+    settings.ApiServiceGrpcUrl = "http://api:5001";
+    settings.CronRefreshIntervalMinutes = 60;
+
+    if (config.useVault) {
+        settings.Vault = {
+            "Enable": true,
+            "Addr": config.vault.addr,
+            "Token": config.vault.token,
+            "Path": config.vault.path,
+            "MountPoint": config.vault.mountPoint
+        };
+    } else {
+        settings.Vault = {
+            "Enable": false,
+            "Addr": "http://vault:8200",
+            "Token": "",
+            "Path": "",
+            "MountPoint": "secret"
+        };
+    }
+
+    return JSON.stringify(settings, null, 2);
+}
+
+// Generate appsettings.json for WORKER service
+function generateWorkerAppsettings(config) {
+    const settings = {
+        "Logging": {
+            "LogLevel": {
+                "Default": "Information",
+                "Microsoft.AspNetCore": "Warning"
+            }
+        }
+    };
+
+    settings.Kafka = {
+        "BootstrapServers": "kafka:9092",
+        "ConsumerGroupId": "worker-service"
+    };
+
+    if (config.useMQTT) {
+        settings.Mqtt = {
+            "Host": "mqtt",
+            "Port": "1883",
+            "Username": config.mqtt.user,
+            "Password": config.useVault ? "{{vault:mqtt_password}}" : config.mqtt.password,
+            "ClientId": "electrostore-worker"
+        };
+    } else {
+        const mqtt = config.mqttExternal;
+        settings.Mqtt = {
+            "Host": mqtt.host,
+            "Port": mqtt.port,
+            "Username": mqtt.user,
+            "Password": config.useVault ? "{{vault:mqtt_password}}" : mqtt.password,
+            "ClientId": "electrostore-worker"
+        };
+    }
+
+    settings.ApiServiceGrpcUrl = "http://api:5001";
+
+    if (config.useVault) {
+        settings.Vault = {
+            "Enable": true,
+            "Addr": config.vault.addr,
+            "Token": config.vault.token,
+            "Path": config.vault.path,
+            "MountPoint": config.vault.mountPoint
+        };
+    } else {
+        settings.Vault = {
+            "Enable": false,
+            "Addr": "http://vault:8200",
+            "Token": "",
+            "Path": "",
+            "MountPoint": "secret"
+        };
+    }
 
     return JSON.stringify(settings, null, 2);
 }
@@ -422,6 +764,10 @@ function generateEnvFile(config) {
     env += `API_VERSION=${config.appVersion}\n`;
     env += `FRONTEND_VERSION=${config.appVersion}\n`;
     env += `IA_VERSION=${config.appVersion}\n`;
+    env += `NOTIF_VERSION=${config.appVersion}\n`;
+    env += `CRON_VERSION=${config.appVersion}\n`;
+    env += `WORKER_VERSION=${config.appVersion}\n`;
+    env += `KAFKA_VERSION=3.9\n`;
     if (config.useMariaDB) {
         env += `MARIADB_VERSION=11.7.2\n`;
     }
@@ -432,6 +778,12 @@ function generateEnvFile(config) {
         env += `GARAGE_VERSION=v2.0.0\n`;
     }
     env += `\n`;
+
+    if (config.enableVapid && config.vapid) {
+        env += `# VAPID (Web Push Notifications)\n`;
+        env += `VAPID_PUBLIC_KEY=${config.vapid.publicKey}\n`;
+        env += `VAPID_PRIVATE_KEY=${config.vapid.privateKey}\n\n`;
+    }
     
     if (!config.useTraefik) {
         env += `# Ports\n`;
@@ -454,11 +806,16 @@ function generateEnvFile(config) {
     }
     
     if (config.enableS3 && config.useS3) {
-        env += `# S3 Garage (integrated service)\n`;
+        env += `# S3 Garage - API service (integrated service)\n`;
         env += `S3_ACCESS_KEY=${config.s3.accessKey}\n`;
         env += `S3_SECRET_KEY=${config.s3.secretKey}\n`;
         env += `S3_BUCKET=${config.s3.bucket}\n`;
         env += `S3_REGION=${config.s3.region}\n\n`;
+        env += `# S3 Garage - IA service (integrated service)\n`;
+        env += `S3_IA_ACCESS_KEY=${config.s3Ia.accessKey}\n`;
+        env += `S3_IA_SECRET_KEY=${config.s3Ia.secretKey}\n`;
+        env += `S3_IA_BUCKET=${config.s3Ia.bucket}\n\n`;
+        env += `S3_IA_REGION=${config.s3Ia.region}\n\n`;
     }
     
     return env;
@@ -497,6 +854,11 @@ echo "Storing secrets in Vault..."
 
         if (config.enableSMTP && config.smtp) {
             script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} smtp_password="${config.smtp.password}"
+`;
+        }
+
+        if (config.enableVapid && config.vapid) {
+            script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} vapid_private_key="${config.vapid.privateKey}"
 `;
         }
 
@@ -550,12 +912,17 @@ docker exec electrostore-garage /garage bucket create ${config.s3.bucket}
 
 echo "Assigning permissions..."
 docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.bucket} --key electrostore-key
+
+echo "Creating bucket ${config.s3Ia.bucket} for IA service..."
+docker exec electrostore-garage /garage key import -n electrostore-ia-key --yes ${config.s3Ia.accessKey} ${config.s3Ia.secretKey}
+docker exec electrostore-garage /garage bucket create ${config.s3Ia.bucket}
+docker exec electrostore-garage /garage bucket allow --read --write ${config.s3Ia.bucket} --key electrostore-ia-key
 `;
 
         if (config.useVault) {
             script += `
 echo "Storing S3 keys in Vault..."
-docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} s3_access_key="\$GARAGE_ACCESS_KEY" s3_secret_key="\$GARAGE_SECRET_KEY"
+docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} s3_access_key="\$GARAGE_ACCESS_KEY" s3_secret_key="\$GARAGE_SECRET_KEY" s3_ia_access_key="${config.s3Ia.accessKey}" s3_ia_secret_key="${config.s3Ia.secretKey}"
 `;
         }
 
@@ -685,7 +1052,11 @@ This file contains all necessary files to deploy ElectroStore with Docker.
 - \`docker-compose.yml\` : Docker Compose configuration
 - \`.env\` : Environment variables
 - \`setup.sh\` : Automatic configuration script
-- \`config/appsettings.json\` : API configuration
+- \`config/api/appsettings.json\` : API configuration
+- \`config/ia/appsettings.json\` : IA service configuration
+- \`config/notif/appsettings.json\` : Notification service configuration
+- \`config/cron/appsettings.json\` : CRON service configuration
+- \`config/worker/appsettings.json\` : WORKER service configuration
 
 ## Installation
 

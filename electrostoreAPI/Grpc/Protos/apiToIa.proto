@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+option csharp_namespace = "ElectrostoreAPI.Grpc";
+
+package apiToIa;
+
+service APIToIAGrpc {
+  rpc GetStatus (StatusRequest) returns (StatusReply);
+  rpc Detect (DetectRequest) returns (DetectReply);
+}
+
+message StatusRequest {
+  int32 id_model = 1;
+}
+
+message StatusReply {
+  string status = 1;
+  string message = 2;
+  int32 epoch = 3;
+  float accuracy = 4;
+  float val_accuracy = 5;
+  float loss = 6;
+  float val_loss = 7;
+  float learning_rate = 8;
+  int32 batch_processed_count = 9;
+}
+
+message DetectRequest {
+  int32 id_model = 1;
+  bytes image_data = 2;
+}
+
+message DetectReply {
+  int32 predicted_class = 1;
+  float confidence = 2;
+}

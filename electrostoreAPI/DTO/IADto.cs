@@ -9,6 +9,7 @@ public record ReadIADto
     public required string nom_ia { get; init; }
     public required string description_ia { get; init; }
     public bool trained_ia { get; init; }
+    public DateTime? date_training_ia { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
 }

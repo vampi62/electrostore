@@ -2,9 +2,12 @@ using AutoMapper;
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Grpc;
+using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.SessionService;
 using ElectrostoreAPI.Services.FileService;
+using Google.Protobuf;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using System.Text.Json;
@@ -17,17 +20,17 @@ public class IAService : IIAService
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
     private readonly IFileService _fileService;
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly string _iaServiceUrl = "http://electrostoreIA:5000";
-    private readonly string _modelsPath = "models";
+    private readonly APIToIAGrpc.APIToIAGrpcClient _iaGrpcClient;
+    private readonly IKafkaProducerService _kafkaProducer;
 
-    public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IFileService fileService, IHttpClientFactory httpClientFactory)
+    public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IFileService fileService, APIToIAGrpc.APIToIAGrpcClient iaGrpcClient, IKafkaProducerService kafkaProducer)
     {
         _mapper = mapper;
         _context = context;
         _sessionService = sessionService;
         _fileService = fileService;
-        _httpClientFactory = httpClientFactory;
+        _iaGrpcClient = iaGrpcClient;
+        _kafkaProducer = kafkaProducer;
     }
 
     public async Task<PaginatedResponseDto<ReadIADto>> GetIA(int limit = 100, int offset = 0,
@@ -117,15 +120,6 @@ public class IAService : IIAService
         {
             iaToUpdate.description_ia = iaDto.description_ia;
         }
-        // if model exists set trained_ia to true
-        if (await _fileService.FileExists(GetModelFilePath(id)) && !iaToUpdate.trained_ia)
-        {
-            iaToUpdate.trained_ia = true;
-        }
-        else if (!await _fileService.FileExists(GetModelFilePath(id)) && iaToUpdate.trained_ia)
-        {
-            iaToUpdate.trained_ia = false;
-        }
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadIADto>(iaToUpdate);
     }
@@ -139,9 +133,12 @@ public class IAService : IIAService
         }
         var iaToDelete = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id '{id}' not found");
         // remove model if exists
-        await _fileService.DeleteFile(GetModelFilePath(id));
-        await _fileService.DeleteFile(GetModelItemListFilePath(id));
         _context.IA.Remove(iaToDelete);
+        await _kafkaProducer.PublishAsync(
+            "ia-requests",
+            id.ToString(),
+            JsonSerializer.Serialize(new { action = "ia_deleted", id_ia = id, deleted_at = DateTime.UtcNow, deleted_by = _sessionService.GetClientId() })
+        );
         await _context.SaveChangesAsync();
     }
 
@@ -153,19 +150,16 @@ public class IAService : IIAService
         }
         try
         {
-            var httpClient = _httpClientFactory.CreateClient();
-            var response = await httpClient.GetAsync(_iaServiceUrl + "/status/" + id);
-            var content = await response.Content.ReadAsStringAsync();
-            var status = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content) ?? new Dictionary<string, JsonElement>();
+            var reply = await _iaGrpcClient.GetStatusAsync(new StatusRequest { IdModel = id });
             return new IAStatusDto
             {
-                Status = GetStringValue(status, "status", "unknown"),
-                Message = GetStringValue(status, "message", "unknown"),
-                Epoch = GetIntValue(status, "epoch", 0),
-                Accuracy = GetFloatValue(status, "accuracy", 0),
-                ValAccuracy = GetFloatValue(status, "val_accuracy", 0),
-                Loss = GetFloatValue(status, "loss", 0),
-                ValLoss = GetFloatValue(status, "val_loss", 0)
+                Status      = reply.Status,
+                Message     = reply.Message,
+                Epoch       = reply.Epoch,
+                Accuracy    = reply.Accuracy,
+                ValAccuracy = reply.ValAccuracy,
+                Loss        = reply.Loss,
+                ValLoss     = reply.ValLoss
             };
         }
         catch (Exception e)
@@ -197,18 +191,16 @@ public class IAService : IIAService
         }
         try
         {
-            var httpClient = _httpClientFactory.CreateClient();
-            var response = await httpClient.PostAsync(_iaServiceUrl + "/train/" + id, null);
-            // check if 200 OK
-            if (response.StatusCode != System.Net.HttpStatusCode.OK)
-            {
-                throw new InvalidOperationException("Error while training IA");
-            }
+            await _kafkaProducer.PublishAsync(
+                "ia-requests",
+                id.ToString(),
+                JsonSerializer.Serialize(new { action = "train_requested", id_ia = id, requested_at = DateTime.UtcNow, requested_by = _sessionService.GetClientId() })
+            );
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
-            throw new InvalidOperationException("Error while training IA", e); 
+            throw new InvalidOperationException("Error while training IA", e);
         }
     }
 
@@ -221,68 +213,26 @@ public class IAService : IIAService
         }
         try
         {
-            var httpClient = _httpClientFactory.CreateClient();
-            PredictionOutput newDetecResult;
-            // requete POST avec l'image à scanner
-            var response = await httpClient.PostAsync(_iaServiceUrl + "/detect/" + id,
-                new MultipartFormDataContent
-                {
-                    { new StreamContent(detecDto.img_file.OpenReadStream()), "img_file", detecDto.img_file.FileName }
-                }
-            );
-            var content = await response.Content.ReadAsStringAsync();
-            // convert the response to a json object
-            var json = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content);
-            if (json is null)
+            using var ms = new MemoryStream();
+            await detecDto.img_file.OpenReadStream().CopyToAsync(ms);
+            var imageBytes = ByteString.CopyFrom(ms.ToArray());
+
+            var reply = await _iaGrpcClient.DetectAsync(new DetectRequest
             {
-                newDetecResult = new PredictionOutput
-                {
-                    PredictedLabel = -1,
-                    Score = 0
-                };
-                return newDetecResult;
-            }
-            newDetecResult = new PredictionOutput
+                IdModel   = id,
+                ImageData = imageBytes
+            });
+
+            return new PredictionOutput
             {
-                PredictedLabel = GetIntValue(json, "predicted_class", -1),
-                Score = GetFloatValue(json, "confidence", 0)
+                PredictedLabel = reply.PredictedClass,
+                Score          = reply.Confidence
             };
-            return newDetecResult;
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
             throw new InvalidOperationException("Error while detecting item", e);
         }
-    }
-
-    private static string GetModelFilePath(int id)
-    {
-        return "Model" + id.ToString() + ".keras";
-    }
-    private static string GetModelItemListFilePath(int id)
-    {
-        return "ItemList" + id.ToString() + ".txt";
-    }
-
-    private static string GetStringValue(Dictionary<string, JsonElement> dict, string key, string defaultValue)
-    {
-        return dict.TryGetValue(key, out var value) && value.ValueKind == JsonValueKind.String 
-            ? value.GetString()! 
-            : defaultValue;
-    }
-
-    private static int GetIntValue(Dictionary<string, JsonElement> dict, string key, int defaultValue)
-    {
-        return dict.TryGetValue(key, out var value) && value.ValueKind == JsonValueKind.Number 
-            ? value.GetInt32() 
-            : defaultValue;
-    }
-
-    private static float GetFloatValue(Dictionary<string, JsonElement> dict, string key, float defaultValue)
-    {
-        return dict.TryGetValue(key, out var value) && value.ValueKind == JsonValueKind.Number 
-            ? value.GetSingle() 
-            : defaultValue;
     }
 }

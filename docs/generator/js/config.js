@@ -73,8 +73,14 @@ function collectConfig(formData) {
             config.s3 = {
                 accessKey: 'GK' + generateHexaKey(24),
                 secretKey: generateHexaKey(64),
-                bucket: formData.get('s3Bucket') || 'electrostore',
+                bucket: formData.get('s3Bucket') || 'electrostore-api',
                 region: formData.get('s3Region') || 'garage'
+            };
+            config.s3Ia = {
+                accessKey: 'GK' + generateHexaKey(24),
+                secretKey: generateHexaKey(64),
+                bucket: formData.get('s3IaBucket') || 'electrostore-ia',
+                region: config.s3.region
             };
         } else {
             config.s3External = {
@@ -84,6 +90,14 @@ function collectConfig(formData) {
                 bucket: formData.get('s3ExternalBucket'),
                 region: formData.get('s3ExternalRegion') || 'us-east-1',
                 secure: document.getElementById('s3ExternalSecure') ? document.getElementById('s3ExternalSecure').checked : true
+            };
+            config.s3IaExternal = {
+                endpoint: formData.get('s3IaExternalEndpoint'),
+                accessKey: formData.get('s3IaExternalAccessKey'),
+                secretKey: formData.get('s3IaExternalSecretKey'),
+                bucket: formData.get('s3IaExternalBucket'),
+                region: formData.get('s3IaExternalRegion') || 'us-east-1',
+                secure: document.getElementById('s3IaExternalSecure') ? document.getElementById('s3IaExternalSecure').checked : true
             };
         }
     }

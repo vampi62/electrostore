@@ -1,12 +1,27 @@
-FROM python:3.11.13-slim
+FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY ["DTO/", "Enums/", "Extensions/", "Grpc/", "Kafka/", "Services/", \
+        "electrostoreIA.csproj", "Program.cs", "./"]
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN dotnet restore
 
-COPY ["app_init.py", "config.py", "db_query.py", "file_manager.py", "image_detector.py", "main.py", "model_trainer.py", "routes.py", "S3Manager.py", "./"]
+RUN dotnet publish -c Release -o out
+
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS runtime
+
+WORKDIR /app
+
+COPY --from=build /app/out .
+
+RUN apk add --no-cache --virtual .build-deps \
+    g++ \
+    linux-headers \
+    musl-dev \
+    && apk add --no-cache --virtual .run-deps \
+    libgomp \
+    && rm -rf /var/cache/apk/*
 
 #COPY entrypoint.sh /entrypoint.sh
 #RUN chmod +x /entrypoint.sh && chown -R 3216:3216 /app
@@ -14,5 +29,9 @@ COPY ["app_init.py", "config.py", "db_query.py", "file_manager.py", "image_detec
 #USER 3216:3216
 
 EXPOSE 5000
+EXPOSE 5001
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD wget -qO- http://localhost:5000/health || exit 1
+
+ENTRYPOINT ["dotnet", "electrostoreIA.dll"]

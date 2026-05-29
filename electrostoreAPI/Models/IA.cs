@@ -17,4 +17,6 @@ public class IA : BaseEntity
     public required string description_ia { get; set; }
 
     public bool trained_ia { get; set; } = false;
+
+    public DateTime? date_training_ia { get; set; }
 }
