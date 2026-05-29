@@ -122,6 +122,9 @@ public class MappingProfile : Profile
         CreateMap<Tags, ReadTagDto>();
         CreateMap<Tags, ReadExtendedTagDto>();
 
+        CreateMap<CreateUserPushSubscriptionDto, UserPushSubscriptions>();
+        CreateMap<UserPushSubscriptions, ReadUserPushSubscriptionDto>();
+
         CreateMap<CreateUserDto, Users>();
         CreateMap<Users, ReadUserDto>();
         CreateMap<Users, ReadExtendedUserDto>();
