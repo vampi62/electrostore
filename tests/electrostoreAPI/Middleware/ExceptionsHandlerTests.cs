@@ -6,7 +6,7 @@ using System.Net;
 using System.Text.Json;
 using Xunit;
 
-namespace electrostoreAPIAPI.Tests.Middleware
+namespace ElectrostoreAPI.Tests.Middleware
 {
     public class ExceptionsHandlerTests
     {

@@ -91,11 +91,11 @@ public class CommandDocumentService : ICommandDocumentService
         {
             throw new KeyNotFoundException($"Command with id '{commandDocumentDto.id_command}' not found");
         }
-        var savedFile = await _fileService.SaveFile(Path.Combine(_commandDocumentsPath, commandDocumentDto.id_command.ToString()), commandDocumentDto.document);
+        var savedFile = await _fileService.SaveFile(Path.Combine(_commandDocumentsPath, commandDocumentDto.id_command.ToString()), commandDocumentDto.document.FileName, commandDocumentDto.document.ContentType, commandDocumentDto.document.OpenReadStream());
         var commandDocument = new CommandsDocuments
         {
             id_command = commandDocumentDto.id_command,
-            url_command_document = savedFile.url,
+            url_command_document = savedFile.path,
             name_command_document = commandDocumentDto.name_command_document,
             type_command_document = savedFile.mimeType,
             size_command_document = commandDocumentDto.document.Length

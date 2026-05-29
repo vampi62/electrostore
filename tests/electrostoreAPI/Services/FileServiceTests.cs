@@ -303,21 +303,16 @@ namespace ElectrostoreAPI.Tests.Services
                 .ThrowsAsync(new Minio.Exceptions.ObjectNotFoundException("File not found"));
 
             var fileService = new FileService(configurationRoot, _minioClient.Object);
-            var mockFormFile = new Mock<Microsoft.AspNetCore.Http.IFormFile>();
             var content = "This is a test file";
             var fileName = "test-file.txt";
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
-            mockFormFile.Setup(f => f.FileName).Returns(fileName);
-            mockFormFile.Setup(f => f.Length).Returns(ms.Length);
-            mockFormFile.Setup(f => f.OpenReadStream()).Returns(ms);
-            mockFormFile.Setup(f => f.ContentType).Returns("text/plain");
 
             // Act
-            var result = await fileService.SaveFile("some-path", mockFormFile.Object);
+            var result = await fileService.SaveFile("some-path", fileName, "text/plain", ms);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Contains("some-path", result.url);
+            Assert.Contains("some-path", result.path);
             Assert.Equal("text/plain", result.mimeType);
         }
         
@@ -334,29 +329,24 @@ namespace ElectrostoreAPI.Tests.Services
                 .Build();
 
             var fileService = new FileService(configurationRoot, _minioClient.Object);
-            var mockFormFile = new Mock<Microsoft.AspNetCore.Http.IFormFile>();
             var content = "This is a test local file";
             var fileName = "local-test-file.txt";
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
-            mockFormFile.Setup(f => f.FileName).Returns(fileName);
-            mockFormFile.Setup(f => f.Length).Returns(ms.Length);
-            mockFormFile.Setup(f => f.OpenReadStream()).Returns(ms);
-            mockFormFile.Setup(f => f.ContentType).Returns("text/plain");
 
             // create the directory if it doesn't exist
             var saveDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "local-path");
             Directory.CreateDirectory(saveDir);
 
             // Act
-            var result = await fileService.SaveFile("local-path", mockFormFile.Object);
+            var result = await fileService.SaveFile("local-path", fileName, "text/plain", ms);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Contains("local-path", result.url);
+            Assert.Contains("local-path", result.path);
             Assert.Equal("text/plain", result.mimeType);
 
             // Cleanup
-            var savedFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", result.url);
+            var savedFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", result.path);
             if (File.Exists(savedFilePath))
             {
                 File.Delete(savedFilePath);
@@ -380,28 +370,23 @@ namespace ElectrostoreAPI.Tests.Services
                 .Build();
 
             var fileService = new FileService(configurationRoot, _minioClient.Object);
-            var mockFormFile = new Mock<Microsoft.AspNetCore.Http.IFormFile>();
             var content = "This is a test file for directory traversal";
             var fileName = "../traversal-test-file.txt"; // Attempted directory traversal
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
-            mockFormFile.Setup(f => f.FileName).Returns(fileName);
-            mockFormFile.Setup(f => f.Length).Returns(ms.Length);
-            mockFormFile.Setup(f => f.OpenReadStream()).Returns(ms);
-            mockFormFile.Setup(f => f.ContentType).Returns("text/plain");
 
             // create the directory if it doesn't exist
             var saveDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "safe-path");
             Directory.CreateDirectory(saveDir);
 
             // Act
-            var result = await fileService.SaveFile("safe-path", mockFormFile.Object);
+            var result = await fileService.SaveFile("safe-path", fileName, "text/plain", ms);
 
             // Assert
             Assert.NotNull(result);
-            Assert.DoesNotContain("..", result.url); // Ensure no directory traversal in saved path
+            Assert.DoesNotContain("..", result.path); // Ensure no directory traversal in saved path
 
             // Cleanup
-            var savedFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", result.url);
+            var savedFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", result.path);
             if (File.Exists(savedFilePath))
             {
                 File.Delete(savedFilePath);
@@ -425,29 +410,24 @@ namespace ElectrostoreAPI.Tests.Services
                 .Build();
 
             var fileService = new FileService(configurationRoot, _minioClient.Object);
-            var mockFormFile = new Mock<Microsoft.AspNetCore.Http.IFormFile>();
             var content = "This is a test file for long file names";
             var longFileName = new string('a', 150) + ".txt"; // 150 characters long
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
-            mockFormFile.Setup(f => f.FileName).Returns(longFileName);
-            mockFormFile.Setup(f => f.Length).Returns(ms.Length);
-            mockFormFile.Setup(f => f.OpenReadStream()).Returns(ms);
-            mockFormFile.Setup(f => f.ContentType).Returns("text/plain");
 
             // create the directory if it doesn't exist
             var saveDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "long-name-path");
             Directory.CreateDirectory(saveDir);
 
             // Act
-            var result = await fileService.SaveFile("long-name-path", mockFormFile.Object);
+            var result = await fileService.SaveFile("long-name-path", longFileName, "text/plain", ms);
 
             // Assert
             Assert.NotNull(result);
-            var savedFileName = Path.GetFileName(result.url);
+            var savedFileName = Path.GetFileName(result.path);
             Assert.True(savedFileName.Length <= 104); // 100 chars + 4 for ".txt"
 
             // Cleanup
-            var savedFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", result.url);
+            var savedFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", result.path);
             if (File.Exists(savedFilePath))
             {
                 File.Delete(savedFilePath);
@@ -479,19 +459,14 @@ namespace ElectrostoreAPI.Tests.Services
                 .ThrowsAsync(new Minio.Exceptions.ObjectNotFoundException("File not found"));
 
             var fileService = new FileService(configurationRoot, _minioClient.Object);
-            var mockFormFile = new Mock<Microsoft.AspNetCore.Http.IFormFile>();
             var content = "This is a test file for S3 upload error";
             var fileName = "s3-error-test-file.txt";
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
-            mockFormFile.Setup(f => f.FileName).Returns(fileName);
-            mockFormFile.Setup(f => f.Length).Returns(ms.Length);
-            mockFormFile.Setup(f => f.OpenReadStream()).Returns(ms);
-            mockFormFile.Setup(f => f.ContentType).Returns("text/plain");
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(async () =>
             {
-                await fileService.SaveFile("error-path", mockFormFile.Object);
+                await fileService.SaveFile("error-path", fileName, "text/plain", ms);
             });
         }
 
@@ -508,32 +483,19 @@ namespace ElectrostoreAPI.Tests.Services
                 .Build();
 
             var fileService = new FileService(configurationRoot, _minioClient.Object);
-            var mockFormFile = new Mock<Microsoft.AspNetCore.Http.IFormFile>();
-            var content = "This is a test file for local save error";
-            var fileName = "local-error-test-file.txt";
-            var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
-            mockFormFile.Setup(f => f.FileName).Returns(fileName);
-            mockFormFile.Setup(f => f.Length).Returns(ms.Length);
-            mockFormFile.Setup(f => f.OpenReadStream()).Returns(ms);
-            mockFormFile.Setup(f => f.ContentType).Returns("text/plain");
 
-            // Simulate error by making the directory read-only
+            // Simulate error using a stream that throws on CopyToAsync
             var savePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "error-path");
             Directory.CreateDirectory(savePath);
-            var dirInfo = new DirectoryInfo(savePath);
-            dirInfo.Attributes |= FileAttributes.ReadOnly;
-            // or make the mockFormFile.CopyToAsync throw an exception.
-            mockFormFile.Setup(f => f.CopyToAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new UnauthorizedAccessException("Cannot write to read-only directory"));
+            var throwingStream = new ThrowingStream(new UnauthorizedAccessException("Cannot write to read-only directory"));
 
             // Act & Assert
             await Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
             {
-                await fileService.SaveFile("error-path", mockFormFile.Object);
+                await fileService.SaveFile("error-path", "local-error-test-file.txt", "text/plain", throwingStream);
             });
 
             // Cleanup
-            dirInfo.Attributes &= ~FileAttributes.ReadOnly;
             Directory.Delete(savePath, true);
         }
 
@@ -573,22 +535,17 @@ namespace ElectrostoreAPI.Tests.Services
                 .ReturnsAsync((Minio.DataModel.Response.PutObjectResponse)null!);
 
             var fileService = new FileService(configurationRoot, _minioClient.Object);
-            var mockFormFile = new Mock<Microsoft.AspNetCore.Http.IFormFile>();
             var content = "This is a test file for S3 name collision";
             var fileName = "collision-test-file.txt";
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
-            mockFormFile.Setup(f => f.FileName).Returns(fileName);
-            mockFormFile.Setup(f => f.Length).Returns(ms.Length);
-            mockFormFile.Setup(f => f.OpenReadStream()).Returns(ms);
-            mockFormFile.Setup(f => f.ContentType).Returns("text/plain");
 
             // Act
-            var result = await fileService.SaveFile("collision-path", mockFormFile.Object);
+            var result = await fileService.SaveFile("collision-path", fileName, "text/plain", ms);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Contains("collision-path", result.url);
-            Assert.Matches(@"collision-test-file\(\d+\)\.txt$", result.url); // Check for appended number in filename
+            Assert.Contains("collision-path", result.path);
+            Assert.Matches(@"collision-test-file\(\d+\)\.txt$", result.path); // Check for appended number in filename
         }
 
         [Fact]
@@ -604,14 +561,9 @@ namespace ElectrostoreAPI.Tests.Services
                 .Build();
 
             var fileService = new FileService(configurationRoot, _minioClient.Object);
-            var mockFormFile = new Mock<Microsoft.AspNetCore.Http.IFormFile>();
             var content = "This is a test file for local name collision";
             var fileName = "local-collision-test-file.txt";
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
-            mockFormFile.Setup(f => f.FileName).Returns(fileName);
-            mockFormFile.Setup(f => f.Length).Returns(ms.Length);
-            mockFormFile.Setup(f => f.OpenReadStream()).Returns(ms);
-            mockFormFile.Setup(f => f.ContentType).Returns("text/plain");
 
             // Pre-create a file to cause a collision
             var saveDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "local-collision-path");
@@ -620,15 +572,15 @@ namespace ElectrostoreAPI.Tests.Services
             await File.WriteAllTextAsync(existingFilePath, "existing file content");
 
             // Act
-            var result = await fileService.SaveFile("local-collision-path", mockFormFile.Object);
+            var result = await fileService.SaveFile("local-collision-path", fileName, "text/plain", ms);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Contains("local-collision-path", result.url);
-            Assert.Matches(@"local-collision-test-file\(\d+\)\.txt$", result.url); // Check for appended number in filename
+            Assert.Contains("local-collision-path", result.path);
+            Assert.Matches(@"local-collision-test-file\(\d+\)\.txt$", result.path); // Check for appended number in filename
 
             // Cleanup
-            var savedFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", result.url);
+            var savedFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", result.path);
             if (File.Exists(savedFilePath))
             {
                 File.Delete(savedFilePath);
@@ -670,26 +622,12 @@ namespace ElectrostoreAPI.Tests.Services
             await image.SaveAsJpegAsync(imageMs);
             imageMs.Position = 0;
 
-            var mockFormFile = new Mock<Microsoft.AspNetCore.Http.IFormFile>();
             var fileName = "test-image.jpg";
-            mockFormFile.Setup(f => f.FileName).Returns(fileName);
-            mockFormFile.Setup(f => f.Length).Returns(imageMs.Length);
-            mockFormFile.Setup(f => f.OpenReadStream()).Returns(() =>
-            {
-                imageMs.Position = 0;
-                return imageMs;
-            });
-            mockFormFile.Setup(f => f.ContentType).Returns("image/jpeg");
-            mockFormFile.Setup(f => f.CopyToAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
-                .Returns<Stream, CancellationToken>(async (stream, token) =>
-                {
-                    imageMs.Position = 0;
-                    await imageMs.CopyToAsync(stream, token);
-                });
+            imageMs.Position = 0;
 
             // Save the original image first
-            var saveResult = await fileService.SaveFile(Path.Combine("thumbnailsTest", "main"), mockFormFile.Object);
-            var sourceFilePath = saveResult.url;
+            var saveResult = await fileService.SaveFile(Path.Combine("thumbnailsTest", "main"), fileName, "image/jpeg", imageMs);
+            var sourceFilePath = saveResult.path;
             var destPath = Path.Combine("thumbnailsTest","thumbnails");
 
             // Act
@@ -697,12 +635,12 @@ namespace ElectrostoreAPI.Tests.Services
 
             // Assert
             Assert.NotNull(thumbnailResult);
-            Assert.Contains("main", saveResult.url);
-            Assert.Contains("thumbnails", thumbnailResult.url);
+            Assert.Contains("main", saveResult.path);
+            Assert.Contains("thumbnails", thumbnailResult.path);
             Assert.Equal("image/jpeg", thumbnailResult.mimeType);
 
             // Cleanup
-            var savedThumbnailPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", thumbnailResult.url);
+            var savedThumbnailPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", thumbnailResult.path);
             if (File.Exists(savedThumbnailPath))
             {
                 File.Delete(savedThumbnailPath);
@@ -856,6 +794,14 @@ namespace ElectrostoreAPI.Tests.Services
 
             // Assert
             _minioClient.Verify(m => m.RemoveObjectAsync(It.IsAny<RemoveObjectArgs>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        }
+
+        private sealed class ThrowingStream : MemoryStream
+        {
+            private readonly Exception _exception;
+            public ThrowingStream(Exception exception) { _exception = exception; }
+            public override Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
+                => throw _exception;
         }
     }
 }
