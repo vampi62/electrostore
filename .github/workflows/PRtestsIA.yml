@@ -15,19 +15,22 @@ jobs:
         shell: bash
         working-directory: ./electrostoreIA
     steps:
-    - name: Checkout
+    - name: Checkout code
       uses: actions/checkout@v4
-    - name: Set up python
-      uses: actions/setup-python@v5
+    - name: Set up C#
+      uses: actions/setup-dotnet@v4
       with:
-        python-version: '3.11'
+        dotnet-version: '9.0.x'
     - name: Install dependencies
+      run: dotnet restore
+    - name: Run tests and collect coverage (OpenCover)
       run: |
-        pip install -r requirements.txt
-        pip install -r ../tests/electrostoreIA/requirements.txt
-    - name: Run tests with coverage
-      run: |
-        python -m pytest ../tests/electrostoreIA --cov=electrostoreIA --cov-report=xml:coverage.xml
+        dotnet test ../tests/electrostoreIA \
+          --collect "XPlat Code Coverage" \
+          --logger "trx;LogFileName=test-results.trx" \
+          --results-directory ./TestResults \
+          -- \
+          DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
     - name: Get PR ID
       id: get-pr-id
       run: |
@@ -36,17 +39,21 @@ jobs:
     - name: Run SonarQube scan
       id: sonarqube
       continue-on-error: true
-      uses: SonarSource/sonarqube-scan-action@v6
       env:
-        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      with:
-        args: >
-          -Dsonar.projectKey=PR-${{ steps.get-pr-id.outputs.pr_id }}-electrostore-ia
-          -Dsonar.projectName=PR-${{ steps.get-pr-id.outputs.pr_id }}-electrostore-ia
-          -Dsonar.sources=electrostoreIA
-          -Dsonar.python.coverage.reportPaths=electrostoreIA/coverage.xml
-          -Dsonar.cfamily.cache.enabled=false
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        PROJECT_KEY: "PR-${{ steps.get-pr-id.outputs.pr_id }}-electrostore-api"
+      run: |
+        dotnet tool install --global dotnet-sonarscanner
+        dotnet sonarscanner begin /k:"$PROJECT_KEY" \
+          /d:sonar.host.url="$SONAR_HOST_URL" \
+          /d:sonar.token="$SONAR_TOKEN" \
+          /d:sonar.exclusions="**/Migrations/**" \
+          /d:sonar.cpd.exclusions="**/DTO/**,**/Models/**" \
+          /d:sonar.cs.vstest.reportsPaths=../electrostoreIA/TestResults/*.trx \
+          /d:sonar.cs.opencover.reportsPaths=../electrostoreIA/TestResults/**/coverage.opencover.xml
+        dotnet build
+        dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
     - name: SonarQube Status
       if: steps.sonarqube.outcome == 'failure'
       run: |

@@ -171,6 +171,13 @@ public partial class Program
             options.MaxReceiveMessageSize = 100 * 1024 * 1024; // 100 MB
         });
 
+        // gRPC client for the IA service
+        builder.Services.AddGrpcClient<APIToIAGrpc.APIToIAGrpcClient>(options =>
+        {
+            options.Address = new Uri(
+                builder.Configuration.GetValue<string>("IAServiceGrpcUrl") ?? "http://electrostoreIA:5001");
+        });
+
         builder.Logging.AddFilter("LuckyPennySoftware.AutoMapper.License", LogLevel.None);
 
         AddAuthentication(builder, key);
@@ -201,6 +208,7 @@ public partial class Program
 
         app.UseMiddleware<ExceptionsHandler>();
 
+        app.MapGrpcService<ElectrostoreIAToApiGrpcService>();
         app.MapGrpcService<ElectrostoreNOTIFToApiGrpcService>();
 
         app.MapGet("/health", (IConfiguration config) =>
@@ -353,10 +361,6 @@ public partial class Program
         if (!Directory.Exists("wwwroot/imagesThumbnails"))
         {
             Directory.CreateDirectory("wwwroot/imagesThumbnails");
-        }
-        if (!Directory.Exists("wwwroot/models"))
-        {
-            Directory.CreateDirectory("wwwroot/models");
         }
         if (!Directory.Exists("wwwroot/projetDocuments"))
         {
