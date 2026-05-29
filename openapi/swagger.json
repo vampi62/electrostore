@@ -1932,6 +1932,259 @@
         }
       }
     },
+    "/api/cronjob": {
+      "get": {
+        "tags": [
+          "CronJob"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "idResearch",
+            "in": "query",
+            "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'name_cronjob=like=example'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'name_cronjob,asc' or 'name_cronjob,desc'.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCronJobDtoPaginatedResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCronJobDtoPaginatedResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCronJobDtoPaginatedResponseDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CronJob"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCronJobDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCronJobDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCronJobDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCronJobDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCronJobDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCronJobDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cronjob/{id_cronjob}": {
+      "get": {
+        "tags": [
+          "CronJob"
+        ],
+        "parameters": [
+          {
+            "name": "id_cronjob",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCronJobDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCronJobDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCronJobDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "CronJob"
+        ],
+        "parameters": [
+          {
+            "name": "id_cronjob",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCronJobDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCronJobDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCronJobDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCronJobDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCronJobDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCronJobDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "CronJob"
+        ],
+        "parameters": [
+          {
+            "name": "id_cronjob",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "electrostoreAPI"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/ia": {
       "get": {
         "tags": [
@@ -7062,6 +7315,35 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReadBulkProjetProjetTagDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/status": {
+      "get": {
+        "tags": [
+          "Status"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadStatusDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadStatusDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadStatusDto"
                 }
               }
             }
@@ -12341,6 +12623,39 @@
         },
         "additionalProperties": false
       },
+      "CreateCronJobDto": {
+        "required": [
+          "action_cronjob",
+          "cron_expression",
+          "name_cronjob"
+        ],
+        "type": "object",
+        "properties": {
+          "name_cronjob": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "cron_expression": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "action_cronjob": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "params_cronjob": {
+            "type": "string",
+            "nullable": true
+          },
+          "is_enabled": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "CreateIADto": {
         "required": [
           "description_ia",
@@ -13510,21 +13825,8 @@
         "additionalProperties": false
       },
       "ReadConfig": {
-        "required": [
-          "ia_service_status"
-        ],
         "type": "object",
         "properties": {
-          "smtp_enabled": {
-            "type": "boolean"
-          },
-          "mqtt_connected": {
-            "type": "boolean"
-          },
-          "ia_service_status": {
-            "type": "string",
-            "nullable": true
-          },
           "demo_mode": {
             "type": "boolean"
           },
@@ -13600,6 +13902,94 @@
             "type": "array",
             "items": {
               "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadCronJobDto": {
+        "required": [
+          "action_cronjob",
+          "cron_expression",
+          "name_cronjob"
+        ],
+        "type": "object",
+        "properties": {
+          "id_cronjob": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name_cronjob": {
+            "type": "string",
+            "nullable": true
+          },
+          "cron_expression": {
+            "type": "string",
+            "nullable": true
+          },
+          "action_cronjob": {
+            "type": "string",
+            "nullable": true
+          },
+          "params_cronjob": {
+            "type": "string",
+            "nullable": true
+          },
+          "is_enabled": {
+            "type": "boolean"
+          },
+          "last_run_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "next_run_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadCronJobDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filters",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadCronJobDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilterDto"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SorterDto"
             },
             "nullable": true
           }
@@ -14122,6 +14512,10 @@
             "nullable": true
           },
           "seuil_min_item": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "quantity_item": {
             "type": "integer",
             "format": "int32"
           },
@@ -14814,6 +15208,11 @@
             "type": "string",
             "nullable": true
           },
+          "mqtt_last_seen_store": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "created_at": {
             "type": "string",
             "format": "date-time"
@@ -15174,6 +15573,11 @@
           "trained_ia": {
             "type": "boolean"
           },
+          "date_training_ia": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "created_at": {
             "type": "string",
             "format": "date-time"
@@ -15431,6 +15835,10 @@
             "nullable": true
           },
           "seuil_min_item": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "quantity_item": {
             "type": "integer",
             "format": "int32"
           },
@@ -15809,6 +16217,38 @@
         },
         "additionalProperties": false
       },
+      "ReadStatusDto": {
+        "required": [
+          "ia_status",
+          "notif_status"
+        ],
+        "type": "object",
+        "properties": {
+          "api_status": {
+            "type": "string",
+            "nullable": true
+          },
+          "db_connected": {
+            "type": "boolean"
+          },
+          "mqtt_connected": {
+            "type": "boolean"
+          },
+          "ia_status": {
+            "type": "string",
+            "nullable": true
+          },
+          "ia_training_in_progress": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "notif_status": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ReadStoreCompleteDto": {
         "required": [
           "store"
@@ -15852,6 +16292,11 @@
           },
           "mqtt_name_store": {
             "type": "string",
+            "nullable": true
+          },
+          "mqtt_last_seen_store": {
+            "type": "string",
+            "format": "date-time",
             "nullable": true
           },
           "created_at": {
@@ -16373,6 +16818,45 @@
             "minimum": 0,
             "type": "number",
             "format": "float",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateCronJobDto": {
+        "type": "object",
+        "properties": {
+          "name_cronjob": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "cron_expression": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "action_cronjob": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "params_cronjob": {
+            "type": "string",
+            "nullable": true
+          },
+          "is_enabled": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "last_run_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "next_run_at": {
+            "type": "string",
+            "format": "date-time",
             "nullable": true
           }
         },

@@ -30,6 +30,7 @@ using ElectrostoreAPI.Services.SessionService;
 using ElectrostoreAPI.Services.StoreService;
 using ElectrostoreAPI.Services.StoreTagService;
 using ElectrostoreAPI.Services.TagService;
+using ElectrostoreAPI.Services.UserPushSubscriptionService;
 using ElectrostoreAPI.Services.UserService;
 using ElectrostoreAPI.Services.ValidateStoreService;
 using ElectrostoreAPI.Services.JwtService;
@@ -317,6 +318,7 @@ public partial class Program
         builder.Services.AddScoped<IStoreService, StoreService>();
         builder.Services.AddScoped<IStoreTagService, StoreTagService>();
         builder.Services.AddScoped<ITagService, TagService>();
+        builder.Services.AddScoped<IUserPushSubscriptionService, UserPushSubscriptionService>();
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IValidateStoreService, ValidateStoreService>();
         builder.Services.AddScoped<IJwiService, JwiService>();

@@ -27,6 +27,10 @@ export const useUsersStore = defineStore("users",{
 		tokensTotalCount: {},
 		tokens: {},
 		tokensEdition: {},
+
+		pushSubscriptionsLoading: false,
+		pushSubscriptionsTotalCount: {},
+		pushSubscriptions: {},
 	}),
 	actions: {
 		async getUserByList(idResearch = [], expand = []) {
@@ -342,6 +346,46 @@ export const useUsersStore = defineStore("users",{
 				useToken: "access",
 				body: params,
 			});
+		},
+
+		async getPushSubscriptionsByInterval(idUser, limit = 100, offset = 0, clear = false) {
+			if (!this.pushSubscriptions[idUser] || clear) {
+				this.pushSubscriptions[idUser] = {};
+			}
+			this.pushSubscriptionsLoading = true;
+			const paramString = `offset=${offset}&limit=${limit}`;
+			const result = await fetchWrapper.get({
+				url: `${baseUrl}/user/${idUser}/push-subscriptions?${paramString}`,
+				useToken: "access",
+			});
+			for (const sub of result["data"]) {
+				this.pushSubscriptions[idUser][sub.id_push_subscription] = sub;
+			}
+			this.pushSubscriptionsTotalCount[idUser] = result["pagination"]?.["total"] || 0;
+			this.pushSubscriptionsLoading = false;
+			return [result["pagination"]?.["nextOffset"] || 0, result["pagination"]?.["hasMore"] || false];
+		},
+		async createPushSubscription(idUser, params) {
+			if (!this.pushSubscriptions[idUser]) {
+				this.pushSubscriptions[idUser] = {};
+			}
+			const sub = await fetchWrapper.post({
+				url: `${baseUrl}/user/${idUser}/push-subscriptions`,
+				useToken: "access",
+				body: params,
+			});
+			this.pushSubscriptions[idUser][sub.id_push_subscription] = sub;
+			return sub;
+		},
+		async deletePushSubscription(idUser, id) {
+			if (!this.pushSubscriptions[idUser]) {
+				this.pushSubscriptions[idUser] = {};
+			}
+			await fetchWrapper.delete({
+				url: `${baseUrl}/user/${idUser}/push-subscriptions/${id}`,
+				useToken: "access",
+			});
+			delete this.pushSubscriptions[idUser][id];
 		},
 	},
 });

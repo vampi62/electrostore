@@ -49,6 +49,12 @@ function toggleSMTP() {
     document.getElementById('section-smtp').style.display = enabled ? 'block' : 'none';
 }
 
+// Toggle VAPID
+function toggleVapid() {
+    const enabled = document.getElementById('enableVapid').checked;
+    document.getElementById('section-vapid').style.display = enabled ? 'block' : 'none';
+}
+
 // Toggle Traefik TLS
 function toggleTraefikTLS() {
     const enabled = document.getElementById('traefikTlsEnable').checked;
