@@ -253,6 +253,37 @@ sudo nano /opt/electrostore/notif/appsettings.json
 > Generate VAPID keys with: `npx web-push generate-vapid-keys`  
 > The **Public Key** must also be set as `VITE_VAPID_PUBLIC_KEY` in the frontend environment.
 
+##### WORKER service configuration
+```bash
+sudo nano /opt/electrostore/worker/appsettings.json
+```
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "Kafka": {
+    "BootstrapServers": "kafka:9092",
+    "ConsumerGroupId": "worker-service"
+  },
+  "Mqtt": {
+    "Host": "mqtt",
+    "Port": "1883",
+    "Username": "electrostore",
+    "Password": "QHF8Gmq3oa2L117FmLqC",
+    "ClientId": "electrostore-worker"
+  },
+  "ApiServiceGrpcUrl": "http://electrostoreAPI:5001",
+  "Vault": {
+    "Enable": false,
+    "Addr": "http://vault:8200",
+    "Token": "",
+    "Path": "",
+    "MountPoint": "secret"
+  }
 }
 ```
 
@@ -302,6 +333,20 @@ sudo docker run -d --name electrostoreNOTIF \
  --cpus=1 \
  --memory=512m \
  ghcr.io/vampi62/electrostore/notif:local
+
+sudo docker build -t ghcr.io/vampi62/electrostore/worker:local electrostoreWORKER
+sudo docker run -d --name electrostoreWORKER \
+ --restart always \
+ --network electrostore \
+ -v /opt/electrostore/worker:/app/config:ro \
+ --tmpfs /tmp \
+ --security-opt no-new-privileges=true \
+ --read-only=true \
+ --cap-drop ALL \
+ --cap-add CHOWN \
+ --cpus=1 \
+ --memory=256m \
+ ghcr.io/vampi62/electrostore/worker:local
 ```
 
 

@@ -29,6 +29,7 @@ group "default" {
     "front",
     "ia",
     "notif",
+    "worker",
   ]
 }
 
@@ -118,6 +119,19 @@ target "notif" {
   inherits = ["defaults"]
   context = "electrostoreNOTIF/"
   tags = tag("notif")
+  labels = merge(
+    label("url", "https://github.com/${REPO}"),
+    label("title", "Electrostore ia"),
+    label("description", "Electrostore ia image"),
+    label("source", "https://github.com/${REPO}"),
+    label("version", "${VERSION}")
+  )
+}
+
+target "worker" {
+  inherits = ["defaults"]
+  context = "electrostoreWORKER/"
+  tags = tag("worker")
   labels = merge(
     label("url", "https://github.com/${REPO}"),
     label("title", "Electrostore ia"),

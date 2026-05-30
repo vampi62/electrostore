@@ -210,6 +210,7 @@ public partial class Program
 
         app.MapGrpcService<ElectrostoreIAToApiGrpcService>();
         app.MapGrpcService<ElectrostoreNOTIFToApiGrpcService>();
+        app.MapGrpcService<ElectrostoreWORKERToApiGrpcService>();
 
         app.MapGet("/health", (IConfiguration config) =>
             Results.Ok(new
