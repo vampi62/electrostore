@@ -25,4 +25,5 @@ public class Commands : BaseEntity
     public ICollection<CommandsCommentaires> CommandsCommentaires { get; set; } = new List<CommandsCommentaires>();
     public ICollection<CommandsDocuments> CommandsDocuments { get; set; } = new List<CommandsDocuments>();
     public ICollection<CommandsItems> CommandsItems { get; set; } = new List<CommandsItems>();
+    public ICollection<CommandsHistory> CommandsHistories { get; set; } = new List<CommandsHistory>();
 }

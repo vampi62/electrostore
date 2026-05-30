@@ -1,0 +1,60 @@
+name: tests PR CRON
+
+on:
+  pull_request:
+    paths:
+      - "electrostoreCRON/**"
+      - "tests/electrostoreCRON/**"
+
+jobs:
+  test-api:
+    name: tests - CRON
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./electrostoreCRON
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Set up C#
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+    - name: Install dependencies
+      run: dotnet restore
+    - name: Run tests and collect coverage (OpenCover)
+      run: |
+        dotnet test ../tests/electrostoreCRON \
+          --collect "XPlat Code Coverage" \
+          --logger "trx;LogFileName=test-results.trx" \
+          --results-directory ./TestResults \
+          -- \
+          DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+    - name: Get PR ID
+      id: get-pr-id
+      run: |
+        PR_ID="${{ github.event.pull_request.number }}"
+        echo "pr_id=$PR_ID" >> $GITHUB_OUTPUT
+    - name: Run SonarQube scan
+      id: sonarqube
+      continue-on-error: true
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        PROJECT_KEY: "PR-${{ steps.get-pr-id.outputs.pr_id }}-electrostore-api"
+      run: |
+        dotnet tool install --global dotnet-sonarscanner
+        dotnet sonarscanner begin /k:"$PROJECT_KEY" \
+          /d:sonar.host.url="$SONAR_HOST_URL" \
+          /d:sonar.token="$SONAR_TOKEN" \
+          /d:sonar.exclusions="**/Migrations/**" \
+          /d:sonar.cpd.exclusions="**/DTO/**,**/Models/**" \
+          /d:sonar.cs.vstest.reportsPaths=../electrostoreCRON/TestResults/*.trx \
+          /d:sonar.cs.opencover.reportsPaths=../electrostoreCRON/TestResults/**/coverage.opencover.xml
+        dotnet build
+        dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+    - name: SonarQube Status
+      if: steps.sonarqube.outcome == 'failure'
+      run: |
+        echo "::warning::SonarQube scan failed - server may be unreachable"

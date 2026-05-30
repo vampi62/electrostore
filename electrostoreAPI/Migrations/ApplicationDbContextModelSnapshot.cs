@@ -230,6 +230,50 @@ namespace ElectrostoreAPI.Migrations
                     b.ToTable("CommandsDocuments");
                 });
 
+            modelBuilder.Entity("ElectrostoreAPI.Models.CommandsHistory", b =>
+                {
+                    b.Property<int>("id_command_history")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_command_history"));
+
+                    b.Property<string>("carrier")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("event_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("id_command")
+                        .HasColumnType("int");
+
+                    b.Property<string>("status_command_history")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("tracking_event")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("tracking_number")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_command_history");
+
+                    b.HasIndex("id_command");
+
+                    b.ToTable("CommandsHistory");
+                });
+
             modelBuilder.Entity("ElectrostoreAPI.Models.CommandsItems", b =>
                 {
                     b.Property<int>("id_command")
@@ -1104,6 +1148,17 @@ namespace ElectrostoreAPI.Migrations
                     b.Navigation("Command");
                 });
 
+            modelBuilder.Entity("ElectrostoreAPI.Models.CommandsHistory", b =>
+                {
+                    b.HasOne("ElectrostoreAPI.Models.Commands", "Command")
+                        .WithMany("CommandsHistories")
+                        .HasForeignKey("id_command")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Command");
+                });
+
             modelBuilder.Entity("ElectrostoreAPI.Models.CommandsItems", b =>
                 {
                     b.HasOne("ElectrostoreAPI.Models.Commands", "Command")
@@ -1352,6 +1407,8 @@ namespace ElectrostoreAPI.Migrations
                     b.Navigation("CommandsCommentaires");
 
                     b.Navigation("CommandsDocuments");
+
+                    b.Navigation("CommandsHistories");
 
                     b.Navigation("CommandsItems");
                 });

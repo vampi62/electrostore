@@ -30,6 +30,7 @@ group "default" {
     "ia",
     "notif",
     "worker",
+    "cron"
   ]
 }
 
@@ -140,4 +141,16 @@ target "worker" {
     label("version", "${VERSION}")
   )
 }
+
+target "cron" {
+  inherits = ["defaults"]
+  context = "electrostoreCRON/"
+  tags = tag("cron")
+  labels = merge(
+    label("url", "https://github.com/${REPO}"),
+    label("title", "Electrostore ia"),
+    label("description", "Electrostore ia image"),
+    label("source", "https://github.com/${REPO}"),
+    label("version", "${VERSION}")
+  )
 }

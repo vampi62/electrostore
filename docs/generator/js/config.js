@@ -132,6 +132,12 @@ function collectConfig(formData) {
         };
     }
     
+    // 17track
+    config.enableTrack17 = document.getElementById('enableTrack17').checked;
+    if (config.enableTrack17) {
+        config.track17ApiKey = formData.get('track17ApiKey') || '';
+    }
+
     // JWT
     config.jwt = {
         key: formData.get('jwtKey') || generateRandomPassword(64),

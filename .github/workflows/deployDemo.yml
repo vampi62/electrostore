@@ -95,6 +95,7 @@ jobs:
           docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/ia:latest
           docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/notif:latest
           docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/worker:latest
+          docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/cron:latest
     - name: TEST deployment
       if: ${{ needs.init-work.outputs.release != 'true' }}
       uses: appleboy/ssh-action@v1
@@ -109,4 +110,5 @@ jobs:
           docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/ia:${{ needs.init-work.outputs.version }}
           docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/notif:${{ needs.init-work.outputs.version }}
           docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/worker:${{ needs.init-work.outputs.version }}
+          docker pull ghcr.io/${{ steps.repo.outputs.lowercase }}/cron:${{ needs.init-work.outputs.version }}
           

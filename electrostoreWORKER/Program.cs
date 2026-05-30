@@ -51,6 +51,7 @@ public partial class Program
         builder.Services.AddSingleton<ConfigCacheService>();
         builder.Services.AddSingleton<IConfigCacheService>(sp => sp.GetRequiredService<ConfigCacheService>());
         builder.Services.AddHostedService(sp => sp.GetRequiredService<ConfigCacheService>());
+        builder.Services.AddHostedService<KafkaCronConsumer>();
         builder.Services.AddHostedService<KafkaIaStatusConsumer>();
         builder.Services.AddHostedService<MqttClientService>();
     }

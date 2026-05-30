@@ -31,6 +31,9 @@ jobs:
           - service_name: NOTIF
             source_dir: electrostoreNOTIF
             sonar_key: electrostore-notif
+          - service_name: CRON
+            source_dir: electrostoreCRON
+            sonar_key: electrostore-cron
           - service_name: WORKER
             source_dir: electrostoreWORKER
             sonar_key: electrostore-worker
