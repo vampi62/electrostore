@@ -1,12 +1,16 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 
 WORKDIR /app
 
 COPY electrostoreCRON.csproj .
 RUN dotnet restore
 
-COPY ["DTO/", "Extensions/", "Grpc/", "Kafka/", "Services/", \
-        "electrostoreCRON.csproj", "Program.cs", "./"]
+COPY DTO/ DTO/
+COPY Extensions/ Extensions/
+COPY Grpc/ Grpc/
+COPY Kafka/ Kafka/
+COPY Services/ Services/
+COPY Program.cs ./
 
 RUN dotnet publish -c Release -o out
 
