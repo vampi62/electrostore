@@ -1,6 +1,5 @@
 using ElectrostoreWORKER.Extensions;
 using ElectrostoreWORKER.Grpc;
-using ElectrostoreWORKER.Grpc.Services;
 using ElectrostoreWORKER.Kafka.Consumers;
 using ElectrostoreWORKER.Mqtt;
 using ElectrostoreWORKER.Services.ConfigCacheService;
@@ -52,7 +51,7 @@ public partial class Program
         builder.Services.AddSingleton<ConfigCacheService>();
         builder.Services.AddSingleton<IConfigCacheService>(sp => sp.GetRequiredService<ConfigCacheService>());
         builder.Services.AddHostedService(sp => sp.GetRequiredService<ConfigCacheService>());
-        builder.Services.AddSingleton<IWorkerDataService, WorkerDataService>();
+        builder.Services.AddHostedService<KafkaCronConsumer>();
         builder.Services.AddHostedService<KafkaIaStatusConsumer>();
         builder.Services.AddHostedService<MqttClientService>();
     }
