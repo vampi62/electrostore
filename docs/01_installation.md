@@ -237,6 +237,38 @@ sudo nano /opt/electrostore/notif/appsettings.json
 > Generate VAPID keys with: `npx web-push generate-vapid-keys`  
 > The **Public Key** must also be set as `VITE_VAPID_PUBLIC_KEY` in the frontend environment.
 
+### CRON service configuration
+```bash
+sudo nano /opt/electrostore/cron/appsettings.json
+```
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning",
+      "Quartz": "Warning"
+    }
+  },
+  "Kafka": {
+    "BootstrapServers": "kafka:9092",
+    "CronConsumerGroupId": "cron-service-events"
+  },
+  "Track17": {
+    "ApiKey": "<your-17track-api-key>"
+  },
+  "ApiServiceGrpcUrl": "http://electrostoreAPI:5001",
+  "CronRefreshIntervalMinutes": 60,
+  "Vault": {
+    "Enable": false,
+    "Addr": "http://vault:8200",
+    "Token": "",
+    "Path": "",
+    "MountPoint": "secret"
+  }
+}
+```
+
 ### WORKER service configuration
 ```bash
 sudo nano /opt/electrostore/worker/appsettings.json
@@ -314,6 +346,19 @@ sudo docker run -d --name electrostoreNOTIF \
  --cpus=1 \
  --memory=512m \
  ghcr.io/vampi62/electrostore/notif:v1.0
+
+sudo docker run -d --name electrostoreCRON \
+ --restart always \
+ --network electrostore \
+ -v /opt/electrostore/cron:/app/config:ro \
+ --tmpfs /tmp \
+ --security-opt no-new-privileges=true \
+ --read-only=true \
+ --cap-drop ALL \
+ --cap-add CHOWN \
+ --cpus=1 \
+ --memory=256m \
+ ghcr.io/vampi62/electrostore/cron:v1.0
 
 sudo docker run -d --name electrostoreWORKER \
  --restart always \

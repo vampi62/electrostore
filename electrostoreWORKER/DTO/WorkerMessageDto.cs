@@ -1,5 +1,26 @@
 namespace ElectrostoreWORKER.DTO;
 
+public record ParcelTrackingMessage
+{
+    public string action { get; init; } = string.Empty;
+    public int id_command { get; init; }
+    public string tracking_number { get; init; } = string.Empty;
+    public string carrier { get; init; } = string.Empty;
+    public string tracking_status { get; init; } = string.Empty;
+    public string tracking_event { get; init; } = string.Empty;
+    public bool is_delivered { get; init; }
+    public string date_livraison { get; init; } = string.Empty;
+}
+
+public record PriceUpdateMessage
+{
+    public string action { get; init; } = string.Empty;
+    public int id_command { get; init; }
+    public int id_item { get; init; }
+    public float price { get; init; }
+    public string provider { get; init; } = string.Empty;
+}
+
 public record MqttEventMessage
 {
     public string topic { get; init; } = string.Empty;

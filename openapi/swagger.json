@@ -1537,6 +1537,129 @@
         }
       }
     },
+    "/api/command/{id_command}/history": {
+      "get": {
+        "tags": [
+          "CommandHistory"
+        ],
+        "parameters": [
+          {
+            "name": "id_command",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL filter. Example: 'status_projet==0'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string. Example: 'created_at,asc' or 'created_at,desc'.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCommandHistoryDtoPaginatedResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCommandHistoryDtoPaginatedResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCommandHistoryDtoPaginatedResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/command/{id_command}/history/{id_command_history}": {
+      "get": {
+        "tags": [
+          "CommandHistory"
+        ],
+        "parameters": [
+          {
+            "name": "id_command",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_command_history",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCommandHistoryDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCommandHistoryDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCommandHistoryDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/command/{id_command}/item": {
       "get": {
         "tags": [
@@ -12151,6 +12274,200 @@
         }
       }
     },
+    "/api/user/{id_user}/push-subscriptions": {
+      "get": {
+        "tags": [
+          "UserPushSubscription"
+        ],
+        "parameters": [
+          {
+            "name": "id_user",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadUserPushSubscriptionDtoPaginatedResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadUserPushSubscriptionDtoPaginatedResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadUserPushSubscriptionDtoPaginatedResponseDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "UserPushSubscription"
+        ],
+        "parameters": [
+          {
+            "name": "id_user",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserPushSubscriptionDtoByUserId"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserPushSubscriptionDtoByUserId"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserPushSubscriptionDtoByUserId"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadUserPushSubscriptionDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadUserPushSubscriptionDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadUserPushSubscriptionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/{id_user}/push-subscriptions/{id_subscription}": {
+      "get": {
+        "tags": [
+          "UserPushSubscription"
+        ],
+        "parameters": [
+          {
+            "name": "id_user",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_subscription",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadUserPushSubscriptionDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadUserPushSubscriptionDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadUserPushSubscriptionDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "UserPushSubscription"
+        ],
+        "parameters": [
+          {
+            "name": "id_user",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_subscription",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/user/{id_user}/sessions": {
       "get": {
         "tags": [
@@ -12503,7 +12820,7 @@
             "type": "string"
           },
           "url_camera": {
-            "maxLength": 150,
+            "maxLength": 2048,
             "minLength": 1,
             "type": "string"
           },
@@ -12549,7 +12866,7 @@
             "format": "float"
           },
           "url_command": {
-            "maxLength": 150,
+            "maxLength": 2048,
             "minLength": 1,
             "type": "string",
             "format": "uri"
@@ -12857,7 +13174,7 @@
             "type": "string"
           },
           "url_projet": {
-            "maxLength": 150,
+            "maxLength": 2048,
             "minLength": 1,
             "type": "string"
           },
@@ -13094,6 +13411,37 @@
           },
           "role_user": {
             "$ref": "#/components/schemas/UserRole"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateUserPushSubscriptionDtoByUserId": {
+        "required": [
+          "auth",
+          "endpoint",
+          "p256dh"
+        ],
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "type": "string"
+          },
+          "p256dh": {
+            "maxLength": 512,
+            "minLength": 1,
+            "type": "string"
+          },
+          "auth": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "device_name": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -13790,6 +14138,87 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadCommandHistoryDto": {
+        "required": [
+          "status_command_history"
+        ],
+        "type": "object",
+        "properties": {
+          "id_command_history": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id_command": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status_command_history": {
+            "type": "string",
+            "nullable": true
+          },
+          "tracking_number": {
+            "type": "string",
+            "nullable": true
+          },
+          "carrier": {
+            "type": "string",
+            "nullable": true
+          },
+          "tracking_event": {
+            "type": "string",
+            "nullable": true
+          },
+          "event_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadCommandHistoryDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filters",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadCommandHistoryDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilterDto"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SorterDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -16219,8 +16648,10 @@
       },
       "ReadStatusDto": {
         "required": [
+          "cron_status",
           "ia_status",
-          "notif_status"
+          "notif_status",
+          "worker_status"
         ],
         "type": "object",
         "properties": {
@@ -16243,6 +16674,14 @@
             "nullable": true
           },
           "notif_status": {
+            "type": "string",
+            "nullable": true
+          },
+          "cron_status": {
+            "type": "string",
+            "nullable": true
+          },
+          "worker_status": {
             "type": "string",
             "nullable": true
           }
@@ -16395,6 +16834,85 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadUserPushSubscriptionDto": {
+        "required": [
+          "auth",
+          "endpoint",
+          "p256dh"
+        ],
+        "type": "object",
+        "properties": {
+          "id_push_subscription": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id_user": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "endpoint": {
+            "type": "string",
+            "nullable": true
+          },
+          "p256dh": {
+            "type": "string",
+            "nullable": true
+          },
+          "auth": {
+            "type": "string",
+            "nullable": true
+          },
+          "device_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadUserPushSubscriptionDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filters",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadUserPushSubscriptionDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilterDto"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SorterDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -16732,7 +17250,7 @@
             "nullable": true
           },
           "url_camera": {
-            "maxLength": 150,
+            "maxLength": 2048,
             "type": "string",
             "nullable": true
           },
@@ -16781,7 +17299,7 @@
             "nullable": true
           },
           "url_command": {
-            "maxLength": 150,
+            "maxLength": 2048,
             "type": "string",
             "format": "uri",
             "nullable": true
@@ -17021,7 +17539,7 @@
             "nullable": true
           },
           "url_projet": {
-            "maxLength": 150,
+            "maxLength": 2048,
             "type": "string",
             "nullable": true
           },

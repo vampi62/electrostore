@@ -55,6 +55,12 @@ function toggleVapid() {
     document.getElementById('section-vapid').style.display = enabled ? 'block' : 'none';
 }
 
+// Toggle 17track parcel tracking
+function toggleTrack17() {
+    const enabled = document.getElementById('enableTrack17').checked;
+    document.getElementById('section-track17').style.display = enabled ? 'block' : 'none';
+}
+
 // Toggle Traefik TLS
 function toggleTraefikTLS() {
     const enabled = document.getElementById('traefikTlsEnable').checked;
