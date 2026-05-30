@@ -1,11 +1,22 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 
 WORKDIR /app
 
-COPY ["Controllers/", "DTO/", "Enums/", "Extensions/", "Middleware/", "Migrations/", "Models/", "Grpc/", "Kafka/", "Services/", "Validators/", \
-        "ApplicationDbContext.cs", "electrostoreAPI.csproj", "Mapper.cs", "Program.cs", "SwaggerClass.cs", "./"]
-
+COPY electrostoreAPI.csproj .
 RUN dotnet restore
+
+COPY Controllers/ Controllers/
+COPY DTO/ DTO/
+COPY Enums/ Enums/
+COPY Extensions/ Extensions/
+COPY Middleware/ Middleware/
+COPY Migrations/ Migrations/
+COPY Models/ Models/
+COPY Grpc/ Grpc/
+COPY Kafka/ Kafka/
+COPY Services/ Services/
+COPY Validators/ Validators/
+COPY ApplicationDbContext.cs Mapper.cs Program.cs SwaggerClass.cs ./
 
 RUN dotnet publish -c Release -o out
 
