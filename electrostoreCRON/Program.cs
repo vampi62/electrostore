@@ -1,10 +1,10 @@
 using ElectrostoreCRON.Extensions;
 using ElectrostoreCRON.Grpc;
+using ElectrostoreCRON.Kafka.Consumers;
 using ElectrostoreCRON.Kafka.Producer;
 using ElectrostoreCRON.Services.ConfigCacheService;
 using ElectrostoreCRON.Services.CronSchedulerService;
 using ElectrostoreCRON.Services.ParcelTrackerService;
-using ElectrostoreCRON.Services.PriceUpdaterService;
 using Quartz;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
@@ -57,10 +57,12 @@ public partial class Program
     {
         builder.Services.AddHttpClient();
         builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
+        builder.Services.AddSingleton<IParcelTrackerService, ParcelTrackerService>();
         builder.Services.AddSingleton<ConfigCacheService>();
         builder.Services.AddSingleton<IConfigCacheService>(sp => sp.GetRequiredService<ConfigCacheService>());
         builder.Services.AddHostedService(sp => sp.GetRequiredService<ConfigCacheService>());
         builder.Services.AddHostedService<CronSchedulerService>();
+        builder.Services.AddHostedService<KafkaCronJobEventsConsumer>();
         builder.Services.AddTransient<ElectrostoreCronJob>();
     }
 }

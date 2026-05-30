@@ -665,8 +665,17 @@ function generateCronAppsettings(config) {
     };
 
     settings.Kafka = {
-        "BootstrapServers": "kafka:9092"
+        "BootstrapServers": "kafka:9092",
+        "CronConsumerGroupId": "cron-service-events"
     };
+
+    if (config.enableTrack17) {
+        settings.Track17 = {
+            "ApiKey": config.useVault ? "{{vault:track17_api_key}}" : (config.track17ApiKey || "")
+        };
+    } else {
+        settings.Track17 = { "ApiKey": "" };
+    }
 
     settings.ApiServiceGrpcUrl = "http://api:5001";
     settings.CronRefreshIntervalMinutes = 60;

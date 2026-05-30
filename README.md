@@ -267,7 +267,11 @@ sudo nano /opt/electrostore/cron/appsettings.json
     }
   },
   "Kafka": {
-    "BootstrapServers": "kafka:9092"
+    "BootstrapServers": "kafka:9092",
+    "CronConsumerGroupId": "cron-service-events"
+  },
+  "Track17": {
+    "ApiKey": "<your-17track-api-key>"
   },
   "ApiServiceGrpcUrl": "http://electrostoreAPI:5001",
   "CronRefreshIntervalMinutes": 60,

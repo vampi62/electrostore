@@ -430,6 +430,26 @@
                     </div>
                 </section>
 
+                <!-- Parcel Tracking -->
+                <section class="form-section">
+                    <h2>Parcel Tracking</h2>
+
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="enableTrack17" name="enableTrack17" onchange="toggleTrack17()">
+                            <strong>Enable 17track parcel tracking</strong> - Automatic delivery status update via the 17track API
+                        </label>
+                    </div>
+
+                    <div class="conditional-section" id="section-track17" style="display: none;">
+                        <div class="form-group">
+                            <label for="track17ApiKey">17track API Key</label>
+                            <input type="password" id="track17ApiKey" name="track17ApiKey" placeholder="Your 17track API key">
+                            <small class="help-text">API key from <a href="https://www.17track.net/en/api" target="_blank">17track developer portal</a>. Set in the CRON service as <code>Track17:ApiKey</code>.</small>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Secrets Manager -->
                 <section class="form-section">
                     <h2>Secrets Management</h2>

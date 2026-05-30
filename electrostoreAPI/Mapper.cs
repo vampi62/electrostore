@@ -35,6 +35,8 @@ public class MappingProfile : Profile
         CreateMap<Commands, ReadCommandDto>();
         CreateMap<Commands, ReadExtendedCommandDto>();
 
+        CreateMap<CommandsHistory, ReadCommandHistoryDto>();
+
         CreateMap<CreateCommandItemDto, CommandsItems>();
         CreateMap<CommandsItems, ReadCommandItemDto>();
         CreateMap<CommandsItems, ReadExtendedCommandItemDto>()

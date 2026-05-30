@@ -10,6 +10,7 @@ using ElectrostoreAPI.Services.CameraService;
 using ElectrostoreAPI.Services.CommandCommentaireService;
 using ElectrostoreAPI.Services.CommandDocumentService;
 using ElectrostoreAPI.Services.CommandItemService;
+using ElectrostoreAPI.Services.CommandHistoryService;
 using ElectrostoreAPI.Services.CommandService;
 using ElectrostoreAPI.Services.CronJobService;
 using ElectrostoreAPI.Services.ConfigService;
@@ -330,6 +331,7 @@ public partial class Program
         builder.Services.AddScoped<ICommandDocumentService, CommandDocumentService>();
         builder.Services.AddScoped<ICommandItemService, CommandItemService>();
         builder.Services.AddScoped<ICommandService, CommandService>();
+        builder.Services.AddScoped<ICommandHistoryService, CommandHistoryService>();
         builder.Services.AddScoped<ICronJobService, CronJobService>();
         builder.Services.AddScoped<IConfigService, ConfigService>();
         builder.Services.AddScoped<IIAService, IAService>();
