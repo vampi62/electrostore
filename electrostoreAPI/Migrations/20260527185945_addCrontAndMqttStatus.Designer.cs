@@ -4,6 +4,7 @@ using ElectrostoreAPI;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ElectrostoreAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260527185945_addCrontAndMqttStatus")]
+    partial class addCrontAndMqttStatus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -104,8 +107,8 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_camera")
                         .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("varchar(2048)");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.Property<string>("user_camera")
                         .HasMaxLength(50)
@@ -146,8 +149,8 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_command")
                         .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("varchar(2048)");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.HasKey("id_command");
 
@@ -220,8 +223,8 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_command_document")
                         .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("varchar(2048)");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.HasKey("id_command_document");
 
@@ -367,13 +370,13 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_picture_img")
                         .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("varchar(2048)");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.Property<string>("url_thumbnail_img")
                         .IsRequired()
-                        .HasMaxLength(2063)
-                        .HasColumnType("varchar(2063)");
+                        .HasMaxLength(165)
+                        .HasColumnType("varchar(165)");
 
                     b.HasKey("id_img");
 
@@ -483,8 +486,8 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_item_document")
                         .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("varchar(2048)");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.HasKey("id_item_document");
 
@@ -710,8 +713,8 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_projet")
                         .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("varchar(2048)");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.HasKey("id_projet");
 
@@ -784,8 +787,8 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_projet_document")
                         .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("varchar(2048)");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.HasKey("id_projet_document");
 
@@ -953,49 +956,6 @@ namespace ElectrostoreAPI.Migrations
                     b.HasKey("id_tag");
 
                     b.ToTable("Tags");
-                });
-
-            modelBuilder.Entity("ElectrostoreAPI.Models.UserPushSubscriptions", b =>
-                {
-                    b.Property<int>("id_push_subscription")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_push_subscription"));
-
-                    b.Property<string>("auth")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
-
-                    b.Property<DateTime>("created_at")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("device_name")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<string>("endpoint")
-                        .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("varchar(2048)");
-
-                    b.Property<int>("id_user")
-                        .HasColumnType("int");
-
-                    b.Property<string>("p256dh")
-                        .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("varchar(512)");
-
-                    b.Property<DateTime>("updated_at")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("id_push_subscription");
-
-                    b.HasIndex("id_user");
-
-                    b.ToTable("UserPushSubscriptions");
                 });
 
             modelBuilder.Entity("ElectrostoreAPI.Models.Users", b =>
@@ -1327,17 +1287,6 @@ namespace ElectrostoreAPI.Migrations
                     b.Navigation("Store");
 
                     b.Navigation("Tag");
-                });
-
-            modelBuilder.Entity("ElectrostoreAPI.Models.UserPushSubscriptions", b =>
-                {
-                    b.HasOne("ElectrostoreAPI.Models.Users", "User")
-                        .WithMany()
-                        .HasForeignKey("id_user")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ElectrostoreAPI.Models.Boxs", b =>
