@@ -15,7 +15,7 @@ on:
         type: string
 
 jobs:
-  test-dotnet:
+  test-backend:
     name: tests - ${{ matrix.service_name }}
     runs-on: ubuntu-latest
     strategy:
@@ -31,6 +31,9 @@ jobs:
           - service_name: NOTIF
             source_dir: electrostoreNOTIF
             sonar_key: electrostore-notif
+          - service_name: WORKER
+            source_dir: electrostoreWORKER
+            sonar_key: electrostore-worker
     defaults:
       run:
         shell: bash
@@ -77,7 +80,7 @@ jobs:
       run: |
         echo "::warning::SonarQube scan failed - server may be unreachable"
 
-  test-front:
+  test-frontend:
     name: tests - FRONT
     runs-on: ubuntu-latest
     defaults:
@@ -92,7 +95,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '24'
     - name: Install dependencies
       run: npm install
     - name: Install test dependencies

@@ -257,7 +257,53 @@ namespace ElectrostoreAPI.Migrations
                     b.ToTable("CommandsItems");
                 });
 
-            modelBuilder.Entity("electrostore.Models.IA", b =>
+            modelBuilder.Entity("ElectrostoreAPI.Models.CronJobs", b =>
+                {
+                    b.Property<int>("id_cronjob")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_cronjob"));
+
+                    b.Property<string>("action_cronjob")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("cron_expression")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<bool>("is_enabled")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("last_run_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("name_cronjob")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime?>("next_run_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("params_cronjob")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_cronjob");
+
+                    b.ToTable("CronJobs");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.IA", b =>
                 {
                     b.Property<int>("id_ia")
                         .ValueGeneratedOnAdd()
@@ -829,6 +875,12 @@ namespace ElectrostoreAPI.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_store"));
 
                     b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("is_mqtt_connected_store")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("mqtt_last_seen_store")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("mqtt_name_store")

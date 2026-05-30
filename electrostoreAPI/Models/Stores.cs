@@ -19,6 +19,9 @@ public class Stores : BaseEntity
 
     [MaxLength(Constants.MaxNameLength)]
     public required string mqtt_name_store { get; set; }
+    public bool is_mqtt_connected_store { get; set; } = false;
+
+    public DateTime? mqtt_last_seen_store { get; set; }
 
     public ICollection<Boxs> Boxs { get; set; } = new List<Boxs>();
     public ICollection<Leds> Leds { get; set; } = new List<Leds>();
