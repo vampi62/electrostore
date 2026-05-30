@@ -1,12 +1,15 @@
-using ElectrostoreWORKER.Extensions;
-using ElectrostoreWORKER.Grpc;
-using ElectrostoreWORKER.Kafka.Consumers;
-using ElectrostoreWORKER.Mqtt;
-using ElectrostoreWORKER.Services.ConfigCacheService;
+using ElectrostoreCRON.Extensions;
+using ElectrostoreCRON.Grpc;
+using ElectrostoreCRON.Kafka.Producer;
+using ElectrostoreCRON.Services.ConfigCacheService;
+using ElectrostoreCRON.Services.CronSchedulerService;
+using ElectrostoreCRON.Services.ParcelTrackerService;
+using ElectrostoreCRON.Services.PriceUpdaterService;
+using Quartz;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
 
-namespace ElectrostoreWORKER;
+namespace ElectrostoreCRON;
 
 public partial class Program
 {
@@ -27,11 +30,15 @@ public partial class Program
         }
 
         // gRPC client to the API
-        builder.Services.AddGrpcClient<WORKERToAPIGrpc.WORKERToAPIGrpcClient>(options =>
+        builder.Services.AddGrpcClient<CRONToAPIGrpc.CRONToAPIGrpcClient>(options =>
         {
             options.Address = new Uri(
                 builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
         });
+
+        // Quartz.NET scheduler
+        builder.Services.AddQuartz();
+        builder.Services.AddQuartzHostedService(opt => opt.WaitForJobsToComplete = true);
 
         AddScopes(builder);
 
@@ -48,11 +55,12 @@ public partial class Program
 
     private static void AddScopes(WebApplicationBuilder builder)
     {
+        builder.Services.AddHttpClient();
+        builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
         builder.Services.AddSingleton<ConfigCacheService>();
         builder.Services.AddSingleton<IConfigCacheService>(sp => sp.GetRequiredService<ConfigCacheService>());
         builder.Services.AddHostedService(sp => sp.GetRequiredService<ConfigCacheService>());
-        builder.Services.AddHostedService<KafkaCronConsumer>();
-        builder.Services.AddHostedService<KafkaIaStatusConsumer>();
-        builder.Services.AddHostedService<MqttClientService>();
+        builder.Services.AddHostedService<CronSchedulerService>();
+        builder.Services.AddTransient<ElectrostoreCronJob>();
     }
 }

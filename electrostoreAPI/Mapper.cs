@@ -41,6 +41,9 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.command, opt => opt.MapFrom(src => src.Command))
             .ForMember(dest => dest.item, opt => opt.MapFrom(src => src.Item));
 
+        CreateMap<CreateCronJobDto, CronJobs>();
+        CreateMap<CronJobs, ReadCronJobDto>();
+
         CreateMap<CreateIADto, IA>();
         CreateMap<IA, ReadIADto>();
 

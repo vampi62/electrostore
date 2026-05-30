@@ -12,6 +12,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<ElectrostoreAPI.Models.Boxs> Boxs { get; set; }
     public DbSet<ElectrostoreAPI.Models.BoxsTags> BoxsTags { get; set; }
     public DbSet<ElectrostoreAPI.Models.Cameras> Cameras { get; set; }
+    public DbSet<ElectrostoreAPI.Models.CronJobs> CronJobs { get; set; }
     public DbSet<ElectrostoreAPI.Models.Commands> Commands { get; set; }
     public DbSet<ElectrostoreAPI.Models.CommandsCommentaires> CommandsCommentaires { get; set; }
     public DbSet<ElectrostoreAPI.Models.CommandsDocuments> CommandsDocuments { get; set; }

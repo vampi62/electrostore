@@ -11,6 +11,7 @@ using ElectrostoreAPI.Services.CommandCommentaireService;
 using ElectrostoreAPI.Services.CommandDocumentService;
 using ElectrostoreAPI.Services.CommandItemService;
 using ElectrostoreAPI.Services.CommandService;
+using ElectrostoreAPI.Services.CronJobService;
 using ElectrostoreAPI.Services.ConfigService;
 using ElectrostoreAPI.Services.FileService;
 using ElectrostoreAPI.Services.IAService;
@@ -210,6 +211,7 @@ public partial class Program
 
         app.MapGrpcService<ElectrostoreIAToApiGrpcService>();
         app.MapGrpcService<ElectrostoreNOTIFToApiGrpcService>();
+        app.MapGrpcService<ElectrostoreCRONToApiGrpcService>();
         app.MapGrpcService<ElectrostoreWORKERToApiGrpcService>();
 
         app.MapGet("/health", (IConfiguration config) =>
@@ -328,6 +330,7 @@ public partial class Program
         builder.Services.AddScoped<ICommandDocumentService, CommandDocumentService>();
         builder.Services.AddScoped<ICommandItemService, CommandItemService>();
         builder.Services.AddScoped<ICommandService, CommandService>();
+        builder.Services.AddScoped<ICronJobService, CronJobService>();
         builder.Services.AddScoped<IConfigService, ConfigService>();
         builder.Services.AddScoped<IIAService, IAService>();
         builder.Services.AddScoped<IImgService, ImgService>();

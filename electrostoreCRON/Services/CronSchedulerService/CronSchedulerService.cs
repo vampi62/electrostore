@@ -1,0 +1,101 @@
+using ElectrostoreCRON.Grpc;
+using Grpc.Core;
+using Quartz;
+using Quartz.Impl.Matchers;
+
+namespace ElectrostoreCRON.Services.CronSchedulerService;
+
+public class CronSchedulerService : BackgroundService
+{
+    private readonly ISchedulerFactory _schedulerFactory;
+    private readonly CRONToAPIGrpc.CRONToAPIGrpcClient _apiClient;
+    private readonly IConfiguration _configuration;
+    private readonly ILogger<CronSchedulerService> _logger;
+
+    public CronSchedulerService(
+        ISchedulerFactory schedulerFactory,
+        CRONToAPIGrpc.CRONToAPIGrpcClient apiClient,
+        IConfiguration configuration,
+        ILogger<CronSchedulerService> logger)
+    {
+        _schedulerFactory = schedulerFactory;
+        _apiClient        = apiClient;
+        _configuration    = configuration;
+        _logger           = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        var scheduler = await _schedulerFactory.GetScheduler(stoppingToken);
+        await scheduler.Start(stoppingToken);
+
+        await LoadAndScheduleJobsAsync(scheduler, stoppingToken);
+
+        var refreshMinutes = _configuration.GetValue<int>("CronRefreshIntervalMinutes", 60);
+        using var timer = new PeriodicTimer(TimeSpan.FromMinutes(refreshMinutes));
+
+        while (await timer.WaitForNextTickAsync(stoppingToken))
+        {
+            _logger.LogInformation("Refreshing cron job schedule...");
+            await scheduler.UnscheduleJobs(
+                (await scheduler.GetTriggerKeys(GroupMatcher<TriggerKey>.AnyGroup())).ToList(),
+                stoppingToken);
+            await LoadAndScheduleJobsAsync(scheduler, stoppingToken);
+        }
+    }
+
+    private async Task LoadAndScheduleJobsAsync(IScheduler scheduler, CancellationToken ct)
+    {
+        GetCronJobsReply reply;
+        try
+        {
+            reply = await _apiClient.GetEnabledCronJobsAsync(new GetCronJobsRequest(), cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve cron jobs from API.");
+            return;
+        }
+
+        _logger.LogInformation("{Count} cron job(s) loaded from API.", reply.Jobs.Count);
+
+        foreach (var job in reply.Jobs)
+        {
+            if (string.IsNullOrWhiteSpace(job.CronExpression))
+            {
+                _logger.LogWarning("Cron job #{Id} ({Name}): empty cron expression, skipped.", job.IdCronjob, job.NameCronjob);
+                continue;
+            }
+
+            var jobKey = new JobKey($"job-{job.IdCronjob}", "electrostore");
+
+            var jobDetail = JobBuilder.Create<ElectrostoreCronJob>()
+                .WithIdentity(jobKey)
+                .UsingJobData(ElectrostoreCronJob.KeyId,     job.IdCronjob)
+                .UsingJobData(ElectrostoreCronJob.KeyAction,  job.ActionCronjob)
+                .UsingJobData(ElectrostoreCronJob.KeyParams,  job.ParamsCronjob ?? string.Empty)
+                .Build();
+
+            ITrigger trigger;
+            try
+            {
+                trigger = TriggerBuilder.Create()
+                    .WithIdentity($"trigger-{job.IdCronjob}", "electrostore")
+                    .WithCronSchedule(job.CronExpression)
+                    .Build();
+            }
+            catch (FormatException ex)
+            {
+                _logger.LogError(ex,
+                    "Cron job #{Id} ({Name}): invalid cron expression '{Expr}' — skipped.",
+                    job.IdCronjob, job.NameCronjob, job.CronExpression);
+                continue;
+            }
+
+            await scheduler.ScheduleJob(jobDetail, trigger, ct);
+            _logger.LogInformation(
+                "Cron job #{Id} ({Name}) scheduled — action={Action}, expr={Expr}",
+                job.IdCronjob, job.NameCronjob, job.ActionCronjob, job.CronExpression);
+        }
+    }
+}
