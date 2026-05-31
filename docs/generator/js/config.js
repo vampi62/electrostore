@@ -128,8 +128,7 @@ function collectConfig(formData) {
             addr: formData.get('vaultAddr') || 'http://vault:8200',
             token: formData.get('vaultToken'),
             path: formData.get('vaultPath') || 'electrostore',
-            mountPoint: formData.get('vaultMountPoint') || 'secret',
-            containerName: formData.get('vaultContainerName') || 'vault'
+            mountPoint: formData.get('vaultMountPoint') || 'secret'
         };
     }
     

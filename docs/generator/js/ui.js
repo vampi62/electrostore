@@ -184,7 +184,6 @@ function generateFiles() {
     const workerAppsettings = generateWorkerAppsettings(config);
     const envFile = generateEnvFile(config);
     const setupScript = generateSetupScript(config);
-    const setupScriptWindows = generateSetupScriptWindows(config);
     const garageConfig = config.enableS3 && config.useS3 ? generateGarageConfig(config) : null;
     const mosquittoConfig = config.useMQTT ? generateMosquittoConfig(config) : null;
     const mosquittoPasswd = config.useMQTT ? generateMosquittoPasswd(config) : null;
@@ -197,7 +196,6 @@ function generateFiles() {
     document.getElementById('workerAppsettingsFile').textContent = workerAppsettings;
     document.getElementById('envFile').textContent = envFile;
     document.getElementById('setupScript').textContent = setupScript;
-    document.getElementById('setupScriptWindows').textContent = setupScriptWindows;
     
     // Show or hide garage.toml file
     const garageConfigSection = document.getElementById('garageConfigSection');

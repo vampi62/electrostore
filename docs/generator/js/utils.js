@@ -73,7 +73,6 @@ async function downloadAllAsZip() {
     zip.file('docker-compose.yml', document.getElementById('dockerCompose').textContent);
     zip.file('.env', document.getElementById('envFile').textContent);
     zip.file('setup.sh', document.getElementById('setupScript').textContent);
-    zip.file('setup.ps1', document.getElementById('setupScriptWindows').textContent);
     
     // Create config folders and add appsettings.json files
     zip.folder('config/api');
