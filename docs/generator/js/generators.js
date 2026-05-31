@@ -52,7 +52,7 @@ services:`;
     } else {
         compose += `
     ports:
-      - "\${API_PORT:-${config.apiPort}}:8080"`;
+      - "\${API_PORT:-${config.apiPort}}:5000"`;
     }
     
     compose += `
@@ -77,7 +77,9 @@ services:`;
     
     compose += `
     networks:
-      - electrostore`;
+      electrostore:
+        aliases:
+          - electrostoreAPI`;
     
     if (config.useTraefik) {
         compose += `\n      - ${config.traefik.network}`;
@@ -185,7 +187,9 @@ services:`;
     }
     compose += `
     networks:
-      - electrostore
+      electrostore:
+        aliases:
+          - electrostoreIA
     restart: unless-stopped
 `;
 
@@ -213,7 +217,9 @@ services:`;
     volumes:
       - ./config/notif/appsettings.json:/app/config/appsettings.json:ro
     networks:
-      - electrostore
+      electrostore:
+        aliases:
+          - electrostoreNOTIF
     restart: unless-stopped
 `;
 
@@ -242,7 +248,9 @@ services:`;
     volumes:
       - ./config/cron/appsettings.json:/app/config/appsettings.json:ro
     networks:
-      - electrostore
+      electrostore:
+        aliases:
+          - electrostoreCRON
     restart: unless-stopped
 `;
 
@@ -277,7 +285,9 @@ services:`;
     volumes:
       - ./config/worker/appsettings.json:/app/config/appsettings.json:ro
     networks:
-      - electrostore
+      electrostore:
+        aliases:
+          - electrostoreWORKER
     restart: unless-stopped
 `;
 
@@ -317,6 +327,7 @@ services:`;
       - ./config/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - ./config/mosquitto/mosquitto.passwd:/mosquitto/config/mosquitto.passwd:ro
       - mqtt-data:/mosquitto/data
+      - mqtt-logs:/mosquitto/logs
     networks:
       - electrostore
     restart: unless-stopped
@@ -347,18 +358,25 @@ services:`;
     // Kafka
     compose += `
   kafka:
-    image: bitnami/kafka:\${KAFKA_VERSION:-3.9}
+    image: apache/kafka:\${KAFKA_VERSION:-4.2.1}
     container_name: electrostore-kafka
     environment:
-      - KAFKA_CFG_NODE_ID=1
-      - KAFKA_CFG_PROCESS_ROLES=broker,controller
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_NODE_ID=1
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - KAFKA_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
+      - KAFKA_NUM_PARTITIONS=3
     volumes:
-      - kafka-data:/bitnami/kafka
+      - kafka-data:/var/lib/kafka/data
+      - kafka-config:/mnt/shared/config
+      - kafka-secrets:/etc/kafka/secrets
     networks:
       - electrostore
     restart: unless-stopped
@@ -378,11 +396,13 @@ networks:
 
     compose += `
 volumes:
-  kafka-data:`;
+  kafka-data:
+  kafka-config:
+  kafka-secrets:`;
 
     if (!config.enableS3) compose += `\n  api-wwwroot:\n  ia-models:`;
     if (config.useMariaDB) compose += `\n  mariadb-data:`;
-    if (config.useMQTT) compose += `\n  mqtt-data:`;
+    if (config.useMQTT) compose += `\n  mqtt-data:\n  mqtt-logs:`;
     if (config.enableS3 && config.useS3) compose += `\n  garage-data:\n  garage-meta:`;
 
     return compose;
@@ -395,6 +415,18 @@ function generateApiAppsettings(config) {
             "LogLevel": {
                 "Default": "Information",
                 "Microsoft.AspNetCore": "Warning"
+            }
+        },
+        "Kestrel": {
+            "Endpoints": {
+                "Grpc": {
+                    "Url": "http://0.0.0.0:5001",
+                    "Protocols": "Http2"
+                },
+                "Http": {
+                    "Url": "http://0.0.0.0:5000",
+                    "Protocols": "Http1"
+                }
             }
         },
         "AllowedHosts": "*"
@@ -524,6 +556,18 @@ function generateIaAppsettings(config) {
                 "Microsoft.AspNetCore": "Warning",
                 "Microsoft.ML": "Warning"
             }
+        },
+        "Kestrel": {
+            "Endpoints": {
+                "Grpc": {
+                    "Url": "http://0.0.0.0:5001",
+                    "Protocols": "Http2"
+                },
+                "Http": {
+                    "Url": "http://0.0.0.0:5000",
+                    "Protocols": "Http1"
+                }
+            }
         }
     };
 
@@ -532,7 +576,7 @@ function generateIaAppsettings(config) {
         "ConsumerGroupId": "ia-service"
     };
 
-    settings.ApiServiceGrpcUrl = "http://api:5001";
+    settings.ApiServiceGrpcUrl = "http://electrostoreAPI:5001";
 
     if (config.useVault) {
         settings.Vault = {
@@ -592,6 +636,14 @@ function generateNotifAppsettings(config) {
                 "Default": "Information",
                 "Microsoft": "Warning"
             }
+        },
+        "Kestrel": {
+            "Endpoints": {
+                "Http": {
+                    "Url": "http://0.0.0.0:5000",
+                    "Protocols": "Http1"
+                }
+            }
         }
     };
 
@@ -600,7 +652,7 @@ function generateNotifAppsettings(config) {
         "ConsumerGroupId": "notif-service"
     };
 
-    settings.ApiServiceGrpcUrl = "http://api:5001";
+    settings.ApiServiceGrpcUrl = "http://electrostoreAPI:5001";
 
     if (config.useVault) {
         settings.Vault = {
@@ -661,6 +713,14 @@ function generateCronAppsettings(config) {
                 "Microsoft.AspNetCore": "Warning",
                 "Quartz": "Warning"
             }
+        },
+        "Kestrel": {
+            "Endpoints": {
+                "Http": {
+                    "Url": "http://0.0.0.0:5000",
+                    "Protocols": "Http1"
+                }
+            }
         }
     };
 
@@ -677,7 +737,7 @@ function generateCronAppsettings(config) {
         settings.Track17 = { "ApiKey": "" };
     }
 
-    settings.ApiServiceGrpcUrl = "http://api:5001";
+    settings.ApiServiceGrpcUrl = "http://electrostoreAPI:5001";
     settings.CronRefreshIntervalMinutes = 60;
 
     if (config.useVault) {
@@ -709,6 +769,14 @@ function generateWorkerAppsettings(config) {
                 "Default": "Information",
                 "Microsoft.AspNetCore": "Warning"
             }
+        },
+        "Kestrel": {
+            "Endpoints": {
+                "Http": {
+                    "Url": "http://0.0.0.0:5000",
+                    "Protocols": "Http1"
+                }
+            }
         }
     };
 
@@ -736,7 +804,7 @@ function generateWorkerAppsettings(config) {
         };
     }
 
-    settings.ApiServiceGrpcUrl = "http://api:5001";
+    settings.ApiServiceGrpcUrl = "http://electrostoreAPI:5001";
 
     if (config.useVault) {
         settings.Vault = {
@@ -776,7 +844,7 @@ function generateEnvFile(config) {
     env += `NOTIF_VERSION=${config.appVersion}\n`;
     env += `CRON_VERSION=${config.appVersion}\n`;
     env += `WORKER_VERSION=${config.appVersion}\n`;
-    env += `KAFKA_VERSION=3.9\n`;
+    env += `KAFKA_VERSION=4.2.1\n`;
     if (config.useMariaDB) {
         env += `MARIADB_VERSION=11.7.2\n`;
     }
@@ -849,42 +917,44 @@ echo ""
         script += `# Vault Configuration
 echo "Configuring HashiCorp Vault..."
 
+export VAULT_TOKEN='${config.vault.token}'
+
 echo "Enabling KV v2 engine..."
-docker exec vault vault secrets enable -version=2 -path=${config.vault.mountPoint} kv || echo "KV engine already enabled"
+docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault secrets enable -version=2 -path=${config.vault.mountPoint} kv || echo "KV engine already enabled"
 
 echo "Storing secrets in Vault..."
 `;
 
-        script += `docker exec vault vault kv put ${config.vault.mountPoint}/${config.vault.path} mariadb_password="${config.useMariaDB ? config.mariadb.password : config.mariadbExternal.password}"
+        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv put ${config.vault.mountPoint}/${config.vault.path} mariadb_password='${config.useMariaDB ? config.mariadb.password : config.mariadbExternal.password}'
 `;
 
-        script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password="${config.useMQTT ? config.mqtt.password : config.mqttExternal.password}"
+        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password='${config.useMQTT ? config.mqtt.password : config.mqttExternal.password}'
 `;
 
         if (config.enableSMTP && config.smtp) {
-            script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} smtp_password="${config.smtp.password}"
+            script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} smtp_password='${config.smtp.password}'
 `;
         }
 
         if (config.enableVapid && config.vapid) {
-            script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} vapid_private_key="${config.vapid.privateKey}"
+            script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} vapid_private_key='${config.vapid.privateKey}'
 `;
         }
 
-        script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} jwt_key="${config.jwt.key}"
+        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} jwt_key='${config.jwt.key}'
 `;
 
         if (config.oauthProviders.length > 0) {
             config.oauthProviders.forEach(provider => {
                 const name = toSnakeCase(provider.displayName);
-                script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_id="${provider.clientId}"
+                script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_id='${provider.clientId}'
 `;
-                script += `docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_secret="${provider.clientSecret}"
+                script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_secret='${provider.clientSecret}'
 `;
             });
         }
 
-`    
+        script += `
 echo "Vault configuration completed"
 echo ""
 
@@ -903,27 +973,28 @@ sleep 10
 
 echo "Configuring Garage cluster..."
 GARAGE_NODE_ID=$(docker exec electrostore-garage /garage status | grep -oP '[0-9a-f]{16}' | head -n 1)
-GARAGE_CAPACITY=5000000000 # 5GB, adjust as needed
-docker exec electrostore-garage /garage layout assign $GARAGE_NODE_ID -z dc1 --capacity $GARAGE_CAPACITY $ $(docker exec electrostore-garage garage status | grep -oP '[0-9a-f]{16}' | head -n 1) || true
+GARAGE_CAPACITY=10000000000 # 10GB, adjust as needed
+docker exec electrostore-garage /garage layout assign $GARAGE_NODE_ID -z dc1 --capacity $GARAGE_CAPACITY || true
 docker exec electrostore-garage /garage layout apply --version 1
 
 echo "Creating S3 access keys..."
+GARAGE_API_ACCESS_KEY="${config.s3.accessKey}"
+GARAGE_API_SECRET_KEY="${config.s3.secretKey}"
+GARAGE_IA_ACCESS_KEY="${config.s3Ia.accessKey}"
+GARAGE_IA_SECRET_KEY="${config.s3Ia.secretKey}"
 
-docker exec electrostore-garage /garage key import -n electrostore-key --yes ${config.s3.accessKey} ${config.s3.secretKey}
-GARAGE_ACCESS_KEY="${config.s3.accessKey}"
-GARAGE_SECRET_KEY="${config.s3.secretKey}"
+echo "API Access Key: \$GARAGE_API_ACCESS_KEY"
+echo "API Secret Key: \$GARAGE_API_SECRET_KEY"
+echo "IA Access Key: \$GARAGE_IA_ACCESS_KEY"
+echo "IA Secret Key: \$GARAGE_IA_SECRET_KEY"
 
-echo "Access Key: \$GARAGE_ACCESS_KEY"
-echo "Secret Key: \$GARAGE_SECRET_KEY"
-
-echo "Creating bucket ${config.s3.bucket}..."
+echo "Creating bucket ${config.s3.bucket} for API service..."
+docker exec electrostore-garage /garage key import -n electrostore-key --yes $GARAGE_API_ACCESS_KEY $GARAGE_API_SECRET_KEY
 docker exec electrostore-garage /garage bucket create ${config.s3.bucket}
-
-echo "Assigning permissions..."
 docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.bucket} --key electrostore-key
 
 echo "Creating bucket ${config.s3Ia.bucket} for IA service..."
-docker exec electrostore-garage /garage key import -n electrostore-ia-key --yes ${config.s3Ia.accessKey} ${config.s3Ia.secretKey}
+docker exec electrostore-garage /garage key import -n electrostore-ia-key --yes $GARAGE_IA_ACCESS_KEY $GARAGE_IA_SECRET_KEY
 docker exec electrostore-garage /garage bucket create ${config.s3Ia.bucket}
 docker exec electrostore-garage /garage bucket allow --read --write ${config.s3Ia.bucket} --key electrostore-ia-key
 `;
@@ -931,7 +1002,7 @@ docker exec electrostore-garage /garage bucket allow --read --write ${config.s3I
         if (config.useVault) {
             script += `
 echo "Storing S3 keys in Vault..."
-docker exec vault vault kv patch ${config.vault.mountPoint}/${config.vault.path} s3_access_key="\$GARAGE_ACCESS_KEY" s3_secret_key="\$GARAGE_SECRET_KEY" s3_ia_access_key="${config.s3Ia.accessKey}" s3_ia_secret_key="${config.s3Ia.secretKey}"
+docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} s3_access_key="$GARAGE_API_ACCESS_KEY" s3_secret_key="$GARAGE_API_SECRET_KEY" s3_ia_access_key='$GARAGE_IA_ACCESS_KEY' s3_ia_secret_key='$GARAGE_IA_SECRET_KEY'
 `;
         }
 
@@ -1048,6 +1119,175 @@ allow_anonymous false
 function generateMosquittoPasswd(config) {
     return `${config.mqtt.user}:${config.mqtt.password}
 `;
+}
+
+// Generate setup.ps1 script for Windows
+function generateSetupScriptWindows(config) {
+    let script = `# ElectroStore Configuration Script (Windows)
+# Generated on ${new Date().toLocaleDateString('en-US')}
+
+$ErrorActionPreference = "Stop"
+
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host "ElectroStore Configuration" -ForegroundColor Cyan
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host ""
+
+`;
+
+    if (config.useVault) {
+        script += `# Vault Configuration
+Write-Host "Configuring HashiCorp Vault..." -ForegroundColor Yellow
+
+$env:VAULT_TOKEN = '${config.vault.token}'
+
+Write-Host "Enabling KV v2 engine..."
+docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault secrets enable -version=2 -path=${config.vault.mountPoint} kv
+if ($LASTEXITCODE -ne 0) { Write-Host "KV engine already enabled" }
+
+Write-Host "Storing secrets in Vault..."
+`;
+
+        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv put ${config.vault.mountPoint}/${config.vault.path} mariadb_password='${config.useMariaDB ? config.mariadb.password : config.mariadbExternal.password}'
+`;
+
+        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password='${config.useMQTT ? config.mqtt.password : config.mqttExternal.password}'
+`;
+
+        if (config.enableSMTP && config.smtp) {
+            script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} smtp_password='${config.smtp.password}'
+`;
+        }
+
+        if (config.enableVapid && config.vapid) {
+            script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} vapid_private_key='${config.vapid.privateKey}'
+`;
+        }
+
+        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} jwt_key='${config.jwt.key}'
+`;
+
+        if (config.oauthProviders.length > 0) {
+            config.oauthProviders.forEach(provider => {
+                const name = toSnakeCase(provider.displayName);
+                script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_id='${provider.clientId}'
+`;
+                script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_secret='${provider.clientSecret}'
+`;
+            });
+        }
+
+        script += `
+Write-Host "Vault configuration completed" -ForegroundColor Green
+Write-Host ""
+
+`;
+    }
+
+    if (config.enableS3 && config.useS3) {
+        script += `# S3 Garage Configuration
+Write-Host "Configuring Garage S3..." -ForegroundColor Yellow
+
+Write-Host "Starting Garage..."
+docker compose up -d garage
+
+Write-Host "Waiting for Garage to start (10 seconds)..."
+Start-Sleep -Seconds 10
+
+Write-Host "Configuring Garage cluster..."
+$GARAGE_NODE_ID = (docker exec electrostore-garage /garage status) | Select-String -Pattern '[0-9a-f]{16}' | ForEach-Object { $_.Matches[0].Value } | Select-Object -First 1
+$GARAGE_CAPACITY = 10000000000 # 10GB, adjust as needed
+docker exec electrostore-garage /garage layout assign $GARAGE_NODE_ID -z dc1 --capacity $GARAGE_CAPACITY
+docker exec electrostore-garage /garage layout apply --version 1
+
+Write-Host "Creating S3 access keys..."
+$GARAGE_API_ACCESS_KEY = "${config.s3.accessKey}"
+$GARAGE_API_SECRET_KEY = "${config.s3.secretKey}"
+$GARAGE_IA_ACCESS_KEY = "${config.s3Ia.accessKey}"
+$GARAGE_IA_SECRET_KEY = "${config.s3Ia.secretKey}"
+
+Write-Host "API Access Key: $GARAGE_API_ACCESS_KEY"
+Write-Host "API Secret Key: $GARAGE_API_SECRET_KEY"
+Write-Host "IA Access Key: $GARAGE_IA_ACCESS_KEY"
+Write-Host "IA Secret Key: $GARAGE_IA_SECRET_KEY"
+
+Write-Host "Creating bucket ${config.s3.bucket} for API service..."
+docker exec electrostore-garage /garage key import -n electrostore-key --yes $GARAGE_API_ACCESS_KEY $GARAGE_API_SECRET_KEY
+docker exec electrostore-garage /garage bucket create ${config.s3.bucket}
+docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.bucket} --key electrostore-key
+
+Write-Host "Creating bucket ${config.s3Ia.bucket} for IA service..."
+docker exec electrostore-garage /garage key import -n electrostore-ia-key --yes $GARAGE_IA_ACCESS_KEY $GARAGE_IA_SECRET_KEY
+docker exec electrostore-garage /garage bucket create ${config.s3Ia.bucket}
+docker exec electrostore-garage /garage bucket allow --read --write ${config.s3Ia.bucket} --key electrostore-ia-key
+`;
+
+        if (config.useVault) {
+            script += `
+Write-Host "Storing S3 keys in Vault..."
+docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} s3_access_key="$GARAGE_API_ACCESS_KEY" s3_secret_key="$GARAGE_API_SECRET_KEY" s3_ia_access_key="$GARAGE_IA_ACCESS_KEY" s3_ia_secret_key="$GARAGE_IA_SECRET_KEY"
+`;
+        }
+
+        script += `
+Write-Host "Garage configuration completed" -ForegroundColor Green
+Write-Host ""
+
+`;
+    }
+
+    if (config.useMQTT) {
+        script += `# MQTT Configuration
+Write-Host "Configuring Mosquitto MQTT..." -ForegroundColor Yellow
+
+Write-Host "Hashing MQTT password with temporary container..."
+$MqttConfigPath = Join-Path $PWD "config/mosquitto"
+docker run --rm -v "\${MqttConfigPath}:/temp" eclipse-mosquitto:2.0.20 sh -c "cp /temp/mosquitto.passwd /tmp/mosquitto.passwd && mosquitto_passwd -U /tmp/mosquitto.passwd && cat /tmp/mosquitto.passwd > /temp/mosquitto.passwd"
+
+Write-Host "Starting Mosquitto..."
+docker compose up -d mqtt
+
+Write-Host "MQTT configuration completed" -ForegroundColor Green
+Write-Host ""
+
+`;
+    }
+
+    script += `# Start all services
+Write-Host "Starting all services..."
+docker compose up -d
+
+Write-Host ""
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host "Configuration completed!" -ForegroundColor Green
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Application access:"
+Write-Host "Frontend: ${'${config.frontUrlObj.toString()}'}"
+Write-Host "API: ${'${config.apiUrlObj.toString()}'}"
+Write-Host ""
+`;
+
+    if (config.enableS3 && config.useS3) {
+        script += `Write-Host "S3 Garage:"
+Write-Host "  Endpoint: http://localhost:3900"
+Write-Host "  Bucket: ${config.s3.bucket}"
+Write-Host "  Access Key: (see .env)"
+Write-Host "  Secret Key: (see .env)"
+Write-Host ""
+`;
+    }
+
+    if (config.useMQTT) {
+        script += `Write-Host "MQTT:"
+Write-Host "  Host: localhost:1883"
+Write-Host "  User: ${config.mqtt.user}"
+Write-Host "  Password: (see .env)"
+Write-Host ""
+`;
+    }
+
+    return script;
 }
 
 // Generate README file
