@@ -488,6 +488,12 @@
                             <input type="text" id="vaultMountPoint" name="vaultMountPoint" placeholder="secret" value="secret">
                             <small class="help-text">Mount point of the KV secrets engine</small>
                         </div>
+
+                        <div class="form-group">
+                            <label for="vaultContainerName">Vault Container Name</label>
+                            <input type="text" id="vaultContainerName" name="vaultContainerName" placeholder="vault" value="vault">
+                            <small class="help-text">Name of the Docker container running Vault (used in docker exec commands)</small>
+                        </div>
                     </div>
                 </section>
 
