@@ -77,7 +77,9 @@ services:`;
     
     compose += `
     networks:
-      - electrostore`;
+      electrostore:
+        aliases:
+          - electrostoreAPI`;
     
     if (config.useTraefik) {
         compose += `\n      - ${config.traefik.network}`;
@@ -185,7 +187,9 @@ services:`;
     }
     compose += `
     networks:
-      - electrostore
+      electrostore:
+        aliases:
+          - electrostoreIA
     restart: unless-stopped
 `;
 
@@ -213,7 +217,9 @@ services:`;
     volumes:
       - ./config/notif/appsettings.json:/app/config/appsettings.json:ro
     networks:
-      - electrostore
+      electrostore:
+        aliases:
+          - electrostoreNOTIF
     restart: unless-stopped
 `;
 
@@ -242,7 +248,9 @@ services:`;
     volumes:
       - ./config/cron/appsettings.json:/app/config/appsettings.json:ro
     networks:
-      - electrostore
+      electrostore:
+        aliases:
+          - electrostoreCRON
     restart: unless-stopped
 `;
 
@@ -277,7 +285,9 @@ services:`;
     volumes:
       - ./config/worker/appsettings.json:/app/config/appsettings.json:ro
     networks:
-      - electrostore
+      electrostore:
+        aliases:
+          - electrostoreWORKER
     restart: unless-stopped
 `;
 
@@ -1109,6 +1119,175 @@ allow_anonymous false
 function generateMosquittoPasswd(config) {
     return `${config.mqtt.user}:${config.mqtt.password}
 `;
+}
+
+// Generate setup.ps1 script for Windows
+function generateSetupScriptWindows(config) {
+    let script = `# ElectroStore Configuration Script (Windows)
+# Generated on ${new Date().toLocaleDateString('en-US')}
+
+$ErrorActionPreference = "Stop"
+
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host "ElectroStore Configuration" -ForegroundColor Cyan
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host ""
+
+`;
+
+    if (config.useVault) {
+        script += `# Vault Configuration
+Write-Host "Configuring HashiCorp Vault..." -ForegroundColor Yellow
+
+$env:VAULT_TOKEN = '${config.vault.token}'
+
+Write-Host "Enabling KV v2 engine..."
+docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault secrets enable -version=2 -path=${config.vault.mountPoint} kv
+if ($LASTEXITCODE -ne 0) { Write-Host "KV engine already enabled" }
+
+Write-Host "Storing secrets in Vault..."
+`;
+
+        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv put ${config.vault.mountPoint}/${config.vault.path} mariadb_password='${config.useMariaDB ? config.mariadb.password : config.mariadbExternal.password}'
+`;
+
+        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password='${config.useMQTT ? config.mqtt.password : config.mqttExternal.password}'
+`;
+
+        if (config.enableSMTP && config.smtp) {
+            script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} smtp_password='${config.smtp.password}'
+`;
+        }
+
+        if (config.enableVapid && config.vapid) {
+            script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} vapid_private_key='${config.vapid.privateKey}'
+`;
+        }
+
+        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} jwt_key='${config.jwt.key}'
+`;
+
+        if (config.oauthProviders.length > 0) {
+            config.oauthProviders.forEach(provider => {
+                const name = toSnakeCase(provider.displayName);
+                script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_id='${provider.clientId}'
+`;
+                script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_secret='${provider.clientSecret}'
+`;
+            });
+        }
+
+        script += `
+Write-Host "Vault configuration completed" -ForegroundColor Green
+Write-Host ""
+
+`;
+    }
+
+    if (config.enableS3 && config.useS3) {
+        script += `# S3 Garage Configuration
+Write-Host "Configuring Garage S3..." -ForegroundColor Yellow
+
+Write-Host "Starting Garage..."
+docker compose up -d garage
+
+Write-Host "Waiting for Garage to start (10 seconds)..."
+Start-Sleep -Seconds 10
+
+Write-Host "Configuring Garage cluster..."
+$GARAGE_NODE_ID = (docker exec electrostore-garage /garage status) | Select-String -Pattern '[0-9a-f]{16}' | ForEach-Object { $_.Matches[0].Value } | Select-Object -First 1
+$GARAGE_CAPACITY = 10000000000 # 10GB, adjust as needed
+docker exec electrostore-garage /garage layout assign $GARAGE_NODE_ID -z dc1 --capacity $GARAGE_CAPACITY
+docker exec electrostore-garage /garage layout apply --version 1
+
+Write-Host "Creating S3 access keys..."
+$GARAGE_API_ACCESS_KEY = "${config.s3.accessKey}"
+$GARAGE_API_SECRET_KEY = "${config.s3.secretKey}"
+$GARAGE_IA_ACCESS_KEY = "${config.s3Ia.accessKey}"
+$GARAGE_IA_SECRET_KEY = "${config.s3Ia.secretKey}"
+
+Write-Host "API Access Key: $GARAGE_API_ACCESS_KEY"
+Write-Host "API Secret Key: $GARAGE_API_SECRET_KEY"
+Write-Host "IA Access Key: $GARAGE_IA_ACCESS_KEY"
+Write-Host "IA Secret Key: $GARAGE_IA_SECRET_KEY"
+
+Write-Host "Creating bucket ${config.s3.bucket} for API service..."
+docker exec electrostore-garage /garage key import -n electrostore-key --yes $GARAGE_API_ACCESS_KEY $GARAGE_API_SECRET_KEY
+docker exec electrostore-garage /garage bucket create ${config.s3.bucket}
+docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.bucket} --key electrostore-key
+
+Write-Host "Creating bucket ${config.s3Ia.bucket} for IA service..."
+docker exec electrostore-garage /garage key import -n electrostore-ia-key --yes $GARAGE_IA_ACCESS_KEY $GARAGE_IA_SECRET_KEY
+docker exec electrostore-garage /garage bucket create ${config.s3Ia.bucket}
+docker exec electrostore-garage /garage bucket allow --read --write ${config.s3Ia.bucket} --key electrostore-ia-key
+`;
+
+        if (config.useVault) {
+            script += `
+Write-Host "Storing S3 keys in Vault..."
+docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} s3_access_key="$GARAGE_API_ACCESS_KEY" s3_secret_key="$GARAGE_API_SECRET_KEY" s3_ia_access_key="$GARAGE_IA_ACCESS_KEY" s3_ia_secret_key="$GARAGE_IA_SECRET_KEY"
+`;
+        }
+
+        script += `
+Write-Host "Garage configuration completed" -ForegroundColor Green
+Write-Host ""
+
+`;
+    }
+
+    if (config.useMQTT) {
+        script += `# MQTT Configuration
+Write-Host "Configuring Mosquitto MQTT..." -ForegroundColor Yellow
+
+Write-Host "Hashing MQTT password with temporary container..."
+$MqttConfigPath = Join-Path $PWD "config/mosquitto"
+docker run --rm -v "\${MqttConfigPath}:/temp" eclipse-mosquitto:2.0.20 sh -c "cp /temp/mosquitto.passwd /tmp/mosquitto.passwd && mosquitto_passwd -U /tmp/mosquitto.passwd && cat /tmp/mosquitto.passwd > /temp/mosquitto.passwd"
+
+Write-Host "Starting Mosquitto..."
+docker compose up -d mqtt
+
+Write-Host "MQTT configuration completed" -ForegroundColor Green
+Write-Host ""
+
+`;
+    }
+
+    script += `# Start all services
+Write-Host "Starting all services..."
+docker compose up -d
+
+Write-Host ""
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host "Configuration completed!" -ForegroundColor Green
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Application access:"
+Write-Host "Frontend: ${'${config.frontUrlObj.toString()}'}"
+Write-Host "API: ${'${config.apiUrlObj.toString()}'}"
+Write-Host ""
+`;
+
+    if (config.enableS3 && config.useS3) {
+        script += `Write-Host "S3 Garage:"
+Write-Host "  Endpoint: http://localhost:3900"
+Write-Host "  Bucket: ${config.s3.bucket}"
+Write-Host "  Access Key: (see .env)"
+Write-Host "  Secret Key: (see .env)"
+Write-Host ""
+`;
+    }
+
+    if (config.useMQTT) {
+        script += `Write-Host "MQTT:"
+Write-Host "  Host: localhost:1883"
+Write-Host "  User: ${config.mqtt.user}"
+Write-Host "  Password: (see .env)"
+Write-Host ""
+`;
+    }
+
+    return script;
 }
 
 // Generate README file

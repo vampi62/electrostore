@@ -659,7 +659,7 @@
 
                 <div class="file-output">
                     <div class="file-header">
-                        <h3>setup.sh</h3>
+                        <h3>setup.sh (Linux / macOS)</h3>
                         <button class="btn-copy" onclick="copyToClipboard('setupScript')">Copy</button>
                     </div>
                     <pre id="setupScript"></pre>
@@ -668,6 +668,20 @@
                         <strong>Usage:</strong> This script automates Garage S3 and MQTT configuration.<br>
                         Make it executable with: <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">chmod +x setup.sh</code><br>
                         Then run: <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">./setup.sh</code>
+                    </p>
+                </div>
+
+                <div class="file-output">
+                    <div class="file-header">
+                        <h3>setup.ps1 (Windows)</h3>
+                        <button class="btn-copy" onclick="copyToClipboard('setupScriptWindows')">Copy</button>
+                    </div>
+                    <pre id="setupScriptWindows"></pre>
+                    <button class="btn-download" onclick="downloadFile('setup.ps1', 'setupScriptWindows')">Download</button>
+                    <p class="help-text" style="margin-top: 1rem; padding: 1rem; background: #e3f2fd; border-left: 4px solid #2196f3;">
+                        <strong>Usage:</strong> This script automates Garage S3 and MQTT configuration on Windows.<br>
+                        Run it in PowerShell: <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">.\setup.ps1</code><br>
+                        If needed, allow execution first: <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code>
                     </p>
                 </div>
 
