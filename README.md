@@ -75,15 +75,22 @@ sudo docker run -d --name mqtt \
 sudo docker run -d --name kafka \
  --restart always \
  -p 9092:9092 \
- -e KAFKA_CFG_NODE_ID=1 \
- -e KAFKA_CFG_PROCESS_ROLES=broker,controller \
- -e KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093 \
- -e KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093 \
- -e KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092 \
- -e KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT \
- -e KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER \
- -v electrostoreKAFKA:/bitnami/kafka \
- bitnami/kafka:3.9
+ -e KAFKA_NODE_ID=1 \
+ -e KAFKA_PROCESS_ROLES=broker,controller \
+ -e KAFKA_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093 \
+ -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092 \
+ -e KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER \
+ -e KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT \
+ -e KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093 \
+ -e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 \
+ -e KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1 \
+ -e KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1 \
+ -e KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0 \
+ -e KAFKA_NUM_PARTITIONS=3 \
+ -v electrostore-kafka-data:/var/lib/kafka/data \
+ -v electrostore-kafka-config:/mnt/shared/config \
+ -v electrostore-kafka-secrets:/etc/kafka/secrets \
+ apache/kafka:4.2.1
 ```
 
 #### create network
@@ -112,6 +119,18 @@ sudo nano /opt/electrostore/api/appsettings.json
     "LogLevel": {
       "Default": "Information",
       "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "Kestrel": {
+    "Endpoints": {
+      "Grpc": {
+        "Url": "http://0.0.0.0:5001",
+        "Protocols": "Http2"
+      },
+      "Http": {
+        "Url": "http://0.0.0.0:5000",
+        "Protocols": "Http1"
+      }
     }
   },
   "ConnectionStrings": {
@@ -193,6 +212,18 @@ sudo nano /opt/electrostore/ia/appsettings.json
       "Microsoft.ML": "Warning"
     }
   },
+  "Kestrel": {
+    "Endpoints": {
+      "Grpc": {
+        "Url": "http://0.0.0.0:5001",
+        "Protocols": "Http2"
+      },
+      "Http": {
+        "Url": "http://0.0.0.0:5000",
+        "Protocols": "Http1"
+      }
+    }
+  },
   "Kafka": {
     "BootstrapServers": "kafka:9092",
     "ConsumerGroupId": "ia-service"
@@ -220,6 +251,14 @@ sudo nano /opt/electrostore/notif/appsettings.json
     "LogLevel": {
       "Default": "Information",
       "Microsoft": "Warning"
+    }
+  },
+  "Kestrel": {
+    "Endpoints": {
+      "Http": {
+        "Url": "http://0.0.0.0:5000",
+        "Protocols": "Http1"
+      }
     }
   },
   "Kafka": {
@@ -266,6 +305,14 @@ sudo nano /opt/electrostore/cron/appsettings.json
       "Quartz": "Warning"
     }
   },
+  "Kestrel": {
+    "Endpoints": {
+      "Http": {
+        "Url": "http://0.0.0.0:5000",
+        "Protocols": "Http1"
+      }
+    }
+  },
   "Kafka": {
     "BootstrapServers": "kafka:9092",
     "CronConsumerGroupId": "cron-service-events"
@@ -295,6 +342,14 @@ sudo nano /opt/electrostore/worker/appsettings.json
     "LogLevel": {
       "Default": "Information",
       "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "Kestrel": {
+    "Endpoints": {
+      "Http": {
+        "Url": "http://0.0.0.0:5000",
+        "Protocols": "Http1"
+      }
     }
   },
   "Kafka": {
