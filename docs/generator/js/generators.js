@@ -10,9 +10,18 @@ version: '3.8'
 services:`;
 
     // API Backend
-    compose += `
+    if (config.appVersion === 'local') {
+        compose += `
   api:
-    image: ghcr.io/vampi62/electrostore/api:\${API_VERSION:-latest}
+    build:
+      context: ./electrostore/electrostoreAPI
+      dockerfile: Dockerfile`;
+    } else {
+        compose += `
+  api:
+    image: ghcr.io/vampi62/electrostore/api:\${API_VERSION:-latest}`;
+    }
+    compose += `
     container_name: electrostore-api
     cap_add:
       - CHOWN
@@ -90,9 +99,18 @@ services:`;
 `;
 
     // Frontend
-    compose += `
+    if (config.appVersion === 'local') {
+        compose += `
   frontend:
-    image: ghcr.io/vampi62/electrostore/front:\${FRONTEND_VERSION:-latest}
+    build:
+      context: ./electrostore/electrostoreFRONT
+      dockerfile: Dockerfile`;
+    } else {
+        compose += `
+  frontend:
+    image: ghcr.io/vampi62/electrostore/front:\${FRONTEND_VERSION:-latest}`;
+    }
+    compose += `
     container_name: electrostore-frontend
     cap_drop:
       - ALL
@@ -153,9 +171,18 @@ services:`;
 `;
 
     // Service IA
-    compose += `
+    if (config.appVersion === 'local') {
+        compose += `
   ia:
-    image: ghcr.io/vampi62/electrostore/ia:\${IA_VERSION:-latest}
+    build:
+      context: ./electrostore/electrostoreIA
+      dockerfile: Dockerfile`;
+    } else {
+        compose += `
+  ia:
+    image: ghcr.io/vampi62/electrostore/ia:\${IA_VERSION:-latest}`;
+    }
+    compose += `
     container_name: electrostore-ia
     cap_add:
       - CHOWN
@@ -194,9 +221,18 @@ services:`;
 `;
 
     // NOTIF Service
-    compose += `
+    if (config.appVersion === 'local') {
+        compose += `
   notif:
-    image: ghcr.io/vampi62/electrostore/notif:\${NOTIF_VERSION:-latest}
+    build:
+      context: ./electrostore/electrostoreNOTIF
+      dockerfile: Dockerfile`;
+    } else {
+        compose += `
+  notif:
+    image: ghcr.io/vampi62/electrostore/notif:\${NOTIF_VERSION:-latest}`;
+    }
+    compose += `
     container_name: electrostore-notif
     cap_add:
       - CHOWN
@@ -224,9 +260,18 @@ services:`;
 `;
 
     // CRON Service
-    compose += `
+    if (config.appVersion === 'local') {
+        compose += `
   cron:
-    image: ghcr.io/vampi62/electrostore/cron:\${CRON_VERSION:-latest}
+    build:
+      context: ./electrostore/electrostoreCRON
+      dockerfile: Dockerfile`;
+    } else {
+        compose += `
+  cron:
+    image: ghcr.io/vampi62/electrostore/cron:\${CRON_VERSION:-latest}`;
+    }
+    compose += `
     container_name: electrostore-cron
     cap_add:
       - CHOWN
@@ -255,9 +300,18 @@ services:`;
 `;
 
     // WORKER Service
-    compose += `
+    if (config.appVersion === 'local') {
+        compose += `
   worker:
-    image: ghcr.io/vampi62/electrostore/worker:\${WORKER_VERSION:-latest}
+    build:
+      context: ./electrostore/electrostoreWORKER
+      dockerfile: Dockerfile`;
+    } else {
+        compose += `
+  worker:
+    image: ghcr.io/vampi62/electrostore/worker:\${WORKER_VERSION:-latest}`;
+    }
+        compose += `
     container_name: electrostore-worker
     cap_add:
       - CHOWN
@@ -912,6 +966,18 @@ echo "====================================="
 echo ""
 
 `;
+    if (config.appVersion === 'local') {
+        script += `# Clone repository
+echo "Cloning ElectroStore repository..."
+if [ -d "electrostore" ]; then
+    echo "Repository already exists, skipping clone..."
+else
+    git clone https://github.com/vampi62/electrostore.git
+fi
+echo ""
+
+    `;
+    }
 
     if (config.useVault) {
         script += `# Vault Configuration
@@ -1134,6 +1200,18 @@ Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host ""
 
 `;
+    if (config.appVersion === 'local') {
+        script += `# Clone repository
+Write-Host "Cloning ElectroStore repository..." -ForegroundColor Yellow
+if (Test-Path "electrostore") {
+    Write-Host "Repository already exists, skipping clone..." -ForegroundColor Yellow
+} else {
+    git clone https://github.com/vampi62/electrostore.git
+}
+Write-Host ""
+
+`;
+    }
 
     if (config.useVault) {
         script += `# Vault Configuration

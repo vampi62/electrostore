@@ -23,6 +23,12 @@ RUN apk add --no-cache gcompat patchelf binutils
 
 COPY --from=build /app/out .
 
+RUN apk add --no-cache --virtual .build-deps \
+    g++ \
+    linux-headers \
+    musl-dev \
+    && rm -rf /var/cache/apk/*
+
 # fix kafka native library dependencies for amr and x64 architectures
 RUN if [ "$(uname -m)" = "aarch64" ]; then \
         patchelf --remove-needed ld-linux-aarch64.so.1 /app/runtimes/linux-arm64/native/librdkafka.so && \
