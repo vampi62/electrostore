@@ -381,7 +381,7 @@ services:`;
       - ./config/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - ./config/mosquitto/mosquitto.passwd:/mosquitto/config/mosquitto.passwd:ro
       - mqtt-data:/mosquitto/data
-      - mqtt-logs:/mosquitto/logs
+      - mqtt-logs:/mosquitto/log
     networks:
       - electrostore
     restart: unless-stopped
@@ -991,31 +991,31 @@ docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault se
 echo "Storing secrets in Vault..."
 `;
 
-        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv put ${config.vault.mountPoint}/${config.vault.path} mariadb_password='${config.useMariaDB ? config.mariadb.password : config.mariadbExternal.password}'
+        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv put ${config.vault.mountPoint}/${config.vault.path} mariadb_password='${escapeVaultSecret(config.useMariaDB ? config.mariadb.password : config.mariadbExternal.password)}'
 `;
 
-        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password='${config.useMQTT ? config.mqtt.password : config.mqttExternal.password}'
+        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password='${escapeVaultSecret(config.useMQTT ? config.mqtt.password : config.mqttExternal.password)}'
 `;
 
         if (config.enableSMTP && config.smtp) {
-            script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} smtp_password='${config.smtp.password}'
+            script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} smtp_password='${escapeVaultSecret(config.smtp.password)}'
 `;
         }
 
         if (config.enableVapid && config.vapid) {
-            script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} vapid_private_key='${config.vapid.privateKey}'
+            script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} vapid_private_key='${escapeVaultSecret(config.vapid.privateKey)}'
 `;
         }
 
-        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} jwt_key='${config.jwt.key}'
+        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} jwt_key='${escapeVaultSecret(config.jwt.key)}'
 `;
 
         if (config.oauthProviders.length > 0) {
             config.oauthProviders.forEach(provider => {
                 const name = toSnakeCase(provider.displayName);
-                script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_id='${provider.clientId}'
+                script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_id='${escapeVaultSecret(provider.clientId)}'
 `;
-                script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_secret='${provider.clientSecret}'
+                script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_secret='${escapeVaultSecret(provider.clientSecret)}'
 `;
             });
         }
@@ -1068,7 +1068,7 @@ docker exec electrostore-garage /garage bucket allow --read --write ${config.s3I
         if (config.useVault) {
             script += `
 echo "Storing S3 keys in Vault..."
-docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} s3_access_key="$GARAGE_API_ACCESS_KEY" s3_secret_key="$GARAGE_API_SECRET_KEY" s3_ia_access_key='$GARAGE_IA_ACCESS_KEY' s3_ia_secret_key='$GARAGE_IA_SECRET_KEY'
+docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} s3_access_key="$GARAGE_API_ACCESS_KEY" s3_secret_key="$GARAGE_API_SECRET_KEY" s3_ia_access_key="$GARAGE_IA_ACCESS_KEY" s3_ia_secret_key="$GARAGE_IA_SECRET_KEY"
 `;
         }
 
@@ -1226,31 +1226,31 @@ if ($LASTEXITCODE -ne 0) { Write-Host "KV engine already enabled" }
 Write-Host "Storing secrets in Vault..."
 `;
 
-        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv put ${config.vault.mountPoint}/${config.vault.path} mariadb_password='${config.useMariaDB ? config.mariadb.password : config.mariadbExternal.password}'
+        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv put ${config.vault.mountPoint}/${config.vault.path} mariadb_password='${escapeVaultSecret(config.useMariaDB ? config.mariadb.password : config.mariadbExternal.password)}'
 `;
 
-        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password='${config.useMQTT ? config.mqtt.password : config.mqttExternal.password}'
+        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password='${escapeVaultSecret(config.useMQTT ? config.mqtt.password : config.mqttExternal.password)}'
 `;
 
         if (config.enableSMTP && config.smtp) {
-            script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} smtp_password='${config.smtp.password}'
+            script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} smtp_password='${escapeVaultSecret(config.smtp.password)}'
 `;
         }
 
         if (config.enableVapid && config.vapid) {
-            script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} vapid_private_key='${config.vapid.privateKey}'
+            script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} vapid_private_key='${escapeVaultSecret(config.vapid.privateKey)}'
 `;
         }
 
-        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} jwt_key='${config.jwt.key}'
+        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} jwt_key='${escapeVaultSecret(config.jwt.key)}'
 `;
 
         if (config.oauthProviders.length > 0) {
             config.oauthProviders.forEach(provider => {
                 const name = toSnakeCase(provider.displayName);
-                script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_id='${provider.clientId}'
+                script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_id='${escapeVaultSecret(provider.clientId)}'
 `;
-                script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_secret='${provider.clientSecret}'
+                script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_secret='${escapeVaultSecret(provider.clientSecret)}'
 `;
             });
         }
