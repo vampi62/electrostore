@@ -70,11 +70,12 @@ services:`;
 
     compose += `
     depends_on:
-      - kafka`;
+      kafka:
+        condition: service_started`;
     
-    if (config.useMariaDB) compose += `\n      - mariadb`;
-    if (config.useMQTT) compose += `\n      - mqtt`;
-    if (config.enableS3 && config.useS3) compose += `\n      - garage`;
+    if (config.useMariaDB) compose += `\n      mariadb\n        condition: service_healthy`;
+    if (config.useMQTT) compose += `\n      - mqtt\n        condition: service_started`;
+    if (config.enableS3 && config.useS3) compose += `\n      - garage\n        condition: service_started`;
     
     compose += `
     volumes:
@@ -158,7 +159,8 @@ services:`;
     
     compose += `
     depends_on:
-      - api
+      api:
+        condition: service_started
     networks:
       - electrostore`;
     
@@ -201,10 +203,13 @@ services:`;
     
     compose += `
     depends_on:
-      - kafka`;
+      kafka
+        condition: service_started
+      api:
+        condition: service_healthy`;
     
-    if (config.useMariaDB) compose += `\n      - mariadb`;
-    if (config.enableS3 && config.useS3) compose += `\n      - garage`;
+    if (config.useMariaDB) compose += `\n      - mariadb\n        condition: service_healthy`;
+    if (config.enableS3 && config.useS3) compose += `\n      - garage\n        condition: service_started`;
     
     compose += `
     volumes:
@@ -249,7 +254,10 @@ services:`;
           cpus: '1.0'
           memory: 512M
     depends_on:
-      - kafka
+      kafka:
+        condition: service_started
+      api:
+        condition: service_healthy
     volumes:
       - ./config/notif/appsettings.json:/app/config/appsettings.json:ro
     networks:
@@ -288,8 +296,10 @@ services:`;
           cpus: '1.0'
           memory: 256M
     depends_on:
-      - kafka
-      - api
+      kafka:
+        condition: service_started
+      api:
+        condition: service_healthy
     volumes:
       - ./config/cron/appsettings.json:/app/config/appsettings.json:ro
     networks:
@@ -330,8 +340,10 @@ services:`;
 
     compose += `
     depends_on:
-      - kafka
-      - api`;
+      kafka:
+        condition: service_started
+      api:
+        condition: service_healthy`;
 
     if (config.useMQTT) compose += `\n      - mqtt`;
 
@@ -427,6 +439,7 @@ services:`;
       - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
       - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
       - KAFKA_NUM_PARTITIONS=3
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
     volumes:
       - kafka-data:/var/lib/kafka/data
       - kafka-config:/mnt/shared/config
