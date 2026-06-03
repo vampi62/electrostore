@@ -8,12 +8,12 @@ namespace ElectrostoreWORKER.Kafka.Consumers;
 public class KafkaIaStatusConsumer : BackgroundService
 {
     private const string Topic = "ia-status";
-    private readonly WORKERToAPIGrpc.WORKERToAPIGrpcClient _dataService;
+    private readonly IaTrainingGrpc.IaTrainingGrpcClient _dataService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<KafkaIaStatusConsumer> _logger;
 
     public KafkaIaStatusConsumer(
-        WORKERToAPIGrpc.WORKERToAPIGrpcClient dataService,
+        IaTrainingGrpc.IaTrainingGrpcClient dataService,
         IConfiguration configuration,
         ILogger<KafkaIaStatusConsumer> logger)
     {

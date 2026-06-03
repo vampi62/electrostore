@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+option csharp_namespace = "ElectrostoreAPI.Grpc";
+
+package iaTraining;
+
+service IaTrainingGrpc {
+  rpc StreamTrainingImages (StreamTrainingImagesRequest) returns (stream TrainingImage);
+  rpc UpdateIaStatus         (UpdateIaStatusRequest)         returns (UpdateIaStatusReply);
+}
+
+// ---- Training images ----
+
+message StreamTrainingImagesRequest {
+  repeated string existing_filenames = 1;
+}
+
+message TrainingImage {
+  string label    = 1;
+  string filename = 2;
+  bytes  data     = 3;
+}
+
+// ---- IA status ----
+
+message UpdateIaStatusRequest {
+  int32  id_ia        = 1;
+  string action       = 2; // training_started | training_completed | training_failed
+  int32  requested_by = 3;
+  string message      = 4;
+  float  accuracy     = 5;
+  float  val_accuracy = 6;
+  float  loss         = 7;
+  float  val_loss     = 8;
+  int32  epoch        = 9;
+}
+
+message UpdateIaStatusReply {
+  bool success = 1;
+}

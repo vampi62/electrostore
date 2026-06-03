@@ -20,10 +20,10 @@ public class IAService : IIAService
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
     private readonly IFileService _fileService;
-    private readonly APIToIAGrpc.APIToIAGrpcClient _iaGrpcClient;
+    private readonly IaCmdGrpc.IaCmdGrpcClient _iaGrpcClient;
     private readonly IKafkaProducerService _kafkaProducer;
 
-    public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IFileService fileService, APIToIAGrpc.APIToIAGrpcClient iaGrpcClient, IKafkaProducerService kafkaProducer)
+    public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IFileService fileService, IaCmdGrpc.IaCmdGrpcClient iaGrpcClient, IKafkaProducerService kafkaProducer)
     {
         _mapper = mapper;
         _context = context;

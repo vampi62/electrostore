@@ -10,12 +10,12 @@ public class KafkaCronConsumer : BackgroundService
 {
     private const string TopicParcel = "cron-parcel-tracking";
 
-    private readonly WORKERToAPIGrpc.WORKERToAPIGrpcClient _apiClient;
+    private readonly CommandsGrpc.CommandsGrpcClient _apiClient;
     private readonly IConfiguration _configuration;
     private readonly ILogger<KafkaCronConsumer> _logger;
 
     public KafkaCronConsumer(
-        WORKERToAPIGrpc.WORKERToAPIGrpcClient apiClient,
+        CommandsGrpc.CommandsGrpcClient apiClient,
         IConfiguration configuration,
         ILogger<KafkaCronConsumer> logger)
     {

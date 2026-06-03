@@ -174,7 +174,7 @@ public partial class Program
         });
 
         // gRPC client for the IA service
-        builder.Services.AddGrpcClient<APIToIAGrpc.APIToIAGrpcClient>(options =>
+        builder.Services.AddGrpcClient<IaCmdGrpc.IaCmdGrpcClient>(options =>
         {
             options.Address = new Uri(
                 builder.Configuration.GetValue<string>("IAServiceGrpcUrl") ?? "http://electrostoreIA:5001");
@@ -210,10 +210,12 @@ public partial class Program
 
         app.UseMiddleware<ExceptionsHandler>();
 
-        app.MapGrpcService<ElectrostoreIAToApiGrpcService>();
-        app.MapGrpcService<ElectrostoreNOTIFToApiGrpcService>();
-        app.MapGrpcService<ElectrostoreCRONToApiGrpcService>();
-        app.MapGrpcService<ElectrostoreWORKERToApiGrpcService>();
+        app.MapGrpcService<CommandsGrpcService>();
+        app.MapGrpcService<ConfigGrpcService>();
+        app.MapGrpcService<CronJobsGrpcService>();
+        app.MapGrpcService<IaTrainingGrpcService>();
+        app.MapGrpcService<StoreMqttGrpcService>();
+        app.MapGrpcService<UsersGrpcService>();
 
         app.MapGet("/health", (IConfiguration config) =>
             Results.Ok(new

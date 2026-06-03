@@ -5,12 +5,12 @@ namespace ElectrostoreWORKER.Services.ConfigCacheService;
 
 public class ConfigCacheService : IHostedService, IConfigCacheService
 {
-    private readonly WORKERToAPIGrpc.WORKERToAPIGrpcClient _client;
+    private readonly ConfigGrpc.ConfigGrpcClient _client;
     private readonly ILogger<ConfigCacheService> _logger;
 
     public bool DemoMode { get; private set; }
 
-    public ConfigCacheService(WORKERToAPIGrpc.WORKERToAPIGrpcClient client, ILogger<ConfigCacheService> logger)
+    public ConfigCacheService(ConfigGrpc.ConfigGrpcClient client, ILogger<ConfigCacheService> logger)
     {
         _client = client;
         _logger = logger;

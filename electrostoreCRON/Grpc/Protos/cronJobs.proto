@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+option csharp_namespace = "ElectrostoreCRON.Grpc";
+
+package cronJobs;
+
+service CronJobGrpc {
+  rpc GetEnabledCronJobs (GetEnabledCronJobsRequest) returns (GetEnabledCronJobsReply);
+  rpc UpdateCronJobRun   (UpdateCronJobRunRequest)   returns (UpdateCronJobRunReply);
+}
+
+// ---- CronJobs ----
+
+message GetEnabledCronJobsRequest {}
+
+message GetEnabledCronJobsReply {
+  repeated CronJobItem cron_jobs = 1;
+}
+
+message CronJobItem {
+  int32  id_cronjob       = 1;
+  string name_cronjob     = 2;
+  string cron_expression  = 3;
+  string action_cronjob   = 4;
+  string params_cronjob   = 5; // JSON stringfied parameters, content depends on action_cronjob
+}
+
+// ---- Update CronJob Run ----
+
+message UpdateCronJobRunRequest {
+  int32  id_cronjob   = 1;
+  string last_run_at  = 2; // ISO 8601
+  string next_run_at  = 3; // ISO 8601
+}
+
+message UpdateCronJobRunReply {
+  bool success = 1;
+}

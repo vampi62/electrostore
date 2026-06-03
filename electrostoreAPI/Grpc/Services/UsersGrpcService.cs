@@ -1,27 +1,23 @@
-using ElectrostoreAPI.Services.ConfigService;
 using ElectrostoreAPI.Services.FileService;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElectrostoreAPI.Grpc.Services;
 
-public class ElectrostoreNOTIFToApiGrpcService : NOTIFToAPIGrpc.NOTIFToAPIGrpcBase
+public class UsersGrpcService : UsersGrpc.UsersGrpcBase
 {
     private readonly ApplicationDbContext _context;
     private readonly IFileService _fileService;
-    private readonly ILogger<ElectrostoreNOTIFToApiGrpcService> _logger;
-    private readonly IConfigService _configService;
+    private readonly ILogger<UsersGrpcService> _logger;
 
-    public ElectrostoreNOTIFToApiGrpcService(
+    public UsersGrpcService(
         ApplicationDbContext context,
         IFileService fileService,
-        ILogger<ElectrostoreNOTIFToApiGrpcService> logger,
-        IConfigService configService)
+        ILogger<UsersGrpcService> logger)
     {
         _context = context;
         _fileService = fileService;
         _logger = logger;
-        _configService = configService;
     }
 
     public override async Task<GetUserInfoReply> GetUserInfo(GetUserInfoRequest request, ServerCallContext context)
@@ -50,10 +46,5 @@ public class ElectrostoreNOTIFToApiGrpcService : NOTIFToAPIGrpc.NOTIFToAPIGrpcBa
             Auth = s.auth,
         }));
         return reply;
-    }
-
-    public override Task<NOTIFGetConfigReply> GetConfig(NOTIFGetConfigRequest request, ServerCallContext context)
-    {
-        return Task.FromResult(new NOTIFGetConfigReply { DemoMode = _configService.GetDemoMode() });
     }
 }

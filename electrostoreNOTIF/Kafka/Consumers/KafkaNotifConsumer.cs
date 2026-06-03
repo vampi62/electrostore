@@ -13,14 +13,14 @@ public class KafkaNotifConsumer : BackgroundService
     private readonly IConfiguration _configuration;
     private readonly IEmailSenderService _email;
     private readonly IWebPushService _webPush;
-    private readonly NOTIFToAPIGrpc.NOTIFToAPIGrpcClient _userResolver;
+    private readonly UsersGrpc.UsersGrpcClient _userResolver;
     private readonly ILogger<KafkaNotifConsumer> _logger;
 
     public KafkaNotifConsumer(
         IConfiguration configuration,
         IEmailSenderService email,
         IWebPushService webPush,
-        NOTIFToAPIGrpc.NOTIFToAPIGrpcClient userResolver,
+        UsersGrpc.UsersGrpcClient userResolver,
         ILogger<KafkaNotifConsumer> logger)
     {
         _configuration = configuration;

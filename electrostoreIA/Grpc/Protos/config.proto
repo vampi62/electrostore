@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option csharp_namespace = "ElectrostoreIA.Grpc";
+
+package config;
+
+service ConfigGrpc {
+  rpc GetConfig          (GetConfigRequest)       returns (GetConfigReply);
+}
+
+message GetConfigRequest {}
+
+message GetConfigReply {
+  bool demo_mode = 1;
+  repeated string allowed_image_extensions = 2;
+}

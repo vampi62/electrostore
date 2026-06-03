@@ -5,12 +5,12 @@ namespace ElectrostoreCRON.Services.ConfigCacheService;
 
 public class ConfigCacheService : IHostedService, IConfigCacheService
 {
-    private readonly CRONToAPIGrpc.CRONToAPIGrpcClient _client;
+    private readonly ConfigGrpc.ConfigGrpcClient _client;
     private readonly ILogger<ConfigCacheService> _logger;
 
     public bool DemoMode { get; private set; }
 
-    public ConfigCacheService(CRONToAPIGrpc.CRONToAPIGrpcClient client, ILogger<ConfigCacheService> logger)
+    public ConfigCacheService(ConfigGrpc.ConfigGrpcClient client, ILogger<ConfigCacheService> logger)
     {
         _client = client;
         _logger = logger;

@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option csharp_namespace = "ElectrostoreAPI.Grpc";
+
+package storesmqtt;
+
+service StoresMqttGrpc {
+  rpc UpdateStoreMqttStatus  (UpdateStoreMqttStatusRequest)  returns (UpdateStoreMqttStatusReply);
+}
+
+message UpdateStoreMqttStatusRequest {
+  string mqtt_name_store       = 1;
+  bool   is_mqtt_connected     = 2;
+}
+
+message UpdateStoreMqttStatusReply {
+  bool success      = 1;
+  int32 store_count = 2; // nombre de stores mis à jour
+}

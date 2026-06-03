@@ -1,23 +1,19 @@
-using ElectrostoreAPI.Services.ConfigService;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 
 namespace ElectrostoreAPI.Grpc.Services;
 
-public class ElectrostoreCRONToApiGrpcService : CRONToAPIGrpc.CRONToAPIGrpcBase
+public class CronJobsGrpcService : CronJobsGrpc.CronJobsGrpcBase
 {
     private readonly ApplicationDbContext _context;
-    private readonly ILogger<ElectrostoreCRONToApiGrpcService> _logger;
-    private readonly IConfigService _configService;
+    private readonly ILogger<CronJobsGrpcService> _logger;
 
-    public ElectrostoreCRONToApiGrpcService(
+    public CronJobsGrpcService(
         ApplicationDbContext context,
-        ILogger<ElectrostoreCRONToApiGrpcService> logger,
-        IConfigService configService)
+        ILogger<CronJobsGrpcService> logger)
     {
         _context = context;
         _logger = logger;
-        _configService = configService;
     }
 
     public override async Task<GetEnabledCronJobsReply> GetEnabledCronJobs(
@@ -68,11 +64,5 @@ public class ElectrostoreCRONToApiGrpcService : CRONToAPIGrpc.CRONToAPIGrpcBase
 
         await _context.SaveChangesAsync(context.CancellationToken);
         return new UpdateCronJobRunReply { Success = true };
-    }
-
-    public override Task<CRONGetConfigReply> GetConfig(
-        CRONGetConfigRequest request, ServerCallContext context)
-    {
-        return Task.FromResult(new CRONGetConfigReply { DemoMode = _configService.GetDemoMode() });
     }
 }

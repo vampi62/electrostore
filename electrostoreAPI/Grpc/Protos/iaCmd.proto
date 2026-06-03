@@ -2,9 +2,9 @@ syntax = "proto3";
 
 option csharp_namespace = "ElectrostoreAPI.Grpc";
 
-package apiToIa;
+package iacmd;
 
-service APIToIAGrpc {
+service IaCmdGrpc {
   rpc GetStatus (StatusRequest) returns (StatusReply);
   rpc Detect (DetectRequest) returns (DetectReply);
 }

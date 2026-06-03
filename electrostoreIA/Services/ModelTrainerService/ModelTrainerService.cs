@@ -19,14 +19,14 @@ public class ModelTrainerService : IModelTrainerService
     private readonly int _defaultEpochs;
     private readonly int _defaultBatchSize;
     private readonly ILogger<ModelTrainerService> _logger;
-    private readonly IAToAPIGrpc.IAToAPIGrpcClient _client;
+    private readonly IaTrainingGrpc.IaTrainingGrpcClient _client;
     private readonly IFileService _fileService;
 
     public readonly ConcurrentDictionary<int, TrainingProgress> TrainingProgressMap = new();
 
     private readonly string[] SupportedExtensions;
 
-    public ModelTrainerService(IConfiguration configuration, IAToAPIGrpc.IAToAPIGrpcClient client, ILogger<ModelTrainerService> logger, IConfigCacheService configCache, IFileService fileService)
+    public ModelTrainerService(IConfiguration configuration, IaTrainingGrpc.IaTrainingGrpcClient client, ILogger<ModelTrainerService> logger, IConfigCacheService configCache, IFileService fileService)
     {
         _logger = logger;
         _client = client;

@@ -39,7 +39,12 @@ public partial class Program
         });
 
         // gRPC client for the API service
-        builder.Services.AddGrpcClient<IAToAPIGrpc.IAToAPIGrpcClient>(options =>
+        builder.Services.AddGrpcClient<ConfigGrpc.ConfigGrpcClient>(options =>
+        {
+            options.Address = new Uri(
+                builder.Configuration.GetValue<string>("ApiServiceGrpcUrl") ?? "http://electrostoreAPI:5001");
+        });
+        builder.Services.AddGrpcClient<IaTrainingGrpc.IaTrainingGrpcClient>(options =>
         {
             options.Address = new Uri(
                 builder.Configuration.GetValue<string>("ApiServiceGrpcUrl") ?? "http://electrostoreAPI:5001");
@@ -59,7 +64,7 @@ public partial class Program
                 training_in_progress = trainerService.IsTrainingInProgress()
             }));
 
-        app.MapGrpcService<IAGrpcService>();
+        app.MapGrpcService<IaCmdService>();
 
         app.Run();
     }

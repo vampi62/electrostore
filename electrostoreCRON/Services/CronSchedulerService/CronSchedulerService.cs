@@ -8,13 +8,13 @@ namespace ElectrostoreCRON.Services.CronSchedulerService;
 public class CronSchedulerService : BackgroundService
 {
     private readonly ISchedulerFactory _schedulerFactory;
-    private readonly CRONToAPIGrpc.CRONToAPIGrpcClient _apiClient;
+    private readonly CronJobGrpc.CronJobGrpcClient _apiClient;
     private readonly IConfiguration _configuration;
     private readonly ILogger<CronSchedulerService> _logger;
 
     public CronSchedulerService(
         ISchedulerFactory schedulerFactory,
-        CRONToAPIGrpc.CRONToAPIGrpcClient apiClient,
+        CronJobGrpc.CronJobGrpcClient apiClient,
         IConfiguration configuration,
         ILogger<CronSchedulerService> logger)
     {
