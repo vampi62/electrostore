@@ -18,7 +18,7 @@ async function loadGitHubTags() {
         const select = document.getElementById('appVersion');
         if (select) {
             // Keep "latest" option and add tags
-            select.innerHTML = '<option value="latest">latest (développement)</option>' + options;
+            select.innerHTML = '<option value="latest">latest (développement)</option><option value="local">local (build from source)</option>' + options;
         }
     } catch (error) {
         console.error('Error loading GitHub tags:', error);
