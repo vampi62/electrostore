@@ -74,8 +74,8 @@ services:`;
         condition: service_healthy`;
     
     if (config.useMariaDB) compose += `\n      mariadb\n        condition: service_healthy`;
-    if (config.useMQTT) compose += `\n      - mqtt\n        condition: service_started`;
-    if (config.enableS3 && config.useS3) compose += `\n      - garage\n        condition: service_healthy`;
+    if (config.useMQTT) compose += `\n      mqtt\n        condition: service_started`;
+    if (config.enableS3 && config.useS3) compose += `\n      garage\n        condition: service_healthy`;
     
     compose += `
     volumes:
@@ -344,7 +344,7 @@ services:`;
       api:
         condition: service_healthy`;
 
-    if (config.useMQTT) compose += `\n      - mqtt`;
+    if (config.useMQTT) compose += `\n      mqtt\n        condition: service_started`;
 
     compose += `
     volumes:
