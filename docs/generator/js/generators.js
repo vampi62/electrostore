@@ -71,11 +71,11 @@ services:`;
     compose += `
     depends_on:
       kafka:
-        condition: service_started`;
+        condition: service_healthy`;
     
     if (config.useMariaDB) compose += `\n      mariadb\n        condition: service_healthy`;
     if (config.useMQTT) compose += `\n      - mqtt\n        condition: service_started`;
-    if (config.enableS3 && config.useS3) compose += `\n      - garage\n        condition: service_started`;
+    if (config.enableS3 && config.useS3) compose += `\n      - garage\n        condition: service_healthy`;
     
     compose += `
     volumes:
@@ -159,8 +159,7 @@ services:`;
     
     compose += `
     depends_on:
-      api:
-        condition: service_started
+      - api
     networks:
       - electrostore`;
     
@@ -204,12 +203,12 @@ services:`;
     compose += `
     depends_on:
       kafka
-        condition: service_started
+        condition: service_healthy
       api:
         condition: service_healthy`;
     
     if (config.useMariaDB) compose += `\n      - mariadb\n        condition: service_healthy`;
-    if (config.enableS3 && config.useS3) compose += `\n      - garage\n        condition: service_started`;
+    if (config.enableS3 && config.useS3) compose += `\n      - garage\n        condition: service_healthy`;
     
     compose += `
     volumes:
@@ -255,7 +254,7 @@ services:`;
           memory: 512M
     depends_on:
       kafka:
-        condition: service_started
+        condition: service_healthy
       api:
         condition: service_healthy
     volumes:
@@ -297,7 +296,7 @@ services:`;
           memory: 256M
     depends_on:
       kafka:
-        condition: service_started
+        condition: service_healthy
       api:
         condition: service_healthy
     volumes:
@@ -341,7 +340,7 @@ services:`;
     compose += `
     depends_on:
       kafka:
-        condition: service_started
+        condition: service_healthy
       api:
         condition: service_healthy`;
 
@@ -375,9 +374,10 @@ services:`;
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 `;
     }
 
@@ -418,6 +418,12 @@ services:`;
     networks:
       - electrostore
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/garage", "-c", "/etc/garage.toml", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 `;
     }
 
@@ -440,6 +446,7 @@ services:`;
       - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
       - KAFKA_NUM_PARTITIONS=3
       - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_CREATE_TOPICS="notification-requests:3:1,cronjob-events:3:1,ia-requests:3:1,cron-parcel-tracking:3:1,ia-status:3:1"
     volumes:
       - kafka-data:/var/lib/kafka/data
       - kafka-config:/mnt/shared/config
@@ -447,6 +454,12 @@ services:`;
     networks:
       - electrostore
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 `;
 
     // Networks et Volumes
