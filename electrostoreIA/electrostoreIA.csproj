@@ -9,13 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Minio" Version="7.0.0" />
     <PackageReference Include="Confluent.Kafka" Version="2.6.0" />
-    <PackageReference Include="Microsoft.ML" Version="3.0.1" />
-    <PackageReference Include="Microsoft.ML.Vision" Version="3.0.1" />
-    <PackageReference Include="Microsoft.ML.ImageAnalytics" Version="3.0.1" />
-    <PackageReference Include="SciSharp.TensorFlow.Redist" Version="2.16.0" />
-    <PackageReference Include="VaultSharp" Version="1.17.5.1" />
+    <PackageReference Include="Google.Protobuf" Version="3.29.3" />
     <PackageReference Include="Grpc.AspNetCore" Version="2.67.0" />
     <PackageReference Include="Grpc.Net.Client" Version="2.67.0" />
     <PackageReference Include="Grpc.Net.ClientFactory" Version="2.67.0" />
@@ -23,7 +18,13 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Google.Protobuf" Version="3.29.3" />
+    <PackageReference Include="librdkafka.redist" Version="2.6.0" />
+    <PackageReference Include="Microsoft.ML" Version="3.0.1" />
+    <PackageReference Include="Microsoft.ML.Vision" Version="3.0.1" />
+    <PackageReference Include="Microsoft.ML.ImageAnalytics" Version="3.0.1" />
+    <PackageReference Include="Minio" Version="7.0.0" />
+    <PackageReference Include="SciSharp.TensorFlow.Redist" Version="2.16.0" />
+    <PackageReference Include="VaultSharp" Version="1.17.5.1" />
   </ItemGroup>
 
   <ItemGroup>

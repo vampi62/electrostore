@@ -10,9 +10,18 @@ version: '3.8'
 services:`;
 
     // API Backend
-    compose += `
+    if (config.appVersion === 'local') {
+        compose += `
   api:
-    image: ghcr.io/vampi62/electrostore/api:\${API_VERSION:-latest}
+    build:
+      context: ./electrostore/electrostoreAPI
+      dockerfile: Dockerfile`;
+    } else {
+        compose += `
+  api:
+    image: ghcr.io/vampi62/electrostore/api:\${API_VERSION:-latest}`;
+    }
+    compose += `
     container_name: electrostore-api
     cap_add:
       - CHOWN
@@ -61,11 +70,12 @@ services:`;
 
     compose += `
     depends_on:
-      - kafka`;
+      kafka:
+        condition: service_healthy`;
     
-    if (config.useMariaDB) compose += `\n      - mariadb`;
-    if (config.useMQTT) compose += `\n      - mqtt`;
-    if (config.enableS3 && config.useS3) compose += `\n      - garage`;
+    if (config.useMariaDB) compose += `\n      mariadb\n        condition: service_healthy`;
+    if (config.useMQTT) compose += `\n      mqtt\n        condition: service_started`;
+    if (config.enableS3 && config.useS3) compose += `\n      garage\n        condition: service_healthy`;
     
     compose += `
     volumes:
@@ -90,9 +100,18 @@ services:`;
 `;
 
     // Frontend
-    compose += `
+    if (config.appVersion === 'local') {
+        compose += `
   frontend:
-    image: ghcr.io/vampi62/electrostore/front:\${FRONTEND_VERSION:-latest}
+    build:
+      context: ./electrostore/electrostoreFRONT
+      dockerfile: Dockerfile`;
+    } else {
+        compose += `
+  frontend:
+    image: ghcr.io/vampi62/electrostore/front:\${FRONTEND_VERSION:-latest}`;
+    }
+    compose += `
     container_name: electrostore-frontend
     cap_drop:
       - ALL
@@ -153,9 +172,18 @@ services:`;
 `;
 
     // Service IA
-    compose += `
+    if (config.appVersion === 'local') {
+        compose += `
   ia:
-    image: ghcr.io/vampi62/electrostore/ia:\${IA_VERSION:-latest}
+    build:
+      context: ./electrostore/electrostoreIA
+      dockerfile: Dockerfile`;
+    } else {
+        compose += `
+  ia:
+    image: ghcr.io/vampi62/electrostore/ia:\${IA_VERSION:-latest}`;
+    }
+    compose += `
     container_name: electrostore-ia
     cap_add:
       - CHOWN
@@ -174,10 +202,13 @@ services:`;
     
     compose += `
     depends_on:
-      - kafka`;
+      kafka
+        condition: service_healthy
+      api:
+        condition: service_healthy`;
     
-    if (config.useMariaDB) compose += `\n      - mariadb`;
-    if (config.enableS3 && config.useS3) compose += `\n      - garage`;
+    if (config.useMariaDB) compose += `\n      - mariadb\n        condition: service_healthy`;
+    if (config.enableS3 && config.useS3) compose += `\n      - garage\n        condition: service_healthy`;
     
     compose += `
     volumes:
@@ -194,9 +225,18 @@ services:`;
 `;
 
     // NOTIF Service
-    compose += `
+    if (config.appVersion === 'local') {
+        compose += `
   notif:
-    image: ghcr.io/vampi62/electrostore/notif:\${NOTIF_VERSION:-latest}
+    build:
+      context: ./electrostore/electrostoreNOTIF
+      dockerfile: Dockerfile`;
+    } else {
+        compose += `
+  notif:
+    image: ghcr.io/vampi62/electrostore/notif:\${NOTIF_VERSION:-latest}`;
+    }
+    compose += `
     container_name: electrostore-notif
     cap_add:
       - CHOWN
@@ -213,7 +253,10 @@ services:`;
           cpus: '1.0'
           memory: 512M
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
+      api:
+        condition: service_healthy
     volumes:
       - ./config/notif/appsettings.json:/app/config/appsettings.json:ro
     networks:
@@ -224,9 +267,18 @@ services:`;
 `;
 
     // CRON Service
-    compose += `
+    if (config.appVersion === 'local') {
+        compose += `
   cron:
-    image: ghcr.io/vampi62/electrostore/cron:\${CRON_VERSION:-latest}
+    build:
+      context: ./electrostore/electrostoreCRON
+      dockerfile: Dockerfile`;
+    } else {
+        compose += `
+  cron:
+    image: ghcr.io/vampi62/electrostore/cron:\${CRON_VERSION:-latest}`;
+    }
+    compose += `
     container_name: electrostore-cron
     cap_add:
       - CHOWN
@@ -243,8 +295,10 @@ services:`;
           cpus: '1.0'
           memory: 256M
     depends_on:
-      - kafka
-      - api
+      kafka:
+        condition: service_healthy
+      api:
+        condition: service_healthy
     volumes:
       - ./config/cron/appsettings.json:/app/config/appsettings.json:ro
     networks:
@@ -255,9 +309,18 @@ services:`;
 `;
 
     // WORKER Service
-    compose += `
+    if (config.appVersion === 'local') {
+        compose += `
   worker:
-    image: ghcr.io/vampi62/electrostore/worker:\${WORKER_VERSION:-latest}
+    build:
+      context: ./electrostore/electrostoreWORKER
+      dockerfile: Dockerfile`;
+    } else {
+        compose += `
+  worker:
+    image: ghcr.io/vampi62/electrostore/worker:\${WORKER_VERSION:-latest}`;
+    }
+        compose += `
     container_name: electrostore-worker
     cap_add:
       - CHOWN
@@ -276,10 +339,12 @@ services:`;
 
     compose += `
     depends_on:
-      - kafka
-      - api`;
+      kafka:
+        condition: service_healthy
+      api:
+        condition: service_healthy`;
 
-    if (config.useMQTT) compose += `\n      - mqtt`;
+    if (config.useMQTT) compose += `\n      mqtt\n        condition: service_started`;
 
     compose += `
     volumes:
@@ -309,9 +374,10 @@ services:`;
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 `;
     }
 
@@ -327,7 +393,7 @@ services:`;
       - ./config/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - ./config/mosquitto/mosquitto.passwd:/mosquitto/config/mosquitto.passwd:ro
       - mqtt-data:/mosquitto/data
-      - mqtt-logs:/mosquitto/logs
+      - mqtt-logs:/mosquitto/log
     networks:
       - electrostore
     restart: unless-stopped
@@ -352,6 +418,12 @@ services:`;
     networks:
       - electrostore
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/garage", "-c", "/etc/garage.toml", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 `;
     }
 
@@ -373,6 +445,8 @@ services:`;
       - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
       - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
       - KAFKA_NUM_PARTITIONS=3
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_CREATE_TOPICS="notification-requests:3:1,cronjob-events:3:1,ia-requests:3:1,cron-parcel-tracking:3:1,ia-status:3:1"
     volumes:
       - kafka-data:/var/lib/kafka/data
       - kafka-config:/mnt/shared/config
@@ -380,6 +454,12 @@ services:`;
     networks:
       - electrostore
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 `;
 
     // Networks et Volumes
@@ -912,6 +992,18 @@ echo "====================================="
 echo ""
 
 `;
+    if (config.appVersion === 'local') {
+        script += `# Clone repository
+echo "Cloning ElectroStore repository..."
+if [ -d "electrostore" ]; then
+    echo "Repository already exists, skipping clone..."
+else
+    git clone https://github.com/vampi62/electrostore.git
+fi
+echo ""
+
+    `;
+    }
 
     if (config.useVault) {
         script += `# Vault Configuration
@@ -925,31 +1017,31 @@ docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault se
 echo "Storing secrets in Vault..."
 `;
 
-        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv put ${config.vault.mountPoint}/${config.vault.path} mariadb_password='${config.useMariaDB ? config.mariadb.password : config.mariadbExternal.password}'
+        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv put ${config.vault.mountPoint}/${config.vault.path} mariadb_password='${escapeVaultSecret(config.useMariaDB ? config.mariadb.password : config.mariadbExternal.password)}'
 `;
 
-        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password='${config.useMQTT ? config.mqtt.password : config.mqttExternal.password}'
+        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password='${escapeVaultSecret(config.useMQTT ? config.mqtt.password : config.mqttExternal.password)}'
 `;
 
         if (config.enableSMTP && config.smtp) {
-            script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} smtp_password='${config.smtp.password}'
+            script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} smtp_password='${escapeVaultSecret(config.smtp.password)}'
 `;
         }
 
         if (config.enableVapid && config.vapid) {
-            script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} vapid_private_key='${config.vapid.privateKey}'
+            script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} vapid_private_key='${escapeVaultSecret(config.vapid.privateKey)}'
 `;
         }
 
-        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} jwt_key='${config.jwt.key}'
+        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} jwt_key='${escapeVaultSecret(config.jwt.key)}'
 `;
 
         if (config.oauthProviders.length > 0) {
             config.oauthProviders.forEach(provider => {
                 const name = toSnakeCase(provider.displayName);
-                script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_id='${provider.clientId}'
+                script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_id='${escapeVaultSecret(provider.clientId)}'
 `;
-                script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_secret='${provider.clientSecret}'
+                script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_secret='${escapeVaultSecret(provider.clientSecret)}'
 `;
             });
         }
@@ -1002,7 +1094,7 @@ docker exec electrostore-garage /garage bucket allow --read --write ${config.s3I
         if (config.useVault) {
             script += `
 echo "Storing S3 keys in Vault..."
-docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} s3_access_key="$GARAGE_API_ACCESS_KEY" s3_secret_key="$GARAGE_API_SECRET_KEY" s3_ia_access_key='$GARAGE_IA_ACCESS_KEY' s3_ia_secret_key='$GARAGE_IA_SECRET_KEY'
+docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} s3_access_key="$GARAGE_API_ACCESS_KEY" s3_secret_key="$GARAGE_API_SECRET_KEY" s3_ia_access_key="$GARAGE_IA_ACCESS_KEY" s3_ia_secret_key="$GARAGE_IA_SECRET_KEY"
 `;
         }
 
@@ -1134,6 +1226,18 @@ Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host ""
 
 `;
+    if (config.appVersion === 'local') {
+        script += `# Clone repository
+Write-Host "Cloning ElectroStore repository..." -ForegroundColor Yellow
+if (Test-Path "electrostore") {
+    Write-Host "Repository already exists, skipping clone..." -ForegroundColor Yellow
+} else {
+    git clone https://github.com/vampi62/electrostore.git
+}
+Write-Host ""
+
+`;
+    }
 
     if (config.useVault) {
         script += `# Vault Configuration
@@ -1148,31 +1252,31 @@ if ($LASTEXITCODE -ne 0) { Write-Host "KV engine already enabled" }
 Write-Host "Storing secrets in Vault..."
 `;
 
-        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv put ${config.vault.mountPoint}/${config.vault.path} mariadb_password='${config.useMariaDB ? config.mariadb.password : config.mariadbExternal.password}'
+        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv put ${config.vault.mountPoint}/${config.vault.path} mariadb_password='${escapeVaultSecret(config.useMariaDB ? config.mariadb.password : config.mariadbExternal.password)}'
 `;
 
-        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password='${config.useMQTT ? config.mqtt.password : config.mqttExternal.password}'
+        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password='${escapeVaultSecret(config.useMQTT ? config.mqtt.password : config.mqttExternal.password)}'
 `;
 
         if (config.enableSMTP && config.smtp) {
-            script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} smtp_password='${config.smtp.password}'
+            script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} smtp_password='${escapeVaultSecret(config.smtp.password)}'
 `;
         }
 
         if (config.enableVapid && config.vapid) {
-            script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} vapid_private_key='${config.vapid.privateKey}'
+            script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} vapid_private_key='${escapeVaultSecret(config.vapid.privateKey)}'
 `;
         }
 
-        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} jwt_key='${config.jwt.key}'
+        script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} jwt_key='${escapeVaultSecret(config.jwt.key)}'
 `;
 
         if (config.oauthProviders.length > 0) {
             config.oauthProviders.forEach(provider => {
                 const name = toSnakeCase(provider.displayName);
-                script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_id='${provider.clientId}'
+                script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_id='${escapeVaultSecret(provider.clientId)}'
 `;
-                script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_secret='${provider.clientSecret}'
+                script += `docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} oauth_${name}_client_secret='${escapeVaultSecret(provider.clientSecret)}'
 `;
             });
         }
