@@ -3,6 +3,7 @@ using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Grpc;
+using ElectrostoreAPI.Kafka.Messages;
 using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.SessionService;
@@ -134,10 +135,17 @@ public class IAService : IIAService
         var iaToDelete = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id '{id}' not found");
         // remove model if exists
         _context.IA.Remove(iaToDelete);
+        var iaMessage = new IaMessage
+        {
+            action = "ia_deleted",
+            id_ia = id,
+            requested_at = DateTime.UtcNow,
+            requested_by = _sessionService.GetClientId()
+        };
         await _kafkaProducer.PublishAsync(
             "ia-requests",
             id.ToString(),
-            JsonSerializer.Serialize(new { action = "ia_deleted", id_ia = id, deleted_at = DateTime.UtcNow, deleted_by = _sessionService.GetClientId() })
+            JsonSerializer.Serialize(iaMessage)
         );
         await _context.SaveChangesAsync();
     }
@@ -191,10 +199,17 @@ public class IAService : IIAService
         }
         try
         {
+            var iaMessage = new IaMessage
+            {
+                action = "train_requested",
+                id_ia = id,
+                requested_at = DateTime.UtcNow,
+                requested_by = _sessionService.GetClientId()
+            };
             await _kafkaProducer.PublishAsync(
                 "ia-requests",
                 id.ToString(),
-                JsonSerializer.Serialize(new { action = "train_requested", id_ia = id, requested_at = DateTime.UtcNow, requested_by = _sessionService.GetClientId() })
+                JsonSerializer.Serialize(iaMessage)
             );
         }
         catch (Exception e)
@@ -296,9 +311,9 @@ public class IAService : IIAService
                       $"Epochs: {iaStatus.Epoch}"
                     : $"Training for IA #{id} failed.\nDetails: {iaStatus.Message}";
 
-                var notification = new
+                var notification = new NotificationMessage
                 {
-                    Types = new[] { "email" },
+                    Types = new List<string> { "email" },
                     RecipientUserId = requestedBy,
                     Subject = subject,
                     Title = subject,

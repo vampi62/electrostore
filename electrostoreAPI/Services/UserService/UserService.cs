@@ -3,6 +3,7 @@ using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Kafka.Producer;
+using ElectrostoreAPI.Kafka.Messages;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.JwiService;
 using ElectrostoreAPI.Services.SessionService;
