@@ -17,4 +17,6 @@ public interface IStoreService
     public Task<ReadStoreCompleteDto> CreateStoreComplete(CreateStoreCompleteDto storeDto);
 
     public Task<ReadStoreCompleteDto> UpdateStoreComplete(int id, UpdateStoreCompleteDto storeDto);
+
+    public Task<int> UpdateStoreMqttStatusByMqttNameAsync(string mqttName, UpdateStoreMqttStatusDto mqttStatusDto, CancellationToken cancellationToken);
 }

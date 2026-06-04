@@ -1,4 +1,6 @@
 using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Grpc;
+using Grpc.Core;
 
 namespace ElectrostoreAPI.Services.ImgService;
 
@@ -13,4 +15,6 @@ public interface IImgService
     public Task<ReadImgDto> UpdateImg(int id, UpdateImgDto imgDto, int? itemId = null);
 
     public Task DeleteImg(int id, int? itemId = null);
+
+    Task StreamTrainingImagesAsync(IAsyncStreamWriter<TrainingImage> responseStream, HashSet<string>? requestedSet, CancellationToken cancellationToken);
 }

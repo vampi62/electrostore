@@ -1,28 +1,28 @@
-using ElectrostoreAPI.Services.FileService;
+using ElectrostoreAPI.Services.UserService;
+using ElectrostoreAPI.Services.UserPushSubscriptionService;
 using Grpc.Core;
-using Microsoft.EntityFrameworkCore;
 
 namespace ElectrostoreAPI.Grpc.Services;
 
 public class UsersGrpcService : UsersGrpc.UsersGrpcBase
 {
-    private readonly ApplicationDbContext _context;
-    private readonly IFileService _fileService;
+    private readonly IUserService _userService;
+    private readonly IUserPushSubscriptionService _userPushSubscriptionService;
     private readonly ILogger<UsersGrpcService> _logger;
 
     public UsersGrpcService(
-        ApplicationDbContext context,
-        IFileService fileService,
+        IUserService userService,
+        IUserPushSubscriptionService userPushSubscriptionService,
         ILogger<UsersGrpcService> logger)
     {
-        _context = context;
-        _fileService = fileService;
         _logger = logger;
+        _userService = userService;
+        _userPushSubscriptionService = userPushSubscriptionService;
     }
 
     public override async Task<GetUserInfoReply> GetUserInfo(GetUserInfoRequest request, ServerCallContext context)
     {
-        var user = await _context.Users.FindAsync(request.UserId, context.CancellationToken);
+        var user = await _userService.GetUserByIdAsync(request.UserId, context.CancellationToken);
         if (user is null)
         {
             return new GetUserInfoReply { Found = false };
@@ -33,10 +33,7 @@ public class UsersGrpcService : UsersGrpc.UsersGrpcBase
     public override async Task<GetUserPushSubscriptionsReply> GetUserPushSubscriptions(
         GetUserPushSubscriptionsRequest request, ServerCallContext context)
     {
-        var rows = await _context.UserPushSubscriptions
-            .Where(s => s.id_user == request.UserId)
-            .ToListAsync(context.CancellationToken);
-
+        var rows = await _userPushSubscriptionService.GetPushSubscriptionsByUserIdAsync(request.UserId, context.CancellationToken);
         var reply = new GetUserPushSubscriptionsReply();
         reply.Subscriptions.AddRange(rows.Select(s => new PushSubscriptionItem
         {

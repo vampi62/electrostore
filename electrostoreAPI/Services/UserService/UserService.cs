@@ -275,6 +275,18 @@ public class UserService : IUserService
         }
     }
 
+    public async Task<ReadUserDto?> GetUserByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Users.AsQueryable();
+        query = query.Where(u => u.id_user == id);
+        var user = await query.FirstOrDefaultAsync(cancellationToken);
+        if (user == null)
+        {
+            return null;
+        }
+        return _mapper.Map<ReadUserDto>(user);
+    }
+
     private async Task AlerteUpdateUser(Users userToUpdate, UpdateUserDto userDto, string oldUserEmail)
     {
         if (userDto.email_user is not null && userToUpdate.email_user != userDto.email_user)

@@ -235,4 +235,90 @@ public class IAService : IIAService
             throw new InvalidOperationException("Error while detecting item", e);
         }
     }
+
+    public async Task<bool> UpdateIaStatusAsync(int id, IAStatusDto iaStatus, int? requestedBy, CancellationToken cancellationToken)
+    {
+        var ia = await _context.IA.FindAsync(
+            new object[] { id }, cancellationToken);
+
+        if (ia is null)
+        {
+            Console.WriteLine($"IA with id '{id}' not found for status update.");
+            return false;
+        }
+
+        // Update trained_ia flag based on the action
+        if (iaStatus.Status == "training_completed")
+        {
+            ia.trained_ia = true;
+            ia.date_training_ia = DateTime.UtcNow;
+            await _context.SaveChangesAsync(cancellationToken);
+            Console.WriteLine($"IA #{id}: training completed successfully.");
+        }
+        else if (iaStatus.Status == "training_failed")
+        {
+            // trained_ia is left unchanged
+            Console.WriteLine($"IA #{id}: training failed with message: {iaStatus.Message}");
+        }
+        else if (iaStatus.Status == "training_started")
+        {
+            ia.trained_ia = false;
+            ia.date_training_ia = null;
+            await _context.SaveChangesAsync(cancellationToken);
+            Console.WriteLine($"IA #{id}: training started.");
+        }
+        else
+        {
+            Console.WriteLine($"IA #{id}: received unknown status '{iaStatus.Status}'. No changes applied.");
+            return false;
+        }
+
+        // Schedule a notification for terminal actions
+        if (requestedBy != null && (iaStatus.Status == "training_completed" || iaStatus.Status == "training_failed"))
+        {
+            var requesterId = requestedBy.ToString();
+            if (requesterId == null)
+            {
+                Console.WriteLine($"IA #{id}: No valid requester ID provided for notification. Skipping notification.");
+                return true; // Status update succeeded, just no notification
+            }
+            try
+            {
+                bool success = iaStatus.Status == "training_completed";
+                var subject = success
+                    ? $"IA #{id} training completed successfully"
+                    : $"IA #{id} training failed";
+
+                var body = success
+                    ? $"Training for IA #{id} completed successfully.\n" +
+                      $"Accuracy: {iaStatus.Accuracy:P2} | Val. accuracy: {iaStatus.ValAccuracy:P2}\n" +
+                      $"Loss: {iaStatus.Loss:F4} | Val. loss: {iaStatus.ValLoss:F4}\n" +
+                      $"Epochs: {iaStatus.Epoch}"
+                    : $"Training for IA #{id} failed.\nDetails: {iaStatus.Message}";
+
+                var notification = new
+                {
+                    Types = new[] { "email" },
+                    RecipientUserId = requestedBy,
+                    Subject = subject,
+                    Title = subject,
+                    Body = body,
+                };
+
+                await _kafkaProducer.PublishAsync(
+                    "notification-requests",
+                    requesterId,
+                    JsonSerializer.Serialize(notification),
+                    cancellationToken);
+
+                Console.WriteLine($"Notification for user #{requesterId} about IA #{id} training {(success ? "completion" : "failure")} has been published.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error while publishing notification for IA #{id} status update: {ex.Message}");
+                // Even if notification fails, we consider the status update successful
+            }
+        }
+        return true;
+    }
 }

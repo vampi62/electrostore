@@ -1,68 +1,47 @@
 using Grpc.Core;
-using Microsoft.EntityFrameworkCore;
+using ElectrostoreAPI.Services.CronJobService;
 
 namespace ElectrostoreAPI.Grpc.Services;
 
 public class CronJobsGrpcService : CronJobsGrpc.CronJobsGrpcBase
 {
-    private readonly ApplicationDbContext _context;
+    private readonly ICronJobService _cronJobService;
     private readonly ILogger<CronJobsGrpcService> _logger;
 
     public CronJobsGrpcService(
-        ApplicationDbContext context,
+        ICronJobService cronJobService,
         ILogger<CronJobsGrpcService> logger)
     {
-        _context = context;
+        _cronJobService = cronJobService;
         _logger = logger;
     }
 
     public override async Task<GetEnabledCronJobsReply> GetEnabledCronJobs(
         GetEnabledCronJobsRequest request, ServerCallContext context)
     {
-        var jobs = await _context.CronJobs
-            .Where(c => c.is_enabled)
-            .Select(c => new CronJobItem
-            {
+        var jobs = await _cronJobService.GetEnabledCronJobsAsync(context.CancellationToken);
+        var reply = new GetEnabledCronJobsReply();
+        reply.CronJobs.AddRange(jobs.Select(c => new CronJobItem
+        {
                 IdCronjob = c.id_cronjob,
                 NameCronjob = c.name_cronjob,
                 CronExpression = c.cron_expression,
                 ActionCronjob = c.action_cronjob,
                 ParamsCronjob = c.params_cronjob ?? string.Empty,
-            })
-            .ToListAsync(context.CancellationToken);
-
-        var reply = new GetEnabledCronJobsReply();
-        reply.CronJobs.AddRange(jobs);
+                LastRunAt = c.last_run_at?.ToString("o") ?? string.Empty,
+                NextRunAt = c.next_run_at?.ToString("o") ?? string.Empty
+        }));
         return reply;
     }
 
     public override async Task<UpdateCronJobRunReply> UpdateCronJobRun(
         UpdateCronJobRunRequest request, ServerCallContext context)
     {
-        var job = await _context.CronJobs.FindAsync(
-            new object[] { request.IdCronjob }, context.CancellationToken);
-
-        if (job is null)
-        {
-            _logger.LogWarning("UpdateCronJobRun : cronjob #{Id} introuvable.", request.IdCronjob);
-            return new UpdateCronJobRunReply { Success = false };
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.LastRunAt)
-            && DateTime.TryParse(request.LastRunAt, null,
-                System.Globalization.DateTimeStyles.RoundtripKind, out var lastRun))
-        {
-            job.last_run_at = lastRun;
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.NextRunAt)
-            && DateTime.TryParse(request.NextRunAt, null,
-                System.Globalization.DateTimeStyles.RoundtripKind, out var nextRun))
-        {
-            job.next_run_at = nextRun;
-        }
-
-        await _context.SaveChangesAsync(context.CancellationToken);
+        await _cronJobService.UpdateCronJobRunAsync(
+            request.IdCronjob,
+            string.IsNullOrWhiteSpace(request.LastRunAt) ? null : DateTime.Parse(request.LastRunAt, null, System.Globalization.DateTimeStyles.RoundtripKind),
+            string.IsNullOrWhiteSpace(request.NextRunAt) ? null : DateTime.Parse(request.NextRunAt, null, System.Globalization.DateTimeStyles.RoundtripKind),
+            context.CancellationToken);
         return new UpdateCronJobRunReply { Success = true };
     }
 }

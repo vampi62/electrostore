@@ -151,4 +151,25 @@ public class CronJobService : ICronJobService
             JsonSerializer.Serialize(new { action = "deleted", data = new { id } })
          );
     }
+
+    public async Task<IEnumerable<ReadCronJobDto>> GetEnabledCronJobsAsync(CancellationToken cancellationToken)
+    {
+        var cronJobs = await _context.CronJobs.Where(c => c.is_enabled).ToListAsync(cancellationToken);
+        return _mapper.Map<IEnumerable<ReadCronJobDto>>(cronJobs);
+    }
+
+    public async Task UpdateCronJobRunAsync(int id, DateTime? lastRunAt, DateTime? nextRunAt, CancellationToken cancellationToken)
+    {
+        var cronJob = await _context.CronJobs.FindAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException($"CronJob with id '{id}' not found");
+        if (lastRunAt.HasValue)
+        {
+            cronJob.last_run_at = lastRunAt.Value;
+        }
+        if (nextRunAt.HasValue)
+        {
+            cronJob.next_run_at = nextRunAt.Value;
+        }
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }

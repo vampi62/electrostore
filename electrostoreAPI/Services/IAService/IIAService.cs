@@ -19,4 +19,6 @@ public interface IIAService
     Task StartIATrainById(int id);
 
     Task<PredictionOutput> IADetectItem(int id, DetecDto detecDto);
+
+    Task<bool> UpdateIaStatusAsync(int id, IAStatusDto status, int? requestedBy, CancellationToken cancellationToken);
 }

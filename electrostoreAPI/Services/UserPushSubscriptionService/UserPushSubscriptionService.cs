@@ -125,4 +125,13 @@ public class UserPushSubscriptionService : IUserPushSubscriptionService
         _context.UserPushSubscriptions.Remove(subscription);
         await _context.SaveChangesAsync();
     }
+
+    public async Task<List<ReadUserPushSubscriptionDto>> GetPushSubscriptionsByUserIdAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _context.Users.FindAsync(new object[] { userId }, cancellationToken) ?? throw new KeyNotFoundException($"User with id {userId} not found");
+        var subscriptions = await _context.UserPushSubscriptions
+            .Where(s => s.id_user == userId)
+            .ToListAsync(cancellationToken);
+        return _mapper.Map<List<ReadUserPushSubscriptionDto>>(subscriptions);
+    }
 }
