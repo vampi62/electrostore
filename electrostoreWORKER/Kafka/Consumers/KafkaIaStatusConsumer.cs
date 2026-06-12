@@ -1,19 +1,23 @@
 using Confluent.Kafka;
-using ElectrostoreWORKER.DTO;
 using ElectrostoreWORKER.Grpc;
+using ElectrostoreWORKER.Kafka.Messages;
 using System.Text.Json;
 
 namespace ElectrostoreWORKER.Kafka.Consumers;
 
 public class KafkaIaStatusConsumer : BackgroundService
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
     private const string Topic = "ia-status";
-    private readonly WORKERToAPIGrpc.WORKERToAPIGrpcClient _dataService;
+    private readonly IaTrainingGrpc.IaTrainingGrpcClient _dataService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<KafkaIaStatusConsumer> _logger;
 
     public KafkaIaStatusConsumer(
-        WORKERToAPIGrpc.WORKERToAPIGrpcClient dataService,
+        IaTrainingGrpc.IaTrainingGrpcClient dataService,
         IConfiguration configuration,
         ILogger<KafkaIaStatusConsumer> logger)
     {
@@ -33,9 +37,25 @@ public class KafkaIaStatusConsumer : BackgroundService
             GroupId          = groupId,
             AutoOffsetReset  = AutoOffsetReset.Earliest,
             EnableAutoCommit = false,
+            EnablePartitionEof  = true,
+            SessionTimeoutMs = 60_000,
+            HeartbeatIntervalMs = 15_000,
         };
 
-        using var consumer = new ConsumerBuilder<string, string>(config).Build();
+        using var consumer = new ConsumerBuilder<string, string>(config)
+            .SetErrorHandler((_, e) =>
+                _logger.LogError(
+                    "[Kafka] Broker error | Code: {Code} | Reason: {Reason} | Fatal: {Fatal}",
+                    e.Code, e.Reason, e.IsFatal))
+            .SetPartitionsAssignedHandler((_, partitions) =>
+                _logger.LogInformation(
+                    "[Kafka] Partitions assigned → {Parts}",
+                    string.Join(", ", partitions.Select(p => $"{p.Topic}[{p.Partition}]"))))
+            .SetPartitionsRevokedHandler((_, partitions) =>
+                _logger.LogWarning(
+                    "[Kafka] Partitions revoked → {Parts}",
+                    string.Join(", ", partitions.Select(p => $"{p.Topic}[{p.Partition}]"))))
+            .Build();
         consumer.Subscribe(Topic);
 
         _logger.LogInformation(
@@ -48,7 +68,7 @@ public class KafkaIaStatusConsumer : BackgroundService
                 ConsumeResult<string, string>? result = null;
                 try
                 {
-                    result = consumer.Consume(stoppingToken);
+                    result = consumer.Consume(TimeSpan.FromSeconds(2));
                 }
                 catch (OperationCanceledException)
                 {
@@ -59,62 +79,41 @@ public class KafkaIaStatusConsumer : BackgroundService
                     _logger.LogError(ex, "Kafka error: {Reason}", ex.Error.Reason);
                     continue;
                 }
-
-                if (result?.Message?.Value is null)
+                if (result is null || result.IsPartitionEOF)
+                {
                     continue;
-
+                }
+                if (result?.Message?.Value is null)
+                {
+                    continue;
+                }
                 IaStatusMessage? msg;
                 try
                 {
-                    msg = JsonSerializer.Deserialize<IaStatusMessage>(result.Message.Value);
+                    msg = JsonSerializer.Deserialize<IaStatusMessage>(result.Message.Value, JsonOptions);
                 }
                 catch (JsonException ex)
                 {
-                    _logger.LogWarning(ex, "Invalid ia-status message: {Payload}", result.Message.Value);
+                    _logger.LogWarning(ex, "Invalid Kafka message (JSON) — offset {Offset}", result.Offset);
                     consumer.Commit(result);
                     continue;
                 }
-
                 if (msg is null)
                 {
                     consumer.Commit(result);
                     continue;
                 }
-
+                var dispatched = false;
                 try
                 {
-                    var reply = await _dataService.UpdateIaStatusAsync(
-                        new UpdateIaStatusRequest
-                        {
-                            IdIa       = msg.id_ia,
-                            Action     = msg.action,
-                            RequestedBy = msg.requested_by,
-                            Message    = msg.message,
-                            Accuracy   = msg.accuracy,
-                            ValAccuracy = msg.val_accuracy,
-                            Loss       = msg.loss,
-                            ValLoss    = msg.val_loss,
-                            Epoch      = msg.epoch,
-                        },
-                        cancellationToken: stoppingToken);
-
-                    if (reply.Success)
-                    {
-                        _logger.LogInformation(
-                            "IA #{Id} status updated: action={Action}", msg.id_ia, msg.action);
-                    }
-                    else
-                    {
-                        _logger.LogWarning(
-                            "API: IA #{Id} status update rejected (action={Action}).", msg.id_ia, msg.action);
-                    }
+                    await DispatchAsync(msg, stoppingToken);
+                    dispatched = true;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error forwarding ia-status (id_ia={Id}, action={Action}).",
-                        msg.id_ia, msg.action);
+                    _logger.LogError(ex, "Error dispatching message for offset {Offset}: {Message}", result.Offset, ex.Message);
                 }
-                finally
+                if (dispatched)
                 {
                     consumer.Commit(result);
                 }
@@ -124,6 +123,32 @@ public class KafkaIaStatusConsumer : BackgroundService
         {
             consumer.Close();
             _logger.LogInformation("KafkaIaStatusConsumer stopped");
+        }
+    }
+
+    private async Task DispatchAsync(IaStatusMessage msg, CancellationToken ct)
+    {
+        var reply = await _dataService.UpdateIaStatusAsync(
+            new UpdateIaStatusRequest
+            {
+                IdIa       = msg.id_ia,
+                Action     = msg.action,
+                RequestedBy = msg.requested_by,
+                Message    = msg.message,
+                Accuracy   = msg.accuracy,
+                ValAccuracy = msg.val_accuracy,
+                Loss       = msg.loss,
+                ValLoss    = msg.val_loss,
+                Epoch      = msg.epoch,
+            },
+            cancellationToken: ct);
+        if (reply.Success)
+        {
+            _logger.LogInformation("IA #{Id} status updated: action={Action}", msg.id_ia, msg.action);
+        }
+        else
+        {
+            _logger.LogWarning("API: IA #{Id} status update rejected (action={Action}).", msg.id_ia, msg.action);
         }
     }
 }

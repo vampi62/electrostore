@@ -25,7 +25,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="Grpc\Protos\cronToApi.proto" GrpcServices="Client" />
+    <Protobuf Include="Grpc\Protos\config.proto" GrpcServices="Client" />
+    <Protobuf Include="Grpc\Protos\cronJobs.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>

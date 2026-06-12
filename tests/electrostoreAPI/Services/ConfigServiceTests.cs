@@ -63,7 +63,7 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task getAllConfig_shouldReturnAllConfigs()
         {
             // Arrange
-            var configService = new ConfigService(_mqttClient.Object, _configuration, _mockHttpClientFactory.Object);
+            var configService = new ConfigService(_configuration);
 
             // Act
             var result = await configService.getAllConfig();

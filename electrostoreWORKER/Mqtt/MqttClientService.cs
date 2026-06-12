@@ -9,12 +9,12 @@ public class MqttClientService : BackgroundService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<MqttClientService> _logger;
-    private readonly WORKERToAPIGrpc.WORKERToAPIGrpcClient _grpcClient;
+    private readonly StoresMqttGrpc.StoresMqttGrpcClient _grpcClient;
 
     public MqttClientService(
         IConfiguration configuration,
         ILogger<MqttClientService> logger,
-        WORKERToAPIGrpc.WORKERToAPIGrpcClient grpcClient)
+        StoresMqttGrpc.StoresMqttGrpcClient grpcClient)
     {
         _configuration = configuration;
         _logger        = logger;

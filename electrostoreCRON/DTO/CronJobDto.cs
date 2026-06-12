@@ -12,15 +12,6 @@ public record ParcelTrackingMessage
     public string date_livraison { get; init; } = string.Empty;
 }
 
-public record PriceUpdateMessage
-{
-    public string action { get; init; } = "update_price";
-    public int id_command { get; init; }
-    public int id_item { get; init; }
-    public float price { get; init; }
-    public string provider { get; init; } = string.Empty;
-}
-
 // ---- Événements Kafka "cronjob-events" ----
 
 public record CronJobEvent

@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Confluent.Kafka;
-using ElectrostoreNOTIF.Dto;
+using ElectrostoreNOTIF.Kafka.Messages;
 using ElectrostoreNOTIF.Services.EmailSenderService;
 using ElectrostoreNOTIF.Services.WebPushService;
 using ElectrostoreNOTIF.Grpc;
@@ -10,17 +10,21 @@ namespace ElectrostoreNOTIF.Kafka.Consumers;
 
 public class KafkaNotifConsumer : BackgroundService
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
     private readonly IConfiguration _configuration;
     private readonly IEmailSenderService _email;
     private readonly IWebPushService _webPush;
-    private readonly NOTIFToAPIGrpc.NOTIFToAPIGrpcClient _userResolver;
+    private readonly UsersGrpc.UsersGrpcClient _userResolver;
     private readonly ILogger<KafkaNotifConsumer> _logger;
 
     public KafkaNotifConsumer(
         IConfiguration configuration,
         IEmailSenderService email,
         IWebPushService webPush,
-        NOTIFToAPIGrpc.NOTIFToAPIGrpcClient userResolver,
+        UsersGrpc.UsersGrpcClient userResolver,
         ILogger<KafkaNotifConsumer> logger)
     {
         _configuration = configuration;
@@ -39,9 +43,25 @@ public class KafkaNotifConsumer : BackgroundService
             BootstrapServers = bootstrapServers,
             GroupId = groupId,
             AutoOffsetReset = AutoOffsetReset.Earliest,
-            EnableAutoCommit = false
+            EnableAutoCommit = false,
+            EnablePartitionEof  = true,
+            SessionTimeoutMs = 60_000,
+            HeartbeatIntervalMs = 15_000,
         };
-        using var consumer = new ConsumerBuilder<string, string>(config).Build();
+        using var consumer = new ConsumerBuilder<string, string>(config)
+            .SetErrorHandler((_, e) =>
+                _logger.LogError(
+                    "[Kafka] Broker error | Code: {Code} | Reason: {Reason} | Fatal: {Fatal}",
+                    e.Code, e.Reason, e.IsFatal))
+            .SetPartitionsAssignedHandler((_, partitions) =>
+                _logger.LogInformation(
+                    "[Kafka] Partitions assigned → {Parts}",
+                    string.Join(", ", partitions.Select(p => $"{p.Topic}[{p.Partition}]"))))
+            .SetPartitionsRevokedHandler((_, partitions) =>
+                _logger.LogWarning(
+                    "[Kafka] Partitions revoked → {Parts}",
+                    string.Join(", ", partitions.Select(p => $"{p.Topic}[{p.Partition}]"))))
+            .Build();
         consumer.Subscribe("notification-requests");
         _logger.LogInformation(
             "KafkaNotifConsumer started (group={Group}, servers={Servers})",
@@ -54,7 +74,7 @@ public class KafkaNotifConsumer : BackgroundService
                 ConsumeResult<string, string>? result = null;
                 try
                 {
-                    result = consumer.Consume(stoppingToken);
+                    result = consumer.Consume(TimeSpan.FromSeconds(2));
                 }
                 catch (OperationCanceledException)
                 {
@@ -65,6 +85,10 @@ public class KafkaNotifConsumer : BackgroundService
                     _logger.LogError(ex, "Kafka consume error");
                     continue;
                 }
+                if (result is null || result.IsPartitionEOF)
+                {
+                    continue;
+                }
                 if (result?.Message?.Value is null)
                 {
                     continue;
@@ -72,9 +96,7 @@ public class KafkaNotifConsumer : BackgroundService
                 NotificationMessage? msg;
                 try
                 {
-                    msg = JsonSerializer.Deserialize<NotificationMessage>(
-                        result.Message.Value,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    msg = JsonSerializer.Deserialize<NotificationMessage>(result.Message.Value, JsonOptions);
                 }
                 catch (JsonException ex)
                 {
@@ -87,15 +109,20 @@ public class KafkaNotifConsumer : BackgroundService
                     consumer.Commit(result);
                     continue;
                 }
+                var dispatched = false;
                 try
                 {
                     await DispatchAsync(msg, stoppingToken);
+                    dispatched = true;
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error dispatching notification message for offset {Offset}", result.Offset);
                 }
-                consumer.Commit(result);
+                if (dispatched)
+                {
+                    consumer.Commit(result);
+                }
             }
         }
         finally

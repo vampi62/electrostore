@@ -1,6 +1,7 @@
 using AutoMapper;
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Kafka.Producer;
+using ElectrostoreAPI.Kafka.Messages;
 using ElectrostoreAPI.Services.SessionService;
 using ElectrostoreAPI.Services.UserService;
 using ElectrostoreAPI.Services.JwiService;

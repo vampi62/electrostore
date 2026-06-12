@@ -28,8 +28,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="Grpc\Protos\apiToIa.proto" GrpcServices="Server" />
-    <Protobuf Include="Grpc\Protos\iaToApi.proto" GrpcServices="Client" />
+    <Protobuf Include="Grpc\Protos\config.proto" GrpcServices="Client" />
+    <Protobuf Include="Grpc\Protos\iaCmd.proto" GrpcServices="Server" />
+    <Protobuf Include="Grpc\Protos\iaTraining.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>

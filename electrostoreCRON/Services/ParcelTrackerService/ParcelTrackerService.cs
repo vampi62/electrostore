@@ -56,10 +56,12 @@ public class ParcelTrackerService : IParcelTrackerService
 
         var result = await FetchTrackingStatusAsync(p, ct);
         if (result is null)
+        {
+            _logger.LogWarning("ParcelTracker: failed to fetch tracking status for command {Id}.", p.id_command);
             return;
+        }
 
-        var message = JsonSerializer.Serialize(result);
-        await _kafka.PublishAsync(Topic, p.id_command.ToString(), message, ct);
+        await _kafka.PublishAsync(Topic, p.id_command.ToString(), JsonSerializer.Serialize(result), ct);
         _logger.LogInformation(
             "ParcelTracker: tracking published for command {Id} — status={Status}, delivered={Delivered}",
             p.id_command, result.tracking_status, result.is_delivered);

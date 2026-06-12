@@ -1,8 +1,11 @@
 using AutoMapper;
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Grpc;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.FileService;
+using Google.Protobuf;
+using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -140,5 +143,41 @@ public class ImgService : IImgService
         await _fileService.DeleteFile(imgToDelete.url_thumbnail_img);
         _context.Imgs.Remove(imgToDelete);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task StreamTrainingImagesAsync(IAsyncStreamWriter<TrainingImage> responseStream, HashSet<string>? requestedSet, CancellationToken cancellationToken)
+    {
+        var images = await _context.Imgs
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+        if (requestedSet is not null)
+        {
+            images = images.Where(img => !requestedSet.Contains(Path.GetFileName(img.url_picture_img))).ToList();
+        }
+        foreach (var img in images)
+        {
+            if (cancellationToken.IsCancellationRequested) break;
+            try
+            {
+                var fileResult = await _fileService.GetFile(img.url_picture_img);
+                if (!fileResult.Success || fileResult.FileStream is null)
+                {
+                    Console.WriteLine($"Could not read image {img.url_picture_img}");
+                    continue;
+                }
+                using var ms = new MemoryStream();
+                await fileResult.FileStream.CopyToAsync(ms, cancellationToken);
+                await responseStream.WriteAsync(new TrainingImage
+                {
+                    Label = img.id_item.ToString(),
+                    Filename = Path.GetFileName(img.url_picture_img),
+                    Data = ByteString.CopyFrom(ms.ToArray())
+                }, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error streaming image {img.url_picture_img}: {ex.Message}");
+            }
+        }
     }
 }

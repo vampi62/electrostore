@@ -313,6 +313,26 @@ public class StoreService : IStoreService
         };
     }
 
+    public async Task<int> UpdateStoreMqttStatusByMqttNameAsync(string mqttName, UpdateStoreMqttStatusDto mqttStatusDto, CancellationToken cancellationToken)
+    {
+        var stores = await _context.Stores
+            .Where(s => s.mqtt_name_store == mqttName)
+            .ToListAsync(cancellationToken);
+        if (stores.Count == 0)
+        {
+            return 0;
+        }
+        var now = DateTime.UtcNow;
+        foreach (var store in stores)
+        {
+            store.is_mqtt_connected_store = mqttStatusDto.is_mqtt_connected_store;
+            store.mqtt_last_seen_store    = now;
+        }
+        await _context.SaveChangesAsync(cancellationToken);
+        return stores.Count;
+    }
+
+
     private async Task<(List<ReadLedDto>, List<ErrorDetail>)> UpdateLedList(Stores storeToUpdate, IEnumerable<UpdateBulkLedByStoreDto> ledListDto)
     {
         var validQueryLed = new List<ReadLedDto>();

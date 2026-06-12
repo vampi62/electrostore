@@ -15,12 +15,12 @@ public class ElectrostoreCronJob : IJob
     public const string KeyId       = "id_cronjob";
 
     private readonly IParcelTrackerService _parcelTracker;
-    private readonly CRONToAPIGrpc.CRONToAPIGrpcClient _apiClient;
+    private readonly CronJobGrpc.CronJobGrpcClient _apiClient;
     private readonly ILogger<ElectrostoreCronJob> _logger;
 
     public ElectrostoreCronJob(
         IParcelTrackerService parcelTracker,
-        CRONToAPIGrpc.CRONToAPIGrpcClient apiClient,
+        CronJobGrpc.CronJobGrpcClient apiClient,
         ILogger<ElectrostoreCronJob> logger)
     {
         _parcelTracker = parcelTracker;

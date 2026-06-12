@@ -6,17 +6,17 @@ using ElectrostoreIA.Services.ConfigCacheService;
 
 namespace ElectrostoreIA.Grpc.Services;
 
-public class IAGrpcService : APIToIAGrpc.APIToIAGrpcBase
+public class IaCmdService : IaCmdGrpc.IaCmdGrpcBase
 {
     private readonly IModelTrainerService _trainerService;
     private readonly IImageDetectorService _detectorService;
-    private readonly ILogger<IAGrpcService> _logger;
+    private readonly ILogger<IaCmdService> _logger;
 
-    public IAGrpcService(
+    public IaCmdService(
         IModelTrainerService trainerService,
         IImageDetectorService detectorService,
         IConfigCacheService configCache,
-        ILogger<IAGrpcService> logger)
+        ILogger<IaCmdService> logger)
     {
         _trainerService = trainerService;
         _detectorService = detectorService;

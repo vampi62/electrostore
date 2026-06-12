@@ -1,19 +1,14 @@
 using ElectrostoreAPI.Dto;
-using MQTTnet;
 
 namespace ElectrostoreAPI.Services.ConfigService;
 
 public class ConfigService : IConfigService
 {
-    private readonly IMqttClient _mqttClient;
     private readonly IConfiguration _configuration;
-    private readonly IHttpClientFactory _httpClientFactory;
 
-    public ConfigService(IMqttClient mqttClient, IConfiguration configuration, IHttpClientFactory httpClientFactory)
+    public ConfigService(IConfiguration configuration)
     {
-        _mqttClient = mqttClient;
         _configuration = configuration;
-        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<ReadConfig> getAllConfig()

@@ -24,7 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="Grpc\Protos\notifToApi.proto" GrpcServices="Client" />
+    <Protobuf Include="Grpc\Protos\config.proto" GrpcServices="Client" />
+    <Protobuf Include="Grpc\Protos\users.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>
