@@ -21,7 +21,7 @@ public class ConfigCacheService : IHostedService, IConfigCacheService
     {
         try
         {
-            var reply = await _client.GetConfigAsync(new IAGetConfigRequest(), cancellationToken: cancellationToken);
+            var reply = await _client.GetConfigAsync(new GetConfigRequest(), cancellationToken: cancellationToken);
             DemoMode = reply.DemoMode;
             AllowedImageExtensions = reply.AllowedImageExtensions;
             _logger.LogInformation(

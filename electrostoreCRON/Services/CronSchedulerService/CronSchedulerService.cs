@@ -46,10 +46,10 @@ public class CronSchedulerService : BackgroundService
 
     private async Task LoadAndScheduleJobsAsync(IScheduler scheduler, CancellationToken ct)
     {
-        GetCronJobsReply reply;
+        GetEnabledCronJobsReply reply;
         try
         {
-            reply = await _apiClient.GetEnabledCronJobsAsync(new GetCronJobsRequest(), cancellationToken: ct);
+            reply = await _apiClient.GetEnabledCronJobsAsync(new GetEnabledCronJobsRequest(), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
@@ -57,9 +57,9 @@ public class CronSchedulerService : BackgroundService
             return;
         }
 
-        _logger.LogInformation("{Count} cron job(s) loaded from API.", reply.Jobs.Count);
+        _logger.LogInformation("{Count} cron job(s) loaded from API.", reply.CronJobs.Count);
 
-        foreach (var job in reply.Jobs)
+        foreach (var job in reply.CronJobs)
         {
             if (string.IsNullOrWhiteSpace(job.CronExpression))
             {

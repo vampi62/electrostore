@@ -20,7 +20,7 @@ public class ConfigCacheService : IHostedService, IConfigCacheService
     {
         try
         {
-            var reply = await _client.GetConfigAsync(new WORKERGetConfigRequest(), cancellationToken: cancellationToken);
+            var reply = await _client.GetConfigAsync(new GetConfigRequest(), cancellationToken: cancellationToken);
             DemoMode = reply.DemoMode;
             _logger.LogInformation("Config loaded from API: DemoMode={DemoMode}", DemoMode);
         }
