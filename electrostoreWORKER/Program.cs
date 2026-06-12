@@ -27,11 +27,11 @@ public partial class Program
         }
 
         // gRPC client to the API
-        builder.Services.AddGrpcClient<CommandsGrpc.CommandsGrpcClient>(options =>
+        /* builder.Services.AddGrpcClient<CommandsGrpc.CommandsGrpcClient>(options =>
         {
             options.Address = new Uri(
                 builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
-        });
+        }); */
         builder.Services.AddGrpcClient<ConfigGrpc.ConfigGrpcClient>(options =>
         {
             options.Address = new Uri(
@@ -66,7 +66,7 @@ public partial class Program
         builder.Services.AddSingleton<ConfigCacheService>();
         builder.Services.AddSingleton<IConfigCacheService>(sp => sp.GetRequiredService<ConfigCacheService>());
         builder.Services.AddHostedService(sp => sp.GetRequiredService<ConfigCacheService>());
-        builder.Services.AddHostedService<KafkaCronConsumer>();
+        //builder.Services.AddHostedService<KafkaCronCommandConsumer>();
         builder.Services.AddHostedService<KafkaIaStatusConsumer>();
         builder.Services.AddHostedService<MqttClientService>();
     }
