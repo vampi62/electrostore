@@ -2,12 +2,11 @@ syntax = "proto3";
 
 option csharp_namespace = "ElectrostoreAPI.Grpc";
 
-package cronToApi;
+package cronJobs;
 
-service CRONToAPIGrpc {
+service CronJobsGrpc {
   rpc GetEnabledCronJobs (GetEnabledCronJobsRequest) returns (GetEnabledCronJobsReply);
   rpc UpdateCronJobRun   (UpdateCronJobRunRequest)   returns (UpdateCronJobRunReply);
-  rpc GetConfig          (CRONGetConfigRequest)       returns (CRONGetConfigReply);
 }
 
 // ---- CronJobs ----
@@ -24,6 +23,8 @@ message CronJobItem {
   string cron_expression  = 3;
   string action_cronjob   = 4;
   string params_cronjob   = 5; // JSON stringfied parameters, content depends on action_cronjob
+  string last_run_at      = 6; // ISO 8601
+  string next_run_at      = 7; // ISO 8601
 }
 
 // ---- Update CronJob Run ----
@@ -36,12 +37,4 @@ message UpdateCronJobRunRequest {
 
 message UpdateCronJobRunReply {
   bool success = 1;
-}
-
-// ---- Config ----
-
-message CRONGetConfigRequest {}
-
-message CRONGetConfigReply {
-  bool demo_mode = 1;
 }

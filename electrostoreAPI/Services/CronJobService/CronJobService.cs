@@ -1,6 +1,7 @@
 using AutoMapper;
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Kafka.Messages;
 using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
@@ -87,10 +88,15 @@ public class CronJobService : ICronJobService
         _context.CronJobs.Add(newCronJob);
         await _context.SaveChangesAsync();
         var result = _mapper.Map<ReadCronJobDto>(newCronJob);
+        var cronJobMessage = new CronJobMessage
+        {
+            action = "created",
+            data = result
+        };
         await _kafkaProducer.PublishAsync(
             "cronjob-events",
             newCronJob.id_cronjob.ToString(),
-            JsonSerializer.Serialize(new { action = "created", data = result })
+            JsonSerializer.Serialize(cronJobMessage)
         );
         return result;
     }
@@ -131,10 +137,15 @@ public class CronJobService : ICronJobService
 
         await _context.SaveChangesAsync();
         var result = _mapper.Map<ReadCronJobDto>(cronJobToUpdate);
+        var cronJobMessage = new CronJobMessage
+        {
+            action = "updated",
+            data = result
+        };
         await _kafkaProducer.PublishAsync(
             "cronjob-events",
             cronJobToUpdate.id_cronjob.ToString(),
-            JsonSerializer.Serialize(new { action = "updated", data = result })
+            JsonSerializer.Serialize(cronJobMessage)
         );
         return result;
     }
@@ -143,12 +154,38 @@ public class CronJobService : ICronJobService
     {
         var cronJobToDelete = await _context.CronJobs.FindAsync(id)
             ?? throw new KeyNotFoundException($"CronJob with id '{id}' not found");
+        var cronJobMessage = new CronJobMessage
+        {
+            action = "deleted",
+            data = _mapper.Map<ReadCronJobDto>(cronJobToDelete)
+        };
         _context.CronJobs.Remove(cronJobToDelete);
         await _context.SaveChangesAsync();
         await _kafkaProducer.PublishAsync(
             "cronjob-events",
             id.ToString(),
-            JsonSerializer.Serialize(new { action = "deleted", data = new { id } })
+            JsonSerializer.Serialize(cronJobMessage)
          );
+    }
+
+    public async Task<IEnumerable<ReadCronJobDto>> GetEnabledCronJobsAsync(CancellationToken cancellationToken)
+    {
+        var cronJobs = await _context.CronJobs.Where(c => c.is_enabled).ToListAsync(cancellationToken);
+        return _mapper.Map<IEnumerable<ReadCronJobDto>>(cronJobs);
+    }
+
+    public async Task UpdateCronJobRunAsync(int id, DateTime? lastRunAt, DateTime? nextRunAt, CancellationToken cancellationToken)
+    {
+        var cronJob = await _context.CronJobs.FindAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException($"CronJob with id '{id}' not found");
+        if (lastRunAt.HasValue)
+        {
+            cronJob.last_run_at = lastRunAt.Value;
+        }
+        if (nextRunAt.HasValue)
+        {
+            cronJob.next_run_at = nextRunAt.Value;
+        }
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

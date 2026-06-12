@@ -41,11 +41,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="Grpc\Protos\apiToIa.proto" GrpcServices="Client" />
-    <Protobuf Include="Grpc\Protos\notifToApi.proto" GrpcServices="Server" />
-    <Protobuf Include="Grpc\Protos\iaToApi.proto" GrpcServices="Server" />
-    <Protobuf Include="Grpc\Protos\cronToApi.proto" GrpcServices="Server" />
-    <Protobuf Include="Grpc\Protos\workerToApi.proto" GrpcServices="Server" />
+    <Protobuf Include="Grpc\Protos\commands.proto" GrpcServices="Server" />
+    <Protobuf Include="Grpc\Protos\config.proto" GrpcServices="Server" />
+    <Protobuf Include="Grpc\Protos\cronJobs.proto" GrpcServices="Server" />
+    <Protobuf Include="Grpc\Protos\iaCmd.proto" GrpcServices="Client" />
+    <Protobuf Include="Grpc\Protos\iaTraining.proto" GrpcServices="Server" />
+    <Protobuf Include="Grpc\Protos\storeMqtt.proto" GrpcServices="Server" />
+    <Protobuf Include="Grpc\Protos\users.proto" GrpcServices="Server" />
   </ItemGroup>
 
   <ItemGroup>

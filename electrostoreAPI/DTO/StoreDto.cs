@@ -79,3 +79,8 @@ public record UpdateStoreCompleteDto
     public IEnumerable<UpdateBulkBoxByStoreDto>? boxs { get; init; }
     public IEnumerable<UpdateBulkLedByStoreDto>? leds { get; init; }
 }
+
+public record UpdateStoreMqttStatusDto
+{
+    public required bool is_mqtt_connected_store { get; init; }
+}

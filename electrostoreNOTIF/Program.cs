@@ -28,7 +28,12 @@ public partial class Program
         }
 
         // gRPC client for the API service
-        builder.Services.AddGrpcClient<NOTIFToAPIGrpc.NOTIFToAPIGrpcClient>(options =>
+        builder.Services.AddGrpcClient<ConfigGrpc.ConfigGrpcClient>(options =>
+        {
+            options.Address = new Uri(
+                builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
+        });
+        builder.Services.AddGrpcClient<UsersGrpc.UsersGrpcClient>(options =>
         {
             options.Address = new Uri(
                 builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");

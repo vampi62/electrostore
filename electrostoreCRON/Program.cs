@@ -30,7 +30,12 @@ public partial class Program
         }
 
         // gRPC client to the API
-        builder.Services.AddGrpcClient<CRONToAPIGrpc.CRONToAPIGrpcClient>(options =>
+        builder.Services.AddGrpcClient<ConfigGrpc.ConfigGrpcClient>(options =>
+        {
+            options.Address = new Uri(
+                builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
+        });
+        builder.Services.AddGrpcClient<CronJobGrpc.CronJobGrpcClient>(options =>
         {
             options.Address = new Uri(
                 builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");

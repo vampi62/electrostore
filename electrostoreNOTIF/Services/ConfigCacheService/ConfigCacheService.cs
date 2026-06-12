@@ -5,12 +5,12 @@ namespace ElectrostoreNOTIF.Services.ConfigCacheService;
 
 public class ConfigCacheService : IHostedService, IConfigCacheService
 {
-    private readonly NOTIFToAPIGrpc.NOTIFToAPIGrpcClient _client;
+    private readonly ConfigGrpc.ConfigGrpcClient _client;
     private readonly ILogger<ConfigCacheService> _logger;
 
     public bool DemoMode { get; private set; }
 
-    public ConfigCacheService(NOTIFToAPIGrpc.NOTIFToAPIGrpcClient client, ILogger<ConfigCacheService> logger)
+    public ConfigCacheService(ConfigGrpc.ConfigGrpcClient client, ILogger<ConfigCacheService> logger)
     {
         _client = client;
         _logger = logger;
@@ -20,7 +20,7 @@ public class ConfigCacheService : IHostedService, IConfigCacheService
     {
         try
         {
-            var reply = await _client.GetConfigAsync(new NOTIFGetConfigRequest(), cancellationToken: cancellationToken);
+            var reply = await _client.GetConfigAsync(new GetConfigRequest(), cancellationToken: cancellationToken);
             DemoMode = reply.DemoMode;
             _logger.LogInformation("Config loaded from API at startup: DemoMode={DemoMode}", DemoMode);
         }

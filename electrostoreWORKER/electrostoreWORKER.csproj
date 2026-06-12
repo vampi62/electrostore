@@ -24,7 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="Grpc\Protos\workerToApi.proto" GrpcServices="Client" />
+    <Protobuf Include="Grpc\Protos\commands.proto" GrpcServices="Client" />
+    <Protobuf Include="Grpc\Protos\config.proto" GrpcServices="Client" />
+    <Protobuf Include="Grpc\Protos\iaTraining.proto" GrpcServices="Client" />
+    <Protobuf Include="Grpc\Protos\storeMqtt.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>

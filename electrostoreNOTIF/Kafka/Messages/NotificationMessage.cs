@@ -1,4 +1,4 @@
-namespace ElectrostoreIA.Dto;
+namespace ElectrostoreNOTIF.Kafka.Messages;
 
 public class NotificationMessage
 {

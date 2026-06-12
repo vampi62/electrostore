@@ -15,4 +15,6 @@ public interface IUserService
     public Task<ReadUserDto> UpdateUser(int id, UpdateUserDto userDto);
 
     public Task DeleteUser(int id);
+
+    public Task<ReadUserDto?> GetUserByIdAsync(int id, CancellationToken cancellationToken = default);
 }

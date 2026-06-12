@@ -3,6 +3,7 @@ using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Kafka.Producer;
+using ElectrostoreAPI.Kafka.Messages;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.JwiService;
 using ElectrostoreAPI.Services.SessionService;
@@ -273,6 +274,18 @@ public class UserService : IUserService
         {
             Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
         }
+    }
+
+    public async Task<ReadUserDto?> GetUserByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Users.AsQueryable();
+        query = query.Where(u => u.id_user == id);
+        var user = await query.FirstOrDefaultAsync(cancellationToken);
+        if (user == null)
+        {
+            return null;
+        }
+        return _mapper.Map<ReadUserDto>(user);
     }
 
     private async Task AlerteUpdateUser(Users userToUpdate, UpdateUserDto userDto, string oldUserEmail)

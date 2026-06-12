@@ -13,4 +13,8 @@ public interface ICronJobService
     public Task<ReadCronJobDto> UpdateCronJob(int id, UpdateCronJobDto cronJobDto);
 
     public Task DeleteCronJob(int id);
+
+    public Task<IEnumerable<ReadCronJobDto>> GetEnabledCronJobsAsync(CancellationToken cancellationToken);
+
+    public Task UpdateCronJobRunAsync(int id, DateTime? lastRunAt, DateTime? nextRunAt, CancellationToken cancellationToken);
 }

@@ -2,11 +2,10 @@ syntax = "proto3";
 
 option csharp_namespace = "ElectrostoreAPI.Grpc";
 
-package notifToApi;
+package users;
 
-service NOTIFToAPIGrpc {
+service UsersGrpc {
   rpc GetUserInfo (GetUserInfoRequest) returns (GetUserInfoReply);
-  rpc GetConfig (NOTIFGetConfigRequest) returns (NOTIFGetConfigReply);
   rpc GetUserPushSubscriptions (GetUserPushSubscriptionsRequest) returns (GetUserPushSubscriptionsReply);
 }
 
@@ -34,12 +33,4 @@ message PushSubscriptionItem {
 
 message GetUserPushSubscriptionsReply {
   repeated PushSubscriptionItem subscriptions = 1;
-}
-
-// ---- Config ----
-
-message NOTIFGetConfigRequest {}
-
-message NOTIFGetConfigReply {
-  bool demo_mode = 1;
 }
