@@ -1,5 +1,7 @@
 // Generate docker-compose.yml file
 function generateDockerCompose(config) {
+    const isLegacy = isLegacyVersion(config.appVersion);
+    
     let compose = `# docker-compose.yml for ElectroStore
 # This file uses environment variables defined in the .env file
 # To use this file, create a .env file at the project root
@@ -45,18 +47,18 @@ services:`;
         compose += `
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=${apiRule}"
-      - "traefik.http.routers.api.entrypoints=${entrypoint}"
-      - "traefik.http.services.api.loadbalancer.server.port=8080"`;
+      - "traefik.http.routers.electrostoreapi.rule=${apiRule}"
+      - "traefik.http.routers.electrostoreapi.entrypoints=${entrypoint}"
+      - "traefik.http.services.electrostoreapi.loadbalancer.server.port=5000"`;
       
         if (config.traefik.middlewares) {
             compose += `
-      - "traefik.http.routers.api.middlewares=${config.traefik.middlewares}"`;
+      - "traefik.http.routers.electrostoreapi.middlewares=${config.traefik.middlewares}"`;
         }
         
         if (config.traefik.tlsEnable) {
             compose += `
-      - "traefik.http.routers.api.tls.certresolver=${config.traefik.certResolver}"`;
+      - "traefik.http.routers.electrostoreapi.tls.certresolver=${config.traefik.certResolver}"`;
         }
     } else {
         compose += `
@@ -68,14 +70,26 @@ services:`;
     environment:
       - ASPNETCORE_ENVIRONMENT=\${ENVIRONMENT:-Production}`;
 
-    compose += `
-    depends_on:
-      kafka:
-        condition: service_healthy`;
+    // Build depends_on section
+    const apiDependencies = [];
+    if (!isLegacy) {
+        apiDependencies.push('kafka:\n        condition: service_healthy');
+    }
+    if (config.useMariaDB) {
+        apiDependencies.push('mariadb:\n        condition: service_healthy');
+    }
+    if (config.useMQTT) {
+        apiDependencies.push('mqtt:\n        condition: service_started');
+    }
+    if (config.enableS3 && config.useS3) {
+        apiDependencies.push('garage:\n        condition: service_healthy');
+    }
     
-    if (config.useMariaDB) compose += `\n      mariadb\n        condition: service_healthy`;
-    if (config.useMQTT) compose += `\n      mqtt\n        condition: service_started`;
-    if (config.enableS3 && config.useS3) compose += `\n      garage\n        condition: service_healthy`;
+    if (apiDependencies.length > 0) {
+        compose += `
+    depends_on:
+      ${apiDependencies.join('\n      ')}`;
+    }
     
     compose += `
     volumes:
@@ -92,7 +106,7 @@ services:`;
           - electrostoreAPI`;
     
     if (config.useTraefik) {
-        compose += `\n      - ${config.traefik.network}`;
+        compose += `\n      ${config.traefik.network}:`;
     }
     
     compose += `
@@ -137,19 +151,19 @@ services:`;
         compose += `
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=${frontendRule}"
-      - "traefik.http.routers.frontend.entrypoints=${entrypoint}"
-      - "traefik.http.services.frontend.loadbalancer.server.port=80"`;
+      - "traefik.http.routers.electrostorefront.rule=${frontendRule}"
+      - "traefik.http.routers.electrostorefront.entrypoints=${entrypoint}"
+      - "traefik.http.services.electrostorefront.loadbalancer.server.port=80"`;
       
         if (config.traefik.middlewares) {
             compose += `
-      - "traefik.http.routers.frontend.middlewares=${config.traefik.middlewares}"`;
+      - "traefik.http.routers.electrostorefront.middlewares=${config.traefik.middlewares}"`;
         }
         
         if (config.traefik.tlsEnable) {
             compose += `
-      - "traefik.http.routers.frontend.tls=true"
-      - "traefik.http.routers.frontend.tls.certresolver=${config.traefik.certResolver}"`;
+      - "traefik.http.routers.electrostorefront.tls=true"
+      - "traefik.http.routers.electrostorefront.tls.certresolver=${config.traefik.certResolver}"`;
         }
     } else {
         compose += `
@@ -200,19 +214,35 @@ services:`;
           cpus: '2.0'
           memory: 2G`;
     
+    // Build depends_on section for IA service
+    const iaDependencies = [];
+    if (!isLegacy) {
+        iaDependencies.push('kafka:\n        condition: service_healthy');
+        iaDependencies.push('api:\n        condition: service_healthy');
+    } else {
+        iaDependencies.push('api:\n        condition: service_started');
+    }
+    if (config.useMariaDB) {
+        iaDependencies.push('mariadb:\n        condition: service_healthy');
+    }
+    if (config.enableS3 && config.useS3) {
+        iaDependencies.push('garage:\n        condition: service_healthy');
+    }
+    
     compose += `
     depends_on:
-      kafka
-        condition: service_healthy
-      api:
-        condition: service_healthy`;
+      ${iaDependencies.join('\n      ')}`;
     
-    if (config.useMariaDB) compose += `\n      - mariadb\n        condition: service_healthy`;
-    if (config.enableS3 && config.useS3) compose += `\n      - garage\n        condition: service_healthy`;
-    
-    compose += `
+    if (!isLegacy) {
+        compose += `
     volumes:
       - ./config/ia/appsettings.json:/app/config/appsettings.json:ro`;
+    } else {
+        compose += `
+    volumes:
+        - ./config/api/appsettings.json:/app/appsettings.json:ro`;
+    }
+
     if (!config.enableS3) {
         compose += `\n      - ia-models:/app/models`;
     }
@@ -224,19 +254,20 @@ services:`;
     restart: unless-stopped
 `;
 
-    // NOTIF Service
-    if (config.appVersion === 'local') {
-        compose += `
+    // NOTIF Service (only for modern versions)
+    if (!isLegacy) {
+        if (config.appVersion === 'local') {
+            compose += `
   notif:
     build:
       context: ./electrostore/electrostoreNOTIF
       dockerfile: Dockerfile`;
-    } else {
-        compose += `
+        } else {
+            compose += `
   notif:
     image: ghcr.io/vampi62/electrostore/notif:\${NOTIF_VERSION:-latest}`;
-    }
-    compose += `
+        }
+        compose += `
     container_name: electrostore-notif
     cap_add:
       - CHOWN
@@ -265,20 +296,22 @@ services:`;
           - electrostoreNOTIF
     restart: unless-stopped
 `;
+    }
 
-    // CRON Service
-    if (config.appVersion === 'local') {
-        compose += `
+    // CRON Service (only for modern versions)
+    if (!isLegacy) {
+        if (config.appVersion === 'local') {
+            compose += `
   cron:
     build:
       context: ./electrostore/electrostoreCRON
       dockerfile: Dockerfile`;
-    } else {
-        compose += `
+        } else {
+            compose += `
   cron:
     image: ghcr.io/vampi62/electrostore/cron:\${CRON_VERSION:-latest}`;
-    }
-    compose += `
+        }
+        compose += `
     container_name: electrostore-cron
     cap_add:
       - CHOWN
@@ -307,19 +340,21 @@ services:`;
           - electrostoreCRON
     restart: unless-stopped
 `;
+    }
 
-    // WORKER Service
-    if (config.appVersion === 'local') {
-        compose += `
+    // WORKER Service (only for modern versions)
+    if (!isLegacy) {
+        if (config.appVersion === 'local') {
+            compose += `
   worker:
     build:
       context: ./electrostore/electrostoreWORKER
       dockerfile: Dockerfile`;
-    } else {
-        compose += `
+        } else {
+            compose += `
   worker:
     image: ghcr.io/vampi62/electrostore/worker:\${WORKER_VERSION:-latest}`;
-    }
+        }
         compose += `
     container_name: electrostore-worker
     cap_add:
@@ -337,16 +372,16 @@ services:`;
           cpus: '1.0'
           memory: 256M`;
 
-    compose += `
+        compose += `
     depends_on:
       kafka:
         condition: service_healthy
       api:
         condition: service_healthy`;
 
-    if (config.useMQTT) compose += `\n      mqtt\n        condition: service_started`;
+        if (config.useMQTT) compose += `\n      mqtt:\n        condition: service_started`;
 
-    compose += `
+        compose += `
     volumes:
       - ./config/worker/appsettings.json:/app/config/appsettings.json:ro
     networks:
@@ -355,6 +390,7 @@ services:`;
           - electrostoreWORKER
     restart: unless-stopped
 `;
+    }
 
     // MariaDB
     if (config.useMariaDB) {
@@ -427,8 +463,9 @@ services:`;
 `;
     }
 
-    // Kafka
-    compose += `
+    // Kafka (only for modern versions)
+    if (!isLegacy) {
+        compose += `
   kafka:
     image: apache/kafka:\${KAFKA_VERSION:-4.2.1}
     container_name: electrostore-kafka
@@ -461,6 +498,7 @@ services:`;
       retries: 3
       start_period: 15s
 `;
+    }
 
     // Networks et Volumes
     compose += `
@@ -475,10 +513,14 @@ networks:
     }
 
     compose += `
-volumes:
+volumes:`;
+
+    if (!isLegacy) {
+        compose += `
   kafka-data:
   kafka-config:
   kafka-secrets:`;
+    }
 
     if (!config.enableS3) compose += `\n  api-wwwroot:\n  ia-models:`;
     if (config.useMariaDB) compose += `\n  mariadb-data:`;
@@ -490,6 +532,8 @@ volumes:
 
 // Generate appsettings.json for API service
 function generateApiAppsettings(config) {
+    const isLegacy = isLegacyVersion(config.appVersion);
+    
     const settings = {
         "Logging": {
             "LogLevel": {
@@ -569,9 +613,11 @@ function generateApiAppsettings(config) {
         };
     }
 
-    settings.Kafka = {
-        "BootstrapServers": "kafka:9092"
-    };
+    if (!isLegacy) {
+        settings.Kafka = {
+            "BootstrapServers": "kafka:9092"
+        };
+    }
 
     settings.Jwt = {
         "Key": config.useVault ? "{{vault:jwt_key}}" : config.jwt.key,
@@ -615,11 +661,26 @@ function generateApiAppsettings(config) {
         };
     }
 
-    settings.IAServiceGrpcUrl = "http://electrostoreIA:5001";
-    settings.IAServiceHealthUrl = "http://electrostoreIA:5000/health";
-    settings.NotifServiceHealthUrl = "http://electrostoreNOTIF:5000/health";
-    settings.CRONServiceHealthUrl = "http://electrostoreCRON:5000/health";
-    settings.WORKERServiceHealthUrl = "http://electrostoreWORKER:5000/health";
+    // SMTP configuration for legacy versions (integrated in API)
+    if (isLegacy && config.enableSMTP && config.smtp) {
+        settings.SMTP = {
+            "Host": config.smtp.host,
+            "Port": parseInt(config.smtp.port),
+            "Username": config.useVault ? "{{vault:smtp_user}}" : config.smtp.user,
+            "Password": config.useVault ? "{{vault:smtp_password}}" : config.smtp.password,
+            "From": config.smtp.from
+        };
+    }
+
+    
+    if (!isLegacy) {
+        settings.IAServiceGrpcUrl = "http://electrostoreIA:5001";
+        settings.IAServiceHealthUrl = "http://electrostoreIA:5000/health";
+        settings.NotifServiceHealthUrl = "http://electrostoreNOTIF:5000/health";
+        settings.CRONServiceHealthUrl = "http://electrostoreCRON:5000/health";
+        settings.WORKERServiceHealthUrl = "http://electrostoreWORKER:5000/health";
+    }
+    
     settings.DemoMode = false;
     settings.FrontendUrl = config.frontUrl;
     settings.AllowedOrigins = config.allowedOrigins;
@@ -629,6 +690,8 @@ function generateApiAppsettings(config) {
 
 // Generate appsettings.json for IA service
 function generateIaAppsettings(config) {
+    const isLegacy = isLegacyVersion(config.appVersion);
+    
     const settings = {
         "Logging": {
             "LogLevel": {
@@ -651,10 +714,12 @@ function generateIaAppsettings(config) {
         }
     };
 
-    settings.Kafka = {
-        "BootstrapServers": "kafka:9092",
-        "ConsumerGroupId": "ia-service"
-    };
+    if (!isLegacy) {
+        settings.Kafka = {
+            "BootstrapServers": "kafka:9092",
+            "ConsumerGroupId": "ia-service"
+        };
+    }
 
     settings.ApiServiceGrpcUrl = "http://electrostoreAPI:5001";
 
@@ -909,6 +974,8 @@ function generateWorkerAppsettings(config) {
 
 // Generate .env file
 function generateEnvFile(config) {
+    const isLegacy = isLegacyVersion(config.appVersion);
+    
     let env = `# .env file for ElectroStore\n`;
     env += `# Generated on ${new Date().toLocaleDateString('en-US')}\n`;
     env += `# This file contains environment variables used by docker-compose.yml\n\n`;
@@ -921,10 +988,14 @@ function generateEnvFile(config) {
     env += `API_VERSION=${config.appVersion}\n`;
     env += `FRONTEND_VERSION=${config.appVersion}\n`;
     env += `IA_VERSION=${config.appVersion}\n`;
-    env += `NOTIF_VERSION=${config.appVersion}\n`;
-    env += `CRON_VERSION=${config.appVersion}\n`;
-    env += `WORKER_VERSION=${config.appVersion}\n`;
-    env += `KAFKA_VERSION=4.2.1\n`;
+    
+    if (!isLegacy) {
+        env += `NOTIF_VERSION=${config.appVersion}\n`;
+        env += `CRON_VERSION=${config.appVersion}\n`;
+        env += `WORKER_VERSION=${config.appVersion}\n`;
+        env += `KAFKA_VERSION=4.2.1\n`;
+    }
+    
     if (config.useMariaDB) {
         env += `MARIADB_VERSION=11.7.2\n`;
     }
@@ -936,7 +1007,7 @@ function generateEnvFile(config) {
     }
     env += `\n`;
 
-    if (config.enableVapid && config.vapid) {
+    if (!isLegacy && config.enableVapid && config.vapid) {
         env += `# VAPID (Web Push Notifications)\n`;
         env += `VAPID_PUBLIC_KEY=${config.vapid.publicKey}\n`;
         env += `VAPID_PRIVATE_KEY=${config.vapid.privateKey}\n\n`;
@@ -968,11 +1039,13 @@ function generateEnvFile(config) {
         env += `S3_SECRET_KEY=${config.s3.secretKey}\n`;
         env += `S3_BUCKET=${config.s3.bucket}\n`;
         env += `S3_REGION=${config.s3.region}\n\n`;
-        env += `# S3 Garage - IA service (integrated service)\n`;
-        env += `S3_IA_ACCESS_KEY=${config.s3Ia.accessKey}\n`;
-        env += `S3_IA_SECRET_KEY=${config.s3Ia.secretKey}\n`;
-        env += `S3_IA_BUCKET=${config.s3Ia.bucket}\n\n`;
-        env += `S3_IA_REGION=${config.s3Ia.region}\n\n`;
+        if (!isLegacy) {
+            env += `# S3 Garage - IA service (integrated service)\n`;
+            env += `S3_IA_ACCESS_KEY=${config.s3Ia.accessKey}\n`;
+            env += `S3_IA_SECRET_KEY=${config.s3Ia.secretKey}\n`;
+            env += `S3_IA_BUCKET=${config.s3Ia.bucket}\n\n`;
+            env += `S3_IA_REGION=${config.s3Ia.region}\n\n`;
+        }
     }
     
     return env;
@@ -980,6 +1053,7 @@ function generateEnvFile(config) {
 
 // Generate setup.sh script
 function generateSetupScript(config) {
+    const isLegacy = isLegacyVersion(config.appVersion);
     let script = `#!/bin/bash
 # ElectroStore Configuration Script
 # Generated on ${new Date().toLocaleDateString('en-US')}
@@ -1071,25 +1145,37 @@ docker exec electrostore-garage /garage layout apply --version 1
 
 echo "Creating S3 access keys..."
 GARAGE_API_ACCESS_KEY="${config.s3.accessKey}"
-GARAGE_API_SECRET_KEY="${config.s3.secretKey}"
-GARAGE_IA_ACCESS_KEY="${config.s3Ia.accessKey}"
-GARAGE_IA_SECRET_KEY="${config.s3Ia.secretKey}"
+GARAGE_API_SECRET_KEY="${config.s3.secretKey}"`;
 
+        if (!isLegacy) {
+            script += `
+GARAGE_IA_ACCESS_KEY="${config.s3Ia.accessKey}"
+GARAGE_IA_SECRET_KEY="${config.s3Ia.secretKey}"`;
+        }
+script += `
 echo "API Access Key: \$GARAGE_API_ACCESS_KEY"
-echo "API Secret Key: \$GARAGE_API_SECRET_KEY"
+echo "API Secret Key: \$GARAGE_API_SECRET_KEY"`;
+        if (!isLegacy) {
+            script += `
 echo "IA Access Key: \$GARAGE_IA_ACCESS_KEY"
-echo "IA Secret Key: \$GARAGE_IA_SECRET_KEY"
+echo "IA Secret Key: \$GARAGE_IA_SECRET_KEY"`;
+        }
+
+script += `
 
 echo "Creating bucket ${config.s3.bucket} for API service..."
 docker exec electrostore-garage /garage key import -n electrostore-key --yes $GARAGE_API_ACCESS_KEY $GARAGE_API_SECRET_KEY
 docker exec electrostore-garage /garage bucket create ${config.s3.bucket}
 docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.bucket} --key electrostore-key
-
+`;
+        if (!isLegacy) {
+            script += `
 echo "Creating bucket ${config.s3Ia.bucket} for IA service..."
 docker exec electrostore-garage /garage key import -n electrostore-ia-key --yes $GARAGE_IA_ACCESS_KEY $GARAGE_IA_SECRET_KEY
 docker exec electrostore-garage /garage bucket create ${config.s3Ia.bucket}
 docker exec electrostore-garage /garage bucket allow --read --write ${config.s3Ia.bucket} --key electrostore-ia-key
 `;
+        }
 
         if (config.useVault) {
             script += `
@@ -1395,8 +1481,9 @@ Write-Host ""
 }
 
 // Generate README file
-function generateReadme() {
-    return `# ElectroStore - Docker Configuration
+function generateReadme(isLegacy) {
+
+    let readmeFile = `# ElectroStore - Docker Configuration
 
 This file contains all necessary files to deploy ElectroStore with Docker.
 
@@ -1404,12 +1491,21 @@ This file contains all necessary files to deploy ElectroStore with Docker.
 
 - \`docker-compose.yml\` : Docker Compose configuration
 - \`.env\` : Environment variables
-- \`setup.sh\` : Automatic configuration script
+- \`setup.sh\` : Automatic configuration script`;
+
+    if (!isLegacy) {
+        readmeFile += `
 - \`config/api/appsettings.json\` : API configuration
 - \`config/ia/appsettings.json\` : IA service configuration
 - \`config/notif/appsettings.json\` : Notification service configuration
 - \`config/cron/appsettings.json\` : CRON service configuration
-- \`config/worker/appsettings.json\` : WORKER service configuration
+- \`config/worker/appsettings.json\` : WORKER service configuration`;
+    } else {
+        readmeFile += `
+- \`config/api/appsettings.json\` : API configuration (includes IA and NOTIF settings)`;
+    }
+
+readmeFile += `
 
 ## Installation
 
@@ -1437,4 +1533,5 @@ Check the setup.sh script output for details.
 
 For more information, visit: https://github.com/vampi62/electrostore
 `;
+    return readmeFile;
 }
