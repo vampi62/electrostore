@@ -242,6 +242,8 @@ services:`;
     volumes:
         - ./config/api/appsettings.json:/app/appsettings.json:ro`;
     }
+    compose += `
+        - ./ia-data:/app/wwwroot`;
 
     if (!config.enableS3) {
         compose += `\n      - ia-models:/app/models`;
@@ -483,7 +485,6 @@ services:`;
       - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
       - KAFKA_NUM_PARTITIONS=3
       - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
-      - KAFKA_CREATE_TOPICS="notification-requests:3:1,cronjob-events:3:1,ia-requests:3:1,cron-parcel-tracking:3:1,ia-status:3:1"
     volumes:
       - kafka-data:/var/lib/kafka/data
       - kafka-config:/mnt/shared/config
@@ -1132,7 +1133,16 @@ echo ""
 echo "Configuring Garage S3..."
 
 echo "Starting Garage..."
-docker compose up -d garage
+docker compose up -d garage`;
+
+        if (!isLegacy) {
+            script += `
+
+echo "Initializing Kafka..."
+docker compose up -d kafka`;
+        }
+
+script += `
 
 echo "Waiting for Garage to start (10 seconds)..."
 sleep 10
@@ -1208,6 +1218,27 @@ echo ""
 
 `;
     }
+
+    if (!isLegacy) {
+        script += `# await Kafka readiness
+echo "Waiting for Kafka to be ready..."
+while ! docker exec electrostore-kafka /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1; do
+    echo "Kafka is not ready yet. Waiting..."
+    sleep 5
+done
+echo "Kafka is ready."
+
+# Configure Kafka topics
+echo "Configuring Kafka topics..."
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic notification-requests --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'notification-requests' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic cronjob-events --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'cronjob-events' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic ia-requests --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'ia-requests' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic cron-parcel-tracking --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'cron-parcel-tracking' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic ia-status --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'ia-status' already exists"
+`;
+    }
+
+
 
     script += `# Start all services
 echo "Starting all services..."
@@ -1379,7 +1410,16 @@ Write-Host ""
 Write-Host "Configuring Garage S3..." -ForegroundColor Yellow
 
 Write-Host "Starting Garage..."
-docker compose up -d garage
+docker compose up -d garage`;
+
+        if (!isLegacy) {
+            script += `
+
+Write-Host "Initializing Kafka..."
+docker compose up -d kafka`;
+        }
+
+script += `
 
 Write-Host "Waiting for Garage to start (10 seconds)..."
 Start-Sleep -Seconds 10
@@ -1392,25 +1432,36 @@ docker exec electrostore-garage /garage layout apply --version 1
 
 Write-Host "Creating S3 access keys..."
 $GARAGE_API_ACCESS_KEY = "${config.s3.accessKey}"
-$GARAGE_API_SECRET_KEY = "${config.s3.secretKey}"
-$GARAGE_IA_ACCESS_KEY = "${config.s3Ia.accessKey}"
-$GARAGE_IA_SECRET_KEY = "${config.s3Ia.secretKey}"
+$GARAGE_API_SECRET_KEY = "${config.s3.secretKey}"`;
 
+        if (!isLegacy) {
+            script += `
+$GARAGE_IA_ACCESS_KEY = "${config.s3Ia.accessKey}"
+$GARAGE_IA_SECRET_KEY = "${config.s3Ia.secretKey}"`;
+        }
+script += `
 Write-Host "API Access Key: $GARAGE_API_ACCESS_KEY"
-Write-Host "API Secret Key: $GARAGE_API_SECRET_KEY"
+Write-Host "API Secret Key: $GARAGE_API_SECRET_KEY"`;
+        if (!isLegacy) {
+            script += `
 Write-Host "IA Access Key: $GARAGE_IA_ACCESS_KEY"
-Write-Host "IA Secret Key: $GARAGE_IA_SECRET_KEY"
+Write-Host "IA Secret Key: $GARAGE_IA_SECRET_KEY"`;
+        }
+script += `
 
 Write-Host "Creating bucket ${config.s3.bucket} for API service..."
 docker exec electrostore-garage /garage key import -n electrostore-key --yes $GARAGE_API_ACCESS_KEY $GARAGE_API_SECRET_KEY
 docker exec electrostore-garage /garage bucket create ${config.s3.bucket}
 docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.bucket} --key electrostore-key
-
+`;
+        if (!isLegacy) {
+            script += `
 Write-Host "Creating bucket ${config.s3Ia.bucket} for IA service..."
 docker exec electrostore-garage /garage key import -n electrostore-ia-key --yes $GARAGE_IA_ACCESS_KEY $GARAGE_IA_SECRET_KEY
 docker exec electrostore-garage /garage bucket create ${config.s3Ia.bucket}
 docker exec electrostore-garage /garage bucket allow --read --write ${config.s3Ia.bucket} --key electrostore-ia-key
 `;
+        }
 
         if (config.useVault) {
             script += `
@@ -1440,6 +1491,25 @@ docker compose up -d mqtt
 Write-Host "MQTT configuration completed" -ForegroundColor Green
 Write-Host ""
 
+`;
+    }
+
+    if (!isLegacy) {
+        script += `# await Kafka readiness
+Write-Host "Waiting for Kafka to be ready..."
+do {
+    Start-Sleep -Seconds 5
+    $kafkaReady = docker exec electrostore-kafka /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 2>$null
+} while ($LASTEXITCODE -ne 0)
+Write-Host "Kafka is ready."
+
+# Configure Kafka topics
+Write-Host "Configuring Kafka topics..."
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic notification-requests --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'notification-requests' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic cronjob-events --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'cronjob-events' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic ia-requests --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'ia-requests' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic cron-parcel-tracking --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'cron-parcel-tracking' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic ia-status --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'ia-status' already exists"
 `;
     }
 

@@ -36,8 +36,8 @@ public class KafkaNotifConsumer : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var bootstrapServers = _configuration["Kafka:BootstrapServers"] ?? "kafka:9092";
-        var groupId = _configuration["Kafka:ConsumerGroupId"] ?? "notif-service";
+        var bootstrapServers = _configuration.GetSection("Kafka:BootstrapServers").Value ?? "kafka:9092";
+        var groupId = _configuration.GetSection("Kafka:ConsumerGroupId").Value ?? "notif-service";
         var config = new ConsumerConfig
         {
             BootstrapServers = bootstrapServers,
@@ -74,7 +74,7 @@ public class KafkaNotifConsumer : BackgroundService
                 ConsumeResult<string, string>? result = null;
                 try
                 {
-                    result = consumer.Consume(TimeSpan.FromSeconds(2));
+                    result = await Task.Run(() => consumer.Consume(stoppingToken), stoppingToken);
                 }
                 catch (OperationCanceledException)
                 {
