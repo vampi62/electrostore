@@ -82,6 +82,11 @@ async function downloadAllAsZip() {
     
     const zip = new JSZip();
     
+    // Detect if legacy version
+    const versionSelect = document.getElementById('appVersion');
+    const version = versionSelect ? versionSelect.value : 'latest';
+    const isLegacy = isLegacyVersion(version);
+    
     // Add main files
     zip.file('docker-compose.yml', document.getElementById('dockerCompose').textContent);
     zip.file('.env', document.getElementById('envFile').textContent);
@@ -91,14 +96,18 @@ async function downloadAllAsZip() {
     // Create config folders and add appsettings.json files
     zip.folder('config/api');
     zip.file('config/api/appsettings.json', document.getElementById('apiAppsettingsFile').textContent);
-    zip.folder('config/ia');
-    zip.file('config/ia/appsettings.json', document.getElementById('iaAppsettingsFile').textContent);
-    zip.folder('config/notif');
-    zip.file('config/notif/appsettings.json', document.getElementById('notifAppsettingsFile').textContent);
-    zip.folder('config/cron');
-    zip.file('config/cron/appsettings.json', document.getElementById('cronAppsettingsFile').textContent);
-    zip.folder('config/worker');
-    zip.file('config/worker/appsettings.json', document.getElementById('workerAppsettingsFile').textContent);
+    
+    // Only add modern service configs if not legacy
+    if (!isLegacy) {
+        zip.folder('config/ia');
+        zip.file('config/ia/appsettings.json', document.getElementById('iaAppsettingsFile').textContent);
+        zip.folder('config/notif');
+        zip.file('config/notif/appsettings.json', document.getElementById('notifAppsettingsFile').textContent);
+        zip.folder('config/cron');
+        zip.file('config/cron/appsettings.json', document.getElementById('cronAppsettingsFile').textContent);
+        zip.folder('config/worker');
+        zip.file('config/worker/appsettings.json', document.getElementById('workerAppsettingsFile').textContent);
+    }
     
     // Add garage.toml if present
     const garageConfigSection = document.getElementById('garageConfigSection');
@@ -116,7 +125,7 @@ async function downloadAllAsZip() {
     }
     
     // Add README
-    zip.file('README.md', generateReadme());
+    zip.file('README.md', generateReadme(isLegacy));
     
     // Generate ZIP
     const content = await zip.generateAsync({ type: 'blob' });
@@ -130,4 +139,23 @@ async function downloadAllAsZip() {
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
+}
+
+// Check if version is legacy (1.0.0 to 1.2.x)
+function isLegacyVersion(version) {
+    if (!version || version === 'latest' || version === 'local') {
+        return false;
+    }
+    
+    // Parse version (format: v1.2.3 or 1.2.3)
+    const versionMatch = version.match(/^v?(\d+)\.(\d+)\.(\d+)/);
+    if (!versionMatch) {
+        return false;
+    }
+    
+    const major = parseInt(versionMatch[1]);
+    const minor = parseInt(versionMatch[2]);
+    
+    // Legacy versions are 1.0.x, 1.1.x, 1.2.x
+    return major === 1 && minor <= 2;
 }
