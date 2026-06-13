@@ -1,450 +1,259 @@
 
-# Installation
+# Installation Guide
 
-## configuration page
-A page to generate the configuration files and the setup script is available here: [generator page](https://vampi62.github.io/electrostore/docs/generator/index.html)
+## Overview
 
-## start database server
-if you have already a mariadb server and a mqtt server, you can skip this step, just make sure that the database is named `electrostore` with a user with the permissions to access it.
+ElectroStore provides an automated configuration generator that creates all necessary files for Docker deployment. This is the recommended installation method.
+
+**Configuration Generator**: [https://vampi62.github.io/electrostore/docs/generator/](https://vampi62.github.io/electrostore/docs/generator/index.html)
+
+## Quick Start
+
+1. Open the [configuration generator](https://vampi62.github.io/electrostore/docs/generator/index.html)
+2. Fill in the configuration options (see details below)
+3. Click "Generate files"
+4. Download the generated ZIP archive containing all configuration files
+5. Extract the archive to your server
+6. Run the setup script: `./setup.sh` (Linux/macOS) or `.\setup.ps1` (Windows)
+7. Start the services: `docker-compose up -d`
+
+## Configuration Generator Options
+
+### URLs and CORS
+
+**API URL**  
+The public URL where your API will be accessible.
+- Example: `http://localhost:5000` or `https://api.electrostore.com`
+- Used for internal service communication and CORS configuration
+
+**Frontend URL**  
+The public URL where your web interface will be accessible.
+- Example: `http://localhost:8080` or `https://electrostore.com`
+- Automatically added to CORS allowed origins
+
+**Other Allowed Origins (CORS)**  
+Additional domains that should be allowed to access the API (one per line).
+- Example: `https://mobile.electrostore.com`
+- Useful for mobile apps or additional frontends
+
+### Docker Image Version
+
+Select the ElectroStore version to deploy:
+
+- **latest**: Development version using images from the `main` branch (features under development)
+- **local**: Build from source code on your machine (requires local repository clone)
+
+### Reverse Proxy (Traefik)
+
+**Use Traefik**  
+Enable this option if you're using Traefik as a reverse proxy with Docker labels.
+
+When enabled, configure:
+- **Traefik Docker Network**: Docker network used by Traefik (default: `traefik`)
+- **Entrypoint**: Traefik entrypoint (e.g., `web` for HTTP or `websecure` for HTTPS)
+- **Middlewares**: Comma-separated list of middlewares (e.g., `redirect-https@file,compress@file`)
+- **Enable TLS/HTTPS**: Automatically configure HTTPS with cert resolver
+- **Cert Resolver**: Certificate resolver name configured in Traefik (e.g., `letsencrypt`)
+
+When disabled, configure:
+- **API Port**: Port to expose the API (default: `5000`)
+- **Frontend Port**: Port to expose the web interface (default: `8080`)
+
+### Database (MariaDB)
+
+**Include MariaDB in Docker**  
+Enable to deploy a containerized MariaDB instance. The database will be automatically configured with secure default values.
+
+When disabled, configure external database:
+- **Host**: Database server address
+- **Port**: Database port (default: `3306`)
+- **Database Name**: Name of the database
+- **User**: Database username
+- **Password**: Database password
+
+### MQTT Broker (Mosquitto)
+
+**Include Mosquitto in Docker**  
+Enable to deploy a containerized MQTT broker for ESP module communication. The broker will be automatically configured with secure default values.
+
+When disabled, configure external MQTT broker:
+- **Host**: MQTT broker address
+- **Port**: MQTT broker port (default: `1883`)
+- **User**: MQTT username
+- **Password**: MQTT password
+
+### File Storage (S3)
+
+**Enable S3 storage**  
+Enable to store images and documents in S3-compatible storage. When disabled, files are stored in a local Docker volume.
+
+**Use integrated Garage S3**  
+Enable to deploy a containerized Garage S3 instance. Two separate buckets will be automatically created: one for the API service and one for the IA service, each with its own access keys.
+
+Configure bucket names:
+- **API Bucket Name**: Bucket for API files (default: `electrostore-api`)
+- **IA Bucket Name**: Bucket for AI training data (default: `electrostore-ia`)
+
+When using external S3 service (AWS, MinIO, etc.), configure separately for API and IA services:
+- **Endpoint**: S3 endpoint URL
+- **Access Key**: S3 access key ID
+- **Secret Key**: S3 secret access key
+- **Bucket**: Bucket name
+- **Region**: S3 region (e.g., `us-east-1`)
+- **Use HTTPS**: Enable secure connection
+
+### Notifications
+
+#### Email Service (SMTP)
+
+**Enable email sending**  
+Enable to send email notifications and password reset emails.
+
+Configure:
+- **SMTP Host**: SMTP server address (e.g., `smtp.gmail.com`)
+- **SMTP Port**: SMTP server port (default: `587`)
+- **SMTP User**: SMTP username
+- **SMTP Password**: SMTP password
+- **"From" Address**: Sender email address (e.g., `noreply@electrostore.com`)
+
+#### Web Push Notifications (VAPID)
+
+**Enable Web Push Notifications**  
+Enable browser push notifications for the Progressive Web App (PWA).
+
+Generate VAPID keys with: `npx web-push generate-vapid-keys`
+
+Configure:
+- **Subject**: Contact address (mailto: or https:) identifying the application owner
+- **VAPID Public Key**: Public key from `web-push` output (also set as `VITE_VAPID_PUBLIC_KEY` in frontend)
+- **VAPID Private Key**: Private key (keep secret, server-side only)
+
+### Parcel Tracking
+
+**Enable 17track parcel tracking**  
+Enable automatic delivery status updates via the 17track API.
+
+Configure:
+- **17track API Key**: API key from [17track developer portal](https://www.17track.net/en/api)
+
+### Secrets Management (HashiCorp Vault)
+
+**Use HashiCorp Vault**  
+Enable to retrieve secrets from Vault instead of storing them in plain text.
+
+Configure:
+- **Vault URL**: Vault server address (default: `http://vault:8200`)
+- **Vault Token**: Token with appropriate permissions
+- **Secrets Path**: Path in Vault where secrets are stored (default: `electrostore`)
+- **Mount Point**: Mount point of the KV secrets engine (default: `secret`)
+- **Vault Container Name**: Docker container name (default: `vault`)
+
+### JWT Configuration
+
+Configure JSON Web Token authentication:
+- **JWT Secret Key**: Random secret key (click "Generate" for a secure key)
+- **Issuer**: Token issuer identifier (default: `ElectroStoreAPI`)
+- **Audience**: Token audience identifier (default: `ElectroStoreClient`)
+- **Validity Duration**: Token validity in days (default: `1`)
+
+### OAuth Configuration
+
+**Add OAuth provider**  
+Configure Single Sign-On (SSO) authentication providers (e.g., Google, GitHub, Authentik).
+
+For each provider, configure:
+- **Provider Name**: Internal identifier
+- **Client ID**: OAuth client ID from provider
+- **Client Secret**: OAuth client secret
+- **Authority**: OAuth authorization URL
+- **Redirect URI**: Callback URL (format: `{frontend-url}/auth/callback`)
+- **Scope**: Requested OAuth scopes (e.g., `openid profile email`)
+- **Display Name**: Name shown to users
+- **Icon URL**: Provider logo URL
+- **Group Mapping**: Map OAuth groups to ElectroStore roles (User, Moderator, Admin)
+
+## Generated Files
+
+The generator creates:
+
+- **docker-compose.yml**: Complete Docker Compose configuration
+- **config/api/appsettings.json**: API service configuration
+- **config/ia/appsettings.json**: AI service configuration
+- **config/notif/appsettings.json**: Notification service configuration
+- **config/cron/appsettings.json**: CRON service configuration
+- **config/worker/appsettings.json**: WORKER service configuration
+- **.env**: Environment variables for Docker Compose
+- **setup.sh** / **setup.ps1**: Automated setup script for Linux/macOS or Windows
+- **config/garage/garage.toml**: Garage S3 configuration (if enabled)
+- **config/mosquitto/mosquitto.conf**: Mosquitto MQTT configuration (if enabled)
+- **config/mosquitto/mosquitto.passwd**: Mosquitto password file (if enabled)
+
+## Deployment
+
+### Linux / macOS
+
 ```bash
-sudo docker run -d --name mariadb \
- --restart always \
- -p 3306:3306 \
- -e MYSQL_ROOT_PASSWORD=electrostore \
- -e MYSQL_DATABASE=electrostore \
- -e MYSQL_USER=electrostore \
- -e MYSQL_PASSWORD=electrostore \
- -v electrostoreDB:/var/lib/mysql \
- mariadb:11.7.2
+# Extract the generated archive
+unzip electrostore-config.zip
+cd electrostore-config
+
+# Make the setup script executable
+chmod +x setup.sh
+
+# Run the setup script (configures Garage S3 and MQTT if enabled)
+./setup.sh
 ```
 
-create MQTT configuration
+### Windows (PowerShell)
+
+```powershell
+# Extract the generated archive
+Expand-Archive electrostore-config.zip
+cd electrostore-config
+
+# Run the setup script (configures Garage S3 and MQTT if enabled)
+.\setup.ps1
+
+# Start all services
+docker-compose up -d
+```
+
+## First Login
+
+After deployment, access the web interface at your configured frontend URL (e.g., `http://localhost:8080`).
+
+**Default credentials:**
+- **Username**: `admin@localhost.local`
+- **Password**: `Admin@1234`
+
+**Important**: Change the administrator password immediately after first login.
+
+## Troubleshooting
+
+### Check service status
+
 ```bash
-sudo mkdir /opt/mqtt && sudo mkdir /opt/mqtt/config && cd /opt/mqtt/config
+docker-compose ps
+```
 
-sudo nano mosquitto.conf
+### View service logs
 
-sudo nano mosquitto.passwd
-```
-Add the following content to the `mosquitto.conf` file, replacing `electrostore` with your desired username and password:
-```plaintext
-listener 1883
-persistence true
-persistence_location /mosquitto/data/
-password_file /mosquitto/config/mosquitto.passwd
-allow_anonymous false
-```
-Add the user to the password file: `mosquitto.passwd`
-```plaintext
-electrostore:$7$101$C/k6gESY+L+YDyuA$XCUrPtlix5a0mlq/f6JGklsaMbzL9wekwZ2udKjkpZNK0S8ix50vUbumpTBUqGacMd1HeCInrZstzhrw+Upe5g==
-```
 ```bash
-sudo docker run -d --name mqtt \
- --restart always \
- -p 1883:1883 \
- -v electrostoreMQTT:/mosquitto/data \
- -v /opt/mqtt/config:/mosquitto/config \
- -v /opt/mqtt/log:/mosquitto/log \
- eclipse-mosquitto:2.0.20
+# All services
+docker-compose logs -f
+
+# Specific service
+docker-compose logs -f electrostoreAPI
 ```
-the user created in the `mosquitto.passwd` is `electrostore` with the password `QHF8Gmq3oa2L117FmLqC`
-if you want to change the password, you can use the `mosquitto_passwd` command:
+
+### Restart services
+
 ```bash
-sudo docker attach mqtt
-mosquitto_passwd -b /mosquitto/config/mosquitto.passwd electrostore <new-password>
+docker-compose restart
 ```
 
-## start Kafka
+### Rebuild services (for local version)
+
 ```bash
-sudo docker run -d --name kafka \
- --restart always \
- -p 9092:9092 \
- -e KAFKA_NODE_ID=1 \
- -e KAFKA_PROCESS_ROLES=broker,controller \
- -e KAFKA_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093 \
- -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092 \
- -e KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER \
- -e KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT \
- -e KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093 \
- -e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 \
- -e KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1 \
- -e KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1 \
- -e KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0 \
- -e KAFKA_NUM_PARTITIONS=3 \
- -v electrostore-kafka-data:/var/lib/kafka/data \
- -v electrostore-kafka-config:/mnt/shared/config \
- -v electrostore-kafka-secrets:/etc/kafka/secrets \
- apache/kafka:4.2.1
+docker-compose up -d --build
 ```
-
-## create network
-```bash
-sudo docker network create electrostore
-
-sudo docker network connect electrostore mariadb
-
-sudo docker network connect electrostore mqtt
-
-sudo docker network connect electrostore kafka
-```
-
-## create and Complete config file
-```bash
-sudo mkdir -p /opt/electrostore/api /opt/electrostore/ia /opt/electrostore/notif /opt/electrostore/cron /opt/electrostore/worker
-```
-
-### API configuration
-```bash
-sudo nano /opt/electrostore/api/appsettings.json
-```
-```json
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
-  "Kestrel": {
-    "Endpoints": {
-      "Grpc": {
-        "Url": "http://0.0.0.0:5001",
-        "Protocols": "Http2"
-      },
-      "Http": {
-        "Url": "http://0.0.0.0:5000",
-        "Protocols": "Http1"
-      }
-    }
-  },
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=mariadb;Port=3306;Database=electrostore;Uid=electrostore;Pwd=electrostore;"
-  },
-  "MQTT": {
-    "Username": "electrostore",
-    "Password": "QHF8Gmq3oa2L117FmLqC",
-    "Server": "mqtt",
-    "Port": 1883,
-    "ClientId": "electroapi"
-  },
-  "Jwt": {
-    "Key": "<your-random-key>",
-    "Issuer": "<your-issuer>",
-    "Audience": "<your-audience>",
-    "ExpireDays": 1
-  },
-  "OAuth": {
-    "<method-name>": {
-      "ClientId": "<client-id>",
-      "ClientSecret": "<client-secret>",
-      "Authority": "https://<sso-server-url>/application/o/authorize/",
-      "RedirectUri": "https://<frontend-url>/auth/callback",
-      "Scope": "openid profile email",
-      "GroupMapping": {
-        "User": "electrostore Users",
-        "Moderator": "electrostore Moderators",
-        "Admin": "electrostore Admins"
-      },
-      "DisplayName": "<method-name>",
-      "IconUrl": "<method-icon-url>"
-    }
-  },
-  "S3": {
-    "Enable": false,
-    "Endpoint": "<minio-url>:9000",
-    "AccessKey": "<access-key>",
-    "SecretKey": "<secret-key>",
-    "BucketName": "electrostore",
-    "Region": "garage",
-    "Secure": false
-  },
-  "Kafka": {
-    "BootstrapServers": "kafka:9092"
-  },
-  "Vault": {
-    "Enable": false,
-    "Address": "http://<vault-server-url>:8200",
-    "Token": "<vault-access-token>",
-    "Path": "electrostore",
-    "MountPoint": "secret"
-  },
-  "IAServiceGrpcUrl": "http://electrostoreIA:5001",
-  "IAServiceHealthUrl": "http://electrostoreIA:5000/health",
-  "NotifServiceHealthUrl": "http://electrostoreNOTIF:5000/health",
-  "CRONServiceHealthUrl": "http://electrostoreCRON:5000/health",
-  "WORKERServiceHealthUrl": "http://electrostoreWORKER:5000/health",
-  "AllowedOrigins": [
-    "https://<your-frontend-domain1>",
-    "https://<your-frontend-domain2>"
-  ],
-  "FrontendUrl": "http://<frontend-url>",
-  "AllowedHosts": "*",
-  "DemoMode": false
-}
-```
-
-### IA service configuration
-```bash
-sudo nano /opt/electrostore/ia/appsettings.json
-```
-```json
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning",
-      "Microsoft.ML": "Warning"
-    }
-  },
-  "Kestrel": {
-    "Endpoints": {
-      "Grpc": {
-        "Url": "http://0.0.0.0:5001",
-        "Protocols": "Http2"
-      },
-      "Http": {
-        "Url": "http://0.0.0.0:5000",
-        "Protocols": "Http1"
-      }
-    }
-  },
-  "Kafka": {
-    "BootstrapServers": "kafka:9092",
-    "ConsumerGroupId": "ia-service"
-  },
-  "ApiServiceGrpcUrl": "http://electrostoreAPI:5001",
-  "Vault": {
-    "Enable": false,
-    "Addr": "http://vault:8200",
-    "Token": "",
-    "Path": "",
-    "MountPoint": "secret"
-  },
-  "DefaultEpochs": 10,
-  "DefaultBatchSize": 32
-}
-```
-
-### Notification service configuration
-```bash
-sudo nano /opt/electrostore/notif/appsettings.json
-```
-```json
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft": "Warning"
-    }
-  },
-  "Kestrel": {
-    "Endpoints": {
-      "Http": {
-        "Url": "http://0.0.0.0:5000",
-        "Protocols": "Http1"
-      }
-    }
-  },
-  "Kafka": {
-    "BootstrapServers": "kafka:9092",
-    "ConsumerGroupId": "notif-service"
-  },
-  "ApiServiceGrpcUrl": "http://electrostoreAPI:5001",
-  "Vault": {
-    "Enable": false,
-    "Addr": "http://vault:8200",
-    "Token": "",
-    "Path": "",
-    "MountPoint": "secret"
-  },
-  "SMTP": {
-    "Enable": false,
-    "Host": "<your-smtp-host>",
-    "Port": "587",
-    "Username": "<your-smtp-username>",
-    "Password": "<your-smtp-password>",
-    "From": "noreply@electrostore.local"
-  },
-  "VAPID": {
-    "Subject": "mailto:admin@electrostore.local",
-    "PublicKey": "<your-vapid-public-key>",
-    "PrivateKey": "<your-vapid-private-key>"
-  }
-}
-```
-
-> Generate VAPID keys with: `npx web-push generate-vapid-keys`  
-> The **Public Key** must also be set as `VITE_VAPID_PUBLIC_KEY` in the frontend environment.
-
-### CRON service configuration
-```bash
-sudo nano /opt/electrostore/cron/appsettings.json
-```
-```json
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning",
-      "Quartz": "Warning"
-    }
-  },
-  "Kestrel": {
-    "Endpoints": {
-      "Http": {
-        "Url": "http://0.0.0.0:5000",
-        "Protocols": "Http1"
-      }
-    }
-  },
-  "Kafka": {
-    "BootstrapServers": "kafka:9092",
-    "CronConsumerGroupId": "cron-service-events"
-  },
-  "Track17": {
-    "ApiKey": "<your-17track-api-key>"
-  },
-  "ApiServiceGrpcUrl": "http://electrostoreAPI:5001",
-  "CronRefreshIntervalMinutes": 60,
-  "Vault": {
-    "Enable": false,
-    "Addr": "http://vault:8200",
-    "Token": "",
-    "Path": "",
-    "MountPoint": "secret"
-  }
-}
-```
-
-### WORKER service configuration
-```bash
-sudo nano /opt/electrostore/worker/appsettings.json
-```
-```json
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
-  "Kestrel": {
-    "Endpoints": {
-      "Http": {
-        "Url": "http://0.0.0.0:5000",
-        "Protocols": "Http1"
-      }
-    }
-  },
-  "Kafka": {
-    "BootstrapServers": "kafka:9092",
-    "ConsumerGroupId": "worker-service"
-  },
-  "Mqtt": {
-    "Host": "mqtt",
-    "Port": "1883",
-    "Username": "electrostore",
-    "Password": "QHF8Gmq3oa2L117FmLqC",
-    "ClientId": "electrostore-worker"
-  },
-  "ApiServiceGrpcUrl": "http://electrostoreAPI:5001",
-  "Vault": {
-    "Enable": false,
-    "Addr": "http://vault:8200",
-    "Token": "",
-    "Path": "",
-    "MountPoint": "secret"
-  }
-}
-```
-
-## start the API
-```bash
-sudo docker run -d --name electrostoreAPI \
- --restart always \
- --network electrostore \
- -p 5002:5000 \
- -v electrostoreDATA:/app/wwwroot \
- -v /opt/electrostore/api:/app/config:ro \
- --tmpfs /tmp \
- --security-opt no-new-privileges=true \
- --read-only=true \
- --cap-drop ALL \
- --cap-add CHOWN \
- --cpus=2 \
- --memory=1g \
- ghcr.io/vampi62/electrostore/api:v1.0
-
-sudo docker run -d --name electrostoreIA \
- --restart always \
- --network electrostore \
- -v electrostoreDATA:/data \
- -v /opt/electrostore/ia:/app/config:ro \
- --tmpfs /tmp \
- --security-opt no-new-privileges=true \
- --read-only=true \
- --cap-drop ALL \
- --cap-add CHOWN \
- --cpus=2 \
- --memory=2g \
- ghcr.io/vampi62/electrostore/ia:v1.0
-
-sudo docker run -d --name electrostoreNOTIF \
- --restart always \
- --network electrostore \
- -v /opt/electrostore/notif:/app/config:ro \
- --tmpfs /tmp \
- --security-opt no-new-privileges=true \
- --read-only=true \
- --cap-drop ALL \
- --cap-add CHOWN \
- --cpus=1 \
- --memory=512m \
- ghcr.io/vampi62/electrostore/notif:v1.0
-
-sudo docker run -d --name electrostoreCRON \
- --restart always \
- --network electrostore \
- -v /opt/electrostore/cron:/app/config:ro \
- --tmpfs /tmp \
- --security-opt no-new-privileges=true \
- --read-only=true \
- --cap-drop ALL \
- --cap-add CHOWN \
- --cpus=1 \
- --memory=256m \
- ghcr.io/vampi62/electrostore/cron:v1.0
-
-sudo docker run -d --name electrostoreWORKER \
- --restart always \
- --network electrostore \
- -v /opt/electrostore/worker:/app/config:ro \
- --tmpfs /tmp \
- --security-opt no-new-privileges=true \
- --read-only=true \
- --cap-drop ALL \
- --cap-add CHOWN \
- --cpus=1 \
- --memory=256m \
- ghcr.io/vampi62/electrostore/worker:v1.0
-```
-
-## start the web interface
-set `VUE_API_URL` with the complete url of the API (ex: https://api.electrostore.com:443/api)
-```bash
-sudo docker run -d --name electrostoreFRONT \
- --restart always \
- -p 8080:80 \
- -e VUE_API_URL=http://<your-api-url>/api \
- --security-opt no-new-privileges=true \
- --cap-drop ALL \
- --cpus=2 \
- --memory=1g \
- ghcr.io/vampi62/electrostore/front:v1.0
-```
-
-## login to the web interface
-Open your web browser and navigate to `http://<your-server-ip>:8080`. You should see the ElectroStore web interface.
-use the default credentials:
-- **Username**: admin@localhost.local
-- **Password**: Admin@1234

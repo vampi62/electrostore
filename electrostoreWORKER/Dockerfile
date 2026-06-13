@@ -5,7 +5,6 @@ WORKDIR /app
 COPY electrostoreWORKER.csproj .
 RUN dotnet restore
 
-COPY DTO/ DTO/
 COPY Extensions/ Extensions/
 COPY Grpc/ Grpc/
 COPY Kafka/ Kafka/

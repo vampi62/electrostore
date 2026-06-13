@@ -69,7 +69,7 @@ function toggleTraefikTLS() {
 
 // Generate random password in field
 function generatePassword(fieldId, length = 32) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@$%^&*()_+-=[]{}|;:,.<>?';
     let password = '';
     
     for (let i = 0; i < length; i++) {
@@ -163,11 +163,49 @@ function resetForm() {
     initializeForm();
 }
 
+// Handle version change
+function handleVersionChange() {
+    const version = document.getElementById('appVersion').value;
+    const isLegacy = isLegacyVersion(version);
+    
+    // Hide/show sections based on version
+    const parcelSection = document.querySelector('section.form-section:has(#enableTrack17)');
+    const vapidSubSection = document.querySelector('.sub-section:has(#enableVapid)');
+    const iaBucketNameField = document.getElementById('s3IaBucket').closest('.form-group');
+    
+    if (parcelSection) {
+        parcelSection.style.display = isLegacy ? 'none' : 'block';
+        if (isLegacy) {
+            document.getElementById('enableTrack17').checked = false;
+            toggleTrack17();
+        }
+    }
+    
+    if (vapidSubSection) {
+        vapidSubSection.style.display = isLegacy ? 'none' : 'block';
+        if (isLegacy) {
+            document.getElementById('enableVapid').checked = false;
+            toggleVapid();
+        }
+    }
+
+    if (iaBucketNameField) {
+        iaBucketNameField.style.display = isLegacy ? 'none' : 'block';
+    }
+}
+
 // Initialize form
 function initializeForm() {
     // Initialize visible sections
     toggleSection('mariadb');
     toggleSection('mqtt');
+    
+    // Add version change listener
+    const versionSelect = document.getElementById('appVersion');
+    if (versionSelect) {
+        versionSelect.addEventListener('change', handleVersionChange);
+        handleVersionChange(); // Initial call
+    }
 }
 
 // File generation - Main entry point
@@ -189,12 +227,33 @@ function generateFiles() {
     const mosquittoConfig = config.useMQTT ? generateMosquittoConfig(config) : null;
     const mosquittoPasswd = config.useMQTT ? generateMosquittoPasswd(config) : null;
     
+    const isLegacy = isLegacyVersion(config.appVersion);
+    
     document.getElementById('dockerCompose').textContent = dockerCompose;
     document.getElementById('apiAppsettingsFile').textContent = apiAppsettings;
-    document.getElementById('iaAppsettingsFile').textContent = iaAppsettings;
-    document.getElementById('notifAppsettingsFile').textContent = notifAppsettings;
-    document.getElementById('cronAppsettingsFile').textContent = cronAppsettings;
-    document.getElementById('workerAppsettingsFile').textContent = workerAppsettings;
+    
+    // Hide/show service-specific configs based on version
+    const notifSection = document.getElementById('notifAppsettingsFile').closest('.file-output');
+    const cronSection = document.getElementById('cronAppsettingsFile').closest('.file-output');
+    const workerSection = document.getElementById('workerAppsettingsFile').closest('.file-output');
+    const iaSection = document.getElementById('iaAppsettingsFile').closest('.file-output');
+    
+    if (isLegacy) {
+        if (notifSection) notifSection.style.display = 'none';
+        if (cronSection) cronSection.style.display = 'none';
+        if (workerSection) workerSection.style.display = 'none';
+        if (iaSection) iaSection.style.display = 'none';
+    } else {
+        if (notifSection) notifSection.style.display = 'block';
+        if (cronSection) cronSection.style.display = 'block';
+        if (workerSection) workerSection.style.display = 'block';
+        if (iaSection) iaSection.style.display = 'block';
+        document.getElementById('notifAppsettingsFile').textContent = notifAppsettings;
+        document.getElementById('cronAppsettingsFile').textContent = cronAppsettings;
+        document.getElementById('workerAppsettingsFile').textContent = workerAppsettings;
+        document.getElementById('iaAppsettingsFile').textContent = iaAppsettings;
+    }
+    
     document.getElementById('envFile').textContent = envFile;
     document.getElementById('setupScript').textContent = setupScript;
     document.getElementById('setupScriptWindows').textContent = setupScriptWindows;
