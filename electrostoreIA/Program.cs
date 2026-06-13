@@ -9,6 +9,7 @@ using ElectrostoreIA.Grpc;
 using ElectrostoreIA.Grpc.Services;
 using ElectrostoreIA.Kafka.Consumers;
 using ElectrostoreIA.Kafka.Producer;
+using Microsoft.AspNetCore.Mvc;
 using Minio;
 
 namespace ElectrostoreIA;
@@ -57,7 +58,7 @@ public partial class Program
         app.UseStaticFiles();
         CreateRequiredDirectories();
 
-        app.MapGet("/health", (ModelTrainerService trainerService, ConfigCacheService configCache) =>
+        app.MapGet("/health", ([FromServices] IModelTrainerService trainerService, [FromServices] IConfigCacheService configCache) =>
             Results.Ok(new
             {
                 status = configCache.DemoMode ? "demo" : "healthy",

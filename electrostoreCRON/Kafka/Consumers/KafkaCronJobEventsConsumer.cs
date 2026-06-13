@@ -30,8 +30,8 @@ public class KafkaCronJobEventsConsumer : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var bootstrapServers = _configuration["Kafka:BootstrapServers"] ?? "kafka:9092";
-        var groupId          = _configuration["Kafka:CronConsumerGroupId"] ?? "cron-service-events";
+        var bootstrapServers = _configuration.GetSection("Kafka:BootstrapServers").Value ?? "kafka:9092";
+        var groupId = _configuration.GetSection("Kafka:ConsumerGroupId").Value ?? "cron-service-events";
 
         var config = new ConsumerConfig
         {
@@ -54,7 +54,7 @@ public class KafkaCronJobEventsConsumer : BackgroundService
                 ConsumeResult<string, string>? result = null;
                 try
                 {
-                    result = consumer.Consume(stoppingToken);
+                    result = await Task.Run(() => consumer.Consume(stoppingToken), stoppingToken);
                 }
                 catch (OperationCanceledException)
                 {

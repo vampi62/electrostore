@@ -4,8 +4,6 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>ElectrostoreIA</RootNamespace>
-    <AssemblyName>electrostoreIA</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

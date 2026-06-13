@@ -5,12 +5,14 @@ namespace ElectrostoreNOTIF.Services.WebPushService;
 
 public class WebPushService : IWebPushService
 {
+    private readonly IConfiguration _configuration;
     private readonly ILogger<WebPushService> _logger;
     private readonly WebPushClient _client;
     private readonly VapidDetails _vapid;
 
     public WebPushService(IConfiguration configuration, ILogger<WebPushService> logger)
     {
+        _configuration = configuration;
         _logger = logger;
         var publicKey = configuration["VAPID:PublicKey"] ?? throw new InvalidOperationException("VAPID:PublicKey is not configured.");
         var privateKey = configuration["VAPID:PrivateKey"] ?? throw new InvalidOperationException("VAPID:PrivateKey is not configured.");
@@ -21,6 +23,13 @@ public class WebPushService : IWebPushService
 
     public async Task SendAsync(string endpoint, string p256dh, string auth, string title, string body, Dictionary<string, string>? data = null)
     {
+
+        if (!bool.TryParse(_configuration["VAPID:Enable"], out var isEnabled) || !isEnabled)
+        {
+            _logger.LogDebug("VAPID disabled — push notification ignored for {Endpoint}", endpoint);
+            return;
+        }
+
         var payload = JsonSerializer.Serialize(new
         {
             title,

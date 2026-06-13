@@ -22,17 +22,36 @@ public class EmailSenderService : IEmailSenderService
             return;
         }
 
+        // Validate recipient address
+        if (string.IsNullOrWhiteSpace(to))
+        {
+            _logger.LogError("Recipient e-mail address is null or empty");
+            throw new ArgumentException("Recipient e-mail address cannot be null or empty", nameof(to));
+        }
+
         var host = _configuration["SMTP:Host"] ?? throw new InvalidOperationException("SMTP:Host configuration is missing");
         var port = int.Parse(_configuration["SMTP:Port"] ?? "587");
         var username = _configuration["SMTP:Username"];
         var password = _configuration["SMTP:Password"];
         var from = _configuration["SMTP:From"] ?? username ?? "noreply@electrostore.local";
 
+        // Validate sender address
+        if (string.IsNullOrWhiteSpace(from))
+        {
+            _logger.LogError("Sender e-mail address is null or empty");
+            throw new InvalidOperationException("SMTP:From configuration is missing and no username is configured");
+        }
+
         using var client = new SmtpClient(host, port)
         {
-            Credentials = new NetworkCredential(username, password),
             EnableSsl = true
         };
+
+        // Only set credentials if username and password are provided
+        if (!string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password))
+        {
+            client.Credentials = new NetworkCredential(username, password);
+        }
 
         var message = new MailMessage(from, to, subject, body) { IsBodyHtml = true };
 
