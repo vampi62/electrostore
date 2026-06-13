@@ -35,8 +35,8 @@ public class KafkaIaTrainConsumer : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var bootstrapServers = _configuration.GetValue<string>("Kafka:BootstrapServers") ?? "kafka:9092";
-        var groupId = _configuration.GetValue<string>("Kafka:ConsumerGroupId") ?? "ia-service";
+        var bootstrapServers = _configuration.GetSection("Kafka:BootstrapServers").Value ?? "kafka:9092";
+        var groupId = _configuration.GetSection("Kafka:ConsumerGroupId").Value ?? "ia-service";
 
         var config = new ConsumerConfig
         {
@@ -71,7 +71,7 @@ public class KafkaIaTrainConsumer : BackgroundService
                 ConsumeResult<string, string>? result = null;
                 try
                 {
-                    result = consumer.Consume(TimeSpan.FromSeconds(2));
+                    result = await Task.Run(() => consumer.Consume(stoppingToken), stoppingToken);
                 }
                 catch (OperationCanceledException)
                 {

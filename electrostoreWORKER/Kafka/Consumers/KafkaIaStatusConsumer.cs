@@ -28,8 +28,8 @@ public class KafkaIaStatusConsumer : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var bootstrapServers = _configuration["Kafka:BootstrapServers"] ?? "kafka:9092";
-        var groupId          = _configuration["Kafka:ConsumerGroupId"]  ?? "worker-service";
+        var bootstrapServers = _configuration.GetSection("Kafka:BootstrapServers").Value ?? "kafka:9092";
+        var groupId = _configuration.GetSection("Kafka:ConsumerGroupId").Value ?? "worker-service";
 
         var config = new ConsumerConfig
         {
@@ -68,7 +68,7 @@ public class KafkaIaStatusConsumer : BackgroundService
                 ConsumeResult<string, string>? result = null;
                 try
                 {
-                    result = consumer.Consume(TimeSpan.FromSeconds(2));
+                    result = await Task.Run(() => consumer.Consume(stoppingToken), stoppingToken);
                 }
                 catch (OperationCanceledException)
                 {

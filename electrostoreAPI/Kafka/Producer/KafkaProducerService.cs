@@ -6,12 +6,13 @@ public class KafkaProducerService : IDisposable, IKafkaProducerService
 {
     private readonly IProducer<string, string> _producer;
     private readonly ILogger<KafkaProducerService> _logger;
+    private readonly string _bootstrapServers;
 
     public KafkaProducerService(IConfiguration configuration, ILogger<KafkaProducerService> logger)
     {
         _logger = logger;
-        var bootstrapServers = configuration["Kafka:BootstrapServers"] ?? "kafka:9092";
-        var config = new ProducerConfig { BootstrapServers = bootstrapServers };
+        _bootstrapServers = configuration["Kafka:BootstrapServers"] ?? "kafka:9092";
+        var config = new ProducerConfig { BootstrapServers = _bootstrapServers };
         _producer = new ProducerBuilder<string, string>(config).Build();
     }
 
@@ -26,6 +27,26 @@ public class KafkaProducerService : IDisposable, IKafkaProducerService
         {
             _logger.LogError(ex, "Failed to publish message to {Topic}", topic);
             throw;
+        }
+    }
+
+    public Task<bool> IsConnectedAsync()
+    {
+        try
+        {
+            using var adminClient = new AdminClientBuilder(new AdminClientConfig 
+            { 
+                BootstrapServers = _bootstrapServers,
+                SocketTimeoutMs = 5000
+            }).Build();
+            
+            var metadata = adminClient.GetMetadata(TimeSpan.FromSeconds(5));
+            return Task.FromResult(metadata.Brokers.Count > 0);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Kafka connection check failed");
+            return Task.FromResult(false);
         }
     }
 
