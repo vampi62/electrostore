@@ -65,6 +65,8 @@ function loadToEdition(id) {
 			mqtt_name_store: storesStore.stores[storeId.value].mqtt_name_store,
 			xlength_store: storesStore.stores[storeId.value].xlength_store,
 			ylength_store: storesStore.stores[storeId.value].ylength_store,
+			is_mqtt_connected_store: storesStore.stores[storeId.value].is_mqtt_connected_store,
+			mqtt_last_seen_store: storesStore.stores[storeId.value].mqtt_last_seen_store,
 		};
 		storesStore.ledEdition[storeId.value] = { ...storesStore.leds[storeId.value] };
 		storesStore.boxEdition[storeId.value] = { ...storesStore.boxs[storeId.value] };
@@ -347,6 +349,8 @@ const labelForm = ref([
 	{ key: "mqtt_name_store", label: "store.MQTTName", type: "text", enableCondition: "func.hasPermission([2])" },
 	{ key: "xlength_store", label: "store.XLength", type: "number", enableCondition: "func.hasPermission([2])" },
 	{ key: "ylength_store", label: "store.YLength", type: "number", enableCondition: "func.hasPermission([2])" },
+	{ key: "is_mqtt_connected_store", label: "store.MqttConnected", type: "computed" },
+	{ key: "mqtt_last_seen_store", label: "store.MqttLastSeen", type: "computed" },
 ]);
 const labelTableauModalTag = ref([
 	{ label: "store.TagName", sortable: true, key: "nom_tag", valueKey: "nom_tag", type: "text" },

@@ -3,6 +3,8 @@
 	"FilterMqttName": "MQTT Name",
 	"FilterXLength": "X Length",
 	"FilterYLength": "Y Length",
+	"FilterMqttConnected": "MQTT Connected",
+	"FilterMqttLastSeen": "MQTT Last Seen",
 	"FilterTag": "Tag",
 	"Title": "Stores",
 	"Add": "Add a store",
@@ -10,6 +12,8 @@
 	"XLength": "X Length",
 	"YLength": "Y Length",
 	"MqttName": "MQTT Name",
+	"MqttConnected": "MQTT Connected",
+	"MqttLastSeen": "MQTT Last Seen",
 	"TagsList": "Tags",
 	"Loading": "Loading"
 }

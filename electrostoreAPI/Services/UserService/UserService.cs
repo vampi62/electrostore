@@ -99,13 +99,16 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<ReadUserDto> CreateUser(CreateUserDto userDto)
+    public async Task<ReadUserDto> CreateUser(CreateUserDto userDto, bool avoidRoleVerification = false)
     {
-        // if the user is not an admin, he can only create a user with the role "user"
-        var User = _sessionService.GetClientRole();
-        if (User < UserRole.Admin && userDto.role_user > UserRole.User)
+        if (!avoidRoleVerification)
         {
-            throw new UnauthorizedAccessException("You are not allowed to create a user with this role");
+            // if the user is not an admin, he can only create a user with the role "user"
+            var User = _sessionService.GetClientRole();
+            if (User < UserRole.Admin && userDto.role_user > UserRole.User)
+            {
+                throw new UnauthorizedAccessException("You are not allowed to create a user with this role");
+            }
         }
         // Check if email is already used
         var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user);

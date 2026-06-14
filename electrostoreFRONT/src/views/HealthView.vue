@@ -120,19 +120,19 @@ const isConfigLoading = computed(() => configsStore.configs?.loading);
 		<section class="mb-8">
 			<div class="flex items-center justify-between mb-3">
 				<h3 class="text-lg font-semibold text-gray-700">{{ $t('health.SectionStatus') }}</h3>
-				<button type="button" @click="configsStore.getHealth()"
-					class="flex items-center gap-1 text-sm px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700">
-					<i class="fa-solid fa-arrows-rotate" :class="{ 'animate-spin': isStatusLoading }"></i>
-					{{ $t('health.Refresh') }}
-				</button>
+				<div class="flex items-center gap-2">
+					<div v-if="isStatusLoading" class="flex items-center gap-2 text-gray-500">
+						<span class="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></span>
+						{{ $t('health.Loading') }}
+					</div>
+					<button type="button" @click="configsStore.getHealth()"
+						class="flex items-center gap-1 text-sm px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700">
+						<i class="fa-solid fa-arrows-rotate" :class="{ 'animate-spin': isStatusLoading }"></i>
+						{{ $t('health.Refresh') }}
+					</button>
+				</div>
 			</div>
-
-			<div v-if="isStatusLoading" class="flex items-center gap-2 text-gray-500 py-4">
-				<span class="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></span>
-				{{ $t('health.Loading') }}
-			</div>
-
-			<div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 				<div v-for="service in services" :key="service.key"
 					class="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-4 py-3 shadow-sm">
 					<span class="font-medium text-gray-700">{{ service.label }}</span>
@@ -147,19 +147,19 @@ const isConfigLoading = computed(() => configsStore.configs?.loading);
 		<section>
 			<div class="flex items-center justify-between mb-3">
 				<h3 class="text-lg font-semibold text-gray-700">{{ $t('health.SectionConfig') }}</h3>
-				<button type="button" @click="configsStore.getConfig()"
-					class="flex items-center gap-1 text-sm px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700">
-					<i class="fa-solid fa-arrows-rotate" :class="{ 'animate-spin': isConfigLoading }"></i>
-					{{ $t('health.Refresh') }}
-				</button>
+				<div class="flex items-center gap-2">
+					<div v-if="isConfigLoading" class="flex items-center gap-2 text-gray-500">
+						<span class="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></span>
+						{{ $t('health.Loading') }}
+					</div>
+					<button type="button" @click="configsStore.getConfig()"
+						class="flex items-center gap-1 text-sm px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700">
+						<i class="fa-solid fa-arrows-rotate" :class="{ 'animate-spin': isConfigLoading }"></i>
+						{{ $t('health.Refresh') }}
+					</button>
+				</div>
 			</div>
-
-			<div v-if="isConfigLoading" class="flex items-center gap-2 text-gray-500 py-4">
-				<span class="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></span>
-				{{ $t('health.Loading') }}
-			</div>
-
-			<div v-else class="flex flex-col gap-4">
+			<div class="flex flex-col gap-4">
 				<div v-for="group in configGroups" :key="group.label"
 					class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
 					<div class="px-4 py-2 bg-gray-50 border-b border-gray-200">

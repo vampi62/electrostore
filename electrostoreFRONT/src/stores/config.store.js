@@ -100,6 +100,7 @@ export const useConfigsStore = defineStore("configs",{
 			});
 		},
 		async getHealth() {
+			this.status.loading = true;
 			this.status = await fetchWrapper.get({
 				url: `${baseUrl}/status`,
 			});
