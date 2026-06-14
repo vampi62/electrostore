@@ -11,10 +11,8 @@ const demoMode = `${import.meta.env.VITE_APP_DEMO_MODE}` === "true";
 export const useConfigsStore = defineStore("configs",{
 	state: () => ({
 		configs: {},
+		status: {},
 		defaultsConfig: {
-			"smtp_enabled": false,
-			"mqtt_connected": false,
-			"ia_service_status": false,
 			"demo_mode": demoMode,
 			"max_length_url": 150,
 			"max_length_commentaire": 455,
@@ -80,12 +78,30 @@ export const useConfigsStore = defineStore("configs",{
 				".bmp",
 			],
 		},
+		defaultsStatus: {
+			"api_status": "unknown",
+			"db_connected": false,
+			"mqtt_connected": false,
+			"kafka_connected": false,
+			"ia_status": "unknown",
+			"ia_training_in_progress": false,
+			"notif_status": "unknown",
+			"notif_smtp": false,
+			"notif_webPush": false,
+			"cron_status": "unknown",
+			"worker_status": "unknown"
+		},
 	}),
 	actions: {
 		async getConfig() {
 			this.configs.loading = true;
 			this.configs = await fetchWrapper.get({
 				url: `${baseUrl}/config`,
+			});
+		},
+		async getHealth() {
+			this.status = await fetchWrapper.get({
+				url: `${baseUrl}/status`,
 			});
 		},
 	},
@@ -96,6 +112,15 @@ export const useConfigsStore = defineStore("configs",{
 			}
 			if (state.defaultsConfig[key]) {
 				return state.defaultsConfig[key];
+			}
+			return null;
+		},
+		getStatusByKey: (state) => (key) => {
+			if (state.status[key]) {
+				return state.status[key];
+			}
+			if (state.defaultsStatus[key]) {
+				return state.defaultsStatus[key];
 			}
 			return null;
 		},
