@@ -1,4 +1,5 @@
 using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Kafka.Producer;
 using MQTTnet;
 using System.Text.Json;
 
@@ -10,17 +11,20 @@ public class StatusService : IStatusService
     private readonly IConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ApplicationDbContext _context;
+    private readonly IKafkaProducerService _kafkaProducerService;
 
     public StatusService(
         IMqttClient mqttClient,
         IConfiguration configuration,
         IHttpClientFactory httpClientFactory,
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        IKafkaProducerService kafkaProducerService)
     {
         _mqttClient = mqttClient;
         _configuration = configuration;
         _httpClientFactory = httpClientFactory;
         _context = context;
+        _kafkaProducerService = kafkaProducerService;
     }
 
     public async Task<ReadStatusDto> GetStatus()
@@ -35,29 +39,26 @@ public class StatusService : IStatusService
         var cronTask = FetchServiceHealth(cronUrl);
         var workerTask = FetchServiceHealth(workerUrl);
         var dbTask = CheckDatabaseAsync();
+        var kafkaTask = _kafkaProducerService.IsConnectedAsync();
 
-        await Task.WhenAll(iaTask, notifTask, cronTask, workerTask, dbTask);
+        await Task.WhenAll(iaTask, notifTask, cronTask, workerTask, dbTask, kafkaTask);
 
         var iaHealth = iaTask.Result;
         var notifHealth = notifTask.Result;
         var cronHealth = cronTask.Result;
         var workerHealth = workerTask.Result;
 
-        bool? iaTraining = null;
-        if (iaHealth.TryGetValue("training_in_progress", out var tipElement) &&
-            (tipElement.ValueKind == JsonValueKind.True || tipElement.ValueKind == JsonValueKind.False))
-        {
-            iaTraining = tipElement.ValueKind == JsonValueKind.True;
-        }
-
         return new ReadStatusDto
         {
-            api_status = "healthy",
+            api_status = _configuration.GetValue<bool>("DemoMode") ? "demo" : "healthy",
             db_connected = dbTask.Result,
             mqtt_connected = _mqttClient.IsConnected,
+            kafka_connected = kafkaTask.Result, 
             ia_status = iaHealth.TryGetValue("status", out var iaStatus) && iaStatus.GetString() is string s ? s : "unknown",
-            ia_training_in_progress = iaTraining,
+            ia_training_in_progress = iaHealth.TryGetValue("training_in_progress", out var trainingElement) && (trainingElement.ValueKind == JsonValueKind.True || trainingElement.ValueKind == JsonValueKind.False) ? trainingElement.ValueKind == JsonValueKind.True : (bool?)null,
             notif_status = notifHealth.TryGetValue("status", out var notifStatus) && notifStatus.GetString() is string ns ? ns : "unknown",
+            notif_smtp = notifHealth.TryGetValue("smtp", out var smtpElement) && (smtpElement.ValueKind == JsonValueKind.True || smtpElement.ValueKind == JsonValueKind.False) ? smtpElement.ValueKind == JsonValueKind.True : (bool?)null,
+            notif_webPush = notifHealth.TryGetValue("webPush", out var wpElement) && (wpElement.ValueKind == JsonValueKind.True || wpElement.ValueKind == JsonValueKind.False) ? wpElement.ValueKind == JsonValueKind.True : (bool?)null,
             cron_status = cronHealth.TryGetValue("status", out var cronStatus) && cronStatus.GetString() is string cs ? cs : "unknown",
             worker_status = workerHealth.TryGetValue("status", out var workerStatus) && workerStatus.GetString() is string workerStr ? workerStr : "unknown"
         };

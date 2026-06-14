@@ -190,7 +190,7 @@ function handleVersionChange() {
     }
 
     if (iaBucketNameField) {
-        iaBucketNameField.style.display = isLegacy ? 'none' : 'block';
+        iaBucketNameField.style.display = isLegacy ? 'none' : '';
     }
 }
 
