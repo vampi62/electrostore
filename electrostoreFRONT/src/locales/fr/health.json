@@ -6,6 +6,8 @@
 	"Loading": "Chargement...",
 	"StatusTrue": "Actif",
 	"StatusFalse": "Inactif",
+	"StatusInProgress": "En cours ({0})",
+	"StatusIdle": "Inactif",
 	"StatusUnknown": "Inconnu",
 	"ServiceApi": "API",
 	"ServiceDb": "Base de données",

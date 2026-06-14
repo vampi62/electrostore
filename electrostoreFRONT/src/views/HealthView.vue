@@ -13,50 +13,50 @@ onMounted(() => {
 });
 
 const services = computed(() => [
-	{ key: "api_status",            label: t("health.ServiceApi"),      type: "string" },
-	{ key: "db_connected",          label: t("health.ServiceDb"),       type: "bool"   },
-	{ key: "mqtt_connected",        label: t("health.ServiceMqtt"),     type: "bool"   },
-	{ key: "kafka_connected",       label: t("health.ServiceKafka"),    type: "bool"   },
-	{ key: "ia_status",             label: t("health.ServiceIa"),       type: "string" },
-	{ key: "ia_training_in_progress", label: t("health.ServiceIaTrain"), type: "bool"  },
-	{ key: "notif_status",          label: t("health.ServiceNotif"),    type: "string" },
-	{ key: "cron_status",           label: t("health.ServiceCron"),     type: "string" },
-	{ key: "worker_status",         label: t("health.ServiceWorker"),   type: "string" },
+	{ key: "api_status", label: t("health.ServiceApi"), type: "string" },
+	{ key: "db_connected", label: t("health.ServiceDb"), type: "bool" },
+	{ key: "mqtt_connected", label: t("health.ServiceMqtt"), type: "bool" },
+	{ key: "kafka_connected", label: t("health.ServiceKafka"), type: "bool" },
+	{ key: "ia_status", label: t("health.ServiceIa"), type: "string" },
+	{ key: "ia_training_in_progress", label: t("health.ServiceIaTrain"), type: "int" },
+	{ key: "notif_status", label: t("health.ServiceNotif"), type: "string" },
+	{ key: "cron_status", label: t("health.ServiceCron"), type: "string" },
+	{ key: "worker_status", label: t("health.ServiceWorker"), type: "string" },
 ]);
 
 const configGroups = computed(() => [
 	{
 		label: t("health.ConfigGroupGeneral"),
 		keys: [
-			{ key: "demo_mode",               label: t("health.ConfigDemoMode"),          type: "bool" },
-			{ key: "max_size_document_in_mb", label: t("health.ConfigMaxDocSize"),        type: "value", unit: "MB" },
+			{ key: "demo_mode", label: t("health.ConfigDemoMode"), type: "bool" },
+			{ key: "max_size_document_in_mb", label: t("health.ConfigMaxDocSize"), type: "value", unit: "MB" },
 		],
 	},
 	{
 		label: t("health.ConfigGroupLimits"),
 		keys: [
-			{ key: "max_length_name",         label: t("health.ConfigMaxName"),           type: "value" },
-			{ key: "max_length_description",  label: t("health.ConfigMaxDesc"),           type: "value" },
-			{ key: "max_length_url",          label: t("health.ConfigMaxUrl"),            type: "value" },
-			{ key: "max_length_commentaire",  label: t("health.ConfigMaxComment"),        type: "value" },
-			{ key: "max_length_email",        label: t("health.ConfigMaxEmail"),          type: "value" },
-			{ key: "max_length_ip",           label: t("health.ConfigMaxIp"),             type: "value" },
-			{ key: "max_length_reason",       label: t("health.ConfigMaxReason"),         type: "value" },
-			{ key: "max_length_status",       label: t("health.ConfigMaxStatus"),         type: "value" },
-			{ key: "max_length_type",         label: t("health.ConfigMaxType"),           type: "value" },
+			{ key: "max_length_name", label: t("health.ConfigMaxName"), type: "value" },
+			{ key: "max_length_description", label: t("health.ConfigMaxDesc"), type: "value" },
+			{ key: "max_length_url", label: t("health.ConfigMaxUrl"), type: "value" },
+			{ key: "max_length_commentaire", label: t("health.ConfigMaxComment"), type: "value" },
+			{ key: "max_length_email", label: t("health.ConfigMaxEmail"), type: "value" },
+			{ key: "max_length_ip", label: t("health.ConfigMaxIp"), type: "value" },
+			{ key: "max_length_reason", label: t("health.ConfigMaxReason"), type: "value" },
+			{ key: "max_length_status", label: t("health.ConfigMaxStatus"), type: "value" },
+			{ key: "max_length_type", label: t("health.ConfigMaxType"), type: "value" },
 		],
 	},
 	{
 		label: t("health.ConfigGroupMedia"),
 		keys: [
-			{ key: "allowed_image_extensions",    label: t("health.ConfigImgExt"),        type: "list" },
-			{ key: "allowed_document_extensions", label: t("health.ConfigDocExt"),        type: "list" },
+			{ key: "allowed_image_extensions", label: t("health.ConfigImgExt"), type: "list" },
+			{ key: "allowed_document_extensions", label: t("health.ConfigDocExt"), type: "list" },
 		],
 	},
 	{
 		label: t("health.ConfigGroupSSO"),
 		keys: [
-			{ key: "sso_available_providers", label: t("health.ConfigSsoProviders"),      type: "sso" },
+			{ key: "sso_available_providers", label: t("health.ConfigSsoProviders"), type: "sso" },
 		],
 	},
 ]);
@@ -66,9 +66,16 @@ function statusBadge(key, type) {
 	if (type === "bool") {
 		return value ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
 	}
+	if (type === "int") {
+		return value > 0 ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800";
+	}
 	const v = (value || "").toLowerCase();
-	if (["healthy", "ok", "online", "running"].includes(v)) return "bg-green-100 text-green-800";
-	if (["unknown", ""].includes(v) || !v) return "bg-gray-100 text-gray-600";
+	if (["healthy", "ok", "online", "running"].includes(v)) {
+		return "bg-green-100 text-green-800";
+	}
+	if (["unknown", ""].includes(v) || !v) {
+		return "bg-gray-100 text-gray-600";
+	}
 	return "bg-red-100 text-red-800";
 }
 
@@ -77,14 +84,23 @@ function statusLabel(key, type) {
 	if (type === "bool") {
 		return value ? t("health.StatusTrue") : t("health.StatusFalse");
 	}
+	if (type === "int") {
+		return value > 0 ? t("health.StatusInProgress", value) : t("health.StatusIdle");
+	}
 	return value || t("health.StatusUnknown");
 }
 
 function configValue(key, type, unit) {
 	const value = configsStore.getConfigByKey(key);
-	if (type === "bool") return null;
-	if (type === "list") return Array.isArray(value) ? value : [];
-	if (type === "sso") return Array.isArray(value) ? value : [];
+	if (type === "bool") {
+		return null;
+	}
+	if (type === "list") {
+		return Array.isArray(value) ? value : [];
+	}
+	if (type === "sso") {
+		return Array.isArray(value) ? value : [];
+	}
 	return unit ? `${value} ${unit}` : value;
 }
 

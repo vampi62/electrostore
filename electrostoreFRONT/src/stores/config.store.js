@@ -84,12 +84,12 @@ export const useConfigsStore = defineStore("configs",{
 			"mqtt_connected": false,
 			"kafka_connected": false,
 			"ia_status": "unknown",
-			"ia_training_in_progress": false,
+			"ia_training_in_progress": 0,
 			"notif_status": "unknown",
 			"notif_smtp": false,
 			"notif_webPush": false,
 			"cron_status": "unknown",
-			"worker_status": "unknown"
+			"worker_status": "unknown",
 		},
 	}),
 	actions: {
