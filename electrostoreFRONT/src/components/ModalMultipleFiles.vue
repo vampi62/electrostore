@@ -114,11 +114,6 @@ export default {
 			required: false,
 			default: "components.VModalMultipleFilesTitle",
 		},
-		maxSizeInMb: {
-			type: Number,
-			required: false,
-			default: 5,
-		},
 		fileType: {
 			type: String,
 			required: false,
@@ -140,6 +135,7 @@ export default {
 			errorMessage: "",
 			allowedExtensions: this.configsStore.getConfigByKey(
 				this.fileType === "image" ? "allowed_image_extensions" : "allowed_document_extensions") || [],
+			maxSizeInMb: this.configsStore.getConfigByKey("max_size_document_in_mb") || 10,
 		};
 	},
 	methods: {

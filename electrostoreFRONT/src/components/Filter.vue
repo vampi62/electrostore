@@ -74,7 +74,7 @@
 				:class="[classCss, label.length > 0 ? 'mr-2' : '']"
 				:disabled="disabled"
 				v-model="inputText"
-				@change="$emit('updateText', $event.target.checked)" />
+				@change="$emit('updateText', [$event.target.checked, $event.target.checked])" />
 		</template>
 		<template v-else>
 			<input
@@ -82,10 +82,11 @@
 				:type="type"
 				:placeholder="placeholder"
 				:value="preset"
+				autocomplete="one-time-code"
 				class="border border-gray-300 rounded px-2 py-1"
 				:class="[classCss, label.length > 0 ? 'mr-2' : '']"
 				:disabled="disabled"
-				@input="$emit('updateText', $event.target.value)" />
+				@input="$emit('updateText', [$event.target.value, $event.target.value])" />
 		</template>
 		</div>
 	</div>
@@ -125,7 +126,7 @@ export default {
 			default: "",
 		},
 		preset: {
-			type: [String, Number],
+			type: [String, Number, Boolean],
 			required: false,
 			// This should be the value to preset the input with
 			default: "",
@@ -172,6 +173,13 @@ export default {
 			// This should be the key in storeData to pass to fetchOptions function
 			default: null,
 		},
+		strictMode: {
+			type: Object,
+			required: false,
+			// This should be an object containing the configuration for strict mode
+			// e.g., { key: 'region_signaleur.id', storeKey: 'id', typeData: 'number' }
+			default: null,
+		},
 	},
 	data() {
 		return {
@@ -181,8 +189,9 @@ export default {
 	},
 	created() {
 		this.debouncedRefetchData = debounce(this.refetchData, 500);
+		this._justSelected = false;
 	},
-	mounted() {
+	async mounted() {
 		if (this.type === "datalist" && this.preset) {
 			const found = this.options && this.options.find((o) => String(o.id) === String(this.preset));
 			if (found) {
@@ -192,7 +201,18 @@ export default {
 			}
 		}
 		if (this.type === "datalist" && this.fetchOptions && this.storeData && this.storeKey) {
-			this.refetchData();
+			await this.refetchData();
+			if (this.strictMode) {
+				const foundInStore = Object.values(this.storeData).find((o) => String(o[this.strictMode.storeKey]) === String(this.preset));
+				if (foundInStore) {
+					this.inputText = foundInStore[this.strictMode.storeKey];
+				}
+			} else {
+				const foundInStore = Object.values(this.storeData).find((o) => String(o[this.storeKey]) === String(this.preset));
+				if (foundInStore) {
+					this.inputText = foundInStore[this.storeKey];
+				}
+			}
 		}
 	},
 	emits: ["updateText"],
@@ -202,7 +222,7 @@ export default {
 				return [];
 			}
 			let result = this.options.filter((option) => {
-				if (this.inputText !== "") {
+				if (this.inputText !== null && this.inputText !== "") {
 					return toLowerCaseWithoutAccents(String(option.value)).includes(toLowerCaseWithoutAccents(this.inputText));
 				}
 				return true;
@@ -221,12 +241,13 @@ export default {
 				return [];
 			}
 			let result = Object.entries(this.storeData).filter(([index, element]) => {
-				if (this.inputText !== "") {
+				if (this.inputText !== null && this.inputText !== "") {
 					return toLowerCaseWithoutAccents(element[this.storeKey]).includes(toLowerCaseWithoutAccents(this.inputText));
 				}
 				return true;
 			}).map(([index, element]) => {
-				return [element[this.storeKey], element[this.storeKey]];
+				const idValue = this.strictMode ? element[this.strictMode.storeKey] : element[this.storeKey];
+				return [idValue, element[this.storeKey]];
 			});
 			if (this.sortOptions) {
 				result = result.slice().sort((a, b) => {
@@ -242,23 +263,32 @@ export default {
 		selectOption(index, option){
 			this.inputText = option;
 			this.isOpen = false;
-			this.$emit("updateText", index);
+			if (this.strictMode) {
+				this._justSelected = true;
+				this.$emit("updateText", [index, option], "select");
+			} else {
+				this.$emit("updateText", [index, option], "text");
+			}
 			this.$refs.filterInput.blur();
 		},
 		validateInput(){
+			if (this._justSelected) {
+				this._justSelected = false;
+				return;
+			}
 			if (this.options && this.options.length > 0 && !this.storeData) {
 				const result = this.options.find((option) => {
 					return toLowerCaseWithoutAccents(String(option.value)) === toLowerCaseWithoutAccents(this.inputText);
 				});
 				if (result) {
 					this.inputText = result.value;
-					this.$emit("updateText", result.id);
+					this.$emit("updateText", [result.id, result.value]);
 				} else {
 					this.inputText = "";
-					this.$emit("updateText", "");
+					this.$emit("updateText", ["", ""]);
 				}
 			} else if (this.storeData && this.storeKey) {
-				this.$emit("updateText", this.inputText);
+				this.$emit("updateText", [this.inputText, this.inputText]);
 			}
 		},
 		startEventUpdatePosition(){

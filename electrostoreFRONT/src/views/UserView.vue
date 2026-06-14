@@ -378,7 +378,8 @@ onMounted(() => {
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="user.PushNotifications"
-			:total-count="Number(usersStore.pushSubscriptionsTotalCount[userId] || 0)" :permission="userId !== 'new'">
+			:total-count="Number(usersStore.pushSubscriptionsTotalCount[userId] || 0)" :permission="userId !== 'new'"
+			v-if="configsStore.getConfigByKey('notif_webPush')">
 			<template #append-row>
 				<div v-if="!pushSupported" class="text-gray-500 italic text-sm">
 					{{ $t('user.PushNotSupported') }}

@@ -68,6 +68,10 @@ app.component(
 	defineAsyncComponent(() => import("@/components/NavBar.vue")),
 );
 app.component(
+	"NotificationAppUpdate",
+	defineAsyncComponent(() => import("@/components/NotificationAppUpdate.vue")),
+);
+app.component(
 	"NotificationContainer",
 	defineAsyncComponent(() => import("@/components/NotificationContainer.vue")),
 );

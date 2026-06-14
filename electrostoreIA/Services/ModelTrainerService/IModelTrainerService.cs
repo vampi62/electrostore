@@ -5,7 +5,7 @@ namespace ElectrostoreIA.Services.ModelTrainerService;
 
 public interface IModelTrainerService
 {
-    public bool IsTrainingInProgress();
+    public int IsTrainingInProgress();
     public TrainingProgress? GetTrainingStatus(int idModel);
     public bool SetTrainingProgressMap(int idModel, TrainingProgress trainingProgress);
     public Task<bool> StartAndWaitAsync(int idModel, int requestedBy, CancellationToken ct = default);

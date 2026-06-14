@@ -8,6 +8,7 @@ export { default as ModalFinder } from "./ModalFinder.vue";
 export { default as ModalMultipleFiles } from "./ModalMultipleFiles.vue";
 export { default as NavBar } from "./NavBar.vue";
 export { default as Notification } from "./Notification.vue";
+export { default as NotificationAppUpdate } from "./NotificationAppUpdate.vue";
 export { default as NotificationContainer } from "./NotificationContainer.vue";
 export { default as StatusDisplay } from "./StatusDisplay.vue";
 export { default as Store } from "./Store.vue";

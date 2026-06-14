@@ -40,19 +40,6 @@ function toSnakeCase(str) {
     return str.replace(/\s+/g, '_').toLowerCase();
 }
 
-// Escape secret for Vault CLI
-// Vault CLI can be very picky about special characters in secrets, so we need to escape them properly
-function escapeVaultSecret(secret) {
-    if (!secret) return secret;
-    return secret
-        .replace(/\\/g, '\\\\')
-        .replace(/"/g, '\\"')
-        .replace(/\$/g, '\\$')
-        .replace(/`/g, '\\`')
-        .replace(/@/g, '\\@')
-        .replace(/'/g, "'\"'\"'");
-}
-
 // Download file
 function downloadFile(filename, elementId) {
     const text = document.getElementById(elementId).textContent;

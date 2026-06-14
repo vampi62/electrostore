@@ -34,7 +34,7 @@ function onSubmit(values, { setErrors }) {
 		</div>
 
 		<!-- Form Section -->
-		<div v-else-if="configsStore.configs.smtp_enabled">
+		<div v-else-if="configsStore.getStatusByKey('notif_smtp')">
 			<Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
 				<div class="mb-4">
 					<label class="block text-gray-700" for="email">{{ $t('common.VForgotPasswordEmail') }}</label>
