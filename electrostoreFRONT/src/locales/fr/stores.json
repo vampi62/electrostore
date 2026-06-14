@@ -3,6 +3,8 @@
 	"FilterMqttName": "Nom MQTT",
 	"FilterXLength": "Longueur X",
 	"FilterYLength": "Longueur Y",
+	"FilterMqttConnected": "MQTT Connecté",
+	"FilterMqttLastSeen": "MQTT Dernière Connection",
 	"FilterTag": "Tag",
 	"Title": "Rangements",
 	"Add": "Créer un rangement",
@@ -10,6 +12,8 @@
 	"XLength": "Longueur X",
 	"YLength": "Longueur Y",
 	"MqttName": "Nom MQTT",
+	"MqttConnected": "MQTT Connecté",
+	"MqttLastSeen": "MQTT Dernière Connection",
 	"TagsList": "Tags",
 	"Loading": "Chargement"
 }

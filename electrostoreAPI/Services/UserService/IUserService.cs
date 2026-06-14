@@ -6,7 +6,7 @@ public interface IUserService
 {
     public Task<PaginatedResponseDto<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null);
 
-    public Task<ReadUserDto> CreateUser(CreateUserDto userDto);
+    public Task<ReadUserDto> CreateUser(CreateUserDto userDto, bool avoidRoleVerification = false);
     
     public Task<ReadUserDto> CreateFirstAdminUser(CreateUserDto userDto);
 

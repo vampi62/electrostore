@@ -4,6 +4,7 @@ import command from "./command.json";
 import commands from "./commands.json";
 import common from "./common.json";
 import components from "./components.json";
+import health from "./health.json";
 import ia from "./IA.json";
 import ias from "./IAs.json";
 import item from "./item.json";
@@ -26,6 +27,7 @@ export default {
 	commands,
 	common,
 	components,
+	health,
 	ia,
 	ias,
 	item,

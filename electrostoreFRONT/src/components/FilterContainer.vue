@@ -5,7 +5,7 @@
 			:label="filter.label"
 			:type="filter.type"
 			:disabled="filter?.enableCondition !== undefined && !eval(filter.enableCondition)"
-			:preset="filter?.value"
+			:preset="filter?.preset"
 			:placeholder="filter?.placeholder"
 			:class-css="filter?.class"
 			:options="filter?.options ? Object.keys(filter.options).map((key) => ({ id: key, value: filter.options[key] })) : null"
@@ -13,7 +13,8 @@
 			:fetch-options="filter?.fetchOptions"
 			:store-data="filter?.storeData"
 			:store-key="filter?.storeKey"
-			@update-text="(value) => updateText(index, value)"
+			:strict-mode="filter.strictMode"
+			@update-text="(value, mode) => updateText(index, value, mode)"
 		/>
 	</div>
 </template>
@@ -67,14 +68,40 @@ export default {
 		Filter: defineAsyncComponent(() => import("@/components/Filter.vue")),
 	},
 	beforeMount() {
+		for (const filter of this.filters) {
+			if (filter.strictMode) {
+				filter._originalKey = filter.key;
+				filter._originalCompareMethod = filter.compareMethod;
+				if (filter.typeData) {
+					filter._originalTypeData = filter.typeData;
+				}
+				if (filter.disableLocalFilter) {
+					filter._disableLocalFilter = filter.disableLocalFilter;
+				}
+			}
+		}
 		if (this.saveState) {
 			const saved = sessionStorage.getItem(this._filterStateKey());
 			if (saved) {
 				const savedValues = JSON.parse(saved);
 				for (const filter of this.filters) {
 					if (filter.key in savedValues) {
-						filter.value = savedValues[filter.key];
-						filter.preset = savedValues[filter.key];
+						//prevent malformed saved values from breaking the component
+						if (typeof savedValues[filter.key].value === "undefined" || typeof savedValues[filter.key].value === "object") {
+							continue;
+						}
+						if (savedValues[filter.key].value === null || savedValues[filter.key].value === "undefined") {
+							savedValues[filter.key].value = "";
+						}
+						filter.value = savedValues[filter.key].value;
+						filter.preset = savedValues[filter.key].preset;
+						filter.strictModeEnabled = savedValues[filter.key].strictModeEnabled || false;
+						if (filter.strictMode && filter.strictModeEnabled) {
+							filter.key = filter.strictMode.key;
+							filter.compareMethod = "==";
+							filter.typeData = filter.strictMode.typeData;
+							filter.disableLocalFilter = filter.strictMode.disableLocalFilter || false;
+						}
 					}
 				}
 			}
@@ -89,50 +116,85 @@ export default {
 			const values = {};
 			for (const filter of this.filters) {
 				if (filter.key !== undefined) {
-					values[filter.key] = filter.value;
+					if (filter.strictMode) {
+						values[filter._originalKey] = { value: filter.value, preset: filter.preset, strictModeEnabled: filter.strictModeEnabled || false };
+					} else {
+						values[filter.key] = { value: filter.value, preset: filter.preset, strictModeEnabled: false };
+					}
 				}
 			}
 			sessionStorage.setItem(this._filterStateKey(), JSON.stringify(values));
 		},
-		updateText(key, value) {
+		_validateValue(filter, value) {
+			switch (filter.type) {
+			case "number":
+				value = Number.parseFloat(value);
+				if (Number.isNaN(value)) {
+					value = "";
+				}
+				break;
+			case "text":
+				value = value.toLowerCase();
+				break;
+			case "select":
+			case "datalist":
+			case "hidden":
+				switch (filter?.typeData) {
+				case "number":
+					value = Number.parseInt(value);
+					if (Number.isNaN(value)) {
+						value = "";
+					}
+					break;
+				case "float":
+					value = Number.parseFloat(value);
+					break;
+				case "string":
+					value = value.toLowerCase();
+					break;
+				case "bool":
+					value = value === "true";
+					break;
+				}
+				break;
+			case "checkbox":
+				value = value ? filter.valueIfTrue : filter.valueIfFalse;
+				break;
+			}
+			filter.value = value;
+		},
+		updateText(key, value, mode = "text") {
 			for (const [index, filter] of this.filters.entries()) {
 				if (index === key) {
-					switch (filter.type) {
-					case "number":
-						value = Number.parseFloat(value);
-						if (Number.isNaN(value)) {
-							value = "";
+					if (mode === "select") {
+						if (filter.strictMode) {
+							filter.strictModeEnabled = true;
+							filter.key = filter.strictMode.key;
+							filter.compareMethod = "==";
+							filter.typeData = filter.strictMode.typeData;
+							filter.disableLocalFilter = filter.strictMode.disableLocalFilter || false;
 						}
-						break;
-					case "text":
-						value = value.toLowerCase();
-						break;
-					case "select":
-					case "datalist":
-					case "hidden":
-						switch (filter?.typeData) {
-						case "number":
-							value = Number.parseInt(value);
-							if (Number.isNaN(value)) {
-								value = "";
-							}
-							break;
-						case "float":
-							value = Number.parseFloat(value);
-							break;
-						case "string":
-							value = value.toLowerCase();
-							break;
-						case "bool":
-							value = value === "true";
-							break;
-						}
-						break;
-					case "checkbox":
-						value = value ? filter.valueIfTrue : filter.valueIfFalse;
-						break;
 					}
-					filter.value = value;
+					if (mode === "text" || (mode === "select" && !filter?.strictModeEnabled)) {
+						if (filter.strictModeEnabled) {
+							filter.strictModeEnabled = false;
+							filter.key = filter._originalKey;
+							filter.compareMethod = filter._originalCompareMethod;
+							if (filter._originalTypeData) {
+								filter.typeData = filter._originalTypeData;
+							} else {
+								delete filter.typeData;
+							}
+							if (filter._disableLocalFilter) {
+								filter.disableLocalFilter = filter._disableLocalFilter;
+							} else {
+								delete filter.disableLocalFilter;
+							}
+						}
+					}
+					this._validateValue(filter, value[0]);
+					filter.preset = value[1] || null;
+					break;
 				}
 			}
 			if (this.saveState) {

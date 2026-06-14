@@ -684,7 +684,6 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		@close-modal="documentAddModalShow = false"
 		@files-saved="documentAdd"
 		file-type="document"
-		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
 	/>
 
 	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
@@ -696,7 +695,6 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		@close-modal="imageAddModalShow = false"
 		@files-saved="imageAdd"
 		file-type="image"
-		:max-size-in-mb="configsStore.getConfigByKey('max_size_document_in_mb')"
 	/>
 
 	<ModalDeleteConfirm :show-modal="imageDeleteModalShow" @close-modal="imageDeleteModalShow = false"

@@ -49,7 +49,7 @@ function onSubmit(values, { setErrors }) {
 			</div>
 		</div>
 
-		<div v-else-if="configsStore.configs.smtp_enabled">
+		<div v-else-if="configsStore.getStatusByKey('notif_smtp')">
 			<Form @submit="onSubmit" :validation-schema="schema" v-slot="{ errors, isSubmitting }">
 				<!-- Email Field -->
 				<div class="mb-4">

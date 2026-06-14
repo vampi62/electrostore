@@ -23,9 +23,7 @@ describe("Login Page", () => {
 		cy.intercept("GET", "**/api/config", {
 			statusCode: 200,
 			body: {
-				"smtp_enabled": false,
-				"mqtt_connected": false,
-				"ia_service_status": false,
+				"demo_mode": false,
 				"max_length_url": 150,
 				"max_length_commentaire": 455,
 				"max_length_description": 500,

@@ -1,9 +1,20 @@
+import { writeFileSync } from "fs";
 import { fileURLToPath, URL } from "url";
-
 import { defineConfig } from "vite";
-import vue from "@vitejs/plugin-vue";
 import { VitePWA } from "vite-plugin-pwa";
+import vue from "@vitejs/plugin-vue";
 
+const versionPlugin = () => ({
+	name: "version-plugin",
+	closeBundle() {
+		const version = {
+			version: Date.now().toString(), // or use a version from package.json
+			buildDate: new Date().toISOString(),
+		};
+		writeFileSync("./dist/version.json", JSON.stringify(version));
+		console.log(`Version file created with version: ${version.version}`);
+	},
+});
 // https://vitejs.dev/config/
 export default defineConfig({
 	plugins: [vue(),
@@ -53,6 +64,7 @@ export default defineConfig({
 				type: "module",
 			},
 		}),
+		versionPlugin(),
 	],
 	resolve: {
 		alias: {
@@ -71,7 +83,9 @@ export default defineConfig({
 							.toString();
 					}
 				},
+				entryFileNames: "assets/js/[name]-[hash].js",
 				chunkFileNames: "assets/js/[name]-[hash].js",
+				assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
 			},
 		},
 	},

@@ -46,6 +46,7 @@ const showAboutModal = ref(false);
 	</div>
 	<ModalFinder ref="modalFinderRef" />
 	<NotificationContainer />
+	<NotificationAppUpdate />
 	<div v-if="showAboutModal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-20" @click="showAboutModal = false">
 		<div class="bg-white rounded-lg shadow-lg w-3/4 h-3/4 p-6" @click.stop>
 		</div>

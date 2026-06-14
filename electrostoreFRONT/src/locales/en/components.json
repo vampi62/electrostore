@@ -38,5 +38,10 @@
 	"VModalMultipleFilesErrorSize": "The file {fileName} exceeds the maximum allowed size ({maxSize}MB)",
 	"VModalMultipleFilesErrorExtension": "The file {fileName} does not have an allowed extension",
 	"VModalMultipleFilesErrorEmptyName": "All files must have a name",
-	"VModalMultipleFilesErrorSaving": "An error occurred while saving the files"
+	"VModalMultipleFilesErrorSaving": "An error occurred while saving the files",
+
+	"VNotificationAppUpdateNewVersionAvailable": "New version available",
+	"VNotificationAppUpdateReloadForImprovements": "Reload to enjoy the latest improvements",
+	"VNotificationAppUpdateUpdate": "Update",
+	"VNotificationAppUpdateDismiss": "Later"
 }

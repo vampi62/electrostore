@@ -39,8 +39,8 @@ public class ModelTrainerService : IModelTrainerService
         SupportedExtensions = configCache.AllowedImageExtensions.ToArray() ?? new[] { ".jpg", ".jpeg", ".png", ".bmp" };
     }
 
-    public bool IsTrainingInProgress()
-        => TrainingProgressMap.Values.Any(p => p.Status == TrainingStatus.InProgress);
+    public int IsTrainingInProgress() // return the idModel of the first model in progress, or 0 if none
+        => TrainingProgressMap.FirstOrDefault(kv => kv.Value.Status == TrainingStatus.InProgress).Key;
 
     public TrainingProgress? GetTrainingStatus(int idModel)
         => TrainingProgressMap.TryGetValue(idModel, out var progress) ? progress : null;

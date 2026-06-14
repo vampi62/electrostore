@@ -201,7 +201,7 @@ public class AuthService : IAuthService
             mdp_user = GenerateSecureRandomString(32),
             role_user = userRole
         };
-        return await _userService.CreateUser(newUserDto);
+        return await _userService.CreateUser(newUserDto, true); // true indicates that this is an SSO user login, so we avoid role checks
     }
 
     public async Task<bool> CheckUserPasswordByEmail(string email, string password)
