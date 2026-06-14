@@ -38,5 +38,10 @@
 	"VModalMultipleFilesErrorSize": "Le fichier {fileName} dépasse la taille maximale autorisée ({maxSize}Mo)",
 	"VModalMultipleFilesErrorExtension": "Le fichier {fileName} n'a pas une extension autorisée",
 	"VModalMultipleFilesErrorEmptyName": "Tous les fichiers doivent avoir un nom",
-	"VModalMultipleFilesErrorSaving": "Une erreur est survenue lors de l'enregistrement des fichiers"
+	"VModalMultipleFilesErrorSaving": "Une erreur est survenue lors de l'enregistrement des fichiers",
+
+	"VNotificationAppUpdateNewVersionAvailable": "Nouvelle version disponible",
+	"VNotificationAppUpdateReloadForImprovements": "Rechargez pour profiter des dernières améliorations",
+	"VNotificationAppUpdateUpdate": "Mettre à jour",
+	"VNotificationAppUpdateDismiss": "Plus tard"
 }
