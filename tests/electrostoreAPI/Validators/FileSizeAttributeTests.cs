@@ -12,7 +12,7 @@ public class FileSizeAttributeTests
     {
         // Arrange
         var maxSizeInMB = 5L;
-        var attribute = new FileSizeAttribute(maxSizeInMB);
+        var attribute = new FileSizeAttribute(nameof(maxSizeInMB));
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.Length).Returns(2 * 1024 * 1024); // 2MB
 
@@ -28,7 +28,7 @@ public class FileSizeAttributeTests
     {
         // Arrange
         var maxSizeInMB = 5L;
-        var attribute = new FileSizeAttribute(maxSizeInMB);
+        var attribute = new FileSizeAttribute(nameof(maxSizeInMB));
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.Length).Returns(10 * 1024 * 1024); // 10MB
 
@@ -44,7 +44,7 @@ public class FileSizeAttributeTests
     {
         // Arrange
         var maxSizeInMB = 5L;
-        var attribute = new FileSizeAttribute(maxSizeInMB);
+        var attribute = new FileSizeAttribute(nameof(maxSizeInMB));
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.Length).Returns(5 * 1024 * 1024); // Exactly 5MB
 
@@ -60,7 +60,7 @@ public class FileSizeAttributeTests
     {
         // Arrange
         var maxSizeInMB = 5L;
-        var attribute = new FileSizeAttribute(maxSizeInMB);
+        var attribute = new FileSizeAttribute(nameof(maxSizeInMB));
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.Length).Returns(0);
 
@@ -76,7 +76,7 @@ public class FileSizeAttributeTests
     {
         // Arrange
         var maxSizeInMB = 5L;
-        var attribute = new FileSizeAttribute(maxSizeInMB);
+        var attribute = new FileSizeAttribute(nameof(maxSizeInMB));
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.Length).Returns(-1);
 
@@ -92,7 +92,7 @@ public class FileSizeAttributeTests
     {
         // Arrange
         var maxSizeInMB = 5L;
-        var attribute = new FileSizeAttribute(maxSizeInMB);
+        var attribute = new FileSizeAttribute(nameof(maxSizeInMB));
 
         // Act
         var result = attribute.IsValid(null);
@@ -106,7 +106,7 @@ public class FileSizeAttributeTests
     {
         // Arrange
         var maxSizeInMB = 5L;
-        var attribute = new FileSizeAttribute(maxSizeInMB);
+        var attribute = new FileSizeAttribute(nameof(maxSizeInMB));
 
         // Act
         var result = attribute.IsValid("not a file");
@@ -120,7 +120,7 @@ public class FileSizeAttributeTests
     {
         // Arrange
         var maxSizeInMB = 0L;
-        var attribute = new FileSizeAttribute(maxSizeInMB);
+        var attribute = new FileSizeAttribute(nameof(maxSizeInMB));
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.Length).Returns(1);
 
@@ -136,7 +136,7 @@ public class FileSizeAttributeTests
     {
         // Arrange
         var maxSizeInMB = 1L;
-        var attribute = new FileSizeAttribute(maxSizeInMB);
+        var attribute = new FileSizeAttribute(nameof(maxSizeInMB));
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.Length).Returns(1); // 1 byte
 
@@ -156,7 +156,7 @@ public class FileSizeAttributeTests
     public void IsValid_WithVariousFileSizes_ReturnsExpectedResult(long maxSizeInMB, long fileSizeInBytes, bool expected)
     {
         // Arrange
-        var attribute = new FileSizeAttribute(maxSizeInMB);
+        var attribute = new FileSizeAttribute(nameof(maxSizeInMB));
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.Length).Returns(fileSizeInBytes);
 
