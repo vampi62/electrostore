@@ -101,14 +101,14 @@ public class AuthService : IAuthService
         {
             var notification = new NotificationMessage
             {
-                Types = new List<string> { "email" },
+                Types = ["email"],
                 RecipientEmail = user.email_user,
-                Subject = "Login",
-                Body = "A new login has been detected on your account. If this was not you, please change your password.",
+                TemplateId = "login-detected",
+                Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
             };
             await _kafkaProducerService.PublishAsync(
                 "notification-requests",
-                user.email_user,
+                user.email_user + "-sso-login",
                 JsonSerializer.Serialize(notification)
             );
         }
@@ -240,14 +240,18 @@ public class AuthService : IAuthService
             {
                 var notification = new NotificationMessage
                 {
-                    Types = new List<string> { "email" },
+                    Types = ["email"],
                     RecipientEmail = user.email_user,
-                    Subject = "Reset password",
-                    Body = "Click on the following link to reset your password: " + _configuration["FrontendUrl"] + "/reset-password?token=" + user.reset_token.ToString() + "&email=" + user.email_user,
+                    TemplateId = "password-reset",
+                    Language = _configuration.GetValue<string>("AppLanguage") ?? "fr",
+                    TemplateValues = new Dictionary<string, string>
+                    {
+                        ["resetLink"] = _configuration["FrontendUrl"] + "/reset-password?token=" + user.reset_token.ToString() + "&email=" + user.email_user
+                    }
                 };
                 await _kafkaProducerService.PublishAsync(
                     "notification-requests",
-                    user.email_user,
+                    user.email_user + "-password-reset",
                     JsonSerializer.Serialize(notification)
                 );
             }
@@ -281,14 +285,14 @@ public class AuthService : IAuthService
         {
             var notification = new NotificationMessage
             {
-                Types = new List<string> { "email" },
+                Types = ["email"],
                 RecipientEmail = user.email_user,
-                Subject = "Password changed",
-                Body = "Your password has been changed",
+                TemplateId = "password-changed",
+                Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
             };
             await _kafkaProducerService.PublishAsync(
                 "notification-requests",
-                user.email_user,
+                user.email_user + "-password-changed",
                 JsonSerializer.Serialize(notification)
             );
         }
@@ -315,14 +319,14 @@ public class AuthService : IAuthService
         {
             var notification = new NotificationMessage
             {
-                Types = new List<string> { "email" },
+                Types = ["email"],
                 RecipientEmail = user.email_user,
-                Subject = "Login",
-                Body = "A new login has been detected on your account. If this was not you, please change your password.",
+                TemplateId = "login-detected",
+                Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
             };
             await _kafkaProducerService.PublishAsync(
                 "notification-requests",
-                user.email_user,
+                user.email_user + "-login-detected",
                 JsonSerializer.Serialize(notification)
             );
         }

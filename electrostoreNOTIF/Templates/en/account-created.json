@@ -1,0 +1,8 @@
+{
+  "subject": "Your ElectroStore account has been created",
+  "body": "<p>Hello {{firstName}} {{lastName}},</p><p>Your account has been successfully created. Your role is <strong>{{role}}</strong>.</p><p>Thank you,<br/>The ElectroStore team</p>",
+  "title": "ElectroStore account created",
+  "data": {
+    "event": "account_created"
+  }
+}

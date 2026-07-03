@@ -9,6 +9,7 @@ COPY Extensions/ Extensions/
 COPY Grpc/ Grpc/
 COPY Kafka/ Kafka/
 COPY Services/ Services/
+COPY Templates/ Templates/
 COPY Program.cs ./
 
 RUN dotnet publish -c Release -o out

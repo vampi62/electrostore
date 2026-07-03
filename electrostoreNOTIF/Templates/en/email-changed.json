@@ -1,0 +1,8 @@
+{
+  "subject": "Email address changed",
+  "body": "<p>Hello,</p><p>The email address associated with your ElectroStore account has been changed.</p><ul><li>Old address: <strong>{{oldEmail}}</strong></li><li>New address: <strong>{{newEmail}}</strong></li></ul><p>If you did not make this change, please contact us immediately.</p><p>Thank you,<br/>The ElectroStore team</p>",
+  "title": "Email address changed",
+  "data": {
+    "event": "email_changed"
+  }
+}

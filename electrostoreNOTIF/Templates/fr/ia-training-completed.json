@@ -1,0 +1,9 @@
+{
+  "subject": "Entraînement du modèle IA #{{iaId}} terminé",
+  "body": "<p>Bonjour,</p><p>L'entraînement du modèle IA <strong>#{{iaId}}</strong> s'est terminé avec succès.</p><table><tr><th>Métrique</th><th>Entraînement</th><th>Validation</th></tr><tr><td>Précision</td><td>{{accuracy}}</td><td>{{valAccuracy}}</td></tr><tr><td>Perte</td><td>{{loss}}</td><td>{{valLoss}}</td></tr></table><p>Nombre d'époques : <strong>{{epoch}}</strong></p><p>Merci,<br/>L'équipe ElectroStore</p>",
+  "title": "Entraînement IA #{{iaId}} terminé",
+  "data": {
+    "event": "ia_training_completed",
+    "iaId": "{{iaId}}"
+  }
+}

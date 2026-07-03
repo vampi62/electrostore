@@ -1,0 +1,9 @@
+{
+  "subject": "AI model #{{iaId}} training failed",
+  "body": "<p>Hello,</p><p>The training of AI model <strong>#{{iaId}}</strong> has failed.</p><p>Error details: <em>{{message}}</em></p><p>Thank you,<br/>The ElectroStore team</p>",
+  "title": "AI training #{{iaId}} failed",
+  "data": {
+    "event": "ia_training_failed",
+    "iaId": "{{iaId}}"
+  }
+}

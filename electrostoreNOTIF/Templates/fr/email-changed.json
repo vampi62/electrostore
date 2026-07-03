@@ -1,0 +1,8 @@
+{
+  "subject": "Adresse e-mail modifiée",
+  "body": "<p>Bonjour,</p><p>L'adresse e-mail associée à votre compte ElectroStore a été modifiée.</p><ul><li>Ancienne adresse : <strong>{{oldEmail}}</strong></li><li>Nouvelle adresse : <strong>{{newEmail}}</strong></li></ul><p>Si vous n'êtes pas à l'origine de cette modification, contactez-nous immédiatement.</p><p>Merci,<br/>L'équipe ElectroStore</p>",
+  "title": "Adresse e-mail modifiée",
+  "data": {
+    "event": "email_changed"
+  }
+}

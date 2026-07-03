@@ -1,0 +1,9 @@
+{
+  "subject": "Échec de l'entraînement du modèle IA #{{iaId}}",
+  "body": "<p>Bonjour,</p><p>L'entraînement du modèle IA <strong>#{{iaId}}</strong> a échoué.</p><p>Détails de l'erreur : <em>{{message}}</em></p><p>Merci,<br/>L'équipe ElectroStore</p>",
+  "title": "Entraînement IA #{{iaId}} échoué",
+  "data": {
+    "event": "ia_training_failed",
+    "iaId": "{{iaId}}"
+  }
+}

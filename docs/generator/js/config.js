@@ -151,11 +151,13 @@ function collectConfig(formData) {
     config.apiUrl = formData.get('apiUrl');
     config.frontUrl = formData.get('frontUrl');
     
-    // CORS: Ajouter automatiquement l'URL du frontend
+    // CORS: allowed origins
     const additionalOrigins = formData.get('allowedOrigins')?.split('\n').filter(o => o.trim()) || [];
     config.allowedOrigins = [config.frontUrl, ...additionalOrigins].filter(o => o);
+
+    // Application language
+    config.appLanguage = formData.get('appLanguage') || 'en';
     
-    // Extraire les URLs complètes pour Traefik
     if (config.useTraefik) {
         try {
             config.apiUrlObj = new URL(config.apiUrl || 'http://api.electrostore.local');
@@ -165,7 +167,6 @@ function collectConfig(formData) {
             config.frontUrlObj = new URL('http://electrostore.local');
         }
     } else {
-        // Extraire les ports des URLs si pas de Traefik
         try {
             config.apiUrlObj = new URL(config.apiUrl || 'http://localhost:5000');
             config.frontUrlObj = new URL(config.frontUrl || 'http://localhost:8080');
