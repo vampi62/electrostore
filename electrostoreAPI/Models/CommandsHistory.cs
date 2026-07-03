@@ -16,8 +16,8 @@ public class CommandsHistory : BaseEntity
     [MaxLength(Constants.MaxNameLength)]
     public string? tracking_number { get; set; }
 
-    [MaxLength(Constants.MaxNameLength)]
     public string? carrier { get; set; }
+    [MaxLength(Constants.MaxTypeLength)]
 
     [MaxLength(Constants.MaxDescriptionLength)]
     public string? tracking_event { get; set; }

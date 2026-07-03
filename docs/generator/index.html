@@ -431,15 +431,20 @@
                             </div>
 
                             <div class="form-group">
+                                <button type="button" class="btn-secondary" onclick="generateVapidKeys()">Generate VAPID Key Pair</button>
+                                <small class="help-text">Generates a new VAPID public/private key pair and fills the fields below</small>
+                            </div>
+
+                            <div class="form-group">
                                 <label for="vapidPublicKey">VAPID Public Key</label>
                                 <input type="text" id="vapidPublicKey" name="vapidPublicKey" placeholder="Base64url-encoded public key">
-                                <small class="help-text">Copied from the output of <code>npx web-push generate-vapid-keys</code> — also used in the frontend <code>VITE_VAPID_PUBLIC_KEY</code></small>
+                                <small class="help-text">Copied from the output of <code>npx web-push generate-vapid-keys</code> - also used in the frontend <code>VITE_VAPID_PUBLIC_KEY</code></small>
                             </div>
 
                             <div class="form-group">
                                 <label for="vapidPrivateKey">VAPID Private Key</label>
                                 <input type="text" id="vapidPrivateKey" name="vapidPrivateKey" placeholder="Base64url-encoded private key">
-                                <small class="help-text">Keep this secret — only used server-side by the NOTIF service</small>
+                                <small class="help-text">Keep this secret - only used server-side by the NOTIF service</small>
                             </div>
                         </div>
                     </div>
@@ -462,6 +467,38 @@
                             <input type="password" id="track17ApiKey" name="track17ApiKey" placeholder="Your 17track API key">
                             <small class="help-text">API key from <a href="https://www.17track.net/en/api" target="_blank">17track developer portal</a>. Set in the CRON service as <code>Track17:ApiKey</code>.</small>
                         </div>
+                    </div>
+                </section>
+
+                <!-- File Validation -->
+                <section class="form-section">
+                    <h2>File Validation</h2>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="maxDocumentSizeMB">Max Document Size (MB)</label>
+                            <input type="number" id="maxDocumentSizeMB" name="maxDocumentSizeMB" value="10" min="1">
+                            <small class="help-text">Maximum size for uploaded documents (PDF, Word, Excel...)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="maxImageSizeMB">Max Image Size (MB)</label>
+                            <input type="number" id="maxImageSizeMB" name="maxImageSizeMB" value="8" min="1">
+                            <small class="help-text">Maximum size for uploaded images</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Allowed Image MIME Types</label>
+                        <small class="help-text">MIME type and corresponding file extension accepted for images</small>
+                        <div id="allowedImageMimeTypes" class="mime-type-list"></div>
+                        <button type="button" style="margin-top:0.5rem" onclick="addMimeType('allowedImageMimeTypes')">+ Add MIME type</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Allowed Document MIME Types</label>
+                        <small class="help-text">MIME type and corresponding file extension accepted for documents</small>
+                        <div id="allowedDocumentMimeTypes" class="mime-type-list"></div>
+                        <button type="button" style="margin-top:0.5rem" onclick="addMimeType('allowedDocumentMimeTypes')">+ Add MIME type</button>
                     </div>
                 </section>
 

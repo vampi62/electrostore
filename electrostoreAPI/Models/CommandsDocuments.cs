@@ -11,7 +11,7 @@ public class CommandsDocuments : BaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_command_document { get; set; }
 
-    [MaxLength(Constants.MaxUrlLength)]
+    [MaxLength(Constants.MaxUrlFileLength)]
     public required string url_command_document { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]

@@ -11,7 +11,7 @@ public class ItemsDocuments : BaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_item_document { get; set; }
 
-    [MaxLength(Constants.MaxUrlLength)]
+    [MaxLength(Constants.MaxUrlFileLength)]
     public required string url_item_document { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]

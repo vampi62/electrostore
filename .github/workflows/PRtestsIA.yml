@@ -42,7 +42,7 @@ jobs:
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        PROJECT_KEY: "PR-${{ steps.get-pr-id.outputs.pr_id }}-electrostore-api"
+        PROJECT_KEY: "PR-${{ steps.get-pr-id.outputs.pr_id }}-electrostore-ia"
       run: |
         dotnet tool install --global dotnet-sonarscanner
         dotnet sonarscanner begin /k:"$PROJECT_KEY" \

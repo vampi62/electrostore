@@ -157,6 +157,26 @@ function collectConfig(formData) {
 
     // Application language
     config.appLanguage = formData.get('appLanguage') || 'en';
+
+    // File Validation
+    config.fileValidation = {
+        maxDocumentSizeMB: parseInt(document.getElementById('maxDocumentSizeMB').value) || 10,
+        maxImageSizeMB: parseInt(document.getElementById('maxImageSizeMB').value) || 8,
+        allowedImageMimeTypes: {},
+        allowedDocumentMimeTypes: {}
+    };
+    document.querySelectorAll('#allowedImageMimeTypes .mime-type-row').forEach(row => {
+        const mime = row.querySelector('.mime-type-input').value.trim();
+        let ext = row.querySelector('.mime-ext-input').value.trim();
+        if (ext && !ext.startsWith('.')) ext = '.' + ext;
+        if (mime && ext) config.fileValidation.allowedImageMimeTypes[mime] = ext;
+    });
+    document.querySelectorAll('#allowedDocumentMimeTypes .mime-type-row').forEach(row => {
+        const mime = row.querySelector('.mime-type-input').value.trim();
+        let ext = row.querySelector('.mime-ext-input').value.trim();
+        if (ext && !ext.startsWith('.')) ext = '.' + ext;
+        if (mime && ext) config.fileValidation.allowedDocumentMimeTypes[mime] = ext;
+    });
     
     if (config.useTraefik) {
         try {
