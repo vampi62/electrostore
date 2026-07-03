@@ -16,6 +16,7 @@ public class ConfigService : IConfigService
         return new ReadConfig
         {
             demo_mode = GetDemoMode(),
+            app_language = GetAppLanguage(),
             // get the max length of the url
             max_length_url = Constants.MaxUrlLength,
             // get the max length
@@ -37,6 +38,8 @@ public class ConfigService : IConfigService
     }
 
     public bool GetDemoMode() => _configuration.GetValue<bool>("DemoMode");
+
+    public string GetAppLanguage() => _configuration.GetValue<string>("AppLanguage") ?? "fr";
 
     public string[] GetAllowedImageExtensions() => [.. Constants.AllowedImageMimeTypes.Values];
 

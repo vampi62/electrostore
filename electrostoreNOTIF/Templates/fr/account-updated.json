@@ -1,0 +1,8 @@
+{
+  "subject": "Votre compte a été mis à jour",
+  "body": "<p>Bonjour,</p><p>Les informations de votre compte ElectroStore ont été mises à jour.</p><p>Si vous n'êtes pas à l'origine de cette modification, contactez-nous immédiatement.</p><p>Merci,<br/>L'équipe ElectroStore</p>",
+  "title": "Informations du compte mises à jour",
+  "data": {
+    "event": "account_updated"
+  }
+}

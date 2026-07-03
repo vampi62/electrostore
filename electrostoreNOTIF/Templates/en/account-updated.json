@@ -1,0 +1,8 @@
+{
+  "subject": "Your account has been updated",
+  "body": "<p>Hello,</p><p>Your ElectroStore account information has been updated.</p><p>If you did not make this change, please contact us immediately.</p><p>Thank you,<br/>The ElectroStore team</p>",
+  "title": "Account information updated",
+  "data": {
+    "event": "account_updated"
+  }
+}

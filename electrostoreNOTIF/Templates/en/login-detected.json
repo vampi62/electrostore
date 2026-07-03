@@ -1,0 +1,8 @@
+{
+  "subject": "New login detected on your account",
+  "body": "<p>Hello,</p><p>A new login has been detected on your ElectroStore account.</p><p>If you did not initiate this login, please change your password immediately.</p><p>Thank you,<br/>The ElectroStore team</p>",
+  "title": "New login detected",
+  "data": {
+    "event": "login_detected"
+  }
+}

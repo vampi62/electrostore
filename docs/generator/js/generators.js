@@ -685,6 +685,7 @@ function generateApiAppsettings(config) {
     settings.DemoMode = false;
     settings.FrontendUrl = config.frontUrl;
     settings.AllowedOrigins = config.allowedOrigins;
+    settings.AppLanguage = config.appLanguage;
 
     return JSON.stringify(settings, null, 2);
 }
@@ -835,12 +836,14 @@ function generateNotifAppsettings(config) {
 
     if (config.enableVapid && config.vapid) {
         settings.VAPID = {
+            "Enable": true,
             "Subject": config.vapid.subject,
             "PublicKey": config.vapid.publicKey,
             "PrivateKey": config.useVault ? "{{vault:vapid_private_key}}" : config.vapid.privateKey
         };
     } else {
         settings.VAPID = {
+            "Enable": false,
             "Subject": "mailto:admin@electrostore.local",
             "PublicKey": "",
             "PrivateKey": ""

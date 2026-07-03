@@ -1,0 +1,9 @@
+{
+  "subject": "AI model #{{iaId}} training completed",
+  "body": "<p>Hello,</p><p>The training of AI model <strong>#{{iaId}}</strong> has completed successfully.</p><table><tr><th>Metric</th><th>Training</th><th>Validation</th></tr><tr><td>Accuracy</td><td>{{accuracy}}</td><td>{{valAccuracy}}</td></tr><tr><td>Loss</td><td>{{loss}}</td><td>{{valLoss}}</td></tr></table><p>Number of epochs: <strong>{{epoch}}</strong></p><p>Thank you,<br/>The ElectroStore team</p>",
+  "title": "AI training #{{iaId}} completed",
+  "data": {
+    "event": "ia_training_completed",
+    "iaId": "{{iaId}}"
+  }
+}

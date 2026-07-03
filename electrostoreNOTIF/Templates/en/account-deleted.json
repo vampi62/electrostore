@@ -1,0 +1,8 @@
+{
+  "subject": "Your account has been deleted",
+  "body": "<p>Hello,</p><p>Your ElectroStore account has been deleted.</p><p>All your data has been erased. If you believe this is an error, please contact an administrator.</p><p>Thank you for using ElectroStore,<br/>The ElectroStore team</p>",
+  "title": "Account deleted",
+  "data": {
+    "event": "account_deleted"
+  }
+}

@@ -18,7 +18,7 @@ public class EmailSenderService : IEmailSenderService
     {
         if (!bool.TryParse(_configuration["SMTP:Enable"], out var isEnabled) || !isEnabled)
         {
-            _logger.LogDebug("SMTP disabled — e-mail ignored for {To}", to);
+            _logger.LogDebug("SMTP disabled - e-mail ignored for {To}", to);
             return;
         }
 
@@ -27,6 +27,13 @@ public class EmailSenderService : IEmailSenderService
         {
             _logger.LogError("Recipient e-mail address is null or empty");
             throw new ArgumentException("Recipient e-mail address cannot be null or empty", nameof(to));
+        }
+        if (to.EndsWith("@localhost", StringComparison.OrdinalIgnoreCase) ||
+            to.EndsWith("@local", StringComparison.OrdinalIgnoreCase) ||
+            to.EndsWith("@localhost.local", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogDebug("E-mail to {To} ignored because it is a local address", to);
+            return;
         }
 
         var host = _configuration["SMTP:Host"] ?? throw new InvalidOperationException("SMTP:Host configuration is missing");

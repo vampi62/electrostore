@@ -1,0 +1,8 @@
+{
+  "subject": "Nouvelle connexion détectée sur votre compte",
+  "body": "<p>Bonjour,</p><p>Une nouvelle connexion a été détectée sur votre compte ElectroStore.</p><p>Si vous n'êtes pas à l'origine de cette connexion, veuillez changer votre mot de passe immédiatement.</p><p>Merci,<br/>L'équipe ElectroStore</p>",
+  "title": "Connexion détectée",
+  "data": {
+    "event": "login_detected"
+  }
+}
