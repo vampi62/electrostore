@@ -1,7 +1,5 @@
-using System.Text.Json;
-using ElectrostoreCRON.DTO;
 using ElectrostoreCRON.Grpc;
-using ElectrostoreCRON.Services.ParcelTrackerService;
+using ElectrostoreCRON.Services.Track17SyncService;
 using Grpc.Core;
 using Quartz;
 
@@ -10,43 +8,42 @@ namespace ElectrostoreCRON.Services.CronSchedulerService;
 [DisallowConcurrentExecution]
 public class ElectrostoreCronJob : IJob
 {
-    public const string KeyAction   = "action_cronjob";
-    public const string KeyParams   = "params_cronjob";
-    public const string KeyId       = "id_cronjob";
+    public const string KeyAction = "action_cronjob";
+    public const string KeyParams = "params_cronjob";
+    public const string KeyId     = "id_cronjob";
 
-    private readonly IParcelTrackerService _parcelTracker;
+    private readonly ITrack17SyncService           _track17Sync;
     private readonly CronJobGrpc.CronJobGrpcClient _apiClient;
-    private readonly ILogger<ElectrostoreCronJob> _logger;
+    private readonly ILogger<ElectrostoreCronJob>  _logger;
 
     public ElectrostoreCronJob(
-        IParcelTrackerService parcelTracker,
+        ITrack17SyncService track17Sync,
         CronJobGrpc.CronJobGrpcClient apiClient,
         ILogger<ElectrostoreCronJob> logger)
     {
-        _parcelTracker = parcelTracker;
-        _apiClient     = apiClient;
-        _logger        = logger;
+        _track17Sync = track17Sync;
+        _apiClient   = apiClient;
+        _logger      = logger;
     }
 
     public async Task Execute(IJobExecutionContext context)
     {
-        var map        = context.JobDetail.JobDataMap;
-        var action     = map.GetString(KeyAction) ?? string.Empty;
-        var paramsJson = map.GetString(KeyParams);
-        var id         = map.GetInt(KeyId);
+        var map    = context.JobDetail.JobDataMap;
+        var action = map.GetString(KeyAction) ?? string.Empty;
+        var id     = map.GetInt(KeyId);
 
-        _logger.LogInformation("Running cron job #{Id} — action={Action}", id, action);
+        _logger.LogInformation("Running cron job #{Id} - action={Action}", id, action);
 
         try
         {
             switch (action)
             {
-                case "track_parcel":
-                    await _parcelTracker.TrackAsync(paramsJson, context.CancellationToken);
+                case "sync_17track":
+                    await _track17Sync.SyncAllAsync(context.CancellationToken);
                     break;
 
                 default:
-                    _logger.LogWarning("Cron job #{Id}: unknown action '{Action}' — skipped.", id, action);
+                    _logger.LogWarning("Cron job #{Id}: unknown action '{Action}' - skipped.", id, action);
                     break;
             }
         }

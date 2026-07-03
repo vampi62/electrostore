@@ -21,4 +21,6 @@ public class Cameras : BaseEntity
 
     [MaxLength(Constants.MaxNameLength)]
     public string? mdp_camera { get; set; }
+
+    public DateTime? last_seen_camera { get; set; }
 }

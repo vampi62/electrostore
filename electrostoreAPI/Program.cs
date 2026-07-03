@@ -7,10 +7,11 @@ using ElectrostoreAPI.Services.AuthService;
 using ElectrostoreAPI.Services.BoxService;
 using ElectrostoreAPI.Services.BoxTagService;
 using ElectrostoreAPI.Services.CameraService;
+using ElectrostoreAPI.Services.CarrierService;
 using ElectrostoreAPI.Services.CommandCommentaireService;
 using ElectrostoreAPI.Services.CommandDocumentService;
-using ElectrostoreAPI.Services.CommandItemService;
 using ElectrostoreAPI.Services.CommandHistoryService;
+using ElectrostoreAPI.Services.CommandItemService;
 using ElectrostoreAPI.Services.CommandService;
 using ElectrostoreAPI.Services.CronJobService;
 using ElectrostoreAPI.Services.ConfigService;
@@ -331,11 +332,12 @@ public partial class Program
         builder.Services.AddScoped<IBoxService, BoxService>();
         builder.Services.AddScoped<IBoxTagService, BoxTagService>();
         builder.Services.AddScoped<ICameraService, CameraService>();
+        builder.Services.AddScoped<ICarrierService, CarrierService>();
         builder.Services.AddScoped<ICommandCommentaireService, CommandCommentaireService>();
         builder.Services.AddScoped<ICommandDocumentService, CommandDocumentService>();
+        builder.Services.AddScoped<ICommandHistoryService, CommandHistoryService>();
         builder.Services.AddScoped<ICommandItemService, CommandItemService>();
         builder.Services.AddScoped<ICommandService, CommandService>();
-        builder.Services.AddScoped<ICommandHistoryService, CommandHistoryService>();
         builder.Services.AddScoped<ICronJobService, CronJobService>();
         builder.Services.AddScoped<IConfigService, ConfigService>();
         builder.Services.AddScoped<IIAService, IAService>();
@@ -409,7 +411,48 @@ public partial class Program
                 mdp_user = "Admin@1234",
                 role_user = UserRole.Admin
             }).Wait();
-
+        }
+        // check if the database has a list of carriers, if not, fetch the list from the 17track API and populate the database
+        if (!context.Carriers.Any())
+        {
+            var httpClient = new HttpClient();
+            var response = httpClient.GetAsync("https://res.17track.net/asset/carrier/info/apicarrier.all.json").Result;
+            if (response.IsSuccessStatusCode)
+            {
+                var json = response.Content.ReadAsStringAsync().Result;
+                var carriers = System.Text.Json.JsonSerializer.Deserialize<List<JsonCarrierDto>>(json);
+                if (carriers != null)
+                {
+                    var carrierService = serviceScope.ServiceProvider.GetRequiredService<ICarrierService>();
+                    foreach (var carrier in carriers)
+                    {
+                        var createCarrierDto = new CreateCarrierDto
+                        {
+                            key = carrier.key,
+                            country = carrier._country,
+                            country_iso = carrier._country_iso,
+                            email = carrier._email,
+                            tel = carrier._tel,
+                            url = carrier._url,
+                            name = carrier._name
+                        };
+                        carrierService.CreateFirstCarrier(createCarrierDto).Wait();
+                    }
+                }
+            }
+        }
+        // add default cronjob for tracking request processing if not exists
+        if (!context.CronJobs.Any(c => c.name_cronjob == "ProcessTrackingRequests"))
+        {
+            var cronJobService = serviceScope.ServiceProvider.GetRequiredService<ICronJobService>();
+            var createCronJobDto = new CreateCronJobDto
+            {
+                name_cronjob = "ProcessTrackingRequests",
+                cron_expression = "*/15 * * * *",
+                is_enabled = true,
+                action_cronjob = Enums.CronJobAction.PackageTracking,
+            };
+            cronJobService.CreateCronJob(createCronJobDto).Wait();
         }
     }
 }

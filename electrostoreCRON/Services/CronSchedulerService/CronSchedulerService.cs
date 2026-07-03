@@ -87,14 +87,14 @@ public class CronSchedulerService : BackgroundService
             catch (FormatException ex)
             {
                 _logger.LogError(ex,
-                    "Cron job #{Id} ({Name}): invalid cron expression '{Expr}' — skipped.",
+                    "Cron job #{Id} ({Name}): invalid cron expression '{Expr}' - skipped.",
                     job.IdCronjob, job.NameCronjob, job.CronExpression);
                 continue;
             }
 
             await scheduler.ScheduleJob(jobDetail, trigger, ct);
             _logger.LogInformation(
-                "Cron job #{Id} ({Name}) scheduled — action={Action}, expr={Expr}",
+                "Cron job #{Id} ({Name}) scheduled - action={Action}, expr={Expr}",
                 job.IdCronjob, job.NameCronjob, job.ActionCronjob, job.CronExpression);
         }
     }

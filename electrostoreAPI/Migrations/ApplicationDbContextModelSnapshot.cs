@@ -90,6 +90,9 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<DateTime?>("last_seen_camera")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("mdp_camera")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
@@ -116,6 +119,48 @@ namespace ElectrostoreAPI.Migrations
                     b.ToTable("Cameras");
                 });
 
+            modelBuilder.Entity("ElectrostoreAPI.Models.Carriers", b =>
+                {
+                    b.Property<int>("id_carrier")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_carrier"));
+
+                    b.Property<int?>("country")
+                        .HasColumnType("int");
+
+                    b.Property<string>("country_iso")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("email")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int>("key")
+                        .HasColumnType("int");
+
+                    b.Property<string>("name")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("tel")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("url")
+                        .HasMaxLength(2048)
+                        .HasColumnType("varchar(2048)");
+
+                    b.HasKey("id_carrier");
+
+                    b.ToTable("Carriers");
+                });
+
             modelBuilder.Entity("ElectrostoreAPI.Models.Commands", b =>
                 {
                     b.Property<int>("id_command")
@@ -133,13 +178,40 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<DateTime?>("date_livraison_command")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<int>("id_carrier")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("is_active")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("is_tracking_requested")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("is_tracking_validated")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int?>("last_status")
+                        .HasColumnType("int");
+
                     b.Property<float>("prix_command")
                         .HasColumnType("float");
 
-                    b.Property<string>("status_command")
+                    b.Property<string>("raw_data")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("recipient_adress")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("shipper_adress")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("status_command")
+                        .HasColumnType("int");
+
+                    b.Property<string>("tracking_number")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");
@@ -150,6 +222,8 @@ namespace ElectrostoreAPI.Migrations
                         .HasColumnType("varchar(2048)");
 
                     b.HasKey("id_command");
+
+                    b.HasIndex("id_carrier");
 
                     b.ToTable("Commands");
                 });
@@ -220,8 +294,8 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_command_document")
                         .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("varchar(2048)");
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
 
                     b.HasKey("id_command_document");
 
@@ -238,29 +312,59 @@ namespace ElectrostoreAPI.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_command_history"));
 
-                    b.Property<string>("carrier")
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                    b.Property<string>("city")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("country")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime>("event_at")
+                    b.Property<string>("description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<DateTime?>("event_time_utc")
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("id_command")
                         .HasColumnType("int");
 
-                    b.Property<string>("status_command_history")
-                        .IsRequired()
+                    b.Property<string>("latitude")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<string>("tracking_event")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
+                    b.Property<string>("location")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
-                    b.Property<string>("tracking_number")
+                    b.Property<string>("longitude")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("postal_code")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("stage")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("state")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int?>("status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("sub_status")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("timezone")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
@@ -309,10 +413,8 @@ namespace ElectrostoreAPI.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_cronjob"));
 
-                    b.Property<string>("action_cronjob")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                    b.Property<int>("action_cronjob")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
@@ -411,13 +513,13 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_picture_img")
                         .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("varchar(2048)");
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
 
                     b.Property<string>("url_thumbnail_img")
                         .IsRequired()
-                        .HasMaxLength(2063)
-                        .HasColumnType("varchar(2063)");
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
 
                     b.HasKey("id_img");
 
@@ -527,8 +629,8 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_item_document")
                         .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("varchar(2048)");
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
 
                     b.HasKey("id_item_document");
 
@@ -828,8 +930,8 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("url_projet_document")
                         .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("varchar(2048)");
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
 
                     b.HasKey("id_projet_document");
 
@@ -1120,6 +1222,17 @@ namespace ElectrostoreAPI.Migrations
                     b.Navigation("Tag");
                 });
 
+            modelBuilder.Entity("ElectrostoreAPI.Models.Commands", b =>
+                {
+                    b.HasOne("ElectrostoreAPI.Models.Carriers", "Carrier")
+                        .WithMany()
+                        .HasForeignKey("id_carrier")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Carrier");
+                });
+
             modelBuilder.Entity("ElectrostoreAPI.Models.CommandsCommentaires", b =>
                 {
                     b.HasOne("ElectrostoreAPI.Models.Commands", "Command")
@@ -1150,13 +1263,13 @@ namespace ElectrostoreAPI.Migrations
 
             modelBuilder.Entity("ElectrostoreAPI.Models.CommandsHistory", b =>
                 {
-                    b.HasOne("ElectrostoreAPI.Models.Commands", "Command")
-                        .WithMany("CommandsHistories")
+                    b.HasOne("ElectrostoreAPI.Models.Commands", "command")
+                        .WithMany("CommandsHistory")
                         .HasForeignKey("id_command")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Command");
+                    b.Navigation("command");
                 });
 
             modelBuilder.Entity("ElectrostoreAPI.Models.CommandsItems", b =>
@@ -1408,7 +1521,7 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Navigation("CommandsDocuments");
 
-                    b.Navigation("CommandsHistories");
+                    b.Navigation("CommandsHistory");
 
                     b.Navigation("CommandsItems");
                 });
