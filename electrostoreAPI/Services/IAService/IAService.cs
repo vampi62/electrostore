@@ -23,8 +23,9 @@ public class IAService : IIAService
     private readonly IFileService _fileService;
     private readonly IaCmdGrpc.IaCmdGrpcClient _iaGrpcClient;
     private readonly IKafkaProducerService _kafkaProducer;
+    private readonly IConfiguration _configuration;
 
-    public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IFileService fileService, IaCmdGrpc.IaCmdGrpcClient iaGrpcClient, IKafkaProducerService kafkaProducer)
+    public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IFileService fileService, IaCmdGrpc.IaCmdGrpcClient iaGrpcClient, IKafkaProducerService kafkaProducer, IConfiguration configuration)
     {
         _mapper = mapper;
         _context = context;
@@ -32,6 +33,7 @@ public class IAService : IIAService
         _fileService = fileService;
         _iaGrpcClient = iaGrpcClient;
         _kafkaProducer = kafkaProducer;
+        _configuration = configuration;
     }
 
     public async Task<PaginatedResponseDto<ReadIADto>> GetIA(int limit = 100, int offset = 0,
@@ -300,29 +302,47 @@ public class IAService : IIAService
             try
             {
                 bool success = iaStatus.Status == "training_completed";
-                var subject = success
-                    ? $"IA #{id} training completed successfully"
-                    : $"IA #{id} training failed";
+                var lang = _configuration.GetValue<string>("AppLanguage") ?? "fr";
 
-                var body = success
-                    ? $"Training for IA #{id} completed successfully.\n" +
-                      $"Accuracy: {iaStatus.Accuracy:P2} | Val. accuracy: {iaStatus.ValAccuracy:P2}\n" +
-                      $"Loss: {iaStatus.Loss:F4} | Val. loss: {iaStatus.ValLoss:F4}\n" +
-                      $"Epochs: {iaStatus.Epoch}"
-                    : $"Training for IA #{id} failed.\nDetails: {iaStatus.Message}";
-
-                var notification = new NotificationMessage
+                NotificationMessage notification;
+                if (success)
                 {
-                    Types = new List<string> { "email" },
-                    RecipientUserId = requestedBy,
-                    Subject = subject,
-                    Title = subject,
-                    Body = body,
-                };
+                    notification = new NotificationMessage
+                    {
+                        Types = ["email"],
+                        RecipientUserId = requestedBy,
+                        TemplateId = "ia-training-completed",
+                        Language = lang,
+                        TemplateValues = new Dictionary<string, string>
+                        {
+                            ["iaId"]       = id.ToString(),
+                            ["accuracy"]   = $"{iaStatus.Accuracy:P2}",
+                            ["valAccuracy"] = $"{iaStatus.ValAccuracy:P2}",
+                            ["loss"]       = $"{iaStatus.Loss:F4}",
+                            ["valLoss"]    = $"{iaStatus.ValLoss:F4}",
+                            ["epoch"]      = iaStatus.Epoch.ToString()
+                        }
+                    };
+                }
+                else
+                {
+                    notification = new NotificationMessage
+                    {
+                        Types = ["email"],
+                        RecipientUserId = requestedBy,
+                        TemplateId = "ia-training-failed",
+                        Language = lang,
+                        TemplateValues = new Dictionary<string, string>
+                        {
+                            ["iaId"]    = id.ToString(),
+                            ["message"] = iaStatus.Message ?? "Unknown error"
+                        }
+                    };
+                }
 
                 await _kafkaProducer.PublishAsync(
                     "notification-requests",
-                    requesterId,
+                    requesterId + "-ia-training-status",
                     JsonSerializer.Serialize(notification),
                     cancellationToken);
 

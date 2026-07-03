@@ -17,13 +17,16 @@ public class UserService : IUserService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly IConfiguration _configuration;
     private readonly IKafkaProducerService _kafkaProducerService;
     private readonly ISessionService _sessionService;
     private readonly IJwiService _jwiService;
-    public UserService(IMapper mapper, ApplicationDbContext context, IKafkaProducerService kafkaNotificationService, ISessionService sessionService, IJwiService jwiService)
+
+    public UserService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, IKafkaProducerService kafkaNotificationService, ISessionService sessionService, IJwiService jwiService)
     {
         _mapper = mapper;
         _context = context;
+        _configuration = configuration;
         _kafkaProducerService = kafkaNotificationService;
         _sessionService = sessionService;
         _jwiService = jwiService;
@@ -130,14 +133,20 @@ public class UserService : IUserService
         {
             var notification = new NotificationMessage
             {
-                Types = new List<string> { "email" },
+                Types = ["email"],
                 RecipientEmail = newUser.email_user,
-                Subject = "Account created",
-                Body = "Your account has been created. Your role is " + newUser.role_user.ToString()
+                TemplateId = "account-created",
+                Language = _configuration.GetValue<string>("AppLanguage") ?? "fr",
+                TemplateValues = new Dictionary<string, string>
+                {
+                    ["firstName"] = newUser.prenom_user,
+                    ["lastName"] = newUser.nom_user,
+                    ["role"] = newUser.role_user.ToString()
+                }
             };
             await _kafkaProducerService.PublishAsync(
                 "notification-requests",
-                newUser.email_user,
+                newUser.email_user + "-account-created",
                 JsonSerializer.Serialize(notification)
             );
         }
@@ -262,14 +271,14 @@ public class UserService : IUserService
         {
             var notification = new NotificationMessage
             {
-                Types = new List<string> { "email" },
+                Types = ["email"],
                 RecipientEmail = userToDelete.email_user,
-                Subject = "Account deleted",
-                Body = "Your account has been deleted"
+                TemplateId = "account-deleted",
+                Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
             };
             await _kafkaProducerService.PublishAsync(
                 "notification-requests",
-                userToDelete.email_user,
+                userToDelete.email_user + "-account-deleted",
                 JsonSerializer.Serialize(notification)
             );
         }
@@ -293,32 +302,40 @@ public class UserService : IUserService
 
     private async Task AlerteUpdateUser(Users userToUpdate, UpdateUserDto userDto, string oldUserEmail)
     {
-        if (userDto.email_user is not null && userToUpdate.email_user != userDto.email_user)
+        if (userDto.email_user is not null && oldUserEmail != userDto.email_user)
         {
             try
             {
+                var lang = _configuration.GetValue<string>("AppLanguage") ?? "fr";
+                var values = new Dictionary<string, string>
+                {
+                    ["oldEmail"] = oldUserEmail,
+                    ["newEmail"] = userToUpdate.email_user
+                };
                 var notificationNew = new NotificationMessage
                 {
-                    Types = new List<string> { "email" },
+                    Types = ["email"],
                     RecipientEmail = userToUpdate.email_user,
-                    Subject = "Email changed",
-                    Body = "Your email has been changed from " + oldUserEmail + " to " + userDto.email_user
+                    TemplateId = "email-changed",
+                    Language = lang,
+                    TemplateValues = values
                 };
                 await _kafkaProducerService.PublishAsync(
                     "notification-requests",
-                    userToUpdate.email_user,
+                    userToUpdate.email_user + "-email-changed",
                     JsonSerializer.Serialize(notificationNew)
                 );
                 var notificationOld = new NotificationMessage
                 {
-                    Types = new List<string> { "email" },
+                    Types = ["email"],
                     RecipientEmail = oldUserEmail,
-                    Subject = "Email changed",
-                    Body = "Your email has been changed from " + oldUserEmail + " to " + userDto.email_user
+                    TemplateId = "email-changed",
+                    Language = lang,
+                    TemplateValues = values
                 };
                 await _kafkaProducerService.PublishAsync(
                     "notification-requests",
-                    oldUserEmail,
+                    oldUserEmail + "-email-changed",
                     JsonSerializer.Serialize(notificationOld)
                 );
             }
@@ -333,14 +350,14 @@ public class UserService : IUserService
             {
                 var notification = new NotificationMessage
                 {
-                    Types = new List<string> { "email" },
+                    Types = ["email"],
                     RecipientEmail = userToUpdate.email_user,
-                    Subject = "Password changed",
-                    Body = "Your password has been changed"
+                    TemplateId = "password-changed",
+                    Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
                 };
                 await _kafkaProducerService.PublishAsync(
                     "notification-requests",
-                    userToUpdate.email_user,
+                    userToUpdate.email_user + "-password-changed",
                     JsonSerializer.Serialize(notification)
                 );
             }
@@ -349,21 +366,20 @@ public class UserService : IUserService
                 Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
             }
         }
-        // send email to the user if any other field has changed
         else
         {
             try
             {
                 var notification = new NotificationMessage
                 {
-                    Types = new List<string> { "email" },
+                    Types = ["email"],
                     RecipientEmail = userToUpdate.email_user,
-                    Subject = "Account updated",
-                    Body = "Your account has been updated"
+                    TemplateId = "account-updated",
+                    Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
                 };
                 await _kafkaProducerService.PublishAsync(
                     "notification-requests",
-                    userToUpdate.email_user,
+                    userToUpdate.email_user + "-account-updated",
                     JsonSerializer.Serialize(notification)
                 );
             }

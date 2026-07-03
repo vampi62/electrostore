@@ -1,4 +1,5 @@
 using ElectrostoreNOTIF.Services.EmailSenderService;
+using ElectrostoreNOTIF.Services.NotificationTemplateService;
 using ElectrostoreNOTIF.Services.WebPushService;
 using ElectrostoreNOTIF.Services.ConfigCacheService;
 using ElectrostoreNOTIF.Extensions;
@@ -48,7 +49,7 @@ public partial class Program
             {
                 status = configCache.DemoMode ? "demo" : "healthy",
                 smtp = config.GetValue<bool>("Smtp:Enable") ? "configured" : "not configured",
-                webPush = config.GetValue<bool>("WebPush:Enable") ? "configured" : "not configured"
+                webPush = config.GetValue<bool>("VAPID:Enable") ? "configured" : "not configured"
             }));
 
         app.Run();
@@ -58,6 +59,7 @@ public partial class Program
     {
         builder.Services.AddSingleton<IEmailSenderService, EmailSenderService>();
         builder.Services.AddSingleton<IWebPushService, WebPushService>();
+        builder.Services.AddSingleton<INotificationTemplateService, NotificationTemplateService>();
         builder.Services.AddSingleton<ConfigCacheService>();
         builder.Services.AddSingleton<IConfigCacheService>(sp => sp.GetRequiredService<ConfigCacheService>());
         builder.Services.AddHostedService(sp => sp.GetRequiredService<ConfigCacheService>());

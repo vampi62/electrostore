@@ -6,5 +6,6 @@ public interface IConfigService
 {
     Task<ReadConfig> getAllConfig();
     bool GetDemoMode();
+    string GetAppLanguage();
     string[] GetAllowedImageExtensions();
 }

@@ -1,0 +1,8 @@
+{
+  "subject": "Votre compte a été supprimé",
+  "body": "<p>Bonjour,</p><p>Votre compte ElectroStore a été supprimé.</p><p>Toutes vos données ont été effacées. Si vous pensez qu'il s'agit d'une erreur, contactez un administrateur.</p><p>Merci d'avoir utilisé ElectroStore,<br/>L'équipe ElectroStore</p>",
+  "title": "Compte supprimé",
+  "data": {
+    "event": "account_deleted"
+  }
+}

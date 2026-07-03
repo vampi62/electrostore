@@ -2,6 +2,7 @@ using System.Text.Json;
 using Confluent.Kafka;
 using ElectrostoreNOTIF.Kafka.Messages;
 using ElectrostoreNOTIF.Services.EmailSenderService;
+using ElectrostoreNOTIF.Services.NotificationTemplateService;
 using ElectrostoreNOTIF.Services.WebPushService;
 using ElectrostoreNOTIF.Grpc;
 using Grpc.Core;
@@ -16,6 +17,8 @@ public class KafkaNotifConsumer : BackgroundService
     };
     private readonly IConfiguration _configuration;
     private readonly IEmailSenderService _email;
+    private readonly INotificationTemplateService _templateService;
+    private readonly string topic = "notification-requests";
     private readonly IWebPushService _webPush;
     private readonly UsersGrpc.UsersGrpcClient _userResolver;
     private readonly ILogger<KafkaNotifConsumer> _logger;
@@ -23,12 +26,14 @@ public class KafkaNotifConsumer : BackgroundService
     public KafkaNotifConsumer(
         IConfiguration configuration,
         IEmailSenderService email,
+        INotificationTemplateService templateService,
         IWebPushService webPush,
         UsersGrpc.UsersGrpcClient userResolver,
         ILogger<KafkaNotifConsumer> logger)
     {
         _configuration = configuration;
         _email = email;
+        _templateService = templateService;
         _webPush = webPush;
         _userResolver = userResolver;
         _logger = logger;
@@ -62,7 +67,7 @@ public class KafkaNotifConsumer : BackgroundService
                     "[Kafka] Partitions revoked → {Parts}",
                     string.Join(", ", partitions.Select(p => $"{p.Topic}[{p.Partition}]"))))
             .Build();
-        consumer.Subscribe("notification-requests");
+        consumer.Subscribe(topic);
         _logger.LogInformation(
             "KafkaNotifConsumer started (group={Group}, servers={Servers})",
             groupId, bootstrapServers);
@@ -100,7 +105,7 @@ public class KafkaNotifConsumer : BackgroundService
                 }
                 catch (JsonException ex)
                 {
-                    _logger.LogWarning(ex, "Invalid Kafka message (JSON) — offset {Offset}", result.Offset);
+                    _logger.LogWarning(ex, "Invalid Kafka message (JSON) - offset {Offset}", result.Offset);
                     consumer.Commit(result);
                     continue;
                 }
@@ -134,7 +139,22 @@ public class KafkaNotifConsumer : BackgroundService
 
     private async Task DispatchAsync(NotificationMessage msg, CancellationToken ct)
     {
+        var rendered = !string.IsNullOrWhiteSpace(msg.TemplateId)
+            ? _templateService.RenderTemplate(msg.TemplateId, msg.TemplateValues, msg.Language)
+            : null;
+
+        if (!string.IsNullOrWhiteSpace(msg.TemplateId) && rendered is null)
+        {
+            _logger.LogWarning("Template '{TemplateId}' could not be rendered.", msg.TemplateId);
+        }
+
         string? emailAddress = msg.RecipientEmail;
+        var emailSubject = rendered?.Subject ?? msg.Subject;
+        var emailBody = rendered?.Body ?? msg.Body;
+        var pushTitle = rendered?.Title ?? msg.Title;
+        var pushBody = rendered?.Body ?? msg.Body;
+        var pushData = rendered?.Data ?? msg.PushData;
+
         if (string.IsNullOrEmpty(emailAddress) && msg.RecipientUserId.HasValue)
         {
             try
@@ -162,12 +182,12 @@ public class KafkaNotifConsumer : BackgroundService
                 case "email":
                     if (!string.IsNullOrEmpty(emailAddress))
                     {
-                        await _email.SendAsync(emailAddress, msg.Subject, msg.Body);
+                        await _email.SendAsync(emailAddress, emailSubject ?? string.Empty, emailBody ?? string.Empty);
                     }
                     else
                     {
                         _logger.LogWarning(
-                            "Cannot send email notification — no email address for user ID {UserId}",
+                            "Cannot send email notification - no email address for user ID {UserId}",
                             msg.RecipientUserId);
                     }
                     break;
@@ -190,7 +210,7 @@ public class KafkaNotifConsumer : BackgroundService
                         {
                             try
                             {
-                                await _webPush.SendAsync(sub.Endpoint, sub.P256Dh, sub.Auth, msg.Title, msg.Body, msg.PushData);
+                                await _webPush.SendAsync(sub.Endpoint, sub.P256Dh, sub.Auth, pushTitle ?? string.Empty, pushBody ?? string.Empty, pushData);
                             }
                             catch (Exception ex)
                             {
@@ -204,7 +224,7 @@ public class KafkaNotifConsumer : BackgroundService
                     }
                     break;
                 default:
-                    _logger.LogWarning("Unknown notification type '{Type}' — skipping", type);
+                    _logger.LogWarning("Unknown notification type '{Type}' - skipping", type);
                     break;
             }
         }

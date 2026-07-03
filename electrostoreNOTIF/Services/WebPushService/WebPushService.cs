@@ -26,7 +26,7 @@ public class WebPushService : IWebPushService
 
         if (!bool.TryParse(_configuration["VAPID:Enable"], out var isEnabled) || !isEnabled)
         {
-            _logger.LogDebug("VAPID disabled — push notification ignored for {Endpoint}", endpoint);
+            _logger.LogDebug("VAPID disabled - push notification ignored for {Endpoint}", endpoint);
             return;
         }
 

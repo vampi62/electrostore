@@ -5,6 +5,7 @@ namespace ElectrostoreAPI.Dto;
 public record ReadConfig
 {
     public bool demo_mode { get; init; }
+    public string app_language { get; init; } = "en";
     public int max_length_url { get; init; }
     public int max_length_commentaire { get; init; }
     public int max_length_description { get; init; }
