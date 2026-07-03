@@ -94,7 +94,7 @@ public class KafkaIaStatusConsumer : BackgroundService
                 }
                 catch (JsonException ex)
                 {
-                    _logger.LogWarning(ex, "Invalid Kafka message (JSON) — offset {Offset}", result.Offset);
+                    _logger.LogWarning(ex, "Invalid Kafka message (JSON) - offset {Offset}", result.Offset);
                     consumer.Commit(result);
                     continue;
                 }

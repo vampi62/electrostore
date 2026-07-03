@@ -122,7 +122,7 @@ public class ModelTrainerService : IModelTrainerService
                                 BatchProcessedCount = BatchProcessedCount,
                                 RequestedBy = requestedBy
                             };
-                            _logger.LogInformation("Model {Id} — Epoch {Epoch}: accuracy={Acc:F4} loss={Loss:F4} val_accuracy={ValAcc:F4} val_loss={ValLoss:F4} lr={LR:E2} batch_count={BatchCount}",
+                            _logger.LogInformation("Model {Id} - Epoch {Epoch}: accuracy={Acc:F4} loss={Loss:F4} val_accuracy={ValAcc:F4} val_loss={ValLoss:F4} lr={LR:E2} batch_count={BatchCount}",
                                 idModel, epochCounter, lastTrainAccuracy, lastTrainLoss, lastValAccuracy, lastValLoss, LearningRate, BatchProcessedCount);
                         }
                     }))

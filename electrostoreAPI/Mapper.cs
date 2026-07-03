@@ -22,6 +22,9 @@ public class MappingProfile : Profile
         CreateMap<CreateCameraDto, Cameras>();
         CreateMap<Cameras, ReadCameraDto>();
 
+        CreateMap<CreateCarrierDto, Carriers>();
+        CreateMap<Carriers, ReadCarrierDto>();
+
         CreateMap<CreateCommandCommentaireDto, CommandsCommentaires>();
         CreateMap<CommandsCommentaires, ReadCommandCommentaireDto>();
         CreateMap<CommandsCommentaires, ReadExtendedCommandCommentaireDto>()
@@ -35,6 +38,7 @@ public class MappingProfile : Profile
         CreateMap<Commands, ReadCommandDto>();
         CreateMap<Commands, ReadExtendedCommandDto>();
 
+        CreateMap<CreateCommandHistoryDto, CommandsHistory>();
         CreateMap<CommandsHistory, ReadCommandHistoryDto>();
 
         CreateMap<CreateCommandItemDto, CommandsItems>();

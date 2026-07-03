@@ -88,7 +88,7 @@ public class MqttClientService : BackgroundService
         var topic   = e.ApplicationMessage.Topic;
         var payload = e.ApplicationMessage.ConvertPayloadToString();
 
-        _logger.LogDebug("MQTT received — topic={Topic}, payload={Payload}", topic, payload);
+        _logger.LogDebug("MQTT received - topic={Topic}, payload={Payload}", topic, payload);
 
         // Expected format: electrostore/{mqtt_name_store}/status
         const string prefix = "electrostore/";
@@ -122,7 +122,7 @@ public class MqttClientService : BackgroundService
 
             if (reply.Success)
                 _logger.LogInformation(
-                    "MQTT: store(s) '{Name}' updated — connected={Connected}, count={Count}",
+                    "MQTT: store(s) '{Name}' updated - connected={Connected}, count={Count}",
                     mqttNameStore, isConnected, reply.StoreCount);
             else
                 _logger.LogWarning(

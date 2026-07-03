@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Confluent.Kafka;
-using ElectrostoreCRON.DTO;
+using ElectrostoreCRON.Kafka.Messages;
 using ElectrostoreCRON.Services.CronSchedulerService;
 using Quartz;
 using Quartz.Impl.Matchers;
@@ -168,13 +168,13 @@ public class KafkaCronJobEventsConsumer : BackgroundService
         catch (FormatException ex)
         {
             _logger.LogError(ex,
-                "CronJob #{Id}: invalid cron expression '{Expr}' — skipped.", job.id_cronjob, job.cron_expression);
+                "CronJob #{Id}: invalid cron expression '{Expr}' - skipped.", job.id_cronjob, job.cron_expression);
             return;
         }
 
         await scheduler.ScheduleJob(jobDetail, trigger, ct);
         _logger.LogInformation(
-            "CronJob #{Id} scheduled via event — action={Action}, expr={Expr}",
+            "CronJob #{Id} scheduled via event - action={Action}, expr={Expr}",
             job.id_cronjob, job.action_cronjob, job.cron_expression);
     }
 
