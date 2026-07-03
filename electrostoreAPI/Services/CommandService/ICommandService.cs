@@ -13,4 +13,6 @@ public interface ICommandService
     public Task<ReadCommandDto> UpdateCommand(int id, UpdateCommandDto commandDto);
 
     public Task DeleteCommand(int id);
+
+    public Task UpdateCommandStatusByTracking(string trackingNumber, int carrierKey, string action);
 }
