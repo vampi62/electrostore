@@ -1,9 +1,9 @@
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using ElectrostoreAPI.Dto;
 
 namespace ElectrostoreAPI.Models;
-
 public class CommandsHistory : BaseEntity
 {
     [Key]
@@ -18,6 +18,7 @@ public class CommandsHistory : BaseEntity
 
     public string? carrier { get; set; }
     [MaxLength(Constants.MaxTypeLength)]
+    public string? sub_status { get; set; }
 
     [MaxLength(Constants.MaxDescriptionLength)]
     public string? tracking_event { get; set; }
