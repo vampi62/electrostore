@@ -75,6 +75,8 @@ public partial class Program
             builder.Configuration.AddVaultConfiguration();
         }
 
+        Constants.Initialize(builder.Configuration);
+
         var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>() ?? new JwtSettings
         {
             Key = "default_key_value",
@@ -343,6 +345,7 @@ public partial class Program
         builder.Services.AddScoped<IItemService, ItemService>();
         builder.Services.AddScoped<IItemTagService, ItemTagService>();
         builder.Services.AddScoped<ILedService, LedService>();
+        
         builder.Services.AddScoped<IProjetCommentaireService, ProjetCommentaireService>();
         builder.Services.AddScoped<IProjetDocumentService, ProjetDocumentService>();
         builder.Services.AddScoped<IProjetItemService, ProjetItemService>();

@@ -1,3 +1,59 @@
+// Default MIME type lists
+const DEFAULT_IMAGE_MIME_TYPES = [
+    { mime: 'image/png', ext: '.png' },
+    { mime: 'image/webp', ext: '.webp' },
+    { mime: 'image/jpg', ext: '.jpg' },
+    { mime: 'image/jpeg', ext: '.jpeg' },
+    { mime: 'image/gif', ext: '.gif' },
+    { mime: 'image/bmp', ext: '.bmp' },
+];
+
+const DEFAULT_DOCUMENT_MIME_TYPES = [
+    { mime: 'application/pdf', ext: '.pdf' },
+    { mime: 'application/msword', ext: '.doc' },
+    { mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', ext: '.docx' },
+    { mime: 'application/vnd.ms-excel', ext: '.xls' },
+    { mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', ext: '.xlsx' },
+    { mime: 'application/vnd.ms-powerpoint', ext: '.ppt' },
+    { mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', ext: '.pptx' },
+    { mime: 'text/plain', ext: '.txt' },
+    { mime: 'application/zip', ext: '.zip' },
+    { mime: 'application/x-rar-compressed', ext: '.rar' },
+    { mime: 'image/png', ext: '.png' },
+    { mime: 'image/webp', ext: '.webp' },
+    { mime: 'image/jpg', ext: '.jpg' },
+    { mime: 'image/jpeg', ext: '.jpeg' },
+    { mime: 'image/gif', ext: '.gif' },
+    { mime: 'image/bmp', ext: '.bmp' },
+];
+
+// Add a MIME type row to the given list
+function addMimeType(containerId, mime = '', ext = '') {
+    const container = document.getElementById(containerId);
+    const row = document.createElement('div');
+    row.className = 'mime-type-row';
+    row.innerHTML = `
+        <input type="text" placeholder="MIME type (e.g. image/png)" value="${mime}" class="mime-type-input">
+        <input type="text" placeholder="Extension (e.g. .png)" value="${ext}" class="mime-ext-input">
+        <button type="button" class="btn-remove" onclick="this.closest('.mime-type-row').remove()">Remove</button>
+    `;
+    container.appendChild(row);
+}
+
+// Initialize MIME type lists with default values
+function initMimeTypes() {
+    const imageContainer = document.getElementById('allowedImageMimeTypes');
+    const docContainer = document.getElementById('allowedDocumentMimeTypes');
+    if (imageContainer) {
+        imageContainer.innerHTML = '';
+        DEFAULT_IMAGE_MIME_TYPES.forEach(({ mime, ext }) => addMimeType('allowedImageMimeTypes', mime, ext));
+    }
+    if (docContainer) {
+        docContainer.innerHTML = '';
+        DEFAULT_DOCUMENT_MIME_TYPES.forEach(({ mime, ext }) => addMimeType('allowedDocumentMimeTypes', mime, ext));
+    }
+}
+
 // Toggle section display based on checkboxes
 function toggleSection(section) {
     console.log(`Toggling section: ${section}`);
@@ -77,6 +133,36 @@ function generatePassword(fieldId, length = 32) {
     }
     
     document.getElementById(fieldId).value = password;
+}
+
+// Generate VAPID keys
+async function generateVapidKeys() {
+    const keyPair = await window.crypto.subtle.generateKey(
+        {
+            name: "ECDSA",
+            namedCurve: "P-256",
+        },
+        true,
+        ["sign", "verify"]
+    );
+    const publicKeyBuffer = await window.crypto.subtle.exportKey("raw", keyPair.publicKey);
+    const publicKey = arrayBufferToBase64(publicKeyBuffer);
+    const privateKeyBuffer = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
+    const privateKey = arrayBufferToBase64(privateKeyBuffer);
+    document.getElementById('vapidPublicKey').value = toURLSafeBase64(publicKey);
+    document.getElementById('vapidPrivateKey').value = toURLSafeBase64(privateKey);
+    return { publicKey: toURLSafeBase64(publicKey), privateKey: toURLSafeBase64(privateKey) };
+}
+
+function arrayBufferToBase64(buffer) {
+  return btoa(String.fromCharCode(...new Uint8Array(buffer)));
+}
+
+function toURLSafeBase64(base64) {
+  return base64
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }
 
 // Add OAuth provider
@@ -199,6 +285,7 @@ function initializeForm() {
     // Initialize visible sections
     toggleSection('mariadb');
     toggleSection('mqtt');
+    initMimeTypes();
     
     // Add version change listener
     const versionSelect = document.getElementById('appVersion');

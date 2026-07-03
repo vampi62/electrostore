@@ -1,5 +1,7 @@
+using ElectrostoreAPI.Dto;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Reflection.Metadata;
 
 namespace ElectrostoreAPI.Models;
 
@@ -13,15 +15,15 @@ public class UserPushSubscriptions : BaseEntity
     [ForeignKey("id_user")]
     public Users? User { get; set; }
 
-    [MaxLength(2048)]
+    [MaxLength(Constants.MaxUrlLength)]
     public required string endpoint { get; set; }
 
-    [MaxLength(512)]
+    [MaxLength(Constants.MaxPushKeyLength)]
     public required string p256dh { get; set; }
 
-    [MaxLength(256)]
+    [MaxLength(Constants.MaxPushAuthLength)]
     public required string auth { get; set; }
 
-    [MaxLength(255)]
+    [MaxLength(Constants.MaxDeviceNameLength)]
     public string? device_name { get; set; }
 }

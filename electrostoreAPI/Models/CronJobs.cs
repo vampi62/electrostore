@@ -1,6 +1,8 @@
+using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using ElectrostoreAPI.Dto;
+
 
 namespace ElectrostoreAPI.Models;
 
@@ -13,11 +15,10 @@ public class CronJobs : BaseEntity
     [MaxLength(Constants.MaxNameLength)]
     public required string name_cronjob { get; set; }
 
-    [MaxLength(100)]
+    [MaxLength(Constants.MaxCronExpressionLength)]
     public required string cron_expression { get; set; }
 
-    [MaxLength(Constants.MaxNameLength)]
-    public required string action_cronjob { get; set; }
+    public CronJobAction action_cronjob { get; set; }
 
     public string? params_cronjob { get; set; }
 

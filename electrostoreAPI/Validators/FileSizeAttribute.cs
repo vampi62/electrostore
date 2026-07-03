@@ -1,3 +1,4 @@
+using ElectrostoreAPI.Dto;
 using System.ComponentModel.DataAnnotations;
 
 namespace ElectrostoreAPI.Validators;
@@ -7,9 +8,14 @@ public class FileSizeAttribute : ValidationAttribute
 {
     private readonly long _maxSizeInMB;
 
-    public FileSizeAttribute(long maxSizeInMB)
+    public FileSizeAttribute(string maxSizePropertyName)
     {
-        _maxSizeInMB = maxSizeInMB;
+        var maxSizeField = typeof(Constants).GetField(
+            maxSizePropertyName,
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
+        ) ?? throw new InvalidOperationException($"Field '{maxSizePropertyName}' not found in Constants class.");
+
+        _maxSizeInMB = (long)maxSizeField.GetValue(null)!;
     }
 
     public override bool IsValid(object? value)

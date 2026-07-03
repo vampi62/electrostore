@@ -25,7 +25,7 @@ public record ReadExtendedCommandDto : ReadCommandDto
 }
 public record CreateCommandDto
 {
-    [Required]
+    [Required(ErrorMessage = "{0} is required.")]
     [Range(0.0, float.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public required float prix_command { get; init; }
 
