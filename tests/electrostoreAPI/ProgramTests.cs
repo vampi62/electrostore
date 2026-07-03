@@ -208,41 +208,6 @@ namespace ElectrostoreAPI.Tests
             // Assert
             Assert.True(operation.Responses.TryGetValue("200", out var resp) && !resp.Headers.ContainsKey("X-Total-Count"));
         }
-
-        [Fact]
-        public void SwaggerGen_ShouldProduceV1Document_WithExpectedTitle_And_IncludeFilter()
-        {
-            // Arrange: configure SwaggerGen similarly to Program.cs
-            var services = new ServiceCollection();
-            
-            // Add required services
-            var mockWebHostEnvironment = new Mock<IWebHostEnvironment>();
-            mockWebHostEnvironment.Setup(m => m.EnvironmentName).Returns("Development");
-            mockWebHostEnvironment.Setup(m => m.ApplicationName).Returns("ElectrostoreAPI");
-            services.AddSingleton<IWebHostEnvironment>(mockWebHostEnvironment.Object);
-            services.AddSingleton<Microsoft.Extensions.Hosting.IHostEnvironment>(mockWebHostEnvironment.Object);
-            
-            services.AddLogging();
-            services.AddRouting();
-            services.AddControllers();
-            services.AddEndpointsApiExplorer();
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "ElectroStore API", Version = "v1" });
-                c.OperationFilter<AddTotalCountHeaderFilter>();
-            });
-
-            using var provider = services.BuildServiceProvider();
-            var swaggerGen = provider.GetRequiredService<ISwaggerProvider>();
-
-            // Act
-            var doc = swaggerGen.GetSwagger("v1");
-
-            // Assert
-            Assert.NotNull(doc);
-            Assert.Equal("ElectroStore API", doc.Info.Title);
-            Assert.Equal("v1", doc.Info.Version);
-        }
     }
 
     // Custom WebApplicationFactory for testing

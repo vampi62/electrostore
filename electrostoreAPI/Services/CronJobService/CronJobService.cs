@@ -116,7 +116,7 @@ public class CronJobService : ICronJobService
         }
         if (cronJobDto.action_cronjob is not null)
         {
-            cronJobToUpdate.action_cronjob = cronJobDto.action_cronjob;
+            cronJobToUpdate.action_cronjob = cronJobDto.action_cronjob.Value;
         }
         if (cronJobDto.params_cronjob is not null)
         {

@@ -13,4 +13,5 @@ public record ReadStatusDto
     public bool? notif_webPush { get; init; }
     public required string cron_status { get; init; }
     public required string worker_status { get; init; }
+    public Dictionary<string, string> external_services { get; init; } = new();
 }

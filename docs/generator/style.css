@@ -227,6 +227,44 @@ main {
     min-width: 0;
 }
 
+.mime-type-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.mime-type-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.mime-type-row .mime-type-input {
+    flex: 2;
+    min-width: 0;
+}
+
+.mime-type-row .mime-ext-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.mime-type-row .btn-remove {
+    flex-shrink: 0;
+}
+
+.form-row {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.form-row .form-group {
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
 textarea {
     padding: 0.75rem;
     border: 2px solid var(--border-color);

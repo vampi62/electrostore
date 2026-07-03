@@ -618,6 +618,19 @@ function generateApiAppsettings(config) {
         settings.Kafka = {
             "BootstrapServers": "kafka:9092"
         };
+        if (config.enableTrack17) {
+            settings.Track17 = {
+                "Enable": true,
+                "ApiKey": config.useVault ? "{{vault:track17_api_key}}" : (config.track17ApiKey || ""),
+                "CarrierListUrl": "https://res.17track.net/asset/carrier/info/apicarrier.all.json",
+            };
+        } else {
+            settings.Track17 = {
+                "Enable": false,
+                "ApiKey": "",
+                "CarrierListUrl": "https://res.17track.net/asset/carrier/info/apicarrier.all.json"
+            };
+        }
     }
 
     settings.Jwt = {
@@ -686,6 +699,12 @@ function generateApiAppsettings(config) {
     settings.FrontendUrl = config.frontUrl;
     settings.AllowedOrigins = config.allowedOrigins;
     settings.AppLanguage = config.appLanguage;
+    settings.FileValidation = {
+        "MaxDocumentSizeMB": config.fileValidation.maxDocumentSizeMB,
+        "MaxImageSizeMB": config.fileValidation.maxImageSizeMB,
+        "AllowedImageMimeTypes": config.fileValidation.allowedImageMimeTypes,
+        "AllowedDocumentMimeTypes": config.fileValidation.allowedDocumentMimeTypes
+    };
 
     return JSON.stringify(settings, null, 2);
 }
@@ -880,10 +899,17 @@ function generateCronAppsettings(config) {
 
     if (config.enableTrack17) {
         settings.Track17 = {
-            "ApiKey": config.useVault ? "{{vault:track17_api_key}}" : (config.track17ApiKey || "")
+            "Enable": true,
+            "ApiKey": config.useVault ? "{{vault:track17_api_key}}" : (config.track17ApiKey || ""),
+            "BaseUrl": "https://api.17track.net/track/v2.4",
+            "BatchSize": 40,
+            "ConsumeTimeoutMs": 300
         };
     } else {
-        settings.Track17 = { "ApiKey": "" };
+        settings.Track17 = {
+            "Enable": false,
+            "ApiKey": ""
+        };
     }
 
     settings.ApiServiceGrpcUrl = "http://electrostoreAPI:5001";
@@ -1236,7 +1262,11 @@ echo "Configuring Kafka topics..."
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic notification-requests --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'notification-requests' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic cronjob-events --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'cronjob-events' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic ia-requests --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'ia-requests' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic cron-parcel-tracking --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'cron-parcel-tracking' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-add --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-request-add' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-change --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-request-change' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-stop --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-request-stop' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-resume --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-request-resume' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-delete --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-request-delete' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic ia-status --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'ia-status' already exists"
 `;
     }
@@ -1512,7 +1542,11 @@ Write-Host "Configuring Kafka topics..."
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic notification-requests --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'notification-requests' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic cronjob-events --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'cronjob-events' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic ia-requests --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'ia-requests' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic cron-parcel-tracking --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'cron-parcel-tracking' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-add --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-request-add' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-change --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-request-change' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-stop --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-request-stop' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-resume --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-request-resume' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-delete --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-request-delete' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic ia-status --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'ia-status' already exists"
 `;
     }

@@ -11,7 +11,7 @@ public class ProjetsDocuments : BaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_projet_document { get; set; }
 
-    [MaxLength(Constants.MaxUrlLength)]
+    [MaxLength(Constants.MaxUrlFileLength)]
     public required string url_projet_document { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]

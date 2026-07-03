@@ -16,35 +16,35 @@ public record ReadUserPushSubscriptionDto
 public record CreateUserPushSubscriptionDtoByUserId
 {
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(2048, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     public required string endpoint { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(512, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [MaxLength(Constants.MaxPushKeyLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     public required string p256dh { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(256, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [MaxLength(Constants.MaxPushAuthLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     public required string auth { get; init; }
 
-    [MaxLength(255, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [MaxLength(Constants.MaxDeviceNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     public string? device_name { get; init; }
 }
 public record CreateUserPushSubscriptionDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(2048, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     public required string endpoint { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(512, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [MaxLength(Constants.MaxPushKeyLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     public required string p256dh { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(256, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [MaxLength(Constants.MaxPushAuthLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     public required string auth { get; init; }
 
-    [MaxLength(255, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [MaxLength(Constants.MaxDeviceNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     public string? device_name { get; init; }
     public int id_user { get; init; }
 }
