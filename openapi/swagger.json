@@ -656,6 +656,247 @@
         }
       }
     },
+    "/api/carrier": {
+      "get": {
+        "tags": [
+          "Carrier"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "idResearch",
+            "in": "query",
+            "description": "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results. Example: 'nom_carrier=like=example'.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string to order results. Example: 'nom_carrier,asc' or 'nom_carrier,desc'.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCarrierDtoPaginatedResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCarrierDtoPaginatedResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCarrierDtoPaginatedResponseDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Carrier"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCarrierDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCarrierDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCarrierDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCarrierDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCarrierDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCarrierDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/carrier/{id_carrier}": {
+      "get": {
+        "tags": [
+          "Carrier"
+        ],
+        "parameters": [
+          {
+            "name": "id_carrier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCarrierDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCarrierDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCarrierDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Carrier"
+        ],
+        "parameters": [
+          {
+            "name": "id_carrier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCarrierDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCarrierDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCarrierDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCarrierDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCarrierDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadCarrierDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Carrier"
+        ],
+        "parameters": [
+          {
+            "name": "id_carrier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/command": {
       "get": {
         "tags": [
@@ -683,7 +924,7 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_items'. Multiple values can be specified by separating them with ','.",
+            "description": "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_history', 'commands_items'. Multiple values can be specified by separating them with ','.",
             "schema": {
               "type": "array",
               "items": {
@@ -808,7 +1049,7 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_items'. Multiple values can be specified by separating them with ','.",
+            "description": "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_history', 'commands_items'. Multiple values can be specified by separating them with ','.",
             "schema": {
               "type": "array",
               "items": {
@@ -1573,7 +1814,7 @@
           {
             "name": "filter",
             "in": "query",
-            "description": "(Optional) RSQL filter. Example: 'status_projet==0'.",
+            "description": "(Optional) RSQL string to filter results. Example: 'prix_command_item=gt=100'.",
             "schema": {
               "type": "string"
             }
@@ -1581,7 +1822,7 @@
           {
             "name": "sort",
             "in": "query",
-            "description": "(Optional) Sort string. Example: 'created_at,asc' or 'created_at,desc'.",
+            "description": "(Optional) Sort string to order results. Example: 'prix_command_item,asc' or 'prix_command_item,desc'.",
             "schema": {
               "type": "string"
             }
@@ -1611,7 +1852,7 @@
         }
       }
     },
-    "/api/command/{id_command}/history/{id_command_history}": {
+    "/api/command/{id_command}/history/{id_history}": {
       "get": {
         "tags": [
           "CommandHistory"
@@ -1627,7 +1868,7 @@
             }
           },
           {
-            "name": "id_command_history",
+            "name": "id_history",
             "in": "path",
             "required": true,
             "schema": {
@@ -3918,6 +4159,194 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/item/{id_item}/history": {
+      "get": {
+        "tags": [
+          "ItemHistory"
+        ],
+        "parameters": [
+          {
+            "name": "id_item",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string. Example: 'created_at,desc'.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadExtendedItemHistoryDtoPaginatedResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadExtendedItemHistoryDtoPaginatedResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadExtendedItemHistoryDtoPaginatedResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/item/{id_item}/history/{id_history}": {
+      "get": {
+        "tags": [
+          "ItemHistory"
+        ],
+        "parameters": [
+          {
+            "name": "id_item",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id_history",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadExtendedItemHistoryDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadExtendedItemHistoryDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadExtendedItemHistoryDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/item/history": {
+      "get": {
+        "tags": [
+          "ItemHistory"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "(Optional) RSQL string to filter results.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "(Optional) Sort string. Example: 'created_at,desc'.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadExtendedItemHistoryDtoPaginatedResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadExtendedItemHistoryDtoPaginatedResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadExtendedItemHistoryDtoPaginatedResponseDto"
+                }
+              }
+            }
           }
         }
       }
@@ -12468,6 +12897,52 @@
         }
       }
     },
+    "/api/user/{id_user}/push-subscriptions/testPush": {
+      "post": {
+        "tags": [
+          "UserPushSubscription"
+        ],
+        "parameters": [
+          {
+            "name": "id_user",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/user/{id_user}/push-subscriptions/testEmail": {
+      "post": {
+        "tags": [
+          "UserPushSubscription"
+        ],
+        "parameters": [
+          {
+            "name": "id_user",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/user/{id_user}/sessions": {
       "get": {
         "tags": [
@@ -12654,6 +13129,37 @@
           }
         }
       }
+    },
+    "/api/webhook/17track": {
+      "post": {
+        "tags": [
+          "WebHook"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "string"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -12744,6 +13250,21 @@
           }
         },
         "additionalProperties": false
+      },
+      "CommandStatus": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "type": "integer",
+        "format": "int32"
       },
       "CreateBoxByStoreDto": {
         "required": [
@@ -12837,6 +13358,41 @@
         },
         "additionalProperties": false
       },
+      "CreateCarrierDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "country": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "country_iso": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "tel": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "CreateCommandCommentaireByCommandDto": {
         "required": [
           "contenu_command_commentaire"
@@ -12854,8 +13410,10 @@
       "CreateCommandDto": {
         "required": [
           "date_command",
+          "id_carrier",
           "prix_command",
           "status_command",
+          "tracking_number",
           "url_command"
         ],
         "type": "object",
@@ -12872,9 +13430,7 @@
             "format": "uri"
           },
           "status_command": {
-            "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
+            "$ref": "#/components/schemas/CommandStatus"
           },
           "date_command": {
             "type": "string",
@@ -12883,6 +13439,20 @@
           "date_livraison_command": {
             "type": "string",
             "format": "date-time",
+            "nullable": true
+          },
+          "tracking_number": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "id_carrier": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "is_tracking_requested": {
+            "type": "boolean",
             "nullable": true
           }
         },
@@ -12959,9 +13529,7 @@
             "type": "string"
           },
           "action_cronjob": {
-            "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
+            "$ref": "#/components/schemas/CronJobAction"
           },
           "params_cronjob": {
             "type": "string",
@@ -13446,6 +14014,19 @@
         },
         "additionalProperties": false
       },
+      "CronJobAction": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
       "ErrorDetail": {
         "required": [
           "data",
@@ -13536,6 +14117,18 @@
           }
         },
         "additionalProperties": false
+      },
+      "ItemHistoryType": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "type": "integer",
+        "format": "int32"
       },
       "LoginRequest": {
         "required": [
@@ -13939,6 +14532,11 @@
             "type": "string",
             "nullable": true
           },
+          "last_seen_camera": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "created_at": {
             "type": "string",
             "format": "date-time"
@@ -13963,6 +14561,89 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ReadCameraDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilterDto"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SorterDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadCarrierDto": {
+        "type": "object",
+        "properties": {
+          "id_carrier": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "key": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "country": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "country_iso": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "tel": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadCarrierDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filters",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadCarrierDto"
             },
             "nullable": true
           },
@@ -14101,7 +14782,7 @@
       },
       "ReadCommandDto": {
         "required": [
-          "status_command",
+          "tracking_number",
           "url_command"
         ],
         "type": "object",
@@ -14119,8 +14800,7 @@
             "nullable": true
           },
           "status_command": {
-            "type": "string",
-            "nullable": true
+            "$ref": "#/components/schemas/CommandStatus"
           },
           "date_command": {
             "type": "string",
@@ -14129,6 +14809,42 @@
           "date_livraison_command": {
             "type": "string",
             "format": "date-time",
+            "nullable": true
+          },
+          "tracking_number": {
+            "type": "string",
+            "nullable": true
+          },
+          "id_carrier": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "carrier_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "is_tracking_requested": {
+            "type": "boolean"
+          },
+          "is_tracking_validated": {
+            "type": "boolean"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "shipper_adress": {
+            "type": "string",
+            "nullable": true
+          },
+          "recipient_adress": {
+            "type": "string",
+            "nullable": true
+          },
+          "last_status": {
+            "$ref": "#/components/schemas/TrackingStatus"
+          },
+          "raw_data": {
+            "type": "string",
             "nullable": true
           },
           "created_at": {
@@ -14143,9 +14859,6 @@
         "additionalProperties": false
       },
       "ReadCommandHistoryDto": {
-        "required": [
-          "status_command_history"
-        ],
         "type": "object",
         "properties": {
           "id_command_history": {
@@ -14156,25 +14869,57 @@
             "type": "integer",
             "format": "int32"
           },
-          "status_command_history": {
+          "status": {
+            "$ref": "#/components/schemas/TrackingStatus"
+          },
+          "sub_status": {
             "type": "string",
             "nullable": true
           },
-          "tracking_number": {
+          "description": {
             "type": "string",
             "nullable": true
           },
-          "carrier": {
+          "location": {
             "type": "string",
             "nullable": true
           },
-          "tracking_event": {
+          "stage": {
             "type": "string",
             "nullable": true
           },
-          "event_at": {
+          "event_time_utc": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
+          },
+          "timezone": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "postal_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "string",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "string",
+            "nullable": true
           },
           "created_at": {
             "type": "string",
@@ -14259,6 +15004,10 @@
           "demo_mode": {
             "type": "boolean"
           },
+          "app_language": {
+            "type": "string",
+            "nullable": true
+          },
           "max_length_url": {
             "type": "integer",
             "format": "int32"
@@ -14283,6 +15032,14 @@
             "type": "integer",
             "format": "int32"
           },
+          "max_length_location": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_cron_expression": {
+            "type": "integer",
+            "format": "int32"
+          },
           "max_length_ip": {
             "type": "integer",
             "format": "int32"
@@ -14295,7 +15052,43 @@
             "type": "integer",
             "format": "int32"
           },
+          "max_length_device_name": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_push_key": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_push_auth": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_tracking_number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_carrier_name": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_timezone": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_coordinate": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_length_postal_code": {
+            "type": "integer",
+            "format": "int32"
+          },
           "max_size_document_in_mb": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max_size_image_in_mb": {
             "type": "integer",
             "format": "int32"
           },
@@ -14339,7 +15132,6 @@
       },
       "ReadCronJobDto": {
         "required": [
-          "action_cronjob",
           "cron_expression",
           "name_cronjob"
         ],
@@ -14358,8 +15150,7 @@
             "nullable": true
           },
           "action_cronjob": {
-            "type": "string",
-            "nullable": true
+            "$ref": "#/components/schemas/CronJobAction"
           },
           "params_cronjob": {
             "type": "string",
@@ -14666,7 +15457,7 @@
       },
       "ReadExtendedCommandDto": {
         "required": [
-          "status_command",
+          "tracking_number",
           "url_command"
         ],
         "type": "object",
@@ -14684,8 +15475,7 @@
             "nullable": true
           },
           "status_command": {
-            "type": "string",
-            "nullable": true
+            "$ref": "#/components/schemas/CommandStatus"
           },
           "date_command": {
             "type": "string",
@@ -14694,6 +15484,42 @@
           "date_livraison_command": {
             "type": "string",
             "format": "date-time",
+            "nullable": true
+          },
+          "tracking_number": {
+            "type": "string",
+            "nullable": true
+          },
+          "id_carrier": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "carrier_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "is_tracking_requested": {
+            "type": "boolean"
+          },
+          "is_tracking_validated": {
+            "type": "boolean"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "shipper_adress": {
+            "type": "string",
+            "nullable": true
+          },
+          "recipient_adress": {
+            "type": "string",
+            "nullable": true
+          },
+          "last_status": {
+            "$ref": "#/components/schemas/TrackingStatus"
+          },
+          "raw_data": {
+            "type": "string",
             "nullable": true
           },
           "created_at": {
@@ -14713,6 +15539,10 @@
             "format": "int32"
           },
           "commands_items_count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "commands_history_count": {
             "type": "integer",
             "format": "int32"
           },
@@ -14736,6 +15566,16 @@
               "$ref": "#/components/schemas/ReadCommandItemDto"
             },
             "nullable": true
+          },
+          "commands_history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadCommandHistoryDto"
+            },
+            "nullable": true
+          },
+          "carrier": {
+            "$ref": "#/components/schemas/ReadCarrierDto"
           }
         },
         "additionalProperties": false
@@ -15036,6 +15876,106 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ReadExtendedItemDto"
+            },
+            "nullable": true
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
+          },
+          "filters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilterDto"
+            },
+            "nullable": true
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SorterDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadExtendedItemHistoryDto": {
+        "type": "object",
+        "properties": {
+          "id_item_history": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id_item": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "id_box": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "id_user": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/ItemHistoryType"
+          },
+          "quantity_change": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "old_quantity": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "new_quantity": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "item": {
+            "$ref": "#/components/schemas/ReadItemDto"
+          },
+          "box": {
+            "$ref": "#/components/schemas/ReadBoxDto"
+          },
+          "user": {
+            "$ref": "#/components/schemas/ReadUserDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadExtendedItemHistoryDtoPaginatedResponseDto": {
+        "required": [
+          "data",
+          "filters",
+          "pagination",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadExtendedItemHistoryDto"
             },
             "nullable": true
           },
@@ -15641,6 +16581,9 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "is_mqtt_connected_store": {
+            "type": "boolean"
           },
           "created_at": {
             "type": "string",
@@ -16665,16 +17608,27 @@
           "mqtt_connected": {
             "type": "boolean"
           },
+          "kafka_connected": {
+            "type": "boolean"
+          },
           "ia_status": {
             "type": "string",
             "nullable": true
           },
           "ia_training_in_progress": {
-            "type": "boolean",
-            "nullable": true
+            "type": "integer",
+            "format": "int32"
           },
           "notif_status": {
             "type": "string",
+            "nullable": true
+          },
+          "notif_smtp": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "notif_webPush": {
+            "type": "boolean",
             "nullable": true
           },
           "cron_status": {
@@ -16683,6 +17637,13 @@
           },
           "worker_status": {
             "type": "string",
+            "nullable": true
+          },
+          "external_services": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
             "nullable": true
           }
         },
@@ -16737,6 +17698,9 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "is_mqtt_connected_store": {
+            "type": "boolean"
           },
           "created_at": {
             "type": "string",
@@ -17108,6 +18072,22 @@
         },
         "additionalProperties": false
       },
+      "TrackingStatus": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
       "UpdateAccessTokenDto": {
         "type": "object",
         "properties": {
@@ -17267,6 +18247,37 @@
         },
         "additionalProperties": false
       },
+      "UpdateCarrierDto": {
+        "type": "object",
+        "properties": {
+          "country": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "country_iso": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "tel": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "UpdateCommandCommentaireDto": {
         "type": "object",
         "properties": {
@@ -17305,9 +18316,7 @@
             "nullable": true
           },
           "status_command": {
-            "maxLength": 50,
-            "type": "string",
-            "nullable": true
+            "$ref": "#/components/schemas/CommandStatus"
           },
           "date_command": {
             "type": "string",
@@ -17317,6 +18326,20 @@
           "date_livraison_command": {
             "type": "string",
             "format": "date-time",
+            "nullable": true
+          },
+          "tracking_number": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "id_carrier": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "is_tracking_requested": {
+            "type": "boolean",
             "nullable": true
           }
         },
@@ -17355,9 +18378,7 @@
             "nullable": true
           },
           "action_cronjob": {
-            "maxLength": 50,
-            "type": "string",
-            "nullable": true
+            "$ref": "#/components/schemas/CronJobAction"
           },
           "params_cronjob": {
             "type": "string",
