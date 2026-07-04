@@ -43,11 +43,11 @@ jobs:
         working-directory: ./${{ matrix.source_dir }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         ref: ${{ inputs.branch }}
     - name: Set up C#
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v5
       with:
         dotnet-version: '9.0.x'
     - name: Install dependencies
@@ -92,11 +92,11 @@ jobs:
         working-directory: ./electrostoreFRONT
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         ref: ${{ inputs.branch }}
     - name: Set up Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: '24'
     - name: Install dependencies
@@ -108,14 +108,14 @@ jobs:
     - name: Cypress run
       env:
         VITE_API_URL: http://localhost/vite_api_url_placeholder/api
-      uses: cypress-io/github-action@v6
+      uses: cypress-io/github-action@v7
       with:
         start: npm run dev
         wait-on: 'http://localhost:5173'
         wait-on-timeout: 30
         working-directory: ./tests/electrostoreFRONT
     - name: Upload screenshots
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: failure()
       with:
         name: cypress-screenshots
@@ -123,7 +123,7 @@ jobs:
     - name: SonarScanner
       id: sonarqube
       continue-on-error: true
-      uses: SonarSource/sonarqube-scan-action@v6
+      uses: SonarSource/sonarqube-scan-action@v8
       env:
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
