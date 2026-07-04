@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ inputs.branch }}
@@ -55,7 +55,7 @@ jobs:
 
       - name: Generate Changelog
         if: ${{ steps.branch_tags.outputs.branch_tags != 'none' }}
-        uses: metcalfc/changelog-generator@v4.6.2
+        uses: metcalfc/changelog-generator@v4.7.0
         id: changelog
         with:
           mytoken: ${{ secrets.GITHUB_TOKEN }}
@@ -71,7 +71,7 @@ jobs:
       
       - name: Create First Release
         if: ${{ steps.branch_tags.outputs.branch_tags == 'none' }}
-        uses: ncipollo/release-action@v1.12.0
+        uses: ncipollo/release-action@v1.21.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -86,7 +86,7 @@ jobs:
       - name: Create Release
         id: create_release
         if: ${{ steps.changelog.outputs.changelog != '' }}
-        uses: ncipollo/release-action@v1.12.0
+        uses: ncipollo/release-action@v1.21.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

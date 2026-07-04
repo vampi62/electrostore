@@ -20,7 +20,7 @@ jobs:
         DEPLOY: ${{ env.DEPLOY }}
         RELEASE: ${{ env.RELEASE }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -75,7 +75,7 @@ jobs:
     if: needs.init-work.outputs.DEPLOY == 'true'
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
     - name: Helper to convert github repo to lowercase
       id: repo
       uses: ASzc/change-string-case-action@v6
