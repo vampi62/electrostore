@@ -13,4 +13,8 @@ public interface IUserPushSubscriptionService
     Task DeletePushSubscription(int id, int? userId = null);
 
     Task<List<ReadUserPushSubscriptionDto>> GetPushSubscriptionsByUserIdAsync(int userId, CancellationToken cancellationToken = default);
+
+    Task SendTestPushNotification(int userId);
+
+    Task SendTestEmailNotification(int userId);
 }
