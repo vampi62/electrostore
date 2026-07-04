@@ -1,7 +1,9 @@
 using AutoMapper;
 using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
+using ElectrostoreAPI.Services.ItemHistoryService;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -11,11 +13,13 @@ public class ItemBoxService : IItemBoxService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly IItemHistoryService _itemHistoryService;
 
-    public ItemBoxService(IMapper mapper, ApplicationDbContext context)
+    public ItemBoxService(IMapper mapper, ApplicationDbContext context, IItemHistoryService itemHistoryService)
     {
         _mapper = mapper;
         _context = context;
+        _itemHistoryService = itemHistoryService;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedItemBoxDto>> GetItemsBoxsByBoxId(int boxId, int limit = 100, int offset = 0,
@@ -174,12 +178,15 @@ public class ItemBoxService : IItemBoxService
         var newItemBox = _mapper.Map<ItemsBoxs>(itemBoxDto);
         _context.ItemsBoxs.Add(newItemBox);
         await _context.SaveChangesAsync();
+        await _itemHistoryService.LogHistory(newItemBox.id_item, newItemBox.id_box, ItemHistoryType.StockAdded,
+            oldQuantity: null, newQuantity: newItemBox.qte_item_box);
         return _mapper.Map<ReadItemBoxDto>(newItemBox);
     }
 
     public async Task<ReadItemBoxDto> UpdateItemBox(int itemId, int boxId, UpdateItemBoxDto itemBoxDto)
     {
         var itemBoxToUpdate = await _context.ItemsBoxs.FindAsync(itemId, boxId) ?? throw new KeyNotFoundException($"ItemBox with id '{itemId}' and boxId '{boxId}' not found");
+        var oldQte = itemBoxToUpdate.qte_item_box;
         if (itemBoxDto.qte_item_box is not null)
         {
             itemBoxToUpdate.qte_item_box = itemBoxDto.qte_item_box.Value;
@@ -190,12 +197,22 @@ public class ItemBoxService : IItemBoxService
             itemBoxToUpdate.seuil_max_item_item_box = itemBoxDto.seuil_max_item_item_box.Value;
         }
         await _context.SaveChangesAsync();
+        if (itemBoxDto.qte_item_box is not null)
+        {
+            var historyType = itemBoxToUpdate.qte_item_box > oldQte ? ItemHistoryType.StockAdded
+                : itemBoxToUpdate.qte_item_box < oldQte ? ItemHistoryType.StockRemoved
+                : ItemHistoryType.StockUpdated;
+            await _itemHistoryService.LogHistory(itemId, boxId, historyType,
+                oldQuantity: oldQte, newQuantity: itemBoxToUpdate.qte_item_box);
+        }
         return _mapper.Map<ReadItemBoxDto>(itemBoxToUpdate);
     }
 
     public async Task DeleteItemBox(int itemId, int boxId)
     {
         var itemBoxToDelete = await _context.ItemsBoxs.FindAsync(itemId, boxId) ?? throw new KeyNotFoundException($"ItemBox with id '{itemId}' and boxId '{boxId}' not found");
+        await _itemHistoryService.LogHistory(itemBoxToDelete.id_item, itemBoxToDelete.id_box, ItemHistoryType.StockRemoved,
+            oldQuantity: itemBoxToDelete.qte_item_box, newQuantity: null);
         _context.ItemsBoxs.Remove(itemBoxToDelete);
         await _context.SaveChangesAsync();
     }

@@ -23,6 +23,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<ElectrostoreAPI.Models.Imgs> Imgs { get; set; }
     public DbSet<ElectrostoreAPI.Models.Items> Items { get; set; }
     public DbSet<ElectrostoreAPI.Models.ItemsBoxs> ItemsBoxs { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ItemsHistory> ItemsHistory { get; set; }
     public DbSet<ElectrostoreAPI.Models.ItemsDocuments> ItemsDocuments { get; set; }
     public DbSet<ElectrostoreAPI.Models.ItemsTags> ItemsTags { get; set; }
     public DbSet<ElectrostoreAPI.Models.JwiAccessTokens> JwiAccessTokens { get; set; }
@@ -91,5 +92,23 @@ public class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<StoresTags>()
             .HasKey(st => new { st.id_store, st.id_tag });
+
+        modelBuilder.Entity<ItemsHistory>()
+            .HasOne(h => h.Item)
+            .WithMany()
+            .HasForeignKey(h => h.id_item)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<ItemsHistory>()
+            .HasOne(h => h.Box)
+            .WithMany()
+            .HasForeignKey(h => h.id_box)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<ItemsHistory>()
+            .HasOne(h => h.User)
+            .WithMany()
+            .HasForeignKey(h => h.id_user)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

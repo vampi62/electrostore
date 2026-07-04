@@ -29,5 +29,6 @@ public class Items : BaseEntity
     public ICollection<ItemsBoxs> ItemsBoxs { get; set; } = new List<ItemsBoxs>();
     public ICollection<ItemsDocuments> ItemsDocuments { get; set; } = new List<ItemsDocuments>();
     public ICollection<ItemsTags> ItemsTags { get; set; } = new List<ItemsTags>();
+    public ICollection<ItemsHistory> ItemsHistory { get; set; } = new List<ItemsHistory>();
     public ICollection<ProjetsItems> ProjetsItems { get; set; } = new List<ProjetsItems>();
 }

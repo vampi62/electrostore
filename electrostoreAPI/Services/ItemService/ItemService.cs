@@ -1,8 +1,10 @@
 using AutoMapper;
 using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.FileService;
+using ElectrostoreAPI.Services.ItemHistoryService;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -13,15 +15,17 @@ public class ItemService : IItemService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly IFileService _fileService;
+    private readonly IItemHistoryService _itemHistoryService;
     private readonly string _itemDocumentsPath = "itemDocuments";
     private readonly string _imagesPath = "images";
     private readonly string _imagesThumbnailsPath = "imagesThumbnails";
 
-    public ItemService(IMapper mapper, ApplicationDbContext context, IFileService fileService)
+    public ItemService(IMapper mapper, ApplicationDbContext context, IFileService fileService, IItemHistoryService itemHistoryService)
     {
         _mapper = mapper;
         _context = context;
         _fileService = fileService;
+        _itemHistoryService = itemHistoryService;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedItemDto>> GetItems(int limit = 100, int offset = 0,
@@ -73,6 +77,7 @@ public class ItemService : IItemService
                 CommandsItems = expand != null && expand.Contains("command_items") ? i.CommandsItems.Take(20).ToList() : null,
                 ProjetsItems = expand != null && expand.Contains("projet_items") ? i.ProjetsItems.Take(20).ToList() : null,
                 ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null,
+                ItemsHistory = expand != null && expand.Contains("item_history") ? i.ItemsHistory.OrderByDescending(h => h.created_at).Take(20).ToList() : null,
                 quantity_item = i.ItemsBoxs.Sum(ib => ib.qte_item_box)
             })
             .ToListAsync();
@@ -91,6 +96,7 @@ public class ItemService : IItemService
                     command_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(i.CommandsItems),
                     projet_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(i.ProjetsItems),
                     item_documents = _mapper.Map<IEnumerable<ReadItemDocumentDto>>(i.ItemsDocuments),
+                    item_history = _mapper.Map<IEnumerable<ReadItemHistoryDto>>(i.ItemsHistory),
                     quantity_item = i.quantity_item
                 };
             }).ToList(),
@@ -125,6 +131,7 @@ public class ItemService : IItemService
                 CommandsItems = expand != null && expand.Contains("command_items") ? i.CommandsItems.Take(20).ToList() : null,
                 ProjetsItems = expand != null && expand.Contains("projet_items") ? i.ProjetsItems.Take(20).ToList() : null,
                 ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null,
+                ItemsHistory = expand != null && expand.Contains("item_history") ? i.ItemsHistory.OrderByDescending(h => h.created_at).Take(20).ToList() : null,
                 quantity_item = i.ItemsBoxs.Sum(ib => ib.qte_item_box)
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Item with id '{id}' not found");
@@ -140,6 +147,7 @@ public class ItemService : IItemService
             command_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(item.CommandsItems),
             projet_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(item.ProjetsItems),
             item_documents = _mapper.Map<IEnumerable<ReadItemDocumentDto>>(item.ItemsDocuments),
+            item_history = _mapper.Map<IEnumerable<ReadItemHistoryDto>>(item.ItemsHistory),
             quantity_item = item.quantity_item
         };
     }
@@ -162,6 +170,7 @@ public class ItemService : IItemService
         await _fileService.CreateDirectory(Path.Combine(_imagesThumbnailsPath, item.id_item.ToString()));
         await _fileService.CreateDirectory(Path.Combine(_itemDocumentsPath, item.id_item.ToString()));
         await _context.SaveChangesAsync();
+        await _itemHistoryService.LogHistory(item.id_item, null, ItemHistoryType.ItemCreated);
         return _mapper.Map<ReadItemDto>(item);
     }
 
@@ -200,12 +209,14 @@ public class ItemService : IItemService
             itemToUpdate.id_img = itemDto.id_img;
         }
         await _context.SaveChangesAsync();
+        await _itemHistoryService.LogHistory(id, null, ItemHistoryType.ItemUpdated);
         return _mapper.Map<ReadItemDto>(itemToUpdate);
     }
 
     public async Task DeleteItem(int id)
     {
         var itemToDelete = await _context.Items.FindAsync(id) ?? throw new KeyNotFoundException($"Item with id '{id}' not found");
+        await _itemHistoryService.LogHistory(id, null, ItemHistoryType.ItemDeleted);
         _context.Items.Remove(itemToDelete);
         await _fileService.DeleteDirectory(Path.Combine(_imagesPath, id.ToString()));
         await _fileService.DeleteDirectory(Path.Combine(_imagesThumbnailsPath, id.ToString()));

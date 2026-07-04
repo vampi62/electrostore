@@ -20,6 +20,7 @@ using ElectrostoreAPI.Services.IAService;
 using ElectrostoreAPI.Services.ImgService;
 using ElectrostoreAPI.Services.ItemBoxService;
 using ElectrostoreAPI.Services.ItemDocumentService;
+using ElectrostoreAPI.Services.ItemHistoryService;
 using ElectrostoreAPI.Services.ItemService;
 using ElectrostoreAPI.Services.ItemTagService;
 using ElectrostoreAPI.Services.JwiService;
@@ -344,6 +345,7 @@ public partial class Program
         builder.Services.AddScoped<IImgService, ImgService>();
         builder.Services.AddScoped<IItemBoxService, ItemBoxService>();
         builder.Services.AddScoped<IItemDocumentService, ItemDocumentService>();
+        builder.Services.AddScoped<IItemHistoryService, ItemHistoryService>();
         builder.Services.AddScoped<IItemService, ItemService>();
         builder.Services.AddScoped<IItemTagService, ItemTagService>();
         builder.Services.AddScoped<ILedService, LedService>();

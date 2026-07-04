@@ -69,6 +69,12 @@ public class MappingProfile : Profile
         CreateMap<Items, ReadItemDto>();
         CreateMap<Items, ReadExtendedItemDto>();
 
+        CreateMap<ItemsHistory, ReadItemHistoryDto>();
+        CreateMap<ItemsHistory, ReadExtendedItemHistoryDto>()
+            .ForMember(dest => dest.item, opt => opt.MapFrom(src => src.Item))
+            .ForMember(dest => dest.box, opt => opt.MapFrom(src => src.Box))
+            .ForMember(dest => dest.user, opt => opt.MapFrom(src => src.User));
+
         CreateMap<CreateItemTagDto, ItemsTags>();
         CreateMap<ItemsTags, ReadItemTagDto>();
         CreateMap<ItemsTags, ReadExtendedItemTagDto>()

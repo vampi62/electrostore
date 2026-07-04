@@ -639,6 +639,56 @@ namespace ElectrostoreAPI.Migrations
                     b.ToTable("ItemsDocuments");
                 });
 
+            modelBuilder.Entity("ElectrostoreAPI.Models.ItemsHistory", b =>
+                {
+                    b.Property<int>("id_item_history")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_item_history"));
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("id_box")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("id_item")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("id_user")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("new_quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<int?>("old_quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("quantity_change")
+                        .HasColumnType("int");
+
+                    b.Property<int>("type")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_item_history");
+
+                    b.HasIndex("id_box");
+
+                    b.HasIndex("id_item");
+
+                    b.HasIndex("id_user");
+
+                    b.ToTable("ItemsHistory");
+                });
+
             modelBuilder.Entity("ElectrostoreAPI.Models.ItemsTags", b =>
                 {
                     b.Property<int>("id_item")
@@ -1339,6 +1389,30 @@ namespace ElectrostoreAPI.Migrations
                         .IsRequired();
 
                     b.Navigation("Item");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.ItemsHistory", b =>
+                {
+                    b.HasOne("ElectrostoreAPI.Models.Boxs", "Box")
+                        .WithMany()
+                        .HasForeignKey("id_box")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("ElectrostoreAPI.Models.Items", "Item")
+                        .WithMany()
+                        .HasForeignKey("id_item")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("ElectrostoreAPI.Models.Users", "User")
+                        .WithMany()
+                        .HasForeignKey("id_user")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Box");
+
+                    b.Navigation("Item");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ElectrostoreAPI.Models.ItemsTags", b =>
