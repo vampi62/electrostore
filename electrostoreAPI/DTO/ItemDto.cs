@@ -27,6 +27,7 @@ public record ReadExtendedItemDto : ReadItemDto
     public IEnumerable<ReadCommandItemDto>? command_items { get; init; }
     public IEnumerable<ReadProjetItemDto>? projet_items { get; init; }
     public IEnumerable<ReadItemDocumentDto>? item_documents { get; init; }
+    public IEnumerable<ReadItemHistoryDto>? item_history { get; init; }
 }
 public record CreateItemDto
 {
