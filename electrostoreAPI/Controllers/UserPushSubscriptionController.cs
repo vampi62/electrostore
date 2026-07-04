@@ -65,5 +65,21 @@ namespace ElectrostoreAPI.Controllers
             await _userPushSubscriptionService.DeletePushSubscription(id_subscription, id_user);
             return NoContent();
         }
+
+        [HttpPost("testPush")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult> SendTestPushNotification([FromRoute] int id_user)
+        {
+            await _userPushSubscriptionService.SendTestPushNotification(id_user);
+            return NoContent();
+        }
+
+        [HttpPost("testEmail")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult> SendTestEmailNotification([FromRoute] int id_user)
+        {
+            await _userPushSubscriptionService.SendTestEmailNotification(id_user);
+            return NoContent();
+        }
     }
 }
