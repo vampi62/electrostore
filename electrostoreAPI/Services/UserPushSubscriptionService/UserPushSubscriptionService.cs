@@ -1,9 +1,12 @@
 using AutoMapper;
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Kafka.Messages;
+using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using System.Text.Json;
 
 
 namespace ElectrostoreAPI.Services.UserPushSubscriptionService;
@@ -12,11 +15,15 @@ public class UserPushSubscriptionService : IUserPushSubscriptionService
 {
     private readonly ApplicationDbContext _context;
     private readonly IMapper _mapper;
+    private readonly IConfiguration _configuration;
+    private readonly IKafkaProducerService _kafkaProducerService;
 
-    public UserPushSubscriptionService(ApplicationDbContext context, IMapper mapper)
+    public UserPushSubscriptionService(ApplicationDbContext context, IMapper mapper, IConfiguration configuration, IKafkaProducerService kafkaProducerService)
     {
         _context = context;
         _mapper = mapper;
+        _configuration = configuration;
+        _kafkaProducerService = kafkaProducerService;
     }
 
     public async Task<PaginatedResponseDto<ReadUserPushSubscriptionDto>> GetPushSubscriptionsByUserId(int userId, int limit = 100, int offset = 0,
@@ -133,5 +140,47 @@ public class UserPushSubscriptionService : IUserPushSubscriptionService
             .Where(s => s.id_user == userId)
             .ToListAsync(cancellationToken);
         return _mapper.Map<List<ReadUserPushSubscriptionDto>>(subscriptions);
+    }
+
+    public async Task SendTestPushNotification(int userId)
+    {
+        if (!await _context.Users.AnyAsync(u => u.id_user == userId))
+        {
+            throw new KeyNotFoundException($"User with id {userId} not found");
+        }
+        var notification = new NotificationMessage
+        {
+            Types = ["webPush"],
+            RecipientUserId = userId,
+            Title = "Test notification",
+            Body = "This is a test push notification",
+            Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
+        };
+        await _kafkaProducerService.PublishAsync(
+            "notification-requests",
+            $"user-{userId}-push-test",
+            JsonSerializer.Serialize(notification)
+        );
+    }
+
+    public async Task SendTestEmailNotification(int userId)
+    {
+        if (!await _context.Users.AnyAsync(u => u.id_user == userId))
+        {
+            throw new KeyNotFoundException($"User with id {userId} not found");
+        }
+        var notification = new NotificationMessage
+        {
+            Types = ["email"],
+            RecipientUserId = userId,
+            Title = "Test notification",
+            Body = "This is a test email notification",
+            Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
+        };
+        await _kafkaProducerService.PublishAsync(
+            "notification-requests",
+            $"user-{userId}-email-test",
+            JsonSerializer.Serialize(notification)
+        );
     }
 }
