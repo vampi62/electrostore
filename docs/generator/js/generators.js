@@ -7,8 +7,6 @@ function generateDockerCompose(config) {
 # To use this file, create a .env file at the project root
 # Default values are provided with the syntax \${VAR:-default_value}
 
-version: '3.8'
-
 services:`;
 
     // API Backend
@@ -845,7 +843,8 @@ function generateNotifAppsettings(config) {
             "Port": parseInt(config.smtp.port),
             "Username": config.smtp.user,
             "Password": config.useVault ? "{{vault:smtp_password}}" : config.smtp.password,
-            "From": config.smtp.from
+            "From": config.smtp.from,
+            "EnableSsl": config.smtp.enableSsl
         };
     } else {
         settings.SMTP = {
@@ -1267,6 +1266,7 @@ docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic t
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-stop --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-request-stop' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-resume --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-request-resume' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-delete --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-request-delete' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-result --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-result' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic ia-status --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'ia-status' already exists"
 `;
     }
@@ -1547,6 +1547,7 @@ docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic t
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-stop --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-request-stop' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-resume --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-request-resume' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-delete --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-request-delete' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-result --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-result' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic ia-status --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'ia-status' already exists"
 `;
     }

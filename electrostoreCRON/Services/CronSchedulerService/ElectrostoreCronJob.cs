@@ -13,12 +13,12 @@ public class ElectrostoreCronJob : IJob
     public const string KeyId     = "id_cronjob";
 
     private readonly ITrack17SyncService           _track17Sync;
-    private readonly CronJobGrpc.CronJobGrpcClient _apiClient;
+    private readonly CronJobsGrpc.CronJobsGrpcClient _apiClient;
     private readonly ILogger<ElectrostoreCronJob>  _logger;
 
     public ElectrostoreCronJob(
         ITrack17SyncService track17Sync,
-        CronJobGrpc.CronJobGrpcClient apiClient,
+        CronJobsGrpc.CronJobsGrpcClient apiClient,
         ILogger<ElectrostoreCronJob> logger)
     {
         _track17Sync = track17Sync;
@@ -29,7 +29,9 @@ public class ElectrostoreCronJob : IJob
     public async Task Execute(IJobExecutionContext context)
     {
         var map    = context.JobDetail.JobDataMap;
-        var action = map.GetString(KeyAction) ?? string.Empty;
+
+        // if map.GetInt(KeyAction) is a empty string, then int.TryParse will return false and actionValue will be -1
+        var action = int.TryParse(map.GetString(KeyAction), out var parsedAction) ? parsedAction : -1;
         var id     = map.GetInt(KeyId);
 
         _logger.LogInformation("Running cron job #{Id} - action={Action}", id, action);
@@ -38,7 +40,7 @@ public class ElectrostoreCronJob : IJob
         {
             switch (action)
             {
-                case "sync_17track":
+                case (int)CronJobAction.PackageTracking:
                     await _track17Sync.SyncAllAsync(context.CancellationToken);
                     break;
 

@@ -109,7 +109,8 @@ function collectConfig(formData) {
             port: formData.get('smtpPort') || '587',
             user: formData.get('smtpUser'),
             password: formData.get('smtpPassword'),
-            from: formData.get('smtpFrom')
+            from: formData.get('smtpFrom'),
+            enableSsl: document.getElementById('smtpEnableSsl') ? document.getElementById('smtpEnableSsl').checked : true
         };
     }
 
