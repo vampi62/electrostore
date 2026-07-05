@@ -8,13 +8,13 @@ namespace ElectrostoreCRON.Services.CronSchedulerService;
 public class CronSchedulerService : BackgroundService
 {
     private readonly ISchedulerFactory _schedulerFactory;
-    private readonly CronJobGrpc.CronJobGrpcClient _apiClient;
+    private readonly CronJobsGrpc.CronJobsGrpcClient _apiClient;
     private readonly IConfiguration _configuration;
     private readonly ILogger<CronSchedulerService> _logger;
 
     public CronSchedulerService(
         ISchedulerFactory schedulerFactory,
-        CronJobGrpc.CronJobGrpcClient apiClient,
+        CronJobsGrpc.CronJobsGrpcClient apiClient,
         IConfiguration configuration,
         ILogger<CronSchedulerService> logger)
     {
@@ -72,23 +72,30 @@ public class CronSchedulerService : BackgroundService
             var jobDetail = JobBuilder.Create<ElectrostoreCronJob>()
                 .WithIdentity(jobKey)
                 .UsingJobData(ElectrostoreCronJob.KeyId,     job.IdCronjob)
-                .UsingJobData(ElectrostoreCronJob.KeyAction,  job.ActionCronjob)
+                .UsingJobData(ElectrostoreCronJob.KeyAction,  job.ActionCronjob.ToString())
                 .UsingJobData(ElectrostoreCronJob.KeyParams,  job.ParamsCronjob ?? string.Empty)
                 .Build();
+
+            // Normalize 5-field Unix cron (m h dom mon dow) to 6-field Quartz cron (s m h dom mon dow)
+            var cronExpression = job.CronExpression.Trim();
+            if (cronExpression.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length == 5)
+            {
+                cronExpression = "0 " + cronExpression;
+            }
 
             ITrigger trigger;
             try
             {
                 trigger = TriggerBuilder.Create()
                     .WithIdentity($"trigger-{job.IdCronjob}", "electrostore")
-                    .WithCronSchedule(job.CronExpression)
+                    .WithCronSchedule(cronExpression)
                     .Build();
             }
             catch (FormatException ex)
             {
                 _logger.LogError(ex,
                     "Cron job #{Id} ({Name}): invalid cron expression '{Expr}' - skipped.",
-                    job.IdCronjob, job.NameCronjob, job.CronExpression);
+                    job.IdCronjob, job.NameCronjob, cronExpression);
                 continue;
             }
 
