@@ -41,6 +41,7 @@ public class WebPushService : IWebPushService
         try
         {
             await _client.SendNotificationAsync(subscription, payload, _vapid);
+            _logger.LogInformation("[WebPushService] Push notification sent to {Endpoint}", endpoint);
         }
         catch (WebPushException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Gone ||
                                            ex.StatusCode == System.Net.HttpStatusCode.NotFound)

@@ -153,7 +153,7 @@ public class KafkaCronJobEventsConsumer : BackgroundService
         var jobDetail = JobBuilder.Create<ElectrostoreCronJob>()
             .WithIdentity(jobKey)
             .UsingJobData(ElectrostoreCronJob.KeyId,     job.id_cronjob)
-            .UsingJobData(ElectrostoreCronJob.KeyAction,  job.action_cronjob ?? string.Empty)
+            .UsingJobData(ElectrostoreCronJob.KeyAction,  job.action_cronjob?.ToString() ?? string.Empty)
             .UsingJobData(ElectrostoreCronJob.KeyParams,  job.params_cronjob ?? string.Empty)
             .Build();
 

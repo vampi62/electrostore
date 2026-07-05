@@ -48,8 +48,8 @@ public partial class Program
             Results.Ok(new
             {
                 status = configCache.DemoMode ? "demo" : "healthy",
-                smtp = config.GetValue<bool>("Smtp:Enable") ? "configured" : "not configured",
-                webPush = config.GetValue<bool>("VAPID:Enable") ? "configured" : "not configured"
+                smtp = config.GetValue<bool>("Smtp:Enable"),
+                webPush = config.GetValue<bool>("VAPID:Enable")
             }));
 
         app.Run();

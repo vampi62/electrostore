@@ -191,7 +191,7 @@ public class KafkaNotifConsumer : BackgroundService
                             msg.RecipientUserId);
                     }
                     break;
-                case "web_push":
+                case "webpush":
                     if (msg.RecipientUserId.HasValue)
                     {
                         GetUserPushSubscriptionsReply? pushSubs;
@@ -220,7 +220,7 @@ public class KafkaNotifConsumer : BackgroundService
                     }
                     else
                     {
-                        _logger.LogWarning("web_push: RecipientUserId is required");
+                        _logger.LogWarning("webPush: RecipientUserId is required");
                     }
                     break;
                 default:

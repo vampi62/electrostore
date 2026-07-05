@@ -450,7 +450,7 @@ public partial class Program
             var createCronJobDto = new CreateCronJobDto
             {
                 name_cronjob = "ProcessTrackingRequests",
-                cron_expression = "*/15 * * * *",
+                cron_expression = "*/15 * * * ?",
                 is_enabled = true,
                 action_cronjob = Enums.CronJobAction.PackageTracking,
             };

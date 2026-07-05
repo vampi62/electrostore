@@ -1,5 +1,6 @@
-using System.Net;
-using System.Net.Mail;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 
 namespace ElectrostoreNOTIF.Services.EmailSenderService;
 
@@ -16,12 +17,11 @@ public class EmailSenderService : IEmailSenderService
 
     public async Task SendAsync(string to, string subject, string body)
     {
-        if (!bool.TryParse(_configuration["SMTP:Enable"], out var isEnabled) || !isEnabled)
+        if (!_configuration.GetValue<bool>("SMTP:Enable"))
         {
             _logger.LogDebug("SMTP disabled - e-mail ignored for {To}", to);
             return;
         }
-
         // Validate recipient address
         if (string.IsNullOrWhiteSpace(to))
         {
@@ -35,36 +35,40 @@ public class EmailSenderService : IEmailSenderService
             _logger.LogDebug("E-mail to {To} ignored because it is a local address", to);
             return;
         }
-
-        var host = _configuration["SMTP:Host"] ?? throw new InvalidOperationException("SMTP:Host configuration is missing");
-        var port = int.Parse(_configuration["SMTP:Port"] ?? "587");
-        var username = _configuration["SMTP:Username"];
-        var password = _configuration["SMTP:Password"];
-        var from = _configuration["SMTP:From"] ?? username ?? "noreply@electrostore.local";
-
         // Validate sender address
+        var from = _configuration["SMTP:From"] ?? _configuration["SMTP:Username"];
         if (string.IsNullOrWhiteSpace(from))
         {
             _logger.LogError("Sender e-mail address is null or empty");
             throw new InvalidOperationException("SMTP:From configuration is missing and no username is configured");
         }
 
-        using var client = new SmtpClient(host, port)
-        {
-            EnableSsl = true
-        };
+        var host = _configuration["SMTP:Host"] ?? throw new InvalidOperationException("SMTP:Host is not configured");
+        var port = _configuration.GetValue<int>("SMTP:Port", 587);
+        var username = _configuration["SMTP:Username"] ?? throw new InvalidOperationException("SMTP:Username is not configured");
+        var password = _configuration["SMTP:Password"] ?? throw new InvalidOperationException("SMTP:Password is not configured");
 
-        // Only set credentials if username and password are provided
-        if (!string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password))
-        {
-            client.Credentials = new NetworkCredential(username, password);
-        }
+        // Port 465 = SSL implicite, other ports = STARTTLS
+        var socketOptions = port == 465
+            ? SecureSocketOptions.SslOnConnect
+            : SecureSocketOptions.StartTls;
 
-        var message = new MailMessage(from, to, subject, body) { IsBodyHtml = true };
+        var message = new MimeMessage();
+        message.From.Add(MailboxAddress.Parse(from));
+        message.To.Add(MailboxAddress.Parse(to));
+        message.Subject = subject;
+        message.Body = new TextPart("html") { Text = body };
 
+        using var client = new SmtpClient();
         try
         {
-            await client.SendMailAsync(message);
+            await client.ConnectAsync(host, port, socketOptions);
+            if (!string.IsNullOrWhiteSpace(username))
+            {
+                await client.AuthenticateAsync(username, password);
+            }
+            await client.SendAsync(message);
+            await client.DisconnectAsync(quit: true);
             _logger.LogInformation("E-mail sent to {To} with subject {Subject}", to, subject);
         }
         catch (Exception ex)
