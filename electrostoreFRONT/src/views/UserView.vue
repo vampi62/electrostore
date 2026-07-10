@@ -72,11 +72,11 @@ function loadToEdition(id) {
 	} else {
 		usersStore.userEdition = {
 			loading: false,
-			id_user: usersStore.users[userId.value].id_user,
-			nom_user: usersStore.users[userId.value].nom_user,
-			prenom_user: usersStore.users[userId.value].prenom_user,
-			email_user: usersStore.users[userId.value].email_user,
-			role_user: usersStore.users[userId.value].role_user,
+			id_user: usersStore.users[id].id_user,
+			nom_user: usersStore.users[id].nom_user,
+			prenom_user: usersStore.users[id].prenom_user,
+			email_user: usersStore.users[id].email_user,
+			role_user: usersStore.users[id].role_user,
 			current_mdp_user: "",
 			mdp_user: "",
 			confirm_mdp_user: "",
@@ -227,20 +227,30 @@ const labelTableauSession = ref([
 document.querySelector("#view").classList.add("overflow-y-scroll");
 
 // --- Push Notifications ---
-const pushSupported = typeof window !== "undefined" && "PushManager" in window && "serviceWorker" in navigator;
+const pushSupported = typeof window !== "undefined" && "PushManager" in window && "serviceWorker" in navigator && typeof Notification !== "undefined";
 const pushSubscriptionId = ref(null); // id de l'abonnement actuel dans l'API
 const pushLoading = ref(false);
 const pushDeviceName = ref("");
+const notificationPermission = ref(typeof Notification !== "undefined" ? Notification.permission : "default");
 
 function urlBase64ToUint8Array(base64String) {
 	const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
 	const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-	const raw = window.atob(base64);
-	return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+	const rawData = window.atob(base64);
+	const outputArray = new Uint8Array(rawData.length);
+	for (let i = 0; i < rawData.length; ++i) {
+		outputArray[i] = rawData.charCodeAt(i);
+	}
+	return outputArray;
 }
 
 async function checkExistingSubscription() {
 	if (!pushSupported || userId.value === "new") {
+		pushSubscriptionId.value = null;
+		return;
+	}
+	notificationPermission.value = Notification.permission;
+	if (Notification.permission !== "granted") {
 		pushSubscriptionId.value = null;
 		return;
 	}
@@ -268,6 +278,12 @@ async function subscribePush() {
 	}
 	pushLoading.value = true;
 	try {
+		const permission = await Notification.requestPermission();
+		notificationPermission.value = permission;
+		if (permission !== "granted") {
+			addNotification({ message: t("user.PushPermissionDenied"), type: "error" });
+			return;
+		}
 		const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 		if (!vapidKey) {
 			addNotification({ message: t("user.PushSubscribeError"), type: "error" });
@@ -314,6 +330,57 @@ async function unsubscribePush() {
 		pushLoading.value = false;
 	}
 }
+
+const sendTestNotification = async() => {
+	try {
+		await usersStore.sendTestPushNotification(userId.value);
+		addNotification({ message: t("user.PushTestSent"), type: "success" });
+	} catch (e) {
+		addNotification({ message: t("user.PushTestError"), type: "error" });
+	}
+};
+const sendTestEmailNotification = async() => {
+	try {
+		await usersStore.sendTestEmailNotification(userId.value);
+		addNotification({ message: t("user.PushTestSent"), type: "success" });
+	} catch (e) {
+		addNotification({ message: t("user.PushTestError"), type: "error" });
+	}
+};
+
+const deletePushSubscriptionFromTable = async(subscriptionId) => {
+	try {
+		if (subscriptionId === pushSubscriptionId.value) {
+			if (pushSupported) {
+				const reg = await navigator.serviceWorker.ready;
+				const sub = await reg.pushManager.getSubscription();
+				if (sub) {
+					await sub.unsubscribe();
+				}
+			}
+			pushSubscriptionId.value = null;
+		}
+		await usersStore.deletePushSubscription(userId.value, subscriptionId);
+		addNotification({ message: t("user.PushDeleted"), type: "success" });
+	} catch (e) {
+		addNotification({ message: t("user.PushDeleteError"), type: "error" });
+	}
+};
+
+const labelTableauPushSubscriptions = ref([
+	{ label: "user.PushDeviceName", sortable: false, key: "device_name", valueKey: "device_name", type: "text" },
+	{ label: "user.PushEndpoint", sortable: false, key: "endpoint", valueKey: "endpoint", type: "text" },
+	{ label: "user.PushCreatedAt", sortable: false, key: "created_at", valueKey: "created_at", type: "datetime" },
+	{ label: "user.TokenActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "user.PushDeleteBtn",
+			icon: "fa-solid fa-trash",
+			action: (row) => deletePushSubscriptionFromTable(row.id_push_subscription),
+			class: "bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600",
+			animation: true,
+		},
+	] },
+]);
 
 onMounted(() => {
 	fetchAllData().then(() => checkExistingSubscription());
@@ -379,12 +446,13 @@ onMounted(() => {
 		</CollapsibleSection>
 		<CollapsibleSection title="user.PushNotifications"
 			:total-count="Number(usersStore.pushSubscriptionsTotalCount[userId] || 0)" :permission="userId !== 'new'"
-			v-if="configsStore.getConfigByKey('notif_webPush')">
+			v-if="configsStore.getStatusByKey('notif_webPush')">
 			<template #append-row>
-				<div v-if="!pushSupported" class="text-gray-500 italic text-sm">
-					{{ $t('user.PushNotSupported') }}
+				<div v-if="notificationPermission === 'denied'" class="flex items-center gap-2 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 mb-2">
+					<i class="fa-solid fa-ban"></i>
+					{{ $t('user.PushPermissionDenied') }}
 				</div>
-				<div v-else class="flex flex-col gap-4 py-2">
+				<div v-if="pushSupported" class="flex flex-col gap-4 py-2">
 					<div v-if="!pushSubscriptionId" class="flex items-end gap-3 flex-wrap">
 						<div class="flex flex-col gap-1">
 							<label class="text-sm font-medium text-gray-700">{{ $t('user.PushDeviceName') }}</label>
@@ -405,6 +473,26 @@ onMounted(() => {
 						</button>
 					</div>
 				</div>
+				<div v-else class="text-gray-500 italic text-sm py-2">
+					{{ $t('user.PushNotSupported') }}
+				</div>
+				<div class="flex justify-end mb-2">
+					<button @click="sendTestNotification"
+						class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 text-sm">
+						<i class="fa-solid fa-bell mr-1"></i>{{ $t('user.PushSendTest') }}
+					</button>
+					<button @click="sendTestEmailNotification"
+						class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 text-sm">
+						<i class="fa-solid fa-bell mr-1"></i>{{ $t('user.PushSendTestEmail') }}
+					</button>
+				</div>
+				<Tableau :labels="labelTableauPushSubscriptions" :meta="{ key: 'id_push_subscription' }"
+					:store-data="[usersStore.pushSubscriptions[userId]]"
+					:loading="usersStore.pushSubscriptionsLoading"
+					:total-count="Number(usersStore.pushSubscriptionsTotalCount[userId]) || 0"
+					:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getPushSubscriptionsByInterval(userId, limit, offset, clear) : undefined"
+					:tableau-css="{ component: 'min-h-32 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+				/>
 			</template>
 		</CollapsibleSection>
 	</div>

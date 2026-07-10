@@ -387,5 +387,17 @@ export const useUsersStore = defineStore("users",{
 			});
 			delete this.pushSubscriptions[idUser][id];
 		},
+		async sendTestPushNotification(idUser) {
+			await fetchWrapper.post({
+				url: `${baseUrl}/user/${idUser}/push-subscriptions/testPush`,
+				useToken: "access",
+			});
+		},
+		async sendTestEmailNotification(idUser) {
+			await fetchWrapper.post({
+				url: `${baseUrl}/user/${idUser}/push-subscriptions/testEmail`,
+				useToken: "access",
+			});
+		},
 	},
 });

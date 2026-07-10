@@ -36,7 +36,26 @@ describe("Login Page", () => {
 				"max_size_document_in_mb": 5,
 				"sso_available_providers": [],// e.g : [{"provider":"authentik","display_name":"Authentik","icon_url":"https://example.com/icon.png"}]
 			},
-		}).as("getConfig");
+		}).as("getConfig")
+		cy.intercept("GET", "**/api/status", {
+			statusCode: 200,
+			body: {
+				"api_status": "healthy",
+				"db_connected": true,
+				"mqtt_connected": true,
+				"kafka_connected": true,
+				"ia_status": "healthy",
+				"ia_training_in_progress": 0,
+				"notif_status": "healthy",
+				"notif_smtp": true,
+				"notif_webPush": true,
+				"cron_status": "healthy",
+				"worker_status": "healthy",
+				"external_services": {
+					"17Track": "healthy",
+				},
+			},
+		}).as("getStatus")
 		
 		// Visit the login page before each test
 		cy.visit("/login");

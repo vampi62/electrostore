@@ -30,6 +30,7 @@ const configGroups = computed(() => [
 		keys: [
 			{ key: "demo_mode", label: t("health.ConfigDemoMode"), type: "bool" },
 			{ key: "max_size_document_in_mb", label: t("health.ConfigMaxDocSize"), type: "value", unit: "MB" },
+			{ key: "max_size_image_in_mb", label: t("health.ConfigMaxImgSize"), type: "value", unit: "MB" },
 		],
 	},
 	{

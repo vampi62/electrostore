@@ -24,6 +24,7 @@ export const useConfigsStore = defineStore("configs",{
 			"max_length_reason": 50,
 			"max_length_status": 50,
 			"max_size_document_in_mb": 5,
+			"max_size_image_in_mb": 5,
 			"sso_available_providers": [],// e.g : [{"provider":"authentik","display_name":"Authentik","icon_url":"https://example.com/icon.png"}]
 			"allowed_image_mime_types": [
 				"image/png",
@@ -90,6 +91,9 @@ export const useConfigsStore = defineStore("configs",{
 			"notif_webPush": false,
 			"cron_status": "unknown",
 			"worker_status": "unknown",
+			"external_services": {
+				"17Track": "unknown",
+			},
 		},
 	}),
 	actions: {

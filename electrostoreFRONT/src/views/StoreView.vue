@@ -52,24 +52,24 @@ async function fetchAllData() {
 }
 function loadToEdition(id) {
 	if (id === "new") {
-		storesStore.storeEdition[storeId.value] = {
+		storesStore.storeEdition[id] = {
 			loading: false,
 		};
-		storesStore.ledEdition[storeId.value] = {};
-		storesStore.boxEdition[storeId.value] = {};
+		storesStore.ledEdition[id] = {};
+		storesStore.boxEdition[id] = {};
 	} else {
-		storesStore.storeEdition[storeId.value] = {
+		storesStore.storeEdition[id] = {
 			loading: false,
-			id_store: storesStore.stores[storeId.value].id_store,
-			nom_store: storesStore.stores[storeId.value].nom_store,
-			mqtt_name_store: storesStore.stores[storeId.value].mqtt_name_store,
-			xlength_store: storesStore.stores[storeId.value].xlength_store,
-			ylength_store: storesStore.stores[storeId.value].ylength_store,
-			is_mqtt_connected_store: storesStore.stores[storeId.value].is_mqtt_connected_store,
-			mqtt_last_seen_store: storesStore.stores[storeId.value].mqtt_last_seen_store,
+			id_store: storesStore.stores[id].id_store,
+			nom_store: storesStore.stores[id].nom_store,
+			mqtt_name_store: storesStore.stores[id].mqtt_name_store,
+			xlength_store: storesStore.stores[id].xlength_store,
+			ylength_store: storesStore.stores[id].ylength_store,
+			is_mqtt_connected_store: storesStore.stores[id].is_mqtt_connected_store,
+			mqtt_last_seen_store: storesStore.stores[id].mqtt_last_seen_store,
 		};
-		storesStore.ledEdition[storeId.value] = { ...storesStore.leds[storeId.value] };
-		storesStore.boxEdition[storeId.value] = { ...storesStore.boxs[storeId.value] };
+		storesStore.ledEdition[id] = { ...storesStore.leds[id] };
+		storesStore.boxEdition[id] = { ...storesStore.boxs[id] };
 	}
 }
 onMounted(() => {

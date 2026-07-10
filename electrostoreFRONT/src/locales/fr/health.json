@@ -24,6 +24,7 @@
 	"ConfigGroupSSO": "Fournisseurs SSO",
 	"ConfigDemoMode": "Mode démonstration",
 	"ConfigMaxDocSize": "Taille max. document",
+	"ConfigMaxImgSize": "Taille max. image",
 	"ConfigMaxName": "Longueur max. nom",
 	"ConfigMaxDesc": "Longueur max. description",
 	"ConfigMaxUrl": "Longueur max. URL",

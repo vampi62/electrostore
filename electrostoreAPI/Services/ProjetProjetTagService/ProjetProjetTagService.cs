@@ -121,7 +121,7 @@ public class ProjetProjetTagService : IProjetProjetTagService
         {
             query = query.Include(st => st.ProjetTag);
         }
-        if (expand != null && expand.Contains("Projet"))
+        if (expand != null && expand.Contains("projet"))
         {
             query = query.Include(st => st.Projet);
         }
@@ -150,7 +150,7 @@ public class ProjetProjetTagService : IProjetProjetTagService
         {
             query = query.Include(st => st.ProjetTag);
         }
-        if (expand != null && expand.Contains("Projet"))
+        if (expand != null && expand.Contains("projet"))
         {
             query = query.Include(st => st.Projet);
         }
