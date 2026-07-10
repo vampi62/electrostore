@@ -13,7 +13,7 @@ import {
 	faBox, faProjectDiagram, faShoppingCart, faCamera, faTags, faStore, faMicrochip,
 	faTrash, faDownload, faFile, faFilter, faPenToSquare, faEye,
 	faTruckLoading, faTruckMoving, faTruckRampBox,
-	faSort, faSortUp, faSortDown, faPlus, faMinus, faSave, faSpinner,
+	faSort, faSortUp, faSortDown, faPlus, faMinus, faSave, faSpinner, faClock,
 	faRotateLeft, faRotateRight, faSearch, faCheck, faXmark, faBan,
 } from "@fortawesome/free-solid-svg-icons";
 import "./assets/tailwind.css";
@@ -26,7 +26,7 @@ library.add(
 	faBox, faProjectDiagram, faShoppingCart, faCamera, faTags, faStore, faMicrochip,
 	faTrash, faDownload, faFile, faFilter, faPenToSquare, faEye,
 	faTruckLoading, faTruckMoving, faTruckRampBox,
-	faSort, faSortUp, faSortDown, faPlus, faMinus, faSave, faSpinner,
+	faSort, faSortUp, faSortDown, faPlus, faMinus, faSave, faSpinner, faClock,
 	faRotateLeft, faRotateRight, faSearch, faCheck, faXmark, faBan,
 );
 
@@ -74,6 +74,10 @@ app.component(
 app.component(
 	"NotificationContainer",
 	defineAsyncComponent(() => import("@/components/NotificationContainer.vue")),
+);
+app.component(
+	"RoadMap",
+	defineAsyncComponent(() => import("@/components/RoadMap.vue")),
 );
 app.component(
 	"StatusDisplay",

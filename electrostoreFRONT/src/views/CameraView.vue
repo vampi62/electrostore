@@ -60,12 +60,12 @@ function loadToEdition(id) {
 	} else {
 		camerasStore.cameraEdition = {
 			loading: false,
-			nom_camera: camerasStore.cameras[cameraId.value].nom_camera,
-			url_camera: camerasStore.cameras[cameraId.value].url_camera,
-			user_camera: camerasStore.cameras[cameraId.value].user_camera,
-			mdp_camera: camerasStore.cameras[cameraId.value].mdp_camera,
+			nom_camera: camerasStore.cameras[id].nom_camera,
+			url_camera: camerasStore.cameras[id].url_camera,
+			user_camera: camerasStore.cameras[id].user_camera,
+			mdp_camera: camerasStore.cameras[id].mdp_camera,
 		};
-		camerasStore.cameraEdition._check = (camerasStore.cameras[cameraId.value].user_camera !== "") || (camerasStore.cameras[cameraId.value].mdp_camera !== "");
+		camerasStore.cameraEdition._check = (camerasStore.cameras[id].user_camera !== "") || (camerasStore.cameras[id].mdp_camera !== "");
 	}
 }
 onMounted(() => {

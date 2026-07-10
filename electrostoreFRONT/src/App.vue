@@ -10,6 +10,7 @@ const configsStore = useConfigsStore();
 const authStore = useAuthStore();
 
 configsStore.getConfig();
+configsStore.getHealth();
 
 const isIframe = computed(() => route.query.iframe !== undefined);
 

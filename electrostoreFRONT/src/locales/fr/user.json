@@ -54,6 +54,8 @@
 	"DeleteTitle": "Supprimer l'utilisateur",
 	"DeleteTextAdmin": "Voulez-vous vraiment supprimer cet utilisateur?",
 	"DeleteTextUser": "Voulez-vous vraiment supprimer votre compte?",
+	"PushTestSent": "Notification de test envoyée",
+	"PushTestError": "Erreur lors de l'envoi de la notification de test",
 	"PushNotifications": "Notifications push",
 	"PushSubscribe": "Activer les notifications push",
 	"PushUnsubscribe": "Désactiver",
@@ -61,5 +63,11 @@
 	"PushSubscribeError": "Erreur lors de l'activation des notifications push",
 	"PushDeleteError": "Erreur lors de la suppression de l'abonnement",
 	"PushNotSupported": "Les notifications push ne sont pas supportées par ce navigateur",
-	"PushDeviceName": "Nom du périphérique"
+	"PushPermissionDenied": "Les notifications sont bloquées par le navigateur. Veuillez les autoriser dans les paramètres du site.",
+	"PushDeviceName": "Nom du périphérique",
+	"PushEndpoint": "Point de terminaison",
+	"PushCreatedAt": "Créé le",
+	"PushDeleteBtn": "Supprimer",
+	"PushSendTest": "Envoyer une notification de test",
+	"PushSendTestEmail": "Envoyer une notification de test par email"
 }

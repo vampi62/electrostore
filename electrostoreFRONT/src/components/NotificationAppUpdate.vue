@@ -111,14 +111,13 @@ export default {
 				this.intervalId = null;
 			}
 		},
-		forceReload() {
+		async forceReload() {
 			if ("caches" in window) {
-				caches.keys().then((names) => {
-					names.forEach((name) => caches.delete(name));
-				});
+				const names = await caches.keys();
+				await Promise.all(names.map((name) => caches.delete(name)));
 			}
 			sessionStorage.removeItem(this._sessionStateKey());
-			window.location.reload(true);
+			window.location.reload();
 		},
 	},
 };

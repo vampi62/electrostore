@@ -24,6 +24,8 @@ self.addEventListener("push", (event) => {
 		badge: "/pwa/android-192x192.png",
 		data: data.data || {},
 		requireInteraction: false,
+		tag: "electrostore-notification",
+		vibrate: [100, 50, 100],
 	};
 
 	event.waitUntil(self.registration.showNotification(title, options));

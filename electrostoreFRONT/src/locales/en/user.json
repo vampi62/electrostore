@@ -55,11 +55,19 @@
 	"DeleteTextAdmin": "Do you really want to delete this user?",
 	"DeleteTextUser": "Do you really want to delete your account?",
 	"PushNotifications": "Push notifications",
+	"PushTestSent": "Test notification sent",
+	"PushTestError": "Error sending test notification",
 	"PushSubscribe": "Enable push notifications",
 	"PushUnsubscribe": "Disable",
 	"PushSubscribed": "Push notifications enabled",
 	"PushSubscribeError": "Error enabling push notifications",
 	"PushDeleteError": "Error deleting subscription",
 	"PushNotSupported": "Push notifications are not supported by this browser",
-	"PushDeviceName": "Device name"
+	"PushPermissionDenied": "Notifications are blocked by the browser. Please allow them in the site settings.",
+	"PushDeviceName": "Device name",
+	"PushEndpoint": "Endpoint",
+	"PushCreatedAt": "Created at",
+	"PushDeleteBtn": "Delete",
+	"PushSendTest": "Send test notification",
+	"PushSendTestEmail": "Send test email notification"
 }

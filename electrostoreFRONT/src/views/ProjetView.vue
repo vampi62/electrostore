@@ -64,12 +64,12 @@ function loadToEdition(id) {
 	} else {
 		projetsStore.projetEdition = {
 			loading: false,
-			nom_projet: projetsStore.projets[projetId.value].nom_projet,
-			description_projet: projetsStore.projets[projetId.value].description_projet,
-			url_projet: projetsStore.projets[projetId.value].url_projet,
-			status_projet: projetsStore.projets[projetId.value].status_projet,
-			date_debut_projet: projetsStore.projets[projetId.value].date_debut_projet,
-			date_fin_projet: projetsStore.projets[projetId.value].date_fin_projet,
+			nom_projet: projetsStore.projets[id].nom_projet,
+			description_projet: projetsStore.projets[id].description_projet,
+			url_projet: projetsStore.projets[id].url_projet,
+			status_projet: projetsStore.projets[id].status_projet,
+			date_debut_projet: projetsStore.projets[id].date_debut_projet,
+			date_fin_projet: projetsStore.projets[id].date_fin_projet,
 		};
 	}
 }
@@ -115,6 +115,24 @@ const projetDeleteModalShow = ref(false);
 const projetTypeStatus = ref({ [ProjetStatus.NotStarted]: t("projet.Status0"), [ProjetStatus.InProgress]: t("projet.Status1"),
 	[ProjetStatus.Completed]: t("projet.Status2"), [ProjetStatus.OnHold]: t("projet.Status3"),
 	[ProjetStatus.Cancelled]: t("projet.Status4"), [ProjetStatus.Archived]: t("projet.Status5") });
+
+// roadmap
+const projetRoadmapSteps = [
+	{ id: ProjetStatus.NotStarted, name: "NotStarted" },
+	{ id: ProjetStatus.InProgress, name: "InProgress" },
+	{ id: ProjetStatus.Completed, name: "Completed" },
+	{ id: ProjetStatus.OnHold, name: "OnHold" },
+	{ id: ProjetStatus.Cancelled, name: "Cancelled" },
+	{ id: ProjetStatus.Archived, name: "Archived" },
+];
+const projetCurrentStep = computed(() => {
+	const status = projetsStore.projetEdition?.status_projet;
+	if (status === null || status === undefined) {
+		return 0;
+	}
+	const idx = projetRoadmapSteps.findIndex((s) => s.id === Number(status));
+	return idx >= 0 ? idx : 0;
+});
 const projetSave = async() => {
 	try {
 		const validationResults = await Promise.all([
@@ -296,7 +314,7 @@ const labelForm = ref([
 	{ key: "nom_projet", label: "projet.Name", type: "text" },
 	{ key: "description_projet", label: "projet.Description", type: "textarea", rows: 4 },
 	{ key: "url_projet", label: "projet.Url", type: "text" },
-	{ key: "status_projet", label: "projet.Status", type: "select", options: projetTypeStatus },
+	{ key: "status_projet", label: "projet.Status", type: "select", typeData: "number", options: projetTypeStatus },
 	{ key: "date_debut_projet", label: "projet.StartDate", type: "computed", value: dateDebut },
 	{ key: "date_fin_projet", label: "projet.EndDate", type: "computed", value: dateFin },
 ]);
@@ -488,6 +506,11 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			@button-create="projetSave" @button-update="projetSave" @button-delete="projetDeleteModalShow = true"/>
 	</div>
 	<div v-if="projetsStore.projets[projetId] || projetId == 'new'" class="w-full">
+		<RoadMap v-if="projetId !== 'new'"
+			:steps="projetRoadmapSteps"
+			:current-step="projetCurrentStep"
+			mode="horizontal-bottom"
+		/>
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="projetsStore.projetEdition"/>
 			<Tags :current-tags="projetsStore.projetTagProjet[projetId] || {}" :tags-store="projetTagsStore.projetTags" :can-edit="projetId !== 'new' && authStore.hasPermission([2])"

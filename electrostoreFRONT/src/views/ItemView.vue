@@ -63,12 +63,12 @@ function loadToEdition(id) {
 	} else {
 		itemsStore.itemEdition = {
 			loading: false,
-			id_item: itemsStore.items[itemId.value].id_item,
-			reference_name_item: itemsStore.items[itemId.value].reference_name_item,
-			friendly_name_item: itemsStore.items[itemId.value].friendly_name_item,
-			description_item: itemsStore.items[itemId.value].description_item,
-			seuil_min_item: itemsStore.items[itemId.value].seuil_min_item,
-			id_img: itemsStore.items[itemId.value].id_img,
+			id_item: itemsStore.items[id].id_item,
+			reference_name_item: itemsStore.items[id].reference_name_item,
+			friendly_name_item: itemsStore.items[id].friendly_name_item,
+			description_item: itemsStore.items[id].description_item,
+			seuil_min_item: itemsStore.items[id].seuil_min_item,
+			id_img: itemsStore.items[id].id_img,
 		};
 	}
 }
@@ -359,7 +359,7 @@ const schemaAddImage = Yup.object().shape({
 		.required(t("item.ImageNameRequired")),
 	image: Yup.mixed()
 		.required(t("item.ImageRequired"))
-		.test("fileSize", t("item.ImageSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
+		.test("fileSize", t("item.ImageSize") + " " + configsStore.getConfigByKey("max_size_image_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_image_in_mb"))) * 1024 * 1024),
 });
 
 const labelForm = [

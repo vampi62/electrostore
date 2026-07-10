@@ -59,10 +59,10 @@ function loadToEdition(id) {
 	} else {
 		iasStore.iaEdition = {
 			loading: false,
-			nom_ia: iasStore.ias[iaId.value].nom_ia,
-			description_ia: iasStore.ias[iaId.value].description_ia,
-			date_ia: iasStore.ias[iaId.value].date_ia,
-			trained_ia: iasStore.ias[iaId.value].trained_ia,
+			nom_ia: iasStore.ias[id].nom_ia,
+			description_ia: iasStore.ias[id].description_ia,
+			date_ia: iasStore.ias[id].date_ia,
+			trained_ia: iasStore.ias[id].trained_ia,
 		};
 	}
 }
