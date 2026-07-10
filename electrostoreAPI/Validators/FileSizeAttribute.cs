@@ -10,12 +10,12 @@ public class FileSizeAttribute : ValidationAttribute
 
     public FileSizeAttribute(string maxSizePropertyName)
     {
-        var maxSizeField = typeof(Constants).GetField(
+        var maxSizeProperty = typeof(Constants).GetProperty(
             maxSizePropertyName,
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
         ) ?? throw new InvalidOperationException($"Field '{maxSizePropertyName}' not found in Constants class.");
 
-        _maxSizeInMB = (long)maxSizeField.GetValue(null)!;
+        _maxSizeInMB = (long)Convert.ToInt64(maxSizeProperty.GetValue(null)!);
     }
 
     public override bool IsValid(object? value)

@@ -3,9 +3,9 @@ using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
+using ElectrostoreAPI.Services.SessionService;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
-using System.Security.Claims;
 
 namespace ElectrostoreAPI.Services.ItemHistoryService;
 
@@ -13,17 +13,17 @@ public class ItemHistoryService : IItemHistoryService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ISessionService _sessionService;
 
-    public ItemHistoryService(IMapper mapper, ApplicationDbContext context, IHttpContextAccessor httpContextAccessor)
+    public ItemHistoryService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService)
     {
         _mapper = mapper;
         _context = context;
-        _httpContextAccessor = httpContextAccessor;
+        _sessionService = sessionService;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedItemHistoryDto>> GetItemHistoryByItemId(int itemId, int limit = 100, int offset = 0,
-        List<FilterDto>? rsql = null, SorterDto? sort = null)
+        List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
@@ -57,13 +57,24 @@ public class ItemHistoryService : IItemHistoryService
         }
         query = query.Skip(offset).Take(limit);
         var history = await query
-            .Include(h => h.Item)
-            .Include(h => h.Box)
-            .Include(h => h.User)
+            .Select(h => new
+            {
+                ItemHistory = h,
+                Item = expand != null && expand.Contains("item") ? h.Item : null,
+                Box = expand != null && expand.Contains("box") ? h.Box : null,
+                User = expand != null && expand.Contains("user") ? h.User : null
+            })
             .ToListAsync();
         return new PaginatedResponseDto<ReadExtendedItemHistoryDto>
         {
-            data = _mapper.Map<List<ReadExtendedItemHistoryDto>>(history),
+            data = history.Select(h => {
+                return _mapper.Map<ReadExtendedItemHistoryDto>(h.ItemHistory) with
+                {
+                    item = _mapper.Map<ReadExtendedItemDto>(h.Item),
+                    box = _mapper.Map<ReadBoxDto>(h.Box),
+                    user = _mapper.Map<ReadUserDto>(h.User),
+                };
+            }).ToList(),
             pagination = new PaginationDto
             {
                 offset = offset,
@@ -77,19 +88,30 @@ public class ItemHistoryService : IItemHistoryService
         };
     }
 
-    public async Task<ReadExtendedItemHistoryDto> GetItemHistoryById(int id, int itemId)
+    public async Task<ReadExtendedItemHistoryDto> GetItemHistoryById(int id, int itemId, List<string>? expand = null)
     {
-        var history = await _context.ItemsHistory
-            .Include(h => h.Item)
-            .Include(h => h.Box)
-            .Include(h => h.User)
-            .FirstOrDefaultAsync(h => h.id_item_history == id && h.id_item == itemId)
+        var query = _context.ItemsHistory.AsQueryable();
+        query = query.Where(h => h.id_item_history == id && h.id_item == itemId);
+        var history = await query
+            .Select(h => new
+            {
+                ItemHistory = h,
+                Item = expand != null && expand.Contains("item") ? h.Item : null,
+                Box = expand != null && expand.Contains("box") ? h.Box : null,
+                User = expand != null && expand.Contains("user") ? h.User : null
+            })
+            .FirstOrDefaultAsync()
             ?? throw new KeyNotFoundException($"ItemHistory with id '{id}' not found for Item with id '{itemId}'");
-        return _mapper.Map<ReadExtendedItemHistoryDto>(history);
+        return _mapper.Map<ReadExtendedItemHistoryDto>(history.ItemHistory) with
+        {
+            item = _mapper.Map<ReadExtendedItemDto>(history.Item),
+            box = _mapper.Map<ReadBoxDto>(history.Box),
+            user = _mapper.Map<ReadUserDto>(history.User),
+        };
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedItemHistoryDto>> GetItemsHistory(int limit = 100, int offset = 0,
-        List<FilterDto>? rsql = null, SorterDto? sort = null)
+        List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         var query = _context.ItemsHistory.AsQueryable();
         var filterResult = default(Expression<Func<ItemsHistory, bool>>);
@@ -117,13 +139,24 @@ public class ItemHistoryService : IItemHistoryService
         }
         query = query.Skip(offset).Take(limit);
         var history = await query
-            .Include(h => h.Item)
-            .Include(h => h.Box)
-            .Include(h => h.User)
+            .Select(h => new
+            {
+                ItemHistory = h,
+                Item = expand != null && expand.Contains("item") ? h.Item : null,
+                Box = expand != null && expand.Contains("box") ? h.Box : null,
+                User = expand != null && expand.Contains("user") ? h.User : null
+            })
             .ToListAsync();
         return new PaginatedResponseDto<ReadExtendedItemHistoryDto>
         {
-            data = _mapper.Map<List<ReadExtendedItemHistoryDto>>(history),
+            data = history.Select(h => {
+                return _mapper.Map<ReadExtendedItemHistoryDto>(h.ItemHistory) with
+                {
+                    item = _mapper.Map<ReadExtendedItemDto>(h.Item),
+                    box = _mapper.Map<ReadBoxDto>(h.Box),
+                    user = _mapper.Map<ReadUserDto>(h.User),
+                };
+            }).ToList(),
             pagination = new PaginationDto
             {
                 offset = offset,
@@ -140,12 +173,7 @@ public class ItemHistoryService : IItemHistoryService
     public async Task LogHistory(int? itemId, int? boxId, ItemHistoryType type,
         int? oldQuantity = null, int? newQuantity = null, string? notes = null)
     {
-        int? userId = null;
-        var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (int.TryParse(userIdClaim, out var parsedUserId))
-        {
-            userId = parsedUserId;
-        }
+        var userId = _sessionService.GetClientId();
 
         int? quantityChange = null;
         if (oldQuantity.HasValue && newQuantity.HasValue)

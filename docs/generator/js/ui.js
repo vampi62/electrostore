@@ -145,13 +145,17 @@ async function generateVapidKeys() {
         true,
         ["sign", "verify"]
     );
+    // Public key: export as raw uncompressed point (65 bytes) → base64url
     const publicKeyBuffer = await window.crypto.subtle.exportKey("raw", keyPair.publicKey);
-    const publicKey = arrayBufferToBase64(publicKeyBuffer);
-    const privateKeyBuffer = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
-    const privateKey = arrayBufferToBase64(privateKeyBuffer);
-    document.getElementById('vapidPublicKey').value = toURLSafeBase64(publicKey);
-    document.getElementById('vapidPrivateKey').value = toURLSafeBase64(privateKey);
-    return { publicKey: toURLSafeBase64(publicKey), privateKey: toURLSafeBase64(privateKey) };
+    const publicKey = toURLSafeBase64(arrayBufferToBase64(publicKeyBuffer));
+    // Private key: export as JWK and extract the 'd' field which is the raw 32-byte
+    // EC scalar already encoded as base64url — required format for VAPID.
+    // (pkcs8 wraps the key with ASN.1 metadata making it >32 bytes and invalid for VAPID)
+    const privateKeyJwk = await window.crypto.subtle.exportKey("jwk", keyPair.privateKey);
+    const privateKey = privateKeyJwk.d;
+    document.getElementById('vapidPublicKey').value = publicKey;
+    document.getElementById('vapidPrivateKey').value = privateKey;
+    return { publicKey, privateKey };
 }
 
 function arrayBufferToBase64(buffer) {

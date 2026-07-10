@@ -95,7 +95,7 @@ public class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<ItemsHistory>()
             .HasOne(h => h.Item)
-            .WithMany()
+            .WithMany(i => i.ItemsHistory)
             .HasForeignKey(h => h.id_item)
             .OnDelete(DeleteBehavior.SetNull);
 
