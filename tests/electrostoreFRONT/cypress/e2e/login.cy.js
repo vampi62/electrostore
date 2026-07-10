@@ -56,10 +56,6 @@ describe("Login Page", () => {
 				},
 			},
 		}).as("getStatus")
-
-		// Wait for the API calls to complete
-		cy.wait("@getConfig");
-		cy.wait("@getStatus");
 		
 		// Visit the login page before each test
 		cy.visit("/login");
