@@ -70,6 +70,15 @@
 	"DocumentType": "Type",
 	"DocumentDate": "Date",
 	"DocumentActions": "Actions",
+	"History": "Historique",
+	"HistoryDate": "Date",
+	"HistoryType": "Type",
+	"HistoryQuantityChange": "Changement de quantité",
+	"HistoryOldQuantity": "Ancienne quantité",
+	"HistoryNewQuantity": "Nouvelle quantité",
+	"HistoryBoxId": "Id de la boîte d'articles",
+	"HistoryUser": "utilisateur",
+	"HistoryNotes": "Notes",
 	"Images": "Images",
 	"AddImage": "Ajouter une image",
 	"ImageLoading": "Chargement",
@@ -102,5 +111,11 @@
 	"TagName": "Nom",
 	"TagActions": "Actions",
 	"TagAdded": "Tag ajouté",
-	"TagDeleted": "Tag supprimé"
+	"TagDeleted": "Tag supprimé",
+	"HistoryTypeItemCreated": "Item créé",
+	"HistoryTypeItemUpdated": "Item mis à jour",
+	"HistoryTypeItemDeleted": "Item supprimé",
+	"HistoryTypeStockAdded": "Stock ajouté",
+	"HistoryTypeStockRemoved": "Stock retiré",
+	"HistoryTypeStockUpdated": "Stock mis à jour"
 }
