@@ -135,7 +135,7 @@ export default {
 			errorMessage: "",
 			allowedExtensions: this.configsStore.getConfigByKey(
 				this.fileType === "image" ? "allowed_image_extensions" : "allowed_document_extensions") || [],
-			maxSizeInMb: this.configsStore.getConfigByKey("max_size_document_in_mb") || 10,
+			maxSizeInMb: this.configsStore.getConfigByKey("max_size_" + this.fileType + "_in_mb") || 5,
 		};
 	},
 	methods: {

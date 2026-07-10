@@ -63,12 +63,12 @@ function loadToEdition(id) {
 	} else {
 		itemsStore.itemEdition = {
 			loading: false,
-			id_item: itemsStore.items[itemId.value].id_item,
-			reference_name_item: itemsStore.items[itemId.value].reference_name_item,
-			friendly_name_item: itemsStore.items[itemId.value].friendly_name_item,
-			description_item: itemsStore.items[itemId.value].description_item,
-			seuil_min_item: itemsStore.items[itemId.value].seuil_min_item,
-			id_img: itemsStore.items[itemId.value].id_img,
+			id_item: itemsStore.items[id].id_item,
+			reference_name_item: itemsStore.items[id].reference_name_item,
+			friendly_name_item: itemsStore.items[id].friendly_name_item,
+			description_item: itemsStore.items[id].description_item,
+			seuil_min_item: itemsStore.items[id].seuil_min_item,
+			id_img: itemsStore.items[id].id_img,
 		};
 	}
 }

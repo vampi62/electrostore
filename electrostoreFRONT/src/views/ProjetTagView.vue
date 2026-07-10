@@ -56,8 +56,8 @@ function loadToEdition(id) {
 	} else {
 		projetTagsStore.projetTagEdition = {
 			loading: false,
-			nom_projet_tag: projetTagsStore.projetTags[projetTagId.value].nom_projet_tag,
-			poids_projet_tag: projetTagsStore.projetTags[projetTagId.value].poids_projet_tag,
+			nom_projet_tag: projetTagsStore.projetTags[id].nom_projet_tag,
+			poids_projet_tag: projetTagsStore.projetTags[id].poids_projet_tag,
 		};
 	}
 }
