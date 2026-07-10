@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 
 import { fetchWrapper } from "@/helpers";
 
-import { useTagsStore, useStoresStore, useCommandsStore, useProjetsStore } from "@/stores";
+import { useTagsStore, useStoresStore, useCommandsStore, useProjetsStore, useUsersStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -44,6 +44,10 @@ export const useItemsStore = defineStore("items",{
 		imagesURL: {},
 		thumbnailsURL: {},
 		imageEdition: {},
+
+		itemHistoryLoading: false,
+		itemHistoryTotalCount: {},
+		itemHistory: {},
 	}),
 	actions: {
 		async getItemByList(idResearch = [], expand = []) {
@@ -93,6 +97,12 @@ export const useItemsStore = defineStore("items",{
 					this.itemProjets[item.id_item] = {};
 					for (const itemProjet of item["projet_items"]) {
 						this.itemProjets[item.id_item][itemProjet.id_projet] = itemProjet;
+					}
+				}
+				if (expand.includes("item_history")) {
+					this.itemHistory[item.id_item] = {};
+					for (const itemHistory of item["item_history"]) {
+						this.itemHistory[item.id_item][itemHistory.id_item_history] = itemHistory;
 					}
 				}
 			}
@@ -151,6 +161,12 @@ export const useItemsStore = defineStore("items",{
 					this.itemProjets[item.id_item] = {};
 					for (const itemProjet of item["projet_items"]) {
 						this.itemProjets[item.id_item][itemProjet.id_projet] = itemProjet;
+					}
+				}
+				if (expand.includes("item_history")) {
+					this.itemHistory[item.id_item] = {};
+					for (const itemHistory of item["item_history"]) {
+						this.itemHistory[item.id_item][itemHistory.id_item_history] = itemHistory;
 					}
 				}
 			}
@@ -775,6 +791,51 @@ export const useItemsStore = defineStore("items",{
 			});
 			const url = URL.createObjectURL(response);
 			this.thumbnailsURL[id_img] = url;
+		},
+
+		async getItemHistoryByInterval(idItem, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.itemHistory[idItem] || clear) {
+				this.itemHistory[idItem] = {};
+			}
+			this.itemHistoryLoading = true;
+			const usersStore = useUsersStore();
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const newItemHistoryList = await fetchWrapper.get({
+				url: `${baseUrl}/item/${idItem}/history?${paramString}`,
+				useToken: "access",
+			});
+			for (const itemHistory of newItemHistoryList["data"]) {
+				this.itemHistory[idItem][itemHistory.id_item_history] = itemHistory;
+				if (expand.includes("user")) {
+					usersStore.users[itemHistory.id_user] = itemHistory["user"];
+				}
+			}
+			this.itemHistoryTotalCount[idItem] = newItemHistoryList["pagination"]?.["total"] || 0;
+			this.itemHistoryLoading = false;
+			return [newItemHistoryList["pagination"]?.["nextOffset"] || 0, newItemHistoryList["pagination"]?.["hasMore"] || false];
+		},
+		async getItemHistoryById(idItem, id, expand = []) {
+			if (!this.itemHistory[idItem]) {
+				this.itemHistory[idItem] = {};
+			}
+			if (!this.itemHistory[idItem][id]) {
+				this.itemHistory[idItem][id] = {};
+			}
+			this.itemHistory[idItem][id].loading = true;
+			const usersStore = useUsersStore();
+			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			this.itemHistory[idItem][id] = await fetchWrapper.get({
+				url: `${baseUrl}/item/${idItem}/history/${id}?${expandString}`,
+				useToken: "access",
+			});
+			if (expand.includes("user")) {
+				usersStore.users[this.itemHistory[idItem][id].id_user] = this.itemHistory[idItem][id]["user"];
+			}
 		},
 	},
 });
