@@ -12,12 +12,12 @@ public class FileTypeAttribute : ValidationAttribute
     private readonly string[] _allowedExtensions;
     public FileTypeAttribute(string mimeTypesPropertyName)
     {
-        var _mimeTypesField = (typeof(Constants).GetField(
+        var _mimeTypesProperty = (typeof(Constants).GetProperty(
                 mimeTypesPropertyName,
                 BindingFlags.Public | BindingFlags.Static
             ) ?? null) ?? throw new InvalidOperationException($"Field '{mimeTypesPropertyName}' not found in Constants class.");
-        _allowedMimeTypes = [.. ((ImmutableDictionary<string, string>)_mimeTypesField.GetValue(null)!).Keys];
-        _allowedExtensions = [.. ((ImmutableDictionary<string, string>)_mimeTypesField.GetValue(null)!).Values];
+        _allowedMimeTypes = ((ImmutableDictionary<string, string>)_mimeTypesProperty.GetValue(null)!).Keys.ToArray();
+        _allowedExtensions = ((ImmutableDictionary<string, string>)_mimeTypesProperty.GetValue(null)!).Values.ToArray();
     }
     public override bool IsValid(object? value)
     {

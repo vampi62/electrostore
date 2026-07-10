@@ -24,11 +24,12 @@ namespace ElectrostoreAPI.Controllers
             [FromQuery] int limit = 100,
             [FromQuery] int offset = 0,
             [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results.")] string? filter = null,
-            [FromQuery, SwaggerParameter(Description = "(Optional) Sort string. Example: 'created_at,desc'.")] string? sort = null)
+            [FromQuery, SwaggerParameter(Description = "(Optional) Sort string. Example: 'created_at,desc'.")] string? sort = null,
+            [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'item', 'box', 'user'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
-            var history = await _itemHistoryService.GetItemHistoryByItemId(id_item, limit, offset, rsqlDto, sortDto);
+            var history = await _itemHistoryService.GetItemHistoryByItemId(id_item, limit, offset, rsqlDto, sortDto, expand);
             return Ok(history);
         }
 
@@ -36,9 +37,10 @@ namespace ElectrostoreAPI.Controllers
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadExtendedItemHistoryDto>> GetItemHistoryById(
             [FromRoute] int id_item,
-            [FromRoute] int id_history)
+            [FromRoute] int id_history,
+            [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'item', 'box', 'user'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var history = await _itemHistoryService.GetItemHistoryById(id_history, id_item);
+            var history = await _itemHistoryService.GetItemHistoryById(id_history, id_item, expand);
             return Ok(history);
         }
 
@@ -48,11 +50,12 @@ namespace ElectrostoreAPI.Controllers
             [FromQuery] int limit = 100,
             [FromQuery] int offset = 0,
             [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results.")] string? filter = null,
-            [FromQuery, SwaggerParameter(Description = "(Optional) Sort string. Example: 'created_at,desc'.")] string? sort = null)
+            [FromQuery, SwaggerParameter(Description = "(Optional) Sort string. Example: 'created_at,desc'.")] string? sort = null,
+            [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'item', 'box', 'user'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
-            var history = await _itemHistoryService.GetItemsHistory(limit, offset, rsqlDto, sortDto);
+            var history = await _itemHistoryService.GetItemsHistory(limit, offset, rsqlDto, sortDto, expand);
             return Ok(history);
         }
     }
