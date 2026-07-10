@@ -16,7 +16,9 @@ const preset = ref(route.query.preset || null);
 
 import { downloadFile, viewFile } from "@/utils";
 
-import { useConfigsStore, useItemsStore, useTagsStore, useStoresStore, useCommandsStore, useProjetsStore, useAuthStore } from "@/stores";
+import { ItemHistoryType } from "@/enums";
+
+import { useConfigsStore, useItemsStore, useTagsStore, useStoresStore, useCommandsStore, useProjetsStore, useAuthStore, useUsersStore } from "@/stores";
 const configsStore = useConfigsStore();
 const itemsStore = useItemsStore();
 const tagsStore = useTagsStore();
@@ -24,6 +26,7 @@ const storesStore = useStoresStore();
 const commandsStore = useCommandsStore();
 const projetsStore = useProjetsStore();
 const authStore = useAuthStore();
+const usersStore = useUsersStore();
 
 const formContainer = ref(null);
 
@@ -304,6 +307,11 @@ function tagDelete(id_tag) {
 	}
 }
 
+// item history enum
+const projetTypeStatus = ref({ [ItemHistoryType.ItemCreated]: t("item.HistoryTypeItemCreated"), [ItemHistoryType.ItemUpdated]: t("item.HistoryTypeItemUpdated"),
+	[ItemHistoryType.ItemDeleted]: t("item.HistoryTypeItemDeleted"), [ItemHistoryType.StockAdded]: t("item.HistoryTypeStockAdded"),
+	[ItemHistoryType.StockRemoved]: t("item.HistoryTypeStockRemoved"), [ItemHistoryType.StockUpdated]: t("item.HistoryTypeStockUpdated") });
+
 const schemaBox = Yup.object().shape({
 	qte_item_box: Yup.number()
 		.required(t("item.BoxQuantityRequired"))
@@ -441,6 +449,16 @@ const labelTableauDocument = ref([
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
+]);
+const labelTableauHistory = ref([
+	{ label: "item.HistoryDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
+	{ label: "item.HistoryType", sortable: true, key: "type", valueKey: "type", type: "enum", options: projetTypeStatus },
+	{ label: "item.HistoryQuantityChange", sortable: true, key: "quantity_change", valueKey: "quantity_change", type: "number" },
+	{ label: "item.HistoryOldQuantity", sortable: true, key: "old_quantity", valueKey: "old_quantity", type: "number" },
+	{ label: "item.HistoryNewQuantity", sortable: true, key: "new_quantity", valueKey: "new_quantity", type: "number" },
+	{ label: "item.HistoryBoxId", sortable: true, key: "id_box", valueKey: "id_box", type: "number" },
+	{ label: "item.HistoryUser", sortable: true, key: "User.email_user", valueKey: "email_user", type: "text", storeRessourceId: 1, sourceKey: "id_user" },
+	{ label: "item.HistoryNotes", sortable: false, key: "notes", valueKey: "notes", type: "text" },
 ]);
 const labelTableauBox = ref([
 	{ label: "item.BoxId", sortable: true, key: "id_box", valueKey: "id_box", type: "number" },
@@ -638,6 +656,18 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:total-count="Number(itemsStore.itemProjetsTotalCount[itemId])"
 					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemProjetByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
+				/>
+			</template>
+		</CollapsibleSection>
+		<CollapsibleSection title="item.History"
+			:total-count="Number(itemsStore.itemHistoryTotalCount[itemId] || 0)" :permission="itemId !=='new'">
+			<template #append-row>
+				<Tableau :labels="labelTableauHistory" :meta="{ key: 'id_item_history', expand: ['user'] }"
+					:store-data="[itemsStore.itemHistory[itemId], usersStore.users]"
+					:loading="itemsStore.itemHistoryLoading"
+					:total-count="Number(itemsStore.itemHistoryTotalCount[itemId])"
+					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemHistoryByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
+					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
