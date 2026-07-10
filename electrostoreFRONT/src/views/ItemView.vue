@@ -359,7 +359,7 @@ const schemaAddImage = Yup.object().shape({
 		.required(t("item.ImageNameRequired")),
 	image: Yup.mixed()
 		.required(t("item.ImageRequired"))
-		.test("fileSize", t("item.ImageSize") + " " + configsStore.getConfigByKey("max_size_document_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
+		.test("fileSize", t("item.ImageSize") + " " + configsStore.getConfigByKey("max_size_image_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_image_in_mb"))) * 1024 * 1024),
 });
 
 const labelForm = [
