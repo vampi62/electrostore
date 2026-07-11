@@ -72,7 +72,7 @@ public class CronSchedulerService : BackgroundService
             var jobDetail = JobBuilder.Create<ElectrostoreCronJob>()
                 .WithIdentity(jobKey)
                 .UsingJobData(ElectrostoreCronJob.KeyId,     job.IdCronjob)
-                .UsingJobData(ElectrostoreCronJob.KeyAction,  job.ActionCronjob.ToString())
+                .UsingJobData(ElectrostoreCronJob.KeyAction,  (int)job.ActionCronjob)
                 .UsingJobData(ElectrostoreCronJob.KeyParams,  job.ParamsCronjob ?? string.Empty)
                 .Build();
 

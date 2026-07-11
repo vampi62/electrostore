@@ -4,6 +4,8 @@ import command from "./command.json";
 import commands from "./commands.json";
 import common from "./common.json";
 import components from "./components.json";
+import cronJob from "./cronJob.json";
+import cronJobs from "./cronJobs.json";
 import health from "./health.json";
 import ia from "./IA.json";
 import ias from "./IAs.json";
@@ -27,6 +29,8 @@ export default {
 	commands,
 	common,
 	components,
+	cronJob,
+	cronJobs,
 	health,
 	ia,
 	ias,
