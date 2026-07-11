@@ -23,6 +23,7 @@ const listNav = ref([
 	{ name: "common.VAppIa", path: "/ia", faIcon: "fa-solid fa-microchip" },
 	{ name: "common.VAppTags", path: "/tags", faIcon: "fa-solid fa-tags" },
 	{ name: "common.VAppStores", path: "/stores", faIcon: "fa-solid fa-store" },
+	{ name: "common.VAppCronJobs", path: "/cronjobs", faIcon: "fa-solid fa-clock" },
 ]);
 
 const containerClasses = computed(() => [

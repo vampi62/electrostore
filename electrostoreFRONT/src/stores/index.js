@@ -2,6 +2,7 @@ export * from "./auth.store";
 export * from "./camera.store";
 export * from "./commands.store";
 export * from "./config.store";
+export * from "./cronjobs.store";
 export * from "./ias.store";
 export * from "./items.store";
 export * from "./projets.store";

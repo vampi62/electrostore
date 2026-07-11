@@ -1,0 +1,19 @@
+{
+	"Title": "Tâches planifiées",
+	"Add": "Créer une tâche planifiée",
+	"FilterName": "Nom",
+	"FilterAction": "Action",
+	"FilterEnabled": "Activé",
+	"FilterEnabled0": "Désactivé",
+	"FilterEnabled1": "Activé",
+	"Name": "Nom",
+	"Action": "Action",
+	"CronExpression": "Expression cron",
+	"IsEnabled": "Activé",
+	"LastRun": "Dernière exécution",
+	"NextRun": "Prochaine exécution",
+	"ActionPackageTracking": "Suivi de colis",
+	"ActionIARetrain": "Réentraînement IA",
+	"ActionStockLowAlert": "Alerte stock faible",
+	"Loading": "Chargement"
+}

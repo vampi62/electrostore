@@ -29,9 +29,7 @@ public class ElectrostoreCronJob : IJob
     public async Task Execute(IJobExecutionContext context)
     {
         var map    = context.JobDetail.JobDataMap;
-
-        // if map.GetInt(KeyAction) is a empty string, then int.TryParse will return false and actionValue will be -1
-        var action = int.TryParse(map.GetString(KeyAction), out var parsedAction) ? parsedAction : -1;
+        var action = Enum.TryParse<CronJobAction>(map.GetString(KeyAction), out var actionValue) ? (int)actionValue : -1;
         var id     = map.GetInt(KeyId);
 
         _logger.LogInformation("Running cron job #{Id} - action={Action}", id, action);
