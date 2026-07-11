@@ -67,6 +67,7 @@
 	"VAppIa": "AI",
 	"VAppTags": "Tags",
 	"VAppStores": "Storage",
+	"VAppCronJobs": "Cron Jobs",
 	"VAppHome": "Home",
 	"VAppFind": "Find",
 	"VAppInstall": "Install",

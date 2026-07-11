@@ -1,0 +1,19 @@
+{
+	"Title": "Cron Jobs",
+	"Add": "Create Cron Job",
+	"FilterName": "Name",
+	"FilterAction": "Action",
+	"FilterEnabled": "Enabled",
+	"FilterEnabled0": "Disabled",
+	"FilterEnabled1": "Enabled",
+	"Name": "Name",
+	"Action": "Action",
+	"CronExpression": "Cron Expression",
+	"IsEnabled": "Enabled",
+	"LastRun": "Last Run",
+	"NextRun": "Next Run",
+	"ActionPackageTracking": "Package Tracking",
+	"ActionIARetrain": "IA Retrain",
+	"ActionStockLowAlert": "Stock Low Alert",
+	"Loading": "Loading"
+}
