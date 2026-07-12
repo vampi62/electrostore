@@ -21,6 +21,7 @@ public record ReadCommandDto
     public string? shipper_adress { get; init; }
     public string? recipient_adress { get; init; }
     public TrackingStatus? last_status { get; init; }
+    public TrackingSubStatus? last_sub_status { get; init; }
     public string? raw_data { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }

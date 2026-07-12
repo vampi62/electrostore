@@ -13,7 +13,7 @@ public class CommandsHistory : BaseEntity
     public TrackingStatus? status { get; set; }
 
     [MaxLength(Constants.MaxTypeLength)]
-    public string? sub_status { get; set; }
+    public TrackingSubStatus? sub_status { get; set; }
 
     [MaxLength(Constants.MaxDescriptionLength)]
     public string? description { get; set; }

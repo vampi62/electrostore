@@ -53,6 +53,7 @@ public class Commands : BaseEntity
     }
 
     public TrackingStatus? last_status { get; set; }
+    public TrackingSubStatus? last_sub_status { get; set; }
     public string? raw_data { get; set; }
     public T? GetRawData<T>()
     {

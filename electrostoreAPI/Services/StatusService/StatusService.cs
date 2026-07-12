@@ -63,7 +63,7 @@ public class StatusService : IStatusService
             worker_status = workerHealth.TryGetValue("status", out var workerStatus) && workerStatus.GetString() is string workerStr ? workerStr : "unknown",
             external_services = new Dictionary<string, string>
             {
-                { "17Track", _configuration.GetValue<bool>("17Track:Enable") ? "enabled" : "disabled" }
+                { "17Track", _configuration.GetValue<bool>("Track17:Enable") ? "enabled" : "disabled" }
             }
         };
     }
