@@ -67,6 +67,7 @@
 	"VAppIa": "IA",
 	"VAppTags": "Tags",
 	"VAppStores": "Rangements",
+	"VAppCronJobs": "Tâches planifiées",
 	"VAppHome": "Accueil",
 	"VAppFind": "Trouver",
 	"VAppInstall": "Installer",
