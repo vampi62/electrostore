@@ -29,7 +29,7 @@ public class ElectrostoreCronJob : IJob
     public async Task Execute(IJobExecutionContext context)
     {
         var map    = context.JobDetail.JobDataMap;
-        var action = Enum.TryParse<CronJobAction>(map.GetString(KeyAction), out var actionValue) ? (int)actionValue : -1;
+        var action = Enum.TryParse<CronJobAction>(map.Get(KeyAction)?.ToString(), out var actionValue) ? (int)actionValue : -1;
         var id     = map.GetInt(KeyId);
 
         _logger.LogInformation("Running cron job #{Id} - action={Action}", id, action);

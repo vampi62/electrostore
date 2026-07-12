@@ -4,7 +4,6 @@ namespace ElectrostoreCRON.Kafka.Messages;
 
 public record TrackingActionMessage
 {
-    public int    id_command      { get; init; }
     public string tracking_number { get; init; } = string.Empty;
     public int?   carrier         { get; init; }   // 17track carrier code (register, changecarrier, stoptrack, retrack, deletetrack, push)
     public int?   carrier_old     { get; init; }   // old 17track carrier code (changecarrier only)
@@ -18,7 +17,6 @@ public record TrackingActionMessage
 public record TrackingResultMessage
 {
     public string action          { get; init; } = string.Empty;  // register|changecarrier|changeinfo|stoptrack|retrack|deletetrack|push
-    public int    id_command      { get; init; }
     public string tracking_number { get; init; } = string.Empty;
     public int    carrier         { get; init; }
     public int?   carrier_old     { get; init; }

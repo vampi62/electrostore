@@ -553,7 +553,7 @@ const labelForm = computed(() => [
 	{ key: "prix_command", label: "command.Price", type: "number" },
 	{ key: "url_command", label: "command.Url", type: "text" },
 	{ key: "date_command", label: "command.Date", type: "datetime-local" },
-	{ key: "status_command", label: "command.Status", type: "select", options: commandStatusOptions },
+	{ key: "status_command", label: "command.Status", type: "select", typeData: "number", options: commandStatusOptions },
 	{ key: "date_livraison_command", label: "command.DeliveryDate", type: "datetime-local" },
 	{ key: "tracking_number", label: "command.TrackingNumber", type: "text" },
 	{ key: "id_carrier", label: "command.Carrier", type: "fetch-select", fetchFunction: (limit, offset, expand, filter, sort, clear) => 

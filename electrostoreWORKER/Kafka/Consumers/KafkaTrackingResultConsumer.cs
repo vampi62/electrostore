@@ -113,8 +113,8 @@ public class KafkaTrackingResultConsumer : BackgroundService
                 catch (Exception ex)
                 {
                     _logger.LogError(ex,
-                        "Error dispatching tracking result: action={Action}, command={Id}",
-                        msg.action, msg.id_command);
+                        "Error dispatching tracking result: action={Action}, tracking={Num} carrier={Carrier}",
+                        msg.action, msg.tracking_number, msg.carrier);
                 }
 
                 if (dispatched)
