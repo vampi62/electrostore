@@ -37,7 +37,7 @@ public record UpdateCameraDto
     public string? nom_camera { get; init; }
 
     [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
+    [OptionalUrl(ErrorMessage = "{0} must be a valid URL.")]
     public string? url_camera { get; init; }
 
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]

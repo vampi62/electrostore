@@ -20,7 +20,6 @@ public record CreateImgByItemDto
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string nom_img { get; init; }
 
-    [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? description_img { get; init; }
 
@@ -36,7 +35,6 @@ public record CreateImgDto
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string nom_img { get; init; }
 
-    [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? description_img { get; init; }
 
@@ -56,6 +54,5 @@ public record UpdateImgDto
     public string? nom_img { get; init; }
 
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? description_img { get; init; }
 }
