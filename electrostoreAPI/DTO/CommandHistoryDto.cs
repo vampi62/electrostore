@@ -7,7 +7,7 @@ public record ReadCommandHistoryDto
     public int id_command_history { get; init; }
     public int id_command { get; init; }
     public TrackingStatus? status { get; init; }
-    public string? sub_status { get; init; }
+    public TrackingSubStatus? sub_status { get; init; }
     public string? description { get; init; }
     public string? location { get; init; }
     public string? stage { get; init; }
@@ -27,7 +27,7 @@ public record CreateCommandHistoryDto
 {
     public int id_command { get; init; }
     public TrackingStatus? status { get; init; }
-    public string? sub_status { get; init; }
+    public TrackingSubStatus? sub_status { get; init; }
     public string? description { get; init; }
     public string? location { get; init; }
     public string? stage { get; init; }

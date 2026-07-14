@@ -27,6 +27,10 @@ export const useCommandsStore = defineStore("commands",{
 		itemsLoading: false,
 		items: {},
 		itemEdition: {},
+
+		historyTotalCount: {},
+		historyLoading: false,
+		history: {},
 	}),
 	actions: {
 		async getCommandByList(idResearch = [], expand = []) {
@@ -53,6 +57,12 @@ export const useCommandsStore = defineStore("commands",{
 					this.documents[command.id_command] = {};
 					for (const document of command.commands_documents) {
 						this.documents[command.id_command][document.id_command_document] = document;
+					}
+				}
+				if (expand.includes("commands_history")) {
+					this.history[command.id_command] = {};
+					for (const historyEntry of command.commands_history) {
+						this.history[command.id_command][historyEntry.id_command_history] = historyEntry;
 					}
 				}
 				if (expand.includes("commands_items")) {
@@ -96,6 +106,12 @@ export const useCommandsStore = defineStore("commands",{
 						this.documents[command.id_command][document.id_command_document] = document;
 					}
 				}
+				if (expand.includes("commands_history")) {
+					this.history[command.id_command] = {};
+					for (const historyEntry of command.commands_history) {
+						this.history[command.id_command][historyEntry.id_command_history] = historyEntry;
+					}
+				}
 				if (expand.includes("commands_items")) {
 					this.items[command.id_command] = {};
 					for (const item of command.commands_items) {
@@ -130,6 +146,12 @@ export const useCommandsStore = defineStore("commands",{
 				this.documents[id] = {};
 				for (const document of this.commands[id].commands_documents) {
 					this.documents[id][document.id_command_document] = document;
+				}
+			}
+			if (expand.includes("commands_history")) {
+				this.history[id] = {};
+				for (const historyEntry of this.commands[id].commands_history) {
+					this.history[id][historyEntry.id_command_history] = historyEntry;
 				}
 			}
 			if (expand.includes("commands_items")) {
@@ -404,6 +426,41 @@ export const useCommandsStore = defineStore("commands",{
 			for (const item of itemBulk["valide"]) {
 				this.items[idCommand][item.id_item] = item;
 			}
+		},
+
+		async getHistoryByInterval(idCommand, limit = 100, offset = 0, filter = "", sort = "", clear = false) {
+			if (!this.history[idCommand] || clear) {
+				this.history[idCommand] = {};
+			}
+			this.historyLoading = true;
+			const offsetString = "offset=" + offset;
+			const limitString = "limit=" + limit;
+			const filterString = filter ? "filter=" + filter : "";
+			const sortString = sort ? "sort=" + sort : "";
+			const paramString = [offsetString, limitString, filterString, sortString].join("&");
+			const newHistoryList = await fetchWrapper.get({
+				url: `${baseUrl}/command/${idCommand}/history?${paramString}`,
+				useToken: "access",
+			});
+			for (const historyEntry of newHistoryList["data"]) {
+				this.history[idCommand][historyEntry.id_command_history] = historyEntry;
+			}
+			this.historyTotalCount[idCommand] = newHistoryList["pagination"]?.["total"] || 0;
+			this.historyLoading = false;
+			return [newHistoryList["pagination"]?.["nextOffset"] || 0, newHistoryList["pagination"]?.["hasMore"] || false];
+		},
+		async getHistoryById(idCommand, id) {
+			if (!this.history[idCommand]) {
+				this.history[idCommand] = {};
+			}
+			if (!this.history[idCommand][id]) {
+				this.history[idCommand][id] = {};
+			}
+			this.history[idCommand][id].loading = true;
+			this.history[idCommand][id] = await fetchWrapper.get({
+				url: `${baseUrl}/command/${idCommand}/history/${id}`,
+				useToken: "access",
+			});
 		},
 	},
 });

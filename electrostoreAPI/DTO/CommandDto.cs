@@ -7,8 +7,8 @@ namespace ElectrostoreAPI.Dto;
 public record ReadCommandDto
 {
     public int id_command { get; init; }
-    public float prix_command { get; init; }
-    public required string url_command { get; init; }
+    public float? prix_command { get; init; }
+    public string? url_command { get; init; }
     public CommandStatus status_command { get; init; }
     public DateTime date_command { get; init; }
     public DateTime? date_livraison_command { get; init; }
@@ -21,6 +21,7 @@ public record ReadCommandDto
     public string? shipper_adress { get; init; }
     public string? recipient_adress { get; init; }
     public TrackingStatus? last_status { get; init; }
+    public TrackingSubStatus? last_sub_status { get; init; }
     public string? raw_data { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
@@ -39,14 +40,12 @@ public record ReadExtendedCommandDto : ReadCommandDto
 }
 public record CreateCommandDto
 {
-    [Required(ErrorMessage = "{0} is required.")]
     [Range(0.0, float.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public required float prix_command { get; init; }
+    public float? prix_command { get; init; }
 
-    [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    [Url(ErrorMessage = "{0} must be a valid URL.")]
-    public required string url_command { get; init; }
+    [OptionalUrl(ErrorMessage = "{0} must be a valid URL.")]
+    public string? url_command { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, (int)ProjetStatus.Archived, ErrorMessage = "{0} must be a valid status, between {1} and {2}.")]
@@ -58,9 +57,9 @@ public record CreateCommandDto
     public DateTime? date_livraison_command { get; init; }
 
     [MaxLength(Constants.MaxTrackingNumberLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public required string? tracking_number { get; init; }
+    public string? tracking_number { get; init; }
 
-    public required int? id_carrier { get; init; }
+    public int? id_carrier { get; init; }
 
     public bool? is_tracking_requested { get; init; }
 }
@@ -70,8 +69,7 @@ public record UpdateCommandDto
     public float? prix_command { get; init; }
 
     [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
-    [Url(ErrorMessage = "{0} must be a valid URL.")]
+    [OptionalUrl(ErrorMessage = "{0} must be a valid URL.")]
     public string? url_command { get; init; }
 
     [Range(0, (int)ProjetStatus.Archived, ErrorMessage = "{0} must be a valid status, between {1} and {2}.")]

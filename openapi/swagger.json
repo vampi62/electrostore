@@ -2943,7 +2943,7 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "(Optional) Fields to expand. Possible values: 'item_tags', 'item_boxs', 'command_items', 'projet_items', 'item_documents'. Multiple values can be specified by separating them with ','.",
+            "description": "(Optional) Fields to expand. Possible values: 'item_tags', 'item_boxs', 'command_items', 'projet_items', 'item_documents', 'item_history'. Multiple values can be specified by separating them with ','.",
             "schema": {
               "type": "array",
               "items": {
@@ -3068,7 +3068,7 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "(Optional) Fields to expand. Possible values: 'item_tags', 'item_boxs', 'command_items', 'projet_items', 'item_documents'. Multiple values can be specified by separating them with ','.",
+            "description": "(Optional) Fields to expand. Possible values: 'item_tags', 'item_boxs', 'command_items', 'projet_items', 'item_documents', 'item_history'. Multiple values can be specified by separating them with ','.",
             "schema": {
               "type": "array",
               "items": {
@@ -4211,6 +4211,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "description": "(Optional) Fields to expand. Possible values: 'item', 'box', 'user'. Multiple values can be specified by separating them with ','.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         ],
         "responses": {
@@ -4259,6 +4270,17 @@
             "schema": {
               "type": "integer",
               "format": "int32"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "description": "(Optional) Fields to expand. Possible values: 'item', 'box', 'user'. Multiple values can be specified by separating them with ','.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -4324,6 +4346,17 @@
             "description": "(Optional) Sort string. Example: 'created_at,desc'.",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "description": "(Optional) Fields to expand. Possible values: 'item', 'box', 'user'. Multiple values can be specified by separating them with ','.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -4444,7 +4477,6 @@
             "multipart/form-data": {
               "schema": {
                 "required": [
-                  "description_img",
                   "img_file",
                   "nom_img"
                 ],
@@ -13138,19 +13170,13 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "type": "string"
-              }
+              "schema": { }
             },
             "text/json": {
-              "schema": {
-                "type": "string"
-              }
+              "schema": { }
             },
             "application/*+json": {
-              "schema": {
-                "type": "string"
-              }
+              "schema": { }
             }
           }
         },
@@ -13410,24 +13436,20 @@
       "CreateCommandDto": {
         "required": [
           "date_command",
-          "id_carrier",
-          "prix_command",
-          "status_command",
-          "tracking_number",
-          "url_command"
+          "status_command"
         ],
         "type": "object",
         "properties": {
           "prix_command": {
             "minimum": 0,
             "type": "number",
-            "format": "float"
+            "format": "float",
+            "nullable": true
           },
           "url_command": {
             "maxLength": 2048,
-            "minLength": 1,
             "type": "string",
-            "format": "uri"
+            "nullable": true
           },
           "status_command": {
             "$ref": "#/components/schemas/CommandStatus"
@@ -13543,7 +13565,6 @@
       },
       "CreateIADto": {
         "required": [
-          "description_ia",
           "nom_ia"
         ],
         "type": "object",
@@ -13555,8 +13576,8 @@
           },
           "description_ia": {
             "maxLength": 500,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -13617,7 +13638,6 @@
       },
       "CreateItemDto": {
         "required": [
-          "description_item",
           "friendly_name_item",
           "reference_name_item",
           "seuil_min_item"
@@ -13642,8 +13662,8 @@
           },
           "description_item": {
             "maxLength": 500,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "id_img": {
             "type": "integer",
@@ -13724,10 +13744,8 @@
       },
       "CreateProjetDto": {
         "required": [
-          "description_projet",
           "nom_projet",
-          "status_projet",
-          "url_projet"
+          "status_projet"
         ],
         "type": "object",
         "properties": {
@@ -13738,13 +13756,13 @@
           },
           "description_projet": {
             "maxLength": 500,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "url_projet": {
             "maxLength": 2048,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "status_projet": {
             "$ref": "#/components/schemas/ProjetStatus"
@@ -14018,11 +14036,7 @@
         "enum": [
           0,
           1,
-          2,
-          3,
-          4,
-          5,
-          6
+          2
         ],
         "type": "integer",
         "format": "int32"
@@ -14782,8 +14796,7 @@
       },
       "ReadCommandDto": {
         "required": [
-          "tracking_number",
-          "url_command"
+          "tracking_number"
         ],
         "type": "object",
         "properties": {
@@ -14793,7 +14806,8 @@
           },
           "prix_command": {
             "type": "number",
-            "format": "float"
+            "format": "float",
+            "nullable": true
           },
           "url_command": {
             "type": "string",
@@ -14843,6 +14857,9 @@
           "last_status": {
             "$ref": "#/components/schemas/TrackingStatus"
           },
+          "last_sub_status": {
+            "$ref": "#/components/schemas/TrackingSubStatus"
+          },
           "raw_data": {
             "type": "string",
             "nullable": true
@@ -14873,8 +14890,7 @@
             "$ref": "#/components/schemas/TrackingStatus"
           },
           "sub_status": {
-            "type": "string",
-            "nullable": true
+            "$ref": "#/components/schemas/TrackingSubStatus"
           },
           "description": {
             "type": "string",
@@ -15457,8 +15473,7 @@
       },
       "ReadExtendedCommandDto": {
         "required": [
-          "tracking_number",
-          "url_command"
+          "tracking_number"
         ],
         "type": "object",
         "properties": {
@@ -15468,7 +15483,8 @@
           },
           "prix_command": {
             "type": "number",
-            "format": "float"
+            "format": "float",
+            "nullable": true
           },
           "url_command": {
             "type": "string",
@@ -15517,6 +15533,9 @@
           },
           "last_status": {
             "$ref": "#/components/schemas/TrackingStatus"
+          },
+          "last_sub_status": {
+            "$ref": "#/components/schemas/TrackingSubStatus"
           },
           "raw_data": {
             "type": "string",
@@ -15762,7 +15781,6 @@
       },
       "ReadExtendedItemDto": {
         "required": [
-          "description_item",
           "friendly_name_item",
           "reference_name_item"
         ],
@@ -15857,6 +15875,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ReadItemDocumentDto"
+            },
+            "nullable": true
+          },
+          "item_history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadItemHistoryDto"
             },
             "nullable": true
           }
@@ -16141,9 +16166,7 @@
       },
       "ReadExtendedProjetDto": {
         "required": [
-          "description_projet",
-          "nom_projet",
-          "url_projet"
+          "nom_projet"
         ],
         "type": "object",
         "properties": {
@@ -16925,7 +16948,6 @@
       },
       "ReadIADto": {
         "required": [
-          "description_ia",
           "nom_ia"
         ],
         "type": "object",
@@ -16999,7 +17021,6 @@
       },
       "ReadImgDto": {
         "required": [
-          "description_img",
           "nom_img",
           "url_picture_img",
           "url_thumbnail_img"
@@ -17188,7 +17209,6 @@
       },
       "ReadItemDto": {
         "required": [
-          "description_item",
           "friendly_name_item",
           "reference_name_item"
         ],
@@ -17221,6 +17241,61 @@
           "id_img": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReadItemHistoryDto": {
+        "type": "object",
+        "properties": {
+          "id_item_history": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id_item": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "id_box": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "id_user": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/ItemHistoryType"
+          },
+          "quantity_change": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "old_quantity": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "new_quantity": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
             "nullable": true
           },
           "created_at": {
@@ -17441,9 +17516,7 @@
       },
       "ReadProjetDto": {
         "required": [
-          "description_projet",
-          "nom_projet",
-          "url_projet"
+          "nom_projet"
         ],
         "type": "object",
         "properties": {
@@ -18088,6 +18161,42 @@
         "type": "integer",
         "format": "int32"
       },
+      "TrackingSubStatus": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
       "UpdateAccessTokenDto": {
         "type": "object",
         "properties": {
@@ -18312,7 +18421,6 @@
           "url_command": {
             "maxLength": 2048,
             "type": "string",
-            "format": "uri",
             "nullable": true
           },
           "status_command": {

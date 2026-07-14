@@ -278,12 +278,14 @@ const createSchema = () => {
 		.max(configsStore.getConfigByKey("max_length_name"), t("projet.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("projet.NameRequired"));
 	shape.description_projet = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_description"), t("projet.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }))
-		.required(t("projet.DescriptionRequired"));
+		.nullable()
+		.optional()
+		.max(configsStore.getConfigByKey("max_length_description"), t("projet.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }));
 	shape.url_projet = Yup.string()
+		.nullable()
+		.optional()
 		.max(configsStore.getConfigByKey("max_length_url"), t("projet.UrlMaxLength", { count: configsStore.getConfigByKey("max_length_url") }))
-		.url(t("projet.UrlInvalid"))
-		.required(t("projet.UrlRequired"));
+		.url(t("projet.UrlInvalid"));
 	shape.status_projet = Yup.number()
 		.required(t("projet.StatusRequired"));
 	return Yup.object().shape(shape);

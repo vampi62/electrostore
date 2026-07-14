@@ -8,8 +8,8 @@ public record ReadProjetDto
 {
     public int id_projet { get; init; }
     public required string nom_projet { get; init; }
-    public required string description_projet { get; init; }
-    public required string url_projet { get; init; }
+    public string? description_projet { get; init; }
+    public string? url_projet { get; init; }
     public ProjetStatus status_projet { get; init; }
     public DateTime? date_debut_projet { get; init; }
     public DateTime? date_fin_projet { get; init; }
@@ -36,13 +36,12 @@ public record CreateProjetDto
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string nom_projet { get; init; }
 
-    [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public required string description_projet { get; init; }
+    public string? description_projet { get; init; }
 
-    [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public required string url_projet { get; init; }
+    [OptionalUrl(ErrorMessage = "{0} must be a valid URL.")]
+    public string? url_projet { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, (int)ProjetStatus.Archived, ErrorMessage = "{0} must be a valid status, between {1} and {2}.")]
@@ -59,7 +58,7 @@ public record UpdateProjetDto
     public string? description_projet { get; init; }
 
     [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
+    [OptionalUrl(ErrorMessage = "{0} must be a valid URL.")]
     public string? url_projet { get; init; }
 
     [Range(0, (int)ProjetStatus.Archived, ErrorMessage = "{0} must be a valid status, between {1} and {2}.")]

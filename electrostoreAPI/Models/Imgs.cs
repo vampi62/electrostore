@@ -24,5 +24,5 @@ public class Imgs : BaseEntity
     public required string url_thumbnail_img { get; set; }
 
     [MaxLength(Constants.MaxDescriptionLength)]
-    public required string description_img { get; set; }
+    public string description_img { get; set; } = string.Empty;
 }

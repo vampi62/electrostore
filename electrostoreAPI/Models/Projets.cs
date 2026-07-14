@@ -15,10 +15,10 @@ public class Projets : BaseEntity
     public required string nom_projet { get; set; }
 
     [MaxLength(Constants.MaxDescriptionLength)]
-    public required string description_projet { get; set; }
+    public string description_projet { get; set; } = string.Empty;
 
     [MaxLength(Constants.MaxUrlLength)]
-    public required string url_projet { get; set; }
+    public string url_projet { get; set; } = string.Empty;
 
     public ProjetStatus status_projet { get; set; } = ProjetStatus.NotStarted;
 

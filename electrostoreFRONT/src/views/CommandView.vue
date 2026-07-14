@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, inject } from "vue";
+import { onMounted, onBeforeUnmount, ref, inject, computed } from "vue";
 import router from "@/router";
 
 const { addNotification } = inject("useNotification");
@@ -16,16 +16,24 @@ const preset = ref(route.query.preset || null);
 
 import { downloadFile, viewFile } from "@/utils";
 
-import { useConfigsStore, useCommandsStore, useUsersStore, useItemsStore, useAuthStore } from "@/stores";
+import CommandStatus from "@/enums/CommandStatus";
+import TrackingStatus from "@/enums/TrackingStatus";
+import TrackingSubStatus from "@/enums/TrackingSubStatus";
+
+import { useConfigsStore, useCommandsStore, useUsersStore, useItemsStore, useCarriersStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
 const commandsStore = useCommandsStore();
 const usersStore = useUsersStore();
 const itemsStore = useItemsStore();
+const carriersStore = useCarriersStore();
 const authStore = useAuthStore();
 
 const formContainer = ref(null);
 
 async function fetchAllData() {
+	if (Object.keys(carriersStore.carriers).length === 0) {
+		carriersStore.getCarrierByInterval(200, 0, "", "", false);
+	}
 	if (commandId.value === "new") {
 		loadToEdition(commandId.value);
 		if (preset.value) {
@@ -49,6 +57,7 @@ async function fetchAllData() {
 			return;
 		}
 		loadToEdition(commandId.value);
+		commandsStore.getHistoryByInterval(commandId.value);
 		usersStore.users[authStore.user.id_user] = authStore.user; // avoids undefined user when the current user posts first comment
 	}
 }
@@ -56,6 +65,10 @@ function loadToEdition(id) {
 	if (id === "new") {
 		commandsStore.commandEdition = {
 			loading: false,
+			is_tracking_requested: false,
+			is_tracking_validated: false,
+			is_active: true,
+			tracking_number: "",
 		};
 	} else {
 		commandsStore.commandEdition = {
@@ -64,6 +77,14 @@ function loadToEdition(id) {
 			status_command: commandsStore.commands[id].status_command,
 			date_command: commandsStore.commands[id].date_command,
 			date_livraison_command: commandsStore.commands[id].date_livraison_command,
+			tracking_number: commandsStore.commands[id].tracking_number,
+			id_carrier: commandsStore.commands[id].id_carrier,
+			is_tracking_requested: commandsStore.commands[id].is_tracking_requested,
+			is_tracking_validated: commandsStore.commands[id].is_tracking_validated,
+			is_active: commandsStore.commands[id].is_active,
+			shipper_adress: commandsStore.commands[id].shipper_adress,
+			recipient_adress: commandsStore.commands[id].recipient_adress,
+			last_status: commandsStore.commands[id].last_status,
 			loading: false,
 		};
 	}
@@ -79,7 +100,154 @@ onBeforeUnmount(() => {
 
 // commande
 const commandDeleteModalShow = ref(false);
-const commandTypeStatus = ref({ ["En attente"]: t("command.Status1"), ["En cours"]: t("command.Status2"), ["Terminée"]: t("command.Status3"), ["Annulée"]: t("command.Status4") });
+const commandStatusOptions = {
+	[CommandStatus.Created]: t("command.Status0"),
+	[CommandStatus.Processing]: t("command.Status1"),
+	[CommandStatus.InTransit]: t("command.Status2"),
+	[CommandStatus.Delivered]: t("command.Status3"),
+	[CommandStatus.Cancelled]: t("command.Status4"),
+	[CommandStatus.Returned]: t("command.Status5"),
+	[CommandStatus.Failed]: t("command.Status6"),
+	[CommandStatus.Unknown]: t("command.Status7"),
+	[CommandStatus.Archived]: t("command.Status8"),
+};
+const trackingStatusOptions = {
+	[TrackingStatus.NotFound]: t("command.TrackingStatus0"),
+	[TrackingStatus.InfoReceived]: t("command.TrackingStatus1"),
+	[TrackingStatus.InTransit]: t("command.TrackingStatus2"),
+	[TrackingStatus.Expired]: t("command.TrackingStatus3"),
+	[TrackingStatus.AvailableForPickup]: t("command.TrackingStatus4"),
+	[TrackingStatus.OutForDelivery]: t("command.TrackingStatus5"),
+	[TrackingStatus.DeliveryFailure]: t("command.TrackingStatus6"),
+	[TrackingStatus.Delivered]: t("command.TrackingStatus7"),
+	[TrackingStatus.Exception]: t("command.TrackingStatus8"),
+	[TrackingStatus.Unknown]: t("command.TrackingStatus9"),
+};
+const trackingSubStatusOptions = {
+	[TrackingSubStatus.NotFound_Other]: t("command.TrackingSubStatus0"),
+	[TrackingSubStatus.NotFound_InvalidCode]: t("command.TrackingSubStatus1"),
+	[TrackingSubStatus.InfoReceived]: t("command.TrackingSubStatus2"),
+	[TrackingSubStatus.InTransit_PickedUp]: t("command.TrackingSubStatus3"),
+	[TrackingSubStatus.InTransit_Other]: t("command.TrackingSubStatus4"),
+	[TrackingSubStatus.InTransit_Departure]: t("command.TrackingSubStatus5"),
+	[TrackingSubStatus.InTransit_Arrival]: t("command.TrackingSubStatus6"),
+	[TrackingSubStatus.InTransit_CustomsProcessing]: t("command.TrackingSubStatus7"),
+	[TrackingSubStatus.InTransit_CustomsReleased]: t("command.TrackingSubStatus8"),
+	[TrackingSubStatus.InTransit_CustomsRequiringInformation]: t("command.TrackingSubStatus9"),
+	[TrackingSubStatus.Expired_Other]: t("command.TrackingSubStatus10"),
+	[TrackingSubStatus.AvailableForPickup_Other]: t("command.TrackingSubStatus11"),
+	[TrackingSubStatus.OutForDelivery_Other]: t("command.TrackingSubStatus12"),
+	[TrackingSubStatus.DeliveryFailure_Other]: t("command.TrackingSubStatus13"),
+	[TrackingSubStatus.DeliveryFailure_NoBody]: t("command.TrackingSubStatus14"),
+	[TrackingSubStatus.DeliveryFailure_Security]: t("command.TrackingSubStatus15"),
+	[TrackingSubStatus.DeliveryFailure_Rejected]: t("command.TrackingSubStatus16"),
+	[TrackingSubStatus.DeliveryFailure_InvalidAddress]: t("command.TrackingSubStatus17"),
+	[TrackingSubStatus.Delivered_Other]: t("command.TrackingSubStatus18"),
+	[TrackingSubStatus.Exception_Other]: t("command.TrackingSubStatus19"),
+	[TrackingSubStatus.Exception_Returning]: t("command.TrackingSubStatus20"),
+	[TrackingSubStatus.Exception_Returned]: t("command.TrackingSubStatus21"),
+	[TrackingSubStatus.Exception_NoBody]: t("command.TrackingSubStatus22"),
+	[TrackingSubStatus.Exception_Security]: t("command.TrackingSubStatus23"),
+	[TrackingSubStatus.Exception_Damage]: t("command.TrackingSubStatus24"),
+	[TrackingSubStatus.Exception_Rejected]: t("command.TrackingSubStatus25"),
+	[TrackingSubStatus.Exception_Delayed]: t("command.TrackingSubStatus26"),
+	[TrackingSubStatus.Exception_Lost]: t("command.TrackingSubStatus27"),
+	[TrackingSubStatus.Exception_Destroyed]: t("command.TrackingSubStatus28"),
+	[TrackingSubStatus.Exception_Cancel]: t("command.TrackingSubStatus29"),
+};
+
+// roadmap commande
+const commandRoadmapSteps = [
+	{ id: CommandStatus.Created, name: "Created" },
+	{ id: CommandStatus.Processing, name: "Processing" },
+	{ id: CommandStatus.InTransit, name: "InTransit" },
+	{ id: CommandStatus.Delivered, name: "Delivered" },
+	{ id: CommandStatus.Cancelled, name: "Cancelled" },
+	{ id: CommandStatus.Returned, name: "Returned" },
+	{ id: CommandStatus.Failed, name: "Failed" },
+	{ id: CommandStatus.Unknown, name: "Unknown" },
+	{ id: CommandStatus.Archived, name: "Archived" },
+];
+const commandRoadmapStepColors = {
+	Created: { completed: "bg-gray-300 text-gray-700", current: "bg-gray-400 text-gray-800", pending: "bg-gray-100 text-gray-500", border: "border-gray-400", badge: "bg-gray-200 text-gray-800", text: "text-gray-700", historyBorder: "border-gray-400" },
+	Processing: { completed: "bg-blue-400 text-white", current: "bg-blue-500 text-white", pending: "bg-blue-100 text-blue-600", border: "border-blue-500", badge: "bg-blue-200 text-blue-900", text: "text-blue-700", historyBorder: "border-blue-500" },
+	InTransit: { completed: "bg-cyan-400 text-white", current: "bg-cyan-500 text-white", pending: "bg-cyan-100 text-cyan-600", border: "border-cyan-500", badge: "bg-cyan-200 text-cyan-900", text: "text-cyan-700", historyBorder: "border-cyan-500" },
+	Delivered: { completed: "bg-green-400 text-white", current: "bg-green-500 text-white", pending: "bg-green-100 text-green-600", border: "border-green-500", badge: "bg-green-200 text-green-900", text: "text-green-700", historyBorder: "border-green-500" },
+	Cancelled: { completed: "bg-red-400 text-white", current: "bg-red-500 text-white", pending: "bg-red-100 text-red-600", border: "border-red-500", badge: "bg-red-200 text-red-900", text: "text-red-700", historyBorder: "border-red-500" },
+	Returned: { completed: "bg-orange-400 text-white", current: "bg-orange-500 text-white", pending: "bg-orange-100 text-orange-600", border: "border-orange-500", badge: "bg-orange-200 text-orange-900", text: "text-orange-700", historyBorder: "border-orange-500" },
+	Failed: { completed: "bg-rose-400 text-white", current: "bg-rose-500 text-white", pending: "bg-rose-100 text-rose-600", border: "border-rose-500", badge: "bg-rose-200 text-rose-900", text: "text-rose-700", historyBorder: "border-rose-500" },
+	Unknown: { completed: "bg-gray-300 text-gray-700", current: "bg-gray-400 text-gray-800", pending: "bg-gray-100 text-gray-500", border: "border-gray-400", badge: "bg-gray-200 text-gray-800", text: "text-gray-700", historyBorder: "border-gray-400" },
+	Archived: { completed: "bg-purple-400 text-white", current: "bg-purple-500 text-white", pending: "bg-purple-100 text-purple-600", border: "border-purple-500", badge: "bg-purple-200 text-purple-900", text: "text-purple-700", historyBorder: "border-purple-500" },
+};
+const commandCurrentStep = computed(() => {
+	const status = commandsStore.commandEdition?.status_command;
+	if (status === null || status === undefined) {
+		return 0;
+	}
+	const idx = commandRoadmapSteps.findIndex((s) => s.id === Number(status));
+	return idx >= 0 ? idx : 0;
+});
+
+// roadmap tracking
+const trackingRoadmapSteps = [
+	{ id: TrackingStatus.NotFound, name: "NotFound" },
+	{ id: TrackingStatus.InfoReceived, name: "InfoReceived" },
+	{ id: TrackingStatus.InTransit, name: "InTransit" },
+	{ id: TrackingStatus.Expired, name: "Expired" },
+	{ id: TrackingStatus.AvailableForPickup, name: "AvailableForPickup" },
+	{ id: TrackingStatus.OutForDelivery, name: "OutForDelivery" },
+	{ id: TrackingStatus.DeliveryFailure, name: "DelivereyFailure" },
+	{ id: TrackingStatus.Delivered, name: "Delivered" },
+	{ id: TrackingStatus.Exception, name: "Exception" },
+	{ id: TrackingStatus.Unknown, name: "Unknown" },
+];
+const trackingRoadmapStepColors = {
+	InfoReceived: { completed: "bg-gray-300 text-gray-700", current: "bg-gray-400 text-gray-800", pending: "bg-gray-100 text-gray-500", border: "border-gray-400", badge: "bg-gray-200 text-gray-800", text: "text-gray-700", historyBorder: "border-gray-400" },
+	PickedUp: { completed: "bg-blue-300 text-blue-900", current: "bg-blue-400 text-white", pending: "bg-blue-50 text-blue-500", border: "border-blue-400", badge: "bg-blue-200 text-blue-900", text: "text-blue-600", historyBorder: "border-blue-400" },
+	Departure: { completed: "bg-cyan-300 text-cyan-900", current: "bg-cyan-400 text-white", pending: "bg-cyan-50 text-cyan-500", border: "border-cyan-400", badge: "bg-cyan-200 text-cyan-900", text: "text-cyan-600", historyBorder: "border-cyan-400" },
+	Arrival: { completed: "bg-teal-300 text-teal-900", current: "bg-teal-400 text-white", pending: "bg-teal-50 text-teal-500", border: "border-teal-400", badge: "bg-teal-200 text-teal-900", text: "text-teal-600", historyBorder: "border-teal-400" },
+	AvailableForPickup: { completed: "bg-yellow-300 text-yellow-900", current: "bg-yellow-400 text-yellow-900", pending: "bg-yellow-50 text-yellow-600", border: "border-yellow-400", badge: "bg-yellow-200 text-yellow-900", text: "text-yellow-700", historyBorder: "border-yellow-400" },
+	OutForDelivery: { completed: "bg-orange-300 text-orange-900", current: "bg-orange-400 text-white", pending: "bg-orange-50 text-orange-500", border: "border-orange-400", badge: "bg-orange-200 text-orange-900", text: "text-orange-600", historyBorder: "border-orange-400" },
+	Delivered: { completed: "bg-green-400 text-white", current: "bg-green-500 text-white", pending: "bg-green-100 text-green-600", border: "border-green-500", badge: "bg-green-200 text-green-900", text: "text-green-700", historyBorder: "border-green-500" },
+	Returning: { completed: "bg-amber-300 text-amber-900", current: "bg-amber-400 text-white", pending: "bg-amber-50 text-amber-500", border: "border-amber-400", badge: "bg-amber-200 text-amber-900", text: "text-amber-600", historyBorder: "border-amber-400" },
+	Returned: { completed: "bg-red-300 text-red-900", current: "bg-red-400 text-white", pending: "bg-red-50 text-red-500", border: "border-red-400", badge: "bg-red-200 text-red-900", text: "text-red-600", historyBorder: "border-red-400" },
+	Unknown: { completed: "bg-gray-400 text-white", current: "bg-gray-500 text-white", pending: "bg-gray-100 text-gray-500", border: "border-gray-500", badge: "bg-gray-300 text-gray-800", text: "text-gray-600", historyBorder: "border-gray-500" },
+};
+const trackingCurrentStep = computed(() => {
+	const status = commandsStore.commandEdition?.last_status;
+	if (status === null || status === undefined) {
+		return 0;
+	}
+	const idx = trackingRoadmapSteps.findIndex((s) => s.id === Number(status));
+	return idx >= 0 ? idx : 0;
+});
+const trackingHistory = computed(() => {
+	const result = {};
+	const historyData = commandsStore.history[commandId.value];
+	if (!historyData) {
+		return result;
+	}
+	for (const entry of Object.values(historyData)) {
+		if (entry.status !== null && entry.status !== undefined) {
+			if (!result[entry.status]) {
+				result[entry.status] = [];
+			}
+			result[entry.status].push({
+				action: entry.description || entry.sub_status || "",
+				date: entry.event_time_utc || entry.created_at,
+				comment: entry.location || "",
+			});
+		}
+	}
+	return result;
+});
+const carrierOptions = computed(() =>
+	Object.fromEntries(
+		Object.values(carriersStore.carriers)
+			.filter((c) => c && c.id_carrier)
+			.map((c) => [c.id_carrier, c.name ?? `Carrier #${c.id_carrier}`]),
+	),
+);
 const commandSave = async() => {
 	try {
 		const validationResults = await Promise.all([
@@ -122,6 +290,120 @@ const commandDelete = async() => {
 	}
 	commandDeleteModalShow.value = false;
 };
+
+// tracking
+const trackingActivateLoading = ref(false);
+const trackingStopLoading = ref(false);
+const trackingResumeLoading = ref(false);
+const trackingDeleteLoading = ref(false);
+const trackingRefreshLoading = ref(false);
+
+const trackingActivate = async() => {
+	trackingActivateLoading.value = true;
+	try {
+		await commandsStore.updateCommand(commandId.value, { is_tracking_requested: true });
+		loadToEdition(commandId.value);
+		addNotification({ message: t("command.TrackingActivated"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	} finally {
+		trackingActivateLoading.value = false;
+	}
+};
+const trackingStop = async() => {
+	trackingStopLoading.value = true;
+	try {
+		await commandsStore.updateCommand(commandId.value, { is_tracking_requested: false });
+		loadToEdition(commandId.value);
+		addNotification({ message: t("command.TrackingStopped"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	} finally {
+		trackingStopLoading.value = false;
+	}
+};
+const trackingResume = async() => {
+	trackingResumeLoading.value = true;
+	try {
+		await commandsStore.updateCommand(commandId.value, { is_tracking_requested: true });
+		loadToEdition(commandId.value);
+		addNotification({ message: t("command.TrackingResumed"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	} finally {
+		trackingResumeLoading.value = false;
+	}
+};
+const trackingDelete = async() => {
+	trackingDeleteLoading.value = true;
+	try {
+		await commandsStore.updateCommand(commandId.value, { tracking_number: "" });
+		loadToEdition(commandId.value);
+		addNotification({ message: t("command.TrackingDeleted"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	} finally {
+		trackingDeleteLoading.value = false;
+	}
+};
+const trackingRefresh = async() => {
+	trackingRefreshLoading.value = true;
+	try {
+		await commandsStore.getCommandById(commandId.value);
+		loadToEdition(commandId.value);
+		addNotification({ message: t("command.TrackingRefreshed"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	} finally {
+		trackingRefreshLoading.value = false;
+	}
+};
+const trackingOptionalConfig = computed(() => {
+	const ed = commandsStore.commandEdition;
+	const base = commandId.value !== "new" && !!ed?.tracking_number && !!ed?.id_carrier;
+	return [
+		{
+			label: "command.TrackingActivate",
+			action: trackingActivate,
+			showCondition: base && !ed?.is_tracking_requested,
+			bgColor: "bg-green-500",
+			hoverColor: "hover:bg-green-600",
+			loading: trackingActivateLoading.value,
+		},
+		{
+			label: "command.TrackingStop",
+			action: trackingStop,
+			showCondition: base && !!ed?.is_tracking_validated && !!ed?.is_active,
+			bgColor: "bg-orange-500",
+			hoverColor: "hover:bg-orange-600",
+			loading: trackingStopLoading.value,
+		},
+		{
+			label: "command.TrackingResume",
+			action: trackingResume,
+			showCondition: base && !!ed?.is_tracking_validated && !ed?.is_active,
+			bgColor: "bg-green-500",
+			hoverColor: "hover:bg-green-600",
+			loading: trackingResumeLoading.value,
+		},
+		{
+			label: "command.TrackingDelete",
+			action: trackingDelete,
+			showCondition: base && !!ed?.is_tracking_validated,
+			bgColor: "bg-red-500",
+			hoverColor: "hover:bg-red-600",
+			loading: trackingDeleteLoading.value,
+		},
+		{
+			label: "command.TrackingRefresh",
+			action: trackingRefresh,
+			showCondition: base && !!ed?.is_tracking_validated && !!ed?.is_active,
+			bgColor: "bg-blue-500",
+			hoverColor: "hover:bg-blue-600",
+			loading: trackingRefreshLoading.value,
+		},
+	];
+});
 
 // document
 const documentAddModalShow = ref(false);
@@ -221,20 +503,25 @@ const createSchema = () => {
 		return Yup.object().shape(shape);
 	}
 	shape.prix_command = Yup.number()
+		.nullable()
+		.optional()
 		.min(0, t("command.PriceMin"))
-		.typeError(t("command.PriceNumber"))
-		.required(t("command.PriceRequired"));
+		.typeError(t("command.PriceNumber"));
 	shape.url_command = Yup.string()
+		.nullable()
+		.optional()
 		.max(configsStore.getConfigByKey("max_length_url"), t("command.UrlMaxLength", { count: configsStore.getConfigByKey("max_length_url") }))
-		.url(t("command.UrlInvalid"))
-		.required(t("command.UrlRequired"));
+		.url(t("command.UrlInvalid"));
 	shape.date_command = Yup.date()
 		.typeError(t("command.DateInvalid"))
 		.required(t("command.DateRequired"));
-	shape.status_command = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_status"), t("command.StatusMaxLength", { count: configsStore.getConfigByKey("max_length_status") }))
+	shape.status_command = Yup.mixed()
 		.required(t("command.StatusRequired"));
 	shape.date_livraison_command = Yup.date()
+		.nullable()
+		.optional();
+	shape.tracking_number = Yup.string()
+		.max(configsStore.getConfigByKey("max_length_name"), t("command.TrackingNumberMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.nullable()
 		.optional();
 	return Yup.object().shape(shape);
@@ -264,12 +551,23 @@ const schemaItem = Yup.object().shape({
 		.min(1, t("command.ItemPriceMin")),
 });
 
-const labelForm = ref([
+const labelForm = computed(() => [
 	{ key: "prix_command", label: "command.Price", type: "number" },
 	{ key: "url_command", label: "command.Url", type: "text" },
 	{ key: "date_command", label: "command.Date", type: "datetime-local" },
-	{ key: "status_command", label: "command.Status", type: "select", options: commandTypeStatus },
+	{ key: "status_command", label: "command.Status", type: "select", typeData: "number", options: commandStatusOptions },
 	{ key: "date_livraison_command", label: "command.DeliveryDate", type: "datetime-local" },
+	{ key: "tracking_number", label: "command.TrackingNumber", type: "text" },
+	{ key: "id_carrier", label: "command.Carrier", type: "fetch-select", fetchFunction: (limit, offset, expand, filter, sort, clear) => 
+		carriersStore.getCarrierByInterval(limit, offset, filter, sort, clear),
+	fetchStore: carriersStore.carriers, fetchValueKey: "id_carrier", fetchStoreKey: "name",
+	},
+	{ key: "is_tracking_requested", label: "command.IsTrackingRequested", type: "computed" },
+	{ key: "is_tracking_validated", label: "command.IsTrackingValidated", type: "computed" },
+	{ key: "is_active", label: "command.IsActive", type: "computed" },
+	{ key: "shipper_adress", label: "command.ShipperAddress", type: "computed" },
+	{ key: "recipient_adress", label: "command.RecipientAddress", type: "computed" },
+	{ key: "last_status", label: "command.LastStatus", type: "computed" },
 ]);
 const labelTableauDocument = ref([
 	{ label: "command.DocumentName", sortable: true, key: "name_command_document", valueKey: "name_command_document", type: "text", canEdit: true },
@@ -436,14 +734,26 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				update: { showCondition: commandId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition?.loading },
 				delete: { showCondition: commandId !== 'new' && authStore.hasPermission([0, 1, 2]) }
 			}"
+			:optional-config="trackingOptionalConfig"
 			@button-create="commandSave" @button-update="commandSave" @button-delete="commandDeleteModalShow = true"/>
 	</div>
 	<div v-if="commandsStore.commands[commandId] || commandId == 'new'" class="w-full">
+		<RoadMap v-if="commandId !== 'new'"
+			:steps="commandRoadmapSteps"
+			:current-step="commandCurrentStep"
+			:step-colors="commandRoadmapStepColors"
+			mode="horizontal-bottom"
+		/>
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="commandsStore.commandEdition" />
-			<div>
-				<!-- TODO suivie commande -->
-			</div>
+			<RoadMap
+				v-if="commandId !== 'new' && commandsStore.commandEdition?.last_status !== null && commandsStore.commandEdition?.last_status !== undefined"
+				:steps="trackingRoadmapSteps"
+				:current-step="trackingCurrentStep"
+				:step-colors="trackingRoadmapStepColors"
+				:history="trackingHistory"
+				mode="vertical-right"
+			/>
 		</div>
 		<CollapsibleSection title="command.Documents"
 			:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)" :permission="commandId !=='new'">
