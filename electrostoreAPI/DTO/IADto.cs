@@ -7,7 +7,7 @@ public record ReadIADto
 {
     public int id_ia { get; init; }
     public required string nom_ia { get; init; }
-    public required string description_ia { get; init; }
+    public string? description_ia { get; init; }
     public bool trained_ia { get; init; }
     public DateTime? date_training_ia { get; init; }
     public DateTime created_at { get; init; }
@@ -19,9 +19,8 @@ public record CreateIADto
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string nom_ia { get; init; }
 
-    [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public required string description_ia { get; init; }
+    public string? description_ia { get; init; }
 }
 public record UpdateIADto
 {

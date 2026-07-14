@@ -503,13 +503,15 @@ const createSchema = () => {
 		return Yup.object().shape(shape);
 	}
 	shape.prix_command = Yup.number()
+		.nullable()
+		.optional()
 		.min(0, t("command.PriceMin"))
-		.typeError(t("command.PriceNumber"))
-		.required(t("command.PriceRequired"));
+		.typeError(t("command.PriceNumber"));
 	shape.url_command = Yup.string()
+		.nullable()
+		.optional()
 		.max(configsStore.getConfigByKey("max_length_url"), t("command.UrlMaxLength", { count: configsStore.getConfigByKey("max_length_url") }))
-		.url(t("command.UrlInvalid"))
-		.required(t("command.UrlRequired"));
+		.url(t("command.UrlInvalid"));
 	shape.date_command = Yup.date()
 		.typeError(t("command.DateInvalid"))
 		.required(t("command.DateRequired"));

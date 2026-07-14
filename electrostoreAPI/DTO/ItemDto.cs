@@ -10,7 +10,7 @@ public record ReadItemDto
     public required string friendly_name_item { get; init; }
     public int seuil_min_item { get; init; }
     public int quantity_item { get; init; }
-    public required string description_item { get; init; }
+    public string? description_item { get; init; }
     public int? id_img { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
@@ -45,7 +45,7 @@ public record CreateItemDto
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public required string description_item { get; init; }
+    public string? description_item { get; init; }
 
     public int? id_img { get; init; }
 }

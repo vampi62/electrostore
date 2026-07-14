@@ -9,7 +9,6 @@
 	"NameMaxLength": "Le nom doit contenir au maximum {count} caractères",
 	"NameRequired": "Nom requis",
 	"DescriptionMaxLength": "La description doit contenir au maximum {count} caractères",
-	"DescriptionRequired": "Description requise",
 	"Title": "IA",
 	"Refresh": "Actualiser",
 	"Train": "Entraîner",

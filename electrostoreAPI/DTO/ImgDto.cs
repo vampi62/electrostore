@@ -9,7 +9,7 @@ public record ReadImgDto
     public required string nom_img { get; init; }
     public required string url_picture_img { get; init; }
     public required string url_thumbnail_img { get; init; }
-    public required string description_img { get; init; }
+    public string? description_img { get; init; }
     public int id_item { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
@@ -22,7 +22,7 @@ public record CreateImgByItemDto
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public required string description_img { get; init; }
+    public string? description_img { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [FileSize(nameof(Constants.MaxImageSizeMB), ErrorMessage = "{0} cannot exceed {1} MB in size.")]
@@ -38,7 +38,7 @@ public record CreateImgDto
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public required string description_img { get; init; }
+    public string? description_img { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     public int id_item { get; init; }

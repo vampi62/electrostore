@@ -140,8 +140,9 @@ const createSchema = () => {
 		.max(configsStore.getConfigByKey("max_length_name"), t("ia.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("ia.NameRequired"));
 	shape.description_ia = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_description"), t("ia.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }))
-		.required(t("ia.DescriptionRequired"));
+		.nullable()
+		.optional()
+		.max(configsStore.getConfigByKey("max_length_description"), t("ia.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }));
 	return Yup.object().shape(shape);
 };
 const labelForm = [

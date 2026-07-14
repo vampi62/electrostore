@@ -12,10 +12,10 @@ public class Commands : BaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_command { get; set; }
 
-    public float prix_command { get; set; }
+    public float? prix_command { get; set; }
 
     [MaxLength(Constants.MaxUrlLength)]
-    public required string url_command { get; set; }
+    public string url_command { get; set; } = string.Empty;
 
     public CommandStatus status_command { get; set; } = CommandStatus.Created;
 

@@ -23,7 +23,7 @@ public class Items : BaseEntity
     public int seuil_min_item { get; set; }
 
     [MaxLength(Constants.MaxDescriptionLength)]
-    public required string description_item { get; set; }
+    public string description_item { get; set; } = string.Empty;
 
     public ICollection<CommandsItems> CommandsItems { get; set; } = new List<CommandsItems>();
     public ICollection<ItemsBoxs> ItemsBoxs { get; set; } = new List<ItemsBoxs>();

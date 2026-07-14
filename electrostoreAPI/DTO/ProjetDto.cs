@@ -8,8 +8,8 @@ public record ReadProjetDto
 {
     public int id_projet { get; init; }
     public required string nom_projet { get; init; }
-    public required string description_projet { get; init; }
-    public required string url_projet { get; init; }
+    public string? description_projet { get; init; }
+    public string? url_projet { get; init; }
     public ProjetStatus status_projet { get; init; }
     public DateTime? date_debut_projet { get; init; }
     public DateTime? date_fin_projet { get; init; }
@@ -38,11 +38,11 @@ public record CreateProjetDto
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public required string description_projet { get; init; }
+    public string? description_projet { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public required string url_projet { get; init; }
+    public string? url_projet { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, (int)ProjetStatus.Archived, ErrorMessage = "{0} must be a valid status, between {1} and {2}.")]

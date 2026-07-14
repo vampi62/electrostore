@@ -27,11 +27,29 @@ namespace electrostoreAPI.Migrations
                 table: "Commands",
                 type: "int",
                 nullable: true);
+
+            migrationBuilder.AlterColumn<float>(
+                name: "prix_command",
+                table: "Commands",
+                type: "float",
+                nullable: true,
+                oldClrType: typeof(float),
+                oldType: "float");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AlterColumn<float>(
+                name: "prix_command",
+                table: "Commands",
+                type: "float",
+                nullable: false,
+                defaultValue: 0f,
+                oldClrType: typeof(float),
+                oldType: "float",
+                oldNullable: true);
+
             migrationBuilder.DropColumn(
                 name: "last_sub_status",
                 table: "Commands");

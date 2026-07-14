@@ -199,7 +199,7 @@ namespace electrostoreAPI.Migrations
                     b.Property<int?>("last_sub_status")
                         .HasColumnType("int");
 
-                    b.Property<float>("prix_command")
+                    b.Property<float?>("prix_command")
                         .HasColumnType("float");
 
                     b.Property<string>("raw_data")
