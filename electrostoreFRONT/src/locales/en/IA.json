@@ -9,7 +9,6 @@
 	"NameMaxLength": "Name must be at most {count} characters",
 	"NameRequired": "Name required",
 	"DescriptionMaxLength": "Description must be at most {count} characters",
-	"DescriptionRequired": "Description required",
 	"Title": "IA",
 	"Refresh": "Refresh",
 	"Train": "Train",

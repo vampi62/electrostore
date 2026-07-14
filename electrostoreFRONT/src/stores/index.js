@@ -1,5 +1,6 @@
 export * from "./auth.store";
 export * from "./camera.store";
+export * from "./carriers.store";
 export * from "./commands.store";
 export * from "./config.store";
 export * from "./cronjobs.store";

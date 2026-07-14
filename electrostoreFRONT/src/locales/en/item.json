@@ -33,7 +33,6 @@
 	"FriendlyNameMaxLength": "Friendly name must be at most {count} characters",
 	"FriendlyNameRequired": "Friendly name required",
 	"DescriptionMaxLength": "Description must be at most {count} characters",
-	"DescriptionRequired": "Item description required",
 	"SeuilMinMin": "Minimum threshold must be greater than 0",
 	"SeuilMinType": "Minimum threshold must be a number",
 	"SeuilMinRequired": "Minimum threshold required",

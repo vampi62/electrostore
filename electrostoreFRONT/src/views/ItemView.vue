@@ -336,8 +336,9 @@ const createSchema = () => {
 		.max(configsStore.getConfigByKey("max_length_name"), t("item.FriendlyNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("item.FriendlyNameRequired"));
 	shape.description_item = Yup.string()
-		.max(configsStore.getConfigByKey("max_length_description"), t("item.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }))
-		.required(t("item.DescriptionRequired"));
+		.nullable()
+		.optional()
+		.max(configsStore.getConfigByKey("max_length_description"), t("item.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }));
 	shape.seuil_min_item = Yup.number()
 		.min(0, t("item.SeuilMinMin"))
 		.typeError(t("item.SeuilMinType"))

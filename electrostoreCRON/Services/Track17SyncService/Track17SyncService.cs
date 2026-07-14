@@ -21,7 +21,6 @@ public class Track17SyncService : ITrack17SyncService
         ("tracking-request-stop",   "stoptrack",      "/stoptrack"),
         ("tracking-request-resume", "retrack",        "/retrack"),
         ("tracking-request-delete", "deletetrack",    "/deletetrack"),
-        ("tracking-request-push",   "push",           "/push"),
     ];
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -52,7 +51,7 @@ public class Track17SyncService : ITrack17SyncService
 
     public async Task SyncAllAsync(CancellationToken ct = default)
     {
-        var apiKey = _configuration["Track17:ApiKey"];
+        var apiKey = _configuration.GetValue<string>("Track17:ApiKey");
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             _logger.LogWarning("Track17:ApiKey not configured - sync skipped.");
@@ -140,7 +139,7 @@ public class Track17SyncService : ITrack17SyncService
                     continue;
                 }
 
-                if (msg is null || msg.id_command == 0 || string.IsNullOrWhiteSpace(msg.tracking_number))
+                if (msg is null || string.IsNullOrWhiteSpace(msg.tracking_number))
                 {
                     _logger.LogWarning(
                         "Track17 sync: incomplete message in topic={Topic}, offset={Offset} - skipped.",
@@ -260,7 +259,6 @@ public class Track17SyncService : ITrack17SyncService
             return new TrackingResultMessage
             {
                 action          = action,
-                id_command      = m.id_command,
                 tracking_number = m.tracking_number,
                 carrier         = m.carrier ?? 0,
                 carrier_old     = m.carrier_old,
@@ -275,7 +273,6 @@ public class Track17SyncService : ITrack17SyncService
         messages.Select(m => new TrackingResultMessage
         {
             action          = action,
-            id_command      = m.id_command,
             tracking_number = m.tracking_number,
             carrier         = m.carrier ?? 0,
             success         = false,

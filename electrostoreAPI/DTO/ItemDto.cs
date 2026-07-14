@@ -10,7 +10,7 @@ public record ReadItemDto
     public required string friendly_name_item { get; init; }
     public int seuil_min_item { get; init; }
     public int quantity_item { get; init; }
-    public required string description_item { get; init; }
+    public string? description_item { get; init; }
     public int? id_img { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
@@ -43,9 +43,8 @@ public record CreateItemDto
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public required int seuil_min_item { get; init; }
 
-    [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public required string description_item { get; init; }
+    public string? description_item { get; init; }
 
     public int? id_img { get; init; }
 }
@@ -63,7 +62,6 @@ public record UpdateItemDto
     public int? seuil_min_item { get; init; }
 
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? description_item { get; init; }
 
     public int? id_img { get; init; }

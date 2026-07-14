@@ -193,7 +193,10 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<int?>("last_status")
                         .HasColumnType("int");
 
-                    b.Property<float>("prix_command")
+                    b.Property<int?>("last_sub_status")
+                        .HasColumnType("int");
+
+                    b.Property<float?>("prix_command")
                         .HasColumnType("float");
 
                     b.Property<string>("raw_data")
@@ -360,9 +363,9 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<int?>("status")
                         .HasColumnType("int");
 
-                    b.Property<string>("sub_status")
+                    b.Property<int?>("sub_status")
                         .HasMaxLength(150)
-                        .HasColumnType("varchar(150)");
+                        .HasColumnType("int");
 
                     b.Property<string>("timezone")
                         .HasMaxLength(50)
@@ -1399,7 +1402,7 @@ namespace ElectrostoreAPI.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("ElectrostoreAPI.Models.Items", "Item")
-                        .WithMany()
+                        .WithMany("ItemsHistory")
                         .HasForeignKey("id_item")
                         .OnDelete(DeleteBehavior.SetNull);
 
@@ -1607,6 +1610,8 @@ namespace ElectrostoreAPI.Migrations
                     b.Navigation("ItemsBoxs");
 
                     b.Navigation("ItemsDocuments");
+
+                    b.Navigation("ItemsHistory");
 
                     b.Navigation("ItemsTags");
 

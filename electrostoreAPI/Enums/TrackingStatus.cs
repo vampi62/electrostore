@@ -3,14 +3,14 @@ namespace ElectrostoreAPI.Enums;
 
 public enum TrackingStatus
 {
+    NotFound,
     InfoReceived,
-    PickedUp,
-    Departure,
-    Arrival,
+    InTransit,
+    Expired,
     AvailableForPickup,
     OutForDelivery,
+    DeliveryFailure,
     Delivered,
-    Returning,
-    Returned,
+    Exception,
     Unknown
 }

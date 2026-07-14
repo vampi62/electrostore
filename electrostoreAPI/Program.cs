@@ -41,6 +41,7 @@ using ElectrostoreAPI.Services.UserService;
 using ElectrostoreAPI.Services.ValidateStoreService;
 using ElectrostoreAPI.Services.StatusService;
 using ElectrostoreAPI.Services.JwtService;
+using ElectrostoreAPI.Services.WebHookService;
 using ElectrostoreAPI.Grpc.Services;
 using ElectrostoreAPI.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -365,6 +366,7 @@ public partial class Program
         builder.Services.AddScoped<IValidateStoreService, ValidateStoreService>();
         builder.Services.AddScoped<IJwiService, JwiService>();
         builder.Services.AddScoped<IStatusService, StatusService>();
+        builder.Services.AddScoped<IWebHookService, WebHookService>();
     }
 
     private static void CreateRequiredDirectories()

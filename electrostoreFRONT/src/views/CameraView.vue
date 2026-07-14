@@ -149,7 +149,8 @@ const createSchema = () => {
 		.required(t("camera.NameRequired"));
 	shape.url_camera = Yup.string()
 		.max(configsStore.getConfigByKey("max_length_url"), t("camera.URLMaxLength", { count: configsStore.getConfigByKey("max_length_url") }))
-		.required(t("camera.DescriptionRequired"));
+		.required(t("camera.UrlRequired"))
+		.url(t("camera.UrlInvalid"));
 	if (edition?._check) {
 		shape.user_camera = Yup.string()
 			.required(t("camera.UserRequired"))

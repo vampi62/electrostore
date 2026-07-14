@@ -157,12 +157,19 @@ public class KafkaCronJobEventsConsumer : BackgroundService
             .UsingJobData(ElectrostoreCronJob.KeyParams,  job.params_cronjob ?? string.Empty)
             .Build();
 
+        // Normalize 5-field Unix cron (m h dom mon dow) to 6-field Quartz cron (s m h dom mon dow)
+        var cronExpression = job.cron_expression.Trim();
+        if (cronExpression.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length == 5)
+        {
+            cronExpression = "0 " + cronExpression;
+        }
+
         ITrigger trigger;
         try
         {
             trigger = TriggerBuilder.Create()
                 .WithIdentity($"trigger-{job.id_cronjob}", "electrostore")
-                .WithCronSchedule(job.cron_expression)
+                .WithCronSchedule(cronExpression)
                 .Build();
         }
         catch (FormatException ex)

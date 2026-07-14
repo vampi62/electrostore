@@ -33,7 +33,6 @@
 	"FriendlyNameMaxLength": "Le nom convivial doit contenir au maximum {count} caractères",
 	"FriendlyNameRequired": "Nom convivial requis",
 	"DescriptionMaxLength": "La description doit contenir au maximum {count} caractères",
-	"DescriptionRequired": "Description de l'article requise",
 	"SeuilMinMin": "Le seuil minimum doit être supérieur à 0",
 	"SeuilMinType": "Le seuil minimum doit être un nombre",
 	"SeuilMinRequired": "Seuil minimum requis",

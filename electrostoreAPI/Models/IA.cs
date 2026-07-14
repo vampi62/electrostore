@@ -14,7 +14,7 @@ public class IA : BaseEntity
     public required string nom_ia { get; set; }
 
     [MaxLength(Constants.MaxDescriptionLength)]
-    public required string description_ia { get; set; }
+    public string description_ia { get; set; } = string.Empty;
 
     public bool trained_ia { get; set; } = false;
 

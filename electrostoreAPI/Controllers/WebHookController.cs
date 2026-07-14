@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ElectrostoreAPI.Services.WebHookService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,17 +19,13 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task Post17Track([FromBody] string body)
+        public async Task Post17Track([FromBody] JsonElement body)
         {
-            Console.WriteLine("Received webhook headers:");
-            Console.WriteLine(Request.Headers.ToString());
-            Console.WriteLine("Received webhook from 17Track:");
-            Console.WriteLine(body);
-            var result = await _webHookService.Process17TrackWebhook(body);
-            if (!result)
+            if (!Request.Headers.TryGetValue("Sign", out var signatureHeader))
             {
-                throw new Exception("Failed to process webhook");
+                throw new ArgumentException("Missing signature header");
             }
+            await _webHookService.Process17TrackWebhook(body, signatureHeader.ToString());
             Ok();
         }
     }
