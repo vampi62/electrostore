@@ -129,6 +129,50 @@
 								</Field>
 								<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
 							</template>
+							<template v-else-if="field.type === 'fetch-select'">
+								<Field :name="field.key" v-model="storeData[field.key]" type="hidden" />
+								<div class="relative">
+									<input
+										:id="`form-input-${this.$.uid}-${field.key}`"
+										:ref="`fetch-select-input-${field.key}`"
+										type="text"
+										:value="getFetchSelectInputText(field)"
+										@input="handleFetchSelectInput(field, $event)"
+										@focus="openFetchSelect(field, $event)"
+										@blur="closeFetchSelectDelayed(field.key)"
+										class="border border-gray-300 rounded px-2 py-1 w-full pr-7 focus:outline-none focus:ring focus:ring-blue-300"
+										:class="{ 'border-red-500': errors[field.key] }"
+										:placeholder="field.placeholder ? $t(field.placeholder) : ''"
+										:disabled="(!permission) || (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading"
+									/>
+									<div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+										<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+										</svg>
+									</div>
+								</div>
+								<Teleport to="body">
+									<div
+										v-show="isFetchSelectOpen(field.key)"
+										:ref="`fetch-select-menu-${field.key}`"
+										:style="getFetchSelectStyle(field.key)"
+										class="fixed z-[9999] bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto"
+									>
+										<div
+											v-for="[value, label] in getFetchSelectOptions(field)"
+											:key="value"
+											@mousedown.prevent="selectFetchOption(field, value, label)"
+											class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+										>
+											{{ label }}
+										</div>
+										<div v-if="getFetchSelectOptions(field).length === 0" class="px-3 py-2 text-sm text-gray-400 italic">
+											Aucun résultat
+										</div>
+									</div>
+								</Teleport>
+								<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
+							</template>
 							<template v-else-if="field.type === 'textarea'">
 								<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" as="textarea" v-model="storeData[field.key]" :rows="field.rows || 3"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
@@ -192,6 +236,8 @@
 
 <script>
 import { Form, Field } from "vee-validate";
+import { debounce } from "lodash-es";
+import { buildRSQLFilter, buildRSQLSort } from "@/utils";
 export default {
 	name: "FormContainer",
 	props: {
@@ -239,6 +285,9 @@ export default {
 		labelsShown() {
 			return this.labels.filter((field) => !field?.showCondition || this.evaluateCondition(field.showCondition));
 		},
+	},
+	created() {
+		this._fetchSelectDebouncers = {};
 	},
 	components: {
 		Form,
@@ -324,6 +373,16 @@ export default {
 					}
 				}
 			});
+			// Mettre à jour les positions des fetch-select ouverts
+			Object.keys(this.fetchSelectState).forEach((key) => {
+				if (this.fetchSelectState[key]?.isOpen) {
+					const inputRef = `fetch-select-input-${key}`;
+					const input = this.$refs[inputRef];
+					if (input) {
+						this.updateFetchSelectPosition(key, Array.isArray(input) ? input[0] : input);
+					}
+				}
+			});
 		},
 		handleClickOutside(event) {
 			// Fermer les dropdowns si on clique en dehors
@@ -368,17 +427,106 @@ export default {
 				this.recalculateDropdownPosition(key);
 			}
 		},
-		recalculateDropdownPosition(key) {
-			// Attendre que le DOM soit mis à jour avec le nouvel état
-			this.$nextTick(() => {
-				if (this.dropdownOpen[key]) {
-					const buttonRef = `dropdown-button-${key}`;
-					const button = this.$refs[buttonRef];
-					if (button) {
-						this.updateDropdownPosition(key, Array.isArray(button) ? button[0] : button);
+		initFetchSelectState(field) {
+			const key = field.key;
+			if (!this.fetchSelectState[key]) {
+				let initialText = "";
+				if (this.storeData[key] !== undefined && this.storeData[key] !== null && this.storeData[key] !== "" && field.fetchStore) {
+					const fetchValueKey = field.fetchValueKey || field.fetchStoreKey;
+					const found = Object.values(field.fetchStore).find((item) => String(item[fetchValueKey]) === String(this.storeData[key]));
+					if (found) {
+						initialText = found[field.fetchStoreKey];
 					}
 				}
+				this.fetchSelectState[key] = { inputText: initialText, isOpen: false, position: null };
+			}
+		},
+		getFetchSelectInputText(field) {
+			this.initFetchSelectState(field);
+			return this.fetchSelectState[field.key].inputText;
+		},
+		isFetchSelectOpen(key) {
+			return this.fetchSelectState[key]?.isOpen || false;
+		},
+		getFetchSelectStyle(key) {
+			const pos = this.fetchSelectState[key]?.position;
+			if (!pos) {
+				return {};
+			}
+			return {
+				top: `${pos.top + 4}px`,
+				left: `${pos.left}px`,
+				width: `${pos.width}px`,
+			};
+		},
+		updateFetchSelectPosition(key, inputEl) {
+			if (!inputEl) {
+				return;
+			}
+			const rect = inputEl.getBoundingClientRect();
+			this.fetchSelectState[key].position = {
+				top: rect.bottom + window.scrollY,
+				left: rect.left + window.scrollX,
+				width: rect.width,
+			};
+		},
+		async openFetchSelect(field, event) {
+			this.initFetchSelectState(field);
+			this.fetchSelectState[field.key].isOpen = true;
+			this.fetchSelectState[field.key].inputText = "";
+			await this.doFetchSelectSearch(field);
+			this.$nextTick(() => {
+				this.updateFetchSelectPosition(field.key, event.target);
 			});
+		},
+		closeFetchSelectDelayed(key) {
+			setTimeout(() => {
+				if (this.fetchSelectState[key]) {
+					this.fetchSelectState[key].isOpen = false;
+				}
+			}, 200);
+		},
+		selectFetchOption(field, value, label) {
+			this.storeData[field.key] = value;
+			this.fetchSelectState[field.key].inputText = label;
+			this.fetchSelectState[field.key].isOpen = false;
+		},
+		handleFetchSelectInput(field, event) {
+			this.initFetchSelectState(field);
+			this.fetchSelectState[field.key].inputText = event.target.value;
+			this.fetchSelectState[field.key].isOpen = true;
+			if (!this._fetchSelectDebouncers[field.key]) {
+				this._fetchSelectDebouncers[field.key] = debounce(async(f) => {
+					await this.doFetchSelectSearch(f);
+					this.$nextTick(() => {
+						const inputRef = `fetch-select-input-${f.key}`;
+						const input = this.$refs[inputRef];
+						if (input) {
+							this.updateFetchSelectPosition(f.key, Array.isArray(input) ? input[0] : input);
+						}
+					});
+				}, 300);
+			}
+			this._fetchSelectDebouncers[field.key](field);
+		},
+		async doFetchSelectSearch(field) {
+			if (!field.fetchFunction) {
+				return;
+			}
+			const inputText = this.fetchSelectState[field.key]?.inputText || "";
+			const filter = [{ key: field.fetchStoreKey, compareMethod: "=like=", value: inputText }];
+			const sort = { key: field.fetchStoreKey, order: "asc" };
+			await field.fetchFunction(10, 0, [], buildRSQLFilter(filter), buildRSQLSort(sort), false);
+		},
+		getFetchSelectOptions(field) {
+			if (!field.fetchStore) {
+				return [];
+			}
+			const fetchValueKey = field.fetchValueKey || field.fetchStoreKey;
+			return Object.values(field.fetchStore).filter((item) => {
+				const inputText = this.fetchSelectState[field.key]?.inputText || "";
+				return String(item[field.fetchStoreKey]).toLowerCase().includes(inputText.toLowerCase());
+			}).map((item) => [item[fetchValueKey], item[field.fetchStoreKey]]);
 		},
 		getSortedOptions(field) {
 			if (!field.options) {
@@ -416,6 +564,7 @@ export default {
 			showPassword: false,
 			dropdownOpen: {},
 			dropdownPositions: {},
+			fetchSelectState: {},
 		};
 	},
 	mounted() {
