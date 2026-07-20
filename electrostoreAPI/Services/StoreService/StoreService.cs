@@ -2,11 +2,14 @@ using AutoMapper;
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Kafka.Messages;
+using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.SessionService;
 using ElectrostoreAPI.Services.ValidateStoreService;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using System.Text.Json;
 
 namespace ElectrostoreAPI.Services.StoreService;
 
@@ -16,13 +19,15 @@ public class StoreService : IStoreService
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
     private readonly IValidateStoreService _validateStoreService;
+    private readonly IKafkaProducerService _kafkaProducer;
 
-    public StoreService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IValidateStoreService validateStoreService)
+    public StoreService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IValidateStoreService validateStoreService, IKafkaProducerService kafkaProducer)
     {
         _mapper = mapper;
         _context = context;
         _sessionService = sessionService;
         _validateStoreService = validateStoreService;
+        _kafkaProducer = kafkaProducer;
     }
 
     // limit the number of store to 100 and add offset and search parameters
@@ -138,7 +143,21 @@ public class StoreService : IStoreService
         var newStore = _mapper.Map<Stores>(storeDto);
         _context.Stores.Add(newStore);
         await _context.SaveChangesAsync();
-        return _mapper.Map<ReadStoreDto>(newStore);
+        var mqttPassword = await GenerateMqttPasswordForStore(newStore.id_store);
+        await _kafkaProducer.PublishAsync(
+            "mqtt-user-events",
+            newStore.id_store.ToString(),
+            JsonSerializer.Serialize(new MqttUserMessage
+            {
+                user = newStore.mqtt_name_store,
+                password = mqttPassword,
+                delete = false
+            })
+        );
+        return _mapper.Map<ReadStoreDto>(newStore) with
+        {
+            mqtt_password_store = mqttPassword
+        };
     }
 
     public async Task<ReadStoreDto> UpdateStore(int id, UpdateStoreDto storeDto)
@@ -149,10 +168,29 @@ public class StoreService : IStoreService
             throw new UnauthorizedAccessException("You do not have permission to update a store");
         }
         var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
+        var oldMqttName = storeToUpdate.mqtt_name_store;
         await _validateStoreService.UpdateStoreInformations(storeToUpdate, storeDto);
         await _validateStoreService.CheckUpdateStoreOutsideElement(storeToUpdate);
         await _context.SaveChangesAsync();
-        return _mapper.Map<ReadStoreDto>(storeToUpdate);
+        var mqttPassword = await GenerateMqttPasswordForStore(storeToUpdate.id_store);
+        if (storeDto.reset_mqtt_password_store == true)
+        {
+            await _kafkaProducer.PublishAsync(
+                "mqtt-user-events",
+                storeToUpdate.id_store.ToString(),
+                JsonSerializer.Serialize(new MqttUserMessage
+                {
+                    user = storeToUpdate.mqtt_name_store,
+                    old_user = oldMqttName,
+                    password = mqttPassword,
+                    delete = false
+                })
+            );
+        }
+        return _mapper.Map<ReadStoreDto>(storeToUpdate) with
+        {
+            mqtt_password_store = mqttPassword
+        };
     }
 
     public async Task DeleteStore(int id)
@@ -164,6 +202,17 @@ public class StoreService : IStoreService
         }
         var storeToDelete = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
         _context.Stores.Remove(storeToDelete);
+        
+        await _kafkaProducer.PublishAsync(
+            "mqtt-user-events",
+            storeToDelete.id_store.ToString(),
+            JsonSerializer.Serialize(new MqttUserMessage
+            {
+                user = storeToDelete.mqtt_name_store,
+                password = "",
+                delete = true
+            })
+        );
         await _context.SaveChangesAsync();
     }
 
@@ -176,8 +225,6 @@ public class StoreService : IStoreService
         }
         var newStore = _mapper.Map<Stores>(storeDto.store);
         _context.Stores.Add(newStore);
-        await _context.SaveChangesAsync();
-
         // Add leds and boxs if provided
         var validQueryLed = new List<ReadLedDto>();
         var errorQueryLed = new List<ErrorDetail>();
@@ -195,7 +242,6 @@ public class StoreService : IStoreService
                 var newLed = _mapper.Map<Leds>(ledDtoFull);
                 _validateStoreService.ValidateLedPosition(newLed, newStore);
                 _context.Leds.Add(newLed);
-                await _context.SaveChangesAsync();
                 validQueryLed.Add(_mapper.Map<ReadLedDto>(newLed));
             }
             catch (Exception e)
@@ -237,13 +283,27 @@ public class StoreService : IStoreService
             }
         }
         
+        var mqttPassword = await GenerateMqttPasswordForStore(newStore.id_store);
         if (errorQueryLed.Count == 0 && errorQueryBox.Count == 0)
         {
             await _context.SaveChangesAsync();
+            await _kafkaProducer.PublishAsync(
+                "mqtt-user-events",
+                newStore.id_store.ToString(),
+                JsonSerializer.Serialize(new MqttUserMessage
+                {
+                    user = newStore.mqtt_name_store,
+                    password = mqttPassword,
+                    delete = false
+                })
+            );
         }
         return new ReadStoreCompleteDto
         {
-            store = _mapper.Map<ReadStoreDto>(newStore),
+            store = _mapper.Map<ReadStoreDto>(newStore) with
+            {
+                mqtt_password_store = mqttPassword
+            },
             leds = new ReadBulkLedDto
             {
                 Valide = validQueryLed,
@@ -265,6 +325,7 @@ public class StoreService : IStoreService
             throw new UnauthorizedAccessException("You do not have permission to update a store");
         }
         var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
+        var oldMqttName = storeToUpdate.mqtt_name_store;
         await _validateStoreService.UpdateStoreInformations(storeToUpdate, storeDto.store);
         // Add leds and boxs, if status field indicate the new status "delete", "modified", "new"
         (var validQueryLed, var errorQueryLed) = await UpdateLedList(storeToUpdate, storeDto.leds ?? []);
@@ -297,9 +358,27 @@ public class StoreService : IStoreService
         {
             await _context.SaveChangesAsync();
         }
+        var mqttPassword = await GenerateMqttPasswordForStore(storeToUpdate.id_store);
+        if (storeDto.store.reset_mqtt_password_store == true)
+        {
+            await _kafkaProducer.PublishAsync(
+                "mqtt-user-events",
+                storeToUpdate.id_store.ToString(),
+                JsonSerializer.Serialize(new MqttUserMessage
+                {
+                    user = storeToUpdate.mqtt_name_store,
+                    old_user = oldMqttName,
+                    password = mqttPassword,
+                    delete = false
+                })
+            );
+        }
         return new ReadStoreCompleteDto
         {
-            store = _mapper.Map<ReadStoreDto>(storeToUpdate),
+            store = _mapper.Map<ReadStoreDto>(storeToUpdate) with
+            {
+                mqtt_password_store = mqttPassword
+            },
             leds = new ReadBulkLedDto
             {
                 Valide = validQueryLed,
@@ -332,6 +411,11 @@ public class StoreService : IStoreService
         return stores.Count;
     }
 
+    private async Task<string> GenerateMqttPasswordForStore(int id)
+    {
+        var newPassword = Convert.ToBase64String(Guid.NewGuid().ToByteArray())[..32];
+        return newPassword;
+    }
 
     private async Task<(List<ReadLedDto>, List<ErrorDetail>)> UpdateLedList(Stores storeToUpdate, IEnumerable<UpdateBulkLedByStoreDto> ledListDto)
     {

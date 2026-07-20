@@ -12,6 +12,7 @@ public record ReadStoreDto
     public required string mqtt_name_store { get; init; }
     public DateTime? mqtt_last_seen_store { get; init; }
     public bool is_mqtt_connected_store { get; init; }
+    public string? mqtt_password_store { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
 }
@@ -59,6 +60,8 @@ public record UpdateStoreDto
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? mqtt_name_store { get; init; }
+
+    public bool? reset_mqtt_password_store { get; init; }
 }
 
 public record ReadStoreCompleteDto
