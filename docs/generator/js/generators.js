@@ -427,7 +427,7 @@ services:`;
       - "1883:1883"
     volumes:
       - ./config/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-      - ./config/mosquitto/mosquitto.passwd:/mosquitto/config/mosquitto.passwd:ro
+      - ./config/mosquitto/mosquitto.passwd:/mosquitto/config/mosquitto.passwd
       - mqtt-data:/mosquitto/data
       - mqtt-logs:/mosquitto/log
     networks:
@@ -572,7 +572,9 @@ function generateApiAppsettings(config) {
             "Server": "mqtt",
             "Port": 1883,
             "Username": config.mqtt.user,
-            "Password": config.useVault ? "{{vault:mqtt_password}}" : config.mqtt.password
+            "Password": config.useVault ? "{{vault:mqtt_password}}" : config.mqtt.password,
+            "ContainerName": "electrostore-mqtt",
+            "ClientId": "electrostore-api"
         };
     } else {
         const mqtt = config.mqttExternal;
@@ -580,7 +582,9 @@ function generateApiAppsettings(config) {
             "Server": mqtt.host,
             "Port": parseInt(mqtt.port),
             "Username": mqtt.user,
-            "Password": config.useVault ? "{{vault:mqtt_password}}" : config.mqtt.password
+            "Password": config.useVault ? "{{vault:mqtt_password}}" : config.mqtt.password,
+            "ContainerName": mqtt.containerName || "mosquitto",
+            "ClientId": "electrostore-api"
         };
     }
 
@@ -965,6 +969,7 @@ function generateWorkerAppsettings(config) {
             "Port": "1883",
             "Username": config.mqtt.user,
             "Password": config.useVault ? "{{vault:mqtt_password}}" : config.mqtt.password,
+            "ContainerName": "electrostore-mqtt",
             "ClientId": "electrostore-worker"
         };
     } else {
@@ -974,6 +979,7 @@ function generateWorkerAppsettings(config) {
             "Port": mqtt.port,
             "Username": mqtt.user,
             "Password": config.useVault ? "{{vault:mqtt_password}}" : mqtt.password,
+            "ContainerName": mqtt.containerName || "mosquitto",
             "ClientId": "electrostore-worker"
         };
     }
