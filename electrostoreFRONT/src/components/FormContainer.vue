@@ -14,6 +14,10 @@
 						<span v-if="field.label" class="font-semibold sm:min-w-[150px]" :for="`form-input-${this.$.uid}-${field.key}`">{{ $t(field.label) }}</span>
 						<span v-else class="font-semibold sm:min-w-[150px]" :for="`form-input-${this.$.uid}-${field.key}`">{{ field.text }}</span>
 					</template>
+					<template v-else-if="field.type === 'readonly'">
+						<span v-if="field.label" class="font-semibold sm:min-w-[150px]" :for="`form-input-${this.$.uid}-${field.key}`">{{ $t(field.label) }}</span>
+						<span v-else class="font-semibold sm:min-w-[150px]" :for="`form-input-${this.$.uid}-${field.key}`">{{ storeData[field.key] }}</span>
+					</template>
 					<template v-else>
 						<label v-if="field.label" class="font-semibold sm:min-w-[150px]" :for="`form-input-${this.$.uid}-${field.key}`">{{ $t(field.label) }}</label>
 						<label v-else class="font-semibold sm:min-w-[150px]" :for="`form-input-${this.$.uid}-${field.key}`">{{ field.text }}</label>
@@ -139,7 +143,7 @@
 										:value="getFetchSelectInputText(field)"
 										@input="handleFetchSelectInput(field, $event)"
 										@focus="openFetchSelect(field, $event)"
-										@blur="closeFetchSelectDelayed(field.key)"
+										@blur="closeFetchSelect(field.key)"
 										class="border border-gray-300 rounded px-2 py-1 w-full pr-7 focus:outline-none focus:ring focus:ring-blue-300"
 										:class="{ 'border-red-500': errors[field.key] }"
 										:placeholder="field.placeholder ? $t(field.placeholder) : ''"
@@ -442,8 +446,7 @@ export default {
 			}
 		},
 		getFetchSelectInputText(field) {
-			this.initFetchSelectState(field);
-			return this.fetchSelectState[field.key].inputText;
+			return Object.values(field.fetchStore).find((item) => String(item[field.fetchValueKey || field.fetchStoreKey]) === String(this.storeData[field.key]))?.[field.fetchStoreKey] || "";
 		},
 		isFetchSelectOpen(key) {
 			return this.fetchSelectState[key]?.isOpen || false;
@@ -479,17 +482,21 @@ export default {
 				this.updateFetchSelectPosition(field.key, event.target);
 			});
 		},
-		closeFetchSelectDelayed(key) {
-			setTimeout(() => {
-				if (this.fetchSelectState[key]) {
-					this.fetchSelectState[key].isOpen = false;
-				}
-			}, 200);
+		closeFetchSelect(key) {
+			if (this.fetchSelectState[key]) {
+				this.fetchSelectState[key].isOpen = false;
+			}
 		},
 		selectFetchOption(field, value, label) {
 			this.storeData[field.key] = value;
 			this.fetchSelectState[field.key].inputText = label;
 			this.fetchSelectState[field.key].isOpen = false;
+			this.$nextTick(() => {
+				const input = this.$refs[`fetch-select-input-${field.key}`];
+				if (input) {
+					input[0].blur();
+				}
+			});
 		},
 		handleFetchSelectInput(field, event) {
 			this.initFetchSelectState(field);

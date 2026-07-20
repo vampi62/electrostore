@@ -31,10 +31,10 @@ const authStore = useAuthStore();
 const formContainer = ref(null);
 
 async function fetchAllData() {
-	if (Object.keys(carriersStore.carriers).length === 0) {
-		carriersStore.getCarrierByInterval(200, 0, "", "", false);
-	}
 	if (commandId.value === "new") {
+		if (Object.keys(carriersStore.carriers).length === 0) {
+			carriersStore.getCarrierByInterval(200, 0, "", "", false);
+		}
 		loadToEdition(commandId.value);
 		if (preset.value) {
 			preset.value.split(";").forEach((pair) => {
@@ -49,7 +49,7 @@ async function fetchAllData() {
 			loading: true,
 		};
 		try {
-			await commandsStore.getCommandById(commandId.value);
+			await commandsStore.getCommandById(commandId.value, ["carrier"]);
 		} catch {
 			delete commandsStore.commands[commandId.value];
 			addNotification({ message: t("command.NotFound"), type: "error" });
@@ -241,13 +241,6 @@ const trackingHistory = computed(() => {
 	}
 	return result;
 });
-const carrierOptions = computed(() =>
-	Object.fromEntries(
-		Object.values(carriersStore.carriers)
-			.filter((c) => c && c.id_carrier)
-			.map((c) => [c.id_carrier, c.name ?? `Carrier #${c.id_carrier}`]),
-	),
-);
 const commandSave = async() => {
 	try {
 		const validationResults = await Promise.all([
@@ -562,12 +555,12 @@ const labelForm = computed(() => [
 		carriersStore.getCarrierByInterval(limit, offset, filter, sort, clear),
 	fetchStore: carriersStore.carriers, fetchValueKey: "id_carrier", fetchStoreKey: "name",
 	},
-	{ key: "is_tracking_requested", label: "command.IsTrackingRequested", type: "computed" },
-	{ key: "is_tracking_validated", label: "command.IsTrackingValidated", type: "computed" },
-	{ key: "is_active", label: "command.IsActive", type: "computed" },
-	{ key: "shipper_adress", label: "command.ShipperAddress", type: "computed" },
-	{ key: "recipient_adress", label: "command.RecipientAddress", type: "computed" },
-	{ key: "last_status", label: "command.LastStatus", type: "computed" },
+	{ key: "is_tracking_requested", label: "command.IsTrackingRequested", type: "checkbox", enableCondition: "false" },
+	{ key: "is_tracking_validated", label: "command.IsTrackingValidated", type: "checkbox", enableCondition: "false" },
+	{ key: "is_active", label: "command.IsActive", type: "checkbox", enableCondition: "false" },
+	{ key: "shipper_adress", label: "command.ShipperAddress", type: "readonly" },
+	{ key: "recipient_adress", label: "command.RecipientAddress", type: "readonly" },
+	{ key: "last_status", label: "command.LastStatus", type: "readonly" },
 ]);
 const labelTableauDocument = ref([
 	{ label: "command.DocumentName", sortable: true, key: "name_command_document", valueKey: "name_command_document", type: "text", canEdit: true },
