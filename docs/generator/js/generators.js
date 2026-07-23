@@ -569,7 +569,7 @@ function generateApiAppsettings(config) {
 
     if (config.useMQTT) {
         settings.MQTT = {
-            "Server": "mqtt",
+            "Server": "electrostore-mqtt",
             "Port": 1883,
             "Username": config.mqtt.user,
             "Password": config.useVault ? "{{vault:mqtt_password}}" : config.mqtt.password
@@ -961,7 +961,7 @@ function generateWorkerAppsettings(config) {
 
     if (config.useMQTT) {
         settings.Mqtt = {
-            "Host": "mqtt",
+            "Host": "electrostore-mqtt",
             "Port": "1883",
             "Username": config.mqtt.user,
             "Password": config.useVault ? "{{vault:mqtt_password}}" : config.mqtt.password,

@@ -924,7 +924,7 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_history', 'commands_items'. Multiple values can be specified by separating them with ','.",
+            "description": "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_history', 'commands_items', 'carrier'. Multiple values can be specified by separating them with ','.",
             "schema": {
               "type": "array",
               "items": {
@@ -1049,7 +1049,7 @@
           {
             "name": "expand",
             "in": "query",
-            "description": "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_history', 'commands_items'. Multiple values can be specified by separating them with ','.",
+            "description": "(Optional) Fields to expand. Possible values: 'commands_commentaires', 'commands_documents', 'commands_history', 'commands_items', 'carrier'. Multiple values can be specified by separating them with ','.",
             "schema": {
               "type": "array",
               "items": {

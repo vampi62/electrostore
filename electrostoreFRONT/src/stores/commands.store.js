@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 
 import { fetchWrapper } from "@/helpers";
 
-import { useUsersStore, useItemsStore } from "@/stores";
+import { useUsersStore, useItemsStore, useCarriersStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -71,6 +71,12 @@ export const useCommandsStore = defineStore("commands",{
 						this.items[command.id_command][item.id_item] = item;
 					}
 				}
+				if (expand.includes("carrier")) {
+					if (command.carrier) {
+						const carriersStore = useCarriersStore();
+						carriersStore.carriers[command.id_carrier] = command.carrier;
+					}
+				}
 			}
 			this.commandsLoading = false;
 		},
@@ -118,6 +124,12 @@ export const useCommandsStore = defineStore("commands",{
 						this.items[command.id_command][item.id_item] = item;
 					}
 				}
+				if (expand.includes("carrier")) {
+					if (command.carrier) {
+						const carriersStore = useCarriersStore();
+						carriersStore.carriers[command.id_carrier] = command.carrier;
+					}
+				}
 			}
 			this.commandsTotalCount = newCommandList["pagination"]?.["total"] || 0;
 			this.commandsLoading = false;
@@ -158,6 +170,12 @@ export const useCommandsStore = defineStore("commands",{
 				this.items[id] = {};
 				for (const item of this.commands[id].commands_items) {
 					this.items[id][item.id_item] = item;
+				}
+			}
+			if (expand.includes("carrier")) {
+				if (this.commands[id].carrier) {
+					const carriersStore = useCarriersStore();
+					carriersStore.carriers[this.commands[id].id_carrier] = this.commands[id].carrier;
 				}
 			}
 		},

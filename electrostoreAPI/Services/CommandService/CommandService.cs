@@ -76,7 +76,8 @@ public class CommandService : ICommandService
                 CommandsCommentaires = expand != null && expand.Contains("commands_commentaires") ? c.CommandsCommentaires.Take(20).ToList() : null,
                 CommandsDocuments = expand != null && expand.Contains("commands_documents") ? c.CommandsDocuments.Take(20).ToList() : null,
                 CommandsHistory = expand != null && expand.Contains("commands_history") ? c.CommandsHistory.Take(20).ToList() : null,
-                CommandsItems = expand != null && expand.Contains("commands_items") ? c.CommandsItems.Take(20).ToList() : null
+                CommandsItems = expand != null && expand.Contains("commands_items") ? c.CommandsItems.Take(20).ToList() : null,
+                Carrier = expand != null && expand.Contains("carrier") ? c.Carrier : null
             })
             .ToListAsync();
         return new PaginatedResponseDto<ReadExtendedCommandDto>
@@ -90,7 +91,8 @@ public class CommandService : ICommandService
                     commands_commentaires = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(c.CommandsCommentaires),
                     commands_documents = _mapper.Map<IEnumerable<ReadCommandDocumentDto>>(c.CommandsDocuments),
                     commands_history = _mapper.Map<IEnumerable<ReadCommandHistoryDto>>(c.CommandsHistory),
-                    commands_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(c.CommandsItems)
+                    commands_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(c.CommandsItems),
+                    carrier = c.Command.Carrier != null ? _mapper.Map<ReadCarrierDto>(c.Command.Carrier) : null
                 };
             }).ToList(),
             pagination = new PaginationDto
