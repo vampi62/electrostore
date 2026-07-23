@@ -63,7 +63,8 @@ function collectConfig(formData) {
             host: formData.get('mqttExternalHost'),
             port: formData.get('mqttExternalPort') || '1883',
             user: formData.get('mqttExternalUser'),
-            password: formData.get('mqttExternalPassword')
+            password: formData.get('mqttExternalPassword'),
+            containerName: formData.get('mqttExternalContainerName') || 'mosquitto'
         };
     }
     

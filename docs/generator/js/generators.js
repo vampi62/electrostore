@@ -427,7 +427,7 @@ services:`;
       - "1883:1883"
     volumes:
       - ./config/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-      - ./config/mosquitto/mosquitto.passwd:/mosquitto/config/mosquitto.passwd:ro
+      - ./config/mosquitto/mosquitto.passwd:/mosquitto/config/mosquitto.passwd
       - mqtt-data:/mosquitto/data
       - mqtt-logs:/mosquitto/log
     networks:
@@ -572,7 +572,9 @@ function generateApiAppsettings(config) {
             "Server": "electrostore-mqtt",
             "Port": 1883,
             "Username": config.mqtt.user,
-            "Password": config.useVault ? "{{vault:mqtt_password}}" : config.mqtt.password
+            "Password": config.useVault ? "{{vault:mqtt_password}}" : config.mqtt.password,
+            "ContainerName": "electrostore-mqtt",
+            "ClientId": "electrostore-api"
         };
     } else {
         const mqtt = config.mqttExternal;
@@ -580,7 +582,9 @@ function generateApiAppsettings(config) {
             "Server": mqtt.host,
             "Port": parseInt(mqtt.port),
             "Username": mqtt.user,
-            "Password": config.useVault ? "{{vault:mqtt_password}}" : config.mqtt.password
+            "Password": config.useVault ? "{{vault:mqtt_password}}" : config.mqtt.password,
+            "ContainerName": mqtt.containerName || "mosquitto",
+            "ClientId": "electrostore-api"
         };
     }
 
@@ -965,6 +969,7 @@ function generateWorkerAppsettings(config) {
             "Port": "1883",
             "Username": config.mqtt.user,
             "Password": config.useVault ? "{{vault:mqtt_password}}" : config.mqtt.password,
+            "ContainerName": "electrostore-mqtt",
             "ClientId": "electrostore-worker"
         };
     } else {
@@ -974,6 +979,7 @@ function generateWorkerAppsettings(config) {
             "Port": mqtt.port,
             "Username": mqtt.user,
             "Password": config.useVault ? "{{vault:mqtt_password}}" : mqtt.password,
+            "ContainerName": mqtt.containerName || "mosquitto",
             "ClientId": "electrostore-worker"
         };
     }
@@ -1260,6 +1266,7 @@ echo "Kafka is ready."
 echo "Configuring Kafka topics..."
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic notification-requests --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'notification-requests' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic cronjob-events --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'cronjob-events' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic mqtt-user-events --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'mqtt-user-events' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic ia-requests --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'ia-requests' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-add --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-request-add' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-change --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-request-change' already exists"
@@ -1541,6 +1548,7 @@ Write-Host "Kafka is ready."
 Write-Host "Configuring Kafka topics..."
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic notification-requests --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'notification-requests' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic cronjob-events --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'cronjob-events' already exists"
+docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic mqtt-user-events --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'mqtt-user-events' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic ia-requests --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'ia-requests' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-add --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-request-add' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-change --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-request-change' already exists"
