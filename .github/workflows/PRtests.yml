@@ -1,0 +1,111 @@
+name: tests PR
+
+on:
+  pull_request:
+
+jobs:
+  detect-changes:
+    name: Detect Modified Directories
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      cron: ${{ steps.filter.outputs.cron }}
+      ia: ${{ steps.filter.outputs.ia }}
+      front: ${{ steps.filter.outputs.front }}
+      notif: ${{ steps.filter.outputs.notif }}
+      worker: ${{ steps.filter.outputs.worker }}
+      testAPI: ${{ steps.filter.outputs.testAPI }}
+      testCRON: ${{ steps.filter.outputs.testCRON }}
+      testIA: ${{ steps.filter.outputs.testIA }}
+      testFRONT: ${{ steps.filter.outputs.testFRONT }}
+      testNOTIF: ${{ steps.filter.outputs.testNOTIF }}
+      testWORKER: ${{ steps.filter.outputs.testWORKER }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Filter changed files
+        id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            api: 'electrostoreAPI/**'
+            cron: 'electrostoreCRON/**'
+            ia: 'electrostoreIA/**'
+            front: 'electrostoreFRONT/**'
+            notif: 'electrostoreNOTIF/**'
+            worker: 'electrostoreWORKER/**'
+            testAPI: 'tests/electrostoreAPI/**'
+            testCRON: 'tests/electrostoreCRON/**'
+            testIA: 'tests/electrostoreIA/**'
+            testFRONT: 'tests/electrostoreFRONT/**'
+            testNOTIF: 'tests/electrostoreNOTIF/**'
+            testWORKER: 'tests/electrostoreWORKER/**'
+  
+  test-api:
+    name: tests - API
+    needs: detect-changes
+    if: needs.detect-changes.outputs.api == 'true' || needs.detect-changes.outputs.testAPI == 'true'
+    uses: ./.github/workflows/PRtestsAPI.yml
+    with:
+      branch: ${{ github.head_ref }}
+    permissions:
+      packages: write
+      contents: read
+
+  test-cron:
+    name: tests - CRON
+    needs: detect-changes
+    if: needs.detect-changes.outputs.cron == 'true' || needs.detect-changes.outputs.testCRON == 'true'
+    uses: ./.github/workflows/PRtestsCRON.yml
+    with:
+      branch: ${{ github.head_ref }}
+    permissions:
+      packages: write
+      contents: read
+  
+  test-ia:
+    name: tests - IA
+    needs: detect-changes
+    if: needs.detect-changes.outputs.ia == 'true' || needs.detect-changes.outputs.testIA == 'true'
+    uses: ./.github/workflows/PRtestsIA.yml
+    with:
+      branch: ${{ github.head_ref }}
+    permissions:
+      packages: write
+      contents: read
+
+  test-front:
+    name: tests - FRONT
+    needs: detect-changes
+    if: needs.detect-changes.outputs.front == 'true' || needs.detect-changes.outputs.testFRONT == 'true'
+    uses: ./.github/workflows/PRtestsFRONT.yml
+    with:
+      branch: ${{ github.head_ref }}
+    permissions:
+      packages: write
+      contents: read
+
+  test-notif:
+    name: tests - NOTIF
+    needs: detect-changes
+    if: needs.detect-changes.outputs.notif == 'true' || needs.detect-changes.outputs.testNOTIF == 'true'
+    uses: ./.github/workflows/PRtestsNOTIF.yml
+    with:
+      branch: ${{ github.head_ref }}
+    permissions:
+      packages: write
+      contents: read
+
+  test-worker:
+    name: tests - WORKER
+    needs: detect-changes
+    if: needs.detect-changes.outputs.worker == 'true' || needs.detect-changes.outputs.testWORKER == 'true'
+    uses: ./.github/workflows/PRtestsWORKER.yml
+    with:
+      branch: ${{ github.head_ref }}
+    permissions:
+      packages: write
+      contents: read

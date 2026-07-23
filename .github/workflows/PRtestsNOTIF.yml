@@ -1,10 +1,12 @@
 name: tests PR NOTIF
 
 on:
-  pull_request:
-    paths:
-      - "electrostoreNOTIF/**"
-      - "tests/electrostoreNOTIF/**"
+  workflow_call:
+    inputs:
+      branch:
+        description: 'The branch that triggered this workflow.'
+        required: true
+        type: string
 
 jobs:
   test-notif:
@@ -17,6 +19,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v7
+      with:
+        ref: ${{ inputs.branch }}
     - name: Set up C#
       uses: actions/setup-dotnet@v5
       with:

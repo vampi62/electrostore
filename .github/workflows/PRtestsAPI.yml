@@ -1,10 +1,12 @@
 name: tests PR API
 
 on:
-  pull_request:
-    paths:
-      - "electrostoreAPI/**"
-      - "tests/electrostoreAPI/**"
+  workflow_call:
+    inputs:
+      branch:
+        description: 'The branch that triggered this workflow.'
+        required: true
+        type: string
 
 jobs:
   test-api:
@@ -17,6 +19,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v7
+      with:
+        ref: ${{ inputs.branch }}
     - name: Set up C#
       uses: actions/setup-dotnet@v5
       with:

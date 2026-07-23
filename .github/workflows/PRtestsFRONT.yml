@@ -1,10 +1,12 @@
 name: tests PR FRONT
 
 on:
-  pull_request:
-    paths:
-      - "electrostoreFRONT/**"
-      - "tests/electrostoreFRONT/**"
+  workflow_call:
+    inputs:
+      branch:
+        description: 'The branch that triggered this workflow.'
+        required: true
+        type: string
 
 jobs:
   test-front:
@@ -17,6 +19,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v7
+      with:
+        ref: ${{ inputs.branch }}
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
