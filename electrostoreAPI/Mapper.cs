@@ -34,7 +34,9 @@ public class MappingProfile : Profile
         CreateMap<CreateCommandDocumentDto, CommandsDocuments>();
         CreateMap<CommandsDocuments, ReadCommandDocumentDto>();
 
-        CreateMap<CreateCommandDto, Commands>();
+        CreateMap<CreateCommandDto, Commands>()
+            .ForMember(dest => dest.url_command, opt => opt.MapFrom(src => src.url_command ?? string.Empty))
+            .ForMember(dest => dest.tracking_number, opt => opt.MapFrom(src => src.tracking_number ?? string.Empty));
         CreateMap<Commands, ReadCommandDto>();
         CreateMap<Commands, ReadExtendedCommandDto>();
 
@@ -50,7 +52,8 @@ public class MappingProfile : Profile
         CreateMap<CreateCronJobDto, CronJobs>();
         CreateMap<CronJobs, ReadCronJobDto>();
 
-        CreateMap<CreateIADto, IA>();
+        CreateMap<CreateIADto, IA>()
+            .ForMember(dest => dest.description_ia, opt => opt.MapFrom(src => src.description_ia ?? string.Empty));
         CreateMap<IA, ReadIADto>();
 
         CreateMap<CreateImgDto, Imgs>();
@@ -65,7 +68,8 @@ public class MappingProfile : Profile
         CreateMap<CreateItemDocumentDto, ItemsDocuments>();
         CreateMap<ItemsDocuments, ReadItemDocumentDto>();
 
-        CreateMap<CreateItemDto, Items>();
+        CreateMap<CreateItemDto, Items>()
+            .ForMember(dest => dest.description_item, opt => opt.MapFrom(src => src.description_item ?? string.Empty));
         CreateMap<Items, ReadItemDto>();
         CreateMap<Items, ReadExtendedItemDto>();
 
@@ -98,7 +102,9 @@ public class MappingProfile : Profile
         CreateMap<CreateProjetDocumentDto, ProjetsDocuments>();
         CreateMap<ProjetsDocuments, ReadProjetDocumentDto>();
 
-        CreateMap<CreateProjetDto, Projets>();
+        CreateMap<CreateProjetDto, Projets>()
+            .ForMember(dest => dest.description_projet, opt => opt.MapFrom(src => src.description_projet ?? string.Empty))
+            .ForMember(dest => dest.url_projet, opt => opt.MapFrom(src => src.url_projet ?? string.Empty));
         CreateMap<Projets, ReadProjetDto>();
         CreateMap<Projets, ReadExtendedProjetDto>();
 

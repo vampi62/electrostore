@@ -235,7 +235,7 @@ public class UserService : IUserService
         }
         if (userDto.role_user is not null)
         {
-            if (userDto.role_user == UserRole.Admin && await _context.Users.CountAsync(u => u.role_user == UserRole.Admin) == 1)
+            if (userToUpdate.role_user == UserRole.Admin && userDto.role_user != UserRole.Admin && await _context.Users.CountAsync(u => u.role_user == UserRole.Admin) == 1)
             {
                 throw new InvalidOperationException("You can't change the role of the last admin");
             }

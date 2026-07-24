@@ -105,7 +105,7 @@ public class ImgService : IImgService
             nom_img = imgDto.nom_img,
             url_picture_img = savedImg.path,
             url_thumbnail_img = savedThumbnail.path,
-            description_img = imgDto.description_img,
+            description_img = imgDto.description_img ?? string.Empty,
             id_item = imgDto.id_item
         };
         _context.Imgs.Add(newImg);

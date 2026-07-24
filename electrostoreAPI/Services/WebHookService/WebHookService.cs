@@ -94,8 +94,8 @@ public class WebHookService : IWebHookService
                     state = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").GetProperty("state").GetString(),
                     city = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").GetProperty("city").GetString(),
                     postal_code = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").GetProperty("postal_code").GetString(),
-                    latitude = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").GetProperty("coordinates").TryGetProperty("latitude", out var latProp) ? latProp.GetString() : null,
-                    longitude = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").TryGetProperty("coordinates", out var longProp) ? longProp.GetString() : null
+                    latitude = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").TryGetProperty("coordinates", out var coordinatesProp) && coordinatesProp.TryGetProperty("latitude", out var latProp) ? latProp.GetString() : null,
+                    longitude = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").TryGetProperty("coordinates", out var longCoordinatesProp) && longCoordinatesProp.TryGetProperty("longitude", out var longProp) ? longProp.GetString() : null
                 };
                 _context.CommandsHistory.Add(historyEntry);
                 await _context.SaveChangesAsync();

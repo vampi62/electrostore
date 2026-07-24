@@ -239,13 +239,14 @@ public static class RsqlParserExtensions
                     object? convertedValue;
                     try
                     {
-                        if (itemProperty.Type.IsEnum)
+                        var itemUnderlyingType = Nullable.GetUnderlyingType(itemProperty.Type) ?? itemProperty.Type;
+                        if (itemUnderlyingType.IsEnum)
                         {
-                            convertedValue = Enum.Parse(itemProperty.Type, value?.ToString() ?? "", true);
+                            convertedValue = Enum.Parse(itemUnderlyingType, value?.ToString() ?? "", true);
                         }
                         else
                         {
-                            convertedValue = Convert.ChangeType(value, itemProperty.Type);
+                            convertedValue = Convert.ChangeType(value, itemUnderlyingType);
                         }
                     }
                     catch (Exception)
@@ -254,7 +255,7 @@ public static class RsqlParserExtensions
                         continue;
                     }
 
-                    Expression right = Expression.Constant(convertedValue);
+                    Expression right = Expression.Constant(convertedValue, itemProperty.Type);
 
                     Expression? itemCondition = searchType switch
                     {
@@ -286,13 +287,14 @@ public static class RsqlParserExtensions
                     object? convertedValue;
                     try
                     {
-                        if (left.Type.IsEnum)
+                        var underlyingType = Nullable.GetUnderlyingType(left.Type) ?? left.Type;
+                        if (underlyingType.IsEnum)
                         {
-                            convertedValue = Enum.Parse(left.Type, value?.ToString() ?? "", true);
+                            convertedValue = Enum.Parse(underlyingType, value?.ToString() ?? "", true);
                         }
                         else
                         {
-                            convertedValue = Convert.ChangeType(value, left.Type);
+                            convertedValue = Convert.ChangeType(value, underlyingType);
                         }
                     }
                     catch (Exception)
@@ -301,7 +303,7 @@ public static class RsqlParserExtensions
                         continue;
                     }
 
-                    Expression right = Expression.Constant(convertedValue);
+                    Expression right = Expression.Constant(convertedValue, left.Type);
 
                     binaryExpression = searchType switch
                     {
