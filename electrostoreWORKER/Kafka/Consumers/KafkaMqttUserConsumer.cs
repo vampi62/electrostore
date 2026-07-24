@@ -27,7 +27,7 @@ public class KafkaMqttUserConsumer : BackgroundService
         _configuration = configuration;
         _logger        = logger;
         _dockerClient  = new DockerClientConfiguration().CreateClient();
-        _mosquittoContainerName = configuration.GetSection("Mqtt:ContainerName").Value ?? "electrostore-mqtt";
+        _mosquittoContainerName = configuration.GetSection("MQTT:ContainerName").Value ?? "electrostore-mqtt";
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
