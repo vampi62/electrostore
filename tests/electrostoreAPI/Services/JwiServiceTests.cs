@@ -25,10 +25,10 @@ namespace ElectrostoreAPI.Tests.Services
 {
     public class JwiServiceTests : TestBase
     {
-        private Mock<ISessionService> _sessionService;
-        private Mock<IJwtService> _jwtService;
-        private JwtSettings _jwtSettings;
-    
+        private readonly Mock<ISessionService> _sessionService;
+        private readonly Mock<IJwtService> _jwtService;
+        private readonly JwtSettings _jwtSettings;
+
         public JwiServiceTests()
         {
             _sessionService = new Mock<ISessionService>();
@@ -43,6 +43,11 @@ namespace ElectrostoreAPI.Tests.Services
                 Audience = "electrostoreAPI_users",
                 ExpireDays = 7
             };
+        }
+
+        private JwiService CreateService(ApplicationDbContext context)
+        {
+            return new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
         }
 
         // Helper method to generate a real JWT token
@@ -67,6 +72,51 @@ namespace ElectrostoreAPI.Tests.Services
             return tokenHandler.WriteToken(token);
         }
 
+        private static Models.JwiAccessTokens BuildAccessToken(Guid tokenId, int userId, bool isRevoked, DateTime expiresAt, Guid? sessionId = null)
+        {
+            return new Models.JwiAccessTokens
+            {
+                id_jwi_access = tokenId,
+                session_id = sessionId ?? Guid.NewGuid(),
+                auth_method = "login",
+                created_by_ip = "192.168.1.1",
+                id_user = userId,
+                is_revoked = isRevoked,
+                expires_at = expiresAt
+            };
+        }
+
+        private static Models.JwiRefreshTokens BuildRefreshToken(Guid tokenId, int userId, bool isRevoked, DateTime expiresAt, Guid? sessionId = null, Guid accessTokenId = default, DateTime? createdAt = null)
+        {
+            return new Models.JwiRefreshTokens
+            {
+                id_jwi_refresh = tokenId,
+                id_jwi_access = accessTokenId,
+                session_id = sessionId ?? Guid.NewGuid(),
+                auth_method = "login",
+                created_by_ip = "192.168.1.1",
+                id_user = userId,
+                is_revoked = isRevoked,
+                expires_at = expiresAt,
+                created_at = createdAt ?? DateTime.UtcNow
+            };
+        }
+
+        private static Models.Users BuildUser(int id, UserRole role = UserRole.User)
+        {
+            return new Models.Users
+            {
+                id_user = id,
+                prenom_user = "Test",
+                nom_user = "User",
+                email_user = "test@test.com",
+                mdp_user = "hashedpassword",
+                role_user = role
+            };
+        }
+
+        // --- SaveToken ---
+
         [Fact]
         public async Task SaveToken_ShouldSaveTokensToDatabase()
         {
@@ -76,7 +126,7 @@ namespace ElectrostoreAPI.Tests.Services
             var refreshTokenId = Guid.NewGuid();
             var expireAccessToken = DateTime.UtcNow.AddMinutes(15);
             var expireRefreshToken = DateTime.UtcNow.AddDays(7);
-            
+
             var token = new Jwt
             {
                 token = GenerateJwtToken(tokenId, "access", expireAccessToken),
@@ -87,7 +137,7 @@ namespace ElectrostoreAPI.Tests.Services
                 refresh_token_id = refreshTokenId,
                 created_at = DateTime.UtcNow
             };
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             // Act
             await jwiService.SaveToken(token, userId: 1, reason: "login");
             // Assert
@@ -99,27 +149,20 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal("login", savedRefreshToken.auth_method);
         }
 
+        // --- ValidateToken ---
+
         [Fact]
         public async Task ValidateToken_ShouldReturnFalse_ForRevokedToken()
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var tokenId = Guid.NewGuid();
-            context.JwiAccessTokens.Add(new Models.JwiAccessTokens
-            {
-                id_jwi_access = tokenId,
-                session_id = Guid.NewGuid(),
-                auth_method = "login",
-                created_by_ip = "192.168.1.1",
-                id_user = 1,
-                is_revoked = true,
-                expires_at = DateTime.UtcNow.AddMinutes(15)
-            });
+            context.JwiAccessTokens.Add(BuildAccessToken(tokenId, 1, isRevoked: true, expiresAt: DateTime.UtcNow.AddMinutes(15)));
             await context.SaveChangesAsync();
             var expireAt = DateTime.UtcNow.AddMinutes(15);
             var jwtToken = GenerateJwtToken(tokenId, "access", expireAt);
-            
+
             // Act
             var isValid = jwiService.ValidateToken(jwtToken, "access");
             // Assert
@@ -131,22 +174,13 @@ namespace ElectrostoreAPI.Tests.Services
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var tokenId = Guid.NewGuid();
-            context.JwiAccessTokens.Add(new Models.JwiAccessTokens
-            {
-                id_jwi_access = tokenId,
-                session_id = Guid.NewGuid(),
-                auth_method = "login",
-                created_by_ip = "192.168.1.1",
-                id_user = 1,
-                is_revoked = false,
-                expires_at = DateTime.UtcNow.AddMinutes(15)
-            });
+            context.JwiAccessTokens.Add(BuildAccessToken(tokenId, 1, isRevoked: false, expiresAt: DateTime.UtcNow.AddMinutes(15)));
             await context.SaveChangesAsync();
             var expireAt = DateTime.UtcNow.AddMinutes(15);
             var jwtToken = GenerateJwtToken(tokenId, "access", expireAt);
-            
+
             // Act
             var isValid = jwiService.ValidateToken(jwtToken, "access");
             // Assert
@@ -158,22 +192,13 @@ namespace ElectrostoreAPI.Tests.Services
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var tokenId = Guid.NewGuid();
-            context.JwiAccessTokens.Add(new Models.JwiAccessTokens
-            {
-                id_jwi_access = tokenId,
-                session_id = Guid.NewGuid(),
-                auth_method = "login",
-                created_by_ip = "192.168.1.1",
-                id_user = 1,
-                is_revoked = false,
-                expires_at = DateTime.UtcNow.AddMinutes(-5) // Expired 5 minutes ago
-            });
+            context.JwiAccessTokens.Add(BuildAccessToken(tokenId, 1, isRevoked: false, expiresAt: DateTime.UtcNow.AddMinutes(-5))); // Expired 5 minutes ago
             await context.SaveChangesAsync();
             var expireAt = DateTime.UtcNow.AddMinutes(-5);
             var jwtToken = GenerateJwtToken(tokenId, "access", expireAt);
-            
+
             // Act
             var isValid = jwiService.ValidateToken(jwtToken, "access");
             // Assert
@@ -185,7 +210,7 @@ namespace ElectrostoreAPI.Tests.Services
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var nonExistentTokenId = Guid.NewGuid();
             var expireAt = DateTime.UtcNow.AddMinutes(15);
             var jwtToken = GenerateJwtToken(nonExistentTokenId, "access", expireAt);
@@ -201,18 +226,9 @@ namespace ElectrostoreAPI.Tests.Services
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var tokenId = Guid.NewGuid();
-            context.JwiAccessTokens.Add(new Models.JwiAccessTokens
-            {
-                id_jwi_access = tokenId,
-                session_id = Guid.NewGuid(),
-                auth_method = "login",
-                created_by_ip = "192.168.1.1",
-                id_user = 1,
-                is_revoked = false,
-                expires_at = DateTime.UtcNow.AddMinutes(15)
-            });
+            context.JwiAccessTokens.Add(BuildAccessToken(tokenId, 1, isRevoked: false, expiresAt: DateTime.UtcNow.AddMinutes(15)));
             await context.SaveChangesAsync();
             var expireAt = DateTime.UtcNow.AddMinutes(15);
             // Generate token with different key to simulate invalid signature
@@ -237,37 +253,30 @@ namespace ElectrostoreAPI.Tests.Services
             // Assert
             Assert.False(isValid);
         }
-        
+
         [Fact]
-        public async Task ValidateToken_ShouldReturnFalse_ForMalformedToken()
+        public void ValidateToken_ShouldReturnFalse_ForMalformedToken()
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var malformedToken = "this.is.not.a.valid.token";
             // Act
             var isValid = jwiService.ValidateToken(malformedToken, "access");
             // Assert
             Assert.False(isValid);
         }
-        
+
+        // --- IsRevoked ---
+
         [Fact]
         public async Task IsRevoked_ShouldReturnTrue_ForRevokedToken()
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var tokenId = Guid.NewGuid();
-            context.JwiAccessTokens.Add(new Models.JwiAccessTokens
-            {
-                id_jwi_access = tokenId,
-                session_id = Guid.NewGuid(),
-                auth_method = "login",
-                created_by_ip = "192.168.1.1",
-                id_user = 1,
-                is_revoked = true,
-                expires_at = DateTime.UtcNow.AddMinutes(15)
-            });
+            context.JwiAccessTokens.Add(BuildAccessToken(tokenId, 1, isRevoked: true, expiresAt: DateTime.UtcNow.AddMinutes(15)));
             await context.SaveChangesAsync();
             // Act
             var isRevoked = jwiService.IsRevoked(tokenId.ToString(), "access");
@@ -280,18 +289,9 @@ namespace ElectrostoreAPI.Tests.Services
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var tokenId = Guid.NewGuid();
-            context.JwiAccessTokens.Add(new Models.JwiAccessTokens
-            {
-                id_jwi_access = tokenId,
-                session_id = Guid.NewGuid(),
-                auth_method = "login",
-                created_by_ip = "192.168.1.1",
-                id_user = 1,
-                is_revoked = false,
-                expires_at = DateTime.UtcNow.AddMinutes(15)
-            });
+            context.JwiAccessTokens.Add(BuildAccessToken(tokenId, 1, isRevoked: false, expiresAt: DateTime.UtcNow.AddMinutes(15)));
             await context.SaveChangesAsync();
             // Act
             var isRevoked = jwiService.IsRevoked(tokenId.ToString(), "access");
@@ -300,11 +300,11 @@ namespace ElectrostoreAPI.Tests.Services
         }
 
         [Fact]
-        public async Task IsRevoked_ShouldReturnTrue_ForNonexistentToken()
+        public void IsRevoked_ShouldReturnTrue_ForNonexistentToken()
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var nonExistentTokenId = Guid.NewGuid();
             // Act
             var isRevoked = jwiService.IsRevoked(nonExistentTokenId.ToString(), "access");
@@ -313,46 +313,30 @@ namespace ElectrostoreAPI.Tests.Services
         }
 
         [Fact]
-        public async Task IsRevoked_ShouldReturnTrue_ForEmptyTokenId()
+        public void IsRevoked_ShouldReturnTrue_ForEmptyTokenId()
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             // Act
             var isRevoked = jwiService.IsRevoked(string.Empty, "access");
             // Assert
             Assert.True(isRevoked);
         }
 
+        // --- RevokeAllAccessTokenByUser ---
+
         [Fact]
         public async Task RevokeAllAccessTokenByUser_ShouldRevokeAllTokens()
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var userId = 1;
             context.JwiAccessTokens.AddRange(new List<Models.JwiAccessTokens>
             {
-                new Models.JwiAccessTokens
-                {
-                    id_jwi_access = Guid.NewGuid(),
-                    session_id = Guid.NewGuid(),
-                    auth_method = "login",
-                    created_by_ip = "192.168.1.1",
-                    id_user = userId,
-                    is_revoked = false,
-                    expires_at = DateTime.UtcNow.AddMinutes(15)
-                },
-                new Models.JwiAccessTokens
-                {
-                    id_jwi_access = Guid.NewGuid(),
-                    session_id = Guid.NewGuid(),
-                    auth_method = "login",
-                    created_by_ip = "192.168.1.1",
-                    id_user = userId,
-                    is_revoked = false,
-                    expires_at = DateTime.UtcNow.AddMinutes(30)
-                }
+                BuildAccessToken(Guid.NewGuid(), userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddMinutes(15)),
+                BuildAccessToken(Guid.NewGuid(), userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddMinutes(30))
             });
             await context.SaveChangesAsync();
             // Act
@@ -368,35 +352,19 @@ namespace ElectrostoreAPI.Tests.Services
             }
         }
 
+        // --- RevokeAllRefreshTokenByUser ---
+
         [Fact]
         public async Task RevokeAllRefreshTokenByUser_ShouldRevokeAllTokens()
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var userId = 1;
             context.JwiRefreshTokens.AddRange(new List<Models.JwiRefreshTokens>
             {
-                new Models.JwiRefreshTokens
-                {
-                    id_jwi_refresh = Guid.NewGuid(),
-                    session_id = Guid.NewGuid(),
-                    auth_method = "login",
-                    created_by_ip = "192.168.1.1",
-                    id_user = userId,
-                    is_revoked = false,
-                    expires_at = DateTime.UtcNow.AddDays(7)
-                },
-                new Models.JwiRefreshTokens
-                {
-                    id_jwi_refresh = Guid.NewGuid(),
-                    session_id = Guid.NewGuid(),
-                    auth_method = "login",
-                    created_by_ip = "192.168.1.1",
-                    id_user = userId,
-                    is_revoked = false,
-                    expires_at = DateTime.UtcNow.AddDays(14)
-                }
+                BuildRefreshToken(Guid.NewGuid(), userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(7)),
+                BuildRefreshToken(Guid.NewGuid(), userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(14))
             });
             await context.SaveChangesAsync();
             // Act
@@ -411,39 +379,21 @@ namespace ElectrostoreAPI.Tests.Services
                 Assert.Equal("test revoke", token.revoked_reason);
             }
         }
-        
+
+        // --- GetTokenSessionById ---
+
         [Fact]
         public async Task GetTokenSessionById_ShouldReturnSession_ForGivenSessionId()
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var userId = 1;
             var sessionId = Guid.NewGuid();
             context.JwiRefreshTokens.AddRange(new List<Models.JwiRefreshTokens>
             {
-                new Models.JwiRefreshTokens
-                {
-                    id_jwi_refresh = Guid.NewGuid(),
-                    session_id = sessionId,
-                    auth_method = "login",
-                    created_by_ip = "192.168.1.1",
-                    id_user = userId,
-                    is_revoked = false,
-                    expires_at = DateTime.UtcNow.AddDays(7),
-                    created_at = DateTime.UtcNow.AddDays(-1)
-                },
-                new Models.JwiRefreshTokens
-                {
-                    id_jwi_refresh = Guid.NewGuid(),
-                    session_id = sessionId,
-                    auth_method = "login",
-                    created_by_ip = "192.168.1.1",
-                    id_user = userId,
-                    is_revoked = false,
-                    expires_at = DateTime.UtcNow.AddDays(14),
-                    created_at = DateTime.UtcNow
-                }
+                BuildRefreshToken(Guid.NewGuid(), userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(7), sessionId: sessionId, createdAt: DateTime.UtcNow.AddDays(-1)),
+                BuildRefreshToken(Guid.NewGuid(), userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(14), sessionId: sessionId, createdAt: DateTime.UtcNow)
             });
             await context.SaveChangesAsync();
             // Act
@@ -459,7 +409,7 @@ namespace ElectrostoreAPI.Tests.Services
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var userId = 1;
             var invalidSessionId = Guid.NewGuid().ToString();
             // Act & Assert
@@ -474,7 +424,7 @@ namespace ElectrostoreAPI.Tests.Services
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var userId = 1;
             var sessionId = Guid.NewGuid().ToString();
             _sessionService.Setup(s => s.GetClientId()).Returns(2); // Different user
@@ -491,33 +441,13 @@ namespace ElectrostoreAPI.Tests.Services
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var userId = 1;
             var sessionId = Guid.NewGuid();
             context.JwiRefreshTokens.AddRange(new List<Models.JwiRefreshTokens>
             {
-                new Models.JwiRefreshTokens
-                {
-                    id_jwi_refresh = Guid.NewGuid(),
-                    session_id = sessionId,
-                    auth_method = "login",
-                    created_by_ip = "192.168.1.1",
-                    id_user = userId,
-                    is_revoked = false,
-                    expires_at = DateTime.UtcNow.AddDays(7),
-                    created_at = DateTime.UtcNow.AddDays(-1)
-                },
-                new Models.JwiRefreshTokens
-                {
-                    id_jwi_refresh = Guid.NewGuid(),
-                    session_id = sessionId,
-                    auth_method = "login",
-                    created_by_ip = "192.168.1.1",
-                    id_user = userId,
-                    is_revoked = false,
-                    expires_at = DateTime.UtcNow.AddDays(14),
-                    created_at = DateTime.UtcNow
-                }
+                BuildRefreshToken(Guid.NewGuid(), userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(7), sessionId: sessionId, createdAt: DateTime.UtcNow.AddDays(-1)),
+                BuildRefreshToken(Guid.NewGuid(), userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(14), sessionId: sessionId, createdAt: DateTime.UtcNow)
             });
             await context.SaveChangesAsync();
             _sessionService.Setup(s => s.GetClientId()).Returns(2); // Different user
@@ -530,34 +460,18 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.False(session.is_revoked);
         }
 
+        // --- RevokeSessionById ---
+
         [Fact]
         public async Task RevokeSessionById_ShouldRevokeTokens_ForGivenSessionId()
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var userId = 1;
             var sessionId = Guid.NewGuid();
-            context.JwiRefreshTokens.Add(new Models.JwiRefreshTokens
-            {
-                id_jwi_refresh = Guid.NewGuid(),
-                session_id = sessionId,
-                auth_method = "login",
-                created_by_ip = "192.168.1.1",
-                id_user = userId,
-                is_revoked = false,
-                expires_at = DateTime.UtcNow.AddDays(7)
-            });
-            context.JwiAccessTokens.Add(new Models.JwiAccessTokens
-            {
-                id_jwi_access = Guid.NewGuid(),
-                session_id = sessionId,
-                auth_method = "login",
-                created_by_ip = "192.168.1.1",
-                id_user = userId,
-                is_revoked = false,
-                expires_at = DateTime.UtcNow.AddMinutes(15)
-            });
+            context.JwiRefreshTokens.Add(BuildRefreshToken(Guid.NewGuid(), userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(7), sessionId: sessionId));
+            context.JwiAccessTokens.Add(BuildAccessToken(Guid.NewGuid(), userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddMinutes(15), sessionId: sessionId));
             await context.SaveChangesAsync();
             // Act
             var revokedSession = await jwiService.RevokeSessionById(sessionId.ToString(), "user logout", userId);
@@ -579,7 +493,7 @@ namespace ElectrostoreAPI.Tests.Services
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var userId = 1;
             var sessionId = Guid.NewGuid().ToString();
             _sessionService.Setup(s => s.GetClientId()).Returns(2); // Different user
@@ -596,38 +510,12 @@ namespace ElectrostoreAPI.Tests.Services
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var userId = 1;
             var sessionId = Guid.NewGuid();
-            context.Users.Add(new Models.Users
-            {
-                id_user = userId,
-                prenom_user = "Test",
-                nom_user = "User",
-                email_user = "test@test.com",
-                mdp_user = "hashedpassword",
-                role_user = UserRole.User
-            });
-            context.JwiRefreshTokens.Add(new Models.JwiRefreshTokens
-            {
-                id_jwi_refresh = Guid.NewGuid(),
-                session_id = sessionId,
-                auth_method = "login",
-                created_by_ip = "192.168.1.1",
-                id_user = userId,
-                is_revoked = false,
-                expires_at = DateTime.UtcNow.AddDays(7)
-            });
-            context.JwiAccessTokens.Add(new Models.JwiAccessTokens
-            {
-                id_jwi_access = Guid.NewGuid(),
-                session_id = sessionId,
-                auth_method = "login",
-                created_by_ip = "192.168.1.1",
-                id_user = userId,
-                is_revoked = false,
-                expires_at = DateTime.UtcNow.AddMinutes(15)
-            });
+            context.Users.Add(BuildUser(userId));
+            context.JwiRefreshTokens.Add(BuildRefreshToken(Guid.NewGuid(), userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(7), sessionId: sessionId));
+            context.JwiAccessTokens.Add(BuildAccessToken(Guid.NewGuid(), userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddMinutes(15), sessionId: sessionId));
             await context.SaveChangesAsync();
             _sessionService.Setup(s => s.GetClientId()).Returns(2); // Different user
             _sessionService.Setup(s => s.GetClientRole()).Returns(UserRole.Admin);
@@ -646,45 +534,20 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal("admin revoke", revokedAccessToken?.revoked_reason);
         }
 
+        // --- RevokePairTokenByRefreshToken ---
+
         [Fact]
         public async Task RevokePairTokenByRefreshToken_ShouldRevokeTokens_ForGivenRefreshToken()
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var userId = 1;
             var refreshTokenId = Guid.NewGuid();
             var accessTokenId = Guid.NewGuid();
-            context.Users.Add(new Models.Users
-            {
-                id_user = userId,
-                prenom_user = "Test",
-                nom_user = "User",
-                email_user = "test@test.com",
-                mdp_user = "hashedpassword",
-                role_user = UserRole.User
-            });
-            context.JwiRefreshTokens.Add(new Models.JwiRefreshTokens
-            {
-                id_jwi_refresh = refreshTokenId,
-                id_jwi_access = accessTokenId,
-                session_id = Guid.NewGuid(),
-                auth_method = "login",
-                created_by_ip = "192.168.1.1",
-                id_user = userId,
-                is_revoked = false,
-                expires_at = DateTime.UtcNow.AddDays(7)
-            });
-            context.JwiAccessTokens.Add(new Models.JwiAccessTokens
-            {
-                id_jwi_access = accessTokenId,
-                session_id = Guid.NewGuid(),
-                auth_method = "login",
-                created_by_ip = "192.168.1.1",
-                id_user = userId,
-                is_revoked = false,
-                expires_at = DateTime.UtcNow.AddMinutes(15)
-            });
+            context.Users.Add(BuildUser(userId));
+            context.JwiRefreshTokens.Add(BuildRefreshToken(refreshTokenId, userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(7), accessTokenId: accessTokenId));
+            context.JwiAccessTokens.Add(BuildAccessToken(accessTokenId, userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddMinutes(15)));
             await context.SaveChangesAsync();
             // Act
             await jwiService.RevokePairTokenByRefreshToken(refreshTokenId.ToString(), "token compromise", userId);
@@ -704,7 +567,7 @@ namespace ElectrostoreAPI.Tests.Services
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var userId = 1;
             var refreshTokenId = Guid.NewGuid();
             _sessionService.Setup(s => s.GetClientId()).Returns(2); // Different user
@@ -721,40 +584,13 @@ namespace ElectrostoreAPI.Tests.Services
         {
             // Arrange
             using var context = new ApplicationDbContext(_dbContextOptions);
-            var jwiService = new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            var jwiService = CreateService(context);
             var userId = 1;
             var refreshTokenId = Guid.NewGuid();
             var accessTokenId = Guid.NewGuid();
-            context.Users.Add(new Models.Users
-            {
-                id_user = userId,
-                prenom_user = "Test",
-                nom_user = "User",
-                email_user = "test@test.com",
-                mdp_user = "hashedpassword",
-                role_user = UserRole.Admin
-            });
-            context.JwiRefreshTokens.Add(new Models.JwiRefreshTokens
-            {
-                id_jwi_refresh = refreshTokenId,
-                id_jwi_access = accessTokenId,
-                session_id = Guid.NewGuid(),
-                auth_method = "login",
-                created_by_ip = "192.168.1.1",
-                id_user = userId,
-                is_revoked = false,
-                expires_at = DateTime.UtcNow.AddDays(7)
-            });
-            context.JwiAccessTokens.Add(new Models.JwiAccessTokens
-            {
-                id_jwi_access = accessTokenId,
-                session_id = Guid.NewGuid(),
-                auth_method = "login",
-                created_by_ip = "192.168.1.1",
-                id_user = userId,
-                is_revoked = false,
-                expires_at = DateTime.UtcNow.AddMinutes(15)
-            });
+            context.Users.Add(BuildUser(userId, UserRole.Admin));
+            context.JwiRefreshTokens.Add(BuildRefreshToken(refreshTokenId, userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddDays(7), accessTokenId: accessTokenId));
+            context.JwiAccessTokens.Add(BuildAccessToken(accessTokenId, userId, isRevoked: false, expiresAt: DateTime.UtcNow.AddMinutes(15)));
             await context.SaveChangesAsync();
             _sessionService.Setup(s => s.GetClientId()).Returns(2); // Different user
             _sessionService.Setup(s => s.GetClientRole()).Returns(UserRole.Admin);
