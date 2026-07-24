@@ -384,6 +384,7 @@ services:`;
         compose += `
     volumes:
       - ./config/worker/appsettings.json:/app/config/appsettings.json:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       electrostore:
         aliases:
@@ -964,7 +965,7 @@ function generateWorkerAppsettings(config) {
     };
 
     if (config.useMQTT) {
-        settings.Mqtt = {
+        settings.MQTT = {
             "Host": "electrostore-mqtt",
             "Port": "1883",
             "Username": config.mqtt.user,
@@ -974,7 +975,7 @@ function generateWorkerAppsettings(config) {
         };
     } else {
         const mqtt = config.mqttExternal;
-        settings.Mqtt = {
+        settings.MQTT = {
             "Host": mqtt.host,
             "Port": mqtt.port,
             "Username": mqtt.user,

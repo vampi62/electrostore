@@ -123,31 +123,32 @@ export const useStoresStore = defineStore("stores",{
 			}
 			this.stores[id].loading = true;
 			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			this.stores[id] = await fetchWrapper.get({
+			let store = await fetchWrapper.get({
 				url: `${baseUrl}/store/${id}?${expandString}`,
 				useToken: "access",
 			});
-			this.boxsTotalCount[id] = this.stores[id].boxs_count;
-			this.ledsTotalCount[id] = this.stores[id].leds_count;
-			this.storeTagsTotalCount[id] = this.stores[id].stores_tags_count;
+			this.boxsTotalCount[id] = store.boxs_count;
+			this.ledsTotalCount[id] = store.leds_count;
+			this.storeTagsTotalCount[id] = store.stores_tags_count;
 			if (expand.includes("boxs")) {
 				this.boxs[id] = {};
-				for (const box of this.stores[id].boxs) {
+				for (const box of store.boxs) {
 					this.boxs[id][box.id_box] = box;
 				}
 			}
 			if (expand.includes("leds")) {
 				this.leds[id] = {};
-				for (const led of this.stores[id].leds) {
+				for (const led of store.leds) {
 					this.leds[id][led.id_led] = led;
 				}
 			}
 			if (expand.includes("stores_tags")) {
 				this.storeTags[id] = {};
-				for (const tag of this.stores[id].stores_tags) {
+				for (const tag of store.stores_tags) {
 					this.storeTags[id][tag.id_tag] = tag;
 				}
 			}
+			this.stores[id] = { ...this.stores[id], ...store, loading: false };
 		},
 		async createStore(params) {
 			const store = await fetchWrapper.post({

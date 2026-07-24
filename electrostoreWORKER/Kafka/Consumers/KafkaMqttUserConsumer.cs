@@ -27,7 +27,7 @@ public class KafkaMqttUserConsumer : BackgroundService
         _configuration = configuration;
         _logger        = logger;
         _dockerClient  = new DockerClientConfiguration().CreateClient();
-        _mosquittoContainerName = configuration.GetSection("MQTT:ContainerName").Value ?? "electrostore-mqtt";
+        _mosquittoContainerName = configuration.GetSection("Mqtt:ContainerName").Value ?? "electrostore-mqtt";
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -152,6 +152,8 @@ public class KafkaMqttUserConsumer : BackgroundService
             _logger.LogInformation("Adding/updating MQTT user: {User}", msg.user);
             await ExecuteCommandInMosquittoAsync($"mosquitto_passwd -b {PasswdFilePath} {msg.user} {msg.password}", ct);
         }
+        _logger.LogInformation("Reloading Mosquitto configuration");
+        await ExecuteCommandInMosquittoAsync("kill -HUP 1", ct);
     }
 
     private async Task ExecuteCommandInMosquittoAsync(string command, CancellationToken ct)
