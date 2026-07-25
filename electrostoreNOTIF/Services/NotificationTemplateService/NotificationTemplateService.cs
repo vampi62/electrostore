@@ -6,24 +6,16 @@ using Microsoft.Extensions.Configuration;
 
 namespace ElectrostoreNOTIF.Services.NotificationTemplateService;
 
-public class NotificationTemplateService : INotificationTemplateService
+public partial class NotificationTemplateService : INotificationTemplateService
 {
-    // --- Regex compilées une seule fois ---
-
     /// <summary>Blocs {{#each key}}…{{/each}}, y compris sur plusieurs lignes.</summary>
-    private static readonly Regex EachBlockRegex = new(
-        @"\{\{#each\s+(\w+)\}\}(.*?)\{\{/each\}\}",
-        RegexOptions.Compiled | RegexOptions.Singleline);
+    private static readonly Regex EachBlockRegex = MyRegexEachBlock();
 
     /// <summary>Placeholder scalaire {{key}} ou {{ key }}.</summary>
-    private static readonly Regex PlaceholderRegex = new(
-        @"\{\{\s*(\w+)\s*\}\}",
-        RegexOptions.Compiled);
+    private static readonly Regex PlaceholderRegex = MyRegexPlaceholder();
 
     /// <summary>Placeholder courant {{.}} dans un bloc #each.</summary>
-    private static readonly Regex DotPlaceholderRegex = new(
-        @"\{\{\s*\.\s*\}\}",
-        RegexOptions.Compiled);
+    private static readonly Regex DotPlaceholderRegex = MyRegexDotPlaceholder();
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -272,6 +264,15 @@ public class NotificationTemplateService : INotificationTemplateService
         JsonValueKind.Null    => string.Empty,
         _                     => null
     };
+
+    [GeneratedRegex(@"\{\{#each\s+(\w+)\}\}(.*?)\{\{/each\}\}", RegexOptions.Singleline)]
+    private static partial Regex MyRegexEachBlock();
+
+    [GeneratedRegex(@"\{\{\s*(\w+)\s*\}\}")]
+    private static partial Regex MyRegexPlaceholder();
+
+    [GeneratedRegex(@"\{\{\s*\.\s*\}\}")]
+    private static partial Regex MyRegexDotPlaceholder();
 }
 
 // -----------------------------------------------------------------------
