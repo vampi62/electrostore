@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ElectrostoreCRON\ElectrostoreCRON.csproj" />
+    <ProjectReference Include="..\..\electrostoreCRON\electrostoreCRON.csproj" />
   </ItemGroup>
 
 </Project>
