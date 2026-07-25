@@ -8,6 +8,7 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace ElectrostoreAPI.Controllers
 {
     [ApiController]
+    [Route("api/item")]
     public class ItemHistoryController : ControllerBase
     {
         private readonly IItemHistoryService _itemHistoryService;
@@ -17,7 +18,7 @@ namespace ElectrostoreAPI.Controllers
             _itemHistoryService = itemHistoryService;
         }
 
-        [HttpGet("api/item/{id_item}/history")]
+        [HttpGet("{id_item}/history")]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<PaginatedResponseDto<ReadExtendedItemHistoryDto>>> GetItemHistoryByItemId(
             [FromRoute] int id_item,
@@ -33,7 +34,7 @@ namespace ElectrostoreAPI.Controllers
             return Ok(history);
         }
 
-        [HttpGet("api/item/{id_item}/history/{id_history}")]
+        [HttpGet("{id_item}/history/{id_history}")]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadExtendedItemHistoryDto>> GetItemHistoryById(
             [FromRoute] int id_item,
@@ -44,7 +45,7 @@ namespace ElectrostoreAPI.Controllers
             return Ok(history);
         }
 
-        [HttpGet("api/item/history")]
+        [HttpGet("history")]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<PaginatedResponseDto<ReadExtendedItemHistoryDto>>> GetItemsHistory(
             [FromQuery] int limit = 100,

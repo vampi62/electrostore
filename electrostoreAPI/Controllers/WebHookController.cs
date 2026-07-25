@@ -19,13 +19,13 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task Post17Track([FromBody] JsonElement body)
+        public async Task Post17Track([FromBody] JsonElement body, [FromHeader] string Sign)
         {
-            if (!Request.Headers.TryGetValue("Sign", out var signatureHeader))
+            if (string.IsNullOrEmpty(Sign))
             {
                 throw new ArgumentException("Missing signature header");
             }
-            await _webHookService.Process17TrackWebhook(body, signatureHeader.ToString());
+            await _webHookService.Process17TrackWebhook(body, Sign);
             Ok();
         }
     }

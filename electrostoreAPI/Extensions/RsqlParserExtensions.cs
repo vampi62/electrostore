@@ -5,10 +5,10 @@ using System.Text.RegularExpressions;
 
 namespace ElectrostoreAPI.Extensions;
 
-public static class RsqlParserExtensions
+public static partial class RsqlParserExtensions
 {
     private static readonly Regex AggregateRegex =
-        new(@"^(SUM|MAX|MIN|AVG|COUNT)\((.+)\)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        MyRegex();
 
     private static bool IsCollectionType(Type type)
     {
@@ -371,4 +371,7 @@ public static class RsqlParserExtensions
 
         return (Expression.Lambda<Func<T, object>>(converted, param), direction);
     }
+
+    [GeneratedRegex(@"^(SUM|MAX|MIN|AVG|COUNT)\((.+)\)$", RegexOptions.IgnoreCase)]
+    private static partial Regex MyRegex();
 }

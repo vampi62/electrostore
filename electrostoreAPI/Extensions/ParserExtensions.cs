@@ -48,7 +48,7 @@ public static class ParserExtensions
         }
 
         var field = parts[0].Trim();
-        var order = parts[1].Trim().ToLower() == "desc" ? "desc" : "asc";
+        var order = string.Equals(parts[1].Trim(), "desc", StringComparison.OrdinalIgnoreCase) ? "desc" : "asc";
 
         return new SorterDto { Field = field, Order = order };
     }

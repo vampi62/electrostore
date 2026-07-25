@@ -60,8 +60,8 @@ public class ConfigService : IConfigService
 
     private string[] GetAllowedDocumentMimeTypes() => [.. Constants.AllowedDocumentMimeTypes.Keys];
 
-    private List<SSOAvailableProvider> GetSSOProviders() =>
-        [.. _configuration.GetSection("OAuth").GetChildren().Select(provider => new SSOAvailableProvider
+    private List<SsoAvailableProvider> GetSSOProviders() =>
+        [.. _configuration.GetSection("OAuth").GetChildren().Select(provider => new SsoAvailableProvider
         {
             provider = provider.Key,
             display_name = provider.GetValue<string>("DisplayName") ?? string.Empty,
