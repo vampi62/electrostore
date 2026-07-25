@@ -14,20 +14,24 @@ public class BoxTagService : IBoxTagService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
+    private readonly ILogger<BoxTagService> _logger;
 
-    public BoxTagService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService)
+    public BoxTagService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, ILogger<BoxTagService> logger)
     {
         _mapper = mapper;
         _context = context;
         _sessionService = sessionService;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedBoxTagDto>> GetBoxsTagsByBoxId(int boxId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        _logger.LogDebug("GetBoxsTagsByBoxId: boxId {BoxId}, limit {Limit}, offset {Offset}", boxId, limit, offset);
         // check if box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId))
         {
+            _logger.LogWarning("GetBoxsTagsByBoxId: box {BoxId} not found", boxId);
             throw new KeyNotFoundException($"Box with id '{boxId}' not found");
         }
         var query = _context.BoxsTags.AsQueryable();
@@ -85,9 +89,11 @@ public class BoxTagService : IBoxTagService
     public async Task<PaginatedResponseDto<ReadExtendedBoxTagDto>> GetBoxsTagsByTagId(int tagId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        _logger.LogDebug("GetBoxsTagsByTagId: tagId {TagId}, limit {Limit}, offset {Offset}", tagId, limit, offset);
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
         {
+            _logger.LogWarning("GetBoxsTagsByTagId: tag {TagId} not found", tagId);
             throw new KeyNotFoundException($"Tag with id '{tagId}' not found");
         }
         var query = _context.BoxsTags.AsQueryable();
@@ -154,7 +160,12 @@ public class BoxTagService : IBoxTagService
         {
             query = query.Include(bt => bt.Box);
         }
-        var boxTag = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"BoxTag with id '{boxId}' and '{tagId}' not found");
+        var boxTag = await query.FirstOrDefaultAsync();
+        if (boxTag is null)
+        {
+            _logger.LogWarning("GetBoxTagById: boxtag with box {BoxId} and tag {TagId} not found", boxId, tagId);
+            throw new KeyNotFoundException($"BoxTag with id '{boxId}' and '{tagId}' not found");
+        }
         return _mapper.Map<ReadExtendedBoxTagDto>(boxTag);
     }
 
@@ -163,26 +174,31 @@ public class BoxTagService : IBoxTagService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("CreateBoxTag: unauthorized attempt to create BoxTag (role {ClientRole})", clientRole);
             throw new UnauthorizedAccessException("You are not authorized to create BoxTag");
         }
         // check if box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxTagDto.id_box))
         {
+            _logger.LogWarning("CreateBoxTag: box {BoxId} not found", boxTagDto.id_box);
             throw new KeyNotFoundException($"Box with id '{boxTagDto.id_box}' not found");
         }
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == boxTagDto.id_tag))
         {
+            _logger.LogWarning("CreateBoxTag: tag {TagId} not found", boxTagDto.id_tag);
             throw new KeyNotFoundException($"Tag with id '{boxTagDto.id_tag}' not found");
         }
         // check if the boxtag already exists
         if (await _context.BoxsTags.AnyAsync(bt => bt.id_box == boxTagDto.id_box && bt.id_tag == boxTagDto.id_tag))
         {
+            _logger.LogWarning("CreateBoxTag: boxtag with box {BoxId} and tag {TagId} already exists", boxTagDto.id_box, boxTagDto.id_tag);
             throw new InvalidOperationException($"BoxTag with id '{boxTagDto.id_box}' and '{boxTagDto.id_tag}' already exists");
         }
         var newBoxTag = _mapper.Map<BoxsTags>(boxTagDto);
         _context.BoxsTags.Add(newBoxTag);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("CreateBoxTag: boxtag created with box {BoxId} and tag {TagId}", newBoxTag.id_box, newBoxTag.id_tag);
         return _mapper.Map<ReadBoxTagDto>(newBoxTag);
     }
 
@@ -210,6 +226,7 @@ public class BoxTagService : IBoxTagService
                 });
             }
         }
+        _logger.LogInformation("CreateBulkBoxTag: {ValidCount} boxtags created, {ErrorCount} errors", validQuery.Count, errorQuery.Count);
         return new ReadBulkBoxTagDto
         {
             Valide = validQuery,
@@ -222,17 +239,25 @@ public class BoxTagService : IBoxTagService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("DeleteBoxTag: unauthorized attempt to delete BoxTag (role {ClientRole})", clientRole);
             throw new UnauthorizedAccessException("You are not authorized to delete BoxTag");
         }
-        var boxTagToDelete = await _context.BoxsTags.FindAsync(boxId, tagId) ?? throw new KeyNotFoundException($"BoxTag with id '{boxId}' and '{tagId}' not found");
+        var boxTagToDelete = await _context.BoxsTags.FindAsync(boxId, tagId);
+        if (boxTagToDelete is null)
+        {
+            _logger.LogWarning("DeleteBoxTag: boxtag with box {BoxId} and tag {TagId} not found", boxId, tagId);
+            throw new KeyNotFoundException($"BoxTag with id '{boxId}' and '{tagId}' not found");
+        }
         _context.BoxsTags.Remove(boxTagToDelete);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("DeleteBoxTag: boxtag with box {BoxId} and tag {TagId} deleted", boxId, tagId);
     }
 
     public async Task CheckIfStoreExists(int storeId, int boxId)
     {
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId && b.id_store == storeId))
         {
+            _logger.LogWarning("CheckIfStoreExists: box {BoxId} not found in store {StoreId}", boxId, storeId);
             throw new KeyNotFoundException($"Box with id '{boxId}' not found in store with id '{storeId}'");
         }
     }
@@ -242,6 +267,7 @@ public class BoxTagService : IBoxTagService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("DeleteBulkBoxTag: unauthorized attempt to delete BoxTag (role {ClientRole})", clientRole);
             throw new UnauthorizedAccessException("You are not authorized to delete BoxTag");
         }
         var validQuery = new List<ReadBoxTagDto>();
@@ -266,6 +292,7 @@ public class BoxTagService : IBoxTagService
                 });
             }
         }
+        _logger.LogInformation("DeleteBulkBoxTag: {ValidCount} boxtags deleted, {ErrorCount} errors", validQuery.Count, errorQuery.Count);
         return new ReadBulkBoxTagDto
         {
             Valide = validQuery,

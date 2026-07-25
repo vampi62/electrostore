@@ -27,7 +27,7 @@ namespace ElectrostoreAPI.Tests.Services
         private UserPushSubscriptionService CreateService(ApplicationDbContext context, IConfiguration? configuration = null)
         {
             configuration ??= new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
-            return new UserPushSubscriptionService(context, _mapper, configuration, _kafkaProducerService.Object);
+            return new UserPushSubscriptionService(context, _mapper, configuration, _kafkaProducerService.Object, CreateLogger<UserPushSubscriptionService>());
         }
 
         private static Users BuildUser(int id)

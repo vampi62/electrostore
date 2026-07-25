@@ -41,7 +41,7 @@ namespace ElectrostoreAPI.Tests.Services
         private IAService CreateService(ApplicationDbContext context, IConfiguration? configuration = null)
         {
             configuration ??= new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
-            return new IAService(_mapper, context, _sessionService.Object, _fileService.Object, _iaGrpcClient.Object, _kafkaProducer.Object, configuration);
+            return new IAService(_mapper, context, _sessionService.Object, _fileService.Object, _iaGrpcClient.Object, _kafkaProducer.Object, configuration, CreateLogger<IAService>());
         }
 
         private void SetClientRole(UserRole role)

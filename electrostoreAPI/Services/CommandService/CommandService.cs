@@ -21,19 +21,22 @@ public class CommandService : ICommandService
     private readonly IKafkaProducerService _kafkaProducerService;
     private readonly ICommandHistoryService _commandHistoryService;
     private readonly string _commandDocumentsPath = "commandDocuments";
+    private readonly ILogger<CommandService> _logger;
 
-    public CommandService(IMapper mapper, ApplicationDbContext context, IFileService fileService, IKafkaProducerService kafkaProducerService, ICommandHistoryService commandHistoryService)
+    public CommandService(IMapper mapper, ApplicationDbContext context, IFileService fileService, IKafkaProducerService kafkaProducerService, ICommandHistoryService commandHistoryService, ILogger<CommandService> logger)
     {
         _mapper = mapper;
         _context = context;
         _fileService = fileService;
         _kafkaProducerService = kafkaProducerService;
         _commandHistoryService = commandHistoryService;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedCommandDto>> GetCommands(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
+        _logger.LogDebug("GetCommands: limit {Limit}, offset {Offset}", limit, offset);
         var query = _context.Commands.AsQueryable();
         var filterResult = default(Expression<Func<Commands, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
@@ -125,7 +128,12 @@ public class CommandService : ICommandService
                 CommandsItems = expand != null && expand.Contains("commands_items") ? c.CommandsItems.Take(20).ToList() : null,
                 Carrier = expand != null && expand.Contains("carrier") ? c.Carrier : null
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Command with id '{id}' not found");
+            .FirstOrDefaultAsync();
+        if (command is null)
+        {
+            _logger.LogWarning("GetCommandById: command {CommandId} not found", id);
+            throw new KeyNotFoundException($"Command with id '{id}' not found");
+        }
         return _mapper.Map<ReadExtendedCommandDto>(command.Command) with
         {
             commands_commentaires_count = command.CommandsCommentairesCount,
@@ -145,7 +153,12 @@ public class CommandService : ICommandService
         var carrier = default(Carriers);
         if (commandDto.id_carrier is not null)
         {
-            carrier = await _context.Carriers.FindAsync(commandDto.id_carrier.Value) ?? throw new KeyNotFoundException($"Carrier with id '{commandDto.id_carrier}' not found");
+            carrier = await _context.Carriers.FindAsync(commandDto.id_carrier.Value);
+            if (carrier is null)
+            {
+                _logger.LogWarning("CreateCommand: carrier {CarrierId} not found", commandDto.id_carrier);
+                throw new KeyNotFoundException($"Carrier with id '{commandDto.id_carrier}' not found");
+            }
         }
         _context.Commands.Add(newCommand);
         await _fileService.CreateDirectory(Path.Combine(_commandDocumentsPath, newCommand.id_command.ToString()));
@@ -162,12 +175,18 @@ public class CommandService : ICommandService
             var messageJson = JsonSerializer.Serialize(message);
             await _kafkaProducerService.PublishAsync("tracking-request-add", kafkaKey, messageJson);
         }
+        _logger.LogInformation("CreateCommand: command {CommandId} created", newCommand.id_command);
         return _mapper.Map<ReadCommandDto>(newCommand);
     }
 
     public async Task<ReadCommandDto> UpdateCommand(int id, UpdateCommandDto commandDto)
     {
-        var commandToUpdate = await _context.Commands.FindAsync(id) ?? throw new KeyNotFoundException($"Command with id '{id}' not found");
+        var commandToUpdate = await _context.Commands.FindAsync(id);
+        if (commandToUpdate is null)
+        {
+            _logger.LogWarning("UpdateCommand: command {CommandId} not found", id);
+            throw new KeyNotFoundException($"Command with id '{id}' not found");
+        }
         var oldTrackingNumber = commandToUpdate.tracking_number;
         var oldCarrierId = commandToUpdate.id_carrier;
         if (commandDto.prix_command is not null)
@@ -196,7 +215,12 @@ public class CommandService : ICommandService
         }
         if (commandDto.id_carrier is not null)
         {
-            var carrier = await _context.Carriers.FindAsync(commandDto.id_carrier.Value) ?? throw new KeyNotFoundException($"Carrier with id '{commandDto.id_carrier}' not found");
+            var carrier = await _context.Carriers.FindAsync(commandDto.id_carrier.Value);
+            if (carrier is null)
+            {
+                _logger.LogWarning("UpdateCommand: carrier {CarrierId} not found", commandDto.id_carrier);
+                throw new KeyNotFoundException($"Carrier with id '{commandDto.id_carrier}' not found");
+            }
             commandToUpdate.id_carrier = commandDto.id_carrier.Value;
         }
         if (commandDto.is_tracking_requested is not null)
@@ -204,12 +228,18 @@ public class CommandService : ICommandService
             commandToUpdate.is_tracking_requested = commandDto.is_tracking_requested.Value;
         }
         await _context.SaveChangesAsync();
+        _logger.LogInformation("UpdateCommand: command {CommandId} updated", id);
         //tracking-request-add si is_tracking_requested && !is_tracking_validated
         if (!string.IsNullOrEmpty(commandToUpdate.tracking_number) && commandToUpdate.id_carrier != 0 &&
             ((commandDto.is_tracking_requested is not null && !commandToUpdate.is_tracking_validated && commandDto.is_tracking_requested.Value) ||
             (!string.IsNullOrEmpty(commandDto.tracking_number) && commandDto.tracking_number != oldTrackingNumber)))
         {
-            var carrierEntity = await _context.Carriers.FindAsync(commandToUpdate.id_carrier) ?? throw new KeyNotFoundException($"Carrier with id '{commandToUpdate.id_carrier}' not found");
+            var carrierEntity = await _context.Carriers.FindAsync(commandToUpdate.id_carrier);
+            if (carrierEntity is null)
+            {
+                _logger.LogWarning("UpdateCommand: carrier {CarrierId} not found (tracking-request-add)", commandToUpdate.id_carrier);
+                throw new KeyNotFoundException($"Carrier with id '{commandToUpdate.id_carrier}' not found");
+            }
             var carrierKey = carrierEntity?.key ?? 0;
             var kafkaKey = $"{commandToUpdate.tracking_number}_{carrierKey}";
             var message = new TrackingActionMessage
@@ -223,8 +253,18 @@ public class CommandService : ICommandService
         //tracking-request-change si is_tracking_validated && id_carrier !=
         if (commandDto.id_carrier is not null && commandToUpdate.id_carrier != 0 && commandToUpdate.is_tracking_validated && commandDto.id_carrier.Value != oldCarrierId)
         {
-            var newCarrierEntity = await _context.Carriers.FindAsync(commandDto.id_carrier) ?? throw new KeyNotFoundException($"Carrier with id '{commandDto.id_carrier}' not found");
-            var oldCarrierEntity = await _context.Carriers.FindAsync(oldCarrierId) ?? throw new KeyNotFoundException($"Carrier with id '{oldCarrierId}' not found");
+            var newCarrierEntity = await _context.Carriers.FindAsync(commandDto.id_carrier);
+            if (newCarrierEntity is null)
+            {
+                _logger.LogWarning("UpdateCommand: carrier {CarrierId} not found (tracking-request-change)", commandDto.id_carrier);
+                throw new KeyNotFoundException($"Carrier with id '{commandDto.id_carrier}' not found");
+            }
+            var oldCarrierEntity = await _context.Carriers.FindAsync(oldCarrierId);
+            if (oldCarrierEntity is null)
+            {
+                _logger.LogWarning("UpdateCommand: old carrier {CarrierId} not found (tracking-request-change)", oldCarrierId);
+                throw new KeyNotFoundException($"Carrier with id '{oldCarrierId}' not found");
+            }
             var newCarrierKey = newCarrierEntity?.key ?? 0;
             var oldCarrierKey = oldCarrierEntity?.key ?? 0;
             var kafkaKey = $"{commandToUpdate.tracking_number}_{newCarrierKey}";
@@ -241,7 +281,12 @@ public class CommandService : ICommandService
         //tracking-request-resume si is_tracking_requested && is_tracking_validated && !is_active
         if (commandDto.is_tracking_requested is not null && commandToUpdate.is_tracking_validated && commandToUpdate.is_active && !commandDto.is_tracking_requested.Value)
         {
-            var carrierEntity = await _context.Carriers.FindAsync(commandToUpdate.id_carrier) ?? throw new KeyNotFoundException($"Carrier with id '{commandToUpdate.id_carrier}' not found");
+            var carrierEntity = await _context.Carriers.FindAsync(commandToUpdate.id_carrier);
+            if (carrierEntity is null)
+            {
+                _logger.LogWarning("UpdateCommand: carrier {CarrierId} not found (tracking-request-stop)", commandToUpdate.id_carrier);
+                throw new KeyNotFoundException($"Carrier with id '{commandToUpdate.id_carrier}' not found");
+            }
             var carrierKey = carrierEntity?.key ?? 0;
             var kafkaKey = $"{commandToUpdate.tracking_number}_{carrierKey}";
             var message = new TrackingActionMessage
@@ -254,7 +299,12 @@ public class CommandService : ICommandService
         }
         if (commandDto.is_tracking_requested is not null && commandToUpdate.is_tracking_validated && !commandToUpdate.is_active && commandDto.is_tracking_requested.Value)
         {
-            var carrierEntity = await _context.Carriers.FindAsync(commandToUpdate.id_carrier) ?? throw new KeyNotFoundException($"Carrier with id '{commandToUpdate.id_carrier}' not found");
+            var carrierEntity = await _context.Carriers.FindAsync(commandToUpdate.id_carrier);
+            if (carrierEntity is null)
+            {
+                _logger.LogWarning("UpdateCommand: carrier {CarrierId} not found (tracking-request-resume)", commandToUpdate.id_carrier);
+                throw new KeyNotFoundException($"Carrier with id '{commandToUpdate.id_carrier}' not found");
+            }
             var carrierKey = carrierEntity?.key ?? 0;
             var kafkaKey = $"{commandToUpdate.tracking_number}_{carrierKey}";
             var message = new TrackingActionMessage
@@ -268,7 +318,12 @@ public class CommandService : ICommandService
         //tracking-request-delete si tracking_number !=
         if (commandDto.tracking_number is not null && commandToUpdate.is_tracking_validated && !string.IsNullOrEmpty(oldTrackingNumber) && commandDto.tracking_number != oldTrackingNumber)
         {
-            var carrierEntity = await _context.Carriers.FindAsync(commandToUpdate.id_carrier) ?? throw new KeyNotFoundException($"Carrier with id '{commandToUpdate.id_carrier}' not found");
+            var carrierEntity = await _context.Carriers.FindAsync(commandToUpdate.id_carrier);
+            if (carrierEntity is null)
+            {
+                _logger.LogWarning("UpdateCommand: carrier {CarrierId} not found (tracking-request-delete)", commandToUpdate.id_carrier);
+                throw new KeyNotFoundException($"Carrier with id '{commandToUpdate.id_carrier}' not found");
+            }
             var carrierKey = carrierEntity?.key ?? 0;
             var kafkaKey = $"{commandToUpdate.tracking_number}_{carrierKey}";
             var message = new TrackingActionMessage
@@ -284,7 +339,12 @@ public class CommandService : ICommandService
 
     public async Task DeleteCommand(int id)
     {
-        var commandToDelete = await _context.Commands.FindAsync(id) ?? throw new KeyNotFoundException($"Command with id '{id}' not found");
+        var commandToDelete = await _context.Commands.FindAsync(id);
+        if (commandToDelete is null)
+        {
+            _logger.LogWarning("DeleteCommand: command {CommandId} not found", id);
+            throw new KeyNotFoundException($"Command with id '{id}' not found");
+        }
         _context.Commands.Remove(commandToDelete);
         await _fileService.DeleteDirectory(Path.Combine(_commandDocumentsPath, id.ToString()));
         if (!string.IsNullOrEmpty(commandToDelete.tracking_number) && commandToDelete.id_carrier != 0 && commandToDelete.is_tracking_validated && commandToDelete.is_active)
@@ -301,10 +361,12 @@ public class CommandService : ICommandService
             await _kafkaProducerService.PublishAsync("tracking-request-delete", kafkaKey, messageJson);
         }
         await _context.SaveChangesAsync();
+        _logger.LogInformation("DeleteCommand: command {CommandId} deleted", id);
     }
 
     public async Task UpdateCommandStatusByTracking(string trackingNumber, int carrierKey, string action)
     {
+        _logger.LogDebug("UpdateCommandStatusByTracking: trackingNumber {TrackingNumber}, carrierKey {CarrierKey}, action {Action}", trackingNumber, carrierKey, action);
         var commands = await _context.Commands
             .Include(c => c.Carrier)
             .Where(c => c.tracking_number == trackingNumber
@@ -312,8 +374,9 @@ public class CommandService : ICommandService
                      && c.Carrier.key == carrierKey)
             .ToListAsync();
 
-        if (commands.Count == 0) 
+        if (commands.Count == 0)
         {
+            _logger.LogWarning("UpdateCommandStatusByTracking: no commands found for trackingNumber {TrackingNumber} and carrierKey {CarrierKey}", trackingNumber, carrierKey);
             return; // No commands found for the given tracking number and carrier key
         }
 
@@ -339,5 +402,6 @@ public class CommandService : ICommandService
         }
 
         await _context.SaveChangesAsync();
+        _logger.LogInformation("UpdateCommandStatusByTracking: {Count} command(s) updated with action {Action} for trackingNumber {TrackingNumber}", commands.Count, action, trackingNumber);
     }
 }

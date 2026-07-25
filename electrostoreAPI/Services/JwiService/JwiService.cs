@@ -17,12 +17,14 @@ public class JwiService : IJwiService
     private readonly JwtSettings _jwtSettings;
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
+    private readonly ILogger<JwiService> _logger;
 
-    public JwiService(ApplicationDbContext context, IOptions<JwtSettings> jwtSettings, ISessionService sessionService)
+    public JwiService(ApplicationDbContext context, IOptions<JwtSettings> jwtSettings, ISessionService sessionService, ILogger<JwiService> logger)
     {
         _jwtSettings = jwtSettings.Value ?? throw new ArgumentNullException(nameof(jwtSettings));
         _context = context;
         _sessionService = sessionService;
+        _logger = logger;
     }
 
     public async Task SaveToken(Jwt token, int userId, string reason = "user_password", Guid? sessionId = null)
@@ -57,6 +59,7 @@ public class JwiService : IJwiService
         await _context.JwiRefreshTokens.AddAsync(jwi_refresh);
         await _context.JwiAccessTokens.AddAsync(jwi_access);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Jwt tokens saved for user {UserId} in session {SessionId} (reason: {Reason})", userId, sessionId, reason);
     }
 
     // build token
@@ -80,6 +83,7 @@ public class JwiService : IJwiService
 
     public bool ValidateToken(string token, string role)
     {
+        _logger.LogDebug("ValidateToken: validating token for role {Role}", role);
         if (string.IsNullOrEmpty(token)) return false;
         try
         {
@@ -128,6 +132,7 @@ public class JwiService : IJwiService
             jwi.revoked_reason = reason;
         }
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Revoked {Count} access token(s) for user {UserId} (reason: {Reason})", jwi_access.Count, userId, reason);
     }
 
     public async Task RevokeAllRefreshTokenByUser(int userId, string reason)
@@ -144,15 +149,18 @@ public class JwiService : IJwiService
             jwi.revoked_reason = reason;
         }
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Revoked {Count} refresh token(s) for user {UserId} (reason: {Reason})", jwi_refresh.Count, userId, reason);
     }
 
     public async Task<PaginatedResponseDto<SessionDto>> GetTokenSessionsByUserId(int userId, int limit, int offset,
     List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
+        _logger.LogDebug("GetTokenSessionsByUserId: userId={UserId}, limit={Limit}, offset={Offset}", userId, limit, offset);
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
         if (clientId != userId && clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("GetTokenSessionsByUserId: user {ClientId} is not authorized to view sessions for user {UserId}", clientId, userId);
             throw new UnauthorizedAccessException("You are not authorized to view this session.");
         }
         var query = _context.JwiRefreshTokens.AsQueryable();
@@ -218,10 +226,12 @@ public class JwiService : IJwiService
 
     public async Task<SessionDto> GetTokenSessionById(string id, int userId)
     {
+        _logger.LogDebug("GetTokenSessionById: id={Id}, userId={UserId}", id, userId);
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
         if (clientId != userId && clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("GetTokenSessionById: user {ClientId} is not authorized to view session {SessionId} for user {UserId}", clientId, id, userId);
             throw new UnauthorizedAccessException("You are not authorized to view this session.");
         }
         var query = _context.JwiRefreshTokens
@@ -242,15 +252,23 @@ public class JwiService : IJwiService
                 id_user = group.OrderByDescending(jwi => jwi.expires_at).First().id_user,
                 first_created_at = group.OrderBy(jwi => jwi.expires_at).First().created_at
             });
-        return await groupedQuery.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Session with id '{id}' not found for user '{userId}'");
+        var result = await groupedQuery.FirstOrDefaultAsync();
+        if (result is null)
+        {
+            _logger.LogWarning("GetTokenSessionById: session {SessionId} not found for user {UserId}", id, userId);
+            throw new KeyNotFoundException($"Session with id '{id}' not found for user '{userId}'");
+        }
+        return result;
     }
 
     public async Task<Guid> GetSessionIdByTokenId(string id, int userId)
     {
+        _logger.LogDebug("GetSessionIdByTokenId: id={Id}, userId={UserId}", id, userId);
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
         if (clientId != userId && clientRole != UserRole.Admin)
         {
+            _logger.LogWarning("GetSessionIdByTokenId: user {ClientId} is not authorized to view session for user {UserId}", clientId, userId);
             throw new UnauthorizedAccessException("You are not authorized to view this session.");
         }
         var session = await _context.JwiRefreshTokens
@@ -265,6 +283,7 @@ public class JwiService : IJwiService
         var clientRole = _sessionService.GetClientRole();
         if (clientId != userId && clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("RevokeSessionById: user {ClientId} is not authorized to revoke session {SessionId} for user {UserId}", clientId, id, userId);
             throw new UnauthorizedAccessException("You are not authorized to revoke this session.");
         }
         var clientIp = _sessionService.GetClientIp();
@@ -289,7 +308,7 @@ public class JwiService : IJwiService
             jwi_access.revoked_reason = reason;
         }
         await _context.SaveChangesAsync();
-        return await _context.JwiRefreshTokens
+        var revokedSession = await _context.JwiRefreshTokens
             .Where(jwi => jwi.id_user == userId && jwi.session_id == Guid.Parse(id))
             .GroupBy(jwi => jwi.session_id)
             .Select(group => new SessionDto
@@ -306,7 +325,14 @@ public class JwiService : IJwiService
                 id_user = group.OrderByDescending(jwi => jwi.expires_at).First().id_user,
                 first_created_at = group.OrderBy(jwi => jwi.expires_at).First().created_at
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Session with id '{id}' not found for user '{userId}'");     
+            .FirstOrDefaultAsync();
+        if (revokedSession is null)
+        {
+            _logger.LogWarning("RevokeSessionById: session {SessionId} not found for user {UserId}", id, userId);
+            throw new KeyNotFoundException($"Session with id '{id}' not found for user '{userId}'");
+        }
+        _logger.LogInformation("Session {SessionId} revoked for user {UserId} (reason: {Reason})", id, userId, reason);
+        return revokedSession;
     }
 
     public async Task RevokePairTokenByRefreshToken(string refreshToken, string reason, int? userId = null)
@@ -316,18 +342,26 @@ public class JwiService : IJwiService
         var clientRole = _sessionService.GetClientRole();
         if (clientId != userId && clientRole != UserRole.Admin)
         {
+            _logger.LogWarning("RevokePairTokenByRefreshToken: user {ClientId} is not authorized to access this resource", clientId);
             throw new UnauthorizedAccessException($"You are not authorized to access this resource");
         }
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
         {
+            _logger.LogWarning("RevokePairTokenByRefreshToken: user {UserId} not found", userId);
             throw new KeyNotFoundException($"User with id '{userId}' not found");
         }
         var jwi_refresh = await _context.JwiRefreshTokens.FindAsync(Guid.Parse(refreshToken));
         if ((jwi_refresh is null) || (userId is not null && jwi_refresh.id_user != userId))
         {
+            _logger.LogWarning("RevokePairTokenByRefreshToken: refresh token {RefreshTokenId} not found for user {UserId}", refreshToken, userId);
             throw new KeyNotFoundException($"RefreshToken with id '{refreshToken}' not found");
         }
-        var jwi_access = await _context.JwiAccessTokens.FindAsync(jwi_refresh.id_jwi_access) ?? throw new KeyNotFoundException($"AccessToken with id '{jwi_refresh.id_jwi_access}' not found");
+        var jwi_access = await _context.JwiAccessTokens.FindAsync(jwi_refresh.id_jwi_access);
+        if (jwi_access is null)
+        {
+            _logger.LogWarning("RevokePairTokenByRefreshToken: access token {AccessTokenId} not found", jwi_refresh.id_jwi_access);
+            throw new KeyNotFoundException($"AccessToken with id '{jwi_refresh.id_jwi_access}' not found");
+        }
         jwi_refresh.is_revoked = true;
         jwi_refresh.revoked_at = DateTime.UtcNow;
         jwi_refresh.revoked_by_ip = clientIp;
@@ -337,5 +371,6 @@ public class JwiService : IJwiService
         jwi_access.revoked_by_ip = clientIp;
         jwi_access.revoked_reason = reason;
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Revoked token pair (access {AccessTokenId}, refresh {RefreshTokenId}) for user {UserId} (reason: {Reason})", jwi_access.id_jwi_access, jwi_refresh.id_jwi_refresh, userId, reason);
     }
 }

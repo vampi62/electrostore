@@ -30,7 +30,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private WebHookService CreateService(ApplicationDbContext context, IConfiguration configuration)
         {
-            return new WebHookService(_mapper, context, configuration, _commandService.Object);
+            return new WebHookService(_mapper, context, configuration, _commandService.Object, CreateLogger<WebHookService>());
         }
 
         private static IConfiguration BuildConfiguration(bool track17Enable = true, string? apiKey = ApiKey)

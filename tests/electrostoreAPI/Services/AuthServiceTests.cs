@@ -68,7 +68,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private AuthService CreateService(ApplicationDbContext context, IConfiguration configuration)
         {
-            return new AuthService(_mapper, context, configuration, _kafkaProducerService.Object, _sessionService.Object, _userService.Object, _jwtService.Object, _jwiService.Object);
+            return new AuthService(_mapper, context, configuration, _kafkaProducerService.Object, _sessionService.Object, _userService.Object, _jwtService.Object, _jwiService.Object, CreateLogger<AuthService>());
         }
 
         private static Models.Users BuildUser(int id, string email, string password, UserRole role = UserRole.User)

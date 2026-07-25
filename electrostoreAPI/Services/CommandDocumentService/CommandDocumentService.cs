@@ -13,21 +13,25 @@ public class CommandDocumentService : ICommandDocumentService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly IFileService _fileService;
+    private readonly ILogger<CommandDocumentService> _logger;
     private readonly string _commandDocumentsPath = "commandDocuments";
 
-    public CommandDocumentService(IMapper mapper, ApplicationDbContext context, IFileService fileService)
+    public CommandDocumentService(IMapper mapper, ApplicationDbContext context, IFileService fileService, ILogger<CommandDocumentService> logger)
     {
         _mapper = mapper;
         _context = context;
         _fileService = fileService;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadCommandDocumentDto>> GetCommandsDocumentsByCommandId(int commandId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
+        _logger.LogDebug("GetCommandsDocumentsByCommandId: commandId {CommandId}, limit {Limit}, offset {Offset}", commandId, limit, offset);
         // check if command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commandId))
         {
+            _logger.LogWarning("GetCommandsDocumentsByCommandId: command {CommandId} not found", commandId);
             throw new KeyNotFoundException($"Command with id '{commandId}' not found");
         }
         var query = _context.CommandsDocuments.AsQueryable();
@@ -76,9 +80,15 @@ public class CommandDocumentService : ICommandDocumentService
 
     public async Task<ReadCommandDocumentDto> GetCommandDocumentById(int id, int? commandId = null)
     {
-        var commandDocument = await _context.CommandsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"CommandDocument with id '{id}' not found");
+        var commandDocument = await _context.CommandsDocuments.FindAsync(id);
+        if (commandDocument is null)
+        {
+            _logger.LogWarning("GetCommandDocumentById: command document {CommandDocumentId} not found", id);
+            throw new KeyNotFoundException($"CommandDocument with id '{id}' not found");
+        }
         if (commandId is not null && commandDocument.id_command != commandId)
         {
+            _logger.LogWarning("GetCommandDocumentById: command document {CommandDocumentId} not found for command {CommandId}", id, commandId);
             throw new KeyNotFoundException($"CommandDocument with id '{id}' not found for command with id '{commandId}'");
         }
         return _mapper.Map<ReadCommandDocumentDto>(commandDocument);
@@ -89,6 +99,7 @@ public class CommandDocumentService : ICommandDocumentService
         // check if command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commandDocumentDto.id_command))
         {
+            _logger.LogWarning("CreateCommandDocument: command {CommandId} not found", commandDocumentDto.id_command);
             throw new KeyNotFoundException($"Command with id '{commandDocumentDto.id_command}' not found");
         }
         var savedFile = await _fileService.SaveFile(Path.Combine(_commandDocumentsPath, commandDocumentDto.id_command.ToString()), commandDocumentDto.document.FileName, commandDocumentDto.document.ContentType, commandDocumentDto.document.OpenReadStream());
@@ -102,14 +113,21 @@ public class CommandDocumentService : ICommandDocumentService
         };
         await _context.CommandsDocuments.AddAsync(commandDocument);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("CreateCommandDocument: document {CommandDocumentId} created for command {CommandId}", commandDocument.id_command_document, commandDocument.id_command);
         return _mapper.Map<ReadCommandDocumentDto>(commandDocument);
     }
 
     public async Task<ReadCommandDocumentDto> UpdateCommandDocument(int id, UpdateCommandDocumentDto commandDocumentDto, int? commandId = null)
     {
-        var commandDocument = await _context.CommandsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"CommandDocument with id '{id}' not found");
+        var commandDocument = await _context.CommandsDocuments.FindAsync(id);
+        if (commandDocument is null)
+        {
+            _logger.LogWarning("UpdateCommandDocument: command document {CommandDocumentId} not found", id);
+            throw new KeyNotFoundException($"CommandDocument with id '{id}' not found");
+        }
         if (commandId is not null && commandDocument.id_command != commandId)
         {
+            _logger.LogWarning("UpdateCommandDocument: command document {CommandDocumentId} not found for command {CommandId}", id, commandId);
             throw new KeyNotFoundException($"CommandDocument with id '{id}' not found for command with id '{commandId}'");
         }
         if (commandDocumentDto.name_command_document is not null)
@@ -117,18 +135,26 @@ public class CommandDocumentService : ICommandDocumentService
             commandDocument.name_command_document = commandDocumentDto.name_command_document;
         }
         await _context.SaveChangesAsync();
+        _logger.LogInformation("UpdateCommandDocument: document {CommandDocumentId} updated", id);
         return _mapper.Map<ReadCommandDocumentDto>(commandDocument);
     }
 
     public async Task DeleteCommandDocument(int id, int? commandId = null)
     {
-        var commandDocument = await _context.CommandsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"CommandDocument with id '{id}' not found");
+        var commandDocument = await _context.CommandsDocuments.FindAsync(id);
+        if (commandDocument is null)
+        {
+            _logger.LogWarning("DeleteCommandDocument: command document {CommandDocumentId} not found", id);
+            throw new KeyNotFoundException($"CommandDocument with id '{id}' not found");
+        }
         if (commandId is not null && commandDocument.id_command != commandId)
         {
+            _logger.LogWarning("DeleteCommandDocument: command document {CommandDocumentId} not found for command {CommandId}", id, commandId);
             throw new KeyNotFoundException($"CommandDocument with id '{id}' not found for command with id '{commandId}'");
         }
         await _fileService.DeleteFile(commandDocument.url_command_document);
         _context.CommandsDocuments.Remove(commandDocument);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("DeleteCommandDocument: document {CommandDocumentId} deleted", id);
     }
 }

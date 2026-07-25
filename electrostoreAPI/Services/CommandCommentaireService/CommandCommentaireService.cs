@@ -14,20 +14,24 @@ public class CommandCommentaireService : ICommandCommentaireService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
+    private readonly ILogger<CommandCommentaireService> _logger;
 
-    public CommandCommentaireService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService)
+    public CommandCommentaireService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, ILogger<CommandCommentaireService> logger)
     {
         _mapper = mapper;
         _context = context;
         _sessionService = sessionService;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedCommandCommentaireDto>> GetCommandsCommentairesByCommandId(int CommandId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        _logger.LogDebug("GetCommandsCommentairesByCommandId: commandId {CommandId}, limit {Limit}, offset {Offset}", CommandId, limit, offset);
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == CommandId))
         {
+            _logger.LogWarning("GetCommandsCommentairesByCommandId: command {CommandId} not found", CommandId);
             throw new KeyNotFoundException($"Command with id '{CommandId}' not found");
         }
         var query = _context.CommandsCommentaires.AsQueryable();
@@ -85,9 +89,11 @@ public class CommandCommentaireService : ICommandCommentaireService
     public async Task<PaginatedResponseDto<ReadExtendedCommandCommentaireDto>> GetCommandsCommentairesByUserId(int userId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        _logger.LogDebug("GetCommandsCommentairesByUserId: userId {UserId}, limit {Limit}, offset {Offset}", userId, limit, offset);
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
         {
+            _logger.LogWarning("GetCommandsCommentairesByUserId: user {UserId} not found", userId);
             throw new KeyNotFoundException($"User with id '{userId}' not found");
         }
         var query = _context.CommandsCommentaires.AsQueryable();
@@ -154,7 +160,12 @@ public class CommandCommentaireService : ICommandCommentaireService
         {
             query = query.Include(cc => cc.User);
         }
-        var commandCommentaire = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Commentaire with id '{id}' not found");
+        var commandCommentaire = await query.FirstOrDefaultAsync();
+        if (commandCommentaire is null)
+        {
+            _logger.LogWarning("GetCommandsCommentaireById: commentaire {CommentaireId} not found", id);
+            throw new KeyNotFoundException($"Commentaire with id '{id}' not found");
+        }
         return _mapper.Map<ReadExtendedCommandCommentaireDto>(commandCommentaire);
     }
 
@@ -163,16 +174,19 @@ public class CommandCommentaireService : ICommandCommentaireService
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == commandCommentaireDto.id_command))
         {
+            _logger.LogWarning("CreateCommentaire: command {CommandId} not found", commandCommentaireDto.id_command);
             throw new KeyNotFoundException($"Command with id '{commandCommentaireDto.id_command}' not found");
         }
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == commandCommentaireDto.id_user))
         {
+            _logger.LogWarning("CreateCommentaire: user {UserId} not found", commandCommentaireDto.id_user);
             throw new KeyNotFoundException($"User with id '{commandCommentaireDto.id_user}' not found");
         }
         var newCommandCommentaire = _mapper.Map<CommandsCommentaires>(commandCommentaireDto);
         _context.CommandsCommentaires.Add(newCommandCommentaire);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("CreateCommentaire: commentaire {CommentaireId} created for command {CommandId}", newCommandCommentaire.id_command_commentaire, newCommandCommentaire.id_command);
         return _mapper.Map<ReadCommandCommentaireDto>(newCommandCommentaire);
     }
 
@@ -181,16 +195,19 @@ public class CommandCommentaireService : ICommandCommentaireService
         var commandCommentaireToUpdate = await _context.CommandsCommentaires.FindAsync(id);
         if ((commandCommentaireToUpdate is null) || (CommandId is not null && commandCommentaireToUpdate.id_command != CommandId) || (userId is not null && commandCommentaireToUpdate.id_user != userId))
         {
+            _logger.LogWarning("UpdateCommentaire: commentaire {CommentaireId} not found", id);
             throw new KeyNotFoundException($"Commentaire with id '{id}' not found");
         }
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
         if (clientId != commandCommentaireToUpdate.id_user && clientRole < UserRole.Moderator)
         {
+            _logger.LogWarning("UpdateCommentaire: user {ClientId} not authorized to update commentaire {CommentaireId}", clientId, id);
             throw new UnauthorizedAccessException($"You are not authorized to update this commentaire");
         }
         commandCommentaireToUpdate.contenu_command_commentaire = commandCommentaireDto.contenu_command_commentaire ?? commandCommentaireToUpdate.contenu_command_commentaire;
         await _context.SaveChangesAsync();
+        _logger.LogInformation("UpdateCommentaire: commentaire {CommentaireId} updated", id);
         return _mapper.Map<ReadCommandCommentaireDto>(commandCommentaireToUpdate);
     }
 
@@ -199,15 +216,18 @@ public class CommandCommentaireService : ICommandCommentaireService
         var commandCommentaireToDelete = await _context.CommandsCommentaires.FindAsync(id);
         if ((commandCommentaireToDelete is null) || (CommandId is not null && commandCommentaireToDelete.id_command != CommandId) || (userId is not null && commandCommentaireToDelete.id_user != userId))
         {
+            _logger.LogWarning("DeleteCommentaire: commentaire {CommentaireId} not found", id);
             throw new KeyNotFoundException($"Commentaire with id '{id}' not found");
         }
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
         if (clientId != commandCommentaireToDelete.id_user && clientRole < UserRole.Moderator)
         {
+            _logger.LogWarning("DeleteCommentaire: user {ClientId} not authorized to delete commentaire {CommentaireId}", clientId, id);
             throw new UnauthorizedAccessException($"You are not authorized to delete this commentaire");
         }
         _context.CommandsCommentaires.Remove(commandCommentaireToDelete);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("DeleteCommentaire: commentaire {CommentaireId} deleted", id);
     }
 }

@@ -8,16 +8,19 @@ namespace ElectrostoreAPI.Services.ValidateStoreService;
 public class ValidateStoreService : IValidateStoreService
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<ValidateStoreService> _logger;
 
-    public ValidateStoreService(ApplicationDbContext context)
+    public ValidateStoreService(ApplicationDbContext context, ILogger<ValidateStoreService> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public void ValidateLedPosition(Leds led, Stores store)
     {
         if (led.x_led >= store.xlength_store || led.y_led >= store.ylength_store)
         {
+            _logger.LogWarning("ValidateLedPosition: Led position ({XLed}, {YLed}) is out of store {StoreId} bounds", led.x_led, led.y_led, store.id_store);
             throw new ArgumentException("Led position is out of store bounds");
         }
     }
@@ -26,10 +29,12 @@ public class ValidateStoreService : IValidateStoreService
     {
         if (box.xend_box <= box.xstart_box || box.yend_box <= box.ystart_box)
         {
+            _logger.LogWarning("ValidateBoxPosition: Box start position ({XStart}, {YStart}) must be less than end position ({XEnd}, {YEnd})", box.xstart_box, box.ystart_box, box.xend_box, box.yend_box);
             throw new ArgumentException($"Box start position ({box.xstart_box}, {box.ystart_box}) must be less than end position ({box.xend_box}, {box.yend_box}).");
         }
         if (box.xend_box > store.xlength_store || box.yend_box > store.ylength_store)
         {
+            _logger.LogWarning("ValidateBoxPosition: Box position ({XStart}, {YStart}, {XEnd}, {YEnd}) is out of store {StoreId} bounds", box.xstart_box, box.ystart_box, box.xend_box, box.yend_box, store.id_store);
             throw new ArgumentException($"Box position ({box.xstart_box}, {box.ystart_box}, {box.xend_box}, {box.yend_box}) is out of store bounds.");
         }
     }
@@ -76,6 +81,7 @@ public class ValidateStoreService : IValidateStoreService
         {
             if (!await _context.Stores.AnyAsync(s => s.id_store == boxDto.new_id_store))
             {
+                _logger.LogWarning("UpdateBoxInformations: Store {StoreId} not found", boxDto.new_id_store);
                 throw new KeyNotFoundException($"Store with id '{boxDto.new_id_store}' not found");
             }
             boxToUpdate.id_store = boxDto.new_id_store.Value;
@@ -103,11 +109,13 @@ public class ValidateStoreService : IValidateStoreService
         // check if a box in the store is outside of the store size
         if (await _context.Boxs.AnyAsync(b => b.id_store == storeToUpdate.id_store && (b.xend_box > storeToUpdate.xlength_store || b.yend_box > storeToUpdate.ylength_store)))
         {
+            _logger.LogWarning("CheckUpdateStoreOutsideElement: reducing store {StoreId} size would leave a box out of bounds", storeToUpdate.id_store);
             throw new ArgumentException("you can't reduce the store size, a box will be out of store bounds");
         }
         // check if a led in the store is outside of the store size
         if (await _context.Leds.AnyAsync(l => l.id_store == storeToUpdate.id_store && (l.x_led > storeToUpdate.xlength_store || l.y_led > storeToUpdate.ylength_store)))
         {
+            _logger.LogWarning("CheckUpdateStoreOutsideElement: reducing store {StoreId} size would leave a led out of bounds", storeToUpdate.id_store);
             throw new ArgumentException("you can't reduce the store size, a led will be out of store bounds");
         }
     }
@@ -124,6 +132,7 @@ public class ValidateStoreService : IValidateStoreService
             ((newBox.ystart_box <= b.ystart_box && newBox.yend_box > b.ystart_box) ||
             (newBox.ystart_box >= b.ystart_box && newBox.ystart_box < b.yend_box))))
         {
+            _logger.LogWarning("CheckCreateBoxPositionOverlap: Box XY position already taken in store {StoreId}", newBox.id_store);
             throw new ArgumentException("Box XY position already taken");
         }
     }
@@ -140,6 +149,7 @@ public class ValidateStoreService : IValidateStoreService
             ((boxToUpdate.ystart_box <= b.ystart_box && boxToUpdate.yend_box > b.ystart_box) ||
             (boxToUpdate.ystart_box >= b.ystart_box && boxToUpdate.ystart_box < b.yend_box))))
         {
+            _logger.LogWarning("CheckUpdateBoxPositionOverlap: Box XY position already taken in store {StoreId}, box {BoxId}", boxToUpdate.id_store, boxToUpdate.id_box);
             throw new ArgumentException("Box XY position already taken");
         }
     }

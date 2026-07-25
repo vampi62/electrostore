@@ -26,7 +26,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private ProjetCommentaireService CreateService(ApplicationDbContext context)
         {
-            return new ProjetCommentaireService(_mapper, context, _sessionService.Object);
+            return new ProjetCommentaireService(_mapper, context, _sessionService.Object, CreateLogger<ProjetCommentaireService>());
         }
 
         private void SetClient(int id, UserRole role)

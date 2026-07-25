@@ -23,6 +23,7 @@ public class AuthService : IAuthService
     private readonly IUserService _userService;
     private readonly IJwtService _jwtService;
     private readonly IJwiService _jwiService;
+    private readonly ILogger<AuthService> _logger;
     private static readonly Dictionary<string, DateTime> _stateStore = new();
     private static readonly char[] separator = new char[] { '_', '-' };
     private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
@@ -32,7 +33,7 @@ public class AuthService : IAuthService
 
     // In-memory store for state parameters, if you want persistence or use duplication across instances, consider using a distributed cache like Redis
 
-    public AuthService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, IKafkaProducerService kafkaNotificationService, ISessionService sessionService, IUserService userService, IJwtService jwtService, IJwiService jwiService)
+    public AuthService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, IKafkaProducerService kafkaNotificationService, ISessionService sessionService, IUserService userService, IJwtService jwtService, IJwiService jwiService, ILogger<AuthService> logger)
     {
         _mapper = mapper;
         _context = context;
@@ -42,6 +43,7 @@ public class AuthService : IAuthService
         _userService = userService;
         _jwtService = jwtService;
         _jwiService = jwiService;
+        _logger = logger;
     }
 
     public async Task<SsoUrlResponse> GetSSOAuthUrl(string sso_method)
@@ -51,9 +53,10 @@ public class AuthService : IAuthService
         var authority = ssoModuleConfig["Authority"];
         var redirectUri = ssoModuleConfig["RedirectUri"];
         var scope = ssoModuleConfig["Scope"];
-        if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(authority) || 
+        if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(authority) ||
             string.IsNullOrEmpty(redirectUri) || string.IsNullOrEmpty(scope))
         {
+            _logger.LogWarning("GetSSOAuthUrl: SSO method {SsoMethod} configuration is invalid", sso_method);
             throw new ArgumentException("SSO method configuration is invalid");
         }
         var state = GenerateSecureRandomString(32);
@@ -66,6 +69,7 @@ public class AuthService : IAuthService
         queryParams["scope"] = scope;
         queryParams["state"] = state;
         var authUrl = $"{authority}?{queryParams}";
+        _logger.LogInformation("GetSSOAuthUrl: generated SSO auth url for method {SsoMethod}", sso_method);
         return new SsoUrlResponse
         {
             AuthUrl = authUrl,
@@ -77,6 +81,7 @@ public class AuthService : IAuthService
     {
         if (!_stateStore.TryGetValue(request.State, out DateTime value) || value < DateTime.UtcNow)
         {
+            _logger.LogWarning("LoginWithSSO: invalid or expired state parameter for method {SsoMethod}", sso_method);
             throw new UnauthorizedAccessException("Invalid or expired state parameter");
         }
         _stateStore.Remove(request.State);
@@ -86,14 +91,15 @@ public class AuthService : IAuthService
         var authority = ssoModuleConfig["Authority"];
         var redirectUri = ssoModuleConfig["RedirectUri"];
         var groupMappingSection = ssoModuleConfig.GetSection("GroupMapping");
-        if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret) || 
+        if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret) ||
             string.IsNullOrEmpty(authority) || string.IsNullOrEmpty(redirectUri))
         {
+            _logger.LogWarning("LoginWithSSO: SSO method {SsoMethod} configuration is invalid", sso_method);
             throw new ArgumentException("SSO method configuration is invalid");
         }
         var tokenResponse = await ExchangeCodeForToken(request.Code, clientId!, clientSecret!, authority!, redirectUri!);
         var userInfo = await GetUserInfo(tokenResponse.access_token, authority!);
-        Console.WriteLine($"User Info: {JsonSerializer.Serialize(userInfo)}");
+        _logger.LogDebug("LoginWithSSO: retrieved user info for email {Email} via method {SsoMethod}", userInfo.Email, sso_method);
         var user = await GetOrCreateUser(userInfo, groupMappingSection);
         var jwt = await _jwtService.GenerateToken(user, "sso_" + sso_method);
         await _jwiService.SaveToken(jwt, user.id_user, "sso_" + sso_method);
@@ -114,8 +120,9 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+            _logger.LogError(ex, "LoginWithSSO: unable to send login notification email for user {UserId}", user.id_user);
         }
+        _logger.LogInformation("LoginWithSSO: user {UserId} logged in via {SsoMethod}", user.id_user, sso_method);
         return new LoginResponse
         {
             token = jwt.token,
@@ -126,7 +133,7 @@ public class AuthService : IAuthService
         };
     }
 
-    private static async Task<TokenResponse> ExchangeCodeForToken(string code, string clientId, string clientSecret, string authority, string redirectUri)
+    private async Task<TokenResponse> ExchangeCodeForToken(string code, string clientId, string clientSecret, string authority, string redirectUri)
     {
         var tokenEndpoint = authority.Replace("/authorize/", "/token/");
         var requestBody = new List<KeyValuePair<string, string>>
@@ -142,8 +149,7 @@ public class AuthService : IAuthService
         var response = await httpClient.PostAsync(tokenEndpoint, content);
         if (!response.IsSuccessStatusCode)
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            Console.WriteLine(errorContent);
+            _logger.LogError("ExchangeCodeForToken: failed to exchange code for token, status {StatusCode}", response.StatusCode);
             throw new HttpRequestException($"Error exchanging code for token: {response.StatusCode}");
         }
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -151,7 +157,7 @@ public class AuthService : IAuthService
         return tokenResponse ?? throw new InvalidOperationException("Invalid token response");
     }
 
-    private static async Task<UserInfoResponse> GetUserInfo(string accessToken, string authority)
+    private async Task<UserInfoResponse> GetUserInfo(string accessToken, string authority)
     {
         var userInfoEndpoint = authority.Replace("/application/o/authorize/", "/application/o/userinfo/");
         var httpClient = new HttpClient();
@@ -159,8 +165,7 @@ public class AuthService : IAuthService
         var response = await httpClient.GetAsync(userInfoEndpoint);
         if (!response.IsSuccessStatusCode)
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            Console.WriteLine(errorContent);
+            _logger.LogError("GetUserInfo: failed to retrieve user info, status {StatusCode}", response.StatusCode);
             throw new HttpRequestException($"Error retrieving user info: {response.StatusCode}");
         }
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -190,6 +195,7 @@ public class AuthService : IAuthService
                 // Update user role if it has changed
                 existingUser.role_user = userRole;
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("GetOrCreateUser: updated role for user {UserId} to {UserRole}", existingUser.id_user, userRole);
             }
             return _mapper.Map<ReadUserDto>(existingUser);
         }
@@ -206,7 +212,12 @@ public class AuthService : IAuthService
 
     public async Task<bool> CheckUserPasswordByEmail(string email, string password)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == email) ?? throw new KeyNotFoundException($"User with email '{email}' not found");
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == email);
+        if (user is null)
+        {
+            _logger.LogWarning("CheckUserPasswordByEmail: user with email {Email} not found", email);
+            throw new KeyNotFoundException($"User with email '{email}' not found");
+        }
         return BCrypt.Net.BCrypt.Verify(password, user.mdp_user);
     }
 
@@ -225,6 +236,7 @@ public class AuthService : IAuthService
         //check if SMTP is Enabled
         if (bool.TryParse(_configuration["SMTP:Enable"], out var isEnabled) && !isEnabled)
         {
+            _logger.LogWarning("ForgotPassword: SMTP is not enabled");
             throw new InvalidOperationException("SMTP is not enabled");
         }
         // check if user exists
@@ -235,6 +247,7 @@ public class AuthService : IAuthService
             user.reset_token = Guid.NewGuid();
             user.reset_token_expiration = DateTime.Now.AddHours(1);
             await _context.SaveChangesAsync();
+            _logger.LogInformation("ForgotPassword: reset token generated for user {UserId}", user.id_user);
             // send email with reset_token
             try
             {
@@ -257,7 +270,7 @@ public class AuthService : IAuthService
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"SMTP Error: Unable to send password reset email - {ex.Message}");
+                _logger.LogError(ex, "ForgotPassword: unable to send password reset email for user {UserId}", user.id_user);
             }
         }
     }
@@ -267,12 +280,18 @@ public class AuthService : IAuthService
         //check if SMTP is Enabled
         if (bool.TryParse(_configuration["SMTP:Enable"], out var isEnabled) && !isEnabled)
         {
+            _logger.LogWarning("ResetPassword: SMTP is not enabled");
             throw new InvalidOperationException("SMTP is not enabled");
         }
         // check if token is valid
         var user = await _context.Users.FirstOrDefaultAsync(
             u => u.email_user == request.Email && u.reset_token.ToString() == request.Token && u.reset_token_expiration > DateTime.Now
-        ) ?? throw new InvalidOperationException("Invalid token");
+        );
+        if (user is null)
+        {
+            _logger.LogWarning("ResetPassword: invalid or expired reset token for email {Email}", request.Email);
+            throw new InvalidOperationException("Invalid token");
+        }
         // update password
         user.mdp_user = BCrypt.Net.BCrypt.HashPassword(request.Password);
         user.reset_token = null;
@@ -280,6 +299,7 @@ public class AuthService : IAuthService
         await _context.SaveChangesAsync();
         await _jwiService.RevokeAllAccessTokenByUser(user.id_user, "User reset password");
         await _jwiService.RevokeAllRefreshTokenByUser(user.id_user, "User reset password");
+        _logger.LogInformation("ResetPassword: password reset for user {UserId}", user.id_user);
         // send email to the user
         try
         {
@@ -298,17 +318,23 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"SMTP Error: Unable to send password changed notification email - {ex.Message}");
+            _logger.LogError(ex, "ResetPassword: unable to send password changed notification email for user {UserId}", user.id_user);
         }
     }
 
     public async Task<LoginResponse> LoginWithPassword(LoginRequest request)
     {
         // check if user exists
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.Email) ?? throw new UnauthorizedAccessException("Invalid password"); // do not reveal if email exists
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.Email);
+        if (user is null)
+        {
+            _logger.LogWarning("LoginWithPassword: no user found for email {Email}", request.Email); // do not reveal if email exists
+            throw new UnauthorizedAccessException("Invalid password"); // do not reveal if email exists
+        }
         // check if password is correct
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.mdp_user))
         {
+            _logger.LogWarning("LoginWithPassword: invalid password for user {UserId}", user.id_user);
             throw new UnauthorizedAccessException("Invalid password");
         }
         // generate tokens
@@ -332,8 +358,9 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+            _logger.LogError(ex, "LoginWithPassword: unable to send login notification email for user {UserId}", user.id_user);
         }
+        _logger.LogInformation("LoginWithPassword: user {UserId} logged in", user.id_user);
         // return tokens
         return new LoginResponse
         {
@@ -351,10 +378,16 @@ public class AuthService : IAuthService
         var tokenId = _sessionService.GetTokenId();
         var authMethod = _sessionService.GetTokenAuthMethod();
         var sessionId = await _jwiService.GetSessionIdByTokenId(tokenId, clientId);
-        var user = await _context.Users.FindAsync(clientId) ?? throw new KeyNotFoundException($"User with id '{clientId}' not found");
+        var user = await _context.Users.FindAsync(clientId);
+        if (user is null)
+        {
+            _logger.LogWarning("RefreshJwt: user {UserId} not found", clientId);
+            throw new KeyNotFoundException($"User with id '{clientId}' not found");
+        }
         var token = await _jwtService.GenerateToken(_mapper.Map<ReadUserDto>(user), authMethod);
         await _jwiService.RevokePairTokenByRefreshToken(tokenId, "User refresh token", clientId);
         await _jwiService.SaveToken(token, user.id_user, authMethod, sessionId);
+        _logger.LogInformation("RefreshJwt: token refreshed for user {UserId}", user.id_user);
         // return tokens
         return new LoginResponse
         {

@@ -29,7 +29,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private BoxService CreateService(ApplicationDbContext context)
         {
-            return new BoxService(_mapper, context, _sessionService.Object, _validateStoreService.Object);
+            return new BoxService(_mapper, context, _sessionService.Object, _validateStoreService.Object, CreateLogger<BoxService>());
         }
 
         private void SetClientRole(UserRole role)

@@ -12,15 +12,18 @@ public class FileService : IFileService
     private readonly bool _s3Enabled;
     private readonly string _s3BucketName;
     private readonly string _localFilesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-    
-    public FileService(IConfiguration configuration, IMinioClient? minioClient = null)
+    private readonly ILogger<FileService> _logger;
+
+    public FileService(IConfiguration configuration, ILogger<FileService> logger, IMinioClient? minioClient = null)
     {
         _minioClient = minioClient;
         _s3Enabled = configuration.GetValue<bool>("S3:Enable");
         _s3BucketName = configuration.GetValue<string>("S3:BucketName") ?? "ElectrostoreAPI-bucket";
+        _logger = logger;
     }
     public async Task<GetFileResult> GetFile(string path)
     {
+        _logger.LogDebug("GetFile: path={Path}, s3Enabled={S3Enabled}", path, _s3Enabled);
         // if S3 is used, upload the file to S3 and return the path
         if (_s3Enabled)
         {
@@ -70,6 +73,7 @@ public class FileService : IFileService
             }
             catch (Minio.Exceptions.ObjectNotFoundException)
             {
+                _logger.LogDebug("GetFile: object {Path} not found in S3 bucket {Bucket}", path, _s3BucketName);
                 return new GetFileResult
                 {
                     Success = false,
@@ -117,6 +121,7 @@ public class FileService : IFileService
             }
             else
             {
+                _logger.LogDebug("GetFile: local file {LocalPath} not found", localPath);
                 return new GetFileResult
                 {
                     Success = false,
@@ -157,6 +162,7 @@ public class FileService : IFileService
 
     public async Task<SaveFileResult> SaveFile(string basePath, string fullFileName, string contentType, Stream data, bool overwrite = false)
     {
+        _logger.LogDebug("SaveFile: basePath={BasePath}, fileName={FileName}, overwrite={Overwrite}", basePath, fullFileName, overwrite);
         var fileName = Path.GetFileNameWithoutExtension(fullFileName);
         fileName = fileName.Replace(".", "").Replace("/", ""); // remove "." and "/" from the file name to prevent directory traversal attacks
         if (fileName.Length > 100) // cut the file name to 100 characters to prevent too long file names
@@ -172,6 +178,7 @@ public class FileService : IFileService
         {
             if (_minioClient == null)
             {
+                _logger.LogWarning("SaveFile: S3 is enabled but MinIO client is not configured");
                 throw new InvalidOperationException("S3 is enabled but MinIO client is not configured");
             }
             var baseS3Url = basePath + Path.AltDirectorySeparatorChar;
@@ -231,6 +238,7 @@ public class FileService : IFileService
                 await data.CopyToAsync(fileStream);
             }
         }
+        _logger.LogInformation("SaveFile: file saved to {FilePath}", filePath);
         return new SaveFileResult
         {
             path = filePath,
@@ -240,10 +248,12 @@ public class FileService : IFileService
 
     public async Task<SaveFileResult> GenerateThumbnail(string sourceFilePath, string destPath, int width, int height)
     {
+        _logger.LogDebug("GenerateThumbnail: sourceFilePath={SourceFilePath}, destPath={DestPath}, width={Width}, height={Height}", sourceFilePath, destPath, width, height);
         // if S3 is used, get the file from S3, generate the thumbnail and upload it back to S3
         var file = await GetFile(sourceFilePath);
         if (!file.Success || file.FileStream == null)
         {
+            _logger.LogWarning("GenerateThumbnail: source file {SourceFilePath} could not be read", sourceFilePath);
             return new SaveFileResult
             {
                 path = "",
@@ -264,16 +274,19 @@ public class FileService : IFileService
 
     public async Task DeleteFile(string path)
     {
+        _logger.LogDebug("DeleteFile: path={Path}, s3Enabled={S3Enabled}", path, _s3Enabled);
         if (_s3Enabled)
         {
             if (_minioClient == null)
             {
+                _logger.LogWarning("DeleteFile: S3 is enabled but MinIO client is not configured");
                 throw new InvalidOperationException("S3 is enabled but MinIO client is not configured");
             }
             await _minioClient.RemoveObjectAsync(new RemoveObjectArgs()
                 .WithBucket(_s3BucketName)
                 .WithObject(path)
             );
+            _logger.LogInformation("DeleteFile: object {Path} deleted from S3 bucket {Bucket}", path, _s3BucketName);
         }
         else
         {
@@ -281,12 +294,14 @@ public class FileService : IFileService
             if (File.Exists(localPath))
             {
                 File.Delete(localPath);
+                _logger.LogInformation("DeleteFile: local file {LocalPath} deleted", localPath);
             }
         }
     }
 
     public async Task CreateDirectory(string path)
     {
+        _logger.LogDebug("CreateDirectory: path={Path}, s3Enabled={S3Enabled}", path, _s3Enabled);
         if (_s3Enabled)
         {
             // S3 does not have directories, so we do nothing here
@@ -297,16 +312,19 @@ public class FileService : IFileService
             if (!Directory.Exists(localPath))
             {
                 Directory.CreateDirectory(localPath);
+                _logger.LogInformation("CreateDirectory: local directory {LocalPath} created", localPath);
             }
         }
     }
 
     public async Task DeleteDirectory(string path)
     {
+        _logger.LogDebug("DeleteDirectory: path={Path}, s3Enabled={S3Enabled}", path, _s3Enabled);
         if (_s3Enabled)
         {
             if (_minioClient == null)
             {
+                _logger.LogWarning("DeleteDirectory: S3 is enabled but MinIO client is not configured");
                 throw new InvalidOperationException("S3 is enabled but MinIO client is not configured");
             }
             // S3 removes objects, so we need to list all objects with the given prefix and delete them
@@ -330,6 +348,7 @@ public class FileService : IFileService
                     .WithObject(key)
                 );
             }
+            _logger.LogInformation("DeleteDirectory: {Count} object(s) deleted from S3 bucket {Bucket} with prefix {Path}", keys.Count, _s3BucketName, path);
         }
         else
         {
@@ -337,6 +356,7 @@ public class FileService : IFileService
             if (Directory.Exists(localPath))
             {
                 Directory.Delete(localPath, true);
+                _logger.LogInformation("DeleteDirectory: local directory {LocalPath} deleted", localPath);
             }
         }
     }

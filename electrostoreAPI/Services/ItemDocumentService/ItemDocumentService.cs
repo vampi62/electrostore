@@ -14,20 +14,24 @@ public class ItemDocumentService : IItemDocumentService
     private readonly ApplicationDbContext _context;
     private readonly IFileService _fileService;
     private readonly string _itemDocumentsPath = "itemDocuments";
+    private readonly ILogger<ItemDocumentService> _logger;
 
-    public ItemDocumentService(IMapper mapper, ApplicationDbContext context, IFileService fileService)
+    public ItemDocumentService(IMapper mapper, ApplicationDbContext context, IFileService fileService, ILogger<ItemDocumentService> logger)
     {
         _mapper = mapper;
         _context = context;
         _fileService = fileService;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadItemDocumentDto>> GetItemsDocumentsByItemId(int itemId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
+        _logger.LogDebug("GetItemsDocumentsByItemId: itemId={ItemId}, limit={Limit}, offset={Offset}", itemId, limit, offset);
         // check if item exists
         if (!await _context.Items.AnyAsync(item => item.id_item == itemId))
         {
+            _logger.LogWarning("GetItemsDocumentsByItemId: Item {ItemId} not found", itemId);
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.ItemsDocuments.AsQueryable();
@@ -76,9 +80,15 @@ public class ItemDocumentService : IItemDocumentService
 
     public async Task<ReadItemDocumentDto> GetItemDocumentById(int id, int? itemId = null)
     {
-        var itemDocument = await _context.ItemsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ItemDocument with id '{id}' not found");
+        var itemDocument = await _context.ItemsDocuments.FindAsync(id);
+        if (itemDocument is null)
+        {
+            _logger.LogWarning("GetItemDocumentById: ItemDocument {ItemDocumentId} not found", id);
+            throw new KeyNotFoundException($"ItemDocument with id '{id}' not found");
+        }
         if (itemId is not null && itemDocument.id_item != itemId)
         {
+            _logger.LogWarning("GetItemDocumentById: ItemDocument {ItemDocumentId} not found for Item {ItemId}", id, itemId);
             throw new KeyNotFoundException($"ItemDocument with id '{id}' not found for item with id '{itemId}'");
         }
         return _mapper.Map<ReadItemDocumentDto>(itemDocument);
@@ -89,6 +99,7 @@ public class ItemDocumentService : IItemDocumentService
         // check if item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemDocumentDto.id_item))
         {
+            _logger.LogWarning("CreateItemDocument: Item {ItemId} not found", itemDocumentDto.id_item);
             throw new KeyNotFoundException($"Item with id '{itemDocumentDto.id_item}' not found");
         }
         var savedFile = await _fileService.SaveFile(Path.Combine(_itemDocumentsPath, itemDocumentDto.id_item.ToString()), itemDocumentDto.document.FileName, itemDocumentDto.document.ContentType, itemDocumentDto.document.OpenReadStream());
@@ -102,14 +113,21 @@ public class ItemDocumentService : IItemDocumentService
         };
         await _context.ItemsDocuments.AddAsync(itemDocument);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ItemDocument {ItemDocumentId} created for Item {ItemId}", itemDocument.id_item_document, itemDocument.id_item);
         return _mapper.Map<ReadItemDocumentDto>(itemDocument);
     }
 
     public async Task<ReadItemDocumentDto> UpdateItemDocument(int id, UpdateItemDocumentDto itemDocumentDto, int? itemId = null)
     {
-        var itemDocument = await _context.ItemsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ItemDocument with id '{id}' not found");
+        var itemDocument = await _context.ItemsDocuments.FindAsync(id);
+        if (itemDocument is null)
+        {
+            _logger.LogWarning("UpdateItemDocument: ItemDocument {ItemDocumentId} not found", id);
+            throw new KeyNotFoundException($"ItemDocument with id '{id}' not found");
+        }
         if (itemId is not null && itemDocument.id_item != itemId)
         {
+            _logger.LogWarning("UpdateItemDocument: ItemDocument {ItemDocumentId} not found for Item {ItemId}", id, itemId);
             throw new KeyNotFoundException($"ItemDocument with id '{id}' not found for item with id '{itemId}'");
         }
         if (itemDocumentDto.name_item_document is not null)
@@ -117,18 +135,26 @@ public class ItemDocumentService : IItemDocumentService
             itemDocument.name_item_document = itemDocumentDto.name_item_document;
         }
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ItemDocument {ItemDocumentId} updated", id);
         return _mapper.Map<ReadItemDocumentDto>(itemDocument);
     }
 
     public async Task DeleteItemDocument(int id, int? itemId = null)
     {
-        var itemDocument = await _context.ItemsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ItemDocument with id '{id}' not found");
+        var itemDocument = await _context.ItemsDocuments.FindAsync(id);
+        if (itemDocument is null)
+        {
+            _logger.LogWarning("DeleteItemDocument: ItemDocument {ItemDocumentId} not found", id);
+            throw new KeyNotFoundException($"ItemDocument with id '{id}' not found");
+        }
         if (itemId is not null && itemDocument.id_item != itemId)
         {
+            _logger.LogWarning("DeleteItemDocument: ItemDocument {ItemDocumentId} not found for Item {ItemId}", id, itemId);
             throw new KeyNotFoundException($"ItemDocument with id '{id}' not found for item with id '{itemId}'");
         }
         await _fileService.DeleteFile(itemDocument.url_item_document);
         _context.ItemsDocuments.Remove(itemDocument);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ItemDocument {ItemDocumentId} deleted", id);
     }
 }

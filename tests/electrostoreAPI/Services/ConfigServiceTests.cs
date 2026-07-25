@@ -65,7 +65,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private ConfigService CreateService()
         {
-            return new ConfigService(_configuration);
+            return new ConfigService(_configuration, CreateLogger<ConfigService>());
         }
 
         // --- getAllConfig ---

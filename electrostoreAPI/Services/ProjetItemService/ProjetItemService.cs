@@ -11,19 +11,23 @@ public class ProjetItemService : IProjetItemService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<ProjetItemService> _logger;
 
-    public ProjetItemService(IMapper mapper, ApplicationDbContext context)
+    public ProjetItemService(IMapper mapper, ApplicationDbContext context, ILogger<ProjetItemService> logger)
     {
         _mapper = mapper;
         _context = context;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedProjetItemDto>> GetProjetItemsByProjetId(int projetId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        _logger.LogDebug("GetProjetItemsByProjetId: projetId={ProjetId}, limit={Limit}, offset={Offset}", projetId, limit, offset);
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
         {
+            _logger.LogWarning("GetProjetItemsByProjetId: projet {ProjetId} not found", projetId);
             throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsItems.AsQueryable();
@@ -81,9 +85,11 @@ public class ProjetItemService : IProjetItemService
     public async Task<PaginatedResponseDto<ReadExtendedProjetItemDto>> GetProjetItemsByItemId(int itemId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        _logger.LogDebug("GetProjetItemsByItemId: itemId={ItemId}, limit={Limit}, offset={Offset}", itemId, limit, offset);
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
+            _logger.LogWarning("GetProjetItemsByItemId: item {ItemId} not found", itemId);
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.ProjetsItems.AsQueryable();
@@ -150,7 +156,12 @@ public class ProjetItemService : IProjetItemService
         {
             query = query.Include(pi => pi.Projet);
         }
-        var projetItem = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetItem with id_projet '{projetId}' and id_item '{itemId}' not found");
+        var projetItem = await query.FirstOrDefaultAsync();
+        if (projetItem is null)
+        {
+            _logger.LogWarning("GetProjetItemById: projet item (projet {ProjetId}, item {ItemId}) not found", projetId, itemId);
+            throw new KeyNotFoundException($"ProjetItem with id_projet '{projetId}' and id_item '{itemId}' not found");
+        }
         return _mapper.Map<ReadExtendedProjetItemDto>(projetItem);
     }
 
@@ -159,21 +170,25 @@ public class ProjetItemService : IProjetItemService
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetItemDto.id_projet))
         {
+            _logger.LogWarning("CreateProjetItem: projet {ProjetId} not found", projetItemDto.id_projet);
             throw new KeyNotFoundException($"Projet with id '{projetItemDto.id_projet}' not found");
         }
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == projetItemDto.id_item))
         {
+            _logger.LogWarning("CreateProjetItem: item {ItemId} not found", projetItemDto.id_item);
             throw new KeyNotFoundException($"Item with id '{projetItemDto.id_item}' not found");
         }
         // check if the projetItem already exists
         if (await _context.ProjetsItems.AnyAsync(pi => pi.id_projet == projetItemDto.id_projet && pi.id_item == projetItemDto.id_item))
         {
+            _logger.LogWarning("CreateProjetItem: projet item (projet {ProjetId}, item {ItemId}) already exists", projetItemDto.id_projet, projetItemDto.id_item);
             throw new InvalidOperationException($"ProjetItem with id_projet '{projetItemDto.id_projet}' and id_item '{projetItemDto.id_item}' already exists");
         }
         var newProjetItem = _mapper.Map<ProjetsItems>(projetItemDto);
         _context.ProjetsItems.Add(newProjetItem);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ProjetItem created (projet {ProjetId}, item {ItemId})", newProjetItem.id_projet, newProjetItem.id_item);
         return _mapper.Map<ReadProjetItemDto>(newProjetItem);
     }
 
@@ -196,6 +211,7 @@ public class ProjetItemService : IProjetItemService
                 });
             }
         }
+        _logger.LogInformation("CreateBulkProjetItem: {SuccessCount} projet item(s) created, {ErrorCount} failed", validQuery.Count, errorQuery.Count);
         return new ReadBulkProjetItemDto
         {
             Valide = validQuery,
@@ -208,26 +224,40 @@ public class ProjetItemService : IProjetItemService
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
         {
+            _logger.LogWarning("UpdateProjetItem: projet {ProjetId} not found", projetId);
             throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
+            _logger.LogWarning("UpdateProjetItem: item {ItemId} not found", itemId);
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
-        var projetItemToUpdate = await _context.ProjetsItems.FindAsync(projetId, itemId) ?? throw new KeyNotFoundException($"ProjetItem with id_projet '{projetId}' and id_item '{itemId}' not found");
+        var projetItemToUpdate = await _context.ProjetsItems.FindAsync(projetId, itemId);
+        if (projetItemToUpdate is null)
+        {
+            _logger.LogWarning("UpdateProjetItem: projet item (projet {ProjetId}, item {ItemId}) not found", projetId, itemId);
+            throw new KeyNotFoundException($"ProjetItem with id_projet '{projetId}' and id_item '{itemId}' not found");
+        }
         if (projetItemDto.qte_projet_item is not null)
         {
             projetItemToUpdate.qte_projet_item = projetItemDto.qte_projet_item.Value;
         }
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ProjetItem updated (projet {ProjetId}, item {ItemId})", projetId, itemId);
         return _mapper.Map<ReadProjetItemDto>(projetItemToUpdate);
     }
 
     public async Task DeleteProjetItem(int projetId, int itemId)
     {
-        var projetItemToDelete = await _context.ProjetsItems.FindAsync(projetId, itemId) ?? throw new KeyNotFoundException($"ProjetItem with id_projet '{projetId}' and id_item '{itemId}' not found");
+        var projetItemToDelete = await _context.ProjetsItems.FindAsync(projetId, itemId);
+        if (projetItemToDelete is null)
+        {
+            _logger.LogWarning("DeleteProjetItem: projet item (projet {ProjetId}, item {ItemId}) not found", projetId, itemId);
+            throw new KeyNotFoundException($"ProjetItem with id_projet '{projetId}' and id_item '{itemId}' not found");
+        }
         _context.ProjetsItems.Remove(projetItemToDelete);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ProjetItem deleted (projet {ProjetId}, item {ItemId})", projetId, itemId);
     }
 }

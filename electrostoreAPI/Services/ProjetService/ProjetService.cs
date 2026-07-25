@@ -17,18 +17,21 @@ public class ProjetService : IProjetService
     private readonly IFileService _fileService;
     private readonly IProjetStatusService _projetStatusService;
     private readonly string _projetDocumentsPath = "projetDocuments";
+    private readonly ILogger<ProjetService> _logger;
 
-    public ProjetService(IMapper mapper, ApplicationDbContext context, IFileService fileService, IProjetStatusService projetStatusService)
+    public ProjetService(IMapper mapper, ApplicationDbContext context, IFileService fileService, IProjetStatusService projetStatusService, ILogger<ProjetService> logger)
     {
         _mapper = mapper;
         _context = context;
         _fileService = fileService;
         _projetStatusService = projetStatusService;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedProjetDto>> GetProjets(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
+        _logger.LogDebug("GetProjets: limit={Limit}, offset={Offset}", limit, offset);
         var query = _context.Projets.AsQueryable();
         var filterResult = default(Expression<Func<Projets, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
@@ -121,6 +124,7 @@ public class ProjetService : IProjetService
 
     public async Task<ReadExtendedProjetDto> GetProjetById(int id, List<string>? expand = null)
     {
+        _logger.LogDebug("GetProjetById: id={ProjetId}", id);
         var query = _context.Projets.AsQueryable();
         query = query.Where(p => p.id_projet == id);
         var projet = await query
@@ -148,7 +152,12 @@ public class ProjetService : IProjetService
                 ProjetsProjetTags = expand != null && expand.Contains("projets_projet_tags") ? p.ProjetsProjetTags.Take(20).ToList() : null,
                 ProjetsStatus = expand != null && expand.Contains("projets_status_history") ? p.ProjetsStatus.Take(20).ToList() : null
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Projet with id '{id}' not found");
+            .FirstOrDefaultAsync();
+        if (projet is null)
+        {
+            _logger.LogWarning("GetProjetById: projet {ProjetId} not found", id);
+            throw new KeyNotFoundException($"Projet with id '{id}' not found");
+        }
         return _mapper.Map<ReadExtendedProjetDto>(projet.Projet) with
         {
             date_debut_projet = projet.DateDebutProjet,
@@ -177,12 +186,18 @@ public class ProjetService : IProjetService
             id_projet = newProjet.id_projet,
             status_projet = newProjet.status_projet
         });
+        _logger.LogInformation("Projet {ProjetId} created", newProjet.id_projet);
         return _mapper.Map<ReadProjetDto>(newProjet);
     }
 
     public async Task<ReadProjetDto> UpdateProjet(int id, UpdateProjetDto projetDto)
     {
-        var projetToUpdate = await _context.Projets.FindAsync(id) ?? throw new KeyNotFoundException($"Projet with id '{id}' not found");
+        var projetToUpdate = await _context.Projets.FindAsync(id);
+        if (projetToUpdate is null)
+        {
+            _logger.LogWarning("UpdateProjet: projet {ProjetId} not found", id);
+            throw new KeyNotFoundException($"Projet with id '{id}' not found");
+        }
         var statusChanged = projetDto.status_projet.HasValue && projetDto.status_projet.Value != projetToUpdate.status_projet;
         if (projetDto.nom_projet is not null)
         {
@@ -209,14 +224,21 @@ public class ProjetService : IProjetService
                 status_projet = projetToUpdate.status_projet
             });
         }
+        _logger.LogInformation("Projet {ProjetId} updated", id);
         return _mapper.Map<ReadProjetDto>(projetToUpdate);
     }
 
     public async Task DeleteProjet(int id)
     {
-        var projetToDelete = await _context.Projets.FindAsync(id) ?? throw new KeyNotFoundException($"Projet with id '{id}' not found");
+        var projetToDelete = await _context.Projets.FindAsync(id);
+        if (projetToDelete is null)
+        {
+            _logger.LogWarning("DeleteProjet: projet {ProjetId} not found", id);
+            throw new KeyNotFoundException($"Projet with id '{id}' not found");
+        }
         _context.Projets.Remove(projetToDelete);
         await _fileService.DeleteDirectory(Path.Combine(_projetDocumentsPath, id.ToString()));
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Projet {ProjetId} deleted", id);
     }
 }

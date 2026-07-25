@@ -16,7 +16,7 @@ namespace ElectrostoreAPI.Tests.Services
     {
         private TagService CreateService(ApplicationDbContext context)
         {
-            return new TagService(_mapper, context);
+            return new TagService(_mapper, context, CreateLogger<TagService>());
         }
 
         private static Tags BuildTag(int id, string name, int weight = 0)

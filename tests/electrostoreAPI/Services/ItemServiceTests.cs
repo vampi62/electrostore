@@ -29,7 +29,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private ItemService CreateService(ApplicationDbContext context)
         {
-            return new ItemService(_mapper, context, _fileService.Object, _itemHistoryService.Object);
+            return new ItemService(_mapper, context, _fileService.Object, _itemHistoryService.Object, CreateLogger<ItemService>());
         }
 
         private static Items BuildItem(int id, string referenceName, string friendlyName = "Item")

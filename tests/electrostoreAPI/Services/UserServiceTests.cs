@@ -34,7 +34,7 @@ namespace ElectrostoreAPI.Tests.Services
         private UserService CreateService(ApplicationDbContext context)
         {
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
-            return new UserService(_mapper, context, configuration, _kafkaProducerService.Object, _sessionService.Object, _jwiService.Object);
+            return new UserService(_mapper, context, configuration, _kafkaProducerService.Object, _sessionService.Object, _jwiService.Object, CreateLogger<UserService>());
         }
 
         private void SetClient(int id, UserRole role)

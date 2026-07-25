@@ -11,16 +11,19 @@ public class TagService : ITagService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<TagService> _logger;
 
-    public TagService(IMapper mapper, ApplicationDbContext context)
+    public TagService(IMapper mapper, ApplicationDbContext context, ILogger<TagService> logger)
     {
         _mapper = mapper;
         _context = context;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedTagDto>> GetTags(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
+        _logger.LogDebug("GetTags: limit={Limit}, offset={Offset}, idResearchCount={IdResearchCount}", limit, offset, idResearch?.Count ?? 0);
         var query = _context.Tags.AsQueryable();
         var filterResult = default(Expression<Func<Tags, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
@@ -106,7 +109,12 @@ public class TagService : ITagService
                 ItemsTags = expand != null && expand.Contains("items_tags") ? t.ItemsTags.Take(20).ToList() : null,
                 BoxsTags = expand != null && expand.Contains("boxs_tags") ? t.BoxsTags.Take(20).ToList() : null
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Tag with id '{id}' not found");
+            .FirstOrDefaultAsync();
+        if (tag is null)
+        {
+            _logger.LogWarning("GetTagById: Tag {TagId} not found", id);
+            throw new KeyNotFoundException($"Tag with id '{id}' not found");
+        }
         return _mapper.Map<ReadExtendedTagDto>(tag.Tag) with
         {
             stores_tags_count = tag.StoresTagsCount,
@@ -123,11 +131,13 @@ public class TagService : ITagService
         // check if tag name already exists
         if (await _context.Tags.AnyAsync(t => t.nom_tag == tagDto.nom_tag))
         {
+            _logger.LogWarning("CreateTag: Tag with name {TagName} already exists", tagDto.nom_tag);
             throw new InvalidOperationException($"Tag with name '{tagDto.nom_tag}' already exists");
         }
         var newTag = _mapper.Map<Tags>(tagDto);
         _context.Tags.Add(newTag);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("CreateTag: Tag {TagId} created", newTag.id_tag);
         return _mapper.Map<ReadTagDto>(newTag);
     }
 
@@ -150,6 +160,7 @@ public class TagService : ITagService
                 });
             }
         }
+        _logger.LogInformation("CreateBulkTag: {ValidCount} created, {ErrorCount} failed", validQuery.Count, errorQuery.Count);
         return new ReadBulkTagDto
         {
             Valide = validQuery,
@@ -159,12 +170,18 @@ public class TagService : ITagService
 
     public async Task<ReadTagDto> UpdateTag(int id, UpdateTagDto tagDto)
     {
-        var tagToUpdate = await _context.Tags.FindAsync(id) ?? throw new KeyNotFoundException($"Tag with id '{id}' not found");
+        var tagToUpdate = await _context.Tags.FindAsync(id);
+        if (tagToUpdate is null)
+        {
+            _logger.LogWarning("UpdateTag: Tag {TagId} not found", id);
+            throw new KeyNotFoundException($"Tag with id '{id}' not found");
+        }
         if (tagDto.nom_tag is not null)
         {
             // check if another tag with the name already exists
             if (await _context.Tags.AnyAsync(t => t.nom_tag == tagDto.nom_tag && t.id_tag != id))
             {
+                _logger.LogWarning("UpdateTag: Tag with name {TagName} already exists", tagDto.nom_tag);
                 throw new InvalidOperationException($"Tag with name '{tagDto.nom_tag}' already exists");
             }
             tagToUpdate.nom_tag = tagDto.nom_tag;
@@ -174,13 +191,20 @@ public class TagService : ITagService
             tagToUpdate.poids_tag = tagDto.poids_tag.Value;
         }
         await _context.SaveChangesAsync();
+        _logger.LogInformation("UpdateTag: Tag {TagId} updated", id);
         return _mapper.Map<ReadTagDto>(tagToUpdate);
     }
 
     public async Task DeleteTag(int id)
     {
-        var tagToDelete = await _context.Tags.FindAsync(id) ?? throw new KeyNotFoundException($"Tag with id '{id}' not found");
+        var tagToDelete = await _context.Tags.FindAsync(id);
+        if (tagToDelete is null)
+        {
+            _logger.LogWarning("DeleteTag: Tag {TagId} not found", id);
+            throw new KeyNotFoundException($"Tag with id '{id}' not found");
+        }
         _context.Tags.Remove(tagToDelete);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("DeleteTag: Tag {TagId} deleted", id);
     }
 }

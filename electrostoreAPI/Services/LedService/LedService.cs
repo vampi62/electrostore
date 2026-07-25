@@ -20,23 +20,27 @@ public class LedService : ILedService
     private readonly IMqttClient _mqttClient;
     private readonly ISessionService _sessionService;
     private readonly IValidateStoreService _validateStoreService;
+    private readonly ILogger<LedService> _logger;
     private readonly static int numberLedSentPerMessage = 10;
 
-    public LedService(IMapper mapper, ApplicationDbContext context, IMqttClient mqttClient, ISessionService sessionService, IValidateStoreService validateStoreService)
+    public LedService(IMapper mapper, ApplicationDbContext context, IMqttClient mqttClient, ISessionService sessionService, IValidateStoreService validateStoreService, ILogger<LedService> logger)
     {
         _mapper = mapper;
         _context = context;
         _mqttClient = mqttClient;
         _sessionService = sessionService;
         _validateStoreService = validateStoreService;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadLedDto>> GetLedsByStoreId(int storeId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
+        _logger.LogDebug("GetLedsByStoreId: storeId={StoreId}, limit={Limit}, offset={Offset}", storeId, limit, offset);
         // check if the store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
         {
+            _logger.LogWarning("GetLedsByStoreId: store {StoreId} not found", storeId);
             throw new KeyNotFoundException($"Store with id '{storeId}' not found");
         }
         var query = _context.Leds.AsQueryable();
@@ -85,9 +89,15 @@ public class LedService : ILedService
 
     public async Task<ReadLedDto> GetLedById(int id, int? storeId = null)
     {
-        var led = await _context.Leds.FindAsync(id) ?? throw new KeyNotFoundException($"Led with id '{id}' not found");
+        var led = await _context.Leds.FindAsync(id);
+        if (led is null)
+        {
+            _logger.LogWarning("GetLedById: led {LedId} not found", id);
+            throw new KeyNotFoundException($"Led with id '{id}' not found");
+        }
         if ((storeId is not null) && (led.id_store != storeId))
         {
+            _logger.LogWarning("GetLedById: led {LedId} not found in store {StoreId}", id, storeId);
             throw new KeyNotFoundException($"Led with id '{id}' not found in store with id '{storeId}'");
         }
         return _mapper.Map<ReadLedDto>(led);
@@ -98,18 +108,26 @@ public class LedService : ILedService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("CreateLed: client role {ClientRole} is not authorized to create a led", clientRole);
             throw new UnauthorizedAccessException("You do not have permission to create a led");
         }
         // check if store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == ledDto.id_store))
         {
+            _logger.LogWarning("CreateLed: store {StoreId} not found", ledDto.id_store);
             throw new KeyNotFoundException($"Store with id '{ledDto.id_store}' not found");
         }
         var newLed = _mapper.Map<Leds>(ledDto);
-        var store = await _context.Stores.FindAsync(newLed.id_store) ?? throw new KeyNotFoundException($"Store with id '{newLed.id_store}' not found");
+        var store = await _context.Stores.FindAsync(newLed.id_store);
+        if (store is null)
+        {
+            _logger.LogWarning("CreateLed: store {StoreId} not found", newLed.id_store);
+            throw new KeyNotFoundException($"Store with id '{newLed.id_store}' not found");
+        }
         _validateStoreService.ValidateLedPosition(newLed, store);
         _context.Leds.Add(newLed);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Led {LedId} created in store {StoreId}", newLed.id_led, newLed.id_store);
         return _mapper.Map<ReadLedDto>(newLed);
     }
 
@@ -118,6 +136,7 @@ public class LedService : ILedService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("CreateBulkLed: client role {ClientRole} is not authorized to create leds", clientRole);
             throw new UnauthorizedAccessException("You do not have permission to create leds");
         }
         var validQuery = new List<ReadLedDto>();
@@ -137,6 +156,7 @@ public class LedService : ILedService
                 });
             }
         }
+        _logger.LogInformation("CreateBulkLed: {SuccessCount} led(s) created, {ErrorCount} failed", validQuery.Count, errorQuery.Count);
         return new ReadBulkLedDto
         {
             Valide = validQuery,
@@ -149,17 +169,30 @@ public class LedService : ILedService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("UpdateLed: client role {ClientRole} is not authorized to update a led", clientRole);
             throw new UnauthorizedAccessException("You do not have permission to update a led");
         }
-        var ledToUpdate = await _context.Leds.FindAsync(id) ?? throw new KeyNotFoundException($"Led with id '{id}' not found");
+        var ledToUpdate = await _context.Leds.FindAsync(id);
+        if (ledToUpdate is null)
+        {
+            _logger.LogWarning("UpdateLed: led {LedId} not found", id);
+            throw new KeyNotFoundException($"Led with id '{id}' not found");
+        }
         if ((storeId is not null) && (ledToUpdate.id_store != storeId))
         {
+            _logger.LogWarning("UpdateLed: led {LedId} not found in store {StoreId}", id, storeId);
             throw new KeyNotFoundException($"Led with id '{id}' not found in store with id '{storeId}'");
         }
         await _validateStoreService.UpdateLedInformations(ledToUpdate, ledDto);
-        var store = await _context.Stores.FindAsync(ledToUpdate.id_store) ?? throw new KeyNotFoundException($"Store with id '{ledToUpdate.id_store}' not found");
+        var store = await _context.Stores.FindAsync(ledToUpdate.id_store);
+        if (store is null)
+        {
+            _logger.LogWarning("UpdateLed: store {StoreId} not found", ledToUpdate.id_store);
+            throw new KeyNotFoundException($"Store with id '{ledToUpdate.id_store}' not found");
+        }
         _validateStoreService.ValidateLedPosition(ledToUpdate, store);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Led {LedId} updated", ledToUpdate.id_led);
         return _mapper.Map<ReadLedDto>(ledToUpdate);
     }
 
@@ -168,6 +201,7 @@ public class LedService : ILedService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("UpdateBulkLed: client role {ClientRole} is not authorized to update leds", clientRole);
             throw new UnauthorizedAccessException("You do not have permission to update leds");
         }
         var validQuery = new List<ReadLedDto>();
@@ -193,6 +227,7 @@ public class LedService : ILedService
                 });
             }
         }
+        _logger.LogInformation("UpdateBulkLed: {SuccessCount} led(s) updated, {ErrorCount} failed for store {StoreId}", validQuery.Count, errorQuery.Count, storeId);
         return new ReadBulkLedDto
         {
             Valide = validQuery,
@@ -205,15 +240,23 @@ public class LedService : ILedService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("DeleteLed: client role {ClientRole} is not authorized to delete a led", clientRole);
             throw new UnauthorizedAccessException("You do not have permission to delete a led");
         }
-        var ledToDelete = await _context.Leds.FindAsync(id) ?? throw new KeyNotFoundException($"Led with id '{id}' not found");
+        var ledToDelete = await _context.Leds.FindAsync(id);
+        if (ledToDelete is null)
+        {
+            _logger.LogWarning("DeleteLed: led {LedId} not found", id);
+            throw new KeyNotFoundException($"Led with id '{id}' not found");
+        }
         if ((storeId is not null) && (ledToDelete.id_store != storeId))
         {
+            _logger.LogWarning("DeleteLed: led {LedId} not found in store {StoreId}", id, storeId);
             throw new KeyNotFoundException($"Led with id '{id}' not found in store with id '{storeId}'");
         }
         _context.Leds.Remove(ledToDelete);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Led {LedId} deleted", id);
     }
 
     public async Task<ReadBulkLedDto> DeleteBulkLed(List<int> ids, int storeId)
@@ -221,6 +264,7 @@ public class LedService : ILedService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("DeleteBulkLed: client role {ClientRole} is not authorized to delete leds", clientRole);
             throw new UnauthorizedAccessException("You do not have permission to delete leds");
         }
         var validQuery = new List<ReadLedDto>();
@@ -244,6 +288,7 @@ public class LedService : ILedService
                 });
             }
         }
+        _logger.LogInformation("DeleteBulkLed: {SuccessCount} led(s) deleted, {ErrorCount} failed for store {StoreId}", validQuery.Count, errorQuery.Count, storeId);
         return new ReadBulkLedDto
         {
             Valide = validQuery,
@@ -255,12 +300,23 @@ public class LedService : ILedService
     {
         var ledDB = await _context.Leds
             .Where(led => led.id_store == storeId && led.id_led == id)
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Led with id '{id}' not found in store with id '{storeId}'");
+            .FirstOrDefaultAsync();
+        if (ledDB is null)
+        {
+            _logger.LogWarning("ShowLedById: led {LedId} not found in store {StoreId}", id, storeId);
+            throw new KeyNotFoundException($"Led with id '{id}' not found in store with id '{storeId}'");
+        }
         if (!_mqttClient.IsConnected)
         {
+            _logger.LogWarning("ShowLedById: MQTT client is not connected");
             throw new NotImplementedException("MQTT client is not connected");
         }
-        var store = await _context.Stores.FindAsync(ledDB.id_store) ?? throw new KeyNotFoundException($"Store with id '{ledDB.id_store}' not found");
+        var store = await _context.Stores.FindAsync(ledDB.id_store);
+        if (store is null)
+        {
+            _logger.LogWarning("ShowLedById: store {StoreId} not found", ledDB.id_store);
+            throw new KeyNotFoundException($"Store with id '{ledDB.id_store}' not found");
+        }
         var topic = "electrostore/" + store.mqtt_name_store;
         var message = new MqttApplicationMessageBuilder()
             .WithTopic(topic)
@@ -283,6 +339,7 @@ public class LedService : ILedService
             .WithRetainFlag(false)
             .Build();
         await _mqttClient.PublishAsync(message);
+        _logger.LogInformation("Led {LedId} shown in store {StoreId}", id, storeId);
     }
 
     public async Task ShowLedsByBox(int storeId, int boxId, int redColor, int greenColor, int blueColor, int timeshow, int animation)
@@ -290,11 +347,13 @@ public class LedService : ILedService
         // check if the store exists
         if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
         {
+            _logger.LogWarning("ShowLedsByBox: store {StoreId} not found", storeId);
             throw new KeyNotFoundException($"Store with id '{storeId}' not found");
         }
         // check if the box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId && b.id_store == storeId))
         {
+            _logger.LogWarning("ShowLedsByBox: box {BoxId} not found in store {StoreId}", boxId, storeId);
             throw new KeyNotFoundException($"Box with id '{boxId}' not found in store with id '{storeId}'");
         }
         var ledsDB = await _context.Leds
@@ -309,13 +368,20 @@ public class LedService : ILedService
             .ToListAsync();
         if (ledsDB.Count == 0)
         {
+            _logger.LogWarning("ShowLedsByBox: no leds found in store {StoreId} and box {BoxId}", storeId, boxId);
             throw new KeyNotFoundException($"No leds found in store with id '{storeId}' and box with id '{boxId}'");
         }
         if (!_mqttClient.IsConnected)
         {
+            _logger.LogWarning("ShowLedsByBox: MQTT client is not connected");
             throw new NotImplementedException("MQTT client is not connected");
         }
-        var store = await _context.Stores.FindAsync(storeId) ?? throw new KeyNotFoundException($"Store with id '{storeId}' not found");
+        var store = await _context.Stores.FindAsync(storeId);
+        if (store is null)
+        {
+            _logger.LogWarning("ShowLedsByBox: store {StoreId} not found", storeId);
+            throw new KeyNotFoundException($"Store with id '{storeId}' not found");
+        }
         var topic = "electrostore/" + store.mqtt_name_store;
 
         // sent led 10 per 10
@@ -342,5 +408,6 @@ public class LedService : ILedService
                 .Build();
             await _mqttClient.PublishAsync(message);
         }
+        _logger.LogInformation("Leds shown in box {BoxId} in store {StoreId} ({LedCount} led(s))", boxId, storeId, ledsDB.Count);
     }
 }

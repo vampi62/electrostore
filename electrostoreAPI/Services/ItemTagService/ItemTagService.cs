@@ -11,19 +11,23 @@ public class ItemTagService : IItemTagService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<ItemTagService> _logger;
 
-    public ItemTagService(IMapper mapper, ApplicationDbContext context)
+    public ItemTagService(IMapper mapper, ApplicationDbContext context, ILogger<ItemTagService> logger)
     {
         _mapper = mapper;
         _context = context;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedItemTagDto>> GetItemsTagsByItemId(int itemId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        _logger.LogDebug("GetItemsTagsByItemId: itemId={ItemId}, limit={Limit}, offset={Offset}", itemId, limit, offset);
         // check if the item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
+            _logger.LogWarning("GetItemsTagsByItemId: Item {ItemId} not found", itemId);
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.ItemsTags.AsQueryable();
@@ -81,9 +85,11 @@ public class ItemTagService : IItemTagService
     public async Task<PaginatedResponseDto<ReadExtendedItemTagDto>> GetItemsTagsByTagId(int tagId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        _logger.LogDebug("GetItemsTagsByTagId: tagId={TagId}, limit={Limit}, offset={Offset}", tagId, limit, offset);
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == tagId))
         {
+            _logger.LogWarning("GetItemsTagsByTagId: Tag {TagId} not found", tagId);
             throw new KeyNotFoundException($"Tag with id '{tagId}' not found");
         }
         var query = _context.ItemsTags.AsQueryable();
@@ -150,7 +156,12 @@ public class ItemTagService : IItemTagService
         {
             query = query.Include(it => it.Item);
         }
-        var itemTag = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ItemTag with id_item '{itemId}' and id_tag '{tagId}' not found");
+        var itemTag = await query.FirstOrDefaultAsync();
+        if (itemTag is null)
+        {
+            _logger.LogWarning("GetItemTagById: ItemTag with itemId {ItemId} and tagId {TagId} not found", itemId, tagId);
+            throw new KeyNotFoundException($"ItemTag with id_item '{itemId}' and id_tag '{tagId}' not found");
+        }
         return _mapper.Map<ReadExtendedItemTagDto>(itemTag);
     }
 
@@ -159,26 +170,31 @@ public class ItemTagService : IItemTagService
         // check if item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemTagDto.id_item))
         {
+            _logger.LogWarning("CreateItemTag: Item {ItemId} not found", itemTagDto.id_item);
             throw new KeyNotFoundException($"Item with id '{itemTagDto.id_item}' not found");
         }
         // check if tag exists
         if (!await _context.Tags.AnyAsync(t => t.id_tag == itemTagDto.id_tag))
         {
+            _logger.LogWarning("CreateItemTag: Tag {TagId} not found", itemTagDto.id_tag);
             throw new KeyNotFoundException($"Tag with id '{itemTagDto.id_tag}' not found");
         }
         // check if itemTag already exists
         if (await _context.ItemsTags.AnyAsync(it => it.id_item == itemTagDto.id_item && it.id_tag == itemTagDto.id_tag))
         {
+            _logger.LogWarning("CreateItemTag: ItemTag with itemId {ItemId} and tagId {TagId} already exists", itemTagDto.id_item, itemTagDto.id_tag);
             throw new InvalidOperationException($"ItemTag with id_item '{itemTagDto.id_item}' and id_tag '{itemTagDto.id_tag}' already exists");
         }
         var itemTag = _mapper.Map<ItemsTags>(itemTagDto);
         _context.ItemsTags.Add(itemTag);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ItemTag created for Item {ItemId} and Tag {TagId}", itemTagDto.id_item, itemTagDto.id_tag);
         return _mapper.Map<ReadItemTagDto>(itemTag);
     }
 
     public async Task<ReadBulkItemTagDto> CreateBulkItemTag(List<CreateItemTagDto> itemTagBulkDto)
     {
+        _logger.LogDebug("CreateBulkItemTag: itemTagCount={ItemTagCount}", itemTagBulkDto.Count);
         var validQuery = new List<ReadItemTagDto>();
         var errorQuery = new List<ErrorDetail>();
         foreach (var itemTagDto in itemTagBulkDto)
@@ -189,6 +205,7 @@ public class ItemTagService : IItemTagService
             }
             catch (Exception e)
             {
+                _logger.LogWarning("CreateBulkItemTag: failed to create ItemTag for Item {ItemId} and Tag {TagId}: {Reason}", itemTagDto.id_item, itemTagDto.id_tag, e.Message);
                 errorQuery.Add(new ErrorDetail
                 {
                     Reason = e.Message,
@@ -196,6 +213,7 @@ public class ItemTagService : IItemTagService
                 });
             }
         }
+        _logger.LogInformation("CreateBulkItemTag: {ValidCount} succeeded, {ErrorCount} failed", validQuery.Count, errorQuery.Count);
         return new ReadBulkItemTagDto
         {
             Valide = validQuery,
@@ -205,13 +223,20 @@ public class ItemTagService : IItemTagService
 
     public async Task DeleteItemTag(int itemId, int tagId)
     {
-        var itemTagToDelete = await _context.ItemsTags.FindAsync(itemId, tagId) ?? throw new KeyNotFoundException($"ItemTag with id_item '{itemId}' and id_tag '{tagId}' not found");
+        var itemTagToDelete = await _context.ItemsTags.FindAsync(itemId, tagId);
+        if (itemTagToDelete is null)
+        {
+            _logger.LogWarning("DeleteItemTag: ItemTag with itemId {ItemId} and tagId {TagId} not found", itemId, tagId);
+            throw new KeyNotFoundException($"ItemTag with id_item '{itemId}' and id_tag '{tagId}' not found");
+        }
         _context.ItemsTags.Remove(itemTagToDelete);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ItemTag deleted for Item {ItemId} and Tag {TagId}", itemId, tagId);
     }
 
     public async Task<ReadBulkItemTagDto> DeleteBulkItemTag(List<CreateItemTagDto> itemTagBulkDto)
     {
+        _logger.LogDebug("DeleteBulkItemTag: itemTagCount={ItemTagCount}", itemTagBulkDto.Count);
         var validQuery = new List<ReadItemTagDto>();
         var errorQuery = new List<ErrorDetail>();
         foreach (var itemTagDto in itemTagBulkDto)
@@ -227,6 +252,7 @@ public class ItemTagService : IItemTagService
             }
             catch (Exception e)
             {
+                _logger.LogWarning("DeleteBulkItemTag: failed to delete ItemTag for Item {ItemId} and Tag {TagId}: {Reason}", itemTagDto.id_item, itemTagDto.id_tag, e.Message);
                 errorQuery.Add(new ErrorDetail
                 {
                     Reason = e.Message,
@@ -234,6 +260,7 @@ public class ItemTagService : IItemTagService
                 });
             }
         }
+        _logger.LogInformation("DeleteBulkItemTag: {ValidCount} succeeded, {ErrorCount} failed", validQuery.Count, errorQuery.Count);
         return new ReadBulkItemTagDto
         {
             Valide = validQuery,

@@ -16,7 +16,7 @@ namespace ElectrostoreAPI.Tests.Services
     {
         private CommandItemService CreateService(ApplicationDbContext context)
         {
-            return new CommandItemService(_mapper, context);
+            return new CommandItemService(_mapper, context, CreateLogger<CommandItemService>());
         }
 
         private static Commands BuildCommand(int id)

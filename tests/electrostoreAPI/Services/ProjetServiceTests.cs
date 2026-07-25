@@ -29,7 +29,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private ProjetService CreateService(ApplicationDbContext context)
         {
-            return new ProjetService(_mapper, context, _fileService.Object, _projetStatusService.Object);
+            return new ProjetService(_mapper, context, _fileService.Object, _projetStatusService.Object, CreateLogger<ProjetService>());
         }
 
         private static Projets BuildProjet(int id, string name = "Projet", ProjetStatus status = ProjetStatus.NotStarted)

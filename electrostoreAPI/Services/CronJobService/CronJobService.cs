@@ -15,17 +15,20 @@ public class CronJobService : ICronJobService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly IKafkaProducerService _kafkaProducer;
+    private readonly ILogger<CronJobService> _logger;
 
-    public CronJobService(IMapper mapper, ApplicationDbContext context, IKafkaProducerService kafkaProducer)
+    public CronJobService(IMapper mapper, ApplicationDbContext context, IKafkaProducerService kafkaProducer, ILogger<CronJobService> logger)
     {
         _mapper = mapper;
         _context = context;
         _kafkaProducer = kafkaProducer;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadCronJobDto>> GetCronJobs(int limit = 100, int offset = 0,
         List<FilterDto>? rsql = null, SorterDto? sort = null, List<int>? idResearch = null)
     {
+        _logger.LogDebug("GetCronJobs: limit={Limit}, offset={Offset}, idResearchCount={IdResearchCount}", limit, offset, idResearch?.Count ?? 0);
         var query = _context.CronJobs.AsQueryable();
         var filterResult = default(Expression<Func<CronJobs, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
@@ -77,8 +80,12 @@ public class CronJobService : ICronJobService
 
     public async Task<ReadCronJobDto> GetCronJobById(int id)
     {
-        var cronJob = await _context.CronJobs.FindAsync(id)
-            ?? throw new KeyNotFoundException($"CronJob with id '{id}' not found");
+        var cronJob = await _context.CronJobs.FindAsync(id);
+        if (cronJob is null)
+        {
+            _logger.LogWarning("GetCronJobById: CronJob {CronJobId} not found", id);
+            throw new KeyNotFoundException($"CronJob with id '{id}' not found");
+        }
         return _mapper.Map<ReadCronJobDto>(cronJob);
     }
 
@@ -98,13 +105,18 @@ public class CronJobService : ICronJobService
             newCronJob.id_cronjob.ToString(),
             JsonSerializer.Serialize(cronJobMessage)
         );
+        _logger.LogInformation("CronJob {CronJobId} created", newCronJob.id_cronjob);
         return result;
     }
 
     public async Task<ReadCronJobDto> UpdateCronJob(int id, UpdateCronJobDto cronJobDto)
     {
-        var cronJobToUpdate = await _context.CronJobs.FindAsync(id)
-            ?? throw new KeyNotFoundException($"CronJob with id '{id}' not found");
+        var cronJobToUpdate = await _context.CronJobs.FindAsync(id);
+        if (cronJobToUpdate is null)
+        {
+            _logger.LogWarning("UpdateCronJob: CronJob {CronJobId} not found", id);
+            throw new KeyNotFoundException($"CronJob with id '{id}' not found");
+        }
 
         if (cronJobDto.name_cronjob is not null)
         {
@@ -147,13 +159,18 @@ public class CronJobService : ICronJobService
             cronJobToUpdate.id_cronjob.ToString(),
             JsonSerializer.Serialize(cronJobMessage)
         );
+        _logger.LogInformation("CronJob {CronJobId} updated", cronJobToUpdate.id_cronjob);
         return result;
     }
 
     public async Task DeleteCronJob(int id)
     {
-        var cronJobToDelete = await _context.CronJobs.FindAsync(id)
-            ?? throw new KeyNotFoundException($"CronJob with id '{id}' not found");
+        var cronJobToDelete = await _context.CronJobs.FindAsync(id);
+        if (cronJobToDelete is null)
+        {
+            _logger.LogWarning("DeleteCronJob: CronJob {CronJobId} not found", id);
+            throw new KeyNotFoundException($"CronJob with id '{id}' not found");
+        }
         var cronJobMessage = new CronJobMessage
         {
             action = "deleted",
@@ -166,18 +183,24 @@ public class CronJobService : ICronJobService
             id.ToString(),
             JsonSerializer.Serialize(cronJobMessage)
          );
+        _logger.LogInformation("CronJob {CronJobId} deleted", id);
     }
 
     public async Task<IEnumerable<ReadCronJobDto>> GetEnabledCronJobsAsync(CancellationToken cancellationToken)
     {
+        _logger.LogDebug("GetEnabledCronJobsAsync: fetching enabled cron jobs");
         var cronJobs = await _context.CronJobs.Where(c => c.is_enabled).ToListAsync(cancellationToken);
         return _mapper.Map<IEnumerable<ReadCronJobDto>>(cronJobs);
     }
 
     public async Task UpdateCronJobRunAsync(int id, DateTime? lastRunAt, DateTime? nextRunAt, CancellationToken cancellationToken)
     {
-        var cronJob = await _context.CronJobs.FindAsync(id, cancellationToken)
-            ?? throw new KeyNotFoundException($"CronJob with id '{id}' not found");
+        var cronJob = await _context.CronJobs.FindAsync(id, cancellationToken);
+        if (cronJob is null)
+        {
+            _logger.LogWarning("UpdateCronJobRunAsync: CronJob {CronJobId} not found", id);
+            throw new KeyNotFoundException($"CronJob with id '{id}' not found");
+        }
         if (lastRunAt.HasValue)
         {
             cronJob.last_run_at = lastRunAt.Value;
@@ -187,5 +210,6 @@ public class CronJobService : ICronJobService
             cronJob.next_run_at = nextRunAt.Value;
         }
         await _context.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("CronJob {CronJobId} run updated (lastRunAt={LastRunAt}, nextRunAt={NextRunAt})", id, lastRunAt, nextRunAt);
     }
 }

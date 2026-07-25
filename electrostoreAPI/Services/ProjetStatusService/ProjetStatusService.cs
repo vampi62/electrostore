@@ -10,19 +10,23 @@ public class ProjetStatusService : IProjetStatusService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<ProjetStatusService> _logger;
 
-    public ProjetStatusService(IMapper mapper, ApplicationDbContext context)
+    public ProjetStatusService(IMapper mapper, ApplicationDbContext context, ILogger<ProjetStatusService> logger)
     {
         _mapper = mapper;
         _context = context;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedProjetStatusDto>> GetProjetStatusByProjetId(int projetId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
+        _logger.LogDebug("GetProjetStatusByProjetId: projetId={ProjetId}, limit={Limit}, offset={Offset}", projetId, limit, offset);
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
         {
+            _logger.LogWarning("GetProjetStatusByProjetId: projet {ProjetId} not found", projetId);
             throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsStatus.AsQueryable();
@@ -73,7 +77,12 @@ public class ProjetStatusService : IProjetStatusService
     {
         var query = _context.ProjetsStatus.AsQueryable();
         query = query.Where(pc => pc.id_projet_status == id && (projetId == null || pc.id_projet == projetId));
-        var projetStatus = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetStatus with id '{id}' not found");
+        var projetStatus = await query.FirstOrDefaultAsync();
+        if (projetStatus is null)
+        {
+            _logger.LogWarning("GetProjetStatusById: projet status {ProjetStatusId} not found", id);
+            throw new KeyNotFoundException($"ProjetStatus with id '{id}' not found");
+        }
         return _mapper.Map<ReadExtendedProjetStatusDto>(projetStatus);
     }
 
@@ -82,11 +91,13 @@ public class ProjetStatusService : IProjetStatusService
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetStatusDto.id_projet))
         {
+            _logger.LogWarning("CreateProjetStatus: projet {ProjetId} not found", projetStatusDto.id_projet);
             throw new KeyNotFoundException($"Projet with id '{projetStatusDto.id_projet}' not found");
         }
         var newProjetStatus = _mapper.Map<ProjetsStatus>(projetStatusDto);
         _context.ProjetsStatus.Add(newProjetStatus);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ProjetStatus {ProjetStatusId} created for projet {ProjetId} (status: {Status})", newProjetStatus.id_projet_status, newProjetStatus.id_projet, newProjetStatus.status_projet);
         return _mapper.Map<ReadProjetStatusDto>(newProjetStatus);
     }
 }

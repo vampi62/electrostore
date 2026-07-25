@@ -11,16 +11,19 @@ public class ProjetTagService : IProjetTagService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<ProjetTagService> _logger;
 
-    public ProjetTagService(IMapper mapper, ApplicationDbContext context)
+    public ProjetTagService(IMapper mapper, ApplicationDbContext context, ILogger<ProjetTagService> logger)
     {
         _mapper = mapper;
         _context = context;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedProjetTagDto>> GetProjetTags(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
+        _logger.LogDebug("GetProjetTags: limit={Limit}, offset={Offset}", limit, offset);
         var query = _context.ProjetTags.AsQueryable();
         var filterResult = default(Expression<Func<ProjetTags, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
@@ -92,7 +95,12 @@ public class ProjetTagService : IProjetTagService
                 ProjetsProjetTagsCount = t.ProjetsProjetTags.Count,
                 ProjetsProjetTags = expand != null && expand.Contains("projets_projet_tags") ? t.ProjetsProjetTags.Take(20).ToList() : null
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetTag with id '{id}' not found");
+            .FirstOrDefaultAsync();
+        if (projetTag is null)
+        {
+            _logger.LogWarning("GetProjetTagById: projet tag {ProjetTagId} not found", id);
+            throw new KeyNotFoundException($"ProjetTag with id '{id}' not found");
+        }
         return _mapper.Map<ReadExtendedProjetTagDto>(projetTag.ProjetTags) with
         {
             projets_projet_tags_count = projetTag.ProjetsProjetTagsCount,
@@ -105,11 +113,13 @@ public class ProjetTagService : IProjetTagService
         // check if tag name already exists
         if (await _context.ProjetTags.AnyAsync(t => t.nom_projet_tag == projetTagDto.nom_projet_tag))
         {
+            _logger.LogWarning("CreateProjetTag: tag name {ProjetTagName} already exists", projetTagDto.nom_projet_tag);
             throw new InvalidOperationException($"ProjetTag with name '{projetTagDto.nom_projet_tag}' already exists");
         }
         var newProjetTag = _mapper.Map<ProjetTags>(projetTagDto);
         _context.ProjetTags.Add(newProjetTag);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ProjetTag {ProjetTagId} created", newProjetTag.id_projet_tag);
         return _mapper.Map<ReadProjetTagDto>(newProjetTag);
     }
 
@@ -132,6 +142,7 @@ public class ProjetTagService : IProjetTagService
                 });
             }
         }
+        _logger.LogInformation("CreateBulkProjetTag: {SuccessCount} projet tag(s) created, {ErrorCount} failed", validQuery.Count, errorQuery.Count);
         return new ReadBulkProjetTagDto
         {
             Valide = validQuery,
@@ -141,12 +152,18 @@ public class ProjetTagService : IProjetTagService
 
     public async Task<ReadProjetTagDto> UpdateProjetTag(int id, UpdateProjetTagDto projetTagDto)
     {
-        var projetTagToUpdate = await _context.ProjetTags.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetTag with id {id} not found");
+        var projetTagToUpdate = await _context.ProjetTags.FindAsync(id);
+        if (projetTagToUpdate is null)
+        {
+            _logger.LogWarning("UpdateProjetTag: projet tag {ProjetTagId} not found", id);
+            throw new KeyNotFoundException($"ProjetTag with id {id} not found");
+        }
         if (projetTagDto.nom_projet_tag is not null)
         {
             // check if another tag with the name already exists
             if (await _context.ProjetTags.AnyAsync(t => t.nom_projet_tag == projetTagDto.nom_projet_tag && t.id_projet_tag != id))
             {
+                _logger.LogWarning("UpdateProjetTag: tag name {ProjetTagName} already exists", projetTagDto.nom_projet_tag);
                 throw new InvalidOperationException($"ProjetTag with name '{projetTagDto.nom_projet_tag}' already exists");
             }
             projetTagToUpdate.nom_projet_tag = projetTagDto.nom_projet_tag;
@@ -156,13 +173,20 @@ public class ProjetTagService : IProjetTagService
             projetTagToUpdate.poids_projet_tag = projetTagDto.poids_projet_tag.Value;
         }
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ProjetTag {ProjetTagId} updated", id);
         return _mapper.Map<ReadProjetTagDto>(projetTagToUpdate);
     }
 
     public async Task DeleteProjetTag(int id)
     {
-        var projetTagToDelete = await _context.ProjetTags.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetTag with id '{id}' not found");
+        var projetTagToDelete = await _context.ProjetTags.FindAsync(id);
+        if (projetTagToDelete is null)
+        {
+            _logger.LogWarning("DeleteProjetTag: projet tag {ProjetTagId} not found", id);
+            throw new KeyNotFoundException($"ProjetTag with id '{id}' not found");
+        }
         _context.ProjetTags.Remove(projetTagToDelete);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ProjetTag {ProjetTagId} deleted", id);
     }
 }

@@ -22,10 +22,11 @@ public class CarrierService : ICarrierService
     private readonly IJwiService _jwiService;
     private readonly IConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<CarrierService> _logger;
     private const string DemoModeKey = "DemoMode";
     private const string camAuthMethod = "Basic";
 
-    public CarrierService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IJwiService jwiService, IConfiguration configuration, IHttpClientFactory httpClientFactory)
+    public CarrierService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IJwiService jwiService, IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<CarrierService> logger)
     {
         _mapper = mapper;
         _context = context;
@@ -33,12 +34,14 @@ public class CarrierService : ICarrierService
         _jwiService = jwiService;
         _configuration = configuration;
         _httpClientFactory = httpClientFactory;
+        _logger = logger;
     }
 
     // limit the number of carrier to 100 and add offset and search parameters
     public async Task<PaginatedResponseDto<ReadCarrierDto>> GetCarriers(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<int>? idResearch = null)
     {
+        _logger.LogDebug("GetCarriers: limit {Limit}, offset {Offset}", limit, offset);
         var query = _context.Carriers.AsQueryable();
         var filterResult = default(Expression<Func<Carriers, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
@@ -90,7 +93,12 @@ public class CarrierService : ICarrierService
 
     public async Task<ReadCarrierDto> GetCarrierById(int id)
     {
-        var carrier = await _context.Carriers.FindAsync(id) ?? throw new KeyNotFoundException($"Carrier with id '{id}' not found");
+        var carrier = await _context.Carriers.FindAsync(id);
+        if (carrier is null)
+        {
+            _logger.LogWarning("GetCarrierById: carrier {CarrierId} not found", id);
+            throw new KeyNotFoundException($"Carrier with id '{id}' not found");
+        }
         return _mapper.Map<ReadCarrierDto>(carrier);
     }
 
@@ -99,11 +107,13 @@ public class CarrierService : ICarrierService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("CreateCarrier: unauthorized attempt to create a carrier (role {ClientRole})", clientRole);
             throw new UnauthorizedAccessException("You do not have permission to create a carrier");
         }
         var newCarrier = _mapper.Map<Carriers>(carrierDto);
         _context.Carriers.Add(newCarrier);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("CreateCarrier: carrier {CarrierId} created", newCarrier.id_carrier);
         return _mapper.Map<ReadCarrierDto>(newCarrier);
     }
 
@@ -112,6 +122,7 @@ public class CarrierService : ICarrierService
         var newCarrier = _mapper.Map<Carriers>(carrierDto);
         _context.Carriers.Add(newCarrier);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("CreateFirstCarrier: carrier {CarrierId} created", newCarrier.id_carrier);
         return _mapper.Map<ReadCarrierDto>(newCarrier);
     }
 
@@ -120,9 +131,15 @@ public class CarrierService : ICarrierService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("UpdateCarrier: unauthorized attempt to update carrier {CarrierId} (role {ClientRole})", id, clientRole);
             throw new UnauthorizedAccessException("You do not have permission to update a carrier");
         }
-        var carrierToUpdate = await _context.Carriers.FindAsync(id) ?? throw new KeyNotFoundException($"Carrier with id '{id}' not found");
+        var carrierToUpdate = await _context.Carriers.FindAsync(id);
+        if (carrierToUpdate is null)
+        {
+            _logger.LogWarning("UpdateCarrier: carrier {CarrierId} not found", id);
+            throw new KeyNotFoundException($"Carrier with id '{id}' not found");
+        }
         if (carrierDto.country is not null)
         {
             carrierToUpdate.country = carrierDto.country.Value;
@@ -148,6 +165,7 @@ public class CarrierService : ICarrierService
             carrierToUpdate.name = carrierDto.name;
         }
         await _context.SaveChangesAsync();
+        _logger.LogInformation("UpdateCarrier: carrier {CarrierId} updated", id);
         return _mapper.Map<ReadCarrierDto>(carrierToUpdate);
     }
 
@@ -156,10 +174,17 @@ public class CarrierService : ICarrierService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("DeleteCarrier: unauthorized attempt to delete carrier {CarrierId} (role {ClientRole})", id, clientRole);
             throw new UnauthorizedAccessException("You do not have permission to delete a carrier");
         }
-        var carrierToDelete = await _context.Carriers.FindAsync(id) ?? throw new KeyNotFoundException($"Carrier with id '{id}' not found");
+        var carrierToDelete = await _context.Carriers.FindAsync(id);
+        if (carrierToDelete is null)
+        {
+            _logger.LogWarning("DeleteCarrier: carrier {CarrierId} not found", id);
+            throw new KeyNotFoundException($"Carrier with id '{id}' not found");
+        }
         _context.Carriers.Remove(carrierToDelete);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("DeleteCarrier: carrier {CarrierId} deleted", id);
     }
 }

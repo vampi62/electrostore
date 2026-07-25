@@ -32,7 +32,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private LedService CreateService(ApplicationDbContext context)
         {
-            return new LedService(_mapper, context, _mqttClient.Object, _sessionService.Object, _validateStoreService.Object);
+            return new LedService(_mapper, context, _mqttClient.Object, _sessionService.Object, _validateStoreService.Object, CreateLogger<LedService>());
         }
 
         private void SetClientRole(UserRole role)

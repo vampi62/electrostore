@@ -17,7 +17,7 @@ namespace ElectrostoreAPI.Tests.Services
     {
         private ProjetStatusService CreateService(ApplicationDbContext context)
         {
-            return new ProjetStatusService(_mapper, context);
+            return new ProjetStatusService(_mapper, context, CreateLogger<ProjetStatusService>());
         }
 
         private static Projets BuildProjet(int id, string name = "Projet")

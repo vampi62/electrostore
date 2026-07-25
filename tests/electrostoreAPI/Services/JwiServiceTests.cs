@@ -47,7 +47,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private JwiService CreateService(ApplicationDbContext context)
         {
-            return new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object);
+            return new JwiService(context, Options.Create(_jwtSettings), _sessionService.Object, CreateLogger<JwiService>());
         }
 
         // Helper method to generate a real JWT token

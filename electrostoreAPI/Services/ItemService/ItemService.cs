@@ -19,18 +19,21 @@ public class ItemService : IItemService
     private readonly string _itemDocumentsPath = "itemDocuments";
     private readonly string _imagesPath = "images";
     private readonly string _imagesThumbnailsPath = "imagesThumbnails";
+    private readonly ILogger<ItemService> _logger;
 
-    public ItemService(IMapper mapper, ApplicationDbContext context, IFileService fileService, IItemHistoryService itemHistoryService)
+    public ItemService(IMapper mapper, ApplicationDbContext context, IFileService fileService, IItemHistoryService itemHistoryService, ILogger<ItemService> logger)
     {
         _mapper = mapper;
         _context = context;
         _fileService = fileService;
         _itemHistoryService = itemHistoryService;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedItemDto>> GetItems(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
+        _logger.LogDebug("GetItems: limit={Limit}, offset={Offset}, idResearchCount={IdResearchCount}", limit, offset, idResearch?.Count ?? 0);
         var query = _context.Items.AsQueryable();
         var filterResult = default(Expression<Func<Items, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
@@ -115,6 +118,7 @@ public class ItemService : IItemService
 
     public async Task<ReadExtendedItemDto> GetItemById(int id, List<string>? expand = null)
     {
+        _logger.LogDebug("GetItemById: id={ItemId}", id);
         var query = _context.Items.AsQueryable();
         query = query.Where(i => i.id_item == id);
         var item = await query
@@ -134,7 +138,12 @@ public class ItemService : IItemService
                 ItemsHistory = expand != null && expand.Contains("item_history") ? i.ItemsHistory.OrderByDescending(h => h.created_at).Take(20).ToList() : null,
                 quantity_item = i.ItemsBoxs.Sum(ib => ib.qte_item_box)
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Item with id '{id}' not found");
+            .FirstOrDefaultAsync();
+        if (item is null)
+        {
+            _logger.LogWarning("GetItemById: Item {ItemId} not found", id);
+            throw new KeyNotFoundException($"Item with id '{id}' not found");
+        }
         return _mapper.Map<ReadExtendedItemDto>(item.Item) with
         {
             item_tags_count = item.ItemsTagsCount,
@@ -157,11 +166,13 @@ public class ItemService : IItemService
         // check if img exists
         if (itemDto.id_img is not null && !await _context.Imgs.AnyAsync(i => i.id_img == itemDto.id_img))
         {
+            _logger.LogWarning("CreateItem: Img {ImgId} not found", itemDto.id_img);
             throw new KeyNotFoundException($"Img with id '{itemDto.id_img}' not found");
         }
         // check if item already exists
         if (await _context.Items.AnyAsync(i => i.reference_name_item == itemDto.reference_name_item))
         {
+            _logger.LogWarning("CreateItem: Item with name {ReferenceName} already exists", itemDto.reference_name_item);
             throw new InvalidOperationException($"Item with name '{itemDto.reference_name_item}' already exists");
         }
         var item = _mapper.Map<Items>(itemDto);
@@ -171,18 +182,25 @@ public class ItemService : IItemService
         await _fileService.CreateDirectory(Path.Combine(_itemDocumentsPath, item.id_item.ToString()));
         await _context.SaveChangesAsync();
         await _itemHistoryService.LogHistory(item.id_item, null, ItemHistoryType.ItemCreated);
+        _logger.LogInformation("Item {ItemId} created", item.id_item);
         return _mapper.Map<ReadItemDto>(item);
     }
 
     public async Task<ReadItemDto> UpdateItem(int id, UpdateItemDto itemDto)
     {
         // check if img exists
-        var itemToUpdate = await _context.Items.FindAsync(id) ?? throw new KeyNotFoundException($"Item with id '{id}' not found");
+        var itemToUpdate = await _context.Items.FindAsync(id);
+        if (itemToUpdate is null)
+        {
+            _logger.LogWarning("UpdateItem: Item {ItemId} not found", id);
+            throw new KeyNotFoundException($"Item with id '{id}' not found");
+        }
         if (itemDto.reference_name_item is not null)
         {
             // check if another item with the name already exists
             if (await _context.Items.AnyAsync(i => i.reference_name_item == itemDto.reference_name_item && i.id_item != id))
             {
+                _logger.LogWarning("UpdateItem: Item with name {ReferenceName} already exists", itemDto.reference_name_item);
                 throw new InvalidOperationException($"Item with name '{itemDto.reference_name_item}' already exists");
             }
             itemToUpdate.reference_name_item = itemDto.reference_name_item;
@@ -204,23 +222,31 @@ public class ItemService : IItemService
             var img = await _context.Imgs.FindAsync(itemDto.id_img);
             if ((img is null) || (id != img.id_item))
             {
+                _logger.LogWarning("UpdateItem: Img {ImgId} not found for Item {ItemId}", itemDto.id_img, id);
                 throw new KeyNotFoundException($"Img with id '{itemDto.id_img}' not found");
             }
             itemToUpdate.id_img = itemDto.id_img;
         }
         await _context.SaveChangesAsync();
         await _itemHistoryService.LogHistory(id, null, ItemHistoryType.ItemUpdated);
+        _logger.LogInformation("Item {ItemId} updated", id);
         return _mapper.Map<ReadItemDto>(itemToUpdate);
     }
 
     public async Task DeleteItem(int id)
     {
-        var itemToDelete = await _context.Items.FindAsync(id) ?? throw new KeyNotFoundException($"Item with id '{id}' not found");
+        var itemToDelete = await _context.Items.FindAsync(id);
+        if (itemToDelete is null)
+        {
+            _logger.LogWarning("DeleteItem: Item {ItemId} not found", id);
+            throw new KeyNotFoundException($"Item with id '{id}' not found");
+        }
         await _itemHistoryService.LogHistory(id, null, ItemHistoryType.ItemDeleted);
         _context.Items.Remove(itemToDelete);
         await _fileService.DeleteDirectory(Path.Combine(_imagesPath, id.ToString()));
         await _fileService.DeleteDirectory(Path.Combine(_imagesThumbnailsPath, id.ToString()));
         await _fileService.DeleteDirectory(Path.Combine(_itemDocumentsPath, id.ToString()));
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Item {ItemId} deleted", id);
     }
 }

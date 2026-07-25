@@ -30,7 +30,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private ImgService CreateService(ApplicationDbContext context)
         {
-            return new ImgService(_mapper, context, _fileService.Object);
+            return new ImgService(_mapper, context, _fileService.Object, CreateLogger<ImgService>());
         }
 
         private static Items BuildItem(int id, string name = "Item")

@@ -26,7 +26,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private StoreTagService CreateService(ApplicationDbContext context)
         {
-            return new StoreTagService(_mapper, context, _sessionService.Object);
+            return new StoreTagService(_mapper, context, _sessionService.Object, CreateLogger<StoreTagService>());
         }
 
         private void SetClientRole(UserRole role)

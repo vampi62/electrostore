@@ -12,10 +12,12 @@ namespace ElectrostoreAPI.Services.JwtService;
 public class JwtService : IJwtService
 {
     private readonly JwtSettings _jwtSettings;
+    private readonly ILogger<JwtService> _logger;
 
-    public JwtService(IOptions<JwtSettings> jwtSettings)
+    public JwtService(IOptions<JwtSettings> jwtSettings, ILogger<JwtService> logger)
     {
         _jwtSettings = jwtSettings.Value ?? throw new ArgumentNullException(nameof(jwtSettings));
+        _logger = logger;
     }
 
     public Task<Jwt> GenerateToken(ReadUserDto user, string reason)
@@ -78,6 +80,8 @@ public class JwtService : IJwtService
         };
         var refreshToken = tokenHandler.CreateToken(refreshTokenDescriptor);
         var refreshTokenString = tokenHandler.WriteToken(refreshToken);
+
+        _logger.LogDebug("Access/refresh token pair generated for user {UserId} (reason: {Reason})", user.id_user, reason);
 
         // return token
         return Task.FromResult(new Jwt

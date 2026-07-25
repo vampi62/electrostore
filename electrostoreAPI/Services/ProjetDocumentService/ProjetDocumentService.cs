@@ -14,20 +14,24 @@ public class ProjetDocumentService : IProjetDocumentService
     private readonly ApplicationDbContext _context;
     private readonly IFileService _fileService;
     private readonly string _projetDocumentsPath = "projetDocuments";
+    private readonly ILogger<ProjetDocumentService> _logger;
 
-    public ProjetDocumentService(IMapper mapper, ApplicationDbContext context, IFileService fileService)
+    public ProjetDocumentService(IMapper mapper, ApplicationDbContext context, IFileService fileService, ILogger<ProjetDocumentService> logger)
     {
         _mapper = mapper;
         _context = context;
         _fileService = fileService;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadProjetDocumentDto>> GetProjetDocumentsByProjetId(int projetId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
+        _logger.LogDebug("GetProjetDocumentsByProjetId: projetId={ProjetId}, limit={Limit}, offset={Offset}", projetId, limit, offset);
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
         {
+            _logger.LogWarning("GetProjetDocumentsByProjetId: projet {ProjetId} not found", projetId);
             throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsDocuments.AsQueryable();
@@ -76,9 +80,15 @@ public class ProjetDocumentService : IProjetDocumentService
 
     public async Task<ReadProjetDocumentDto> GetProjetDocumentById(int id, int? projetId = null)
     {
-        var projetDocument = await _context.ProjetsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found");
+        var projetDocument = await _context.ProjetsDocuments.FindAsync(id);
+        if (projetDocument is null)
+        {
+            _logger.LogWarning("GetProjetDocumentById: projet document {ProjetDocumentId} not found", id);
+            throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found");
+        }
         if (projetId is not null && projetDocument.id_projet != projetId)
         {
+            _logger.LogWarning("GetProjetDocumentById: projet document {ProjetDocumentId} not found for projet {ProjetId}", id, projetId);
             throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found for projet with id '{projetId}'");
         }
         return _mapper.Map<ReadProjetDocumentDto>(projetDocument);
@@ -89,6 +99,7 @@ public class ProjetDocumentService : IProjetDocumentService
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetDocumentDto.id_projet))
         {
+            _logger.LogWarning("CreateProjetDocument: projet {ProjetId} not found", projetDocumentDto.id_projet);
             throw new KeyNotFoundException($"Projet with id '{projetDocumentDto.id_projet}' not found");
         }
         var savedFile = await _fileService.SaveFile(Path.Combine(_projetDocumentsPath, projetDocumentDto.id_projet.ToString()), projetDocumentDto.document.FileName, projetDocumentDto.document.ContentType, projetDocumentDto.document.OpenReadStream());
@@ -102,14 +113,21 @@ public class ProjetDocumentService : IProjetDocumentService
         };
         await _context.ProjetsDocuments.AddAsync(projetDocument);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ProjetDocument {ProjetDocumentId} created for projet {ProjetId}", projetDocument.id_projet_document, projetDocument.id_projet);
         return _mapper.Map<ReadProjetDocumentDto>(projetDocument);
     }
 
     public async Task<ReadProjetDocumentDto> UpdateProjetDocument(int id, UpdateProjetDocumentDto projetDocumentDto, int? projetId = null)
     {
-        var projetDocument = await _context.ProjetsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found");
+        var projetDocument = await _context.ProjetsDocuments.FindAsync(id);
+        if (projetDocument is null)
+        {
+            _logger.LogWarning("UpdateProjetDocument: projet document {ProjetDocumentId} not found", id);
+            throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found");
+        }
         if (projetId is not null && projetDocument.id_projet != projetId)
         {
+            _logger.LogWarning("UpdateProjetDocument: projet document {ProjetDocumentId} not found for projet {ProjetId}", id, projetId);
             throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found for projet with id '{projetId}'");
         }
         if (projetDocumentDto.name_projet_document is not null)
@@ -117,18 +135,26 @@ public class ProjetDocumentService : IProjetDocumentService
             projetDocument.name_projet_document = projetDocumentDto.name_projet_document;
         }
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ProjetDocument {ProjetDocumentId} updated", id);
         return _mapper.Map<ReadProjetDocumentDto>(projetDocument);
     }
 
     public async Task DeleteProjetDocument(int id, int? projetId = null)
     {
-        var projetDocument = await _context.ProjetsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found");
+        var projetDocument = await _context.ProjetsDocuments.FindAsync(id);
+        if (projetDocument is null)
+        {
+            _logger.LogWarning("DeleteProjetDocument: projet document {ProjetDocumentId} not found", id);
+            throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found");
+        }
         if (projetId is not null && projetDocument.id_projet != projetId)
         {
+            _logger.LogWarning("DeleteProjetDocument: projet document {ProjetDocumentId} not found for projet {ProjetId}", id, projetId);
             throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found for projet with id '{projetId}'");
         }
         await _fileService.DeleteFile(projetDocument.url_projet_document);
         _context.ProjetsDocuments.Remove(projetDocument);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ProjetDocument {ProjetDocumentId} deleted", id);
     }
 }

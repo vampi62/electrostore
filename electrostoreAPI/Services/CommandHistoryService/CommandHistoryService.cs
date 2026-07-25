@@ -11,19 +11,23 @@ public class CommandHistoryService : ICommandHistoryService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<CommandHistoryService> _logger;
 
-    public CommandHistoryService(IMapper mapper, ApplicationDbContext context)
+    public CommandHistoryService(IMapper mapper, ApplicationDbContext context, ILogger<CommandHistoryService> logger)
     {
         _mapper = mapper;
         _context = context;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadCommandHistoryDto>> GetCommandHistoryByCommandId(int idCommand, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
+        _logger.LogDebug("GetCommandHistoryByCommandId: commandId {CommandId}, limit {Limit}, offset {Offset}", idCommand, limit, offset);
         // check if the command exists
         if (!await _context.Commands.AnyAsync(c => c.id_command == idCommand))
         {
+            _logger.LogWarning("GetCommandHistoryByCommandId: command {CommandId} not found", idCommand);
             throw new KeyNotFoundException($"Command with id '{idCommand}' not found");
         }
         var query = _context.CommandsHistory.AsQueryable();
@@ -75,16 +79,27 @@ public class CommandHistoryService : ICommandHistoryService
     {
         var query = _context.CommandsHistory.AsQueryable();
         query = query.Where(pth => pth.id_command_history == id && pth.id_command == idCommand);
-        var commandHistory = await query.FirstOrDefaultAsync()?? throw new KeyNotFoundException($"CommandHistory with id '{id}' not found for Command with id '{idCommand}'");
+        var commandHistory = await query.FirstOrDefaultAsync();
+        if (commandHistory is null)
+        {
+            _logger.LogWarning("GetCommandHistoryById: command history {CommandHistoryId} not found for command {CommandId}", id, idCommand);
+            throw new KeyNotFoundException($"CommandHistory with id '{id}' not found for Command with id '{idCommand}'");
+        }
         return _mapper.Map<ReadCommandHistoryDto>(commandHistory);
     }
 
     public async Task<ReadCommandHistoryDto> CreateCommandHistory(CreateCommandHistoryDto commandHistoryDto)
     {
-        var command = await _context.Commands.FirstOrDefaultAsync(c => c.id_command == commandHistoryDto.id_command) ?? throw new KeyNotFoundException($"Command with id '{commandHistoryDto.id_command}' not found");
+        var command = await _context.Commands.FirstOrDefaultAsync(c => c.id_command == commandHistoryDto.id_command);
+        if (command is null)
+        {
+            _logger.LogWarning("CreateCommandHistory: command {CommandId} not found", commandHistoryDto.id_command);
+            throw new KeyNotFoundException($"Command with id '{commandHistoryDto.id_command}' not found");
+        }
         var newCommandHistory = _mapper.Map<CommandsHistory>(commandHistoryDto);
         _context.CommandsHistory.Add(newCommandHistory);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("CreateCommandHistory: history entry {CommandHistoryId} created for command {CommandId}", newCommandHistory.id_command_history, newCommandHistory.id_command);
         return _mapper.Map<ReadCommandHistoryDto>(newCommandHistory);
     }
 }

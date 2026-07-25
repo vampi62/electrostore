@@ -16,7 +16,7 @@ namespace ElectrostoreAPI.Tests.Services
     {
         private ItemTagService CreateService(ApplicationDbContext context)
         {
-            return new ItemTagService(_mapper, context);
+            return new ItemTagService(_mapper, context, CreateLogger<ItemTagService>());
         }
 
         private static Items BuildItem(int id, string name = "Item")

@@ -26,7 +26,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private ItemHistoryService CreateService(ApplicationDbContext context)
         {
-            return new ItemHistoryService(_mapper, context, _sessionService.Object);
+            return new ItemHistoryService(_mapper, context, _sessionService.Object, CreateLogger<ItemHistoryService>());
         }
 
         private static Items BuildItem(int id, string name = "Item")

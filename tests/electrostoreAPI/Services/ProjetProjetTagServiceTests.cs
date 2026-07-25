@@ -26,7 +26,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private ProjetProjetTagService CreateService(ApplicationDbContext context)
         {
-            return new ProjetProjetTagService(_mapper, context, _sessionService.Object);
+            return new ProjetProjetTagService(_mapper, context, _sessionService.Object, CreateLogger<ProjetProjetTagService>());
         }
 
         private void SetClientRole(UserRole role)

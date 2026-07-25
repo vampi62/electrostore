@@ -18,20 +18,24 @@ public class ImgService : IImgService
     private readonly IFileService _fileService;
     private readonly string _imagesPath = "images";
     private readonly string _imagesThumbnailsPath = "imagesThumbnails";
+    private readonly ILogger<ImgService> _logger;
 
-    public ImgService(IMapper mapper, ApplicationDbContext context, IFileService fileService)
+    public ImgService(IMapper mapper, ApplicationDbContext context, IFileService fileService, ILogger<ImgService> logger)
     {
         _mapper = mapper;
         _context = context;
         _fileService = fileService;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadImgDto>> GetImgsByItemId(int itemId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
+        _logger.LogDebug("GetImgsByItemId: itemId={ItemId}, limit={Limit}, offset={Offset}", itemId, limit, offset);
         //check if item exists
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
+            _logger.LogWarning("GetImgsByItemId: Item {ItemId} not found", itemId);
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.Imgs.AsQueryable();
@@ -83,6 +87,7 @@ public class ImgService : IImgService
         var img = await _context.Imgs.FindAsync(id);
         if ((img is null) || (itemId is not null && img.id_item != itemId))
         {
+            _logger.LogWarning("GetImgById: Image {ImgId} not found (itemId={ItemId})", id, itemId);
             throw new KeyNotFoundException($"Image with id '{id}' not found");
         }
         return _mapper.Map<ReadImgDto>(img);
@@ -93,6 +98,7 @@ public class ImgService : IImgService
         // check if item exists
         if (await _context.Items.FindAsync(imgDto.id_item) is null)
         {
+            _logger.LogWarning("CreateImg: Item {ItemId} not found", imgDto.id_item);
             throw new KeyNotFoundException($"Item with id '{imgDto.id_item}' not found");
         }
         var savedImg = await _fileService.SaveFile(Path.Combine(_imagesPath, imgDto.id_item.ToString()), imgDto.img_file.FileName, imgDto.img_file.ContentType, imgDto.img_file.OpenReadStream());
@@ -110,6 +116,7 @@ public class ImgService : IImgService
         };
         _context.Imgs.Add(newImg);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Img {ImgId} created for Item {ItemId}", newImg.id_img, newImg.id_item);
         return _mapper.Map<ReadImgDto>(newImg);
     }
 
@@ -118,6 +125,7 @@ public class ImgService : IImgService
         var imgToUpdate = await _context.Imgs.FindAsync(id);
         if ((imgToUpdate is null) || (itemId is not null && imgToUpdate.id_item != itemId))
         {
+            _logger.LogWarning("UpdateImg: Image {ImgId} not found (itemId={ItemId})", id, itemId);
             throw new KeyNotFoundException($"Image with id '{id}' not found");
         }
         if (imgDto.nom_img is not null)
@@ -129,6 +137,7 @@ public class ImgService : IImgService
             imgToUpdate.description_img = imgDto.description_img;
         }
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Img {ImgId} updated", id);
         return _mapper.Map<ReadImgDto>(imgToUpdate);
     }
 
@@ -137,16 +146,19 @@ public class ImgService : IImgService
         var imgToDelete = await _context.Imgs.FindAsync(id);
         if ((imgToDelete is null) || (itemId is not null && imgToDelete.id_item != itemId))
         {
+            _logger.LogWarning("DeleteImg: Image {ImgId} not found (itemId={ItemId})", id, itemId);
             throw new KeyNotFoundException($"Image with id '{id}' not found");
         }
         await _fileService.DeleteFile(imgToDelete.url_picture_img);
         await _fileService.DeleteFile(imgToDelete.url_thumbnail_img);
         _context.Imgs.Remove(imgToDelete);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Img {ImgId} deleted", id);
     }
 
     public async Task StreamTrainingImagesAsync(IAsyncStreamWriter<TrainingImage> responseStream, HashSet<string>? requestedSet, CancellationToken cancellationToken)
     {
+        _logger.LogDebug("StreamTrainingImagesAsync: requestedSetCount={RequestedSetCount}", requestedSet?.Count ?? 0);
         var images = await _context.Imgs
             .AsNoTracking()
             .ToListAsync(cancellationToken);
@@ -162,7 +174,7 @@ public class ImgService : IImgService
                 var fileResult = await _fileService.GetFile(img.url_picture_img);
                 if (!fileResult.Success || fileResult.FileStream is null)
                 {
-                    Console.WriteLine($"Could not read image {img.url_picture_img}");
+                    _logger.LogWarning("StreamTrainingImagesAsync: could not read image {ImagePath}", img.url_picture_img);
                     continue;
                 }
                 using var ms = new MemoryStream();
@@ -176,7 +188,7 @@ public class ImgService : IImgService
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error streaming image {img.url_picture_img}: {ex.Message}");
+                _logger.LogError(ex, "StreamTrainingImagesAsync: error streaming image {ImagePath}", img.url_picture_img);
             }
         }
     }

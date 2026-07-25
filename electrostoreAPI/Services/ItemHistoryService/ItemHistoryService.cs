@@ -14,19 +14,23 @@ public class ItemHistoryService : IItemHistoryService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
+    private readonly ILogger<ItemHistoryService> _logger;
 
-    public ItemHistoryService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService)
+    public ItemHistoryService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, ILogger<ItemHistoryService> logger)
     {
         _mapper = mapper;
         _context = context;
         _sessionService = sessionService;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedItemHistoryDto>> GetItemHistoryByItemId(int itemId, int limit = 100, int offset = 0,
         List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        _logger.LogDebug("GetItemHistoryByItemId: itemId={ItemId}, limit={Limit}, offset={Offset}", itemId, limit, offset);
         if (!await _context.Items.AnyAsync(i => i.id_item == itemId))
         {
+            _logger.LogWarning("GetItemHistoryByItemId: Item {ItemId} not found", itemId);
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.ItemsHistory.AsQueryable();
@@ -100,8 +104,12 @@ public class ItemHistoryService : IItemHistoryService
                 Box = expand != null && expand.Contains("box") ? h.Box : null,
                 User = expand != null && expand.Contains("user") ? h.User : null
             })
-            .FirstOrDefaultAsync()
-            ?? throw new KeyNotFoundException($"ItemHistory with id '{id}' not found for Item with id '{itemId}'");
+            .FirstOrDefaultAsync();
+        if (history is null)
+        {
+            _logger.LogWarning("GetItemHistoryById: ItemHistory {ItemHistoryId} not found for Item {ItemId}", id, itemId);
+            throw new KeyNotFoundException($"ItemHistory with id '{id}' not found for Item with id '{itemId}'");
+        }
         return _mapper.Map<ReadExtendedItemHistoryDto>(history.ItemHistory) with
         {
             item = _mapper.Map<ReadExtendedItemDto>(history.Item),
@@ -113,6 +121,7 @@ public class ItemHistoryService : IItemHistoryService
     public async Task<PaginatedResponseDto<ReadExtendedItemHistoryDto>> GetItemsHistory(int limit = 100, int offset = 0,
         List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        _logger.LogDebug("GetItemsHistory: limit={Limit}, offset={Offset}", limit, offset);
         var query = _context.ItemsHistory.AsQueryable();
         var filterResult = default(Expression<Func<ItemsHistory, bool>>);
         if (rsql != null && rsql.Count > 0)
@@ -202,5 +211,6 @@ public class ItemHistoryService : IItemHistoryService
         };
         _context.ItemsHistory.Add(entry);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ItemHistory {ItemHistoryId} logged (type={HistoryType}, itemId={ItemId}, boxId={BoxId})", entry.id_item_history, type, itemId, boxId);
     }
 }

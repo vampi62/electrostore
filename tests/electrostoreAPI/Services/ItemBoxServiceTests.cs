@@ -26,7 +26,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private ItemBoxService CreateService(ApplicationDbContext context)
         {
-            return new ItemBoxService(_mapper, context, _itemHistoryService.Object);
+            return new ItemBoxService(_mapper, context, _itemHistoryService.Object, CreateLogger<ItemBoxService>());
         }
 
         private static Stores BuildStore(int id, string name = "Store")

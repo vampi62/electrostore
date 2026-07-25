@@ -20,20 +20,23 @@ public class StoreService : IStoreService
     private readonly ISessionService _sessionService;
     private readonly IValidateStoreService _validateStoreService;
     private readonly IKafkaProducerService _kafkaProducer;
+    private readonly ILogger<StoreService> _logger;
 
-    public StoreService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IValidateStoreService validateStoreService, IKafkaProducerService kafkaProducer)
+    public StoreService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IValidateStoreService validateStoreService, IKafkaProducerService kafkaProducer, ILogger<StoreService> logger)
     {
         _mapper = mapper;
         _context = context;
         _sessionService = sessionService;
         _validateStoreService = validateStoreService;
         _kafkaProducer = kafkaProducer;
+        _logger = logger;
     }
 
     // limit the number of store to 100 and add offset and search parameters
     public async Task<PaginatedResponseDto<ReadExtendedStoreDto>> GetStores(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
+        _logger.LogDebug("GetStores: limit={Limit}, offset={Offset}, idResearchCount={IdResearchCount}", limit, offset, idResearch?.Count ?? 0);
         var query = _context.Stores.AsQueryable();
         var filterResult = default(Expression<Func<Stores, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
@@ -121,7 +124,12 @@ public class StoreService : IStoreService
                 Leds = expand != null && expand.Contains("leds") ? s.Leds.Take(20).ToList() : null,
                 StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
+            .FirstOrDefaultAsync();
+        if (store is null)
+        {
+            _logger.LogWarning("GetStoreById: Store {StoreId} not found", id);
+            throw new KeyNotFoundException($"Store with id '{id}' not found");
+        }
         return _mapper.Map<ReadExtendedStoreDto>(store.Store) with
         {
             boxs_count = store.BoxsCount,
@@ -138,6 +146,7 @@ public class StoreService : IStoreService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("CreateStore: unauthorized attempt to create a store");
             throw new UnauthorizedAccessException("You do not have permission to create a store");
         }
         var newStore = _mapper.Map<Stores>(storeDto);
@@ -154,6 +163,7 @@ public class StoreService : IStoreService
                 delete = false
             })
         );
+        _logger.LogInformation("CreateStore: Store {StoreId} created", newStore.id_store);
         return _mapper.Map<ReadStoreDto>(newStore) with
         {
             mqtt_password_store = mqttPassword
@@ -165,9 +175,15 @@ public class StoreService : IStoreService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("UpdateStore: unauthorized attempt to update store {StoreId}", id);
             throw new UnauthorizedAccessException("You do not have permission to update a store");
         }
-        var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
+        var storeToUpdate = await _context.Stores.FindAsync(id);
+        if (storeToUpdate is null)
+        {
+            _logger.LogWarning("UpdateStore: Store {StoreId} not found", id);
+            throw new KeyNotFoundException($"Store with id '{id}' not found");
+        }
         var oldMqttName = storeToUpdate.mqtt_name_store;
         await _validateStoreService.UpdateStoreInformations(storeToUpdate, storeDto);
         await _validateStoreService.CheckUpdateStoreOutsideElement(storeToUpdate);
@@ -187,6 +203,7 @@ public class StoreService : IStoreService
                 })
             );
         }
+        _logger.LogInformation("UpdateStore: Store {StoreId} updated", storeToUpdate.id_store);
         return _mapper.Map<ReadStoreDto>(storeToUpdate) with
         {
             mqtt_password_store = mqttPassword
@@ -198,11 +215,17 @@ public class StoreService : IStoreService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("DeleteStore: unauthorized attempt to delete store {StoreId}", id);
             throw new UnauthorizedAccessException("You do not have permission to delete a store");
         }
-        var storeToDelete = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
+        var storeToDelete = await _context.Stores.FindAsync(id);
+        if (storeToDelete is null)
+        {
+            _logger.LogWarning("DeleteStore: Store {StoreId} not found", id);
+            throw new KeyNotFoundException($"Store with id '{id}' not found");
+        }
         _context.Stores.Remove(storeToDelete);
-        
+
         await _kafkaProducer.PublishAsync(
             "mqtt-user-events",
             storeToDelete.id_store.ToString(),
@@ -214,6 +237,7 @@ public class StoreService : IStoreService
             })
         );
         await _context.SaveChangesAsync();
+        _logger.LogInformation("DeleteStore: Store {StoreId} deleted", id);
     }
 
     public async Task<ReadStoreCompleteDto> CreateStoreComplete(CreateStoreCompleteDto storeDto)
@@ -221,6 +245,7 @@ public class StoreService : IStoreService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("CreateStoreComplete: unauthorized attempt to create a store");
             throw new UnauthorizedAccessException("You do not have permission to create a store");
         }
         var newStore = _mapper.Map<Stores>(storeDto.store);
@@ -282,7 +307,7 @@ public class StoreService : IStoreService
                 });
             }
         }
-        
+
         var mqttPassword = await GenerateMqttPasswordForStore(newStore.id_store);
         if (errorQueryLed.Count == 0 && errorQueryBox.Count == 0)
         {
@@ -298,6 +323,8 @@ public class StoreService : IStoreService
                 })
             );
         }
+        _logger.LogInformation("CreateStoreComplete: Store {StoreId} created with {ValidLedCount} valid led(s) ({ErrorLedCount} failed) and {ValidBoxCount} valid box(es) ({ErrorBoxCount} failed)",
+            newStore.id_store, validQueryLed.Count, errorQueryLed.Count, validQueryBox.Count, errorQueryBox.Count);
         return new ReadStoreCompleteDto
         {
             store = _mapper.Map<ReadStoreDto>(newStore) with
@@ -316,15 +343,21 @@ public class StoreService : IStoreService
             }
         };
     }
-    
+
     public async Task<ReadStoreCompleteDto> UpdateStoreComplete(int id, UpdateStoreCompleteDto storeDto)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("UpdateStoreComplete: unauthorized attempt to update store {StoreId}", id);
             throw new UnauthorizedAccessException("You do not have permission to update a store");
         }
-        var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
+        var storeToUpdate = await _context.Stores.FindAsync(id);
+        if (storeToUpdate is null)
+        {
+            _logger.LogWarning("UpdateStoreComplete: Store {StoreId} not found", id);
+            throw new KeyNotFoundException($"Store with id '{id}' not found");
+        }
         var oldMqttName = storeToUpdate.mqtt_name_store;
         await _validateStoreService.UpdateStoreInformations(storeToUpdate, storeDto.store);
         // Add leds and boxs, if status field indicate the new status "delete", "modified", "new"
@@ -340,7 +373,12 @@ public class StoreService : IStoreService
                 {
                     if (box.status == "new" || box.status == "modified")
                     {
-                        var boxToUpdate = await _context.Boxs.FindAsync(box.id_box) ?? throw new KeyNotFoundException($"Box with id '{box.id_box}' not found");
+                        var boxToUpdate = await _context.Boxs.FindAsync(box.id_box);
+                        if (boxToUpdate is null)
+                        {
+                            _logger.LogWarning("UpdateStoreComplete: Box {BoxId} not found", box.id_box);
+                            throw new KeyNotFoundException($"Box with id '{box.id_box}' not found");
+                        }
                         await _validateStoreService.CheckUpdateBoxPositionOverlap(boxToUpdate);
                     }
                 }
@@ -373,6 +411,8 @@ public class StoreService : IStoreService
                 })
             );
         }
+        _logger.LogInformation("UpdateStoreComplete: Store {StoreId} updated with {ValidLedCount} valid led(s) ({ErrorLedCount} failed) and {ValidBoxCount} valid box(es) ({ErrorBoxCount} failed)",
+            storeToUpdate.id_store, validQueryLed.Count, errorQueryLed.Count, validQueryBox.Count, errorQueryBox.Count);
         return new ReadStoreCompleteDto
         {
             store = _mapper.Map<ReadStoreDto>(storeToUpdate) with
@@ -399,6 +439,7 @@ public class StoreService : IStoreService
             .ToListAsync(cancellationToken);
         if (stores.Count == 0)
         {
+            _logger.LogWarning("UpdateStoreMqttStatusByMqttNameAsync: no store found for mqtt name {MqttName}", mqttName);
             return 0;
         }
         var now = DateTime.UtcNow;
@@ -408,6 +449,7 @@ public class StoreService : IStoreService
             store.mqtt_last_seen_store    = now;
         }
         await _context.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("UpdateStoreMqttStatusByMqttNameAsync: {StoreCount} store(s) updated for mqtt name {MqttName}, connected={IsConnected}", stores.Count, mqttName, mqttStatusDto.is_mqtt_connected_store);
         return stores.Count;
     }
 
@@ -427,9 +469,15 @@ public class StoreService : IStoreService
             {
                 if (led.status == "delete")
                 {
-                    var ledToDelete = await _context.Leds.FindAsync(led.id_led) ?? throw new KeyNotFoundException($"Led with id '{led.id_led}' not found");
+                    var ledToDelete = await _context.Leds.FindAsync(led.id_led);
+                    if (ledToDelete is null)
+                    {
+                        _logger.LogWarning("UpdateLedList: Led {LedId} not found", led.id_led);
+                        throw new KeyNotFoundException($"Led with id '{led.id_led}' not found");
+                    }
                     if (ledToDelete.id_store != storeToUpdate.id_store)
                     {
+                        _logger.LogWarning("UpdateLedList: Led {LedId} does not belong to store {StoreId}", led.id_led, storeToUpdate.id_store);
                         throw new ArgumentException($"Led with id '{led.id_led}' does not belong to the store with id '{storeToUpdate.id_store}'.");
                     }
                     _context.Leds.Remove(ledToDelete);
@@ -437,9 +485,15 @@ public class StoreService : IStoreService
                 }
                 else if (led.status == "modified")
                 {
-                    var ledToUpdate = await _context.Leds.FindAsync(led.id_led) ?? throw new KeyNotFoundException($"Led with id '{led.id_led}' not found");
+                    var ledToUpdate = await _context.Leds.FindAsync(led.id_led);
+                    if (ledToUpdate is null)
+                    {
+                        _logger.LogWarning("UpdateLedList: Led {LedId} not found", led.id_led);
+                        throw new KeyNotFoundException($"Led with id '{led.id_led}' not found");
+                    }
                     if (ledToUpdate.id_store != storeToUpdate.id_store)
                     {
+                        _logger.LogWarning("UpdateLedList: Led {LedId} does not belong to store {StoreId}", led.id_led, storeToUpdate.id_store);
                         throw new ArgumentException($"Led with id '{led.id_led}' does not belong to the store with id '{storeToUpdate.id_store}'.");
                     }
                     await _validateStoreService.UpdateLedInformations(ledToUpdate, _mapper.Map<UpdateLedDto>(led));
@@ -448,12 +502,27 @@ public class StoreService : IStoreService
                 }
                 else if (led.status == "new")
                 {
+                    if (led.x_led is null)
+                    {
+                        _logger.LogWarning("UpdateLedList: x_led is required for new led in store {StoreId}", storeToUpdate.id_store);
+                        throw new ArgumentException("x_led is required for new led");
+                    }
+                    if (led.y_led is null)
+                    {
+                        _logger.LogWarning("UpdateLedList: y_led is required for new led in store {StoreId}", storeToUpdate.id_store);
+                        throw new ArgumentException("y_led is required for new led");
+                    }
+                    if (led.mqtt_led_id is null)
+                    {
+                        _logger.LogWarning("UpdateLedList: mqtt_led_id is required for new led in store {StoreId}", storeToUpdate.id_store);
+                        throw new ArgumentException("mqtt_led_id is required for new led");
+                    }
                     var ledDtoFull = new CreateLedDto
                     {
-                        x_led = led.x_led ?? throw new ArgumentException("x_led is required for new led"),
-                        y_led = led.y_led ?? throw new ArgumentException("y_led is required for new led"),
+                        x_led = led.x_led.Value,
+                        y_led = led.y_led.Value,
                         id_store = storeToUpdate.id_store,
-                        mqtt_led_id = led.mqtt_led_id ?? throw new ArgumentException("mqtt_led_id is required for new led")
+                        mqtt_led_id = led.mqtt_led_id.Value
                     };
                     var newLed = _mapper.Map<Leds>(ledDtoFull);
                     _validateStoreService.ValidateLedPosition(newLed, storeToUpdate);
@@ -472,7 +541,7 @@ public class StoreService : IStoreService
         }
         return (validQueryLed, errorQueryLed);
     }
-    
+
     private async Task<(List<ReadBoxDto>, List<ErrorDetail>)> UpdateBoxList(Stores storeToUpdate, IEnumerable<UpdateBulkBoxByStoreDto> boxListDto)
     {
         var validQueryBox = new List<ReadBoxDto>();
@@ -483,9 +552,15 @@ public class StoreService : IStoreService
             {
                 if (box.status == "delete")
                 {
-                    var boxToDelete = await _context.Boxs.FindAsync(box.id_box) ?? throw new KeyNotFoundException($"Box with id '{box.id_box}' not found");
+                    var boxToDelete = await _context.Boxs.FindAsync(box.id_box);
+                    if (boxToDelete is null)
+                    {
+                        _logger.LogWarning("UpdateBoxList: Box {BoxId} not found", box.id_box);
+                        throw new KeyNotFoundException($"Box with id '{box.id_box}' not found");
+                    }
                     if (boxToDelete.id_store != storeToUpdate.id_store)
                     {
+                        _logger.LogWarning("UpdateBoxList: Box {BoxId} does not belong to store {StoreId}", box.id_box, storeToUpdate.id_store);
                         throw new ArgumentException($"Box with id '{box.id_box}' does not belong to the store with id '{storeToUpdate.id_store}'.");
                     }
                     _context.Boxs.Remove(boxToDelete);
@@ -493,9 +568,15 @@ public class StoreService : IStoreService
                 }
                 else if (box.status == "modified")
                 {
-                    var boxToUpdate = await _context.Boxs.FindAsync(box.id_box) ?? throw new KeyNotFoundException($"Box with id '{box.id_box}' not found");
+                    var boxToUpdate = await _context.Boxs.FindAsync(box.id_box);
+                    if (boxToUpdate is null)
+                    {
+                        _logger.LogWarning("UpdateBoxList: Box {BoxId} not found", box.id_box);
+                        throw new KeyNotFoundException($"Box with id '{box.id_box}' not found");
+                    }
                     if (boxToUpdate.id_store != storeToUpdate.id_store)
                     {
+                        _logger.LogWarning("UpdateBoxList: Box {BoxId} does not belong to store {StoreId}", box.id_box, storeToUpdate.id_store);
                         throw new ArgumentException($"Box with id '{box.id_box}' does not belong to the store with id '{storeToUpdate.id_store}'.");
                     }
                     await _validateStoreService.UpdateBoxInformations(boxToUpdate, _mapper.Map<UpdateBoxDto>(box));
@@ -504,12 +585,32 @@ public class StoreService : IStoreService
                 }
                 else if (box.status == "new")
                 {
+                    if (box.xstart_box is null)
+                    {
+                        _logger.LogWarning("UpdateBoxList: xstart_box is required for new box in store {StoreId}", storeToUpdate.id_store);
+                        throw new ArgumentException("xstart_box is required for new box");
+                    }
+                    if (box.ystart_box is null)
+                    {
+                        _logger.LogWarning("UpdateBoxList: ystart_box is required for new box in store {StoreId}", storeToUpdate.id_store);
+                        throw new ArgumentException("ystart_box is required for new box");
+                    }
+                    if (box.xend_box is null)
+                    {
+                        _logger.LogWarning("UpdateBoxList: xend_box is required for new box in store {StoreId}", storeToUpdate.id_store);
+                        throw new ArgumentException("xend_box is required for new box");
+                    }
+                    if (box.yend_box is null)
+                    {
+                        _logger.LogWarning("UpdateBoxList: yend_box is required for new box in store {StoreId}", storeToUpdate.id_store);
+                        throw new ArgumentException("yend_box is required for new box");
+                    }
                     var boxDtoFull = new CreateBoxDto
                     {
-                        xstart_box = box.xstart_box ?? throw new ArgumentException("xstart_box is required for new box"),
-                        ystart_box = box.ystart_box ?? throw new ArgumentException("ystart_box is required for new box"),
-                        xend_box = box.xend_box ?? throw new ArgumentException("xend_box is required for new box"),
-                        yend_box = box.yend_box ?? throw new ArgumentException("yend_box is required for new box"),
+                        xstart_box = box.xstart_box.Value,
+                        ystart_box = box.ystart_box.Value,
+                        xend_box = box.xend_box.Value,
+                        yend_box = box.yend_box.Value,
                         id_store = storeToUpdate.id_store
                     };
                     var newBox = _mapper.Map<Boxs>(boxDtoFull);

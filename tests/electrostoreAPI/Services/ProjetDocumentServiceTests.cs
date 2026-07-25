@@ -27,7 +27,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private ProjetDocumentService CreateService(ApplicationDbContext context)
         {
-            return new ProjetDocumentService(_mapper, context, _fileService.Object);
+            return new ProjetDocumentService(_mapper, context, _fileService.Object, CreateLogger<ProjetDocumentService>());
         }
 
         private static Projets BuildProjet(int id, string name = "Projet")

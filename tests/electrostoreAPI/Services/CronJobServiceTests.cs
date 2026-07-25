@@ -26,7 +26,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private CronJobService CreateService(ApplicationDbContext context)
         {
-            return new CronJobService(_mapper, context, _kafkaProducer.Object);
+            return new CronJobService(_mapper, context, _kafkaProducer.Object, CreateLogger<CronJobService>());
         }
 
         private static CronJobs BuildCronJob(int id, string name = "Job", bool isEnabled = true)

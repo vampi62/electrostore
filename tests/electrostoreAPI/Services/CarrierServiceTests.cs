@@ -34,7 +34,7 @@ namespace ElectrostoreAPI.Tests.Services
         private CarrierService CreateService(ApplicationDbContext context)
         {
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
-            return new CarrierService(_mapper, context, _sessionService.Object, _jwiService.Object, configuration, _httpClientFactory.Object);
+            return new CarrierService(_mapper, context, _sessionService.Object, _jwiService.Object, configuration, _httpClientFactory.Object, CreateLogger<CarrierService>());
         }
 
         private void SetClientRole(UserRole role)

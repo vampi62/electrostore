@@ -14,7 +14,7 @@ namespace ElectrostoreAPI.Tests.Services
     {
         private static ValidateStoreService CreateService(ApplicationDbContext context)
         {
-            return new ValidateStoreService(context);
+            return new ValidateStoreService(context, CreateLogger<ValidateStoreService>());
         }
 
         private static Stores BuildStore(int id, int xLength = 100, int yLength = 100)

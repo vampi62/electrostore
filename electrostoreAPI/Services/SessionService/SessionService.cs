@@ -8,14 +8,21 @@ public class SessionService : ISessionService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly string _errorMessageHttpContextNull = "HttpContext is null";
+    private readonly ILogger<SessionService> _logger;
 
-    public SessionService(IHttpContextAccessor httpContextAccessor)
+    public SessionService(IHttpContextAccessor httpContextAccessor, ILogger<SessionService> logger)
     {
         _httpContextAccessor = httpContextAccessor;
+        _logger = logger;
     }
     public string GetClientIp()
     {
-        var httpContext = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException(_errorMessageHttpContextNull);
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext is null)
+        {
+            _logger.LogWarning("GetClientIp: {ErrorMessage}", _errorMessageHttpContextNull);
+            throw new InvalidOperationException(_errorMessageHttpContextNull);
+        }
         var clientIp = "";
         if (httpContext.Request.Headers.TryGetValue("X-Forwarded-For", out Microsoft.Extensions.Primitives.StringValues value))
         {
@@ -60,7 +67,12 @@ public class SessionService : ISessionService
 
     public int GetClientId()
     {
-        var httpContext = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException(_errorMessageHttpContextNull);
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext is null)
+        {
+            _logger.LogWarning("GetClientId: {ErrorMessage}", _errorMessageHttpContextNull);
+            throw new InvalidOperationException(_errorMessageHttpContextNull);
+        }
         var userId = 0;
         if (httpContext.User == null)
         {
@@ -76,7 +88,12 @@ public class SessionService : ISessionService
 
     public string GetTokenId()
     {
-        var httpContext = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException(_errorMessageHttpContextNull);
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext is null)
+        {
+            _logger.LogWarning("GetTokenId: {ErrorMessage}", _errorMessageHttpContextNull);
+            throw new InvalidOperationException(_errorMessageHttpContextNull);
+        }
         var tokenId = string.Empty;
         if (httpContext.User == null)
         {
@@ -92,7 +109,12 @@ public class SessionService : ISessionService
 
     public string GetTokenAuthMethod()
     {
-        var httpContext = _httpContextAccessor.HttpContext ?? throw new InvalidOperationException(_errorMessageHttpContextNull);
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext is null)
+        {
+            _logger.LogWarning("GetTokenAuthMethod: {ErrorMessage}", _errorMessageHttpContextNull);
+            throw new InvalidOperationException(_errorMessageHttpContextNull);
+        }
         var authMethod = string.Empty;
         if (httpContext.User == null)
         {

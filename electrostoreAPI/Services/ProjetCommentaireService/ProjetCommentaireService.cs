@@ -14,20 +14,24 @@ public class ProjetCommentaireService : IProjetCommentaireService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
+    private readonly ILogger<ProjetCommentaireService> _logger;
 
-    public ProjetCommentaireService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService)
+    public ProjetCommentaireService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, ILogger<ProjetCommentaireService> logger)
     {
         _mapper = mapper;
         _context = context;
         _sessionService = sessionService;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedProjetCommentaireDto>> GetProjetCommentairesByProjetId(int projetId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        _logger.LogDebug("GetProjetCommentairesByProjetId: projetId={ProjetId}, limit={Limit}, offset={Offset}", projetId, limit, offset);
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
         {
+            _logger.LogWarning("GetProjetCommentairesByProjetId: projet {ProjetId} not found", projetId);
             throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsCommentaires.AsQueryable();
@@ -85,9 +89,11 @@ public class ProjetCommentaireService : IProjetCommentaireService
     public async Task<PaginatedResponseDto<ReadExtendedProjetCommentaireDto>> GetProjetCommentairesByUserId(int userId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
+        _logger.LogDebug("GetProjetCommentairesByUserId: userId={UserId}, limit={Limit}, offset={Offset}", userId, limit, offset);
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == userId))
         {
+            _logger.LogWarning("GetProjetCommentairesByUserId: user {UserId} not found", userId);
             throw new KeyNotFoundException($"User with id '{userId}' not found");
         }
         var query = _context.ProjetsCommentaires.AsQueryable();
@@ -154,7 +160,12 @@ public class ProjetCommentaireService : IProjetCommentaireService
         {
             query = query.Include(pc => pc.User);
         }
-        var projetCommentaire = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetCommentaire with id '{id}' not found");
+        var projetCommentaire = await query.FirstOrDefaultAsync();
+        if (projetCommentaire is null)
+        {
+            _logger.LogWarning("GetProjetCommentairesById: projet commentaire {ProjetCommentaireId} not found", id);
+            throw new KeyNotFoundException($"ProjetCommentaire with id '{id}' not found");
+        }
         return _mapper.Map<ReadExtendedProjetCommentaireDto>(projetCommentaire);
     }
 
@@ -163,16 +174,19 @@ public class ProjetCommentaireService : IProjetCommentaireService
         // check if the projet exists
         if (!await _context.Projets.AnyAsync(p => p.id_projet == projetCommentaireDto.id_projet))
         {
+            _logger.LogWarning("CreateProjetCommentaire: projet {ProjetId} not found", projetCommentaireDto.id_projet);
             throw new KeyNotFoundException($"Projet with id '{projetCommentaireDto.id_projet}' not found");
         }
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == projetCommentaireDto.id_user))
         {
+            _logger.LogWarning("CreateProjetCommentaire: user {UserId} not found", projetCommentaireDto.id_user);
             throw new KeyNotFoundException($"User with id '{projetCommentaireDto.id_user}' not found");
         }
         var newProjetCommentaire = _mapper.Map<ProjetsCommentaires>(projetCommentaireDto);
         _context.ProjetsCommentaires.Add(newProjetCommentaire);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ProjetCommentaire {ProjetCommentaireId} created for projet {ProjetId}", newProjetCommentaire.id_projet_commentaire, newProjetCommentaire.id_projet);
         return _mapper.Map<ReadProjetCommentaireDto>(newProjetCommentaire);
     }
 
@@ -181,16 +195,19 @@ public class ProjetCommentaireService : IProjetCommentaireService
         var projetCommentaireToUpdate = await _context.ProjetsCommentaires.FindAsync(id);
         if ((projetCommentaireToUpdate is null) || (projetId is not null && projetCommentaireToUpdate.id_projet != projetId) || (userId is not null && projetCommentaireToUpdate.id_user != userId))
         {
+            _logger.LogWarning("UpdateProjetCommentaire: commentaire {ProjetCommentaireId} not found", id);
             throw new KeyNotFoundException($"Commentaire with id '{id}' not found");
         }
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
         if (clientId != projetCommentaireToUpdate.id_user && clientRole < UserRole.Moderator)
         {
+            _logger.LogWarning("UpdateProjetCommentaire: user {ClientId} is not authorized to update commentaire {ProjetCommentaireId}", clientId, id);
             throw new UnauthorizedAccessException($"You are not authorized to update this commentaire");
         }
         projetCommentaireToUpdate.contenu_projet_commentaire = projetCommentaireDto.contenu_projet_commentaire ?? projetCommentaireToUpdate.contenu_projet_commentaire;
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ProjetCommentaire {ProjetCommentaireId} updated", id);
         return _mapper.Map<ReadProjetCommentaireDto>(projetCommentaireToUpdate);
     }
 
@@ -199,15 +216,18 @@ public class ProjetCommentaireService : IProjetCommentaireService
         var projetCommentaireToDelete = await _context.ProjetsCommentaires.FindAsync(id);
         if ((projetCommentaireToDelete is null) || (projetId is not null && projetCommentaireToDelete.id_projet != projetId) || (userId is not null && projetCommentaireToDelete.id_user != userId))
         {
+            _logger.LogWarning("DeleteProjetCommentaire: projet commentaire {ProjetCommentaireId} not found", id);
             throw new KeyNotFoundException($"ProjetCommentaire with id '{id}' not found");
         }
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
         if (clientId != projetCommentaireToDelete.id_user && clientRole < UserRole.Moderator)
         {
+            _logger.LogWarning("DeleteProjetCommentaire: user {ClientId} is not authorized to delete commentaire {ProjetCommentaireId}", clientId, id);
             throw new UnauthorizedAccessException($"You are not authorized to delete this commentaire");
         }
         _context.ProjetsCommentaires.Remove(projetCommentaireToDelete);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("ProjetCommentaire {ProjetCommentaireId} deleted", id);
     }
 }

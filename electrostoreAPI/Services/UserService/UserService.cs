@@ -21,8 +21,9 @@ public class UserService : IUserService
     private readonly IKafkaProducerService _kafkaProducerService;
     private readonly ISessionService _sessionService;
     private readonly IJwiService _jwiService;
+    private readonly ILogger<UserService> _logger;
 
-    public UserService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, IKafkaProducerService kafkaNotificationService, ISessionService sessionService, IJwiService jwiService)
+    public UserService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, IKafkaProducerService kafkaNotificationService, ISessionService sessionService, IJwiService jwiService, ILogger<UserService> logger)
     {
         _mapper = mapper;
         _context = context;
@@ -30,11 +31,13 @@ public class UserService : IUserService
         _kafkaProducerService = kafkaNotificationService;
         _sessionService = sessionService;
         _jwiService = jwiService;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
+        _logger.LogDebug("GetUsers: limit={Limit}, offset={Offset}, idResearchCount={IdResearchCount}", limit, offset, idResearch?.Count ?? 0);
         var query = _context.Users.AsQueryable();
         var filterResult = default(Expression<Func<Users, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
@@ -110,6 +113,7 @@ public class UserService : IUserService
             var User = _sessionService.GetClientRole();
             if (User < UserRole.Admin && userDto.role_user > UserRole.User)
             {
+                _logger.LogWarning("CreateUser: unauthorized attempt to create a user with role {Role}", userDto.role_user);
                 throw new UnauthorizedAccessException("You are not allowed to create a user with this role");
             }
         }
@@ -117,6 +121,7 @@ public class UserService : IUserService
         var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user);
         if (user is not null)
         {
+            _logger.LogWarning("CreateUser: email {Email} is already used", userDto.email_user);
             throw new InvalidOperationException($"Email '{userDto.email_user}' is already used");
         }
         var newUser = new Users
@@ -152,8 +157,9 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+            _logger.LogError(ex, "CreateUser: failed to send account-created notification email to user {UserId}", newUser.id_user);
         }
+        _logger.LogInformation("CreateUser: User {UserId} created", newUser.id_user);
         return _mapper.Map<ReadUserDto>(newUser);
     }
 
@@ -163,6 +169,7 @@ public class UserService : IUserService
         var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user);
         if (user is not null)
         {
+            _logger.LogWarning("CreateFirstAdminUser: email {Email} is already used", userDto.email_user);
             throw new InvalidOperationException($"Email '{userDto.email_user}' is already used");
         }
         var newUser = new Users
@@ -175,6 +182,7 @@ public class UserService : IUserService
         };
         _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("CreateFirstAdminUser: first admin User {UserId} created", newUser.id_user);
         return _mapper.Map<ReadUserDto>(newUser);
     }
 
@@ -191,7 +199,12 @@ public class UserService : IUserService
                 ProjetsCommentaires = expand != null && expand.Contains("projets_commentaires") ? u.ProjetsCommentaires.Take(20).ToList() : null,
                 CommandsCommentaires = expand != null && expand.Contains("commands_commentaires") ? u.CommandsCommentaires.Take(20).ToList() : null
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"User with id '{id}' not found");
+            .FirstOrDefaultAsync();
+        if (user is null)
+        {
+            _logger.LogWarning("GetUserById: User {UserId} not found", id);
+            throw new KeyNotFoundException($"User with id '{id}' not found");
+        }
         return _mapper.Map<ReadExtendedUserDto>(user.User) with
         {
             projets_commentaires_count = user.ProjetsCommentairesCount,
@@ -207,9 +220,15 @@ public class UserService : IUserService
         var clientRole = _sessionService.GetClientRole();
         if (clientId != id && clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("UpdateUser: unauthorized attempt by client {ClientId} to update user {UserId}", clientId, id);
             throw new UnauthorizedAccessException("You are not allowed to update this user");
         }
-        var userToUpdate = await _context.Users.FindAsync(id) ?? throw new KeyNotFoundException($"User with id '{id}' not found");
+        var userToUpdate = await _context.Users.FindAsync(id);
+        if (userToUpdate is null)
+        {
+            _logger.LogWarning("UpdateUser: User {UserId} not found", id);
+            throw new KeyNotFoundException($"User with id '{id}' not found");
+        }
         if (userDto.nom_user is not null)
         {
             userToUpdate.nom_user = userDto.nom_user;
@@ -225,6 +244,7 @@ public class UserService : IUserService
             var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.email_user == userDto.email_user && u.id_user != id);
             if (existingUser != null)
             {
+                _logger.LogWarning("UpdateUser: email {Email} is already used by another user", userDto.email_user);
                 throw new InvalidOperationException($"Email '{userDto.email_user}' is already used by another user");
             }
             userToUpdate.email_user = userDto.email_user;
@@ -237,6 +257,7 @@ public class UserService : IUserService
         {
             if (userToUpdate.role_user == UserRole.Admin && userDto.role_user != UserRole.Admin && await _context.Users.CountAsync(u => u.role_user == UserRole.Admin) == 1)
             {
+                _logger.LogWarning("UpdateUser: attempt to change the role of the last admin {UserId}", id);
                 throw new InvalidOperationException("You can't change the role of the last admin");
             }
             userToUpdate.role_user = userDto.role_user ?? userToUpdate.role_user;
@@ -246,6 +267,7 @@ public class UserService : IUserService
         await _jwiService.RevokeAllAccessTokenByUser(id, "User update account");
         // send email to the user if the email has changed
         await AlerteUpdateUser(userToUpdate, userDto, oldUserEmail);
+        _logger.LogInformation("UpdateUser: User {UserId} updated", id);
         return _mapper.Map<ReadUserDto>(userToUpdate);
     }
 
@@ -255,11 +277,18 @@ public class UserService : IUserService
         var clientRole = _sessionService.GetClientRole();
         if (clientId != id && clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("DeleteUser: unauthorized attempt by client {ClientId} to delete user {UserId}", clientId, id);
             throw new UnauthorizedAccessException("You are not allowed to delete this user");
         }
-        var userToDelete = await _context.Users.FindAsync(id) ?? throw new KeyNotFoundException($"User with id '{id}' not found");
+        var userToDelete = await _context.Users.FindAsync(id);
+        if (userToDelete is null)
+        {
+            _logger.LogWarning("DeleteUser: User {UserId} not found", id);
+            throw new KeyNotFoundException($"User with id '{id}' not found");
+        }
         if (userToDelete.role_user == UserRole.Admin && await _context.Users.CountAsync(u => u.role_user == UserRole.Admin) == 1)
         {
+            _logger.LogWarning("DeleteUser: attempt to delete the last admin {UserId}", id);
             throw new InvalidOperationException("You can't delete the last admin");
         }
         await _jwiService.RevokeAllAccessTokenByUser(id, "User delete account");
@@ -284,8 +313,9 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+            _logger.LogError(ex, "DeleteUser: failed to send account-deleted notification email to user {UserId}", id);
         }
+        _logger.LogInformation("DeleteUser: User {UserId} deleted", id);
     }
 
     public async Task<ReadUserDto?> GetUserByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -341,7 +371,7 @@ public class UserService : IUserService
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+                _logger.LogError(ex, "AlerteUpdateUser: failed to send email-changed notification email to user {UserId}", userToUpdate.id_user);
             }
         }
         else if (userDto.mdp_user is not null)
@@ -363,7 +393,7 @@ public class UserService : IUserService
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+                _logger.LogError(ex, "AlerteUpdateUser: failed to send password-changed notification email to user {UserId}", userToUpdate.id_user);
             }
         }
         else
@@ -385,7 +415,7 @@ public class UserService : IUserService
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+                _logger.LogError(ex, "AlerteUpdateUser: failed to send account-updated notification email to user {UserId}", userToUpdate.id_user);
             }
         }
     }

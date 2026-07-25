@@ -24,8 +24,9 @@ public class IAService : IIAService
     private readonly IaCmdGrpc.IaCmdGrpcClient _iaGrpcClient;
     private readonly IKafkaProducerService _kafkaProducer;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<IAService> _logger;
 
-    public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IFileService fileService, IaCmdGrpc.IaCmdGrpcClient iaGrpcClient, IKafkaProducerService kafkaProducer, IConfiguration configuration)
+    public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IFileService fileService, IaCmdGrpc.IaCmdGrpcClient iaGrpcClient, IKafkaProducerService kafkaProducer, IConfiguration configuration, ILogger<IAService> logger)
     {
         _mapper = mapper;
         _context = context;
@@ -34,11 +35,13 @@ public class IAService : IIAService
         _iaGrpcClient = iaGrpcClient;
         _kafkaProducer = kafkaProducer;
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadIADto>> GetIA(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<int>? idResearch = null)
     {
+        _logger.LogDebug("GetIA: limit={Limit}, offset={Offset}, idResearchCount={IdResearchCount}", limit, offset, idResearch?.Count ?? 0);
         var query = _context.IA.AsQueryable();
         var filterResult = default(Expression<Func<IA, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
@@ -90,7 +93,12 @@ public class IAService : IIAService
 
     public async Task<ReadIADto> GetIAById(int id)
     {
-        var ia = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id '{id}' not found");
+        var ia = await _context.IA.FindAsync(id);
+        if (ia is null)
+        {
+            _logger.LogWarning("GetIAById: IA {IaId} not found", id);
+            throw new KeyNotFoundException($"IA with id '{id}' not found");
+        }
         return _mapper.Map<ReadIADto>(ia);
     }
 
@@ -99,11 +107,13 @@ public class IAService : IIAService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole != UserRole.Admin)
         {
+            _logger.LogWarning("CreateIA: client role {ClientRole} is not authorized to create IA", clientRole);
             throw new UnauthorizedAccessException("You are not authorized to create IA");
         }
         var newIA = _mapper.Map<IA>(iaDto);
         _context.IA.Add(newIA);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("IA {IaId} created", newIA.id_ia);
         return _mapper.Map<ReadIADto>(newIA);
     }
 
@@ -112,9 +122,15 @@ public class IAService : IIAService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole != UserRole.Admin)
         {
+            _logger.LogWarning("UpdateIA: client role {ClientRole} is not authorized to update IA {IaId}", clientRole, id);
             throw new UnauthorizedAccessException("You are not authorized to update IA");
         }
-        var iaToUpdate = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id '{id}' not found");
+        var iaToUpdate = await _context.IA.FindAsync(id);
+        if (iaToUpdate is null)
+        {
+            _logger.LogWarning("UpdateIA: IA {IaId} not found", id);
+            throw new KeyNotFoundException($"IA with id '{id}' not found");
+        }
         if (iaDto.nom_ia is not null)
         {
             iaToUpdate.nom_ia = iaDto.nom_ia;
@@ -124,6 +140,7 @@ public class IAService : IIAService
             iaToUpdate.description_ia = iaDto.description_ia;
         }
         await _context.SaveChangesAsync();
+        _logger.LogInformation("IA {IaId} updated", id);
         return _mapper.Map<ReadIADto>(iaToUpdate);
     }
 
@@ -132,9 +149,15 @@ public class IAService : IIAService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole != UserRole.Admin)
         {
+            _logger.LogWarning("DeleteIA: client role {ClientRole} is not authorized to delete IA {IaId}", clientRole, id);
             throw new UnauthorizedAccessException("You are not authorized to delete IA");
         }
-        var iaToDelete = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id '{id}' not found");
+        var iaToDelete = await _context.IA.FindAsync(id);
+        if (iaToDelete is null)
+        {
+            _logger.LogWarning("DeleteIA: IA {IaId} not found", id);
+            throw new KeyNotFoundException($"IA with id '{id}' not found");
+        }
         // remove model if exists
         _context.IA.Remove(iaToDelete);
         var iaMessage = new IaMessage
@@ -150,12 +173,14 @@ public class IAService : IIAService
             JsonSerializer.Serialize(iaMessage)
         );
         await _context.SaveChangesAsync();
+        _logger.LogInformation("IA {IaId} deleted", id);
     }
 
     public async Task<IAStatusDto> GetIATrainingStatusById(int id)
     {
         if (await _context.IA.FindAsync(id) == null)
         {
+            _logger.LogWarning("GetIATrainingStatusById: IA {IaId} not found", id);
             throw new KeyNotFoundException($"IA with id '{id}' not found");
         }
         try
@@ -174,7 +199,7 @@ public class IAService : IIAService
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _logger.LogError(e, "GetIATrainingStatusById: error while fetching training status for IA {IaId}", id);
             return new IAStatusDto
             {
                 Status = "unknown",
@@ -193,10 +218,12 @@ public class IAService : IIAService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole != UserRole.Admin)
         {
+            _logger.LogWarning("StartIATrainById: client role {ClientRole} is not authorized to train IA {IaId}", clientRole, id);
             throw new UnauthorizedAccessException("You are not authorized to train IA");
         }
         if (await _context.IA.FindAsync(id) == null)
         {
+            _logger.LogWarning("StartIATrainById: IA {IaId} not found", id);
             throw new KeyNotFoundException($"IA with id '{id}' not found");
         }
         try
@@ -213,19 +240,26 @@ public class IAService : IIAService
                 id.ToString(),
                 JsonSerializer.Serialize(iaMessage)
             );
+            _logger.LogInformation("IA {IaId} train requested", id);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _logger.LogError(e, "StartIATrainById: error while requesting training for IA {IaId}", id);
             throw new InvalidOperationException("Error while training IA", e);
         }
     }
 
     public async Task<PredictionOutput> IADetectItem(int id, DetecDto detecDto)
     {
-        var ia = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id '{id}' not found");
+        var ia = await _context.IA.FindAsync(id);
+        if (ia is null)
+        {
+            _logger.LogWarning("IADetectItem: IA {IaId} not found", id);
+            throw new KeyNotFoundException($"IA with id '{id}' not found");
+        }
         if (!ia.trained_ia)
         {
+            _logger.LogWarning("IADetectItem: IA {IaId} is not trained", id);
             throw new InvalidOperationException("IA is not trained");
         }
         try
@@ -248,7 +282,7 @@ public class IAService : IIAService
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _logger.LogError(e, "IADetectItem: error while detecting item using IA {IaId}", id);
             throw new InvalidOperationException("Error while detecting item", e);
         }
     }
@@ -260,7 +294,7 @@ public class IAService : IIAService
 
         if (ia is null)
         {
-            Console.WriteLine($"IA with id '{id}' not found for status update.");
+            _logger.LogWarning("UpdateIaStatusAsync: IA {IaId} not found for status update", id);
             return false;
         }
 
@@ -270,23 +304,23 @@ public class IAService : IIAService
             ia.trained_ia = true;
             ia.date_training_ia = DateTime.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
-            Console.WriteLine($"IA #{id}: training completed successfully.");
+            _logger.LogInformation("IA {IaId} training completed successfully", id);
         }
         else if (iaStatus.Status == "training_failed")
         {
             // trained_ia is left unchanged
-            Console.WriteLine($"IA #{id}: training failed with message: {iaStatus.Message}");
+            _logger.LogWarning("IA {IaId} training failed with message: {Message}", id, iaStatus.Message);
         }
         else if (iaStatus.Status == "training_started")
         {
             ia.trained_ia = false;
             ia.date_training_ia = null;
             await _context.SaveChangesAsync(cancellationToken);
-            Console.WriteLine($"IA #{id}: training started.");
+            _logger.LogInformation("IA {IaId} training started", id);
         }
         else
         {
-            Console.WriteLine($"IA #{id}: received unknown status '{iaStatus.Status}'. No changes applied.");
+            _logger.LogWarning("IA {IaId} received unknown status {Status}. No changes applied", id, iaStatus.Status);
             return false;
         }
 
@@ -296,7 +330,7 @@ public class IAService : IIAService
             var requesterId = requestedBy.ToString();
             if (requesterId == null)
             {
-                Console.WriteLine($"IA #{id}: No valid requester ID provided for notification. Skipping notification.");
+                _logger.LogWarning("IA {IaId}: no valid requester id provided for notification, skipping notification", id);
                 return true; // Status update succeeded, just no notification
             }
             try
@@ -346,11 +380,11 @@ public class IAService : IIAService
                     JsonSerializer.Serialize(notification),
                     cancellationToken);
 
-                Console.WriteLine($"Notification for user #{requesterId} about IA #{id} training {(success ? "completion" : "failure")} has been published.");
+                _logger.LogInformation("Notification for user {RequesterId} about IA {IaId} training {NotificationOutcome} has been published", requesterId, id, success ? "completion" : "failure");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error while publishing notification for IA #{id} status update: {ex.Message}");
+                _logger.LogError(ex, "UpdateIaStatusAsync: error while publishing notification for IA {IaId} status update", id);
                 // Even if notification fails, we consider the status update successful
             }
         }

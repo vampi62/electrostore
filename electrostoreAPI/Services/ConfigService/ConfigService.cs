@@ -5,14 +5,17 @@ namespace ElectrostoreAPI.Services.ConfigService;
 public class ConfigService : IConfigService
 {
     private readonly IConfiguration _configuration;
+    private readonly ILogger<ConfigService> _logger;
 
-    public ConfigService(IConfiguration configuration)
+    public ConfigService(IConfiguration configuration, ILogger<ConfigService> logger)
     {
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task<ReadConfig> getAllConfig()
     {
+        _logger.LogDebug("getAllConfig: building configuration response");
         return new ReadConfig
         {
             demo_mode = GetDemoMode(),

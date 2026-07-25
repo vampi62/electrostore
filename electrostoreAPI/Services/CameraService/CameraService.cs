@@ -22,10 +22,11 @@ public class CameraService : ICameraService
     private readonly IJwiService _jwiService;
     private readonly IConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<CameraService> _logger;
     private const string DemoModeKey = "DemoMode";
     private const string camAuthMethod = "Basic";
 
-    public CameraService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IJwiService jwiService, IConfiguration configuration, IHttpClientFactory httpClientFactory)
+    public CameraService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IJwiService jwiService, IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<CameraService> logger)
     {
         _mapper = mapper;
         _context = context;
@@ -33,12 +34,14 @@ public class CameraService : ICameraService
         _jwiService = jwiService;
         _configuration = configuration;
         _httpClientFactory = httpClientFactory;
+        _logger = logger;
     }
 
     // limit the number of camera to 100 and add offset and search parameters
     public async Task<PaginatedResponseDto<ReadCameraDto>> GetCameras(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<int>? idResearch = null)
     {
+        _logger.LogDebug("GetCameras: limit {Limit}, offset {Offset}", limit, offset);
         var query = _context.Cameras.AsQueryable();
         var filterResult = default(Expression<Func<Cameras, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
@@ -90,7 +93,12 @@ public class CameraService : ICameraService
 
     public async Task<ReadCameraDto> GetCameraById(int id)
     {
-        var camera = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id '{id}' not found");
+        var camera = await _context.Cameras.FindAsync(id);
+        if (camera is null)
+        {
+            _logger.LogWarning("GetCameraById: camera {CameraId} not found", id);
+            throw new KeyNotFoundException($"Camera with id '{id}' not found");
+        }
         return _mapper.Map<ReadCameraDto>(camera);
     }
 
@@ -99,11 +107,13 @@ public class CameraService : ICameraService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("CreateCamera: unauthorized attempt to create a camera (role {ClientRole})", clientRole);
             throw new UnauthorizedAccessException("You do not have permission to create a camera");
         }
         var newCamera = _mapper.Map<Cameras>(cameraDto);
         _context.Cameras.Add(newCamera);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("CreateCamera: camera {CameraId} created", newCamera.id_camera);
         return _mapper.Map<ReadCameraDto>(newCamera);
     }
 
@@ -112,9 +122,15 @@ public class CameraService : ICameraService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("UpdateCamera: unauthorized attempt to update camera {CameraId} (role {ClientRole})", id, clientRole);
             throw new UnauthorizedAccessException("You do not have permission to update a camera");
         }
-        var cameraToUpdate = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id '{id}' not found");
+        var cameraToUpdate = await _context.Cameras.FindAsync(id);
+        if (cameraToUpdate is null)
+        {
+            _logger.LogWarning("UpdateCamera: camera {CameraId} not found", id);
+            throw new KeyNotFoundException($"Camera with id '{id}' not found");
+        }
         if (cameraDto.nom_camera is not null)
         {
             cameraToUpdate.nom_camera = cameraDto.nom_camera;
@@ -132,6 +148,7 @@ public class CameraService : ICameraService
             cameraToUpdate.mdp_camera = cameraDto.mdp_camera;
         }
         await _context.SaveChangesAsync();
+        _logger.LogInformation("UpdateCamera: camera {CameraId} updated", id);
         return _mapper.Map<ReadCameraDto>(cameraToUpdate);
     }
 
@@ -140,16 +157,28 @@ public class CameraService : ICameraService
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
         {
+            _logger.LogWarning("DeleteCamera: unauthorized attempt to delete camera {CameraId} (role {ClientRole})", id, clientRole);
             throw new UnauthorizedAccessException("You do not have permission to delete a camera");
         }
-        var cameraToDelete = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id '{id}' not found");
+        var cameraToDelete = await _context.Cameras.FindAsync(id);
+        if (cameraToDelete is null)
+        {
+            _logger.LogWarning("DeleteCamera: camera {CameraId} not found", id);
+            throw new KeyNotFoundException($"Camera with id '{id}' not found");
+        }
         _context.Cameras.Remove(cameraToDelete);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("DeleteCamera: camera {CameraId} deleted", id);
     }
 
     public async Task<CameraStatusDto> GetCameraStatus(int id_camera)
     {
-        var camera = await _context.Cameras.FindAsync(id_camera) ?? throw new KeyNotFoundException($"Camera with id '{id_camera}' not found");
+        var camera = await _context.Cameras.FindAsync(id_camera);
+        if (camera is null)
+        {
+            _logger.LogWarning("GetCameraStatus: camera {CameraId} not found", id_camera);
+            throw new KeyNotFoundException($"Camera with id '{id_camera}' not found");
+        }
         try
         {
             if (_configuration.GetValue<bool>(DemoModeKey))
@@ -224,7 +253,7 @@ public class CameraService : ICameraService
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            _logger.LogError(ex, "GetCameraStatus: error while getting status for camera {CameraId}", id_camera);
             return new CameraStatusDto
             {
                 network = false,
@@ -235,7 +264,12 @@ public class CameraService : ICameraService
 
     public async Task<ActionResult> GetCameraCapture(int id_camera)
     {
-        var camera = await _context.Cameras.FindAsync(id_camera) ?? throw new KeyNotFoundException($"Camera with id '{id_camera}' not found");
+        var camera = await _context.Cameras.FindAsync(id_camera);
+        if (camera is null)
+        {
+            _logger.LogWarning("GetCameraCapture: camera {CameraId} not found", id_camera);
+            throw new KeyNotFoundException($"Camera with id '{id_camera}' not found");
+        }
         try
         {
             if (_configuration.GetValue<bool>(DemoModeKey))
@@ -259,21 +293,28 @@ public class CameraService : ICameraService
             var response = await client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
+                _logger.LogWarning("GetCameraCapture: camera {CameraId} returned status {StatusCode}", id_camera, response.StatusCode);
                 throw new InvalidOperationException($"Error while getting camera capture: {response.StatusCode}");
             }
             var contentStream = await response.Content.ReadAsStreamAsync();
+            _logger.LogInformation("GetCameraCapture: capture retrieved for camera {CameraId}", id_camera);
             return new FileStreamResult(contentStream, "image/jpeg");
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            _logger.LogError(ex, "GetCameraCapture: error while getting capture for camera {CameraId}", id_camera);
             throw new InvalidOperationException($"Error while getting camera capture: {ex.Message}");
         }
     }
 
     public async Task<CameraLightDto> SwitchCameraLight(int id_camera, CameraLightDto reqCamera)
     {
-        var camera = await _context.Cameras.FindAsync(id_camera) ?? throw new KeyNotFoundException($"Camera with id '{id_camera}' not found");
+        var camera = await _context.Cameras.FindAsync(id_camera);
+        if (camera is null)
+        {
+            _logger.LogWarning("SwitchCameraLight: camera {CameraId} not found", id_camera);
+            throw new KeyNotFoundException($"Camera with id '{id_camera}' not found");
+        }
         try
         {
             if (_configuration.GetValue<bool>(DemoModeKey))
@@ -292,19 +333,22 @@ public class CameraService : ICameraService
             var response = await client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
+                _logger.LogWarning("SwitchCameraLight: camera {CameraId} returned status {StatusCode}", id_camera, response.StatusCode);
                 throw new InvalidOperationException($"Error while switching camera light: {response.StatusCode}");
             }
             var content = await response.Content.ReadAsStringAsync();
             var json = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content);
             if (json is null || !json.TryGetValue("ringLightPower", out JsonElement value))
             {
+                _logger.LogWarning("SwitchCameraLight: camera {CameraId} returned an unexpected response, status {StatusCode}", id_camera, response.StatusCode);
                 throw new InvalidOperationException($"Error while switching camera light: {response.StatusCode}");
             }
+            _logger.LogInformation("SwitchCameraLight: camera {CameraId} light switched to {State}", id_camera, value.GetBoolean());
             return new CameraLightDto { state = value.GetBoolean() };
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            _logger.LogError(ex, "SwitchCameraLight: error while switching light for camera {CameraId}", id_camera);
             throw new InvalidOperationException($"Error while switching camera light: {ex.Message}");
         }
     }
@@ -313,9 +357,15 @@ public class CameraService : ICameraService
     {
         if (token is null || !_jwiService.ValidateToken(token, "access"))
         {
+            _logger.LogWarning("GetCameraStream: invalid or missing token for camera {CameraId}", id_camera);
             throw new UnauthorizedAccessException("Invalid token");
         }
-        var camera = await _context.Cameras.FindAsync(id_camera) ?? throw new KeyNotFoundException($"Camera with id '{id_camera}' not found");
+        var camera = await _context.Cameras.FindAsync(id_camera);
+        if (camera is null)
+        {
+            _logger.LogWarning("GetCameraStream: camera {CameraId} not found", id_camera);
+            throw new KeyNotFoundException($"Camera with id '{id_camera}' not found");
+        }
         try
         {
             if (_configuration.GetValue<bool>(DemoModeKey))
@@ -339,19 +389,27 @@ public class CameraService : ICameraService
             var response = await client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
+                _logger.LogWarning("GetCameraStream: camera {CameraId} returned status {StatusCode}", id_camera, response.StatusCode);
                 throw new InvalidOperationException($"Error while getting camera stream: {response.StatusCode}");
             }
             if (response.Content.Headers.ContentType is null)
             {
+                _logger.LogWarning("GetCameraStream: camera {CameraId} returned no content type, status {StatusCode}", id_camera, response.StatusCode);
                 throw new InvalidOperationException($"Error while getting camera stream: {response.StatusCode}");
             }
-            var boundary = (response.Content.Headers.ContentType.Parameters.FirstOrDefault(p => p.Name == "boundary")?.Value) ?? throw new InvalidOperationException($"Error while getting camera stream: {response.StatusCode}");
+            var boundary = response.Content.Headers.ContentType.Parameters.FirstOrDefault(p => p.Name == "boundary")?.Value;
+            if (boundary is null)
+            {
+                _logger.LogWarning("GetCameraStream: camera {CameraId} returned no boundary, status {StatusCode}", id_camera, response.StatusCode);
+                throw new InvalidOperationException($"Error while getting camera stream: {response.StatusCode}");
+            }
             var contentStream = await response.Content.ReadAsStreamAsync();
+            _logger.LogInformation("GetCameraStream: streaming camera {CameraId}", id_camera);
             return new FileStreamResult(contentStream, "multipart/x-mixed-replace; boundary=" + boundary);
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            _logger.LogError(ex, "GetCameraStream: error while getting stream for camera {CameraId}", id_camera);
             throw new InvalidOperationException($"Error while getting camera stream: {ex.Message}");
         }
     }

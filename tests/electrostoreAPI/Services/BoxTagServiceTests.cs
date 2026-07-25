@@ -26,7 +26,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private BoxTagService CreateService(ApplicationDbContext context)
         {
-            return new BoxTagService(_mapper, context, _sessionService.Object);
+            return new BoxTagService(_mapper, context, _sessionService.Object, CreateLogger<BoxTagService>());
         }
 
         private void SetClientRole(UserRole role)

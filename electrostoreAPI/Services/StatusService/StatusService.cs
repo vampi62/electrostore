@@ -12,23 +12,27 @@ public class StatusService : IStatusService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ApplicationDbContext _context;
     private readonly IKafkaProducerService _kafkaProducerService;
+    private readonly ILogger<StatusService> _logger;
 
     public StatusService(
         IMqttClient mqttClient,
         IConfiguration configuration,
         IHttpClientFactory httpClientFactory,
         ApplicationDbContext context,
-        IKafkaProducerService kafkaProducerService)
+        IKafkaProducerService kafkaProducerService,
+        ILogger<StatusService> logger)
     {
         _mqttClient = mqttClient;
         _configuration = configuration;
         _httpClientFactory = httpClientFactory;
         _context = context;
         _kafkaProducerService = kafkaProducerService;
+        _logger = logger;
     }
 
     public async Task<ReadStatusDto> GetStatus()
     {
+        _logger.LogDebug("GetStatus: aggregating health of IA, Notif, CRON, WORKER, database and Kafka");
         var iaUrl = _configuration.GetValue<string>("IAServiceHealthUrl") ?? "http://electrostoreIA:5000/health";
         var notifUrl = _configuration.GetValue<string>("NotifServiceHealthUrl") ?? "http://electrostoreNOTIF:5000/health";
         var cronUrl = _configuration.GetValue<string>("CRONServiceHealthUrl") ?? "http://electrostoreCRON:5000/health";
@@ -53,7 +57,7 @@ public class StatusService : IStatusService
             api_status = _configuration.GetValue<bool>("DemoMode") ? "demo" : "healthy",
             db_connected = dbTask.Result,
             mqtt_connected = _mqttClient.IsConnected,
-            kafka_connected = kafkaTask.Result, 
+            kafka_connected = kafkaTask.Result,
             ia_status = iaHealth.TryGetValue("status", out var iaStatus) && iaStatus.GetString() is string s ? s : "unknown",
             ia_training_in_progress = iaHealth.TryGetValue("training_in_progress", out var trainingElement) && trainingElement.ValueKind == JsonValueKind.Number && trainingElement.TryGetInt32(out var trainingCount) ? trainingCount : 0,
             notif_status = notifHealth.TryGetValue("status", out var notifStatus) && notifStatus.GetString() is string ns ? ns : "unknown",
@@ -74,8 +78,9 @@ public class StatusService : IStatusService
         {
             return await _context.Database.CanConnectAsync();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "CheckDatabaseAsync: database health check failed");
             return false;
         }
     }
@@ -91,8 +96,9 @@ public class StatusService : IStatusService
             return JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content)
                 ?? new Dictionary<string, JsonElement> { { "status", JsonDocument.Parse("\"unknown\"").RootElement } };
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "FetchServiceHealth: service at {Url} is unreachable", url);
             return new Dictionary<string, JsonElement>
             {
                 { "status", JsonDocument.Parse("\"unreachable\"").RootElement }

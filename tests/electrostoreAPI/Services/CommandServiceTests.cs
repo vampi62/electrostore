@@ -32,7 +32,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private CommandService CreateService(ApplicationDbContext context)
         {
-            return new CommandService(_mapper, context, _fileService.Object, _kafkaProducerService.Object, _commandHistoryService.Object);
+            return new CommandService(_mapper, context, _fileService.Object, _kafkaProducerService.Object, _commandHistoryService.Object, CreateLogger<CommandService>());
         }
 
         private static Carriers BuildCarrier(int id, int key = 100)

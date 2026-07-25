@@ -16,7 +16,7 @@ namespace ElectrostoreAPI.Tests.Services
     {
         private ProjetTagService CreateService(ApplicationDbContext context)
         {
-            return new ProjetTagService(_mapper, context);
+            return new ProjetTagService(_mapper, context, CreateLogger<ProjetTagService>());
         }
 
         private static ProjetTags BuildProjetTag(int id, string name, int weight = 0)
