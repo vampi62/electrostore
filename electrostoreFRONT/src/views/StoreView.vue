@@ -349,8 +349,8 @@ const labelForm = ref([
 	{ key: "mqtt_name_store", label: "store.MQTTName", type: "text", enableCondition: "func.hasPermission([2])" },
 	{ key: "xlength_store", label: "store.XLength", type: "number", enableCondition: "func.hasPermission([2])" },
 	{ key: "ylength_store", label: "store.YLength", type: "number", enableCondition: "func.hasPermission([2])" },
-	{ key: "is_mqtt_connected_store", label: "store.MqttConnected", type: "computed" },
-	{ key: "mqtt_last_seen_store", label: "store.MqttLastSeen", type: "computed" },
+	{ key: "is_mqtt_connected_store", label: "store.MqttConnected", type: "checkbox", enableCondition: "false" },
+	{ key: "mqtt_last_seen_store", label: "store.MqttLastSeen", type: "datetime", enableCondition: "false" },
 ]);
 const labelTableauModalTag = ref([
 	{ label: "store.TagName", sortable: true, key: "nom_tag", valueKey: "nom_tag", type: "text" },

@@ -17,7 +17,7 @@ public class FileService : IFileService
     {
         _minioClient = minioClient;
         _s3Enabled = configuration.GetValue<bool>("S3:Enable");
-        _s3BucketName = configuration.GetValue<string>("S3:BucketName") ?? "ElectrostoreAPI-bucket";
+        _s3BucketName = configuration.GetValue<string>("S3:BucketName") ?? "electrostore-api";
     }
     public async Task<GetFileResult> GetFile(string path)
     {

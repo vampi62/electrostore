@@ -21,22 +21,28 @@ public class ModelTrainerService : IModelTrainerService
     private readonly ILogger<ModelTrainerService> _logger;
     private readonly IaTrainingGrpc.IaTrainingGrpcClient _client;
     private readonly IFileService _fileService;
+    private readonly IConfigCacheService _configCache;
 
     public readonly ConcurrentDictionary<int, TrainingProgress> TrainingProgressMap = new();
 
-    private readonly string[] SupportedExtensions;
+    private static readonly string[] DefaultSupportedExtensions = [".jpg", ".jpeg", ".png", ".bmp"];
+
+    private string[] SupportedExtensions =>
+        _configCache.AllowedImageExtensions.Any()
+            ? _configCache.AllowedImageExtensions.ToArray()
+            : DefaultSupportedExtensions;
 
     public ModelTrainerService(IConfiguration configuration, IaTrainingGrpc.IaTrainingGrpcClient client, ILogger<ModelTrainerService> logger, IConfigCacheService configCache, IFileService fileService)
     {
         _logger = logger;
         _client = client;
         _fileService = fileService;
+        _configCache = configCache;
         _mlContext = new MLContext(seed: 123);
         _modelDir = "models";
         _imageDir = "images";
         _defaultEpochs = configuration.GetValue<int>("DefaultEpochs", 10);
         _defaultBatchSize = configuration.GetValue<int>("DefaultBatchSize", 32);
-        SupportedExtensions = configCache.AllowedImageExtensions.ToArray() ?? new[] { ".jpg", ".jpeg", ".png", ".bmp" };
     }
 
     public int IsTrainingInProgress() // return the idModel of the first model in progress, or 0 if none
@@ -61,11 +67,11 @@ public class ModelTrainerService : IModelTrainerService
     {
         try
         {
-            var dataDir = await DownloadTrainingImagesAsync(_imageDir, ct);
-            var imageFiles = LoadImagePaths(dataDir);
+            await DownloadTrainingImagesAsync(_imageDir, ct);
+            var imageFiles = LoadImagePaths(_imageDir);
             if (imageFiles.Count == 0)
             {
-                throw new InvalidOperationException($"No training images found in {dataDir}");
+                throw new InvalidOperationException($"No training images found in {_imageDir}");
             }
             var data = _mlContext.Data.LoadFromEnumerable(imageFiles);
             data = _mlContext.Data.ShuffleRows(data, seed: 123);
@@ -254,7 +260,7 @@ public class ModelTrainerService : IModelTrainerService
 
     // ---- Training images ----
 
-    private async Task<string> DownloadTrainingImagesAsync(string targetDir, CancellationToken ct = default)
+    private async Task DownloadTrainingImagesAsync(string targetDir, CancellationToken ct = default)
     {
         int count = 0;
         var existingFiles = Directory.Exists(targetDir)
@@ -276,7 +282,6 @@ public class ModelTrainerService : IModelTrainerService
             count++;
         }
         _logger.LogInformation("DownloadTrainingImages: {Count} images téléchargées dans {Dir}", count, targetDir);
-        return targetDir;
     }
 
     // ---- Model file management ----

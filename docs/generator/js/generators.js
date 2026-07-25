@@ -596,7 +596,7 @@ function generateApiAppsettings(config) {
                 "Endpoint": "garage:3900",
                 "AccessKey": config.useVault ? "{{vault:s3_access_key}}" : config.s3.accessKey,
                 "SecretKey": config.useVault ? "{{vault:s3_secret_key}}" : config.s3.secretKey,
-                "Bucket": config.s3.bucket,
+                "BucketName": config.s3.bucket,
                 "Region": config.s3.region,
                 "Secure": false
             };
@@ -606,7 +606,7 @@ function generateApiAppsettings(config) {
                 "Endpoint": config.s3External.endpoint,
                 "AccessKey": config.useVault ? "{{vault:s3_access_key}}" : config.s3External.accessKey,
                 "SecretKey": config.useVault ? "{{vault:s3_secret_key}}" : config.s3External.secretKey,
-                "Bucket": config.s3External.bucket,
+                "BucketName": config.s3External.bucket,
                 "Region": config.s3External.region,
                 "Secure": config.s3External.secure
             };
@@ -772,7 +772,7 @@ function generateIaAppsettings(config) {
                 "Endpoint": "garage:3900",
                 "AccessKey": config.useVault ? "{{vault:s3_ia_access_key}}" : config.s3Ia.accessKey,
                 "SecretKey": config.useVault ? "{{vault:s3_ia_secret_key}}" : config.s3Ia.secretKey,
-                "Bucket": config.s3Ia.bucket,
+                "BucketName": config.s3Ia.bucket,
                 "Region": config.s3Ia.region,
                 "Secure": false
             };
@@ -782,7 +782,7 @@ function generateIaAppsettings(config) {
                 "Endpoint": config.s3IaExternal.endpoint,
                 "AccessKey": config.useVault ? "{{vault:s3_ia_access_key}}" : config.s3IaExternal.accessKey,
                 "SecretKey": config.useVault ? "{{vault:s3_ia_secret_key}}" : config.s3IaExternal.secretKey,
-                "Bucket": config.s3IaExternal.bucket,
+                "BucketName": config.s3IaExternal.bucket,
                 "Region": config.s3IaExternal.region,
                 "Secure": config.s3IaExternal.secure
             };
