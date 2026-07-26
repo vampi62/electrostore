@@ -42,6 +42,8 @@ private:
 public:
     explicit WebServer(WiFiManager* wm, MQTTManager* mm, OTAManager* om);
     ~WebServer();
+    WebServer(const WebServer&) = delete;
+    WebServer& operator=(const WebServer&) = delete;
 
     void begin();
     void stop();

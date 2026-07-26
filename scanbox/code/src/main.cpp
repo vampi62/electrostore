@@ -59,7 +59,6 @@ void setup() {
     otaManager.begin();
 
     // Start web server
-    webServer = WebServer(&wifiManager, &otaManager, &cameraManager, &stripLedManager);
     webServer.begin();
 
     Logger::info("Setup complete");

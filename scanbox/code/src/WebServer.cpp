@@ -249,7 +249,6 @@ void WebServer::handleRoot(AsyncWebServerRequest *request) {
     <ul class='menu'>
         <li><a href='/wifi'>WiFi Settings</a></li>
         <li><a href='/auth'>User Settings</a></li>
-        <li><a href='/mqtt'>Mqtt Settings</a></li>
         <li><a href='/ota'>OTA Settings</a></li>
         <li><a href='/cam'>Camera Settings</a></li>
     </ul>

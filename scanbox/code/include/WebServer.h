@@ -51,6 +51,8 @@ private:
 public:
     explicit WebServer(WiFiManager* wm, OTAManager* om, CameraManager* cm, StripLedManager* sm);
     ~WebServer();
+    WebServer(const WebServer&) = delete;
+    WebServer& operator=(const WebServer&) = delete;
 
     void begin();
     void stop();

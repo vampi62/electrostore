@@ -99,7 +99,6 @@ void setup() {
     }
 
     // Start web server
-    webServer = WebServer(&wifiManager, &mqttManager, &otaManager);
     webServer.begin();
 
     Logger::info("Setup complete");
