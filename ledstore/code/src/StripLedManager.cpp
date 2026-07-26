@@ -6,14 +6,14 @@ void StripLedManager::begin() {
     for (int i = 0; i < LED_COUNT+1; i++) {
         leds[i] = new LEDInfo{0, 0, 0, 0, 0};
     }
-    strip = new Adafruit_NeoPixel(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+    strip = new Adafruit_NeoPixel(LED_COUNT+1, LED_PIN, NEO_GRB + NEO_KHZ800);
     strip->begin();
     strip->show(); // Initialize all pixels to 'off'
     startTimeLed = millis();
 }
 
 void StripLedManager::setLed(int index, uint8_t red, uint8_t green, uint8_t blue, uint8_t module, uint32_t delayTime) {
-    if (index < 0 || index >= LED_COUNT) {
+    if (index < 0 || index >= LED_COUNT+1) {
         return; // Index out of bounds
     }
     leds[index]->red = red;
@@ -38,7 +38,7 @@ void StripLedManager::calculateAnimationMode() {
 }
 
 void StripLedManager::calculateDelayTime() {
-    for (int i = 0; i < LED_COUNT; i++) {
+    for (int i = 0; i < LED_COUNT+1; i++) {
         if (leds[i]->delayTime > 0) {
             leds[i]->delayTime -= (millis() - startTimeLed);
         }
@@ -50,7 +50,7 @@ void StripLedManager::show() {
     calculateAnimationMode();
     calculateDelayTime();
     strip->clear();
-    for (int i = 0; i < LED_COUNT; i++) {
+    for (int i = 0; i < LED_COUNT+1; i++) {
         if (leds[i]->delayTime > 0)
         {
             switch (leds[i]->module)

@@ -20,7 +20,7 @@
 #define OTA_WINDOW_MS       300000  // OTA window: 5 minutes after startup
 
 // StripLed configuration
-#define LED_COUNT 30
+#define LED_COUNT 46
 #define HAS_LED_IN_BOX true
 #if defined(ESP32)
 #define LED_PIN 15
