@@ -21,7 +21,7 @@ void WebServer::begin() {
 }
 
 bool WebServer::authenticate(AsyncWebServerRequest *request) {
-    // En mode AP, l'authentification est désactivée pour permettre la réinitialisation
+    // In AP mode, authentication is disabled to allow reset
     if (!wifiManager) return true;
     if (wifiManager->getCurrentMode() == WIFI_CONN_AP) {
         return true;
@@ -37,7 +37,7 @@ bool WebServer::authenticate(AsyncWebServerRequest *request) {
 }
 
 void WebServer::setupRoutes() {
-    // Page Menu
+    // Menu page
     server->on("/", HTTP_GET, [this](AsyncWebServerRequest *request) {
         if (!authenticate(request)) return;
         handleRoot(request);
@@ -49,60 +49,60 @@ void WebServer::setupRoutes() {
         handleStatus(request);
     });
 
-    // Sauvegarde WiFi
+    // WiFi page
     server->on("/wifi", HTTP_GET, [this](AsyncWebServerRequest *request) {
         if (!authenticate(request)) return;
         handleWiFiPage(request);
     });
 
-    // Sauvegarde WiFi
+    // Save WiFi
     server->on("/wifi", HTTP_POST, [this](AsyncWebServerRequest *request) {
         if (!authenticate(request)) return;
         handleSaveWiFi(request);
     });
 
-    // Page gestion des identifiants
+    // Credentials management page
     server->on("/auth", HTTP_GET, [this](AsyncWebServerRequest *request) {
         if (!authenticate(request)) return;
         handleAuthPage(request);
     });
 
-    // Sauvegarde des identifiants
+    // Save credentials
     server->on("/auth", HTTP_POST, [this](AsyncWebServerRequest *request) {
         if (!authenticate(request)) return;
         handleSaveAuth(request);
     });
 
-    // Page OTA
+    // OTA page
     server->on("/ota", HTTP_GET, [this](AsyncWebServerRequest *request) {
         if (!authenticate(request)) return;
         handleOTAPage(request);
     });
 
-    // Sauvegarde OTA
+    // Save OTA
     server->on("/ota", HTTP_POST, [this](AsyncWebServerRequest *request) {
         if (!authenticate(request)) return;
         handleSaveOTA(request);
     });
 
-    // Page MQTT
+    // MQTT page
     server->on("/mqtt", HTTP_GET, [this](AsyncWebServerRequest *request) {
         if (!authenticate(request)) return;
         handleMQTTPage(request);
     });
 
-    // Sauvegarde MQTT
+    // Save MQTT
     server->on("/mqtt", HTTP_POST, [this](AsyncWebServerRequest *request) {
         if (!authenticate(request)) return;
         handleSaveMQTT(request);
     });
-    
-    // Fichiers statiques (CSS, JS)
+
+    // Static files (CSS, JS)
     server->on("/style.css", HTTP_GET, [this](AsyncWebServerRequest *request) {
         handleSendStyle(request);
     });
-    
-    // Fichiers statiques (CSS, JS)
+
+    // Static files (CSS, JS)
     server->on("/common.js", HTTP_GET, [this](AsyncWebServerRequest *request) {
         handleSendJS(request);
     });
@@ -116,7 +116,7 @@ void WebServer::setupRoutes() {
 void WebServer::handleRoot(AsyncWebServerRequest *request) {
     String html = R"(
 <!DOCTYPE html>
-<html lang='fr'>
+<html lang='en'>
     <head>
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
@@ -128,6 +128,7 @@ void WebServer::handleRoot(AsyncWebServerRequest *request) {
         li { margin: 10px 0; }
         .menu a { display: block; text-align: center; padding: 10px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px; }
         .menu a:hover { background-color: #45a049; }
+        .info { max-width:400px; margin:10px auto; font-size:12px; color:#888; text-align:center}
         .info a { text-align: center; margin: 3px; text-decoration: none; color: #4CAF50; }
         .info a:hover { text-decoration: underline; }
     </style>
@@ -187,7 +188,7 @@ void WebServer::handleWiFiPage(AsyncWebServerRequest *request) {
     String curSsid = wifiManager->getSsid();
     bool hasPwd = wifiManager->hasPassword();
     String html =
-        "<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'>"
+        "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'>"
         "<meta name='viewport' content='width=device-width,initial-scale=1'>"
         "<title>WiFi Settings</title><link rel='stylesheet' href='/style.css'>"
         "</head><body><h1>WiFi Settings</h1><div id='notification'></div>"
@@ -196,22 +197,22 @@ void WebServer::handleWiFiPage(AsyncWebServerRequest *request) {
         "<input type='text' id='ssid' value='" + curSsid + "' maxlength='50'></div>"
         "<div class='fg'><input type='checkbox' id='usePwd' onchange='tglPwd()' " +
         String(hasPwd ? "checked" : "") +
-        "> Mot de passe requis</div>"
-        "<div class='fg'><label>Mot de passe</label>"
+        "> Password required</div>"
+        "<div class='fg'><label>Password</label>"
         "<input type='password' id='pwd' maxlength='50' " +
         String(hasPwd ? "placeholder='&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;'" : "disabled") +
         "></div>"
-        "<button onclick='save()'>Enregistrer &amp; Red&#233;marrer</button></div>"
-        "<a class='back' href='/'>&#8592; Retour</a>"
+        "<button onclick='save()'>Save &amp; Restart</button></div>"
+        "<a class='back' href='/'>&#8592; Back</a>"
         "<div class='card'>"
-        "<b>IP :</b> " + WiFi.localIP().toString() +
-        " &nbsp; <b>MAC :</b> " + WiFi.macAddress() +
-        "<br><b>SSID actuel :</b> " + WiFi.SSID() +
-        " &nbsp; <b>Signal :</b> <span id='rssi'>" + String(WiFi.RSSI()) + " dBm</span>"
+        "<b>IP:</b> " + WiFi.localIP().toString() +
+        " &nbsp; <b>MAC:</b> " + WiFi.macAddress() +
+        "<br><b>Current SSID:</b> " + WiFi.SSID() +
+        " &nbsp; <b>Signal:</b> <span id='rssi'>" + String(WiFi.RSSI()) + " dBm</span>"
 #if defined(ESP32)
-        "<br><b>Mode :</b> " + String(WiFi.getMode() == WIFI_MODE_AP ? "AP" : "STA") +
+        "<br><b>Mode:</b> " + String(WiFi.getMode() == WIFI_MODE_AP ? "AP" : "STA") +
 #elif defined(ESP8266)
-        "<br><b>Mode :</b> " + String(WiFi.getMode() == WIFI_AP ? "AP" : "STA") +
+        "<br><b>Mode:</b> " + String(WiFi.getMode() == WIFI_AP ? "AP" : "STA") +
 #endif
         "</div>"
         "<script src='/common.js'></script><script>"
@@ -228,13 +229,13 @@ void WebServer::handleWiFiPage(AsyncWebServerRequest *request) {
 
 void WebServer::handleSaveWiFi(AsyncWebServerRequest *request) {
     if (!request->hasParam("ssid", true)) {
-        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Param\\u00e8tre ssid manquant\"}");
+        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Missing ssid parameter\"}");
         return;
     }
     String ssid     = request->getParam("ssid", true)->value();
     String password = request->hasParam("password", true) ? request->getParam("password", true)->value() : "";
     wifiManager->saveCredentials(ssid, password);
-    request->send(200, "application/json", "{\"status\":\"ok\",\"msg\":\"Credentials sauvegard\\u00e9s. Red\\u00e9marrage...\"}");
+    request->send(200, "application/json", "{\"status\":\"ok\",\"msg\":\"Credentials saved. Restarting...\"}");
     delay(1000);
     ESP.restart();
 }
@@ -243,28 +244,28 @@ void WebServer::handleAuthPage(AsyncWebServerRequest *request) {
     bool hasCred = (espPassword.length() > 0);
     bool isAP    = (wifiManager->getCurrentMode() == WIFI_CONN_AP);
     String html =
-        "<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'>"
+        "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'>"
         "<meta name='viewport' content='width=device-width,initial-scale=1'>"
-        "<title>Gestion des acc&#232;s</title><link rel='stylesheet' href='/style.css'>"
-        "</head><body><h1>Gestion des acc&#232;s</h1><div id='notification'></div>";
+        "<title>Access Management</title><link rel='stylesheet' href='/style.css'>"
+        "</head><body><h1>Access Management</h1><div id='notification'></div>";
     if (isAP)
-        html += "<div class='alert alert-warn'>&#9888; Mode AP : authentification d&#233;sactiv&#233;e.</div>";
+        html += "<div class='alert alert-warn'>&#9888; AP mode: authentication disabled.</div>";
     else if (!hasCred)
-        html += "<div class='alert alert-info'>&#9432; Aucun identifiant configur&#233;. Acc&#232;s libre.</div>";
+        html += "<div class='alert alert-info'>&#9432; No credentials configured. Free access.</div>";
     html +=
         "<div class='card'>"
-        "<div class='fg'><label>Nom d'utilisateur</label>"
+        "<div class='fg'><label>Username</label>"
         "<input type='text' id='usr' maxlength='50'></div>"
-        "<div class='fg'><label>Nouveau mot de passe</label>"
+        "<div class='fg'><label>New password</label>"
         "<input type='password' id='np' maxlength='50'></div>"
-        "<div class='fg'><label>Confirmer le mot de passe</label>"
+        "<div class='fg'><label>Confirm password</label>"
         "<input type='password' id='cp' maxlength='50'></div>";
     if (hasCred && !isAP)
-        html += "<div class='fg'><label>Ancien mot de passe</label>"
+        html += "<div class='fg'><label>Old password</label>"
                 "<input type='password' id='op' maxlength='50'></div>";
     html +=
-        "<button onclick='save()'>Enregistrer</button></div>"
-        "<a class='back' href='/'>&#8592; Retour</a>"
+        "<button onclick='save()'>Save</button></div>"
+        "<a class='back' href='/'>&#8592; Back</a>"
         "<script src='/common.js'></script><script>"
         "function save(){"
         "var d={user:document.getElementById('usr').value,"
@@ -281,28 +282,28 @@ void WebServer::handleSaveAuth(AsyncWebServerRequest *request) {
     if (!request->hasParam("user", true) ||
         !request->hasParam("newpass", true) ||
         !request->hasParam("confirmpass", true)) {
-        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Param\\u00e8tres manquants\"}");
+        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Missing parameters\"}");
         return;
     }
     String newUser  = request->getParam("user",        true)->value();
     String newPass  = request->getParam("newpass",     true)->value();
     String confPass = request->getParam("confirmpass", true)->value();
     if (newUser.indexOf(':') >= 0) {
-        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Nom d'utilisateur invalide (pas de ':')\"}");
+        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Invalid username (no ':')\"}");
         return;
     }
     if (newPass != confPass) {
-        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Mots de passe diff\\u00e9rents\"}");
+        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Passwords do not match\"}");
         return;
     }
     bool isAP = (wifiManager->getCurrentMode() == WIFI_CONN_AP);
     if (espPassword.length() > 0 && !isAP) {
         if (!request->hasParam("oldpass", true)) {
-            request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Ancien mot de passe requis\"}");
+            request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Old password required\"}");
             return;
         }
         if (request->getParam("oldpass", true)->value() != espPassword) {
-            request->send(401, "application/json", "{\"status\":\"error\",\"msg\":\"Ancien mot de passe incorrect\"}");
+            request->send(401, "application/json", "{\"status\":\"error\",\"msg\":\"Incorrect old password\"}");
             return;
         }
     }
@@ -310,7 +311,7 @@ void WebServer::handleSaveAuth(AsyncWebServerRequest *request) {
     espPassword = newPass;
     StorageManager::saveAuth(espUser, espPassword);
     otaManager->setPassword(espPassword);
-    request->send(200, "application/json", "{\"status\":\"ok\",\"msg\":\"Identifiants mis \\u00e0 jour avec succ\\u00e8s\"}");
+    request->send(200, "application/json", "{\"status\":\"ok\",\"msg\":\"Credentials updated successfully\"}");
 }
 
 
@@ -321,23 +322,23 @@ void WebServer::handleOTAPage(AsyncWebServerRequest *request) {
     String lastErr = otaManager->getLastError();
     unsigned long rem = otaManager->getRemainingTime();
     String badge = winOpen
-        ? (updating ? "<span class='badge badge-warn'>En cours</span>" : "<span class='badge badge-ok'>Ouverte</span>")
-        : "<span class='badge badge-err'>Ferm&#233;e</span>";
+        ? (updating ? "<span class='badge badge-warn'>In progress</span>" : "<span class='badge badge-ok'>Open</span>")
+        : "<span class='badge badge-err'>Closed</span>";
     String html =
-        "<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'>"
+        "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'>"
         "<meta name='viewport' content='width=device-width,initial-scale=1'>"
         "<title>OTA Settings</title><link rel='stylesheet' href='/style.css'>"
         "</head><body><h1>OTA Settings</h1><div id='notification'></div>"
-        "<div class='card'><h2>Statut</h2>"
-        "<p><b>Fen&#234;tre :</b> " + badge + "</p>"
-        "<p><b>Restant :</b> <span id='otaRem'>" + String(rem / 1000) + "</span> s</p>"
+        "<div class='card'><h2>Status</h2>"
+        "<p><b>Window:</b> " + badge + "</p>"
+        "<p><b>Remaining:</b> <span id='otaRem'>" + String(rem / 1000) + "</span> s</p>"
         "<div class='progress'><div class='progress-bar' id='otaPb' style='width:" + String(prog) + "%'></div></div>";
     if (lastErr.length() > 0)
         html += "<p style='color:#e53935;font-size:13px'>" + lastErr + "</p>";
     html +=
-        "<button class='btn-blue' onclick='openWin()'>Ouvrir fen&#234;tre OTA (" +
+        "<button class='btn-blue' onclick='openWin()'>Open OTA window (" +
         String(OTA_WINDOW_MS / 1000) + " s)</button></div>"
-        "<a class='back' href='/'>&#8592; Retour</a>"
+        "<a class='back' href='/'>&#8592; Back</a>"
         "<script src='/common.js'></script><script>"
         "function openWin(){apiPost('/ota',{},function(){setTimeout(refresh,500)});}"
         "function refresh(){fetch('/status').then(function(r){return r.json()}).then(function(d){"
@@ -352,7 +353,7 @@ void WebServer::handleSaveOTA(AsyncWebServerRequest *request) {
     otaManager->openWindow(OTA_WINDOW_MS);
     StaticJsonDocument<96> doc;
     doc["status"] = "ok";
-    doc["msg"] = "Fen\u00eatre OTA ouverte pour " + String(OTA_WINDOW_MS / 1000) + "s";
+    doc["msg"] = "OTA window opened for " + String(OTA_WINDOW_MS / 1000) + "s";
     String out; serializeJson(doc, out);
     request->send(200, "application/json", out);
 }
@@ -365,37 +366,37 @@ void WebServer::handleMQTTPage(AsyncWebServerRequest *request) {
     bool   hasPwd    = mqttManager->hasPassword();
     String topic     = mqttManager->getRawTopic();
     String badge = connected
-        ? "<span class='badge badge-ok'>Connect&#233;</span>"
-        : "<span class='badge badge-err'>D&#233;connect&#233;</span>";
+        ? "<span class='badge badge-ok'>Connected</span>"
+        : "<span class='badge badge-err'>Disconnected</span>";
     String html =
-        "<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'>"
+        "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'>"
         "<meta name='viewport' content='width=device-width,initial-scale=1'>"
         "<title>MQTT Settings</title><link rel='stylesheet' href='/style.css'>"
         "</head><body><h1>MQTT Settings</h1><div id='notification'></div>"
-        "<div class='card'><b>Statut :</b> " + badge + "</div>"
+        "<div class='card'><b>Status:</b> " + badge + "</div>"
         "<div class='card'>"
-        "<div class='fg'><label>Serveur</label>"
-        "<input type='text' id='ms' value='" + server + "' maxlength='100' placeholder='192.168.x.x ou hostname'></div>"
+        "<div class='fg'><label>Server</label>"
+        "<input type='text' id='ms' value='" + server + "' maxlength='100' placeholder='192.168.x.x or hostname'></div>"
         "<div class='fg'><label>Port</label>"
         "<input type='number' id='mp' value='" + String(port > 0 ? port : 1883) + "' min='1' max='65535'></div>"
-        "<div class='fg'><label>Utilisateur</label>"
+        "<div class='fg'><label>User</label>"
         "<input type='text' id='mu' value='" + user + "' maxlength='50'></div>"
         "<div class='fg'>";
     if (hasPwd) {
         html +=
-            "<input type='checkbox' id='chgPwd' onchange='tglPwd()'> Changer le mot de passe<br>"
+            "<input type='checkbox' id='chgPwd' onchange='tglPwd()'> Change password<br>"
             "<input type='password' id='mpwd' maxlength='50' "
             "placeholder='&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;' disabled>";
     } else {
-        html += "<label>Mot de passe</label><input type='password' id='mpwd' maxlength='50'>";
+        html += "<label>Password</label><input type='password' id='mpwd' maxlength='50'>";
     }
     html +=
         "</div>"
-        "<div class='fg'><label>Topic <small>(sans pr&#233;fixe &quot;" +
+        "<div class='fg'><label>Topic <small>(without prefix &quot;" +
         String(MQTT_BASE_TOPIC) + "/&quot;)</small></label>"
         "<input type='text' id='mt' value='" + topic + "' maxlength='100'></div>"
-        "<button onclick='save()'>Enregistrer &amp; Connecter</button></div>"
-        "<a class='back' href='/'>&#8592; Retour</a>"
+        "<button onclick='save()'>Save &amp; Connect</button></div>"
+        "<a class='back' href='/'>&#8592; Back</a>"
         "<script src='/common.js'></script><script>"
         "function tglPwd(){var f=document.getElementById('mpwd');"
         "f.disabled=!document.getElementById('chgPwd').checked;if(f.disabled)f.value='';}"
@@ -420,7 +421,7 @@ void WebServer::handleSaveMQTT(AsyncWebServerRequest *request) {
     if (!request->hasParam("server", true) ||
         !request->hasParam("port",   true) ||
         !request->hasParam("topic",  true)) {
-        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Param\\u00e8tres manquants (server, port, topic)\"}");
+        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Missing parameters (server, port, topic)\"}");
         return;
     }
     String server = request->getParam("server", true)->value();
@@ -428,18 +429,18 @@ void WebServer::handleSaveMQTT(AsyncWebServerRequest *request) {
     String user   = request->hasParam("user",  true) ? request->getParam("user",  true)->value() : "";
     String topic  = request->getParam("topic", true)->value();
     if (server.isEmpty()) {
-        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Serveur invalide\"}");
+        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Invalid server\"}");
         return;
     }
     if (port < 1 || port > 65535) {
-        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Port invalide (1-65535)\"}");
+        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Invalid port (1-65535)\"}");
         return;
     }
     if (topic.isEmpty()) {
-        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Topic invalide\"}");
+        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Invalid topic\"}");
         return;
     }
-    // Si changePassword=1, utiliser le nouveau mot de passe ; sinon conserver l'existant depuis le stockage
+    // If changePassword=1, use the new password; otherwise keep the existing one from storage
     String password;
     bool changePassword = request->hasParam("changePassword", true) &&
                           request->getParam("changePassword", true)->value() == "1";
@@ -454,8 +455,8 @@ void WebServer::handleSaveMQTT(AsyncWebServerRequest *request) {
     StaticJsonDocument<160> doc;
     doc["status"] = "ok";
     doc["msg"] = ok
-        ? ("MQTT connect\u00e9 \u00e0 " + server + ":" + String(port))
-        : ("Credentials sauvegard\u00e9s. Reconnexion auto dans " + String(MQTT_RECONNECT_INTERVAL / 1000) + "s");
+        ? ("MQTT connected to " + server + ":" + String(port))
+        : ("Credentials saved. Auto-reconnecting in " + String(MQTT_RECONNECT_INTERVAL / 1000) + "s");
     String out; serializeJson(doc, out);
     request->send(200, "application/json", out);
 }
@@ -482,7 +483,7 @@ button{width:100%;padding:10px;background:#4CAF50;color:#fff;border:none;border-
 button:hover{background:#45a049}
 .btn-blue{background:#1976D2}
 .btn-blue:hover{background:#1565C0}
-.alert{padding:10px;margin:10px 0;border-radius:4px;font-size:14px}
+.alert{padding:10px;margin:15px auto;border-radius:5px;font-size:14px;text-align:center;max-width:400px}
 .alert-info{background:#cce5ff;color:#004085}
 .alert-warn{background:#fff3cd;color:#856404}
 .badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:13px;font-weight:bold}
@@ -516,17 +517,17 @@ function apiPost(url,data,cb){
   fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body})
     .then(function(r){return r.json()})
     .then(function(d){
-      if(d.status==='ok'){showNotification(d.msg||'Enregistr\u00e9',true);if(cb)cb(d);}
-      else showNotification(d.msg||'Erreur',false);
+      if(d.status==='ok'){showNotification(d.msg||'Saved',true);if(cb)cb(d);}
+      else showNotification(d.msg||'Error',false);
     })
-    .catch(function(e){showNotification('Erreur: '+e.message,false);});
+    .catch(function(e){showNotification('Error: '+e.message,false);});
 }
 )";
     request->send(200, "application/javascript", html);
 }
 
 void WebServer::handleNotFound(AsyncWebServerRequest *request) {
-    request->send(404, "text/plain", "Page non trouvée");
+    request->send(404, "text/plain", "Page not found");
 }
 
 void WebServer::stop() {

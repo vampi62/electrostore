@@ -9,9 +9,9 @@ MQTTManager::MQTTManager(WiFiManager* wm) : wifiManager(wm)
 
 bool MQTTManager::begin() {
     _instance = this;
-    // Tentative de chargement des credentials
+    // Attempt to load credentials
     if (loadCredentials()) {
-        Logger::info("Credentials MQTT trouvés, tentative de connexion...");
+        Logger::info("MQTT credentials found, attempting to connect...");
         mqttClient.setServer(mqttServer.c_str(), mqttPort);
         mqttClient.setCallback(staticCallback);
         if (wifiManager->isConnected() && wifiManager->getCurrentMode() == WIFI_CONN_CLIENT) {
@@ -26,7 +26,7 @@ bool MQTTManager::begin() {
 bool MQTTManager::connectToMQTT(const String& server, int port,
                        const String& user, const String& password,
                        const String& topic, const String& clientPrefix) {
-    Logger::info("Connexion MQTT " + server + ":" + String(port) + "...");
+    Logger::info("MQTT connection " + server + ":" + String(port) + "...");
     String mac = wifiManager->getMACAddress();
     mac.replace(":", "");
     sessionName = clientPrefix + mac;
@@ -46,11 +46,11 @@ bool MQTTManager::connectToMQTT(const String& server, int port,
     if (connected) {
         mqttClient.subscribe(topicBase.c_str());
         publish("status", "online", true);
-        Logger::info("MQTT connecté, abonné à : " + topicBase);
+        Logger::info("MQTT connected, subscribed to: " + topicBase);
         return true;
     }
 
-    Logger::error("Échec connexion MQTT, rc=" + String(mqttClient.state()));
+    Logger::error("MQTT connection failed, rc=" + String(mqttClient.state()));
     return false;
 }
 
@@ -59,7 +59,7 @@ void MQTTManager::handleConnection() {
         unsigned long now = millis();
         if (now - _lastReconnectAttempt >= MQTT_RECONNECT_INTERVAL) {
             _lastReconnectAttempt = now;
-            Logger::info("Tentative reconnexion MQTT...");
+            Logger::info("Attempting MQTT reconnection...");
             connectToMQTT(mqttServer, mqttPort, mqttUser, mqttPassword, mqttTopic, sessionName);
         }
     }
@@ -70,12 +70,12 @@ void MQTTManager::handleConnection() {
 
 bool MQTTManager::publish(const String& subtopic, const String& payload, bool retained) {
     if (!mqttClient.connected()) {
-        Logger::warning("Tentative de publication MQTT alors que le client n'est pas connecté.");
+        Logger::warning("Attempted MQTT publish while the client is not connected.");
         return false;
     }
     String fullTopic = topicBase + "/" + subtopic;
     bool ok = mqttClient.publish(fullTopic.c_str(), payload.c_str(), retained);
-    if (!ok) Logger::error("Échec publication MQTT sur : " + fullTopic);
+    if (!ok) Logger::error("MQTT publish failed on: " + fullTopic);
     return ok;
 }
 
@@ -87,17 +87,17 @@ void MQTTManager::setCallback(MessageCallback cb) {
     messageCallback = cb;
 }
 
-// Pont statique → instance : convertit les types bruts PubSubClient en String
+// Static bridge -> instance: converts raw PubSubClient types to String
 void MQTTManager::staticCallback(char* topic, uint8_t* payload, unsigned int length) {
     if (!_instance) return;
-    Logger::debug("Message reçu sur topic : " + String(topic));
+    Logger::debug("Message received on topic: " + String(topic));
     char json[length + 1];
     strncpy(json, (const char*)payload, length);
     json[length] = '\0';
     DynamicJsonDocument doc(MQTT_BUFFER_SIZE);
     DeserializationError error = deserializeJson(doc, json);
     if (error) {
-        Logger::error("Erreur désérialisation JSON : " + String(error.c_str()));
+        Logger::error("JSON deserialization error: " + String(error.c_str()));
         return;
     }
     if (_instance->messageCallback) {

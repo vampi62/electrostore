@@ -2,48 +2,43 @@
 #include "OTAManager.h"
 #include "Logger.h"
 
-OTAManager* OTAManager::_instance = nullptr;
-
-OTAManager::OTAManager()
-    : _updating(false), _progress(0), _lastError(""),
-      _windowOpen(false), _windowStart(0), _windowDuration(0) {}
+OTAManager::OTAManager() {}
 
 void OTAManager::begin() {
-    _instance = this;
     ArduinoOTA.setHostname(OTA_HOSTNAME);
     ArduinoOTA.setPort(OTA_PORT);
 
     setPassword(OTA_DEFAULT_PASSWORD);
 
-    ArduinoOTA.onStart([]() {
-        if (_instance) {
-            _instance->_updating  = true;
-            _instance->_progress  = 0;
-            _instance->_lastError = "";
+    ArduinoOTA.onStart([this]() {
+        if (this) {
+            this->_updating  = true;
+            this->_progress  = 0;
+            this->_lastError = "";
         }
-        Logger::info("OTA : démarrage de la mise à jour");
+        Logger::info("OTA: update starting");
     });
 
-    ArduinoOTA.onEnd([]() {
-        if (_instance) {
-            _instance->_updating = false;
+    ArduinoOTA.onEnd([this]() {
+        if (this) {
+            this->_updating = false;
         }
-        Logger::info("OTA : mise à jour terminée");
+        Logger::info("OTA: update complete");
     });
 
-    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-        if (_instance) {
-            _instance->_progress = (uint8_t)(progress / (total / 100));
+    ArduinoOTA.onProgress([this](unsigned int progress, unsigned int total) {
+        if (this) {
+            this->_progress = (uint8_t)(progress / (total / 100));
         }
-        Serial.printf("OTA : %u%%\r", progress / (total / 100));
+        Serial.printf("OTA: %u%%\r", progress / (total / 100));
     });
 
-    ArduinoOTA.onError([](ota_error_t error) {
-        if (_instance) {
-            _instance->_updating  = false;
-            _instance->_lastError = String(error);
+    ArduinoOTA.onError([this](ota_error_t error) {
+        if (this) {
+            this->_updating  = false;
+            this->_lastError = String(error);
         }
-        String msg = "OTA erreur [" + String(error) + "]";
+        String msg = "OTA error [" + String(error) + "]";
         if      (error == OTA_AUTH_ERROR)    msg += " : Auth Failed";
         else if (error == OTA_BEGIN_ERROR)   msg += " : Begin Failed";
         else if (error == OTA_CONNECT_ERROR) msg += " : Connect Failed";
@@ -53,12 +48,12 @@ void OTAManager::begin() {
     });
 
     ArduinoOTA.begin();
-    Logger::info("OTA prêt — hostname: " + String(OTA_HOSTNAME) + ", port: " + String(OTA_PORT));
+    Logger::info("OTA ready — hostname: " + String(OTA_HOSTNAME) + ", port: " + String(OTA_PORT));
 }
 
 void OTAManager::setPassword(const String& password) {
     ArduinoOTA.setPassword(password.c_str());
-    Logger::info("OTA : mot de passe défini");
+    Logger::info("OTA: password set");
 }
 
 void OTAManager::handle() {
@@ -66,7 +61,7 @@ void OTAManager::handle() {
 
     if (!_updating && (millis() - _windowStart >= _windowDuration)) {
         _windowOpen = false;
-        Logger::info("OTA : fenêtre de mise à jour fermée");
+        Logger::info("OTA: update window closed");
         return;
     }
 
@@ -77,27 +72,11 @@ void OTAManager::openWindow(unsigned long durationMs) {
     _windowOpen     = true;
     _windowStart    = millis();
     _windowDuration = durationMs;
-    Logger::info("OTA : fenêtre ouverte pour " + String(durationMs / 1000) + "s");
+    Logger::info("OTA: window opened for " + String(durationMs / 1000) + "s");
 }
 
 unsigned long OTAManager::getRemainingTime() const {
     if (!_windowOpen) return 0;
     unsigned long elapsed = millis() - _windowStart;
     return (elapsed >= _windowDuration) ? 0 : (_windowDuration - elapsed) / 1000;
-}
-
-bool OTAManager::isWindowOpen() const {
-    return _windowOpen;
-}
-
-bool OTAManager::isUpdating() const {
-    return _updating;
-}
-
-uint8_t OTAManager::getProgress() const {
-    return _progress;
-}
-
-String OTAManager::getLastError() const {
-    return _lastError;
 }

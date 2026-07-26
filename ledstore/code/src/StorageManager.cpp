@@ -8,25 +8,25 @@ bool StorageManager::begin() {
 #elif defined(ESP8266)
     if (!LittleFS.begin()) {
 #endif
-        Logger::error("Erreur montage LittleFS");
+        Logger::error("LittleFS mount error");
         return false;
     }
-    Logger::info("LittleFS monté avec succès");
+    Logger::info("LittleFS mounted successfully");
     return true;
 }
 
 // ---------------------------------------------------------------------------
-// Fonctions génériques privées
+// Private generic functions
 // ---------------------------------------------------------------------------
 
 bool StorageManager::saveJson(const String& filePath, const JsonDocument& doc) {
     File file = LittleFS.open(filePath, "w");
     if (!file) {
-        Logger::error("Erreur ouverture fichier: " + filePath);
+        Logger::error("Error opening file: " + filePath);
         return false;
     }
     if (serializeJson(doc, file) == 0) {
-        Logger::error("Erreur écriture JSON: " + filePath);
+        Logger::error("Error writing JSON: " + filePath);
         file.close();
         return false;
     }
@@ -36,25 +36,25 @@ bool StorageManager::saveJson(const String& filePath, const JsonDocument& doc) {
 
 bool StorageManager::loadJson(const String& filePath, JsonDocument& doc) {
     if (!LittleFS.exists(filePath)) {
-        Logger::warning("Fichier inexistant: " + filePath);
+        Logger::warning("File does not exist: " + filePath);
         return false;
     }
     File file = LittleFS.open(filePath, "r");
     if (!file) {
-        Logger::error("Erreur lecture fichier: " + filePath);
+        Logger::error("Error reading file: " + filePath);
         return false;
     }
     DeserializationError error = deserializeJson(doc, file);
     file.close();
     if (error) {
-        Logger::error("Erreur parsing JSON (" + filePath + "): " + String(error.c_str()));
+        Logger::error("Error parsing JSON (" + filePath + "): " + String(error.c_str()));
         return false;
     }
     return true;
 }
 
 // ---------------------------------------------------------------------------
-// Config WiFi
+// WiFi Config
 // ---------------------------------------------------------------------------
 
 bool StorageManager::saveConfig(const String& ssid, const String& password) {
@@ -62,7 +62,7 @@ bool StorageManager::saveConfig(const String& ssid, const String& password) {
     doc["ssid"]     = ssid;
     doc["password"] = password;
     bool ok = saveJson(CONFIG_FILE, doc);
-    if (ok) Logger::info("Configuration sauvegardée");
+    if (ok) Logger::info("Configuration saved");
     return ok;
 }
 
@@ -83,7 +83,7 @@ bool StorageManager::saveAuth(const String& user, const String& password) {
     doc["user"]     = user;
     doc["password"] = password;
     bool ok = saveJson(AUTH_FILE, doc);
-    if (ok) Logger::info("Identifiants auth sauvegardés");
+    if (ok) Logger::info("Auth credentials saved");
     return ok;
 }
 
@@ -96,7 +96,7 @@ bool StorageManager::loadAuth(String& user, String& password) {
 }
 
 // ---------------------------------------------------------------------------
-// Config MQTT
+// MQTT Config
 // ---------------------------------------------------------------------------
 
 bool StorageManager::saveMQTTConfig(const String& server, int port, const String& user, const String& password, const String& topic) {
@@ -107,7 +107,7 @@ bool StorageManager::saveMQTTConfig(const String& server, int port, const String
     doc["password"] = password;
     doc["topic"]    = topic;
     bool ok = saveJson(MQTT_CONFIG_FILE, doc);
-    if (ok) Logger::info("Configuration MQTT sauvegardée");
+    if (ok) Logger::info("MQTT configuration saved");
     return ok;
 }
 

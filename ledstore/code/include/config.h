@@ -1,32 +1,32 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// Configuration WiFi AP
+// WiFi AP configuration
 #define AP_SSID "ESP_Config"
 #define AP_PASSWORD "ConfigPass"
 
-// Configuration WiFi Client
-#define WIFI_CONNECT_TIMEOUT 10000  // 10 secondes
+// WiFi Client configuration
+#define WIFI_CONNECT_TIMEOUT 10000  // 10 seconds
 #define WIFI_MAX_RETRIES 3
 
-// Configuration Stockage
+// Storage configuration
 #define CONFIG_FILE      "/config.json"
 #define AUTH_FILE        "/auth.json"
 #define MQTT_CONFIG_FILE "/mqtt_config.json"
 
-// Configuration OTA
+// OTA configuration
 #define OTA_HOSTNAME        "ESP32_Jardin"
 #define OTA_DEFAULT_PASSWORD "electostore"
 #define OTA_PORT            8100
-#define OTA_WINDOW_MS       300000  // Fenêtre OTA : 5 minutes après le démarrage
+#define OTA_WINDOW_MS       300000  // OTA window: 5 minutes after startup
 
-// Configuration MQTT
-#define MQTT_RECONNECT_INTERVAL 5000          // ms entre tentatives de reconnexion
+// MQTT configuration
+#define MQTT_RECONNECT_INTERVAL 5000          // ms between reconnection attempts
 #define MQTT_BASE_TOPIC         "electrostore"
 #define MQTT_CLIENT_PREFIX      "ESP32"
-#define MQTT_BUFFER_SIZE          4096  // Taille du buffer MQTT (doit être >= à la taille maximale des messages attendus)
+#define MQTT_BUFFER_SIZE          4096  // MQTT buffer size (must be >= the maximum expected message size)
 
-// Configuration StripLed
+// StripLed configuration
 #define LED_COUNT 30
 #define HAS_LED_IN_BOX true
 #if defined(ESP32)
@@ -37,7 +37,7 @@
 #error "board not supported"
 #endif
 
-// Configuration Serveur Web
+// Web server configuration
 #define WEB_SERVER_PORT 80
 
 #define VERSION "1.2"

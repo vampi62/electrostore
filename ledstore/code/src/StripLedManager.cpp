@@ -1,92 +1,80 @@
 #include "StripLedManager.h"
 
-StripLedManager* StripLedManager::_instance = nullptr;
-
-StripLedManager::StripLedManager() 
-    : strip(nullptr),
-      inputLoop(0),
-      modSlowSin(0),
-      modModerateSin(0),
-      modQuickSin(0),
-      modFastSin(0),
-      startTimeLed(0),
-      leds{nullptr}
-{}
+StripLedManager::StripLedManager() {}
 
 void StripLedManager::begin() {
-    _instance = this;
     for (int i = 0; i < LED_COUNT+1; i++) {
-        _instance->leds[i] = new LEDInfo{0, 0, 0, 0, 0};
+        leds[i] = new LEDInfo{0, 0, 0, 0, 0};
     }
-    _instance->strip = new Adafruit_NeoPixel(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
-    _instance->strip->begin();
-    _instance->strip->show(); // Initialize all pixels to 'off'
-    _instance->startTimeLed = millis();
+    strip = new Adafruit_NeoPixel(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+    strip->begin();
+    strip->show(); // Initialize all pixels to 'off'
+    startTimeLed = millis();
 }
 
 void StripLedManager::setLed(int index, uint8_t red, uint8_t green, uint8_t blue, uint8_t module, uint32_t delayTime) {
     if (index < 0 || index >= LED_COUNT) {
         return; // Index out of bounds
     }
-    _instance->leds[index]->red = red;
-    _instance->leds[index]->green = green;
-    _instance->leds[index]->blue = blue;
-    _instance->leds[index]->module = module;
-    _instance->leds[index]->delayTime = delayTime;
-    _instance->strip->setPixelColor(index, _instance->strip->Color(red, green, blue));
-    _instance->strip->show();
+    leds[index]->red = red;
+    leds[index]->green = green;
+    leds[index]->blue = blue;
+    leds[index]->module = module;
+    leds[index]->delayTime = delayTime;
+    strip->setPixelColor(index, strip->Color(red, green, blue));
+    strip->show();
 }
 
 void StripLedManager::calculateAnimationMode() {
-    _instance->inputLoop = _instance->inputLoop + 0.01;
-    if (_instance->inputLoop >= 1080)
+    inputLoop = inputLoop + 0.01;
+    if (inputLoop >= 1080)
     {
-      _instance->inputLoop = 0;
+      inputLoop = 0;
     }
-    _instance->modSlowSin = fabs(sin(_instance->inputLoop));
-    _instance->modModerateSin = fabs(sin(_instance->inputLoop / 0.5));
-    _instance->modQuickSin = fabs(sin(_instance->inputLoop / 0.25));
-    _instance->modFastSin = fabs(sin(_instance->inputLoop / 0.125));
+    modSlowSin = fabs(sin(inputLoop));
+    modModerateSin = fabs(sin(inputLoop / 0.5));
+    modQuickSin = fabs(sin(inputLoop / 0.25));
+    modFastSin = fabs(sin(inputLoop / 0.125));
 }
 
 void StripLedManager::calculateDelayTime() {
     for (int i = 0; i < LED_COUNT; i++) {
-        if (_instance->leds[i]->delayTime > 0) {
-            _instance->leds[i]->delayTime -= (millis() - _instance->startTimeLed);
+        if (leds[i]->delayTime > 0) {
+            leds[i]->delayTime -= (millis() - startTimeLed);
         }
     }
-    _instance->startTimeLed = millis();
+    startTimeLed = millis();
 }
 
 void StripLedManager::show() {
-    _instance->calculateAnimationMode();
-    _instance->calculateDelayTime();
-    _instance->strip->clear();
+    calculateAnimationMode();
+    calculateDelayTime();
+    strip->clear();
     for (int i = 0; i < LED_COUNT; i++) {
-        if (_instance->leds[i]->delayTime > 0)
+        if (leds[i]->delayTime > 0)
         {
-            switch (_instance->leds[i]->module)
+            switch (leds[i]->module)
             {
                 case 1:
-                    _instance->strip->setPixelColor(i, _instance->strip->Color(_instance->leds[i]->red, _instance->leds[i]->green, _instance->leds[i]->blue));
+                    strip->setPixelColor(i, strip->Color(leds[i]->red, leds[i]->green, leds[i]->blue));
                     break;
                 case 2:
-                    _instance->strip->setPixelColor(i, _instance->strip->Color(_instance->leds[i]->red * _instance->modSlowSin, _instance->leds[i]->green * _instance->modSlowSin, _instance->leds[i]->blue * _instance->modSlowSin));
+                    strip->setPixelColor(i, strip->Color(leds[i]->red * modSlowSin, leds[i]->green * modSlowSin, leds[i]->blue * modSlowSin));
                     break;
                 case 3:
-                    _instance->strip->setPixelColor(i, _instance->strip->Color(_instance->leds[i]->red * _instance->modModerateSin, _instance->leds[i]->green * _instance->modModerateSin, _instance->leds[i]->blue * _instance->modModerateSin));
+                    strip->setPixelColor(i, strip->Color(leds[i]->red * modModerateSin, leds[i]->green * modModerateSin, leds[i]->blue * modModerateSin));
                     break;
                 case 4:
-                    _instance->strip->setPixelColor(i, _instance->strip->Color(_instance->leds[i]->red * _instance->modQuickSin, _instance->leds[i]->green * _instance->modQuickSin, _instance->leds[i]->blue * _instance->modQuickSin));
+                    strip->setPixelColor(i, strip->Color(leds[i]->red * modQuickSin, leds[i]->green * modQuickSin, leds[i]->blue * modQuickSin));
                     break;
                 case 5:
-                    _instance->strip->setPixelColor(i, _instance->strip->Color(_instance->leds[i]->red * _instance->modFastSin, _instance->leds[i]->green * _instance->modFastSin, _instance->leds[i]->blue * _instance->modFastSin));
+                    strip->setPixelColor(i, strip->Color(leds[i]->red * modFastSin, leds[i]->green * modFastSin, leds[i]->blue * modFastSin));
                     break;
                 default:
-                    _instance->strip->setPixelColor(i, _instance->strip->Color(_instance->leds[i]->red, _instance->leds[i]->green, _instance->leds[i]->blue));
+                    strip->setPixelColor(i, strip->Color(leds[i]->red, leds[i]->green, leds[i]->blue));
                     break;
             }
         }
     }
-    _instance->strip->show();
+    strip->show();
 }

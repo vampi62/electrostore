@@ -17,22 +17,22 @@ private:
 public:
     explicit OTAManager();
 
-    // Initialise et démarre le service OTA
+    // Initializes and starts the OTA service
     void begin();
 
     void setPassword(const String& password);
 
-    // À appeler dans loop() — traite les requêtes OTA si la fenêtre est ouverte
+    // Call in loop() — processes OTA requests if the window is open
     void handle();
 
-    // Ouvre une fenêtre de mise à jour pour une durée donnée (ms)
+    // Opens an update window for a given duration (ms)
     void openWindow(unsigned long durationMs);
 
-    bool isWindowOpen() const;
+    bool isWindowOpen() const { return _windowOpen; }
     unsigned long getRemainingTime() const;
-    bool isUpdating() const;
-    uint8_t getProgress() const;
-    String getLastError() const;
+    bool isUpdating() const { return _updating; }
+    uint8_t getProgress() const { return _progress; }
+    String getLastError() const { return _lastError; }
 };
 
 #endif

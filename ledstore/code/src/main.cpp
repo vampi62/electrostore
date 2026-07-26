@@ -18,48 +18,48 @@ void setup() {
     Serial.begin(115200);
     delay(1000);
 
-    Logger::info("Démarrage ESP...");
+    Logger::info("Starting ESP...");
 
-    // Initialisation module StripLed ws2812b
+    // Initialize StripLed ws2812b module
     stripLedManager.begin();
 
-    stripLedManager.setLed(0, 255, 0, 0, 1, 100); // LED 1 rouge
+    stripLedManager.setLed(0, 255, 0, 0, 1, 100); // LED 1 red
 
-    // Initialisation du stockage
+    // Initialize storage
     if (!StorageManager::begin()) {
-        Logger::error("Erreur initialisation LittleFS");
-        // LED 1 rouge clignotante pour signaler l'erreur
+        Logger::error("LittleFS initialization error");
+        // LED 1 blinking red to signal the error
         while (true) {
-            stripLedManager.setLed(0, 255, 0, 0, 1, 100); // LED 1 rouge
+            stripLedManager.setLed(0, 255, 0, 0, 1, 100); // LED 1 red
             delay(250);
-            stripLedManager.setLed(0, 0, 0, 0, 1, 100); // LED éteinte
+            stripLedManager.setLed(0, 0, 0, 0, 1, 100); // LED off
             delay(250);
         }
     }
 
-    stripLedManager.setLed(0, 0, 0, 255, 1, 100); // LED 1 bleue
+    stripLedManager.setLed(0, 0, 0, 255, 1, 100); // LED 1 blue
 
-    // Initialisation WiFi
+    // Initialize WiFi
     if (!wifiManager.begin()) {
-        Logger::warning("Démarrage en mode AP");
-        // LED 1 bleue rapide pour signaler le mode AP
-        stripLedManager.setLed(0, 0, 0, 255, 3, 10000); // LED 1 bleue
+        Logger::warning("Starting in AP mode");
+        // LED 1 fast blue to signal AP mode
+        stripLedManager.setLed(0, 0, 0, 255, 3, 10000); // LED 1 blue
     } else {
-        Logger::info("Connexion WiFi établie");
-        // LED 1 jaune pour signaler que la connexion WiFi est OK
-        stripLedManager.setLed(0, 255, 255, 0, 1, 100); // LED 1 jaune
+        Logger::info("WiFi connection established");
+        // LED 1 yellow to signal that the WiFi connection is OK
+        stripLedManager.setLed(0, 255, 255, 0, 1, 100); // LED 1 yellow
     }
 
-    // Initialisation OTA
+    // Initialize OTA
     otaManager.begin();
 
-    // Initialisation MQTT
+    // Initialize MQTT
     mqttManager.setCallback([](const String& topic, const DynamicJsonDocument& payload) {
         if (payload.containsKey("leds"))
         {
             JsonArrayConst ledsArray = payload["leds"].as<JsonArrayConst>();
-            Logger::info("Réception configuration leds via MQTT");
-            Logger::info("Nombre de leds : " + String(ledsArray.size()));
+            Logger::info("Received leds configuration via MQTT");
+            Logger::info("Number of leds: " + String(ledsArray.size()));
             for (size_t i = 0; i < ledsArray.size(); i++)
             {
                 int indextab = ledsArray[i]["index"];
@@ -68,7 +68,7 @@ void setup() {
                     continue;
                 }
                 if (HAS_LED_IN_BOX) {
-                    // Si  LED dans le boîtier, on décale l'index pour ne pas écraser la LED 1
+                    // If a LED is in the box, shift the index to avoid overwriting LED 1
                     stripLedManager.leds[indextab + 1]->red = ledsArray[i]["red"];
                     stripLedManager.leds[indextab + 1]->green = ledsArray[i]["green"];
                     stripLedManager.leds[indextab + 1]->blue = ledsArray[i]["blue"];
@@ -87,22 +87,22 @@ void setup() {
         }
     });
     if (!mqttManager.begin()) {
-        Logger::warning("Échec initialisation MQTT");
+        Logger::warning("MQTT initialization failed");
         if (wifiManager.getCurrentMode() == WIFI_CONN_CLIENT) {
-            // connecter en client wifi mais erreur de connexion MQTT, LED 1 jaune pour signaler l'erreur
-            stripLedManager.setLed(0, 255, 255, 0, 3, 10000); // LED 1 jaune
+            // Connected as WiFi client but MQTT connection error, LED 1 yellow to signal the error
+            stripLedManager.setLed(0, 255, 255, 0, 3, 10000); // LED 1 yellow
         }
     } else {
-        Logger::info("MQTT initialisé avec succès");
-        // LED 1 verte pour signaler que la connexion MQTT est OK
-        stripLedManager.setLed(0, 0, 255, 0, 1, 10000); // LED 1 verte
+        Logger::info("MQTT initialized successfully");
+        // LED 1 green to signal that the MQTT connection is OK
+        stripLedManager.setLed(0, 0, 255, 0, 1, 10000); // LED 1 green
     }
 
-    // Démarrage serveur web
+    // Start web server
     webServer = WebServer(&wifiManager, &mqttManager, &otaManager);
     webServer.begin();
 
-    Logger::info("Setup terminé");
+    Logger::info("Setup complete");
 }
 
 void loop() {

@@ -6,19 +6,19 @@
 WiFiManager::WiFiManager() : retryCount(0), currentMode(WIFI_CONN_NONE), apStartTime(0) {}
 
 bool WiFiManager::begin() {
-    // Tentative de chargement des credentials
+    // Attempt to load credentials
     if (loadCredentials()) {
-        Logger::info("Credentials trouvés, tentative de connexion...");
-        
+        Logger::info("Credentials found, attempting to connect...");
+
         if (connectToWiFi(ssid, password)) {
             currentMode = WIFI_CONN_CLIENT;
-            Logger::info("Connecté au WiFi: " + ssid);
+            Logger::info("Connected to WiFi: " + ssid);
             Logger::info("IP: " + getLocalIP());
             return true;
         }
     }
-    
-    // Échec ou pas de credentials -> Mode AP
+
+    // Failure or no credentials -> AP mode
     startAPMode();
     return false;
 }
@@ -26,8 +26,8 @@ bool WiFiManager::begin() {
 bool WiFiManager::connectToWiFi(const String& ssid, const String& password) {
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid.c_str(), password.c_str());
-    
-    Logger::info("Connexion à " + ssid + "...");
+
+    Logger::info("Connecting to " + ssid + "...");
     
     unsigned long startAttempt = millis();
     
@@ -44,10 +44,10 @@ bool WiFiManager::connectToWiFi(const String& ssid, const String& password) {
     }
     
     retryCount++;
-    Logger::warning("Échec connexion (tentative " + String(retryCount) + ")");
-    
+    Logger::warning("Connection failed (attempt " + String(retryCount) + ")");
+
     if (retryCount >= WIFI_MAX_RETRIES) {
-        Logger::error("Nombre max de tentatives atteint");
+        Logger::error("Maximum number of attempts reached");
         retryCount = 0;
         return false;
     }
@@ -66,15 +66,15 @@ void WiFiManager::startAPMode() {
     currentMode = WIFI_CONN_AP;
     apStartTime = millis();
     
-    Logger::info("Mode AP démarré");
+    Logger::info("AP mode started");
     Logger::info("SSID: " + String(AP_SSID));
     Logger::info("IP: " + WiFi.softAPIP().toString());
 }
 
 void WiFiManager::handleConnection() {
-    // En mode Client, vérifier la connexion
+    // In Client mode, check the connection
     if (currentMode == WIFI_CONN_CLIENT && WiFi.status() != WL_CONNECTED) {
-        Logger::warning("Connexion perdue, reconnexion...");
+        Logger::warning("Connection lost, reconnecting...");
         if (!connectToWiFi(ssid, password)) {
             startAPMode();
         }

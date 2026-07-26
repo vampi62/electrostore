@@ -2,9 +2,9 @@
 #define WIFI_MANAGER_H
 
 #if defined(ESP32)
-#include <WiFi.h> // Utilisez la bibliothèque WiFi pour ESP32
+#include <WiFi.h> // Use the WiFi library for ESP32
 #elif defined(ESP8266)
-#include <ESP8266WiFi.h> // Utilisez la bibliothèque ESP8266WiFi pour ESP8266
+#include <ESP8266WiFi.h> // Use the ESP8266WiFi library for ESP8266
 #else
 #error "board not supported"
 #endif

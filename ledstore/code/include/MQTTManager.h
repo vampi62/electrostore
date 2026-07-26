@@ -3,9 +3,9 @@
 
 #include <Arduino.h>
 #if defined(ESP32)
-  #include <WiFi.h> // Utilisez la bibliothèque WiFi pour ESP32
+  #include <WiFi.h> // Use the WiFi library for ESP32
 #elif defined(ESP8266)
-  #include <ESP8266WiFi.h> // Utilisez la bibliothèque ESP8266WiFi pour ESP8266
+  #include <ESP8266WiFi.h> // Use the ESP8266WiFi library for ESP8266
 #else
   #error "board not supported"
 #endif
@@ -39,7 +39,7 @@ private:
 public:
     explicit MQTTManager(WiFiManager* wm);
 
-    // Initialise la connexion. Retourne true si la première connexion réussit.
+    // Initializes the connection. Returns true if the first connection succeeds.
     bool begin();
     bool connectToMQTT(const String& server, int port,
                        const String& user, const String& password,

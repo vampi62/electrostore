@@ -30,7 +30,7 @@ private:
 public:
     explicit StripLedManager();
 
-    LEDInfo* leds[LED_COUNT+1]; // +1 pour la LED dans le boîtier si HAS_LED_IN_BOX est défini
+    LEDInfo* leds[LED_COUNT+1]; // +1 for the LED in the box if HAS_LED_IN_BOX is defined
 
     void begin();
     void setLed(int index, uint8_t red, uint8_t green, uint8_t blue, uint8_t module, uint32_t delayTime);
