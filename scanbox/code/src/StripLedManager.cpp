@@ -25,6 +25,15 @@ void StripLedManager::setLed(int index, uint8_t red, uint8_t green, uint8_t blue
     strip->show();
 }
 
+void StripLedManager::setRingLight(bool on) {
+    ringLightOn = on;
+    uint8_t level = on ? 255 : 0;
+    uint32_t delayTime = on ? 0x7FFFFFFF : 0; // ~24 days: stays on until explicitly turned off
+    for (int i = 0; i < LED_COUNT; i++) {
+        setLed(i, level, level, level, 1, delayTime);
+    }
+}
+
 void StripLedManager::calculateAnimationMode() {
     inputLoop = inputLoop + 0.01;
     if (inputLoop >= 1080)

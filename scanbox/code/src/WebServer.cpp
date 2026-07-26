@@ -3,7 +3,100 @@
 #include "config.h"
 #include "StorageManager.h"
 
-WebServer::WebServer(WiFiManager* wm, MQTTManager* mm, OTAManager* om) : wifiManager(wm), mqttManager(mm), otaManager(om) {
+namespace {
+    const char* CAM_STREAM_CONTENT_TYPE = "multipart/x-mixed-replace;boundary=123456789000000000000987654321";
+    const char* CAM_STREAM_BOUNDARY     = "\r\n--123456789000000000000987654321\r\n";
+    const char* CAM_STREAM_PART         = "Content-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n";
+    const char* CAM_JPG_CONTENT_TYPE    = "image/jpeg";
+
+    // Serves a single JPEG frame, releasing it back to the camera driver once fully sent
+    class CameraFrameResponse : public AsyncAbstractResponse {
+    private:
+        CameraManager* cam;
+        camera_fb_t*   fb;
+        size_t         _index;
+    public:
+        CameraFrameResponse(CameraManager* camera, camera_fb_t* frame) : cam(camera), fb(frame), _index(0) {
+            _code          = 200;
+            _contentLength = frame->len;
+            _contentType   = CAM_JPG_CONTENT_TYPE;
+        }
+        ~CameraFrameResponse() {
+            if (fb) cam->release(fb);
+        }
+        bool _sourceValid() const override { return fb != nullptr; }
+        size_t _fillBuffer(uint8_t *buf, size_t maxLen) override {
+            size_t remaining = fb->len - _index;
+            size_t toCopy = maxLen < remaining ? maxLen : remaining;
+            memcpy(buf, fb->buf + _index, toCopy);
+            _index += toCopy;
+            if (_index == fb->len) {
+                cam->release(fb);
+                fb = nullptr;
+            }
+            return toCopy;
+        }
+    };
+
+    // Serves an MJPEG stream, pulling a new frame from the camera each time the buffer drains
+    class CameraStreamResponse : public AsyncAbstractResponse {
+    private:
+        CameraManager* cam;
+        camera_fb_t*   fb;
+        size_t         _index;
+    public:
+        explicit CameraStreamResponse(CameraManager* camera) : cam(camera), fb(nullptr), _index(0) {
+            _code              = 200;
+            _contentLength     = 0;
+            _contentType       = CAM_STREAM_CONTENT_TYPE;
+            _sendContentLength = false;
+            _chunked           = true;
+        }
+        ~CameraStreamResponse() {
+            if (fb) cam->release(fb);
+        }
+        bool _sourceValid() const override { return true; }
+        size_t _fillBuffer(uint8_t *buf, size_t maxLen) override {
+            if (!fb) {
+                if (maxLen < strlen(CAM_STREAM_BOUNDARY) + 64) {
+                    return RESPONSE_TRY_AGAIN;
+                }
+                fb = cam->capture();
+                if (!fb) {
+                    return 0;
+                }
+                _index = 0;
+
+                size_t pos  = strlen(CAM_STREAM_BOUNDARY);
+                memcpy(buf, CAM_STREAM_BOUNDARY, pos);
+                pos += sprintf((char*)(buf + pos), CAM_STREAM_PART, fb->len);
+
+                size_t avail = maxLen - pos;
+                size_t chunk = avail < fb->len ? avail : fb->len;
+                memcpy(buf + pos, fb->buf, chunk);
+                _index += chunk;
+
+                if (_index == fb->len) {
+                    cam->release(fb);
+                    fb = nullptr;
+                }
+                return pos + chunk;
+            }
+
+            size_t remaining = fb->len - _index;
+            size_t toCopy = maxLen < remaining ? maxLen : remaining;
+            memcpy(buf, fb->buf + _index, toCopy);
+            _index += toCopy;
+            if (_index == fb->len) {
+                cam->release(fb);
+                fb = nullptr;
+            }
+            return toCopy;
+        }
+    };
+}
+
+WebServer::WebServer(WiFiManager* wm, OTAManager* om, CameraManager* cm, StripLedManager* sm) : wifiManager(wm), otaManager(om), cameraManager(cm), stripLedManager(sm) {
     server = new AsyncWebServer(WEB_SERVER_PORT);
 }
 
@@ -85,16 +178,34 @@ void WebServer::setupRoutes() {
         handleSaveOTA(request);
     });
 
-    // MQTT page
-    server->on("/mqtt", HTTP_GET, [this](AsyncWebServerRequest *request) {
+    // Camera settings page
+    server->on("/cam", HTTP_GET, [this](AsyncWebServerRequest *request) {
         if (!authenticate(request)) return;
-        handleMQTTPage(request);
+        handleCamPage(request);
     });
 
-    // Save MQTT
-    server->on("/mqtt", HTTP_POST, [this](AsyncWebServerRequest *request) {
+    // Save camera settings
+    server->on("/cam", HTTP_POST, [this](AsyncWebServerRequest *request) {
         if (!authenticate(request)) return;
-        handleSaveMQTT(request);
+        handleSaveCam(request);
+    });
+
+    // Single JPEG snapshot
+    server->on("/capture", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        if (!authenticate(request)) return;
+        handleCapture(request);
+    });
+
+    // MJPEG live stream
+    server->on("/stream", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        if (!authenticate(request)) return;
+        handleStream(request);
+    });
+
+    // Enable/disable the 30-LED ring light
+    server->on("/light", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        if (!authenticate(request)) return;
+        handleSaveLight(request);
     });
 
     // Static files (CSS, JS)
@@ -140,6 +251,7 @@ void WebServer::handleRoot(AsyncWebServerRequest *request) {
         <li><a href='/auth'>User Settings</a></li>
         <li><a href='/mqtt'>Mqtt Settings</a></li>
         <li><a href='/ota'>OTA Settings</a></li>
+        <li><a href='/cam'>Camera Settings</a></li>
     </ul>
     <div class='info'>
         <b>Version:</b> ")";
@@ -171,6 +283,7 @@ void WebServer::handleStatus(AsyncWebServerRequest *request) {
     doc["wifiIP"] = WiFi.localIP().toString();
     doc["wifiStatus"] = (WiFi.status() == WL_CONNECTED) ? "Connected" : "Disconnected";
     doc["wifiMAC"] = WiFi.macAddress();
+    doc["ringLightOn"] = stripLedManager->isRingLightOn();
     String jsonResponse;
     serializeJson(doc, jsonResponse);
     request->send(200, "application/json", jsonResponse);
@@ -346,105 +459,147 @@ void WebServer::handleSaveOTA(AsyncWebServerRequest *request) {
     request->send(200, "application/json", out);
 }
 
-void WebServer::handleMQTTPage(AsyncWebServerRequest *request) {
-    bool   connected = mqttManager->isConnected();
-    String server    = mqttManager->getServer();
-    int    port      = mqttManager->getPort();
-    String user      = mqttManager->getUser();
-    bool   hasPwd    = mqttManager->hasPassword();
-    String topic     = mqttManager->getRawTopic();
-    String badge = connected
-        ? "<span class='badge badge-ok'>Connected</span>"
-        : "<span class='badge badge-err'>Disconnected</span>";
+void WebServer::handleCamPage(AsyncWebServerRequest *request) {
+    bool ready = cameraManager->isInitialized();
     String html =
         "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'>"
         "<meta name='viewport' content='width=device-width,initial-scale=1'>"
-        "<title>MQTT Settings</title><link rel='stylesheet' href='/style.css'>"
-        "</head><body><h1>MQTT Settings</h1><div id='notification'></div>"
-        "<div class='card'><b>Status:</b> " + badge + "</div>"
-        "<div class='card'>"
-        "<div class='fg'><label>Server</label>"
-        "<input type='text' id='ms' value='" + server + "' maxlength='100' placeholder='192.168.x.x or hostname'></div>"
-        "<div class='fg'><label>Port</label>"
-        "<input type='number' id='mp' value='" + String(port > 0 ? port : 1883) + "' min='1' max='65535'></div>"
-        "<div class='fg'><label>User</label>"
-        "<input type='text' id='mu' value='" + user + "' maxlength='50'></div>"
-        "<div class='fg'>";
-    if (hasPwd) {
-        html +=
-            "<input type='checkbox' id='chgPwd' onchange='tglPwd()'> Change password<br>"
-            "<input type='password' id='mpwd' maxlength='50' "
-            "placeholder='&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;' disabled>";
+        "<title>Camera Settings</title><link rel='stylesheet' href='/style.css'>"
+        "</head><body><h1>Camera Settings</h1><div id='notification'></div>";
+    if (!ready) {
+        html += "<div class='alert alert-warn'>&#9888; Camera not initialized.</div>";
     } else {
-        html += "<label>Password</label><input type='password' id='mpwd' maxlength='50'>";
+        html +=
+            "<img src='/stream' style='display:block;max-width:100%;margin:15px auto;border-radius:8px'>"
+            "<div class='card'>"
+            "<p><b>Sensor:</b> " + cameraManager->getSensorName() + "</p>"
+            "<p><b>Resolution:</b> " + cameraManager->getFrameSizeName() + "</p>"
+            "<div class='fg'><label>Frame size</label>"
+            "<select id='fs'>"
+            "<option value='VGA'>VGA (640x480)</option>"
+            "<option value='SVGA'>SVGA (800x600)</option>"
+            "<option value='XGA'>XGA (1024x768)</option>"
+            "<option value='HD'>HD (1280x720)</option>"
+            "<option value='UXGA'>UXGA (1600x1200)</option>"
+            "<option value='QXGA'>QXGA (2048x1536)</option>"
+            "</select></div>"
+            "<div class='fg'><label>JPEG quality (4-63, lower = better)</label>"
+            "<input type='number' id='q' min='4' max='63' value='12'></div>"
+            "<div class='fg'><label>Brightness (-2..2)</label>"
+            "<input type='number' id='b' min='-2' max='2' value='0'></div>"
+            "<div class='fg'><label>Contrast (-2..2)</label>"
+            "<input type='number' id='c' min='-2' max='2' value='0'></div>"
+            "<div class='fg'><label>Saturation (-2..2)</label>"
+            "<input type='number' id='s' min='-2' max='2' value='0'></div>"
+            "<div class='fg'><input type='checkbox' id='hm'> Mirror horizontally</div>"
+            "<div class='fg'><input type='checkbox' id='vf'> Flip vertically</div>"
+            "<button onclick='save()'>Apply</button>"
+            "<button class='btn-blue' onclick=\"window.open('/capture','_blank')\">Capture snapshot</button>"
+            "</div>";
     }
     html +=
+        "<div class='card'>"
+        "<button id='lightBtn' class='btn-blue' onclick='toggleLight()'>Ring light</button>"
         "</div>"
-        "<div class='fg'><label>Topic <small>(without prefix &quot;" +
-        String(MQTT_BASE_TOPIC) + "/&quot;)</small></label>"
-        "<input type='text' id='mt' value='" + topic + "' maxlength='100'></div>"
-        "<button onclick='save()'>Save &amp; Connect</button></div>"
         "<a class='back' href='/'>&#8592; Back</a>"
         "<script src='/common.js'></script><script>"
-        "function tglPwd(){var f=document.getElementById('mpwd');"
-        "f.disabled=!document.getElementById('chgPwd').checked;if(f.disabled)f.value='';}"
-        "function save(){"
-        "var d={server:document.getElementById('ms').value,"
-        "port:document.getElementById('mp').value,"
-        "user:document.getElementById('mu').value,"
-        "topic:document.getElementById('mt').value};";
-    if (hasPwd) {
-        html +=
-            "var chg=document.getElementById('chgPwd')&&document.getElementById('chgPwd').checked;"
-            "if(chg){d.changePassword='1';d.password=document.getElementById('mpwd').value;}";
-    } else {
-        html += "d.changePassword='1';d.password=document.getElementById('mpwd').value;";
-    }
-    html += "apiPost('/mqtt',d);}"
-            "</script></body></html>";
+        "var lightOn=false;"
+        "function updateLightBtn(){"
+        "var b=document.getElementById('lightBtn');"
+        "if(b)b.innerText=lightOn?'Turn ring light OFF':'Turn ring light ON';"
+        "}"
+        "function toggleLight(){"
+        "var next=!lightOn;"
+        "apiPost('/light',{on:next?1:0},function(){lightOn=next;updateLightBtn();});"
+        "}"
+        "fetch('/status').then(function(r){return r.json()}).then(function(d){"
+        "lightOn=!!d.ringLightOn;updateLightBtn();"
+        "});"
+        "function save(){apiPost('/cam',{"
+        "framesize:document.getElementById('fs').value,"
+        "quality:document.getElementById('q').value,"
+        "brightness:document.getElementById('b').value,"
+        "contrast:document.getElementById('c').value,"
+        "saturation:document.getElementById('s').value,"
+        "hmirror:document.getElementById('hm').checked?1:0,"
+        "vflip:document.getElementById('vf').checked?1:0"
+        "},function(){setTimeout(function(){location.reload();},500);});}"
+        "</script></body></html>";
     request->send(200, "text/html", html);
 }
 
-void WebServer::handleSaveMQTT(AsyncWebServerRequest *request) {
-    if (!request->hasParam("server", true) ||
-        !request->hasParam("port",   true) ||
-        !request->hasParam("topic",  true)) {
-        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Missing parameters (server, port, topic)\"}");
+void WebServer::handleSaveCam(AsyncWebServerRequest *request) {
+    if (!cameraManager->isInitialized()) {
+        request->send(503, "application/json", "{\"status\":\"error\",\"msg\":\"Camera not initialized\"}");
         return;
     }
-    String server = request->getParam("server", true)->value();
-    int    port   = request->getParam("port",   true)->value().toInt();
-    String user   = request->hasParam("user",  true) ? request->getParam("user",  true)->value() : "";
-    String topic  = request->getParam("topic", true)->value();
-    if (server.isEmpty()) {
-        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Invalid server\"}");
+    if (request->hasParam("framesize", true)) {
+        String fsName = request->getParam("framesize", true)->value();
+        framesize_t fs = FRAMESIZE_SVGA;
+        bool known = true;
+        if      (fsName == "VGA")  fs = FRAMESIZE_VGA;
+        else if (fsName == "SVGA") fs = FRAMESIZE_SVGA;
+        else if (fsName == "XGA")  fs = FRAMESIZE_XGA;
+        else if (fsName == "HD")   fs = FRAMESIZE_HD;
+        else if (fsName == "UXGA") fs = FRAMESIZE_UXGA;
+        else if (fsName == "QXGA") fs = FRAMESIZE_QXGA;
+        else known = false;
+        if (known) cameraManager->setFrameSize(fs);
+    }
+    if (request->hasParam("quality", true)) {
+        cameraManager->setQuality(request->getParam("quality", true)->value().toInt());
+    }
+    if (request->hasParam("brightness", true)) {
+        cameraManager->setBrightness(request->getParam("brightness", true)->value().toInt());
+    }
+    if (request->hasParam("contrast", true)) {
+        cameraManager->setContrast(request->getParam("contrast", true)->value().toInt());
+    }
+    if (request->hasParam("saturation", true)) {
+        cameraManager->setSaturation(request->getParam("saturation", true)->value().toInt());
+    }
+    if (request->hasParam("hmirror", true)) {
+        cameraManager->setHMirror(request->getParam("hmirror", true)->value().toInt() != 0);
+    }
+    if (request->hasParam("vflip", true)) {
+        cameraManager->setVFlip(request->getParam("vflip", true)->value().toInt() != 0);
+    }
+    request->send(200, "application/json", "{\"status\":\"ok\",\"msg\":\"Camera settings updated\"}");
+}
+
+void WebServer::handleCapture(AsyncWebServerRequest *request) {
+    camera_fb_t* fb = cameraManager->capture();
+    if (!fb) {
+        request->send(503, "text/plain", "Camera capture failed");
         return;
     }
-    if (port < 1 || port > 65535) {
-        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Invalid port (1-65535)\"}");
+    CameraFrameResponse* response = new CameraFrameResponse(cameraManager, fb);
+    response->addHeader("Access-Control-Allow-Origin", "*");
+    request->send(response);
+}
+
+void WebServer::handleStream(AsyncWebServerRequest *request) {
+    if (!cameraManager->isInitialized()) {
+        request->send(503, "text/plain", "Camera not initialized");
         return;
     }
-    if (topic.isEmpty()) {
-        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Invalid topic\"}");
+    CameraStreamResponse* response = new CameraStreamResponse(cameraManager);
+    response->addHeader("Access-Control-Allow-Origin", "*");
+    request->send(response);
+}
+
+void WebServer::handleSaveLight(AsyncWebServerRequest *request) {
+    if (!request->hasParam("on", true)) {
+        request->send(400, "application/json", "{\"status\":\"error\",\"msg\":\"Missing on parameter\"}");
         return;
     }
-    // If changePassword=1, use the new password; otherwise keep the existing one from storage
-    String password;
-    bool changePassword = request->hasParam("changePassword", true) &&
-                          request->getParam("changePassword", true)->value() == "1";
-    if (changePassword) {
-        password = request->hasParam("password", true) ? request->getParam("password", true)->value() : "";
-    } else {
-        String _s, _u, _t; int _p;
-        StorageManager::loadMQTTConfig(_s, _p, _u, password, _t);
-    }
-    mqttManager->saveCredentials(server, port, user, password, topic);
-    bool ok = mqttManager->connectToMQTT(server, port, user, password, topic, MQTT_CLIENT_PREFIX);
-    StaticJsonDocument<160> doc;
+    bool on = request->getParam("on", true)->value().toInt() != 0;
+    stripLedManager->setRingLight(on);
+    String msg = on ? "Ring light turned on" : "Ring light turned off";
+    StaticJsonDocument<128> doc;
     doc["status"] = "ok";
-    doc["msg"] = ok
-        ? ("MQTT connected to " + server + ":" + String(port))
-        : ("Credentials saved. Auto-reconnecting in " + String(MQTT_RECONNECT_INTERVAL / 1000) + "s");
+    doc["msg"] = msg;
+    doc["ringLightOn"] = on;
     String out; serializeJson(doc, out);
     request->send(200, "application/json", out);
 }

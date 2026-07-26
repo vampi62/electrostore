@@ -28,6 +28,31 @@
 #error "board not supported"
 #endif
 
+// Camera configuration (AI-Thinker ESP32-CAM pinout)
+#define CAMERA_MODEL_AI_THINKER
+#define CAM_PIN_PWDN     32
+#define CAM_PIN_RESET    -1
+#define CAM_PIN_XCLK      0
+#define CAM_PIN_SIOD     26
+#define CAM_PIN_SIOC     27
+#define CAM_PIN_D7       35
+#define CAM_PIN_D6       34
+#define CAM_PIN_D5       39
+#define CAM_PIN_D4       36
+#define CAM_PIN_D3       21
+#define CAM_PIN_D2       19
+#define CAM_PIN_D1       18
+#define CAM_PIN_D0        5
+#define CAM_PIN_VSYNC    25
+#define CAM_PIN_HREF     23
+#define CAM_PIN_PCLK     22
+
+#define CAM_XCLK_FREQ_HZ         20000000
+#define CAM_FRAME_SIZE_PSRAM     FRAMESIZE_QXGA
+#define CAM_JPEG_QUALITY_PSRAM   10
+#define CAM_FRAME_SIZE_NOPSRAM   FRAMESIZE_SVGA
+#define CAM_JPEG_QUALITY_NOPSRAM 12
+
 // Web server configuration
 #define WEB_SERVER_PORT 80
 

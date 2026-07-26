@@ -3,8 +3,9 @@
 
 #include <ESPAsyncWebServer.h>
 #include "WiFiManager.h"
-#include "MQTTManager.h"
 #include "OTAManager.h"
+#include "CameraManager.h"
+#include "StripLedManager.h"
 
 #include "StorageManager.h"
 
@@ -12,8 +13,9 @@ class WebServer {
 private:
     AsyncWebServer* server;
     WiFiManager* wifiManager;
-    MQTTManager* mqttManager;
     OTAManager* otaManager;
+    CameraManager* cameraManager;
+    StripLedManager* stripLedManager;
     String espUser;
     String espPassword;
 
@@ -35,12 +37,19 @@ private:
     void handleMQTTPage(AsyncWebServerRequest *request);
     void handleSaveMQTT(AsyncWebServerRequest *request);
 
+    void handleCamPage(AsyncWebServerRequest *request);
+    void handleSaveCam(AsyncWebServerRequest *request);
+    void handleCapture(AsyncWebServerRequest *request);
+    void handleStream(AsyncWebServerRequest *request);
+
+    void handleSaveLight(AsyncWebServerRequest *request);
+
     void handleSendStyle(AsyncWebServerRequest *request);
     void handleSendJS(AsyncWebServerRequest *request);
 
     void handleNotFound(AsyncWebServerRequest *request);
 public:
-    explicit WebServer(WiFiManager* wm, MQTTManager* mm, OTAManager* om);
+    explicit WebServer(WiFiManager* wm, OTAManager* om, CameraManager* cm, StripLedManager* sm);
     ~WebServer();
 
     void begin();

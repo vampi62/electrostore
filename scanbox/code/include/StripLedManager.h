@@ -24,6 +24,7 @@ private:
     float modQuickSin = 0;
     float modFastSin = 0;
     unsigned long startTimeLed = 0;
+    bool ringLightOn = false;
 
     void calculateAnimationMode();
     void calculateDelayTime();
@@ -35,6 +36,10 @@ public:
     void begin();
     void setLed(int index, uint8_t red, uint8_t green, uint8_t blue, uint8_t module, uint32_t delayTime);
     void show();
+
+    // Turns the full 30-LED ring on (white) or off, independently of the per-LED animation system
+    void setRingLight(bool on);
+    bool isRingLightOn() const { return ringLightOn; }
 };
 
 #endif

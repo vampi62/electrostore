@@ -16,7 +16,6 @@ struct LEDInfo
 
 class StripLedManager {
 private:
-    static StripLedManager* _instance;
     Adafruit_NeoPixel* strip;
     float inputLoop = 0;
     float modSlowSin = 0;
