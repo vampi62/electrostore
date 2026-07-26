@@ -36,6 +36,8 @@
 	"MQTTName": "MQTT Name",
 	"XLength": "X Length",
 	"YLength": "Y Length",
+	"MqttLastSeen": "MQTT Last seen",
+	"MqttConnected": "MQTT Connected",
 	"CellSize": "Cell size",
 	"ShowLedId": "Show LED IDs",
 	"BoxContent": "Box content",

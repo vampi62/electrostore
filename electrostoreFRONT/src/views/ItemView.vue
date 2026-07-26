@@ -255,12 +255,16 @@ const imageDeleteOpenModal = (doc) => {
 };
 const imageAdd = async(files) => {
 	for (const file of files) {
-		documentModalData.value = { nom_img: file.name, description_img: "undefined", image: file.document };
+		imageModalData.value = { nom_img: file.name, description_img: "undefined", image: file.document };
 		try {
-			schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
+			schemaAddImage.validateSync(imageModalData.value, { abortEarly: false });
 			await itemsStore.createImage(itemId.value, imageModalData.value);
 			addNotification({ message: t("item.ImageAdded"), type: "success" });
 		} catch (e) {
+			// logs all errors for debugging
+			for (const err of e.inner || []) {
+				console.error("Validation error:", err.path, err.message);
+			}
 			addNotification({ message: e, type: "error" });
 		}
 	}
