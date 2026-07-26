@@ -15,7 +15,7 @@
 #define MQTT_CONFIG_FILE "/mqtt_config.json"
 
 // OTA configuration
-#define OTA_HOSTNAME        "ESP32_Jardin"
+#define OTA_HOSTNAME        "ESP32_StoreLed"
 #define OTA_DEFAULT_PASSWORD "electostore"
 #define OTA_PORT            8100
 #define OTA_WINDOW_MS       300000  // OTA window: 5 minutes after startup
