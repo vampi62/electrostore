@@ -567,6 +567,10 @@ void WebServer::handleSaveCam(AsyncWebServerRequest *request) {
 }
 
 void WebServer::handleCapture(AsyncWebServerRequest *request) {
+    if (otaManager->isWindowOpen()) {
+        request->send(403, "text/plain", "Camera disabled while OTA window is open");
+        return;
+    }
     camera_fb_t* fb = cameraManager->capture();
     if (!fb) {
         request->send(503, "text/plain", "Camera capture failed");
@@ -578,6 +582,10 @@ void WebServer::handleCapture(AsyncWebServerRequest *request) {
 }
 
 void WebServer::handleStream(AsyncWebServerRequest *request) {
+    if (otaManager->isWindowOpen()) {
+        request->send(403, "text/plain", "Camera disabled while OTA window is open");
+        return;
+    }
     if (!cameraManager->isInitialized()) {
         request->send(503, "text/plain", "Camera not initialized");
         return;
