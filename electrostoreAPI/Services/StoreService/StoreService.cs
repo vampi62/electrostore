@@ -143,7 +143,7 @@ public class StoreService : IStoreService
         var newStore = _mapper.Map<Stores>(storeDto);
         _context.Stores.Add(newStore);
         await _context.SaveChangesAsync();
-        var mqttPassword = await GenerateMqttPasswordForStore(newStore.id_store);
+        var mqttPassword = GenerateMqttPasswordForStore(newStore.id_store);
         await _kafkaProducer.PublishAsync(
             "mqtt-user-events",
             newStore.id_store.ToString(),
@@ -172,7 +172,7 @@ public class StoreService : IStoreService
         await _validateStoreService.UpdateStoreInformations(storeToUpdate, storeDto);
         await _validateStoreService.CheckUpdateStoreOutsideElement(storeToUpdate);
         await _context.SaveChangesAsync();
-        var mqttPassword = await GenerateMqttPasswordForStore(storeToUpdate.id_store);
+        var mqttPassword = GenerateMqttPasswordForStore(storeToUpdate.id_store);
         if (storeDto.reset_mqtt_password_store == true)
         {
             await _kafkaProducer.PublishAsync(
@@ -224,7 +224,9 @@ public class StoreService : IStoreService
             throw new UnauthorizedAccessException("You do not have permission to create a store");
         }
         var newStore = _mapper.Map<Stores>(storeDto.store);
+        await using var transaction = await _context.Database.BeginTransactionAsync();
         _context.Stores.Add(newStore);
+        await _context.SaveChangesAsync(); // persist store to get real id_store
         // Add leds and boxs if provided
         var validQueryLed = new List<ReadLedDto>();
         var errorQueryLed = new List<ErrorDetail>();
@@ -283,10 +285,11 @@ public class StoreService : IStoreService
             }
         }
         
-        var mqttPassword = await GenerateMqttPasswordForStore(newStore.id_store);
+        var mqttPassword = GenerateMqttPasswordForStore(newStore.id_store);
         if (errorQueryLed.Count == 0 && errorQueryBox.Count == 0)
         {
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             await _kafkaProducer.PublishAsync(
                 "mqtt-user-events",
                 newStore.id_store.ToString(),
@@ -297,6 +300,10 @@ public class StoreService : IStoreService
                     delete = false
                 })
             );
+        }
+        else
+        {
+            await transaction.RollbackAsync();
         }
         return new ReadStoreCompleteDto
         {
@@ -358,7 +365,7 @@ public class StoreService : IStoreService
         {
             await _context.SaveChangesAsync();
         }
-        var mqttPassword = await GenerateMqttPasswordForStore(storeToUpdate.id_store);
+        var mqttPassword = GenerateMqttPasswordForStore(storeToUpdate.id_store);
         if (storeDto.store.reset_mqtt_password_store == true)
         {
             await _kafkaProducer.PublishAsync(
@@ -411,10 +418,10 @@ public class StoreService : IStoreService
         return stores.Count;
     }
 
-    private async Task<string> GenerateMqttPasswordForStore(int id)
+    private static string GenerateMqttPasswordForStore(int id)
     {
-        var newPassword = Convert.ToBase64String(Guid.NewGuid().ToByteArray())[..32];
-        return newPassword;
+        var randomBytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(24);
+        return Convert.ToBase64String(randomBytes);
     }
 
     private async Task<(List<ReadLedDto>, List<ErrorDetail>)> UpdateLedList(Stores storeToUpdate, IEnumerable<UpdateBulkLedByStoreDto> ledListDto)
