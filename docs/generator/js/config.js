@@ -148,6 +148,10 @@ function collectConfig(formData) {
         audience: formData.get('jwtAudience') || 'ElectroStoreClient',
         expireDays: formData.get('jwtExpireDays') || '1'
     };
+
+    config.aes = {
+        key: formData.get('aesKey') || generateHexaKey(64)
+    };
     
     // URLs
     config.apiUrl = formData.get('apiUrl');

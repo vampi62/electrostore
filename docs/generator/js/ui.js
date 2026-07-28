@@ -135,6 +135,16 @@ function generatePassword(fieldId, length = 32) {
     document.getElementById(fieldId).value = password;
 }
 
+// Generate valid hexadecimal key
+function generateHexaKey(length) {
+    const chars = '0123456789abcdef';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
 // Generate VAPID keys
 async function generateVapidKeys() {
     const keyPair = await window.crypto.subtle.generateKey(

@@ -10,9 +10,9 @@ public record ReadStoreDto
     public int xlength_store { get; init; }
     public int ylength_store { get; init; }
     public required string mqtt_name_store { get; init; }
+    public string? mqtt_password_store { get; init; }
     public DateTime? mqtt_last_seen_store { get; init; }
     public bool is_mqtt_connected_store { get; init; }
-    public string? mqtt_password_store { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
 }

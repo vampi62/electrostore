@@ -5,6 +5,7 @@ using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Kafka.Messages;
 using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Models;
+using ElectrostoreAPI.Services.EncryptionService;
 using ElectrostoreAPI.Services.SessionService;
 using ElectrostoreAPI.Services.ValidateStoreService;
 using Microsoft.EntityFrameworkCore;
@@ -17,15 +18,19 @@ public class StoreService : IStoreService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly string _encryptionKey;
     private readonly ISessionService _sessionService;
+    private readonly IEncryptionService _encryptionService;
     private readonly IValidateStoreService _validateStoreService;
     private readonly IKafkaProducerService _kafkaProducer;
 
-    public StoreService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IValidateStoreService validateStoreService, IKafkaProducerService kafkaProducer)
+    public StoreService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, IEncryptionService encryptionService, ISessionService sessionService, IValidateStoreService validateStoreService, IKafkaProducerService kafkaProducer)
     {
         _mapper = mapper;
         _context = context;
+        _encryptionKey = configuration.GetValue<string>("Encryption:HexKey") ?? throw new InvalidOperationException("Encryption key is not configured");
         _sessionService = sessionService;
+        _encryptionService = encryptionService;
         _validateStoreService = validateStoreService;
         _kafkaProducer = kafkaProducer;
     }
@@ -85,6 +90,7 @@ public class StoreService : IStoreService
             {
                 return _mapper.Map<ReadExtendedStoreDto>(s.Store) with
                 {
+                    mqtt_password_store = string.Empty, // Do not return the password in the list view
                     boxs_count = s.BoxsCount,
                     leds_count = s.LedsCount,
                     stores_tags_count = s.StoresTagsCount,
@@ -122,8 +128,20 @@ public class StoreService : IStoreService
                 StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
+        var clientRole = _sessionService.GetClientRole();
+        var mqttPassword = string.Empty;
+        if (clientRole == UserRole.Admin)
+        {
+            mqttPassword = await _encryptionService.Decrypt(new EncryptDto
+            {
+                EncryptedData = store.Store.mqtt_password_store,
+                IV = store.Store.mqtt_password_encryption_iv_store,
+                Tag = store.Store.mqtt_password_encryption_tag_store
+            }, _encryptionKey);
+        }
         return _mapper.Map<ReadExtendedStoreDto>(store.Store) with
         {
+            mqtt_password_store = mqttPassword,
             boxs_count = store.BoxsCount,
             leds_count = store.LedsCount,
             stores_tags_count = store.StoresTagsCount,
@@ -141,9 +159,13 @@ public class StoreService : IStoreService
             throw new UnauthorizedAccessException("You do not have permission to create a store");
         }
         var newStore = _mapper.Map<Stores>(storeDto);
+        var mqttPassword = GenerateMqttPasswordForStore();
+        var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
+        newStore.mqtt_password_store = encryptedPassword.EncryptedData;
+        newStore.mqtt_password_encryption_iv_store = encryptedPassword.IV;
+        newStore.mqtt_password_encryption_tag_store = encryptedPassword.Tag;
         _context.Stores.Add(newStore);
         await _context.SaveChangesAsync();
-        var mqttPassword = GenerateMqttPasswordForStore(newStore.id_store);
         await _kafkaProducer.PublishAsync(
             "mqtt-user-events",
             newStore.id_store.ToString(),
@@ -171,10 +193,14 @@ public class StoreService : IStoreService
         var oldMqttName = storeToUpdate.mqtt_name_store;
         await _validateStoreService.UpdateStoreInformations(storeToUpdate, storeDto);
         await _validateStoreService.CheckUpdateStoreOutsideElement(storeToUpdate);
-        await _context.SaveChangesAsync();
-        var mqttPassword = GenerateMqttPasswordForStore(storeToUpdate.id_store);
+        var mqttPassword = string.Empty;
         if (storeDto.reset_mqtt_password_store == true)
         {
+            mqttPassword = GenerateMqttPasswordForStore();
+            var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
+            storeToUpdate.mqtt_password_store = encryptedPassword.EncryptedData;
+            storeToUpdate.mqtt_password_encryption_iv_store = encryptedPassword.IV;
+            storeToUpdate.mqtt_password_encryption_tag_store = encryptedPassword.Tag;
             await _kafkaProducer.PublishAsync(
                 "mqtt-user-events",
                 storeToUpdate.id_store.ToString(),
@@ -186,6 +212,16 @@ public class StoreService : IStoreService
                     delete = false
                 })
             );
+        }
+        await _context.SaveChangesAsync();
+        if (mqttPassword == string.Empty)
+        {
+            mqttPassword = await _encryptionService.Decrypt(new EncryptDto
+            {
+                EncryptedData = storeToUpdate.mqtt_password_store,
+                IV = storeToUpdate.mqtt_password_encryption_iv_store,
+                Tag = storeToUpdate.mqtt_password_encryption_tag_store
+            }, _encryptionKey);
         }
         return _mapper.Map<ReadStoreDto>(storeToUpdate) with
         {
@@ -202,7 +238,6 @@ public class StoreService : IStoreService
         }
         var storeToDelete = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
         _context.Stores.Remove(storeToDelete);
-        
         await _kafkaProducer.PublishAsync(
             "mqtt-user-events",
             storeToDelete.id_store.ToString(),
@@ -284,8 +319,12 @@ public class StoreService : IStoreService
                 });
             }
         }
-        
-        var mqttPassword = GenerateMqttPasswordForStore(newStore.id_store);
+        var mqttPassword = GenerateMqttPasswordForStore();
+        var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
+        newStore.mqtt_password_store = encryptedPassword.EncryptedData;
+        newStore.mqtt_password_encryption_iv_store = encryptedPassword.IV;
+        newStore.mqtt_password_encryption_tag_store = encryptedPassword.Tag;
+        await _context.SaveChangesAsync();
         if (errorQueryLed.Count == 0 && errorQueryBox.Count == 0)
         {
             await _context.SaveChangesAsync();
@@ -332,6 +371,7 @@ public class StoreService : IStoreService
             throw new UnauthorizedAccessException("You do not have permission to update a store");
         }
         var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
+        await using var transaction = await _context.Database.BeginTransactionAsync();
         var oldMqttName = storeToUpdate.mqtt_name_store;
         await _validateStoreService.UpdateStoreInformations(storeToUpdate, storeDto.store);
         // Add leds and boxs, if status field indicate the new status "delete", "modified", "new"
@@ -361,24 +401,44 @@ public class StoreService : IStoreService
                 }
             }
         }
+        var mqttPassword = string.Empty;
         if (errorQueryLed.Count == 0 && errorQueryBox.Count == 0)
         {
             await _context.SaveChangesAsync();
+            if (storeDto.store.reset_mqtt_password_store == true)
+            {
+                mqttPassword = GenerateMqttPasswordForStore();
+                var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
+                storeToUpdate.mqtt_password_store = encryptedPassword.EncryptedData;
+                storeToUpdate.mqtt_password_encryption_iv_store = encryptedPassword.IV;
+                storeToUpdate.mqtt_password_encryption_tag_store = encryptedPassword.Tag;
+                await _context.SaveChangesAsync();
+                await _kafkaProducer.PublishAsync(
+                    "mqtt-user-events",
+                    storeToUpdate.id_store.ToString(),
+                    JsonSerializer.Serialize(new MqttUserMessage
+                    {
+                        user = storeToUpdate.mqtt_name_store,
+                        old_user = oldMqttName,
+                        password = mqttPassword,
+                        delete = false
+                    })
+                );
+            }
+            await transaction.CommitAsync();
         }
-        var mqttPassword = GenerateMqttPasswordForStore(storeToUpdate.id_store);
-        if (storeDto.store.reset_mqtt_password_store == true)
+        else
         {
-            await _kafkaProducer.PublishAsync(
-                "mqtt-user-events",
-                storeToUpdate.id_store.ToString(),
-                JsonSerializer.Serialize(new MqttUserMessage
-                {
-                    user = storeToUpdate.mqtt_name_store,
-                    old_user = oldMqttName,
-                    password = mqttPassword,
-                    delete = false
-                })
-            );
+            await transaction.RollbackAsync();
+        }
+        if (mqttPassword == string.Empty)
+        {
+            mqttPassword = await _encryptionService.Decrypt(new EncryptDto
+            {
+                EncryptedData = storeToUpdate.mqtt_password_store,
+                IV = storeToUpdate.mqtt_password_encryption_iv_store,
+                Tag = storeToUpdate.mqtt_password_encryption_tag_store
+            }, _encryptionKey);
         }
         return new ReadStoreCompleteDto
         {
@@ -418,7 +478,7 @@ public class StoreService : IStoreService
         return stores.Count;
     }
 
-    private static string GenerateMqttPasswordForStore(int id)
+    private static string GenerateMqttPasswordForStore()
     {
         var randomBytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(24);
         return Convert.ToBase64String(randomBytes);
