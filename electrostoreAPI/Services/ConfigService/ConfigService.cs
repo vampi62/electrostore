@@ -54,11 +54,11 @@ public class ConfigService : IConfigService
 
     public string[] GetAllowedImageExtensions() => [.. Constants.AllowedImageMimeTypes.Values];
 
-    private string[] GetAllowedImageMimeTypes() => [.. Constants.AllowedImageMimeTypes.Keys];
+    private static string[] GetAllowedImageMimeTypes() => [.. Constants.AllowedImageMimeTypes.Keys];
 
-    private string[] GetAllowedDocumentExtensions() => [.. Constants.AllowedDocumentMimeTypes.Values];
+    private static string[] GetAllowedDocumentExtensions() => [.. Constants.AllowedDocumentMimeTypes.Values];
 
-    private string[] GetAllowedDocumentMimeTypes() => [.. Constants.AllowedDocumentMimeTypes.Keys];
+    private static string[] GetAllowedDocumentMimeTypes() => [.. Constants.AllowedDocumentMimeTypes.Keys];
 
     private List<SsoAvailableProvider> GetSSOProviders() =>
         [.. _configuration.GetSection("OAuth").GetChildren().Select(provider => new SsoAvailableProvider

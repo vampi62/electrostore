@@ -104,12 +104,10 @@ public class WebHookService : IWebHookService
         Console.WriteLine("Webhook processed successfully.");
     }
 
-    private string getGeneratedSignature(string requestText, string key)
+    private static string getGeneratedSignature(string requestText, string key)
     {
         var src = requestText + "/" + key;
-
-        using var sha256 = System.Security.Cryptography.SHA256.Create();
-        byte[] hash = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(src));
+        byte[] hash = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(src));
 
         var hexString = new System.Text.StringBuilder(hash.Length * 2);
         foreach (var b in hash)
