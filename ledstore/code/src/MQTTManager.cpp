@@ -31,6 +31,7 @@ bool MQTTManager::connectToMQTT(const String& server, int port,
     mac.replace(":", "");
     sessionName = clientPrefix + mac;
     topicBase   = String(MQTT_BASE_TOPIC) + "/" + topic;
+    ledsTopic = topicBase + "/leds";
     statusTopic = topicBase + "/status";
 
     bool connected = mqttClient.connect(
@@ -44,9 +45,9 @@ bool MQTTManager::connectToMQTT(const String& server, int port,
     );
 
     if (connected) {
-        mqttClient.subscribe(topicBase.c_str());
+        mqttClient.subscribe(ledsTopic.c_str(), 1); // Subscribe to the LEDs topic with QoS 1
         publish("status", "online", true);
-        Logger::info("MQTT connected, subscribed to: " + topicBase);
+        Logger::info("MQTT connected, subscribed to: " + ledsTopic);
         return true;
     }
 

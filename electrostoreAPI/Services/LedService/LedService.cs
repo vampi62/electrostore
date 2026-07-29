@@ -261,7 +261,7 @@ public class LedService : ILedService
             throw new NotImplementedException("MQTT client is not connected");
         }
         var store = await _context.Stores.FindAsync(ledDB.id_store) ?? throw new KeyNotFoundException($"Store with id '{ledDB.id_store}' not found");
-        var topic = "electrostore/" + store.mqtt_name_store;
+        var topic = "electrostore/" + store.mqtt_name_store + "/leds";
         var message = new MqttApplicationMessageBuilder()
             .WithTopic(topic)
             .WithPayload(JsonSerializer.Serialize(new
@@ -316,7 +316,7 @@ public class LedService : ILedService
             throw new NotImplementedException("MQTT client is not connected");
         }
         var store = await _context.Stores.FindAsync(storeId) ?? throw new KeyNotFoundException($"Store with id '{storeId}' not found");
-        var topic = "electrostore/" + store.mqtt_name_store;
+        var topic = "electrostore/" + store.mqtt_name_store + "/leds";
 
         // sent led 10 per 10
         for (int i = 0; i <= ledsDB.Count; i+=numberLedSentPerMessage)

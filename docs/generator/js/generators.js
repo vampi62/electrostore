@@ -533,7 +533,7 @@ volumes:`;
 // Generate appsettings.json for API service
 function generateApiAppsettings(config) {
     const isLegacy = isLegacyVersion(config.appVersion);
-    
+
     const settings = {
         "Logging": {
             "LogLevel": {
@@ -563,7 +563,7 @@ function generateApiAppsettings(config) {
         const db = config.mariadbExternal;
         connectionString = `Server=${db.host};Port=${db.port};Database=${db.database};User=${db.user};Password=${config.useVault ? '{{vault:mariadb_password}}' : db.password};`;
     }
-    
+
     settings.ConnectionStrings = {
         "DefaultConnection": connectionString
     };
@@ -641,6 +641,10 @@ function generateApiAppsettings(config) {
         "Issuer": config.jwt.issuer,
         "Audience": config.jwt.audience,
         "ExpireDays": parseInt(config.jwt.expireDays)
+    };
+
+    settings.Encryption = {
+        "HexKey": config.useVault ? "{{vault:aes_key}}" : config.aesKey
     };
 
     if (config.oauthProviders.length > 0) {
@@ -1131,6 +1135,9 @@ echo "Storing secrets in Vault..."
 `;
 
         script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password='${config.useMQTT ? config.mqtt.password : config.mqttExternal.password}'
+`;
+
+        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} aes_key='${config.aesKey}'
 `;
 
         if (config.enableSMTP && config.smtp) {
