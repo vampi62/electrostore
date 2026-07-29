@@ -15111,7 +15111,7 @@
           "sso_available_providers": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/SSOAvailableProvider"
+              "$ref": "#/components/schemas/SsoAvailableProvider"
             },
             "nullable": true
           },
@@ -17978,7 +17978,7 @@
         },
         "additionalProperties": false
       },
-      "SSOAvailableProvider": {
+      "SsoAvailableProvider": {
         "required": [
           "display_name",
           "icon_url",

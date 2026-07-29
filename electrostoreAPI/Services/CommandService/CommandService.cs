@@ -1,11 +1,9 @@
 using AutoMapper;
 using ElectrostoreAPI.Dto;
-using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Kafka.Messages;
 using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Models;
-using ElectrostoreAPI.Services.CommandHistoryService;
 using ElectrostoreAPI.Services.FileService;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -19,16 +17,14 @@ public class CommandService : ICommandService
     private readonly ApplicationDbContext _context;
     private readonly IFileService _fileService;
     private readonly IKafkaProducerService _kafkaProducerService;
-    private readonly ICommandHistoryService _commandHistoryService;
     private readonly string _commandDocumentsPath = "commandDocuments";
 
-    public CommandService(IMapper mapper, ApplicationDbContext context, IFileService fileService, IKafkaProducerService kafkaProducerService, ICommandHistoryService commandHistoryService)
+    public CommandService(IMapper mapper, ApplicationDbContext context, IFileService fileService, IKafkaProducerService kafkaProducerService)
     {
         _mapper = mapper;
         _context = context;
         _fileService = fileService;
         _kafkaProducerService = kafkaProducerService;
-        _commandHistoryService = commandHistoryService;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedCommandDto>> GetCommands(int limit = 100, int offset = 0,

@@ -38,7 +38,7 @@ public class CronSchedulerService : BackgroundService
         {
             _logger.LogInformation("Refreshing cron job schedule...");
             await scheduler.UnscheduleJobs(
-                (await scheduler.GetTriggerKeys(GroupMatcher<TriggerKey>.AnyGroup())).ToList(),
+                (await scheduler.GetTriggerKeys(GroupMatcher<TriggerKey>.AnyGroup(), stoppingToken)).ToList(),
                 stoppingToken);
             await LoadAndScheduleJobsAsync(scheduler, stoppingToken);
         }

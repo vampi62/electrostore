@@ -5,14 +5,11 @@ namespace ElectrostoreAPI.Grpc.Services;
 
 public class ConfigGrpcService : ConfigGrpc.ConfigGrpcBase
 {
-    private readonly ILogger<ConfigGrpcService> _logger;
     private readonly IConfigService _configService;
 
     public ConfigGrpcService(
-        ILogger<ConfigGrpcService> logger,
         IConfigService configService)
     {
-        _logger = logger;
         _configService = configService;
     }
 

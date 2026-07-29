@@ -6,14 +6,11 @@ namespace ElectrostoreAPI.Grpc.Services;
 public class CronJobsGrpcService : CronJobsGrpc.CronJobsGrpcBase
 {
     private readonly ICronJobService _cronJobService;
-    private readonly ILogger<CronJobsGrpcService> _logger;
 
     public CronJobsGrpcService(
-        ICronJobService cronJobService,
-        ILogger<CronJobsGrpcService> logger)
+        ICronJobService cronJobService)
     {
         _cronJobService = cronJobService;
-        _logger = logger;
     }
 
     public override async Task<GetEnabledCronJobsReply> GetEnabledCronJobs(

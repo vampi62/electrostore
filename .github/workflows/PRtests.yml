@@ -3,6 +3,9 @@ name: tests PR
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   detect-changes:
     name: Detect Modified Directories
@@ -54,6 +57,7 @@ jobs:
     permissions:
       packages: write
       contents: read
+    secrets: inherit
 
   test-cron:
     name: tests - CRON
@@ -65,6 +69,7 @@ jobs:
     permissions:
       packages: write
       contents: read
+    secrets: inherit
   
   test-ia:
     name: tests - IA
@@ -76,6 +81,7 @@ jobs:
     permissions:
       packages: write
       contents: read
+    secrets: inherit
 
   test-front:
     name: tests - FRONT
@@ -87,6 +93,7 @@ jobs:
     permissions:
       packages: write
       contents: read
+    secrets: inherit
 
   test-notif:
     name: tests - NOTIF
@@ -98,6 +105,7 @@ jobs:
     permissions:
       packages: write
       contents: read
+    secrets: inherit
 
   test-worker:
     name: tests - WORKER
@@ -109,3 +117,4 @@ jobs:
     permissions:
       packages: write
       contents: read
+    secrets: inherit
