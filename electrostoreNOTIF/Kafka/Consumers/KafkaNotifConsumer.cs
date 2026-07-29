@@ -76,157 +76,224 @@ public class KafkaNotifConsumer : BackgroundService
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                ConsumeResult<string, string>? result = null;
-                try
-                {
-                    result = await Task.Run(() => consumer.Consume(stoppingToken), stoppingToken);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (ConsumeException ex)
-                {
-                    _logger.LogError(ex, "Kafka consume error");
-                    continue;
-                }
-                if (result is null || result.IsPartitionEOF)
+                var result = await ConsumeMessageAsync(consumer, stoppingToken);
+                if (result is null)
                 {
                     continue;
                 }
-                if (result?.Message?.Value is null)
-                {
-                    continue;
-                }
-                NotificationMessage? msg;
-                try
-                {
-                    msg = JsonSerializer.Deserialize<NotificationMessage>(result.Message.Value, JsonOptions);
-                }
-                catch (JsonException ex)
-                {
-                    _logger.LogWarning(ex, "Invalid Kafka message (JSON) - offset {Offset}", result.Offset);
-                    consumer.Commit(result);
-                    continue;
-                }
-                if (msg is null)
-                {
-                    consumer.Commit(result);
-                    continue;
-                }
-                var dispatched = false;
-                try
-                {
-                    await DispatchAsync(msg, stoppingToken);
-                    dispatched = true;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error dispatching notification message for offset {Offset}", result.Offset);
-                }
-                if (dispatched)
-                {
-                    consumer.Commit(result);
-                }
+                await ProcessMessageAsync(consumer, result, stoppingToken);
             }
         }
         finally
         {
             consumer.Close();
-            _logger.LogInformation("KafkaNotifConsumer stopped");
+            _logger.LogInformation("KafkaIaStatusConsumer stopped");
         }
     }
 
-    private async Task DispatchAsync(NotificationMessage msg, CancellationToken ct)
+    private async Task<ConsumeResult<string, string>?> ConsumeMessageAsync(
+        IConsumer<string, string> consumer, 
+        CancellationToken ct)
     {
-        var rendered = !string.IsNullOrWhiteSpace(msg.TemplateId)
-            ? _templateService.RenderTemplate(msg.TemplateId, msg.TemplateValues, msg.Language)
-            : null;
+        try
+        {
+            return await Task.Run(() => consumer.Consume(ct), ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+        catch (ConsumeException ex)
+        {
+            _logger.LogError(ex, "Kafka error: {Reason}", ex.Error.Reason);
+            return null;
+        }
+    }
 
-        if (!string.IsNullOrWhiteSpace(msg.TemplateId) && rendered is null)
+    private async Task ProcessMessageAsync(
+        IConsumer<string, string> consumer,
+        ConsumeResult<string, string> result,
+        CancellationToken ct)
+    {
+        if (result.IsPartitionEOF || result.Message?.Value is null)
+        {
+            return;
+        }
+        var msg = DeserializeMessage(result);
+        if (msg is null)
+        {
+            consumer.Commit(result);
+            return;
+        }
+        var dispatched = await DispatchAsync(msg, ct);
+        if (dispatched)
+        {
+            consumer.Commit(result);
+        } else
+        {
+            _logger.LogWarning("Message for offset {Offset} was not dispatched.", result.Offset);
+        }
+    }
+
+    private NotificationMessage? DeserializeMessage(ConsumeResult<string, string> result)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<NotificationMessage>(result.Message.Value, JsonOptions);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "Invalid Kafka message (JSON) - offset {Offset}", result.Offset);
+            return null;
+        }
+    }
+
+    private async Task<bool> DispatchAsync(NotificationMessage msg, CancellationToken ct)
+    {
+        var rendered = RenderTemplateIfNeededAsync(msg);
+        var emailAddress = await ResolveEmailAddressAsync(msg, ct);
+        
+        var notificationContent = new NotificationContent
+        {
+            EmailAddress = emailAddress,
+            EmailSubject = rendered?.Subject ?? msg.Subject,
+            EmailBody = rendered?.Body ?? msg.Body,
+            PushTitle = rendered?.Title ?? msg.Title,
+            PushBody = rendered?.Body ?? msg.Body,
+            PushData = rendered?.Data ?? msg.PushData
+        };
+
+        foreach (var type in msg.Types)
+        {
+            await SendNotificationByTypeAsync(type, msg, notificationContent, ct);
+        }
+        
+        return true;
+    }
+
+    private NotificationTemplateRender? RenderTemplateIfNeededAsync(NotificationMessage msg)
+    {
+        if (string.IsNullOrWhiteSpace(msg.TemplateId))
+        {
+            return null;
+        }
+        var rendered = _templateService.RenderTemplate(msg.TemplateId, msg.TemplateValues, msg.Language);
+        if (rendered is null)
         {
             _logger.LogWarning("Template '{TemplateId}' could not be rendered.", msg.TemplateId);
         }
+        return rendered;
+    }
 
-        string? emailAddress = msg.RecipientEmail;
-        var emailSubject = rendered?.Subject ?? msg.Subject;
-        var emailBody = rendered?.Body ?? msg.Body;
-        var pushTitle = rendered?.Title ?? msg.Title;
-        var pushBody = rendered?.Body ?? msg.Body;
-        var pushData = rendered?.Data ?? msg.PushData;
+    private async Task<string?> ResolveEmailAddressAsync(NotificationMessage msg, CancellationToken ct)
+    {
+        if (!string.IsNullOrEmpty(msg.RecipientEmail))
+        {
+            return msg.RecipientEmail;
+        }
+        if (!msg.RecipientUserId.HasValue)
+        {
+            return null;
+        }
+        try
+        {
+            var reply = await _userResolver.GetUserInfoAsync(
+                new GetUserInfoRequest { UserId = msg.RecipientUserId.Value },
+                cancellationToken: ct);
+            if (!reply.Found)
+            {
+                _logger.LogWarning("User {Id} not found in API", msg.RecipientUserId.Value);
+                return null;
+            }
+            return reply.Email;
+        }
+        catch (RpcException ex)
+        {
+            _logger.LogError(ex, "Error while calling API to get user info (userId={UserId})", msg.RecipientUserId.Value);
+            return null;
+        }
+    }
 
-        if (string.IsNullOrEmpty(emailAddress) && msg.RecipientUserId.HasValue)
+    private async Task SendNotificationByTypeAsync(
+        string type, 
+        NotificationMessage msg, 
+        NotificationContent content, 
+        CancellationToken ct)
+    {
+        switch (type.ToLowerInvariant())
+        {
+            case "email":
+                await SendEmailNotificationAsync(msg, content);
+                break;
+            case "webpush":
+                await SendWebPushNotificationAsync(msg, content, ct);
+                break;
+            default:
+                _logger.LogWarning("Unknown notification type '{Type}' - skipping", type);
+                break;
+        }
+    }
+
+    private async Task SendEmailNotificationAsync(NotificationMessage msg, NotificationContent content)
+    {
+        if (!string.IsNullOrEmpty(content.EmailAddress))
+        {
+            await _email.SendAsync(
+                content.EmailAddress, 
+                content.EmailSubject ?? string.Empty, 
+                content.EmailBody ?? string.Empty);
+        }
+        else
+        {
+            _logger.LogWarning(
+                "Cannot send email notification - no email address for user ID {UserId}",
+                msg.RecipientUserId);
+        }
+    }
+
+    private async Task SendWebPushNotificationAsync(
+        NotificationMessage msg, 
+        NotificationContent content, 
+        CancellationToken ct)
+    {
+        if (!msg.RecipientUserId.HasValue)
+        {
+            _logger.LogWarning("webPush: RecipientUserId is required");
+            return;
+        }
+        var pushSubs = await _userResolver.GetUserPushSubscriptionsAsync(
+            new GetUserPushSubscriptionsRequest { UserId = msg.RecipientUserId.Value },
+            cancellationToken: ct);
+        if (pushSubs is null)
+        {
+            return;
+        }
+        foreach (var sub in pushSubs.Subscriptions)
         {
             try
             {
-                var reply = await _userResolver.GetUserInfoAsync(
-                    new GetUserInfoRequest { UserId = msg.RecipientUserId.Value },
-                    cancellationToken: ct);
-                if (!reply.Found)
-                {
-                    _logger.LogWarning("User {Id} not found in API", msg.RecipientUserId.Value);
-                    return;
-                }
-                emailAddress = reply.Email;
+                await _webPush.SendAsync(
+                    sub.Endpoint, 
+                    sub.P256Dh, 
+                    sub.Auth, 
+                    content.PushTitle ?? string.Empty, 
+                    content.PushBody ?? string.Empty, 
+                    content.PushData);
             }
-            catch (RpcException ex)
+            catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while calling API to get user info (userId={UserId})", msg.RecipientUserId.Value);
-                return;
+                _logger.LogError(ex, "Failed to send web push to subscription {Id}", sub.Id);
             }
         }
-        foreach (var type in msg.Types)
-        {
-            switch (type.ToLowerInvariant())
-            {
-                case "email":
-                    if (!string.IsNullOrEmpty(emailAddress))
-                    {
-                        await _email.SendAsync(emailAddress, emailSubject ?? string.Empty, emailBody ?? string.Empty);
-                    }
-                    else
-                    {
-                        _logger.LogWarning(
-                            "Cannot send email notification - no email address for user ID {UserId}",
-                            msg.RecipientUserId);
-                    }
-                    break;
-                case "webpush":
-                    if (msg.RecipientUserId.HasValue)
-                    {
-                        GetUserPushSubscriptionsReply? pushSubs;
-                        try
-                        {
-                            pushSubs = await _userResolver.GetUserPushSubscriptionsAsync(
-                                new GetUserPushSubscriptionsRequest { UserId = msg.RecipientUserId.Value },
-                                cancellationToken: ct);
-                        }
-                        catch (RpcException ex)
-                        {
-                            _logger.LogError(ex, "Error fetching push subscriptions for user {UserId}", msg.RecipientUserId.Value);
-                            break;
-                        }
-                        foreach (var sub in pushSubs.Subscriptions)
-                        {
-                            try
-                            {
-                                await _webPush.SendAsync(sub.Endpoint, sub.P256Dh, sub.Auth, pushTitle ?? string.Empty, pushBody ?? string.Empty, pushData);
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError(ex, "Failed to send web push to subscription {Id}", sub.Id);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogWarning("webPush: RecipientUserId is required");
-                    }
-                    break;
-                default:
-                    _logger.LogWarning("Unknown notification type '{Type}' - skipping", type);
-                    break;
-            }
-        }
+    }
+
+    private class NotificationContent
+    {
+        public string? EmailAddress { get; set; }
+        public string? EmailSubject { get; set; }
+        public string? EmailBody { get; set; }
+        public string? PushTitle { get; set; }
+        public string? PushBody { get; set; }
+        public Dictionary<string, string>? PushData { get; set; }
     }
 }

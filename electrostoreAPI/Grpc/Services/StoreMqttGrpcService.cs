@@ -7,14 +7,11 @@ namespace ElectrostoreAPI.Grpc.Services;
 public class StoreMqttGrpcService : StoresMqttGrpc.StoresMqttGrpcBase
 {
     private readonly IStoreService _storeService;
-    private readonly ILogger<StoreMqttGrpcService> _logger;
 
     public StoreMqttGrpcService(
-        IStoreService storeService,
-        ILogger<StoreMqttGrpcService> logger)
+        IStoreService storeService)
     {
         _storeService = storeService;
-        _logger = logger;
     }
 
     public override async Task<UpdateStoreMqttStatusReply> UpdateStoreMqttStatus(

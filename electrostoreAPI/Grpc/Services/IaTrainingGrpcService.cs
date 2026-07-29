@@ -8,21 +8,15 @@ namespace ElectrostoreAPI.Grpc.Services;
 
 public class IaTrainingGrpcService : IaTrainingGrpc.IaTrainingGrpcBase
 {
-    private readonly IFileService _fileService;
     private readonly IIAService _iaService;
     private readonly IImgService _imgService;
-    private readonly ILogger<IaTrainingGrpcService> _logger;
 
     public IaTrainingGrpcService(
-        IFileService fileService,
         IIAService iaService,
-        IImgService imgService,
-        ILogger<IaTrainingGrpcService> logger)
+        IImgService imgService)
     {
-        _fileService = fileService;
         _iaService = iaService;
         _imgService = imgService;
-        _logger = logger;
     }
 
     public override async Task StreamTrainingImages(

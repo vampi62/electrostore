@@ -27,14 +27,14 @@ public record ReadConfig
     public int max_length_postal_code { get; init; }
     public int max_size_document_in_mb { get; init; }
     public int max_size_image_in_mb { get; init; }
-    public List<SSOAvailableProvider>? sso_available_providers { get; init; }
+    public List<SsoAvailableProvider>? sso_available_providers { get; init; }
     public string[]? allowed_image_mime_types { get; init; }
     public string[]? allowed_image_extensions { get; init; }
     public string[]? allowed_document_mime_types { get; init; }
     public string[]? allowed_document_extensions { get; init; }
 }
 
-public record SSOAvailableProvider
+public record SsoAvailableProvider
 {
     public required string provider { get; init; }
     public required string display_name { get; init; }

@@ -68,74 +68,86 @@ public class KafkaTrackingResultConsumer : BackgroundService
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                ConsumeResult<string, string>? result = null;
-                try
+                var result = await ConsumeMessageAsync(consumer, stoppingToken);
+                if (result is null)
                 {
-                    result = await Task.Run(() => consumer.Consume(stoppingToken), stoppingToken);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (ConsumeException ex)
-                {
-                    _logger.LogError(ex, "Kafka consume error: {Reason}", ex.Error.Reason);
                     continue;
                 }
-
-                if (result is null || result.IsPartitionEOF || result.Message?.Value is null)
-                    continue;
-
-                TrackingResultMessage? msg;
-                try
-                {
-                    msg = JsonSerializer.Deserialize<TrackingResultMessage>(result.Message.Value, JsonOptions);
-                }
-                catch (JsonException ex)
-                {
-                    _logger.LogWarning(ex, "Invalid tracking-result JSON - offset {Offset}", result.Offset);
-                    consumer.Commit(result);
-                    continue;
-                }
-
-                if (msg is null)
-                {
-                    consumer.Commit(result);
-                    continue;
-                }
-
-                var dispatched = false;
-                try
-                {
-                    await DispatchAsync(msg, stoppingToken);
-                    dispatched = true;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex,
-                        "Error dispatching tracking result: action={Action}, tracking={Num} carrier={Carrier}",
-                        msg.action, msg.tracking_number, msg.carrier);
-                }
-
-                if (dispatched)
-                    consumer.Commit(result);
+                await ProcessMessageAsync(consumer, result, stoppingToken);
             }
         }
         finally
         {
             consumer.Close();
-            _logger.LogInformation("KafkaTrackingResultConsumer stopped.");
+            _logger.LogInformation("KafkaIaStatusConsumer stopped");
         }
     }
 
-    private async Task DispatchAsync(TrackingResultMessage msg, CancellationToken ct)
+    private async Task<ConsumeResult<string, string>?> ConsumeMessageAsync(
+        IConsumer<string, string> consumer, 
+        CancellationToken ct)
+    {
+        try
+        {
+            return await Task.Run(() => consumer.Consume(ct), ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+        catch (ConsumeException ex)
+        {
+            _logger.LogError(ex, "Kafka error: {Reason}", ex.Error.Reason);
+            return null;
+        }
+    }
+
+    private async Task ProcessMessageAsync(
+        IConsumer<string, string> consumer,
+        ConsumeResult<string, string> result,
+        CancellationToken ct)
+    {
+        if (result.IsPartitionEOF || result.Message?.Value is null)
+        {
+            return;
+        }
+        var msg = DeserializeMessage(result);
+        if (msg is null)
+        {
+            consumer.Commit(result);
+            return;
+        }
+        var dispatched = await DispatchAsync(msg, ct);
+        if (dispatched)
+        {
+            consumer.Commit(result);
+        } else
+        {
+            _logger.LogWarning("Message for offset {Offset} was not dispatched.", result.Offset);
+        }
+    }
+
+    private TrackingResultMessage? DeserializeMessage(ConsumeResult<string, string> result)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<TrackingResultMessage>(result.Message.Value, JsonOptions);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "Invalid Kafka message (JSON) - offset {Offset}", result.Offset);
+            return null;
+        }
+    }
+
+    private async Task<bool> DispatchAsync(TrackingResultMessage msg, CancellationToken ct)
     {
         if (!msg.success)
         {
             _logger.LogWarning(
                 "Track17 result: action={Action} tracking={Num} carrier={Carrier} - échec (error_code={Err}).",
                 msg.action, msg.tracking_number, msg.carrier, msg.error_code);
-            return;
+            return false;
         }
 
         switch (msg.action)
@@ -172,5 +184,6 @@ public class KafkaTrackingResultConsumer : BackgroundService
                     msg.action, msg.tracking_number, msg.carrier);
                 break;
         }
+        return true;
     }
 }

@@ -6,24 +6,18 @@ using Microsoft.Extensions.Configuration;
 
 namespace ElectrostoreNOTIF.Services.NotificationTemplateService;
 
-public class NotificationTemplateService : INotificationTemplateService
+public partial class NotificationTemplateService : INotificationTemplateService
 {
     // --- Regex compilées une seule fois ---
 
     /// <summary>Blocs {{#each key}}…{{/each}}, y compris sur plusieurs lignes.</summary>
-    private static readonly Regex EachBlockRegex = new(
-        @"\{\{#each\s+(\w+)\}\}(.*?)\{\{/each\}\}",
-        RegexOptions.Compiled | RegexOptions.Singleline);
+    private static readonly Regex EachBlockRegex = MyRegexEachBlock();
 
     /// <summary>Placeholder scalaire {{key}} ou {{ key }}.</summary>
-    private static readonly Regex PlaceholderRegex = new(
-        @"\{\{\s*(\w+)\s*\}\}",
-        RegexOptions.Compiled);
+    private static readonly Regex PlaceholderRegex = MyRegexPlaceholder();
 
     /// <summary>Placeholder courant {{.}} dans un bloc #each.</summary>
-    private static readonly Regex DotPlaceholderRegex = new(
-        @"\{\{\s*\.\s*\}\}",
-        RegexOptions.Compiled);
+    private static readonly Regex DotPlaceholderRegex = MyRegexDotPlaceholder();
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -33,7 +27,7 @@ public class NotificationTemplateService : INotificationTemplateService
     // --- État interne ---
 
     /// <summary>Index construit au démarrage : "templateId:langue" → chemin de fichier.</summary>
-    private readonly IReadOnlyDictionary<string, string> _index;
+    private readonly Dictionary<string, string> _index;
 
     /// <summary>Cache des templates déjà lus : chargement à la demande.</summary>
     private readonly ConcurrentDictionary<string, NotificationTemplate> _cache = new(StringComparer.OrdinalIgnoreCase);
@@ -150,7 +144,7 @@ public class NotificationTemplateService : INotificationTemplateService
     // Construction de l'index au démarrage (lecture des noms de fichiers uniquement)
     // -----------------------------------------------------------------------
 
-    private IReadOnlyDictionary<string, string> BuildIndex()
+    private Dictionary<string, string> BuildIndex()
     {
         var index = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var templateRoot = Path.Combine(AppContext.BaseDirectory, "Templates");
@@ -272,6 +266,15 @@ public class NotificationTemplateService : INotificationTemplateService
         JsonValueKind.Null    => string.Empty,
         _                     => null
     };
+
+    [GeneratedRegex(@"\{\{#each\s+(\w+)\}\}(.*?)\{\{/each\}\}", RegexOptions.Singleline)]
+    private static partial Regex MyRegexEachBlock();
+
+    [GeneratedRegex(@"\{\{\s*(\w+)\s*\}\}")]
+    private static partial Regex MyRegexPlaceholder();
+
+    [GeneratedRegex(@"\{\{\s*\.\s*\}\}")]
+    private static partial Regex MyRegexDotPlaceholder();
 }
 
 // -----------------------------------------------------------------------

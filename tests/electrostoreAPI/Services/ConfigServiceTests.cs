@@ -81,7 +81,7 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal(Constants.MaxIpLength, result.max_length_ip);
             Assert.Equal(Constants.MaxReasonLength, result.max_length_reason);
             Assert.Equal(Constants.MaxDocumentSizeMB, result.max_size_document_in_mb);
-            var ssoProviders = _configuration.GetSection("OAuth").GetChildren().Select(provider => new SSOAvailableProvider
+            var ssoProviders = _configuration.GetSection("OAuth").GetChildren().Select(provider => new SsoAvailableProvider
             {
                 provider = provider.Key,
                 display_name = provider.GetValue<string>("DisplayName") ?? string.Empty,

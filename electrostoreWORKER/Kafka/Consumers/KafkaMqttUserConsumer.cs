@@ -17,7 +17,7 @@ public class KafkaMqttUserConsumer : BackgroundService
     private readonly ILogger<KafkaMqttUserConsumer> _logger;
 
     private readonly DockerClient _dockerClient;
-    private string _mosquittoContainerName;
+    private readonly string _mosquittoContainerName;
     private const string PasswdFilePath = "/mosquitto/config/mosquitto.passwd";
 
     public KafkaMqttUserConsumer(
@@ -69,68 +69,79 @@ public class KafkaMqttUserConsumer : BackgroundService
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                ConsumeResult<string, string>? result = null;
-                try
-                {
-                    result = await Task.Run(() => consumer.Consume(stoppingToken), stoppingToken);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (ConsumeException ex)
-                {
-                    _logger.LogError(ex, "Kafka error: {Reason}", ex.Error.Reason);
-                    continue;
-                }
-                if (result is null || result.IsPartitionEOF)
+                var result = await ConsumeMessageAsync(consumer, stoppingToken);
+                if (result is null)
                 {
                     continue;
                 }
-                if (result?.Message?.Value is null)
-                {
-                    continue;
-                }
-                MqttUserMessage? msg;
-                try
-                {
-                    msg = JsonSerializer.Deserialize<MqttUserMessage>(result.Message.Value, JsonOptions);
-                }
-                catch (JsonException ex)
-                {
-                    _logger.LogWarning(ex, "Invalid Kafka message (JSON) - offset {Offset}", result.Offset);
-                    consumer.Commit(result);
-                    continue;
-                }
-                if (msg is null)
-                {
-                    consumer.Commit(result);
-                    continue;
-                }
-                var dispatched = false;
-                try
-                {
-                    await DispatchAsync(msg, stoppingToken);
-                    dispatched = true;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error dispatching message for offset {Offset}: {Message}", result.Offset, ex.Message);
-                }
-                if (dispatched)
-                {
-                    consumer.Commit(result);
-                }
+                await ProcessMessageAsync(consumer, result, stoppingToken);
             }
         }
         finally
         {
             consumer.Close();
-            _logger.LogInformation("KafkaMqttUserConsumer stopped");
+            _logger.LogInformation("KafkaIaStatusConsumer stopped");
         }
     }
 
-    private async Task DispatchAsync(MqttUserMessage msg, CancellationToken ct)
+    private async Task<ConsumeResult<string, string>?> ConsumeMessageAsync(
+        IConsumer<string, string> consumer, 
+        CancellationToken ct)
+    {
+        try
+        {
+            return await Task.Run(() => consumer.Consume(ct), ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+        catch (ConsumeException ex)
+        {
+            _logger.LogError(ex, "Kafka error: {Reason}", ex.Error.Reason);
+            return null;
+        }
+    }
+
+    private async Task ProcessMessageAsync(
+        IConsumer<string, string> consumer,
+        ConsumeResult<string, string> result,
+        CancellationToken ct)
+    {
+        if (result.IsPartitionEOF || result.Message?.Value is null)
+        {
+            return;
+        }
+        var msg = DeserializeMessage(result);
+        if (msg is null)
+        {
+            consumer.Commit(result);
+            return;
+        }
+        var dispatched = await DispatchAsync(msg, ct);
+        if (dispatched)
+        {
+            consumer.Commit(result);
+        } else
+        {
+            _logger.LogWarning("Message for offset {Offset} was not dispatched.", result.Offset);
+        }
+    }
+
+    private MqttUserMessage? DeserializeMessage(ConsumeResult<string, string> result)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<MqttUserMessage>(result.Message.Value, JsonOptions);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "Invalid Kafka message (JSON) - offset {Offset}", result.Offset);
+            return null;
+        }
+    }
+
+    private async Task<bool> DispatchAsync(MqttUserMessage msg, CancellationToken ct)
     {
         if (msg.delete ?? false)
         {
@@ -142,7 +153,7 @@ public class KafkaMqttUserConsumer : BackgroundService
             if (string.IsNullOrWhiteSpace(msg.user) || string.IsNullOrWhiteSpace(msg.password))
             {
                 _logger.LogWarning("Invalid MQTT user message: missing user or password");
-                return;
+                return false;
             }
             if (!string.IsNullOrWhiteSpace(msg.old_user) && msg.old_user != msg.user)
             {
@@ -154,16 +165,17 @@ public class KafkaMqttUserConsumer : BackgroundService
         }
         _logger.LogInformation("Reloading Mosquitto configuration");
         await ExecuteCommandInMosquittoAsync("kill -HUP 1", ct);
+        return true;
     }
 
-    private async Task ExecuteCommandInMosquittoAsync(string command, CancellationToken ct)
+    private async Task<bool> ExecuteCommandInMosquittoAsync(string command, CancellationToken ct)
     {
         var containers = await _dockerClient.Containers.ListContainersAsync(new ContainersListParameters { All = true }, ct);
         var mosquittoContainer = containers.FirstOrDefault(c => c.Names.Any(n => n.TrimStart('/').Equals(_mosquittoContainerName, StringComparison.OrdinalIgnoreCase)));
         if (mosquittoContainer is null)
         {
             _logger.LogError("Mosquitto container not found. Cannot execute command.");
-            return;
+            return false;
         }
         try
         {
@@ -174,10 +186,12 @@ public class KafkaMqttUserConsumer : BackgroundService
                 Cmd = ["sh", "-c", command]
             }, ct);
             await _dockerClient.Exec.StartContainerExecAsync(execCreateResponse.ID, ct);
+            return true;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to execute command in Mosquitto container: {Message}", ex.Message);
+            return false;
         }
     }
 }

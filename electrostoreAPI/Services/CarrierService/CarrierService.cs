@@ -4,13 +4,8 @@ using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.SessionService;
-using ElectrostoreAPI.Services.JwiService;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
 
 namespace ElectrostoreAPI.Services.CarrierService;
 
@@ -19,20 +14,13 @@ public class CarrierService : ICarrierService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
-    private readonly IJwiService _jwiService;
-    private readonly IConfiguration _configuration;
-    private readonly IHttpClientFactory _httpClientFactory;
     private const string DemoModeKey = "DemoMode";
-    private const string camAuthMethod = "Basic";
 
-    public CarrierService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IJwiService jwiService, IConfiguration configuration, IHttpClientFactory httpClientFactory)
+    public CarrierService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService)
     {
         _mapper = mapper;
         _context = context;
         _sessionService = sessionService;
-        _jwiService = jwiService;
-        _configuration = configuration;
-        _httpClientFactory = httpClientFactory;
     }
 
     // limit the number of carrier to 100 and add offset and search parameters
