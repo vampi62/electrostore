@@ -4,6 +4,6 @@ namespace ElectrostoreAPI.Kafka.Messages;
 
 public class CronJobMessage
 {
-    public ReadCronJobDto data { get; set; }
-    public string action { get; set; }
+    public required ReadCronJobDto data { get; set; }
+    public required string action { get; set; }
 }

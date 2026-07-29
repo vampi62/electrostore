@@ -8,14 +8,11 @@ public class UsersGrpcService : UsersGrpc.UsersGrpcBase
 {
     private readonly IUserService _userService;
     private readonly IUserPushSubscriptionService _userPushSubscriptionService;
-    private readonly ILogger<UsersGrpcService> _logger;
 
     public UsersGrpcService(
         IUserService userService,
-        IUserPushSubscriptionService userPushSubscriptionService,
-        ILogger<UsersGrpcService> logger)
+        IUserPushSubscriptionService userPushSubscriptionService)
     {
-        _logger = logger;
         _userService = userService;
         _userPushSubscriptionService = userPushSubscriptionService;
     }

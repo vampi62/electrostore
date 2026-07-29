@@ -7,7 +7,6 @@ using ElectrostoreAPI.Kafka.Messages;
 using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.SessionService;
-using ElectrostoreAPI.Services.FileService;
 using Google.Protobuf;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -20,17 +19,15 @@ public class IAService : IIAService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
-    private readonly IFileService _fileService;
     private readonly IaCmdGrpc.IaCmdGrpcClient _iaGrpcClient;
     private readonly IKafkaProducerService _kafkaProducer;
     private readonly IConfiguration _configuration;
 
-    public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IFileService fileService, IaCmdGrpc.IaCmdGrpcClient iaGrpcClient, IKafkaProducerService kafkaProducer, IConfiguration configuration)
+    public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IaCmdGrpc.IaCmdGrpcClient iaGrpcClient, IKafkaProducerService kafkaProducer, IConfiguration configuration)
     {
         _mapper = mapper;
         _context = context;
         _sessionService = sessionService;
-        _fileService = fileService;
         _iaGrpcClient = iaGrpcClient;
         _kafkaProducer = kafkaProducer;
         _configuration = configuration;
