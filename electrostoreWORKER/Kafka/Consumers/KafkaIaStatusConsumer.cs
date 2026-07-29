@@ -65,58 +65,12 @@ public class KafkaIaStatusConsumer : BackgroundService
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                ConsumeResult<string, string>? result = null;
-                try
-                {
-                    result = await Task.Run(() => consumer.Consume(stoppingToken), stoppingToken);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (ConsumeException ex)
-                {
-                    _logger.LogError(ex, "Kafka error: {Reason}", ex.Error.Reason);
-                    continue;
-                }
-                if (result is null || result.IsPartitionEOF)
+                var result = await ConsumeMessageAsync(consumer, stoppingToken);
+                if (result is null)
                 {
                     continue;
                 }
-                if (result?.Message?.Value is null)
-                {
-                    continue;
-                }
-                IaStatusMessage? msg;
-                try
-                {
-                    msg = JsonSerializer.Deserialize<IaStatusMessage>(result.Message.Value, JsonOptions);
-                }
-                catch (JsonException ex)
-                {
-                    _logger.LogWarning(ex, "Invalid Kafka message (JSON) - offset {Offset}", result.Offset);
-                    consumer.Commit(result);
-                    continue;
-                }
-                if (msg is null)
-                {
-                    consumer.Commit(result);
-                    continue;
-                }
-                var dispatched = false;
-                try
-                {
-                    await DispatchAsync(msg, stoppingToken);
-                    dispatched = true;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error dispatching message for offset {Offset}: {Message}", result.Offset, ex.Message);
-                }
-                if (dispatched)
-                {
-                    consumer.Commit(result);
-                }
+                await ProcessMessageAsync(consumer, result, stoppingToken);
             }
         }
         finally
@@ -126,20 +80,77 @@ public class KafkaIaStatusConsumer : BackgroundService
         }
     }
 
-    private async Task DispatchAsync(IaStatusMessage msg, CancellationToken ct)
+    private async Task<ConsumeResult<string, string>?> ConsumeMessageAsync(
+        IConsumer<string, string> consumer, 
+        CancellationToken ct)
+    {
+        try
+        {
+            return await Task.Run(() => consumer.Consume(ct), ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+        catch (ConsumeException ex)
+        {
+            _logger.LogError(ex, "Kafka error: {Reason}", ex.Error.Reason);
+            return null;
+        }
+    }
+
+    private async Task ProcessMessageAsync(
+        IConsumer<string, string> consumer,
+        ConsumeResult<string, string> result,
+        CancellationToken ct)
+    {
+        if (result.IsPartitionEOF || result.Message?.Value is null)
+        {
+            return;
+        }
+        var msg = DeserializeMessage(result);
+        if (msg is null)
+        {
+            consumer.Commit(result);
+            return;
+        }
+        var dispatched = await DispatchAsync(msg, ct);
+        if (dispatched)
+        {
+            consumer.Commit(result);
+        } else
+        {
+            _logger.LogWarning("Message for offset {Offset} was not dispatched.", result.Offset);
+        }
+    }
+
+    private IaStatusMessage? DeserializeMessage(ConsumeResult<string, string> result)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<IaStatusMessage>(result.Message.Value, JsonOptions);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "Invalid Kafka message (JSON) - offset {Offset}", result.Offset);
+            return null;
+        }
+    }
+
+    private async Task<bool> DispatchAsync(IaStatusMessage msg, CancellationToken ct)
     {
         var reply = await _dataService.UpdateIaStatusAsync(
             new UpdateIaStatusRequest
             {
-                IdIa       = msg.id_ia,
-                Action     = msg.action,
+                IdIa        = msg.id_ia,
+                Action      = msg.action,
                 RequestedBy = msg.requested_by,
-                Message    = msg.message,
-                Accuracy   = msg.accuracy,
+                Message     = msg.message,
+                Accuracy    = msg.accuracy,
                 ValAccuracy = msg.val_accuracy,
-                Loss       = msg.loss,
-                ValLoss    = msg.val_loss,
-                Epoch      = msg.epoch,
+                Loss        = msg.loss,
+                ValLoss     = msg.val_loss,
+                Epoch       = msg.epoch,
             },
             cancellationToken: ct);
         if (reply.Success)
@@ -150,5 +161,6 @@ public class KafkaIaStatusConsumer : BackgroundService
         {
             _logger.LogWarning("API: IA #{Id} status update rejected (action={Action}).", msg.id_ia, msg.action);
         }
+        return true;
     }
 }

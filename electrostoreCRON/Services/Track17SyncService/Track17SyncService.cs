@@ -240,7 +240,7 @@ public class Track17SyncService : ITrack17SyncService
 
     // ---- Result builders ----------------------------------------------------------
 
-    private TrackingResultMessage[] BuildResults(
+    private static TrackingResultMessage[] BuildResults(
         string action, List<TrackingActionMessage> messages, Track17BatchResponse? apiResp)
     {
         var acceptedMap = apiResp?.data?.accepted?
@@ -253,9 +253,8 @@ public class Track17SyncService : ITrack17SyncService
 
         return messages.Select(m =>
         {
-            var isAccepted = acceptedMap.TryGetValue(m.tracking_number, out var acc);
-            var errorCode  = rejectedMap.TryGetValue(m.tracking_number, out var err) ? err : null;
-
+            var isAccepted = acceptedMap.TryGetValue(m.tracking_number);
+            var errorCode  = rejectedMap.TryGetValue(m.tracking_number);
             return new TrackingResultMessage
             {
                 action          = action,

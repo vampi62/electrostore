@@ -47,13 +47,16 @@ public class WebPushService : IWebPushService
                                            ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             _logger.LogWarning(
-                "[WebPushService] Subscription expired or invalid (endpoint={Endpoint}): {Status}",
-                endpoint, ex.StatusCode);
+                "[WebPushService] Subscription expired or invalid (endpoint={Endpoint}): {ErrorMessage} (StatusCode={StatusCode}) (Exception={Exception})",
+                endpoint,
+                ex.Message,
+                ex.StatusCode,
+                ex);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "[WebPushService] Failed to send push to {Endpoint}", endpoint);
-            throw;
+            throw new InvalidOperationException($"Failed to send push notification to {endpoint}", ex);
         }
     }
 }

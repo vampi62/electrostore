@@ -12,18 +12,15 @@ public class KafkaCronJobEventsConsumer : BackgroundService
     private const string Topic = "cronjob-events";
 
     private readonly ISchedulerFactory _schedulerFactory;
-    private readonly IServiceProvider _serviceProvider;
     private readonly IConfiguration _configuration;
     private readonly ILogger<KafkaCronJobEventsConsumer> _logger;
 
     public KafkaCronJobEventsConsumer(
         ISchedulerFactory schedulerFactory,
-        IServiceProvider serviceProvider,
         IConfiguration configuration,
         ILogger<KafkaCronJobEventsConsumer> logger)
     {
         _schedulerFactory = schedulerFactory;
-        _serviceProvider  = serviceProvider;
         _configuration    = configuration;
         _logger           = logger;
     }
@@ -51,90 +48,115 @@ public class KafkaCronJobEventsConsumer : BackgroundService
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                ConsumeResult<string, string>? result = null;
-                try
+                var result = await ConsumeMessageAsync(consumer, stoppingToken);
+                if (result is null)
                 {
-                    result = await Task.Run(() => consumer.Consume(stoppingToken), stoppingToken);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (ConsumeException ex)
-                {
-                    _logger.LogError(ex, "Kafka consume error: {Reason}", ex.Error.Reason);
                     continue;
                 }
-
-                if (result?.Message?.Value is null)
-                    continue;
-
-                try
-                {
-                    await HandleEventAsync(result.Message.Value, stoppingToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error processing cronjob-event message.");
-                }
-                finally
-                {
-                    consumer.Commit(result);
-                }
+                await ProcessMessageAsync(consumer, result, stoppingToken);
             }
         }
         finally
         {
             consumer.Close();
+            _logger.LogInformation("KafkaCronJobEventsConsumer stopped");
         }
     }
 
-    private async Task HandleEventAsync(string payload, CancellationToken ct)
+    private async Task<ConsumeResult<string, string>?> ConsumeMessageAsync(
+        IConsumer<string, string> consumer, 
+        CancellationToken ct)
     {
-        CronJobEvent? evt;
         try
         {
-            evt = JsonSerializer.Deserialize<CronJobEvent>(payload);
+            return await Task.Run(() => consumer.Consume(ct), ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+        catch (ConsumeException ex)
+        {
+            _logger.LogError(ex, "Kafka error: {Reason}", ex.Error.Reason);
+            return null;
+        }
+    }
+
+    private async Task ProcessMessageAsync(
+        IConsumer<string, string> consumer,
+        ConsumeResult<string, string> result,
+        CancellationToken ct)
+    {
+        if (result.IsPartitionEOF || result.Message?.Value is null)
+        {
+            return;
+        }
+        var msg = DeserializeMessage(result);
+        if (msg is null)
+        {
+            consumer.Commit(result);
+            return;
+        }
+        var dispatched = await HandleEventAsync(msg, ct);
+        if (dispatched)
+        {
+            consumer.Commit(result);
+        } else
+        {
+            _logger.LogWarning("Message for offset {Offset} was not dispatched.", result.Offset);
+        }
+    }
+
+    private CronJobEvent? DeserializeMessage(ConsumeResult<string, string> result)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<CronJobEvent>(result.Message.Value, JsonOptions);
         }
         catch (JsonException ex)
         {
-            _logger.LogWarning(ex, "Invalid cronjob-event payload: {Payload}", payload);
-            return;
+            _logger.LogWarning(ex, "Invalid Kafka message (JSON) - offset {Offset}", result.Offset);
+            return null;
         }
+    }
 
+    private async Task<bool> HandleEventAsync(CronJobEvent evt, CancellationToken ct)
+    {
         if (evt is null)
-            return;
-
-        _logger.LogInformation(
-            "CronJob event received: action={Action}, id={Id}", evt.action, evt.data?.id_cronjob);
-
+        {
+            return false;
+        }
+        _logger.LogInformation("CronJob event received: action={Action}, id={Id}", evt.action, evt.data?.id_cronjob);
         var scheduler = await _schedulerFactory.GetScheduler(ct);
-
         switch (evt.action)
         {
             case "created":
                 if (evt.data is not null && evt.data.is_enabled)
+                {
                     await ScheduleOrReplaceJobAsync(scheduler, evt.data, ct);
+                }
                 break;
-
             case "updated":
                 if (evt.data is not null)
                 {
                     await RemoveJobAsync(scheduler, evt.data.id_cronjob, ct);
                     if (evt.data.is_enabled)
+                    {
                         await ScheduleOrReplaceJobAsync(scheduler, evt.data, ct);
+                    }
                 }
                 break;
-
             case "deleted":
                 if (evt.data is not null)
+                {
                     await RemoveJobAsync(scheduler, evt.data.id_cronjob, ct);
+                }
                 break;
-
             default:
                 _logger.LogWarning("Unknown cronjob-event action: {Action}", evt.action);
                 break;
         }
+        return true;
     }
 
     private async Task ScheduleOrReplaceJobAsync(IScheduler scheduler, CronJobEventData job, CancellationToken ct)

@@ -74,7 +74,7 @@ public class EmailSenderService : IEmailSenderService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send e-mail to {To} with subject {Subject}", to, subject);
-            throw;
+            throw new InvalidOperationException($"Failed to send e-mail to {to} with subject {subject}", ex);
         }
     }
 }
