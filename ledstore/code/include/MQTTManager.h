@@ -27,8 +27,9 @@ private:
     int    mqttPort;
     String mqttUser;
     String mqttPassword;
-    String mqttTopic;     // "<topic>"
+    String mqttTopic;    // "<topic>"
     String topicBase;    // "electrostore/<topic>"
+    String ledsTopic;    // "electrostore/<topic>/leds"
     String statusTopic;  // "electrostore/<topic>/status"
     String sessionName;  // "<prefix><MAC>"
     unsigned long   _lastReconnectAttempt;

@@ -19,6 +19,18 @@ public class Stores : BaseEntity
 
     [MaxLength(Constants.MaxNameLength)]
     public required string mqtt_name_store { get; set; }
+
+    [Required]
+    [Column(TypeName = "varbinary(512)")]
+    public byte[] mqtt_password_store { get; set; } = new byte[512];
+
+    [Required]
+    [Column(TypeName = "varbinary(16)")]
+    public byte[] mqtt_password_encryption_iv_store { get; set; } = new byte[16];
+
+    [Required]
+    [Column(TypeName = "varbinary(16)")]
+    public byte[] mqtt_password_encryption_tag_store { get; set; } = new byte[16];
     public bool is_mqtt_connected_store { get; set; } = false;
 
     public DateTime? mqtt_last_seen_store { get; set; }

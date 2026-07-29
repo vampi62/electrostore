@@ -111,8 +111,6 @@ public record UpdateBulkBoxByStoreDto
 
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? yend_box { get; init; }
-    
-    public int? new_id_store { get; init; }
 
     public string? status { get; init; } // status field to indicate the new status "delete", "modified", "new"
 }

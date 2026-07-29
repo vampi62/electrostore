@@ -18280,11 +18280,6 @@
             "format": "int32",
             "nullable": true
           },
-          "new_id_store": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "status": {
             "type": "string",
             "nullable": true

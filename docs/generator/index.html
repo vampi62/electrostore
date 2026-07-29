@@ -591,6 +591,18 @@
                     </div>
                 </section>
 
+                <section class="form-section">
+                    <h2>AES Encryption Configuration</h2>
+                    <div class="form-group">
+                        <label for="aesKey">AES Secret Key</label>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="password" id="aesKey" name="aesKey" style="flex: 1;">
+                            <button type="button" class="btn-secondary" onclick="generateHexaKey('aesKey', 32)" style="position: static;">Generate</button>
+                            <button type="button" class="btn-secondary" onclick="togglePasswordVisibility('aesKey')" style="position: static;">Show</button>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- OAuth Configuration -->
                 <section class="form-section">
                     <h2>OAuth Configuration</h2>

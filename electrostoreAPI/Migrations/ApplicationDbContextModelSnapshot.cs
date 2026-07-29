@@ -1087,6 +1087,18 @@ namespace ElectrostoreAPI.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
+                    b.Property<byte[]>("mqtt_password_encryption_iv_store")
+                        .IsRequired()
+                        .HasColumnType("varbinary(16)");
+
+                    b.Property<byte[]>("mqtt_password_encryption_tag_store")
+                        .IsRequired()
+                        .HasColumnType("varbinary(16)");
+
+                    b.Property<byte[]>("mqtt_password_store")
+                        .IsRequired()
+                        .HasColumnType("varbinary(512)");
+
                     b.Property<string>("nom_store")
                         .IsRequired()
                         .HasMaxLength(50)
