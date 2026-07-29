@@ -253,8 +253,8 @@ public class Track17SyncService : ITrack17SyncService
 
         return messages.Select(m =>
         {
-            var isAccepted = acceptedMap.TryGetValue(m.tracking_number);
-            var errorCode  = rejectedMap.TryGetValue(m.tracking_number);
+            var isAccepted = acceptedMap.TryGetValue(m.tracking_number, out _);
+            var errorCode  = rejectedMap.TryGetValue(m.tracking_number, out var code) ? code : null;
             return new TrackingResultMessage
             {
                 action          = action,

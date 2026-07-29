@@ -9,6 +9,10 @@ namespace ElectrostoreCRON.Kafka.Consumers;
 
 public class KafkaCronJobEventsConsumer : BackgroundService
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
     private const string Topic = "cronjob-events";
 
     private readonly ISchedulerFactory _schedulerFactory;

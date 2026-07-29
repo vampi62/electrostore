@@ -3,6 +3,9 @@ name: tests PR
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   detect-changes:
     name: Detect Modified Directories

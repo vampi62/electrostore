@@ -185,8 +185,8 @@ public class KafkaMqttUserConsumer : BackgroundService
                 AttachStderr = true,
                 Cmd = ["sh", "-c", command]
             }, ct);
-            var execStartResponse = await _dockerClient.Exec.StartContainerExecAsync(execCreateResponse.ID, ct);
-            return execStartResponse?.StatusCode == System.Net.HttpStatusCode.OK;
+            await _dockerClient.Exec.StartContainerExecAsync(execCreateResponse.ID, ct);
+            return true;
         }
         catch (Exception ex)
         {

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace ElectrostoreNOTIF.Services.NotificationTemplateService;
 
-public class NotificationTemplateService : INotificationTemplateService
+public partial class NotificationTemplateService : INotificationTemplateService
 {
     // --- Regex compilées une seule fois ---
 

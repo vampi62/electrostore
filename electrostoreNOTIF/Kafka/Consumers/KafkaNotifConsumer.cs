@@ -150,7 +150,7 @@ public class KafkaNotifConsumer : BackgroundService
 
     private async Task<bool> DispatchAsync(NotificationMessage msg, CancellationToken ct)
     {
-        var rendered = await RenderTemplateIfNeededAsync(msg);
+        var rendered = RenderTemplateIfNeededAsync(msg);
         var emailAddress = await ResolveEmailAddressAsync(msg, ct);
         
         var notificationContent = new NotificationContent
@@ -171,7 +171,7 @@ public class KafkaNotifConsumer : BackgroundService
         return true;
     }
 
-    private RenderedTemplate? RenderTemplateIfNeededAsync(NotificationMessage msg)
+    private NotificationTemplateRender? RenderTemplateIfNeededAsync(NotificationMessage msg)
     {
         if (string.IsNullOrWhiteSpace(msg.TemplateId))
         {
@@ -185,6 +185,35 @@ public class KafkaNotifConsumer : BackgroundService
         return rendered;
     }
 
+    private async Task<string?> ResolveEmailAddressAsync(NotificationMessage msg, CancellationToken ct)
+    {
+        if (!string.IsNullOrEmpty(msg.RecipientEmail))
+        {
+            return msg.RecipientEmail;
+        }
+        if (!msg.RecipientUserId.HasValue)
+        {
+            return null;
+        }
+        try
+        {
+            var reply = await _userResolver.GetUserInfoAsync(
+                new GetUserInfoRequest { UserId = msg.RecipientUserId.Value },
+                cancellationToken: ct);
+            if (!reply.Found)
+            {
+                _logger.LogWarning("User {Id} not found in API", msg.RecipientUserId.Value);
+                return null;
+            }
+            return reply.Email;
+        }
+        catch (RpcException ex)
+        {
+            _logger.LogError(ex, "Error while calling API to get user info (userId={UserId})", msg.RecipientUserId.Value);
+            return null;
+        }
+    }
+
     private async Task SendNotificationByTypeAsync(
         string type, 
         NotificationMessage msg, 
@@ -194,7 +223,7 @@ public class KafkaNotifConsumer : BackgroundService
         switch (type.ToLowerInvariant())
         {
             case "email":
-                await SendEmailNotificationAsync(msg, content, ct);
+                await SendEmailNotificationAsync(msg, content);
                 break;
             case "webpush":
                 await SendWebPushNotificationAsync(msg, content, ct);
@@ -205,29 +234,8 @@ public class KafkaNotifConsumer : BackgroundService
         }
     }
 
-    private async Task SendEmailNotificationAsync(NotificationMessage msg, NotificationContent content, CancellationToken ct)
+    private async Task SendEmailNotificationAsync(NotificationMessage msg, NotificationContent content)
     {
-        if (string.IsNullOrEmpty(content.EmailAddress) && msg.RecipientUserId.HasValue)
-        {
-            try
-            {
-                var reply = await _userResolver.GetUserInfoAsync(
-                    new GetUserInfoRequest { UserId = msg.RecipientUserId.Value },
-                    cancellationToken: ct);
-                if (!reply.Found)
-                {
-                    _logger.LogWarning("User {Id} not found in API", msg.RecipientUserId.Value);
-                }
-                else
-                {
-                    content.EmailAddress = reply.Email;
-                }
-            }
-            catch (RpcException ex)
-            {
-                _logger.LogError(ex, "Error while calling API to get user info (userId={UserId})", msg.RecipientUserId.Value);
-            }
-        }
         if (!string.IsNullOrEmpty(content.EmailAddress))
         {
             await _email.SendAsync(
