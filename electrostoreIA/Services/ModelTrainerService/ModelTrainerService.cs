@@ -67,8 +67,8 @@ public class ModelTrainerService : IModelTrainerService
     {
         try
         {
-            await DownloadTrainingImagesAsync(_imageDir, ct);
-            var imageFiles = LoadImagePaths(_imageDir);
+            await DownloadTrainingImagesAsync(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", _imageDir), ct);
+            var imageFiles = LoadImagePaths(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", _imageDir));
             if (imageFiles.Count == 0)
             {
                 throw new InvalidOperationException($"No training images found in {_imageDir}");
@@ -218,9 +218,9 @@ public class ModelTrainerService : IModelTrainerService
         return result;
     }
 
-    public string GetModelPath(int idModel) => Path.Combine(_modelDir, $"Model{idModel}.zip");
+    public string GetModelPath(int idModel) => Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", _modelDir, $"Model{idModel}.zip");
 
-    public string GetClassNamesPath(int idModel) => Path.Combine(_modelDir, $"ItemList{idModel}.txt");
+    public string GetClassNamesPath(int idModel) => Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", _modelDir, $"ItemList{idModel}.txt");
 
     public async Task<string> EnsureModelLocalAsync(int idModel)
     {
