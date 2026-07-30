@@ -57,9 +57,9 @@ public class Track17SyncService : ITrack17SyncService
             _logger.LogWarning("Track17:ApiKey not configured - sync skipped.");
             return;
         }
-        _logger.LogInformation("----------------------------------------------------------------------");
-        _logger.LogInformation("Track17 sync: starting sync for {TopicCount} topics.", ActionMap.Length);
-        _logger.LogInformation("Track17 sync: date={Date} - starting sync for {TopicCount} topics.",
+        _logger.LogDebug("----------------------------------------------------------------------");
+        _logger.LogDebug("Track17 sync: starting sync for {TopicCount} topics.", ActionMap.Length);
+        _logger.LogDebug("Track17 sync: date={Date} - starting sync for {TopicCount} topics.",
             DateTime.UtcNow, ActionMap.Length);
 
         foreach (var (topic, action, endpoint) in ActionMap)
@@ -67,8 +67,7 @@ public class Track17SyncService : ITrack17SyncService
             if (ct.IsCancellationRequested) break;
             await SyncTopicAsync(topic, action, endpoint, apiKey, ct);
         }
-        _logger.LogInformation("Track17 sync: completed sync for {TopicCount} topics.", ActionMap.Length);
-        _logger.LogInformation("----------------------------------------------------------------------");
+        _logger.LogDebug("----------------------------------------------------------------------");
     }
 
     // -------------------------------------------------------------------------
@@ -139,15 +138,33 @@ public class Track17SyncService : ITrack17SyncService
             "Track17 sync: consuming from topic={Topic} (group={Group}, servers={Servers})",
             topic, groupId, bootstrapServers);
 
+        const int maxConsecutiveEmptyPolls = 5;
+        var consecutiveEmptyPolls = 0;
+
         try
         {
-            while (messages.Count < _batchSize || !ct.IsCancellationRequested)
+            while (messages.Count < _batchSize && !ct.IsCancellationRequested)
             {
                 var result = await ConsumeMessageAsync(consumer, ct);
-                if (result is null || result.IsPartitionEOF)
+                if (result is null)
                 {
+                    consecutiveEmptyPolls++;
+                    _logger.LogDebug(
+                        "Track17 sync: topic={Topic} - empty poll {Count}/{Max} (likely rebalance or no new message).",
+                        topic, consecutiveEmptyPolls, maxConsecutiveEmptyPolls);
+                    if (consecutiveEmptyPolls >= maxConsecutiveEmptyPolls)
+                    {
+                        break;
+                    }
+                    continue;
+                }
+                if (result.IsPartitionEOF)
+                {
+                    _logger.LogDebug("Track17 sync: topic={Topic} - end of partition reached.", topic);
                     break;
                 }
+
+                consecutiveEmptyPolls = 0;
                 var msg = DeserializeMessage(result);
                 if (msg is null || string.IsNullOrWhiteSpace(msg.tracking_number))
                 {
@@ -218,9 +235,6 @@ public class Track17SyncService : ITrack17SyncService
     {
         var requestItems = BuildRequestItems(action, messages);
         var requestBody  = JsonSerializer.Serialize(requestItems, JsonOptions);
-
-        _logger.LogDebug("Track17 sync: calling endpoint={Endpoint} with {Count} items.", endpoint, messages.Count);
-        _logger.LogDebug("Track17 request body: {RequestBody}", requestBody);
 
         using var client  = _httpClientFactory.CreateClient();
         using var content = new StringContent(requestBody, Encoding.UTF8, "application/json");
