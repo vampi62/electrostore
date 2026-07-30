@@ -10,7 +10,7 @@ public static class ParserExtensions
         var filters = new List<FilterDto>();
         foreach (var condition in conditions)
         {
-            var parts = condition.Split(["==", "!=", "=gt=", "=lt=", "=ge=", "=le=", "=like=", "=null=", "!=null="], StringSplitOptions.None);
+            var parts = condition.Split(["==", "!=", "=gt=", "=lt=", "=ge=", "=le=", "=like=", "=null=", "!=null=", "=any="], StringSplitOptions.None);
             if (parts.Length != 2) continue;
 
             var field = parts[0];
@@ -25,6 +25,7 @@ public static class ParserExtensions
                              condition.Contains("=like=") ? "like" :
                              condition.Contains("=null=") ? "null" :
                              condition.Contains("!=null=") ? "notnull" :
+                             condition.Contains("=any=") ? "any" :
                              null;
 
             if (searchType != null)
