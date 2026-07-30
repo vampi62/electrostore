@@ -72,14 +72,14 @@ function collectConfig(formData) {
     if (config.enableS3) {
         if (config.useS3) {
             config.s3 = {
-                accessKey: 'GK' + generateHexaKey(24),
-                secretKey: generateHexaKey(64),
+                accessKey: 'GK' + generateRandomHexaKey(24),
+                secretKey: generateRandomHexaKey(64),
                 bucket: formData.get('s3Bucket') || 'electrostore-api',
                 region: formData.get('s3Region') || 'garage'
             };
             config.s3Ia = {
-                accessKey: 'GK' + generateHexaKey(24),
-                secretKey: generateHexaKey(64),
+                accessKey: 'GK' + generateRandomHexaKey(24),
+                secretKey: generateRandomHexaKey(64),
                 bucket: formData.get('s3IaBucket') || 'electrostore-ia',
                 region: config.s3.region
             };
@@ -150,7 +150,7 @@ function collectConfig(formData) {
     };
 
     config.aes = {
-        key: formData.get('aesKey') || generateHexaKey(64)
+        key: formData.get('aesKey') || generateRandomHexaKey(64)
     };
     
     // URLs
@@ -243,7 +243,7 @@ function generateRandomPassword(length) {
 }
 
 // Generate valid hexadecimal key
-function generateHexaKey(length) {
+function generateRandomHexaKey(length) {
     const chars = '0123456789abcdef';
     let result = '';
     for (let i = 0; i < length; i++) {

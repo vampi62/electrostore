@@ -136,13 +136,13 @@ function generatePassword(fieldId, length = 32) {
 }
 
 // Generate valid hexadecimal key
-function generateHexaKey(length) {
+function generateHexaKey(fieldId, length) {
     const chars = '0123456789abcdef';
     let result = '';
     for (let i = 0; i < length; i++) {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    return result;
+    document.getElementById(fieldId).value = result;
 }
 
 // Generate VAPID keys
