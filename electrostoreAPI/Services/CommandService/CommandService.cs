@@ -269,7 +269,7 @@ public class CommandService : ICommandService
             var kafkaKey = $"{commandToUpdate.tracking_number}_{carrierKey}";
             var message = new TrackingActionMessage
             {
-                tracking_number = commandToUpdate.tracking_number,
+                tracking_number = oldTrackingNumber,
                 carrier = carrierKey
             };
             var messageJson = JsonSerializer.Serialize(message);

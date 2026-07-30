@@ -57,12 +57,17 @@ public class Track17SyncService : ITrack17SyncService
             _logger.LogWarning("Track17:ApiKey not configured - sync skipped.");
             return;
         }
+        _logger.LogDebug("----------------------------------------------------------------------");
+        _logger.LogDebug("Track17 sync: starting sync for {TopicCount} topics.", ActionMap.Length);
+        _logger.LogDebug("Track17 sync: date={Date} - starting sync for {TopicCount} topics.",
+            DateTime.UtcNow, ActionMap.Length);
 
         foreach (var (topic, action, endpoint) in ActionMap)
         {
             if (ct.IsCancellationRequested) break;
             await SyncTopicAsync(topic, action, endpoint, apiKey, ct);
         }
+        _logger.LogDebug("----------------------------------------------------------------------");
     }
 
     // -------------------------------------------------------------------------
@@ -70,7 +75,7 @@ public class Track17SyncService : ITrack17SyncService
     private async Task SyncTopicAsync(
         string topic, string action, string endpoint, string apiKey, CancellationToken ct)
     {
-        var messages = ConsumeBatch(topic);
+        var messages = await ConsumeBatch(topic, ct);
         if (messages.Count == 0)
         {
             _logger.LogDebug("Track17 sync: topic={Topic} - no pending messages.", topic);
@@ -98,7 +103,7 @@ public class Track17SyncService : ITrack17SyncService
 
     // ---- Batch consumption from Kafka ----------------------------------------
 
-    private List<TrackingActionMessage> ConsumeBatch(string topic)
+    private async Task<List<TrackingActionMessage>> ConsumeBatch(string topic, CancellationToken ct)
     {
         var bootstrapServers = _configuration["Kafka:BootstrapServers"] ?? "kafka:9092";
         var groupId = (_configuration["Kafka:ConsumerGroupId"] ?? "cron-service") + "-17track";
@@ -111,34 +116,56 @@ public class Track17SyncService : ITrack17SyncService
             EnableAutoCommit = false,
         };
 
-        using var consumer = new ConsumerBuilder<string, string>(config).Build();
+        using var consumer = new ConsumerBuilder<string, string>(config)
+            .SetErrorHandler((_, e) =>
+                _logger.LogError(
+                    "[Kafka] Broker error | Code: {Code} | Reason: {Reason} | Fatal: {Fatal}",
+                    e.Code, e.Reason, e.IsFatal))
+            .SetPartitionsAssignedHandler((_, partitions) =>
+                _logger.LogInformation(
+                    "[Kafka] Partitions assigned → {Parts}",
+                    string.Join(", ", partitions.Select(p => $"{p.Topic}[{p.Partition}]"))))
+            .SetPartitionsRevokedHandler((_, partitions) =>
+                _logger.LogWarning(
+                    "[Kafka] Partitions revoked → {Parts}",
+                    string.Join(", ", partitions.Select(p => $"{p.Topic}[{p.Partition}]"))))
+            .Build();
         consumer.Subscribe(topic);
-
         var messages          = new List<TrackingActionMessage>(_batchSize);
         ConsumeResult<string, string>? lastCommittable = null;
 
+        _logger.LogInformation(
+            "Track17 sync: consuming from topic={Topic} (group={Group}, servers={Servers})",
+            topic, groupId, bootstrapServers);
+
+        const int maxConsecutiveEmptyPolls = 5;
+        var consecutiveEmptyPolls = 0;
+
         try
         {
-            while (messages.Count < _batchSize)
+            while (messages.Count < _batchSize && !ct.IsCancellationRequested)
             {
-                var result = consumer.Consume(TimeSpan.FromMilliseconds(_consumeTimeoutMs));
-                if (result is null || result.IsPartitionEOF)
-                    break;
-
-                TrackingActionMessage? msg;
-                try
+                var result = await ConsumeMessageAsync(consumer, ct);
+                if (result is null)
                 {
-                    msg = JsonSerializer.Deserialize<TrackingActionMessage>(result.Message.Value, JsonOptions);
-                }
-                catch (JsonException ex)
-                {
-                    _logger.LogWarning(ex,
-                        "Track17 sync: invalid JSON in topic={Topic}, offset={Offset} - skipped.",
-                        topic, result.Offset);
-                    lastCommittable = result;
+                    consecutiveEmptyPolls++;
+                    _logger.LogDebug(
+                        "Track17 sync: topic={Topic} - empty poll {Count}/{Max} (likely rebalance or no new message).",
+                        topic, consecutiveEmptyPolls, maxConsecutiveEmptyPolls);
+                    if (consecutiveEmptyPolls >= maxConsecutiveEmptyPolls)
+                    {
+                        break;
+                    }
                     continue;
                 }
+                if (result.IsPartitionEOF)
+                {
+                    _logger.LogDebug("Track17 sync: topic={Topic} - end of partition reached.", topic);
+                    break;
+                }
 
+                consecutiveEmptyPolls = 0;
+                var msg = DeserializeMessage(result);
                 if (msg is null || string.IsNullOrWhiteSpace(msg.tracking_number))
                 {
                     _logger.LogWarning(
@@ -147,13 +174,13 @@ public class Track17SyncService : ITrack17SyncService
                     lastCommittable = result;
                     continue;
                 }
-
                 messages.Add(msg);
                 lastCommittable = result;
             }
-
             if (lastCommittable is not null)
+            {
                 consumer.Commit(lastCommittable);
+            }
         }
         catch (Exception ex)
         {
@@ -163,8 +190,41 @@ public class Track17SyncService : ITrack17SyncService
         {
             consumer.Close();
         }
-
+        _logger.LogDebug("Track17 sync: topic={Topic} - consumed {Count} messages.", topic, messages.Count);
+        _logger.LogDebug("Track17 messages: {Messages}", string.Join(", ", messages.Select(m => m.tracking_number)));
         return messages;
+    }
+
+    private async Task<ConsumeResult<string, string>?> ConsumeMessageAsync(
+        IConsumer<string, string> consumer, 
+        CancellationToken ct)
+    {
+        try
+        {
+            return await Task.Run(() => consumer.Consume(TimeSpan.FromMilliseconds(_consumeTimeoutMs)), ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+        catch (ConsumeException ex)
+        {
+            _logger.LogError(ex, "Kafka error: {Reason}", ex.Error.Reason);
+            return null;
+        }
+    }
+
+    private TrackingActionMessage? DeserializeMessage(ConsumeResult<string, string> result)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<TrackingActionMessage>(result.Message.Value, JsonOptions);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "Invalid Kafka message (JSON) - offset {Offset}", result.Offset);
+            return null;
+        }
     }
 
     // ---- 17track API call ------------------------------------------------------
@@ -183,6 +243,7 @@ public class Track17SyncService : ITrack17SyncService
         HttpResponseMessage response;
         try
         {
+            _logger.LogDebug("Track17 sync: sending POST request to {Url}.", _track17Base + endpoint);
             response = await client.PostAsync(_track17Base + endpoint, content, ct);
         }
         catch (Exception ex)
@@ -209,6 +270,10 @@ public class Track17SyncService : ITrack17SyncService
             _logger.LogError(ex, "Track17 sync: response parsing failed for endpoint={Endpoint}.", endpoint);
             return BuildErrorResults(action, messages);
         }
+        _logger.LogDebug("Track17 sync: endpoint={Endpoint} response: {Response}", endpoint, json);
+        _logger.LogDebug("Track17 sync: endpoint={Endpoint} response json={ResponseJson}", endpoint, apiResp);
+        _logger.LogDebug("Track17 sync: endpoint={Endpoint} accepted={AcceptedCount} rejected={RejectedCount}.",
+            endpoint, apiResp?.data?.accepted?.Length ?? 0, apiResp?.data?.rejected?.Length ?? 0);
 
         return BuildResults(action, messages, apiResp);
     }
