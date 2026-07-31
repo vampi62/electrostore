@@ -261,11 +261,16 @@ public class KafkaNotifConsumer : BackgroundService
             _logger.LogWarning("webPush: RecipientUserId is required");
             return;
         }
-        var pushSubs = await _userResolver.GetUserPushSubscriptionsAsync(
-            new GetUserPushSubscriptionsRequest { UserId = msg.RecipientUserId.Value },
-            cancellationToken: ct);
-        if (pushSubs is null)
+        GetUserPushSubscriptionsReply pushSubs;
+        try
         {
+            pushSubs = await _userResolver.GetUserPushSubscriptionsAsync(
+                new GetUserPushSubscriptionsRequest { UserId = msg.RecipientUserId.Value },
+                cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger.LogError(ex, "Error fetching push subscriptions for user {UserId}", msg.RecipientUserId.Value);
             return;
         }
         foreach (var sub in pushSubs.Subscriptions)
