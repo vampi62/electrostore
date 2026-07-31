@@ -1340,7 +1340,7 @@ echo ""
 
 // Generate Garage configuration file
 function generateGarageConfig(config) {
-    const rpcSecret = generateHexaKey(64);
+    const rpcSecret = generateRandomHexaKey(64);
     return `metadata_dir = "/meta"
 data_dir = "/data"
 db_engine = "sqlite"
