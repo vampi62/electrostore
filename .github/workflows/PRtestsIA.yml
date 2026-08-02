@@ -62,3 +62,11 @@ jobs:
       if: steps.sonarqube.outcome == 'failure'
       run: |
         echo "::warning::SonarQube scan failed - server may be unreachable"
+    - name: SonarQube Summary
+      if: steps.sonarqube.outcome == 'success'
+      uses: ./.github/actions/sonarqube-summary
+      with:
+        project-key: "PR-${{ steps.get-pr-id.outputs.pr_id }}-electrostore-ia"
+        sonar-host-url: ${{ secrets.SONAR_HOST_URL }}
+        sonar-token: ${{ secrets.SONAR_TOKEN }}
+        title: IA

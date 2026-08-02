@@ -135,4 +135,72 @@ public class EmailSenderServiceTests
         // Assert
         Assert.Contains("SMTP:Password", exception.Message);
     }
+
+    // Once every required setting is present, SendAsync attempts a real SMTP connection
+    // (SmtpClient isn't injected/mockable). Port 1 has nobody listening, so the connection is
+    // refused immediately, exercising the generic catch-and-wrap branch deterministically and fast.
+
+    [Fact]
+    public async Task SendAsync_ShouldThrowInvalidOperationException_WhenSmtpServerIsUnreachable_OnStartTlsPort()
+    {
+        // Arrange - any port other than 465 selects SecureSocketOptions.StartTls
+        var service = CreateService(new Dictionary<string, string?>
+        {
+            ["SMTP:Enable"] = "true",
+            ["SMTP:From"] = "noreply@example.com",
+            ["SMTP:Host"] = "127.0.0.1",
+            ["SMTP:Port"] = "1",
+            ["SMTP:Username"] = "smtp-user",
+            ["SMTP:Password"] = "smtp-password"
+        });
+
+        // Act
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.SendAsync("user@example.com", "Subject", "Body"));
+
+        // Assert
+        Assert.Contains("Failed to send e-mail to user@example.com", exception.Message);
+    }
+
+    [Fact]
+    public async Task SendAsync_ShouldThrowInvalidOperationException_WhenSmtpServerIsUnreachable_OnSslOnConnectPort()
+    {
+        // Arrange - port 465 selects SecureSocketOptions.SslOnConnect
+        var service = CreateService(new Dictionary<string, string?>
+        {
+            ["SMTP:Enable"] = "true",
+            ["SMTP:From"] = "noreply@example.com",
+            ["SMTP:Host"] = "127.0.0.1",
+            ["SMTP:Port"] = "465",
+            ["SMTP:Username"] = "smtp-user",
+            ["SMTP:Password"] = "smtp-password"
+        });
+
+        // Act
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.SendAsync("user@example.com", "Subject", "Body"));
+
+        // Assert
+        Assert.Contains("Failed to send e-mail to user@example.com", exception.Message);
+    }
+
+    [Fact]
+    public async Task SendAsync_ShouldSkipAuthentication_WhenUsernameIsWhitespace()
+    {
+        // Arrange - a whitespace-only username passes the "?? throw" null-check but should skip
+        // the AuthenticateAsync call; the connection still fails since nothing listens on port 1.
+        var service = CreateService(new Dictionary<string, string?>
+        {
+            ["SMTP:Enable"] = "true",
+            ["SMTP:From"] = "noreply@example.com",
+            ["SMTP:Host"] = "127.0.0.1",
+            ["SMTP:Port"] = "1",
+            ["SMTP:Username"] = "   ",
+            ["SMTP:Password"] = "smtp-password"
+        });
+
+        // Act
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.SendAsync("user@example.com", "Subject", "Body"));
+
+        // Assert
+        Assert.Contains("Failed to send e-mail to user@example.com", exception.Message);
+    }
 }
