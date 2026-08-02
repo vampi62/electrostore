@@ -24,8 +24,9 @@ public class CameraService : ICameraService
     private readonly IHttpClientFactory _httpClientFactory;
     private const string DemoModeKey = "DemoMode";
     private const string camAuthMethod = "Basic";
+    private readonly ILogger<CameraService> _logger;
 
-    public CameraService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IJwiService jwiService, IConfiguration configuration, IHttpClientFactory httpClientFactory)
+    public CameraService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IJwiService jwiService, IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<CameraService> logger)
     {
         _mapper = mapper;
         _context = context;
@@ -33,6 +34,7 @@ public class CameraService : ICameraService
         _jwiService = jwiService;
         _configuration = configuration;
         _httpClientFactory = httpClientFactory;
+        _logger = logger;
     }
 
     // limit the number of camera to 100 and add offset and search parameters
@@ -224,7 +226,7 @@ public class CameraService : ICameraService
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            _logger.LogError(ex, "Error while getting status of camera {Id}", id_camera);
             return new CameraStatusDto
             {
                 network = false,
@@ -266,7 +268,7 @@ public class CameraService : ICameraService
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            _logger.LogError(ex, "Error while getting capture of camera {Id}", id_camera);
             throw new InvalidOperationException($"Error while getting camera capture: {ex.Message}");
         }
     }
@@ -304,7 +306,7 @@ public class CameraService : ICameraService
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            _logger.LogError(ex, "Error while switching light of camera {Id}", id_camera);
             throw new InvalidOperationException($"Error while switching camera light: {ex.Message}");
         }
     }
@@ -351,7 +353,7 @@ public class CameraService : ICameraService
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            _logger.LogError(ex, "Error while getting stream of camera {Id}", id_camera);
             throw new InvalidOperationException($"Error while getting camera stream: {ex.Message}");
         }
     }

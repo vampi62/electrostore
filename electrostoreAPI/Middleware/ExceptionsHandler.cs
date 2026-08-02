@@ -21,16 +21,19 @@ public class ExceptionsHandler
         }
         catch (Exception ex)
         {
-            // don't log 4xx errors
-            if (ex is ArgumentException || ex is KeyNotFoundException || ex is InvalidOperationException)
+            if (ex is KeyNotFoundException)
             {
-                await HandleExceptionAsync(context, ex);
+                _logger.LogDebug(ex, "Not found: {Message}", ex.Message);
+            }
+            else if (ex is ArgumentException || ex is InvalidOperationException)
+            {
+                _logger.LogWarning(ex, "Request failed: {Message}", ex.Message);
             }
             else
             {
                 _logger.LogError(ex, "An error occurred: {Message}", ex.Message);
-                await HandleExceptionAsync(context, ex);
             }
+            await HandleExceptionAsync(context, ex);
         }
     }
 
