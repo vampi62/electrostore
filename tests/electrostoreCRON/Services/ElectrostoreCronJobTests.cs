@@ -79,6 +79,27 @@ public class ElectrostoreCronJobTests
     }
 
     [Fact]
+    public async Task Execute_ShouldNotCallTrack17Sync_AndShouldStillUpdateLastRun_WhenActionKeyIsAbsentFromJobDataMap()
+    {
+        // Arrange - Enum.TryParse fails on a null/missing value, exercising the "action = -1"
+        // fallback branch rather than an unhandled-but-valid CronJobAction value.
+        var job = CreateJob();
+        var context = CreateContext(9, action: null);
+        _apiClient
+            .Setup(c => c.UpdateCronJobRunAsync(It.IsAny<UpdateCronJobRunRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Returns(CreateAsyncUnaryCall(new UpdateCronJobRunReply { Success = true }));
+
+        // Act
+        await job.Execute(context.Object);
+
+        // Assert
+        _track17Sync.Verify(s => s.SyncAllAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _apiClient.Verify(c => c.UpdateCronJobRunAsync(
+            It.Is<UpdateCronJobRunRequest>(r => r.IdCronjob == 9),
+            It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task Execute_ShouldNotCallTrack17Sync_AndShouldStillUpdateLastRun_WhenActionIsUnknown()
     {
         // Arrange

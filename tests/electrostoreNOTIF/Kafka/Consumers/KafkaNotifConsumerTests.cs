@@ -1,4 +1,5 @@
 using System.Reflection;
+using Confluent.Kafka;
 using ElectrostoreNOTIF.Grpc;
 using ElectrostoreNOTIF.Kafka.Consumers;
 using ElectrostoreNOTIF.Kafka.Messages;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using Metadata = Grpc.Core.Metadata;
 
 namespace ElectrostoreNOTIF.Tests.Kafka.Consumers;
 
@@ -58,6 +60,37 @@ public class KafkaNotifConsumerTests
         var method = typeof(KafkaNotifConsumer).GetMethod("DispatchAsync", BindingFlags.NonPublic | BindingFlags.Instance)
             ?? throw new InvalidOperationException("DispatchAsync method not found");
         return (Task)method.Invoke(consumer, new object[] { message, ct })!;
+    }
+
+    private static ConsumeResult<string, string> CreateConsumeResult(string? value, bool isPartitionEOF = false, long offset = 1)
+    {
+        return new ConsumeResult<string, string>
+        {
+            Message = value is null ? null : new Message<string, string> { Value = value },
+            IsPartitionEOF = isPartitionEOF,
+            Offset = offset
+        };
+    }
+
+    private static Task<ConsumeResult<string, string>?> ConsumeMessageAsync(KafkaNotifConsumer consumer, IConsumer<string, string> kafkaConsumer, CancellationToken ct = default)
+    {
+        var method = typeof(KafkaNotifConsumer).GetMethod("ConsumeMessageAsync", BindingFlags.NonPublic | BindingFlags.Instance)
+            ?? throw new InvalidOperationException("ConsumeMessageAsync method not found");
+        return (Task<ConsumeResult<string, string>?>)method.Invoke(consumer, new object[] { kafkaConsumer, ct })!;
+    }
+
+    private static Task ProcessMessageAsync(KafkaNotifConsumer consumer, IConsumer<string, string> kafkaConsumer, ConsumeResult<string, string> result, CancellationToken ct = default)
+    {
+        var method = typeof(KafkaNotifConsumer).GetMethod("ProcessMessageAsync", BindingFlags.NonPublic | BindingFlags.Instance)
+            ?? throw new InvalidOperationException("ProcessMessageAsync method not found");
+        return (Task)method.Invoke(consumer, new object[] { kafkaConsumer, result, ct })!;
+    }
+
+    private static NotificationMessage? DeserializeMessage(KafkaNotifConsumer consumer, ConsumeResult<string, string> result)
+    {
+        var method = typeof(KafkaNotifConsumer).GetMethod("DeserializeMessage", BindingFlags.NonPublic | BindingFlags.Instance)
+            ?? throw new InvalidOperationException("DeserializeMessage method not found");
+        return (NotificationMessage?)method.Invoke(consumer, new object[] { result });
     }
 
     [Fact]
@@ -300,5 +333,170 @@ public class KafkaNotifConsumerTests
         Assert.Null(exception);
         _emailService.Verify(e => e.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _webPushService.Verify(w => w.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Dictionary<string, string>?>()), Times.Never);
+    }
+
+    // ---- DeserializeMessage ----
+
+    [Fact]
+    public void DeserializeMessage_ShouldReturnMessage_WhenJsonIsValid()
+    {
+        // Arrange
+        var consumer = CreateConsumer();
+        var result = CreateConsumeResult("""{"types":["email"],"recipientEmail":"user@example.com"}""");
+
+        // Act
+        var msg = DeserializeMessage(consumer, result);
+
+        // Assert
+        Assert.NotNull(msg);
+        Assert.Equal("user@example.com", msg!.RecipientEmail);
+    }
+
+    [Fact]
+    public void DeserializeMessage_ShouldReturnNull_WhenJsonIsInvalid()
+    {
+        // Arrange
+        var consumer = CreateConsumer();
+        var result = CreateConsumeResult("{not-json");
+
+        // Act
+        var msg = DeserializeMessage(consumer, result);
+
+        // Assert
+        Assert.Null(msg);
+    }
+
+    // ---- ConsumeMessageAsync ----
+
+    [Fact]
+    public async Task ConsumeMessageAsync_ShouldReturnResult_WhenConsumeSucceeds()
+    {
+        // Arrange
+        var consumer = CreateConsumer();
+        var expected = CreateConsumeResult("""{"types":["email"],"recipientEmail":"user@example.com"}""");
+        var kafkaConsumer = new Mock<IConsumer<string, string>>();
+        kafkaConsumer.Setup(c => c.Consume(It.IsAny<CancellationToken>())).Returns(expected);
+
+        // Act
+        var result = await ConsumeMessageAsync(consumer, kafkaConsumer.Object);
+
+        // Assert
+        Assert.Same(expected, result);
+    }
+
+    [Fact]
+    public async Task ConsumeMessageAsync_ShouldReturnNull_WhenOperationIsCancelled()
+    {
+        // Arrange
+        var consumer = CreateConsumer();
+        var kafkaConsumer = new Mock<IConsumer<string, string>>();
+        kafkaConsumer.Setup(c => c.Consume(It.IsAny<CancellationToken>())).Throws<OperationCanceledException>();
+
+        // Act
+        var result = await ConsumeMessageAsync(consumer, kafkaConsumer.Object);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ConsumeMessageAsync_ShouldReturnNull_WhenConsumeExceptionIsThrown()
+    {
+        // Arrange
+        var consumer = CreateConsumer();
+        var kafkaConsumer = new Mock<IConsumer<string, string>>();
+        kafkaConsumer
+            .Setup(c => c.Consume(It.IsAny<CancellationToken>()))
+            .Throws(new ConsumeException(new ConsumeResult<byte[], byte[]>(), new Error(ErrorCode.UnknownTopicOrPart)));
+
+        // Act
+        var result = await ConsumeMessageAsync(consumer, kafkaConsumer.Object);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    // ---- ProcessMessageAsync ----
+
+    [Fact]
+    public async Task ProcessMessageAsync_ShouldDoNothing_WhenResultIsPartitionEOF()
+    {
+        // Arrange
+        var consumer = CreateConsumer();
+        var kafkaConsumer = new Mock<IConsumer<string, string>>();
+        var result = CreateConsumeResult(null, isPartitionEOF: true);
+
+        // Act
+        await ProcessMessageAsync(consumer, kafkaConsumer.Object, result);
+
+        // Assert
+        kafkaConsumer.Verify(c => c.Commit(It.IsAny<ConsumeResult<string, string>>()), Times.Never);
+        _emailService.Verify(e => e.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_ShouldDoNothing_WhenMessageValueIsNull()
+    {
+        // Arrange
+        var consumer = CreateConsumer();
+        var kafkaConsumer = new Mock<IConsumer<string, string>>();
+        var result = CreateConsumeResult(null);
+
+        // Act
+        await ProcessMessageAsync(consumer, kafkaConsumer.Object, result);
+
+        // Assert
+        kafkaConsumer.Verify(c => c.Commit(It.IsAny<ConsumeResult<string, string>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_ShouldCommitWithoutDispatching_WhenJsonIsInvalid()
+    {
+        // Arrange
+        var consumer = CreateConsumer();
+        var kafkaConsumer = new Mock<IConsumer<string, string>>();
+        var result = CreateConsumeResult("{not-json");
+
+        // Act
+        await ProcessMessageAsync(consumer, kafkaConsumer.Object, result);
+
+        // Assert
+        kafkaConsumer.Verify(c => c.Commit(result), Times.Once);
+        _emailService.Verify(e => e.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_ShouldDispatchAndCommit_WhenMessageIsValid()
+    {
+        // Arrange
+        var consumer = CreateConsumer();
+        var kafkaConsumer = new Mock<IConsumer<string, string>>();
+        var result = CreateConsumeResult("""{"types":["email"],"recipientEmail":"user@example.com","subject":"S","body":"B"}""");
+
+        // Act
+        await ProcessMessageAsync(consumer, kafkaConsumer.Object, result);
+
+        // Assert
+        _emailService.Verify(e => e.SendAsync("user@example.com", "S", "B"), Times.Once);
+        kafkaConsumer.Verify(c => c.Commit(result), Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_ShouldNotCommitOrThrow_WhenDispatchThrows()
+    {
+        // Arrange
+        var consumer = CreateConsumer();
+        var kafkaConsumer = new Mock<IConsumer<string, string>>();
+        var result = CreateConsumeResult("""{"types":["email"],"recipientEmail":"user@example.com","subject":"S","body":"B"}""");
+        _emailService
+            .Setup(e => e.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ThrowsAsync(new InvalidOperationException("smtp down"));
+
+        // Act
+        var exception = await Record.ExceptionAsync(() => ProcessMessageAsync(consumer, kafkaConsumer.Object, result));
+
+        // Assert
+        Assert.Null(exception);
+        kafkaConsumer.Verify(c => c.Commit(It.IsAny<ConsumeResult<string, string>>()), Times.Never);
     }
 }

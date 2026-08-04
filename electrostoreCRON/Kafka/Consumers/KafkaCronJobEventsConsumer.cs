@@ -101,7 +101,15 @@ public class KafkaCronJobEventsConsumer : BackgroundService
             consumer.Commit(result);
             return;
         }
-        var dispatched = await HandleEventAsync(msg, ct);
+        var dispatched = false;
+        try
+        {
+            dispatched = await HandleEventAsync(msg, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error dispatching message for offset {Offset}", result.Offset);
+        }
         if (dispatched)
         {
             consumer.Commit(result);

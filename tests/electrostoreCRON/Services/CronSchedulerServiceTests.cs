@@ -49,6 +49,13 @@ public class CronSchedulerServiceTests
         return (Task)method.Invoke(service, new object[] { scheduler, ct })!;
     }
 
+    private static Task InvokeExecuteAsync(CronSchedulerService service, CancellationToken ct)
+    {
+        var method = typeof(CronSchedulerService).GetMethod("ExecuteAsync", BindingFlags.NonPublic | BindingFlags.Instance)
+            ?? throw new InvalidOperationException("ExecuteAsync method not found");
+        return (Task)method.Invoke(service, new object[] { ct })!;
+    }
+
     [Fact]
     public async Task LoadAndScheduleJobsAsync_ShouldScheduleJob_WithNormalizedCronExpression()
     {
@@ -168,5 +175,33 @@ public class CronSchedulerServiceTests
         // Assert
         Assert.Null(exception);
         scheduler.Verify(s => s.ScheduleJob(It.IsAny<IJobDetail>(), It.IsAny<ITrigger>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldStartSchedulerAndLoadJobs_BeforeEnteringRefreshLoop()
+    {
+        // ExecuteAsync's refresh loop runs on a real wall-clock PeriodicTimer tied to
+        // CronRefreshIntervalMinutes, so it isn't awaited here. Passing an already-cancelled
+        // token lets scheduler startup and the initial job load run and be verified, then
+        // PeriodicTimer.WaitForNextTickAsync throws OperationCanceledException immediately
+        // instead of actually waiting - keeping this fast and deterministic.
+        // Arrange
+        var service = CreateService();
+        var scheduler = new Mock<IScheduler>();
+        _schedulerFactory.Setup(f => f.GetScheduler(It.IsAny<CancellationToken>())).ReturnsAsync(scheduler.Object);
+        var reply = new GetEnabledCronJobsReply();
+        _apiClient
+            .Setup(c => c.GetEnabledCronJobsAsync(It.IsAny<GetEnabledCronJobsRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Returns(CreateAsyncUnaryCall(reply));
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        // Act
+        var exception = await Record.ExceptionAsync(() => InvokeExecuteAsync(service, cts.Token));
+
+        // Assert
+        Assert.IsAssignableFrom<OperationCanceledException>(exception);
+        scheduler.Verify(s => s.Start(It.IsAny<CancellationToken>()), Times.Once);
+        _apiClient.Verify(c => c.GetEnabledCronJobsAsync(It.IsAny<GetEnabledCronJobsRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

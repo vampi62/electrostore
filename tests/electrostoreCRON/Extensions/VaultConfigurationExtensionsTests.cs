@@ -142,4 +142,33 @@ public class VaultConfigurationExtensionsTests
         // Assert
         Assert.Equal("plain-value", result["SomeSetting"]);
     }
+
+    [Fact]
+    public void AddVaultConfiguration_ShouldThrowInvalidOperationException_WhenSecretRetrievalFails()
+    {
+        // A config value references a vault secret ("{{vault:...}}"), which drives execution into
+        // the placeholder-substitution loop and the actual Vault HTTP call. Port 1 has nobody
+        // listening, so the connection is refused immediately (no DNS/timeout delay), letting
+        // GetVaultSecret's catch-and-wrap branch be exercised deterministically and fast.
+        // Note: the value must live under a nested key (e.g. "App:ApiKey") - SearchInConfigBranch
+        // only inspects the *children* of each top-level section, so a flat top-level key is
+        // never checked for a vault placeholder.
+        // Arrange
+        var builder = BuildConfigBuilder(new Dictionary<string, string?>
+        {
+            ["Vault:Enable"] = "true",
+            ["Vault:Addr"] = "http://127.0.0.1:1",
+            ["Vault:Token"] = "token",
+            ["Vault:Path"] = "secret/path",
+            ["Vault:MountPoint"] = "secret",
+            ["App:ApiKey"] = "prefix-{{vault:api-key}}-suffix"
+        });
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(() => builder.AddVaultConfiguration());
+
+        // Assert
+        Assert.Contains("Failed to retrieve secret from Vault", exception.Message);
+        Assert.Contains("api-key", exception.Message);
+    }
 }

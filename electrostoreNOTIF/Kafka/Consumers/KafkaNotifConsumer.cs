@@ -125,7 +125,15 @@ public class KafkaNotifConsumer : BackgroundService
             consumer.Commit(result);
             return;
         }
-        var dispatched = await DispatchAsync(msg, ct);
+        var dispatched = false;
+        try
+        {
+            dispatched = await DispatchAsync(msg, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error dispatching message for offset {Offset}", result.Offset);
+        }
         if (dispatched)
         {
             consumer.Commit(result);
