@@ -1,0 +1,28 @@
+name: 'SonarQube Summary'
+description: 'Poll a SonarQube background task and publish issues/coverage/duplication metrics to the GitHub Actions job summary'
+
+inputs:
+  project-key:
+    description: 'SonarQube project key that was analyzed'
+    required: true
+  sonar-host-url:
+    description: 'SonarQube server URL'
+    required: true
+  sonar-token:
+    description: 'SonarQube auth token'
+    required: true
+  title:
+    description: 'Title shown in the job summary section'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - shell: bash
+      env:
+        SONAR_HOST_URL: ${{ inputs.sonar-host-url }}
+        SONAR_TOKEN: ${{ inputs.sonar-token }}
+        PROJECT_KEY: ${{ inputs.project-key }}
+        SUMMARY_TITLE: ${{ inputs.title }}
+      run: bash "${{ github.action_path }}/summary.sh"

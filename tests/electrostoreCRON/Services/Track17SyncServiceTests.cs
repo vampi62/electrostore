@@ -1,6 +1,7 @@
 using System.Net;
 using System.Reflection;
 using System.Text.Json;
+using Confluent.Kafka;
 using ElectrostoreCRON.Kafka.Messages;
 using ElectrostoreCRON.Kafka.Producer;
 using ElectrostoreCRON.Services.Track17SyncService;
@@ -73,6 +74,30 @@ public class Track17SyncServiceTests
         return (object[])method.Invoke(null, new object[] { action, messages })!;
     }
 
+    private static ConsumeResult<string, string> CreateConsumeResult(string? value, bool isPartitionEOF = false, long offset = 1)
+    {
+        return new ConsumeResult<string, string>
+        {
+            Message = value is null ? null : new Message<string, string> { Value = value },
+            IsPartitionEOF = isPartitionEOF,
+            Offset = offset
+        };
+    }
+
+    private static Task<ConsumeResult<string, string>?> ConsumeMessageAsync(Track17SyncService service, IConsumer<string, string> kafkaConsumer, CancellationToken ct = default)
+    {
+        var method = typeof(Track17SyncService).GetMethod("ConsumeMessageAsync", BindingFlags.NonPublic | BindingFlags.Instance)
+            ?? throw new InvalidOperationException("ConsumeMessageAsync method not found");
+        return (Task<ConsumeResult<string, string>?>)method.Invoke(service, new object[] { kafkaConsumer, ct })!;
+    }
+
+    private static TrackingActionMessage? DeserializeMessage(Track17SyncService service, ConsumeResult<string, string> result)
+    {
+        var method = typeof(Track17SyncService).GetMethod("DeserializeMessage", BindingFlags.NonPublic | BindingFlags.Instance)
+            ?? throw new InvalidOperationException("DeserializeMessage method not found");
+        return (TrackingActionMessage?)method.Invoke(service, new object[] { result });
+    }
+
     // ---- SyncAllAsync ----
 
     [Fact]
@@ -87,6 +112,87 @@ public class Track17SyncServiceTests
         // Assert
         _httpClientFactory.Verify(f => f.CreateClient(It.IsAny<string>()), Times.Never);
         _kafka.Verify(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // ---- DeserializeMessage ----
+
+    [Fact]
+    public void DeserializeMessage_ShouldReturnMessage_WhenJsonIsValid()
+    {
+        // Arrange
+        var service = CreateService();
+        var result = CreateConsumeResult("""{"tracking_number":"TN1","carrier":100}""");
+
+        // Act
+        var msg = DeserializeMessage(service, result);
+
+        // Assert
+        Assert.NotNull(msg);
+        Assert.Equal("TN1", msg!.tracking_number);
+    }
+
+    [Fact]
+    public void DeserializeMessage_ShouldReturnNull_WhenJsonIsInvalid()
+    {
+        // Arrange
+        var service = CreateService();
+        var result = CreateConsumeResult("{not-json");
+
+        // Act
+        var msg = DeserializeMessage(service, result);
+
+        // Assert
+        Assert.Null(msg);
+    }
+
+    // ---- ConsumeMessageAsync ----
+
+    [Fact]
+    public async Task ConsumeMessageAsync_ShouldReturnResult_WhenConsumeSucceeds()
+    {
+        // Arrange
+        var service = CreateService();
+        var expected = CreateConsumeResult("""{"tracking_number":"TN1","carrier":100}""");
+        var kafkaConsumer = new Mock<IConsumer<string, string>>();
+        kafkaConsumer.Setup(c => c.Consume(It.IsAny<TimeSpan>())).Returns(expected);
+
+        // Act
+        var result = await ConsumeMessageAsync(service, kafkaConsumer.Object);
+
+        // Assert
+        Assert.Same(expected, result);
+    }
+
+    [Fact]
+    public async Task ConsumeMessageAsync_ShouldReturnNull_WhenOperationIsCancelled()
+    {
+        // Arrange
+        var service = CreateService();
+        var kafkaConsumer = new Mock<IConsumer<string, string>>();
+        kafkaConsumer.Setup(c => c.Consume(It.IsAny<TimeSpan>())).Throws<OperationCanceledException>();
+
+        // Act
+        var result = await ConsumeMessageAsync(service, kafkaConsumer.Object);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ConsumeMessageAsync_ShouldReturnNull_WhenConsumeExceptionIsThrown()
+    {
+        // Arrange
+        var service = CreateService();
+        var kafkaConsumer = new Mock<IConsumer<string, string>>();
+        kafkaConsumer
+            .Setup(c => c.Consume(It.IsAny<TimeSpan>()))
+            .Throws(new ConsumeException(new ConsumeResult<byte[], byte[]>(), new Error(ErrorCode.UnknownTopicOrPart)));
+
+        // Act
+        var result = await ConsumeMessageAsync(service, kafkaConsumer.Object);
+
+        // Assert
+        Assert.Null(result);
     }
 
     // ---- BuildRequestItems ----
@@ -279,5 +385,31 @@ public class Track17SyncServiceTests
         // Assert
         var result = Assert.Single(results);
         Assert.False(result.success);
+    }
+
+    [Fact(Timeout = 15000)]
+    public async Task SyncAllAsync_ShouldSkipEveryTopic_WhenKafkaBrokerIsUnreachable()
+    {
+        // ConsumeBatch builds its own real Confluent.Kafka IConsumer internally (not
+        // injected/mockable), so this exercises the full SyncAllAsync -> SyncTopicAsync ->
+        // ConsumeBatch orchestration loop end-to-end against an unreachable broker (127.0.0.1:1,
+        // connection refused) rather than mocking pieces of it. A short ConsumeTimeoutMs keeps the
+        // 5-empty-poll bail-out bounded (~5 * 100ms per topic * 5 topics), so this stays fast and
+        // deterministic instead of depending on librdkafka's multi-minute default message timeout.
+        // Arrange
+        var service = CreateService(new Dictionary<string, string?>
+        {
+            ["Track17:ApiKey"] = "test-key",
+            ["Kafka:BootstrapServers"] = "127.0.0.1:1",
+            ["Track17:ConsumeTimeoutMs"] = "100"
+        });
+
+        // Act
+        var exception = await Record.ExceptionAsync(() => service.SyncAllAsync());
+
+        // Assert
+        Assert.Null(exception);
+        _httpClientFactory.Verify(f => f.CreateClient(It.IsAny<string>()), Times.Never);
+        _kafka.Verify(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }
