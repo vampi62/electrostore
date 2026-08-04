@@ -8,13 +8,16 @@ public class UsersGrpcService : UsersGrpc.UsersGrpcBase
 {
     private readonly IUserService _userService;
     private readonly IUserPushSubscriptionService _userPushSubscriptionService;
+    private readonly ILogger<UsersGrpcService> _logger;
 
     public UsersGrpcService(
         IUserService userService,
-        IUserPushSubscriptionService userPushSubscriptionService)
+        IUserPushSubscriptionService userPushSubscriptionService,
+        ILogger<UsersGrpcService> logger)
     {
         _userService = userService;
         _userPushSubscriptionService = userPushSubscriptionService;
+        _logger = logger;
     }
 
     public override async Task<GetUserInfoReply> GetUserInfo(GetUserInfoRequest request, ServerCallContext context)
@@ -22,6 +25,7 @@ public class UsersGrpcService : UsersGrpc.UsersGrpcBase
         var user = await _userService.GetUserByIdAsync(request.UserId, context.CancellationToken);
         if (user is null)
         {
+            _logger.LogDebug("GetUserInfo: user {UserId} not found", request.UserId);
             return new GetUserInfoReply { Found = false };
         }
         return new GetUserInfoReply { Found = true, Email = user.email_user };
@@ -39,6 +43,7 @@ public class UsersGrpcService : UsersGrpc.UsersGrpcBase
             P256Dh = s.p256dh,
             Auth = s.auth,
         }));
+        _logger.LogDebug("GetUserPushSubscriptions: {Count} subscription(s) for user {UserId}", reply.Subscriptions.Count, request.UserId);
         return reply;
     }
 }

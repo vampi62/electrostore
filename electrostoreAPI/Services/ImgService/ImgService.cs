@@ -18,12 +18,14 @@ public class ImgService : IImgService
     private readonly IFileService _fileService;
     private readonly string _imagesPath = "images";
     private readonly string _imagesThumbnailsPath = "imagesThumbnails";
+    private readonly ILogger<ImgService> _logger;
 
-    public ImgService(IMapper mapper, ApplicationDbContext context, IFileService fileService)
+    public ImgService(IMapper mapper, ApplicationDbContext context, IFileService fileService, ILogger<ImgService> logger)
     {
         _mapper = mapper;
         _context = context;
         _fileService = fileService;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadImgDto>> GetImgsByItemId(int itemId, int limit = 100, int offset = 0,
@@ -162,7 +164,7 @@ public class ImgService : IImgService
                 var fileResult = await _fileService.GetFile(img.url_picture_img);
                 if (!fileResult.Success || fileResult.FileStream is null)
                 {
-                    Console.WriteLine($"Could not read image {img.url_picture_img}");
+                    _logger.LogWarning("Could not read image {ImagePath}", img.url_picture_img);
                     continue;
                 }
                 using var ms = new MemoryStream();
@@ -176,7 +178,7 @@ public class ImgService : IImgService
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error streaming image {img.url_picture_img}: {ex.Message}");
+                _logger.LogError(ex, "Error streaming image {ImagePath}", img.url_picture_img);
             }
         }
     }

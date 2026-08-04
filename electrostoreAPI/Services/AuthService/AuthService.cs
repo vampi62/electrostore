@@ -23,6 +23,7 @@ public class AuthService : IAuthService
     private readonly IUserService _userService;
     private readonly IJwtService _jwtService;
     private readonly IJwiService _jwiService;
+    private readonly ILogger<AuthService> _logger;
     private static readonly Dictionary<string, DateTime> _stateStore = new();
     private static readonly char[] separator = new char[] { '_', '-' };
     private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
@@ -32,7 +33,7 @@ public class AuthService : IAuthService
 
     // In-memory store for state parameters, if you want persistence or use duplication across instances, consider using a distributed cache like Redis
 
-    public AuthService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, IKafkaProducerService kafkaNotificationService, ISessionService sessionService, IUserService userService, IJwtService jwtService, IJwiService jwiService)
+    public AuthService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, IKafkaProducerService kafkaNotificationService, ISessionService sessionService, IUserService userService, IJwtService jwtService, IJwiService jwiService, ILogger<AuthService> logger)
     {
         _mapper = mapper;
         _context = context;
@@ -42,6 +43,7 @@ public class AuthService : IAuthService
         _userService = userService;
         _jwtService = jwtService;
         _jwiService = jwiService;
+        _logger = logger;
     }
 
     public async Task<SsoUrlResponse> GetSSOAuthUrl(string sso_method)
@@ -93,7 +95,7 @@ public class AuthService : IAuthService
         }
         var tokenResponse = await ExchangeCodeForToken(request.Code, clientId!, clientSecret!, authority!, redirectUri!);
         var userInfo = await GetUserInfo(tokenResponse.access_token, authority!);
-        Console.WriteLine($"User Info: {JsonSerializer.Serialize(userInfo)}");
+        _logger.LogDebug("SSO user info received: {UserInfo}", JsonSerializer.Serialize(userInfo));
         var user = await GetOrCreateUser(userInfo, groupMappingSection);
         var jwt = await _jwtService.GenerateToken(user, "sso_" + sso_method);
         await _jwiService.SaveToken(jwt, user.id_user, "sso_" + sso_method);
@@ -114,7 +116,7 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+            _logger.LogWarning(ex, "Unable to send login notification email to {Email}", user.email_user);
         }
         return new LoginResponse
         {
@@ -126,7 +128,7 @@ public class AuthService : IAuthService
         };
     }
 
-    private static async Task<TokenResponse> ExchangeCodeForToken(string code, string clientId, string clientSecret, string authority, string redirectUri)
+    private async Task<TokenResponse> ExchangeCodeForToken(string code, string clientId, string clientSecret, string authority, string redirectUri)
     {
         var tokenEndpoint = authority.Replace("/authorize/", "/token/");
         var requestBody = new List<KeyValuePair<string, string>>
@@ -143,7 +145,7 @@ public class AuthService : IAuthService
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
-            Console.WriteLine(errorContent);
+            _logger.LogError("Error exchanging code for token: {StatusCode} - {ErrorContent}", response.StatusCode, errorContent);
             throw new HttpRequestException($"Error exchanging code for token: {response.StatusCode}");
         }
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -151,7 +153,7 @@ public class AuthService : IAuthService
         return tokenResponse ?? throw new InvalidOperationException("Invalid token response");
     }
 
-    private static async Task<UserInfoResponse> GetUserInfo(string accessToken, string authority)
+    private async Task<UserInfoResponse> GetUserInfo(string accessToken, string authority)
     {
         var userInfoEndpoint = authority.Replace("/application/o/authorize/", "/application/o/userinfo/");
         var httpClient = new HttpClient();
@@ -160,7 +162,7 @@ public class AuthService : IAuthService
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
-            Console.WriteLine(errorContent);
+            _logger.LogError("Error retrieving user info: {StatusCode} - {ErrorContent}", response.StatusCode, errorContent);
             throw new HttpRequestException($"Error retrieving user info: {response.StatusCode}");
         }
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -257,7 +259,7 @@ public class AuthService : IAuthService
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"SMTP Error: Unable to send password reset email - {ex.Message}");
+                _logger.LogWarning(ex, "Unable to send password reset email to {Email}", user.email_user);
             }
         }
     }
@@ -298,7 +300,7 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"SMTP Error: Unable to send password changed notification email - {ex.Message}");
+            _logger.LogWarning(ex, "Unable to send password changed notification email to {Email}", user.email_user);
         }
     }
 
@@ -332,7 +334,7 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+            _logger.LogWarning(ex, "Unable to send login notification email to {Email}", user.email_user);
         }
         // return tokens
         return new LoginResponse

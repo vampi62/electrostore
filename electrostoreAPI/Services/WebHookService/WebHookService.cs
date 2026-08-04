@@ -18,44 +18,46 @@ public class WebHookService : IWebHookService
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly ICommandService _commandService;
-    public WebHookService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, ICommandService commandService)
+    private readonly ILogger<WebHookService> _logger;
+    public WebHookService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, ICommandService commandService, ILogger<WebHookService> logger)
     {
         _mapper = mapper;
         _context = context;
         _configuration = configuration;
         _commandService = commandService;
+        _logger = logger;
     }
 
     public async Task Process17TrackWebhook(JsonElement body, string signatureHeader)
     {
         if (_configuration.GetValue<bool>("Track17:Enable") == false)
         {
-            Console.WriteLine("17Track webhook processing is disabled.");
+            _logger.LogWarning("17Track webhook processing is disabled");
             throw new ArgumentException("17Track webhook processing is disabled.");
         }
         var apiKey = _configuration.GetValue<string>("Track17:ApiKey");
         if (string.IsNullOrEmpty(apiKey))
         {
-            Console.WriteLine("API key is not configured.");
+            _logger.LogWarning("17Track API key is not configured");
             throw new ArgumentException("API key is not configured.");
         }
-        
+
         var signature = getGeneratedSignature(JsonSerializer.Serialize(body), apiKey);
         if (signatureHeader != signature)
         {
-            Console.WriteLine($"Invalid signature. Received: {signatureHeader}, Expected: {signature}");
+            _logger.LogWarning("Invalid 17Track webhook signature. Received: {Received}, Expected: {Expected}", signatureHeader, signature);
             throw new ArgumentException("Invalid signature.");
         }
         var event17Track = body.GetProperty("event").GetString();
         var data17Track = body.GetProperty("data");
         if (event17Track != "TRACKING_UPDATED")
         {
-            Console.WriteLine($"Ignoring event: {event17Track}");
+            _logger.LogWarning("Ignoring 17Track event: {Event}", event17Track);
             throw new ArgumentException($"Ignoring event: {event17Track}");
         }
         if (!data17Track.TryGetProperty("number", out var trackingNumberProperty) || !data17Track.TryGetProperty("carrier", out var carrierIdProperty))
         {
-            Console.WriteLine("Invalid data format: missing 'number' or 'carrier' property.");
+            _logger.LogWarning("Invalid 17Track webhook data format: missing 'number' or 'carrier' property");
             throw new ArgumentException("Invalid data format: missing 'number' or 'carrier' property.");
         }
         var trackingNumber = data17Track.GetProperty("number").GetString();
@@ -66,7 +68,7 @@ public class WebHookService : IWebHookService
         var latestSubStatus = data17Track.GetProperty("track_info").GetProperty("latest_status").GetProperty("sub_status").GetString();
         if (!Enum.TryParse<TrackingStatus>(latestStatus, true, out var parsedStatus) || !Enum.TryParse<TrackingSubStatus>(latestSubStatus, true, out var parsedSubStatus))
         {
-            Console.WriteLine($"Invalid status or sub-status received: {latestStatus}, {latestSubStatus}");
+            _logger.LogWarning("Invalid status or sub-status received from 17Track: {Status}, {SubStatus}", latestStatus, latestSubStatus);
             throw new ArgumentException("Invalid status or sub-status received.");
         }
         foreach (var command in commands)
@@ -101,7 +103,7 @@ public class WebHookService : IWebHookService
                 await _context.SaveChangesAsync();
             }
         }
-        Console.WriteLine("Webhook processed successfully.");
+        _logger.LogInformation("17Track webhook processed successfully for tracking number {TrackingNumber}", trackingNumber);
     }
 
     private static string getGeneratedSignature(string requestText, string key)

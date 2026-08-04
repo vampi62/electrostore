@@ -40,7 +40,7 @@ public partial class NotificationTemplateService : INotificationTemplateService
         _logger = logger;
         _defaultLanguage = configuration["NotificationTemplates:DefaultLanguage"] ?? "fr";
         _index = BuildIndex();
-        _logger.LogInformation("NotificationTemplateService: {Count} template(s) indexé(s).", _index.Count);
+        _logger.LogInformation("NotificationTemplateService: {Count} template(s) indexed.", _index.Count);
     }
 
     // -----------------------------------------------------------------------
@@ -92,7 +92,7 @@ public partial class NotificationTemplateService : INotificationTemplateService
         if (!string.Equals(language, _defaultLanguage, StringComparison.OrdinalIgnoreCase))
         {
             _logger.LogDebug(
-                "Template '{Id}' introuvable pour '{Lang}', repli sur '{Default}'.",
+                "Template '{Id}' not found for '{Lang}', falling back to '{Default}'.",
                 templateId, language, _defaultLanguage);
 
             var defaultKey = IndexKey(templateId, _defaultLanguage);
@@ -105,7 +105,7 @@ public partial class NotificationTemplateService : INotificationTemplateService
         }
 
         _logger.LogWarning(
-            "Template '{Id}' introuvable (langue='{Lang}', défaut='{Default}').",
+            "Template '{Id}' not found (language='{Lang}', default='{Default}').",
             templateId, language, _defaultLanguage);
         return null;
     }
@@ -118,7 +118,7 @@ public partial class NotificationTemplateService : INotificationTemplateService
             var template = JsonSerializer.Deserialize<NotificationTemplate>(json, JsonOptions);
             if (template is null)
             {
-                _logger.LogWarning("Template '{Id}' désérialisé en null depuis '{Path}'.", templateId, filePath);
+                _logger.LogWarning("Template '{Id}' deserialized to null from '{Path}'.", templateId, filePath);
                 return null;
             }
 
@@ -127,12 +127,12 @@ public partial class NotificationTemplateService : INotificationTemplateService
 
             // TryAdd est thread-safe ; si une autre thread a déjà mis en cache, on ignore.
             _cache.TryAdd(IndexKey(templateId, language), template);
-            _logger.LogDebug("Template '{Id}' ({Lang}) chargé depuis '{Path}'.", templateId, language, filePath);
+            _logger.LogDebug("Template '{Id}' ({Lang}) loaded from '{Path}'.", templateId, language, filePath);
             return template;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Impossible de charger le template '{Id}' depuis '{Path}'.", templateId, filePath);
+            _logger.LogError(ex, "Failed to load template '{Id}' from '{Path}'.", templateId, filePath);
             return null;
         }
     }
@@ -151,7 +151,7 @@ public partial class NotificationTemplateService : INotificationTemplateService
 
         if (!Directory.Exists(templateRoot))
         {
-            _logger.LogWarning("Dossier de templates introuvable : '{Path}'.", templateRoot);
+            _logger.LogWarning("Templates folder not found: '{Path}'.", templateRoot);
             return index;
         }
 
@@ -170,7 +170,7 @@ public partial class NotificationTemplateService : INotificationTemplateService
                 }
                 else
                 {
-                    _logger.LogWarning("Template dupliqué ignoré : '{File}' (clé '{Key}' déjà présente).", file, key);
+                    _logger.LogWarning("Duplicate template ignored: '{File}' (key '{Key}' already present).", file, key);
                 }
             }
         }
