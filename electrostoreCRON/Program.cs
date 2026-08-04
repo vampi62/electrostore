@@ -16,6 +16,11 @@ public partial class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        builder.Logging.AddSimpleConsole(options =>
+        {
+            options.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
+            options.SingleLine = true;
+        });
         builder.Configuration.AddJsonFile("config/appsettings.json", optional: false, reloadOnChange: true);
         if (builder.Environment.IsDevelopment())
         {

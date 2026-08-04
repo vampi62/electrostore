@@ -6,11 +6,14 @@ namespace ElectrostoreAPI.Grpc.Services;
 public class CronJobsGrpcService : CronJobsGrpc.CronJobsGrpcBase
 {
     private readonly ICronJobService _cronJobService;
+    private readonly ILogger<CronJobsGrpcService> _logger;
 
     public CronJobsGrpcService(
-        ICronJobService cronJobService)
+        ICronJobService cronJobService,
+        ILogger<CronJobsGrpcService> logger)
     {
         _cronJobService = cronJobService;
+        _logger = logger;
     }
 
     public override async Task<GetEnabledCronJobsReply> GetEnabledCronJobs(
@@ -28,17 +31,28 @@ public class CronJobsGrpcService : CronJobsGrpc.CronJobsGrpcBase
                 LastRunAt = c.last_run_at?.ToString("o") ?? string.Empty,
                 NextRunAt = c.next_run_at?.ToString("o") ?? string.Empty
         }));
+        _logger.LogDebug("GetEnabledCronJobs: returned {Count} job(s)", reply.CronJobs.Count);
         return reply;
     }
 
     public override async Task<UpdateCronJobRunReply> UpdateCronJobRun(
         UpdateCronJobRunRequest request, ServerCallContext context)
     {
-        await _cronJobService.UpdateCronJobRunAsync(
-            request.IdCronjob,
-            string.IsNullOrWhiteSpace(request.LastRunAt) ? null : DateTime.Parse(request.LastRunAt, null, System.Globalization.DateTimeStyles.RoundtripKind),
-            string.IsNullOrWhiteSpace(request.NextRunAt) ? null : DateTime.Parse(request.NextRunAt, null, System.Globalization.DateTimeStyles.RoundtripKind),
-            context.CancellationToken);
-        return new UpdateCronJobRunReply { Success = true };
+        try
+        {
+            await _cronJobService.UpdateCronJobRunAsync(
+                request.IdCronjob,
+                string.IsNullOrWhiteSpace(request.LastRunAt) ? null : DateTime.Parse(request.LastRunAt, null, System.Globalization.DateTimeStyles.RoundtripKind),
+                string.IsNullOrWhiteSpace(request.NextRunAt) ? null : DateTime.Parse(request.NextRunAt, null, System.Globalization.DateTimeStyles.RoundtripKind),
+                context.CancellationToken);
+            _logger.LogInformation("UpdateCronJobRun: cronjob={Id} lastRunAt={LastRunAt} nextRunAt={NextRunAt}",
+                request.IdCronjob, request.LastRunAt, request.NextRunAt);
+            return new UpdateCronJobRunReply { Success = true };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "UpdateCronJobRun: error for cronjob={Id}", request.IdCronjob);
+            return new UpdateCronJobRunReply { Success = false };
+        }
     }
 }

@@ -10,13 +10,16 @@ public class IaTrainingGrpcService : IaTrainingGrpc.IaTrainingGrpcBase
 {
     private readonly IIAService _iaService;
     private readonly IImgService _imgService;
+    private readonly ILogger<IaTrainingGrpcService> _logger;
 
     public IaTrainingGrpcService(
         IIAService iaService,
-        IImgService imgService)
+        IImgService imgService,
+        ILogger<IaTrainingGrpcService> logger)
     {
         _iaService = iaService;
         _imgService = imgService;
+        _logger = logger;
     }
 
     public override async Task StreamTrainingImages(
@@ -27,6 +30,7 @@ public class IaTrainingGrpcService : IaTrainingGrpc.IaTrainingGrpcBase
         var existingSet = request.ExistingFilenames.Count > 0
             ? new HashSet<string>(request.ExistingFilenames, StringComparer.OrdinalIgnoreCase)
             : null;
+        _logger.LogInformation("StreamTrainingImages: starting stream, {Count} filename(s) already known", request.ExistingFilenames.Count);
         await _imgService.StreamTrainingImagesAsync(responseStream, existingSet, context.CancellationToken);
     }
 
@@ -44,6 +48,10 @@ public class IaTrainingGrpcService : IaTrainingGrpc.IaTrainingGrpcBase
             ValLoss = request.ValLoss
         };
         var result = await _iaService.UpdateIaStatusAsync(request.IdIa, iaStatus, request.RequestedBy, context.CancellationToken);
+        if (!result)
+        {
+            _logger.LogWarning("UpdateIaStatus: update failed for IA {Id} (status={Status})", request.IdIa, request.Action);
+        }
         return new UpdateIaStatusReply { Success = result };
     }
 }

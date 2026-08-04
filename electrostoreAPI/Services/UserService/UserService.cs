@@ -21,8 +21,9 @@ public class UserService : IUserService
     private readonly IKafkaProducerService _kafkaProducerService;
     private readonly ISessionService _sessionService;
     private readonly IJwiService _jwiService;
+    private readonly ILogger<UserService> _logger;
 
-    public UserService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, IKafkaProducerService kafkaNotificationService, ISessionService sessionService, IJwiService jwiService)
+    public UserService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, IKafkaProducerService kafkaNotificationService, ISessionService sessionService, IJwiService jwiService, ILogger<UserService> logger)
     {
         _mapper = mapper;
         _context = context;
@@ -30,6 +31,7 @@ public class UserService : IUserService
         _kafkaProducerService = kafkaNotificationService;
         _sessionService = sessionService;
         _jwiService = jwiService;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedUserDto>> GetUsers(int limit = 100, int offset = 0,
@@ -152,7 +154,7 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+            _logger.LogWarning(ex, "Unable to send account-created email to {Email}", newUser.email_user);
         }
         return _mapper.Map<ReadUserDto>(newUser);
     }
@@ -284,7 +286,7 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+            _logger.LogWarning(ex, "Unable to send account-deleted email to {Email}", userToDelete.email_user);
         }
     }
 
@@ -341,7 +343,7 @@ public class UserService : IUserService
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+                _logger.LogWarning(ex, "Unable to send email-changed notification to {NewEmail}/{OldEmail}", userToUpdate.email_user, oldUserEmail);
             }
         }
         else if (userDto.mdp_user is not null)
@@ -363,7 +365,7 @@ public class UserService : IUserService
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+                _logger.LogWarning(ex, "Unable to send password-changed notification to {Email}", userToUpdate.email_user);
             }
         }
         else
@@ -385,7 +387,7 @@ public class UserService : IUserService
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"SMTP Error: Unable to send login notification email - {ex.Message}");
+                _logger.LogWarning(ex, "Unable to send account-updated notification to {Email}", userToUpdate.email_user);
             }
         }
     }

@@ -22,8 +22,9 @@ public class IAService : IIAService
     private readonly IaCmdGrpc.IaCmdGrpcClient _iaGrpcClient;
     private readonly IKafkaProducerService _kafkaProducer;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<IAService> _logger;
 
-    public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IaCmdGrpc.IaCmdGrpcClient iaGrpcClient, IKafkaProducerService kafkaProducer, IConfiguration configuration)
+    public IAService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IaCmdGrpc.IaCmdGrpcClient iaGrpcClient, IKafkaProducerService kafkaProducer, IConfiguration configuration, ILogger<IAService> logger)
     {
         _mapper = mapper;
         _context = context;
@@ -31,6 +32,7 @@ public class IAService : IIAService
         _iaGrpcClient = iaGrpcClient;
         _kafkaProducer = kafkaProducer;
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task<PaginatedResponseDto<ReadIADto>> GetIA(int limit = 100, int offset = 0,
@@ -171,7 +173,7 @@ public class IAService : IIAService
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _logger.LogError(e, "Error while getting training status for IA {Id}", id);
             return new IAStatusDto
             {
                 Status = "unknown",
@@ -213,7 +215,7 @@ public class IAService : IIAService
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _logger.LogError(e, "Error while starting training for IA {Id}", id);
             throw new InvalidOperationException("Error while training IA", e);
         }
     }
@@ -245,7 +247,7 @@ public class IAService : IIAService
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _logger.LogError(e, "Error while detecting item with IA {Id}", id);
             throw new InvalidOperationException("Error while detecting item", e);
         }
     }
@@ -257,7 +259,7 @@ public class IAService : IIAService
 
         if (ia is null)
         {
-            Console.WriteLine($"IA with id '{id}' not found for status update.");
+            _logger.LogWarning("IA with id {Id} not found for status update", id);
             return false;
         }
 
@@ -267,23 +269,23 @@ public class IAService : IIAService
             ia.trained_ia = true;
             ia.date_training_ia = DateTime.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
-            Console.WriteLine($"IA #{id}: training completed successfully.");
+            _logger.LogInformation("IA {Id}: training completed successfully", id);
         }
         else if (iaStatus.Status == "training_failed")
         {
             // trained_ia is left unchanged
-            Console.WriteLine($"IA #{id}: training failed with message: {iaStatus.Message}");
+            _logger.LogWarning("IA {Id}: training failed with message: {Message}", id, iaStatus.Message);
         }
         else if (iaStatus.Status == "training_started")
         {
             ia.trained_ia = false;
             ia.date_training_ia = null;
             await _context.SaveChangesAsync(cancellationToken);
-            Console.WriteLine($"IA #{id}: training started.");
+            _logger.LogInformation("IA {Id}: training started", id);
         }
         else
         {
-            Console.WriteLine($"IA #{id}: received unknown status '{iaStatus.Status}'. No changes applied.");
+            _logger.LogWarning("IA {Id}: received unknown status {Status}. No changes applied", id, iaStatus.Status);
             return false;
         }
 
@@ -293,7 +295,7 @@ public class IAService : IIAService
             var requesterId = requestedBy.ToString();
             if (requesterId == null)
             {
-                Console.WriteLine($"IA #{id}: No valid requester ID provided for notification. Skipping notification.");
+                _logger.LogWarning("IA {Id}: no valid requester ID provided for notification, skipping notification", id);
                 return true; // Status update succeeded, just no notification
             }
             try
@@ -343,11 +345,12 @@ public class IAService : IIAService
                     JsonSerializer.Serialize(notification),
                     cancellationToken);
 
-                Console.WriteLine($"Notification for user #{requesterId} about IA #{id} training {(success ? "completion" : "failure")} has been published.");
+                _logger.LogInformation("Notification for user {RequesterId} about IA {Id} training {Result} has been published",
+                    requesterId, id, success ? "completion" : "failure");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error while publishing notification for IA #{id} status update: {ex.Message}");
+                _logger.LogError(ex, "Error while publishing notification for IA {Id} status update", id);
                 // Even if notification fails, we consider the status update successful
             }
         }

@@ -87,7 +87,7 @@ public class KafkaNotifConsumer : BackgroundService
         finally
         {
             consumer.Close();
-            _logger.LogInformation("KafkaIaStatusConsumer stopped");
+            _logger.LogInformation("KafkaNotifConsumer stopped");
         }
     }
 
