@@ -196,13 +196,13 @@ function collectConfig(formData) {
         try {
             config.apiUrlObj = new URL(config.apiUrl || 'http://localhost:5000');
             config.frontUrlObj = new URL(config.frontUrl || 'http://localhost:8080');
-            config.apiPort = config.apiUrlObj.port || '5000';
-            config.frontendPort = config.frontUrlObj.port || '8080';
+            config.apiPort = document.getElementById('apiPort')?.value || config.apiUrlObj.port || '5000';
+            config.frontendPort = document.getElementById('frontendPort')?.value || config.frontUrlObj.port || '8080';
         } catch (e) {
             config.apiUrlObj = new URL('http://localhost:5000');
             config.frontUrlObj = new URL('http://localhost:8080');
-            config.apiPort = '5000';
-            config.frontendPort = '8080';
+            config.apiPort = document.getElementById('apiPort')?.value || '5000';
+            config.frontendPort = document.getElementById('frontendPort')?.value || '8080';
         }
     }
     
