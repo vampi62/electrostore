@@ -1,13 +1,8 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Moq;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.IO;
-using AutoMapper;
-using ElectrostoreAPI;
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Services.JwtService;
@@ -16,28 +11,46 @@ namespace ElectrostoreAPI.Tests.Services
 {
     public class JwtServiceTests
     {
-        [Fact]
-        public async Task GenerateToken_ShouldReturnValidJwt()
+        private readonly JwtSettings _jwtSettings;
+
+        public JwtServiceTests()
         {
-            // Arrange
-            var jwtSettings = new JwtSettings
+            _jwtSettings = new JwtSettings
             {
                 Key = "ThisIsASecretKeyForJwtTokenGeneration12345",
                 Issuer = "ElectrostoreAPI",
                 Audience = "electrostoreAPI_users",
                 ExpireDays = 7
             };
-            var jwtService = new JwtService(Microsoft.Extensions.Options.Options.Create(jwtSettings));
-            var user = new ReadUserDto
+        }
+
+        private JwtService CreateService()
+        {
+            return new JwtService(Options.Create(_jwtSettings), NullLogger<JwtService>.Instance);
+        }
+
+        private static ReadUserDto BuildUser(int id = 1, UserRole role = UserRole.User)
+        {
+            return new ReadUserDto
             {
-                id_user = 1,
+                id_user = id,
                 prenom_user = "Test",
                 nom_user = "User",
                 email_user = "test@test.com",
-                role_user = UserRole.User,
+                role_user = role,
                 created_at = DateTime.UtcNow,
                 updated_at = DateTime.UtcNow
             };
+        }
+
+        // --- GenerateToken ---
+
+        [Fact]
+        public async Task GenerateToken_ShouldReturnValidJwt()
+        {
+            // Arrange
+            var jwtService = CreateService();
+            var user = BuildUser();
             var reason = "login";
             // Act
             var jwt = await jwtService.GenerateToken(user, reason);

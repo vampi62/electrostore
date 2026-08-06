@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using ElectrostoreAPI;
 using ElectrostoreAPI.Dto;
 
@@ -22,7 +23,7 @@ namespace ElectrostoreAPI.Tests.Utils
             _dbContextOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString())
                 .Options;
-            
+
             var loggerFactory = LoggerFactory.Create(builder => { });
             var mapperConfig = new MapperConfiguration(cfg =>
             {
@@ -30,5 +31,7 @@ namespace ElectrostoreAPI.Tests.Utils
             }, loggerFactory);
             _mapper = mapperConfig.CreateMapper();
         }
+
+        protected static ILogger<T> CreateLogger<T>() => NullLogger<T>.Instance;
     }
 }
