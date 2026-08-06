@@ -63,7 +63,7 @@ namespace ElectrostoreAPI.Tests.Middleware
                     It.IsAny<EventId>(),
                     It.IsAny<It.IsAnyType>(),
                     It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Never);
         }
 
@@ -93,7 +93,7 @@ namespace ElectrostoreAPI.Tests.Middleware
                     It.IsAny<EventId>(),
                     It.IsAny<It.IsAnyType>(),
                     It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Never);
         }
 
@@ -123,7 +123,7 @@ namespace ElectrostoreAPI.Tests.Middleware
                     It.IsAny<EventId>(),
                     It.IsAny<It.IsAnyType>(),
                     It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Never);
         }
 
@@ -151,9 +151,9 @@ namespace ElectrostoreAPI.Tests.Middleware
                 x => x.Log(
                     LogLevel.Error,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("An error occurred:")),
+                    It.Is<It.IsAnyType>((v, t) => (v.ToString() ?? string.Empty).Contains("An error occurred:")),
                     It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
         }
 
@@ -181,9 +181,9 @@ namespace ElectrostoreAPI.Tests.Middleware
                 x => x.Log(
                     LogLevel.Error,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("An error occurred:")),
+                    It.Is<It.IsAnyType>((v, t) => (v.ToString() ?? string.Empty).Contains("An error occurred:")),
                     It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
         }
 
@@ -211,9 +211,9 @@ namespace ElectrostoreAPI.Tests.Middleware
                 x => x.Log(
                     LogLevel.Error,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("An error occurred:")),
+                    It.Is<It.IsAnyType>((v, t) => (v.ToString() ?? string.Empty).Contains("An error occurred:")),
                     It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
         }
 
@@ -241,9 +241,9 @@ namespace ElectrostoreAPI.Tests.Middleware
                 x => x.Log(
                     LogLevel.Error,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("An error occurred:")),
+                    It.Is<It.IsAnyType>((v, t) => (v.ToString() ?? string.Empty).Contains("An error occurred:")),
                     It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
         }
 
@@ -257,7 +257,7 @@ namespace ElectrostoreAPI.Tests.Middleware
         public async Task InvokeAsync_WithVariousExceptions_ShouldReturnCorrectStatusCode(Type exceptionType, int expectedStatusCode)
         {
             // Arrange
-            var exception = (Exception)Activator.CreateInstance(exceptionType, "Test exception message");
+            var exception = (Exception)Activator.CreateInstance(exceptionType, "Test exception message")!;
             _mockNext.Setup(x => x(_context)).ThrowsAsync(exception);
 
             // Act

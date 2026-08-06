@@ -25,12 +25,37 @@ namespace ElectrostoreAPI.Tests.Services
     public class FileServiceTests : TestBase
     {
         private readonly Mock<IMinioClient> _minioClient;
-        private readonly Mock<Microsoft.Extensions.Configuration.IConfiguration> _configuration;
 
         public FileServiceTests()
         {
             _minioClient = new Mock<IMinioClient>();
-            _configuration = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
+        }
+
+        private FileService CreateService(IConfiguration configuration)
+        {
+            return new FileService(configuration, _minioClient.Object);
+        }
+
+        private static IConfiguration BuildConfiguration(Dictionary<string, string?> values)
+        {
+            return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+        }
+
+        private static IConfiguration BuildS3EnabledConfiguration(string bucketName = "test-bucket")
+        {
+            return BuildConfiguration(new Dictionary<string, string?>
+            {
+                ["S3:Enable"] = "true",
+                ["S3:BucketName"] = bucketName
+            });
+        }
+
+        private static IConfiguration BuildS3DisabledConfiguration()
+        {
+            return BuildConfiguration(new Dictionary<string, string?>
+            {
+                ["S3:Enable"] = "false"
+            });
         }
 
         // Helper method to convert List to IAsyncEnumerable
@@ -43,19 +68,14 @@ namespace ElectrostoreAPI.Tests.Services
             await Task.CompletedTask;
         }
 
+        // --- GetFile ---
+
         [Fact]
         public async Task GetFile_ShouldReturnS3File_WhenFileExists()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "true",
-                ["S3:BucketName"] = "test-bucket"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
-            
+            var configuration = BuildS3EnabledConfiguration();
+
             _minioClient
                 .Setup(m => m.GetObjectAsync(It.IsAny<GetObjectArgs>(), It.IsAny<CancellationToken>()))
                 .Callback<GetObjectArgs, CancellationToken>((args, ct) =>
@@ -90,9 +110,8 @@ namespace ElectrostoreAPI.Tests.Services
                     }
                 })
                 .ReturnsAsync((Minio.DataModel.ObjectStat)null!);
-                
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
 
             // Act
             var result = await fileService.GetFile("test-file.txt");
@@ -107,19 +126,12 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task GetFile_ShouldReturnS3Error_WhenFileDoesNotExist()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "true",
-                ["S3:BucketName"] = "test-bucket"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3EnabledConfiguration();
 
             _minioClient.Setup(m => m.GetObjectAsync(It.IsAny<GetObjectArgs>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new Minio.Exceptions.ObjectNotFoundException("File not found"));
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
 
             // Act
             var result = await fileService.GetFile("non-existent-file.txt");
@@ -133,15 +145,9 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task GetFile_ShouldReturnLocalFile_WhenS3DisabledAndFileExists()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "false"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3DisabledConfiguration();
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
 
             var testFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "test-file.txt");
             Directory.CreateDirectory(Path.GetDirectoryName(testFilePath)!);
@@ -163,15 +169,9 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task GetFile_ShouldReturnLocalError_WhenS3DisabledAndFileDoesNotExist()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "false"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3DisabledConfiguration();
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
 
             // Act
             var result = await fileService.GetFile("non-existent-local-file.txt");
@@ -181,24 +181,19 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal("File not found", result.ErrorMessage);
         }
 
+        // --- FileExists ---
+
         [Fact]
         public async Task FileExists_ShouldReturnTrue_WhenS3FileExists()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "true",
-                ["S3:BucketName"] = "test-bucket"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3EnabledConfiguration();
 
             _minioClient
                 .Setup(m => m.StatObjectAsync(It.IsAny<StatObjectArgs>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Minio.DataModel.ObjectStat)null!);
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
 
             // Act
             var exists = await fileService.FileExists("existing-s3-file.txt");
@@ -211,20 +206,13 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task FileExists_ShouldReturnFalse_WhenS3FileDoesNotExist()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "true",
-                ["S3:BucketName"] = "test-bucket"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3EnabledConfiguration();
 
             _minioClient
                 .Setup(m => m.StatObjectAsync(It.IsAny<StatObjectArgs>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new Minio.Exceptions.ObjectNotFoundException("File not found"));
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
 
             // Act
             var exists = await fileService.FileExists("non-existent-s3-file.txt");
@@ -237,15 +225,9 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task FileExists_ShouldReturnTrue_WhenLocalFileExists()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "false"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3DisabledConfiguration();
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
 
             var testFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "existing-local-file.txt");
             Directory.CreateDirectory(Path.GetDirectoryName(testFilePath)!);
@@ -265,15 +247,9 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task FileExists_ShouldReturnFalse_WhenLocalFileDoesNotExist()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "false"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3DisabledConfiguration();
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
 
             // Act
             var exists = await fileService.FileExists("non-existent-local-file.txt");
@@ -282,18 +258,13 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.False(exists);
         }
 
+        // --- SaveFile ---
+
         [Fact]
         public async Task SaveFile_ShouldSaveS3File_WhenS3Enabled()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "true",
-                ["S3:BucketName"] = "test-bucket"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3EnabledConfiguration();
 
             _minioClient
                 .Setup(m => m.PutObjectAsync(It.IsAny<PutObjectArgs>(), It.IsAny<CancellationToken>()))
@@ -302,7 +273,7 @@ namespace ElectrostoreAPI.Tests.Services
                 .Setup(m => m.StatObjectAsync(It.IsAny<StatObjectArgs>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new Minio.Exceptions.ObjectNotFoundException("File not found"));
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
             var content = "This is a test file";
             var fileName = "test-file.txt";
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
@@ -315,20 +286,14 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Contains("some-path", result.path);
             Assert.Equal("text/plain", result.mimeType);
         }
-        
+
         [Fact]
         public async Task SaveFile_ShouldSaveLocalFile_WhenS3Disabled()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "false"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3DisabledConfiguration();
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
             var content = "This is a test local file";
             var fileName = "local-test-file.txt";
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
@@ -361,15 +326,9 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task SaveFile_ShouldPreventDirectoryTraversal()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "false"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3DisabledConfiguration();
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
             var content = "This is a test file for directory traversal";
             var fileName = "../traversal-test-file.txt"; // Attempted directory traversal
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
@@ -401,15 +360,9 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task SaveFile_ShouldHandleLongFileNames()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "false"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3DisabledConfiguration();
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
             var content = "This is a test file for long file names";
             var longFileName = new string('a', 150) + ".txt"; // 150 characters long
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
@@ -442,14 +395,7 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task SaveFile_ShouldHandleS3UploadError()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "true",
-                ["S3:BucketName"] = "test-bucket"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3EnabledConfiguration();
 
             _minioClient
                 .Setup(m => m.PutObjectAsync(It.IsAny<PutObjectArgs>(), It.IsAny<CancellationToken>()))
@@ -458,7 +404,7 @@ namespace ElectrostoreAPI.Tests.Services
                 .Setup(m => m.StatObjectAsync(It.IsAny<StatObjectArgs>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new Minio.Exceptions.ObjectNotFoundException("File not found"));
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
             var content = "This is a test file for S3 upload error";
             var fileName = "s3-error-test-file.txt";
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
@@ -474,15 +420,9 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task SaveFile_ShouldHandleLocalFileSaveError()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "false"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3DisabledConfiguration();
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
 
             // Simulate error using a stream that throws on CopyToAsync
             var savePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "error-path");
@@ -503,14 +443,7 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task SaveFile_ShouldHandleFileNameCollisions_InS3()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "true",
-                ["S3:BucketName"] = "test-bucket"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3EnabledConfiguration();
 
             int callCount = 0;
             _minioClient
@@ -534,7 +467,7 @@ namespace ElectrostoreAPI.Tests.Services
                 .Setup(m => m.PutObjectAsync(It.IsAny<PutObjectArgs>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Minio.DataModel.Response.PutObjectResponse)null!);
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
             var content = "This is a test file for S3 name collision";
             var fileName = "collision-test-file.txt";
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
@@ -552,15 +485,9 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task SaveFile_ShouldHandleFileNameCollisions_InLocalStorage()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "false"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3DisabledConfiguration();
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
             var content = "This is a test file for local name collision";
             var fileName = "local-collision-test-file.txt";
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
@@ -595,19 +522,15 @@ namespace ElectrostoreAPI.Tests.Services
             }
         }
 
+        // --- GenerateThumbnail ---
+
         [Fact]
         public async Task GenerateThumbnail_ShouldGenerateThumbnail_ForImageFile()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "false"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3DisabledConfiguration();
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
             // create directory for thumbnails
             var thumbnailsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "thumbnailsTest");
             var thumbnailsDirIn = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "thumbnailsTest", "main");
@@ -656,24 +579,19 @@ namespace ElectrostoreAPI.Tests.Services
             }
         }
 
+        // --- DeleteFile ---
+
         [Fact]
         public async Task DeleteFile_ShouldDeleteS3File_WhenS3Enabled()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "true",
-                ["S3:BucketName"] = "test-bucket"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3EnabledConfiguration();
 
             _minioClient
                 .Setup(m => m.RemoveObjectAsync(It.IsAny<RemoveObjectArgs>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
 
             // Act
             await fileService.DeleteFile("test-file-to-delete.txt");
@@ -686,15 +604,9 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task DeleteFile_ShouldDeleteLocalFile_WhenS3Disabled()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "false"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3DisabledConfiguration();
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
 
             var testFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "file-to-delete.txt");
             Directory.CreateDirectory(Path.GetDirectoryName(testFilePath)!);
@@ -707,19 +619,15 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.False(File.Exists(testFilePath));
         }
 
+        // --- CreateDirectory ---
+
         [Fact]
         public async Task CreateDirectory_ShouldCreateLocalDirectory_WhenS3Disabled()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "false"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3DisabledConfiguration();
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
 
             var dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "new-directory");
 
@@ -736,19 +644,15 @@ namespace ElectrostoreAPI.Tests.Services
             }
         }
 
+        // --- DeleteDirectory ---
+
         [Fact]
         public async Task DeleteDirectory_ShouldDeleteLocalDirectory_WhenS3Disabled()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "false"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3DisabledConfiguration();
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
 
             var dirPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "directory-to-delete");
             Directory.CreateDirectory(dirPath);
@@ -764,16 +668,9 @@ namespace ElectrostoreAPI.Tests.Services
         public async Task DeleteDirectory_ShouldDeleteS3Directory_WhenS3Enabled()
         {
             // Arrange
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["S3:Enable"] = "true",
-                ["S3:BucketName"] = "test-bucket"
-            };
-            IConfiguration configurationRoot = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
+            var configuration = BuildS3EnabledConfiguration();
 
-            var fileService = new FileService(configurationRoot, _minioClient.Object);
+            var fileService = CreateService(configuration);
 
             var objectsToDelete = new List<Minio.DataModel.Item>
             {

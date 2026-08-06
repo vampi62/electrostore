@@ -644,7 +644,7 @@ function generateApiAppsettings(config) {
     };
 
     settings.Encryption = {
-        "HexKey": config.useVault ? "{{vault:aes_key}}" : config.aesKey
+        "HexKey": config.useVault ? "{{vault:aes_key}}" : config.aes.key
     };
 
     if (config.oauthProviders.length > 0) {
@@ -686,7 +686,7 @@ function generateApiAppsettings(config) {
     if (isLegacy && config.enableSMTP && config.smtp) {
         settings.SMTP = {
             "Host": config.smtp.host,
-            "Port": parseInt(config.smtp.port),
+            "Port": Number.parseInt(config.smtp.port),
             "Username": config.useVault ? "{{vault:smtp_user}}" : config.smtp.user,
             "Password": config.useVault ? "{{vault:smtp_password}}" : config.smtp.password,
             "From": config.smtp.from
@@ -761,11 +761,7 @@ function generateIaAppsettings(config) {
         };
     } else {
         settings.Vault = {
-            "Enable": false,
-            "Addr": "http://vault:8200",
-            "Token": "",
-            "Path": "",
-            "MountPoint": "secret"
+            "Enable": false
         };
     }
 
@@ -792,7 +788,9 @@ function generateIaAppsettings(config) {
             };
         }
     } else {
-        settings.S3 = { "Enable": false };
+        settings.S3 = {
+            "Enable": false
+        };
     }
 
     settings.DefaultEpochs = 10;
@@ -837,11 +835,7 @@ function generateNotifAppsettings(config) {
         };
     } else {
         settings.Vault = {
-            "Enable": false,
-            "Addr": "http://vault:8200",
-            "Token": "",
-            "Path": "",
-            "MountPoint": "secret"
+            "Enable": false
         };
     }
 
@@ -933,11 +927,7 @@ function generateCronAppsettings(config) {
         };
     } else {
         settings.Vault = {
-            "Enable": false,
-            "Addr": "http://vault:8200",
-            "Token": "",
-            "Path": "",
-            "MountPoint": "secret"
+            "Enable": false
         };
     }
 
@@ -1001,11 +991,7 @@ function generateWorkerAppsettings(config) {
         };
     } else {
         settings.Vault = {
-            "Enable": false,
-            "Addr": "http://vault:8200",
-            "Token": "",
-            "Path": "",
-            "MountPoint": "secret"
+            "Enable": false
         };
     }
 
@@ -1137,7 +1123,7 @@ echo "Storing secrets in Vault..."
         script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} mqtt_password='${config.useMQTT ? config.mqtt.password : config.mqttExternal.password}'
 `;
 
-        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} aes_key='${config.aesKey}'
+        script += `docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} aes_key='${config.aes.key}'
 `;
 
         if (config.enableSMTP && config.smtp) {
@@ -1578,8 +1564,8 @@ Write-Host "Configuration completed!" -ForegroundColor Green
 Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Application access:"
-Write-Host "Frontend: ${'${config.frontUrlObj.toString()}'}"
-Write-Host "API: ${'${config.apiUrlObj.toString()}'}"
+Write-Host "${'Frontend: ' + config.frontUrlObj.toString()}"
+Write-Host "${'API: ' + config.apiUrlObj.toString()}"
 Write-Host ""
 `;
 

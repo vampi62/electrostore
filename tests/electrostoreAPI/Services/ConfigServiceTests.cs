@@ -16,16 +16,16 @@ namespace ElectrostoreAPI.Tests.Services
 {
     public class ConfigServiceTests : TestBase
     {
-        private Mock<IMqttClient> _mqttClient;
+        private readonly Mock<IMqttClient> _mqttClient;
         private readonly IConfiguration _configuration;
-        private Mock<IHttpClientFactory> _mockHttpClientFactory;
-        private Mock<HttpMessageHandler> _mockHttpMessageHandler;
+        private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+        private readonly Mock<HttpMessageHandler> _mockHttpMessageHandler;
 
         public ConfigServiceTests()
         {
             _mqttClient = new Mock<IMqttClient>();
             _mqttClient.Setup(m => m.IsConnected).Returns(true);
-            
+
             // Mock HttpMessageHandler pour simuler les réponses HTTP
             _mockHttpMessageHandler = new Mock<HttpMessageHandler>();
             _mockHttpMessageHandler.Protected()
@@ -38,13 +38,18 @@ namespace ElectrostoreAPI.Tests.Services
                     StatusCode = HttpStatusCode.OK,
                     Content = new StringContent("{\"status\":\"healthy\"}")
                 });
-            
+
             // Mock IHttpClientFactory
             var httpClient = new HttpClient(_mockHttpMessageHandler.Object);
             _mockHttpClientFactory = new Mock<IHttpClientFactory>();
             _mockHttpClientFactory.Setup(f => f.CreateClient(It.IsAny<string>()))
                 .Returns(httpClient);
-            
+
+            _configuration = BuildDefaultConfiguration();
+        }
+
+        private static IConfiguration BuildDefaultConfiguration()
+        {
             var inMemorySettings = new Dictionary<string, string?> {
                 {"SMTP:Enable", "true"},
                 {"DemoMode", "true"},
@@ -53,17 +58,23 @@ namespace ElectrostoreAPI.Tests.Services
                 {"OAuth:Facebook:DisplayName", "Facebook"},
                 {"OAuth:Facebook:IconUrl", "https://example.com/facebook-icon.png"}
             };
-            _configuration = new ConfigurationBuilder()
+            return new ConfigurationBuilder()
                 .AddInMemoryCollection(inMemorySettings)
                 .Build();
         }
 
+        private ConfigService CreateService()
+        {
+            return new ConfigService(_configuration);
+        }
+
+        // --- getAllConfig ---
 
         [Fact]
         public async Task getAllConfig_shouldReturnAllConfigs()
         {
             // Arrange
-            var configService = new ConfigService(_configuration);
+            var configService = CreateService();
 
             // Act
             var result = await configService.getAllConfig();

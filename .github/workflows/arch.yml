@@ -1,14 +1,16 @@
-name: start-linux-build
+name: arch
+
 on:
   push:
     branches:
       - main
-      - v*.*
+    tags:
+      - 'v*.*.*'
 
 concurrency: ci-build-${{ github.ref }}
 
 permissions:
-  contents: read
+  contents: write
   packages: write
   issues: read
   pull-requests: read
@@ -21,55 +23,46 @@ jobs:
     outputs:
         VERSION: ${{ env.VERSION }}
         BRANCH: ${{ env.BRANCH }}
-        BUILD: ${{ env.BUILD }}
-        DEPLOY: ${{ env.DEPLOY }}
         RELEASE: ${{ env.RELEASE }}
+        IS_TAG: ${{ env.IS_TAG }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Extract branch name
+      - name: Extract branch or tag name
         shell: bash
         run: |
-          echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "IS_TAG=true" >> $GITHUB_ENV
+            echo "BRANCH=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          else
+            echo "IS_TAG=false" >> $GITHUB_ENV
+            echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+          fi
 
       - name: Init for main branch
-        if: env.BRANCH == 'main'
+        if: env.IS_TAG == 'false' && env.BRANCH == 'main'
         shell: bash
         env:
           COMMIT_SHA: ${{ github.sha }}
         run: |
-          echo "VERSION=pr-${COMMIT_SHA:0:8}" >> $GITHUB_ENV
-          echo "BUILD=true" >> $GITHUB_ENV
-          echo "DEPLOY=true" >> $GITHUB_ENV
+          echo "VERSION=dev-${COMMIT_SHA::8}" >> $GITHUB_ENV
           echo "RELEASE=false" >> $GITHUB_ENV
 
-      - name: Init for v* branches
-        if: startsWith(env.BRANCH, 'v')
-        id: deploy
+      - name: Init for tag push (release)
+        if: env.IS_TAG == 'true'
         shell: bash
         run: |
-          version=$( git tag --sort=version:refname --list "${{ env.BRANCH }}.*" | tail -1  );
-          root_version=${version%.*};
-          patch_version=${version##*.};
-          if [ "$patch_version" == "" ]; then 
-            pinned_version=${{ env.BRANCH }}.0;
-          else
-            pinned_version=$root_version.$(expr $patch_version + 1);
-          fi;
-          echo "VERSION=$pinned_version" >> $GITHUB_ENV
-          echo "BUILD=true" >> $GITHUB_ENV
-          echo "DEPLOY=true" >> $GITHUB_ENV
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
           echo "RELEASE=true" >> $GITHUB_ENV
 
       - name: Debug var
         shell: bash
         run: |
+          echo "IS_TAG: ${{ env.IS_TAG }}"
           echo "BRANCH: ${{ env.BRANCH }}"
           echo "VERSION: ${{ env.VERSION }}"
-          echo "BUILD: ${{ env.BUILD }}"
-          echo "DEPLOY: ${{ env.DEPLOY }}"
           echo "RELEASE: ${{ env.RELEASE }}"
 
   tests:
@@ -87,7 +80,6 @@ jobs:
     needs:
       - init-work
       - tests
-    if: needs.init-work.outputs.BUILD == 'true'
     uses: ./.github/workflows/build.yml
     permissions:
       packages: write
@@ -96,7 +88,7 @@ jobs:
       architecture: 'linux/amd64,linux/arm64/v8'
       version: ${{needs.init-work.outputs.VERSION}}
       branch: ${{needs.init-work.outputs.BRANCH}}
-      release: ${{needs.init-work.outputs.RELEASE}}
+      latest: ${{needs.init-work.outputs.RELEASE}}
     secrets: inherit
 
   release:
@@ -115,3 +107,58 @@ jobs:
       version: ${{needs.init-work.outputs.VERSION}}
       branch: ${{needs.init-work.outputs.BRANCH}}
     secrets: inherit
+
+  # ---------------------------------------------------------------
+  # Automatic rollback if the tag was created but the pipeline failed at any point (tests, build or release).
+  # ---------------------------------------------------------------
+  rollback-on-failure:
+    name: Rollback tag on failure
+    runs-on: ubuntu-latest
+    needs:
+      - init-work
+      - tests
+      - build
+      - release
+    if: |
+      always() &&
+      needs.init-work.outputs.IS_TAG == 'true' &&
+      contains(needs.*.result, 'failure')
+    permissions:
+      contents: write
+    steps:
+      - name: Delete remote tag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = "${{ needs.init-work.outputs.BRANCH }}";
+            try {
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `tags/${tag}`
+              });
+              core.notice(`Tag ${tag} deleted due to pipeline failure.`);
+            } catch (e) {
+              core.warning(`Failed to delete tag ${tag}: ${e.message}`);
+            }
+
+      - name: Delete GitHub release (if it was created)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = "${{ needs.init-work.outputs.BRANCH }}";
+            try {
+              const release = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: tag
+              });
+              await github.rest.repos.deleteRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: release.data.id
+              });
+              core.notice(`Release ${tag} deleted.`);
+            } catch (e) {
+              core.info(`No release to delete for ${tag} (${e.message}).`);
+            }

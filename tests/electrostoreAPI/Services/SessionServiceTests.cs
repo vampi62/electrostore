@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
@@ -14,6 +15,13 @@ namespace ElectrostoreAPI.Tests.Services
 {
     public class SessionServiceTests : TestBase
     {
+        private static SessionService CreateService(Mock<IHttpContextAccessor> httpContextAccessor)
+        {
+            return new SessionService(httpContextAccessor.Object);
+        }
+
+        // --- GetClientIp ---
+
         [Fact]
         public void GetClientIp_ShouldReturnCorrectIp_FromXForwardedForHeader()
         {
@@ -25,7 +33,7 @@ namespace ElectrostoreAPI.Tests.Services
                 },
                 remoteIp: "192.168.10.1"
             );
-            var sessionService = new SessionService(httpContextAccessor.Object);
+            var sessionService = CreateService(httpContextAccessor);
             // Act
             var clientIp = sessionService.GetClientIp();
             // Assert
@@ -43,7 +51,7 @@ namespace ElectrostoreAPI.Tests.Services
                 },
                 remoteIp: "192.168.10.1"
             );
-            var sessionService = new SessionService(httpContextAccessor.Object);
+            var sessionService = CreateService(httpContextAccessor);
             // Act
             var clientIp = sessionService.GetClientIp();
             // Assert
@@ -58,7 +66,7 @@ namespace ElectrostoreAPI.Tests.Services
                 headers: new Dictionary<string, string>(),
                 remoteIp: "192.168.10.1"
             );
-            var sessionService = new SessionService(httpContextAccessor.Object);
+            var sessionService = CreateService(httpContextAccessor);
             // Act
             var clientIp = sessionService.GetClientIp();
             // Assert
@@ -73,12 +81,14 @@ namespace ElectrostoreAPI.Tests.Services
                 headers: new Dictionary<string, string>(),
                 remoteIp: null
             );
-            var sessionService = new SessionService(httpContextAccessor.Object);
+            var sessionService = CreateService(httpContextAccessor);
             // Act
             var clientIp = sessionService.GetClientIp();
             // Assert
             Assert.Equal(string.Empty, clientIp);
         }
+
+        // --- GetClientRole ---
 
         [Fact]
         public void GetClientRole_ShouldReturnUserRole_WhenNoClaimsPresent()
@@ -87,7 +97,7 @@ namespace ElectrostoreAPI.Tests.Services
             var httpContextAccessor = HttpContextAccessorMockFactory.Create(
                 claims: new Dictionary<string, string>()
             );
-            var sessionService = new SessionService(httpContextAccessor.Object);
+            var sessionService = CreateService(httpContextAccessor);
             // Act
             var userRole = sessionService.GetClientRole();
             // Assert
@@ -104,12 +114,14 @@ namespace ElectrostoreAPI.Tests.Services
                     { "user_role", "admin" }
                 }
             );
-            var sessionService = new SessionService(httpContextAccessor.Object);
+            var sessionService = CreateService(httpContextAccessor);
             // Act
             var userRole = sessionService.GetClientRole();
             // Assert
             Assert.Equal(UserRole.Admin, userRole);
         }
+
+        // --- GetClientId ---
 
         [Fact]
         public void GetClientId_ShouldReturnZero_WhenNoClaimsPresent()
@@ -118,7 +130,7 @@ namespace ElectrostoreAPI.Tests.Services
             var httpContextAccessor = HttpContextAccessorMockFactory.Create(
                 claims: new Dictionary<string, string>()
             );
-            var sessionService = new SessionService(httpContextAccessor.Object);
+            var sessionService = CreateService(httpContextAccessor);
             // Act
             var clientId = sessionService.GetClientId();
             // Assert
@@ -135,12 +147,14 @@ namespace ElectrostoreAPI.Tests.Services
                     { ClaimTypes.NameIdentifier, "42" }
                 }
             );
-            var sessionService = new SessionService(httpContextAccessor.Object);
+            var sessionService = CreateService(httpContextAccessor);
             // Act
             var clientId = sessionService.GetClientId();
             // Assert
             Assert.Equal(42, clientId);
         }
+
+        // --- GetTokenId ---
 
         [Fact]
         public void GetTokenId_ShouldReturnEmptyString_WhenNoClaimsPresent()
@@ -149,7 +163,7 @@ namespace ElectrostoreAPI.Tests.Services
             var httpContextAccessor = HttpContextAccessorMockFactory.Create(
                 claims: new Dictionary<string, string>()
             );
-            var sessionService = new SessionService(httpContextAccessor.Object);
+            var sessionService = CreateService(httpContextAccessor);
             // Act
             var tokenId = sessionService.GetTokenId();
             // Assert
@@ -167,12 +181,14 @@ namespace ElectrostoreAPI.Tests.Services
                     { JwtRegisteredClaimNames.Jti, expectedGuid }
                 }
             );
-            var sessionService = new SessionService(httpContextAccessor.Object);
+            var sessionService = CreateService(httpContextAccessor);
             // Act
             var tokenId = sessionService.GetTokenId();
             // Assert
             Assert.Equal(expectedGuid, tokenId);
         }
+
+        // --- GetTokenAuthMethod ---
 
         [Fact]
         public void GetTokenAuthMethod_ShouldReturnEmptyString_WhenNoClaimsPresent()
@@ -181,7 +197,7 @@ namespace ElectrostoreAPI.Tests.Services
             var httpContextAccessor = HttpContextAccessorMockFactory.Create(
                 claims: new Dictionary<string, string>()
             );
-            var sessionService = new SessionService(httpContextAccessor.Object);
+            var sessionService = CreateService(httpContextAccessor);
             // Act
             var authMethod = sessionService.GetTokenAuthMethod();
             // Assert
@@ -198,7 +214,7 @@ namespace ElectrostoreAPI.Tests.Services
                     { ClaimTypes.AuthenticationMethod, "password" }
                 }
             );
-            var sessionService = new SessionService(httpContextAccessor.Object);
+            var sessionService = CreateService(httpContextAccessor);
             // Act
             var authMethod = sessionService.GetTokenAuthMethod();
             // Assert
