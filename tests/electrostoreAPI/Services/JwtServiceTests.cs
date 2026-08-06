@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using System;
 using System.Threading.Tasks;
@@ -26,7 +25,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private JwtService CreateService()
         {
-            return new JwtService(Options.Create(_jwtSettings), NullLogger<JwtService>.Instance);
+            return new JwtService(Options.Create(_jwtSettings));
         }
 
         private static ReadUserDto BuildUser(int id = 1, UserRole role = UserRole.User)

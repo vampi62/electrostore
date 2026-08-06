@@ -17,7 +17,7 @@ namespace ElectrostoreAPI.Tests.Services
     {
         private static SessionService CreateService(Mock<IHttpContextAccessor> httpContextAccessor)
         {
-            return new SessionService(httpContextAccessor.Object, CreateLogger<SessionService>());
+            return new SessionService(httpContextAccessor.Object);
         }
 
         // --- GetClientIp ---

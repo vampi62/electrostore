@@ -25,7 +25,7 @@ namespace ElectrostoreAPI.Tests.Utils
         protected override CancellationToken CancellationTokenCore => _cancellationToken;
         protected override Metadata ResponseTrailersCore => new Metadata();
         protected override Status StatusCore { get; set; }
-        protected override WriteOptions WriteOptionsCore { get; set; } = new WriteOptions();
+        protected override WriteOptions? WriteOptionsCore { get; set; } = new WriteOptions();
         protected override AuthContext AuthContextCore => new AuthContext(string.Empty, new Dictionary<string, List<AuthProperty>>());
 
         protected override ContextPropagationToken CreatePropagationTokenCore(ContextPropagationOptions? options)

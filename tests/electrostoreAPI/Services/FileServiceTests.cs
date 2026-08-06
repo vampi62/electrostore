@@ -33,7 +33,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private FileService CreateService(IConfiguration configuration)
         {
-            return new FileService(configuration, CreateLogger<FileService>(), _minioClient.Object);
+            return new FileService(configuration, _minioClient.Object);
         }
 
         private static IConfiguration BuildConfiguration(Dictionary<string, string?> values)

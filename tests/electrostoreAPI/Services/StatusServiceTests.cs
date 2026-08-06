@@ -46,7 +46,7 @@ namespace ElectrostoreAPI.Tests.Services
 
         private StatusService CreateService(ApplicationDbContext context, IConfiguration configuration)
         {
-            return new StatusService(_mqttClient.Object, configuration, _mockHttpClientFactory.Object, context, _kafkaProducerService.Object, CreateLogger<StatusService>());
+            return new StatusService(_mqttClient.Object, configuration, _mockHttpClientFactory.Object, context, _kafkaProducerService.Object);
         }
 
         private static IConfiguration BuildConfiguration(bool demoMode = false, bool track17Enable = false)
