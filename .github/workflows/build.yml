@@ -12,15 +12,15 @@ on:
         required: true
         type: string
       branch:
-        description: 'The branch that triggered this workflow.'
+        description: 'The branch or tag that triggered this workflow.'
         required: true
         type: string
-      release:
-        description: 'If this is a release build.'
+      latest:
+        description: 'If "true", also tag the built image with "latest".'
         required: false
         default: "false"
         type: string
-  
+
   workflow_dispatch:
     inputs:
       architecture:
@@ -33,11 +33,11 @@ on:
         required: true
         type: string
       branch:
-        description: 'The branch that triggered this workflow.'
+        description: 'The branch or tag that triggered this workflow.'
         required: true
         type: string
-      release:
-        description: 'If this is a release build.'
+      latest:
+        description: 'If "true", also tag the built image with "latest".'
         required: false
         default: "false"
         type: string
@@ -229,31 +229,32 @@ jobs:
       uses: ASzc/change-string-case-action@v6
       with:
         string: ${{ github.repository }}
+    - name: Compute image tags
+      id: image_tags
+      shell: bash
+      run: |
+        IMAGE="ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}"
+        TAGS="--tag ${IMAGE}:${{ inputs.branch }} --tag ${IMAGE}:${{ inputs.version }}"
+        if [ "${{ inputs.latest }}" == "true" ]; then
+          TAGS="${TAGS} --tag ${IMAGE}:latest"
+        fi
+        echo "tags=${TAGS}" >> $GITHUB_OUTPUT
     - name: Push multiarch image to Github (ghcr.io)
       if: contains(inputs.architecture, 'linux/amd64,linux/arm64/v8')
       shell: bash
       run: |
-        docker buildx imagetools create \
-          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.branch }} \
-          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }} \
-          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:latest \
+        docker buildx imagetools create ${{ steps.image_tags.outputs.tags }} \
           ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }}-amd64 \
           ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }}-arm64
     - name: Push amd64 image to Github (ghcr.io)
       if: contains(inputs.architecture, 'linux/amd64') && !contains(inputs.architecture, 'linux/arm64/v8')
       shell: bash
       run: |
-        docker buildx imagetools create \
-          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.branch }} \
-          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }} \
-          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:latest \
+        docker buildx imagetools create ${{ steps.image_tags.outputs.tags }} \
           ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }}-amd64
     - name: Push arm64 image to Github (ghcr.io)
       if: contains(inputs.architecture, 'linux/arm64/v8') && !contains(inputs.architecture, 'linux/amd64')
       shell: bash
       run: |
-        docker buildx imagetools create \
-          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.branch }} \
-          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }} \
-          --tag ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:latest \
+        docker buildx imagetools create ${{ steps.image_tags.outputs.tags }} \
           ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}:${{ inputs.version }}-arm64
