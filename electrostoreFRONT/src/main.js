@@ -2,7 +2,8 @@ import { createApp, defineAsyncComponent } from "vue";
 import { createPinia } from "pinia";
 
 import App from "./App.vue";
-import { i18n, useNotification } from "./helpers";
+import { useNotification } from "./composables";
+import { i18n } from "./plugins";
 import router from "./router";
 
 import { library } from "@fortawesome/fontawesome-svg-core";
