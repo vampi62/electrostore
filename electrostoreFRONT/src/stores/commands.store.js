@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper } from "@/helpers";
+import { fetchWrapper, buildQuery } from "@/helpers";
 
 import { useUsersStore, useItemsStore, useCarriersStore } from "@/stores";
 
@@ -35,9 +35,7 @@ export const useCommandsStore = defineStore("commands",{
 	actions: {
 		async getCommandByList(idResearch = [], expand = []) {
 			this.commandsLoading = true;
-			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const paramString = [idResearchString, expandString].join("&");
+			const paramString = buildQuery({ idResearch, expand });
 			const newCommandList = await fetchWrapper.get({
 				url: `${baseUrl}/command?${paramString}`,
 				useToken: "access",
@@ -85,12 +83,7 @@ export const useCommandsStore = defineStore("commands",{
 			if (clear) {
 				this.commands = {};
 			}
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newCommandList = await fetchWrapper.get({
 				url: `${baseUrl}/command?${paramString}`,
 				useToken: "access",
@@ -140,9 +133,9 @@ export const useCommandsStore = defineStore("commands",{
 				this.commands[id] = {};
 			}
 			this.commands[id].loading = true;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = buildQuery({ expand });
 			this.commands[id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${id}?${expandString}`,
+				url: `${baseUrl}/command/${id}?${paramString}`,
 				useToken: "access",
 			});
 			this.commentairesTotalCount[id] = this.commands[id].commands_commentaires_count;
@@ -209,12 +202,7 @@ export const useCommandsStore = defineStore("commands",{
 			}
 			this.commentairesLoading = true;
 			const userStore = useUsersStore();
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newCommentaireList = await fetchWrapper.get({
 				url: `${baseUrl}/command/${idCommand}/commentaire?${paramString}`,
 				useToken: "access",
@@ -238,9 +226,9 @@ export const useCommandsStore = defineStore("commands",{
 			}
 			this.commentaires[idCommand][id].loading = true;
 			const userStore = useUsersStore();
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = buildQuery({ expand });
 			this.commentaires[idCommand][id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/commentaire/${id}?${expandString}`,
+				url: `${baseUrl}/command/${idCommand}/commentaire/${id}?${paramString}`,
 				useToken: "access",
 			});
 			if (expand.includes("user")) {
@@ -284,12 +272,7 @@ export const useCommandsStore = defineStore("commands",{
 				this.documents[idCommand] = {};
 			}
 			this.documentsLoading = true;
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newDocumentList = await fetchWrapper.get({
 				url: `${baseUrl}/command/${idCommand}/document?${paramString}`,
 				useToken: "access",
@@ -309,9 +292,9 @@ export const useCommandsStore = defineStore("commands",{
 				this.documents[idCommand][id] = {};
 			}
 			this.documents[idCommand][id].loading = true;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = buildQuery({ expand });
 			this.documents[idCommand][id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/document/${id}?${expandString}`,
+				url: `${baseUrl}/command/${idCommand}/document/${id}?${paramString}`,
 				useToken: "access",
 			});
 		},
@@ -363,12 +346,7 @@ export const useCommandsStore = defineStore("commands",{
 			}
 			this.itemsLoading = true;
 			const itemStore = useItemsStore();
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newItemList = await fetchWrapper.get({
 				url: `${baseUrl}/command/${idCommand}/item?${paramString}`,
 				useToken: "access",
@@ -392,9 +370,9 @@ export const useCommandsStore = defineStore("commands",{
 			}
 			this.items[idCommand][id].loading = true;
 			const itemStore = useItemsStore();
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = buildQuery({ expand });
 			this.items[idCommand][id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/item/${id}?${expandString}`,
+				url: `${baseUrl}/command/${idCommand}/item/${id}?${paramString}`,
 				useToken: "access",
 			});
 			if (expand.includes("item")) {
@@ -451,11 +429,7 @@ export const useCommandsStore = defineStore("commands",{
 				this.history[idCommand] = {};
 			}
 			this.historyLoading = true;
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, filter, sort });
 			const newHistoryList = await fetchWrapper.get({
 				url: `${baseUrl}/command/${idCommand}/history?${paramString}`,
 				useToken: "access",

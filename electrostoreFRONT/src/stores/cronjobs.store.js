@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper } from "@/helpers";
+import { fetchWrapper, buildQuery } from "@/helpers";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -14,8 +14,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 	actions: {
 		async getCronJobByList(idResearch = []) {
 			this.cronJobsLoading = true;
-			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			const paramString = [idResearchString].join("&");
+			const paramString = buildQuery({ idResearch });
 			const newCronJobList = await fetchWrapper.get({
 				url: `${baseUrl}/cronjob?${paramString}`,
 				useToken: "access",
@@ -30,11 +29,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 			if (clear) {
 				this.cronJobs = {};
 			}
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, filter, sort });
 			const newCronJobList = await fetchWrapper.get({
 				url: `${baseUrl}/cronjob?${paramString}`,
 				useToken: "access",

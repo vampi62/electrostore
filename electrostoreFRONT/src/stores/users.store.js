@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper } from "@/helpers";
+import { fetchWrapper, buildQuery } from "@/helpers";
 
 import { useCommandsStore, useProjetsStore } from "@/stores";
 
@@ -35,9 +35,7 @@ export const useUsersStore = defineStore("users",{
 	actions: {
 		async getUserByList(idResearch = [], expand = []) {
 			this.usersLoading = true;
-			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const paramString = [idResearchString, expandString].join("&");
+			const paramString = buildQuery({ idResearch, expand });
 			const newUserList = await fetchWrapper.get({
 				url: `${baseUrl}/user?${paramString}`,
 				useToken: "access",
@@ -66,12 +64,7 @@ export const useUsersStore = defineStore("users",{
 			if (clear) {
 				this.users = {};
 			}
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newUserList = await fetchWrapper.get({
 				url: `${baseUrl}/user?${paramString}`,
 				useToken: "access",
@@ -102,9 +95,9 @@ export const useUsersStore = defineStore("users",{
 				this.users[id] = {};
 			}
 			this.users[id].loading = true;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = buildQuery({ expand });
 			this.users[id] = await fetchWrapper.get({
-				url: `${baseUrl}/user/${id}?${expandString}`,
+				url: `${baseUrl}/user/${id}?${paramString}`,
 				useToken: "access",
 			});
 			this.projetsCommentaireTotalCount[id] = this.users[id].projets_commentaires_count;
@@ -156,12 +149,7 @@ export const useUsersStore = defineStore("users",{
 			}
 			this.projetsCommentaireLoading = true;
 			const projetStore = useProjetsStore();
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newProjetCommentaireList = await fetchWrapper.get({
 				url: `${baseUrl}/user/${idUser}/projet_commentaire?${paramString}`,
 				useToken: "access",
@@ -185,9 +173,9 @@ export const useUsersStore = defineStore("users",{
 			}
 			this.projetsCommentaire[idUser][id].loading = true;
 			const projetStore = useProjetsStore();
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = buildQuery({ expand });
 			this.projetsCommentaire[idUser][id] = await fetchWrapper.get({
-				url: `${baseUrl}/user/${idUser}/projet_commentaire/${id}?${expandString}`,
+				url: `${baseUrl}/user/${idUser}/projet_commentaire/${id}?${paramString}`,
 				useToken: "access",
 			});
 			if (expand.includes("projet")) {
@@ -232,12 +220,7 @@ export const useUsersStore = defineStore("users",{
 			}
 			this.commandsCommentaireLoading = true;
 			const commandStore = useCommandsStore();
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newCommandCommentaireList = await fetchWrapper.get({
 				url: `${baseUrl}/user/${idUser}/command_commentaire?${paramString}`,
 				useToken: "access",
@@ -261,9 +244,9 @@ export const useUsersStore = defineStore("users",{
 			}
 			this.commandsCommentaire[idUser][id].loading = true;
 			const commandStore = useCommandsStore();
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = buildQuery({ expand });
 			this.commandsCommentaire[idUser][id] = await fetchWrapper.get({
-				url: `${baseUrl}/user/${idUser}/command_commentaire/${id}?${expandString}`,
+				url: `${baseUrl}/user/${idUser}/command_commentaire/${id}?${paramString}`,
 				useToken: "access",
 			});
 			if (expand.includes("command")) {
@@ -307,12 +290,7 @@ export const useUsersStore = defineStore("users",{
 				this.tokens[idUser] = {};
 			}
 			this.tokensLoading = true;
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newTokenList = await fetchWrapper.get({
 				url: `${baseUrl}/user/${idUser}/sessions?${paramString}`,
 				useToken: "access",
@@ -353,7 +331,7 @@ export const useUsersStore = defineStore("users",{
 				this.pushSubscriptions[idUser] = {};
 			}
 			this.pushSubscriptionsLoading = true;
-			const paramString = `offset=${offset}&limit=${limit}`;
+			const paramString = buildQuery({ limit, offset });
 			const result = await fetchWrapper.get({
 				url: `${baseUrl}/user/${idUser}/push-subscriptions?${paramString}`,
 				useToken: "access",

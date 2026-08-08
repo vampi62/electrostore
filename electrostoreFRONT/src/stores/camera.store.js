@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper } from "@/helpers";
+import { fetchWrapper, buildQuery } from "@/helpers";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -17,8 +17,7 @@ export const useCamerasStore = defineStore("cameras",{
 	actions: {
 		async getCameraByList(idResearch = []) {
 			this.loading = true;
-			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			const paramString = [idResearchString].join("&");
+			const paramString = buildQuery({ idResearch });
 			const newCameraList = await fetchWrapper.get({
 				url: `${baseUrl}/camera?${paramString}`,
 				useToken: "access",
@@ -34,12 +33,7 @@ export const useCamerasStore = defineStore("cameras",{
 			if (clear) {
 				this.cameras = {};
 			}
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newCameraList = await fetchWrapper.get({
 				url: `${baseUrl}/camera?${paramString}`,
 				useToken: "access",

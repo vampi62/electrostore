@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper } from "@/helpers";
+import { fetchWrapper, buildQuery } from "@/helpers";
 
 import { useProjetsStore } from "@/stores";
 
@@ -21,9 +21,7 @@ export const useProjetTagsStore = defineStore("projetTags",{
 	actions: {
 		async getProjetTagByList(idResearch = [], expand = []) {
 			this.projetTagsLoading = true;
-			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const paramString = [idResearchString, expandString].join("&");
+			const paramString = buildQuery({ idResearch, expand });
 			const newProjetTagList = await fetchWrapper.get({
 				url: `${baseUrl}/projet-tag?${paramString}`,
 				useToken: "access",
@@ -45,12 +43,7 @@ export const useProjetTagsStore = defineStore("projetTags",{
 			if (clear) {
 				this.projetTags = {};
 			}
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newProjetTagList = await fetchWrapper.get({
 				url: `${baseUrl}/projet-tag?${paramString}`,
 				useToken: "access",
@@ -74,9 +67,9 @@ export const useProjetTagsStore = defineStore("projetTags",{
 				this.projetTags[id] = {};
 			}
 			this.projetTags[id].loading = true;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = buildQuery({ expand });
 			this.projetTags[id] = await fetchWrapper.get({
-				url: `${baseUrl}/projet-tag/${id}?${expandString}`,
+				url: `${baseUrl}/projet-tag/${id}?${paramString}`,
 				useToken: "access",
 			});
 			this.projetTagsProjetTotalCount[id] = this.projetTags[id].projets_projet_tags_count;
@@ -130,12 +123,7 @@ export const useProjetTagsStore = defineStore("projetTags",{
 			}
 			this.projetTagsProjetLoading = true;
 			const projetsStore = useProjetsStore();
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newProjetTagProjetList = await fetchWrapper.get({
 				url: `${baseUrl}/projet-tag/${idProjetTag}/projet?${paramString}`,
 				useToken: "access",
@@ -159,9 +147,9 @@ export const useProjetTagsStore = defineStore("projetTags",{
 			}
 			this.projetTagsProjet[idProjetTag][idProjet].loading = true;
 			const projetsStore = useProjetsStore();
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = buildQuery({ expand });
 			this.projetTagsProjet[idProjetTag][idProjet] = await fetchWrapper.get({
-				url: `${baseUrl}/projet-tag/${idProjetTag}/projet/${idProjet}&${expandString}`,
+				url: `${baseUrl}/projet-tag/${idProjetTag}/projet/${idProjet}&${paramString}`,
 				useToken: "access",
 			});
 			if (expand.includes("projet")) {

@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper } from "@/helpers";
+import { fetchWrapper, buildQuery } from "@/helpers";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -15,8 +15,7 @@ export const useIasStore = defineStore("ias", {
 	actions: {
 		async getIaByList(idResearch = []) {
 			this.loading = true;
-			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			const paramString = [idResearchString].join("&");
+			const paramString = buildQuery({ idResearch });
 			const newIaList = await fetchWrapper.get({
 				url: `${baseUrl}/ia?${paramString}`,
 				useToken: "access",
@@ -31,12 +30,7 @@ export const useIasStore = defineStore("ias", {
 			if (clear) {
 				this.ias = {};
 			}
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newIaList = await fetchWrapper.get({
 				url: `${baseUrl}/ia?${paramString}`,
 				useToken: "access",

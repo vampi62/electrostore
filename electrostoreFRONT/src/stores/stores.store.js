@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper } from "@/helpers";
+import { fetchWrapper, buildQuery } from "@/helpers";
 
 import { useTagsStore, useItemsStore } from "@/stores";
 
@@ -41,9 +41,7 @@ export const useStoresStore = defineStore("stores",{
 	actions: {
 		async getStoreByList(idResearch = [], expand = []) {
 			this.storesLoading = true;
-			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const paramString = [idResearchString, expandString].join("&");
+			const paramString = buildQuery({ idResearch, expand });
 			const newStoreList = await fetchWrapper.get({
 				url: `${baseUrl}/store?${paramString}`,
 				useToken: "access",
@@ -79,12 +77,7 @@ export const useStoresStore = defineStore("stores",{
 			if (clear) {
 				this.stores = {};
 			}
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newStoreList = await fetchWrapper.get({
 				url: `${baseUrl}/store?${paramString}`,
 				useToken: "access",
@@ -122,9 +115,9 @@ export const useStoresStore = defineStore("stores",{
 				this.stores[id] = {};
 			}
 			this.stores[id].loading = true;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = buildQuery({ expand });
 			let store = await fetchWrapper.get({
-				url: `${baseUrl}/store/${id}?${expandString}`,
+				url: `${baseUrl}/store/${id}?${paramString}`,
 				useToken: "access",
 			});
 			this.boxsTotalCount[id] = store.boxs_count;
@@ -195,12 +188,7 @@ export const useStoresStore = defineStore("stores",{
 				this.boxs[idStore] = {};
 			}
 			this.boxsLoading = true;
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newBoxList = await fetchWrapper.get({
 				url: `${baseUrl}/store/${idStore}/box?${paramString}`,
 				useToken: "access",
@@ -234,9 +222,9 @@ export const useStoresStore = defineStore("stores",{
 				this.boxs[idStore][id] = {};
 			}
 			this.boxs[idStore][id].loading = true;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = buildQuery({ expand });
 			this.boxs[idStore][id] = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/box/${id}?${expandString}`,
+				url: `${baseUrl}/store/${idStore}/box/${id}?${paramString}`,
 				useToken: "access",
 			});
 			this.boxItemsTotalCount[id] = this.boxs[idStore][id].item_boxs_count;
@@ -337,12 +325,7 @@ export const useStoresStore = defineStore("stores",{
 				this.leds[idStore] = {};
 			}
 			this.ledsLoading = true;
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newLedList = await fetchWrapper.get({
 				url: `${baseUrl}/store/${idStore}/led?${paramString}`,
 				useToken: "access",
@@ -451,12 +434,7 @@ export const useStoresStore = defineStore("stores",{
 			}
 			const tagsStore = useTagsStore();
 			this.storeTagsLoading = true;
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newTagList = await fetchWrapper.get({
 				url: `${baseUrl}/store/${idStore}/tag?${paramString}`,
 				useToken: "access",
@@ -480,9 +458,9 @@ export const useStoresStore = defineStore("stores",{
 			}
 			const tagsStore = useTagsStore();
 			this.storeTags[idStore][id].loading = true;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = buildQuery({ expand });
 			this.storeTags[idStore][id] = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/tag/${id}?${expandString}`,
+				url: `${baseUrl}/store/${idStore}/tag/${id}?${paramString}`,
 				useToken: "access",
 			});
 			if (expand.includes("tag")) {
@@ -543,12 +521,7 @@ export const useStoresStore = defineStore("stores",{
 			}
 			this.boxItemsLoading = true;
 			const itemsStore = useItemsStore();
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newItemList = await fetchWrapper.get({
 				url: `${baseUrl}/store/${idStore}/box/${idBox}/item?${paramString}`,
 				useToken: "access",
@@ -572,9 +545,9 @@ export const useStoresStore = defineStore("stores",{
 			}
 			this.boxItems[idBox][id].loading = true;
 			const itemsStore = useItemsStore();
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = buildQuery({ expand });
 			this.boxItems[idBox][id] = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/box/${idBox}/item/${id}?${expandString}`,
+				url: `${baseUrl}/store/${idStore}/box/${idBox}/item/${id}?${paramString}`,
 				useToken: "access",
 			});
 			if (expand.includes("item")) {
@@ -619,12 +592,7 @@ export const useStoresStore = defineStore("stores",{
 			}
 			this.boxTagsLoading = true;
 			const tagsStore = useTagsStore();
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
 			const newTagList = await fetchWrapper.get({
 				url: `${baseUrl}/store/${idStore}/box/${idBox}/tag?${paramString}`,
 				useToken: "access",
@@ -648,9 +616,9 @@ export const useStoresStore = defineStore("stores",{
 			}
 			this.boxTags[idBox][id].loading = true;
 			const tagsStore = useTagsStore();
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
+			const paramString = buildQuery({ expand });
 			this.boxTags[idBox][id] = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/box/${idBox}/tag/${id}?${expandString}`,
+				url: `${baseUrl}/store/${idStore}/box/${idBox}/tag/${id}?${paramString}`,
 				useToken: "access",
 			});
 			if (expand.includes("tag")) {
