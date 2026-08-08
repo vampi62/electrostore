@@ -6,6 +6,64 @@ import { useTagsStore, useItemsStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
+const EXPAND_HANDLERS_STORE = {
+	boxs: (store, idStore, storeData) => {
+		store.boxs[idStore] = {};
+		for (const box of storeData.boxs) {
+			store.boxs[idStore][box.id_box] = box;
+		}
+	},
+	leds: (store, idStore, storeData) => {
+		store.leds[idStore] = {};
+		for (const led of storeData.leds) {
+			store.leds[idStore][led.id_led] = led;
+		}
+	},
+	stores_tags: (store, idStore, storeData) => {
+		store.storeTags[idStore] = {};
+		for (const tag of storeData.stores_tags) {
+			store.storeTags[idStore][tag.id_tag] = tag;
+		}
+	},
+};
+const EXPAND_HANDLERS_BOX = {
+	item_boxs: (store, idBox, boxData) => {
+		store.boxItems[idBox] = {};
+		for (const item of boxData.item_boxs) {
+			store.boxItems[idBox][item.id_item] = item;
+		}
+	},
+	box_tags: (store, idBox, boxData) => {
+		store.boxTags[idBox] = {};
+		for (const tag of boxData.box_tags) {
+			store.boxTags[idBox][tag.id_tag] = tag;
+		}
+	},
+};
+
+function hydrateStore(store, idStore, storeData, expand = []) {
+	store.stores[idStore] = storeData;
+	store.boxsTotalCount[idStore] = storeData.boxs_count;
+	store.ledsTotalCount[idStore] = storeData.leds_count;
+	store.storeTagsTotalCount[idStore] = storeData.stores_tags_count;
+	for (const key of expand) {
+		if (EXPAND_HANDLERS_STORE[key]) {
+			EXPAND_HANDLERS_STORE[key](store, idStore, storeData);
+		}
+	}
+}
+
+function hydrateBox(store, idStore, idBox, boxData, expand = []) {
+	store.boxs[idStore][idBox] = boxData;
+	store.boxItemsTotalCount[idBox] = boxData.item_boxs_count;
+	store.boxTagsTotalCount[idBox] = boxData.box_tags_count;
+	for (const key of expand) {
+		if (EXPAND_HANDLERS_BOX[key]) {
+			EXPAND_HANDLERS_BOX[key](store, idBox, boxData);
+		}
+	}
+}
+
 export const useStoresStore = defineStore("stores",{
 	state: () => ({
 		storesLoading: false,
@@ -47,28 +105,7 @@ export const useStoresStore = defineStore("stores",{
 				useToken: "access",
 			});
 			for (const store of newStoreList["data"]) {
-				this.stores[store.id_store] = store;
-				this.boxsTotalCount[store.id_store] = store.boxs_count;
-				this.ledsTotalCount[store.id_store] = store.leds_count;
-				this.storeTagsTotalCount[store.id_store] = store.stores_tags_count;
-				if (expand.includes("boxs")) {
-					this.boxs[store.id_store] = {};
-					for (const box of store.boxs) {
-						this.boxs[store.id_store][box.id_box] = box;
-					}
-				}
-				if (expand.includes("leds")) {
-					this.leds[store.id_store] = {};
-					for (const led of store.leds) {
-						this.leds[store.id_store][led.id_led] = led;
-					}
-				}
-				if (expand.includes("stores_tags")) {
-					this.storeTags[store.id_store] = {};
-					for (const tag of store.stores_tags) {
-						this.storeTags[store.id_store][tag.id_tag] = tag;
-					}
-				}
+				hydrateStore(this, store.id_store, store, expand);
 			}
 			this.storesLoading = false;
 		},
@@ -83,28 +120,7 @@ export const useStoresStore = defineStore("stores",{
 				useToken: "access",
 			});
 			for (const store of newStoreList["data"]) {
-				this.stores[store.id_store] = store;
-				this.boxsTotalCount[store.id_store] = store.boxs_count;
-				this.ledsTotalCount[store.id_store] = store.leds_count;
-				this.storeTagsTotalCount[store.id_store] = store.stores_tags_count;
-				if (expand.includes("boxs")) {
-					this.boxs[store.id_store] = {};
-					for (const box of store.boxs) {
-						this.boxs[store.id_store][box.id_box] = box;
-					}
-				}
-				if (expand.includes("leds")) {
-					this.leds[store.id_store] = {};
-					for (const led of store.leds) {
-						this.leds[store.id_store][led.id_led] = led;
-					}
-				}
-				if (expand.includes("stores_tags")) {
-					this.storeTags[store.id_store] = {};
-					for (const tag of store.stores_tags) {
-						this.storeTags[store.id_store][tag.id_tag] = tag;
-					}
-				}
+				hydrateStore(this, store.id_store, store, expand);
 			}
 			this.storesTotalCount = newStoreList["pagination"]?.["total"] || 0;
 			this.storesLoading = false;
@@ -120,28 +136,7 @@ export const useStoresStore = defineStore("stores",{
 				url: `${baseUrl}/store/${id}?${paramString}`,
 				useToken: "access",
 			});
-			this.boxsTotalCount[id] = store.boxs_count;
-			this.ledsTotalCount[id] = store.leds_count;
-			this.storeTagsTotalCount[id] = store.stores_tags_count;
-			if (expand.includes("boxs")) {
-				this.boxs[id] = {};
-				for (const box of store.boxs) {
-					this.boxs[id][box.id_box] = box;
-				}
-			}
-			if (expand.includes("leds")) {
-				this.leds[id] = {};
-				for (const led of store.leds) {
-					this.leds[id][led.id_led] = led;
-				}
-			}
-			if (expand.includes("stores_tags")) {
-				this.storeTags[id] = {};
-				for (const tag of store.stores_tags) {
-					this.storeTags[id][tag.id_tag] = tag;
-				}
-			}
-			this.stores[id] = { ...this.stores[id], ...store, loading: false };
+			hydrateStore(this, store.id_store, store, expand);
 		},
 		async createStore(params) {
 			const store = await fetchWrapper.post({
@@ -194,21 +189,7 @@ export const useStoresStore = defineStore("stores",{
 				useToken: "access",
 			});
 			for (const box of newBoxList["data"]) {
-				this.boxs[idStore][box.id_box] = box;
-				this.boxItemsTotalCount[box.id_box] = box.item_boxs_count;
-				this.boxTagsTotalCount[box.id_box] = box.box_tags_count;
-				if (expand.includes("item_boxs")) {
-					this.boxItems[box.id_box] = {};
-					for (const item of box.item_boxs) {
-						this.boxItems[box.id_box][item.id_item] = item;
-					}
-				}
-				if (expand.includes("box_tags")) {
-					this.boxTags[box.id_box] = {};
-					for (const tag of box.box_tags) {
-						this.boxTags[box.id_box][tag.id_tag] = tag;
-					}
-				}
+				hydrateBox(this, idStore, box.id_box, box, expand);
 			}
 			this.boxsTotalCount[idStore] = newBoxList["pagination"]?.["total"] || 0;
 			this.boxsLoading = false;
@@ -223,24 +204,11 @@ export const useStoresStore = defineStore("stores",{
 			}
 			this.boxs[idStore][id].loading = true;
 			const paramString = buildQuery({ expand });
-			this.boxs[idStore][id] = await fetchWrapper.get({
+			let box = await fetchWrapper.get({
 				url: `${baseUrl}/store/${idStore}/box/${id}?${paramString}`,
 				useToken: "access",
 			});
-			this.boxItemsTotalCount[id] = this.boxs[idStore][id].item_boxs_count;
-			this.boxTagsTotalCount[id] = this.boxs[idStore][id].box_tags_count;
-			if (expand.includes("item_boxs")) {
-				this.boxItems[id] = {};
-				for (const item of this.boxs[idStore][id].item_boxs) {
-					this.boxItems[id][item.id_item] = item;
-				}
-			}
-			if (expand.includes("box_tags")) {
-				this.boxTags[id] = {};
-				for (const tag of this.boxs[idStore][id].box_tags) {
-					this.boxTags[id][tag.id_tag] = tag;
-				}
-			}
+			hydrateBox(this, idStore, box.id_box, box, expand);
 		},
 		async createBox(idStore, params) {
 			if (!this.boxs[idStore]) {

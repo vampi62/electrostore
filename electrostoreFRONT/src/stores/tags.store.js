@@ -6,6 +6,39 @@ import { useStoresStore, useItemsStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
+const EXPAND_HANDLERS = {
+	stores_tags: (store, idTag, tag) => {
+		store.tagsStore[idTag] = {};
+		for (const tagStore of tag.stores_tags) {
+			store.tagsStore[idTag][tagStore.id_store] = tagStore;
+		}
+	},
+	boxs_tags: (store, idTag, tag) => {
+		store.tagsBox[idTag] = {};
+		for (const tagBox of tag.boxs_tags) {
+			store.tagsBox[idTag][tagBox.id_box] = tagBox;
+		}
+	},
+	items_tags: (store, idTag, tag) => {
+		store.tagsItem[idTag] = {};
+		for (const tagItem of tag.items_tags) {
+			store.tagsItem[idTag][tagItem.id_item] = tagItem;
+		}
+	},
+};
+
+function hydrateTag(store, idTag, tag, expand = []) {
+	store.tags[idTag] = tag;
+	store.tagsStoreTotalCount[idTag] = tag.stores_tags_count;
+	store.tagsBoxTotalCount[idTag] = tag.boxs_tags_count;
+	store.tagsItemTotalCount[idTag] = tag.items_tags_count;
+	for (const key of expand) {
+		if (EXPAND_HANDLERS[key]) {
+			EXPAND_HANDLERS[key](store, idTag, tag);
+		}
+	}
+}
+
 export const useTagsStore = defineStore("tags",{
 	state: () => ({
 		tagsLoading: false,
@@ -37,28 +70,7 @@ export const useTagsStore = defineStore("tags",{
 				useToken: "access",
 			});
 			for (const tag of newTagList["data"]) {
-				this.tags[tag.id_tag] = tag;
-				this.tagsStoreTotalCount[tag.id_tag] = tag.stores_tags_count;
-				this.tagsBoxTotalCount[tag.id_tag] = tag.boxs_tags_count;
-				this.tagsItemTotalCount[tag.id_tag] = tag.items_tags_count;
-				if (expand.includes("stores_tags")) {
-					this.tagsStore[tag.id_tag] = {};
-					for (const tagStore of tag.stores_tags) {
-						this.tagsStore[tag.id_tag][tagStore.id_store] = tagStore;
-					}
-				}
-				if (expand.includes("boxs_tags")) {
-					this.tagsBox[tag.id_tag] = {};
-					for (const tagBox of tag.boxs_tags) {
-						this.tagsBox[tag.id_tag][tagBox.id_box] = tagBox;
-					}
-				}
-				if (expand.includes("items_tags")) {
-					this.tagsItem[tag.id_tag] = {};
-					for (const tagItem of tag.items_tags) {
-						this.tagsItem[tag.id_tag][tagItem.id_item] = tagItem;
-					}
-				}
+				hydrateTag(this, tag.id_tag, tag, expand);
 			}
 			this.tagsLoading = false;
 		},
@@ -73,28 +85,7 @@ export const useTagsStore = defineStore("tags",{
 				useToken: "access",
 			});
 			for (const tag of newTagList["data"]) {
-				this.tags[tag.id_tag] = tag;
-				this.tagsStoreTotalCount[tag.id_tag] = tag.stores_tags_count;
-				this.tagsBoxTotalCount[tag.id_tag] = tag.boxs_tags_count;
-				this.tagsItemTotalCount[tag.id_tag] = tag.items_tags_count;
-				if (expand.includes("stores_tags")) {
-					this.tagsStore[tag.id_tag] = {};
-					for (const tagStore of tag.stores_tags) {
-						this.tagsStore[tag.id_tag][tagStore.id_store] = tagStore;
-					}
-				}
-				if (expand.includes("boxs_tags")) {
-					this.tagsBox[tag.id_tag] = {};
-					for (const tagBox of tag.boxs_tags) {
-						this.tagsBox[tag.id_tag][tagBox.id_box] = tagBox;
-					}
-				}
-				if (expand.includes("items_tags")) {
-					this.tagsItem[tag.id_tag] = {};
-					for (const tagItem of tag.items_tags) {
-						this.tagsItem[tag.id_tag][tagItem.id_item] = tagItem;
-					}
-				}
+				hydrateTag(this, tag.id_tag, tag, expand);
 			}
 			this.tagsTotalCount = newTagList["pagination"]?.["total"] || 0;
 			this.tagsLoading = false;
@@ -106,31 +97,11 @@ export const useTagsStore = defineStore("tags",{
 			}
 			this.tags[id].loading = true;
 			const paramString = buildQuery({ expand });
-			this.tags[id] = await fetchWrapper.get({
+			const tag = await fetchWrapper.get({
 				url: `${baseUrl}/tag/${id}?${paramString}`,
 				useToken: "access",
 			});
-			this.tagsStoreTotalCount[id] = this.tags[id].stores_tags_count;
-			this.tagsBoxTotalCount[id] = this.tags[id].boxs_tags_count;
-			this.tagsItemTotalCount[id] = this.tags[id].items_tags_count;
-			if (expand.includes("stores_tags")) {
-				this.tagsStore[id] = {};
-				for (const tagStore of this.tags[id].stores_tags) {
-					this.tagsStore[id][tagStore.id_store] = tagStore;
-				}
-			}
-			if (expand.includes("boxs_tags")) {
-				this.tagsBox[id] = {};
-				for (const tagBox of this.tags[id].boxs_tags) {
-					this.tagsBox[id][tagBox.id_box] = tagBox;
-				}
-			}
-			if (expand.includes("items_tags")) {
-				this.tagsItem[id] = {};
-				for (const tagItem of this.tags[id].items_tags) {
-					this.tagsItem[id][tagItem.id_item] = tagItem;
-				}
-			}
+			hydrateTag(this, tag.id_tag, tag, expand);
 		},
 		async createTag(params) {
 			const tag = await fetchWrapper.post({

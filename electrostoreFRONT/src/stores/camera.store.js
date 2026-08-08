@@ -4,6 +4,11 @@ import { fetchWrapper, buildQuery } from "@/helpers";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
+function hydrateCamera(store, idCamera, camera, expand = []) {
+	store.cameras[idCamera] = camera;
+	store.getStatus(idCamera);
+}
+
 export const useCamerasStore = defineStore("cameras",{
 	state: () => ({
 		loading: false,
@@ -23,8 +28,7 @@ export const useCamerasStore = defineStore("cameras",{
 				useToken: "access",
 			});
 			for (const camera of newCameraList["data"]) {
-				this.cameras[camera.id_camera] = camera;
-				this.getStatus(camera.id_camera);
+				hydrateCamera(this, camera.id_camera, camera);
 			}
 			this.loading = false;
 		},
@@ -39,8 +43,7 @@ export const useCamerasStore = defineStore("cameras",{
 				useToken: "access",
 			});
 			for (const camera of newCameraList["data"]) {
-				this.cameras[camera.id_camera] = camera;
-				this.getStatus(camera.id_camera);
+				hydrateCamera(this, camera.id_camera, camera);
 			}
 			this.TotalCount = newCameraList["pagination"]?.["total"] || 0;
 			this.loading = false;
@@ -51,11 +54,11 @@ export const useCamerasStore = defineStore("cameras",{
 				this.cameras[id] = {};
 			}
 			this.cameras[id].loading = true;
-			this.cameras[id] = await fetchWrapper.get({
+			const camera = await fetchWrapper.get({
 				url: `${baseUrl}/camera/${id}`,
 				useToken: "access",
 			});
-			this.getStatus(id);
+			hydrateCamera(this, camera.id_camera, camera);
 		},
 		async toggleLight(id) {
 			if (!this.status[id]) {

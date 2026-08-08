@@ -4,6 +4,10 @@ import { fetchWrapper, buildQuery } from "@/helpers";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
+function hydrateIa(store, idIa, ia) {
+	store.ias[idIa] = ia;
+}
+
 export const useIasStore = defineStore("ias", {
 	state: () => ({
 		loading: false,
@@ -21,7 +25,7 @@ export const useIasStore = defineStore("ias", {
 				useToken: "access",
 			});
 			for (const ia of newIaList["data"]) {
-				this.ias[ia.id_ia] = ia;
+				hydrateIa(this, ia.id_ia, ia);
 			}
 			this.loading = false;
 		},
@@ -36,7 +40,7 @@ export const useIasStore = defineStore("ias", {
 				useToken: "access",
 			});
 			for (const ia of newIaList["data"]) {
-				this.ias[ia.id_ia] = ia;
+				hydrateIa(this, ia.id_ia, ia);
 			}
 			this.TotalCount = newIaList["pagination"]?.["total"] || 0;
 			this.loading = false;
@@ -47,10 +51,11 @@ export const useIasStore = defineStore("ias", {
 				this.ias[id] = {};
 			}
 			this.ias[id].loading = true;
-			this.ias[id] = await fetchWrapper.get({
+			const ia = await fetchWrapper.get({
 				url: `${baseUrl}/ia/${id}`,
 				useToken: "access",
 			});
+			hydrateIa(this, ia.id_ia, ia);
 		},
 		async createIa(params) {
 			const ia = await fetchWrapper.post({

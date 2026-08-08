@@ -6,6 +6,44 @@ import { useCommandsStore, useProjetsStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
+const EXPAND_HANDLERS = {
+	projets_commentaires: (store, idUser, user) => {
+		store.projetsCommentaire[idUser] = {};
+		for (const projetCommentaire of user.projets_commentaires) {
+			store.projetsCommentaire[idUser][projetCommentaire.id_projet] = projetCommentaire;
+		}
+	},
+	commands_commentaires: (store, idUser, user) => {
+		store.commandsCommentaire[idUser] = {};
+		for (const commandCommentaire of user.commands_commentaires) {
+			store.commandsCommentaire[idUser][commandCommentaire.id_command] = commandCommentaire;
+		}
+	},
+	tokens: (store, idUser, user) => {
+		store.tokens[idUser] = {};
+		for (const token of user.sessions) {
+			store.tokens[idUser][token.session_id] = token;
+		}
+	},
+	push_subscriptions: (store, idUser, user) => {
+		store.pushSubscriptions[idUser] = {};
+		for (const sub of user.push_subscriptions) {
+			store.pushSubscriptions[idUser][sub.id_push_subscription] = sub;
+		}
+	},
+};
+
+function hydrateUser(store, idUser, user, expand = []) {
+	store.users[idUser] = user;
+	store.projetsCommentaireTotalCount[idUser] = user.projets_commentaires_count;
+	store.commandsCommentaireTotalCount[idUser] = user.commands_commentaires_count;
+	for (const key of expand) {
+		if (EXPAND_HANDLERS[key]) {
+			EXPAND_HANDLERS[key](store, idUser, user);
+		}
+	}
+}
+
 export const useUsersStore = defineStore("users",{
 	state: () => ({
 		usersLoading: false,
@@ -41,21 +79,7 @@ export const useUsersStore = defineStore("users",{
 				useToken: "access",
 			});
 			for (const user of newUserList["data"]) {
-				this.users[user.id_user] = user;
-				this.projetsCommentaireTotalCount[user.id_user] = user.projets_commentaires_count;
-				this.commandsCommentaireTotalCount[user.id_user] = user.commands_commentaires_count;
-				if (expand.includes("projets_commentaires")) {
-					this.projetsCommentaire[user.id_user] = {};
-					for (const projet of user.projets_commentaires) {
-						this.projetsCommentaire[user.id_user][projet.id_projet] = projet;
-					}
-				}
-				if (expand.includes("commands_commentaires")) {
-					this.commandsCommentaire[user.id_user] = {};
-					for (const command of user.commands_commentaires) {
-						this.commandsCommentaire[user.id_user][command.id_command] = command;
-					}
-				}
+				hydrateUser(this, user.id_user, user, expand);
 			}
 			this.usersLoading = false;
 		},
@@ -70,21 +94,7 @@ export const useUsersStore = defineStore("users",{
 				useToken: "access",
 			});
 			for (const user of newUserList["data"]) {
-				this.users[user.id_user] = user;
-				this.projetsCommentaireTotalCount[user.id_user] = user.projets_commentaires_count;
-				this.commandsCommentaireTotalCount[user.id_user] = user.commands_commentaires_count;
-				if (expand.includes("projets_commentaires")) {
-					this.projetsCommentaire[user.id_user] = {};
-					for (const projet of user.projets_commentaires) {
-						this.projetsCommentaire[user.id_user][projet.id_projet] = projet;
-					}
-				}
-				if (expand.includes("commands_commentaires")) {
-					this.commandsCommentaire[user.id_user] = {};
-					for (const command of user.commands_commentaires) {
-						this.commandsCommentaire[user.id_user][command.id_command] = command;
-					}
-				}
+				hydrateUser(this, user.id_user, user, expand);
 			}
 			this.usersTotalCount = newUserList["pagination"]?.["total"] || 0;
 			this.usersLoading = false;
@@ -96,24 +106,11 @@ export const useUsersStore = defineStore("users",{
 			}
 			this.users[id].loading = true;
 			const paramString = buildQuery({ expand });
-			this.users[id] = await fetchWrapper.get({
+			const user = await fetchWrapper.get({
 				url: `${baseUrl}/user/${id}?${paramString}`,
 				useToken: "access",
 			});
-			this.projetsCommentaireTotalCount[id] = this.users[id].projets_commentaires_count;
-			this.commandsCommentaireTotalCount[id] = this.users[id].commands_commentaires_count;
-			if (expand.includes("projets_commentaires")) {
-				this.projetsCommentaire[id] = {};
-				for (const projet of this.users[id].projets_commentaires) {
-					this.projetsCommentaire[id][projet.id_projet] = projet;
-				}
-			}
-			if (expand.includes("commands_commentaires")) {
-				this.commandsCommentaire[id] = {};
-				for (const command of this.users[id].commands_commentaires) {
-					this.commandsCommentaire[id][command.id_command] = command;
-				}
-			}
+			hydrateUser(this, user.id_user, user, expand);
 		},
 		async createUser(params) {
 			const user = await fetchWrapper.post({

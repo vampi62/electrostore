@@ -6,6 +6,25 @@ import { useProjetsStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
+const EXPAND_HANDLERS = {
+	projets_projet_tags: (store, idProjetTag, projetTag) => {
+		store.projetTagsProjet[idProjetTag] = {};
+		for (const projetTagProjet of projetTag.projets_projet_tags) {
+			store.projetTagsProjet[idProjetTag][projetTagProjet.id_projet] = projetTagProjet;
+		}
+	},
+};
+
+function hydrateProjetTag(store, idProjetTag, projetTag, expand = []) {
+	store.projetTags[idProjetTag] = projetTag;
+	store.projetTagsProjetTotalCount[idProjetTag] = projetTag.projets_projet_tags_count;
+	for (const key of expand) {
+		if (EXPAND_HANDLERS[key]) {
+			EXPAND_HANDLERS[key](store, idProjetTag, projetTag);
+		}
+	}
+}
+
 export const useProjetTagsStore = defineStore("projetTags",{
 	state: () => ({
 		projetTagsLoading: false,
@@ -27,14 +46,7 @@ export const useProjetTagsStore = defineStore("projetTags",{
 				useToken: "access",
 			});
 			for (const projetTag of newProjetTagList["data"]) {
-				this.projetTags[projetTag.id_projet_tag] = projetTag;
-				this.projetTagsProjetTotalCount[projetTag.id_projet_tag] = projetTag.projets_projet_tags_count;
-				if (expand.includes("projets_projet_tags")) {
-					this.projetTagsProjet[projetTag.id_projet_tag] = {};
-					for (const projetTagProjet of projetTag.projets_projet_tags) {
-						this.projetTagsProjet[projetTag.id_projet_tag][projetTagProjet.id_projet] = projetTagProjet;
-					}
-				}
+				hydrateProjetTag(this, projetTag.id_projet_tag, projetTag, expand);
 			}
 			this.projetTagsLoading = false;
 		},
@@ -49,14 +61,7 @@ export const useProjetTagsStore = defineStore("projetTags",{
 				useToken: "access",
 			});
 			for (const projetTag of newProjetTagList["data"]) {
-				this.projetTags[projetTag.id_projet_tag] = projetTag;
-				this.projetTagsProjetTotalCount[projetTag.id_projet_tag] = projetTag.projets_projet_tags_count;
-				if (expand.includes("projets_projet_tags")) {
-					this.projetTagsProjet[projetTag.id_projet_tag] = {};
-					for (const projetTagProjet of projetTag.projets_projet_tags) {
-						this.projetTagsProjet[projetTag.id_projet_tag][projetTagProjet.id_projet] = projetTagProjet;
-					}
-				}
+				hydrateProjetTag(this, projetTag.id_projet_tag, projetTag, expand);
 			}
 			this.projetTagsTotalCount = newProjetTagList["pagination"]?.["total"] || 0;
 			this.projetTagsLoading = false;
@@ -68,17 +73,11 @@ export const useProjetTagsStore = defineStore("projetTags",{
 			}
 			this.projetTags[id].loading = true;
 			const paramString = buildQuery({ expand });
-			this.projetTags[id] = await fetchWrapper.get({
+			const projetTag = await fetchWrapper.get({
 				url: `${baseUrl}/projet-tag/${id}?${paramString}`,
 				useToken: "access",
 			});
-			this.projetTagsProjetTotalCount[id] = this.projetTags[id].projets_projet_tags_count;
-			if (expand.includes("projets_projet_tags")) {
-				this.projetTagsProjet[id] = {};
-				for (const projetTagProjet of this.projetTags[id].projets_projet_tags) {
-					this.projetTagsProjet[id][projetTagProjet.id_projet] = projetTagProjet;
-				}
-			}
+			hydrateProjetTag(this, projetTag.id_projet_tag, projetTag, expand);
 		},
 		async createProjetTag(params) {
 			const projetTag = await fetchWrapper.post({

@@ -6,6 +6,51 @@ import { useUsersStore, useItemsStore, useCarriersStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
+const EXPAND_HANDLERS = {
+	commands_commentaires: (store, idCommand, data) => {
+		store.commentaires[idCommand] = {};
+		for (const commentaire of data) {
+			store.commentaires[idCommand][commentaire.id_command_commentaire] = commentaire;
+		}
+	},
+	commands_documents: (store, idCommand, data) => {
+		store.documents[idCommand] = {};
+		for (const document of data) {
+			store.documents[idCommand][document.id_command_document] = document;
+		}
+	},
+	commands_history: (store, idCommand, data) => {
+		store.history[idCommand] = {};
+		for (const historyEntry of data) {
+			store.history[idCommand][historyEntry.id_command_history] = historyEntry;
+		}
+	},
+	commands_items: (store, idCommand, data) => {
+		store.items[idCommand] = {};
+		for (const item of data) {
+			store.items[idCommand][item.id_item] = item;
+		}
+	},
+	carrier: (store, idCommand, data) => {
+		if (data) {
+			const carriersStore = useCarriersStore();
+			carriersStore.carriers[data.id_carrier] = data;
+		}
+	},
+};
+
+function hydrateCommand(store, idCommand, command, expand = []) {
+	store.commands[idCommand] = command;
+	store.commentairesTotalCount[idCommand] = command.commands_commentaires_count;
+	store.documentsTotalCount[idCommand] = command.commands_documents_count;
+	store.itemsTotalCount[idCommand] = command.commands_items_count;
+	for (const key of expand) {
+		if (EXPAND_HANDLERS[key]) {
+			EXPAND_HANDLERS[key](this, command.id_command, command[key]);
+		}
+	}
+}
+
 export const useCommandsStore = defineStore("commands",{
 	state: () => ({
 		commandsLoading: false,
@@ -41,40 +86,7 @@ export const useCommandsStore = defineStore("commands",{
 				useToken: "access",
 			});
 			for (const command of newCommandList["data"]) {
-				this.commands[command.id_command] = command;
-				this.commentairesTotalCount[command.id_command] = command.commands_commentaires_count;
-				this.documentsTotalCount[command.id_command] = command.commands_documents_count;
-				this.itemsTotalCount[command.id_command] = command.commands_items_count;
-				if (expand.includes("commands_commentaires")) {
-					this.commentaires[command.id_command] = {};
-					for (const commentaire of command.commands_commentaires) {
-						this.commentaires[command.id_command][commentaire.id_command_commentaire] = commentaire;
-					}
-				}
-				if (expand.includes("commands_documents")) {
-					this.documents[command.id_command] = {};
-					for (const document of command.commands_documents) {
-						this.documents[command.id_command][document.id_command_document] = document;
-					}
-				}
-				if (expand.includes("commands_history")) {
-					this.history[command.id_command] = {};
-					for (const historyEntry of command.commands_history) {
-						this.history[command.id_command][historyEntry.id_command_history] = historyEntry;
-					}
-				}
-				if (expand.includes("commands_items")) {
-					this.items[command.id_command] = {};
-					for (const item of command.commands_items) {
-						this.items[command.id_command][item.id_item] = item;
-					}
-				}
-				if (expand.includes("carrier")) {
-					if (command.carrier) {
-						const carriersStore = useCarriersStore();
-						carriersStore.carriers[command.id_carrier] = command.carrier;
-					}
-				}
+				hydrateCommand(this, command.id_command, command, expand);
 			}
 			this.commandsLoading = false;
 		},
@@ -89,40 +101,7 @@ export const useCommandsStore = defineStore("commands",{
 				useToken: "access",
 			});
 			for (const command of newCommandList["data"]) {
-				this.commands[command.id_command] = command;
-				this.commentairesTotalCount[command.id_command] = command.commands_commentaires_count;
-				this.documentsTotalCount[command.id_command] = command.commands_documents_count;
-				this.itemsTotalCount[command.id_command] = command.commands_items_count;
-				if (expand.includes("commands_commentaires")) {
-					this.commentaires[command.id_command] = {};
-					for (const commentaire of command.commands_commentaires) {
-						this.commentaires[command.id_command][commentaire.id_command_commentaire] = commentaire;
-					}
-				}
-				if (expand.includes("commands_documents")) {
-					this.documents[command.id_command] = {};
-					for (const document of command.commands_documents) {
-						this.documents[command.id_command][document.id_command_document] = document;
-					}
-				}
-				if (expand.includes("commands_history")) {
-					this.history[command.id_command] = {};
-					for (const historyEntry of command.commands_history) {
-						this.history[command.id_command][historyEntry.id_command_history] = historyEntry;
-					}
-				}
-				if (expand.includes("commands_items")) {
-					this.items[command.id_command] = {};
-					for (const item of command.commands_items) {
-						this.items[command.id_command][item.id_item] = item;
-					}
-				}
-				if (expand.includes("carrier")) {
-					if (command.carrier) {
-						const carriersStore = useCarriersStore();
-						carriersStore.carriers[command.id_carrier] = command.carrier;
-					}
-				}
+				hydrateCommand(this, command.id_command, command, expand);
 			}
 			this.commandsTotalCount = newCommandList["pagination"]?.["total"] || 0;
 			this.commandsLoading = false;
@@ -134,43 +113,11 @@ export const useCommandsStore = defineStore("commands",{
 			}
 			this.commands[id].loading = true;
 			const paramString = buildQuery({ expand });
-			this.commands[id] = await fetchWrapper.get({
+			const command = await fetchWrapper.get({
 				url: `${baseUrl}/command/${id}?${paramString}`,
 				useToken: "access",
 			});
-			this.commentairesTotalCount[id] = this.commands[id].commands_commentaires_count;
-			this.documentsTotalCount[id] = this.commands[id].commands_documents_count;
-			this.itemsTotalCount[id] = this.commands[id].commands_items_count;
-			if (expand.includes("commands_commentaires")) {
-				this.commentaires[id] = {};
-				for (const commentaire of this.commands[id].commands_commentaires) {
-					this.commentaires[id][commentaire.id_command_commentaire] = commentaire;
-				}
-			}
-			if (expand.includes("commands_documents")) {
-				this.documents[id] = {};
-				for (const document of this.commands[id].commands_documents) {
-					this.documents[id][document.id_command_document] = document;
-				}
-			}
-			if (expand.includes("commands_history")) {
-				this.history[id] = {};
-				for (const historyEntry of this.commands[id].commands_history) {
-					this.history[id][historyEntry.id_command_history] = historyEntry;
-				}
-			}
-			if (expand.includes("commands_items")) {
-				this.items[id] = {};
-				for (const item of this.commands[id].commands_items) {
-					this.items[id][item.id_item] = item;
-				}
-			}
-			if (expand.includes("carrier")) {
-				if (this.commands[id].carrier) {
-					const carriersStore = useCarriersStore();
-					carriersStore.carriers[this.commands[id].id_carrier] = this.commands[id].carrier;
-				}
-			}
+			hydrateCommand(this, command.id_command, command, expand);
 		},
 		async createCommand(params) {
 			const command = await fetchWrapper.post({

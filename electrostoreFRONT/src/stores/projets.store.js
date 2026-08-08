@@ -6,6 +6,53 @@ import { useUsersStore, useItemsStore, useProjetTagsStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
+const EXPAND_HANDLERS = {
+	projets_commentaires: (store, idProjet, data) => {
+		store.commentaires[idProjet] = {};
+		for (const commentaire of data) {
+			store.commentaires[idProjet][commentaire.id_projet_commentaire] = commentaire;
+		}
+	},
+	projets_documents: (store, idProjet, data) => {
+		store.documents[idProjet] = {};
+		for (const document of data) {
+			store.documents[idProjet][document.id_projet_document] = document;
+		}
+	},
+	projets_items: (store, idProjet, data) => {
+		store.items[idProjet] = {};
+		for (const item of data) {
+			store.items[idProjet][item.id_item] = item;
+		}
+	},
+	projets_projet_tags: (store, idProjet, data) => {
+		store.projetTagProjet[idProjet] = {};
+		for (const projetTagProjet of data) {
+			store.projetTagProjet[idProjet][projetTagProjet.id_projet_tag] = projetTagProjet;
+		}
+	},
+	projets_status_history: (store, idProjet, data) => {
+		store.statusHistory[idProjet] = {};
+		for (const statusHistory of data) {
+			store.statusHistory[idProjet][statusHistory.id_projet_status] = statusHistory;
+		}
+	},
+};
+
+function hydrateProjet(store, idProjet, projet, expand = []) {
+	store.projets[idProjet] = projet;
+	store.commentairesTotalCount[idProjet] = projet.projets_commentaires_count;
+	store.documentsTotalCount[idProjet] = projet.projets_documents_count;
+	store.itemsTotalCount[idProjet] = projet.projets_items_count;
+	store.projetTagProjetTotalCount[idProjet] = projet.projets_tags_count;
+	store.statusHistoryTotalCount[idProjet] = projet.projets_status_history_count;
+	for (const key of expand) {
+		if (EXPAND_HANDLERS[key]) {
+			EXPAND_HANDLERS[key](this, projet.id_projet, projet[key]);
+		}
+	}
+}
+
 export const useProjetsStore = defineStore("projets",{
 	state: () => ({
 		projetsLoading: false,
@@ -46,42 +93,7 @@ export const useProjetsStore = defineStore("projets",{
 				useToken: "access",
 			});
 			for (const projet of newProjetList["data"]) {
-				this.projets[projet.id_projet] = projet;
-				this.commentairesTotalCount[projet.id_projet] = projet.projets_commentaires_count;
-				this.documentsTotalCount[projet.id_projet] = projet.projets_documents_count;
-				this.itemsTotalCount[projet.id_projet] = projet.projets_items_count;
-				this.projetTagProjetTotalCount[projet.id_projet] = projet.projets_tags_count;
-				this.statusHistoryTotalCount[projet.id_projet] = projet.projets_status_history_count;
-				if (expand.includes("projets_commentaires")) {
-					this.commentaires[projet.id_projet] = {};
-					for (const commentaire of projet.projets_commentaires) {
-						this.commentaires[projet.id_projet][commentaire.id_projet_commentaire] = commentaire;
-					}
-				}
-				if (expand.includes("projets_documents")) {
-					this.documents[projet.id_projet] = {};
-					for (const document of projet.projets_documents) {
-						this.documents[projet.id_projet][document.id_projet_document] = document;
-					}
-				}
-				if (expand.includes("projets_items")) {
-					this.items[projet.id_projet] = {};
-					for (const item of projet.projets_items) {
-						this.items[projet.id_projet][item.id_item] = item;
-					}
-				}
-				if (expand.includes("projets_projet_tags")) {
-					this.projetTagProjet[projet.id_projet] = {};
-					for (const projetTagProjet of projet.projets_projet_tags) {
-						this.projetTagProjet[projet.id_projet][projetTagProjet.id_projet_tag] = projetTagProjet;
-					}
-				}
-				if (expand.includes("projets_status_history")) {
-					this.statusHistory[projet.id_projet] = {};
-					for (const statusHistory of projet.projets_status_history) {
-						this.statusHistory[projet.id_projet][statusHistory.id_projet_status] = statusHistory;
-					}
-				}
+				hydrateProjet(this, projet.id_projet, projet, expand);
 			}
 			this.projetsLoading = false;
 		},
@@ -96,42 +108,7 @@ export const useProjetsStore = defineStore("projets",{
 				useToken: "access",
 			});
 			for (const projet of newProjetList["data"]) {
-				this.projets[projet.id_projet] = projet;
-				this.commentairesTotalCount[projet.id_projet] = projet.projets_commentaires_count;
-				this.documentsTotalCount[projet.id_projet] = projet.projets_documents_count;
-				this.itemsTotalCount[projet.id_projet] = projet.projets_items_count;
-				this.projetTagProjetTotalCount[projet.id_projet] = projet.projets_tags_count;
-				this.statusHistoryTotalCount[projet.id_projet] = projet.projets_status_history_count;
-				if (expand.includes("projets_commentaires")) {
-					this.commentaires[projet.id_projet] = {};
-					for (const commentaire of projet.projets_commentaires) {
-						this.commentaires[projet.id_projet][commentaire.id_projet_commentaire] = commentaire;
-					}
-				}
-				if (expand.includes("projets_documents")) {
-					this.documents[projet.id_projet] = {};
-					for (const document of projet.projets_documents) {
-						this.documents[projet.id_projet][document.id_projet_document] = document;
-					}
-				}
-				if (expand.includes("projets_items")) {
-					this.items[projet.id_projet] = {};
-					for (const item of projet.projets_items) {
-						this.items[projet.id_projet][item.id_item] = item;
-					}
-				}
-				if (expand.includes("projets_projet_tags")) {
-					this.projetTagProjet[projet.id_projet] = {};
-					for (const projetTagProjet of projet.projets_projet_tags) {
-						this.projetTagProjet[projet.id_projet][projetTagProjet.id_projet_tag] = projetTagProjet;
-					}
-				}
-				if (expand.includes("projets_status_history")) {
-					this.statusHistory[projet.id_projet] = {};
-					for (const statusHistory of projet.projets_status_history) {
-						this.statusHistory[projet.id_projet][statusHistory.id_projet_status] = statusHistory;
-					}
-				}
+				hydrateProjet(this, projet.id_projet, projet, expand);
 			}
 			this.projetsTotalCount = newProjetList["pagination"]?.["total"] || 0;
 			this.projetsLoading = false;
@@ -143,45 +120,11 @@ export const useProjetsStore = defineStore("projets",{
 			}
 			this.projets[id].loading = true;
 			const paramString = buildQuery({ expand });
-			this.projets[id] = await fetchWrapper.get({
+			const projet = await fetchWrapper.get({
 				url: `${baseUrl}/projet/${id}?${paramString}`,
 				useToken: "access",
 			});
-			this.commentairesTotalCount[id] = this.projets[id].projets_commentaires_count;
-			this.documentsTotalCount[id] = this.projets[id].projets_documents_count;
-			this.itemsTotalCount[id] = this.projets[id].projets_items_count;
-			this.projetTagProjetTotalCount[id] = this.projets[id].projets_tags_count;
-			this.statusHistoryTotalCount[id] = this.projets[id].projets_status_history_count;
-			if (expand.includes("projets_commentaires")) {
-				this.commentaires[id] = {};
-				for (const commentaire of this.projets[id].projets_commentaires) {
-					this.commentaires[id][commentaire.id_projet_commentaire] = commentaire;
-				}
-			}
-			if (expand.includes("projets_documents")) {
-				this.documents[id] = {};
-				for (const document of this.projets[id].projets_documents) {
-					this.documents[id][document.id_projet_document] = document;
-				}
-			}
-			if (expand.includes("projets_items")) {
-				this.items[id] = {};
-				for (const item of this.projets[id].projets_items) {
-					this.items[id][item.id_item] = item;
-				}
-			}
-			if (expand.includes("projets_projet_tags")) {
-				this.projetTagProjet[id] = {};
-				for (const projetTagProjet of this.projets[id].projets_projet_tags) {
-					this.projetTagProjet[id][projetTagProjet.id_projet_tag] = projetTagProjet;
-				}
-			}
-			if (expand.includes("projets_status_history")) {
-				this.statusHistory[id] = {};
-				for (const statusHistory of this.projets[id].projets_status_history) {
-					this.statusHistory[id][statusHistory.id_projet_status] = statusHistory;
-				}
-			}
+			hydrateProjet(this, projet.id_projet, projet, expand);
 		},
 		async createProjet(params) {
 			const projet = await fetchWrapper.post({

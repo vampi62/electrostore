@@ -4,6 +4,10 @@ import { fetchWrapper, buildQuery } from "@/helpers";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
+function hydrateCronJob(store, idCronJob, cronJob, expand = []) {
+	store.cronJobs[idCronJob] = cronJob;
+}
+
 export const useCronJobsStore = defineStore("cronJobs", {
 	state: () => ({
 		cronJobsLoading: false,
@@ -20,7 +24,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 				useToken: "access",
 			});
 			for (const cronJob of newCronJobList["data"]) {
-				this.cronJobs[cronJob.id_cronjob] = cronJob;
+				hydrateCronJob(this, cronJob.id_cronjob, cronJob);
 			}
 			this.cronJobsLoading = false;
 		},
@@ -35,7 +39,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 				useToken: "access",
 			});
 			for (const cronJob of newCronJobList["data"]) {
-				this.cronJobs[cronJob.id_cronjob] = cronJob;
+				hydrateCronJob(this, cronJob.id_cronjob, cronJob);
 			}
 			this.cronJobsTotalCount = newCronJobList["pagination"]?.["total"] || 0;
 			this.cronJobsLoading = false;
@@ -46,10 +50,11 @@ export const useCronJobsStore = defineStore("cronJobs", {
 				this.cronJobs[id] = {};
 			}
 			this.cronJobs[id].loading = true;
-			this.cronJobs[id] = await fetchWrapper.get({
+			const cronJob = await fetchWrapper.get({
 				url: `${baseUrl}/cronjob/${id}`,
 				useToken: "access",
 			});
+			hydrateCronJob(this, cronJob.id_cronjob, cronJob);
 		},
 		async createCronJob(params) {
 			const cronJob = await fetchWrapper.post({

@@ -6,6 +6,68 @@ import { useTagsStore, useStoresStore, useCommandsStore, useProjetsStore, useUse
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
+const EXPAND_HANDLERS = {
+	item_documents: (store, idItem, data) => {
+		store.documents[idItem] = {};
+		for (const document of data) {
+			store.documents[idItem][document.id_item_document] = document;
+		}
+	},
+	item_boxs: (store, idItem, data) => {
+		store.itemBoxs[idItem] = {};
+		for (const itemBox of data) {
+			store.itemBoxs[idItem][itemBox.id_box] = itemBox;
+		}
+	},
+	item_tags: (store, idItem, data) => {
+		store.itemTags[idItem] = {};
+		for (const itemTag of data) {
+			store.itemTags[idItem][itemTag.id_tag] = itemTag;
+		}
+	},
+	item_commands: (store, idItem, data) => {
+		store.itemCommands[idItem] = {};
+		for (const itemCommand of data) {
+			store.itemCommands[idItem][itemCommand.id_command] = itemCommand;
+		}
+	},
+	item_projets: (store, idItem, data) => {
+		store.itemProjets[idItem] = {};
+		for (const itemProjet of data) {
+			store.itemProjets[idItem][itemProjet.id_projet] = itemProjet;
+		}
+	},
+	images: (store, idItem, data) => {
+		store.images[idItem] = {};
+		for (const image of data) {
+			store.images[idItem][image.id_img] = image;
+		}
+	},
+	item_history: (store, idItem, data) => {
+		store.itemHistory[idItem] = {};
+		for (const itemHistory of data) {
+			store.itemHistory[idItem][itemHistory.id_item_history] = itemHistory;
+		}
+	},
+};
+
+function hydrateItem(store, idItem, item, expand = []) {
+	if (item.id_img && !this.thumbnailsURL[item.id_img]) {
+		this.showThumbnailById(item.id_item, item.id_img);
+	}
+	store.items[idItem] = item;
+	store.documentsTotalCount[idItem] = item["item_documents_count"];
+	store.itemBoxsTotalCount[idItem] = item["item_boxs_count"];
+	store.itemTagsTotalCount[idItem] = item["item_tags_count"];
+	store.itemCommandsTotalCount[idItem] = item["command_items_count"];
+	store.itemProjetsTotalCount[idItem] = item["projet_items_count"];
+	for (const key of expand) {
+		if (EXPAND_HANDLERS[key]) {
+			EXPAND_HANDLERS[key](store, idItem, item[key]);
+		}
+	}
+}
+
 export const useItemsStore = defineStore("items",{
 	state: () => ({
 		itemsLoading: false,
@@ -58,51 +120,7 @@ export const useItemsStore = defineStore("items",{
 				useToken: "access",
 			});
 			for (const item of newItemList["data"]) {
-				if (item.id_img && !this.thumbnailsURL[item.id_img]) {
-					await this.showThumbnailById(item.id_item, item.id_img);
-				}
-				this.items[item.id_item] = item;
-				this.documentsTotalCount[item.id_item] = item["item_documents_count"];
-				this.itemBoxsTotalCount[item.id_item] = item["item_boxs_count"];
-				this.itemTagsTotalCount[item.id_item] = item["item_tags_count"];
-				this.itemCommandsTotalCount[item.id_item] = item["command_items_count"];
-				this.itemProjetsTotalCount[item.id_item] = item["projet_items_count"];
-				if (expand.includes("item_documents")) {
-					this.documents[item.id_item] = {};
-					for (const document of item["item_documents"]) {
-						this.documents[item.id_item][document.id_item_document] = document;
-					}
-				}
-				if (expand.includes("item_boxs")) {
-					this.itemBoxs[item.id_item] = {};
-					for (const itemBox of item["item_boxs"]) {
-						this.itemBoxs[item.id_item][itemBox.id_box] = itemBox;
-					}
-				}
-				if (expand.includes("item_tags")) {
-					this.itemTags[item.id_item] = {};
-					for (const itemTag of item["item_tags"]) {
-						this.itemTags[item.id_item][itemTag.id_tag] = itemTag;
-					}
-				}
-				if (expand.includes("command_items")) {
-					this.itemCommands[item.id_item] = {};
-					for (const itemCommand of item["command_items"]) {
-						this.itemCommands[item.id_item][itemCommand.id_command] = itemCommand;
-					}
-				}
-				if (expand.includes("projet_items")) {
-					this.itemProjets[item.id_item] = {};
-					for (const itemProjet of item["projet_items"]) {
-						this.itemProjets[item.id_item][itemProjet.id_projet] = itemProjet;
-					}
-				}
-				if (expand.includes("item_history")) {
-					this.itemHistory[item.id_item] = {};
-					for (const itemHistory of item["item_history"]) {
-						this.itemHistory[item.id_item][itemHistory.id_item_history] = itemHistory;
-					}
-				}
+				hydrateItem(this, item.id_item, item, expand);
 			}
 			this.itemsLoading = false;
 		},
@@ -117,51 +135,7 @@ export const useItemsStore = defineStore("items",{
 				useToken: "access",
 			});
 			for (const item of newItemList["data"]) {
-				if (item.id_img && !this.thumbnailsURL[item.id_img]) {
-					await this.showThumbnailById(item.id_item, item.id_img);
-				}
-				this.items[item.id_item] = item;
-				this.documentsTotalCount[item.id_item] = item["item_documents_count"];
-				this.itemBoxsTotalCount[item.id_item] = item["item_boxs_count"];
-				this.itemTagsTotalCount[item.id_item] = item["item_tags_count"];
-				this.itemCommandsTotalCount[item.id_item] = item["command_items_count"];
-				this.itemProjetsTotalCount[item.id_item] = item["projet_items_count"];
-				if (expand.includes("item_documents")) {
-					this.documents[item.id_item] = {};
-					for (const document of item["item_documents"]) {
-						this.documents[item.id_item][document.id_item_document] = document;
-					}
-				}
-				if (expand.includes("item_boxs")) {
-					this.itemBoxs[item.id_item] = {};
-					for (const itemBox of item["item_boxs"]) {
-						this.itemBoxs[item.id_item][itemBox.id_box] = itemBox;
-					}
-				}
-				if (expand.includes("item_tags")) {
-					this.itemTags[item.id_item] = {};
-					for (const itemTag of item["item_tags"]) {
-						this.itemTags[item.id_item][itemTag.id_tag] = itemTag;
-					}
-				}
-				if (expand.includes("command_items")) {
-					this.itemCommands[item.id_item] = {};
-					for (const itemCommand of item["command_items"]) {
-						this.itemCommands[item.id_item][itemCommand.id_command] = itemCommand;
-					}
-				}
-				if (expand.includes("projet_items")) {
-					this.itemProjets[item.id_item] = {};
-					for (const itemProjet of item["projet_items"]) {
-						this.itemProjets[item.id_item][itemProjet.id_projet] = itemProjet;
-					}
-				}
-				if (expand.includes("item_history")) {
-					this.itemHistory[item.id_item] = {};
-					for (const itemHistory of item["item_history"]) {
-						this.itemHistory[item.id_item][itemHistory.id_item_history] = itemHistory;
-					}
-				}
+				hydrateItem(this, item.id_item, item, expand);
 			}
 			this.itemsTotalCount = newItemList["pagination"]?.["total"] || 0;
 			this.itemsLoading = false;
@@ -173,48 +147,11 @@ export const useItemsStore = defineStore("items",{
 			}
 			this.items[id].loading = true;
 			const paramString = buildQuery({ expand });
-			this.items[id] = await fetchWrapper.get({
+			const item = await fetchWrapper.get({
 				url: `${baseUrl}/item/${id}?${paramString}`,
 				useToken: "access",
 			});
-			if (this.items[id].id_img && !this.thumbnailsURL[this.items[id].id_img]) {
-				await this.showThumbnailById(id, this.items[id].id_img);
-			}
-			this.documentsTotalCount[id] = this.items[id]["item_documents_count"];
-			this.itemBoxsTotalCount[id] = this.items[id]["item_boxs_count"];
-			this.itemTagsTotalCount[id] = this.items[id]["item_tags_count"];
-			this.itemCommandsTotalCount[id] = this.items[id]["command_items_count"];
-			this.itemProjetsTotalCount[id] = this.items[id]["projet_items_count"];
-			if (expand.includes("item_documents")) {
-				this.documents[id] = {};
-				for (const document of this.items[id]["item_documents"]) {
-					this.documents[id][document.id_item_document] = document;
-				}
-			}
-			if (expand.includes("item_boxs")) {
-				this.itemBoxs[id] = {};
-				for (const itemBox of this.items[id]["item_boxs"]) {
-					this.itemBoxs[id][itemBox.id_box] = itemBox;
-				}
-			}
-			if (expand.includes("item_tags")) {
-				this.itemTags[id] = {};
-				for (const itemTag of this.items[id]["item_tags"]) {
-					this.itemTags[id][itemTag.id_tag] = itemTag;
-				}
-			}
-			if (expand.includes("command_items")) {
-				this.itemCommands[id] = {};
-				for (const itemCommand of this.items[id]["command_items"]) {
-					this.itemCommands[id][itemCommand.id_command] = itemCommand;
-				}
-			}
-			if (expand.includes("projet_items")) {
-				this.itemProjets[id] = {};
-				for (const itemProjet of this.items[id]["projet_items"]) {
-					this.itemProjets[id][itemProjet.id_projet] = itemProjet;
-				}
-			}
+			hydrateItem(this, item.id_item, item, expand);
 		},
 		async createItem(params) {
 			const item = await fetchWrapper.post({

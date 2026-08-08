@@ -4,6 +4,10 @@ import { fetchWrapper, buildQuery } from "@/helpers";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
+function hydrateCarrier(store, idCarrier, carrier, expand = []) {
+	store.carriers[idCarrier] = carrier;
+}
+
 export const useCarriersStore = defineStore("carriers", {
 	state: () => ({
 		carriersLoading: false,
@@ -19,7 +23,7 @@ export const useCarriersStore = defineStore("carriers", {
 				useToken: "access",
 			});
 			for (const carrier of newCarrierList["data"]) {
-				this.carriers[carrier.id_carrier] = carrier;
+				hydrateCarrier(this, carrier.id_carrier, carrier);
 			}
 			this.carriersLoading = false;
 		},
@@ -34,7 +38,7 @@ export const useCarriersStore = defineStore("carriers", {
 				useToken: "access",
 			});
 			for (const carrier of newCarrierList["data"]) {
-				this.carriers[carrier.id_carrier] = carrier;
+				hydrateCarrier(this, carrier.id_carrier, carrier);
 			}
 			this.carriersTotalCount = newCarrierList["pagination"]?.["total"] || 0;
 			this.carriersLoading = false;
@@ -45,10 +49,11 @@ export const useCarriersStore = defineStore("carriers", {
 				this.carriers[id] = {};
 			}
 			this.carriers[id].loading = true;
-			this.carriers[id] = await fetchWrapper.get({
+			const carrier = await fetchWrapper.get({
 				url: `${baseUrl}/carrier/${id}`,
 				useToken: "access",
 			});
+			hydrateCarrier(this, carrier.id_carrier, carrier);
 		},
 	},
 });
