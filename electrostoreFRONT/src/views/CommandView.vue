@@ -411,7 +411,10 @@ const documentAdd = async(files) => {
 		documentModalData.value = { name_command_document: file.name, document: file.document };
 		try {
 			schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
-			await commandsStore.createDocument(commandId.value, documentModalData.value);
+			const formData = new FormData();
+			formData.append("name_command_document", documentModalData.value.name_command_document);
+			formData.append("document", documentModalData.value.document);
+			await commandsStore.createDocument(commandId.value, formData);
 			addNotification({ message: t("command.DocumentAdded"), type: "success" });
 		} catch (e) {
 			addNotification({ message: e, type: "error" });

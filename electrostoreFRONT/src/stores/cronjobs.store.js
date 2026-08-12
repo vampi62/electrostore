@@ -1,12 +1,14 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, buildQuery } from "@/helpers";
+import { createMainResource } from "@/helpers";
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
-
-function hydrateCronJob(store, idCronJob, cronJob, expand = []) {
-	store.cronJobs[idCronJob] = cronJob;
-}
+const cronJobResource = createMainResource({
+	path: () => "/cronjob",
+	idField: "id_cronjob",
+	stateKey: "cronJobs",
+	countKey: "cronJobsTotalCount",
+	loadingKey: "cronJobsLoading",
+});
 
 export const useCronJobsStore = defineStore("cronJobs", {
 	state: () => ({
@@ -16,68 +18,11 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		cronJobEdition: {},
 	}),
 	actions: {
-		async getCronJobByList(idResearch = []) {
-			this.cronJobsLoading = true;
-			const paramString = buildQuery({ idResearch });
-			const newCronJobList = await fetchWrapper.get({
-				url: `${baseUrl}/cronjob?${paramString}`,
-				useToken: "access",
-			});
-			for (const cronJob of newCronJobList["data"]) {
-				hydrateCronJob(this, cronJob.id_cronjob, cronJob);
-			}
-			this.cronJobsLoading = false;
-		},
-		async getCronJobByInterval(limit = 100, offset = 0, filter = "", sort = "", clear = false) {
-			this.cronJobsLoading = true;
-			if (clear) {
-				this.cronJobs = {};
-			}
-			const paramString = buildQuery({ limit, offset, filter, sort });
-			const newCronJobList = await fetchWrapper.get({
-				url: `${baseUrl}/cronjob?${paramString}`,
-				useToken: "access",
-			});
-			for (const cronJob of newCronJobList["data"]) {
-				hydrateCronJob(this, cronJob.id_cronjob, cronJob);
-			}
-			this.cronJobsTotalCount = newCronJobList["pagination"]?.["total"] || 0;
-			this.cronJobsLoading = false;
-			return [newCronJobList["pagination"]?.["nextOffset"] || 0, newCronJobList["pagination"]?.["hasMore"] || false];
-		},
-		async getCronJobById(id) {
-			if (!this.cronJobs[id]) {
-				this.cronJobs[id] = {};
-			}
-			this.cronJobs[id].loading = true;
-			const cronJob = await fetchWrapper.get({
-				url: `${baseUrl}/cronjob/${id}`,
-				useToken: "access",
-			});
-			hydrateCronJob(this, cronJob.id_cronjob, cronJob);
-		},
-		async createCronJob(params) {
-			const cronJob = await fetchWrapper.post({
-				url: `${baseUrl}/cronjob`,
-				useToken: "access",
-				body: params,
-			});
-			this.cronJobs[cronJob.id_cronjob] = cronJob;
-			return cronJob.id_cronjob;
-		},
-		async updateCronJob(id, params) {
-			this.cronJobs[id] = await fetchWrapper.put({
-				url: `${baseUrl}/cronjob/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteCronJob(id) {
-			await fetchWrapper.delete({
-				url: `${baseUrl}/cronjob/${id}`,
-				useToken: "access",
-			});
-			delete this.cronJobs[id];
-		},
+		getCronJobByList: cronJobResource.getByList,
+		getCronJobByInterval: cronJobResource.getByInterval,
+		getCronJobById: cronJobResource.getById,
+		createCronJob: cronJobResource.create,
+		updateCronJob: cronJobResource.update,
+		deleteCronJob: cronJobResource.remove,
 	},
 });

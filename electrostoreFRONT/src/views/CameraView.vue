@@ -126,6 +126,9 @@ const cameraSave = async() => {
 const cameraDelete = async() => {
 	try {
 		await camerasStore.deleteCamera(cameraId.value);
+		delete camerasStore.status[cameraId.value];
+		delete camerasStore.stream[cameraId.value];
+		delete camerasStore.capture[cameraId.value];
 		addNotification({ message: t("camera.Deleted"), type: "success" });
 		router.push("/cameras");
 	} catch (e) {

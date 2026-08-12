@@ -50,7 +50,7 @@ async function fetchAllData() {
 	}
 }
 function loadToEdition(id) {
-	if (tagId.value === "new") {
+	if (id === "new") {
 		tagsStore.tagEdition = {
 			loading: false,
 		};
@@ -92,7 +92,8 @@ const tagSave = async() => {
 		}
 		if (tagId.value === "new") {
 			const newId = await tagsStore.createTag({ ...tagsStore.tagEdition });
-			loadToEdition(newId);
+			console.log("New tag created with ID:", newId);
+			loadToEdition(String(newId));
 			addNotification({ message: t("tag.Created"), type: "success" });
 			tagId.value = String(newId);
 			router.push("/tags/" + tagId.value);

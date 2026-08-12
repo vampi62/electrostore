@@ -189,7 +189,10 @@ const documentAdd = async(files) => {
 		documentModalData.value = { name_projet_document: file.name, document: file.document };
 		try {
 			schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
-			await projetsStore.createDocument(projetId.value, documentModalData.value);
+			const formData = new FormData();
+			formData.append("name_projet_document", documentModalData.value.name_projet_document);
+			formData.append("document", documentModalData.value.document);
+			await projetsStore.createDocument(projetId.value, formData);
 			addNotification({ message: t("projet.DocumentAdded"), type: "success" });
 		} catch (e) {
 			addNotification({ message: e, type: "error" });

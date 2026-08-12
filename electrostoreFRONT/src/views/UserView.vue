@@ -114,7 +114,12 @@ const userSave = async() => {
 			userId.value = String(newId);
 			router.push("/users/" + userId.value);
 		} else {
-			await usersStore.updateUser(userId.value, { ...usersStore.userEdition });
+			const data = { ...usersStore.userEdition };
+			if (!data.mdp_user) {
+				delete data.mdp_user;
+				delete data.confirm_mdp_user;
+			}
+			await usersStore.updateUser(userId.value, data);
 			loadToEdition(userId.value);
 			addNotification({ message: t("user.Updated"), type: "success" });
 		}

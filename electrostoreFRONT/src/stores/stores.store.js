@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, buildQuery } from "@/helpers";
+import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
 
 import { useTagsStore, useItemsStore } from "@/stores";
 
@@ -42,7 +42,6 @@ const EXPAND_HANDLERS_BOX = {
 };
 
 function hydrateStore(store, idStore, storeData, expand = []) {
-	store.stores[idStore] = storeData;
 	store.boxsTotalCount[idStore] = storeData.boxs_count;
 	store.ledsTotalCount[idStore] = storeData.leds_count;
 	store.storeTagsTotalCount[idStore] = storeData.stores_tags_count;
@@ -63,6 +62,48 @@ function hydrateBox(store, idStore, idBox, boxData, expand = []) {
 		}
 	}
 }
+
+const storeResource = createMainResource({
+	path: () => "/store",
+	idField: "id_store",
+	stateKey: "stores",
+	countKey: "storesTotalCount",
+	loadingKey: "storesLoading",
+	onHydrate: (store, entity, expand) => {
+		hydrateStore(store, entity.id_store, entity, expand);
+	},
+});
+
+const boxResource = createNestedResource({
+	path: (idStore) => `/store/${idStore}/box`,
+	idField: "id_box",
+	stateKey: "boxs",
+	countKey: "boxsTotalCount",
+	loadingKey: "boxsLoading",
+	onHydrate: (store, idStore, entity, expand) => {
+		hydrateBox(store, idStore, entity.id_box, entity, expand);
+	},
+});
+const ledResource = createNestedResource({
+	path: (idStore) => `/store/${idStore}/led`,
+	idField: "id_led",
+	stateKey: "leds",
+	countKey: "ledsTotalCount",
+	loadingKey: "ledsLoading",
+});
+const storeTagResource = createNestedResource({
+	path: (idStore) => `/store/${idStore}/store_tag`,
+	idField: "id_tag",
+	stateKey: "storeTags",
+	countKey: "storeTagsTotalCount",
+	loadingKey: "storeTagsLoading",
+	onHydrate: (store, idStore, entity, expand) => {
+		if (expand.includes("tag")) {
+			const tagsStore = useTagsStore();
+			tagsStore.tags[entity.id_tag] = entity.tag;
+		}
+	},
+});
 
 export const useStoresStore = defineStore("stores",{
 	state: () => ({
@@ -97,70 +138,12 @@ export const useStoresStore = defineStore("stores",{
 		boxTagEdition: {},
 	}),
 	actions: {
-		async getStoreByList(idResearch = [], expand = []) {
-			this.storesLoading = true;
-			const paramString = buildQuery({ idResearch, expand });
-			const newStoreList = await fetchWrapper.get({
-				url: `${baseUrl}/store?${paramString}`,
-				useToken: "access",
-			});
-			for (const store of newStoreList["data"]) {
-				hydrateStore(this, store.id_store, store, expand);
-			}
-			this.storesLoading = false;
-		},
-		async getStoreByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			this.storesLoading = true;
-			if (clear) {
-				this.stores = {};
-			}
-			const paramString = buildQuery({ limit, offset, expand, filter, sort });
-			const newStoreList = await fetchWrapper.get({
-				url: `${baseUrl}/store?${paramString}`,
-				useToken: "access",
-			});
-			for (const store of newStoreList["data"]) {
-				hydrateStore(this, store.id_store, store, expand);
-			}
-			this.storesTotalCount = newStoreList["pagination"]?.["total"] || 0;
-			this.storesLoading = false;
-			return [newStoreList["pagination"]?.["nextOffset"] || 0, newStoreList["pagination"]?.["hasMore"] || false];
-		},
-		async getStoreById(id, expand = []) {
-			if (!this.stores[id]) {
-				this.stores[id] = {};
-			}
-			this.stores[id].loading = true;
-			const paramString = buildQuery({ expand });
-			let store = await fetchWrapper.get({
-				url: `${baseUrl}/store/${id}?${paramString}`,
-				useToken: "access",
-			});
-			hydrateStore(this, store.id_store, store, expand);
-		},
-		async createStore(params) {
-			const store = await fetchWrapper.post({
-				url: `${baseUrl}/store`,
-				useToken: "access",
-				body: params,
-			});
-			this.stores[store.id_store] = store;
-			return store.id_store;
-		},
-		async updateStore(id, params) {
-			this.stores[id] = await fetchWrapper.put({
-				url: `${baseUrl}/store/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteStore(id) {
-			await fetchWrapper.delete({
-				url: `${baseUrl}/store/${id}`,
-				useToken: "access",
-			});
-			delete this.stores[id];
-		},
+		getStoreByList: storeResource.getByList,
+		getStoreByInterval: storeResource.getByInterval,
+		getStoreById: storeResource.getById,
+		createStore: storeResource.create,
+		updateStore: storeResource.update,
+		deleteStore: storeResource.remove,
 		async createStoreComplete(id, params) {
 			const store = await fetchWrapper.post({
 				url: `${baseUrl}/store/complete`,
@@ -178,108 +161,14 @@ export const useStoresStore = defineStore("stores",{
 			});
 		},
 
-		async getBoxByInterval(idStore, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			if (!this.boxs[idStore] || clear) {
-				this.boxs[idStore] = {};
-			}
-			this.boxsLoading = true;
-			const paramString = buildQuery({ limit, offset, expand, filter, sort });
-			const newBoxList = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/box?${paramString}`,
-				useToken: "access",
-			});
-			for (const box of newBoxList["data"]) {
-				hydrateBox(this, idStore, box.id_box, box, expand);
-			}
-			this.boxsTotalCount[idStore] = newBoxList["pagination"]?.["total"] || 0;
-			this.boxsLoading = false;
-			return [newBoxList["pagination"]?.["nextOffset"] || 0, newBoxList["pagination"]?.["hasMore"] || false];
-		},
-		async getBoxById(idStore, id, expand = []) {
-			if (!this.boxs[idStore]) {
-				this.boxs[idStore] = {};
-			}
-			if (!this.boxs[idStore][id]) {
-				this.boxs[idStore][id] = {};
-			}
-			this.boxs[idStore][id].loading = true;
-			const paramString = buildQuery({ expand });
-			let box = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/box/${id}?${paramString}`,
-				useToken: "access",
-			});
-			hydrateBox(this, idStore, box.id_box, box, expand);
-		},
-		async createBox(idStore, params) {
-			if (!this.boxs[idStore]) {
-				this.boxs[idStore] = {};
-			}
-			const box = await fetchWrapper.post({
-				url: `${baseUrl}/store/${idStore}/box`,
-				useToken: "access",
-				body: params,
-			});
-			this.boxs[idStore][box.id_box] = box;
-		},
-		async updateBox(idStore, id, params) {
-			if (!this.boxs[idStore]) {
-				this.boxs[idStore] = {};
-			}
-			this.boxs[idStore][id] = await fetchWrapper.put({
-				url: `${baseUrl}/store/${idStore}/box/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteBox(idStore, id) {
-			if (!this.boxs[idStore]) {
-				this.boxs[idStore] = {};
-			}
-			await fetchWrapper.delete({
-				url: `${baseUrl}/store/${idStore}/box/${id}`,
-				useToken: "access",
-			});
-			delete this.boxs[idStore][id];
-		},
-		async createBoxBulk(idStore, params) {
-			if (!this.boxs[idStore]) {
-				this.boxs[idStore] = {};
-			}
-			const boxBulk = await fetchWrapper.post({
-				url: `${baseUrl}/store/${idStore}/box/bulk`,
-				useToken: "access",
-				body: params,
-			});
-			for (const box of boxBulk["valide"]) {
-				this.boxs[idStore][box.id_box] = box;
-			}
-		},
-		async updateBoxBulk(idStore, params) {
-			if (!this.boxs[idStore]) {
-				this.boxs[idStore] = {};
-			}
-			const boxBulk = await fetchWrapper.put({
-				url: `${baseUrl}/store/${idStore}/box/bulk`,
-				useToken: "access",
-				body: params,
-			});
-			for (const box of boxBulk["valide"]) {
-				this.boxs[idStore][box.id_box] = box;
-			}
-		},
-		async deleteBoxBulk(idStore, params) {
-			if (!this.boxs[idStore]) {
-				this.boxs[idStore] = {};
-			}
-			const boxBulk = await fetchWrapper.delete({
-				url: `${baseUrl}/store/${idStore}/box/bulk`,
-				useToken: "access",
-				body: params,
-			});
-			for (const box of boxBulk["valide"]) {
-				delete this.boxs[idStore][box.id_box];
-			}
-		},
+		getBoxByInterval: boxResource.getByInterval,
+		getBoxById: boxResource.getById,
+		createBox: boxResource.create,
+		updateBox: boxResource.update,
+		deleteBox: boxResource.remove,
+		createBoxBulk: boxResource.createBulk,
+		updateBoxBulk: boxResource.updateBulk,
+		deleteBoxBulk: boxResource.removeBulk,
 		async showBoxById(idStore, id, params) {
 			await fetchWrapper.post({
 				url: `${baseUrl}/store/${idStore}/box/${id}/show`,
@@ -288,106 +177,14 @@ export const useStoresStore = defineStore("stores",{
 			});
 		},
 
-		async getLedByInterval(idStore, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			if (!this.leds[idStore] || clear) {
-				this.leds[idStore] = {};
-			}
-			this.ledsLoading = true;
-			const paramString = buildQuery({ limit, offset, expand, filter, sort });
-			const newLedList = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/led?${paramString}`,
-				useToken: "access",
-			});
-			for (const led of newLedList["data"]) {
-				this.leds[idStore][led.id_led] = led;
-			}
-			this.ledsTotalCount[idStore] = newLedList["pagination"]?.["total"] || 0;
-			this.ledsLoading = false;
-			return [newLedList["pagination"]?.["nextOffset"] || 0, newLedList["pagination"]?.["hasMore"] || false];
-		},
-		async getLedById(idStore, id) {
-			if (!this.leds[idStore]) {
-				this.leds[idStore] = {};
-			}
-			if (!this.leds[idStore][id]) {
-				this.leds[idStore][id] = {};
-			}
-			this.leds[idStore][id].loading = true;
-			this.leds[idStore][id] = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/led/${id}`,
-				useToken: "access",
-			});
-		},
-		async createLed(idStore, params) {
-			if (!this.leds[idStore]) {
-				this.leds[idStore] = {};
-			}
-			const led = await fetchWrapper.post({
-				url: `${baseUrl}/store/${idStore}/led`,
-				useToken: "access",
-				body: params,
-			});
-			this.leds[idStore][led.id_led] = led;
-		},
-		async updateLed(idStore, id, params) {
-			if (!this.leds[idStore]) {
-				this.leds[idStore] = {};
-			}
-			this.leds[idStore][id] = await fetchWrapper.put({
-				url: `${baseUrl}/store/${idStore}/led/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteLed(idStore, id) {
-			if (!this.leds[idStore]) {
-				this.leds[idStore] = {};
-			}
-			await fetchWrapper.delete({
-				url: `${baseUrl}/store/${idStore}/led/${id}`,
-				useToken: "access",
-			});
-			delete this.leds[idStore][id];
-		},
-		async createLedBulk(idStore, params) {
-			if (!this.leds[idStore]) {
-				this.leds[idStore] = {};
-			}
-			const ledBulk = await fetchWrapper.post({
-				url: `${baseUrl}/store/${idStore}/led/bulk`,
-				useToken: "access",
-				body: params,
-			});
-			for (const led of ledBulk["valide"]) {
-				this.leds[idStore][led.id_led] = led;
-			}
-		},
-		async updateLedBulk(idStore, params) {
-			if (!this.leds[idStore]) {
-				this.leds[idStore] = {};
-			}
-			const ledBulk = await fetchWrapper.put({
-				url: `${baseUrl}/store/${idStore}/led/bulk`,
-				useToken: "access",
-				body: params,
-			});
-			for (const led of ledBulk["valide"]) {
-				this.leds[idStore][led.id_led] = led;
-			}
-		},
-		async deleteLedBulk(idStore, params) {
-			if (!this.leds[idStore]) {
-				this.leds[idStore] = {};
-			}
-			const ledBulk = await fetchWrapper.delete({
-				url: `${baseUrl}/store/${idStore}/led/bulk`,
-				useToken: "access",
-				body: params,
-			});
-			for (const led of ledBulk["valide"]) {
-				delete this.leds[idStore][led.id_led];
-			}
-		},
+		getLedByInterval: ledResource.getByInterval,
+		getLedById: ledResource.getById,
+		createLed: ledResource.create,
+		updateLed: ledResource.update,
+		deleteLed: ledResource.remove,
+		createLedBulk: ledResource.createBulk,
+		updateLedBulk: ledResource.updateBulk,
+		deleteLedBulk: ledResource.removeBulk,
 		async showLedById(idStore, id, params) {
 			await fetchWrapper.post({
 				url: `${baseUrl}/store/${idStore}/led/${id}/show`,
@@ -396,92 +193,12 @@ export const useStoresStore = defineStore("stores",{
 			});
 		},
 
-		async getTagStoreByInterval(idStore, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			if (!this.storeTags[idStore] || clear) {
-				this.storeTags[idStore] = {};
-			}
-			const tagsStore = useTagsStore();
-			this.storeTagsLoading = true;
-			const paramString = buildQuery({ limit, offset, expand, filter, sort });
-			const newTagList = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/tag?${paramString}`,
-				useToken: "access",
-			});
-			for (const tag of newTagList["data"]) {
-				this.storeTags[idStore][tag.id_tag] = tag;
-				if (expand.includes("tag")) {
-					tagsStore.tags[tag.id_tag] = tag.tag;
-				}
-			}
-			this.storeTagsTotalCount[idStore] = newTagList["pagination"]?.["total"] || 0;
-			this.storeTagsLoading = false;
-			return [newTagList["pagination"]?.["nextOffset"] || 0, newTagList["pagination"]?.["hasMore"] || false];
-		},
-		async getTagStoreById(idStore, id, expand = []) {
-			if (!this.storeTags[idStore]) {
-				this.storeTags[idStore] = {};
-			}
-			if (!this.storeTags[idStore][id]) {
-				this.storeTags[idStore][id] = {};
-			}
-			const tagsStore = useTagsStore();
-			this.storeTags[idStore][id].loading = true;
-			const paramString = buildQuery({ expand });
-			this.storeTags[idStore][id] = await fetchWrapper.get({
-				url: `${baseUrl}/store/${idStore}/tag/${id}?${paramString}`,
-				useToken: "access",
-			});
-			if (expand.includes("tag")) {
-				tagsStore.tags[id] = this.storeTags[idStore][id].tag;
-			}
-		},
-		async createTagStore(idStore, params) {
-			if (!this.storeTags[idStore]) {
-				this.storeTags[idStore] = {};
-			}
-			const tagStore = await fetchWrapper.post({
-				url: `${baseUrl}/store/${idStore}/tag`,
-				useToken: "access",
-				body: params,
-			});
-			this.storeTags[idStore][tagStore.id_tag] = tagStore;
-		},
-		async deleteTagStore(idStore, id) {
-			if (!this.storeTags[idStore]) {
-				this.storeTags[idStore] = {};
-			}
-			await fetchWrapper.delete({
-				url: `${baseUrl}/store/${idStore}/tag/${id}`,
-				useToken: "access",
-			});
-			delete this.storeTags[idStore][id];
-		},
-		async createTagStoreBulk(idStore, params) {
-			if (!this.storeTags[idStore]) {
-				this.storeTags[idStore] = {};
-			}
-			const tagStoreBulk = await fetchWrapper.post({
-				url: `${baseUrl}/store/${idStore}/tag/bulk`,
-				useToken: "access",
-				body: params,
-			});
-			for (const tag of tagStoreBulk["valide"]) {
-				this.storeTags[idStore][tag.id_tag] = tag;
-			}
-		},
-		async deleteTagStoreBulk(idStore, params) {
-			if (!this.storeTags[idStore]) {
-				this.storeTags[idStore] = {};
-			}
-			const tagStoreBulk = await fetchWrapper.delete({
-				url: `${baseUrl}/store/${idStore}/tag/bulk`,
-				useToken: "access",
-				body: params,
-			});
-			for (const tag of tagStoreBulk["valide"]) {
-				delete this.storeTags[idStore][tag.id_tag];
-			}
-		},
+		getTagStoreByInterval: storeTagResource.getByInterval,
+		getTagStoreById: storeTagResource.getById,
+		createTagStore: storeTagResource.create,
+		deleteTagStore: storeTagResource.remove,
+		createTagStoreBulk: storeTagResource.createBulk,
+		deleteTagStoreBulk: storeTagResource.removeBulk,
 
 		async getBoxItemByInterval(idStore, idBox, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			if (!this.boxItems[idBox] || clear) {

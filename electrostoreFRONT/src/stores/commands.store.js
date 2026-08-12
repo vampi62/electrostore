@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, buildQuery } from "@/helpers";
+import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
 
 import { useUsersStore, useItemsStore, useCarriersStore } from "@/stores";
 
@@ -40,16 +40,61 @@ const EXPAND_HANDLERS = {
 };
 
 function hydrateCommand(store, idCommand, command, expand = []) {
-	store.commands[idCommand] = command;
 	store.commentairesTotalCount[idCommand] = command.commands_commentaires_count;
 	store.documentsTotalCount[idCommand] = command.commands_documents_count;
 	store.itemsTotalCount[idCommand] = command.commands_items_count;
 	for (const key of expand) {
 		if (EXPAND_HANDLERS[key]) {
-			EXPAND_HANDLERS[key](this, command.id_command, command[key]);
+			EXPAND_HANDLERS[key](store, idCommand, command[key]);
 		}
 	}
 }
+
+const commandResource = createMainResource({
+	path: () => "/command",
+	idField: "id_command",
+	stateKey: "commands",
+	countKey: "commandsTotalCount",
+	loadingKey: "commandsLoading",
+	onHydrate: (store, entity, expand) => {
+		hydrateCommand(store, entity.id_command, entity, expand);
+	},
+});
+
+const commentaireResource = createNestedResource({
+	path: (idCommand) => `/command/${idCommand}/commentaire`,
+	idField: "id_command_commentaire",
+	stateKey: "commentaires",
+	countKey: "commentairesTotalCount",
+	loadingKey: "commentairesLoading",
+	onHydrate: (store, entity, expand) => {
+		if (expand.includes("user")) {
+			const usersStore = useUsersStore();
+			usersStore.users[entity.id_user] = entity.user;
+		}
+	},
+});
+const documentResource = createNestedResource({
+	path: (idCommand) => `/command/${idCommand}/document`,
+	idField: "id_command_document",
+	stateKey: "documents",
+	countKey: "documentsTotalCount",
+	loadingKey: "documentsLoading",
+});
+const itemResource = createNestedResource({
+	path: (idCommand) => `/command/${idCommand}/item`,
+	idField: "id_item",
+	stateKey: "items",
+	countKey: "itemsTotalCount",
+	loadingKey: "itemsLoading",
+});
+const historyResource = createNestedResource({
+	path: (idCommand) => `/command/${idCommand}/history`,
+	idField: "id_command_history",
+	stateKey: "history",
+	countKey: "historyTotalCount",
+	loadingKey: "historyLoading",
+});
 
 export const useCommandsStore = defineStore("commands",{
 	state: () => ({
@@ -78,208 +123,24 @@ export const useCommandsStore = defineStore("commands",{
 		history: {},
 	}),
 	actions: {
-		async getCommandByList(idResearch = [], expand = []) {
-			this.commandsLoading = true;
-			const paramString = buildQuery({ idResearch, expand });
-			const newCommandList = await fetchWrapper.get({
-				url: `${baseUrl}/command?${paramString}`,
-				useToken: "access",
-			});
-			for (const command of newCommandList["data"]) {
-				hydrateCommand(this, command.id_command, command, expand);
-			}
-			this.commandsLoading = false;
-		},
-		async getCommandByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			this.commandsLoading = true;
-			if (clear) {
-				this.commands = {};
-			}
-			const paramString = buildQuery({ limit, offset, expand, filter, sort });
-			const newCommandList = await fetchWrapper.get({
-				url: `${baseUrl}/command?${paramString}`,
-				useToken: "access",
-			});
-			for (const command of newCommandList["data"]) {
-				hydrateCommand(this, command.id_command, command, expand);
-			}
-			this.commandsTotalCount = newCommandList["pagination"]?.["total"] || 0;
-			this.commandsLoading = false;
-			return [newCommandList["pagination"]?.["nextOffset"] || 0, newCommandList["pagination"]?.["hasMore"] || false];
-		},
-		async getCommandById(id, expand = []) {
-			if (!this.commands[id]) {
-				this.commands[id] = {};
-			}
-			this.commands[id].loading = true;
-			const paramString = buildQuery({ expand });
-			const command = await fetchWrapper.get({
-				url: `${baseUrl}/command/${id}?${paramString}`,
-				useToken: "access",
-			});
-			hydrateCommand(this, command.id_command, command, expand);
-		},
-		async createCommand(params) {
-			const command = await fetchWrapper.post({
-				url: `${baseUrl}/command`,
-				useToken: "access",
-				body: params,
-			});
-			this.commands[command.id_command] = command;
-			return command.id_command;
-		},
-		async updateCommand(id, params) {
-			this.commands[id] = await fetchWrapper.put({
-				url: `${baseUrl}/command/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteCommand(id) {
-			await fetchWrapper.delete({
-				url: `${baseUrl}/command/${id}`,
-				useToken: "access",
-			});
-			delete this.commands[id];
-		},
+		getCommandByList: commandResource.getByList,
+		getCommandByInterval: commandResource.getByInterval,
+		getCommandById: commandResource.getById,
+		createCommand: commandResource.create,
+		updateCommand: commandResource.update,
+		deleteCommand: commandResource.remove,
 
-		async getCommentaireByInterval(idCommand, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			if (!this.commentaires[idCommand] || clear) {
-				this.commentaires[idCommand] = {};
-			}
-			this.commentairesLoading = true;
-			const userStore = useUsersStore();
-			const paramString = buildQuery({ limit, offset, expand, filter, sort });
-			const newCommentaireList = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/commentaire?${paramString}`,
-				useToken: "access",
-			});
-			for (const commentaire of newCommentaireList["data"]) {
-				this.commentaires[idCommand][commentaire.id_command_commentaire] = commentaire;
-				if (expand.includes("user")) {
-					userStore.users[commentaire.id_user] = commentaire.user;
-				}
-			}
-			this.commentairesTotalCount[idCommand] = newCommentaireList["pagination"]?.["total"] || 0;
-			this.commentairesLoading = false;
-			return [newCommentaireList["pagination"]?.["nextOffset"] || 0, newCommentaireList["pagination"]?.["hasMore"] || false];
-		},
-		async getCommentaireById(idCommand, id, expand = []) {
-			if (!this.commentaires[idCommand]) {
-				this.commentaires[idCommand] = {};
-			}
-			if (!this.commentaires[idCommand][id]) {
-				this.commentaires[idCommand][id] = {};
-			}
-			this.commentaires[idCommand][id].loading = true;
-			const userStore = useUsersStore();
-			const paramString = buildQuery({ expand });
-			this.commentaires[idCommand][id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/commentaire/${id}?${paramString}`,
-				useToken: "access",
-			});
-			if (expand.includes("user")) {
-				userStore.users[this.commentaires[idCommand][id].id_user] = this.commentaires[idCommand][id].user;
-			}
-		},
-		async createCommentaire(idCommand, params) {
-			if (!this.commentaires[idCommand]) {
-				this.commentaires[idCommand] = {};
-			}
-			const commentaire = await fetchWrapper.post({
-				url: `${baseUrl}/command/${idCommand}/commentaire`,
-				useToken: "access",
-				body: params,
-			});
-			this.commentaires[idCommand][commentaire.id_command_commentaire] = commentaire;
-		},
-		async updateCommentaire(idCommand, id, params) {
-			if (!this.commentaires[idCommand]) {
-				this.commentaires[idCommand] = {};
-			}
-			this.commentaires[idCommand][id] = await fetchWrapper.put({
-				url: `${baseUrl}/command/${idCommand}/commentaire/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteCommentaire(idCommand, id) {
-			if (!this.commentaires[idCommand]) {
-				this.commentaires[idCommand] = {};
-			}
-			await fetchWrapper.delete({
-				url: `${baseUrl}/command/${idCommand}/commentaire/${id}`,
-				useToken: "access",
-			});
-			delete this.commentaires[idCommand][id];
-		},
+		getCommentaireByInterval: commentaireResource.getByInterval,
+		getCommentaireById: commentaireResource.getById,
+		createCommentaire: commentaireResource.create,
+		updateCommentaire: commentaireResource.update,
+		deleteCommentaire: commentaireResource.remove,
 
-		async getDocumentByInterval(idCommand, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			if (!this.documents[idCommand] || clear) {
-				this.documents[idCommand] = {};
-			}
-			this.documentsLoading = true;
-			const paramString = buildQuery({ limit, offset, expand, filter, sort });
-			const newDocumentList = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/document?${paramString}`,
-				useToken: "access",
-			});
-			for (const document of newDocumentList["data"]) {
-				this.documents[idCommand][document.id_command_document] = document;
-			}
-			this.documentsTotalCount[idCommand] = newDocumentList["pagination"]?.["total"] || 0;
-			this.documentsLoading = false;
-			return [newDocumentList["pagination"]?.["nextOffset"] || 0, newDocumentList["pagination"]?.["hasMore"] || false];
-		},
-		async getDocumentById(idCommand, id, expand = []) {
-			if (!this.documents[idCommand]) {
-				this.documents[idCommand] = {};
-			}
-			if (!this.documents[idCommand][id]) {
-				this.documents[idCommand][id] = {};
-			}
-			this.documents[idCommand][id].loading = true;
-			const paramString = buildQuery({ expand });
-			this.documents[idCommand][id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/document/${id}?${paramString}`,
-				useToken: "access",
-			});
-		},
-		async createDocument(idCommand, params) {
-			if (!this.documents[idCommand]) {
-				this.documents[idCommand] = {};
-			}
-			const formData = new FormData();
-			formData.append("name_command_document", params.name_command_document);
-			formData.append("document", params.document);
-			const document = await fetchWrapper.post({
-				url: `${baseUrl}/command/${idCommand}/document`,
-				useToken: "access",
-				body: formData,
-				contentFile: true,
-			});
-			this.documents[idCommand][document.id_command_document] = document;
-		},
-		async updateDocument(idCommand, id, params) {
-			if (!this.documents[idCommand]) {
-				this.documents[idCommand] = {};
-			}
-			this.documents[idCommand][id] = await fetchWrapper.put({
-				url: `${baseUrl}/command/${idCommand}/document/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteDocument(idCommand, id) {
-			if (!this.documents[idCommand]) {
-				this.documents[idCommand] = {};
-			}
-			await fetchWrapper.delete({
-				url: `${baseUrl}/command/${idCommand}/document/${id}`,
-				useToken: "access",
-			});
-			delete this.documents[idCommand][id];
-		},
+		getDocumentByInterval: documentResource.getByInterval,
+		getDocumentById: documentResource.getById,
+		createDocument: documentResource.create,
+		updateDocument: documentResource.update,
+		deleteDocument: documentResource.remove,
 		async downloadDocument(idCommand, id) {
 			return await fetchWrapper.image({
 				url: `${baseUrl}/command/${idCommand}/document/${id}/download`,
@@ -287,119 +148,14 @@ export const useCommandsStore = defineStore("commands",{
 			});
 		},
 
-		async getItemByInterval(idCommand, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			if (!this.items[idCommand] || clear) {
-				this.items[idCommand] = {};
-			}
-			this.itemsLoading = true;
-			const itemStore = useItemsStore();
-			const paramString = buildQuery({ limit, offset, expand, filter, sort });
-			const newItemList = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/item?${paramString}`,
-				useToken: "access",
-			});
-			for (const item of newItemList["data"]) {
-				this.items[idCommand][item.id_item] = item;
-				if (expand.includes("item")) {
-					itemStore.items[item.id_item] = item.item;
-				}
-			}
-			this.itemsTotalCount[idCommand] = newItemList["pagination"]?.["total"] || 0;
-			this.itemsLoading = false;
-			return [newItemList["pagination"]?.["nextOffset"] || 0, newItemList["pagination"]?.["hasMore"] || false];
-		},
-		async getItemById(idCommand, id, expand = []) {
-			if (!this.items[idCommand]) {
-				this.items[idCommand] = {};
-			}
-			if (!this.items[idCommand][id]) {
-				this.items[idCommand][id] = {};
-			}
-			this.items[idCommand][id].loading = true;
-			const itemStore = useItemsStore();
-			const paramString = buildQuery({ expand });
-			this.items[idCommand][id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/item/${id}?${paramString}`,
-				useToken: "access",
-			});
-			if (expand.includes("item")) {
-				itemStore.items[id] = this.items[idCommand][id].item;
-			}
-		},
-		async createItem(idCommand, params) {
-			const item = await fetchWrapper.post({
-				url: `${baseUrl}/command/${idCommand}/item`,
-				useToken: "access",
-				body: params,
-			});
-			if (!this.items[idCommand]) {
-				this.items[idCommand] = {};
-			}
-			this.items[idCommand][item.id_item] = item;
-		},
-		async updateItem(idCommand, id, params) {
-			if (!this.items[idCommand]) {
-				this.items[idCommand] = {};
-			}
-			this.items[idCommand][id] = await fetchWrapper.put({
-				url: `${baseUrl}/command/${idCommand}/item/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteItem(idCommand, id) {
-			if (!this.items[idCommand]) {
-				this.items[idCommand] = {};
-			}
-			await fetchWrapper.delete({
-				url: `${baseUrl}/command/${idCommand}/item/${id}`,
-				useToken: "access",
-			});
-			delete this.items[idCommand][id];
-		},
-		async createItemBulk(idCommand, params) {
-			if (!this.items[idCommand]) {
-				this.items[idCommand] = {};
-			}
-			const itemBulk = await fetchWrapper.post({
-				url: `${baseUrl}/command/${idCommand}/item/bulk`,
-				useToken: "access",
-				body: params,
-			});
-			for (const item of itemBulk["valide"]) {
-				this.items[idCommand][item.id_item] = item;
-			}
-		},
+		getItemByInterval: itemResource.getByInterval,
+		getItemById: itemResource.getById,
+		createItem: itemResource.create,
+		updateItem: itemResource.update,
+		deleteItem: itemResource.remove,
+		createItemBulk: itemResource.createBulk,
 
-		async getHistoryByInterval(idCommand, limit = 100, offset = 0, filter = "", sort = "", clear = false) {
-			if (!this.history[idCommand] || clear) {
-				this.history[idCommand] = {};
-			}
-			this.historyLoading = true;
-			const paramString = buildQuery({ limit, offset, filter, sort });
-			const newHistoryList = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/history?${paramString}`,
-				useToken: "access",
-			});
-			for (const historyEntry of newHistoryList["data"]) {
-				this.history[idCommand][historyEntry.id_command_history] = historyEntry;
-			}
-			this.historyTotalCount[idCommand] = newHistoryList["pagination"]?.["total"] || 0;
-			this.historyLoading = false;
-			return [newHistoryList["pagination"]?.["nextOffset"] || 0, newHistoryList["pagination"]?.["hasMore"] || false];
-		},
-		async getHistoryById(idCommand, id) {
-			if (!this.history[idCommand]) {
-				this.history[idCommand] = {};
-			}
-			if (!this.history[idCommand][id]) {
-				this.history[idCommand][id] = {};
-			}
-			this.history[idCommand][id].loading = true;
-			this.history[idCommand][id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/history/${id}`,
-				useToken: "access",
-			});
-		},
+		getHistoryByInterval: historyResource.getByInterval,
+		getHistoryById: historyResource.getById,
 	},
 });

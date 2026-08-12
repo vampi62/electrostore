@@ -120,12 +120,18 @@ const itemSave = async() => {
 		if (itemId.value === "new") {
 			const newId = await itemsStore.createItem({ ...itemsStore.itemEdition });
 			loadToEdition(newId);
+			if (itemsStore.items[newId].id_img) {
+				itemsStore.showImageById(itemsStore.items[newId].id_item, itemsStore.items[newId].id_img);
+			}
 			addNotification({ message: t("item.Created"), type: "success" });
 			itemId.value = String(newId);
 			router.push("/inventory/" + itemId.value);
 		} else {
 			await itemsStore.updateItem(itemId.value, { ...itemsStore.itemEdition });
 			loadToEdition(itemId.value);
+			if (itemsStore.items[itemId.value].id_img) {
+				itemsStore.showImageById(itemsStore.items[itemId.value].id_item, itemsStore.items[itemId.value].id_img);
+			}
 			addNotification({ message: t("item.Updated"), type: "success" });
 		}
 	} catch (e) {
@@ -190,7 +196,10 @@ const documentAdd = async(files) => {
 		documentModalData.value = { name_item_document: file.name, document: file.document };
 		try {
 			schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
-			await itemsStore.createDocument(itemId.value, documentModalData.value);
+			const formData = new FormData();
+			formData.append("name_item_document", documentModalData.value.name_item_document);
+			formData.append("document", documentModalData.value.document);
+			await itemsStore.createDocument(itemId.value, formData);
 			addNotification({ message: t("item.DocumentAdded"), type: "success" });
 		} catch (e) {
 			addNotification({ message: e, type: "error" });
@@ -258,7 +267,11 @@ const imageAdd = async(files) => {
 		imageModalData.value = { nom_img: file.name, description_img: "undefined", image: file.document };
 		try {
 			schemaAddImage.validateSync(imageModalData.value, { abortEarly: false });
-			await itemsStore.createImage(itemId.value, imageModalData.value);
+			const formData = new FormData();
+			formData.append("nom_img", imageModalData.value.nom_img);
+			formData.append("description_img", imageModalData.value.description_img);
+			formData.append("image", imageModalData.value.image);
+			await itemsStore.createImage(itemId.value, formData);
 			addNotification({ message: t("item.ImageAdded"), type: "success" });
 		} catch (e) {
 			// logs all errors for debugging

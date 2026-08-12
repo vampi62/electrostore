@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, buildQuery } from "@/helpers";
+import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
 
 import { useUsersStore, useItemsStore, useProjetTagsStore } from "@/stores";
 
@@ -40,7 +40,6 @@ const EXPAND_HANDLERS = {
 };
 
 function hydrateProjet(store, idProjet, projet, expand = []) {
-	store.projets[idProjet] = projet;
 	store.commentairesTotalCount[idProjet] = projet.projets_commentaires_count;
 	store.documentsTotalCount[idProjet] = projet.projets_documents_count;
 	store.itemsTotalCount[idProjet] = projet.projets_items_count;
@@ -48,10 +47,75 @@ function hydrateProjet(store, idProjet, projet, expand = []) {
 	store.statusHistoryTotalCount[idProjet] = projet.projets_status_history_count;
 	for (const key of expand) {
 		if (EXPAND_HANDLERS[key]) {
-			EXPAND_HANDLERS[key](this, projet.id_projet, projet[key]);
+			EXPAND_HANDLERS[key](store, idProjet, projet[key]);
 		}
 	}
 }
+
+const projetResource = createMainResource({
+	path: () => "/projet",
+	idField: "id_projet",
+	stateKey: "projets",
+	countKey: "projetsTotalCount",
+	loadingKey: "projetsLoading",
+	onHydrate: (store, entity, expand) => {
+		hydrateProjet(store, entity.id_projet, entity, expand);
+	},
+});
+
+const commentaireResource = createNestedResource({
+	path: (idProjet) => `/projet/${idProjet}/commentaire`,
+	idField: "id_projet_commentaire",
+	stateKey: "commentaires",
+	countKey: "commentairesTotalCount",
+	loadingKey: "commentairesLoading",
+	onHydrate: (store, entity, expand) => {
+		if (expand.includes("user")) {
+			const usersStore = useUsersStore();
+			usersStore.users[entity.id_user] = entity.user;
+		}
+	},
+});
+const documentResource = createNestedResource({
+	path: (idProjet) => `/projet/${idProjet}/document`,
+	idField: "id_projet_document",
+	stateKey: "documents",
+	countKey: "documentsTotalCount",
+	loadingKey: "documentsLoading",
+});
+const itemResource = createNestedResource({
+	path: (idProjet) => `/projet/${idProjet}/item`,
+	idField: "id_item",
+	stateKey: "items",
+	countKey: "itemsTotalCount",
+	loadingKey: "itemsLoading",
+	onHydrate: (store, entity, expand) => {
+		if (expand.includes("item")) {
+			const itemsStore = useItemsStore();
+			itemsStore.items[entity.id_item] = entity.item;
+		}
+	},
+});
+const projetTagProjetResource = createNestedResource({
+	path: (idProjet) => `/projet/${idProjet}/projet_tag`,
+	idField: "id_projet_tag",
+	stateKey: "projetTagProjet",
+	countKey: "projetTagProjetTotalCount",
+	loadingKey: "projetTagProjetLoading",
+	onHydrate: (store, entity, expand) => {
+		if (expand.includes("projet_tag")) {
+			const projetTagsStore = useProjetTagsStore();
+			projetTagsStore.projetTags[entity.id_projet_tag] = entity.projet_tag;
+		}
+	},
+});
+const statusHistoryResource = createNestedResource({
+	path: (idProjet) => `/projet/${idProjet}/status-history`,
+	idField: "id_projet_status",
+	stateKey: "statusHistory",
+	countKey: "statusHistoryTotalCount",
+	loadingKey: "statusHistoryLoading",
+});
 
 export const useProjetsStore = defineStore("projets",{
 	state: () => ({
@@ -85,416 +149,46 @@ export const useProjetsStore = defineStore("projets",{
 		statusHistory: {},
 	}),
 	actions: {
-		async getProjetByList(idResearch = [], expand = []) {
-			this.projetsLoading = true;
-			const paramString = buildQuery({ idResearch, expand });
-			const newProjetList = await fetchWrapper.get({
-				url: `${baseUrl}/projet?${paramString}`,
-				useToken: "access",
-			});
-			for (const projet of newProjetList["data"]) {
-				hydrateProjet(this, projet.id_projet, projet, expand);
-			}
-			this.projetsLoading = false;
-		},
-		async getProjetByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			this.projetsLoading = true;
-			if (clear) {
-				this.projets = {};
-			}
-			const paramString = buildQuery({ limit, offset, expand, filter, sort });
-			const newProjetList = await fetchWrapper.get({
-				url: `${baseUrl}/projet?${paramString}`,
-				useToken: "access",
-			});
-			for (const projet of newProjetList["data"]) {
-				hydrateProjet(this, projet.id_projet, projet, expand);
-			}
-			this.projetsTotalCount = newProjetList["pagination"]?.["total"] || 0;
-			this.projetsLoading = false;
-			return [newProjetList["pagination"]?.["nextOffset"] || 0, newProjetList["pagination"]?.["hasMore"] || false];
-		},
-		async getProjetById(id, expand = []) {
-			if (!this.projets[id]) {
-				this.projets[id] = {};
-			}
-			this.projets[id].loading = true;
-			const paramString = buildQuery({ expand });
-			const projet = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${id}?${paramString}`,
-				useToken: "access",
-			});
-			hydrateProjet(this, projet.id_projet, projet, expand);
-		},
-		async createProjet(params) {
-			const projet = await fetchWrapper.post({
-				url: `${baseUrl}/projet`,
-				useToken: "access",
-				body: params,
-			});
-			this.projets[projet.id_projet] = projet;
-			return projet.id_projet;
-		},
-		async updateProjet(id, params) {
-			this.projets[id] = await fetchWrapper.put({
-				url: `${baseUrl}/projet/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteProjet(id) {
-			await fetchWrapper.delete({
-				url: `${baseUrl}/projet/${id}`,
-				useToken: "access",
-			});
-			delete this.projets[id];
-		},
+		getProjetByList: projetResource.getByList,
+		getProjetByInterval: projetResource.getByInterval,
+		getProjetById: projetResource.getById,
+		createProjet: projetResource.create,
+		updateProjet: projetResource.update,
+		deleteProjet: projetResource.remove,
 
-		async getCommentaireByInterval(idProjet, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			if (!this.commentaires[idProjet] || clear) {
-				this.commentaires[idProjet] = {};
-			}
-			this.commentairesLoading = true;
-			const userStore = useUsersStore();
-			const paramString = buildQuery({ limit, offset, expand, filter, sort });
-			const newCommentaireList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/commentaire?${paramString}`,
-				useToken: "access",
-			});
-			for (const commentaire of newCommentaireList["data"]) {
-				this.commentaires[idProjet][commentaire.id_projet_commentaire] = commentaire;
-				if (expand.includes("user")) {
-					userStore.users[commentaire.id_user] = commentaire.user;
-				}
-			}
-			this.commentairesTotalCount[idProjet] = newCommentaireList["pagination"]?.["total"] || 0;
-			this.commentairesLoading = false;
-			return [newCommentaireList["pagination"]?.["nextOffset"] || 0, newCommentaireList["pagination"]?.["hasMore"] || false];
-		},
-		async getCommentaireById(idProjet, id, expand = []) {
-			if (!this.commentaires[idProjet]) {
-				this.commentaires[idProjet] = {};
-			}
-			if (!this.commentaires[idProjet][id]) {
-				this.commentaires[idProjet][id] = {};
-			}
-			this.commentaires[idProjet][id].loading = true;
-			const userStore = useUsersStore();
-			const paramString = buildQuery({ expand });
-			this.commentaires[idProjet][id] = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/commentaire/${id}?${paramString}`,
-				useToken: "access",
-			});
-			if (expand.includes("user")) {
-				userStore.users[this.commentaires[idProjet][id].id_user] = this.commentaires[idProjet][id].user;
-			}
-		},
-		async createCommentaire(idProjet, params) {
-			if (!this.commentaires[idProjet]) {
-				this.commentaires[idProjet] = {};
-			}
-			const commentaire = await fetchWrapper.post({
-				url: `${baseUrl}/projet/${idProjet}/commentaire`,
-				useToken: "access",
-				body: params,
-			});
-			this.commentaires[idProjet][commentaire.id_projet_commentaire] = commentaire;
-			this.commentairesTotalCount[idProjet] += 1;
-		},
-		async updateCommentaire(idProjet, id, params) {
-			if (!this.commentaires[idProjet]) {
-				this.commentaires[idProjet] = {};
-			}
-			this.commentaires[idProjet][id] = await fetchWrapper.put({
-				url: `${baseUrl}/projet/${idProjet}/commentaire/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteCommentaire(idProjet, id) {
-			if (!this.commentaires[idProjet]) {
-				this.commentaires[idProjet] = {};
-			}
-			await fetchWrapper.delete({
-				url: `${baseUrl}/projet/${idProjet}/commentaire/${id}`,
-				useToken: "access",
-			});
-			delete this.commentaires[idProjet][id];
-		},
+		getCommentaireByInterval: commentaireResource.getByInterval,
+		getCommentaireById: commentaireResource.getById,
+		createCommentaire: commentaireResource.create,
+		updateCommentaire: commentaireResource.update,
+		deleteCommentaire: commentaireResource.remove,
 
-		async getDocumentByInterval(idProjet, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			if (!this.documents[idProjet] || clear) {
-				this.documents[idProjet] = {};
-			}
-			this.documentsLoading = true;
-			const paramString = buildQuery({ limit, offset, expand, filter, sort });
-			const newDocumentList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/document?${paramString}`,
-				useToken: "access",
-			});
-			for (const document of newDocumentList["data"]) {
-				this.documents[idProjet][document.id_projet_document] = document;
-			}
-			this.documentsTotalCount[idProjet] = newDocumentList["pagination"]?.["total"] || 0;
-			this.documentsLoading = false;
-			return [newDocumentList["pagination"]?.["nextOffset"] || 0, newDocumentList["pagination"]?.["hasMore"] || false];
-		},
-		async getDocumentById(idProjet, id) {
-			if (!this.documents[idProjet]) {
-				this.documents[idProjet] = {};
-			}
-			if (!this.documents[idProjet][id]) {
-				this.documents[idProjet][id] = {};
-			}
-			this.documents[idProjet][id].loading = true;
-			this.documents[idProjet][id] = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/document/${id}`,
-				useToken: "access",
-			});
-		},
-		async createDocument(idProjet, params) {
-			if (!this.documents[idProjet]) {
-				this.documents[idProjet] = {};
-			}
-			const formData = new FormData();
-			formData.append("name_projet_document", params.name_projet_document);
-			formData.append("document", params.document);
-			const document = await fetchWrapper.post({
-				url: `${baseUrl}/projet/${idProjet}/document`,
-				useToken: "access",
-				body: formData,
-				contentFile: true,
-			});
-			this.documents[idProjet][document.id_projet_document] = document;
-		},
-		async updateDocument(idProjet, id, params) {
-			if (!this.documents[idProjet]) {
-				this.documents[idProjet] = {};
-			}
-			this.documents[idProjet][id] = await fetchWrapper.put({
-				url: `${baseUrl}/projet/${idProjet}/document/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteDocument(idProjet, id) {
-			if (!this.documents[idProjet]) {
-				this.documents[idProjet] = {};
-			}
-			await fetchWrapper.delete({
-				url: `${baseUrl}/projet/${idProjet}/document/${id}`,
-				useToken: "access",
-			});
-			delete this.documents[idProjet][id];
-		},
+		getDocumentByInterval: documentResource.getByInterval,
+		getDocumentById: documentResource.getById,
+		createDocument: documentResource.create,
+		updateDocument: documentResource.update,
+		deleteDocument: documentResource.remove,
 		async downloadDocument(idProjet, id) {
 			return await fetchWrapper.image({
 				url: `${baseUrl}/projet/${idProjet}/document/${id}/download`,
 				useToken: "access",
 			});
 		},
+		
+		getItemByInterval: itemResource.getByInterval,
+		getItemById: itemResource.getById,
+		createItem: itemResource.create,
+		updateItem: itemResource.update,
+		deleteItem: itemResource.remove,
+		createItemBulk: itemResource.createBulk,
+		
+		getProjetTagProjetByInterval: projetTagProjetResource.getByInterval,
+		getProjetTagProjetById: projetTagProjetResource.getById,
+		createProjetTagProjet: projetTagProjetResource.create,
+		deleteProjetTagProjet: projetTagProjetResource.remove,
+		createProjetTagProjetBulk: projetTagProjetResource.createBulk,
+		deleteProjetTagProjetBulk: projetTagProjetResource.removeBulk,
 
-		async getItemByInterval(idProjet, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			if (!this.items[idProjet] || clear) {
-				this.items[idProjet] = {};
-			}
-			this.itemsLoading = true;
-			const itemStore = useItemsStore();
-			const paramString = buildQuery({ limit, offset, expand, filter, sort });
-			const newItemList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/item?${paramString}`,
-				useToken: "access",
-			});
-			for (const item of newItemList["data"]) {
-				this.items[idProjet][item.id_item] = item;
-				if (expand.includes("item")) {
-					itemStore.items[item.id_item] = item.item;
-				}
-			}
-			this.itemsTotalCount[idProjet] = newItemList["pagination"]?.["total"] || 0;
-			this.itemsLoading = false;
-			return [newItemList["pagination"]?.["nextOffset"] || 0, newItemList["pagination"]?.["hasMore"] || false];
-		},
-		async getItemById(idProjet, id, expand = []) {
-			if (!this.items[idProjet]) {
-				this.items[idProjet] = {};
-			}
-			if (!this.items[idProjet][id]) {
-				this.items[idProjet][id] = {};
-			}
-			this.items[idProjet][id].loading = true;
-			const itemStore = useItemsStore();
-			const paramString = buildQuery({ expand });
-			this.items[idProjet][id] = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/item/${id}?${paramString}`,
-				useToken: "access",
-			});
-			if (expand.includes("item")) {
-				itemStore.items[id] = this.items[idProjet][id].item;
-			}
-		},
-		async createItem(idProjet, params) {
-			if (!this.items[idProjet]) {
-				this.items[idProjet] = {};
-			}
-			const item = await fetchWrapper.post({
-				url: `${baseUrl}/projet/${idProjet}/item`,
-				useToken: "access",
-				body: params,
-			});
-			this.items[idProjet][item.id_item] = item;
-		},
-		async updateItem(idProjet, id, params) {
-			if (!this.items[idProjet]) {
-				this.items[idProjet] = {};
-			}
-			this.items[idProjet][id] = await fetchWrapper.put({
-				url: `${baseUrl}/projet/${idProjet}/item/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteItem(idProjet, id) {
-			if (!this.items[idProjet]) {
-				this.items[idProjet] = {};
-			}
-			await fetchWrapper.delete({
-				url: `${baseUrl}/projet/${idProjet}/item/${id}`,
-				useToken: "access",
-			});
-			delete this.items[idProjet][id];
-		},
-		async createItemBulk(idProjet, params) {
-			if (!this.items[idProjet]) {
-				this.items[idProjet] = {};
-			}
-			const itemBulk = await fetchWrapper.post({
-				url: `${baseUrl}/projet/${idProjet}/item/bulk`,
-				useToken: "access",
-				body: params,
-			});
-			for (const item of itemBulk["valide"]) {
-				this.items[idProjet][item.id_item] = item;
-			}
-		},
-
-		async getProjetTagProjetByInterval(idProjet, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			if (!this.projetTagProjet[idProjet] || clear) {
-				this.projetTagProjet[idProjet] = {};
-			}
-			this.projetTagProjetLoading = true;
-			const projetTagStore = useProjetTagsStore();
-			const paramString = buildQuery({ limit, offset, expand, filter, sort });
-			const newProjetTagProjetList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/projet-tag?${paramString}`,
-				useToken: "access",
-			});
-			for (const projetTagProjet of newProjetTagProjetList["data"]) {
-				this.projetTagProjet[idProjet][projetTagProjet.id_projet_tag] = projetTagProjet;
-				if (expand.includes("projet_tag")) {
-					projetTagStore.projetTags[projetTagProjet.id_projet_tag] = projetTagProjet.projet_tag;
-				}
-			}
-			this.projetTagProjetTotalCount[idProjet] = newProjetTagProjetList["pagination"]?.["total"] || 0;
-			this.projetTagProjetLoading = false;
-			return [newProjetTagProjetList["pagination"]?.["nextOffset"] || 0, newProjetTagProjetList["pagination"]?.["hasMore"] || false];
-		},
-		async getProjetTagProjetById(idProjet, idProjetTag, expand = []) {
-			if (!this.projetTagProjet[idProjet]) {
-				this.projetTagProjet[idProjet] = {};
-			}
-			if (!this.projetTagProjet[idProjet][idProjetTag]) {
-				this.projetTagProjet[idProjet][idProjetTag] = {};
-			}
-			this.projetTagProjet[idProjet][idProjetTag].loading = true;
-			const projetTagStore = useProjetTagsStore();
-			const paramString = buildQuery({ expand });
-			this.projetTagProjet[idProjet][idProjetTag] = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/projet-tag/${idProjetTag}&${paramString}`,
-				useToken: "access",
-			});
-			if (expand.includes("projet_tag")) {
-				projetTagStore.projetTags[idProjetTag] = this.projetTagProjet[idProjet][idProjetTag].projet_tag;
-			}
-		},
-		async createProjetTagProjet(idProjet, params) {
-			if (!this.projetTagProjet[idProjet]) {
-				this.projetTagProjet[idProjet] = {};
-			}
-			const projetTag = await fetchWrapper.post({
-				url: `${baseUrl}/projet/${idProjet}/projet-tag`,
-				useToken: "access",
-				body: params,
-			});
-			this.projetTagProjet[idProjet][projetTag.id_projet_tag] = projetTag;
-		},
-		async deleteProjetTagProjet(idProjet, idProjetTag) {
-			if (!this.projetTagProjet[idProjet]) {
-				this.projetTagProjet[idProjet] = {};
-			}
-			await fetchWrapper.delete({
-				url: `${baseUrl}/projet/${idProjet}/projet-tag/${idProjetTag}`,
-				useToken: "access",
-			});
-			delete this.projetTagProjet[idProjet][idProjetTag];
-		},
-		async createProjetTagProjetBulk(idProjet, params) {
-			if (!this.projetTagProjet[idProjet]) {
-				this.projetTagProjet[idProjet] = {};
-			}
-			const projetTagBulk = await fetchWrapper.post({
-				url: `${baseUrl}/projet/${idProjet}/projet-tag/bulk`,
-				useToken: "access",
-				body: params,
-			});
-			for (const projetTagProjet of projetTagBulk["valide"]) {
-				this.projetTagProjet[idProjet][projetTagProjet.id_projet_tag] = projetTagProjet;
-			}
-		},
-		async deleteProjetTagProjetBulk(idProjet, params) {
-			if (!this.projetTagProjet[idProjet]) {
-				this.projetTagProjet[idProjet] = {};
-			}
-			const projetTagBulk = await fetchWrapper.delete({
-				url: `${baseUrl}/projet/${idProjet}/projet-tag/bulk`,
-				useToken: "access",
-				body: params,
-			});
-			for (const idProjetTag of projetTagBulk["valide"]) {
-				delete this.projetTagProjet[idProjet][idProjetTag];
-			}
-		},
-
-		async getStatusHistoryByInterval(idProjet, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			if (!this.statusHistory[idProjet] || clear) {
-				this.statusHistory[idProjet] = {};
-			}
-			this.statusHistoryLoading = true;
-			const paramString = buildQuery({ limit, offset, expand, filter, sort });
-			const newStatusHistoryList = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/status-history?${paramString}`,
-				useToken: "access",
-			});
-			for (const statusHistory of newStatusHistoryList["data"]) {
-				this.statusHistory[idProjet][statusHistory.id_projet_status] = statusHistory;
-			}
-			this.statusHistoryTotalCount[idProjet] = newStatusHistoryList["pagination"]?.["total"] || 0;
-			this.statusHistoryLoading = false;
-			return [newStatusHistoryList["pagination"]?.["nextOffset"] || 0, newStatusHistoryList["pagination"]?.["hasMore"] || false];
-		},
-		async getStatusHistoryById(idProjet, id, expand = []) {
-			if (!this.statusHistory[idProjet]) {
-				this.statusHistory[idProjet] = {};
-			}
-			if (!this.statusHistory[idProjet][id]) {
-				this.statusHistory[idProjet][id] = {};
-			}
-			this.statusHistory[idProjet][id].loading = true;
-			const paramString = buildQuery({ expand });
-			this.statusHistory[idProjet][id] = await fetchWrapper.get({
-				url: `${baseUrl}/projet/${idProjet}/status-history/${id}?${paramString}`,
-				useToken: "access",
-			});
-		},
+		getStatusHistoryByInterval: statusHistoryResource.getByInterval,
+		getStatusHistoryById: statusHistoryResource.getById,
 	},
 });
