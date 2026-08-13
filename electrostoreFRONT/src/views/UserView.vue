@@ -36,19 +36,9 @@ if ((!authStore.hasPermission([1, 2])) && authStore.user?.id_user !== Number(use
 
 async function fetchAllData() {
 	if (userId.value === "new") {
-		loadToEdition(userId.value);
-		if (preset.value) {
-			preset.value.split(";").forEach((pair) => {
-				const [key, value] = pair.split(":");
-				if (key && value) {
-					usersStore.userEdition[key] = value;
-				}
-			});
-		}
+		usersStore.loadToEdition(userId.value, preset.value);
 	} else {
-		usersStore.userEdition = {
-			loading: true,
-		};
+		usersStore.setLoadingEdition(userId.value, true);
 		try {
 			await usersStore.getUserById(userId.value);
 		} catch {
@@ -61,39 +51,18 @@ async function fetchAllData() {
 			}
 			return;
 		}
-		loadToEdition(userId.value);
-	}
-}
-function loadToEdition(id) {
-	if (id === "new") {
-		usersStore.userEdition = {
-			loading: false,
-		};
-	} else {
-		usersStore.userEdition = {
-			loading: false,
-			id_user: usersStore.users[id].id_user,
-			nom_user: usersStore.users[id].nom_user,
-			prenom_user: usersStore.users[id].prenom_user,
-			email_user: usersStore.users[id].email_user,
-			role_user: usersStore.users[id].role_user,
-			current_mdp_user: "",
-			mdp_user: "",
-			confirm_mdp_user: "",
-		};
+		usersStore.loadToEdition(userId.value);
 	}
 }
 onBeforeUnmount(() => {
-	usersStore.userEdition = {
-		loading: false,
-	};
+	usersStore.clearEdition(userId.value);
 });
 
 const userDeleteModalShow = ref(false);
 const userTypeRole = ref({ [UserRole.User]: t("user.FilterRole0"), [UserRole.Moderator]: t("user.FilterRole1"), [UserRole.Admin]: t("user.FilterRole2") });
 const userSave = async() => {
 	try {
-		usersStore.userEdition.loading = true;
+		usersStore.setLoadingEdition(userId.value, true);
 		const validationResults = await Promise.all([
 			formContainer.value?.validate(),
 		]);
@@ -104,32 +73,32 @@ const userSave = async() => {
 				message: t("user.FormValidationError", { count: nbErrors }),
 				type: "error",
 			});
-			usersStore.userEdition.loading = false;
+			usersStore.setLoadingEdition(userId.value, false);
 			return;
 		}
 		if (userId.value === "new") {
-			const newId = await usersStore.createUser({ ...usersStore.userEdition });
-			loadToEdition(newId);
+			const newId = await usersStore.createUser({ ...usersStore.userEdition[userId.value] });
+			usersStore.loadToEdition(newId);
 			addNotification({ message: t("user.Created"), type: "success" });
 			userId.value = String(newId);
 			router.push("/users/" + userId.value);
 		} else {
-			const data = { ...usersStore.userEdition };
+			const data = { ...usersStore.userEdition[userId.value] };
 			if (!data.mdp_user) {
 				delete data.mdp_user;
 				delete data.confirm_mdp_user;
 			}
 			await usersStore.updateUser(userId.value, data);
-			loadToEdition(userId.value);
+			usersStore.loadToEdition(userId.value);
 			addNotification({ message: t("user.Updated"), type: "success" });
 		}
-		usersStore.userEdition.mdp_user = "";
-		usersStore.userEdition.confirm_mdp_user = "";
-		usersStore.userEdition.current_mdp_user = "";
+		usersStore.userEdition[userId.value].mdp_user = "";
+		usersStore.userEdition[userId.value].confirm_mdp_user = "";
+		usersStore.userEdition[userId.value].current_mdp_user = "";
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	} finally {
-		usersStore.userEdition.loading = false;
+		usersStore.setLoadingEdition(userId.value, false);
 	}
 };
 const userDelete = async() => {
@@ -154,7 +123,7 @@ const revokeToken = async(tokenId) => {
 };
 
 const createSchema = () => {
-	const edition = usersStore.userEdition;
+	const edition = usersStore.userEdition[userId.value];
 	const shape = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
@@ -396,15 +365,15 @@ onMounted(() => {
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('user.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/users',
-				create: { sameUserId: true, showCondition: userId === 'new' && authStore.hasPermission([1, 2]), loading: usersStore.userEdition?.loading },
-				update: { sameUserId: true, showCondition: userId !== 'new' && authStore.hasPermission([1, 2]), loading: usersStore.userEdition?.loading },
+				create: { sameUserId: true, showCondition: userId === 'new' && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
+				update: { sameUserId: true, showCondition: userId !== 'new' && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
 				delete: { sameUserId: true, showCondition: userId !== 'new' && authStore.hasPermission([1, 2]) }
 			}"
 			@button-create="userSave" @button-update="userSave" @button-delete="userDeleteModalShow = true"/>
 	</div>
 	<div v-if="usersStore.users[userId] || userId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="usersStore.userEdition" :store-user="authStore.user"
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="usersStore.userEdition[userId]" :store-user="authStore.user"
 				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
 		</div>
 		<CollapsibleSection title="user.Participation" :permission="userId !=='new'">

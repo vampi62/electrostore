@@ -27,6 +27,40 @@ export const useIasStore = defineStore("ias", {
 		createIa: iaResource.create,
 		updateIa: iaResource.update,
 		deleteIa: iaResource.remove,
+		loadToEdition(id, preset = null) {
+			this.iaEdition[id] = {};
+			if (preset) {
+				preset.split(";").forEach((pair) => {
+					const [key, value] = pair.split(":");
+					if (key && value) {
+						this.iaEdition[id][key] = value;
+					}
+				});
+			}
+			if (id !== "new" && this.ias[id]) {
+				this.iaEdition[id] = {
+					loading: false,
+					nom_ia: this.ias[id].nom_ia,
+					description_ia: this.ias[id].description_ia,
+					date_ia: this.ias[id].date_ia,
+					trained_ia: this.ias[id].trained_ia,
+				};
+			} else {
+				this.iaEdition[id] = {
+					loading: false,
+				};
+			}
+		},
+		setLoadingEdition(id, loading) {
+			if (!this.iaEdition[id]) {
+				this.iaEdition[id] = {};
+			}
+			this.iaEdition[id].loading = loading;
+		},
+		clearEdition(id) {
+			delete this.iaEdition[id];
+		},
+
 		async getTrainStatus(id) {
 			this.status.train.loading = true;
 			this.status.train = await fetchWrapper.get({

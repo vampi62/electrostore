@@ -24,19 +24,9 @@ const formContainer = ref(null);
 
 async function fetchAllData() {
 	if (projetTagId.value === "new") {
-		loadToEdition(projetTagId.value);
-		if (preset.value) {
-			preset.value.split(";").forEach((pair) => {
-				const [key, value] = pair.split(":");
-				if (key && value) {
-					projetTagsStore.projetTagEdition[key] = value;
-				}
-			});
-		}
+		projetTagsStore.loadToEdition(projetTagId.value, preset.value);
 	} else {
-		projetTagsStore.projetTagEdition = {
-			loading: true,
-		};
+		projetTagsStore.setLoadingEdition(projetTagId.value, true);
 		try {
 			await projetTagsStore.getProjetTagById(projetTagId.value);
 		} catch {
@@ -45,29 +35,14 @@ async function fetchAllData() {
 			router.push("/projet-tags");
 			return;
 		}
-		loadToEdition(projetTagId.value);
-	}
-}
-function loadToEdition(id) {
-	if (id === "new") {
-		projetTagsStore.projetTagEdition = {
-			loading: false,
-		};
-	} else {
-		projetTagsStore.projetTagEdition = {
-			loading: false,
-			nom_projet_tag: projetTagsStore.projetTags[id].nom_projet_tag,
-			poids_projet_tag: projetTagsStore.projetTags[id].poids_projet_tag,
-		};
+		projetTagsStore.loadToEdition(projetTagId.value);
 	}
 }
 onMounted(() => {
 	fetchAllData();
 });
 onBeforeUnmount(() => {
-	projetTagsStore.projetTagEdition = {
-		loading: false,
-	};
+	projetTagsStore.clearEdition(projetTagId.value);
 });
 
 const projetTagDeleteModalShow = ref(false);
@@ -83,24 +58,24 @@ const projetTagSave = async() => {
 				message: t("projetTag.FormValidationError", { count: nbErrors }),
 				type: "error",
 			});
-			projetTagsStore.projetTagEdition.loading = false;
+			projetTagsStore.setLoadingEdition(projetTagId.value, false);
 			return;
 		}
 		if (projetTagId.value === "new") {
-			const newId = await projetTagsStore.createProjetTag({ ...projetTagsStore.projetTagEdition });
-			loadToEdition(newId);
+			const newId = await projetTagsStore.createProjetTag({ ...projetTagsStore.projetTagEdition[projetTagId.value] });
+			projetTagsStore.loadToEdition(newId);
 			addNotification({ message: t("projetTag.Created"), type: "success" });
 			projetTagId.value = String(newId);
 			router.push("/projet-tags/" + projetTagId.value);
 		} else {
-			await projetTagsStore.updateProjetTag(projetTagId.value, { ...projetTagsStore.projetTagEdition });
-			loadToEdition(projetTagId.value);
+			await projetTagsStore.updateProjetTag(projetTagId.value, { ...projetTagsStore.projetTagEdition[projetTagId.value] });
+			projetTagsStore.loadToEdition(projetTagId.value);
 			addNotification({ message: t("projetTag.Updated"), type: "success" });
 		}
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	} finally {
-		projetTagsStore.projetTagEdition.loading = false;
+		projetTagsStore.setLoadingEdition(projetTagId.value, false);
 	}
 };
 const projetTagDelete = async() => {
@@ -155,7 +130,7 @@ const filterProjet = ref([
 ]);
 
 const createSchema = () => {
-	const edition = projetTagsStore.projetTagEdition;
+	const edition = projetTagsStore.projetTagEdition[projetTagId.value];
 	const shape = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
@@ -218,15 +193,15 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('projetTag.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/projet-tags',
-				create: { showCondition: projetTagId === 'new' && authStore.hasPermission([0, 1, 2]), loading: projetTagsStore.projetTagEdition?.loading },
-				update: { showCondition: projetTagId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: projetTagsStore.projetTagEdition?.loading },
+				create: { showCondition: projetTagId === 'new' && authStore.hasPermission([0, 1, 2]), loading: projetTagsStore.projetTagEdition[projetTagId]?.loading },
+				update: { showCondition: projetTagId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: projetTagsStore.projetTagEdition[projetTagId]?.loading },
 				delete: { showCondition: projetTagId !== 'new' && authStore.hasPermission([0, 1, 2]) }
 			}"
 			@button-create="projetTagSave" @button-update="projetTagSave" @button-delete="projetTagDeleteModalShow = true"/>
 	</div>
 	<div v-if="projetTagsStore.projetTags[projetTagId] || projetTagId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="projetTagsStore.projetTagEdition"/>
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="projetTagsStore.projetTagEdition[projetTagId]"/>
 		</div>
 		<CollapsibleSection title="projetTag.Projets"
 			:total-count="Number(projetTagsStore.projetTagsProjetTotalCount[projetTagId] || 0)" :permission="projetTagId !=='new'">

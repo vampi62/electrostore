@@ -25,19 +25,9 @@ const formContainer = ref(null);
 
 async function fetchAllData() {
 	if (storeId.value === "new") {
-		loadToEdition(storeId.value);
-		if (preset.value) {
-			preset.value.split(";").forEach((pair) => {
-				const [key, value] = pair.split(":");
-				if (key && value) {
-					storesStore.storeEdition[storeId.value][key] = value;
-				}
-			});
-		}
+		storesStore.loadToEdition(storeId.value, preset.value);
 	} else {
-		storesStore.storeEdition[storeId.value] = {
-			loading: true,
-		};
+		storesStore.setLoadingEdition(storeId.value, true);
 		try {
 			await storesStore.getStoreById(storeId.value, ["boxs", "leds"]);
 		} catch {
@@ -47,40 +37,14 @@ async function fetchAllData() {
 			return;
 		}
 		storesStore.getTagStoreByInterval(storeId.value, 100, 0, ["tag"]);
-		loadToEdition(storeId.value);
-	}
-}
-function loadToEdition(id) {
-	if (id === "new") {
-		storesStore.storeEdition[id] = {
-			loading: false,
-		};
-		storesStore.ledEdition[id] = {};
-		storesStore.boxEdition[id] = {};
-	} else {
-		storesStore.storeEdition[id] = {
-			loading: false,
-			id_store: storesStore.stores[id].id_store,
-			nom_store: storesStore.stores[id].nom_store,
-			mqtt_name_store: storesStore.stores[id].mqtt_name_store,
-			xlength_store: storesStore.stores[id].xlength_store,
-			ylength_store: storesStore.stores[id].ylength_store,
-			is_mqtt_connected_store: storesStore.stores[id].is_mqtt_connected_store,
-			mqtt_last_seen_store: storesStore.stores[id].mqtt_last_seen_store,
-		};
-		storesStore.ledEdition[id] = { ...storesStore.leds[id] };
-		storesStore.boxEdition[id] = { ...storesStore.boxs[id] };
+		storesStore.loadToEdition(storeId.value);
 	}
 }
 onMounted(() => {
 	fetchAllData();
 });
 onBeforeUnmount(() => {
-	storesStore.storeEdition[storeId.value] = {
-		loading: false,
-	};
-	storesStore.ledEdition[storeId.value] = {};
-	storesStore.boxEdition[storeId.value] = {};
+	storesStore.clearEdition(storeId.value);
 });
 
 // store
@@ -98,11 +62,11 @@ const storeSave = async() => {
 				message: t("store.FormValidationError", { count: nbErrors }),
 				type: "error",
 			});
-			storesStore.storeEdition[storeId.value].loading = false;
+			storesStore.setLoadingEdition(storeId.value, false);
 			return;
 		}
 		if (!storeGrid.value.checkOutOfGrid()) {
-			storesStore.storeEdition[storeId.value].loading = false;
+			storesStore.setLoadingEdition(storeId.value, false);
 			return;
 		}
 		if (storeId.value === "new") {
@@ -111,7 +75,7 @@ const storeSave = async() => {
 				leds: Object.values(storesStore.ledEdition[storeId.value]),
 				boxs: Object.values(storesStore.boxEdition[storeId.value]),
 			});
-			loadToEdition(newId);
+			storesStore.loadToEdition(newId);
 			addNotification({ message: t("store.Created"), type: "success" });
 			storeId.value = String(newId);
 			router.push("/stores/" + storeId.value);
@@ -133,7 +97,7 @@ const storeSave = async() => {
 				leds: Object.values(storesStore.ledEdition[storeId.value]),
 				boxs: Object.values(storesStore.boxEdition[storeId.value]),
 			});
-			loadToEdition(storeId.value);
+			storesStore.loadToEdition(storeId.value);
 			addNotification({ message: t("store.Updated"), type: "success" });
 			await storesStore.getStoreById(storeId.value, ["boxs", "leds"]);
 			storesStore.storeEdition[storeId.value] = {

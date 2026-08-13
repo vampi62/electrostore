@@ -160,6 +160,51 @@ export const useStoresStore = defineStore("stores",{
 				body: params,
 			});
 		},
+		loadToEdition(id, preset = null) {
+			this.storeEdition[id] = {};
+			if (preset) {
+				this.storeEdition[id] = {};
+				preset.split(";").forEach((pair) => {
+					const [key, value] = pair.split(":");
+					if (key && value) {
+						this.storeEdition[id][key] = value;
+					}
+				});
+			}
+			if (id !== "new" && this.stores[id]) {
+				this.storeEdition[id] = {
+					loading: false,
+					id_store: this.stores[id].id_store,
+					nom_store: this.stores[id].nom_store,
+					mqtt_name_store: this.stores[id].mqtt_name_store,
+					xlength_store: this.stores[id].xlength_store,
+					ylength_store: this.stores[id].ylength_store,
+					is_mqtt_connected_store: this.stores[id].is_mqtt_connected_store,
+					mqtt_last_seen_store: this.stores[id].mqtt_last_seen_store,
+				};
+				this.ledEdition[id] = { ...this.leds[id] };
+				this.boxEdition[id] = { ...this.boxs[id] };
+			} else {
+				this.storeEdition[id] = {
+					loading: false,
+				};
+				this.ledEdition[id] = {};
+				this.boxEdition[id] = {};
+			}
+		},
+		setLoadingEdition(id, loading) {
+			if (!this.storeEdition[id]) {
+				this.storeEdition[id] = {};
+			}
+			this.storeEdition[id].loading = loading;
+		},
+		clearEdition(id) {
+			if (this.storeEdition && this.storeEdition[id]) {
+				delete this.storeEdition[id];
+				delete this.ledEdition[id];
+				delete this.boxEdition[id];
+			}
+		},
 
 		getBoxByInterval: boxResource.getByInterval,
 		getBoxById: boxResource.getById,

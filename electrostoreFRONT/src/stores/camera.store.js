@@ -41,6 +41,40 @@ export const useCamerasStore = defineStore("cameras",{
 		createCamera: cameraResource.create,
 		updateCamera: cameraResource.update,
 		deleteCamera: cameraResource.remove,
+		loadToEdition(id, preset = null) {
+			this.cameraEdition[id] = {};
+			if (preset) {
+				preset.split(";").forEach((pair) => {
+					const [key, value] = pair.split(":");
+					if (key && value) {
+						this.cameraEdition[id][key] = value;
+					}
+				});
+			}
+			if (id !== "new" && this.cameras[id]) {
+				this.cameraEdition[id] = {
+					loading: false,
+					nom_camera: this.cameras[id].nom_camera,
+					url_camera: this.cameras[id].url_camera,
+					user_camera: this.cameras[id].user_camera,
+					mdp_camera: this.cameras[id].mdp_camera,
+				};
+				this.cameraEdition[id]._check = (this.cameras[id].user_camera !== "") || (this.cameras[id].mdp_camera !== "");
+			} else {
+				this.cameraEdition[id] = {
+					loading: false,
+				};
+			}
+		},
+		setLoadingEdition(id, loading) {
+			if (!this.cameraEdition[id]) {
+				this.cameraEdition[id] = {};
+			}
+			this.cameraEdition[id].loading = loading;
+		},
+		clearEdition(id) {
+			delete this.cameraEdition[id];
+		},
 
 		async toggleLight(id) {
 			if (!this.status[id]) {
@@ -69,7 +103,9 @@ export const useCamerasStore = defineStore("cameras",{
 			});
 		},
 		stopStream(id) {
-			this.stream[id] = null;
+			if (this.stream[id]) {
+				delete this.stream[id];
+			}
 		},
 		async getStatus(id) {
 			if (!this.status[id]) {

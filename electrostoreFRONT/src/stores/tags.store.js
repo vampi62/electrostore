@@ -120,6 +120,43 @@ export const useTagsStore = defineStore("tags",{
 		updateTag: tagResource.update,
 		deleteTag: tagResource.remove,
 		createTagBulk: tagResource.createBulk,
+		loadToEdition(id, preset = null) {
+			this.tagEdition[id] = {};
+			if (preset) {
+				preset.split(";").forEach((pair) => {
+					const [key, value] = pair.split(":");
+					if (key && value) {
+						this.tagEdition[id][key] = value;
+					}
+				});
+			}
+			if (id !== "new" && this.tags[id]) {
+				this.tagEdition[id] = {
+					nom_tag: this.tags[id].nom_tag,
+					poids_tag: this.tags[id].poids_tag,
+					loading: false,
+				};
+			} else {
+				this.tagEdition[id] = {
+					loading: false,
+				};
+			}
+			this.tagItemEdition[id] = {};
+			this.tagStoreEdition[id] = {};
+			this.tagBoxEdition[id] = {};
+		},
+		setLoadingEdition(id, loading) {
+			if (!this.tagEdition[id]) {
+				this.tagEdition[id] = {};
+			}
+			this.tagEdition[id].loading = loading;
+		},
+		clearEdition(id) {
+			delete this.tagEdition[id];
+			delete this.tagItemEdition[id];
+			delete this.tagStoreEdition[id];
+			delete this.tagBoxEdition[id];
+		},
 
 		getTagStoreByInterval: tagStoreResource.getByInterval,
 		getTagStoreById: tagStoreResource.getById,

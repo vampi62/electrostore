@@ -229,6 +229,53 @@ export const useItemsStore = defineStore("items",{
 		createItem: itemResource.create,
 		updateItem: itemResource.update,
 		deleteItem: itemResource.remove,
+		loadToEdition(id, preset = null) {
+			this.itemEdition[id] = {};
+			if (preset) {
+				preset.split(";").forEach((pair) => {
+					const [key, value] = pair.split(":");
+					if (key && value) {
+						this.itemEdition[id][key] = value;
+					}
+				});
+			}
+			if (id !== "new" && this.items[id]) {
+				this.itemEdition[id] = {
+					loading: false,
+					id_item: this.items[id].id_item,
+					reference_name_item: this.items[id].reference_name_item,
+					friendly_name_item: this.items[id].friendly_name_item,
+					description_item: this.items[id].description_item,
+					seuil_min_item: this.items[id].seuil_min_item,
+					id_img: this.items[id].id_img,
+				};
+			} else {
+				this.itemEdition[id] = {
+					loading: false,
+				};
+			}
+			this.documentEdition[id] = {};
+			this.itemBoxEdition[id] = {};
+			this.itemTagEdition[id] = {};
+			this.itemCommandEdition[id] = {};
+			this.itemProjetEdition[id] = {};
+			this.imageEdition[id] = {};
+		},
+		setLoadingEdition(id, loading) {
+			if (!this.itemEdition[id]) {
+				this.itemEdition[id] = {};
+			}
+			this.itemEdition[id].loading = loading;
+		},
+		clearEdition(id) {
+			delete this.itemEdition[id];
+			delete this.documentEdition[id];
+			delete this.itemBoxEdition[id];
+			delete this.itemTagEdition[id];
+			delete this.itemCommandEdition[id];
+			delete this.itemProjetEdition[id];
+			delete this.imageEdition[id];
+		},
 
 		getDocumentByInterval: documentResource.getByInterval,
 		getDocumentById: documentResource.getById,

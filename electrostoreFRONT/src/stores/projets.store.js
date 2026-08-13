@@ -155,6 +155,49 @@ export const useProjetsStore = defineStore("projets",{
 		createProjet: projetResource.create,
 		updateProjet: projetResource.update,
 		deleteProjet: projetResource.remove,
+		loadToEdition(id, preset = null) {
+			this.projetEdition[id] = {};
+			if (preset) {
+				preset.split(";").forEach((pair) => {
+					const [key, value] = pair.split(":");
+					if (key && value) {
+						this.projetEdition[id][key] = value;
+					}
+				});
+			}
+			if (id !== "new" && this.projets[id]) {
+				this.projetEdition[id] = {
+					loading: false,
+					nom_projet: this.projets[id].nom_projet,
+					description_projet: this.projets[id].description_projet,
+					url_projet: this.projets[id].url_projet,
+					status_projet: this.projets[id].status_projet,
+					date_debut_projet: this.projets[id].date_debut_projet,
+					date_fin_projet: this.projets[id].date_fin_projet,
+				};
+			} else {
+				this.projetEdition[id] = {
+					loading: false,
+				};
+			}
+			this.commentaireEdition[id] = {};
+			this.documentEdition[id] = {};
+			this.itemEdition[id] = {};
+			this.projetTagProjetEdition[id] = {};
+		},
+		setLoadingEdition(id, loading) {
+			if (!this.projetEdition[id]) {
+				this.projetEdition[id] = {};
+			}
+			this.projetEdition[id].loading = loading;
+		},
+		clearEdition(id) {
+			delete this.projetEdition[id];
+			delete this.commentaireEdition[id];
+			delete this.documentEdition[id];
+			delete this.itemEdition[id];
+			delete this.projetTagProjetEdition[id];
+		},
 
 		getCommentaireByInterval: commentaireResource.getByInterval,
 		getCommentaireById: commentaireResource.getById,

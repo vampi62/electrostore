@@ -35,19 +35,9 @@ async function fetchAllData() {
 		if (Object.keys(carriersStore.carriers).length === 0) {
 			carriersStore.getCarrierByInterval(200, 0, "", "", false);
 		}
-		loadToEdition(commandId.value);
-		if (preset.value) {
-			preset.value.split(";").forEach((pair) => {
-				const [key, value] = pair.split(":");
-				if (key && value) {
-					commandsStore.commandEdition[key] = value;
-				}
-			});
-		}
+		commandsStore.loadToEdition(commandId.value, preset.value);
 	} else {
-		commandsStore.commandEdition = {
-			loading: true,
-		};
+		commandsStore.setLoadingEdition(commandId.value, true);
 		try {
 			await commandsStore.getCommandById(commandId.value, ["carrier"]);
 		} catch {
@@ -56,46 +46,16 @@ async function fetchAllData() {
 			router.push("/commands");
 			return;
 		}
-		loadToEdition(commandId.value);
+		commandsStore.loadToEdition(commandId.value);
 		commandsStore.getHistoryByInterval(commandId.value);
 		usersStore.users[authStore.user.id_user] = authStore.user; // avoids undefined user when the current user posts first comment
-	}
-}
-function loadToEdition(id) {
-	if (id === "new") {
-		commandsStore.commandEdition = {
-			loading: false,
-			is_tracking_requested: false,
-			is_tracking_validated: false,
-			is_active: true,
-			tracking_number: "",
-		};
-	} else {
-		commandsStore.commandEdition = {
-			prix_command: commandsStore.commands[id].prix_command,
-			url_command: commandsStore.commands[id].url_command,
-			status_command: commandsStore.commands[id].status_command,
-			date_command: commandsStore.commands[id].date_command,
-			date_livraison_command: commandsStore.commands[id].date_livraison_command,
-			tracking_number: commandsStore.commands[id].tracking_number,
-			id_carrier: commandsStore.commands[id].id_carrier,
-			is_tracking_requested: commandsStore.commands[id].is_tracking_requested,
-			is_tracking_validated: commandsStore.commands[id].is_tracking_validated,
-			is_active: commandsStore.commands[id].is_active,
-			shipper_adress: commandsStore.commands[id].shipper_adress,
-			recipient_adress: commandsStore.commands[id].recipient_adress,
-			last_status: commandsStore.commands[id].last_status,
-			loading: false,
-		};
 	}
 }
 onMounted(() => {
 	fetchAllData();
 });
 onBeforeUnmount(() => {
-	commandsStore.commandEdition = {
-		loading: false,
-	};
+	commandsStore.clearEdition(commandId.value);
 });
 
 // commande
@@ -180,7 +140,7 @@ const commandRoadmapStepColors = {
 	Archived: { completed: "bg-purple-400 text-white", current: "bg-purple-500 text-white", pending: "bg-purple-100 text-purple-600", border: "border-purple-500", badge: "bg-purple-200 text-purple-900", text: "text-purple-700", historyBorder: "border-purple-500" },
 };
 const commandCurrentStep = computed(() => {
-	const status = commandsStore.commandEdition?.status_command;
+	const status = commandsStore.commandEdition[commandId.value]?.status_command;
 	if (status === null || status === undefined) {
 		return 0;
 	}
@@ -214,7 +174,7 @@ const trackingRoadmapStepColors = {
 	Unknown: { completed: "bg-gray-400 text-white", current: "bg-gray-500 text-white", pending: "bg-gray-100 text-gray-500", border: "border-gray-500", badge: "bg-gray-300 text-gray-800", text: "text-gray-600", historyBorder: "border-gray-500" },
 };
 const trackingCurrentStep = computed(() => {
-	const status = commandsStore.commandEdition?.last_status;
+	const status = commandsStore.commandEdition[commandId.value]?.last_status;
 	if (status === null || status === undefined) {
 		return 0;
 	}
@@ -253,24 +213,24 @@ const commandSave = async() => {
 				message: t("command.FormValidationError", { count: nbErrors }),
 				type: "error",
 			});
-			commandsStore.commandEdition.loading = false;
+			commandsStore.setLoadingEdition(commandId.value, false);
 			return;
 		}
 		if (commandId.value === "new") {
-			const newId = await commandsStore.createCommand({ ...commandsStore.commandEdition });
-			loadToEdition(newId);
+			const newId = await commandsStore.createCommand({ ...commandsStore.commandEdition[commandId.value] });
+			commandsStore.loadToEdition(newId);
 			addNotification({ message: t("command.Created"), type: "success" });
 			commandId.value = String(newId);
 			router.push("/commands/" + commandId.value);
 		} else {
-			await commandsStore.updateCommand(commandId.value, { ...commandsStore.commandEdition });
-			loadToEdition(commandId.value);
+			await commandsStore.updateCommand(commandId.value, { ...commandsStore.commandEdition[commandId.value] });
+			commandsStore.loadToEdition(commandId.value);
 			addNotification({ message: t("command.Updated"), type: "success" });
 		}
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	} finally {
-		commandsStore.commandEdition.loading = false;
+		commandsStore.setLoadingEdition(commandId.value, false);
 	}
 };
 const commandDelete = async() => {
@@ -295,7 +255,7 @@ const trackingActivate = async() => {
 	trackingActivateLoading.value = true;
 	try {
 		await commandsStore.updateCommand(commandId.value, { is_tracking_requested: true });
-		loadToEdition(commandId.value);
+		commandsStore.loadToEdition(commandId.value);
 		addNotification({ message: t("command.TrackingActivated"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -307,7 +267,7 @@ const trackingStop = async() => {
 	trackingStopLoading.value = true;
 	try {
 		await commandsStore.updateCommand(commandId.value, { is_tracking_requested: false });
-		loadToEdition(commandId.value);
+		commandsStore.loadToEdition(commandId.value);
 		addNotification({ message: t("command.TrackingStopped"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -319,7 +279,7 @@ const trackingResume = async() => {
 	trackingResumeLoading.value = true;
 	try {
 		await commandsStore.updateCommand(commandId.value, { is_tracking_requested: true });
-		loadToEdition(commandId.value);
+		commandsStore.loadToEdition(commandId.value);
 		addNotification({ message: t("command.TrackingResumed"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -331,7 +291,7 @@ const trackingDelete = async() => {
 	trackingDeleteLoading.value = true;
 	try {
 		await commandsStore.updateCommand(commandId.value, { tracking_number: "" });
-		loadToEdition(commandId.value);
+		commandsStore.loadToEdition(commandId.value);
 		addNotification({ message: t("command.TrackingDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -343,7 +303,7 @@ const trackingRefresh = async() => {
 	trackingRefreshLoading.value = true;
 	try {
 		await commandsStore.getCommandById(commandId.value);
-		loadToEdition(commandId.value);
+		commandsStore.loadToEdition(commandId.value);
 		addNotification({ message: t("command.TrackingRefreshed"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -352,7 +312,7 @@ const trackingRefresh = async() => {
 	}
 };
 const trackingOptionalConfig = computed(() => {
-	const ed = commandsStore.commandEdition;
+	const ed = commandsStore.commandEdition[commandId.value];
 	const base = commandId.value !== "new" && !!ed?.tracking_number && !!ed?.id_carrier;
 	return [
 		{
@@ -493,7 +453,7 @@ const filterItem = ref([
 ]);
 
 const createSchema = () => {
-	const edition = commandsStore.commandEdition;
+	const edition = commandsStore.commandEdition[commandId.value];
 	const shape = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
@@ -726,8 +686,8 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('command.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/commands',
-				create: { showCondition: commandId === 'new' && authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition?.loading },
-				update: { showCondition: commandId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition?.loading },
+				create: { showCondition: commandId === 'new' && authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition[commandId]?.loading },
+				update: { showCondition: commandId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition[commandId]?.loading },
 				delete: { showCondition: commandId !== 'new' && authStore.hasPermission([0, 1, 2]) }
 			}"
 			:optional-config="trackingOptionalConfig"
@@ -741,9 +701,9 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			mode="horizontal-bottom"
 		/>
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="commandsStore.commandEdition" />
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="commandsStore.commandEdition[commandId]" />
 			<RoadMap
-				v-if="commandId !== 'new' && commandsStore.commandEdition?.last_status !== null && commandsStore.commandEdition?.last_status !== undefined"
+				v-if="commandId !== 'new' && commandsStore.commandEdition[commandId]?.last_status !== null && commandsStore.commandEdition[commandId]?.last_status !== undefined"
 				:steps="trackingRoadmapSteps"
 				:current-step="trackingCurrentStep"
 				:step-colors="trackingRoadmapStepColors"

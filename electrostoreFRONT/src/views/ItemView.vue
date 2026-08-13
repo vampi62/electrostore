@@ -32,19 +32,9 @@ const formContainer = ref(null);
 
 async function fetchAllData() {
 	if (itemId.value === "new") {
-		loadToEdition(itemId.value);
-		if (preset.value) {
-			preset.value.split(";").forEach((pair) => {
-				const [key, value] = pair.split(":");
-				if (key && value) {
-					itemsStore.itemEdition[key] = value;
-				}
-			});
-		}
+		itemsStore.loadToEdition(itemId.value, preset.value);
 	} else {
-		itemsStore.itemEdition = {
-			loading: true,
-		};
+		itemsStore.setLoadingEdition(itemId.value, true);
 		try {
 			await itemsStore.getItemById(itemId.value);
 		} catch {
@@ -55,40 +45,20 @@ async function fetchAllData() {
 		}
 		itemsStore.getItemTagByInterval(itemId.value, 100, 0, ["tag"]);
 		itemsStore.getImageByInterval(itemId.value, 100, 0);
-		loadToEdition(itemId.value);
-	}
-}
-function loadToEdition(id) {
-	if (id === "new") {
-		itemsStore.itemEdition = {
-			loading: false,
-		};
-	} else {
-		itemsStore.itemEdition = {
-			loading: false,
-			id_item: itemsStore.items[id].id_item,
-			reference_name_item: itemsStore.items[id].reference_name_item,
-			friendly_name_item: itemsStore.items[id].friendly_name_item,
-			description_item: itemsStore.items[id].description_item,
-			seuil_min_item: itemsStore.items[id].seuil_min_item,
-			id_img: itemsStore.items[id].id_img,
-		};
+		itemsStore.loadToEdition(itemId.value);
 	}
 }
 onMounted(() => {
 	fetchAllData();
-	window.addEventListener("click", () => {
-		selectedImageId.value = null;
-	});
+	window.addEventListener("click", handleClickOutside);
 });
 onBeforeUnmount(() => {
-	itemsStore.itemEdition = {
-		loading: false,
-	};
-	window.removeEventListener("click", () => {
-		selectedImageId.value = null;
-	});
+	itemsStore.clearEdition(itemId.value);
+	window.removeEventListener("click", handleClickOutside);
 });
+const handleClickOutside = () => {
+	selectedImageId.value = null;
+};
 
 const toggleBoxLed = async(boxId) => {
 	let storeId = itemsStore.itemBoxs[itemId.value][boxId]["box"].id_store;
@@ -114,12 +84,12 @@ const itemSave = async() => {
 				message: t("item.FormValidationError", { count: nbErrors }),
 				type: "error",
 			});
-			itemsStore.itemEdition.loading = false;
+			itemsStore.setLoadingEdition(itemId.value, false);
 			return;
 		}
 		if (itemId.value === "new") {
-			const newId = await itemsStore.createItem({ ...itemsStore.itemEdition });
-			loadToEdition(newId);
+			const newId = await itemsStore.createItem({ ...itemsStore.itemEdition[itemId.value] });
+			itemsStore.loadToEdition(newId);
 			if (itemsStore.items[newId].id_img) {
 				itemsStore.showImageById(itemsStore.items[newId].id_item, itemsStore.items[newId].id_img);
 			}
@@ -127,8 +97,8 @@ const itemSave = async() => {
 			itemId.value = String(newId);
 			router.push("/inventory/" + itemId.value);
 		} else {
-			await itemsStore.updateItem(itemId.value, { ...itemsStore.itemEdition });
-			loadToEdition(itemId.value);
+			await itemsStore.updateItem(itemId.value, { ...itemsStore.itemEdition[itemId.value] });
+			itemsStore.loadToEdition(itemId.value);
 			if (itemsStore.items[itemId.value].id_img) {
 				itemsStore.showImageById(itemsStore.items[itemId.value].id_item, itemsStore.items[itemId.value].id_img);
 			}
@@ -137,7 +107,7 @@ const itemSave = async() => {
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	} finally {
-		itemsStore.itemEdition.loading = false;
+		itemsStore.setLoadingEdition(itemId.value, false);
 	}
 };
 const itemDelete = async() => {
@@ -341,7 +311,7 @@ const schemaBox = Yup.object().shape({
 });
 
 const createSchema = () => {
-	const edition = itemsStore.itemEdition;
+	const edition = itemsStore.itemEdition[itemId.value];
 	const shape = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
@@ -547,22 +517,22 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('item.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/inventory',
-				create: { showCondition: itemId === 'new' && authStore.hasPermission([0, 1, 2]), loading: itemsStore.itemEdition?.loading },
-				update: { showCondition: itemId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: itemsStore.itemEdition?.loading },
+				create: { showCondition: itemId === 'new' && authStore.hasPermission([0, 1, 2]), loading: itemsStore.itemEdition[itemId]?.loading },
+				update: { showCondition: itemId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: itemsStore.itemEdition[itemId]?.loading },
 				delete: { showCondition: itemId !== 'new' && authStore.hasPermission([0, 1, 2]) }
 			}"
 			@button-create="itemSave" @button-update="itemSave" @button-delete="itemDeleteModalShow = true"/>
 	</div>
 	<div v-if="itemsStore.items[itemId] || itemId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="itemsStore.itemEdition">
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="itemsStore.itemEdition[itemId]">
 				<template #id_img>
 					<div class="flex justify-center items-center"
-						:class="{ 'cursor-pointer': !itemsStore.itemEdition?.loading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }"
+						:class="{ 'cursor-pointer': !itemsStore.itemEdition[itemId]?.loading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }"
 						@click="imageSelectOpenModal">
-						<template v-if="itemsStore.itemEdition.id_img">
-							<img v-if="itemsStore.thumbnailsURL[itemsStore.itemEdition.id_img]"
-								:src="itemsStore.thumbnailsURL[itemsStore.itemEdition.id_img]" alt="Main"
+						<template v-if="itemsStore.itemEdition[itemId].id_img">
+							<img v-if="itemsStore.thumbnailsURL[itemsStore.itemEdition[itemId].id_img]"
+								:src="itemsStore.thumbnailsURL[itemsStore.itemEdition[itemId].id_img]" alt="Main"
 								class="w-48 h-48 object-cover rounded" />
 							<span v-else class="w-48 h-48 object-cover rounded">
 								{{ $t('item.VInventoryLoading') }}
@@ -714,9 +684,9 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 						class="w-24 h-24 bg-gray-200 rounded m-2 flex items-center justify-center cursor-pointer">
 						<template v-if="itemsStore.thumbnailsURL[image.id_img]">
 							<img :src="itemsStore.thumbnailsURL[image.id_img]" :alt="image.nom_img"
-								:class="itemsStore.itemEdition.id_img == image.id_img ? 'border-2 border-blue-500' : 'border-2 border-transparent'"
+								:class="itemsStore.itemEdition[itemId].id_img == image.id_img ? 'border-2 border-blue-500' : 'border-2 border-transparent'"
 								class="w-24 h-24 object-cover rounded"
-								@click="itemsStore.itemEdition.id_img = image.id_img" />
+								@click="itemsStore.itemEdition[itemId].id_img = image.id_img" />
 						</template>
 						<template v-else>
 							{{ $t('item.ImageLoading') }}

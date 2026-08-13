@@ -129,6 +129,58 @@ export const useCommandsStore = defineStore("commands",{
 		createCommand: commandResource.create,
 		updateCommand: commandResource.update,
 		deleteCommand: commandResource.remove,
+		loadToEdition(id, preset = null) {
+			this.commandEdition[id] = {};
+			if (preset) {
+				preset.split(";").forEach((pair) => {
+					const [key, value] = pair.split(":");
+					if (key && value) {
+						this.commandEdition[id][key] = value;
+					}
+				});
+			}
+			if (id !== "new" && this.commands[id]) {
+				this.commandEdition[id] = {
+					prix_command: this.commands[id].prix_command,
+					url_command: this.commands[id].url_command,
+					status_command: this.commands[id].status_command,
+					date_command: this.commands[id].date_command,
+					date_livraison_command: this.commands[id].date_livraison_command,
+					tracking_number: this.commands[id].tracking_number,
+					id_carrier: this.commands[id].id_carrier,
+					is_tracking_requested: this.commands[id].is_tracking_requested,
+					is_tracking_validated: this.commands[id].is_tracking_validated,
+					is_active: this.commands[id].is_active,
+					shipper_adress: this.commands[id].shipper_adress,
+					recipient_adress: this.commands[id].recipient_adress,
+					last_status: this.commands[id].last_status,
+					loading: false,
+				};
+			} else {
+				this.commandEdition[id] = {
+					loading: false,
+					is_tracking_requested: false,
+					is_tracking_validated: false,
+					is_active: true,
+					tracking_number: "",
+				};
+			}
+			this.commentaireEdition[id] = {};
+			this.documentEdition[id] = {};
+			this.itemEdition[id] = {};
+		},
+		setLoadingEdition(id, loading) {
+			if (!this.commandEdition[id]) {
+				this.commandEdition[id] = {};
+			}
+			this.commandEdition[id].loading = loading;
+		},
+		clearEdition(id) {
+			delete this.commandEdition[id];
+			delete this.commentaireEdition[id];
+			delete this.documentEdition[id];
+			delete this.itemEdition[id];
+		},
 
 		getCommentaireByInterval: commentaireResource.getByInterval,
 		getCommentaireById: commentaireResource.getById,

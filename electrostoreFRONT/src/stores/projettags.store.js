@@ -69,6 +69,39 @@ export const useProjetTagsStore = defineStore("projetTags",{
 		updateProjetTag: projetTagResource.update,
 		deleteProjetTag: projetTagResource.remove,
 		createProjetTagBulk: projetTagResource.createBulk,
+		loadToEdition(id, preset = null) {
+			this.projetTagEdition[id] = {};
+			if (preset) {
+				preset.split(";").forEach((pair) => {
+					const [key, value] = pair.split(":");
+					if (key && value) {
+						this.projetTagEdition[id][key] = value;
+					}
+				});
+			}
+			if (id !== "new" && this.projetTags[id]) {
+				this.projetTagEdition[id] = {
+					loading: false,
+					nom_projet_tag: this.projetTags[id].nom_projet_tag,
+					poids_projet_tag: this.projetTags[id].poids_projet_tag,
+				};
+			} else {
+				this.projetTagEdition[id] = {
+					loading: false,
+				};
+			}
+			this.projetTagProjetEdition[id] = {};
+		},
+		setLoadingEdition(id, loading) {
+			if (!this.projetTagEdition[id]) {
+				this.projetTagEdition[id] = {};
+			}
+			this.projetTagEdition[id].loading = loading;
+		},
+		clearEdition(id) {
+			delete this.projetTagEdition[id];
+			delete this.projetTagProjetEdition[id];
+		},
 
 		getProjetTagProjetByInterval: projetTagProjetResource.getByInterval,
 		getProjetTagProjetById: projetTagProjetResource.getById,

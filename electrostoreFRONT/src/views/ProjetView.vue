@@ -30,19 +30,9 @@ const formContainer = ref(null);
 
 async function fetchAllData() {
 	if (projetId.value === "new") {
-		loadToEdition(projetId.value);
-		if (preset.value) {
-			preset.value.split(";").forEach((pair) => {
-				const [key, value] = pair.split(":");
-				if (key && value) {
-					projetsStore.projetEdition[key] = value;
-				}
-			});
-		}
+		projetsStore.loadToEdition(projetId.value, preset.value);
 	} else {
-		projetsStore.projetEdition = {
-			loading: true,
-		};
+		projetsStore.setLoadingEdition(projetId.value, true);
 		try {
 			await projetsStore.getProjetById(projetId.value);
 		} catch {
@@ -52,41 +42,22 @@ async function fetchAllData() {
 			return;
 		}
 		projetsStore.getProjetTagProjetByInterval(projetId.value, 100, 0, ["projet_tag"]);
-		loadToEdition(projetId.value);
+		projetsStore.loadToEdition(projetId.value);
 		usersStore.users[authStore.user.id_user] = authStore.user; // avoids undefined user when the current user posts first comment
-	}
-}
-function loadToEdition(id) {
-	if (id === "new") {
-		projetsStore.projetEdition = {
-			loading: false,
-		};
-	} else {
-		projetsStore.projetEdition = {
-			loading: false,
-			nom_projet: projetsStore.projets[id].nom_projet,
-			description_projet: projetsStore.projets[id].description_projet,
-			url_projet: projetsStore.projets[id].url_projet,
-			status_projet: projetsStore.projets[id].status_projet,
-			date_debut_projet: projetsStore.projets[id].date_debut_projet,
-			date_fin_projet: projetsStore.projets[id].date_fin_projet,
-		};
 	}
 }
 onMounted(() => {
 	fetchAllData();
 });
 onBeforeUnmount(() => {
-	projetsStore.projetEdition = {
-		loading: false,
-	};
+	projetsStore.clearEdition(projetId.value);
 });
 const dateDebut = computed(() => {
 	// don't return the GMT offset to avoid timezone issues
-	return projetsStore.projetEdition.date_debut_projet ? new Date(projetsStore.projetEdition.date_debut_projet).toISOString().replace(/.\d+Z$/, "").replace("T", " ") : null;
+	return projetsStore.projetEdition[projetId.value].date_debut_projet ? new Date(projetsStore.projetEdition[projetId.value].date_debut_projet).toISOString().replace(/.\d+Z$/, "").replace("T", " ") : null;
 });
 const dateFin = computed(() => {
-	return projetsStore.projetEdition.date_fin_projet ? new Date(projetsStore.projetEdition.date_fin_projet).toISOString().replace(/.\d+Z$/, "").replace("T", " ") : null;
+	return projetsStore.projetEdition[projetId.value].date_fin_projet ? new Date(projetsStore.projetEdition[projetId.value].date_fin_projet).toISOString().replace(/.\d+Z$/, "").replace("T", " ") : null;
 });
 
 // tag
@@ -126,7 +97,7 @@ const projetRoadmapSteps = [
 	{ id: ProjetStatus.Archived, name: "Archived" },
 ];
 const projetCurrentStep = computed(() => {
-	const status = projetsStore.projetEdition?.status_projet;
+	const status = projetsStore.projetEdition[projetId.value]?.status_projet;
 	if (status === null || status === undefined) {
 		return 0;
 	}
@@ -145,24 +116,24 @@ const projetSave = async() => {
 				message: t("projet.FormValidationError", { count: nbErrors }),
 				type: "error",
 			});
-			projetsStore.projetEdition.loading = false;
+			projetsStore.setLoadingEdition(projetId.value, false);
 			return;
 		}
 		if (projetId.value === "new") {
-			const newId = await projetsStore.createProjet({ ...projetsStore.projetEdition });
-			loadToEdition(newId);
+			const newId = await projetsStore.createProjet({ ...projetsStore.projetEdition[projetId.value] });
+			projetsStore.loadToEdition(newId);
 			addNotification({ message: t("projet.Created"), type: "success" });
 			projetId.value = String(newId);
 			router.push("/projets/" + projetId.value);
 		} else {
-			await projetsStore.updateProjet(projetId.value, { ...projetsStore.projetEdition });
-			loadToEdition(projetId.value);
+			await projetsStore.updateProjet(projetId.value, { ...projetsStore.projetEdition[projetId.value] });
+			projetsStore.loadToEdition(projetId.value);
 			addNotification({ message: t("projet.Updated"), type: "success" });
 		}
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	} finally {
-		projetsStore.projetEdition.loading = false;
+		projetsStore.setLoadingEdition(projetId.value, false);
 	}
 };
 const projetDelete = async() => {
@@ -272,7 +243,7 @@ const filterItem = ref([
 ]);
 
 const createSchema = () => {
-	const edition = projetsStore.projetEdition;
+	const edition = projetsStore.projetEdition[projetId.value];
 	const shape = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
@@ -504,8 +475,8 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		</RouterLink>
 		<TopButtonEditElement
 			:main-config="{ path: '/projets',
-				create: { showCondition: projetId === 'new' && authStore.hasPermission([0, 1, 2]), loading: projetsStore.projetEdition?.loading },
-				update: { showCondition: projetId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: projetsStore.projetEdition?.loading },
+				create: { showCondition: projetId === 'new' && authStore.hasPermission([0, 1, 2]), loading: projetsStore.projetEdition[projetId]?.loading },
+				update: { showCondition: projetId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: projetsStore.projetEdition[projetId]?.loading },
 				delete: { showCondition: projetId !== 'new' && authStore.hasPermission([0, 1, 2]) }
 			}"
 			@button-create="projetSave" @button-update="projetSave" @button-delete="projetDeleteModalShow = true"/>
@@ -517,7 +488,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			mode="horizontal-bottom"
 		/>
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="projetsStore.projetEdition"/>
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="projetsStore.projetEdition[projetId]"/>
 			<Tags :current-tags="projetsStore.projetTagProjet[projetId] || {}" :tags-store="projetTagsStore.projetTags" :can-edit="projetId !== 'new' && authStore.hasPermission([2])"
 				:delete-function="(value) => tagDelete(value)"
 				:filter-modal="filterTag"

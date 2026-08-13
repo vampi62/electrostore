@@ -128,6 +128,51 @@ export const useUsersStore = defineStore("users",{
 		createUser: userResource.create,
 		updateUser: userResource.update,
 		deleteUser: userResource.remove,
+		loadToEdition(id, preset = null) {
+			this.userEdition[id] = {};
+			if (preset) {
+				preset.split(";").forEach((pair) => {
+					const [key, value] = pair.split(":");
+					if (key && value) {
+						this.userEdition[id][key] = value;
+					}
+				});
+			}
+			if (id !== "new" && this.users[id]) {
+				this.userEdition[id] = {
+					loading: false,
+					id_user: this.users[id].id_user,
+					nom_user: this.users[id].nom_user,
+					prenom_user: this.users[id].prenom_user,
+					email_user: this.users[id].email_user,
+					role_user: this.users[id].role_user,
+					current_mdp_user: "",
+					mdp_user: "",
+					confirm_mdp_user: "",
+				};
+			} else {
+				this.userEdition[id] = {
+					loading: false,
+				};
+			}
+			this.projetCommentaireEdition[id] = {};
+			this.commandCommentaireEdition[id] = {};
+			this.tokensEdition[id] = {};
+			this.pushSubscriptionsEdition[id] = {};
+		},
+		setLoadingEdition(id, loading) {
+			if (!this.userEdition[id]) {
+				this.userEdition[id] = {};
+			}
+			this.userEdition[id].loading = loading;
+		},
+		clearEdition(id) {
+			delete this.userEdition[id];
+			delete this.projetCommentaireEdition[id];
+			delete this.commandCommentaireEdition[id];
+			delete this.tokensEdition[id];
+			delete this.pushSubscriptionsEdition[id];
+		},
 
 		getProjetCommentaireByInterval: projetCommentaireResource.getByInterval,
 		getProjetCommentaireById: projetCommentaireResource.getById,

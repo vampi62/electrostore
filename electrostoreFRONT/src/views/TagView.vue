@@ -25,19 +25,9 @@ const formContainer = ref(null);
 
 async function fetchAllData() {
 	if (tagId.value === "new") {
-		loadToEdition(tagId.value);
-		if (preset.value) {
-			preset.value.split(";").forEach((pair) => {
-				const [key, value] = pair.split(":");
-				if (key && value) {
-					tagsStore.tagEdition[key] = value;
-				}
-			});
-		}
+		tagsStore.loadToEdition(tagId.value, preset.value);
 	} else {
-		tagsStore.tagEdition = {
-			loading: true,
-		};
+		tagsStore.setLoadingEdition(tagId.value, true);
 		try {
 			await tagsStore.getTagById(tagId.value);
 		} catch {
@@ -46,32 +36,14 @@ async function fetchAllData() {
 			router.push("/tags");
 			return;
 		}
-		loadToEdition(tagId.value);
+		tagsStore.loadToEdition(tagId.value);
 	}
-}
-function loadToEdition(id) {
-	if (id === "new") {
-		tagsStore.tagEdition = {
-			loading: false,
-		};
-	} else {
-		tagsStore.tagEdition = {
-			nom_tag: tagsStore.tags[id].nom_tag,
-			poids_tag: tagsStore.tags[id].poids_tag,
-			loading: false,
-		};
-	}
-	tagsStore.tagItemEdition[id] = {};
-	tagsStore.tagStoreEdition[id] = {};
-	tagsStore.tagBoxEdition[id] = {};
 }
 onMounted(() => {
 	fetchAllData();
 });
 onBeforeUnmount(() => {
-	tagsStore.tagEdition = {
-		loading: false,
-	};
+	tagsStore.clearEdition(tagId.value);
 });
 
 const tagDeleteModalShow = ref(false);
@@ -87,25 +59,24 @@ const tagSave = async() => {
 				message: t("tag.FormValidationError", { count: nbErrors }),
 				type: "error",
 			});
-			tagsStore.tagEdition.loading = false;
+			tagsStore.setLoadingEdition(tagId.value, false);
 			return;
 		}
 		if (tagId.value === "new") {
-			const newId = await tagsStore.createTag({ ...tagsStore.tagEdition });
-			console.log("New tag created with ID:", newId);
-			loadToEdition(String(newId));
+			const newId = await tagsStore.createTag({ ...tagsStore.tagEdition[tagId.value] });
+			tagsStore.loadToEdition(String(newId));
 			addNotification({ message: t("tag.Created"), type: "success" });
 			tagId.value = String(newId);
 			router.push("/tags/" + tagId.value);
 		} else {
-			await tagsStore.updateTag(tagId.value, { ...tagsStore.tagEdition });
-			loadToEdition(tagId.value);
+			await tagsStore.updateTag(tagId.value, { ...tagsStore.tagEdition[tagId.value] });
+			tagsStore.loadToEdition(tagId.value);
 			addNotification({ message: t("tag.Updated"), type: "success" });
 		}
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	} finally {
-		tagsStore.tagEdition.loading = false;
+		tagsStore.setLoadingEdition(tagId.value, false);
 	}
 };
 const tagDelete = async() => {
@@ -220,7 +191,7 @@ const boxDelete = async(box) => {
 };
 
 const createSchema = () => {
-	const edition = tagsStore.tagEdition;
+	const edition = tagsStore.tagEdition[tagId.value];
 	const shape = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
@@ -332,15 +303,15 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('tag.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/tags',
-				create: { showCondition: tagId === 'new' && authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition?.loading },
-				update: { showCondition: tagId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition?.loading },
+				create: { showCondition: tagId === 'new' && authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition[tagId]?.loading },
+				update: { showCondition: tagId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition[tagId]?.loading },
 				delete: { showCondition: tagId !== 'new' && authStore.hasPermission([0, 1, 2]) }
 			}"
 			@button-create="tagSave" @button-update="tagSave" @button-delete="tagDeleteModalShow = true"/>
 	</div>
 	<div v-if="tagsStore.tags[tagId] || tagId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="tagsStore.tagEdition"/>
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="tagsStore.tagEdition[tagId]"/>
 		</div>
 		<CollapsibleSection title="tag.Items"
 			:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)" :permission="tagId !=='new'">
