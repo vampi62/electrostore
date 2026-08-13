@@ -29,4 +29,8 @@ module.exports = {
 		"array-bracket-spacing": ["error", "never"],
 		"vue/no-mutating-props": 0,
 	},
+	parserOptions: {
+		ecmaVersion: 2022,
+		sourceType: "module",
+	},
 };

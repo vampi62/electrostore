@@ -2,7 +2,8 @@ import { createApp, defineAsyncComponent } from "vue";
 import { createPinia } from "pinia";
 
 import App from "./App.vue";
-import { i18n, useNotification } from "./helpers";
+import { useNotification } from "./composables";
+import { i18n } from "./plugins";
 import router from "./router";
 
 import { library } from "@fortawesome/fontawesome-svg-core";
@@ -35,69 +36,11 @@ app.use(createPinia());
 app.use(router);
 app.use(i18n);
 app.provide("useNotification", useNotification());
-app.component(
-	"CollapsibleSection",
-	defineAsyncComponent(() => import("@/components/CollapsibleSection.vue")),
-);
-app.component(
-	"Commentaire",
-	defineAsyncComponent(() => import("@/components/Commentaire.vue")),
-);
-app.component(
-	"FilterContainer",
-	defineAsyncComponent(() => import("@/components/FilterContainer.vue")),
-);
-app.component(
-	"FormContainer",
-	defineAsyncComponent(() => import("@/components/FormContainer.vue")),
-);
-app.component(
-	"ModalDeleteConfirm",
-	defineAsyncComponent(() => import("@/components/ModalDeleteConfirm.vue")),
-);
-app.component(
-	"ModalFinder",
-	defineAsyncComponent(() => import("@/components/ModalFinder.vue")),
-);
-app.component(
-	"ModalMultipleFiles",
-	defineAsyncComponent(() => import("@/components/ModalMultipleFiles.vue")),
-);
-app.component(
-	"NavBar",
-	defineAsyncComponent(() => import("@/components/NavBar.vue")),
-);
-app.component(
-	"NotificationAppUpdate",
-	defineAsyncComponent(() => import("@/components/NotificationAppUpdate.vue")),
-);
-app.component(
-	"NotificationContainer",
-	defineAsyncComponent(() => import("@/components/NotificationContainer.vue")),
-);
-app.component(
-	"RoadMap",
-	defineAsyncComponent(() => import("@/components/RoadMap.vue")),
-);
-app.component(
-	"StatusDisplay",
-	defineAsyncComponent(() => import("@/components/StatusDisplay.vue")),
-);
-app.component(
-	"Store",
-	defineAsyncComponent(() => import("@/components/Store.vue")),
-);
-app.component(
-	"Tableau",
-	defineAsyncComponent(() => import("@/components/Tableau.vue")),
-);
-app.component(
-	"Tags",
-	defineAsyncComponent(() => import("@/components/Tags.vue")),
-);
-app.component(
-	"TopButtonEditElement",
-	defineAsyncComponent(() => import("@/components/TopButtonEditElement.vue")),
-);
+
+const components = import.meta.glob("./components/*.vue");
+for (const path in components) {
+	const componentName = path.split("/").pop().replace(/\.vue$/, "");
+	app.component(componentName, defineAsyncComponent(components[path]));
+}
 
 app.mount("#app");

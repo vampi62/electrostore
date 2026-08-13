@@ -1,10 +1,53 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper } from "@/helpers";
+import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
 
 import { useProjetsStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
+
+const EXPAND_HANDLERS = {
+	projets_projet_tags: (store, idProjetTag, projetTag) => {
+		store.projetTagsProjet[idProjetTag] = {};
+		for (const projetTagProjet of projetTag.projets_projet_tags) {
+			store.projetTagsProjet[idProjetTag][projetTagProjet.id_projet] = projetTagProjet;
+		}
+	},
+};
+
+function hydrateProjetTag(store, idProjetTag, projetTag, expand = []) {
+	store.projetTagsProjetTotalCount[idProjetTag] = projetTag.projets_projet_tags_count;
+	for (const key of expand) {
+		if (EXPAND_HANDLERS[key]) {
+			EXPAND_HANDLERS[key](store, idProjetTag, projetTag);
+		}
+	}
+}
+
+const projetTagResource = createMainResource({
+	path: () => "/projet-tag",
+	idField: "id_projet_tag",
+	stateKey: "projetTags",
+	countKey: "projetTagsTotalCount",
+	loadingKey: "projetTagsLoading",
+	onHydrate: (store, entity, expand) => {
+		hydrateProjetTag(store, entity.id_projet_tag, entity, expand);
+	},
+});
+
+const projetTagProjetResource = createNestedResource({
+	path: (idProjetTag) => `/projet-tag/${idProjetTag}/projet`,
+	idField: "id_projet",
+	stateKey: "projetTagsProjet",
+	countKey: "projetTagsProjetTotalCount",
+	loadingKey: "projetTagsProjetLoading",
+	onHydrate: (store, idProjetTag, entity, expand) => {
+		if (expand.includes("projet")) {
+			const projetsStore = useProjetsStore();
+			projetsStore.projets[entity.id_projet] = entity.projet;
+		}
+	},
+});
 
 export const useProjetTagsStore = defineStore("projetTags",{
 	state: () => ({
@@ -19,201 +62,52 @@ export const useProjetTagsStore = defineStore("projetTags",{
 		projetTagProjetEdition: {},
 	}),
 	actions: {
-		async getProjetTagByList(idResearch = [], expand = []) {
-			this.projetTagsLoading = true;
-			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const paramString = [idResearchString, expandString].join("&");
-			const newProjetTagList = await fetchWrapper.get({
-				url: `${baseUrl}/projet-tag?${paramString}`,
-				useToken: "access",
-			});
-			for (const projetTag of newProjetTagList["data"]) {
-				this.projetTags[projetTag.id_projet_tag] = projetTag;
-				this.projetTagsProjetTotalCount[projetTag.id_projet_tag] = projetTag.projets_projet_tags_count;
-				if (expand.includes("projets_projet_tags")) {
-					this.projetTagsProjet[projetTag.id_projet_tag] = {};
-					for (const projetTagProjet of projetTag.projets_projet_tags) {
-						this.projetTagsProjet[projetTag.id_projet_tag][projetTagProjet.id_projet] = projetTagProjet;
+		getProjetTagByList: projetTagResource.getByList,
+		getProjetTagByInterval: projetTagResource.getByInterval,
+		getProjetTagById: projetTagResource.getById,
+		createProjetTag: projetTagResource.create,
+		updateProjetTag: projetTagResource.update,
+		deleteProjetTag: projetTagResource.remove,
+		createProjetTagBulk: projetTagResource.createBulk,
+		loadToEdition(id, preset = null) {
+			this.projetTagEdition[id] = {};
+			if (preset) {
+				preset.split(";").forEach((pair) => {
+					const [key, value] = pair.split(":");
+					if (key && value) {
+						this.projetTagEdition[id][key] = value;
 					}
-				}
+				});
 			}
-			this.projetTagsLoading = false;
+			if (id !== "new" && this.projetTags[id]) {
+				this.projetTagEdition[id] = {
+					loading: false,
+					nom_projet_tag: this.projetTags[id].nom_projet_tag,
+					poids_projet_tag: this.projetTags[id].poids_projet_tag,
+				};
+			} else {
+				this.projetTagEdition[id] = {
+					loading: false,
+				};
+			}
+			this.projetTagProjetEdition[id] = {};
 		},
-		async getProjetTagByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			this.projetTagsLoading = true;
-			if (clear) {
-				this.projetTags = {};
+		setLoadingEdition(id, loading) {
+			if (!this.projetTagEdition[id]) {
+				this.projetTagEdition[id] = {};
 			}
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
-			const newProjetTagList = await fetchWrapper.get({
-				url: `${baseUrl}/projet-tag?${paramString}`,
-				useToken: "access",
-			});
-			for (const projetTag of newProjetTagList["data"]) {
-				this.projetTags[projetTag.id_projet_tag] = projetTag;
-				this.projetTagsProjetTotalCount[projetTag.id_projet_tag] = projetTag.projets_projet_tags_count;
-				if (expand.includes("projets_projet_tags")) {
-					this.projetTagsProjet[projetTag.id_projet_tag] = {};
-					for (const projetTagProjet of projetTag.projets_projet_tags) {
-						this.projetTagsProjet[projetTag.id_projet_tag][projetTagProjet.id_projet] = projetTagProjet;
-					}
-				}
-			}
-			this.projetTagsTotalCount = newProjetTagList["pagination"]?.["total"] || 0;
-			this.projetTagsLoading = false;
-			return [newProjetTagList["pagination"]?.["nextOffset"] || 0, newProjetTagList["pagination"]?.["hasMore"] || false];
+			this.projetTagEdition[id].loading = loading;
 		},
-		async getProjetTagById(id, expand = []) {
-			if (!this.projetTags[id]) {
-				this.projetTags[id] = {};
-			}
-			this.projetTags[id].loading = true;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			this.projetTags[id] = await fetchWrapper.get({
-				url: `${baseUrl}/projet-tag/${id}?${expandString}`,
-				useToken: "access",
-			});
-			this.projetTagsProjetTotalCount[id] = this.projetTags[id].projets_projet_tags_count;
-			if (expand.includes("projets_projet_tags")) {
-				this.projetTagsProjet[id] = {};
-				for (const projetTagProjet of this.projetTags[id].projets_projet_tags) {
-					this.projetTagsProjet[id][projetTagProjet.id_projet] = projetTagProjet;
-				}
-			}
-		},
-		async createProjetTag(params) {
-			const projetTag = await fetchWrapper.post({
-				url: `${baseUrl}/projet-tag`,
-				useToken: "access",
-				body: params,
-			});
-			this.projetTags[projetTag.id_projet_tag] = projetTag;
-			return projetTag.id_projet_tag;
-		},
-		async updateProjetTag(id, params) {
-			if (params.nom_projet_tag === this.projetTags[id].nom_projet_tag) {
-				delete params.nom_projet_tag;
-			}
-			this.projetTags[id] = await fetchWrapper.put({
-				url: `${baseUrl}/projet-tag/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteProjetTag(id) {
-			await fetchWrapper.delete({
-				url: `${baseUrl}/projet-tag/${id}`,
-				useToken: "access",
-			});
-			delete this.projetTags[id];
-		},
-		async createProjetTagBulk(params) {
-			const projetTagBulk = await fetchWrapper.post({
-				url: `${baseUrl}/projet-tag/bulk`,
-				useToken: "access",
-				body: params,
-			});
-			for (const projetTag of projetTagBulk["valide"]) {
-				this.projetTags[projetTag.id_projet_tag] = projetTag;
-			}
+		clearEdition(id) {
+			delete this.projetTagEdition[id];
+			delete this.projetTagProjetEdition[id];
 		},
 
-		async getProjetTagProjetByInterval(idProjetTag, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			if (!this.projetTagsProjet[idProjetTag] || clear) {
-				this.projetTagsProjet[idProjetTag] = {};
-			}
-			this.projetTagsProjetLoading = true;
-			const projetsStore = useProjetsStore();
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
-			const newProjetTagProjetList = await fetchWrapper.get({
-				url: `${baseUrl}/projet-tag/${idProjetTag}/projet?${paramString}`,
-				useToken: "access",
-			});
-			for (const projetTagProjet of newProjetTagProjetList["data"]) {
-				this.projetTagsProjet[idProjetTag][projetTagProjet.id_projet] = projetTagProjet;
-				if (expand.includes("projet")) {
-					projetsStore.projets[projetTagProjet.id_projet] = projetTagProjet.projet;
-				}
-			}
-			this.projetTagsProjetTotalCount[idProjetTag] = newProjetTagProjetList["pagination"]?.["total"] || 0;
-			this.projetTagsProjetLoading = false;
-			return [newProjetTagProjetList["pagination"]?.["nextOffset"] || 0, newProjetTagProjetList["pagination"]?.["hasMore"] || false];
-		},
-		async getProjetTagProjetById(idProjetTag, idProjet, expand = []) {
-			if (!this.projetTagsProjet[idProjetTag]) {
-				this.projetTagsProjet[idProjetTag] = {};
-			}
-			if (!this.projetTagsProjet[idProjetTag][idProjet]) {
-				this.projetTagsProjet[idProjetTag][idProjet] = {};
-			}
-			this.projetTagsProjet[idProjetTag][idProjet].loading = true;
-			const projetsStore = useProjetsStore();
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			this.projetTagsProjet[idProjetTag][idProjet] = await fetchWrapper.get({
-				url: `${baseUrl}/projet-tag/${idProjetTag}/projet/${idProjet}&${expandString}`,
-				useToken: "access",
-			});
-			if (expand.includes("projet")) {
-				projetsStore.projets[this.projetTagsProjet[idProjetTag].id_projet] = this.projetTagsProjet[idProjetTag].projet;
-			}
-		},
-		async createProjetTagProjet(idProjetTag, params) {
-			if (!this.projetTagsProjet[idProjetTag]) {
-				this.projetTagsProjet[idProjetTag] = {};
-			}
-			const projetTagProjet = await fetchWrapper.post({
-				url: `${baseUrl}/projet-tag/${idProjetTag}/projet`,
-				useToken: "access",
-				body: params,
-			});
-			this.projetTagsProjet[idProjetTag][params.id_projet] = projetTagProjet;
-		},
-		async deleteProjetTagProjet(idProjetTag, idProjet) {
-			if (!this.projetTagsProjet[idProjetTag]) {
-				this.projetTagsProjet[idProjetTag] = {};
-			}
-			await fetchWrapper.delete({
-				url: `${baseUrl}/projet-tag/${idProjetTag}/projet/${idProjet}`,
-				useToken: "access",
-			});
-			delete this.projetTagsProjet[idProjetTag][idProjet];
-		},
-		async createProjetTagProjetBulk(idProjetTag, params) {
-			if (!this.projetTagsProjet[idProjetTag]) {
-				this.projetTagsProjet[idProjetTag] = {};
-			}
-			const projetTagProjetBulk = await fetchWrapper.post({
-				url: `${baseUrl}/projet-tag/${idProjetTag}/projet/bulk`,
-				useToken: "access",
-				body: params,
-			});
-			for (const projetTagProjet of projetTagProjetBulk["valide"]) {
-				this.projetTagsProjet[idProjetTag][projetTagProjet.id_projet] = projetTagProjet;
-			}
-		},
-		async deleteProjetTagProjetBulk(idProjetTag, params) {
-			if (!this.projetTagsProjet[idProjetTag]) {
-				this.projetTagsProjet[idProjetTag] = {};
-			}
-			const projetTagProjetBulk = await fetchWrapper.delete({
-				url: `${baseUrl}/projet-tag/${idProjetTag}/projet/bulk`,
-				useToken: "access",
-				body: params,
-			});
-			for (const projetTagProjet of projetTagProjetBulk["valide"]) {
-				delete this.projetTagsProjet[idProjetTag][projetTagProjet.id_projet];
-			}
-		},
+		getProjetTagProjetByInterval: projetTagProjetResource.getByInterval,
+		getProjetTagProjetById: projetTagProjetResource.getById,
+		createProjetTagProjet: projetTagProjetResource.create,
+		deleteProjetTagProjet: projetTagProjetResource.remove,
+		createProjetTagProjetBulk: projetTagProjetResource.createBulk,
+		deleteProjetTagProjetBulk: projetTagProjetResource.removeBulk,
 	},
 });

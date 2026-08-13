@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper } from "@/helpers";
+import { fetchWrapper, buildQuery } from "@/helpers";
 
 import { getExtension } from "@/utils/mimeTypes.js";
 

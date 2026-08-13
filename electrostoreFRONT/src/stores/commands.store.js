@@ -1,10 +1,100 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper } from "@/helpers";
+import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
 
 import { useUsersStore, useItemsStore, useCarriersStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
+
+const EXPAND_HANDLERS = {
+	commands_commentaires: (store, idCommand, data) => {
+		store.commentaires[idCommand] = {};
+		for (const commentaire of data) {
+			store.commentaires[idCommand][commentaire.id_command_commentaire] = commentaire;
+		}
+	},
+	commands_documents: (store, idCommand, data) => {
+		store.documents[idCommand] = {};
+		for (const document of data) {
+			store.documents[idCommand][document.id_command_document] = document;
+		}
+	},
+	commands_history: (store, idCommand, data) => {
+		store.history[idCommand] = {};
+		for (const historyEntry of data) {
+			store.history[idCommand][historyEntry.id_command_history] = historyEntry;
+		}
+	},
+	commands_items: (store, idCommand, data) => {
+		store.items[idCommand] = {};
+		for (const item of data) {
+			store.items[idCommand][item.id_item] = item;
+		}
+	},
+	carrier: (store, idCommand, data) => {
+		if (data) {
+			const carriersStore = useCarriersStore();
+			carriersStore.carriers[data.id_carrier] = data;
+		}
+	},
+};
+
+function hydrateCommand(store, idCommand, command, expand = []) {
+	store.commentairesTotalCount[idCommand] = command.commands_commentaires_count;
+	store.documentsTotalCount[idCommand] = command.commands_documents_count;
+	store.itemsTotalCount[idCommand] = command.commands_items_count;
+	for (const key of expand) {
+		if (EXPAND_HANDLERS[key]) {
+			EXPAND_HANDLERS[key](store, idCommand, command[key]);
+		}
+	}
+}
+
+const commandResource = createMainResource({
+	path: () => "/command",
+	idField: "id_command",
+	stateKey: "commands",
+	countKey: "commandsTotalCount",
+	loadingKey: "commandsLoading",
+	onHydrate: (store, entity, expand) => {
+		hydrateCommand(store, entity.id_command, entity, expand);
+	},
+});
+
+const commentaireResource = createNestedResource({
+	path: (idCommand) => `/command/${idCommand}/commentaire`,
+	idField: "id_command_commentaire",
+	stateKey: "commentaires",
+	countKey: "commentairesTotalCount",
+	loadingKey: "commentairesLoading",
+	onHydrate: (store, entity, expand) => {
+		if (expand.includes("user")) {
+			const usersStore = useUsersStore();
+			usersStore.users[entity.id_user] = entity.user;
+		}
+	},
+});
+const documentResource = createNestedResource({
+	path: (idCommand) => `/command/${idCommand}/document`,
+	idField: "id_command_document",
+	stateKey: "documents",
+	countKey: "documentsTotalCount",
+	loadingKey: "documentsLoading",
+});
+const itemResource = createNestedResource({
+	path: (idCommand) => `/command/${idCommand}/item`,
+	idField: "id_item",
+	stateKey: "items",
+	countKey: "itemsTotalCount",
+	loadingKey: "itemsLoading",
+});
+const historyResource = createNestedResource({
+	path: (idCommand) => `/command/${idCommand}/history`,
+	idField: "id_command_history",
+	stateKey: "history",
+	countKey: "historyTotalCount",
+	loadingKey: "historyLoading",
+});
 
 export const useCommandsStore = defineStore("commands",{
 	state: () => ({
@@ -33,323 +123,76 @@ export const useCommandsStore = defineStore("commands",{
 		history: {},
 	}),
 	actions: {
-		async getCommandByList(idResearch = [], expand = []) {
-			this.commandsLoading = true;
-			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const paramString = [idResearchString, expandString].join("&");
-			const newCommandList = await fetchWrapper.get({
-				url: `${baseUrl}/command?${paramString}`,
-				useToken: "access",
-			});
-			for (const command of newCommandList["data"]) {
-				this.commands[command.id_command] = command;
-				this.commentairesTotalCount[command.id_command] = command.commands_commentaires_count;
-				this.documentsTotalCount[command.id_command] = command.commands_documents_count;
-				this.itemsTotalCount[command.id_command] = command.commands_items_count;
-				if (expand.includes("commands_commentaires")) {
-					this.commentaires[command.id_command] = {};
-					for (const commentaire of command.commands_commentaires) {
-						this.commentaires[command.id_command][commentaire.id_command_commentaire] = commentaire;
+		getCommandByList: commandResource.getByList,
+		getCommandByInterval: commandResource.getByInterval,
+		getCommandById: commandResource.getById,
+		createCommand: commandResource.create,
+		updateCommand: commandResource.update,
+		deleteCommand: commandResource.remove,
+		loadToEdition(id, preset = null) {
+			this.commandEdition[id] = {};
+			if (preset) {
+				preset.split(";").forEach((pair) => {
+					const [key, value] = pair.split(":");
+					if (key && value) {
+						this.commandEdition[id][key] = value;
 					}
-				}
-				if (expand.includes("commands_documents")) {
-					this.documents[command.id_command] = {};
-					for (const document of command.commands_documents) {
-						this.documents[command.id_command][document.id_command_document] = document;
-					}
-				}
-				if (expand.includes("commands_history")) {
-					this.history[command.id_command] = {};
-					for (const historyEntry of command.commands_history) {
-						this.history[command.id_command][historyEntry.id_command_history] = historyEntry;
-					}
-				}
-				if (expand.includes("commands_items")) {
-					this.items[command.id_command] = {};
-					for (const item of command.commands_items) {
-						this.items[command.id_command][item.id_item] = item;
-					}
-				}
-				if (expand.includes("carrier")) {
-					if (command.carrier) {
-						const carriersStore = useCarriersStore();
-						carriersStore.carriers[command.id_carrier] = command.carrier;
-					}
-				}
+				});
 			}
-			this.commandsLoading = false;
+			if (id !== "new" && this.commands[id]) {
+				this.commandEdition[id] = {
+					prix_command: this.commands[id].prix_command,
+					url_command: this.commands[id].url_command,
+					status_command: this.commands[id].status_command,
+					date_command: this.commands[id].date_command,
+					date_livraison_command: this.commands[id].date_livraison_command,
+					tracking_number: this.commands[id].tracking_number,
+					id_carrier: this.commands[id].id_carrier,
+					is_tracking_requested: this.commands[id].is_tracking_requested,
+					is_tracking_validated: this.commands[id].is_tracking_validated,
+					is_active: this.commands[id].is_active,
+					shipper_adress: this.commands[id].shipper_adress,
+					recipient_adress: this.commands[id].recipient_adress,
+					last_status: this.commands[id].last_status,
+					loading: false,
+				};
+			} else {
+				this.commandEdition[id] = {
+					loading: false,
+					is_tracking_requested: false,
+					is_tracking_validated: false,
+					is_active: true,
+					tracking_number: "",
+				};
+			}
+			this.commentaireEdition[id] = {};
+			this.documentEdition[id] = {};
+			this.itemEdition[id] = {};
 		},
-		async getCommandByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			this.commandsLoading = true;
-			if (clear) {
-				this.commands = {};
+		setLoadingEdition(id, loading) {
+			if (!this.commandEdition[id]) {
+				this.commandEdition[id] = {};
 			}
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
-			const newCommandList = await fetchWrapper.get({
-				url: `${baseUrl}/command?${paramString}`,
-				useToken: "access",
-			});
-			for (const command of newCommandList["data"]) {
-				this.commands[command.id_command] = command;
-				this.commentairesTotalCount[command.id_command] = command.commands_commentaires_count;
-				this.documentsTotalCount[command.id_command] = command.commands_documents_count;
-				this.itemsTotalCount[command.id_command] = command.commands_items_count;
-				if (expand.includes("commands_commentaires")) {
-					this.commentaires[command.id_command] = {};
-					for (const commentaire of command.commands_commentaires) {
-						this.commentaires[command.id_command][commentaire.id_command_commentaire] = commentaire;
-					}
-				}
-				if (expand.includes("commands_documents")) {
-					this.documents[command.id_command] = {};
-					for (const document of command.commands_documents) {
-						this.documents[command.id_command][document.id_command_document] = document;
-					}
-				}
-				if (expand.includes("commands_history")) {
-					this.history[command.id_command] = {};
-					for (const historyEntry of command.commands_history) {
-						this.history[command.id_command][historyEntry.id_command_history] = historyEntry;
-					}
-				}
-				if (expand.includes("commands_items")) {
-					this.items[command.id_command] = {};
-					for (const item of command.commands_items) {
-						this.items[command.id_command][item.id_item] = item;
-					}
-				}
-				if (expand.includes("carrier")) {
-					if (command.carrier) {
-						const carriersStore = useCarriersStore();
-						carriersStore.carriers[command.id_carrier] = command.carrier;
-					}
-				}
-			}
-			this.commandsTotalCount = newCommandList["pagination"]?.["total"] || 0;
-			this.commandsLoading = false;
-			return [newCommandList["pagination"]?.["nextOffset"] || 0, newCommandList["pagination"]?.["hasMore"] || false];
+			this.commandEdition[id].loading = loading;
 		},
-		async getCommandById(id, expand = []) {
-			if (!this.commands[id]) {
-				this.commands[id] = {};
-			}
-			this.commands[id].loading = true;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			this.commands[id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${id}?${expandString}`,
-				useToken: "access",
-			});
-			this.commentairesTotalCount[id] = this.commands[id].commands_commentaires_count;
-			this.documentsTotalCount[id] = this.commands[id].commands_documents_count;
-			this.itemsTotalCount[id] = this.commands[id].commands_items_count;
-			if (expand.includes("commands_commentaires")) {
-				this.commentaires[id] = {};
-				for (const commentaire of this.commands[id].commands_commentaires) {
-					this.commentaires[id][commentaire.id_command_commentaire] = commentaire;
-				}
-			}
-			if (expand.includes("commands_documents")) {
-				this.documents[id] = {};
-				for (const document of this.commands[id].commands_documents) {
-					this.documents[id][document.id_command_document] = document;
-				}
-			}
-			if (expand.includes("commands_history")) {
-				this.history[id] = {};
-				for (const historyEntry of this.commands[id].commands_history) {
-					this.history[id][historyEntry.id_command_history] = historyEntry;
-				}
-			}
-			if (expand.includes("commands_items")) {
-				this.items[id] = {};
-				for (const item of this.commands[id].commands_items) {
-					this.items[id][item.id_item] = item;
-				}
-			}
-			if (expand.includes("carrier")) {
-				if (this.commands[id].carrier) {
-					const carriersStore = useCarriersStore();
-					carriersStore.carriers[this.commands[id].id_carrier] = this.commands[id].carrier;
-				}
-			}
-		},
-		async createCommand(params) {
-			const command = await fetchWrapper.post({
-				url: `${baseUrl}/command`,
-				useToken: "access",
-				body: params,
-			});
-			this.commands[command.id_command] = command;
-			return command.id_command;
-		},
-		async updateCommand(id, params) {
-			this.commands[id] = await fetchWrapper.put({
-				url: `${baseUrl}/command/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteCommand(id) {
-			await fetchWrapper.delete({
-				url: `${baseUrl}/command/${id}`,
-				useToken: "access",
-			});
-			delete this.commands[id];
+		clearEdition(id) {
+			delete this.commandEdition[id];
+			delete this.commentaireEdition[id];
+			delete this.documentEdition[id];
+			delete this.itemEdition[id];
 		},
 
-		async getCommentaireByInterval(idCommand, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			if (!this.commentaires[idCommand] || clear) {
-				this.commentaires[idCommand] = {};
-			}
-			this.commentairesLoading = true;
-			const userStore = useUsersStore();
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
-			const newCommentaireList = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/commentaire?${paramString}`,
-				useToken: "access",
-			});
-			for (const commentaire of newCommentaireList["data"]) {
-				this.commentaires[idCommand][commentaire.id_command_commentaire] = commentaire;
-				if (expand.includes("user")) {
-					userStore.users[commentaire.id_user] = commentaire.user;
-				}
-			}
-			this.commentairesTotalCount[idCommand] = newCommentaireList["pagination"]?.["total"] || 0;
-			this.commentairesLoading = false;
-			return [newCommentaireList["pagination"]?.["nextOffset"] || 0, newCommentaireList["pagination"]?.["hasMore"] || false];
-		},
-		async getCommentaireById(idCommand, id, expand = []) {
-			if (!this.commentaires[idCommand]) {
-				this.commentaires[idCommand] = {};
-			}
-			if (!this.commentaires[idCommand][id]) {
-				this.commentaires[idCommand][id] = {};
-			}
-			this.commentaires[idCommand][id].loading = true;
-			const userStore = useUsersStore();
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			this.commentaires[idCommand][id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/commentaire/${id}?${expandString}`,
-				useToken: "access",
-			});
-			if (expand.includes("user")) {
-				userStore.users[this.commentaires[idCommand][id].id_user] = this.commentaires[idCommand][id].user;
-			}
-		},
-		async createCommentaire(idCommand, params) {
-			if (!this.commentaires[idCommand]) {
-				this.commentaires[idCommand] = {};
-			}
-			const commentaire = await fetchWrapper.post({
-				url: `${baseUrl}/command/${idCommand}/commentaire`,
-				useToken: "access",
-				body: params,
-			});
-			this.commentaires[idCommand][commentaire.id_command_commentaire] = commentaire;
-		},
-		async updateCommentaire(idCommand, id, params) {
-			if (!this.commentaires[idCommand]) {
-				this.commentaires[idCommand] = {};
-			}
-			this.commentaires[idCommand][id] = await fetchWrapper.put({
-				url: `${baseUrl}/command/${idCommand}/commentaire/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteCommentaire(idCommand, id) {
-			if (!this.commentaires[idCommand]) {
-				this.commentaires[idCommand] = {};
-			}
-			await fetchWrapper.delete({
-				url: `${baseUrl}/command/${idCommand}/commentaire/${id}`,
-				useToken: "access",
-			});
-			delete this.commentaires[idCommand][id];
-		},
+		getCommentaireByInterval: commentaireResource.getByInterval,
+		getCommentaireById: commentaireResource.getById,
+		createCommentaire: commentaireResource.create,
+		updateCommentaire: commentaireResource.update,
+		deleteCommentaire: commentaireResource.remove,
 
-		async getDocumentByInterval(idCommand, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			if (!this.documents[idCommand] || clear) {
-				this.documents[idCommand] = {};
-			}
-			this.documentsLoading = true;
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
-			const newDocumentList = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/document?${paramString}`,
-				useToken: "access",
-			});
-			for (const document of newDocumentList["data"]) {
-				this.documents[idCommand][document.id_command_document] = document;
-			}
-			this.documentsTotalCount[idCommand] = newDocumentList["pagination"]?.["total"] || 0;
-			this.documentsLoading = false;
-			return [newDocumentList["pagination"]?.["nextOffset"] || 0, newDocumentList["pagination"]?.["hasMore"] || false];
-		},
-		async getDocumentById(idCommand, id, expand = []) {
-			if (!this.documents[idCommand]) {
-				this.documents[idCommand] = {};
-			}
-			if (!this.documents[idCommand][id]) {
-				this.documents[idCommand][id] = {};
-			}
-			this.documents[idCommand][id].loading = true;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			this.documents[idCommand][id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/document/${id}?${expandString}`,
-				useToken: "access",
-			});
-		},
-		async createDocument(idCommand, params) {
-			if (!this.documents[idCommand]) {
-				this.documents[idCommand] = {};
-			}
-			const formData = new FormData();
-			formData.append("name_command_document", params.name_command_document);
-			formData.append("document", params.document);
-			const document = await fetchWrapper.post({
-				url: `${baseUrl}/command/${idCommand}/document`,
-				useToken: "access",
-				body: formData,
-				contentFile: true,
-			});
-			this.documents[idCommand][document.id_command_document] = document;
-		},
-		async updateDocument(idCommand, id, params) {
-			if (!this.documents[idCommand]) {
-				this.documents[idCommand] = {};
-			}
-			this.documents[idCommand][id] = await fetchWrapper.put({
-				url: `${baseUrl}/command/${idCommand}/document/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteDocument(idCommand, id) {
-			if (!this.documents[idCommand]) {
-				this.documents[idCommand] = {};
-			}
-			await fetchWrapper.delete({
-				url: `${baseUrl}/command/${idCommand}/document/${id}`,
-				useToken: "access",
-			});
-			delete this.documents[idCommand][id];
-		},
+		getDocumentByInterval: documentResource.getByInterval,
+		getDocumentById: documentResource.getById,
+		createDocument: documentResource.create,
+		updateDocument: documentResource.update,
+		deleteDocument: documentResource.remove,
 		async downloadDocument(idCommand, id) {
 			return await fetchWrapper.image({
 				url: `${baseUrl}/command/${idCommand}/document/${id}/download`,
@@ -357,128 +200,14 @@ export const useCommandsStore = defineStore("commands",{
 			});
 		},
 
-		async getItemByInterval(idCommand, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			if (!this.items[idCommand] || clear) {
-				this.items[idCommand] = {};
-			}
-			this.itemsLoading = true;
-			const itemStore = useItemsStore();
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
-			const newItemList = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/item?${paramString}`,
-				useToken: "access",
-			});
-			for (const item of newItemList["data"]) {
-				this.items[idCommand][item.id_item] = item;
-				if (expand.includes("item")) {
-					itemStore.items[item.id_item] = item.item;
-				}
-			}
-			this.itemsTotalCount[idCommand] = newItemList["pagination"]?.["total"] || 0;
-			this.itemsLoading = false;
-			return [newItemList["pagination"]?.["nextOffset"] || 0, newItemList["pagination"]?.["hasMore"] || false];
-		},
-		async getItemById(idCommand, id, expand = []) {
-			if (!this.items[idCommand]) {
-				this.items[idCommand] = {};
-			}
-			if (!this.items[idCommand][id]) {
-				this.items[idCommand][id] = {};
-			}
-			this.items[idCommand][id].loading = true;
-			const itemStore = useItemsStore();
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			this.items[idCommand][id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/item/${id}?${expandString}`,
-				useToken: "access",
-			});
-			if (expand.includes("item")) {
-				itemStore.items[id] = this.items[idCommand][id].item;
-			}
-		},
-		async createItem(idCommand, params) {
-			const item = await fetchWrapper.post({
-				url: `${baseUrl}/command/${idCommand}/item`,
-				useToken: "access",
-				body: params,
-			});
-			if (!this.items[idCommand]) {
-				this.items[idCommand] = {};
-			}
-			this.items[idCommand][item.id_item] = item;
-		},
-		async updateItem(idCommand, id, params) {
-			if (!this.items[idCommand]) {
-				this.items[idCommand] = {};
-			}
-			this.items[idCommand][id] = await fetchWrapper.put({
-				url: `${baseUrl}/command/${idCommand}/item/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteItem(idCommand, id) {
-			if (!this.items[idCommand]) {
-				this.items[idCommand] = {};
-			}
-			await fetchWrapper.delete({
-				url: `${baseUrl}/command/${idCommand}/item/${id}`,
-				useToken: "access",
-			});
-			delete this.items[idCommand][id];
-		},
-		async createItemBulk(idCommand, params) {
-			if (!this.items[idCommand]) {
-				this.items[idCommand] = {};
-			}
-			const itemBulk = await fetchWrapper.post({
-				url: `${baseUrl}/command/${idCommand}/item/bulk`,
-				useToken: "access",
-				body: params,
-			});
-			for (const item of itemBulk["valide"]) {
-				this.items[idCommand][item.id_item] = item;
-			}
-		},
+		getItemByInterval: itemResource.getByInterval,
+		getItemById: itemResource.getById,
+		createItem: itemResource.create,
+		updateItem: itemResource.update,
+		deleteItem: itemResource.remove,
+		createItemBulk: itemResource.createBulk,
 
-		async getHistoryByInterval(idCommand, limit = 100, offset = 0, filter = "", sort = "", clear = false) {
-			if (!this.history[idCommand] || clear) {
-				this.history[idCommand] = {};
-			}
-			this.historyLoading = true;
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, filterString, sortString].join("&");
-			const newHistoryList = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/history?${paramString}`,
-				useToken: "access",
-			});
-			for (const historyEntry of newHistoryList["data"]) {
-				this.history[idCommand][historyEntry.id_command_history] = historyEntry;
-			}
-			this.historyTotalCount[idCommand] = newHistoryList["pagination"]?.["total"] || 0;
-			this.historyLoading = false;
-			return [newHistoryList["pagination"]?.["nextOffset"] || 0, newHistoryList["pagination"]?.["hasMore"] || false];
-		},
-		async getHistoryById(idCommand, id) {
-			if (!this.history[idCommand]) {
-				this.history[idCommand] = {};
-			}
-			if (!this.history[idCommand][id]) {
-				this.history[idCommand][id] = {};
-			}
-			this.history[idCommand][id].loading = true;
-			this.history[idCommand][id] = await fetchWrapper.get({
-				url: `${baseUrl}/command/${idCommand}/history/${id}`,
-				useToken: "access",
-			});
-		},
+		getHistoryByInterval: historyResource.getByInterval,
+		getHistoryById: historyResource.getById,
 	},
 });
