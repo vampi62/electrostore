@@ -1,8 +1,28 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper } from "@/helpers";
+import { fetchWrapper, buildQuery, createMainResource } from "@/helpers";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
+
+function hydrateCamera(store, idCamera, camera, expand = []) {
+	store.getStatus(idCamera);
+}
+
+const cameraResource = createMainResource({
+	path: () => "/camera",
+	idField: "id_camera",
+	stateKey: "cameras",
+	countKey: "TotalCount",
+	loadingKey: "loading",
+	onHydrate: (store, entity, expand) => {
+		hydrateCamera(store, entity.id_camera, entity, expand);
+	},
+	/* onRemove: (store, id) => {
+		delete store.status[id];
+		delete store.stream[id];
+		delete store.capture[id];
+	}, */
+});
 
 export const useCamerasStore = defineStore("cameras",{
 	state: () => ({
@@ -15,54 +35,47 @@ export const useCamerasStore = defineStore("cameras",{
 		capture: {},
 	}),
 	actions: {
-		async getCameraByList(idResearch = []) {
-			this.loading = true;
-			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			const paramString = [idResearchString].join("&");
-			const newCameraList = await fetchWrapper.get({
-				url: `${baseUrl}/camera?${paramString}`,
-				useToken: "access",
-			});
-			for (const camera of newCameraList["data"]) {
-				this.cameras[camera.id_camera] = camera;
-				this.getStatus(camera.id_camera);
+		getCameraByList: cameraResource.getByList,
+		getCameraByInterval: cameraResource.getByInterval,
+		getCameraById: cameraResource.getById,
+		createCamera: cameraResource.create,
+		updateCamera: cameraResource.update,
+		deleteCamera: cameraResource.remove,
+		loadToEdition(id, preset = null) {
+			this.cameraEdition[id] = {};
+			if (preset) {
+				preset.split(";").forEach((pair) => {
+					const [key, value] = pair.split(":");
+					if (key && value) {
+						this.cameraEdition[id][key] = value;
+					}
+				});
 			}
-			this.loading = false;
+			if (id !== "new" && this.cameras[id]) {
+				this.cameraEdition[id] = {
+					loading: false,
+					nom_camera: this.cameras[id].nom_camera,
+					url_camera: this.cameras[id].url_camera,
+					user_camera: this.cameras[id].user_camera,
+					mdp_camera: this.cameras[id].mdp_camera,
+				};
+				this.cameraEdition[id]._check = (this.cameras[id].user_camera !== "") || (this.cameras[id].mdp_camera !== "");
+			} else {
+				this.cameraEdition[id] = {
+					loading: false,
+				};
+			}
 		},
-		async getCameraByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
-			this.loading = true;
-			if (clear) {
-				this.cameras = {};
+		setLoadingEdition(id, loading) {
+			if (!this.cameraEdition[id]) {
+				this.cameraEdition[id] = {};
 			}
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const expandString = expand.map((id) => "expand=" + id.toString()).join("&");
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, expandString, filterString, sortString].join("&");
-			const newCameraList = await fetchWrapper.get({
-				url: `${baseUrl}/camera?${paramString}`,
-				useToken: "access",
-			});
-			for (const camera of newCameraList["data"]) {
-				this.cameras[camera.id_camera] = camera;
-				this.getStatus(camera.id_camera);
-			}
-			this.TotalCount = newCameraList["pagination"]?.["total"] || 0;
-			this.loading = false;
-			return [newCameraList["pagination"]?.["nextOffset"] || 0, newCameraList["pagination"]?.["hasMore"] || false];
+			this.cameraEdition[id].loading = loading;
 		},
-		async getCameraById(id) {
-			if (!this.cameras[id]) {
-				this.cameras[id] = {};
-			}
-			this.cameras[id].loading = true;
-			this.cameras[id] = await fetchWrapper.get({
-				url: `${baseUrl}/camera/${id}`,
-				useToken: "access",
-			});
-			this.getStatus(id);
+		clearEdition(id) {
+			delete this.cameraEdition[id];
 		},
+
 		async toggleLight(id) {
 			if (!this.status[id]) {
 				this.status[id] = {};
@@ -90,52 +103,40 @@ export const useCamerasStore = defineStore("cameras",{
 			});
 		},
 		stopStream(id) {
-			this.stream[id] = null;
+			if (this.stream[id]) {
+				delete this.stream[id];
+			}
 		},
 		async getStatus(id) {
 			if (!this.status[id]) {
 				this.status[id] = {};
 			}
 			this.status[id].loading = true;
-			this.status[id] = await fetchWrapper.get({
-				url: `${baseUrl}/camera/${id}/status`,
-				useToken: "access",
-			});
+			try {
+				this.status[id] = await fetchWrapper.get({
+					url: `${baseUrl}/camera/${id}/status`,
+					useToken: "access",
+				});
+			} catch (error) {
+				console.error("Error fetching camera status:", error);
+			}
+			this.status[id].loading = false;
 		},
 		async getCapture(id, getBlob = false) {
-			const response = await fetchWrapper.image({
-				url: `${baseUrl}/camera/${id}/capture`,
-				useToken: "access",
-			});
-			if (getBlob) {
-				this.capture[id] = response;
-			} else {
-				const url = URL.createObjectURL(response);
-				this.capture[id] = url;
+			try {
+				const response = await fetchWrapper.image({
+					url: `${baseUrl}/camera/${id}/capture`,
+					useToken: "access",
+				});
+				if (getBlob) {
+					this.capture[id] = response;
+				} else {
+					const url = URL.createObjectURL(response);
+					this.capture[id] = url;
+				}
+			} catch (error) {
+				console.error("Error fetching camera capture:", error);
 			}
-		},
-		async createCamera(params) {
-			const camera = await fetchWrapper.post({
-				url: `${baseUrl}/camera`,
-				useToken: "access",
-				body: params,
-			});
-			this.cameras[camera.id_camera] = camera;
-			return camera.id_camera;
-		},
-		async updateCamera(id, params) {
-			this.cameras[id] = await fetchWrapper.put({
-				url: `${baseUrl}/camera/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteCamera(id) {
-			await fetchWrapper.delete({
-				url: `${baseUrl}/camera/${id}`,
-				useToken: "access",
-			});
-			delete this.cameras[id];
 		},
 	},
 });

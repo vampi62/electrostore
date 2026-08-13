@@ -1,8 +1,14 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper } from "@/helpers";
+import { createMainResource } from "@/helpers";
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const cronJobResource = createMainResource({
+	path: () => "/cronjob",
+	idField: "id_cronjob",
+	stateKey: "cronJobs",
+	countKey: "cronJobsTotalCount",
+	loadingKey: "cronJobsLoading",
+});
 
 export const useCronJobsStore = defineStore("cronJobs", {
 	state: () => ({
@@ -12,72 +18,48 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		cronJobEdition: {},
 	}),
 	actions: {
-		async getCronJobByList(idResearch = []) {
-			this.cronJobsLoading = true;
-			const idResearchString = idResearch.map((id) => "idResearch=" + id.toString()).join("&");
-			const paramString = [idResearchString].join("&");
-			const newCronJobList = await fetchWrapper.get({
-				url: `${baseUrl}/cronjob?${paramString}`,
-				useToken: "access",
-			});
-			for (const cronJob of newCronJobList["data"]) {
-				this.cronJobs[cronJob.id_cronjob] = cronJob;
+		getCronJobByList: cronJobResource.getByList,
+		getCronJobByInterval: cronJobResource.getByInterval,
+		getCronJobById: cronJobResource.getById,
+		createCronJob: cronJobResource.create,
+		updateCronJob: cronJobResource.update,
+		deleteCronJob: cronJobResource.remove,
+		loadToEdition(id, preset = null) {
+			this.cronJobEdition[id] = {};
+			if (preset) {
+				preset.split(";").forEach((pair) => {
+					const [key, value] = pair.split(":");
+					if (key && value) {
+						this.cronJobEdition[id][key] = value;
+					}
+				});
 			}
-			this.cronJobsLoading = false;
-		},
-		async getCronJobByInterval(limit = 100, offset = 0, filter = "", sort = "", clear = false) {
-			this.cronJobsLoading = true;
-			if (clear) {
-				this.cronJobs = {};
+			if (id !== "new" && this.cronJobs[id]) {
+				this.cronJobEdition[id] = {
+					loading: false,
+					name_cronjob: this.cronJobs[id].name_cronjob,
+					cron_expression: this.cronJobs[id].cron_expression,
+					action_cronjob: this.cronJobs[id].action_cronjob,
+					params_cronjob: this.cronJobs[id].params_cronjob,
+					is_enabled: this.cronJobs[id].is_enabled,
+					last_run_at: this.cronJobs[id].last_run_at,
+					next_run_at: this.cronJobs[id].next_run_at,
+				};
+			} else {
+				this.cronJobEdition[id] = {
+					loading: false,
+					is_enabled: true,
+				};
 			}
-			const offsetString = "offset=" + offset;
-			const limitString = "limit=" + limit;
-			const filterString = filter ? "filter=" + filter : "";
-			const sortString = sort ? "sort=" + sort : "";
-			const paramString = [offsetString, limitString, filterString, sortString].join("&");
-			const newCronJobList = await fetchWrapper.get({
-				url: `${baseUrl}/cronjob?${paramString}`,
-				useToken: "access",
-			});
-			for (const cronJob of newCronJobList["data"]) {
-				this.cronJobs[cronJob.id_cronjob] = cronJob;
+		},
+		setLoadingEdition(id, loading) {
+			if (!this.cronJobEdition[id]) {
+				this.cronJobEdition[id] = {};
 			}
-			this.cronJobsTotalCount = newCronJobList["pagination"]?.["total"] || 0;
-			this.cronJobsLoading = false;
-			return [newCronJobList["pagination"]?.["nextOffset"] || 0, newCronJobList["pagination"]?.["hasMore"] || false];
+			this.cronJobEdition[id].loading = loading;
 		},
-		async getCronJobById(id) {
-			if (!this.cronJobs[id]) {
-				this.cronJobs[id] = {};
-			}
-			this.cronJobs[id].loading = true;
-			this.cronJobs[id] = await fetchWrapper.get({
-				url: `${baseUrl}/cronjob/${id}`,
-				useToken: "access",
-			});
-		},
-		async createCronJob(params) {
-			const cronJob = await fetchWrapper.post({
-				url: `${baseUrl}/cronjob`,
-				useToken: "access",
-				body: params,
-			});
-			this.cronJobs[cronJob.id_cronjob] = cronJob;
-			return cronJob.id_cronjob;
-		},
-		async updateCronJob(id, params) {
-			this.cronJobs[id] = await fetchWrapper.put({
-				url: `${baseUrl}/cronjob/${id}`,
-				useToken: "access",
-				body: params,
-			});
-		},
-		async deleteCronJob(id) {
-			await fetchWrapper.delete({
-				url: `${baseUrl}/cronjob/${id}`,
-				useToken: "access",
-			});
-			delete this.cronJobs[id];
+		clearEdition(id) {
+			delete this.cronJobEdition[id];
 		},
 	},
 });

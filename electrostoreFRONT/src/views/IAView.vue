@@ -23,19 +23,9 @@ const formContainer = ref(null);
 
 async function fetchAllData() {
 	if (iaId.value === "new") {
-		loadToEdition(iaId.value);
-		if (preset.value) {
-			preset.value.split(";").forEach((pair) => {
-				const [key, value] = pair.split(":");
-				if (key && value) {
-					iasStore.iaEdition[key] = value;
-				}
-			});
-		}
+		iasStore.loadToEdition(iaId.value, preset.value);
 	} else {
-		iasStore.iaEdition = {
-			loading: true,
-		};
+		iasStore.setLoadingEdition(iaId.value, true);
 		try {
 			await iasStore.getIaById(iaId.value);
 		} catch {
@@ -48,22 +38,7 @@ async function fetchAllData() {
 			iasStore.getTrainStatus(iaId.value);
 		}, 15000);
 		iasStore.getTrainStatus(iaId.value);
-		loadToEdition(iaId.value);
-	}
-}
-function loadToEdition(id) {
-	if (id === "new") {
-		iasStore.iaEdition = {
-			loading: false,
-		};
-	} else {
-		iasStore.iaEdition = {
-			loading: false,
-			nom_ia: iasStore.ias[id].nom_ia,
-			description_ia: iasStore.ias[id].description_ia,
-			date_ia: iasStore.ias[id].date_ia,
-			trained_ia: iasStore.ias[id].trained_ia,
-		};
+		iasStore.loadToEdition(iaId.value);
 	}
 }
 onMounted(() => {
@@ -73,9 +48,7 @@ onBeforeUnmount(() => {
 	if (intervalRefreshStatus) {
 		clearInterval(intervalRefreshStatus);
 	}
-	iasStore.iaEdition = {
-		loading: false,
-	};
+	iasStore.clearEdition(iaId.value);
 });
 
 let intervalRefreshStatus = null;
@@ -92,24 +65,24 @@ const iaSave = async() => {
 				message: t("ia.FormValidationError", { count: nbErrors }),
 				type: "error",
 			});
-			iasStore.iaEdition.loading = false;
+			iasStore.setLoadingEdition(iaId.value, false);
 			return;
 		}
 		if (iaId.value === "new") {
-			const newId = await iasStore.createIa({ ...iasStore.iaEdition });
-			loadToEdition(newId);
+			const newId = await iasStore.createIa({ ...iasStore.iaEdition[iaId.value] });
+			iasStore.loadToEdition(newId);
 			addNotification({ message: t("ia.Created"), type: "success" });
 			iaId.value = String(newId);
 			router.push("/ia/" + iaId.value);
 		} else {
-			await iasStore.updateIa(iaId.value, { ...iasStore.iaEdition });
-			loadToEdition(iaId.value);
+			await iasStore.updateIa(iaId.value, { ...iasStore.iaEdition[iaId.value] });
+			iasStore.loadToEdition(iaId.value);
 			addNotification({ message: t("ia.Updated"), type: "success" });
 		}
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	} finally {
-		iasStore.iaEdition.loading = false;
+		iasStore.setLoadingEdition(iaId.value, false);
 	}
 };
 const iaDelete = async() => {
@@ -131,7 +104,7 @@ const iaTrain = async() => {
 	}
 };
 const createSchema = () => {
-	const edition = iasStore.iaEdition;
+	const edition = iasStore.iaEdition[iaId.value];
 	const shape = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
@@ -157,8 +130,8 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('ia.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/ia',
-				create: { showCondition: iaId === 'new' && authStore.hasPermission([2]), loading: iasStore.iaEdition?.loading },
-				update: { showCondition: iaId !== 'new' && authStore.hasPermission([2]), loading: iasStore.iaEdition?.loading },
+				create: { showCondition: iaId === 'new' && authStore.hasPermission([2]), loading: iasStore.iaEdition[iaId]?.loading },
+				update: { showCondition: iaId !== 'new' && authStore.hasPermission([2]), loading: iasStore.iaEdition[iaId]?.loading },
 				delete: { showCondition: iaId !== 'new' && authStore.hasPermission([2]) }
 			}"
 			:optional-config="[
@@ -169,7 +142,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 	</div>
 	<div v-if="iasStore.ias[iaId] || iaId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
-			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="iasStore.iaEdition" :store-user="authStore.user"
+			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="iasStore.iaEdition[iaId]" :store-user="authStore.user"
 				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
 			<StatusDisplay :data-store="iasStore.status.train" />
 		</div>

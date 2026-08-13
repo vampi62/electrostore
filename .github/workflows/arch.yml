@@ -110,6 +110,7 @@ jobs:
 
   # ---------------------------------------------------------------
   # Automatic rollback if the tag was created but the pipeline failed at any point (tests, build or release).
+  # This is to avoid having a tag in the repo that does not have a corresponding release or docker image.
   # ---------------------------------------------------------------
   rollback-on-failure:
     name: Rollback tag on failure

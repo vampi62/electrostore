@@ -12,7 +12,6 @@ const versionPlugin = () => ({
 			buildDate: new Date().toISOString(),
 		};
 		writeFileSync("./dist/version.json", JSON.stringify(version));
-		console.log(`Version file created with version: ${version.version}`);
 	},
 });
 // https://vitejs.dev/config/
