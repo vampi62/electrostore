@@ -747,16 +747,16 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 			</template>
 		</CollapsibleSection>
-		<CollapsibleSection title="command.Commentaires"
-			:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)" :permission="commandId !=='new'">
+		<CollapsibleSection title="command.Comments"
+			:total-count="Number(commandsStore.commentsTotalCount[commandId] || 0)" :permission="commandId !=='new'">
 			<template #append-row>
 				<Comment :meta="{ contenu: 'content_command_comment', key: 'id_command_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[commandsStore.comments[commandId], usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
-					:store-function="{ create: (data) => commandsStore.createCommentaire(commandId, data), update: (id, data) => commandsStore.updateCommentaire(commandId, id, data), delete: (id) => commandsStore.deleteCommentaire(commandId, id) }"
-					:loading="commandsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"
-					:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)"
-					:fetch-function="commandId !== 'new' ? (limit, offset, expand, filter, sort, clear) => commandsStore.getCommentaireByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
+					:store-function="{ create: (data) => commandsStore.createComment(commandId, data), update: (id, data) => commandsStore.updateComment(commandId, id, data), delete: (id) => commandsStore.deleteComment(commandId, id) }"
+					:loading="commandsStore.commentsLoading" :texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"
+					:total-count="Number(commandsStore.commentsTotalCount[commandId] || 0)"
+					:fetch-function="commandId !== 'new' ? (limit, offset, expand, filter, sort, clear) => commandsStore.getCommentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
 				/>
 			</template>
 		</CollapsibleSection>

@@ -12,76 +12,76 @@ namespace ElectrostoreAPI.Controllers
 
     public class ProjectItemController : ControllerBase
     {
-        private readonly IProjectItemService _projetItemService;
+        private readonly IProjectItemService _projectItemService;
 
-        public ProjectItemController(IProjectItemService projetItemService)
+        public ProjectItemController(IProjectItemService projectItemService)
         {
-            _projetItemService = projetItemService;
+            _projectItemService = projectItemService;
         }
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjectItemDto>>> GetProjetItemsByProjetId([FromRoute] int id_project, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjectItemDto>>> GetProjectItemsByProjectId([FromRoute] int id_project, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'project', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) RSQL filter. Example: 'quantity_project_item=gt=5'.")] string? filter = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) Sort string. Example: 'quantity_project_item,asc' or 'quantity_project_item,desc'.")] string? sort = null)
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
-            var projetItems = await _projetItemService.GetProjetItemsByProjetId(id_project, limit, offset, rsqlDto, sortDto, expand);
-            return Ok(projetItems);
+            var projectItems = await _projectItemService.GetProjectItemsByProjectId(id_project, limit, offset, rsqlDto, sortDto, expand);
+            return Ok(projectItems);
         }
 
         [HttpGet("{id_item}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedProjectItemDto>> GetProjetItemById([FromRoute] int id_project, [FromRoute] int id_item,
+        public async Task<ActionResult<ReadExtendedProjectItemDto>> GetProjectItemById([FromRoute] int id_project, [FromRoute] int id_item,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'project', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var projetItem = await _projetItemService.GetProjetItemById(id_project, id_item, expand);
-            return Ok(projetItem);
+            var projectItem = await _projectItemService.GetProjectItemById(id_project, id_item, expand);
+            return Ok(projectItem);
         }
 
         [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadProjectItemDto>> CreateProjetItem([FromRoute] int id_project, [FromBody] CreateProjectItemByProjectDto projetItemDto)
+        public async Task<ActionResult<ReadProjectItemDto>> CreateProjectItem([FromRoute] int id_project, [FromBody] CreateProjectItemByProjectDto projectItemDto)
         {
-            var projetItemDtoFull = new CreateProjectItemDto
+            var projectItemDtoFull = new CreateProjectItemDto
             {
                 id_project = id_project,
-                id_item = projetItemDto.id_item,
-                quantity_project_item = projetItemDto.quantity_project_item
+                id_item = projectItemDto.id_item,
+                quantity_project_item = projectItemDto.quantity_project_item
             };
-            var projetItem = await _projetItemService.CreateProjetItem(projetItemDtoFull);
-            return CreatedAtAction(nameof(GetProjetItemById), new { id_project = projetItem.id_project, id_item = projetItem.id_item }, projetItem);
+            var projectItem = await _projectItemService.CreateProjectItem(projectItemDtoFull);
+            return CreatedAtAction(nameof(GetProjectItemById), new { id_project = projectItem.id_project, id_item = projectItem.id_item }, projectItem);
         }
 
         [HttpPost("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkProjectItemDto>> CreateBulkProjetItem([FromRoute] int id_project, [FromBody] List<CreateProjectItemByProjectDto> projetItemDto)
+        public async Task<ActionResult<ReadBulkProjectItemDto>> CreateBulkProjectItem([FromRoute] int id_project, [FromBody] List<CreateProjectItemByProjectDto> projectItemDto)
         {
-            var projetItemDtoFull = projetItemDto.Select(x => new CreateProjectItemDto
+            var projectItemDtoFull = projectItemDto.Select(x => new CreateProjectItemDto
             {
                 id_project = id_project,
                 id_item = x.id_item,
                 quantity_project_item = x.quantity_project_item
             }).ToList();
-            var projetItem = await _projetItemService.CreateBulkProjetItem(projetItemDtoFull);
-            return Ok(projetItem);
+            var projectItem = await _projectItemService.CreateBulkProjectItem(projectItemDtoFull);
+            return Ok(projectItem);
         }
 
         [HttpPut("{id_item}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadProjectItemDto>> UpdateProjetItem([FromRoute] int id_project, [FromRoute] int id_item, [FromBody] UpdateProjectItemDto projetItemDto)
+        public async Task<ActionResult<ReadProjectItemDto>> UpdateProjectItem([FromRoute] int id_project, [FromRoute] int id_item, [FromBody] UpdateProjectItemDto projectItemDto)
         {
-            var projetItem = await _projetItemService.UpdateProjetItem(id_project, id_item, projetItemDto);
-            return Ok(projetItem);
+            var projectItem = await _projectItemService.UpdateProjectItem(id_project, id_item, projectItemDto);
+            return Ok(projectItem);
         }
 
         [HttpDelete("{id_item}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> DeleteProjetItem([FromRoute] int id_project, [FromRoute] int id_item)
+        public async Task<ActionResult> DeleteProjectItem([FromRoute] int id_project, [FromRoute] int id_item)
         {
-            await _projetItemService.DeleteProjetItem(id_project, id_item);
+            await _projectItemService.DeleteProjectItem(id_project, id_item);
             return NoContent();
         }
     }

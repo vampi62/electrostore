@@ -19,17 +19,17 @@ public class AIService : IAIService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
-    private readonly IaCmdGrpc.IaCmdGrpcClient _iaGrpcClient;
+    private readonly IaCmdGrpc.IaCmdGrpcClient _aiGrpcClient;
     private readonly IKafkaProducerService _kafkaProducer;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AIService> _logger;
 
-    public AIService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IaCmdGrpc.IaCmdGrpcClient iaGrpcClient, IKafkaProducerService kafkaProducer, IConfiguration configuration, ILogger<AIService> logger)
+    public AIService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IaCmdGrpc.IaCmdGrpcClient aiGrpcClient, IKafkaProducerService kafkaProducer, IConfiguration configuration, ILogger<AIService> logger)
     {
         _mapper = mapper;
         _context = context;
         _sessionService = sessionService;
-        _iaGrpcClient = iaGrpcClient;
+        _aiGrpcClient = aiGrpcClient;
         _kafkaProducer = kafkaProducer;
         _configuration = configuration;
         _logger = logger;
@@ -42,7 +42,7 @@ public class AIService : IAIService
         var filterResult = default(Expression<Func<AI, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
-            query = query.Where(ia => idResearch.Contains(ia.id_ia));
+            query = query.Where(ai => idResearch.Contains(ai.id_ia));
         }
         else
         {
@@ -61,26 +61,26 @@ public class AIService : IAIService
                 else
                 {
                     sort = new SorterDto { Field = "id_ia", Order = "asc" };
-                    query = query.OrderBy(ia => ia.id_ia);
+                    query = query.OrderBy(ai => ai.id_ia);
                 }
             }
             else
             {
-                query = query.OrderBy(ia => ia.id_ia);
+                query = query.OrderBy(ai => ai.id_ia);
             }
         }
         query = query.Skip(offset).Take(limit);
-        var ia = await query.ToListAsync();
+        var ai = await query.ToListAsync();
         return new PaginatedResponseDto<ReadAIDto>
         {
-            data = _mapper.Map<List<ReadAIDto>>(ia),
+            data = _mapper.Map<List<ReadAIDto>>(ai),
             pagination = new PaginationDto
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.AI.CountAsync(filterResult ?? (ia => true)),
+                total = await _context.AI.CountAsync(filterResult ?? (ai => true)),
                 nextOffset = offset + limit,
-                hasMore = await _context.AI.Skip(offset + limit).AnyAsync(filterResult ?? (ia => true))
+                hasMore = await _context.AI.Skip(offset + limit).AnyAsync(filterResult ?? (ai => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -89,41 +89,41 @@ public class AIService : IAIService
 
     public async Task<ReadAIDto> GetIAById(int id)
     {
-        var ia = await _context.AI.FindAsync(id) ?? throw new KeyNotFoundException($"AI with id '{id}' not found");
-        return _mapper.Map<ReadAIDto>(ia);
+        var ai = await _context.AI.FindAsync(id) ?? throw new KeyNotFoundException($"AI with id '{id}' not found");
+        return _mapper.Map<ReadAIDto>(ai);
     }
 
-    public async Task<ReadAIDto> CreateIA(CreateAIDto iaDto)
+    public async Task<ReadAIDto> CreateIA(CreateAIDto aiDto)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole != UserRole.Admin)
         {
             throw new UnauthorizedAccessException("You are not authorized to create AI");
         }
-        var newIA = _mapper.Map<AI>(iaDto);
+        var newIA = _mapper.Map<AI>(aiDto);
         _context.AI.Add(newIA);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadAIDto>(newIA);
     }
 
-    public async Task<ReadAIDto> UpdateIA(int id, UpdateAIDto iaDto)
+    public async Task<ReadAIDto> UpdateIA(int id, UpdateAIDto aiDto)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole != UserRole.Admin)
         {
             throw new UnauthorizedAccessException("You are not authorized to update AI");
         }
-        var iaToUpdate = await _context.AI.FindAsync(id) ?? throw new KeyNotFoundException($"AI with id '{id}' not found");
-        if (iaDto.name_ia is not null)
+        var aiToUpdate = await _context.AI.FindAsync(id) ?? throw new KeyNotFoundException($"AI with id '{id}' not found");
+        if (aiDto.name_ia is not null)
         {
-            iaToUpdate.name_ia = iaDto.name_ia;
+            aiToUpdate.name_ia = aiDto.name_ia;
         }
-        if (iaDto.description_ia is not null)
+        if (aiDto.description_ia is not null)
         {
-            iaToUpdate.description_ia = iaDto.description_ia;
+            aiToUpdate.description_ia = aiDto.description_ia;
         }
         await _context.SaveChangesAsync();
-        return _mapper.Map<ReadAIDto>(iaToUpdate);
+        return _mapper.Map<ReadAIDto>(aiToUpdate);
     }
 
     public async Task DeleteIA(int id)
@@ -133,10 +133,10 @@ public class AIService : IAIService
         {
             throw new UnauthorizedAccessException("You are not authorized to delete AI");
         }
-        var iaToDelete = await _context.AI.FindAsync(id) ?? throw new KeyNotFoundException($"AI with id '{id}' not found");
+        var aiToDelete = await _context.AI.FindAsync(id) ?? throw new KeyNotFoundException($"AI with id '{id}' not found");
         // remove model if exists
-        _context.AI.Remove(iaToDelete);
-        var iaMessage = new AiMessage
+        _context.AI.Remove(aiToDelete);
+        var aiMessage = new AiMessage
         {
             action = "ia_deleted",
             id_ia = id,
@@ -146,7 +146,7 @@ public class AIService : IAIService
         await _kafkaProducer.PublishAsync(
             "ia-requests",
             id.ToString(),
-            JsonSerializer.Serialize(iaMessage)
+            JsonSerializer.Serialize(aiMessage)
         );
         await _context.SaveChangesAsync();
     }
@@ -159,7 +159,7 @@ public class AIService : IAIService
         }
         try
         {
-            var reply = await _iaGrpcClient.GetStatusAsync(new StatusRequest { IdModel = id });
+            var reply = await _aiGrpcClient.GetStatusAsync(new StatusRequest { IdModel = id });
             return new AIStatusDto
             {
                 Status      = reply.Status,
@@ -200,7 +200,7 @@ public class AIService : IAIService
         }
         try
         {
-            var iaMessage = new AiMessage
+            var aiMessage = new AiMessage
             {
                 action = "train_requested",
                 id_ia = id,
@@ -210,7 +210,7 @@ public class AIService : IAIService
             await _kafkaProducer.PublishAsync(
                 "ia-requests",
                 id.ToString(),
-                JsonSerializer.Serialize(iaMessage)
+                JsonSerializer.Serialize(aiMessage)
             );
         }
         catch (Exception e)
@@ -222,8 +222,8 @@ public class AIService : IAIService
 
     public async Task<PredictionOutput> IADetectItem(int id, DetecDto detecDto)
     {
-        var ia = await _context.AI.FindAsync(id) ?? throw new KeyNotFoundException($"AI with id '{id}' not found");
-        if (!ia.trained_ia)
+        var ai = await _context.AI.FindAsync(id) ?? throw new KeyNotFoundException($"AI with id '{id}' not found");
+        if (!ai.trained_ia)
         {
             throw new InvalidOperationException("AI is not trained");
         }
@@ -233,7 +233,7 @@ public class AIService : IAIService
             await detecDto.img_file.OpenReadStream().CopyToAsync(ms);
             var imageBytes = ByteString.CopyFrom(ms.ToArray());
 
-            var reply = await _iaGrpcClient.DetectAsync(new DetectRequest
+            var reply = await _aiGrpcClient.DetectAsync(new DetectRequest
             {
                 IdModel   = id,
                 ImageData = imageBytes
@@ -252,45 +252,45 @@ public class AIService : IAIService
         }
     }
 
-    public async Task<bool> UpdateIaStatusAsync(int id, AIStatusDto iaStatus, int? requestedBy, CancellationToken cancellationToken)
+    public async Task<bool> UpdateIaStatusAsync(int id, AIStatusDto aiStatus, int? requestedBy, CancellationToken cancellationToken)
     {
-        var ia = await _context.AI.FindAsync(
+        var ai = await _context.AI.FindAsync(
             new object[] { id }, cancellationToken);
 
-        if (ia is null)
+        if (ai is null)
         {
             _logger.LogWarning("AI with id {Id} not found for status update", id);
             return false;
         }
 
         // Update trained_ia flag based on the action
-        if (iaStatus.Status == "training_completed")
+        if (aiStatus.Status == "training_completed")
         {
-            ia.trained_ia = true;
-            ia.date_training_ia = DateTime.UtcNow;
+            ai.trained_ia = true;
+            ai.date_training_ia = DateTime.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
             _logger.LogInformation("AI {Id}: training completed successfully", id);
         }
-        else if (iaStatus.Status == "training_failed")
+        else if (aiStatus.Status == "training_failed")
         {
             // trained_ia is left unchanged
-            _logger.LogWarning("AI {Id}: training failed with message: {Message}", id, iaStatus.Message);
+            _logger.LogWarning("AI {Id}: training failed with message: {Message}", id, aiStatus.Message);
         }
-        else if (iaStatus.Status == "training_started")
+        else if (aiStatus.Status == "training_started")
         {
-            ia.trained_ia = false;
-            ia.date_training_ia = null;
+            ai.trained_ia = false;
+            ai.date_training_ia = null;
             await _context.SaveChangesAsync(cancellationToken);
             _logger.LogInformation("AI {Id}: training started", id);
         }
         else
         {
-            _logger.LogWarning("AI {Id}: received unknown status {Status}. No changes applied", id, iaStatus.Status);
+            _logger.LogWarning("AI {Id}: received unknown status {Status}. No changes applied", id, aiStatus.Status);
             return false;
         }
 
         // Schedule a notification for terminal actions
-        if (requestedBy != null && (iaStatus.Status == "training_completed" || iaStatus.Status == "training_failed"))
+        if (requestedBy != null && (aiStatus.Status == "training_completed" || aiStatus.Status == "training_failed"))
         {
             var requesterId = requestedBy.ToString();
             if (requesterId == null)
@@ -300,7 +300,7 @@ public class AIService : IAIService
             }
             try
             {
-                bool success = iaStatus.Status == "training_completed";
+                bool success = aiStatus.Status == "training_completed";
                 var lang = _configuration.GetValue<string>("AppLanguage") ?? "fr";
 
                 NotificationMessage notification;
@@ -314,12 +314,12 @@ public class AIService : IAIService
                         Language = lang,
                         TemplateValues = new Dictionary<string, string>
                         {
-                            ["iaId"]       = id.ToString(),
-                            ["accuracy"]   = $"{iaStatus.Accuracy:P2}",
-                            ["valAccuracy"] = $"{iaStatus.ValAccuracy:P2}",
-                            ["loss"]       = $"{iaStatus.Loss:F4}",
-                            ["valLoss"]    = $"{iaStatus.ValLoss:F4}",
-                            ["epoch"]      = iaStatus.Epoch.ToString()
+                            ["aiId"]       = id.ToString(),
+                            ["accuracy"]   = $"{aiStatus.Accuracy:P2}",
+                            ["valAccuracy"] = $"{aiStatus.ValAccuracy:P2}",
+                            ["loss"]       = $"{aiStatus.Loss:F4}",
+                            ["valLoss"]    = $"{aiStatus.ValLoss:F4}",
+                            ["epoch"]      = aiStatus.Epoch.ToString()
                         }
                     };
                 }
@@ -333,8 +333,8 @@ public class AIService : IAIService
                         Language = lang,
                         TemplateValues = new Dictionary<string, string>
                         {
-                            ["iaId"]    = id.ToString(),
-                            ["message"] = iaStatus.Message ?? "Unknown error"
+                            ["aiId"]    = id.ToString(),
+                            ["message"] = aiStatus.Message ?? "Unknown error"
                         }
                     };
                 }

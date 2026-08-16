@@ -7,107 +7,107 @@ import { useProjectsStore } from "@/stores";
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 const EXPAND_HANDLERS = {
-	project_tags: (store, idProjetTag, projectTag) => {
-		store.projetTagsProjet[idProjetTag] = {};
-		for (const projetTagProjet of projectTag.project_tags) {
-			store.projetTagsProjet[idProjetTag][projetTagProjet.id_project] = projetTagProjet;
+	project_tags: (store, idProjectTag, projectTag) => {
+		store.projectTagsProject[idProjectTag] = {};
+		for (const projectTagProject of projectTag.project_tags) {
+			store.projectTagsProject[idProjectTag][projectTagProject.id_project] = projectTagProject;
 		}
 	},
 };
 
-function hydrateProjetTag(store, idProjetTag, projectTag, expand = []) {
-	store.projetTagsProjetTotalCount[idProjetTag] = projectTag.project_tags_count;
+function hydrateProjectTag(store, idProjectTag, projectTag, expand = []) {
+	store.projectTagsProjectTotalCount[idProjectTag] = projectTag.project_tags_count;
 	for (const key of expand) {
 		if (EXPAND_HANDLERS[key]) {
-			EXPAND_HANDLERS[key](store, idProjetTag, projectTag);
+			EXPAND_HANDLERS[key](store, idProjectTag, projectTag);
 		}
 	}
 }
 
-const projetTagResource = createMainResource({
+const projectTagResource = createMainResource({
 	path: () => "/project-tag",
 	idField: "id_project_tag",
 	stateKey: "projectTags",
-	countKey: "projetTagsTotalCount",
-	loadingKey: "projetTagsLoading",
+	countKey: "projectTagsTotalCount",
+	loadingKey: "projectTagsLoading",
 	onHydrate: (store, entity, expand) => {
-		hydrateProjetTag(store, entity.id_project_tag, entity, expand);
+		hydrateProjectTag(store, entity.id_project_tag, entity, expand);
 	},
 });
 
-const projetTagProjetResource = createNestedResource({
-	path: (idProjetTag) => `/project-tag/${idProjetTag}/project`,
+const projectTagProjectResource = createNestedResource({
+	path: (idProjectTag) => `/project-tag/${idProjectTag}/project`,
 	idField: "id_project",
-	stateKey: "projetTagsProjet",
-	countKey: "projetTagsProjetTotalCount",
-	loadingKey: "projetTagsProjetLoading",
-	onHydrate: (store, idProjetTag, entity, expand) => {
+	stateKey: "projectTagsProject",
+	countKey: "projectTagsProjectTotalCount",
+	loadingKey: "projectTagsProjectLoading",
+	onHydrate: (store, idProjectTag, entity, expand) => {
 		if (expand.includes("project")) {
-			const projetsStore = useProjectsStore();
-			projetsStore.projects[entity.id_project] = entity.project;
+			const projectsStore = useProjectsStore();
+			projectsStore.projects[entity.id_project] = entity.project;
 		}
 	},
 });
 
 export const useProjectTagsStore = defineStore("projectTags",{
 	state: () => ({
-		projetTagsLoading: false,
-		projetTagsTotalCount: 0,
+		projectTagsLoading: false,
+		projectTagsTotalCount: 0,
 		projectTags: {},
-		projetTagEdition: {},
+		projectTagEdition: {},
 
-		projetTagsProjetLoading: false,
-		projetTagsProjetTotalCount: {},
-		projetTagsProjet: {},
-		projetTagProjetEdition: {},
+		projectTagsProjectLoading: false,
+		projectTagsProjectTotalCount: {},
+		projectTagsProject: {},
+		projectTagProjectEdition: {},
 	}),
 	actions: {
-		getProjetTagByList: projetTagResource.getByList,
-		getProjetTagByInterval: projetTagResource.getByInterval,
-		getProjetTagById: projetTagResource.getById,
-		createProjetTag: projetTagResource.create,
-		updateProjetTag: projetTagResource.update,
-		deleteProjetTag: projetTagResource.remove,
-		createProjetTagBulk: projetTagResource.createBulk,
+		getProjectTagByList: projectTagResource.getByList,
+		getProjectTagByInterval: projectTagResource.getByInterval,
+		getProjectTagById: projectTagResource.getById,
+		createProjectTag: projectTagResource.create,
+		updateProjectTag: projectTagResource.update,
+		deleteProjectTag: projectTagResource.remove,
+		createProjectTagBulk: projectTagResource.createBulk,
 		loadToEdition(id, preset = null) {
-			this.projetTagEdition[id] = {};
+			this.projectTagEdition[id] = {};
 			if (preset) {
 				preset.split(";").forEach((pair) => {
 					const [key, value] = pair.split(":");
 					if (key && value) {
-						this.projetTagEdition[id][key] = value;
+						this.projectTagEdition[id][key] = value;
 					}
 				});
 			}
 			if (id !== "new" && this.projectTags[id]) {
-				this.projetTagEdition[id] = {
+				this.projectTagEdition[id] = {
 					loading: false,
 					name_project_tag: this.projectTags[id].name_project_tag,
 					weight_project_tag: this.projectTags[id].weight_project_tag,
 				};
 			} else {
-				this.projetTagEdition[id] = {
+				this.projectTagEdition[id] = {
 					loading: false,
 				};
 			}
-			this.projetTagProjetEdition[id] = {};
+			this.projectTagProjectEdition[id] = {};
 		},
 		setLoadingEdition(id, loading) {
-			if (!this.projetTagEdition[id]) {
-				this.projetTagEdition[id] = {};
+			if (!this.projectTagEdition[id]) {
+				this.projectTagEdition[id] = {};
 			}
-			this.projetTagEdition[id].loading = loading;
+			this.projectTagEdition[id].loading = loading;
 		},
 		clearEdition(id) {
-			delete this.projetTagEdition[id];
-			delete this.projetTagProjetEdition[id];
+			delete this.projectTagEdition[id];
+			delete this.projectTagProjectEdition[id];
 		},
 
-		getProjetTagProjetByInterval: projetTagProjetResource.getByInterval,
-		getProjetTagProjetById: projetTagProjetResource.getById,
-		createProjetTagProjet: projetTagProjetResource.create,
-		deleteProjetTagProjet: projetTagProjetResource.remove,
-		createProjetTagProjetBulk: projetTagProjetResource.createBulk,
-		deleteProjetTagProjetBulk: projetTagProjetResource.removeBulk,
+		getProjectTagProjectByInterval: projectTagProjectResource.getByInterval,
+		getProjectTagProjectById: projectTagProjectResource.getById,
+		createProjectTagProject: projectTagProjectResource.create,
+		deleteProjectTagProject: projectTagProjectResource.remove,
+		createProjectTagProjectBulk: projectTagProjectResource.createBulk,
+		deleteProjectTagProjectBulk: projectTagProjectResource.removeBulk,
 	},
 });

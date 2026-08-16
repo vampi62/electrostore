@@ -4,17 +4,17 @@ namespace ElectrostoreAPI.Services.ProjectItemService;
 
 public interface IProjectItemService
 {
-    public Task<PaginatedResponseDto<ReadExtendedProjectItemDto>> GetProjetItemsByProjetId(int projetId, int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null);
+    public Task<PaginatedResponseDto<ReadExtendedProjectItemDto>> GetProjectItemsByProjectId(int projectId, int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null);
 
-    public Task<PaginatedResponseDto<ReadExtendedProjectItemDto>> GetProjetItemsByItemId(int itemId, int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null);
+    public Task<PaginatedResponseDto<ReadExtendedProjectItemDto>> GetProjectItemsByItemId(int itemId, int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null);
 
-    public Task<ReadExtendedProjectItemDto> GetProjetItemById(int projetId, int itemId, List<string>? expand = null);
+    public Task<ReadExtendedProjectItemDto> GetProjectItemById(int projectId, int itemId, List<string>? expand = null);
 
-    public Task<ReadProjectItemDto> CreateProjetItem(CreateProjectItemDto projetItemDto);
+    public Task<ReadProjectItemDto> CreateProjectItem(CreateProjectItemDto projectItemDto);
 
-    public Task<ReadBulkProjectItemDto> CreateBulkProjetItem(List<CreateProjectItemDto> projetItemBulkDto);
+    public Task<ReadBulkProjectItemDto> CreateBulkProjectItem(List<CreateProjectItemDto> projectItemBulkDto);
 
-    public Task<ReadProjectItemDto> UpdateProjetItem(int projetId, int itemId, UpdateProjectItemDto projetItemDto);
+    public Task<ReadProjectItemDto> UpdateProjectItem(int projectId, int itemId, UpdateProjectItemDto projectItemDto);
 
-    public Task DeleteProjetItem(int projetId, int itemId);
+    public Task DeleteProjectItem(int projectId, int itemId);
 }

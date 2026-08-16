@@ -8,16 +8,16 @@ namespace ElectrostoreAPI.Grpc.Services;
 
 public class IaTrainingGrpcService : IaTrainingGrpc.IaTrainingGrpcBase
 {
-    private readonly IAIService _iaService;
+    private readonly IAIService _aiService;
     private readonly IImgService _imgService;
     private readonly ILogger<IaTrainingGrpcService> _logger;
 
     public IaTrainingGrpcService(
-        IAIService iaService,
+        IAIService aiService,
         IImgService imgService,
         ILogger<IaTrainingGrpcService> logger)
     {
-        _iaService = iaService;
+        _aiService = aiService;
         _imgService = imgService;
         _logger = logger;
     }
@@ -37,7 +37,7 @@ public class IaTrainingGrpcService : IaTrainingGrpc.IaTrainingGrpcBase
     public override async Task<UpdateIaStatusReply> UpdateIaStatus(
         UpdateIaStatusRequest request, ServerCallContext context)
     {
-        var iaStatus = new AIStatusDto
+        var aiStatus = new AIStatusDto
         {
             Status = request.Action,
             Message = request.Message,
@@ -47,7 +47,7 @@ public class IaTrainingGrpcService : IaTrainingGrpc.IaTrainingGrpcBase
             Loss = request.Loss,
             ValLoss = request.ValLoss
         };
-        var result = await _iaService.UpdateIaStatusAsync(request.IdIa, iaStatus, request.RequestedBy, context.CancellationToken);
+        var result = await _aiService.UpdateIaStatusAsync(request.IdIa, aiStatus, request.RequestedBy, context.CancellationToken);
         if (!result)
         {
             _logger.LogWarning("UpdateIaStatus: update failed for AI {Id} (status={Status})", request.IdIa, request.Action);

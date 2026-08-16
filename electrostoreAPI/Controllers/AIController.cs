@@ -12,11 +12,11 @@ namespace ElectrostoreAPI.Controllers
 
     public class AIController : ControllerBase
     {
-        private readonly IAIService _iaService;
+        private readonly IAIService _aiService;
 
-        public AIController(IAIService iaService)
+        public AIController(IAIService aiService)
         {
-            _iaService = iaService;
+            _aiService = aiService;
         }
 
         [HttpGet]
@@ -28,23 +28,23 @@ namespace ElectrostoreAPI.Controllers
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
-            var ias = await _iaService.GetIA(limit, offset, rsqlDto, sortDto, idResearch);
-            return Ok(ias);
+            var ais = await _aiService.GetIA(limit, offset, rsqlDto, sortDto, idResearch);
+            return Ok(ais);
         }
 
         [HttpGet("{id_ia}")]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadAIDto>> GetIAById([FromRoute] int id_ia)
         {
-            var ia = await _iaService.GetIAById(id_ia);
-            return Ok(ia);
+            var ai = await _aiService.GetIAById(id_ia);
+            return Ok(ai);
         }
 
         [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadAIDto>> CreateIA([FromBody] CreateAIDto ia)
+        public async Task<ActionResult<ReadAIDto>> CreateIA([FromBody] CreateAIDto ai)
         {
-            var newIA = await _iaService.CreateIA(ia);
+            var newIA = await _aiService.CreateIA(ai);
             return CreatedAtAction(nameof(GetIAById), new { id_ia = newIA.id_ia }, newIA);
         }
 
@@ -52,15 +52,15 @@ namespace ElectrostoreAPI.Controllers
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<AIStatusDto>> GetTrainingStatus(int id_ia)
         {
-            var IAStatus = await _iaService.GetIATrainingStatusById(id_ia);
-            return Ok(IAStatus);
+            var aiStatus = await _aiService.GetIATrainingStatusById(id_ia);
+            return Ok(aiStatus);
         }
 
         [HttpPost("{id_ia}/train")]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult> TrainIA([FromRoute] int id_ia)
         {
-            await _iaService.StartIATrainById(id_ia);
+            await _aiService.StartIATrainById(id_ia);
             return NoContent();
         }
 
@@ -68,23 +68,23 @@ namespace ElectrostoreAPI.Controllers
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<PredictionOutput>> DetectItem([FromRoute] int id_ia, [FromForm] DetecDto img_to_scan)
         {
-            var detection = await _iaService.IADetectItem(id_ia, img_to_scan);
+            var detection = await _aiService.IADetectItem(id_ia, img_to_scan);
             return Ok(detection);
         }
 
         [HttpPut("{id_ia}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadAIDto>> UpdateIA([FromRoute] int id_ia, [FromBody] UpdateAIDto ia)
+        public async Task<ActionResult<ReadAIDto>> UpdateIA([FromRoute] int id_ia, [FromBody] UpdateAIDto ai)
         {
-            var iaToUpdate = await _iaService.UpdateIA(id_ia, ia);
-            return Ok(iaToUpdate);
+            var aiToUpdate = await _aiService.UpdateIA(id_ia, ai);
+            return Ok(aiToUpdate);
         }
 
         [HttpDelete("{id_ia}")]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult> DeleteIA([FromRoute] int id_ia)
         {
-            await _iaService.DeleteIA(id_ia);
+            await _aiService.DeleteIA(id_ia);
             return NoContent();
         }
     }

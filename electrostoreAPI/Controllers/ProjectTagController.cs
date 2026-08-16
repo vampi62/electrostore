@@ -12,16 +12,16 @@ namespace ElectrostoreAPI.Controllers
 
     public class ProjectTagController : ControllerBase
     {
-        private readonly IProjectTagService _projetTagService;
+        private readonly IProjectTagService _projectTagService;
 
-        public ProjectTagController(IProjectTagService projetTagService)
+        public ProjectTagController(IProjectTagService projectTagService)
         {
-            _projetTagService = projetTagService;
+            _projectTagService = projectTagService;
         }
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjectTagDto>>> GetProjetTags([FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjectTagDto>>> GetProjectTags([FromQuery] int limit = 100, [FromQuery] int offset = 0,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'project_tags'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'name_project_tag=like=example'.")] string? filter = null,
@@ -29,48 +29,48 @@ namespace ElectrostoreAPI.Controllers
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
-            var projetTags = await _projetTagService.GetProjetTags(limit, offset, rsqlDto, sortDto, expand, idResearch);
-            return Ok(projetTags);
+            var projectTags = await _projectTagService.GetProjectTags(limit, offset, rsqlDto, sortDto, expand, idResearch);
+            return Ok(projectTags);
         }
 
         [HttpGet("{id_project_tag}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedTagDto>> GetProjetTagById([FromRoute] int id_project_tag,
+        public async Task<ActionResult<ReadExtendedTagDto>> GetProjectTagById([FromRoute] int id_project_tag,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'project_tags'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var projetTags = await _projetTagService.GetProjetTagById(id_project_tag, expand);
-            return Ok(projetTags);
+            var projectTags = await _projectTagService.GetProjectTagById(id_project_tag, expand);
+            return Ok(projectTags);
         }
 
         [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadTagDto>> CreateProjetTag([FromBody] CreateProjectTagDto projetTag)
+        public async Task<ActionResult<ReadTagDto>> CreateProjectTag([FromBody] CreateProjectTagDto projectTag)
         {
-            var newProjetTag = await _projetTagService.CreateProjetTag(projetTag);
-            return CreatedAtAction(nameof(GetProjetTagById), new { id_project_tag = newProjetTag.id_project_tag }, newProjetTag);
+            var newProjectTag = await _projectTagService.CreateProjectTag(projectTag);
+            return CreatedAtAction(nameof(GetProjectTagById), new { id_project_tag = newProjectTag.id_project_tag }, newProjectTag);
         }
         
         [HttpPost("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkTagDto>> CreateBulkProjetTag([FromBody] List<CreateProjectTagDto> projetTag)
+        public async Task<ActionResult<ReadBulkTagDto>> CreateBulkProjectTag([FromBody] List<CreateProjectTagDto> projectTag)
         {
-            var newProjetTag = await _projetTagService.CreateBulkProjetTag(projetTag);
-            return Ok(newProjetTag);
+            var newProjectTag = await _projectTagService.CreateBulkProjectTag(projectTag);
+            return Ok(newProjectTag);
         }
 
         [HttpPut("{id_project_tag}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadTagDto>> UpdateProjetTag([FromRoute] int id_project_tag, [FromBody] UpdateProjectTagDto projetTag)
+        public async Task<ActionResult<ReadTagDto>> UpdateProjectTag([FromRoute] int id_project_tag, [FromBody] UpdateProjectTagDto projectTag)
         {
-            var tagToUpdate = await _projetTagService.UpdateProjetTag(id_project_tag, projetTag);
+            var tagToUpdate = await _projectTagService.UpdateProjectTag(id_project_tag, projectTag);
             return Ok(tagToUpdate);
         }
         
         [HttpDelete("{id_project_tag}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> DeleteProjetTag([FromRoute] int id_project_tag)
+        public async Task<ActionResult> DeleteProjectTag([FromRoute] int id_project_tag)
         {
-            await _projetTagService.DeleteProjetTag(id_project_tag);
+            await _projectTagService.DeleteProjectTag(id_project_tag);
             return NoContent();
         }
     }

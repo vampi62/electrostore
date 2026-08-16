@@ -4,15 +4,15 @@ namespace ElectrostoreAPI.Services.CommandCommentService;
 
 public interface ICommandCommentService
 {
-    public Task<PaginatedResponseDto<ReadExtendedCommandCommentDto>> GetCommandsCommentairesByCommandId(int CommandId, int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null);
+    public Task<PaginatedResponseDto<ReadExtendedCommandCommentDto>> GetCommandsCommentsByCommandId(int CommandId, int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null);
 
-    public Task<PaginatedResponseDto<ReadExtendedCommandCommentDto>> GetCommandsCommentairesByUserId(int userId, int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null);
+    public Task<PaginatedResponseDto<ReadExtendedCommandCommentDto>> GetCommandsCommentsByUserId(int userId, int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null);
 
-    public Task<ReadExtendedCommandCommentDto> GetCommandsCommentaireById(int id, int? userId = null, int? CommandId = null, List<string>? expand = null);
+    public Task<ReadExtendedCommandCommentDto> GetCommandsCommentById(int id, int? userId = null, int? CommandId = null, List<string>? expand = null);
 
-    public Task<ReadCommandCommentDto> CreateCommentaire(CreateCommandCommentDto commandCommentaireDto);
+    public Task<ReadCommandCommentDto> CreateComment(CreateCommandCommentDto commandCommentDto);
 
-    public Task<ReadCommandCommentDto> UpdateCommentaire(int id, UpdateCommandCommentDto commandCommentaireDto, int? userId = null, int? CommandId = null);
+    public Task<ReadCommandCommentDto> UpdateComment(int id, UpdateCommandCommentDto commandCommentDto, int? userId = null, int? CommandId = null);
 
-    public Task DeleteCommentaire(int id, int? userId = null, int? CommandId = null);
+    public Task DeleteComment(int id, int? userId = null, int? CommandId = null);
 }

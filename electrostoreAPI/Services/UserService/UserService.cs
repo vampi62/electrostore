@@ -74,7 +74,7 @@ public class UserService : IUserService
             {
                 User = u,
                 ProjectsCommentsCount = u.ProjectsComments.Count,
-                CommandsCommentairesCount = u.CommandsComments.Count,
+                CommandsCommentsCount = u.CommandsComments.Count,
                 ProjectsComments = expand != null && expand.Contains("project_comments") ? u.ProjectsComments.Take(20).ToList() : null,
                 CommandsComments = expand != null && expand.Contains("command_comments") ? u.CommandsComments.Take(20).ToList() : null
             })
@@ -86,7 +86,7 @@ public class UserService : IUserService
                 return _mapper.Map<ReadExtendedUserDto>(u.User) with
                 {
                     project_comments_count = u.ProjectsCommentsCount,
-                    command_comments_count = u.CommandsCommentairesCount,
+                    command_comments_count = u.CommandsCommentsCount,
                     project_comments = _mapper.Map<IEnumerable<ReadProjectCommentDto>>(u.ProjectsComments),
                     command_comments = _mapper.Map<IEnumerable<ReadCommandCommentDto>>(u.CommandsComments)
                 };
@@ -189,7 +189,7 @@ public class UserService : IUserService
             {
                 User = u,
                 ProjectsCommentsCount = u.ProjectsComments.Count,
-                CommandsCommentairesCount = u.CommandsComments.Count,
+                CommandsCommentsCount = u.CommandsComments.Count,
                 ProjectsComments = expand != null && expand.Contains("project_comments") ? u.ProjectsComments.Take(20).ToList() : null,
                 CommandsComments = expand != null && expand.Contains("command_comments") ? u.CommandsComments.Take(20).ToList() : null
             })
@@ -197,7 +197,7 @@ public class UserService : IUserService
         return _mapper.Map<ReadExtendedUserDto>(user.User) with
         {
             project_comments_count = user.ProjectsCommentsCount,
-            command_comments_count = user.CommandsCommentairesCount,
+            command_comments_count = user.CommandsCommentsCount,
             project_comments = _mapper.Map<IEnumerable<ReadProjectCommentDto>>(user.ProjectsComments),
             command_comments = _mapper.Map<IEnumerable<ReadCommandCommentDto>>(user.CommandsComments)
         };

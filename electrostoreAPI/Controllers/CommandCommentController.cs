@@ -13,62 +13,62 @@ namespace ElectrostoreAPI.Controllers
 
     public class CommandCommentController : ControllerBase
     {
-        private readonly ICommandCommentService _commandCommentaireService;
+        private readonly ICommandCommentService _commandCommentService;
 
-        public CommandCommentController(ICommandCommentService commandCommentaireService)
+        public CommandCommentController(ICommandCommentService commandCommentService)
         {
-            _commandCommentaireService = commandCommentaireService;
+            _commandCommentService = commandCommentService;
         }
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedCommandCommentDto>>> GetCommandsCommentairesByCommandId([FromRoute] int id_command, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedCommandCommentDto>>> GetCommandsCommentsByCommandId([FromRoute] int id_command, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'command', 'user'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'content_command_comment=like=example'.")] string? filter = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'created_at,asc' or 'created_at,desc'.")] string? sort = null)
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
-            var commandCommentaires = await _commandCommentaireService.GetCommandsCommentairesByCommandId(id_command, limit, offset, rsqlDto, sortDto, expand);
-            return Ok(commandCommentaires);
+            var commandComments = await _commandCommentService.GetCommandsCommentsByCommandId(id_command, limit, offset, rsqlDto, sortDto, expand);
+            return Ok(commandComments);
         }
 
         [HttpGet("{id_command_comment}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedCommandCommentDto>> GetCommandsCommentaireById([FromRoute] int id_command, [FromRoute] int id_command_comment,
+        public async Task<ActionResult<ReadExtendedCommandCommentDto>> GetCommandsCommentById([FromRoute] int id_command, [FromRoute] int id_command_comment,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'command', 'user'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var commandCommentaire = await _commandCommentaireService.GetCommandsCommentaireById(id_command_comment, null, id_command, expand);
-            return Ok(commandCommentaire);
+            var commandComment = await _commandCommentService.GetCommandsCommentById(id_command_comment, null, id_command, expand);
+            return Ok(commandComment);
         }
 
         [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadCommandCommentDto>> CreateCommentaire([FromRoute] int id_command, [FromBody] CreateCommandCommentByCommandDto commandCommentaireDto)
+        public async Task<ActionResult<ReadCommandCommentDto>> CreateComment([FromRoute] int id_command, [FromBody] CreateCommandCommentByCommandDto commandCommentDto)
         {
-            var commandCommentaireDtoFull = new CreateCommandCommentDto
+            var commandCommentDtoFull = new CreateCommandCommentDto
             {
                 id_command = id_command,
                 id_user = int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId) ? userId : throw new InvalidOperationException("User identifier not found."),
-                content_command_comment = commandCommentaireDto.content_command_comment
+                content_command_comment = commandCommentDto.content_command_comment
             };
-            var commandCommentaire = await _commandCommentaireService.CreateCommentaire(commandCommentaireDtoFull);
-            return CreatedAtAction(nameof(GetCommandsCommentaireById), new { id_command = commandCommentaire.id_command, id_command_comment = commandCommentaire.id_command_comment }, commandCommentaire);
+            var commandComment = await _commandCommentService.CreateComment(commandCommentDtoFull);
+            return CreatedAtAction(nameof(GetCommandsCommentById), new { id_command = commandComment.id_command, id_command_comment = commandComment.id_command_comment }, commandComment);
         }
 
         [HttpPut("{id_command_comment}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadCommandCommentDto>> UpdateCommentaire([FromRoute] int id_command, [FromRoute] int id_command_comment, [FromBody] UpdateCommandCommentDto commandCommentaireDto)
+        public async Task<ActionResult<ReadCommandCommentDto>> UpdateComment([FromRoute] int id_command, [FromRoute] int id_command_comment, [FromBody] UpdateCommandCommentDto commandCommentDto)
         {
-            var commandCommentaire = await _commandCommentaireService.UpdateCommentaire(id_command_comment, commandCommentaireDto, null, id_command);
-            return Ok(commandCommentaire);
+            var commandComment = await _commandCommentService.UpdateComment(id_command_comment, commandCommentDto, null, id_command);
+            return Ok(commandComment);
         }
 
         [HttpDelete("{id_command_comment}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> DeleteCommentaire([FromRoute] int id_command, [FromRoute] int id_command_comment)
+        public async Task<ActionResult> DeleteComment([FromRoute] int id_command, [FromRoute] int id_command_comment)
         {
-            await _commandCommentaireService.DeleteCommentaire(id_command_comment, null, id_command);
+            await _commandCommentService.DeleteComment(id_command_comment, null, id_command);
             return NoContent();
         }
     }

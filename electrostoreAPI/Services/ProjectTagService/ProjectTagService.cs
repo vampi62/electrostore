@@ -18,7 +18,7 @@ public class ProjectTagService : IProjectTagService
         _context = context;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedProjectTagDto>> GetProjetTags(int limit = 100, int offset = 0,
+    public async Task<PaginatedResponseDto<ReadExtendedProjectTagDto>> GetProjectTags(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.ProjectTags.AsQueryable();
@@ -53,7 +53,7 @@ public class ProjectTagService : IProjectTagService
             }
         }
         query = query.Skip(offset).Take(limit);
-        var projetTag = await query
+        var projectTag = await query
             .Select(t => new
             {
                 ProjectTags = t,
@@ -63,7 +63,7 @@ public class ProjectTagService : IProjectTagService
             .ToListAsync();
         return new PaginatedResponseDto<ReadExtendedProjectTagDto>
         {
-            data = projetTag.Select(t => _mapper.Map<ReadExtendedProjectTagDto>(t.ProjectTags) with
+            data = projectTag.Select(t => _mapper.Map<ReadExtendedProjectTagDto>(t.ProjectTags) with
             {
                 project_tags_count = t.ProjectsProjectTagsCount,
                 project_tags = _mapper.Map<IEnumerable<ReadProjectProjectTagDto>>(t.ProjectsProjectTags)
@@ -81,11 +81,11 @@ public class ProjectTagService : IProjectTagService
         };
     }
 
-    public async Task<ReadExtendedProjectTagDto> GetProjetTagById(int id, List<string>? expand = null)
+    public async Task<ReadExtendedProjectTagDto> GetProjectTagById(int id, List<string>? expand = null)
     {
         var query = _context.ProjectTags.AsQueryable();
         query = query.Where(t => t.id_project_tag == id);
-        var projetTag = await query
+        var projectTag = await query
             .Select(t => new
             {
                 ProjectTags = t,
@@ -93,42 +93,42 @@ public class ProjectTagService : IProjectTagService
                 ProjectsProjectTags = expand != null && expand.Contains("project_tags") ? t.ProjectsProjectTags.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjectTag with id '{id}' not found");
-        return _mapper.Map<ReadExtendedProjectTagDto>(projetTag.ProjectTags) with
+        return _mapper.Map<ReadExtendedProjectTagDto>(projectTag.ProjectTags) with
         {
-            project_tags_count = projetTag.ProjectsProjectTagsCount,
-            project_tags = _mapper.Map<IEnumerable<ReadProjectProjectTagDto>>(projetTag.ProjectsProjectTags)
+            project_tags_count = projectTag.ProjectsProjectTagsCount,
+            project_tags = _mapper.Map<IEnumerable<ReadProjectProjectTagDto>>(projectTag.ProjectsProjectTags)
         };
     }
 
-    public async Task<ReadProjectTagDto> CreateProjetTag(CreateProjectTagDto projetTagDto)
+    public async Task<ReadProjectTagDto> CreateProjectTag(CreateProjectTagDto projectTagDto)
     {
         // check if tag name already exists
-        if (await _context.ProjectTags.AnyAsync(t => t.name_project_tag == projetTagDto.name_project_tag))
+        if (await _context.ProjectTags.AnyAsync(t => t.name_project_tag == projectTagDto.name_project_tag))
         {
-            throw new InvalidOperationException($"ProjectTag with name '{projetTagDto.name_project_tag}' already exists");
+            throw new InvalidOperationException($"ProjectTag with name '{projectTagDto.name_project_tag}' already exists");
         }
-        var newProjetTag = _mapper.Map<ProjectTags>(projetTagDto);
-        _context.ProjectTags.Add(newProjetTag);
+        var newProjectTag = _mapper.Map<ProjectTags>(projectTagDto);
+        _context.ProjectTags.Add(newProjectTag);
         await _context.SaveChangesAsync();
-        return _mapper.Map<ReadProjectTagDto>(newProjetTag);
+        return _mapper.Map<ReadProjectTagDto>(newProjectTag);
     }
 
-    public async Task<ReadBulkProjectTagDto> CreateBulkProjetTag(List<CreateProjectTagDto> projetTagBulkDto)
+    public async Task<ReadBulkProjectTagDto> CreateBulkProjectTag(List<CreateProjectTagDto> projectTagBulkDto)
     {
         var validQuery = new List<ReadProjectTagDto>();
         var errorQuery = new List<ErrorDetail>();
-        foreach (var projetTagDto in projetTagBulkDto)
+        foreach (var projectTagDto in projectTagBulkDto)
         {
             try
             {
-                validQuery.Add(await CreateProjetTag(projetTagDto));
+                validQuery.Add(await CreateProjectTag(projectTagDto));
             }
             catch (Exception e)
             {
                 errorQuery.Add(new ErrorDetail
                 {
                     Reason = e.Message,
-                    Data = projetTagDto
+                    Data = projectTagDto
                 });
             }
         }
@@ -139,30 +139,30 @@ public class ProjectTagService : IProjectTagService
         };
     }
 
-    public async Task<ReadProjectTagDto> UpdateProjetTag(int id, UpdateProjectTagDto projetTagDto)
+    public async Task<ReadProjectTagDto> UpdateProjectTag(int id, UpdateProjectTagDto projectTagDto)
     {
-        var projetTagToUpdate = await _context.ProjectTags.FindAsync(id) ?? throw new KeyNotFoundException($"ProjectTag with id {id} not found");
-        if (projetTagDto.name_project_tag is not null)
+        var projectTagToUpdate = await _context.ProjectTags.FindAsync(id) ?? throw new KeyNotFoundException($"ProjectTag with id {id} not found");
+        if (projectTagDto.name_project_tag is not null)
         {
             // check if another tag with the name already exists
-            if (await _context.ProjectTags.AnyAsync(t => t.name_project_tag == projetTagDto.name_project_tag && t.id_project_tag != id))
+            if (await _context.ProjectTags.AnyAsync(t => t.name_project_tag == projectTagDto.name_project_tag && t.id_project_tag != id))
             {
-                throw new InvalidOperationException($"ProjectTag with name '{projetTagDto.name_project_tag}' already exists");
+                throw new InvalidOperationException($"ProjectTag with name '{projectTagDto.name_project_tag}' already exists");
             }
-            projetTagToUpdate.name_project_tag = projetTagDto.name_project_tag;
+            projectTagToUpdate.name_project_tag = projectTagDto.name_project_tag;
         }
-        if (projetTagDto.weight_project_tag is not null)
+        if (projectTagDto.weight_project_tag is not null)
         {
-            projetTagToUpdate.weight_project_tag = projetTagDto.weight_project_tag.Value;
+            projectTagToUpdate.weight_project_tag = projectTagDto.weight_project_tag.Value;
         }
         await _context.SaveChangesAsync();
-        return _mapper.Map<ReadProjectTagDto>(projetTagToUpdate);
+        return _mapper.Map<ReadProjectTagDto>(projectTagToUpdate);
     }
 
-    public async Task DeleteProjetTag(int id)
+    public async Task DeleteProjectTag(int id)
     {
-        var projetTagToDelete = await _context.ProjectTags.FindAsync(id) ?? throw new KeyNotFoundException($"ProjectTag with id '{id}' not found");
-        _context.ProjectTags.Remove(projetTagToDelete);
+        var projectTagToDelete = await _context.ProjectTags.FindAsync(id) ?? throw new KeyNotFoundException($"ProjectTag with id '{id}' not found");
+        _context.ProjectTags.Remove(projectTagToDelete);
         await _context.SaveChangesAsync();
     }
 }

@@ -32,10 +32,10 @@ const EXPAND_HANDLERS = {
 			store.itemCommands[idItem][itemCommand.id_command] = itemCommand;
 		}
 	},
-	item_projets: (store, idItem, data) => {
-		store.itemProjets[idItem] = {};
-		for (const itemProjet of data) {
-			store.itemProjets[idItem][itemProjet.id_project] = itemProjet;
+	project_items: (store, idItem, data) => {
+		store.itemProjects[idItem] = {};
+		for (const itemProject of data) {
+			store.itemProjects[idItem][itemProject.id_project] = itemProject;
 		}
 	},
 	images: (store, idItem, data) => {
@@ -60,7 +60,7 @@ function hydrateItem(store, idItem, item, expand = []) {
 	store.itemBoxsTotalCount[idItem] = item["item_boxs_count"];
 	store.itemTagsTotalCount[idItem] = item["item_tags_count"];
 	store.itemCommandsTotalCount[idItem] = item["command_items_count"];
-	store.itemProjetsTotalCount[idItem] = item["project_items_count"];
+	store.itemProjectsTotalCount[idItem] = item["project_items_count"];
 	for (const key of expand) {
 		if (EXPAND_HANDLERS[key]) {
 			EXPAND_HANDLERS[key](store, idItem, item[key]);
@@ -133,16 +133,16 @@ const itemCommandResource = createNestedResource({
 		}
 	},
 });
-const itemProjetResource = createNestedResource({
+const itemProjectResource = createNestedResource({
 	path: (idItem) => `/item/${idItem}/project`,
-	idField: "id_projet_item",
-	stateKey: "itemProjets",
-	countKey: "itemProjetsTotalCount",
-	loadingKey: "itemProjetsLoading",
+	idField: "id_project",
+	stateKey: "itemProjects",
+	countKey: "itemProjectsTotalCount",
+	loadingKey: "itemProjectsLoading",
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("project")) {
-			const projetsStore = useProjectsStore();
-			projetsStore.projects[entity.id_project] = entity.project;
+			const projectsStore = useProjectsStore();
+			projectsStore.projects[entity.id_project] = entity.project;
 		}
 	},
 });
@@ -206,10 +206,10 @@ export const useItemsStore = defineStore("items",{
 		itemCommands: {},
 		itemCommandEdition: {},
 
-		itemProjetsLoading: false,
-		itemProjetsTotalCount: {},
-		itemProjets: {},
-		itemProjetEdition: {},
+		itemProjectsLoading: false,
+		itemProjectsTotalCount: {},
+		itemProjects: {},
+		itemProjectEdition: {},
 
 		imagesLoading: false,
 		imagesTotalCount: {},
@@ -258,7 +258,7 @@ export const useItemsStore = defineStore("items",{
 			this.itemBoxEdition[id] = {};
 			this.itemTagEdition[id] = {};
 			this.itemCommandEdition[id] = {};
-			this.itemProjetEdition[id] = {};
+			this.itemProjectEdition[id] = {};
 			this.imageEdition[id] = {};
 		},
 		setLoadingEdition(id, loading) {
@@ -273,7 +273,7 @@ export const useItemsStore = defineStore("items",{
 			delete this.itemBoxEdition[id];
 			delete this.itemTagEdition[id];
 			delete this.itemCommandEdition[id];
-			delete this.itemProjetEdition[id];
+			delete this.itemProjectEdition[id];
 			delete this.imageEdition[id];
 		},
 
@@ -309,12 +309,12 @@ export const useItemsStore = defineStore("items",{
 		deleteItemCommand: itemCommandResource.remove,
 		createItemCommandBulk: itemCommandResource.createBulk,
 
-		getItemProjetByInterval: itemProjetResource.getByInterval,
-		getItemProjetById: itemProjetResource.getById,
-		createItemProjet: itemProjetResource.create,
-		updateItemProjet: itemProjetResource.update,
-		deleteItemProjet: itemProjetResource.remove,
-		createItemProjetBulk: itemProjetResource.createBulk,
+		getItemProjectByInterval: itemProjectResource.getByInterval,
+		getItemProjectById: itemProjectResource.getById,
+		createItemProject: itemProjectResource.create,
+		updateItemProject: itemProjectResource.update,
+		deleteItemProject: itemProjectResource.remove,
+		createItemProjectBulk: itemProjectResource.createBulk,
 
 		getImageByInterval: imageResource.getByInterval,
 		getImageById: imageResource.getById,

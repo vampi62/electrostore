@@ -13,62 +13,62 @@ namespace ElectrostoreAPI.Controllers
 
     public class ProjectCommentController : ControllerBase
     {
-        private readonly IProjectCommentService _projetCommentaireService;
+        private readonly IProjectCommentService _projectCommentService;
 
-        public ProjectCommentController(IProjectCommentService projetCommentaireService)
+        public ProjectCommentController(IProjectCommentService projectCommentService)
         {
-            _projetCommentaireService = projetCommentaireService;
+            _projectCommentService = projectCommentService;
         }
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjectCommentDto>>> GetProjetCommentairesByProjetId([FromRoute] int id_project, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjectCommentDto>>> GetProjectCommentsByProjectId([FromRoute] int id_project, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'project', 'user'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) RSQL filter. Example: 'content_project_comment=like=test'.")] string? filter = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) Sort string. Example: 'created_at,asc' or 'created_at,desc'.")] string? sort = null)
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
-            var projetCommentaires = await _projetCommentaireService.GetProjetCommentairesByProjetId(id_project, limit, offset, rsqlDto, sortDto, expand);
-            return Ok(projetCommentaires);
+            var projectComments = await _projectCommentService.GetProjectCommentsByProjectId(id_project, limit, offset, rsqlDto, sortDto, expand);
+            return Ok(projectComments);
         }
 
         [HttpGet("{id_project_comment}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedProjectCommentDto>> GetProjetCommentairesById([FromRoute] int id_project, [FromRoute] int id_project_comment,
+        public async Task<ActionResult<ReadExtendedProjectCommentDto>> GetProjectCommentsById([FromRoute] int id_project, [FromRoute] int id_project_comment,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'project', 'user'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var projetCommentaire = await _projetCommentaireService.GetProjetCommentairesById(id_project_comment, null, id_project, expand);
-            return Ok(projetCommentaire);
+            var projectComment = await _projectCommentService.GetProjectCommentsById(id_project_comment, null, id_project, expand);
+            return Ok(projectComment);
         }
 
         [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadProjectCommentDto>> AddProjetCommentaire([FromRoute] int id_project, [FromBody] CreateProjectCommentByProjectDto projetCommentaireDto)
+        public async Task<ActionResult<ReadProjectCommentDto>> AddProjectComment([FromRoute] int id_project, [FromBody] CreateProjectCommentByProjectDto projectCommentDto)
         {
-            var projetCommentaireDtoFull = new CreateProjectCommentDto
+            var projectCommentDtoFull = new CreateProjectCommentDto
             {
                 id_project = id_project,
                 id_user = int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId) ? userId : throw new InvalidOperationException("User identifier not found."),
-                content_project_comment = projetCommentaireDto.content_project_comment
+                content_project_comment = projectCommentDto.content_project_comment
             };
-            var projetCommentaire = await _projetCommentaireService.CreateProjetCommentaire(projetCommentaireDtoFull);
-            return CreatedAtAction(nameof(GetProjetCommentairesById), new { id_project = projetCommentaire.id_project, id_project_comment = projetCommentaire.id_project_comment }, projetCommentaire);
+            var projectComment = await _projectCommentService.CreateProjectComment(projectCommentDtoFull);
+            return CreatedAtAction(nameof(GetProjectCommentsById), new { id_project = projectComment.id_project, id_project_comment = projectComment.id_project_comment }, projectComment);
         }
 
         [HttpPut("{id_project_comment}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadProjectCommentDto>> UpdateProjetCommentaire([FromRoute] int id_project, [FromRoute] int id_project_comment, [FromBody] UpdateProjectCommentDto projetCommentaireDto)
+        public async Task<ActionResult<ReadProjectCommentDto>> UpdateProjectComment([FromRoute] int id_project, [FromRoute] int id_project_comment, [FromBody] UpdateProjectCommentDto projectCommentDto)
         {
-            var projetCommentaire = await _projetCommentaireService.UpdateProjetCommentaire(id_project_comment, projetCommentaireDto, null, id_project);
-            return Ok(projetCommentaire);
+            var projectComment = await _projectCommentService.UpdateProjectComment(id_project_comment, projectCommentDto, null, id_project);
+            return Ok(projectComment);
         }
 
         [HttpDelete("{id_project_comment}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> DeleteProjetCommentaire([FromRoute] int id_project, [FromRoute] int id_project_comment)
+        public async Task<ActionResult> DeleteProjectComment([FromRoute] int id_project, [FromRoute] int id_project_comment)
         {
-            await _projetCommentaireService.DeleteProjetCommentaire(id_project_comment, null, id_project);
+            await _projectCommentService.DeleteProjectComment(id_project_comment, null, id_project);
             return NoContent();
         }
     }

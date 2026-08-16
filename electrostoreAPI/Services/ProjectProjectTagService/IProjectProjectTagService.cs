@@ -4,17 +4,17 @@ namespace ElectrostoreAPI.Services.ProjectProjectTagService;
 
 public interface IProjectProjectTagService
 {
-    public Task<PaginatedResponseDto<ReadExtendedProjectProjectTagDto>> GetProjetsProjetTagsByProjetId(int projetId, int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null);
+    public Task<PaginatedResponseDto<ReadExtendedProjectProjectTagDto>> GetProjectsProjectTagsByProjectId(int projectId, int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null);
 
-    public Task<PaginatedResponseDto<ReadExtendedProjectProjectTagDto>> GetProjetsProjetTagsByprojetTagId(int projetTagId, int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null);
+    public Task<PaginatedResponseDto<ReadExtendedProjectProjectTagDto>> GetProjectsProjectTagsByprojectTagId(int projectTagId, int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null);
 
-    public Task<ReadExtendedProjectProjectTagDto> GetProjetProjetTagById(int projetId, int projetTagId, List<string>? expand = null);
+    public Task<ReadExtendedProjectProjectTagDto> GetProjectProjectTagById(int projectId, int projectTagId, List<string>? expand = null);
 
-    public Task<ReadProjectProjectTagDto> CreateProjetProjetTag(CreateProjectProjectTagDto projetProjetTagDto);
+    public Task<ReadProjectProjectTagDto> CreateProjectProjectTag(CreateProjectProjectTagDto projectProjectTagDto);
 
-    public Task<ReadBulkProjectProjectTagDto> CreateBulkProjetProjetTag(List<CreateProjectProjectTagDto> projetProjetTagBulkDto);
+    public Task<ReadBulkProjectProjectTagDto> CreateBulkProjectProjectTag(List<CreateProjectProjectTagDto> projectProjectTagBulkDto);
 
-    public Task DeleteProjetProjetTag(int projetId, int projetTagId);
+    public Task DeleteProjectProjectTag(int projectId, int projectTagId);
 
-    public Task<ReadBulkProjectProjectTagDto> DeleteBulkProjetProjetTag(List<CreateProjectProjectTagDto> projetProjetTagBulkDto);
+    public Task<ReadBulkProjectProjectTagDto> DeleteBulkProjectProjectTag(List<CreateProjectProjectTagDto> projectProjectTagBulkDto);
 }

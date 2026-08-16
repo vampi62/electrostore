@@ -8,9 +8,9 @@ public interface IAIService
 
     Task<ReadAIDto> GetIAById(int id);
 
-    Task<ReadAIDto> CreateIA(CreateAIDto iaDto);
+    Task<ReadAIDto> CreateIA(CreateAIDto aiDto);
 
-    Task<ReadAIDto> UpdateIA(int id, UpdateAIDto iaDto);
+    Task<ReadAIDto> UpdateIA(int id, UpdateAIDto aiDto);
 
     Task DeleteIA(int id);
     

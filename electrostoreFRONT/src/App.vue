@@ -17,10 +17,10 @@ const isIframe = computed(() => route.query.iframe !== undefined);
 const reduceLeftSideBar = ref(false);
 const listNav = ref([
 	{ name: "common.VAppInventory", path: "/inventory", faIcon: "fa-solid fa-box" },
-	{ name: "common.VAppProjet", path: "/projects", faIcon: "fa-solid fa-project-diagram" },
+	{ name: "common.VAppProject", path: "/projects", faIcon: "fa-solid fa-project-diagram" },
 	{ name: "common.VAppCommand", path: "/commands", faIcon: "fa-solid fa-shopping-cart" },
 	{ name: "common.VAppCam", path: "/cameras", faIcon: "fa-solid fa-camera" },
-	{ name: "common.VAppIa", path: "/ai", faIcon: "fa-solid fa-microchip" },
+	{ name: "common.VAppAi", path: "/ai", faIcon: "fa-solid fa-microchip" },
 	{ name: "common.VAppTags", path: "/tags", faIcon: "fa-solid fa-tags" },
 	{ name: "common.VAppStores", path: "/stores", faIcon: "fa-solid fa-store" },
 	{ name: "common.VAppCronJobs", path: "/cronjobs", faIcon: "fa-solid fa-clock" },

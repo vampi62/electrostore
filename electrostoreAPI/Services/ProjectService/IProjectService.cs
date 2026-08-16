@@ -4,13 +4,13 @@ namespace ElectrostoreAPI.Services.ProjectService;
 
 public interface IProjectService
 {
-    public Task<PaginatedResponseDto<ReadExtendedProjectDto>> GetProjets(int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null);
+    public Task<PaginatedResponseDto<ReadExtendedProjectDto>> GetProjects(int limit = 100, int offset = 0, List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null);
 
-    public Task<ReadExtendedProjectDto> GetProjetById(int id, List<string>? expand = null);
+    public Task<ReadExtendedProjectDto> GetProjectById(int id, List<string>? expand = null);
 
-    public Task<ReadProjectDto> CreateProjet(CreateProjectDto projetDto);
+    public Task<ReadProjectDto> CreateProject(CreateProjectDto projectDto);
 
-    public Task<ReadProjectDto> UpdateProjet(int id, UpdateProjectDto projetDto);
+    public Task<ReadProjectDto> UpdateProject(int id, UpdateProjectDto projectDto);
 
-    public Task DeleteProjet(int id);
+    public Task DeleteProject(int id);
 }

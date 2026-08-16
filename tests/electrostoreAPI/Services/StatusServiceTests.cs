@@ -109,8 +109,8 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.True(result.db_connected);
             Assert.True(result.mqtt_connected);
             Assert.True(result.kafka_connected);
-            Assert.Equal("healthy", result.ia_status);
-            Assert.Equal(2, result.ia_training_in_progress);
+            Assert.Equal("healthy", result.ai_status);
+            Assert.Equal(2, result.ai_training_in_progress);
             Assert.Equal("healthy", result.notif_status);
             Assert.True(result.notif_smtp);
             Assert.False(result.notif_webPush);
@@ -144,7 +144,7 @@ namespace ElectrostoreAPI.Tests.Services
             // Act
             var result = await service.GetStatus();
             // Assert
-            Assert.Equal("unreachable", result.ia_status);
+            Assert.Equal("unreachable", result.ai_status);
         }
 
         [Fact]

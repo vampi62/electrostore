@@ -7,68 +7,68 @@ import { useUsersStore, useItemsStore, useProjectTagsStore } from "@/stores";
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 const EXPAND_HANDLERS = {
-	project_comments: (store, idProjet, data) => {
-		store.comments[idProjet] = {};
+	project_comments: (store, idProject, data) => {
+		store.comments[idProject] = {};
 		for (const comment of data) {
-			store.comments[idProjet][comment.id_project_comment] = comment;
+			store.comments[idProject][comment.id_project_comment] = comment;
 		}
 	},
-	project_documents: (store, idProjet, data) => {
-		store.documents[idProjet] = {};
+	project_documents: (store, idProject, data) => {
+		store.documents[idProject] = {};
 		for (const document of data) {
-			store.documents[idProjet][document.id_project_document] = document;
+			store.documents[idProject][document.id_project_document] = document;
 		}
 	},
-	project_items: (store, idProjet, data) => {
-		store.items[idProjet] = {};
+	project_items: (store, idProject, data) => {
+		store.items[idProject] = {};
 		for (const item of data) {
-			store.items[idProjet][item.id_item] = item;
+			store.items[idProject][item.id_item] = item;
 		}
 	},
-	project_tags: (store, idProjet, data) => {
-		store.projetTagProjet[idProjet] = {};
-		for (const projetTagProjet of data) {
-			store.projetTagProjet[idProjet][projetTagProjet.id_project_tag] = projetTagProjet;
+	project_tags: (store, idProject, data) => {
+		store.projectTagProject[idProject] = {};
+		for (const projectTagProject of data) {
+			store.projectTagProject[idProject][projectTagProject.id_project_tag] = projectTagProject;
 		}
 	},
-	project_status_history: (store, idProjet, data) => {
-		store.statusHistory[idProjet] = {};
+	project_status_history: (store, idProject, data) => {
+		store.statusHistory[idProject] = {};
 		for (const statusHistory of data) {
-			store.statusHistory[idProjet][statusHistory.id_project_status] = statusHistory;
+			store.statusHistory[idProject][statusHistory.id_project_status] = statusHistory;
 		}
 	},
 };
 
-function hydrateProjet(store, idProjet, project, expand = []) {
-	store.commentairesTotalCount[idProjet] = project.project_comments_count;
-	store.documentsTotalCount[idProjet] = project.project_documents_count;
-	store.itemsTotalCount[idProjet] = project.project_items_count;
-	store.projetTagProjetTotalCount[idProjet] = project.project_tags_count;
-	store.statusHistoryTotalCount[idProjet] = project.project_status_history_count;
+function hydrateProject(store, idProject, project, expand = []) {
+	store.commentsTotalCount[idProject] = project.project_comments_count;
+	store.documentsTotalCount[idProject] = project.project_documents_count;
+	store.itemsTotalCount[idProject] = project.project_items_count;
+	store.projectTagProjectTotalCount[idProject] = project.project_tags_count;
+	store.statusHistoryTotalCount[idProject] = project.project_status_history_count;
 	for (const key of expand) {
 		if (EXPAND_HANDLERS[key]) {
-			EXPAND_HANDLERS[key](store, idProjet, project[key]);
+			EXPAND_HANDLERS[key](store, idProject, project[key]);
 		}
 	}
 }
 
-const projetResource = createMainResource({
+const projectResource = createMainResource({
 	path: () => "/project",
 	idField: "id_project",
 	stateKey: "projects",
-	countKey: "projetsTotalCount",
-	loadingKey: "projetsLoading",
+	countKey: "projectsTotalCount",
+	loadingKey: "projectsLoading",
 	onHydrate: (store, entity, expand) => {
-		hydrateProjet(store, entity.id_project, entity, expand);
+		hydrateProject(store, entity.id_project, entity, expand);
 	},
 });
 
-const commentaireResource = createNestedResource({
-	path: (idProjet) => `/project/${idProjet}/comment`,
+const commentResource = createNestedResource({
+	path: (idProject) => `/project/${idProject}/comment`,
 	idField: "id_project_comment",
 	stateKey: "comments",
-	countKey: "commentairesTotalCount",
-	loadingKey: "commentairesLoading",
+	countKey: "commentsTotalCount",
+	loadingKey: "commentsLoading",
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("user")) {
 			const usersStore = useUsersStore();
@@ -77,14 +77,14 @@ const commentaireResource = createNestedResource({
 	},
 });
 const documentResource = createNestedResource({
-	path: (idProjet) => `/project/${idProjet}/document`,
+	path: (idProject) => `/project/${idProject}/document`,
 	idField: "id_project_document",
 	stateKey: "documents",
 	countKey: "documentsTotalCount",
 	loadingKey: "documentsLoading",
 });
 const itemResource = createNestedResource({
-	path: (idProjet) => `/project/${idProjet}/item`,
+	path: (idProject) => `/project/${idProject}/item`,
 	idField: "id_item",
 	stateKey: "items",
 	countKey: "itemsTotalCount",
@@ -96,21 +96,21 @@ const itemResource = createNestedResource({
 		}
 	},
 });
-const projetTagProjetResource = createNestedResource({
-	path: (idProjet) => `/project/${idProjet}/project-tag`,
+const projectTagProjectResource = createNestedResource({
+	path: (idProject) => `/project/${idProject}/project-tag`,
 	idField: "id_project_tag",
-	stateKey: "projetTagProjet",
-	countKey: "projetTagProjetTotalCount",
-	loadingKey: "projetTagProjetLoading",
+	stateKey: "projectTagProject",
+	countKey: "projectTagProjectTotalCount",
+	loadingKey: "projectTagProjectLoading",
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("project_tag")) {
-			const projetTagsStore = useProjectTagsStore();
-			projetTagsStore.projectTags[entity.id_project_tag] = entity.project_tag;
+			const projectTagsStore = useProjectTagsStore();
+			projectTagsStore.projectTags[entity.id_project_tag] = entity.project_tag;
 		}
 	},
 });
 const statusHistoryResource = createNestedResource({
-	path: (idProjet) => `/project/${idProjet}/status-history`,
+	path: (idProject) => `/project/${idProject}/status-history`,
 	idField: "id_project_status",
 	stateKey: "statusHistory",
 	countKey: "statusHistoryTotalCount",
@@ -119,15 +119,15 @@ const statusHistoryResource = createNestedResource({
 
 export const useProjectsStore = defineStore("projects",{
 	state: () => ({
-		projetsLoading: false,
-		projetsTotalCount: 0,
+		projectsLoading: false,
+		projectsTotalCount: 0,
 		projects: {},
-		projetEdition: {},
+		projectEdition: {},
 
-		commentairesLoading: false,
-		commentairesTotalCount: {},
+		commentsLoading: false,
+		commentsTotalCount: {},
 		comments: {},
-		commentaireEdition: {},
+		commentEdition: {},
 
 		documentsLoading: false,
 		documentsTotalCount: {},
@@ -139,34 +139,34 @@ export const useProjectsStore = defineStore("projects",{
 		items: {},
 		itemEdition: {},
 
-		projetTagProjetLoading: false,
-		projetTagProjetTotalCount: {},
-		projetTagProjet: {},
-		projetTagProjetEdition: {},
+		projectTagProjectLoading: false,
+		projectTagProjectTotalCount: {},
+		projectTagProject: {},
+		projectTagProjectEdition: {},
 
 		statusHistoryTotalCount: {},
 		statusHistoryLoading: false,
 		statusHistory: {},
 	}),
 	actions: {
-		getProjetByList: projetResource.getByList,
-		getProjetByInterval: projetResource.getByInterval,
-		getProjetById: projetResource.getById,
-		createProjet: projetResource.create,
-		updateProjet: projetResource.update,
-		deleteProjet: projetResource.remove,
+		getProjectByList: projectResource.getByList,
+		getProjectByInterval: projectResource.getByInterval,
+		getProjectById: projectResource.getById,
+		createProject: projectResource.create,
+		updateProject: projectResource.update,
+		deleteProject: projectResource.remove,
 		loadToEdition(id, preset = null) {
-			this.projetEdition[id] = {};
+			this.projectEdition[id] = {};
 			if (preset) {
 				preset.split(";").forEach((pair) => {
 					const [key, value] = pair.split(":");
 					if (key && value) {
-						this.projetEdition[id][key] = value;
+						this.projectEdition[id][key] = value;
 					}
 				});
 			}
 			if (id !== "new" && this.projects[id]) {
-				this.projetEdition[id] = {
+				this.projectEdition[id] = {
 					loading: false,
 					name_project: this.projects[id].name_project,
 					description_project: this.projects[id].description_project,
@@ -176,43 +176,43 @@ export const useProjectsStore = defineStore("projects",{
 					date_end_project: this.projects[id].date_end_project,
 				};
 			} else {
-				this.projetEdition[id] = {
+				this.projectEdition[id] = {
 					loading: false,
 				};
 			}
-			this.commentaireEdition[id] = {};
+			this.commentEdition[id] = {};
 			this.documentEdition[id] = {};
 			this.itemEdition[id] = {};
-			this.projetTagProjetEdition[id] = {};
+			this.projectTagProjectEdition[id] = {};
 		},
 		setLoadingEdition(id, loading) {
-			if (!this.projetEdition[id]) {
-				this.projetEdition[id] = {};
+			if (!this.projectEdition[id]) {
+				this.projectEdition[id] = {};
 			}
-			this.projetEdition[id].loading = loading;
+			this.projectEdition[id].loading = loading;
 		},
 		clearEdition(id) {
-			delete this.projetEdition[id];
-			delete this.commentaireEdition[id];
+			delete this.projectEdition[id];
+			delete this.commentEdition[id];
 			delete this.documentEdition[id];
 			delete this.itemEdition[id];
-			delete this.projetTagProjetEdition[id];
+			delete this.projectTagProjectEdition[id];
 		},
 
-		getCommentaireByInterval: commentaireResource.getByInterval,
-		getCommentaireById: commentaireResource.getById,
-		createCommentaire: commentaireResource.create,
-		updateCommentaire: commentaireResource.update,
-		deleteCommentaire: commentaireResource.remove,
+		getCommentByInterval: commentResource.getByInterval,
+		getCommentById: commentResource.getById,
+		createComment: commentResource.create,
+		updateComment: commentResource.update,
+		deleteComment: commentResource.remove,
 
 		getDocumentByInterval: documentResource.getByInterval,
 		getDocumentById: documentResource.getById,
 		createDocument: documentResource.create,
 		updateDocument: documentResource.update,
 		deleteDocument: documentResource.remove,
-		async downloadDocument(idProjet, id) {
+		async downloadDocument(idProject, id) {
 			return await fetchWrapper.image({
-				url: `${baseUrl}/project/${idProjet}/document/${id}/download`,
+				url: `${baseUrl}/project/${idProject}/document/${id}/download`,
 				useToken: "access",
 			});
 		},
@@ -224,12 +224,12 @@ export const useProjectsStore = defineStore("projects",{
 		deleteItem: itemResource.remove,
 		createItemBulk: itemResource.createBulk,
 		
-		getProjetTagProjetByInterval: projetTagProjetResource.getByInterval,
-		getProjetTagProjetById: projetTagProjetResource.getById,
-		createProjetTagProjet: projetTagProjetResource.create,
-		deleteProjetTagProjet: projetTagProjetResource.remove,
-		createProjetTagProjetBulk: projetTagProjetResource.createBulk,
-		deleteProjetTagProjetBulk: projetTagProjetResource.removeBulk,
+		getProjectTagProjectByInterval: projectTagProjectResource.getByInterval,
+		getProjectTagProjectById: projectTagProjectResource.getById,
+		createProjectTagProject: projectTagProjectResource.create,
+		deleteProjectTagProject: projectTagProjectResource.remove,
+		createProjectTagProjectBulk: projectTagProjectResource.createBulk,
+		deleteProjectTagProjectBulk: projectTagProjectResource.removeBulk,
 
 		getStatusHistoryByInterval: statusHistoryResource.getByInterval,
 		getStatusHistoryById: statusHistoryResource.getById,

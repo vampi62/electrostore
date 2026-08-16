@@ -40,7 +40,7 @@ const EXPAND_HANDLERS = {
 };
 
 function hydrateCommand(store, idCommand, command, expand = []) {
-	store.commentairesTotalCount[idCommand] = command.command_comments_count;
+	store.commentsTotalCount[idCommand] = command.command_comments_count;
 	store.documentsTotalCount[idCommand] = command.commands_documents_count;
 	store.itemsTotalCount[idCommand] = command.commands_items_count;
 	for (const key of expand) {
@@ -61,12 +61,12 @@ const commandResource = createMainResource({
 	},
 });
 
-const commentaireResource = createNestedResource({
+const commentResource = createNestedResource({
 	path: (idCommand) => `/command/${idCommand}/comment`,
 	idField: "id_command_comment",
 	stateKey: "comments",
-	countKey: "commentairesTotalCount",
-	loadingKey: "commentairesLoading",
+	countKey: "commentsTotalCount",
+	loadingKey: "commentsLoading",
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("user")) {
 			const usersStore = useUsersStore();
@@ -103,10 +103,10 @@ export const useCommandsStore = defineStore("commands",{
 		commands: {},
 		commandEdition: {},
 
-		commentairesTotalCount: {},
-		commentairesLoading: false,
+		commentsTotalCount: {},
+		commentsLoading: false,
 		comments: {},
-		commentaireEdition: {},
+		commentEdition: {},
 
 		documentsTotalCount: {},
 		documentsLoading: false,
@@ -165,7 +165,7 @@ export const useCommandsStore = defineStore("commands",{
 					tracking_number: "",
 				};
 			}
-			this.commentaireEdition[id] = {};
+			this.commentEdition[id] = {};
 			this.documentEdition[id] = {};
 			this.itemEdition[id] = {};
 		},
@@ -177,16 +177,16 @@ export const useCommandsStore = defineStore("commands",{
 		},
 		clearEdition(id) {
 			delete this.commandEdition[id];
-			delete this.commentaireEdition[id];
+			delete this.commentEdition[id];
 			delete this.documentEdition[id];
 			delete this.itemEdition[id];
 		},
 
-		getCommentaireByInterval: commentaireResource.getByInterval,
-		getCommentaireById: commentaireResource.getById,
-		createCommentaire: commentaireResource.create,
-		updateCommentaire: commentaireResource.update,
-		deleteCommentaire: commentaireResource.remove,
+		getCommentByInterval: commentResource.getByInterval,
+		getCommentById: commentResource.getById,
+		createComment: commentResource.create,
+		updateComment: commentResource.update,
+		deleteComment: commentResource.remove,
 
 		getDocumentByInterval: documentResource.getByInterval,
 		getDocumentById: documentResource.getById,

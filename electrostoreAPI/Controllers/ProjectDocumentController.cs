@@ -13,44 +13,44 @@ namespace ElectrostoreAPI.Controllers
 
     public class ProjectDocumentController : ControllerBase
     {
-        private readonly IProjectDocumentService _projetDocumentService;
+        private readonly IProjectDocumentService _projectDocumentService;
         private readonly IFileService _fileService;
 
-        public ProjectDocumentController(IProjectDocumentService projetDocumentService, IFileService fileService)
+        public ProjectDocumentController(IProjectDocumentService projectDocumentService, IFileService fileService)
         {
-            _projetDocumentService = projetDocumentService;
+            _projectDocumentService = projectDocumentService;
             _fileService = fileService;
         }
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadProjectDocumentDto>>> GetProjetsDocumentsByProjetId([FromRoute] int id_project, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        public async Task<ActionResult<PaginatedResponseDto<ReadProjectDocumentDto>>> GetProjectsDocumentsByProjectId([FromRoute] int id_project, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
         [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'name_project_document=like=example'.")] string? filter = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'name_project_document,asc' or 'name_project_document,desc'.")] string? sort = null)
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
-            var projetsDocuments = await _projetDocumentService.GetProjetDocumentsByProjetId(id_project, limit, offset, rsqlDto, sortDto);
-            return Ok(projetsDocuments);
+            var projectsDocuments = await _projectDocumentService.GetProjectDocumentsByProjectId(id_project, limit, offset, rsqlDto, sortDto);
+            return Ok(projectsDocuments);
         }
 
-        [HttpGet("{id_projetDocument}")]
+        [HttpGet("{id_project_document}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadProjectDocumentDto>> GetProjetDocumentById([FromRoute] int id_projetDocument, [FromRoute] int id_project)
+        public async Task<ActionResult<ReadProjectDocumentDto>> GetProjectDocumentById([FromRoute] int id_project_document, [FromRoute] int id_project)
         {
-            var projetDocument = await _projetDocumentService.GetProjetDocumentById(id_projetDocument, id_project);
-            return Ok(projetDocument);
+            var projectDocument = await _projectDocumentService.GetProjectDocumentById(id_project_document, id_project);
+            return Ok(projectDocument);
         }
         
-        [HttpGet("{id_projetDocument}/download")]
+        [HttpGet("{id_project_document}/download")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> DownloadProjetDocument([FromRoute] int id_projetDocument, [FromRoute] int id_project)
+        public async Task<ActionResult> DownloadProjectDocument([FromRoute] int id_project_document, [FromRoute] int id_project)
         {
-            var projetDocument = await _projetDocumentService.GetProjetDocumentById(id_projetDocument, id_project);
-            var result = await _fileService.GetFile(projetDocument.url_project_document);
+            var projectDocument = await _projectDocumentService.GetProjectDocumentById(id_project_document, id_project);
+            var result = await _fileService.GetFile(projectDocument.url_project_document);
             if (result.Success && result.FileStream != null)
             {
-                return File(result.FileStream, result.MimeType, projetDocument.name_project_document);
+                return File(result.FileStream, result.MimeType, projectDocument.name_project_document);
             }
             else
             {
@@ -60,31 +60,31 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadProjectDocumentDto>> CreateProjetDocument([FromForm] CreateProjectDocumentByProjectDto projetDocumentDto, [FromRoute] int id_project)
+        public async Task<ActionResult<ReadProjectDocumentDto>> CreateProjectDocument([FromForm] CreateProjectDocumentByProjectDto projectDocumentDto, [FromRoute] int id_project)
         {
-            var projetDocumentDtoFull = new CreateProjectDocumentDto
+            var projectDocumentDtoFull = new CreateProjectDocumentDto
             {
                 id_project = id_project,
-                name_project_document = projetDocumentDto.name_project_document,
-                document = projetDocumentDto.document
+                name_project_document = projectDocumentDto.name_project_document,
+                document = projectDocumentDto.document
             };
-            var projetDocument = await _projetDocumentService.CreateProjetDocument(projetDocumentDtoFull);
-            return CreatedAtAction(nameof(GetProjetDocumentById), new { id_projetDocument = projetDocument.id_project_document, id_project = projetDocument.id_project }, projetDocument);
+            var projectDocument = await _projectDocumentService.CreateProjectDocument(projectDocumentDtoFull);
+            return CreatedAtAction(nameof(GetProjectDocumentById), new { id_project_document = projectDocument.id_project_document, id_project = projectDocument.id_project }, projectDocument);
         }
 
-        [HttpPut("{id_projetDocument}")]
+        [HttpPut("{id_project_document}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadProjectDocumentDto>> UpdateProjetDocument([FromRoute] int id_projetDocument, [FromBody] UpdateProjectDocumentDto projetDocumentDto, [FromRoute] int id_project)
+        public async Task<ActionResult<ReadProjectDocumentDto>> UpdateProjectDocument([FromRoute] int id_project_document, [FromBody] UpdateProjectDocumentDto projectDocumentDto, [FromRoute] int id_project)
         {
-            var projetDocument = await _projetDocumentService.UpdateProjetDocument(id_projetDocument, projetDocumentDto, id_project);
-            return Ok(projetDocument);
+            var projectDocument = await _projectDocumentService.UpdateProjectDocument(id_project_document, projectDocumentDto, id_project);
+            return Ok(projectDocument);
         }
 
-        [HttpDelete("{id_projetDocument}")]
+        [HttpDelete("{id_project_document}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> DeleteProjetDocument([FromRoute] int id_projetDocument, [FromRoute] int id_project)
+        public async Task<ActionResult> DeleteProjectDocument([FromRoute] int id_project_document, [FromRoute] int id_project)
         {
-            await _projetDocumentService.DeleteProjetDocument(id_projetDocument, id_project);
+            await _projectDocumentService.DeleteProjectDocument(id_project_document, id_project);
             return NoContent();
         }
     }

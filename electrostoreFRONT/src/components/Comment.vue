@@ -1,15 +1,15 @@
 <template>
-	<Form v-if="meta.canEdit" :validation-schema="schemaCommentaire" v-slot="{ errors }">
+	<Form v-if="meta.canEdit" :validation-schema="schemaComment" v-slot="{ errors }">
 		<div class="flex items-center space-x-4">
-			<Field :name="meta.contenu" type="text" v-model="commentaireFormNew"
-				:placeholder="$t('components.VModalCommentairePlaceholder')"
+			<Field :name="meta.contenu" type="text" v-model="commentFormNew"
+				:placeholder="$t('components.VModalCommentPlaceholder')"
 				class="w-full p-2 border rounded-lg"
 				:class="{ 'border-red-500': errors[meta.contenu] }" />
 			<div class="relative">
-				<button type="button" @click="commentaireCreate(commentaireFormNew)"
+				<button type="button" @click="commentCreate(commentFormNew)"
 					class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
 					:disabled="createLoading">
-					{{ $t('components.VModalCommentaireAdd') }}
+					{{ $t('components.VModalCommentAdd') }}
 				</button>
 				<div v-if="createLoading"
 					class="absolute inset-0 bg-blue-500 bg-opacity-90 rounded-lg flex items-center justify-center">
@@ -35,16 +35,16 @@
 			</div>
 			<div v-if="meta.canEdit" class="text-center text-gray-800 mb-2">
 				<template v-if="comment.tmp && meta.canEdit">
-					<Form :validation-schema="schemaCommentaire" v-slot="{ errors }">
+					<Form :validation-schema="schemaComment" v-slot="{ errors }">
 						<Field :name="meta.contenu" type="text"
 							v-model="comment.tmp[meta.contenu]"
 							class="w-full p-2 border rounded-lg"
 							:class="{ 'border-red-500': errors[meta.contenu] }" />
 						<div class="flex justify-end space-x-2 mt-2">
 							<div class="relative">
-								<button type="button" @click="commentaireUpdate(comment.tmp)"
+								<button type="button" @click="commentUpdate(comment.tmp)"
 									class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
-									{{ $t('components.VModalCommentaireSave') }}
+									{{ $t('components.VModalCommentSave') }}
 								</button>
 								<div v-if="comment.tmp.loading"
 									class="absolute inset-0 bg-green-500 bg-opacity-90 rounded-lg flex items-center justify-center">
@@ -53,7 +53,7 @@
 							</div>
 							<button type="button" @click="comment.tmp = null"
 								class="px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-								{{ $t('components.VModalCommentaireCancel') }}
+								{{ $t('components.VModalCommentCancel') }}
 							</button>
 						</div>
 					</Form>
@@ -69,11 +69,11 @@
 						class="flex justify-end space-x-2">
 						<button type="button" @click="comment.tmp = { ...comment }"
 							class="px-3 py-1 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500">
-							{{ $t('components.VModalCommentaireEdit') }}
+							{{ $t('components.VModalCommentEdit') }}
 						</button>
-						<button type="button" @click="selectedCommentaire = comment[meta.key]; deleteModalShow = true"
+						<button type="button" @click="selectedComment = comment[meta.key]; deleteModalShow = true"
 							class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
-							{{ $t('components.VModalCommentaireDelete') }}
+							{{ $t('components.VModalCommentDelete') }}
 						</button>
 					</div>
 				</template>
@@ -84,17 +84,17 @@
 				</div>
 				<RouterLink :to="meta.link + comment[meta.idRessource]"
 					class="text-blue-500 hover:underline">
-					{{ $t('components.VModalCommentaireLink') }}
+					{{ $t('components.VModalCommentLink') }}
 				</RouterLink>
 			</div>
 		</div>
 		<div v-if="loading" class="text-center">
-			{{ $t('components.VModalCommentaireLoading') }}
+			{{ $t('components.VModalCommentLoading') }}
 		</div>
 	</div>
 
 	<ModalDeleteConfirm :show-modal="deleteModalShow" @close-modal="deleteModalShow = false"
-		:delete-action="commentaireDelete" :text-title="texteModalDelete?.textTitle"
+		:delete-action="commentDelete" :text-title="texteModalDelete?.textTitle"
 		:text-p="texteModalDelete?.textP"/>
 </template>
 
@@ -144,8 +144,8 @@ export default {
 			// - link: URL for the resource linked to the comment
 			// - roleRequired: boolean indicating if a specific role is required to edit/delete all comments (not just the user's own comments)
 			default: () => ({
-				key: "id_commentaire",
-				contenu: "contenu_commentaire",
+				key: "id_comment",
+				contenu: "content_comment",
 				canEdit: false,
 				idRessource: "id_ressource",
 				link: "/ressource/",
@@ -177,7 +177,7 @@ export default {
 			required: false,
 			// This should contain the text for the delete confirmation modal
 			// the text will be translated using $t so it should be a key from the translation files
-			// Example: { textTitle: "page.VModalCommentaireDeleteTitle", textP: "page.VModalCommentaireDeleteP" }
+			// Example: { textTitle: "page.VModalCommentDeleteTitle", textP: "page.VModalCommentDeleteP" }
 			default: () => ({
 				textTitle: "common.VALLMissingTranslateLink",
 				textP: "common.VALLMissingTranslateLink",
@@ -200,8 +200,8 @@ export default {
 	},
 	data() {
 		return {
-			commentaireFormNew: "",
-			selectedCommentaire: null,
+			commentFormNew: "",
+			selectedComment: null,
 			deleteModalShow: false,
 			createLoading: false,
 			nextOffset: 0,
@@ -210,43 +210,43 @@ export default {
 		};
 	},
 	computed: {
-		schemaCommentaire() {
+		schemaComment() {
 			return Yup.object().shape({
 				[this.meta.contenu]: Yup.string()
-					.max(this.storeConfig.getConfigByKey("max_length_comment"), this.$t("components.VModalCommentaireMaxLength") + " " + this.storeConfig.getConfigByKey("max_length_comment") + this.$t("common.VAllCaracters"))
-					.required(this.$t("components.VModalCommentaireRequired")),
+					.max(this.storeConfig.getConfigByKey("max_length_comment"), this.$t("components.VModalCommentMaxLength") + " " + this.storeConfig.getConfigByKey("max_length_comment") + this.$t("common.VAllCaracters"))
+					.required(this.$t("components.VModalCommentRequired")),
 			});
 		},
 	},
 	methods: {
-		async commentaireCreate(comment) {
+		async commentCreate(comment) {
 			this.createLoading = true;
 			try {
-				this.schemaCommentaire.validateSync({ [this.meta.contenu]: comment }, { abortEarly: false });
+				this.schemaComment.validateSync({ [this.meta.contenu]: comment }, { abortEarly: false });
 				await this.storeFunction.create({
 					[this.meta.contenu]: comment,
 				});
 				this.addNotification({
 					type: "success",
-					message: this.$t("components.VModalCommentaireCreateSuccess"),
+					message: this.$t("components.VModalCommentCreateSuccess"),
 				});
-				this.commentaireFormNew = "";
+				this.commentFormNew = "";
 			} catch (e) {
 				this.addNotification({ message: e, type: "error" });
 			} finally {
 				this.createLoading = false;
 			}
 		},
-		async commentaireUpdate(comment) {
+		async commentUpdate(comment) {
 			comment.loading = true;
 			try {
-				this.schemaCommentaire.validateSync(comment, { abortEarly: false });
+				this.schemaComment.validateSync(comment, { abortEarly: false });
 				await this.storeFunction.update(comment[this.meta.key], {
 					[this.meta.contenu]: comment[this.meta.contenu],
 				});
 				this.addNotification({
 					type: "success",
-					message: this.$t("components.VModalCommentaireUpdateSuccess"),
+					message: this.$t("components.VModalCommentUpdateSuccess"),
 				});
 				comment = null;
 			} catch (e) {
@@ -254,12 +254,12 @@ export default {
 				return;
 			}
 		},
-		async commentaireDelete() {
-			await this.storeFunction.delete(this.selectedCommentaire)
+		async commentDelete() {
+			await this.storeFunction.delete(this.selectedComment)
 				.then(() => {
 					this.addNotification({
 						type: "success",
-						message: this.$t("components.VModalCommentaireDeleteSuccess"),
+						message: this.$t("components.VModalCommentDeleteSuccess"),
 					});
 				})
 				.catch((e) => {

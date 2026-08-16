@@ -15,18 +15,18 @@ public class ProjectService : IProjectService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly IFileService _fileService;
-    private readonly IProjectStatusService _projetStatusService;
-    private readonly string _projetDocumentsPath = "projetDocuments";
+    private readonly IProjectStatusService _projectStatusService;
+    private readonly string _projectDocumentsPath = "projectDocuments";
 
-    public ProjectService(IMapper mapper, ApplicationDbContext context, IFileService fileService, IProjectStatusService projetStatusService)
+    public ProjectService(IMapper mapper, ApplicationDbContext context, IFileService fileService, IProjectStatusService projectStatusService)
     {
         _mapper = mapper;
         _context = context;
         _fileService = fileService;
-        _projetStatusService = projetStatusService;
+        _projectStatusService = projectStatusService;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedProjectDto>> GetProjets(int limit = 100, int offset = 0,
+    public async Task<PaginatedResponseDto<ReadExtendedProjectDto>> GetProjects(int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Projects.AsQueryable();
@@ -70,12 +70,12 @@ public class ProjectService : IProjectService
                 ProjectsItemsCount = p.ProjectsItems.Count,
                 ProjectsProjectTagsCount = p.ProjectsProjectTags.Count,
                 ProjectsStatusHistoryCount = p.ProjectsStatus.Count,
-                DateDebutProjet = p.ProjectsStatus
+                DateStartProject = p.ProjectsStatus
                     .Where(ps => ps.status_project == ProjectStatus.InProgress)
                     .OrderBy(ps => ps.created_at)
                     .Select(ps => (DateTime?)ps.created_at)
                     .FirstOrDefault(),
-                DateFinProjet = p.ProjectsStatus
+                DateEndProject = p.ProjectsStatus
                     .Where(ps => ps.status_project == ProjectStatus.Completed)
                     .OrderByDescending(ps => ps.created_at)
                     .Select(ps => (DateTime?)ps.created_at)
@@ -92,8 +92,8 @@ public class ProjectService : IProjectService
             data = project.Select(p => {
                 return _mapper.Map<ReadExtendedProjectDto>(p.Project) with
                 {
-                    date_start_project = p.DateDebutProjet,
-                    date_end_project = p.DateFinProjet,
+                    date_start_project = p.DateStartProject,
+                    date_end_project = p.DateEndProject,
                     project_comments_count = p.ProjectsCommentsCount,
                     project_documents_count = p.ProjectsDocumentsCount,
                     project_items_count = p.ProjectsItemsCount,
@@ -119,7 +119,7 @@ public class ProjectService : IProjectService
         };
     }
 
-    public async Task<ReadExtendedProjectDto> GetProjetById(int id, List<string>? expand = null)
+    public async Task<ReadExtendedProjectDto> GetProjectById(int id, List<string>? expand = null)
     {
         var query = _context.Projects.AsQueryable();
         query = query.Where(p => p.id_project == id);
@@ -132,12 +132,12 @@ public class ProjectService : IProjectService
                 ProjectsItemsCount = p.ProjectsItems.Count,
                 ProjectsProjectsTagsCount = p.ProjectsProjectTags.Count,
                 ProjectsStatusHistoryCount = p.ProjectsStatus.Count,
-                DateDebutProjet = p.ProjectsStatus
+                DateStartProject = p.ProjectsStatus
                     .Where(ps => ps.status_project == ProjectStatus.InProgress)
                     .OrderBy(ps => ps.created_at)
                     .Select(ps => (DateTime?)ps.created_at)
                     .FirstOrDefault(),
-                DateFinProjet = p.ProjectsStatus
+                DateEndProject = p.ProjectsStatus
                     .Where(ps => ps.status_project == ProjectStatus.Completed)
                     .OrderByDescending(ps => ps.created_at)
                     .Select(ps => (DateTime?)ps.created_at)
@@ -151,8 +151,8 @@ public class ProjectService : IProjectService
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Project with id '{id}' not found");
         return _mapper.Map<ReadExtendedProjectDto>(project.Project) with
         {
-            date_start_project = project.DateDebutProjet,
-            date_end_project = project.DateFinProjet,
+            date_start_project = project.DateStartProject,
+            date_end_project = project.DateEndProject,
             project_comments_count = project.ProjectsCommentsCount,
             project_documents_count = project.ProjectsDocumentsCount,
             project_items_count = project.ProjectsItemsCount,
@@ -166,57 +166,57 @@ public class ProjectService : IProjectService
         };
     }
 
-    public async Task<ReadProjectDto> CreateProjet(CreateProjectDto projetDto)
+    public async Task<ReadProjectDto> CreateProject(CreateProjectDto projectDto)
     {
-        var newProjet = _mapper.Map<Projects>(projetDto);
-        _context.Projects.Add(newProjet);
-        await _fileService.CreateDirectory(Path.Combine(_projetDocumentsPath, newProjet.id_project.ToString()));
+        var newProject = _mapper.Map<Projects>(projectDto);
+        _context.Projects.Add(newProject);
+        await _fileService.CreateDirectory(Path.Combine(_projectDocumentsPath, newProject.id_project.ToString()));
         await _context.SaveChangesAsync();
-        await _projetStatusService.CreateProjetStatus(new CreateProjectStatusDto
+        await _projectStatusService.CreateProjectStatus(new CreateProjectStatusDto
         {
-            id_project = newProjet.id_project,
-            status_project = newProjet.status_project
+            id_project = newProject.id_project,
+            status_project = newProject.status_project
         });
-        return _mapper.Map<ReadProjectDto>(newProjet);
+        return _mapper.Map<ReadProjectDto>(newProject);
     }
 
-    public async Task<ReadProjectDto> UpdateProjet(int id, UpdateProjectDto projetDto)
+    public async Task<ReadProjectDto> UpdateProject(int id, UpdateProjectDto projectDto)
     {
-        var projetToUpdate = await _context.Projects.FindAsync(id) ?? throw new KeyNotFoundException($"Project with id '{id}' not found");
-        var statusChanged = projetDto.status_project.HasValue && projetDto.status_project.Value != projetToUpdate.status_project;
-        if (projetDto.name_project is not null)
+        var projectToUpdate = await _context.Projects.FindAsync(id) ?? throw new KeyNotFoundException($"Project with id '{id}' not found");
+        var statusChanged = projectDto.status_project.HasValue && projectDto.status_project.Value != projectToUpdate.status_project;
+        if (projectDto.name_project is not null)
         {
-            projetToUpdate.name_project = projetDto.name_project;
+            projectToUpdate.name_project = projectDto.name_project;
         }
-        if (projetDto.description_project is not null)
+        if (projectDto.description_project is not null)
         {
-            projetToUpdate.description_project = projetDto.description_project;
+            projectToUpdate.description_project = projectDto.description_project;
         }
-        if (projetDto.url_project is not null)
+        if (projectDto.url_project is not null)
         {
-            projetToUpdate.url_project = projetDto.url_project;
+            projectToUpdate.url_project = projectDto.url_project;
         }
-        if (projetDto.status_project is not null)
+        if (projectDto.status_project is not null)
         {
-            projetToUpdate.status_project = projetDto.status_project.Value;
+            projectToUpdate.status_project = projectDto.status_project.Value;
         }
         await _context.SaveChangesAsync();
         if (statusChanged)
         {
-            await _projetStatusService.CreateProjetStatus(new CreateProjectStatusDto
+            await _projectStatusService.CreateProjectStatus(new CreateProjectStatusDto
             {
-                id_project = projetToUpdate.id_project,
-                status_project = projetToUpdate.status_project
+                id_project = projectToUpdate.id_project,
+                status_project = projectToUpdate.status_project
             });
         }
-        return _mapper.Map<ReadProjectDto>(projetToUpdate);
+        return _mapper.Map<ReadProjectDto>(projectToUpdate);
     }
 
-    public async Task DeleteProjet(int id)
+    public async Task DeleteProject(int id)
     {
-        var projetToDelete = await _context.Projects.FindAsync(id) ?? throw new KeyNotFoundException($"Project with id '{id}' not found");
-        _context.Projects.Remove(projetToDelete);
-        await _fileService.DeleteDirectory(Path.Combine(_projetDocumentsPath, id.ToString()));
+        var projectToDelete = await _context.Projects.FindAsync(id) ?? throw new KeyNotFoundException($"Project with id '{id}' not found");
+        _context.Projects.Remove(projectToDelete);
+        await _fileService.DeleteDirectory(Path.Combine(_projectDocumentsPath, id.ToString()));
         await _context.SaveChangesAsync();
     }
 }

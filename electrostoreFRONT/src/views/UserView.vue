@@ -18,7 +18,7 @@ import { useConfigsStore, useUsersStore, useCommandsStore, useProjectsStore, use
 const configsStore = useConfigsStore();
 const usersStore = useUsersStore();
 const commandsStore = useCommandsStore();
-const projetsStore = useProjectsStore();
+const projectsStore = useProjectsStore();
 const authStore = useAuthStore();
 
 const formContainer = ref(null);
@@ -379,26 +379,26 @@ onMounted(() => {
 		<CollapsibleSection title="user.Participation" :permission="userId !=='new'">
 			<template #append-row>
 				<CollapsibleSection title="user.CommandsComments" :disable-margin="true"
-					:total-count="Number(usersStore.commandsCommentaireTotalCount[userId] || 0)" :permission="userId !=='new'">
+					:total-count="Number(usersStore.commandsCommentTotalCount[userId] || 0)" :permission="userId !=='new'">
 					<template #append-row>
 						<Comment :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'content_command_comment', key: 'id_command_comment', canEdit: false, roleRequired: false, expand: ['command'] }"
-							:store-data="[usersStore.commandsCommentaire[userId], usersStore.users]"
+							:store-data="[usersStore.commandsComment[userId], usersStore.users]"
 							:store-user="authStore.user" :store-config="configsStore"
-							:loading="usersStore.commandsCommentaireLoading"
-							:total-count="Number(usersStore.commandsCommentaireTotalCount[userId]) || 0"
-							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getCommandCommentaireByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+							:loading="usersStore.commandsCommentLoading"
+							:total-count="Number(usersStore.commandsCommentTotalCount[userId]) || 0"
+							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getCommandCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>
 				<CollapsibleSection title="user.ProjectsComments" :disable-margin="true"
-					:total-count="Number(usersStore.projetsCommentaireTotalCount[userId] || 0)" :permission="userId !=='new'">
+					:total-count="Number(usersStore.projectsCommentTotalCount[userId] || 0)" :permission="userId !=='new'">
 					<template #append-row>
 						<Comment :meta="{ link: '/projects/', idRessource: 'id_project', contenu: 'content_project_comment', key: 'id_project_comment', canEdit: false, roleRequired: false, expand: ['project'] }"
-							:store-data="[usersStore.projetsCommentaire[userId], usersStore.users]"
+							:store-data="[usersStore.projectsComment[userId], usersStore.users]"
 							:store-user="authStore.user" :store-config="configsStore"
-							:loading="usersStore.projetsCommentaireLoading"
-							:total-count="Number(usersStore.projetsCommentaireTotalCount[userId]) || 0"
-							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getProjetCommentaireByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+							:loading="usersStore.projectsCommentLoading"
+							:total-count="Number(usersStore.projectsCommentTotalCount[userId]) || 0"
+							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getProjectCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>

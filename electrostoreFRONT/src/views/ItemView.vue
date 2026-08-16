@@ -24,7 +24,7 @@ const itemsStore = useItemsStore();
 const tagsStore = useTagsStore();
 const storesStore = useStoresStore();
 const commandsStore = useCommandsStore();
-const projetsStore = useProjectsStore();
+const projectsStore = useProjectsStore();
 const authStore = useAuthStore();
 const usersStore = useUsersStore();
 
@@ -295,7 +295,7 @@ function tagDelete(id_tag) {
 }
 
 // item history enum
-const projetTypeStatus = ref({ [ItemHistoryType.ItemCreated]: t("item.HistoryTypeItemCreated"), [ItemHistoryType.ItemUpdated]: t("item.HistoryTypeItemUpdated"),
+const projectTypeStatus = ref({ [ItemHistoryType.ItemCreated]: t("item.HistoryTypeItemCreated"), [ItemHistoryType.ItemUpdated]: t("item.HistoryTypeItemUpdated"),
 	[ItemHistoryType.ItemDeleted]: t("item.HistoryTypeItemDeleted"), [ItemHistoryType.StockAdded]: t("item.HistoryTypeStockAdded"),
 	[ItemHistoryType.StockRemoved]: t("item.HistoryTypeStockRemoved"), [ItemHistoryType.StockUpdated]: t("item.HistoryTypeStockUpdated") });
 
@@ -440,7 +440,7 @@ const labelTableauDocument = ref([
 ]);
 const labelTableauHistory = ref([
 	{ label: "item.HistoryDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
-	{ label: "item.HistoryType", sortable: true, key: "type", valueKey: "type", type: "enum", options: projetTypeStatus },
+	{ label: "item.HistoryType", sortable: true, key: "type", valueKey: "type", type: "enum", options: projectTypeStatus },
 	{ label: "item.HistoryQuantityChange", sortable: true, key: "quantity_change", valueKey: "quantity_change", type: "number" },
 	{ label: "item.HistoryOldQuantity", sortable: true, key: "old_quantity", valueKey: "old_quantity", type: "number" },
 	{ label: "item.HistoryNewQuantity", sortable: true, key: "new_quantity", valueKey: "new_quantity", type: "number" },
@@ -497,17 +497,17 @@ const labelTableauCommand = ref([
 	{ label: "item.CommandQte", sortable: true, key: "quantity_command_item", valueKey: "quantity_command_item", type: "number" },
 	{ label: "item.CommandPrice", sortable: true, key: "price_command_item", valueKey: "price_command_item", type: "number" },
 ]);
-const labelTableauProjet = ref([
-	{ label: "item.ProjetName", sortable: true, key: "Project.name_project", sourceKey: "id_project", type: "text", 
+const labelTableauProject = ref([
+	{ label: "item.ProjectName", sortable: true, key: "Project.name_project", sourceKey: "id_project", type: "text", 
 		storeRessourceId: 1, valueKey: "name_project" },
-	{ label: "item.ProjetDate", sortable: true, key: "Project.date_start_project", sourceKey: "id_project", type: "datetime", 
+	{ label: "item.ProjectDate", sortable: true, key: "Project.date_start_project", sourceKey: "id_project", type: "datetime", 
 		storeRessourceId: 1, valueKey: "date_start_project" },
-	{ label: "item.ProjetDateFin", sortable: true, key: "Project.date_end_project", sourceKey: "id_project", type: "datetime", 
+	{ label: "item.ProjectDateEnd", sortable: true, key: "Project.date_end_project", sourceKey: "id_project", type: "datetime", 
 		storeRessourceId: 1, valueKey: "date_end_project" },
 	{ label: "item.ProjectStatus", sortable: true, key: "Project.status_project", sourceKey: "id_project", type: "text", 
 		storeRessourceId: 1, valueKey: "status_project" },
 
-	{ label: "item.ProjetQte", sortable: true, key: "quantity_project_item", valueKey: "quantity_project_item", type: "number" },
+	{ label: "item.ProjectQuantity", sortable: true, key: "quantity_project_item", valueKey: "quantity_project_item", type: "number" },
 ]);
 document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
@@ -636,13 +636,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.Projects"
-			:total-count="Number(itemsStore.itemProjetsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
+			:total-count="Number(itemsStore.itemProjectsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
 			<template #append-row>
-				<Tableau :labels="labelTableauProjet" :meta="{ key: 'id_project', path: '/projects/', expand: ['project'] }"
-					:store-data="[itemsStore.itemProjets[itemId],projetsStore.projects]"
-					:loading="itemsStore.itemProjetsLoading"
-					:total-count="Number(itemsStore.itemProjetsTotalCount[itemId])"
-					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemProjetByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
+				<Tableau :labels="labelTableauProject" :meta="{ key: 'id_project', path: '/projects/', expand: ['project'] }"
+					:store-data="[itemsStore.itemProjects[itemId],projectsStore.projects]"
+					:loading="itemsStore.itemProjectsLoading"
+					:total-count="Number(itemsStore.itemProjectsTotalCount[itemId])"
+					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemProjectByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>

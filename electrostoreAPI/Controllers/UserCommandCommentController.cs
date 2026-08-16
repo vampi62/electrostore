@@ -12,50 +12,50 @@ namespace ElectrostoreAPI.Controllers
 
     public class UserCommandCommentController : ControllerBase
     {
-        private readonly ICommandCommentService _commandCommentaireService;
+        private readonly ICommandCommentService _commandCommentService;
 
-        public UserCommandCommentController(ICommandCommentService commandCommentaireService)
+        public UserCommandCommentController(ICommandCommentService commandCommentService)
         {
-            _commandCommentaireService = commandCommentaireService;
+            _commandCommentService = commandCommentService;
         }
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedCommandCommentDto>>> GetCommandsCommentairesByUserId([FromRoute] int id_user, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedCommandCommentDto>>> GetCommandsCommentsByUserId([FromRoute] int id_user, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'command', 'user'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'content_command_comment=like=example'.")] string? filter = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'created_at,asc' or 'created_at,desc'.")] string? sort = null)
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
-            var commandCommentaires = await _commandCommentaireService.GetCommandsCommentairesByUserId(id_user, limit, offset, rsqlDto, sortDto, expand);
-            return Ok(commandCommentaires);
+            var commandComments = await _commandCommentService.GetCommandsCommentsByUserId(id_user, limit, offset, rsqlDto, sortDto, expand);
+            return Ok(commandComments);
         }
 
         [HttpGet("{id_command_comment}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedCommandCommentDto>> GetCommandsCommentaireById([FromRoute] int id_user, [FromRoute] int id_command_comment,
+        public async Task<ActionResult<ReadExtendedCommandCommentDto>> GetCommandsCommentById([FromRoute] int id_user, [FromRoute] int id_command_comment,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'command', 'user'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var commandCommentaire = await _commandCommentaireService.GetCommandsCommentaireById(id_command_comment, id_user, null, expand);
-            return Ok(commandCommentaire);
+            var commandComment = await _commandCommentService.GetCommandsCommentById(id_command_comment, id_user, null, expand);
+            return Ok(commandComment);
         }
 
         // no create command comment in user controller
 
         [HttpPut("{id_command_comment}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadCommandCommentDto>> UpdateCommandCommentaire([FromRoute] int id_user, [FromRoute] int id_command_comment, [FromBody] UpdateCommandCommentDto commandCommentaireDto)
+        public async Task<ActionResult<ReadCommandCommentDto>> UpdateCommandComment([FromRoute] int id_user, [FromRoute] int id_command_comment, [FromBody] UpdateCommandCommentDto commandCommentDto)
         {
-            var commandCommentaire = await _commandCommentaireService.UpdateCommentaire(id_command_comment, commandCommentaireDto, id_user);
-            return Ok(commandCommentaire);
+            var commandComment = await _commandCommentService.UpdateComment(id_command_comment, commandCommentDto, id_user);
+            return Ok(commandComment);
         }
 
         [HttpDelete("{id_command_comment}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> DeleteCommandCommentaire([FromRoute] int id_user, [FromRoute] int id_command_comment)
+        public async Task<ActionResult> DeleteCommandComment([FromRoute] int id_user, [FromRoute] int id_command_comment)
         {
-            await _commandCommentaireService.DeleteCommentaire(id_command_comment, id_user);
+            await _commandCommentService.DeleteComment(id_command_comment, id_user);
             return NoContent();
         }
     }

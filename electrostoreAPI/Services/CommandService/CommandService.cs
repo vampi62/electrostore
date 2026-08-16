@@ -66,7 +66,7 @@ public class CommandService : ICommandService
             .Select(c => new
             {
                 Command = c,
-                CommandsCommentairesCount = c.CommandsComments.Count,
+                CommandsCommentsCount = c.CommandsComments.Count,
                 CommandsDocumentsCount = c.CommandsDocuments.Count,
                 CommandsItemsCount = c.CommandsItems.Count,
                 CommandsComments = expand != null && expand.Contains("command_comments") ? c.CommandsComments.Take(20).ToList() : null,
@@ -81,7 +81,7 @@ public class CommandService : ICommandService
             data = command.Select(c => {
                 return _mapper.Map<ReadExtendedCommandDto>(c.Command) with
                 {
-                    command_comments_count = c.CommandsCommentairesCount,
+                    command_comments_count = c.CommandsCommentsCount,
                     commands_documents_count = c.CommandsDocumentsCount,
                     commands_items_count = c.CommandsItemsCount,
                     command_comments = _mapper.Map<IEnumerable<ReadCommandCommentDto>>(c.CommandsComments),
@@ -112,7 +112,7 @@ public class CommandService : ICommandService
             .Select(c => new
             {
                 Command = c,
-                CommandsCommentairesCount = c.CommandsComments.Count,
+                CommandsCommentsCount = c.CommandsComments.Count,
                 CommandsDocumentsCount = c.CommandsDocuments.Count,
                 CommandsItemsCount = c.CommandsItems.Count,
                 CommandsComments = expand != null && expand.Contains("command_comments") ? c.CommandsComments.Take(20).ToList() : null,
@@ -124,7 +124,7 @@ public class CommandService : ICommandService
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Command with id '{id}' not found");
         return _mapper.Map<ReadExtendedCommandDto>(command.Command) with
         {
-            command_comments_count = command.CommandsCommentairesCount,
+            command_comments_count = command.CommandsCommentsCount,
             commands_documents_count = command.CommandsDocumentsCount,
             commands_items_count = command.CommandsItemsCount,
             command_comments = _mapper.Map<IEnumerable<ReadCommandCommentDto>>(command.CommandsComments),

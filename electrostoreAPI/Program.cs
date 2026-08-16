@@ -388,9 +388,9 @@ public partial class Program
         {
             Directory.CreateDirectory("wwwroot/imagesThumbnails");
         }
-        if (!Directory.Exists("wwwroot/projetDocuments"))
+        if (!Directory.Exists("wwwroot/projectDocuments"))
         {
-            Directory.CreateDirectory("wwwroot/projetDocuments");
+            Directory.CreateDirectory("wwwroot/projectDocuments");
         }
         if (!Directory.Exists("wwwroot/itemDocuments"))
         {

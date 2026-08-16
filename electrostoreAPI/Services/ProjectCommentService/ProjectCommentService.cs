@@ -22,18 +22,18 @@ public class ProjectCommentService : IProjectCommentService
         _sessionService = sessionService;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedProjectCommentDto>> GetProjetCommentairesByProjetId(int projetId, int limit = 100, int offset = 0,
+    public async Task<PaginatedResponseDto<ReadExtendedProjectCommentDto>> GetProjectCommentsByProjectId(int projectId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if the project exists
-        if (!await _context.Projects.AnyAsync(p => p.id_project == projetId))
+        if (!await _context.Projects.AnyAsync(p => p.id_project == projectId))
         {
-            throw new KeyNotFoundException($"Project with id '{projetId}' not found");
+            throw new KeyNotFoundException($"Project with id '{projectId}' not found");
         }
         var query = _context.ProjectsComments.AsQueryable();
         var filterResult = default(Expression<Func<ProjectsComments, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_project", SearchType = "eq", Value = projetId.ToString() });
+        rsql.Add(new FilterDto { Field = "id_project", SearchType = "eq", Value = projectId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectsComments>(rsql);
@@ -65,24 +65,24 @@ public class ProjectCommentService : IProjectCommentService
         {
             query = query.Include(p => p.User);
         }
-        var projetCommentaire = await query.ToListAsync();
+        var projectComment = await query.ToListAsync();
         return new PaginatedResponseDto<ReadExtendedProjectCommentDto>
         {
-            data = _mapper.Map<List<ReadExtendedProjectCommentDto>>(projetCommentaire),
+            data = _mapper.Map<List<ReadExtendedProjectCommentDto>>(projectComment),
             pagination = new PaginationDto
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ProjectsComments.CountAsync(filterResult ?? (pc => pc.id_project == projetId)),
+                total = await _context.ProjectsComments.CountAsync(filterResult ?? (pc => pc.id_project == projectId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.ProjectsComments.Skip(offset + limit).AnyAsync(filterResult ?? (pc => pc.id_project == projetId))
+                hasMore = await _context.ProjectsComments.Skip(offset + limit).AnyAsync(filterResult ?? (pc => pc.id_project == projectId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
         };
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedProjectCommentDto>> GetProjetCommentairesByUserId(int userId, int limit = 100, int offset = 0,
+    public async Task<PaginatedResponseDto<ReadExtendedProjectCommentDto>> GetProjectCommentsByUserId(int userId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if the user exists
@@ -125,10 +125,10 @@ public class ProjectCommentService : IProjectCommentService
         {
             query = query.Include(pc => pc.User);
         }
-        var projetCommentaire = await query.ToListAsync();
+        var projectComment = await query.ToListAsync();
         return new PaginatedResponseDto<ReadExtendedProjectCommentDto>
         {
-            data = _mapper.Map<List<ReadExtendedProjectCommentDto>>(projetCommentaire),
+            data = _mapper.Map<List<ReadExtendedProjectCommentDto>>(projectComment),
             pagination = new PaginationDto
             {
                 offset = offset,
@@ -142,10 +142,10 @@ public class ProjectCommentService : IProjectCommentService
         };
     }
 
-    public async Task<ReadExtendedProjectCommentDto> GetProjetCommentairesById(int id, int? userId = null, int? projetId = null, List<string>? expand = null)
+    public async Task<ReadExtendedProjectCommentDto> GetProjectCommentsById(int id, int? userId = null, int? projectId = null, List<string>? expand = null)
     {
         var query = _context.ProjectsComments.AsQueryable();
-        query = query.Where(pc => pc.id_project_comment == id && (projetId == null || pc.id_project == projetId) && (userId == null || pc.id_user == userId));
+        query = query.Where(pc => pc.id_project_comment == id && (projectId == null || pc.id_project == projectId) && (userId == null || pc.id_user == userId));
         if (expand != null && expand.Contains("project"))
         {
             query = query.Include(pc => pc.Project);
@@ -154,60 +154,60 @@ public class ProjectCommentService : IProjectCommentService
         {
             query = query.Include(pc => pc.User);
         }
-        var projetCommentaire = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjectComment with id '{id}' not found");
-        return _mapper.Map<ReadExtendedProjectCommentDto>(projetCommentaire);
+        var projectComment = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjectComment with id '{id}' not found");
+        return _mapper.Map<ReadExtendedProjectCommentDto>(projectComment);
     }
 
-    public async Task<ReadProjectCommentDto> CreateProjetCommentaire(CreateProjectCommentDto projetCommentaireDto)
+    public async Task<ReadProjectCommentDto> CreateProjectComment(CreateProjectCommentDto projectCommentDto)
     {
         // check if the project exists
-        if (!await _context.Projects.AnyAsync(p => p.id_project == projetCommentaireDto.id_project))
+        if (!await _context.Projects.AnyAsync(p => p.id_project == projectCommentDto.id_project))
         {
-            throw new KeyNotFoundException($"Project with id '{projetCommentaireDto.id_project}' not found");
+            throw new KeyNotFoundException($"Project with id '{projectCommentDto.id_project}' not found");
         }
         // check if the user exists
-        if (!await _context.Users.AnyAsync(u => u.id_user == projetCommentaireDto.id_user))
+        if (!await _context.Users.AnyAsync(u => u.id_user == projectCommentDto.id_user))
         {
-            throw new KeyNotFoundException($"User with id '{projetCommentaireDto.id_user}' not found");
+            throw new KeyNotFoundException($"User with id '{projectCommentDto.id_user}' not found");
         }
-        var newProjetCommentaire = _mapper.Map<ProjectsComments>(projetCommentaireDto);
-        _context.ProjectsComments.Add(newProjetCommentaire);
+        var newProjectComment = _mapper.Map<ProjectsComments>(projectCommentDto);
+        _context.ProjectsComments.Add(newProjectComment);
         await _context.SaveChangesAsync();
-        return _mapper.Map<ReadProjectCommentDto>(newProjetCommentaire);
+        return _mapper.Map<ReadProjectCommentDto>(newProjectComment);
     }
 
-    public async Task<ReadProjectCommentDto> UpdateProjetCommentaire(int id, UpdateProjectCommentDto projetCommentaireDto, int? userId = null, int? projetId = null)
+    public async Task<ReadProjectCommentDto> UpdateProjectComment(int id, UpdateProjectCommentDto projectCommentDto, int? userId = null, int? projectId = null)
     {
-        var projetCommentaireToUpdate = await _context.ProjectsComments.FindAsync(id);
-        if ((projetCommentaireToUpdate is null) || (projetId is not null && projetCommentaireToUpdate.id_project != projetId) || (userId is not null && projetCommentaireToUpdate.id_user != userId))
+        var projectCommentToUpdate = await _context.ProjectsComments.FindAsync(id);
+        if ((projectCommentToUpdate is null) || (projectId is not null && projectCommentToUpdate.id_project != projectId) || (userId is not null && projectCommentToUpdate.id_user != userId))
         {
-            throw new KeyNotFoundException($"Commentaire with id '{id}' not found");
+            throw new KeyNotFoundException($"Comment with id '{id}' not found");
         }
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
-        if (clientId != projetCommentaireToUpdate.id_user && clientRole < UserRole.Moderator)
+        if (clientId != projectCommentToUpdate.id_user && clientRole < UserRole.Moderator)
         {
             throw new UnauthorizedAccessException($"You are not authorized to update this comment");
         }
-        projetCommentaireToUpdate.content_project_comment = projetCommentaireDto.content_project_comment ?? projetCommentaireToUpdate.content_project_comment;
+        projectCommentToUpdate.content_project_comment = projectCommentDto.content_project_comment ?? projectCommentToUpdate.content_project_comment;
         await _context.SaveChangesAsync();
-        return _mapper.Map<ReadProjectCommentDto>(projetCommentaireToUpdate);
+        return _mapper.Map<ReadProjectCommentDto>(projectCommentToUpdate);
     }
 
-    public async Task DeleteProjetCommentaire(int id, int? userId = null, int? projetId = null)
+    public async Task DeleteProjectComment(int id, int? userId = null, int? projectId = null)
     {
-        var projetCommentaireToDelete = await _context.ProjectsComments.FindAsync(id);
-        if ((projetCommentaireToDelete is null) || (projetId is not null && projetCommentaireToDelete.id_project != projetId) || (userId is not null && projetCommentaireToDelete.id_user != userId))
+        var projectCommentToDelete = await _context.ProjectsComments.FindAsync(id);
+        if ((projectCommentToDelete is null) || (projectId is not null && projectCommentToDelete.id_project != projectId) || (userId is not null && projectCommentToDelete.id_user != userId))
         {
             throw new KeyNotFoundException($"ProjectComment with id '{id}' not found");
         }
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
-        if (clientId != projetCommentaireToDelete.id_user && clientRole < UserRole.Moderator)
+        if (clientId != projectCommentToDelete.id_user && clientRole < UserRole.Moderator)
         {
             throw new UnauthorizedAccessException($"You are not authorized to delete this comment");
         }
-        _context.ProjectsComments.Remove(projetCommentaireToDelete);
+        _context.ProjectsComments.Remove(projectCommentToDelete);
         await _context.SaveChangesAsync();
     }
 }

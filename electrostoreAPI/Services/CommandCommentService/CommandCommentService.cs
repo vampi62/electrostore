@@ -22,7 +22,7 @@ public class CommandCommentService : ICommandCommentService
         _sessionService = sessionService;
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedCommandCommentDto>> GetCommandsCommentairesByCommandId(int CommandId, int limit = 100, int offset = 0,
+    public async Task<PaginatedResponseDto<ReadExtendedCommandCommentDto>> GetCommandsCommentsByCommandId(int CommandId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if the command exists
@@ -65,10 +65,10 @@ public class CommandCommentService : ICommandCommentService
         {
             query = query.Include(cc => cc.User);
         }
-        var commandCommentaire = await query.ToListAsync();
+        var commandComment = await query.ToListAsync();
         return new PaginatedResponseDto<ReadExtendedCommandCommentDto>
         {
-            data = _mapper.Map<IEnumerable<ReadExtendedCommandCommentDto>>(commandCommentaire),
+            data = _mapper.Map<IEnumerable<ReadExtendedCommandCommentDto>>(commandComment),
             pagination = new PaginationDto
             {
                 offset = offset,
@@ -82,7 +82,7 @@ public class CommandCommentService : ICommandCommentService
         };
     }
 
-    public async Task<PaginatedResponseDto<ReadExtendedCommandCommentDto>> GetCommandsCommentairesByUserId(int userId, int limit = 100, int offset = 0,
+    public async Task<PaginatedResponseDto<ReadExtendedCommandCommentDto>> GetCommandsCommentsByUserId(int userId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if the user exists
@@ -125,10 +125,10 @@ public class CommandCommentService : ICommandCommentService
         {
             query = query.Include(cc => cc.User);
         }
-        var commandCommentaire = await query.ToListAsync();
+        var commandComment = await query.ToListAsync();
         return new PaginatedResponseDto<ReadExtendedCommandCommentDto>
         {
-            data = _mapper.Map<IEnumerable<ReadExtendedCommandCommentDto>>(commandCommentaire),
+            data = _mapper.Map<IEnumerable<ReadExtendedCommandCommentDto>>(commandComment),
             pagination = new PaginationDto
             {
                 offset = offset,
@@ -142,7 +142,7 @@ public class CommandCommentService : ICommandCommentService
         };
     }
 
-    public async Task<ReadExtendedCommandCommentDto> GetCommandsCommentaireById(int id, int? userId = null, int? CommandId = null, List<string>? expand = null)
+    public async Task<ReadExtendedCommandCommentDto> GetCommandsCommentById(int id, int? userId = null, int? CommandId = null, List<string>? expand = null)
     {
         var query = _context.CommandsComments.AsQueryable();
         query = query.Where(cc => cc.id_command_comment == id && (CommandId == null || cc.id_command == CommandId) && (userId == null || cc.id_user == userId));
@@ -154,60 +154,60 @@ public class CommandCommentService : ICommandCommentService
         {
             query = query.Include(cc => cc.User);
         }
-        var commandCommentaire = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Commentaire with id '{id}' not found");
-        return _mapper.Map<ReadExtendedCommandCommentDto>(commandCommentaire);
+        var commandComment = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Comment with id '{id}' not found");
+        return _mapper.Map<ReadExtendedCommandCommentDto>(commandComment);
     }
 
-    public async Task<ReadCommandCommentDto> CreateCommentaire(CreateCommandCommentDto commandCommentaireDto)
+    public async Task<ReadCommandCommentDto> CreateComment(CreateCommandCommentDto commandCommentDto)
     {
         // check if the command exists
-        if (!await _context.Commands.AnyAsync(c => c.id_command == commandCommentaireDto.id_command))
+        if (!await _context.Commands.AnyAsync(c => c.id_command == commandCommentDto.id_command))
         {
-            throw new KeyNotFoundException($"Command with id '{commandCommentaireDto.id_command}' not found");
+            throw new KeyNotFoundException($"Command with id '{commandCommentDto.id_command}' not found");
         }
         // check if the user exists
-        if (!await _context.Users.AnyAsync(u => u.id_user == commandCommentaireDto.id_user))
+        if (!await _context.Users.AnyAsync(u => u.id_user == commandCommentDto.id_user))
         {
-            throw new KeyNotFoundException($"User with id '{commandCommentaireDto.id_user}' not found");
+            throw new KeyNotFoundException($"User with id '{commandCommentDto.id_user}' not found");
         }
-        var newCommandCommentaire = _mapper.Map<CommandsComments>(commandCommentaireDto);
-        _context.CommandsComments.Add(newCommandCommentaire);
+        var newCommandComment = _mapper.Map<CommandsComments>(commandCommentDto);
+        _context.CommandsComments.Add(newCommandComment);
         await _context.SaveChangesAsync();
-        return _mapper.Map<ReadCommandCommentDto>(newCommandCommentaire);
+        return _mapper.Map<ReadCommandCommentDto>(newCommandComment);
     }
 
-    public async Task<ReadCommandCommentDto> UpdateCommentaire(int id, UpdateCommandCommentDto commandCommentaireDto, int? userId = null, int? CommandId = null)
+    public async Task<ReadCommandCommentDto> UpdateComment(int id, UpdateCommandCommentDto commandCommentDto, int? userId = null, int? CommandId = null)
     {
-        var commandCommentaireToUpdate = await _context.CommandsComments.FindAsync(id);
-        if ((commandCommentaireToUpdate is null) || (CommandId is not null && commandCommentaireToUpdate.id_command != CommandId) || (userId is not null && commandCommentaireToUpdate.id_user != userId))
+        var commandCommentToUpdate = await _context.CommandsComments.FindAsync(id);
+        if ((commandCommentToUpdate is null) || (CommandId is not null && commandCommentToUpdate.id_command != CommandId) || (userId is not null && commandCommentToUpdate.id_user != userId))
         {
-            throw new KeyNotFoundException($"Commentaire with id '{id}' not found");
+            throw new KeyNotFoundException($"Comment with id '{id}' not found");
         }
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
-        if (clientId != commandCommentaireToUpdate.id_user && clientRole < UserRole.Moderator)
+        if (clientId != commandCommentToUpdate.id_user && clientRole < UserRole.Moderator)
         {
             throw new UnauthorizedAccessException($"You are not authorized to update this comment");
         }
-        commandCommentaireToUpdate.content_command_comment = commandCommentaireDto.content_command_comment ?? commandCommentaireToUpdate.content_command_comment;
+        commandCommentToUpdate.content_command_comment = commandCommentDto.content_command_comment ?? commandCommentToUpdate.content_command_comment;
         await _context.SaveChangesAsync();
-        return _mapper.Map<ReadCommandCommentDto>(commandCommentaireToUpdate);
+        return _mapper.Map<ReadCommandCommentDto>(commandCommentToUpdate);
     }
 
-    public async Task DeleteCommentaire(int id, int? userId = null, int? CommandId = null)
+    public async Task DeleteComment(int id, int? userId = null, int? CommandId = null)
     {
-        var commandCommentaireToDelete = await _context.CommandsComments.FindAsync(id);
-        if ((commandCommentaireToDelete is null) || (CommandId is not null && commandCommentaireToDelete.id_command != CommandId) || (userId is not null && commandCommentaireToDelete.id_user != userId))
+        var commandCommentToDelete = await _context.CommandsComments.FindAsync(id);
+        if ((commandCommentToDelete is null) || (CommandId is not null && commandCommentToDelete.id_command != CommandId) || (userId is not null && commandCommentToDelete.id_user != userId))
         {
-            throw new KeyNotFoundException($"Commentaire with id '{id}' not found");
+            throw new KeyNotFoundException($"Comment with id '{id}' not found");
         }
         var clientId = _sessionService.GetClientId();
         var clientRole = _sessionService.GetClientRole();
-        if (clientId != commandCommentaireToDelete.id_user && clientRole < UserRole.Moderator)
+        if (clientId != commandCommentToDelete.id_user && clientRole < UserRole.Moderator)
         {
             throw new UnauthorizedAccessException($"You are not authorized to delete this comment");
         }
-        _context.CommandsComments.Remove(commandCommentaireToDelete);
+        _context.CommandsComments.Remove(commandCommentToDelete);
         await _context.SaveChangesAsync();
     }
 }
