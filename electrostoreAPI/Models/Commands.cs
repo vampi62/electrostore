@@ -61,7 +61,7 @@ public class Commands : BaseEntity
             ? default
             : JsonSerializer.Deserialize<T>(raw_data);
     }
-    public ICollection<CommandsCommentaires> CommandsCommentaires { get; set; } = new List<CommandsCommentaires>();
+    public ICollection<CommandsComments> CommandsComments { get; set; } = new List<CommandsComments>();
     public ICollection<CommandsDocuments> CommandsDocuments { get; set; } = new List<CommandsDocuments>();
     public ICollection<CommandsHistory> CommandsHistory { get; set; } = new List<CommandsHistory>();
     public ICollection<CommandsItems> CommandsItems { get; set; } = new List<CommandsItems>();

@@ -8,9 +8,9 @@ const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 const EXPAND_HANDLERS = {
 	command_comments: (store, idCommand, data) => {
-		store.commentaires[idCommand] = {};
-		for (const commentaire of data) {
-			store.commentaires[idCommand][commentaire.id_command_comment] = commentaire;
+		store.comments[idCommand] = {};
+		for (const comment of data) {
+			store.comments[idCommand][comment.id_command_comment] = comment;
 		}
 	},
 	commands_documents: (store, idCommand, data) => {
@@ -62,9 +62,9 @@ const commandResource = createMainResource({
 });
 
 const commentaireResource = createNestedResource({
-	path: (idCommand) => `/command/${idCommand}/commentaire`,
+	path: (idCommand) => `/command/${idCommand}/comment`,
 	idField: "id_command_comment",
-	stateKey: "commentaires",
+	stateKey: "comments",
 	countKey: "commentairesTotalCount",
 	loadingKey: "commentairesLoading",
 	onHydrate: (store, entity, expand) => {
@@ -105,7 +105,7 @@ export const useCommandsStore = defineStore("commands",{
 
 		commentairesTotalCount: {},
 		commentairesLoading: false,
-		commentaires: {},
+		comments: {},
 		commentaireEdition: {},
 
 		documentsTotalCount: {},

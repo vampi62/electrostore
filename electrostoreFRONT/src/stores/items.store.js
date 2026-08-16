@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 
 import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
 
-import { useTagsStore, useStoresStore, useCommandsStore, useProjetsStore, useUsersStore } from "@/stores";
+import { useTagsStore, useStoresStore, useCommandsStore, useProjectsStore, useUsersStore } from "@/stores";
 import { onUpdated } from "vue";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
@@ -134,15 +134,15 @@ const itemCommandResource = createNestedResource({
 	},
 });
 const itemProjetResource = createNestedResource({
-	path: (idItem) => `/item/${idItem}/projet`,
+	path: (idItem) => `/item/${idItem}/project`,
 	idField: "id_projet_item",
 	stateKey: "itemProjets",
 	countKey: "itemProjetsTotalCount",
 	loadingKey: "itemProjetsLoading",
 	onHydrate: (store, entity, expand) => {
-		if (expand.includes("projet")) {
-			const projetsStore = useProjetsStore();
-			projetsStore.projets[entity.id_project] = entity.project;
+		if (expand.includes("project")) {
+			const projetsStore = useProjectsStore();
+			projetsStore.projects[entity.id_project] = entity.project;
 		}
 	},
 });

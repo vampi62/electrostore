@@ -18,13 +18,13 @@ import { downloadFile, viewFile } from "@/utils";
 
 import { ItemHistoryType } from "@/enums";
 
-import { useConfigsStore, useItemsStore, useTagsStore, useStoresStore, useCommandsStore, useProjetsStore, useAuthStore, useUsersStore } from "@/stores";
+import { useConfigsStore, useItemsStore, useTagsStore, useStoresStore, useCommandsStore, useProjectsStore, useAuthStore, useUsersStore } from "@/stores";
 const configsStore = useConfigsStore();
 const itemsStore = useItemsStore();
 const tagsStore = useTagsStore();
 const storesStore = useStoresStore();
 const commandsStore = useCommandsStore();
-const projetsStore = useProjetsStore();
+const projetsStore = useProjectsStore();
 const authStore = useAuthStore();
 const usersStore = useUsersStore();
 
@@ -498,13 +498,13 @@ const labelTableauCommand = ref([
 	{ label: "item.CommandPrice", sortable: true, key: "price_command_item", valueKey: "price_command_item", type: "number" },
 ]);
 const labelTableauProjet = ref([
-	{ label: "item.ProjetName", sortable: true, key: "Projet.name_project", sourceKey: "id_project", type: "text", 
+	{ label: "item.ProjetName", sortable: true, key: "Project.name_project", sourceKey: "id_project", type: "text", 
 		storeRessourceId: 1, valueKey: "name_project" },
-	{ label: "item.ProjetDate", sortable: true, key: "Projet.date_start_project", sourceKey: "id_project", type: "datetime", 
+	{ label: "item.ProjetDate", sortable: true, key: "Project.date_start_project", sourceKey: "id_project", type: "datetime", 
 		storeRessourceId: 1, valueKey: "date_start_project" },
-	{ label: "item.ProjetDateFin", sortable: true, key: "Projet.date_end_project", sourceKey: "id_project", type: "datetime", 
+	{ label: "item.ProjetDateFin", sortable: true, key: "Project.date_end_project", sourceKey: "id_project", type: "datetime", 
 		storeRessourceId: 1, valueKey: "date_end_project" },
-	{ label: "item.ProjetStatus", sortable: true, key: "Projet.status_project", sourceKey: "id_project", type: "text", 
+	{ label: "item.ProjectStatus", sortable: true, key: "Project.status_project", sourceKey: "id_project", type: "text", 
 		storeRessourceId: 1, valueKey: "status_project" },
 
 	{ label: "item.ProjetQte", sortable: true, key: "quantity_project_item", valueKey: "quantity_project_item", type: "number" },
@@ -635,11 +635,11 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 			</template>
 		</CollapsibleSection>
-		<CollapsibleSection title="item.Projets"
+		<CollapsibleSection title="item.Projects"
 			:total-count="Number(itemsStore.itemProjetsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
 			<template #append-row>
-				<Tableau :labels="labelTableauProjet" :meta="{ key: 'id_project', path: '/projets/', expand: ['projet'] }"
-					:store-data="[itemsStore.itemProjets[itemId],projetsStore.projets]"
+				<Tableau :labels="labelTableauProjet" :meta="{ key: 'id_project', path: '/projects/', expand: ['project'] }"
+					:store-data="[itemsStore.itemProjets[itemId],projetsStore.projects]"
 					:loading="itemsStore.itemProjetsLoading"
 					:total-count="Number(itemsStore.itemProjetsTotalCount[itemId])"
 					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemProjetByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"

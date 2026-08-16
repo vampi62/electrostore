@@ -15,11 +15,11 @@ public class ApplicationDbContext : DbContext
     public DbSet<ElectrostoreAPI.Models.Carriers> Carriers { get; set; }
     public DbSet<ElectrostoreAPI.Models.CronJobs> CronJobs { get; set; }
     public DbSet<ElectrostoreAPI.Models.Commands> Commands { get; set; }
-    public DbSet<ElectrostoreAPI.Models.CommandsCommentaires> CommandsCommentaires { get; set; }
+    public DbSet<ElectrostoreAPI.Models.CommandsComments> CommandsComments { get; set; }
     public DbSet<ElectrostoreAPI.Models.CommandsDocuments> CommandsDocuments { get; set; }
     public DbSet<ElectrostoreAPI.Models.CommandsHistory> CommandsHistory { get; set; }
     public DbSet<ElectrostoreAPI.Models.CommandsItems> CommandsItems { get; set; }
-    public DbSet<ElectrostoreAPI.Models.IA> IA { get; set; }
+    public DbSet<ElectrostoreAPI.Models.AI> AI { get; set; }
     public DbSet<ElectrostoreAPI.Models.Imgs> Imgs { get; set; }
     public DbSet<ElectrostoreAPI.Models.Items> Items { get; set; }
     public DbSet<ElectrostoreAPI.Models.ItemsBoxs> ItemsBoxs { get; set; }
@@ -29,13 +29,13 @@ public class ApplicationDbContext : DbContext
     public DbSet<ElectrostoreAPI.Models.JwiAccessTokens> JwiAccessTokens { get; set; }
     public DbSet<ElectrostoreAPI.Models.JwiRefreshTokens> JwiRefreshTokens { get; set; }
     public DbSet<ElectrostoreAPI.Models.Leds> Leds { get; set; }
-    public DbSet<ElectrostoreAPI.Models.Projets> Projets { get; set; }
-    public DbSet<ElectrostoreAPI.Models.ProjetsCommentaires> ProjetsCommentaires { get; set; }
-    public DbSet<ElectrostoreAPI.Models.ProjetsDocuments> ProjetsDocuments { get; set; }
-    public DbSet<ElectrostoreAPI.Models.ProjetsItems> ProjetsItems { get; set; }
-    public DbSet<ElectrostoreAPI.Models.ProjetsProjetTags> ProjetsProjetTags { get; set; }
-    public DbSet<ElectrostoreAPI.Models.ProjetTags> ProjetTags { get; set; }
-    public DbSet<ElectrostoreAPI.Models.ProjetsStatus> ProjetsStatus { get; set; }
+    public DbSet<ElectrostoreAPI.Models.Projects> Projects { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ProjectsComments> ProjectsComments { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ProjectsDocuments> ProjectsDocuments { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ProjectsItems> ProjectsItems { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ProjectsProjectTags> ProjectsProjectTags { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ProjectTags> ProjectTags { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ProjectsStatus> ProjectsStatus { get; set; }
     public DbSet<ElectrostoreAPI.Models.Stores> Stores { get; set; }
     public DbSet<ElectrostoreAPI.Models.StoresTags> StoresTags { get; set; }
     public DbSet<ElectrostoreAPI.Models.Tags> Tags { get; set; }
@@ -84,10 +84,10 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<ItemsTags>()
             .HasKey(it => new { it.id_item, it.id_tag });
 
-        modelBuilder.Entity<ProjetsItems>()
+        modelBuilder.Entity<ProjectsItems>()
             .HasKey(pi => new { pi.id_project, pi.id_item });
 
-        modelBuilder.Entity<ProjetsProjetTags>()
+        modelBuilder.Entity<ProjectsProjectTags>()
             .HasKey(ib => new { ib.id_project, ib.id_project_tag });
 
         modelBuilder.Entity<StoresTags>()

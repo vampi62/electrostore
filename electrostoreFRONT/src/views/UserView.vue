@@ -14,11 +14,11 @@ const route = useRoute();
 const userId = ref(route.params.id);
 const preset = ref(route.query.preset || null);
 
-import { useConfigsStore, useUsersStore, useCommandsStore, useProjetsStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useUsersStore, useCommandsStore, useProjectsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
 const usersStore = useUsersStore();
 const commandsStore = useCommandsStore();
-const projetsStore = useProjetsStore();
+const projetsStore = useProjectsStore();
 const authStore = useAuthStore();
 
 const formContainer = ref(null);
@@ -378,10 +378,10 @@ onMounted(() => {
 		</div>
 		<CollapsibleSection title="user.Participation" :permission="userId !=='new'">
 			<template #append-row>
-				<CollapsibleSection title="user.CommandsCommentaires" :disable-margin="true"
+				<CollapsibleSection title="user.CommandsComments" :disable-margin="true"
 					:total-count="Number(usersStore.commandsCommentaireTotalCount[userId] || 0)" :permission="userId !=='new'">
 					<template #append-row>
-						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'content_command_comment', key: 'id_command_comment', canEdit: false, roleRequired: false, expand: ['command'] }"
+						<Comment :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'content_command_comment', key: 'id_command_comment', canEdit: false, roleRequired: false, expand: ['command'] }"
 							:store-data="[usersStore.commandsCommentaire[userId], usersStore.users]"
 							:store-user="authStore.user" :store-config="configsStore"
 							:loading="usersStore.commandsCommentaireLoading"
@@ -390,10 +390,10 @@ onMounted(() => {
 						/>
 					</template>
 				</CollapsibleSection>
-				<CollapsibleSection title="user.ProjetsCommentaires" :disable-margin="true"
+				<CollapsibleSection title="user.ProjectsComments" :disable-margin="true"
 					:total-count="Number(usersStore.projetsCommentaireTotalCount[userId] || 0)" :permission="userId !=='new'">
 					<template #append-row>
-						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_project', contenu: 'content_project_comment', key: 'id_project_comment', canEdit: false, roleRequired: false, expand: ['projet'] }"
+						<Comment :meta="{ link: '/projects/', idRessource: 'id_project', contenu: 'content_project_comment', key: 'id_project_comment', canEdit: false, roleRequired: false, expand: ['project'] }"
 							:store-data="[usersStore.projetsCommentaire[userId], usersStore.users]"
 							:store-user="authStore.user" :store-config="configsStore"
 							:loading="usersStore.projetsCommentaireLoading"

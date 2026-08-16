@@ -750,8 +750,8 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="command.Commentaires"
 			:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)" :permission="commandId !=='new'">
 			<template #append-row>
-				<Commentaire :meta="{ contenu: 'content_command_comment', key: 'id_command_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
-					:store-data="[commandsStore.commentaires[commandId], usersStore.users]"
+				<Comment :meta="{ contenu: 'content_command_comment', key: 'id_command_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
+					:store-data="[commandsStore.comments[commandId], usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
 					:store-function="{ create: (data) => commandsStore.createCommentaire(commandId, data), update: (id, data) => commandsStore.updateCommentaire(commandId, id, data), delete: (id) => commandsStore.deleteCommentaire(commandId, id) }"
 					:loading="commandsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"

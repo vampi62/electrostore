@@ -32,7 +32,7 @@ public record ReadExtendedCommandDto : ReadCommandDto
     public int commands_documents_count { get; init; }
     public int commands_items_count { get; init; }
     public int commands_history_count { get; init; }
-    public IEnumerable<ReadCommandCommentaireDto>? command_comments { get; init; }
+    public IEnumerable<ReadCommandCommentDto>? command_comments { get; init; }
     public IEnumerable<ReadCommandDocumentDto>? commands_documents { get; init; }
     public IEnumerable<ReadCommandItemDto>? commands_items { get; init; }
     public IEnumerable<ReadCommandHistoryDto>? commands_history { get; init; }
@@ -48,7 +48,7 @@ public record CreateCommandDto
     public string? url_command { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    [Range(0, (int)ProjetStatus.Archived, ErrorMessage = "{0} must be a valid status, between {1} and {2}.")]
+    [Range(0, (int)ProjectStatus.Archived, ErrorMessage = "{0} must be a valid status, between {1} and {2}.")]
     public CommandStatus status_command { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
@@ -72,7 +72,7 @@ public record UpdateCommandDto
     [OptionalUrl(ErrorMessage = "{0} must be a valid URL.")]
     public string? url_command { get; init; }
 
-    [Range(0, (int)ProjetStatus.Archived, ErrorMessage = "{0} must be a valid status, between {1} and {2}.")]
+    [Range(0, (int)ProjectStatus.Archived, ErrorMessage = "{0} must be a valid status, between {1} and {2}.")]
     public CommandStatus? status_command { get; init; }
 
     public DateTime? date_command { get; init; }

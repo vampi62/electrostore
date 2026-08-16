@@ -1,6 +1,6 @@
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Services.FileService;
-using ElectrostoreAPI.Services.IAService;
+using ElectrostoreAPI.Services.AIService;
 using ElectrostoreAPI.Services.ImgService;
 using Grpc.Core;
 
@@ -8,12 +8,12 @@ namespace ElectrostoreAPI.Grpc.Services;
 
 public class IaTrainingGrpcService : IaTrainingGrpc.IaTrainingGrpcBase
 {
-    private readonly IIAService _iaService;
+    private readonly IAIService _iaService;
     private readonly IImgService _imgService;
     private readonly ILogger<IaTrainingGrpcService> _logger;
 
     public IaTrainingGrpcService(
-        IIAService iaService,
+        IAIService iaService,
         IImgService imgService,
         ILogger<IaTrainingGrpcService> logger)
     {
@@ -37,7 +37,7 @@ public class IaTrainingGrpcService : IaTrainingGrpc.IaTrainingGrpcBase
     public override async Task<UpdateIaStatusReply> UpdateIaStatus(
         UpdateIaStatusRequest request, ServerCallContext context)
     {
-        var iaStatus = new IAStatusDto
+        var iaStatus = new AIStatusDto
         {
             Status = request.Action,
             Message = request.Message,
@@ -50,7 +50,7 @@ public class IaTrainingGrpcService : IaTrainingGrpc.IaTrainingGrpcBase
         var result = await _iaService.UpdateIaStatusAsync(request.IdIa, iaStatus, request.RequestedBy, context.CancellationToken);
         if (!result)
         {
-            _logger.LogWarning("UpdateIaStatus: update failed for IA {Id} (status={Status})", request.IdIa, request.Action);
+            _logger.LogWarning("UpdateIaStatus: update failed for AI {Id} (status={Status})", request.IdIa, request.Action);
         }
         return new UpdateIaStatusReply { Success = result };
     }

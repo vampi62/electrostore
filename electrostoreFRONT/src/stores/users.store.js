@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 
 import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
 
-import { useCommandsStore, useProjetsStore } from "@/stores";
+import { useCommandsStore, useProjectsStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -55,20 +55,20 @@ const userResource = createMainResource({
 });
 
 const projetCommentaireResource = createNestedResource({
-	path: (idUser) => `/user/${idUser}/projet_commentaire`,
+	path: (idUser) => `/user/${idUser}/project_comment`,
 	idField: "id_project_comment",
 	stateKey: "projetsCommentaire",
 	countKey: "projetsCommentaireTotalCount",
 	loadingKey: "projetsCommentaireLoading",
 	onHydrate: (store, idUser, entity, expand) => {
-		if (expand.includes("projet")) {
-			const projetStore = useProjetsStore();
-			projetStore.projets[entity.project.id_project] = entity.project;
+		if (expand.includes("project")) {
+			const projetStore = useProjectsStore();
+			projetStore.projects[entity.project.id_project] = entity.project;
 		}
 	},
 });
 const commandCommentaireResource = createNestedResource({
-	path: (idUser) => `/user/${idUser}/command_commentaire`,
+	path: (idUser) => `/user/${idUser}/command_comment`,
 	idField: "id_command_comment",
 	stateKey: "commandsCommentaire",
 	countKey: "commandsCommentaireTotalCount",

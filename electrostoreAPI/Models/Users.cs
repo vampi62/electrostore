@@ -30,6 +30,6 @@ public class Users : BaseEntity
 
     public DateTime? reset_token_expiration { get; set; }
 
-    public ICollection<CommandsCommentaires> CommandsCommentaires { get; set; } = new List<CommandsCommentaires>();
-    public ICollection<ProjetsCommentaires> ProjetsCommentaires { get; set; } = new List<ProjetsCommentaires>();
+    public ICollection<CommandsComments> CommandsComments { get; set; } = new List<CommandsComments>();
+    public ICollection<ProjectsComments> ProjectsComments { get; set; } = new List<ProjectsComments>();
 }

@@ -73,10 +73,10 @@ public class UserService : IUserService
             .Select(u => new
             {
                 User = u,
-                ProjetsCommentairesCount = u.ProjetsCommentaires.Count,
-                CommandsCommentairesCount = u.CommandsCommentaires.Count,
-                ProjetsCommentaires = expand != null && expand.Contains("project_comments") ? u.ProjetsCommentaires.Take(20).ToList() : null,
-                CommandsCommentaires = expand != null && expand.Contains("command_comments") ? u.CommandsCommentaires.Take(20).ToList() : null
+                ProjectsCommentsCount = u.ProjectsComments.Count,
+                CommandsCommentairesCount = u.CommandsComments.Count,
+                ProjectsComments = expand != null && expand.Contains("project_comments") ? u.ProjectsComments.Take(20).ToList() : null,
+                CommandsComments = expand != null && expand.Contains("command_comments") ? u.CommandsComments.Take(20).ToList() : null
             })
             .ToListAsync();
         return new PaginatedResponseDto<ReadExtendedUserDto>
@@ -85,10 +85,10 @@ public class UserService : IUserService
             {
                 return _mapper.Map<ReadExtendedUserDto>(u.User) with
                 {
-                    project_comments_count = u.ProjetsCommentairesCount,
+                    project_comments_count = u.ProjectsCommentsCount,
                     command_comments_count = u.CommandsCommentairesCount,
-                    project_comments = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(u.ProjetsCommentaires),
-                    command_comments = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(u.CommandsCommentaires)
+                    project_comments = _mapper.Map<IEnumerable<ReadProjectCommentDto>>(u.ProjectsComments),
+                    command_comments = _mapper.Map<IEnumerable<ReadCommandCommentDto>>(u.CommandsComments)
                 };
             }).ToList(),
             pagination = new PaginationDto
@@ -188,18 +188,18 @@ public class UserService : IUserService
             .Select(u => new
             {
                 User = u,
-                ProjetsCommentairesCount = u.ProjetsCommentaires.Count,
-                CommandsCommentairesCount = u.CommandsCommentaires.Count,
-                ProjetsCommentaires = expand != null && expand.Contains("project_comments") ? u.ProjetsCommentaires.Take(20).ToList() : null,
-                CommandsCommentaires = expand != null && expand.Contains("command_comments") ? u.CommandsCommentaires.Take(20).ToList() : null
+                ProjectsCommentsCount = u.ProjectsComments.Count,
+                CommandsCommentairesCount = u.CommandsComments.Count,
+                ProjectsComments = expand != null && expand.Contains("project_comments") ? u.ProjectsComments.Take(20).ToList() : null,
+                CommandsComments = expand != null && expand.Contains("command_comments") ? u.CommandsComments.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"User with id '{id}' not found");
         return _mapper.Map<ReadExtendedUserDto>(user.User) with
         {
-            project_comments_count = user.ProjetsCommentairesCount,
+            project_comments_count = user.ProjectsCommentsCount,
             command_comments_count = user.CommandsCommentairesCount,
-            project_comments = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(user.ProjetsCommentaires),
-            command_comments = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(user.CommandsCommentaires)
+            project_comments = _mapper.Map<IEnumerable<ReadProjectCommentDto>>(user.ProjectsComments),
+            command_comments = _mapper.Map<IEnumerable<ReadCommandCommentDto>>(user.CommandsComments)
         };
     }
 

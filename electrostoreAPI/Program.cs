@@ -8,7 +8,7 @@ using ElectrostoreAPI.Services.BoxService;
 using ElectrostoreAPI.Services.BoxTagService;
 using ElectrostoreAPI.Services.CameraService;
 using ElectrostoreAPI.Services.CarrierService;
-using ElectrostoreAPI.Services.CommandCommentaireService;
+using ElectrostoreAPI.Services.CommandCommentService;
 using ElectrostoreAPI.Services.CommandDocumentService;
 using ElectrostoreAPI.Services.CommandHistoryService;
 using ElectrostoreAPI.Services.CommandItemService;
@@ -17,7 +17,7 @@ using ElectrostoreAPI.Services.ConfigService;
 using ElectrostoreAPI.Services.CronJobService;
 using ElectrostoreAPI.Services.EncryptionService;
 using ElectrostoreAPI.Services.FileService;
-using ElectrostoreAPI.Services.IAService;
+using ElectrostoreAPI.Services.AIService;
 using ElectrostoreAPI.Services.ImgService;
 using ElectrostoreAPI.Services.ItemBoxService;
 using ElectrostoreAPI.Services.ItemDocumentService;
@@ -26,13 +26,13 @@ using ElectrostoreAPI.Services.ItemService;
 using ElectrostoreAPI.Services.ItemTagService;
 using ElectrostoreAPI.Services.JwiService;
 using ElectrostoreAPI.Services.LedService;
-using ElectrostoreAPI.Services.ProjetCommentaireService;
-using ElectrostoreAPI.Services.ProjetDocumentService;
-using ElectrostoreAPI.Services.ProjetItemService;
-using ElectrostoreAPI.Services.ProjetProjetTagService;
-using ElectrostoreAPI.Services.ProjetService;
-using ElectrostoreAPI.Services.ProjetStatusService;
-using ElectrostoreAPI.Services.ProjetTagService;
+using ElectrostoreAPI.Services.ProjectCommentService;
+using ElectrostoreAPI.Services.ProjectDocumentService;
+using ElectrostoreAPI.Services.ProjectItemService;
+using ElectrostoreAPI.Services.ProjectProjectTagService;
+using ElectrostoreAPI.Services.ProjectService;
+using ElectrostoreAPI.Services.ProjectStatusService;
+using ElectrostoreAPI.Services.ProjectTagService;
 using ElectrostoreAPI.Services.SessionService;
 using ElectrostoreAPI.Services.StoreService;
 using ElectrostoreAPI.Services.StoreTagService;
@@ -184,7 +184,7 @@ public partial class Program
             options.MaxReceiveMessageSize = 100 * 1024 * 1024; // 100 MB
         });
 
-        // gRPC client for the IA service
+        // gRPC client for the AI service
         builder.Services.AddGrpcClient<IaCmdGrpc.IaCmdGrpcClient>(options =>
         {
             options.Address = new Uri(
@@ -343,7 +343,7 @@ public partial class Program
         builder.Services.AddScoped<IBoxTagService, BoxTagService>();
         builder.Services.AddScoped<ICameraService, CameraService>();
         builder.Services.AddScoped<ICarrierService, CarrierService>();
-        builder.Services.AddScoped<ICommandCommentaireService, CommandCommentaireService>();
+        builder.Services.AddScoped<ICommandCommentService, CommandCommentService>();
         builder.Services.AddScoped<ICommandDocumentService, CommandDocumentService>();
         builder.Services.AddScoped<ICommandHistoryService, CommandHistoryService>();
         builder.Services.AddScoped<ICommandItemService, CommandItemService>();
@@ -351,7 +351,7 @@ public partial class Program
         builder.Services.AddScoped<IConfigService, ConfigService>();
         builder.Services.AddScoped<ICronJobService, CronJobService>();
         builder.Services.AddScoped<IEncryptionService, EncryptionService>();
-        builder.Services.AddScoped<IIAService, IAService>();
+        builder.Services.AddScoped<IAIService, AIService>();
         builder.Services.AddScoped<IImgService, ImgService>();
         builder.Services.AddScoped<IItemBoxService, ItemBoxService>();
         builder.Services.AddScoped<IItemDocumentService, ItemDocumentService>();
@@ -360,13 +360,13 @@ public partial class Program
         builder.Services.AddScoped<IItemTagService, ItemTagService>();
         builder.Services.AddScoped<ILedService, LedService>();
         
-        builder.Services.AddScoped<IProjetCommentaireService, ProjetCommentaireService>();
-        builder.Services.AddScoped<IProjetDocumentService, ProjetDocumentService>();
-        builder.Services.AddScoped<IProjetItemService, ProjetItemService>();
-        builder.Services.AddScoped<IProjetProjetTagService, ProjetProjetTagService>();
-        builder.Services.AddScoped<IProjetService, ProjetService>();
-        builder.Services.AddScoped<IProjetStatusService, ProjetStatusService>();
-        builder.Services.AddScoped<IProjetTagService, ProjetTagService>();
+        builder.Services.AddScoped<IProjectCommentService, ProjectCommentService>();
+        builder.Services.AddScoped<IProjectDocumentService, ProjectDocumentService>();
+        builder.Services.AddScoped<IProjectItemService, ProjectItemService>();
+        builder.Services.AddScoped<IProjectProjectTagService, ProjectProjectTagService>();
+        builder.Services.AddScoped<IProjectService, ProjectService>();
+        builder.Services.AddScoped<IProjectStatusService, ProjectStatusService>();
+        builder.Services.AddScoped<IProjectTagService, ProjectTagService>();
         builder.Services.AddScoped<IStoreService, StoreService>();
         builder.Services.AddScoped<IStoreTagService, StoreTagService>();
         builder.Services.AddScoped<ITagService, TagService>();

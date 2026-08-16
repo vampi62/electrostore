@@ -18,8 +18,8 @@ public record ReadExtendedUserDto : ReadUserDto
 {
     public int project_comments_count { get; init; }
     public int command_comments_count { get; init; }
-    public IEnumerable<ReadProjetCommentaireDto>? project_comments { get; init; }
-    public IEnumerable<ReadCommandCommentaireDto>? command_comments { get; init; }
+    public IEnumerable<ReadProjectCommentDto>? project_comments { get; init; }
+    public IEnumerable<ReadCommandCommentDto>? command_comments { get; init; }
 }
 public record CreateUserDto
 {

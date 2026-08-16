@@ -66,10 +66,10 @@ public class CommandService : ICommandService
             .Select(c => new
             {
                 Command = c,
-                CommandsCommentairesCount = c.CommandsCommentaires.Count,
+                CommandsCommentairesCount = c.CommandsComments.Count,
                 CommandsDocumentsCount = c.CommandsDocuments.Count,
                 CommandsItemsCount = c.CommandsItems.Count,
-                CommandsCommentaires = expand != null && expand.Contains("command_comments") ? c.CommandsCommentaires.Take(20).ToList() : null,
+                CommandsComments = expand != null && expand.Contains("command_comments") ? c.CommandsComments.Take(20).ToList() : null,
                 CommandsDocuments = expand != null && expand.Contains("commands_documents") ? c.CommandsDocuments.Take(20).ToList() : null,
                 CommandsHistory = expand != null && expand.Contains("commands_history") ? c.CommandsHistory.Take(20).ToList() : null,
                 CommandsItems = expand != null && expand.Contains("commands_items") ? c.CommandsItems.Take(20).ToList() : null,
@@ -84,7 +84,7 @@ public class CommandService : ICommandService
                     command_comments_count = c.CommandsCommentairesCount,
                     commands_documents_count = c.CommandsDocumentsCount,
                     commands_items_count = c.CommandsItemsCount,
-                    command_comments = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(c.CommandsCommentaires),
+                    command_comments = _mapper.Map<IEnumerable<ReadCommandCommentDto>>(c.CommandsComments),
                     commands_documents = _mapper.Map<IEnumerable<ReadCommandDocumentDto>>(c.CommandsDocuments),
                     commands_history = _mapper.Map<IEnumerable<ReadCommandHistoryDto>>(c.CommandsHistory),
                     commands_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(c.CommandsItems),
@@ -112,10 +112,10 @@ public class CommandService : ICommandService
             .Select(c => new
             {
                 Command = c,
-                CommandsCommentairesCount = c.CommandsCommentaires.Count,
+                CommandsCommentairesCount = c.CommandsComments.Count,
                 CommandsDocumentsCount = c.CommandsDocuments.Count,
                 CommandsItemsCount = c.CommandsItems.Count,
-                CommandsCommentaires = expand != null && expand.Contains("command_comments") ? c.CommandsCommentaires.Take(20).ToList() : null,
+                CommandsComments = expand != null && expand.Contains("command_comments") ? c.CommandsComments.Take(20).ToList() : null,
                 CommandsDocuments = expand != null && expand.Contains("commands_documents") ? c.CommandsDocuments.Take(20).ToList() : null,
                 CommandsHistory = expand != null && expand.Contains("commands_history") ? c.CommandsHistory.Take(20).ToList() : null,
                 CommandsItems = expand != null && expand.Contains("commands_items") ? c.CommandsItems.Take(20).ToList() : null,
@@ -127,7 +127,7 @@ public class CommandService : ICommandService
             command_comments_count = command.CommandsCommentairesCount,
             commands_documents_count = command.CommandsDocumentsCount,
             commands_items_count = command.CommandsItemsCount,
-            command_comments = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(command.CommandsCommentaires),
+            command_comments = _mapper.Map<IEnumerable<ReadCommandCommentDto>>(command.CommandsComments),
             commands_documents = _mapper.Map<IEnumerable<ReadCommandDocumentDto>>(command.CommandsDocuments),
             commands_history = _mapper.Map<IEnumerable<ReadCommandHistoryDto>>(command.CommandsHistory),
             commands_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(command.CommandsItems),
