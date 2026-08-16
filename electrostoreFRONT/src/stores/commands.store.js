@@ -7,10 +7,10 @@ import { useUsersStore, useItemsStore, useCarriersStore } from "@/stores";
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 const EXPAND_HANDLERS = {
-	commands_commentaires: (store, idCommand, data) => {
+	command_comments: (store, idCommand, data) => {
 		store.commentaires[idCommand] = {};
 		for (const commentaire of data) {
-			store.commentaires[idCommand][commentaire.id_command_commentaire] = commentaire;
+			store.commentaires[idCommand][commentaire.id_command_comment] = commentaire;
 		}
 	},
 	commands_documents: (store, idCommand, data) => {
@@ -40,7 +40,7 @@ const EXPAND_HANDLERS = {
 };
 
 function hydrateCommand(store, idCommand, command, expand = []) {
-	store.commentairesTotalCount[idCommand] = command.commands_commentaires_count;
+	store.commentairesTotalCount[idCommand] = command.command_comments_count;
 	store.documentsTotalCount[idCommand] = command.commands_documents_count;
 	store.itemsTotalCount[idCommand] = command.commands_items_count;
 	for (const key of expand) {
@@ -63,7 +63,7 @@ const commandResource = createMainResource({
 
 const commentaireResource = createNestedResource({
 	path: (idCommand) => `/command/${idCommand}/commentaire`,
-	idField: "id_command_commentaire",
+	idField: "id_command_comment",
 	stateKey: "commentaires",
 	countKey: "commentairesTotalCount",
 	loadingKey: "commentairesLoading",
@@ -141,18 +141,18 @@ export const useCommandsStore = defineStore("commands",{
 			}
 			if (id !== "new" && this.commands[id]) {
 				this.commandEdition[id] = {
-					prix_command: this.commands[id].prix_command,
+					price_command: this.commands[id].price_command,
 					url_command: this.commands[id].url_command,
 					status_command: this.commands[id].status_command,
 					date_command: this.commands[id].date_command,
-					date_livraison_command: this.commands[id].date_livraison_command,
+					date_delivery_command: this.commands[id].date_delivery_command,
 					tracking_number: this.commands[id].tracking_number,
 					id_carrier: this.commands[id].id_carrier,
 					is_tracking_requested: this.commands[id].is_tracking_requested,
 					is_tracking_validated: this.commands[id].is_tracking_validated,
 					is_active: this.commands[id].is_active,
-					shipper_adress: this.commands[id].shipper_adress,
-					recipient_adress: this.commands[id].recipient_adress,
+					shipper_address: this.commands[id].shipper_address,
+					recipient_address: this.commands[id].recipient_address,
 					last_status: this.commands[id].last_status,
 					loading: false,
 				};

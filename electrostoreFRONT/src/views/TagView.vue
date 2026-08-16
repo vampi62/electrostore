@@ -167,7 +167,7 @@ const storeDelete = async(store) => {
 };
 
 const filterStore = ref([
-	{ key: "nom_store", value: "", type: "text", label: "", placeholder: t("tag.StoreFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
+	{ key: "name_store", value: "", type: "text", label: "", placeholder: t("tag.StoreFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 // Boxs
@@ -196,10 +196,10 @@ const createSchema = () => {
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
-	shape.nom_tag = Yup.string()
+	shape.name_tag = Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("tag.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("tag.NameRequired"));
-	shape.poids_tag = Yup.number()
+	shape.weight_tag = Yup.number()
 		.min(0, t("tag.PoidsMin"))
 		.typeError(t("tag.PoidsNumber"))
 		.required(t("tag.PoidsRequired"));
@@ -207,8 +207,8 @@ const createSchema = () => {
 };
 
 const labelForm = [
-	{ key: "nom_tag", label: "tag.Name", type: "text" },
-	{ key: "poids_tag", label: "tag.Poids", type: "number" },
+	{ key: "name_tag", label: "tag.Name", type: "text" },
+	{ key: "weight_tag", label: "tag.Poids", type: "number" },
 ];
 const labelTableauItem = ref([
 	{ label: "tag.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text", 
@@ -225,8 +225,8 @@ const labelTableauItem = ref([
 	] },
 ]);
 const labelTableauStore = ref([
-	{ label: "tag.StoreName", sortable: true, key: "Store.nom_store", sourceKey: "id_store", type: "text", 
-		storeRessourceId: 1, valueKey: "nom_store" },
+	{ label: "tag.StoreName", sortable: true, key: "Store.name_store", sourceKey: "id_store", type: "text", 
+		storeRessourceId: 1, valueKey: "name_store" },
 
 	{ label: "tag.StoreActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
@@ -275,7 +275,7 @@ const labelTableauModalItem = ref([
 	] },
 ]);
 const labelTableauModalStore = ref([
-	{ label: "tag.StoreName", sortable: true, key: "nom_store", valueKey: "nom_store", type: "text" },
+	{ label: "tag.StoreName", sortable: true, key: "name_store", valueKey: "name_store", type: "text" },
 	{ label: "tag.StoreActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",

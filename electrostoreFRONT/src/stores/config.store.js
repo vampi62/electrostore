@@ -15,7 +15,7 @@ export const useConfigsStore = defineStore("configs",{
 		defaultsConfig: {
 			"demo_mode": demoMode,
 			"max_length_url": 150,
-			"max_length_commentaire": 455,
+			"max_length_comment": 455,
 			"max_length_description": 500,
 			"max_length_name": 50,
 			"max_length_type": 50,

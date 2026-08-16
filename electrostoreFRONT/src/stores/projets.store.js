@@ -7,44 +7,44 @@ import { useUsersStore, useItemsStore, useProjetTagsStore } from "@/stores";
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 const EXPAND_HANDLERS = {
-	projets_commentaires: (store, idProjet, data) => {
+	project_comments: (store, idProjet, data) => {
 		store.commentaires[idProjet] = {};
 		for (const commentaire of data) {
-			store.commentaires[idProjet][commentaire.id_projet_commentaire] = commentaire;
+			store.commentaires[idProjet][commentaire.id_project_comment] = commentaire;
 		}
 	},
-	projets_documents: (store, idProjet, data) => {
+	project_documents: (store, idProjet, data) => {
 		store.documents[idProjet] = {};
 		for (const document of data) {
-			store.documents[idProjet][document.id_projet_document] = document;
+			store.documents[idProjet][document.id_project_document] = document;
 		}
 	},
-	projets_items: (store, idProjet, data) => {
+	project_items: (store, idProjet, data) => {
 		store.items[idProjet] = {};
 		for (const item of data) {
 			store.items[idProjet][item.id_item] = item;
 		}
 	},
-	projets_projet_tags: (store, idProjet, data) => {
+	project_tags: (store, idProjet, data) => {
 		store.projetTagProjet[idProjet] = {};
 		for (const projetTagProjet of data) {
-			store.projetTagProjet[idProjet][projetTagProjet.id_projet_tag] = projetTagProjet;
+			store.projetTagProjet[idProjet][projetTagProjet.id_project_tag] = projetTagProjet;
 		}
 	},
-	projets_status_history: (store, idProjet, data) => {
+	project_status_history: (store, idProjet, data) => {
 		store.statusHistory[idProjet] = {};
 		for (const statusHistory of data) {
-			store.statusHistory[idProjet][statusHistory.id_projet_status] = statusHistory;
+			store.statusHistory[idProjet][statusHistory.id_project_status] = statusHistory;
 		}
 	},
 };
 
 function hydrateProjet(store, idProjet, projet, expand = []) {
-	store.commentairesTotalCount[idProjet] = projet.projets_commentaires_count;
-	store.documentsTotalCount[idProjet] = projet.projets_documents_count;
-	store.itemsTotalCount[idProjet] = projet.projets_items_count;
-	store.projetTagProjetTotalCount[idProjet] = projet.projets_tags_count;
-	store.statusHistoryTotalCount[idProjet] = projet.projets_status_history_count;
+	store.commentairesTotalCount[idProjet] = projet.project_comments_count;
+	store.documentsTotalCount[idProjet] = projet.project_documents_count;
+	store.itemsTotalCount[idProjet] = projet.project_items_count;
+	store.projetTagProjetTotalCount[idProjet] = projet.project_tags_count;
+	store.statusHistoryTotalCount[idProjet] = projet.project_status_history_count;
 	for (const key of expand) {
 		if (EXPAND_HANDLERS[key]) {
 			EXPAND_HANDLERS[key](store, idProjet, projet[key]);
@@ -54,18 +54,18 @@ function hydrateProjet(store, idProjet, projet, expand = []) {
 
 const projetResource = createMainResource({
 	path: () => "/projet",
-	idField: "id_projet",
+	idField: "id_project",
 	stateKey: "projets",
 	countKey: "projetsTotalCount",
 	loadingKey: "projetsLoading",
 	onHydrate: (store, entity, expand) => {
-		hydrateProjet(store, entity.id_projet, entity, expand);
+		hydrateProjet(store, entity.id_project, entity, expand);
 	},
 });
 
 const commentaireResource = createNestedResource({
 	path: (idProjet) => `/projet/${idProjet}/commentaire`,
-	idField: "id_projet_commentaire",
+	idField: "id_project_comment",
 	stateKey: "commentaires",
 	countKey: "commentairesTotalCount",
 	loadingKey: "commentairesLoading",
@@ -78,7 +78,7 @@ const commentaireResource = createNestedResource({
 });
 const documentResource = createNestedResource({
 	path: (idProjet) => `/projet/${idProjet}/document`,
-	idField: "id_projet_document",
+	idField: "id_project_document",
 	stateKey: "documents",
 	countKey: "documentsTotalCount",
 	loadingKey: "documentsLoading",
@@ -98,20 +98,20 @@ const itemResource = createNestedResource({
 });
 const projetTagProjetResource = createNestedResource({
 	path: (idProjet) => `/projet/${idProjet}/projet_tag`,
-	idField: "id_projet_tag",
+	idField: "id_project_tag",
 	stateKey: "projetTagProjet",
 	countKey: "projetTagProjetTotalCount",
 	loadingKey: "projetTagProjetLoading",
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("projet_tag")) {
 			const projetTagsStore = useProjetTagsStore();
-			projetTagsStore.projetTags[entity.id_projet_tag] = entity.projet_tag;
+			projetTagsStore.projetTags[entity.id_project_tag] = entity.project_tag;
 		}
 	},
 });
 const statusHistoryResource = createNestedResource({
 	path: (idProjet) => `/projet/${idProjet}/status-history`,
-	idField: "id_projet_status",
+	idField: "id_project_status",
 	stateKey: "statusHistory",
 	countKey: "statusHistoryTotalCount",
 	loadingKey: "statusHistoryLoading",
@@ -168,12 +168,12 @@ export const useProjetsStore = defineStore("projets",{
 			if (id !== "new" && this.projets[id]) {
 				this.projetEdition[id] = {
 					loading: false,
-					nom_projet: this.projets[id].nom_projet,
-					description_projet: this.projets[id].description_projet,
-					url_projet: this.projets[id].url_projet,
-					status_projet: this.projets[id].status_projet,
-					date_debut_projet: this.projets[id].date_debut_projet,
-					date_fin_projet: this.projets[id].date_fin_projet,
+					name_project: this.projets[id].name_project,
+					description_project: this.projets[id].description_project,
+					url_project: this.projets[id].url_project,
+					status_project: this.projets[id].status_project,
+					date_start_project: this.projets[id].date_start_project,
+					date_end_project: this.projets[id].date_end_project,
 				};
 			} else {
 				this.projetEdition[id] = {

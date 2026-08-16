@@ -40,7 +40,7 @@ export const useIasStore = defineStore("ias", {
 			if (id !== "new" && this.ias[id]) {
 				this.iaEdition[id] = {
 					loading: false,
-					nom_ia: this.ias[id].nom_ia,
+					name_ia: this.ias[id].name_ia,
 					description_ia: this.ias[id].description_ia,
 					date_ia: this.ias[id].date_ia,
 					trained_ia: this.ias[id].trained_ia,

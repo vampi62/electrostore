@@ -118,7 +118,7 @@ const projetSave = async(projet) => {
 };
 const projetDelete = async(projet) => {
 	try {
-		await projetTagsStore.deleteProjetTagProjet(projetTagId.value, projet.id_projet);
+		await projetTagsStore.deleteProjetTagProjet(projetTagId.value, projet.id_project);
 		addNotification({ message: t("projetTag.ProjetDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -126,7 +126,7 @@ const projetDelete = async(projet) => {
 };
 
 const filterProjet = ref([
-	{ key: "nom_projet", value: "", type: "text", label: "", placeholder: t("projetTag.ProjetFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
+	{ key: "name_project", value: "", type: "text", label: "", placeholder: t("projetTag.ProjetFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 const createSchema = () => {
@@ -135,10 +135,10 @@ const createSchema = () => {
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
-	shape.nom_projet_tag = Yup.string()
+	shape.name_project_tag = Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("projetTag.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("projetTag.NameRequired"));
-	shape.poids_projet_tag = Yup.number()
+	shape.weight_project_tag = Yup.number()
 		.min(0, t("projetTag.PoidsMin"))
 		.typeError(t("projetTag.PoidsNumber"))
 		.required(t("projetTag.PoidsRequired"));
@@ -146,12 +146,12 @@ const createSchema = () => {
 };
 
 const labelForm = [
-	{ key: "nom_projet_tag", label: "projetTag.Name", type: "text" },
-	{ key: "poids_projet_tag", label: "projetTag.Poids", type: "number" },
+	{ key: "name_project_tag", label: "projetTag.Name", type: "text" },
+	{ key: "weight_project_tag", label: "projetTag.Poids", type: "number" },
 ];
 const labelTableauProjet = ref([
-	{ label: "projetTag.ProjetName", sortable: true, key: "Projet.nom_projet", sourceKey: "id_projet", type: "text", 
-		storeRessourceId: 1, valueKey: "nom_projet" },
+	{ label: "projetTag.ProjetName", sortable: true, key: "Projet.name_project", sourceKey: "id_project", type: "text", 
+		storeRessourceId: 1, valueKey: "name_project" },
 		
 	{ label: "projetTag.ProjetActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
@@ -165,12 +165,12 @@ const labelTableauProjet = ref([
 ]);
 
 const labelTableauModalProjet = ref([
-	{ label: "projetTag.ProjetName", sortable: true, key: "nom_projet", valueKey: "nom_projet", type: "text" },
+	{ label: "projetTag.ProjetName", sortable: true, key: "name_project", valueKey: "name_project", type: "text" },
 	{ label: "projetTag.ProjetActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			showCondition: "!store[1]?.[rowData.id_projet]",
+			showCondition: "!store[1]?.[rowData.id_project]",
 			action: (row) => projetSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
@@ -178,7 +178,7 @@ const labelTableauModalProjet = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "store[1]?.[rowData.id_projet]",
+			showCondition: "store[1]?.[rowData.id_project]",
 			action: (row) => projetDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
@@ -210,7 +210,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('projetTag.AddProjet') }}
 				</button>
-				<Tableau :labels="labelTableauProjet" :meta="{ key: 'id_projet', expand: ['projet'] }"
+				<Tableau :labels="labelTableauProjet" :meta="{ key: 'id_project', expand: ['projet'] }"
 					:store-data="[projetTagsStore.projetTagsProjet[projetTagId],projetsStore.projets]"
 					:loading="projetTagsStore.projetTagsProjetLoading"
 					:total-count="Number(projetTagsStore.projetTagsProjetTotalCount[projetTagId] || 0)"
@@ -240,7 +240,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FilterContainer class="my-4 flex gap-4" :filters="filterProjet" :store-data="projetsStore.projets" />
 
 			<!-- Tableau Projets -->
-			<Tableau :labels="labelTableauModalProjet" :meta="{ key: 'id_projet' }"
+			<Tableau :labels="labelTableauModalProjet" :meta="{ key: 'id_project' }"
 				:store-data="[projetsStore.projets, projetTagsStore.projetTagsProjet[projetTagId]]"
 				:filters="filterProjet"
 				:loading="projetTagsStore.projetTagsProjetLoading"

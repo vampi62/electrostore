@@ -25,7 +25,7 @@ describe("Login Page", () => {
 			body: {
 				"demo_mode": false,
 				"max_length_url": 150,
-				"max_length_commentaire": 455,
+				"max_length_comment": 455,
 				"max_length_description": 500,
 				"max_length_name": 50,
 				"max_length_type": 50,
@@ -111,8 +111,8 @@ describe("Login Page", () => {
 				user: {
 					id_user: 1,
 					email_user: "admin@example.com",
-					nom_user: "Admin",
-					prenom_user: "User",
+					name_user: "Admin",
+					firstname_user: "User",
 					role_user: "admin",
 				},
 			},

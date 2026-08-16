@@ -35,7 +35,7 @@ const EXPAND_HANDLERS = {
 	item_projets: (store, idItem, data) => {
 		store.itemProjets[idItem] = {};
 		for (const itemProjet of data) {
-			store.itemProjets[idItem][itemProjet.id_projet] = itemProjet;
+			store.itemProjets[idItem][itemProjet.id_project] = itemProjet;
 		}
 	},
 	images: (store, idItem, data) => {
@@ -60,7 +60,7 @@ function hydrateItem(store, idItem, item, expand = []) {
 	store.itemBoxsTotalCount[idItem] = item["item_boxs_count"];
 	store.itemTagsTotalCount[idItem] = item["item_tags_count"];
 	store.itemCommandsTotalCount[idItem] = item["command_items_count"];
-	store.itemProjetsTotalCount[idItem] = item["projet_items_count"];
+	store.itemProjetsTotalCount[idItem] = item["project_items_count"];
 	for (const key of expand) {
 		if (EXPAND_HANDLERS[key]) {
 			EXPAND_HANDLERS[key](store, idItem, item[key]);
@@ -142,7 +142,7 @@ const itemProjetResource = createNestedResource({
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("projet")) {
 			const projetsStore = useProjetsStore();
-			projetsStore.projets[entity.id_projet] = entity.projet;
+			projetsStore.projets[entity.id_project] = entity.project;
 		}
 	},
 });
@@ -246,7 +246,7 @@ export const useItemsStore = defineStore("items",{
 					reference_name_item: this.items[id].reference_name_item,
 					friendly_name_item: this.items[id].friendly_name_item,
 					description_item: this.items[id].description_item,
-					seuil_min_item: this.items[id].seuil_min_item,
+					threshold_min_item: this.items[id].threshold_min_item,
 					id_img: this.items[id].id_img,
 				};
 			} else {

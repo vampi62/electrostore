@@ -26,8 +26,8 @@
 				'text-left': meta.canEdit && commentaire.id_user !== storeUser.id_user
 			}" class="text-sm text-gray-600">
 				<span class="font-semibold">
-					{{ storeData[1][commentaire.id_user]?.nom_user }} {{
-						storeData[1][commentaire.id_user]?.prenom_user }}
+					{{ storeData[1][commentaire.id_user]?.name_user }} {{
+						storeData[1][commentaire.id_user]?.firstname_user }}
 				</span>
 				<span class="text-xs text-gray-500">
 					- {{ new Date(commentaire.created_at).toLocaleString() }} - {{ new Date(commentaire.updated_at).toLocaleString() }}
@@ -213,7 +213,7 @@ export default {
 		schemaCommentaire() {
 			return Yup.object().shape({
 				[this.meta.contenu]: Yup.string()
-					.max(this.storeConfig.getConfigByKey("max_length_commentaire"), this.$t("components.VModalCommentaireMaxLength") + " " + this.storeConfig.getConfigByKey("max_length_commentaire") + this.$t("common.VAllCaracters"))
+					.max(this.storeConfig.getConfigByKey("max_length_comment"), this.$t("components.VModalCommentaireMaxLength") + " " + this.storeConfig.getConfigByKey("max_length_comment") + this.$t("common.VAllCaracters"))
 					.required(this.$t("components.VModalCommentaireRequired")),
 			});
 		},

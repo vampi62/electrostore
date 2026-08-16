@@ -7,15 +7,15 @@ import { useCommandsStore, useProjetsStore } from "@/stores";
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 const EXPAND_HANDLERS = {
-	projets_commentaires: (store, idUser, user) => {
+	project_comments: (store, idUser, user) => {
 		store.projetsCommentaire[idUser] = {};
-		for (const projetCommentaire of user.projets_commentaires) {
-			store.projetsCommentaire[idUser][projetCommentaire.id_projet] = projetCommentaire;
+		for (const projetCommentaire of user.project_comments) {
+			store.projetsCommentaire[idUser][projetCommentaire.id_project] = projetCommentaire;
 		}
 	},
-	commands_commentaires: (store, idUser, user) => {
+	command_comments: (store, idUser, user) => {
 		store.commandsCommentaire[idUser] = {};
-		for (const commandCommentaire of user.commands_commentaires) {
+		for (const commandCommentaire of user.command_comments) {
 			store.commandsCommentaire[idUser][commandCommentaire.id_command] = commandCommentaire;
 		}
 	},
@@ -34,8 +34,8 @@ const EXPAND_HANDLERS = {
 };
 
 function hydrateUser(store, idUser, user, expand = []) {
-	store.projetsCommentaireTotalCount[idUser] = user.projets_commentaires_count;
-	store.commandsCommentaireTotalCount[idUser] = user.commands_commentaires_count;
+	store.projetsCommentaireTotalCount[idUser] = user.project_comments_count;
+	store.commandsCommentaireTotalCount[idUser] = user.command_comments_count;
 	for (const key of expand) {
 		if (EXPAND_HANDLERS[key]) {
 			EXPAND_HANDLERS[key](store, idUser, user);
@@ -56,20 +56,20 @@ const userResource = createMainResource({
 
 const projetCommentaireResource = createNestedResource({
 	path: (idUser) => `/user/${idUser}/projet_commentaire`,
-	idField: "id_projet_commentaire",
+	idField: "id_project_comment",
 	stateKey: "projetsCommentaire",
 	countKey: "projetsCommentaireTotalCount",
 	loadingKey: "projetsCommentaireLoading",
 	onHydrate: (store, idUser, entity, expand) => {
 		if (expand.includes("projet")) {
 			const projetStore = useProjetsStore();
-			projetStore.projets[entity.projet.id_projet] = entity.projet;
+			projetStore.projets[entity.project.id_project] = entity.project;
 		}
 	},
 });
 const commandCommentaireResource = createNestedResource({
 	path: (idUser) => `/user/${idUser}/command_commentaire`,
-	idField: "id_command_commentaire",
+	idField: "id_command_comment",
 	stateKey: "commandsCommentaire",
 	countKey: "commandsCommentaireTotalCount",
 	loadingKey: "commandsCommentaireLoading",
@@ -142,12 +142,12 @@ export const useUsersStore = defineStore("users",{
 				this.userEdition[id] = {
 					loading: false,
 					id_user: this.users[id].id_user,
-					nom_user: this.users[id].nom_user,
-					prenom_user: this.users[id].prenom_user,
+					name_user: this.users[id].name_user,
+					firstname_user: this.users[id].firstname_user,
 					email_user: this.users[id].email_user,
 					role_user: this.users[id].role_user,
-					current_mdp_user: "",
-					mdp_user: "",
+					current_password_user: "",
+					password_user: "",
 					confirm_mdp_user: "",
 				};
 			} else {

@@ -39,7 +39,7 @@ const configGroups = computed(() => [
 			{ key: "max_length_name", label: t("health.ConfigMaxName"), type: "value" },
 			{ key: "max_length_description", label: t("health.ConfigMaxDesc"), type: "value" },
 			{ key: "max_length_url", label: t("health.ConfigMaxUrl"), type: "value" },
-			{ key: "max_length_commentaire", label: t("health.ConfigMaxComment"), type: "value" },
+			{ key: "max_length_comment", label: t("health.ConfigMaxComment"), type: "value" },
 			{ key: "max_length_email", label: t("health.ConfigMaxEmail"), type: "value" },
 			{ key: "max_length_ip", label: t("health.ConfigMaxIp"), type: "value" },
 			{ key: "max_length_reason", label: t("health.ConfigMaxReason"), type: "value" },

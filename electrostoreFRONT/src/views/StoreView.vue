@@ -86,7 +86,7 @@ const storeSave = async() => {
 			storesStore.storeEdition[storeId.value] = {
 				loading: false,
 				id_store: storesStore.stores[storeId.value].id_store,
-				nom_store: storesStore.stores[storeId.value].nom_store,
+				name_store: storesStore.stores[storeId.value].name_store,
 				mqtt_name_store: storesStore.stores[storeId.value].mqtt_name_store,
 				xlength_store: storesStore.stores[storeId.value].xlength_store,
 				ylength_store: storesStore.stores[storeId.value].ylength_store,
@@ -103,7 +103,7 @@ const storeSave = async() => {
 			storesStore.storeEdition[storeId.value] = {
 				loading: false,
 				id_store: storesStore.stores[storeId.value].id_store,
-				nom_store: storesStore.stores[storeId.value].nom_store,
+				name_store: storesStore.stores[storeId.value].name_store,
 				mqtt_name_store: storesStore.stores[storeId.value].mqtt_name_store,
 				xlength_store: storesStore.stores[storeId.value].xlength_store,
 				ylength_store: storesStore.stores[storeId.value].ylength_store,
@@ -134,7 +134,7 @@ const createSchema = () => {
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
-	shape.nom_store = Yup.string()
+	shape.name_store = Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("store.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("store.NameRequired"));
 	shape.mqtt_name_store = Yup.string()
@@ -152,11 +152,11 @@ const createSchema = () => {
 };
 
 const schemaItem = Yup.object().shape({
-	qte_item_box: Yup.number()
+	quantity_item_box: Yup.number()
 		.required(t("store.ItemQuantityRequired"))
 		.typeError(t("store.ItemQuantityNumber"))
 		.min(0, t("store.ItemQuantityMin")),
-	seuil_max_item_item_box: Yup.number()
+	threshold_max_item_item_box: Yup.number()
 		.required(t("store.ItemMaxThresholdRequired"))
 		.typeError(t("store.ItemMaxThresholdNumber"))
 		.min(1, t("store.ItemMaxThresholdMin")),
@@ -224,7 +224,7 @@ const filterItem = ref([
 // tag
 const tagModalShow = ref(false);
 const filterTag = ref([
-	{ key: "nom_tag", value: "", type: "text", label: "", placeholder: t("store.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
+	{ key: "name_tag", value: "", type: "text", label: "", placeholder: t("store.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 function tagSave(id_tag) {
 	try {
@@ -246,8 +246,8 @@ function tagDelete(id_tag) {
 const labelTableauBoxItem = ref([
 	{ label: "store.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text", 
 		storeRessourceId: 1,  valueKey: "reference_name_item" },
-	{ label: "store.ItemQuantity", sortable: true, key: "qte_item_box", valueKey: "qte_item_box", type: "number" },
-	{ label: "store.ItemMaxThreshold", sortable: true, key: "seuil_max_item_item_box", valueKey: "seuil_max_item_item_box", type: "number" },
+	{ label: "store.ItemQuantity", sortable: true, key: "quantity_item_box", valueKey: "quantity_item_box", type: "number" },
+	{ label: "store.ItemMaxThreshold", sortable: true, key: "threshold_max_item_item_box", valueKey: "threshold_max_item_item_box", type: "number" },
 	{ label: "store.ItemImg", sortable: false, key: "Item.Img.id_img", sourceKey: "id_item", type: "image",
 		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_item", storeLinkKeyJoinRessource: "id_img", valueKey: "id_img" },
 ]);
@@ -258,17 +258,17 @@ const metaTableauBoxItem = ref({
 });
 const labelTableauModalItem = ref([
 	{ label: "store.ItemName", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
-	{ label: "store.ItemQuantity", sortable: true, key: "ItemsBoxs.qte_item_box", sourceKey: "id_item", type: "number", canEdit: true, 
-		storeRessourceId: 1, valueKey: "qte_item_box" },
-	{ label: "store.ItemMaxThreshold", sortable: true, key: "ItemsBoxs.seuil_max_item_item_box", sourceKey: "id_item", type: "number", canEdit: true, 
-		storeRessourceId: 1, valueKey: "seuil_max_item_item_box" },
+	{ label: "store.ItemQuantity", sortable: true, key: "ItemsBoxs.quantity_item_box", sourceKey: "id_item", type: "number", canEdit: true, 
+		storeRessourceId: 1, valueKey: "quantity_item_box" },
+	{ label: "store.ItemMaxThreshold", sortable: true, key: "ItemsBoxs.threshold_max_item_item_box", sourceKey: "id_item", type: "number", canEdit: true, 
+		storeRessourceId: 1, valueKey: "threshold_max_item_item_box" },
 	{ label: "store.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
 			showCondition: "store[1]?.[rowData.id_item] === undefined && !edition?.id_item",
 			action: (row) => {
-				itemsStore.itemBoxEdition[row.id_item] = { qte_item_box: 0, seuil_max_item_item_box: 1, id_item: row.id_item };
+				itemsStore.itemBoxEdition[row.id_item] = { quantity_item_box: 0, threshold_max_item_item_box: 1, id_item: row.id_item };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -309,7 +309,7 @@ const labelTableauModalItem = ref([
 	] },
 ]);
 const labelForm = ref([
-	{ key: "nom_store", label: "store.Name", tledEditionype: "text", enableCondition: "func.hasPermission([2])" },
+	{ key: "name_store", label: "store.Name", tledEditionype: "text", enableCondition: "func.hasPermission([2])" },
 	{ key: "mqtt_name_store", label: "store.MQTTName", type: "text", enableCondition: "func.hasPermission([2])" },
 	{ key: "xlength_store", label: "store.XLength", type: "number", enableCondition: "func.hasPermission([2])" },
 	{ key: "ylength_store", label: "store.YLength", type: "number", enableCondition: "func.hasPermission([2])" },
@@ -317,7 +317,7 @@ const labelForm = ref([
 	{ key: "mqtt_last_seen_store", label: "store.MqttLastSeen", type: "datetime", enableCondition: "false" },
 ]);
 const labelTableauModalTag = ref([
-	{ label: "store.TagName", sortable: true, key: "nom_tag", valueKey: "nom_tag", type: "text" },
+	{ label: "store.TagName", sortable: true, key: "name_tag", valueKey: "name_tag", type: "text" },
 	{ label: "store.TagActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -360,7 +360,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'loading': tagsStore.tagsLoading, 'fetchFunction': (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
 								, 'totalCount': Number(tagsStore.tagsTotalCount || 0) }"
-				:meta ="{ 'keyPoids': 'poids_tag', 'keyName': 'nom_tag' }"
+				:meta ="{ 'keyPoids': 'weight_tag', 'keyName': 'name_tag' }"
 				/>
 		</div>
 		<div class="mb-6 flex justify-between flex-wrap whitespace-pre">

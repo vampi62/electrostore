@@ -6,13 +6,13 @@ const camerasStore = useCamerasStore();
 const authStore = useAuthStore();
 
 const filter = ref([
-	{ key: "nom_camera", value: "", type: "text", label: "cameras.FilterName", compareMethod: "=like=" },
+	{ key: "name_camera", value: "", type: "text", label: "cameras.FilterName", compareMethod: "=like=" },
 	{ key: "url_camera", value: "", type: "text", label: "cameras.FilterUrl", compareMethod: "=like=" },
 ]);
 const tableauLabel = ref([
-	{ label: "cameras.Name", sortable: true, key: "nom_camera", sourceKey: "nom_camera", type: "text" },
+	{ label: "cameras.Name", sortable: true, key: "name_camera", sourceKey: "name_camera", type: "text" },
 	{ label: "cameras.Url", sortable: true, key: "url_camera", sourceKey: "url_camera", type: "text" },
-	{ label: "cameras.User", sortable: false, key: "", sourceKey: "", type: "bool", condition: "rowData?.user_camera == '' && rowData?.mdp_camera == ''" },
+	{ label: "cameras.User", sortable: false, key: "", sourceKey: "", type: "bool", condition: "rowData?.user_camera == '' && rowData?.password_camera == ''" },
 	{ label: "cameras.Network", sortable: false, key: "", sourceKey: "", type: "bool", condition: "store[1]?.[rowData.id_camera]?.network" },
 	{ label: "cameras.Status", sortable: false, key: "", sourceKey: "", type: "bool", condition: "store[1]?.[rowData.id_camera]?.statusCode == 200" },
 ]);

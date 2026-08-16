@@ -108,7 +108,7 @@ export const useAuthStore = defineStore("auth",{
 		async register(email, password, prenom, nom) {
 			const request = fetchWrapper.post({
 				url: `${baseUrl}/user`,
-				body: { "email_user": email, "mdp_user": password, "nom_user": nom, "prenom_user": prenom, "role_user": "user" },
+				body: { "email_user": email, "password_user": password, "name_user": nom, "firstname_user": prenom, "role_user": "user" },
 			});
 			if (request) {
 				this.login(email, password);

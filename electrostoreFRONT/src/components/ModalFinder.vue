@@ -19,7 +19,7 @@
 								'bg-red-200': selectedPageFind.camera !== camera && camerasStore.status[camera.id_camera]?.statusCode !== 200,
 								'bg-gray-200': selectedPageFind.camera !== camera && camerasStore.status[camera.id_camera]?.statusCode === 200,
 								'cursor-pointer': camerasStore.status[camera.id_camera]?.statusCode == 200 }">
-							<div>{{ camera.nom_camera }}</div>
+							<div>{{ camera.name_camera }}</div>
 							<span class="h-4 text-xs">{{ camera.url_camera }}</span>
 						</div>
 					</div>
@@ -32,7 +32,7 @@
 								'bg-red-200': selectedPageFind.ia !== ia && ia.trained_ia === false,
 								'bg-gray-200': selectedPageFind.ia !== ia && ia.trained_ia === true,
 								'cursor-pointer': ia.trained_ia }">
-							<div>{{ ia.nom_ia }}</div>
+							<div>{{ ia.name_ia }}</div>
 							<span class="h-4 text-xs">{{ formatDateForDatetimeLocal(ia.date_ia) }}</span>
 						</div>
 					</div>

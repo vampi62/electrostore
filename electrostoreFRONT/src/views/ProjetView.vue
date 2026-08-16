@@ -54,19 +54,19 @@ onBeforeUnmount(() => {
 });
 const dateDebut = computed(() => {
 	// don't return the GMT offset to avoid timezone issues
-	return projetsStore.projetEdition[projetId.value].date_debut_projet ? new Date(projetsStore.projetEdition[projetId.value].date_debut_projet).toISOString().replace(/.\d+Z$/, "").replace("T", " ") : null;
+	return projetsStore.projetEdition[projetId.value].date_start_project ? new Date(projetsStore.projetEdition[projetId.value].date_start_project).toISOString().replace(/.\d+Z$/, "").replace("T", " ") : null;
 });
 const dateFin = computed(() => {
-	return projetsStore.projetEdition[projetId.value].date_fin_projet ? new Date(projetsStore.projetEdition[projetId.value].date_fin_projet).toISOString().replace(/.\d+Z$/, "").replace("T", " ") : null;
+	return projetsStore.projetEdition[projetId.value].date_end_project ? new Date(projetsStore.projetEdition[projetId.value].date_end_project).toISOString().replace(/.\d+Z$/, "").replace("T", " ") : null;
 });
 
 // tag
 const filterTag = ref([
-	{ key: "nom_projet_tag", value: "", type: "text", label: "", placeholder: t("projet.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
+	{ key: "name_project_tag", value: "", type: "text", label: "", placeholder: t("projet.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 function tagSave(id_tag) {
 	try {
-		projetsStore.createProjetTagProjet(projetId.value,  { id_projet_tag: id_tag });
+		projetsStore.createProjetTagProjet(projetId.value,  { id_project_tag: id_tag });
 		addNotification({ message: t("projet.TagAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -97,7 +97,7 @@ const projetRoadmapSteps = [
 	{ id: ProjetStatus.Archived, name: "Archived" },
 ];
 const projetCurrentStep = computed(() => {
-	const status = projetsStore.projetEdition[projetId.value]?.status_projet;
+	const status = projetsStore.projetEdition[projetId.value]?.status_project;
 	if (status === null || status === undefined) {
 		return 0;
 	}
@@ -150,18 +150,18 @@ const projetDelete = async() => {
 // document
 const documentAddModalShow = ref(false);
 const documentDeleteModalShow = ref(false);
-const documentModalData = ref({ id_projet_document: null, name_projet_document: "", document: null });
+const documentModalData = ref({ id_project_document: null, name_project_document: "", document: null });
 const documentDeleteOpenModal = (doc) => {
 	documentModalData.value = doc;
 	documentDeleteModalShow.value = true;
 };
 const documentAdd = async(files) => {
 	for (const file of files) {
-		documentModalData.value = { name_projet_document: file.name, document: file.document };
+		documentModalData.value = { name_project_document: file.name, document: file.document };
 		try {
 			schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
 			const formData = new FormData();
-			formData.append("name_projet_document", documentModalData.value.name_projet_document);
+			formData.append("name_project_document", documentModalData.value.name_project_document);
 			formData.append("document", documentModalData.value.document);
 			await projetsStore.createDocument(projetId.value, formData);
 			addNotification({ message: t("projet.DocumentAdded"), type: "success" });
@@ -174,8 +174,8 @@ const documentAdd = async(files) => {
 const documentEdit = async(row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
-		await projetsStore.updateDocument(projetId.value, row.id_projet_document, row);
-		delete projetsStore.documentEdition[row.id_projet_document];
+		await projetsStore.updateDocument(projetId.value, row.id_project_document, row);
+		delete projetsStore.documentEdition[row.id_project_document];
 		addNotification({ message: t("projet.DocumentUpdated"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -184,7 +184,7 @@ const documentEdit = async(row) => {
 };
 const documentDelete = async() => {
 	try {
-		await projetsStore.deleteDocument(projetId.value, documentModalData.value.id_projet_document);
+		await projetsStore.deleteDocument(projetId.value, documentModalData.value.id_project_document);
 		addNotification({ message: t("projet.DocumentDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -192,12 +192,12 @@ const documentDelete = async() => {
 	documentDeleteModalShow.value = false;
 };
 const documentDownload = async(fileContent) => {
-	const file = await projetsStore.downloadDocument(projetId.value, fileContent.id_projet_document);
-	downloadFile(file, { keyName: fileContent.name_projet_document, keyType: fileContent.type_projet_document });
+	const file = await projetsStore.downloadDocument(projetId.value, fileContent.id_project_document);
+	downloadFile(file, { keyName: fileContent.name_project_document, keyType: fileContent.type_project_document });
 };
 const documentView = async(fileContent) => {
-	const file = await projetsStore.downloadDocument(projetId.value, fileContent.id_projet_document);
-	if (viewFile(file, { keyName: fileContent.name_projet_document, keyType: fileContent.type_projet_document })) {
+	const file = await projetsStore.downloadDocument(projetId.value, fileContent.id_project_document);
+	if (viewFile(file, { keyName: fileContent.name_project_document, keyType: fileContent.type_project_document })) {
 		addNotification({ message: t("projet.DocumentOpenInNewTab"), type: "success" });
 	} else {
 		addNotification({ message: t("projet.DocumentNotSupported"), type: "error" });
@@ -248,25 +248,25 @@ const createSchema = () => {
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
-	shape.nom_projet = Yup.string()
+	shape.name_project = Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("projet.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("projet.NameRequired"));
-	shape.description_projet = Yup.string()
+	shape.description_project = Yup.string()
 		.nullable()
 		.optional()
 		.max(configsStore.getConfigByKey("max_length_description"), t("projet.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }));
-	shape.url_projet = Yup.string()
+	shape.url_project = Yup.string()
 		.nullable()
 		.optional()
 		.max(configsStore.getConfigByKey("max_length_url"), t("projet.UrlMaxLength", { count: configsStore.getConfigByKey("max_length_url") }))
 		.url(t("projet.UrlInvalid"));
-	shape.status_projet = Yup.number()
+	shape.status_project = Yup.number()
 		.required(t("projet.StatusRequired"));
 	return Yup.object().shape(shape);
 };
 
 const schemaAddDocument = Yup.object().shape({
-	name_projet_document: Yup.string()
+	name_project_document: Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("projet.DocumentNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("projet.DocumentNameRequired")),
 	document: Yup.mixed()
@@ -274,58 +274,58 @@ const schemaAddDocument = Yup.object().shape({
 		.test("fileSize", t("projet.DocumentSize", { count: configsStore.getConfigByKey("max_size_document_in_mb") }), (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 const schemaEditDocument = Yup.object().shape({
-	name_projet_document: Yup.string()
+	name_project_document: Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("projet.DocumentNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("projet.DocumentNameRequired")),
 });
 
 const schemaItem = Yup.object().shape({
-	qte_projet_item: Yup.number()
+	quantity_project_item: Yup.number()
 		.min(1, t("projet.ItemQuantityMin"))
 		.typeError(t("projet.ItemQuantityType"))
 		.required(t("projet.ItemQuantityRequired")),
 });
 
 const labelForm = ref([
-	{ key: "nom_projet", label: "projet.Name", type: "text" },
-	{ key: "description_projet", label: "projet.Description", type: "textarea", rows: 4 },
-	{ key: "url_projet", label: "projet.Url", type: "text" },
-	{ key: "status_projet", label: "projet.Status", type: "select", typeData: "number", options: projetTypeStatus },
-	{ key: "date_debut_projet", label: "projet.StartDate", type: "computed", value: dateDebut },
-	{ key: "date_fin_projet", label: "projet.EndDate", type: "computed", value: dateFin },
+	{ key: "name_project", label: "projet.Name", type: "text" },
+	{ key: "description_project", label: "projet.Description", type: "textarea", rows: 4 },
+	{ key: "url_project", label: "projet.Url", type: "text" },
+	{ key: "status_project", label: "projet.Status", type: "select", typeData: "number", options: projetTypeStatus },
+	{ key: "date_start_project", label: "projet.StartDate", type: "computed", value: dateDebut },
+	{ key: "date_end_project", label: "projet.EndDate", type: "computed", value: dateFin },
 ]);
 const labelTableauHistoryStatus = ref([
-	{ label: "projet.StatusType", sortable: false, key: "status_projet", valueKey: "status_projet", type: "enum", options: projetTypeStatus },
+	{ label: "projet.StatusType", sortable: false, key: "status_project", valueKey: "status_project", type: "enum", options: projetTypeStatus },
 	{ label: "projet.StatusDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
 ]);
 const labelTableauDocument = ref([
-	{ label: "projet.DocumentName", sortable: true, key: "name_projet_document", valueKey: "name_projet_document", type: "text", canEdit: true },
-	{ label: "projet.DocumentType", sortable: true, key: "type_projet_document", valueKey: "type_projet_document", type: "text" },
+	{ label: "projet.DocumentName", sortable: true, key: "name_project_document", valueKey: "name_project_document", type: "text", canEdit: true },
+	{ label: "projet.DocumentType", sortable: true, key: "type_project_document", valueKey: "type_project_document", type: "text" },
 	{ label: "projet.DocumentDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
 	{ label: "projet.DocumentActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "!edition?.id_projet_document",
+			showCondition: "!edition?.id_project_document",
 			action: (row) => {
-				projetsStore.documentEdition[row.id_projet_document] = { ...row };
+				projetsStore.documentEdition[row.id_project_document] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-times",
-			showCondition: "edition?.id_projet_document",
+			showCondition: "edition?.id_project_document",
 			action: (row) => {
-				delete projetsStore.documentEdition[row.id_projet_document];
+				delete projetsStore.documentEdition[row.id_project_document];
 			},
 			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			showCondition: "edition?.id_projet_document",
-			action: (row) => documentEdit(projetsStore.documentEdition[row.id_projet_document]),
+			showCondition: "edition?.id_project_document",
+			action: (row) => documentEdit(projetsStore.documentEdition[row.id_project_document]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -355,7 +355,7 @@ const labelTableauItem = ref([
 	{ label: "projet.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text", 
 		storeRessourceId: 1, valueKey: "reference_name_item" },
 
-	{ label: "projet.ItemQuantity", sortable: true, key: "qte_projet_item", valueKey: "qte_projet_item", type: "number", canEdit: true },
+	{ label: "projet.ItemQuantity", sortable: true, key: "quantity_project_item", valueKey: "quantity_project_item", type: "number", canEdit: true },
 	{ label: "projet.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -393,20 +393,20 @@ const labelTableauItem = ref([
 	] },
 ]);
 const labelTableauModalTag = ref([
-	{ label: "projet.TagName", sortable: true, key: "nom_projet_tag", valueKey: "nom_projet_tag", type: "text" },
+	{ label: "projet.TagName", sortable: true, key: "name_project_tag", valueKey: "name_project_tag", type: "text" },
 	{ label: "projet.TagActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-save",
-			showCondition: "!store[1]?.[rowData.id_projet_tag]",
-			action: (row) => tagSave(row.id_projet_tag),
+			showCondition: "!store[1]?.[rowData.id_project_tag]",
+			action: (row) => tagSave(row.id_project_tag),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "store[1]?.[rowData.id_projet_tag]",
-			action: (row) => tagDelete(row.id_projet_tag),
+			showCondition: "store[1]?.[rowData.id_project_tag]",
+			action: (row) => tagDelete(row.id_project_tag),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
@@ -414,8 +414,8 @@ const labelTableauModalTag = ref([
 const labelTableauModalItem = ref([
 	{ label: "projet.ItemName", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
 	
-	{ label: "projet.ItemQuantity", sortable: true, key: "ProjetsItems.qte_projet_item", sourceKey: "id_projet", type: "number", 
-		storeRessourceId: 1, valueKey: "qte_projet_item", canEdit: true },
+	{ label: "projet.ItemQuantity", sortable: true, key: "ProjetsItems.quantity_project_item", sourceKey: "id_project", type: "number", 
+		storeRessourceId: 1, valueKey: "quantity_project_item", canEdit: true },
 
 	{ label: "projet.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
@@ -423,7 +423,7 @@ const labelTableauModalItem = ref([
 			icon: "fa-solid fa-plus",
 			showCondition: "store[1]?.[rowData.id_item] === undefined && !edition?.id_item",
 			action: (row) => {
-				projetsStore.itemEdition[row.id_item] = { qte_projet_item: 1, id_item: row.id_item };
+				projetsStore.itemEdition[row.id_item] = { quantity_project_item: 1, id_item: row.id_item };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -492,16 +492,16 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<Tags :current-tags="projetsStore.projetTagProjet[projetId] || {}" :tags-store="projetTagsStore.projetTags" :can-edit="projetId !== 'new' && authStore.hasPermission([2])"
 				:delete-function="(value) => tagDelete(value)"
 				:filter-modal="filterTag"
-				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_projet_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
+				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_project_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'loading': projetTagsStore.projetTagsLoading, 'fetchFunction': (limit, offset, expand, filter, sort, clear) => projetTagsStore.getProjetTagByInterval(limit, offset, expand, filter, sort, clear)
 								, 'totalCount': Number(projetTagsStore.projetTagsTotalCount || 0) }"
-				:meta ="{ 'keyPoids': 'poids_projet_tag', 'keyName': 'nom_projet_tag' }"
+				:meta ="{ 'keyPoids': 'weight_project_tag', 'keyName': 'name_project_tag' }"
 				/>
 		</div>
 		<CollapsibleSection title="projet.HistoryStatus"
 			:total-count="Number(projetsStore.statusHistoryTotalCount[projetId] || 0)" :permission="projetId !=='new'">
 			<template #append-row>
-				<Tableau :labels="labelTableauHistoryStatus" :meta="{ key: 'id_projet_status' }"
+				<Tableau :labels="labelTableauHistoryStatus" :meta="{ key: 'id_project_status' }"
 					:store-data="[projetsStore.statusHistory[projetId]]"
 					:loading="projetsStore.statusHistoryLoading"
 					:total-count="Number(projetsStore.statusHistoryTotalCount[projetId])"
@@ -517,7 +517,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
 					{{ $t('projet.AddDocument') }}
 				</button>
-				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_projet_document' }"
+				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_project_document' }"
 					:store-data="[projetsStore.documents[projetId]]"
 					:store-edition="projetsStore.documentEdition"
 					:schema="schemaEditDocument"
@@ -549,7 +549,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="projet.Commentaires"
 			:total-count="Number(projetsStore.commentairesTotalCount[projetId] || 0)" :permission="projetId !=='new'">
 			<template #append-row>
-				<Commentaire :meta="{ contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
+				<Commentaire :meta="{ contenu: 'content_project_comment', key: 'id_project_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[projetsStore.commentaires[projetId], usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
 					:store-function="{ create: (data) => projetsStore.createCommentaire(projetId, data), update: (id, data) => projetsStore.updateCommentaire(projetId, id, data), delete: (id) => projetsStore.deleteCommentaire(projetId, id) }"

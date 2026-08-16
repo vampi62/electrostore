@@ -109,7 +109,7 @@ const createSchema = () => {
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
-	shape.nom_ia = Yup.string()
+	shape.name_ia = Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("ia.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("ia.NameRequired"));
 	shape.description_ia = Yup.string()
@@ -119,7 +119,7 @@ const createSchema = () => {
 	return Yup.object().shape(shape);
 };
 const labelForm = [
-	{ key: "nom_ia", label: "ia.Name", type: "text", enableCondition: "func.hasPermission([2])" },
+	{ key: "name_ia", label: "ia.Name", type: "text", enableCondition: "func.hasPermission([2])" },
 	{ key: "description_ia", label: "ia.Description", type: "textarea", rows: 4, enableCondition: "func.hasPermission([2])" },
 ];
 document.querySelector("#view").classList.add("overflow-y-scroll");

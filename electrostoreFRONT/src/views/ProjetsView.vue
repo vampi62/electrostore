@@ -43,35 +43,35 @@ const projetTypeStatus = ref({ [ProjetStatus.NotStarted]: t("projets.Status0"), 
 	[ProjetStatus.Cancelled]: t("projets.Status4"), [ProjetStatus.Archived]: t("projets.Status5") });
 
 const filter = ref([
-	{ key: "status_projet", value: "", type: "datalist", typeData: "number", options: projetTypeStatus, label: "projets.FilterStatus", compareMethod: "==" },
-	{ key: "nom_projet", value: "", type: "text", label: "projets.FilterNom", compareMethod: "=like=" },
-	{ key: "url_projet", value: "", type: "text", label: "projets.FilterUrl", compareMethod: "=like=" },
-	{ key: "date_debut_projet", value: "", type: "date", label: "projets.FilterDate", compareMethod: "=ge=" },
-	{ key: "date_fin_projet", value: "", type: "date", label: "projets.FilterDateEnd", compareMethod: "=ge=" },
+	{ key: "status_project", value: "", type: "datalist", typeData: "number", options: projetTypeStatus, label: "projets.FilterStatus", compareMethod: "==" },
+	{ key: "name_project", value: "", type: "text", label: "projets.FilterNom", compareMethod: "=like=" },
+	{ key: "url_project", value: "", type: "text", label: "projets.FilterUrl", compareMethod: "=like=" },
+	{ key: "date_start_project", value: "", type: "date", label: "projets.FilterDate", compareMethod: "=ge=" },
+	{ key: "date_end_project", value: "", type: "date", label: "projets.FilterDateEnd", compareMethod: "=ge=" },
 	{ key: "ProjetsItems.Item.reference_name_item", value: "", type: "text", label: "projets.FilterItem", compareMethod: "=like=" },
-	{ key: "ProjetsProjetTags.ProjetTag.nom_projet_tag", value: "", type: "text", label: "projets.FilterTag", compareMethod: "=like=" },
+	{ key: "ProjetsProjetTags.ProjetTag.name_project_tag", value: "", type: "text", label: "projets.FilterTag", compareMethod: "=like=" },
 ]);
 const tableauLabel = ref([
-	{ label: "projets.Name", sortable: true, key: "nom_projet", valueKey: "nom_projet", type: "text" },
-	{ label: "projets.Description", sortable: false, key: "description_projet", valueKey: "description_projet", type: "text" },
-	{ label: "projets.Url", sortable: true, key: "url_projet", valueKey: "url_projet", type: "text" },
-	{ label: "projets.Status", sortable: true, key: "status_projet", valueKey: "status_projet", type: "enum", options: projetTypeStatus },
+	{ label: "projets.Name", sortable: true, key: "name_project", valueKey: "name_project", type: "text" },
+	{ label: "projets.Description", sortable: false, key: "description_project", valueKey: "description_project", type: "text" },
+	{ label: "projets.Url", sortable: true, key: "url_project", valueKey: "url_project", type: "text" },
+	{ label: "projets.Status", sortable: true, key: "status_project", valueKey: "status_project", type: "enum", options: projetTypeStatus },
 
-	{ label: "projets.Items", sortable: false, key: "", sourceKey: "id_projet", type: "link-list", 
-		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_projet", storeLinkKeyJoinRessource: "id_item", valueKey: "reference_name_item",
-		ressourcePrint: [{ from: "link", valueKey: "qte_projet_item" }, { from: "text", text: " - " }, { from: "ressource", valueKey: "reference_name_item" }] },
+	{ label: "projets.Items", sortable: false, key: "", sourceKey: "id_project", type: "link-list", 
+		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_project", storeLinkKeyJoinRessource: "id_item", valueKey: "reference_name_item",
+		ressourcePrint: [{ from: "link", valueKey: "quantity_project_item" }, { from: "text", text: " - " }, { from: "ressource", valueKey: "reference_name_item" }] },
 		
-	{ label: "projets.Tags", sortable: false, key: "", sourceKey: "id_projet", type: "link-list", 
-		storeLinkId: 3, storeRessourceId: 4, storeLinkKeyJoinSource: "id_projet", storeLinkKeyJoinRessource: "id_projet_tag", valueKey: "nom_projet_tag",
-		ressourcePrint: [{ from: "ressource", valueKey: "nom_projet_tag" }] },
+	{ label: "projets.Tags", sortable: false, key: "", sourceKey: "id_project", type: "link-list", 
+		storeLinkId: 3, storeRessourceId: 4, storeLinkKeyJoinSource: "id_project", storeLinkKeyJoinRessource: "id_project_tag", valueKey: "name_project_tag",
+		ressourcePrint: [{ from: "ressource", valueKey: "name_project_tag" }] },
 
-	{ label: "projets.DateStart", sortable: true, key: "date_debut_projet", valueKey: "date_debut_projet", type: "date" },
-	{ label: "projets.DateEnd", sortable: true, key: "date_fin_projet", valueKey: "date_fin_projet", type: "date" },
+	{ label: "projets.DateStart", sortable: true, key: "date_start_project", valueKey: "date_start_project", type: "date" },
+	{ label: "projets.DateEnd", sortable: true, key: "date_end_project", valueKey: "date_end_project", type: "date" },
 ]);
 const tableauMeta = ref({
-	key: "id_projet",
+	key: "id_project",
 	path: "/projets/",
-	expand: ["projets_items", "projets_projet_tags"],
+	expand: ["project_items", "project_tags"],
 	saveState: true,
 	stateKey: "projetsTableState",
 });
