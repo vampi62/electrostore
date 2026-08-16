@@ -7,6 +7,7 @@ namespace ElectrostoreAPI.Models;
 public class ProjectsStatus : BaseEntity
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_project_status { get; set; }
 
     public int id_project { get; set; }

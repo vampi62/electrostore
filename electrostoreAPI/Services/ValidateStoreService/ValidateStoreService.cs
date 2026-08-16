@@ -92,9 +92,9 @@ public class ValidateStoreService : IValidateStoreService
         {
             ledToUpdate.y_led = ledDto.y_led.Value;
         }
-        if (ledDto.mqtt_led_id is not null)
+        if (ledDto.mqtt_id_led is not null)
         {
-            ledToUpdate.mqtt_led_id = ledDto.mqtt_led_id.Value;
+            ledToUpdate.mqtt_id_led = ledDto.mqtt_id_led.Value;
         }
     }
 

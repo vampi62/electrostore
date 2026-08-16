@@ -12,17 +12,17 @@ public record ReadCommandDto
     public CommandStatus status_command { get; init; }
     public DateTime date_command { get; init; }
     public DateTime? date_delivery_command { get; init; }
-    public required string tracking_number { get; init; }
+    public required string tracking_number_command { get; init; }
     public int id_carrier { get; init; }
     public string? carrier_name { get; init; }
     public bool is_tracking_requested { get; init; }
     public bool is_tracking_validated { get; init; }
     public bool is_active { get; init; }
-    public string? shipper_address { get; init; }
-    public string? recipient_address { get; init; }
-    public TrackingStatus? last_status { get; init; }
-    public TrackingSubStatus? last_sub_status { get; init; }
-    public string? raw_data { get; init; }
+    public string? shipper_address_command { get; init; }
+    public string? recipient_address_command { get; init; }
+    public TrackingStatus? last_status_command { get; init; }
+    public TrackingSubStatus? last_sub_status_command { get; init; }
+    public string? raw_data_command { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
 }
@@ -57,7 +57,7 @@ public record CreateCommandDto
     public DateTime? date_delivery_command { get; init; }
 
     [MaxLength(Constants.MaxTrackingNumberLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? tracking_number { get; init; }
+    public string? tracking_number_command { get; init; }
 
     public int? id_carrier { get; init; }
 
@@ -80,7 +80,7 @@ public record UpdateCommandDto
     public DateTime? date_delivery_command { get; init; }
 
     [MaxLength(Constants.MaxTrackingNumberLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? tracking_number { get; init; }
+    public string? tracking_number_command { get; init; }
 
     public int? id_carrier { get; init; }
 

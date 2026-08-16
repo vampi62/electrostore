@@ -25,7 +25,7 @@ public class CronJobsGrpcService : CronJobsGrpc.CronJobsGrpcBase
         {
                 IdCronjob = c.id_cronjob,
                 NameCronjob = c.name_cronjob,
-                CronExpression = c.cron_expression,
+                CronExpressionCronjob = c.cron_expression_cronjob,
                 ActionCronjob = (CronJobAction)(int)c.action_cronjob,
                 ParamsCronjob = c.params_cronjob ?? string.Empty,
                 LastRunAt = c.last_run_at?.ToString("o") ?? string.Empty,

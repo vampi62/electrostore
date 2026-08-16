@@ -62,7 +62,7 @@ public class WebHookService : IWebHookService
         }
         var trackingNumber = data17Track.GetProperty("number").GetString();
         var carrierId = data17Track.GetProperty("carrier").GetInt32();
-        var commands = _context.Commands.Where(c => c.tracking_number == trackingNumber && c.id_carrier == carrierId).ToList();
+        var commands = _context.Commands.Where(c => c.tracking_number_command == trackingNumber && c.id_carrier == carrierId).ToList();
         // fetch latest tracking status and sub-status from the data
         var latestStatus = data17Track.GetProperty("track_info").GetProperty("latest_status").GetProperty("status").GetString();
         var latestSubStatus = data17Track.GetProperty("track_info").GetProperty("latest_status").GetProperty("sub_status").GetString();
@@ -73,31 +73,31 @@ public class WebHookService : IWebHookService
         }
         foreach (var command in commands)
         {
-            if (command.last_status != parsedStatus || command.last_sub_status != parsedSubStatus)
+            if (command.last_status_command != parsedStatus || command.last_sub_status_command != parsedSubStatus)
             {
-                command.last_status = parsedStatus;
-                command.last_sub_status = parsedSubStatus;
-                command.raw_data = data17Track.GetRawText();
-                command.shipper_address = data17Track.GetProperty("track_info").GetProperty("shipping_info").GetProperty("shipper_address").GetRawText();
-                command.recipient_address = data17Track.GetProperty("track_info").GetProperty("shipping_info").GetProperty("recipient_address").GetRawText();
+                command.last_status_command = parsedStatus;
+                command.last_sub_status_command = parsedSubStatus;
+                command.raw_data_command = data17Track.GetRawText();
+                command.shipper_address_command = data17Track.GetProperty("track_info").GetProperty("shipping_info").GetProperty("shipper_address").GetRawText();
+                command.recipient_address_command = data17Track.GetProperty("track_info").GetProperty("shipping_info").GetProperty("recipient_address").GetRawText();
                 _context.Commands.Update(command);
 
                 var historyEntry = new CommandsHistory
                 {
                     id_command = command.id_command,
-                    status = parsedStatus,
-                    sub_status = parsedSubStatus,
-                    description = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("description").GetString(),
-                    location = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("location").GetString(),
-                    stage = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("stage").GetString(),
+                    status_command_history = parsedStatus,
+                    sub_status_command_history = parsedSubStatus,
+                    description_command_history = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("description").GetString(),
+                    location_command_history = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("location").GetString(),
+                    stage_command_history = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("stage").GetString(),
                     event_time_utc = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("time_utc").GetDateTime(),
-                    timezone = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("time_raw").GetProperty("timezone").GetString(),
-                    country = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").GetProperty("country").GetString(),
-                    state = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").GetProperty("state").GetString(),
-                    city = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").GetProperty("city").GetString(),
-                    postal_code = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").GetProperty("postal_code").GetString(),
-                    latitude = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").GetProperty("coordinates").TryGetProperty("latitude", out var latProp) ? latProp.GetString() : null,
-                    longitude = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").TryGetProperty("coordinates", out var longProp) ? longProp.GetString() : null
+                    timezone_command_history = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("time_raw").GetProperty("timezone").GetString(),
+                    country_command_history = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").GetProperty("country").GetString(),
+                    state_command_history = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").GetProperty("state").GetString(),
+                    city_command_history = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").GetProperty("city").GetString(),
+                    postal_code_command_history = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").GetProperty("postal_code").GetString(),
+                    latitude_command_history = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").GetProperty("coordinates").TryGetProperty("latitude", out var latProp) ? latProp.GetString() : null,
+                    longitude_command_history = data17Track.GetProperty("track_info").GetProperty("latest_event").GetProperty("address").TryGetProperty("coordinates", out var longProp) ? longProp.GetString() : null
                 };
                 _context.CommandsHistory.Add(historyEntry);
                 await _context.SaveChangesAsync();

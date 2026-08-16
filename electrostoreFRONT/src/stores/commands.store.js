@@ -146,14 +146,14 @@ export const useCommandsStore = defineStore("commands",{
 					status_command: this.commands[id].status_command,
 					date_command: this.commands[id].date_command,
 					date_delivery_command: this.commands[id].date_delivery_command,
-					tracking_number: this.commands[id].tracking_number,
+					tracking_number_command: this.commands[id].tracking_number_command,
 					id_carrier: this.commands[id].id_carrier,
 					is_tracking_requested: this.commands[id].is_tracking_requested,
 					is_tracking_validated: this.commands[id].is_tracking_validated,
 					is_active: this.commands[id].is_active,
-					shipper_address: this.commands[id].shipper_address,
-					recipient_address: this.commands[id].recipient_address,
-					last_status: this.commands[id].last_status,
+					shipper_address_command: this.commands[id].shipper_address_command,
+					recipient_address_command: this.commands[id].recipient_address_command,
+					last_status_command: this.commands[id].last_status_command,
 					loading: false,
 				};
 			} else {
@@ -162,7 +162,7 @@ export const useCommandsStore = defineStore("commands",{
 					is_tracking_requested: false,
 					is_tracking_validated: false,
 					is_active: true,
-					tracking_number: "",
+					tracking_number_command: "",
 				};
 			}
 			this.commentEdition[id] = {};

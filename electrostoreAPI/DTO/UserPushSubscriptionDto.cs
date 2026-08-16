@@ -4,7 +4,7 @@ namespace ElectrostoreAPI.Dto;
 
 public record ReadUserPushSubscriptionDto
 {
-    public int id_push_subscription { get; init; }
+    public int id_user_push_subscription { get; init; }
     public int id_user { get; init; }
     public required string endpoint { get; init; }
     public required string p256dh { get; init; }

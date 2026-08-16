@@ -180,7 +180,7 @@ public class LedService : ILedService
                 {
                     x_led = ledDto.x_led,
                     y_led = ledDto.y_led,
-                    mqtt_led_id = ledDto.mqtt_led_id
+                    mqtt_id_led = ledDto.mqtt_id_led
                 };
                 validQuery.Add(await UpdateLed(ledDto.id_led, ledDtoFull, storeId));
             }
@@ -270,7 +270,7 @@ public class LedService : ILedService
                 {
                     new
                     {
-                        index = ledDB.mqtt_led_id,
+                        index = ledDB.mqtt_id_led,
                         red = redColor,
                         blue = blueColor,
                         green = greenColor,
@@ -329,7 +329,7 @@ public class LedService : ILedService
                         .Skip(i).Take(numberLedSentPerMessage)
                         .Select(led => new
                     {
-                        index = led.mqtt_led_id,
+                        index = led.mqtt_id_led,
                         red = redColor,
                         blue = blueColor,
                         green = greenColor,

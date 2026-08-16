@@ -440,13 +440,13 @@ const labelTableauDocument = ref([
 ]);
 const labelTableauHistory = ref([
 	{ label: "item.HistoryDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
-	{ label: "item.HistoryType", sortable: true, key: "type", valueKey: "type", type: "enum", options: projectTypeStatus },
-	{ label: "item.HistoryQuantityChange", sortable: true, key: "quantity_change", valueKey: "quantity_change", type: "number" },
-	{ label: "item.HistoryOldQuantity", sortable: true, key: "old_quantity", valueKey: "old_quantity", type: "number" },
-	{ label: "item.HistoryNewQuantity", sortable: true, key: "new_quantity", valueKey: "new_quantity", type: "number" },
+	{ label: "item.HistoryType", sortable: true, key: "type_item_history", valueKey: "type_item_history", type: "enum", options: projectTypeStatus },
+	{ label: "item.HistoryQuantityChange", sortable: true, key: "quantity_change_item_history", valueKey: "quantity_change_item_history", type: "number" },
+	{ label: "item.HistoryOldQuantity", sortable: true, key: "old_quantity_item_history", valueKey: "old_quantity_item_history", type: "number" },
+	{ label: "item.HistoryNewQuantity", sortable: true, key: "new_quantity_item_history", valueKey: "new_quantity_item_history", type: "number" },
 	{ label: "item.HistoryBoxId", sortable: true, key: "id_box", valueKey: "id_box", type: "number" },
 	{ label: "item.HistoryUser", sortable: true, key: "User.email_user", valueKey: "email_user", type: "text", storeRessourceId: 1, sourceKey: "id_user" },
-	{ label: "item.HistoryNotes", sortable: false, key: "notes", valueKey: "notes", type: "text" },
+	{ label: "item.HistoryNotes", sortable: false, key: "notes_item_history", valueKey: "notes_item_history", type: "text" },
 ]);
 const labelTableauBox = ref([
 	{ label: "item.BoxId", sortable: true, key: "id_box", valueKey: "id_box", type: "number" },

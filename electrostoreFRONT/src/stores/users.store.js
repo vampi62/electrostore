@@ -28,7 +28,7 @@ const EXPAND_HANDLERS = {
 	push_subscriptions: (store, idUser, user) => {
 		store.pushSubscriptions[idUser] = {};
 		for (const sub of user.push_subscriptions) {
-			store.pushSubscriptions[idUser][sub.id_push_subscription] = sub;
+			store.pushSubscriptions[idUser][sub.id_user_push_subscription] = sub;
 		}
 	},
 };
@@ -89,7 +89,7 @@ const tokenResource = createNestedResource({
 });
 const pushSubscriptionResource = createNestedResource({
 	path: (idUser) => `/user/${idUser}/push-subscriptions`,
-	idField: "id_push_subscription",
+	idField: "id_user_push_subscription",
 	stateKey: "pushSubscriptions",
 	countKey: "pushSubscriptionsTotalCount",
 	loadingKey: "pushSubscriptionsLoading",

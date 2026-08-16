@@ -174,7 +174,7 @@ const trackingRoadmapStepColors = {
 	Unknown: { completed: "bg-gray-400 text-white", current: "bg-gray-500 text-white", pending: "bg-gray-100 text-gray-500", border: "border-gray-500", badge: "bg-gray-300 text-gray-800", text: "text-gray-600", historyBorder: "border-gray-500" },
 };
 const trackingCurrentStep = computed(() => {
-	const status = commandsStore.commandEdition[commandId.value]?.last_status;
+	const status = commandsStore.commandEdition[commandId.value]?.last_status_command;
 	if (status === null || status === undefined) {
 		return 0;
 	}
@@ -290,7 +290,7 @@ const trackingResume = async() => {
 const trackingDelete = async() => {
 	trackingDeleteLoading.value = true;
 	try {
-		await commandsStore.updateCommand(commandId.value, { tracking_number: "" });
+		await commandsStore.updateCommand(commandId.value, { tracking_number_command: "" });
 		commandsStore.loadToEdition(commandId.value);
 		addNotification({ message: t("command.TrackingDeleted"), type: "success" });
 	} catch (e) {
@@ -313,7 +313,7 @@ const trackingRefresh = async() => {
 };
 const trackingOptionalConfig = computed(() => {
 	const ed = commandsStore.commandEdition[commandId.value];
-	const base = commandId.value !== "new" && !!ed?.tracking_number && !!ed?.id_carrier;
+	const base = commandId.value !== "new" && !!ed?.tracking_number_command && !!ed?.id_carrier;
 	return [
 		{
 			label: "command.TrackingActivate",
@@ -476,7 +476,7 @@ const createSchema = () => {
 	shape.date_delivery_command = Yup.date()
 		.nullable()
 		.optional();
-	shape.tracking_number = Yup.string()
+	shape.tracking_number_command = Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("command.TrackingNumberMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.nullable()
 		.optional();
@@ -513,7 +513,7 @@ const labelForm = computed(() => [
 	{ key: "date_command", label: "command.Date", type: "datetime-local" },
 	{ key: "status_command", label: "command.Status", type: "select", typeData: "number", options: commandStatusOptions },
 	{ key: "date_delivery_command", label: "command.DeliveryDate", type: "datetime-local" },
-	{ key: "tracking_number", label: "command.TrackingNumber", type: "text" },
+	{ key: "tracking_number_command", label: "command.TrackingNumber", type: "text" },
 	{ key: "id_carrier", label: "command.Carrier", type: "fetch-select", fetchFunction: (limit, offset, expand, filter, sort, clear) => 
 		carriersStore.getCarrierByInterval(limit, offset, filter, sort, clear),
 	fetchStore: carriersStore.carriers, fetchValueKey: "id_carrier", fetchStoreKey: "name",
@@ -521,9 +521,9 @@ const labelForm = computed(() => [
 	{ key: "is_tracking_requested", label: "command.IsTrackingRequested", type: "checkbox", enableCondition: "false" },
 	{ key: "is_tracking_validated", label: "command.IsTrackingValidated", type: "checkbox", enableCondition: "false" },
 	{ key: "is_active", label: "command.IsActive", type: "checkbox", enableCondition: "false" },
-	{ key: "shipper_address", label: "command.ShipperAddress", type: "readonly" },
-	{ key: "recipient_address", label: "command.RecipientAddress", type: "readonly" },
-	{ key: "last_status", label: "command.LastStatus", type: "readonly" },
+	{ key: "shipper_address_command", label: "command.ShipperAddress", type: "readonly" },
+	{ key: "recipient_address_command", label: "command.RecipientAddress", type: "readonly" },
+	{ key: "last_status_command", label: "command.LastStatus", type: "readonly" },
 ]);
 const labelTableauDocument = ref([
 	{ label: "command.DocumentName", sortable: true, key: "name_command_document", valueKey: "name_command_document", type: "text", canEdit: true },
@@ -703,7 +703,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="commandsStore.commandEdition[commandId]" />
 			<RoadMap
-				v-if="commandId !== 'new' && commandsStore.commandEdition[commandId]?.last_status !== null && commandsStore.commandEdition[commandId]?.last_status !== undefined"
+				v-if="commandId !== 'new' && commandsStore.commandEdition[commandId]?.last_status_command !== null && commandsStore.commandEdition[commandId]?.last_status_command !== undefined"
 				:steps="trackingRoadmapSteps"
 				:current-step="trackingCurrentStep"
 				:step-colors="trackingRoadmapStepColors"

@@ -77,9 +77,9 @@ namespace ElectrostoreAPI.Tests.Services
             return new Models.JwiAccessTokens
             {
                 id_jwi_access = tokenId,
-                session_id = sessionId ?? Guid.NewGuid(),
-                auth_method = "login",
-                created_by_ip = "192.168.1.1",
+                session_id_jwi_access = sessionId ?? Guid.NewGuid(),
+                auth_method_jwi_access = "login",
+                created_by_ip_jwi_access = "192.168.1.1",
                 id_user = userId,
                 is_revoked = isRevoked,
                 expires_at = expiresAt
@@ -92,9 +92,9 @@ namespace ElectrostoreAPI.Tests.Services
             {
                 id_jwi_refresh = tokenId,
                 id_jwi_access = accessTokenId,
-                session_id = sessionId ?? Guid.NewGuid(),
-                auth_method = "login",
-                created_by_ip = "192.168.1.1",
+                session_id_jwi_refresh = sessionId ?? Guid.NewGuid(),
+                auth_method_jwi_refresh = "login",
+                created_by_ip_jwi_refresh = "192.168.1.1",
                 id_user = userId,
                 is_revoked = isRevoked,
                 expires_at = expiresAt,
@@ -145,8 +145,8 @@ namespace ElectrostoreAPI.Tests.Services
             var savedRefreshToken = await context.JwiRefreshTokens.FirstOrDefaultAsync(jwi => jwi.id_jwi_refresh == token.refresh_token_id);
             Assert.NotNull(savedAccessToken);
             Assert.NotNull(savedRefreshToken);
-            Assert.Equal("login", savedAccessToken.auth_method);
-            Assert.Equal("login", savedRefreshToken.auth_method);
+            Assert.Equal("login", savedAccessToken.auth_method_jwi_access);
+            Assert.Equal("login", savedRefreshToken.auth_method_jwi_refresh);
         }
 
         // --- ValidateToken ---
@@ -348,7 +348,7 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal(2, revokedTokens.Count);
             foreach (var token in revokedTokens)
             {
-                Assert.Equal("test revoke", token.revoked_reason);
+                Assert.Equal("test revoke", token.revoked_reason_jwi_access);
             }
         }
 
@@ -376,7 +376,7 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal(2, revokedTokens.Count);
             foreach (var token in revokedTokens)
             {
-                Assert.Equal("test revoke", token.revoked_reason);
+                Assert.Equal("test revoke", token.revoked_reason_jwi_refresh);
             }
         }
 
@@ -479,13 +479,13 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal(sessionId, revokedSession.session_id);
             Assert.True(revokedSession.is_revoked);
             var revokedRefreshToken = await context.JwiRefreshTokens
-                .FirstOrDefaultAsync(jwi => jwi.session_id == sessionId && jwi.id_user == userId);
+                .FirstOrDefaultAsync(jwi => jwi.session_id_jwi_refresh == sessionId && jwi.id_user == userId);
             var revokedAccessToken = await context.JwiAccessTokens
-                .FirstOrDefaultAsync(jwi => jwi.session_id == sessionId && jwi.id_user == userId);
+                .FirstOrDefaultAsync(jwi => jwi.session_id_jwi_access == sessionId && jwi.id_user == userId);
             Assert.True(revokedRefreshToken?.is_revoked);
-            Assert.Equal("user logout", revokedRefreshToken?.revoked_reason);
+            Assert.Equal("user logout", revokedRefreshToken?.revoked_reason_jwi_refresh);
             Assert.True(revokedAccessToken?.is_revoked);
-            Assert.Equal("user logout", revokedAccessToken?.revoked_reason);
+            Assert.Equal("user logout", revokedAccessToken?.revoked_reason_jwi_access);
         }
 
         [Fact]
@@ -525,13 +525,13 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal(sessionId, revokedSession.session_id);
             Assert.True(revokedSession.is_revoked);
             var revokedRefreshToken = await context.JwiRefreshTokens
-                .FirstOrDefaultAsync(jwi => jwi.session_id == sessionId && jwi.id_user == userId);
+                .FirstOrDefaultAsync(jwi => jwi.session_id_jwi_refresh == sessionId && jwi.id_user == userId);
             var revokedAccessToken = await context.JwiAccessTokens
-                .FirstOrDefaultAsync(jwi => jwi.session_id == sessionId && jwi.id_user == userId);
+                .FirstOrDefaultAsync(jwi => jwi.session_id_jwi_access == sessionId && jwi.id_user == userId);
             Assert.True(revokedRefreshToken?.is_revoked);
-            Assert.Equal("admin revoke", revokedRefreshToken?.revoked_reason);
+            Assert.Equal("admin revoke", revokedRefreshToken?.revoked_reason_jwi_refresh);
             Assert.True(revokedAccessToken?.is_revoked);
-            Assert.Equal("admin revoke", revokedAccessToken?.revoked_reason);
+            Assert.Equal("admin revoke", revokedAccessToken?.revoked_reason_jwi_access);
         }
 
         // --- RevokePairTokenByRefreshToken ---
@@ -557,9 +557,9 @@ namespace ElectrostoreAPI.Tests.Services
             var revokedAccessToken = await context.JwiAccessTokens
                 .FirstOrDefaultAsync(jwi => jwi.id_jwi_access == accessTokenId);
             Assert.True(revokedRefreshToken?.is_revoked);
-            Assert.Equal("token compromise", revokedRefreshToken?.revoked_reason);
+            Assert.Equal("token compromise", revokedRefreshToken?.revoked_reason_jwi_refresh);
             Assert.True(revokedAccessToken?.is_revoked);
-            Assert.Equal("token compromise", revokedAccessToken?.revoked_reason);
+            Assert.Equal("token compromise", revokedAccessToken?.revoked_reason_jwi_access);
         }
 
         [Fact]
@@ -602,9 +602,9 @@ namespace ElectrostoreAPI.Tests.Services
             var revokedAccessToken = await context.JwiAccessTokens
                 .FirstOrDefaultAsync(jwi => jwi.id_jwi_access == accessTokenId);
             Assert.True(revokedRefreshToken?.is_revoked);
-            Assert.Equal("admin revoke", revokedRefreshToken?.revoked_reason);
+            Assert.Equal("admin revoke", revokedRefreshToken?.revoked_reason_jwi_refresh);
             Assert.True(revokedAccessToken?.is_revoked);
-            Assert.Equal("admin revoke", revokedAccessToken?.revoked_reason);
+            Assert.Equal("admin revoke", revokedAccessToken?.revoked_reason_jwi_access);
         }
     }
 }

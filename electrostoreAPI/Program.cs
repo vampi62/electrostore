@@ -441,13 +441,13 @@ public partial class Program
                     {
                         var createCarrierDto = new CreateCarrierDto
                         {
-                            key = carrier.key,
-                            country = carrier._country,
-                            country_iso = carrier._country_iso,
-                            email = carrier._email,
-                            tel = carrier._tel,
-                            url = carrier._url,
-                            name = carrier._name
+                            key_carrier = carrier.key,
+                            country_carrier = carrier._country,
+                            country_iso_carrier = carrier._country_iso,
+                            email_carrier = carrier._email,
+                            tel_carrier = carrier._tel,
+                            url_carrier = carrier._url,
+                            name_carrier = carrier._name
                         };
                         carrierService.CreateFirstCarrier(createCarrierDto).Wait();
                     }
@@ -461,7 +461,7 @@ public partial class Program
             var createCronJobDto = new CreateCronJobDto
             {
                 name_cronjob = "ProcessTrackingRequests",
-                cron_expression = "*/15 * * * ?",
+                cron_expression_cronjob = "*/15 * * * ?",
                 is_enabled = true,
                 action_cronjob = Enums.CronJobAction.PackageTracking,
             };

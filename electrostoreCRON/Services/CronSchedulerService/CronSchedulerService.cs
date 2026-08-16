@@ -61,7 +61,7 @@ public class CronSchedulerService : BackgroundService
 
         foreach (var job in reply.CronJobs)
         {
-            if (string.IsNullOrWhiteSpace(job.CronExpression))
+            if (string.IsNullOrWhiteSpace(job.CronExpressionCronjob))
             {
                 _logger.LogWarning("Cron job #{Id} ({Name}): empty cron expression, skipped.", job.IdCronjob, job.NameCronjob);
                 continue;
@@ -77,7 +77,7 @@ public class CronSchedulerService : BackgroundService
                 .Build();
 
             // Normalize 5-field Unix cron (m h dom mon dow) to 6-field Quartz cron (s m h dom mon dow)
-            var cronExpression = job.CronExpression.Trim();
+            var cronExpression = job.CronExpressionCronjob.Trim();
             if (cronExpression.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length == 5)
             {
                 cronExpression = "0 " + cronExpression;
@@ -102,7 +102,7 @@ public class CronSchedulerService : BackgroundService
             await scheduler.ScheduleJob(jobDetail, trigger, ct);
             _logger.LogInformation(
                 "Cron job #{Id} ({Name}) scheduled - action={Action}, expr={Expr}",
-                job.IdCronjob, job.NameCronjob, job.ActionCronjob, job.CronExpression);
+                job.IdCronjob, job.NameCronjob, job.ActionCronjob, job.CronExpressionCronjob);
         }
     }
 }

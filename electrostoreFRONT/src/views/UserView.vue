@@ -239,7 +239,7 @@ async function checkExistingSubscription() {
 		await usersStore.getPushSubscriptionsByInterval(userId.value, 100, 0, true);
 		const subs = usersStore.pushSubscriptions[userId.value] || {};
 		const match = Object.values(subs).find((s) => s.endpoint === sub.endpoint);
-		pushSubscriptionId.value = match ? match.id_push_subscription : null;
+		pushSubscriptionId.value = match ? match.id_user_push_subscription : null;
 	} catch (e) {
 		pushSubscriptionId.value = null;
 	}
@@ -275,7 +275,7 @@ async function subscribePush() {
 			auth: json.keys.auth,
 			device_name: pushDeviceName.value || undefined,
 		});
-		pushSubscriptionId.value = created.id_push_subscription;
+		pushSubscriptionId.value = created.id_user_push_subscription;
 		addNotification({ message: t("user.PushSubscribed"), type: "success" });
 	} catch (e) {
 		addNotification({ message: t("user.PushSubscribeError"), type: "error" });
@@ -349,7 +349,7 @@ const labelTableauPushSubscriptions = ref([
 		{
 			label: "user.PushDeleteBtn",
 			icon: "fa-solid fa-trash",
-			action: (row) => deletePushSubscriptionFromTable(row.id_push_subscription),
+			action: (row) => deletePushSubscriptionFromTable(row.id_user_push_subscription),
 			class: "bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600",
 			animation: true,
 		},
@@ -460,7 +460,7 @@ onMounted(() => {
 						<i class="fa-solid fa-bell mr-1"></i>{{ $t('user.PushSendTestEmail') }}
 					</button>
 				</div>
-				<Tableau :labels="labelTableauPushSubscriptions" :meta="{ key: 'id_push_subscription' }"
+				<Tableau :labels="labelTableauPushSubscriptions" :meta="{ key: 'id_user_push_subscription' }"
 					:store-data="[usersStore.pushSubscriptions[userId]]"
 					:loading="usersStore.pushSubscriptionsLoading"
 					:total-count="Number(usersStore.pushSubscriptionsTotalCount[userId]) || 0"

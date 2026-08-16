@@ -4,16 +4,19 @@ using ElectrostoreAPI;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace ElectrostoreAPI.Migrations
+namespace electrostoreAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260816153150_RenamePkFkIdentityFields")]
+    partial class RenamePkFkIdentityFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -162,32 +165,32 @@ namespace ElectrostoreAPI.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_carrier"));
 
-                    b.Property<int?>("country_carrier")
+                    b.Property<int?>("country")
                         .HasColumnType("int");
 
-                    b.Property<string>("country_iso_carrier")
+                    b.Property<string>("country_iso")
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("email_carrier")
+                    b.Property<string>("email")
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
-                    b.Property<int>("key_carrier")
+                    b.Property<int>("key")
                         .HasColumnType("int");
 
-                    b.Property<string>("name_carrier")
+                    b.Property<string>("name")
                         .HasColumnType("longtext");
 
-                    b.Property<string>("tel_carrier")
+                    b.Property<string>("tel")
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("url_carrier")
+                    b.Property<string>("url")
                         .HasMaxLength(2048)
                         .HasColumnType("varchar(2048)");
 
@@ -225,28 +228,28 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<bool>("is_tracking_validated")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<int?>("last_status_command")
+                    b.Property<int?>("last_status")
                         .HasColumnType("int");
 
-                    b.Property<int?>("last_sub_status_command")
+                    b.Property<int?>("last_sub_status")
                         .HasColumnType("int");
 
                     b.Property<float?>("price_command")
                         .HasColumnType("float");
 
-                    b.Property<string>("raw_data_command")
+                    b.Property<string>("raw_data")
                         .HasColumnType("longtext");
 
-                    b.Property<string>("recipient_address_command")
+                    b.Property<string>("recipient_address")
                         .HasColumnType("longtext");
 
-                    b.Property<string>("shipper_address_command")
+                    b.Property<string>("shipper_address")
                         .HasColumnType("longtext");
 
                     b.Property<int>("status_command")
                         .HasColumnType("int");
 
-                    b.Property<string>("tracking_number_command")
+                    b.Property<string>("tracking_number")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
@@ -350,18 +353,18 @@ namespace ElectrostoreAPI.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_command_history"));
 
-                    b.Property<string>("city_command_history")
+                    b.Property<string>("city")
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
-                    b.Property<string>("country_command_history")
+                    b.Property<string>("country")
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("description_command_history")
+                    b.Property<string>("description")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
@@ -371,38 +374,38 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<int>("id_command")
                         .HasColumnType("int");
 
-                    b.Property<string>("latitude_command_history")
+                    b.Property<string>("latitude")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<string>("location_command_history")
+                    b.Property<string>("location")
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
-                    b.Property<string>("longitude_command_history")
+                    b.Property<string>("longitude")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<string>("postal_code_command_history")
+                    b.Property<string>("postal_code")
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
 
-                    b.Property<string>("stage_command_history")
+                    b.Property<string>("stage")
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
 
-                    b.Property<string>("state_command_history")
+                    b.Property<string>("state")
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
-                    b.Property<int?>("status_command_history")
+                    b.Property<int?>("status")
                         .HasColumnType("int");
 
-                    b.Property<int?>("sub_status_command_history")
+                    b.Property<int?>("sub_status")
                         .HasMaxLength(150)
                         .HasColumnType("int");
 
-                    b.Property<string>("timezone_command_history")
+                    b.Property<string>("timezone")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
@@ -457,7 +460,7 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("cron_expression_cronjob")
+                    b.Property<string>("cron_expression")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
@@ -662,20 +665,20 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<int?>("id_user")
                         .HasColumnType("int");
 
-                    b.Property<int?>("new_quantity_item_history")
+                    b.Property<int?>("new_quantity")
                         .HasColumnType("int");
 
-                    b.Property<string>("notes_item_history")
+                    b.Property<string>("notes")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
-                    b.Property<int?>("old_quantity_item_history")
+                    b.Property<int?>("old_quantity")
                         .HasColumnType("int");
 
-                    b.Property<int?>("quantity_change_item_history")
+                    b.Property<int?>("quantity_change")
                         .HasColumnType("int");
 
-                    b.Property<int>("type_item_history")
+                    b.Property<int>("type")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("updated_at")
@@ -719,14 +722,14 @@ namespace ElectrostoreAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<string>("auth_method_jwi_access")
+                    b.Property<string>("auth_method")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("created_by_ip_jwi_access")
+                    b.Property<string>("created_by_ip")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
@@ -743,15 +746,15 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<DateTime?>("revoked_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("revoked_by_ip_jwi_access")
+                    b.Property<string>("revoked_by_ip")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<string>("revoked_reason_jwi_access")
+                    b.Property<string>("revoked_reason")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<Guid>("session_id_jwi_access")
+                    b.Property<Guid>("session_id")
                         .HasColumnType("char(36)");
 
                     b.Property<DateTime>("updated_at")
@@ -770,14 +773,14 @@ namespace ElectrostoreAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<string>("auth_method_jwi_refresh")
+                    b.Property<string>("auth_method")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("created_by_ip_jwi_refresh")
+                    b.Property<string>("created_by_ip")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
@@ -797,15 +800,15 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<DateTime?>("revoked_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("revoked_by_ip_jwi_refresh")
+                    b.Property<string>("revoked_by_ip")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<string>("revoked_reason_jwi_refresh")
+                    b.Property<string>("revoked_reason")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<Guid>("session_id_jwi_refresh")
+                    b.Property<Guid>("session_id")
                         .HasColumnType("char(36)");
 
                     b.Property<DateTime>("updated_at")

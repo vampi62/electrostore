@@ -89,7 +89,7 @@ public class KafkaCronJobEventsConsumerTests
         var evt = new CronJobEvent
         {
             action = "created",
-            data = new CronJobEventData { id_cronjob = 1, name_cronjob = "Test", cron_expression = "0 12 1 * ?", action_cronjob = 0, params_cronjob = "", is_enabled = true }
+            data = new CronJobEventData { id_cronjob = 1, name_cronjob = "Test", cron_expression_cronjob = "0 12 1 * ?", action_cronjob = 0, params_cronjob = "", is_enabled = true }
         };
 
         // Act
@@ -108,7 +108,7 @@ public class KafkaCronJobEventsConsumerTests
         var evt = new CronJobEvent
         {
             action = "created",
-            data = new CronJobEventData { id_cronjob = 1, name_cronjob = "Test", cron_expression = "0 12 1 * ?", action_cronjob = 0, params_cronjob = "", is_enabled = false }
+            data = new CronJobEventData { id_cronjob = 1, name_cronjob = "Test", cron_expression_cronjob = "0 12 1 * ?", action_cronjob = 0, params_cronjob = "", is_enabled = false }
         };
 
         // Act
@@ -127,7 +127,7 @@ public class KafkaCronJobEventsConsumerTests
         var evt = new CronJobEvent
         {
             action = "created",
-            data = new CronJobEventData { id_cronjob = 1, name_cronjob = "Test", cron_expression = "", action_cronjob = 0, params_cronjob = "", is_enabled = true }
+            data = new CronJobEventData { id_cronjob = 1, name_cronjob = "Test", cron_expression_cronjob = "", action_cronjob = 0, params_cronjob = "", is_enabled = true }
         };
 
         // Act
@@ -148,7 +148,7 @@ public class KafkaCronJobEventsConsumerTests
         var evt = new CronJobEvent
         {
             action = "updated",
-            data = new CronJobEventData { id_cronjob = 2, name_cronjob = "Test", cron_expression = "0 12 1 * ?", action_cronjob = 0, params_cronjob = "", is_enabled = true }
+            data = new CronJobEventData { id_cronjob = 2, name_cronjob = "Test", cron_expression_cronjob = "0 12 1 * ?", action_cronjob = 0, params_cronjob = "", is_enabled = true }
         };
 
         // Act
@@ -171,7 +171,7 @@ public class KafkaCronJobEventsConsumerTests
         var evt = new CronJobEvent
         {
             action = "updated",
-            data = new CronJobEventData { id_cronjob = 3, name_cronjob = "Test", cron_expression = "0 12 1 * ?", action_cronjob = 0, params_cronjob = "", is_enabled = false }
+            data = new CronJobEventData { id_cronjob = 3, name_cronjob = "Test", cron_expression_cronjob = "0 12 1 * ?", action_cronjob = 0, params_cronjob = "", is_enabled = false }
         };
 
         // Act
@@ -192,7 +192,7 @@ public class KafkaCronJobEventsConsumerTests
         var evt = new CronJobEvent
         {
             action = "deleted",
-            data = new CronJobEventData { id_cronjob = 4, name_cronjob = "Test", cron_expression = "0 12 1 * ?", action_cronjob = 0, params_cronjob = "", is_enabled = true }
+            data = new CronJobEventData { id_cronjob = 4, name_cronjob = "Test", cron_expression_cronjob = "0 12 1 * ?", action_cronjob = 0, params_cronjob = "", is_enabled = true }
         };
 
         // Act
@@ -211,7 +211,7 @@ public class KafkaCronJobEventsConsumerTests
         var evt = new CronJobEvent
         {
             action = "unknown-action",
-            data = new CronJobEventData { id_cronjob = 5, name_cronjob = "Test", cron_expression = "0 12 1 * ?", action_cronjob = 0, params_cronjob = "", is_enabled = true }
+            data = new CronJobEventData { id_cronjob = 5, name_cronjob = "Test", cron_expression_cronjob = "0 12 1 * ?", action_cronjob = 0, params_cronjob = "", is_enabled = true }
         };
 
         // Act

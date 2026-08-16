@@ -7,6 +7,7 @@ namespace ElectrostoreAPI.Models;
 public class CommandsComments : BaseEntity
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_command_comment { get; set; }
 
     public int? id_user { get; set; }

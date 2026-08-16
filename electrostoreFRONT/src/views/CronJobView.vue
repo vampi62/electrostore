@@ -102,7 +102,7 @@ const createSchema = () => {
 	shape.name_cronjob = Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("cronJob.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("cronJob.NameRequired"));
-	shape.cron_expression = Yup.string()
+	shape.cron_expression_cronjob = Yup.string()
 		.required(t("cronJob.CronExpressionRequired"))
 		.test("is-valid-cron", t("cronJob.CronExpressionInvalid"), (value) => {
 			if (!value) {
@@ -117,7 +117,7 @@ const createSchema = () => {
 };
 const labelForm = [
 	{ key: "name_cronjob", label: "cronJob.Name", type: "text", enableCondition: "func.hasPermission([2])" },
-	{ key: "cron_expression", label: "cronJob.CronExpression", type: "text", enableCondition: "func.hasPermission([2])", placeholder: "cronJob.CronExpressionPlaceholder" },
+	{ key: "cron_expression_cronjob", label: "cronJob.CronExpression", type: "text", enableCondition: "func.hasPermission([2])", placeholder: "cronJob.CronExpressionPlaceholder" },
 	{ key: "action_cronjob", label: "cronJob.Action", type: "select", options: cronJobActionOptions, enableCondition: "func.hasPermission([2])" },
 	{ key: "params_cronjob", label: "cronJob.Params", type: "textarea", rows: 4, enableCondition: "func.hasPermission([2])" },
 	{ key: "is_enabled", label: "cronJob.IsEnabled", type: "checkbox", enableCondition: "func.hasPermission([2])" },
