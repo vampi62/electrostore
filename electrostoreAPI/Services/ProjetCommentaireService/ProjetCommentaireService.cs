@@ -26,14 +26,14 @@ public class ProjetCommentaireService : IProjetCommentaireService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if the projet exists
-        if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
+        if (!await _context.Projets.AnyAsync(p => p.id_project == projetId))
         {
             throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsCommentaires.AsQueryable();
         var filterResult = default(Expression<Func<ProjetsCommentaires, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_projet", SearchType = "eq", Value = projetId.ToString() });
+        rsql.Add(new FilterDto { Field = "id_project", SearchType = "eq", Value = projetId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjetsCommentaires>(rsql);
@@ -73,9 +73,9 @@ public class ProjetCommentaireService : IProjetCommentaireService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ProjetsCommentaires.CountAsync(filterResult ?? (pc => pc.id_projet == projetId)),
+                total = await _context.ProjetsCommentaires.CountAsync(filterResult ?? (pc => pc.id_project == projetId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.ProjetsCommentaires.Skip(offset + limit).AnyAsync(filterResult ?? (pc => pc.id_projet == projetId))
+                hasMore = await _context.ProjetsCommentaires.Skip(offset + limit).AnyAsync(filterResult ?? (pc => pc.id_project == projetId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -145,7 +145,7 @@ public class ProjetCommentaireService : IProjetCommentaireService
     public async Task<ReadExtendedProjetCommentaireDto> GetProjetCommentairesById(int id, int? userId = null, int? projetId = null, List<string>? expand = null)
     {
         var query = _context.ProjetsCommentaires.AsQueryable();
-        query = query.Where(pc => pc.id_projet_commentaire == id && (projetId == null || pc.id_projet == projetId) && (userId == null || pc.id_user == userId));
+        query = query.Where(pc => pc.id_project_comment == id && (projetId == null || pc.id_project == projetId) && (userId == null || pc.id_user == userId));
         if (expand != null && expand.Contains("projet"))
         {
             query = query.Include(pc => pc.Projet);
@@ -161,9 +161,9 @@ public class ProjetCommentaireService : IProjetCommentaireService
     public async Task<ReadProjetCommentaireDto> CreateProjetCommentaire(CreateProjetCommentaireDto projetCommentaireDto)
     {
         // check if the projet exists
-        if (!await _context.Projets.AnyAsync(p => p.id_projet == projetCommentaireDto.id_projet))
+        if (!await _context.Projets.AnyAsync(p => p.id_project == projetCommentaireDto.id_project))
         {
-            throw new KeyNotFoundException($"Projet with id '{projetCommentaireDto.id_projet}' not found");
+            throw new KeyNotFoundException($"Projet with id '{projetCommentaireDto.id_project}' not found");
         }
         // check if the user exists
         if (!await _context.Users.AnyAsync(u => u.id_user == projetCommentaireDto.id_user))
@@ -179,7 +179,7 @@ public class ProjetCommentaireService : IProjetCommentaireService
     public async Task<ReadProjetCommentaireDto> UpdateProjetCommentaire(int id, UpdateProjetCommentaireDto projetCommentaireDto, int? userId = null, int? projetId = null)
     {
         var projetCommentaireToUpdate = await _context.ProjetsCommentaires.FindAsync(id);
-        if ((projetCommentaireToUpdate is null) || (projetId is not null && projetCommentaireToUpdate.id_projet != projetId) || (userId is not null && projetCommentaireToUpdate.id_user != userId))
+        if ((projetCommentaireToUpdate is null) || (projetId is not null && projetCommentaireToUpdate.id_project != projetId) || (userId is not null && projetCommentaireToUpdate.id_user != userId))
         {
             throw new KeyNotFoundException($"Commentaire with id '{id}' not found");
         }
@@ -189,7 +189,7 @@ public class ProjetCommentaireService : IProjetCommentaireService
         {
             throw new UnauthorizedAccessException($"You are not authorized to update this commentaire");
         }
-        projetCommentaireToUpdate.contenu_projet_commentaire = projetCommentaireDto.contenu_projet_commentaire ?? projetCommentaireToUpdate.contenu_projet_commentaire;
+        projetCommentaireToUpdate.content_project_comment = projetCommentaireDto.content_project_comment ?? projetCommentaireToUpdate.content_project_comment;
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadProjetCommentaireDto>(projetCommentaireToUpdate);
     }
@@ -197,7 +197,7 @@ public class ProjetCommentaireService : IProjetCommentaireService
     public async Task DeleteProjetCommentaire(int id, int? userId = null, int? projetId = null)
     {
         var projetCommentaireToDelete = await _context.ProjetsCommentaires.FindAsync(id);
-        if ((projetCommentaireToDelete is null) || (projetId is not null && projetCommentaireToDelete.id_projet != projetId) || (userId is not null && projetCommentaireToDelete.id_user != userId))
+        if ((projetCommentaireToDelete is null) || (projetId is not null && projetCommentaireToDelete.id_project != projetId) || (userId is not null && projetCommentaireToDelete.id_user != userId))
         {
             throw new KeyNotFoundException($"ProjetCommentaire with id '{id}' not found");
         }

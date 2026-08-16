@@ -78,8 +78,8 @@ public class WebHookService : IWebHookService
                 command.last_status = parsedStatus;
                 command.last_sub_status = parsedSubStatus;
                 command.raw_data = data17Track.GetRawText();
-                command.shipper_adress = data17Track.GetProperty("track_info").GetProperty("shipping_info").GetProperty("shipper_address").GetRawText();
-                command.recipient_adress = data17Track.GetProperty("track_info").GetProperty("shipping_info").GetProperty("recipient_address").GetRawText();
+                command.shipper_address = data17Track.GetProperty("track_info").GetProperty("shipping_info").GetProperty("shipper_address").GetRawText();
+                command.recipient_address = data17Track.GetProperty("track_info").GetProperty("shipping_info").GetProperty("recipient_address").GetRawText();
                 _context.Commands.Update(command);
 
                 var historyEntry = new CommandsHistory

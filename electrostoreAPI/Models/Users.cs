@@ -12,17 +12,17 @@ public class Users : BaseEntity
     public int id_user { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public required string nom_user { get; set; }
+    public required string name_user { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public required string prenom_user { get; set; }
+    public required string firstname_user { get; set; }
 
     [EmailAddress]
     [MaxLength(Constants.MaxEmailLength)]
     public required string email_user { get; set; }
 
     [MaxLength(255)]
-    public required string mdp_user { get; set; }
+    public required string password_user { get; set; }
 
     public UserRole role_user { get; set; } = UserRole.User;
 

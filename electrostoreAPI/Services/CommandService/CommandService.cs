@@ -69,7 +69,7 @@ public class CommandService : ICommandService
                 CommandsCommentairesCount = c.CommandsCommentaires.Count,
                 CommandsDocumentsCount = c.CommandsDocuments.Count,
                 CommandsItemsCount = c.CommandsItems.Count,
-                CommandsCommentaires = expand != null && expand.Contains("commands_commentaires") ? c.CommandsCommentaires.Take(20).ToList() : null,
+                CommandsCommentaires = expand != null && expand.Contains("command_comments") ? c.CommandsCommentaires.Take(20).ToList() : null,
                 CommandsDocuments = expand != null && expand.Contains("commands_documents") ? c.CommandsDocuments.Take(20).ToList() : null,
                 CommandsHistory = expand != null && expand.Contains("commands_history") ? c.CommandsHistory.Take(20).ToList() : null,
                 CommandsItems = expand != null && expand.Contains("commands_items") ? c.CommandsItems.Take(20).ToList() : null,
@@ -81,10 +81,10 @@ public class CommandService : ICommandService
             data = command.Select(c => {
                 return _mapper.Map<ReadExtendedCommandDto>(c.Command) with
                 {
-                    commands_commentaires_count = c.CommandsCommentairesCount,
+                    command_comments_count = c.CommandsCommentairesCount,
                     commands_documents_count = c.CommandsDocumentsCount,
                     commands_items_count = c.CommandsItemsCount,
-                    commands_commentaires = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(c.CommandsCommentaires),
+                    command_comments = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(c.CommandsCommentaires),
                     commands_documents = _mapper.Map<IEnumerable<ReadCommandDocumentDto>>(c.CommandsDocuments),
                     commands_history = _mapper.Map<IEnumerable<ReadCommandHistoryDto>>(c.CommandsHistory),
                     commands_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(c.CommandsItems),
@@ -115,7 +115,7 @@ public class CommandService : ICommandService
                 CommandsCommentairesCount = c.CommandsCommentaires.Count,
                 CommandsDocumentsCount = c.CommandsDocuments.Count,
                 CommandsItemsCount = c.CommandsItems.Count,
-                CommandsCommentaires = expand != null && expand.Contains("commands_commentaires") ? c.CommandsCommentaires.Take(20).ToList() : null,
+                CommandsCommentaires = expand != null && expand.Contains("command_comments") ? c.CommandsCommentaires.Take(20).ToList() : null,
                 CommandsDocuments = expand != null && expand.Contains("commands_documents") ? c.CommandsDocuments.Take(20).ToList() : null,
                 CommandsHistory = expand != null && expand.Contains("commands_history") ? c.CommandsHistory.Take(20).ToList() : null,
                 CommandsItems = expand != null && expand.Contains("commands_items") ? c.CommandsItems.Take(20).ToList() : null,
@@ -124,10 +124,10 @@ public class CommandService : ICommandService
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Command with id '{id}' not found");
         return _mapper.Map<ReadExtendedCommandDto>(command.Command) with
         {
-            commands_commentaires_count = command.CommandsCommentairesCount,
+            command_comments_count = command.CommandsCommentairesCount,
             commands_documents_count = command.CommandsDocumentsCount,
             commands_items_count = command.CommandsItemsCount,
-            commands_commentaires = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(command.CommandsCommentaires),
+            command_comments = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(command.CommandsCommentaires),
             commands_documents = _mapper.Map<IEnumerable<ReadCommandDocumentDto>>(command.CommandsDocuments),
             commands_history = _mapper.Map<IEnumerable<ReadCommandHistoryDto>>(command.CommandsHistory),
             commands_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(command.CommandsItems),
@@ -166,9 +166,9 @@ public class CommandService : ICommandService
         var commandToUpdate = await _context.Commands.FindAsync(id) ?? throw new KeyNotFoundException($"Command with id '{id}' not found");
         var oldTrackingNumber = commandToUpdate.tracking_number;
         var oldCarrierId = commandToUpdate.id_carrier;
-        if (commandDto.prix_command is not null)
+        if (commandDto.price_command is not null)
         {
-            commandToUpdate.prix_command = commandDto.prix_command.Value;
+            commandToUpdate.price_command = commandDto.price_command.Value;
         }
         if (commandDto.url_command is not null)
         {
@@ -182,9 +182,9 @@ public class CommandService : ICommandService
         {
             commandToUpdate.date_command = commandDto.date_command.Value;
         }
-        if (commandDto.date_livraison_command is not null)
+        if (commandDto.date_delivery_command is not null)
         {
-            commandToUpdate.date_livraison_command = commandDto.date_livraison_command;
+            commandToUpdate.date_delivery_command = commandDto.date_delivery_command;
         }
         if (commandDto.tracking_number is not null)
         {

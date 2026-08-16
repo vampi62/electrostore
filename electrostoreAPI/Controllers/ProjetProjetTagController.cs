@@ -8,7 +8,7 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace ElectrostoreAPI.Controllers
 {
     [ApiController]
-    [Route("api/projet/{id_projet}/projet-tag")]
+    [Route("api/projet/{id_project}/projet-tag")]
 
     public class ProjetProjetTagController : ControllerBase
     {
@@ -21,68 +21,68 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjetProjetTagDto>>> GetProjetsProjetTagsByProjetId([FromRoute] int id_projet, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
+        public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjetProjetTagDto>>> GetProjetsProjetTagsByProjetId([FromRoute] int id_project, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet_tag', 'projet'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
-        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL filter. Example: 'id_projet_tag==5'.")] string? filter = null,
-        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string. Example: 'id_projet_tag,asc' or 'id_projet_tag,desc'.")] string? sort = null)
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL filter. Example: 'id_project_tag==5'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string. Example: 'id_project_tag,asc' or 'id_project_tag,desc'.")] string? sort = null)
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
-            var projetProjetTags = await _projetProjetTagService.GetProjetsProjetTagsByProjetId(id_projet, limit, offset, rsqlDto, sortDto, expand);
+            var projetProjetTags = await _projetProjetTagService.GetProjetsProjetTagsByProjetId(id_project, limit, offset, rsqlDto, sortDto, expand);
             return Ok(projetProjetTags);
         }
         
-        [HttpGet("{id_projet_tag}")]
+        [HttpGet("{id_project_tag}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadExtendedProjetProjetTagDto>> GetProjetProjetTagById([FromRoute] int id_projet, [FromRoute] int id_projet_tag,
+        public async Task<ActionResult<ReadExtendedProjetProjetTagDto>> GetProjetProjetTagById([FromRoute] int id_project, [FromRoute] int id_project_tag,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projet_tag', 'projet'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
-            var projetProjetTag = await _projetProjetTagService.GetProjetProjetTagById(id_projet, id_projet_tag, expand);
+            var projetProjetTag = await _projetProjetTagService.GetProjetProjetTagById(id_project, id_project_tag, expand);
             return Ok(projetProjetTag);
         }
 
         [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadProjetProjetTagDto>> CreateProjetProjetTag([FromRoute] int id_projet, [FromBody] CreateProjetProjetTagByProjetDto projetProjetTagDto)
+        public async Task<ActionResult<ReadProjetProjetTagDto>> CreateProjetProjetTag([FromRoute] int id_project, [FromBody] CreateProjetProjetTagByProjetDto projetProjetTagDto)
         {
             var projetProjetTagFull = new CreateProjetProjetTagDto
             {
-                id_projet = id_projet,
-                id_projet_tag = projetProjetTagDto.id_projet_tag
+                id_project = id_project,
+                id_project_tag = projetProjetTagDto.id_project_tag
             };
             var newProjetProjetTag = await _projetProjetTagService.CreateProjetProjetTag(projetProjetTagFull);
-            return CreatedAtAction(nameof(GetProjetProjetTagById), new { id_projet = newProjetProjetTag.id_projet, id_projet_tag = newProjetProjetTag.id_projet_tag }, newProjetProjetTag);
+            return CreatedAtAction(nameof(GetProjetProjetTagById), new { id_project = newProjetProjetTag.id_project, id_project_tag = newProjetProjetTag.id_project_tag }, newProjetProjetTag);
         }
 
         [HttpPost("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkProjetProjetTagDto>> CreateBulkProjetProjetTag([FromRoute] int id_projet, [FromBody] List<CreateProjetProjetTagByProjetDto> projetProjetTagsDto)
+        public async Task<ActionResult<ReadBulkProjetProjetTagDto>> CreateBulkProjetProjetTag([FromRoute] int id_project, [FromBody] List<CreateProjetProjetTagByProjetDto> projetProjetTagsDto)
         {
             var projetProjetTagsDtoFull = projetProjetTagsDto.Select(projetProjetTagDto => new CreateProjetProjetTagDto
             {
-                id_projet = id_projet,
-                id_projet_tag = projetProjetTagDto.id_projet_tag
+                id_project = id_project,
+                id_project_tag = projetProjetTagDto.id_project_tag
             }).ToList();
             var projetProjetTags = await _projetProjetTagService.CreateBulkProjetProjetTag(projetProjetTagsDtoFull);
             return Ok(projetProjetTags);
         }
 
-        [HttpDelete("{id_projet_tag}")]
+        [HttpDelete("{id_project_tag}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult> DeleteProjetProjetTag([FromRoute] int id_projet, [FromRoute] int id_projet_tag)
+        public async Task<ActionResult> DeleteProjetProjetTag([FromRoute] int id_project, [FromRoute] int id_project_tag)
         {
-            await _projetProjetTagService.DeleteProjetProjetTag(id_projet, id_projet_tag);
+            await _projetProjetTagService.DeleteProjetProjetTag(id_project, id_project_tag);
             return NoContent();
         }
 
         [HttpDelete("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkProjetProjetTagDto>> DeleteBulkProjetProjetTag([FromRoute] int id_projet, [FromBody] List<int> id_projet_tags)
+        public async Task<ActionResult<ReadBulkProjetProjetTagDto>> DeleteBulkProjetProjetTag([FromRoute] int id_project, [FromBody] List<int> id_projet_tags)
         {
-            var projetProjetTagsDtoFull = id_projet_tags.Select(id_projet_tag => new CreateProjetProjetTagDto
+            var projetProjetTagsDtoFull = id_projet_tags.Select(id_project_tag => new CreateProjetProjetTagDto
             {
-                id_projet = id_projet,
-                id_projet_tag = id_projet_tag
+                id_project = id_project,
+                id_project_tag = id_project_tag
             }).ToList();
             var projetProjetTags = await _projetProjetTagService.DeleteBulkProjetProjetTag(projetProjetTagsDtoFull);
             return Ok(projetProjetTags);

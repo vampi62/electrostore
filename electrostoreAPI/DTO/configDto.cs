@@ -7,7 +7,7 @@ public record ReadConfig
     public bool demo_mode { get; init; }
     public string app_language { get; init; } = "en";
     public int max_length_url { get; init; }
-    public int max_length_commentaire { get; init; }
+    public int max_length_comment { get; init; }
     public int max_length_description { get; init; }
     public int max_length_name { get; init; }
     public int max_length_type { get; init; }
@@ -45,7 +45,7 @@ public static class Constants
 {
     public const int MaxUrlLength = 2048;
     public const int MaxUrlFileLength = 300;
-    public const int MaxCommentaireLength = 455;
+    public const int MaxCommentLength = 455;
     public const int MaxDescriptionLength = 500;
     public const int MaxNameLength = 50;
     public const int MaxTypeLength = 150;

@@ -6,7 +6,7 @@ namespace ElectrostoreAPI.Dto;
 public record ReadIADto
 {
     public int id_ia { get; init; }
-    public required string nom_ia { get; init; }
+    public required string name_ia { get; init; }
     public string? description_ia { get; init; }
     public bool trained_ia { get; init; }
     public DateTime? date_training_ia { get; init; }
@@ -17,7 +17,7 @@ public record CreateIADto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public required string nom_ia { get; init; }
+    public required string name_ia { get; init; }
 
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? description_ia { get; init; }
@@ -26,7 +26,7 @@ public record UpdateIADto
 {
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
-    public string? nom_ia { get; init; }
+    public string? name_ia { get; init; }
 
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]

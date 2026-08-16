@@ -7,16 +7,16 @@ namespace ElectrostoreAPI.Models;
 public class ProjetsCommentaires : BaseEntity
 {
     [Key]
-    public int id_projet_commentaire { get; set; }
+    public int id_project_comment { get; set; }
 
     public int? id_user { get; set; }
     [ForeignKey("id_user")]
     public Users? User { get; set; }
 
-    public int id_projet { get; set; }
-    [ForeignKey("id_projet")]
+    public int id_project { get; set; }
+    [ForeignKey("id_project")]
     public Projets? Projet { get; set; }
 
-    [MaxLength(Constants.MaxCommentaireLength)]
-    public required string contenu_projet_commentaire { get; set; }
+    [MaxLength(Constants.MaxCommentLength)]
+    public required string content_project_comment { get; set; }
 }

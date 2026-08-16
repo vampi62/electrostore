@@ -9,21 +9,21 @@ public class ProjetsDocuments : BaseEntity
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int id_projet_document { get; set; }
+    public int id_project_document { get; set; }
 
     [MaxLength(Constants.MaxUrlFileLength)]
-    public required string url_projet_document { get; set; }
+    public required string url_project_document { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public required string name_projet_document { get; set; }
+    public required string name_project_document { get; set; }
 
     [MaxLength(Constants.MaxTypeLength)]
-    public required string type_projet_document { get; set; }
+    public required string type_project_document { get; set; }
 
-    public decimal size_projet_document { get; set; }
+    public decimal size_project_document { get; set; }
 
-    public int id_projet { get; set; }
+    public int id_project { get; set; }
 
-    [ForeignKey("id_projet")]
+    [ForeignKey("id_project")]
     public Projets? Projet { get; set; }
 }

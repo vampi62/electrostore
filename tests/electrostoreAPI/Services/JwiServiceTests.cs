@@ -107,10 +107,10 @@ namespace ElectrostoreAPI.Tests.Services
             return new Models.Users
             {
                 id_user = id,
-                prenom_user = "Test",
-                nom_user = "User",
+                firstname_user = "Test",
+                name_user = "User",
                 email_user = "test@test.com",
-                mdp_user = "hashedpassword",
+                password_user = "hashedpassword",
                 role_user = role
             };
         }

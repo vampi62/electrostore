@@ -12,7 +12,7 @@ public class Commands : BaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_command { get; set; }
 
-    public float? prix_command { get; set; }
+    public float? price_command { get; set; }
 
     [MaxLength(Constants.MaxUrlLength)]
     public string url_command { get; set; } = string.Empty;
@@ -21,7 +21,7 @@ public class Commands : BaseEntity
 
     public DateTime date_command { get; set; }
 
-    public DateTime? date_livraison_command { get; set; }
+    public DateTime? date_delivery_command { get; set; }
 
     [MaxLength(Constants.MaxTrackingNumberLength)]
     public string tracking_number { get; set; } = string.Empty;
@@ -34,22 +34,22 @@ public class Commands : BaseEntity
     public bool is_tracking_validated { get; set; } = false;
     public bool is_active { get; set; } = true;
 
-    public string? shipper_adress { get; set; }
+    public string? shipper_address { get; set; }
 
     public T? GetShipperAdress<T>()
     {
-        return string.IsNullOrEmpty(shipper_adress)
+        return string.IsNullOrEmpty(shipper_address)
             ? default
-            : JsonSerializer.Deserialize<T>(shipper_adress);
+            : JsonSerializer.Deserialize<T>(shipper_address);
     }
 
-    public string? recipient_adress { get; set; }
+    public string? recipient_address { get; set; }
 
     public T? GetRecipientAdress<T>()
     {
-        return string.IsNullOrEmpty(recipient_adress)
+        return string.IsNullOrEmpty(recipient_address)
             ? default
-            : JsonSerializer.Deserialize<T>(recipient_adress);
+            : JsonSerializer.Deserialize<T>(recipient_address);
     }
 
     public TrackingStatus? last_status { get; set; }

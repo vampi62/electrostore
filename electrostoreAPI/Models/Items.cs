@@ -20,7 +20,7 @@ public class Items : BaseEntity
     [MaxLength(Constants.MaxNameLength)]
     public required string friendly_name_item { get; set; }
 
-    public int seuil_min_item { get; set; }
+    public int threshold_min_item { get; set; }
 
     [MaxLength(Constants.MaxDescriptionLength)]
     public string description_item { get; set; } = string.Empty;

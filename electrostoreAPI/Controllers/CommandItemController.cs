@@ -23,8 +23,8 @@ namespace ElectrostoreAPI.Controllers
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<PaginatedResponseDto<ReadExtendedCommandItemDto>>> GetCommandsItemsByCommandId([FromRoute] int id_command, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'command', 'item'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
-        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'prix_command_item=gt=100'.")] string? filter = null,
-        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'prix_command_item,asc' or 'prix_command_item,desc'.")] string? sort = null)
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'price_command_item=gt=100'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'price_command_item,asc' or 'price_command_item,desc'.")] string? sort = null)
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
@@ -49,8 +49,8 @@ namespace ElectrostoreAPI.Controllers
             {
                 id_item = commandItemDto.id_item,
                 id_command = id_command,
-                qte_command_item = commandItemDto.qte_command_item,
-                prix_command_item = commandItemDto.prix_command_item
+                quantity_command_item = commandItemDto.quantity_command_item,
+                price_command_item = commandItemDto.price_command_item
             };
             var commandItem = await _commandItemService.CreateCommandItem(commandItemDtoFull);
             return CreatedAtAction(nameof(GetCommandItemById), new { id_command = commandItem.id_command, id_item = commandItem.id_item }, commandItem);
@@ -64,8 +64,8 @@ namespace ElectrostoreAPI.Controllers
             {
                 id_item = x.id_item,
                 id_command = id_command,
-                qte_command_item = x.qte_command_item,
-                prix_command_item = x.prix_command_item
+                quantity_command_item = x.quantity_command_item,
+                price_command_item = x.price_command_item
             }).ToList();
             var commandItems = await _commandItemService.CreateBulkCommandItem(commandItemDtoFull);
             return Ok(commandItems);

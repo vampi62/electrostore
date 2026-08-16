@@ -15,7 +15,7 @@ public class Imgs : BaseEntity
     public Items? Item { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public required string nom_img { get; set; }
+    public required string name_img { get; set; }
 
     [MaxLength(Constants.MaxUrlFileLength)]
     public required string url_picture_img { get; set; }

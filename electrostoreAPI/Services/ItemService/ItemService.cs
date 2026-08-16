@@ -75,10 +75,10 @@ public class ItemService : IItemService
                 ItemsTags = expand != null && expand.Contains("item_tags") ? i.ItemsTags.Take(20).ToList() : null,
                 ItemsBoxs = expand != null && expand.Contains("item_boxs") ? i.ItemsBoxs.Take(20).ToList() : null,
                 CommandsItems = expand != null && expand.Contains("command_items") ? i.CommandsItems.Take(20).ToList() : null,
-                ProjetsItems = expand != null && expand.Contains("projet_items") ? i.ProjetsItems.Take(20).ToList() : null,
+                ProjetsItems = expand != null && expand.Contains("project_items") ? i.ProjetsItems.Take(20).ToList() : null,
                 ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null,
                 ItemsHistory = expand != null && expand.Contains("item_history") ? i.ItemsHistory.OrderByDescending(h => h.created_at).Take(20).ToList() : null,
-                quantity_item = i.ItemsBoxs.Sum(ib => ib.qte_item_box)
+                quantity_item = i.ItemsBoxs.Sum(ib => ib.quantity_item_box)
             })
             .ToListAsync();
         return new PaginatedResponseDto<ReadExtendedItemDto>
@@ -89,12 +89,12 @@ public class ItemService : IItemService
                     item_tags_count = i.ItemsTagsCount,
                     item_boxs_count = i.ItemsBoxsCount,
                     command_items_count = i.CommandsItemsCount,
-                    projet_items_count = i.ProjetsItemsCount,
+                    project_items_count = i.ProjetsItemsCount,
                     item_documents_count = i.ItemsDocumentsCount,
                     item_tags = _mapper.Map<IEnumerable<ReadItemTagDto>>(i.ItemsTags),
                     item_boxs = _mapper.Map<IEnumerable<ReadItemBoxDto>>(i.ItemsBoxs),
                     command_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(i.CommandsItems),
-                    projet_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(i.ProjetsItems),
+                    project_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(i.ProjetsItems),
                     item_documents = _mapper.Map<IEnumerable<ReadItemDocumentDto>>(i.ItemsDocuments),
                     item_history = _mapper.Map<IEnumerable<ReadItemHistoryDto>>(i.ItemsHistory),
                     quantity_item = i.quantity_item
@@ -129,10 +129,10 @@ public class ItemService : IItemService
                 ItemsTags = expand != null && expand.Contains("item_tags") ? i.ItemsTags.Take(20).ToList() : null,
                 ItemsBoxs = expand != null && expand.Contains("item_boxs") ? i.ItemsBoxs.Take(20).ToList() : null,
                 CommandsItems = expand != null && expand.Contains("command_items") ? i.CommandsItems.Take(20).ToList() : null,
-                ProjetsItems = expand != null && expand.Contains("projet_items") ? i.ProjetsItems.Take(20).ToList() : null,
+                ProjetsItems = expand != null && expand.Contains("project_items") ? i.ProjetsItems.Take(20).ToList() : null,
                 ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null,
                 ItemsHistory = expand != null && expand.Contains("item_history") ? i.ItemsHistory.OrderByDescending(h => h.created_at).Take(20).ToList() : null,
-                quantity_item = i.ItemsBoxs.Sum(ib => ib.qte_item_box)
+                quantity_item = i.ItemsBoxs.Sum(ib => ib.quantity_item_box)
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Item with id '{id}' not found");
         return _mapper.Map<ReadExtendedItemDto>(item.Item) with
@@ -140,12 +140,12 @@ public class ItemService : IItemService
             item_tags_count = item.ItemsTagsCount,
             item_boxs_count = item.ItemsBoxsCount,
             command_items_count = item.CommandsItemsCount,
-            projet_items_count = item.ProjetsItemsCount,
+            project_items_count = item.ProjetsItemsCount,
             item_documents_count = item.ItemsDocumentsCount,
             item_tags = _mapper.Map<IEnumerable<ReadItemTagDto>>(item.ItemsTags),
             item_boxs = _mapper.Map<IEnumerable<ReadItemBoxDto>>(item.ItemsBoxs),
             command_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(item.CommandsItems),
-            projet_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(item.ProjetsItems),
+            project_items = _mapper.Map<IEnumerable<ReadProjetItemDto>>(item.ProjetsItems),
             item_documents = _mapper.Map<IEnumerable<ReadItemDocumentDto>>(item.ItemsDocuments),
             item_history = _mapper.Map<IEnumerable<ReadItemHistoryDto>>(item.ItemsHistory),
             quantity_item = item.quantity_item
@@ -191,9 +191,9 @@ public class ItemService : IItemService
         {
             itemToUpdate.friendly_name_item = itemDto.friendly_name_item;
         }
-        if (itemDto.seuil_min_item is not null)
+        if (itemDto.threshold_min_item is not null)
         {
-            itemToUpdate.seuil_min_item = itemDto.seuil_min_item.Value;
+            itemToUpdate.threshold_min_item = itemDto.threshold_min_item.Value;
         }
         if (itemDto.description_item is not null)
         {

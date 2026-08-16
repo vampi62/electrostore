@@ -7,7 +7,7 @@ namespace ElectrostoreAPI.Models;
 public class CommandsCommentaires : BaseEntity
 {
     [Key]
-    public int id_command_commentaire { get; set; }
+    public int id_command_comment { get; set; }
 
     public int? id_user { get; set; }
     [ForeignKey("id_user")]
@@ -17,6 +17,6 @@ public class CommandsCommentaires : BaseEntity
     [ForeignKey("id_command")]
     public Commands? Command { get; set; }
 
-    [MaxLength(Constants.MaxCommentaireLength)]
-    public required string contenu_command_commentaire { get; set; }
+    [MaxLength(Constants.MaxCommentLength)]
+    public required string content_command_comment { get; set; }
 }

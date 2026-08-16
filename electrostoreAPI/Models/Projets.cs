@@ -9,18 +9,18 @@ public class Projets : BaseEntity
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int id_projet { get; set; }
+    public int id_project { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public required string nom_projet { get; set; }
+    public required string name_project { get; set; }
 
     [MaxLength(Constants.MaxDescriptionLength)]
-    public string description_projet { get; set; } = string.Empty;
+    public string description_project { get; set; } = string.Empty;
 
     [MaxLength(Constants.MaxUrlLength)]
-    public string url_projet { get; set; } = string.Empty;
+    public string url_project { get; set; } = string.Empty;
 
-    public ProjetStatus status_projet { get; set; } = ProjetStatus.NotStarted;
+    public ProjetStatus status_project { get; set; } = ProjetStatus.NotStarted;
 
     public ICollection<ProjetsCommentaires> ProjetsCommentaires { get; set; } = new List<ProjetsCommentaires>();
     public ICollection<ProjetsDocuments> ProjetsDocuments { get; set; } = new List<ProjetsDocuments>();

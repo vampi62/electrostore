@@ -75,8 +75,8 @@ public class UserService : IUserService
                 User = u,
                 ProjetsCommentairesCount = u.ProjetsCommentaires.Count,
                 CommandsCommentairesCount = u.CommandsCommentaires.Count,
-                ProjetsCommentaires = expand != null && expand.Contains("projets_commentaires") ? u.ProjetsCommentaires.Take(20).ToList() : null,
-                CommandsCommentaires = expand != null && expand.Contains("commands_commentaires") ? u.CommandsCommentaires.Take(20).ToList() : null
+                ProjetsCommentaires = expand != null && expand.Contains("project_comments") ? u.ProjetsCommentaires.Take(20).ToList() : null,
+                CommandsCommentaires = expand != null && expand.Contains("command_comments") ? u.CommandsCommentaires.Take(20).ToList() : null
             })
             .ToListAsync();
         return new PaginatedResponseDto<ReadExtendedUserDto>
@@ -85,10 +85,10 @@ public class UserService : IUserService
             {
                 return _mapper.Map<ReadExtendedUserDto>(u.User) with
                 {
-                    projets_commentaires_count = u.ProjetsCommentairesCount,
-                    commands_commentaires_count = u.CommandsCommentairesCount,
-                    projets_commentaires = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(u.ProjetsCommentaires),
-                    commands_commentaires = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(u.CommandsCommentaires)
+                    project_comments_count = u.ProjetsCommentairesCount,
+                    command_comments_count = u.CommandsCommentairesCount,
+                    project_comments = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(u.ProjetsCommentaires),
+                    command_comments = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(u.CommandsCommentaires)
                 };
             }).ToList(),
             pagination = new PaginationDto
@@ -123,10 +123,10 @@ public class UserService : IUserService
         }
         var newUser = new Users
         {
-            nom_user = userDto.nom_user,
-            prenom_user = userDto.prenom_user,
+            name_user = userDto.name_user,
+            firstname_user = userDto.firstname_user,
             email_user = userDto.email_user,
-            mdp_user = BCrypt.Net.BCrypt.HashPassword(userDto.mdp_user),
+            password_user = BCrypt.Net.BCrypt.HashPassword(userDto.password_user),
             role_user = userDto.role_user
         };
         _context.Users.Add(newUser);
@@ -141,8 +141,8 @@ public class UserService : IUserService
                 Language = _configuration.GetValue<string>("AppLanguage") ?? "fr",
                 TemplateValues = new Dictionary<string, string>
                 {
-                    ["firstName"] = newUser.prenom_user,
-                    ["lastName"] = newUser.nom_user,
+                    ["firstName"] = newUser.firstname_user,
+                    ["lastName"] = newUser.name_user,
                     ["role"] = newUser.role_user.ToString()
                 }
             };
@@ -169,10 +169,10 @@ public class UserService : IUserService
         }
         var newUser = new Users
         {
-            nom_user = userDto.nom_user,
-            prenom_user = userDto.prenom_user,
+            name_user = userDto.name_user,
+            firstname_user = userDto.firstname_user,
             email_user = userDto.email_user,
-            mdp_user = BCrypt.Net.BCrypt.HashPassword(userDto.mdp_user),
+            password_user = BCrypt.Net.BCrypt.HashPassword(userDto.password_user),
             role_user = userDto.role_user
         };
         _context.Users.Add(newUser);
@@ -190,16 +190,16 @@ public class UserService : IUserService
                 User = u,
                 ProjetsCommentairesCount = u.ProjetsCommentaires.Count,
                 CommandsCommentairesCount = u.CommandsCommentaires.Count,
-                ProjetsCommentaires = expand != null && expand.Contains("projets_commentaires") ? u.ProjetsCommentaires.Take(20).ToList() : null,
-                CommandsCommentaires = expand != null && expand.Contains("commands_commentaires") ? u.CommandsCommentaires.Take(20).ToList() : null
+                ProjetsCommentaires = expand != null && expand.Contains("project_comments") ? u.ProjetsCommentaires.Take(20).ToList() : null,
+                CommandsCommentaires = expand != null && expand.Contains("command_comments") ? u.CommandsCommentaires.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"User with id '{id}' not found");
         return _mapper.Map<ReadExtendedUserDto>(user.User) with
         {
-            projets_commentaires_count = user.ProjetsCommentairesCount,
-            commands_commentaires_count = user.CommandsCommentairesCount,
-            projets_commentaires = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(user.ProjetsCommentaires),
-            commands_commentaires = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(user.CommandsCommentaires)
+            project_comments_count = user.ProjetsCommentairesCount,
+            command_comments_count = user.CommandsCommentairesCount,
+            project_comments = _mapper.Map<IEnumerable<ReadProjetCommentaireDto>>(user.ProjetsCommentaires),
+            command_comments = _mapper.Map<IEnumerable<ReadCommandCommentaireDto>>(user.CommandsCommentaires)
         };
     }
 
@@ -212,13 +212,13 @@ public class UserService : IUserService
             throw new UnauthorizedAccessException("You are not allowed to update this user");
         }
         var userToUpdate = await _context.Users.FindAsync(id) ?? throw new KeyNotFoundException($"User with id '{id}' not found");
-        if (userDto.nom_user is not null)
+        if (userDto.name_user is not null)
         {
-            userToUpdate.nom_user = userDto.nom_user;
+            userToUpdate.name_user = userDto.name_user;
         }
-        if (userDto.prenom_user is not null)
+        if (userDto.firstname_user is not null)
         {
-            userToUpdate.prenom_user = userDto.prenom_user;
+            userToUpdate.firstname_user = userDto.firstname_user;
         }
         var oldUserEmail = userToUpdate.email_user;
         if (userDto.email_user is not null)
@@ -231,9 +231,9 @@ public class UserService : IUserService
             }
             userToUpdate.email_user = userDto.email_user;
         }
-        if (userDto.mdp_user is not null)
+        if (userDto.password_user is not null)
         {
-            userToUpdate.mdp_user = BCrypt.Net.BCrypt.HashPassword(userDto.mdp_user);
+            userToUpdate.password_user = BCrypt.Net.BCrypt.HashPassword(userDto.password_user);
         }
         if (userDto.role_user is not null)
         {
@@ -346,7 +346,7 @@ public class UserService : IUserService
                 _logger.LogWarning(ex, "Unable to send email-changed notification to {NewEmail}/{OldEmail}", userToUpdate.email_user, oldUserEmail);
             }
         }
-        else if (userDto.mdp_user is not null)
+        else if (userDto.password_user is not null)
         {
             try
             {

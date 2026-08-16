@@ -92,7 +92,7 @@ public class MappingProfile : Profile
         CreateMap<CreateProjetCommentaireDto, ProjetsCommentaires>();
         CreateMap<ProjetsCommentaires, ReadProjetCommentaireDto>();
         CreateMap<ProjetsCommentaires, ReadExtendedProjetCommentaireDto>()
-            .ForMember(dest => dest.projet, opt => opt.MapFrom(src => src.Projet))
+            .ForMember(dest => dest.project, opt => opt.MapFrom(src => src.Projet))
             .ForMember(dest => dest.user, opt => opt.MapFrom(src => src.User));
 
         CreateMap<CreateProjetDocumentDto, ProjetsDocuments>();
@@ -105,12 +105,12 @@ public class MappingProfile : Profile
         CreateMap<CreateProjetItemDto, ProjetsItems>();
         CreateMap<ProjetsItems, ReadProjetItemDto>();
         CreateMap<ProjetsItems, ReadExtendedProjetItemDto>()
-            .ForMember(dest => dest.projet, opt => opt.MapFrom(src => src.Projet))
+            .ForMember(dest => dest.project, opt => opt.MapFrom(src => src.Projet))
             .ForMember(dest => dest.item, opt => opt.MapFrom(src => src.Item));
 
         CreateMap<ProjetsStatus, ReadProjetStatusDto>();
         CreateMap<ProjetsStatus, ReadExtendedProjetStatusDto>()
-            .ForMember(dest => dest.projet, opt => opt.MapFrom(src => src.Projet));
+            .ForMember(dest => dest.project, opt => opt.MapFrom(src => src.Projet));
         CreateMap<CreateProjetStatusDto, ProjetsStatus>();
 
         CreateMap<CreateProjetTagDto, ProjetTags>();
@@ -120,8 +120,8 @@ public class MappingProfile : Profile
         CreateMap<CreateProjetProjetTagDto, ProjetsProjetTags>();
         CreateMap<ProjetsProjetTags, ReadProjetProjetTagDto>();
         CreateMap<ProjetsProjetTags, ReadExtendedProjetProjetTagDto>()
-            .ForMember(dest => dest.projet_tag, opt => opt.MapFrom(src => src.ProjetTag))
-            .ForMember(dest => dest.projet, opt => opt.MapFrom(src => src.Projet));
+            .ForMember(dest => dest.project_tag, opt => opt.MapFrom(src => src.ProjetTag))
+            .ForMember(dest => dest.project, opt => opt.MapFrom(src => src.Projet));
 
         CreateMap<CreateStoreDto, Stores>();
         CreateMap<Stores, ReadStoreDto>();

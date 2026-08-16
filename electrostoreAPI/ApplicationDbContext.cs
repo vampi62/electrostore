@@ -85,10 +85,10 @@ public class ApplicationDbContext : DbContext
             .HasKey(it => new { it.id_item, it.id_tag });
 
         modelBuilder.Entity<ProjetsItems>()
-            .HasKey(pi => new { pi.id_projet, pi.id_item });
+            .HasKey(pi => new { pi.id_project, pi.id_item });
 
         modelBuilder.Entity<ProjetsProjetTags>()
-            .HasKey(ib => new { ib.id_projet, ib.id_projet_tag });
+            .HasKey(ib => new { ib.id_project, ib.id_project_tag });
 
         modelBuilder.Entity<StoresTags>()
             .HasKey(st => new { st.id_store, st.id_tag });

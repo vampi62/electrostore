@@ -26,14 +26,14 @@ public class ProjetDocumentService : IProjetDocumentService
     List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
         // check if the projet exists
-        if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
+        if (!await _context.Projets.AnyAsync(p => p.id_project == projetId))
         {
             throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsDocuments.AsQueryable();
         var filterResult = default(Expression<Func<ProjetsDocuments, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_projet", SearchType = "eq", Value = projetId.ToString() });
+        rsql.Add(new FilterDto { Field = "id_project", SearchType = "eq", Value = projetId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjetsDocuments>(rsql);
@@ -48,13 +48,13 @@ public class ProjetDocumentService : IProjetDocumentService
             }
             else
             {
-                sort = new SorterDto { Field = "id_projet_document", Order = "asc" };
-                query = query.OrderBy(pd => pd.id_projet_document);
+                sort = new SorterDto { Field = "id_project_document", Order = "asc" };
+                query = query.OrderBy(pd => pd.id_project_document);
             }
         }
         else
         {
-            query = query.OrderBy(pd => pd.id_projet_document);
+            query = query.OrderBy(pd => pd.id_project_document);
         }
         query = query.Skip(offset).Take(limit);
         var projetDocument = await query.ToListAsync();
@@ -65,9 +65,9 @@ public class ProjetDocumentService : IProjetDocumentService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ProjetsDocuments.CountAsync(filterResult ?? (pd => pd.id_projet == projetId)),
+                total = await _context.ProjetsDocuments.CountAsync(filterResult ?? (pd => pd.id_project == projetId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.ProjetsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (pd => pd.id_projet == projetId))
+                hasMore = await _context.ProjetsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (pd => pd.id_project == projetId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -77,7 +77,7 @@ public class ProjetDocumentService : IProjetDocumentService
     public async Task<ReadProjetDocumentDto> GetProjetDocumentById(int id, int? projetId = null)
     {
         var projetDocument = await _context.ProjetsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found");
-        if (projetId is not null && projetDocument.id_projet != projetId)
+        if (projetId is not null && projetDocument.id_project != projetId)
         {
             throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found for projet with id '{projetId}'");
         }
@@ -87,18 +87,18 @@ public class ProjetDocumentService : IProjetDocumentService
     public async Task<ReadProjetDocumentDto> CreateProjetDocument(CreateProjetDocumentDto projetDocumentDto)
     {
         // check if the projet exists
-        if (!await _context.Projets.AnyAsync(p => p.id_projet == projetDocumentDto.id_projet))
+        if (!await _context.Projets.AnyAsync(p => p.id_project == projetDocumentDto.id_project))
         {
-            throw new KeyNotFoundException($"Projet with id '{projetDocumentDto.id_projet}' not found");
+            throw new KeyNotFoundException($"Projet with id '{projetDocumentDto.id_project}' not found");
         }
-        var savedFile = await _fileService.SaveFile(Path.Combine(_projetDocumentsPath, projetDocumentDto.id_projet.ToString()), projetDocumentDto.document.FileName, projetDocumentDto.document.ContentType, projetDocumentDto.document.OpenReadStream());
+        var savedFile = await _fileService.SaveFile(Path.Combine(_projetDocumentsPath, projetDocumentDto.id_project.ToString()), projetDocumentDto.document.FileName, projetDocumentDto.document.ContentType, projetDocumentDto.document.OpenReadStream());
         var projetDocument = new ProjetsDocuments
         {
-            id_projet = projetDocumentDto.id_projet,
-            url_projet_document = savedFile.path,
-            name_projet_document = projetDocumentDto.name_projet_document,
-            type_projet_document = savedFile.mimeType,
-            size_projet_document = projetDocumentDto.document.Length
+            id_project = projetDocumentDto.id_project,
+            url_project_document = savedFile.path,
+            name_project_document = projetDocumentDto.name_project_document,
+            type_project_document = savedFile.mimeType,
+            size_project_document = projetDocumentDto.document.Length
         };
         await _context.ProjetsDocuments.AddAsync(projetDocument);
         await _context.SaveChangesAsync();
@@ -108,13 +108,13 @@ public class ProjetDocumentService : IProjetDocumentService
     public async Task<ReadProjetDocumentDto> UpdateProjetDocument(int id, UpdateProjetDocumentDto projetDocumentDto, int? projetId = null)
     {
         var projetDocument = await _context.ProjetsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found");
-        if (projetId is not null && projetDocument.id_projet != projetId)
+        if (projetId is not null && projetDocument.id_project != projetId)
         {
             throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found for projet with id '{projetId}'");
         }
-        if (projetDocumentDto.name_projet_document is not null)
+        if (projetDocumentDto.name_project_document is not null)
         {
-            projetDocument.name_projet_document = projetDocumentDto.name_projet_document;
+            projetDocument.name_project_document = projetDocumentDto.name_project_document;
         }
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadProjetDocumentDto>(projetDocument);
@@ -123,11 +123,11 @@ public class ProjetDocumentService : IProjetDocumentService
     public async Task DeleteProjetDocument(int id, int? projetId = null)
     {
         var projetDocument = await _context.ProjetsDocuments.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found");
-        if (projetId is not null && projetDocument.id_projet != projetId)
+        if (projetId is not null && projetDocument.id_project != projetId)
         {
             throw new KeyNotFoundException($"ProjetDocument with id '{id}' not found for projet with id '{projetId}'");
         }
-        await _fileService.DeleteFile(projetDocument.url_projet_document);
+        await _fileService.DeleteFile(projetDocument.url_project_document);
         _context.ProjetsDocuments.Remove(projetDocument);
         await _context.SaveChangesAsync();
     }

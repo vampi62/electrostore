@@ -114,9 +114,9 @@ public class IAService : IIAService
             throw new UnauthorizedAccessException("You are not authorized to update IA");
         }
         var iaToUpdate = await _context.IA.FindAsync(id) ?? throw new KeyNotFoundException($"IA with id '{id}' not found");
-        if (iaDto.nom_ia is not null)
+        if (iaDto.name_ia is not null)
         {
-            iaToUpdate.nom_ia = iaDto.nom_ia;
+            iaToUpdate.name_ia = iaDto.name_ia;
         }
         if (iaDto.description_ia is not null)
         {

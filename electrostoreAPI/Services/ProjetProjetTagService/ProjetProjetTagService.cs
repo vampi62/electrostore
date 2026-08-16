@@ -26,14 +26,14 @@ public class ProjetProjetTagService : IProjetProjetTagService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if projet exists
-        if (!await _context.Projets.AnyAsync(s => s.id_projet == projetId))
+        if (!await _context.Projets.AnyAsync(s => s.id_project == projetId))
         {
             throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsProjetTags.AsQueryable();
         var filterResult = default(Expression<Func<ProjetsProjetTags, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_projet", SearchType = "eq", Value = projetId.ToString() });
+        rsql.Add(new FilterDto { Field = "id_project", SearchType = "eq", Value = projetId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjetsProjetTags>(rsql);
@@ -48,13 +48,13 @@ public class ProjetProjetTagService : IProjetProjetTagService
             }
             else
             {
-                sort = new SorterDto { Field = "id_projet_tag", Order = "asc" };
-                query = query.OrderBy(st => st.id_projet_tag);
+                sort = new SorterDto { Field = "id_project_tag", Order = "asc" };
+                query = query.OrderBy(st => st.id_project_tag);
             }
         }
         else
         {
-            query = query.OrderBy(st => st.id_projet_tag);
+            query = query.OrderBy(st => st.id_project_tag);
         }
         query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("projet"))
@@ -73,9 +73,9 @@ public class ProjetProjetTagService : IProjetProjetTagService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ProjetsProjetTags.CountAsync(filterResult ?? (st => st.id_projet == projetId)),
+                total = await _context.ProjetsProjetTags.CountAsync(filterResult ?? (st => st.id_project == projetId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.ProjetsProjetTags.Skip(offset + limit).AnyAsync(filterResult ?? (st => st.id_projet == projetId))
+                hasMore = await _context.ProjetsProjetTags.Skip(offset + limit).AnyAsync(filterResult ?? (st => st.id_project == projetId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -86,14 +86,14 @@ public class ProjetProjetTagService : IProjetProjetTagService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
         // check if projetTag exists
-        if (!await _context.ProjetTags.AnyAsync(t => t.id_projet_tag == projetTagId))
+        if (!await _context.ProjetTags.AnyAsync(t => t.id_project_tag == projetTagId))
         {
             throw new KeyNotFoundException($"ProjetTag with id '{projetTagId}' not found");
         }
         var query = _context.ProjetsProjetTags.AsQueryable();
         var filterResult = default(Expression<Func<ProjetsProjetTags, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_projet_tag", SearchType = "eq", Value = projetTagId.ToString() });
+        rsql.Add(new FilterDto { Field = "id_project_tag", SearchType = "eq", Value = projetTagId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjetsProjetTags>(rsql);
@@ -108,13 +108,13 @@ public class ProjetProjetTagService : IProjetProjetTagService
             }
             else
             {
-                sort = new SorterDto { Field = "id_projet", Order = "asc" };
-                query = query.OrderBy(st => st.id_projet);
+                sort = new SorterDto { Field = "id_project", Order = "asc" };
+                query = query.OrderBy(st => st.id_project);
             }
         }
         else
         {
-            query = query.OrderBy(st => st.id_projet);
+            query = query.OrderBy(st => st.id_project);
         }
         query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("projet_tag"))
@@ -133,9 +133,9 @@ public class ProjetProjetTagService : IProjetProjetTagService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ProjetsProjetTags.CountAsync(filterResult ?? (st => st.id_projet_tag == projetTagId)),
+                total = await _context.ProjetsProjetTags.CountAsync(filterResult ?? (st => st.id_project_tag == projetTagId)),
                 nextOffset = offset + limit,
-                hasMore = await _context.ProjetsProjetTags.Skip(offset + limit).AnyAsync(filterResult ?? (st => st.id_projet_tag == projetTagId))
+                hasMore = await _context.ProjetsProjetTags.Skip(offset + limit).AnyAsync(filterResult ?? (st => st.id_project_tag == projetTagId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -145,7 +145,7 @@ public class ProjetProjetTagService : IProjetProjetTagService
     public async Task<ReadExtendedProjetProjetTagDto> GetProjetProjetTagById(int projetId, int projetTagId, List<string>? expand = null)
     {
         var query = _context.ProjetsProjetTags.AsQueryable();
-        query = query.Where(st => st.id_projet == projetId && st.id_projet_tag == projetTagId);
+        query = query.Where(st => st.id_project == projetId && st.id_project_tag == projetTagId);
         if (expand != null && expand.Contains("projet_tag"))
         {
             query = query.Include(st => st.ProjetTag);
@@ -166,19 +166,19 @@ public class ProjetProjetTagService : IProjetProjetTagService
             throw new UnauthorizedAccessException("You are not authorized to create ProjetProjetTag");
         }
         // check if store exists
-        if (!await _context.Projets.AnyAsync(s => s.id_projet == projetProjetTagDto.id_projet))
+        if (!await _context.Projets.AnyAsync(s => s.id_project == projetProjetTagDto.id_project))
         {
-            throw new KeyNotFoundException($"Projet with id '{projetProjetTagDto.id_projet}' not found");
+            throw new KeyNotFoundException($"Projet with id '{projetProjetTagDto.id_project}' not found");
         }
         // check if tag exists
-        if (!await _context.ProjetTags.AnyAsync(t => t.id_projet_tag == projetProjetTagDto.id_projet_tag))
+        if (!await _context.ProjetTags.AnyAsync(t => t.id_project_tag == projetProjetTagDto.id_project_tag))
         {
-            throw new KeyNotFoundException($"Tag with id '{projetProjetTagDto.id_projet_tag}' not found");
+            throw new KeyNotFoundException($"Tag with id '{projetProjetTagDto.id_project_tag}' not found");
         }
         // check if store tag already exists
-        if (await _context.ProjetsProjetTags.AnyAsync(st => st.id_projet == projetProjetTagDto.id_projet && st.id_projet_tag == projetProjetTagDto.id_projet_tag))
+        if (await _context.ProjetsProjetTags.AnyAsync(st => st.id_project == projetProjetTagDto.id_project && st.id_project_tag == projetProjetTagDto.id_project_tag))
         {
-            throw new InvalidOperationException($"ProjetProjetTag with projetId '{projetProjetTagDto.id_projet}' and projetTagId '{projetProjetTagDto.id_projet_tag}' already exists");
+            throw new InvalidOperationException($"ProjetProjetTag with projetId '{projetProjetTagDto.id_project}' and projetTagId '{projetProjetTagDto.id_project_tag}' already exists");
         }
         var newProjetProjetTag = _mapper.Map<ProjetsProjetTags>(projetProjetTagDto);
         _context.ProjetsProjetTags.Add(newProjetProjetTag);
@@ -242,11 +242,11 @@ public class ProjetProjetTagService : IProjetProjetTagService
         {
             try
             {
-                await DeleteProjetProjetTag(projetProjetTagDto.id_projet, projetProjetTagDto.id_projet_tag);
+                await DeleteProjetProjetTag(projetProjetTagDto.id_project, projetProjetTagDto.id_project_tag);
                 validQuery.Add(new ReadProjetProjetTagDto
                 {
-                    id_projet = projetProjetTagDto.id_projet,
-                    id_projet_tag = projetProjetTagDto.id_projet_tag
+                    id_project = projetProjetTagDto.id_project,
+                    id_project_tag = projetProjetTagDto.id_project_tag
                 });
             }
             catch (Exception e)

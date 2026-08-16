@@ -11,9 +11,9 @@ public class Tags : BaseEntity
     public int id_tag { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public required string nom_tag { get; set; }
+    public required string name_tag { get; set; }
 
-    public int poids_tag { get; set; } = 0;
+    public int weight_tag { get; set; } = 0;
 
     public ICollection<BoxsTags> BoxsTags { get; set; } = new List<BoxsTags>();
     public ICollection<ItemsTags> ItemsTags { get; set; } = new List<ItemsTags>();

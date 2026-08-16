@@ -5,13 +5,13 @@ namespace ElectrostoreAPI.Models;
 
 public class ProjetsItems : BaseEntity
 {
-    public int id_projet { get; set; }
-    [ForeignKey("id_projet")]
+    public int id_project { get; set; }
+    [ForeignKey("id_project")]
     public Projets? Projet { get; set; }
 
     public int id_item { get; set; }
     [ForeignKey("id_item")]
     public Items? Item { get; set; }
 
-    public int qte_projet_item { get; set; }
+    public int quantity_project_item { get; set; }
 }

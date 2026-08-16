@@ -25,7 +25,7 @@ public class ProjetTagService : IProjetTagService
         var filterResult = default(Expression<Func<ProjetTags, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
-            query = query.Where(t => idResearch.Contains(t.id_projet_tag));
+            query = query.Where(t => idResearch.Contains(t.id_project_tag));
         }
         else
         {
@@ -43,13 +43,13 @@ public class ProjetTagService : IProjetTagService
                 }
                 else
                 {
-                    sort = new SorterDto { Field = "id_projet_tag", Order = "asc" };
-                    query = query.OrderBy(t => t.id_projet_tag);
+                    sort = new SorterDto { Field = "id_project_tag", Order = "asc" };
+                    query = query.OrderBy(t => t.id_project_tag);
                 }
             }
             else
             {
-                query = query.OrderBy(t => t.id_projet_tag);
+                query = query.OrderBy(t => t.id_project_tag);
             }
         }
         query = query.Skip(offset).Take(limit);
@@ -58,15 +58,15 @@ public class ProjetTagService : IProjetTagService
             {
                 ProjetTags = t,
                 ProjetsProjetTagsCount = t.ProjetsProjetTags.Count,
-                ProjetsProjetTags = expand != null && expand.Contains("projets_projet_tags") ? t.ProjetsProjetTags.Take(20).ToList() : null
+                ProjetsProjetTags = expand != null && expand.Contains("project_tags") ? t.ProjetsProjetTags.Take(20).ToList() : null
             })
             .ToListAsync();
         return new PaginatedResponseDto<ReadExtendedProjetTagDto>
         {
             data = projetTag.Select(t => _mapper.Map<ReadExtendedProjetTagDto>(t.ProjetTags) with
             {
-                projets_projet_tags_count = t.ProjetsProjetTagsCount,
-                projets_projet_tags = _mapper.Map<IEnumerable<ReadProjetProjetTagDto>>(t.ProjetsProjetTags)
+                project_tags_count = t.ProjetsProjetTagsCount,
+                project_tags = _mapper.Map<IEnumerable<ReadProjetProjetTagDto>>(t.ProjetsProjetTags)
             }).ToList(),
             pagination = new PaginationDto
             {
@@ -84,28 +84,28 @@ public class ProjetTagService : IProjetTagService
     public async Task<ReadExtendedProjetTagDto> GetProjetTagById(int id, List<string>? expand = null)
     {
         var query = _context.ProjetTags.AsQueryable();
-        query = query.Where(t => t.id_projet_tag == id);
+        query = query.Where(t => t.id_project_tag == id);
         var projetTag = await query
             .Select(t => new
             {
                 ProjetTags = t,
                 ProjetsProjetTagsCount = t.ProjetsProjetTags.Count,
-                ProjetsProjetTags = expand != null && expand.Contains("projets_projet_tags") ? t.ProjetsProjetTags.Take(20).ToList() : null
+                ProjetsProjetTags = expand != null && expand.Contains("project_tags") ? t.ProjetsProjetTags.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetTag with id '{id}' not found");
         return _mapper.Map<ReadExtendedProjetTagDto>(projetTag.ProjetTags) with
         {
-            projets_projet_tags_count = projetTag.ProjetsProjetTagsCount,
-            projets_projet_tags = _mapper.Map<IEnumerable<ReadProjetProjetTagDto>>(projetTag.ProjetsProjetTags)
+            project_tags_count = projetTag.ProjetsProjetTagsCount,
+            project_tags = _mapper.Map<IEnumerable<ReadProjetProjetTagDto>>(projetTag.ProjetsProjetTags)
         };
     }
 
     public async Task<ReadProjetTagDto> CreateProjetTag(CreateProjetTagDto projetTagDto)
     {
         // check if tag name already exists
-        if (await _context.ProjetTags.AnyAsync(t => t.nom_projet_tag == projetTagDto.nom_projet_tag))
+        if (await _context.ProjetTags.AnyAsync(t => t.name_project_tag == projetTagDto.name_project_tag))
         {
-            throw new InvalidOperationException($"ProjetTag with name '{projetTagDto.nom_projet_tag}' already exists");
+            throw new InvalidOperationException($"ProjetTag with name '{projetTagDto.name_project_tag}' already exists");
         }
         var newProjetTag = _mapper.Map<ProjetTags>(projetTagDto);
         _context.ProjetTags.Add(newProjetTag);
@@ -142,18 +142,18 @@ public class ProjetTagService : IProjetTagService
     public async Task<ReadProjetTagDto> UpdateProjetTag(int id, UpdateProjetTagDto projetTagDto)
     {
         var projetTagToUpdate = await _context.ProjetTags.FindAsync(id) ?? throw new KeyNotFoundException($"ProjetTag with id {id} not found");
-        if (projetTagDto.nom_projet_tag is not null)
+        if (projetTagDto.name_project_tag is not null)
         {
             // check if another tag with the name already exists
-            if (await _context.ProjetTags.AnyAsync(t => t.nom_projet_tag == projetTagDto.nom_projet_tag && t.id_projet_tag != id))
+            if (await _context.ProjetTags.AnyAsync(t => t.name_project_tag == projetTagDto.name_project_tag && t.id_project_tag != id))
             {
-                throw new InvalidOperationException($"ProjetTag with name '{projetTagDto.nom_projet_tag}' already exists");
+                throw new InvalidOperationException($"ProjetTag with name '{projetTagDto.name_project_tag}' already exists");
             }
-            projetTagToUpdate.nom_projet_tag = projetTagDto.nom_projet_tag;
+            projetTagToUpdate.name_project_tag = projetTagDto.name_project_tag;
         }
-        if (projetTagDto.poids_projet_tag is not null)
+        if (projetTagDto.weight_project_tag is not null)
         {
-            projetTagToUpdate.poids_projet_tag = projetTagDto.poids_projet_tag.Value;
+            projetTagToUpdate.weight_project_tag = projetTagDto.weight_project_tag.Value;
         }
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadProjetTagDto>(projetTagToUpdate);

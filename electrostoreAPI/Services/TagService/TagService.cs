@@ -121,9 +121,9 @@ public class TagService : ITagService
     public async Task<ReadTagDto> CreateTag(CreateTagDto tagDto)
     {
         // check if tag name already exists
-        if (await _context.Tags.AnyAsync(t => t.nom_tag == tagDto.nom_tag))
+        if (await _context.Tags.AnyAsync(t => t.name_tag == tagDto.name_tag))
         {
-            throw new InvalidOperationException($"Tag with name '{tagDto.nom_tag}' already exists");
+            throw new InvalidOperationException($"Tag with name '{tagDto.name_tag}' already exists");
         }
         var newTag = _mapper.Map<Tags>(tagDto);
         _context.Tags.Add(newTag);
@@ -160,18 +160,18 @@ public class TagService : ITagService
     public async Task<ReadTagDto> UpdateTag(int id, UpdateTagDto tagDto)
     {
         var tagToUpdate = await _context.Tags.FindAsync(id) ?? throw new KeyNotFoundException($"Tag with id '{id}' not found");
-        if (tagDto.nom_tag is not null)
+        if (tagDto.name_tag is not null)
         {
             // check if another tag with the name already exists
-            if (await _context.Tags.AnyAsync(t => t.nom_tag == tagDto.nom_tag && t.id_tag != id))
+            if (await _context.Tags.AnyAsync(t => t.name_tag == tagDto.name_tag && t.id_tag != id))
             {
-                throw new InvalidOperationException($"Tag with name '{tagDto.nom_tag}' already exists");
+                throw new InvalidOperationException($"Tag with name '{tagDto.name_tag}' already exists");
             }
-            tagToUpdate.nom_tag = tagDto.nom_tag;
+            tagToUpdate.name_tag = tagDto.name_tag;
         }
-        if (tagDto.poids_tag is not null)
+        if (tagDto.weight_tag is not null)
         {
-            tagToUpdate.poids_tag = tagDto.poids_tag.Value;
+            tagToUpdate.weight_tag = tagDto.weight_tag.Value;
         }
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadTagDto>(tagToUpdate);

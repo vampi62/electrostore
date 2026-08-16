@@ -145,7 +145,7 @@ public class CommandCommentaireService : ICommandCommentaireService
     public async Task<ReadExtendedCommandCommentaireDto> GetCommandsCommentaireById(int id, int? userId = null, int? CommandId = null, List<string>? expand = null)
     {
         var query = _context.CommandsCommentaires.AsQueryable();
-        query = query.Where(cc => cc.id_command_commentaire == id && (CommandId == null || cc.id_command == CommandId) && (userId == null || cc.id_user == userId));
+        query = query.Where(cc => cc.id_command_comment == id && (CommandId == null || cc.id_command == CommandId) && (userId == null || cc.id_user == userId));
         if (expand != null && expand.Contains("command")) // check if the command is included in the expand list
         {
             query = query.Include(cc => cc.Command);
@@ -189,7 +189,7 @@ public class CommandCommentaireService : ICommandCommentaireService
         {
             throw new UnauthorizedAccessException($"You are not authorized to update this commentaire");
         }
-        commandCommentaireToUpdate.contenu_command_commentaire = commandCommentaireDto.contenu_command_commentaire ?? commandCommentaireToUpdate.contenu_command_commentaire;
+        commandCommentaireToUpdate.content_command_comment = commandCommentaireDto.content_command_comment ?? commandCommentaireToUpdate.content_command_comment;
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadCommandCommentaireDto>(commandCommentaireToUpdate);
     }

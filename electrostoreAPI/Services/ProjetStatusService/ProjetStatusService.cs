@@ -21,13 +21,13 @@ public class ProjetStatusService : IProjetStatusService
     List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
         // check if the projet exists
-        if (!await _context.Projets.AnyAsync(p => p.id_projet == projetId))
+        if (!await _context.Projets.AnyAsync(p => p.id_project == projetId))
         {
             throw new KeyNotFoundException($"Projet with id '{projetId}' not found");
         }
         var query = _context.ProjetsStatus.AsQueryable();
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_projet", SearchType = "eq", Value = projetId.ToString() });
+        rsql.Add(new FilterDto { Field = "id_project", SearchType = "eq", Value = projetId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             var filterResult = RsqlParserExtensions.ToFilterExpression<ProjetsStatus>(rsql);
@@ -60,9 +60,9 @@ public class ProjetStatusService : IProjetStatusService
             {
                 offset = offset,
                 limit = limit,
-                total = await _context.ProjetsStatus.CountAsync(p => p.id_projet == projetId),
+                total = await _context.ProjetsStatus.CountAsync(p => p.id_project == projetId),
                 nextOffset = offset + limit,
-                hasMore = await _context.ProjetsStatus.Skip(offset + limit).AnyAsync(p => p.id_projet == projetId)
+                hasMore = await _context.ProjetsStatus.Skip(offset + limit).AnyAsync(p => p.id_project == projetId)
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -72,7 +72,7 @@ public class ProjetStatusService : IProjetStatusService
     public async Task<ReadExtendedProjetStatusDto> GetProjetStatusById(int id, int? projetId = null)
     {
         var query = _context.ProjetsStatus.AsQueryable();
-        query = query.Where(pc => pc.id_projet_status == id && (projetId == null || pc.id_projet == projetId));
+        query = query.Where(pc => pc.id_project_status == id && (projetId == null || pc.id_project == projetId));
         var projetStatus = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"ProjetStatus with id '{id}' not found");
         return _mapper.Map<ReadExtendedProjetStatusDto>(projetStatus);
     }
@@ -80,9 +80,9 @@ public class ProjetStatusService : IProjetStatusService
     public async Task<ReadProjetStatusDto> CreateProjetStatus(CreateProjetStatusDto projetStatusDto)
     {
         // check if the projet exists
-        if (!await _context.Projets.AnyAsync(p => p.id_projet == projetStatusDto.id_projet))
+        if (!await _context.Projets.AnyAsync(p => p.id_project == projetStatusDto.id_project))
         {
-            throw new KeyNotFoundException($"Projet with id '{projetStatusDto.id_projet}' not found");
+            throw new KeyNotFoundException($"Projet with id '{projetStatusDto.id_project}' not found");
         }
         var newProjetStatus = _mapper.Map<ProjetsStatus>(projetStatusDto);
         _context.ProjetsStatus.Add(newProjetStatus);
