@@ -10,25 +10,25 @@ public class JwiAccessTokens : BaseEntity
     [Key]
     public Guid id_jwi_access { get; set; }
 
-    public Guid session_id { get; set; }
+    public Guid session_id_jwi_access { get; set; }
 
     public DateTime expires_at { get; set; }
 
     public bool is_revoked { get; set; }
 
-    public required string auth_method { get; set; }
+    public required string auth_method_jwi_access { get; set; }
 
 
     [MaxLength(Constants.MaxIpLength)]
-    public required string created_by_ip { get; set; }
+    public required string created_by_ip_jwi_access { get; set; }
 
     public DateTime? revoked_at { get; set; }
 
     [MaxLength(Constants.MaxIpLength)]
-    public string? revoked_by_ip { get; set; }
+    public string? revoked_by_ip_jwi_access { get; set; }
 
     [MaxLength(Constants.MaxReasonLength)]
-    public string? revoked_reason { get; set; }
+    public string? revoked_reason_jwi_access { get; set; }
 
     public int id_user { get; set; }
     [ForeignKey("id_user")]

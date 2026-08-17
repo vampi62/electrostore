@@ -25,9 +25,9 @@ public class MappingProfile : Profile
         CreateMap<CreateCarrierDto, Carriers>();
         CreateMap<Carriers, ReadCarrierDto>();
 
-        CreateMap<CreateCommandCommentaireDto, CommandsCommentaires>();
-        CreateMap<CommandsCommentaires, ReadCommandCommentaireDto>();
-        CreateMap<CommandsCommentaires, ReadExtendedCommandCommentaireDto>()
+        CreateMap<CreateCommandCommentDto, CommandsComments>();
+        CreateMap<CommandsComments, ReadCommandCommentDto>();
+        CreateMap<CommandsComments, ReadExtendedCommandCommentDto>()
             .ForMember(dest => dest.command, opt => opt.MapFrom(src => src.Command))
             .ForMember(dest => dest.user, opt => opt.MapFrom(src => src.User));
 
@@ -50,8 +50,8 @@ public class MappingProfile : Profile
         CreateMap<CreateCronJobDto, CronJobs>();
         CreateMap<CronJobs, ReadCronJobDto>();
 
-        CreateMap<CreateIADto, IA>();
-        CreateMap<IA, ReadIADto>();
+        CreateMap<CreateAIDto, AI>();
+        CreateMap<AI, ReadAIDto>();
 
         CreateMap<CreateImgDto, Imgs>();
         CreateMap<Imgs, ReadImgDto>();
@@ -89,39 +89,39 @@ public class MappingProfile : Profile
         CreateMap<Leds, ReadLedDto>();
         CreateMap<UpdateBulkLedByStoreDto, UpdateLedDto>();
 
-        CreateMap<CreateProjetCommentaireDto, ProjetsCommentaires>();
-        CreateMap<ProjetsCommentaires, ReadProjetCommentaireDto>();
-        CreateMap<ProjetsCommentaires, ReadExtendedProjetCommentaireDto>()
-            .ForMember(dest => dest.projet, opt => opt.MapFrom(src => src.Projet))
+        CreateMap<CreateProjectCommentDto, ProjectsComments>();
+        CreateMap<ProjectsComments, ReadProjectCommentDto>();
+        CreateMap<ProjectsComments, ReadExtendedProjectCommentDto>()
+            .ForMember(dest => dest.project, opt => opt.MapFrom(src => src.Project))
             .ForMember(dest => dest.user, opt => opt.MapFrom(src => src.User));
 
-        CreateMap<CreateProjetDocumentDto, ProjetsDocuments>();
-        CreateMap<ProjetsDocuments, ReadProjetDocumentDto>();
+        CreateMap<CreateProjectDocumentDto, ProjectsDocuments>();
+        CreateMap<ProjectsDocuments, ReadProjectDocumentDto>();
 
-        CreateMap<CreateProjetDto, Projets>();
-        CreateMap<Projets, ReadProjetDto>();
-        CreateMap<Projets, ReadExtendedProjetDto>();
+        CreateMap<CreateProjectDto, Projects>();
+        CreateMap<Projects, ReadProjectDto>();
+        CreateMap<Projects, ReadExtendedProjectDto>();
 
-        CreateMap<CreateProjetItemDto, ProjetsItems>();
-        CreateMap<ProjetsItems, ReadProjetItemDto>();
-        CreateMap<ProjetsItems, ReadExtendedProjetItemDto>()
-            .ForMember(dest => dest.projet, opt => opt.MapFrom(src => src.Projet))
+        CreateMap<CreateProjectItemDto, ProjectsItems>();
+        CreateMap<ProjectsItems, ReadProjectItemDto>();
+        CreateMap<ProjectsItems, ReadExtendedProjectItemDto>()
+            .ForMember(dest => dest.project, opt => opt.MapFrom(src => src.Project))
             .ForMember(dest => dest.item, opt => opt.MapFrom(src => src.Item));
 
-        CreateMap<ProjetsStatus, ReadProjetStatusDto>();
-        CreateMap<ProjetsStatus, ReadExtendedProjetStatusDto>()
-            .ForMember(dest => dest.projet, opt => opt.MapFrom(src => src.Projet));
-        CreateMap<CreateProjetStatusDto, ProjetsStatus>();
+        CreateMap<ProjectsStatus, ReadProjectStatusDto>();
+        CreateMap<ProjectsStatus, ReadExtendedProjectStatusDto>()
+            .ForMember(dest => dest.project, opt => opt.MapFrom(src => src.Project));
+        CreateMap<CreateProjectStatusDto, ProjectsStatus>();
 
-        CreateMap<CreateProjetTagDto, ProjetTags>();
-        CreateMap<ProjetTags, ReadProjetTagDto>();
-        CreateMap<ProjetTags, ReadExtendedProjetTagDto>();
+        CreateMap<CreateProjectTagDto, ProjectTags>();
+        CreateMap<ProjectTags, ReadProjectTagDto>();
+        CreateMap<ProjectTags, ReadExtendedProjectTagDto>();
 
-        CreateMap<CreateProjetProjetTagDto, ProjetsProjetTags>();
-        CreateMap<ProjetsProjetTags, ReadProjetProjetTagDto>();
-        CreateMap<ProjetsProjetTags, ReadExtendedProjetProjetTagDto>()
-            .ForMember(dest => dest.projet_tag, opt => opt.MapFrom(src => src.ProjetTag))
-            .ForMember(dest => dest.projet, opt => opt.MapFrom(src => src.Projet));
+        CreateMap<CreateProjectProjectTagDto, ProjectsProjectTags>();
+        CreateMap<ProjectsProjectTags, ReadProjectProjectTagDto>();
+        CreateMap<ProjectsProjectTags, ReadExtendedProjectProjectTagDto>()
+            .ForMember(dest => dest.project_tag, opt => opt.MapFrom(src => src.ProjectTag))
+            .ForMember(dest => dest.project, opt => opt.MapFrom(src => src.Project));
 
         CreateMap<CreateStoreDto, Stores>();
         CreateMap<Stores, ReadStoreDto>();

@@ -1,5 +1,5 @@
 export { default as CollapsibleSection } from "./CollapsibleSection.vue";
-export { default as Commentaire } from "./Commentaire.vue";
+export { default as Comment } from "./Comment.vue";
 export { default as Filter } from "./Filter.vue";
 export { default as FilterContainer } from "./FilterContainer.vue";
 export { default as FormContainer } from "./FormContainer.vue";

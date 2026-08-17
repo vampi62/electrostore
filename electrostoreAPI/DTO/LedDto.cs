@@ -8,7 +8,7 @@ public record ReadLedDto
     public int x_led { get; init; }
     public int y_led { get; init; }
     public int id_store { get; init; }
-    public int mqtt_led_id { get; init; }
+    public int mqtt_id_led { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
 }
@@ -29,7 +29,7 @@ public record CreateLedByStoreDto
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public required int mqtt_led_id { get; init; }
+    public required int mqtt_id_led { get; init; }
 }
 public record CreateLedDto
 {
@@ -46,7 +46,7 @@ public record CreateLedDto
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public required int mqtt_led_id { get; init; }
+    public required int mqtt_id_led { get; init; }
 }
 public record UpdateLedByStoreDto
 {
@@ -57,7 +57,7 @@ public record UpdateLedByStoreDto
     public int? y_led { get; init; }
 
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int? mqtt_led_id { get; init; }
+    public int? mqtt_id_led { get; init; }
 }
 public record UpdateLedDto
 {
@@ -68,7 +68,7 @@ public record UpdateLedDto
     public int? y_led { get; init; }
 
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int? mqtt_led_id { get; init; }
+    public int? mqtt_id_led { get; init; }
 }
 public record UpdateBulkLedByStoreDto
 {
@@ -81,8 +81,8 @@ public record UpdateBulkLedByStoreDto
     [Range(0, int.MaxValue, ErrorMessage = "y_led must be greater than or equal to 0.")]
     public int? y_led { get; init; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "mqtt_led_id must be greater than or equal to 0.")]
-    public int? mqtt_led_id { get; init; }
+    [Range(0, int.MaxValue, ErrorMessage = "mqtt_id_led must be greater than or equal to 0.")]
+    public int? mqtt_id_led { get; init; }
 
     public string? status { get; init; } // status field to indicate the new status "delete", "modified", "new"
 }

@@ -6,10 +6,10 @@ namespace ElectrostoreAPI.Dto;
 public record ReadCameraDto
 {
     public int id_camera { get; init; } 
-    public required string nom_camera { get; init; }
+    public required string name_camera { get; init; }
     public required string url_camera { get; init; }
     public string? user_camera { get; init; }
-    public string? mdp_camera { get; init; }
+    public string? password_camera { get; init; }
     public DateTime? last_seen_camera { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
@@ -18,7 +18,7 @@ public record CreateCameraDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public required string nom_camera { get; init; }
+    public required string name_camera { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
@@ -28,13 +28,13 @@ public record CreateCameraDto
     public string? user_camera { get; init; }
 
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? mdp_camera { get; init; }
+    public string? password_camera { get; init; }
 }
 public record UpdateCameraDto
 {
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
-    public string? nom_camera { get; init; }
+    public string? name_camera { get; init; }
 
     [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalUrl(ErrorMessage = "{0} must be a valid URL.")]
@@ -44,7 +44,7 @@ public record UpdateCameraDto
     public string? user_camera { get; init; }
 
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public string? mdp_camera { get; init; }
+    public string? password_camera { get; init; }
 }
 public record CameraLightDto
 {

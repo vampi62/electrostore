@@ -274,7 +274,7 @@ public class StoreService : IStoreService
                     x_led = ledDto.x_led,
                     y_led = ledDto.y_led,
                     id_store = newStore.id_store,
-                    mqtt_led_id = ledDto.mqtt_led_id
+                    mqtt_id_led = ledDto.mqtt_id_led
                 };
                 var newLed = _mapper.Map<Leds>(ledDtoFull);
                 _validateStoreService.ValidateLedPosition(newLed, newStore);
@@ -520,7 +520,7 @@ public class StoreService : IStoreService
                         x_led = led.x_led ?? throw new ArgumentException("x_led is required for new led"),
                         y_led = led.y_led ?? throw new ArgumentException("y_led is required for new led"),
                         id_store = storeToUpdate.id_store,
-                        mqtt_led_id = led.mqtt_led_id ?? throw new ArgumentException("mqtt_led_id is required for new led")
+                        mqtt_id_led = led.mqtt_id_led ?? throw new ArgumentException("mqtt_id_led is required for new led")
                     };
                     var newLed = _mapper.Map<Leds>(ledDtoFull);
                     _validateStoreService.ValidateLedPosition(newLed, storeToUpdate);

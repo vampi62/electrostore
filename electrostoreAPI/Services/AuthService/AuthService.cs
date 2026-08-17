@@ -197,10 +197,10 @@ public class AuthService : IAuthService
         }
         var newUserDto = new CreateUserDto
         {
-            nom_user = userInfo.FamilyName ?? "SSO",
-            prenom_user = userInfo.GivenName ?? "User",
+            name_user = userInfo.FamilyName ?? "SSO",
+            firstname_user = userInfo.GivenName ?? "User",
             email_user = userInfo.Email,
-            mdp_user = GenerateSecureRandomString(32),
+            password_user = GenerateSecureRandomString(32),
             role_user = userRole
         };
         return await _userService.CreateUser(newUserDto, true); // true indicates that this is an SSO user login, so we avoid role checks
@@ -209,7 +209,7 @@ public class AuthService : IAuthService
     public async Task<bool> CheckUserPasswordByEmail(string email, string password)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == email) ?? throw new KeyNotFoundException($"User with email '{email}' not found");
-        return BCrypt.Net.BCrypt.Verify(password, user.mdp_user);
+        return BCrypt.Net.BCrypt.Verify(password, user.password_user);
     }
 
     public async Task<bool> CheckUserPasswordById(int id, string password)
@@ -219,7 +219,7 @@ public class AuthService : IAuthService
         {
             return false;
         }
-        return BCrypt.Net.BCrypt.Verify(password, user.mdp_user);
+        return BCrypt.Net.BCrypt.Verify(password, user.password_user);
     }
 
     public async Task ForgotPassword(ForgotPasswordRequest request)
@@ -276,7 +276,7 @@ public class AuthService : IAuthService
             u => u.email_user == request.Email && u.reset_token.ToString() == request.Token && u.reset_token_expiration > DateTime.Now
         ) ?? throw new InvalidOperationException("Invalid token");
         // update password
-        user.mdp_user = BCrypt.Net.BCrypt.HashPassword(request.Password);
+        user.password_user = BCrypt.Net.BCrypt.HashPassword(request.Password);
         user.reset_token = null;
         user.reset_token_expiration = null;
         await _context.SaveChangesAsync();
@@ -309,7 +309,7 @@ public class AuthService : IAuthService
         // check if user exists
         var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.Email) ?? throw new UnauthorizedAccessException("Invalid password"); // do not reveal if email exists
         // check if password is correct
-        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.mdp_user))
+        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.password_user))
         {
             throw new UnauthorizedAccessException("Invalid password");
         }

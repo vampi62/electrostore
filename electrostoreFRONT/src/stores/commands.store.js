@@ -7,10 +7,10 @@ import { useUsersStore, useItemsStore, useCarriersStore } from "@/stores";
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 const EXPAND_HANDLERS = {
-	commands_commentaires: (store, idCommand, data) => {
-		store.commentaires[idCommand] = {};
-		for (const commentaire of data) {
-			store.commentaires[idCommand][commentaire.id_command_commentaire] = commentaire;
+	command_comments: (store, idCommand, data) => {
+		store.comments[idCommand] = {};
+		for (const comment of data) {
+			store.comments[idCommand][comment.id_command_comment] = comment;
 		}
 	},
 	commands_documents: (store, idCommand, data) => {
@@ -40,7 +40,7 @@ const EXPAND_HANDLERS = {
 };
 
 function hydrateCommand(store, idCommand, command, expand = []) {
-	store.commentairesTotalCount[idCommand] = command.commands_commentaires_count;
+	store.commentsTotalCount[idCommand] = command.command_comments_count;
 	store.documentsTotalCount[idCommand] = command.commands_documents_count;
 	store.itemsTotalCount[idCommand] = command.commands_items_count;
 	for (const key of expand) {
@@ -61,12 +61,12 @@ const commandResource = createMainResource({
 	},
 });
 
-const commentaireResource = createNestedResource({
-	path: (idCommand) => `/command/${idCommand}/commentaire`,
-	idField: "id_command_commentaire",
-	stateKey: "commentaires",
-	countKey: "commentairesTotalCount",
-	loadingKey: "commentairesLoading",
+const commentResource = createNestedResource({
+	path: (idCommand) => `/command/${idCommand}/comment`,
+	idField: "id_command_comment",
+	stateKey: "comments",
+	countKey: "commentsTotalCount",
+	loadingKey: "commentsLoading",
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("user")) {
 			const usersStore = useUsersStore();
@@ -103,10 +103,10 @@ export const useCommandsStore = defineStore("commands",{
 		commands: {},
 		commandEdition: {},
 
-		commentairesTotalCount: {},
-		commentairesLoading: false,
-		commentaires: {},
-		commentaireEdition: {},
+		commentsTotalCount: {},
+		commentsLoading: false,
+		comments: {},
+		commentEdition: {},
 
 		documentsTotalCount: {},
 		documentsLoading: false,
@@ -141,19 +141,19 @@ export const useCommandsStore = defineStore("commands",{
 			}
 			if (id !== "new" && this.commands[id]) {
 				this.commandEdition[id] = {
-					prix_command: this.commands[id].prix_command,
+					price_command: this.commands[id].price_command,
 					url_command: this.commands[id].url_command,
 					status_command: this.commands[id].status_command,
 					date_command: this.commands[id].date_command,
-					date_livraison_command: this.commands[id].date_livraison_command,
-					tracking_number: this.commands[id].tracking_number,
+					date_delivery_command: this.commands[id].date_delivery_command,
+					tracking_number_command: this.commands[id].tracking_number_command,
 					id_carrier: this.commands[id].id_carrier,
 					is_tracking_requested: this.commands[id].is_tracking_requested,
 					is_tracking_validated: this.commands[id].is_tracking_validated,
 					is_active: this.commands[id].is_active,
-					shipper_adress: this.commands[id].shipper_adress,
-					recipient_adress: this.commands[id].recipient_adress,
-					last_status: this.commands[id].last_status,
+					shipper_address_command: this.commands[id].shipper_address_command,
+					recipient_address_command: this.commands[id].recipient_address_command,
+					last_status_command: this.commands[id].last_status_command,
 					loading: false,
 				};
 			} else {
@@ -162,10 +162,10 @@ export const useCommandsStore = defineStore("commands",{
 					is_tracking_requested: false,
 					is_tracking_validated: false,
 					is_active: true,
-					tracking_number: "",
+					tracking_number_command: "",
 				};
 			}
-			this.commentaireEdition[id] = {};
+			this.commentEdition[id] = {};
 			this.documentEdition[id] = {};
 			this.itemEdition[id] = {};
 		},
@@ -177,16 +177,16 @@ export const useCommandsStore = defineStore("commands",{
 		},
 		clearEdition(id) {
 			delete this.commandEdition[id];
-			delete this.commentaireEdition[id];
+			delete this.commentEdition[id];
 			delete this.documentEdition[id];
 			delete this.itemEdition[id];
 		},
 
-		getCommentaireByInterval: commentaireResource.getByInterval,
-		getCommentaireById: commentaireResource.getById,
-		createCommentaire: commentaireResource.create,
-		updateCommentaire: commentaireResource.update,
-		deleteCommentaire: commentaireResource.remove,
+		getCommentByInterval: commentResource.getByInterval,
+		getCommentById: commentResource.getById,
+		createComment: commentResource.create,
+		updateComment: commentResource.update,
+		deleteComment: commentResource.remove,
 
 		getDocumentByInterval: documentResource.getByInterval,
 		getDocumentById: documentResource.getById,

@@ -70,6 +70,9 @@ export default defineConfig({
 			"@": fileURLToPath(new URL("./src", import.meta.url)),
 		},
 	},
+	optimizeDeps: {
+		include: ["workbox-precaching"],
+	},
 	build: {
 		rollupOptions: {
 			output: {

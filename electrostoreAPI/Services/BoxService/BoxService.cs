@@ -271,8 +271,8 @@ public class BoxService : IBoxService
         {
             throw new KeyNotFoundException($"Box with id '{id}' not found");
         }
-        // check if the box has a item in it (ItemsBoxs) with qte_item_box > 0
-        if (await _context.ItemsBoxs.AnyAsync(ib => ib.id_box == id && ib.qte_item_box > 0))
+        // check if the box has a item in it (ItemsBoxs) with quantity_item_box > 0
+        if (await _context.ItemsBoxs.AnyAsync(ib => ib.id_box == id && ib.quantity_item_box > 0))
         {
             throw new InvalidOperationException($"Box with id '{id}' has items in it");
         }

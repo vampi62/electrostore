@@ -12,21 +12,21 @@ public class Carriers : BaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_carrier { get; set; }
 
-    public int key { get; set; }
+    public int key_carrier { get; set; }
 
-    public int? country { get; set; }
+    public int? country_carrier { get; set; }
 
-    public string? country_iso { get; set; }
+    public string? country_iso_carrier { get; set; }
 
     [EmailAddress]
     [MaxLength(Constants.MaxEmailLength)]
-    public string? email { get; set; }
+    public string? email_carrier { get; set; }
 
     [Phone]
-    public string? tel { get; set; }
+    public string? tel_carrier { get; set; }
 
     [MaxLength(Constants.MaxUrlLength)]
-    public string? url { get; set; }
+    public string? url_carrier { get; set; }
 
-    public string? name { get; set; }
+    public string? name_carrier { get; set; }
 }

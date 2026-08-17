@@ -60,7 +60,7 @@ const cameraDeleteModalShow = ref(false);
 const cameraSave = async() => {
 	if (!camerasStore.cameraEdition[cameraId.value]?._check) {
 		camerasStore.cameraEdition[cameraId.value].user_camera = "";
-		camerasStore.cameraEdition[cameraId.value].mdp_camera = "";
+		camerasStore.cameraEdition[cameraId.value].password_camera = "";
 	}
 	try {
 		const validationResults = await Promise.all([
@@ -119,7 +119,7 @@ const createSchema = () => {
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
-	shape.nom_camera = Yup.string()
+	shape.name_camera = Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("camera.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("camera.NameRequired"));
 	shape.url_camera = Yup.string()
@@ -130,22 +130,22 @@ const createSchema = () => {
 		shape.user_camera = Yup.string()
 			.required(t("camera.UserRequired"))
 			.max(configsStore.getConfigByKey("max_length_name"), t("camera.UserMaxLength", { count: configsStore.getConfigByKey("max_length_name") }));
-		shape.mdp_camera = Yup.string()
+		shape.password_camera = Yup.string()
 			.required(t("camera.PasswordRequired"))
 			.max(configsStore.getConfigByKey("max_length_name"), t("camera.PasswordMaxLength", { count: configsStore.getConfigByKey("max_length_name") }));
 	} else {
 		shape.user_camera = Yup.string().nullable();
-		shape.mdp_camera = Yup.string().nullable();
+		shape.password_camera = Yup.string().nullable();
 	}
 	return Yup.object().shape(shape);
 };
 
 const labelForm = ref([
-	{ key: "nom_camera", label: "camera.Name", type: "text", enableCondition: "func.hasPermission([2])" },
+	{ key: "name_camera", label: "camera.Name", type: "text", enableCondition: "func.hasPermission([2])" },
 	{ key: "url_camera", label: "camera.URL", type: "text", enableCondition: "func.hasPermission([2])" },
 	{ key: "_check", label: "camera.Check", type: "checkbox", enableCondition: "func.hasPermission([2])" },
 	{ key: "user_camera", label: "camera.User", type: "text", enableCondition: "func.hasPermission([2]) && edition?._check" },
-	{ key: "mdp_camera", label: "camera.Password", type: "password", enableCondition: "func.hasPermission([2]) && edition?._check" },
+	{ key: "password_camera", label: "camera.Password", type: "password", enableCondition: "func.hasPermission([2]) && edition?._check" },
 ]);
 document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>

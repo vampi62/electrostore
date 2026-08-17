@@ -104,7 +104,7 @@ public class ImgService : IImgService
             256, 256);
         var newImg = new Imgs
         {
-            nom_img = imgDto.nom_img,
+            name_img = imgDto.name_img,
             url_picture_img = savedImg.path,
             url_thumbnail_img = savedThumbnail.path,
             description_img = imgDto.description_img ?? string.Empty,
@@ -122,9 +122,9 @@ public class ImgService : IImgService
         {
             throw new KeyNotFoundException($"Image with id '{id}' not found");
         }
-        if (imgDto.nom_img is not null)
+        if (imgDto.name_img is not null)
         {
-            imgToUpdate.nom_img = imgDto.nom_img;
+            imgToUpdate.name_img = imgDto.name_img;
         }
         if (imgDto.description_img is not null)
         {

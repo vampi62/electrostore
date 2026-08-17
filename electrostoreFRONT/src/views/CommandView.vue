@@ -174,7 +174,7 @@ const trackingRoadmapStepColors = {
 	Unknown: { completed: "bg-gray-400 text-white", current: "bg-gray-500 text-white", pending: "bg-gray-100 text-gray-500", border: "border-gray-500", badge: "bg-gray-300 text-gray-800", text: "text-gray-600", historyBorder: "border-gray-500" },
 };
 const trackingCurrentStep = computed(() => {
-	const status = commandsStore.commandEdition[commandId.value]?.last_status;
+	const status = commandsStore.commandEdition[commandId.value]?.last_status_command;
 	if (status === null || status === undefined) {
 		return 0;
 	}
@@ -290,7 +290,7 @@ const trackingResume = async() => {
 const trackingDelete = async() => {
 	trackingDeleteLoading.value = true;
 	try {
-		await commandsStore.updateCommand(commandId.value, { tracking_number: "" });
+		await commandsStore.updateCommand(commandId.value, { tracking_number_command: "" });
 		commandsStore.loadToEdition(commandId.value);
 		addNotification({ message: t("command.TrackingDeleted"), type: "success" });
 	} catch (e) {
@@ -313,7 +313,7 @@ const trackingRefresh = async() => {
 };
 const trackingOptionalConfig = computed(() => {
 	const ed = commandsStore.commandEdition[commandId.value];
-	const base = commandId.value !== "new" && !!ed?.tracking_number && !!ed?.id_carrier;
+	const base = commandId.value !== "new" && !!ed?.tracking_number_command && !!ed?.id_carrier;
 	return [
 		{
 			label: "command.TrackingActivate",
@@ -458,7 +458,7 @@ const createSchema = () => {
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
-	shape.prix_command = Yup.number()
+	shape.price_command = Yup.number()
 		.nullable()
 		.optional()
 		.min(0, t("command.PriceMin"))
@@ -473,10 +473,10 @@ const createSchema = () => {
 		.required(t("command.DateRequired"));
 	shape.status_command = Yup.mixed()
 		.required(t("command.StatusRequired"));
-	shape.date_livraison_command = Yup.date()
+	shape.date_delivery_command = Yup.date()
 		.nullable()
 		.optional();
-	shape.tracking_number = Yup.string()
+	shape.tracking_number_command = Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("command.TrackingNumberMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.nullable()
 		.optional();
@@ -497,23 +497,23 @@ const schemaEditDocument = Yup.object().shape({
 		.required(t("command.DocumentNameRequired")),
 });
 const schemaItem = Yup.object().shape({
-	qte_command_item: Yup.number()
+	quantity_command_item: Yup.number()
 		.required(t("command.ItemQuantityRequired"))
 		.typeError(t("command.ItemQuantityNumber"))
 		.min(1, t("command.ItemQuantityMin")),
-	prix_command_item: Yup.number()
+	price_command_item: Yup.number()
 		.required(t("command.ItemPriceRequired"))
 		.typeError(t("command.ItemPriceNumber"))
 		.min(1, t("command.ItemPriceMin")),
 });
 
 const labelForm = computed(() => [
-	{ key: "prix_command", label: "command.Price", type: "number" },
+	{ key: "price_command", label: "command.Price", type: "number" },
 	{ key: "url_command", label: "command.Url", type: "text" },
 	{ key: "date_command", label: "command.Date", type: "datetime-local" },
 	{ key: "status_command", label: "command.Status", type: "select", typeData: "number", options: commandStatusOptions },
-	{ key: "date_livraison_command", label: "command.DeliveryDate", type: "datetime-local" },
-	{ key: "tracking_number", label: "command.TrackingNumber", type: "text" },
+	{ key: "date_delivery_command", label: "command.DeliveryDate", type: "datetime-local" },
+	{ key: "tracking_number_command", label: "command.TrackingNumber", type: "text" },
 	{ key: "id_carrier", label: "command.Carrier", type: "fetch-select", fetchFunction: (limit, offset, expand, filter, sort, clear) => 
 		carriersStore.getCarrierByInterval(limit, offset, filter, sort, clear),
 	fetchStore: carriersStore.carriers, fetchValueKey: "id_carrier", fetchStoreKey: "name",
@@ -521,9 +521,9 @@ const labelForm = computed(() => [
 	{ key: "is_tracking_requested", label: "command.IsTrackingRequested", type: "checkbox", enableCondition: "false" },
 	{ key: "is_tracking_validated", label: "command.IsTrackingValidated", type: "checkbox", enableCondition: "false" },
 	{ key: "is_active", label: "command.IsActive", type: "checkbox", enableCondition: "false" },
-	{ key: "shipper_adress", label: "command.ShipperAddress", type: "readonly" },
-	{ key: "recipient_adress", label: "command.RecipientAddress", type: "readonly" },
-	{ key: "last_status", label: "command.LastStatus", type: "readonly" },
+	{ key: "shipper_address_command", label: "command.ShipperAddress", type: "readonly" },
+	{ key: "recipient_address_command", label: "command.RecipientAddress", type: "readonly" },
+	{ key: "last_status_command", label: "command.LastStatus", type: "readonly" },
 ]);
 const labelTableauDocument = ref([
 	{ label: "command.DocumentName", sortable: true, key: "name_command_document", valueKey: "name_command_document", type: "text", canEdit: true },
@@ -582,8 +582,8 @@ const labelTableauItem = ref([
 	{ label: "command.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text", 
 		storeRessourceId: 1, valueKey: "reference_name_item" },
 
-	{ label: "command.ItemQuantity", sortable: true, key: "qte_command_item", valueKey: "qte_command_item", type: "number", canEdit: true },
-	{ label: "command.ItemPrice", sortable: true, key: "prix_command_item", valueKey: "prix_command_item", type: "number", canEdit: true },
+	{ label: "command.ItemQuantity", sortable: true, key: "quantity_command_item", valueKey: "quantity_command_item", type: "number", canEdit: true },
+	{ label: "command.ItemPrice", sortable: true, key: "price_command_item", valueKey: "price_command_item", type: "number", canEdit: true },
 	{ label: "command.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -627,11 +627,11 @@ const labelTableauItem = ref([
 const labelTableauModalItem = ref([
 	{ label: "command.ItemName", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
 
-	{ label: "command.ItemQuantity", sortable: true, key: "Item.qte_command_item", sourceKey: "id_item", type: "text", 
-		storeRessourceId: 1, valueKey: "qte_command_item", canEdit: true },
+	{ label: "command.ItemQuantity", sortable: true, key: "Item.quantity_command_item", sourceKey: "id_item", type: "text", 
+		storeRessourceId: 1, valueKey: "quantity_command_item", canEdit: true },
 
-	{ label: "command.ItemPrice", sortable: true, key: "Item.prix_command_item", sourceKey: "id_item", type: "text", 
-		storeRessourceId: 1, valueKey: "prix_command_item", canEdit: true },
+	{ label: "command.ItemPrice", sortable: true, key: "Item.price_command_item", sourceKey: "id_item", type: "text", 
+		storeRessourceId: 1, valueKey: "price_command_item", canEdit: true },
 
 	{ label: "command.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
@@ -639,7 +639,7 @@ const labelTableauModalItem = ref([
 			icon: "fa-solid fa-plus",
 			showCondition: "store[1]?.[rowData.id_item] === undefined && !edition?.id_item",
 			action: (row) => {
-				commandsStore.itemEdition[row.id_item] = { prix_command_item: 1, qte_command_item: 1, id_item: row.id_item };
+				commandsStore.itemEdition[row.id_item] = { price_command_item: 1, quantity_command_item: 1, id_item: row.id_item };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -703,7 +703,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="commandsStore.commandEdition[commandId]" />
 			<RoadMap
-				v-if="commandId !== 'new' && commandsStore.commandEdition[commandId]?.last_status !== null && commandsStore.commandEdition[commandId]?.last_status !== undefined"
+				v-if="commandId !== 'new' && commandsStore.commandEdition[commandId]?.last_status_command !== null && commandsStore.commandEdition[commandId]?.last_status_command !== undefined"
 				:steps="trackingRoadmapSteps"
 				:current-step="trackingCurrentStep"
 				:step-colors="trackingRoadmapStepColors"
@@ -720,7 +720,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_command_document' }"
 					:store-data="[commandsStore.documents[commandId]]"
-					:store-edition="commandsStore.documentEdition"
+					:store-edition="commandsStore.documentEdition[commandId]"
 					:schema="schemaEditDocument"
 					:loading="commandsStore.documentsLoading"
 					:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)"
@@ -738,7 +738,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
 					:store-data="[commandsStore.items[commandId],itemsStore.items]"
-					:store-edition="commandsStore.itemEdition"
+					:store-edition="commandsStore.itemEdition[commandId]"
 					:schema="schemaItem"
 					:loading="commandsStore.itemsLoading"
 					:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)"
@@ -747,16 +747,16 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 			</template>
 		</CollapsibleSection>
-		<CollapsibleSection title="command.Commentaires"
-			:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)" :permission="commandId !=='new'">
+		<CollapsibleSection title="command.Comments"
+			:total-count="Number(commandsStore.commentsTotalCount[commandId] || 0)" :permission="commandId !=='new'">
 			<template #append-row>
-				<Commentaire :meta="{ contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
-					:store-data="[commandsStore.commentaires[commandId], usersStore.users]"
+				<Comment :meta="{ contenu: 'content_command_comment', key: 'id_command_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
+					:store-data="[commandsStore.comments[commandId], usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
-					:store-function="{ create: (data) => commandsStore.createCommentaire(commandId, data), update: (id, data) => commandsStore.updateCommentaire(commandId, id, data), delete: (id) => commandsStore.deleteCommentaire(commandId, id) }"
-					:loading="commandsStore.commentairesLoading" :texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"
-					:total-count="Number(commandsStore.commentairesTotalCount[commandId] || 0)"
-					:fetch-function="commandId !== 'new' ? (limit, offset, expand, filter, sort, clear) => commandsStore.getCommentaireByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
+					:store-function="{ create: (data) => commandsStore.createComment(commandId, data), update: (id, data) => commandsStore.updateComment(commandId, id, data), delete: (id) => commandsStore.deleteComment(commandId, id) }"
+					:loading="commandsStore.commentsLoading" :texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"
+					:total-count="Number(commandsStore.commentsTotalCount[commandId] || 0)"
+					:fetch-function="commandId !== 'new' ? (limit, offset, expand, filter, sort, clear) => commandsStore.getCommentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
 				/>
 			</template>
 		</CollapsibleSection>
@@ -793,7 +793,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
 				:store-data="[itemsStore.items,commandsStore.items[commandId]]"
-				:store-edition="commandsStore.itemEdition"
+				:store-edition="commandsStore.itemEdition[commandId]"
 				:filters="filterItem"
 				:loading="commandsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"

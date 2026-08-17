@@ -20,7 +20,7 @@ public class ConfigService : IConfigService
             // get the max length of the url
             max_length_url = Constants.MaxUrlLength,
             // get the max length
-            max_length_commentaire = Constants.MaxCommentaireLength,
+            max_length_comment = Constants.MaxCommentLength,
             max_length_description = Constants.MaxDescriptionLength,
             max_length_name = Constants.MaxNameLength,
             max_length_type = Constants.MaxTypeLength,

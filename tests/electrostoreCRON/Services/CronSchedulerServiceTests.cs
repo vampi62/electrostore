@@ -77,7 +77,7 @@ public class CronSchedulerServiceTests
             // 5-field cron with an explicit "?" on day-of-week: Quartz requires day-of-month and
             // day-of-week not both be "*", and the production code does not translate a plain "*"
             // for either field, so a realistic schedulable expression must supply "?" itself.
-            CronExpression = "0 12 1 * ?",
+            CronExpressionCronjob = "0 12 1 * ?",
             ActionCronjob = CronJobAction.PackageTracking,
             ParamsCronjob = ""
         });
@@ -109,7 +109,7 @@ public class CronSchedulerServiceTests
         {
             IdCronjob = 1,
             NameCronjob = "Empty",
-            CronExpression = "",
+            CronExpressionCronjob = "",
             ActionCronjob = CronJobAction.PackageTracking,
         });
         _apiClient
@@ -138,14 +138,14 @@ public class CronSchedulerServiceTests
         {
             IdCronjob = 1,
             NameCronjob = "Invalid",
-            CronExpression = "not-a-cron-expression",
+            CronExpressionCronjob = "not-a-cron-expression",
             ActionCronjob = CronJobAction.PackageTracking,
         });
         reply.CronJobs.Add(new CronJobItem
         {
             IdCronjob = 2,
             NameCronjob = "Valid",
-            CronExpression = "0 12 1 * ?",
+            CronExpressionCronjob = "0 12 1 * ?",
             ActionCronjob = CronJobAction.PackageTracking,
         });
         _apiClient

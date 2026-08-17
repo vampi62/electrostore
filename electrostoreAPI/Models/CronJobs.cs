@@ -16,7 +16,7 @@ public class CronJobs : BaseEntity
     public required string name_cronjob { get; set; }
 
     [MaxLength(Constants.MaxCronExpressionLength)]
-    public required string cron_expression { get; set; }
+    public required string cron_expression_cronjob { get; set; }
 
     public CronJobAction action_cronjob { get; set; }
 

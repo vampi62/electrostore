@@ -7,14 +7,14 @@ import components from "./components.json";
 import cronJob from "./cronJob.json";
 import cronJobs from "./cronJobs.json";
 import health from "./health.json";
-import ia from "./IA.json";
-import ias from "./IAs.json";
+import ai from "./AI.json";
+import ais from "./AIs.json";
 import item from "./item.json";
 import items from "./items.json";
-import projet from "./projet.json";
-import projets from "./projets.json";
-import projetTag from "./projetTag.json";
-import projetTags from "./projetTags.json";
+import project from "./project.json";
+import projects from "./projects.json";
+import projectTag from "./projectTag.json";
+import projectTags from "./projectTags.json";
 import store from "./store.json";
 import stores from "./stores.json";
 import tag from "./tag.json";
@@ -32,14 +32,14 @@ export default {
 	cronJob,
 	cronJobs,
 	health,
-	ia,
-	ias,
+	ai,
+	ais,
 	item,
 	items,
-	projet,
-	projets,
-	projetTag,
-	projetTags,
+	project,
+	projects,
+	projectTag,
+	projectTags,
 	store,
 	stores,
 	tag,

@@ -28,7 +28,7 @@ message GetEnabledCronJobsReply {
 message CronJobItem {
   int32  id_cronjob            = 1;
   string name_cronjob          = 2;
-  string cron_expression       = 3;
+  string cron_expression_cronjob = 3;
   CronJobAction action_cronjob = 4;
   string params_cronjob        = 5; // JSON stringfied parameters, content depends on action_cronjob
   string last_run_at           = 6; // ISO 8601

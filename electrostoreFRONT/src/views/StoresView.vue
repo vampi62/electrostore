@@ -21,19 +21,19 @@ async function fetchTagData(minOffset, maxOffset) {
 }
 
 const filter = ref([
-	{ key: "nom_store", value: "", type: "text", label: "stores.FilterName", compareMethod: "=like=" },
+	{ key: "name_store", value: "", type: "text", label: "stores.FilterName", compareMethod: "=like=" },
 	{ key: "mqtt_name_store", value: "", type: "text", label: "stores.FilterMqttName", compareMethod: "=like=" },
 	{ key: "xlength_store", value: "", type: "number", label: "stores.FilterXLength", compareMethod: "=le=" },
 	{ key: "ylength_store", value: "", type: "number", label: "stores.FilterYLength", compareMethod: "=le=" },
 	{ key: "is_mqtt_connected_store", value: "", type: "boolean", label: "stores.FilterMqttConnected", compareMethod: "=" },
 	{ key: "mqtt_last_seen_store", value: "", type: "date", label: "stores.FilterMqttLastSeen", compareMethod: "=le=" },
-	{ key: "StoresTags.Tag.nom_tag", value: "", type: "datalist", label: "stores.FilterTag", compareMethod: "=like=",
+	{ key: "StoresTags.Tag.name_tag", value: "", type: "datalist", label: "stores.FilterTag", compareMethod: "=like=",
 		fetchOptions: (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear),
-		storeData: tagsStore.tags, storeKey: "nom_tag",
+		storeData: tagsStore.tags, storeKey: "name_tag",
 	},
 ]);
 const tableauLabel = ref([
-	{ label: "stores.Name", sortable: true, key: "nom_store", valueKey: "nom_store", type: "text" },
+	{ label: "stores.Name", sortable: true, key: "name_store", valueKey: "name_store", type: "text" },
 	{ label: "stores.XLength", sortable: true, key: "xlength_store", valueKey: "xlength_store", type: "number" },
 	{ label: "stores.YLength", sortable: true, key: "ylength_store", valueKey: "ylength_store", type: "number" },
 	{ label: "stores.MqttName", sortable: true, key: "mqtt_name_store", valueKey: "mqtt_name_store", type: "text" },
@@ -41,7 +41,7 @@ const tableauLabel = ref([
 	{ label: "stores.MqttLastSeen", sortable: true, key: "mqtt_last_seen_store", valueKey: "mqtt_last_seen_store", type: "date" },
 	{ label: "stores.TagsList", sortable: false, key: "", sourceKey: "id_store", type: "link-list", 
 		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_store", storeLinkKeyJoinRessource: "id_tag",
-		ressourcePrint: [{ from: "ressource", valueKey: "nom_tag" }] },
+		ressourcePrint: [{ from: "ressource", valueKey: "name_tag" }] },
 ]);
 const tableauMeta = ref({
 	key: "id_store",

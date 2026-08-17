@@ -38,7 +38,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 				this.cronJobEdition[id] = {
 					loading: false,
 					name_cronjob: this.cronJobs[id].name_cronjob,
-					cron_expression: this.cronJobs[id].cron_expression,
+					cron_expression_cronjob: this.cronJobs[id].cron_expression_cronjob,
 					action_cronjob: this.cronJobs[id].action_cronjob,
 					params_cronjob: this.cronJobs[id].params_cronjob,
 					is_enabled: this.cronJobs[id].is_enabled,

@@ -1,6 +1,6 @@
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Services.FileService;
-using ElectrostoreAPI.Services.IAService;
+using ElectrostoreAPI.Services.AIService;
 using ElectrostoreAPI.Services.ImgService;
 using Grpc.Core;
 
@@ -8,16 +8,16 @@ namespace ElectrostoreAPI.Grpc.Services;
 
 public class IaTrainingGrpcService : IaTrainingGrpc.IaTrainingGrpcBase
 {
-    private readonly IIAService _iaService;
+    private readonly IAIService _aiService;
     private readonly IImgService _imgService;
     private readonly ILogger<IaTrainingGrpcService> _logger;
 
     public IaTrainingGrpcService(
-        IIAService iaService,
+        IAIService aiService,
         IImgService imgService,
         ILogger<IaTrainingGrpcService> logger)
     {
-        _iaService = iaService;
+        _aiService = aiService;
         _imgService = imgService;
         _logger = logger;
     }
@@ -37,7 +37,7 @@ public class IaTrainingGrpcService : IaTrainingGrpc.IaTrainingGrpcBase
     public override async Task<UpdateIaStatusReply> UpdateIaStatus(
         UpdateIaStatusRequest request, ServerCallContext context)
     {
-        var iaStatus = new IAStatusDto
+        var aiStatus = new AIStatusDto
         {
             Status = request.Action,
             Message = request.Message,
@@ -47,10 +47,10 @@ public class IaTrainingGrpcService : IaTrainingGrpc.IaTrainingGrpcBase
             Loss = request.Loss,
             ValLoss = request.ValLoss
         };
-        var result = await _iaService.UpdateIaStatusAsync(request.IdIa, iaStatus, request.RequestedBy, context.CancellationToken);
+        var result = await _aiService.UpdateIaStatusAsync(request.IdIa, aiStatus, request.RequestedBy, context.CancellationToken);
         if (!result)
         {
-            _logger.LogWarning("UpdateIaStatus: update failed for IA {Id} (status={Status})", request.IdIa, request.Action);
+            _logger.LogWarning("UpdateIaStatus: update failed for AI {Id} (status={Status})", request.IdIa, request.Action);
         }
         return new UpdateIaStatusReply { Success = result };
     }

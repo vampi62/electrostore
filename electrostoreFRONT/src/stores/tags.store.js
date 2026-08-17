@@ -132,8 +132,8 @@ export const useTagsStore = defineStore("tags",{
 			}
 			if (id !== "new" && this.tags[id]) {
 				this.tagEdition[id] = {
-					nom_tag: this.tags[id].nom_tag,
-					poids_tag: this.tags[id].poids_tag,
+					name_tag: this.tags[id].name_tag,
+					weight_tag: this.tags[id].weight_tag,
 					loading: false,
 				};
 			} else {

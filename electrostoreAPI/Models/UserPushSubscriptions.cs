@@ -9,7 +9,7 @@ public class UserPushSubscriptions : BaseEntity
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int id_push_subscription { get; set; }
+    public int id_user_push_subscription { get; set; }
 
     public int id_user { get; set; }
     [ForeignKey("id_user")]

@@ -20,7 +20,7 @@ public class Items : BaseEntity
     [MaxLength(Constants.MaxNameLength)]
     public required string friendly_name_item { get; set; }
 
-    public int seuil_min_item { get; set; }
+    public int threshold_min_item { get; set; }
 
     [MaxLength(Constants.MaxDescriptionLength)]
     public string description_item { get; set; } = string.Empty;
@@ -30,5 +30,5 @@ public class Items : BaseEntity
     public ICollection<ItemsDocuments> ItemsDocuments { get; set; } = new List<ItemsDocuments>();
     public ICollection<ItemsTags> ItemsTags { get; set; } = new List<ItemsTags>();
     public ICollection<ItemsHistory> ItemsHistory { get; set; } = new List<ItemsHistory>();
-    public ICollection<ProjetsItems> ProjetsItems { get; set; } = new List<ProjetsItems>();
+    public ICollection<ProjectsItems> ProjectsItems { get; set; } = new List<ProjectsItems>();
 }
