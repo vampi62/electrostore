@@ -175,7 +175,7 @@ export const useStoresStore = defineStore("stores",{
 				this.storeEdition[id] = {
 					loading: false,
 					id_store: this.stores[id].id_store,
-					nom_store: this.stores[id].nom_store,
+					name_store: this.stores[id].name_store,
 					mqtt_name_store: this.stores[id].mqtt_name_store,
 					xlength_store: this.stores[id].xlength_store,
 					ylength_store: this.stores[id].ylength_store,

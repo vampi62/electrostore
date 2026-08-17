@@ -47,8 +47,8 @@ namespace ElectrostoreAPI.Tests
                 .ReturnsAsync(new ReadUserDto
                 {
                     id_user = 1,
-                    nom_user = "Admin",
-                    prenom_user = "Admin",
+                    name_user = "Admin",
+                    firstname_user = "Admin",
                     email_user = "admin@localhost.local",
                     role_user = UserRole.Admin
                 });
@@ -71,10 +71,10 @@ namespace ElectrostoreAPI.Tests
                     // Call CreateFirstAdminUser directly on the mock
                     await mockUserService.Object.CreateFirstAdminUser(new CreateUserDto
                     {
-                        nom_user = "Admin",
-                        prenom_user = "Admin",
+                        name_user = "Admin",
+                        firstname_user = "Admin",
                         email_user = "admin@localhost.local",
-                        mdp_user = "Admin@1234",
+                        password_user = "Admin@1234",
                         role_user = UserRole.Admin
                     });
                 }

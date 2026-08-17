@@ -11,7 +11,7 @@ public class Stores : BaseEntity
     public int id_store { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public required string nom_store { get; set; }
+    public required string name_store { get; set; }
 
     public int xlength_store { get; set; }
 

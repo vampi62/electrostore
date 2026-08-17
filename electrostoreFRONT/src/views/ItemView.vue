@@ -18,13 +18,13 @@ import { downloadFile, viewFile } from "@/utils";
 
 import { ItemHistoryType } from "@/enums";
 
-import { useConfigsStore, useItemsStore, useTagsStore, useStoresStore, useCommandsStore, useProjetsStore, useAuthStore, useUsersStore } from "@/stores";
+import { useConfigsStore, useItemsStore, useTagsStore, useStoresStore, useCommandsStore, useProjectsStore, useAuthStore, useUsersStore } from "@/stores";
 const configsStore = useConfigsStore();
 const itemsStore = useItemsStore();
 const tagsStore = useTagsStore();
 const storesStore = useStoresStore();
 const commandsStore = useCommandsStore();
-const projetsStore = useProjetsStore();
+const projectsStore = useProjectsStore();
 const authStore = useAuthStore();
 const usersStore = useUsersStore();
 
@@ -125,7 +125,7 @@ const getTotalQuantity = computed(() => {
 	if (itemId.value === "new") {
 		return 0;
 	}
-	return itemsStore.itemBoxs[itemId.value] ? Object.values(itemsStore.itemBoxs[itemId.value]).reduce((acc, box) => acc + box.qte_item_box, 0) : 0;
+	return itemsStore.itemBoxs[itemId.value] ? Object.values(itemsStore.itemBoxs[itemId.value]).reduce((acc, box) => acc + box.quantity_item_box, 0) : 0;
 });
 
 // box
@@ -215,7 +215,7 @@ const imageSelectModalShow = ref(false);
 const imageAddModalShow = ref(false);
 const imageDeleteModalShow = ref(false);
 const selectedImageId = ref(null);
-const imageModalData = ref({ id_img: null, nom_img: "", description_img: "undefined", image: null });
+const imageModalData = ref({ id_img: null, name_img: "", description_img: "undefined", image: null });
 const imageSelectOpenModal = () => {
 	if (itemId.value === "new") {
 		return;
@@ -234,11 +234,11 @@ const imageDeleteOpenModal = (doc) => {
 };
 const imageAdd = async(files) => {
 	for (const file of files) {
-		imageModalData.value = { nom_img: file.name, description_img: "undefined", image: file.document };
+		imageModalData.value = { name_img: file.name, description_img: "undefined", image: file.document };
 		try {
 			schemaAddImage.validateSync(imageModalData.value, { abortEarly: false });
 			const formData = new FormData();
-			formData.append("nom_img", imageModalData.value.nom_img);
+			formData.append("name_img", imageModalData.value.name_img);
 			formData.append("description_img", imageModalData.value.description_img);
 			formData.append("image", imageModalData.value.image);
 			await itemsStore.createImage(itemId.value, formData);
@@ -270,12 +270,12 @@ const imageDownload = async(imageContent) => {
 		addNotification({ message: t("item.ImageDownloadError"), type: "error" });
 		return;
 	}
-	downloadFile(itemsStore.imagesURL[imageContent.id_img], { keyName: imageContent.nom_img, keyType: "image/png" });
+	downloadFile(itemsStore.imagesURL[imageContent.id_img], { keyName: imageContent.name_img, keyType: "image/png" });
 };
 
 // tag
 const filterTag = ref([
-	{ key: "nom_tag", value: "", type: "text", label: "", placeholder: t("item.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
+	{ key: "name_tag", value: "", type: "text", label: "", placeholder: t("item.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 function tagSave(id_tag) {
 	try {
@@ -295,16 +295,16 @@ function tagDelete(id_tag) {
 }
 
 // item history enum
-const projetTypeStatus = ref({ [ItemHistoryType.ItemCreated]: t("item.HistoryTypeItemCreated"), [ItemHistoryType.ItemUpdated]: t("item.HistoryTypeItemUpdated"),
+const projectTypeStatus = ref({ [ItemHistoryType.ItemCreated]: t("item.HistoryTypeItemCreated"), [ItemHistoryType.ItemUpdated]: t("item.HistoryTypeItemUpdated"),
 	[ItemHistoryType.ItemDeleted]: t("item.HistoryTypeItemDeleted"), [ItemHistoryType.StockAdded]: t("item.HistoryTypeStockAdded"),
 	[ItemHistoryType.StockRemoved]: t("item.HistoryTypeStockRemoved"), [ItemHistoryType.StockUpdated]: t("item.HistoryTypeStockUpdated") });
 
 const schemaBox = Yup.object().shape({
-	qte_item_box: Yup.number()
+	quantity_item_box: Yup.number()
 		.required(t("item.BoxQuantityRequired"))
 		.typeError(t("item.BoxQuantityNumber"))
 		.min(0, t("item.BoxQuantityMin")),
-	seuil_max_item_item_box: Yup.number()
+	threshold_max_item_item_box: Yup.number()
 		.required(t("item.BoxMaxThresholdRequired"))
 		.typeError(t("item.BoxMaxThresholdNumber"))
 		.min(1, t("item.BoxMaxThresholdMin")),
@@ -326,7 +326,7 @@ const createSchema = () => {
 		.nullable()
 		.optional()
 		.max(configsStore.getConfigByKey("max_length_description"), t("item.DescriptionMaxLength", { count: configsStore.getConfigByKey("max_length_description") }));
-	shape.seuil_min_item = Yup.number()
+	shape.threshold_min_item = Yup.number()
 		.min(0, t("item.SeuilMinMin"))
 		.typeError(t("item.SeuilMinType"))
 		.required(t("item.SeuilMinRequired"));
@@ -350,7 +350,7 @@ const schemaEditDocument = Yup.object().shape({
 });
 
 const schemaAddImage = Yup.object().shape({
-	nom_img: Yup.string()
+	name_img: Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("item.ImageNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("item.ImageNameRequired")),
 	image: Yup.mixed()
@@ -362,12 +362,12 @@ const labelForm = [
 	{ key: "reference_name_item", label: "item.Name", type: "text" },
 	{ key: "friendly_name_item", label: "item.FriendlyName", type: "text" },
 	{ key: "description_item", label: "item.Description", type: "textarea" },
-	{ key: "seuil_min_item", label: "item.SeuilMin", type: "number" },
+	{ key: "threshold_min_item", label: "item.SeuilMin", type: "number" },
 	{ key: "quantity", label: "item.TotalQuantity", type: "computed", value: getTotalQuantity },
 	{ key: "id_img", label: "item.Image", type: "custom" },
 ];
 const labelTableauModalTag = ref([
-	{ label: "item.TagName", sortable: true, key: "nom_tag", valueKey: "nom_tag", type: "text" },
+	{ label: "item.TagName", sortable: true, key: "name_tag", valueKey: "name_tag", type: "text" },
 	{ label: "item.TagActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -440,18 +440,18 @@ const labelTableauDocument = ref([
 ]);
 const labelTableauHistory = ref([
 	{ label: "item.HistoryDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
-	{ label: "item.HistoryType", sortable: true, key: "type", valueKey: "type", type: "enum", options: projetTypeStatus },
-	{ label: "item.HistoryQuantityChange", sortable: true, key: "quantity_change", valueKey: "quantity_change", type: "number" },
-	{ label: "item.HistoryOldQuantity", sortable: true, key: "old_quantity", valueKey: "old_quantity", type: "number" },
-	{ label: "item.HistoryNewQuantity", sortable: true, key: "new_quantity", valueKey: "new_quantity", type: "number" },
+	{ label: "item.HistoryType", sortable: true, key: "type_item_history", valueKey: "type_item_history", type: "enum", options: projectTypeStatus },
+	{ label: "item.HistoryQuantityChange", sortable: true, key: "quantity_change_item_history", valueKey: "quantity_change_item_history", type: "number" },
+	{ label: "item.HistoryOldQuantity", sortable: true, key: "old_quantity_item_history", valueKey: "old_quantity_item_history", type: "number" },
+	{ label: "item.HistoryNewQuantity", sortable: true, key: "new_quantity_item_history", valueKey: "new_quantity_item_history", type: "number" },
 	{ label: "item.HistoryBoxId", sortable: true, key: "id_box", valueKey: "id_box", type: "number" },
 	{ label: "item.HistoryUser", sortable: true, key: "User.email_user", valueKey: "email_user", type: "text", storeRessourceId: 1, sourceKey: "id_user" },
-	{ label: "item.HistoryNotes", sortable: false, key: "notes", valueKey: "notes", type: "text" },
+	{ label: "item.HistoryNotes", sortable: false, key: "notes_item_history", valueKey: "notes_item_history", type: "text" },
 ]);
 const labelTableauBox = ref([
 	{ label: "item.BoxId", sortable: true, key: "id_box", valueKey: "id_box", type: "number" },
-	{ label: "item.BoxQuantity", sortable: true, key: "qte_item_box", valueKey: "qte_item_box", type: "number", canEdit: true },
-	{ label: "item.BoxMaxThreshold", sortable: true, key: "seuil_max_item_item_box", valueKey: "seuil_max_item_item_box", type: "number", canEdit: true },
+	{ label: "item.BoxQuantity", sortable: true, key: "quantity_item_box", valueKey: "quantity_item_box", type: "number", canEdit: true },
+	{ label: "item.BoxMaxThreshold", sortable: true, key: "threshold_max_item_item_box", valueKey: "threshold_max_item_item_box", type: "number", canEdit: true },
 	{ label: "item.BoxActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -494,20 +494,20 @@ const labelTableauCommand = ref([
 	{ label: "item.CommandStatus", sortable: true, key: "Command.status_command", sourceKey: "id_command", type: "text", 
 		storeRessourceId: 1, valueKey: "status_command" },
 
-	{ label: "item.CommandQte", sortable: true, key: "qte_command_item", valueKey: "qte_command_item", type: "number" },
-	{ label: "item.CommandPrice", sortable: true, key: "prix_command_item", valueKey: "prix_command_item", type: "number" },
+	{ label: "item.CommandQte", sortable: true, key: "quantity_command_item", valueKey: "quantity_command_item", type: "number" },
+	{ label: "item.CommandPrice", sortable: true, key: "price_command_item", valueKey: "price_command_item", type: "number" },
 ]);
-const labelTableauProjet = ref([
-	{ label: "item.ProjetName", sortable: true, key: "Projet.nom_projet", sourceKey: "id_projet", type: "text", 
-		storeRessourceId: 1, valueKey: "nom_projet" },
-	{ label: "item.ProjetDate", sortable: true, key: "Projet.date_debut_projet", sourceKey: "id_projet", type: "datetime", 
-		storeRessourceId: 1, valueKey: "date_debut_projet" },
-	{ label: "item.ProjetDateFin", sortable: true, key: "Projet.date_fin_projet", sourceKey: "id_projet", type: "datetime", 
-		storeRessourceId: 1, valueKey: "date_fin_projet" },
-	{ label: "item.ProjetStatus", sortable: true, key: "Projet.status_projet", sourceKey: "id_projet", type: "text", 
-		storeRessourceId: 1, valueKey: "status_projet" },
+const labelTableauProject = ref([
+	{ label: "item.ProjectName", sortable: true, key: "Project.name_project", sourceKey: "id_project", type: "text", 
+		storeRessourceId: 1, valueKey: "name_project" },
+	{ label: "item.ProjectDate", sortable: true, key: "Project.date_start_project", sourceKey: "id_project", type: "datetime", 
+		storeRessourceId: 1, valueKey: "date_start_project" },
+	{ label: "item.ProjectDateEnd", sortable: true, key: "Project.date_end_project", sourceKey: "id_project", type: "datetime", 
+		storeRessourceId: 1, valueKey: "date_end_project" },
+	{ label: "item.ProjectStatus", sortable: true, key: "Project.status_project", sourceKey: "id_project", type: "text", 
+		storeRessourceId: 1, valueKey: "status_project" },
 
-	{ label: "item.ProjetQte", sortable: true, key: "qte_projet_item", valueKey: "qte_projet_item", type: "number" },
+	{ label: "item.ProjectQuantity", sortable: true, key: "quantity_project_item", valueKey: "quantity_project_item", type: "number" },
 ]);
 document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
@@ -551,7 +551,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'loading': tagsStore.tagsLoading, 'fetchFunction': (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
 								, 'totalCount': Number(tagsStore.tagsTotalCount || 0) }"
-				:meta ="{ 'keyPoids': 'poids_tag', 'keyName': 'nom_tag' }"
+				:meta ="{ 'keyPoids': 'weight_tag', 'keyName': 'name_tag' }"
 				/>
 		</div>
 		<CollapsibleSection title="item.Boxs"
@@ -559,7 +559,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<template #append-row>
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box', expand: ['box'] }"
 					:store-data="[itemsStore.itemBoxs[itemId]]"
-					:store-edition="itemsStore.itemBoxEdition"
+					:store-edition="itemsStore.itemBoxEdition[itemId]"
 					:loading="itemsStore.itemBoxsLoading"
 					:schema="schemaBox"
 					:total-count="Number(itemsStore.itemBoxsTotalCount[itemId])"
@@ -577,7 +577,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_item_document' }"
 					:store-data="[itemsStore.documents[itemId]]"
-					:store-edition="itemsStore.documentEdition"
+					:store-edition="itemsStore.documentEdition[itemId]"
 					:schema="schemaEditDocument"
 					:loading="itemsStore.documentsLoading"
 					:total-count="Number(itemsStore.documentsTotalCount[itemId])"
@@ -599,7 +599,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 							class="w-48 h-48 bg-gray-200 rounded m-2 flex items-center relative">
 							<template v-if="itemsStore.thumbnailsURL[image.id_img]">
 								<img :src="itemsStore.thumbnailsURL[image.id_img]"
-									class="w-48 h-48 object-cover rounded" :alt="image.nom_img"
+									class="w-48 h-48 object-cover rounded" :alt="image.name_img"
 									@click="selectedImageId === image.id_img ? selectedImageId = null : selectedImageId = image.id_img" />
 							</template>
 							<template v-else>
@@ -607,7 +607,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 							</template>
 							<div v-if="selectedImageId === image.id_img"
 								class="absolute inset-0 flex flex-col justify-center items-center bg-black bg-opacity-75 text-white p-2 rounded">
-								<p class="w-full break-words">{{ image.nom_img }}</p>
+								<p class="w-full break-words">{{ image.name_img }}</p>
 								<p class="w-full break-words">{{ image.date_img ? new Date(image.date_img).toLocaleString() : '' }}</p>
 								<div class="flex space-x-2">
 									<font-awesome-icon icon="fa-solid fa-download"
@@ -635,14 +635,14 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 			</template>
 		</CollapsibleSection>
-		<CollapsibleSection title="item.Projets"
-			:total-count="Number(itemsStore.itemProjetsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
+		<CollapsibleSection title="item.Projects"
+			:total-count="Number(itemsStore.itemProjectsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
 			<template #append-row>
-				<Tableau :labels="labelTableauProjet" :meta="{ key: 'id_projet', path: '/projets/', expand: ['projet'] }"
-					:store-data="[itemsStore.itemProjets[itemId],projetsStore.projets]"
-					:loading="itemsStore.itemProjetsLoading"
-					:total-count="Number(itemsStore.itemProjetsTotalCount[itemId])"
-					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemProjetByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
+				<Tableau :labels="labelTableauProject" :meta="{ key: 'id_project', path: '/projects/', expand: ['project'] }"
+					:store-data="[itemsStore.itemProjects[itemId],projectsStore.projects]"
+					:loading="itemsStore.itemProjectsLoading"
+					:total-count="Number(itemsStore.itemProjectsTotalCount[itemId])"
+					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemProjectByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
@@ -683,7 +683,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					<div v-for="image in itemsStore.images[itemId]" :key="image.id_img"
 						class="w-24 h-24 bg-gray-200 rounded m-2 flex items-center justify-center cursor-pointer">
 						<template v-if="itemsStore.thumbnailsURL[image.id_img]">
-							<img :src="itemsStore.thumbnailsURL[image.id_img]" :alt="image.nom_img"
+							<img :src="itemsStore.thumbnailsURL[image.id_img]" :alt="image.name_img"
 								:class="itemsStore.itemEdition[itemId].id_img == image.id_img ? 'border-2 border-blue-500' : 'border-2 border-transparent'"
 								class="w-24 h-24 object-cover rounded"
 								@click="itemsStore.itemEdition[itemId].id_img = image.id_img" />

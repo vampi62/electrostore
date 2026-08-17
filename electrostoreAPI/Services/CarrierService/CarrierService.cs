@@ -111,29 +111,29 @@ public class CarrierService : ICarrierService
             throw new UnauthorizedAccessException("You do not have permission to update a carrier");
         }
         var carrierToUpdate = await _context.Carriers.FindAsync(id) ?? throw new KeyNotFoundException($"Carrier with id '{id}' not found");
-        if (carrierDto.country is not null)
+        if (carrierDto.country_carrier is not null)
         {
-            carrierToUpdate.country = carrierDto.country.Value;
+            carrierToUpdate.country_carrier = carrierDto.country_carrier.Value;
         }
-        if (carrierDto.country_iso is not null)
+        if (carrierDto.country_iso_carrier is not null)
         {
-            carrierToUpdate.country_iso = carrierDto.country_iso;
+            carrierToUpdate.country_iso_carrier = carrierDto.country_iso_carrier;
         }
-        if (carrierDto.email is not null)
+        if (carrierDto.email_carrier is not null)
         {
-            carrierToUpdate.email = carrierDto.email;
+            carrierToUpdate.email_carrier = carrierDto.email_carrier;
         }
-        if (carrierDto.tel is not null)
+        if (carrierDto.tel_carrier is not null)
         {
-            carrierToUpdate.tel = carrierDto.tel;
+            carrierToUpdate.tel_carrier = carrierDto.tel_carrier;
         }
-        if (carrierDto.url is not null)
+        if (carrierDto.url_carrier is not null)
         {
-            carrierToUpdate.url = carrierDto.url;
+            carrierToUpdate.url_carrier = carrierDto.url_carrier;
         }
-        if (carrierDto.name is not null)
+        if (carrierDto.name_carrier is not null)
         {
-            carrierToUpdate.name = carrierDto.name;
+            carrierToUpdate.name_carrier = carrierDto.name_carrier;
         }
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadCarrierDto>(carrierToUpdate);

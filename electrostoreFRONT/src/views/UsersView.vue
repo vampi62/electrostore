@@ -21,14 +21,14 @@ if (!authStore.hasPermission([1, 2])) {
 const userTypeRole = ref({ [UserRole.User]: t("users.FilterRole0"), [UserRole.Moderator]: t("users.FilterRole1"), [UserRole.Admin]: t("users.FilterRole2") });
 
 const filter = ref([
-	{ key: "nom_user", value: "", type: "text", label: "users.FilterName", compareMethod: "=like=" },
-	{ key: "prenom_user", value: "", type: "text", label: "users.FilterFirstName", compareMethod: "=like=" },
+	{ key: "name_user", value: "", type: "text", label: "users.FilterName", compareMethod: "=like=" },
+	{ key: "firstname_user", value: "", type: "text", label: "users.FilterFirstName", compareMethod: "=like=" },
 	{ key: "email_user", value: "", type: "text", label: "users.FilterEmail", compareMethod: "=like=" },
 	{ key: "role_user", value: "", type: "datalist", typeData: "number", options: userTypeRole, sortOptions: "asc", label: "users.FilterRole", compareMethod: "==" },
 ]);
 const tableauLabel = ref([
-	{ label: "users.Name", sortable: true, key: "nom_user", valueKey: "nom_user", type: "text" },
-	{ label: "users.FirstName", sortable: true, key: "prenom_user", valueKey: "prenom_user", type: "text" },
+	{ label: "users.Name", sortable: true, key: "name_user", valueKey: "name_user", type: "text" },
+	{ label: "users.FirstName", sortable: true, key: "firstname_user", valueKey: "firstname_user", type: "text" },
 	{ label: "users.Email", sortable: true, key: "email_user", valueKey: "email_user", type: "text" },
 	{ label: "users.Role", sortable: true, key: "role_user", valueKey: "role_user", type: "enum", options: userTypeRole },
 ]);

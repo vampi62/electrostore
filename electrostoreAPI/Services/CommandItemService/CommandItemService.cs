@@ -214,21 +214,21 @@ public class CommandItemService : ICommandItemService
             throw new KeyNotFoundException($"Command with id '{commandId}' not found");
         }
         var commandItemToUpdate = await _context.CommandsItems.FindAsync(commandId, itemId) ?? throw new KeyNotFoundException($"CommandItem with commandId '{commandId}' and itemId '{itemId}' not found");
-        if (commandItemDto.qte_command_item is not null)
+        if (commandItemDto.quantity_command_item is not null)
         {
-            if (commandItemDto.qte_command_item <= 0)
+            if (commandItemDto.quantity_command_item <= 0)
             {
-                throw new ArgumentException("qte_command_item must be greater than 0");
+                throw new ArgumentException("quantity_command_item must be greater than 0");
             }
-            commandItemToUpdate.qte_command_item = commandItemDto.qte_command_item.Value;
+            commandItemToUpdate.quantity_command_item = commandItemDto.quantity_command_item.Value;
         }
-        if (commandItemDto.prix_command_item is not null)
+        if (commandItemDto.price_command_item is not null)
         {
-            if (commandItemDto.prix_command_item <= 0)
+            if (commandItemDto.price_command_item <= 0)
             {
-                throw new ArgumentException("prix_command_item must be greater than 0");
+                throw new ArgumentException("price_command_item must be greater than 0");
             }
-            commandItemToUpdate.prix_command_item = commandItemDto.prix_command_item.Value;
+            commandItemToUpdate.price_command_item = commandItemDto.price_command_item.Value;
         }
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadCommandItemDto>(commandItemToUpdate);

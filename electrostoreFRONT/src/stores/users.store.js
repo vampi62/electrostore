@@ -2,21 +2,21 @@ import { defineStore } from "pinia";
 
 import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
 
-import { useCommandsStore, useProjetsStore } from "@/stores";
+import { useCommandsStore, useProjectsStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 const EXPAND_HANDLERS = {
-	projets_commentaires: (store, idUser, user) => {
-		store.projetsCommentaire[idUser] = {};
-		for (const projetCommentaire of user.projets_commentaires) {
-			store.projetsCommentaire[idUser][projetCommentaire.id_projet] = projetCommentaire;
+	project_comments: (store, idUser, user) => {
+		store.projectsComment[idUser] = {};
+		for (const projectComment of user.project_comments) {
+			store.projectsComment[idUser][projectComment.id_project] = projectComment;
 		}
 	},
-	commands_commentaires: (store, idUser, user) => {
-		store.commandsCommentaire[idUser] = {};
-		for (const commandCommentaire of user.commands_commentaires) {
-			store.commandsCommentaire[idUser][commandCommentaire.id_command] = commandCommentaire;
+	command_comments: (store, idUser, user) => {
+		store.commandsComment[idUser] = {};
+		for (const commandComment of user.command_comments) {
+			store.commandsComment[idUser][commandComment.id_command] = commandComment;
 		}
 	},
 	tokens: (store, idUser, user) => {
@@ -28,14 +28,14 @@ const EXPAND_HANDLERS = {
 	push_subscriptions: (store, idUser, user) => {
 		store.pushSubscriptions[idUser] = {};
 		for (const sub of user.push_subscriptions) {
-			store.pushSubscriptions[idUser][sub.id_push_subscription] = sub;
+			store.pushSubscriptions[idUser][sub.id_user_push_subscription] = sub;
 		}
 	},
 };
 
 function hydrateUser(store, idUser, user, expand = []) {
-	store.projetsCommentaireTotalCount[idUser] = user.projets_commentaires_count;
-	store.commandsCommentaireTotalCount[idUser] = user.commands_commentaires_count;
+	store.projectsCommentTotalCount[idUser] = user.project_comments_count;
+	store.commandsCommentTotalCount[idUser] = user.command_comments_count;
 	for (const key of expand) {
 		if (EXPAND_HANDLERS[key]) {
 			EXPAND_HANDLERS[key](store, idUser, user);
@@ -54,25 +54,25 @@ const userResource = createMainResource({
 	},
 });
 
-const projetCommentaireResource = createNestedResource({
-	path: (idUser) => `/user/${idUser}/projet_commentaire`,
-	idField: "id_projet_commentaire",
-	stateKey: "projetsCommentaire",
-	countKey: "projetsCommentaireTotalCount",
-	loadingKey: "projetsCommentaireLoading",
+const projectCommentResource = createNestedResource({
+	path: (idUser) => `/user/${idUser}/project_comment`,
+	idField: "id_project_comment",
+	stateKey: "projectsComment",
+	countKey: "projectsCommentTotalCount",
+	loadingKey: "projectsCommentLoading",
 	onHydrate: (store, idUser, entity, expand) => {
-		if (expand.includes("projet")) {
-			const projetStore = useProjetsStore();
-			projetStore.projets[entity.projet.id_projet] = entity.projet;
+		if (expand.includes("project")) {
+			const projectStore = useProjectsStore();
+			projectStore.projects[entity.project.id_project] = entity.project;
 		}
 	},
 });
-const commandCommentaireResource = createNestedResource({
-	path: (idUser) => `/user/${idUser}/command_commentaire`,
-	idField: "id_command_commentaire",
-	stateKey: "commandsCommentaire",
-	countKey: "commandsCommentaireTotalCount",
-	loadingKey: "commandsCommentaireLoading",
+const commandCommentResource = createNestedResource({
+	path: (idUser) => `/user/${idUser}/command_comment`,
+	idField: "id_command_comment",
+	stateKey: "commandsComment",
+	countKey: "commandsCommentTotalCount",
+	loadingKey: "commandsCommentLoading",
 	onHydrate: (store, idUser, entity, expand) => {
 		if (expand.includes("command")) {
 			const commandStore = useCommandsStore();
@@ -89,7 +89,7 @@ const tokenResource = createNestedResource({
 });
 const pushSubscriptionResource = createNestedResource({
 	path: (idUser) => `/user/${idUser}/push-subscriptions`,
-	idField: "id_push_subscription",
+	idField: "id_user_push_subscription",
 	stateKey: "pushSubscriptions",
 	countKey: "pushSubscriptionsTotalCount",
 	loadingKey: "pushSubscriptionsLoading",
@@ -102,15 +102,15 @@ export const useUsersStore = defineStore("users",{
 		users: {},
 		userEdition: {},
 
-		projetsCommentaireLoading: false,
-		projetsCommentaireTotalCount: {},
-		projetsCommentaire: {},
-		projetCommentaireEdition: {},
+		projectsCommentLoading: false,
+		projectsCommentTotalCount: {},
+		projectsComment: {},
+		projectCommentEdition: {},
 
-		commandsCommentaireLoading: false,
-		commandsCommentaireTotalCount: {},
-		commandsCommentaire: {},
-		commandCommentaireEdition: {},
+		commandsCommentLoading: false,
+		commandsCommentTotalCount: {},
+		commandsComment: {},
+		commandCommentEdition: {},
 
 		tokensLoading: false,
 		tokensTotalCount: {},
@@ -142,12 +142,12 @@ export const useUsersStore = defineStore("users",{
 				this.userEdition[id] = {
 					loading: false,
 					id_user: this.users[id].id_user,
-					nom_user: this.users[id].nom_user,
-					prenom_user: this.users[id].prenom_user,
+					name_user: this.users[id].name_user,
+					firstname_user: this.users[id].firstname_user,
 					email_user: this.users[id].email_user,
 					role_user: this.users[id].role_user,
-					current_mdp_user: "",
-					mdp_user: "",
+					current_password_user: "",
+					password_user: "",
 					confirm_mdp_user: "",
 				};
 			} else {
@@ -155,8 +155,8 @@ export const useUsersStore = defineStore("users",{
 					loading: false,
 				};
 			}
-			this.projetCommentaireEdition[id] = {};
-			this.commandCommentaireEdition[id] = {};
+			this.projectCommentEdition[id] = {};
+			this.commandCommentEdition[id] = {};
 			this.tokensEdition[id] = {};
 			this.pushSubscriptionsEdition[id] = {};
 		},
@@ -168,23 +168,23 @@ export const useUsersStore = defineStore("users",{
 		},
 		clearEdition(id) {
 			delete this.userEdition[id];
-			delete this.projetCommentaireEdition[id];
-			delete this.commandCommentaireEdition[id];
+			delete this.projectCommentEdition[id];
+			delete this.commandCommentEdition[id];
 			delete this.tokensEdition[id];
 			delete this.pushSubscriptionsEdition[id];
 		},
 
-		getProjetCommentaireByInterval: projetCommentaireResource.getByInterval,
-		getProjetCommentaireById: projetCommentaireResource.getById,
-		createProjetCommentaire: projetCommentaireResource.create,
-		updateProjetCommentaire: projetCommentaireResource.update,
-		deleteProjetCommentaire: projetCommentaireResource.remove,
+		getProjectCommentByInterval: projectCommentResource.getByInterval,
+		getProjectCommentById: projectCommentResource.getById,
+		createProjectComment: projectCommentResource.create,
+		updateProjectComment: projectCommentResource.update,
+		deleteProjectComment: projectCommentResource.remove,
 
-		getCommandCommentaireByInterval: commandCommentaireResource.getByInterval,
-		getCommandCommentaireById: commandCommentaireResource.getById,
-		createCommandCommentaire: commandCommentaireResource.create,
-		updateCommandCommentaire: commandCommentaireResource.update,
-		deleteCommandCommentaire: commandCommentaireResource.remove,
+		getCommandCommentByInterval: commandCommentResource.getByInterval,
+		getCommandCommentById: commandCommentResource.getById,
+		createCommandComment: commandCommentResource.create,
+		updateCommandComment: commandCommentResource.update,
+		deleteCommandComment: commandCommentResource.remove,
 
 		getTokenByInterval: tokenResource.getByInterval,
 		getTokenById: tokenResource.getById,

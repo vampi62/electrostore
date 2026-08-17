@@ -53,7 +53,7 @@ namespace ElectrostoreAPI.Controllers
                 id_user = id_user
             };
             var result = await _userPushSubscriptionService.CreatePushSubscription(dtoFull);
-            return CreatedAtAction(nameof(GetPushSubscriptionById), new { id_user, id_subscription = result.id_push_subscription }, result);
+            return CreatedAtAction(nameof(GetPushSubscriptionById), new { id_user, id_subscription = result.id_user_push_subscription }, result);
         }
 
         [HttpDelete("{id_subscription}")]

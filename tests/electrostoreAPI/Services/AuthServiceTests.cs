@@ -76,10 +76,10 @@ namespace ElectrostoreAPI.Tests.Services
             return new Models.Users
             {
                 id_user = id,
-                nom_user = "Nom",
-                prenom_user = "Prenom",
+                name_user = "Nom",
+                firstname_user = "Prenom",
                 email_user = email,
-                mdp_user = BCrypt.Net.BCrypt.HashPassword(password),
+                password_user = BCrypt.Net.BCrypt.HashPassword(password),
                 role_user = role
             };
         }
@@ -355,7 +355,7 @@ namespace ElectrostoreAPI.Tests.Services
             await authService.ResetPassword(new ResetPasswordRequest { Email = "user@test.com", Token = resetToken.ToString(), Password = "NewPassword1!" });
             // Assert
             var updatedUser = await context.Users.FindAsync(1);
-            Assert.True(BCrypt.Net.BCrypt.Verify("NewPassword1!", updatedUser!.mdp_user));
+            Assert.True(BCrypt.Net.BCrypt.Verify("NewPassword1!", updatedUser!.password_user));
             Assert.Null(updatedUser.reset_token);
             Assert.Null(updatedUser.reset_token_expiration);
             _jwiService.Verify(j => j.RevokeAllAccessTokenByUser(1, "User reset password"), Times.Once);

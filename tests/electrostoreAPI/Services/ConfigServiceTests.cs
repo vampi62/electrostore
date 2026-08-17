@@ -84,7 +84,7 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.IsType<ReadConfig>(result);
             Assert.Equal(_configuration.GetValue<bool>("DemoMode"), result.demo_mode);
             Assert.Equal(Constants.MaxUrlLength, result.max_length_url);
-            Assert.Equal(Constants.MaxCommentaireLength, result.max_length_commentaire);
+            Assert.Equal(Constants.MaxCommentLength, result.max_length_comment);
             Assert.Equal(Constants.MaxDescriptionLength, result.max_length_description);
             Assert.Equal(Constants.MaxNameLength,  result.max_length_name);
             Assert.Equal(Constants.MaxTypeLength, result.max_length_type);

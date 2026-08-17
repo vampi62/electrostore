@@ -48,7 +48,7 @@ namespace ElectrostoreAPI.Controllers
                 x_led = ledDto.x_led,
                 y_led = ledDto.y_led,
                 id_store = id_store,
-                mqtt_led_id = ledDto.mqtt_led_id
+                mqtt_id_led = ledDto.mqtt_id_led
             };
             var led = await _ledService.CreateLed(ledDtoFull);
             return CreatedAtAction(nameof(GetLedById), new { id_store = led.id_store, id_led = led.id_led }, led);
@@ -63,7 +63,7 @@ namespace ElectrostoreAPI.Controllers
                 x_led = ledDto.x_led,
                 y_led = ledDto.y_led,
                 id_store = id_store,
-                mqtt_led_id = ledDto.mqtt_led_id
+                mqtt_id_led = ledDto.mqtt_id_led
             }).ToList();
             var leds = await _ledService.CreateBulkLed(ledsDtoFull);
             return Ok(leds);
@@ -77,7 +77,7 @@ namespace ElectrostoreAPI.Controllers
             {
                 x_led = ledDto.x_led,
                 y_led = ledDto.y_led,
-                mqtt_led_id = ledDto.mqtt_led_id
+                mqtt_id_led = ledDto.mqtt_id_led
             };
             var led = await _ledService.UpdateLed(id_led, ledDtoFull, id_store);
             return Ok(led);

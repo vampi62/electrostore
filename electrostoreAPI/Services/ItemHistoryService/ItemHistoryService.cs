@@ -194,11 +194,11 @@ public class ItemHistoryService : IItemHistoryService
             id_item = itemId,
             id_box = boxId,
             id_user = userId,
-            type = type,
-            quantity_change = quantityChange,
-            old_quantity = oldQuantity,
-            new_quantity = newQuantity,
-            notes = notes
+            type_item_history = type,
+            quantity_change_item_history = quantityChange,
+            old_quantity_item_history = oldQuantity,
+            new_quantity_item_history = newQuantity,
+            notes_item_history = notes
         };
         _context.ItemsHistory.Add(entry);
         await _context.SaveChangesAsync();

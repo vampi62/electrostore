@@ -23,7 +23,7 @@
 						left: (led.x_led * gridSize.cellSizeX) + gridSize.cellSizeX / 2 + 10 + 'px',
 						top: (((storeData.ylength_store - 1) - led.y_led) * gridSize.cellSizeY) + gridSize.cellSizeY / 2 + 8 + 'px'}"
 					:class="{ 'hidden': led?.status == 'delete' }">
-					{{ led.mqtt_led_id }}
+					{{ led.mqtt_id_led }}
 				</div>
 			</template>
 			<div v-for="box in boxEdition" :key="box.id_box" class="absolute z-[10] border-2 border-[rgb(9,255,0)] overflow-hidden" :ref="'BOX' + box.id_box"
@@ -93,7 +93,7 @@
 						</button>
 						<div class="flex space-x-4">
 							<span>{{ $t('store.MqttLedId') }}</span>
-							<input type="number" v-model="ledEdition[selectedElement.key.id_led].mqtt_led_id" class="w-16" :disabled="!canEdit" />
+							<input type="number" v-model="ledEdition[selectedElement.key.id_led].mqtt_id_led" class="w-16" :disabled="!canEdit" />
 						</div>
 						<!-- TODO : add color weel and select animation and light duration -->
 					</template>
@@ -171,7 +171,7 @@ export default {
 				id_led: this.getLastLedId() + 1,
 				x_led: this.mouseClick.X,
 				y_led: this.mouseClick.Y,
-				mqtt_led_id: this.getLastLedMqttId() + 1,
+				mqtt_id_led: this.getLastLedMqttId() + 1,
 				status: "new",
 			};
 			this.showMenu = false;
@@ -208,8 +208,8 @@ export default {
 		getLastLedMqttId() {
 			let max = 0;
 			Object.keys(this.ledEdition).forEach((led) => {
-				if (this.ledEdition[led].mqtt_led_id > max) {
-					max = this.ledEdition[led].mqtt_led_id;
+				if (this.ledEdition[led].mqtt_id_led > max) {
+					max = this.ledEdition[led].mqtt_id_led;
 				}
 			});
 			return max;

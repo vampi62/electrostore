@@ -17,5 +17,5 @@ public class Leds : BaseEntity
 
     public int y_led { get; set; }
 
-    public int mqtt_led_id { get; set; }
+    public int mqtt_id_led { get; set; }
 }

@@ -8,7 +8,7 @@ public record ReadItemDto
     public int id_item { get; init; }
     public required string reference_name_item { get; init; }
     public required string friendly_name_item { get; init; }
-    public int seuil_min_item { get; init; }
+    public int threshold_min_item { get; init; }
     public int quantity_item { get; init; }
     public string? description_item { get; init; }
     public int? id_img { get; init; }
@@ -20,12 +20,12 @@ public record ReadExtendedItemDto : ReadItemDto
     public int item_tags_count { get; init; }
     public int item_boxs_count { get; init; }
     public int command_items_count { get; init; }
-    public int projet_items_count { get; init; }
+    public int project_items_count { get; init; }
     public int item_documents_count { get; init; }
     public IEnumerable<ReadItemTagDto>? item_tags { get; init; }
     public IEnumerable<ReadItemBoxDto>? item_boxs { get; init; }
     public IEnumerable<ReadCommandItemDto>? command_items { get; init; }
-    public IEnumerable<ReadProjetItemDto>? projet_items { get; init; }
+    public IEnumerable<ReadProjectItemDto>? project_items { get; init; }
     public IEnumerable<ReadItemDocumentDto>? item_documents { get; init; }
     public IEnumerable<ReadItemHistoryDto>? item_history { get; init; }
 }
@@ -41,7 +41,7 @@ public record CreateItemDto
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public required int seuil_min_item { get; init; }
+    public required int threshold_min_item { get; init; }
 
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? description_item { get; init; }
@@ -59,7 +59,7 @@ public record UpdateItemDto
     public string? friendly_name_item { get; init; }
 
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int? seuil_min_item { get; init; }
+    public int? threshold_min_item { get; init; }
 
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? description_item { get; init; }

@@ -29,21 +29,21 @@ public class StatusService : IStatusService
 
     public async Task<ReadStatusDto> GetStatus()
     {
-        var iaUrl = _configuration.GetValue<string>("IAServiceHealthUrl") ?? "http://electrostoreIA:5000/health";
+        var aiUrl = _configuration.GetValue<string>("IAServiceHealthUrl") ?? "http://electrostoreIA:5000/health";
         var notifUrl = _configuration.GetValue<string>("NotifServiceHealthUrl") ?? "http://electrostoreNOTIF:5000/health";
         var cronUrl = _configuration.GetValue<string>("CRONServiceHealthUrl") ?? "http://electrostoreCRON:5000/health";
         var workerUrl = _configuration.GetValue<string>("WORKERServiceHealthUrl") ?? "http://electrostoreWORKER:5000/health";
 
-        var iaTask = FetchServiceHealth(iaUrl);
+        var aiTask = FetchServiceHealth(aiUrl);
         var notifTask = FetchServiceHealth(notifUrl);
         var cronTask = FetchServiceHealth(cronUrl);
         var workerTask = FetchServiceHealth(workerUrl);
         var dbTask = CheckDatabaseAsync();
         var kafkaTask = _kafkaProducerService.IsConnectedAsync();
 
-        await Task.WhenAll(iaTask, notifTask, cronTask, workerTask, dbTask, kafkaTask);
+        await Task.WhenAll(aiTask, notifTask, cronTask, workerTask, dbTask, kafkaTask);
 
-        var iaHealth = iaTask.Result;
+        var aiHealth = aiTask.Result;
         var notifHealth = notifTask.Result;
         var cronHealth = cronTask.Result;
         var workerHealth = workerTask.Result;
@@ -54,8 +54,8 @@ public class StatusService : IStatusService
             db_connected = dbTask.Result,
             mqtt_connected = _mqttClient.IsConnected,
             kafka_connected = kafkaTask.Result, 
-            ia_status = iaHealth.TryGetValue("status", out var iaStatus) && iaStatus.GetString() is string s ? s : "unknown",
-            ia_training_in_progress = iaHealth.TryGetValue("training_in_progress", out var trainingElement) && trainingElement.ValueKind == JsonValueKind.Number && trainingElement.TryGetInt32(out var trainingCount) ? trainingCount : 0,
+            ai_status = aiHealth.TryGetValue("status", out var aiStatus) && aiStatus.GetString() is string s ? s : "unknown",
+            ai_training_in_progress = aiHealth.TryGetValue("training_in_progress", out var trainingElement) && trainingElement.ValueKind == JsonValueKind.Number && trainingElement.TryGetInt32(out var trainingCount) ? trainingCount : 0,
             notif_status = notifHealth.TryGetValue("status", out var notifStatus) && notifStatus.GetString() is string ns ? ns : "unknown",
             notif_smtp = notifHealth.TryGetValue("smtp", out var smtpElement) && (smtpElement.ValueKind == JsonValueKind.True || smtpElement.ValueKind == JsonValueKind.False) ? smtpElement.ValueKind == JsonValueKind.True : (bool?)false,
             notif_webPush = notifHealth.TryGetValue("webPush", out var wpElement) && (wpElement.ValueKind == JsonValueKind.True || wpElement.ValueKind == JsonValueKind.False) ? wpElement.ValueKind == JsonValueKind.True : (bool?)false,

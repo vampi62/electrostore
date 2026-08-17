@@ -6,7 +6,7 @@ namespace ElectrostoreAPI.Dto;
 public record ReadImgDto
 {
     public int id_img { get; init; }
-    public required string nom_img { get; init; }
+    public required string name_img { get; init; }
     public required string url_picture_img { get; init; }
     public required string url_thumbnail_img { get; init; }
     public string? description_img { get; init; }
@@ -18,7 +18,7 @@ public record CreateImgByItemDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public required string nom_img { get; init; }
+    public required string name_img { get; init; }
 
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? description_img { get; init; }
@@ -33,7 +33,7 @@ public record CreateImgDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public required string nom_img { get; init; }
+    public required string name_img { get; init; }
 
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? description_img { get; init; }
@@ -51,7 +51,7 @@ public record UpdateImgDto
 {
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
-    public string? nom_img { get; init; }
+    public string? name_img { get; init; }
 
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? description_img { get; init; }

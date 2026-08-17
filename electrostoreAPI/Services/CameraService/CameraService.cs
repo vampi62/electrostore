@@ -117,9 +117,9 @@ public class CameraService : ICameraService
             throw new UnauthorizedAccessException("You do not have permission to update a camera");
         }
         var cameraToUpdate = await _context.Cameras.FindAsync(id) ?? throw new KeyNotFoundException($"Camera with id '{id}' not found");
-        if (cameraDto.nom_camera is not null)
+        if (cameraDto.name_camera is not null)
         {
-            cameraToUpdate.nom_camera = cameraDto.nom_camera;
+            cameraToUpdate.name_camera = cameraDto.name_camera;
         }
         if (cameraDto.url_camera is not null)
         {
@@ -129,9 +129,9 @@ public class CameraService : ICameraService
         {
             cameraToUpdate.user_camera = cameraDto.user_camera;
         }
-        if (cameraDto.mdp_camera is not null)
+        if (cameraDto.password_camera is not null)
         {
-            cameraToUpdate.mdp_camera = cameraDto.mdp_camera;
+            cameraToUpdate.password_camera = cameraDto.password_camera;
         }
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadCameraDto>(cameraToUpdate);
@@ -179,9 +179,9 @@ public class CameraService : ICameraService
             var client = _httpClientFactory.CreateClient();
             var urlFluxStream = camera.url_camera.EndsWith('/') ? camera.url_camera.Substring(0, camera.url_camera.Length - 1) : camera.url_camera;
             var request = new HttpRequestMessage(HttpMethod.Get, urlFluxStream);
-            if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.mdp_camera))
+            if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.password_camera))
             {
-                var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.mdp_camera}");
+                var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.password_camera}");
                 request.Headers.Authorization = new AuthenticationHeaderValue(camAuthMethod, Convert.ToBase64String(byteArray));
             }
             client.Timeout = TimeSpan.FromSeconds(5);
@@ -252,9 +252,9 @@ public class CameraService : ICameraService
             var client = _httpClientFactory.CreateClient();
             var urlFluxStream = camera.url_camera.EndsWith('/') ? camera.url_camera.Substring(0, camera.url_camera.Length - 1) : camera.url_camera;
             var request = new HttpRequestMessage(HttpMethod.Get, urlFluxStream + "/capture");
-            if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.mdp_camera))
+            if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.password_camera))
             {
-                var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.mdp_camera}");
+                var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.password_camera}");
                 request.Headers.Authorization = new AuthenticationHeaderValue(camAuthMethod, Convert.ToBase64String(byteArray));
             }
             client.Timeout = TimeSpan.FromSeconds(5);
@@ -285,9 +285,9 @@ public class CameraService : ICameraService
             var client = _httpClientFactory.CreateClient();
             var urlFluxStream = camera.url_camera.EndsWith('/') ? camera.url_camera.Substring(0, camera.url_camera.Length - 1) : camera.url_camera;
             var request = new HttpRequestMessage(HttpMethod.Get, urlFluxStream + "/light?state=" + (reqCamera.state ? "on" : "off"));
-            if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.mdp_camera))
+            if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.password_camera))
             {
-                var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.mdp_camera}");
+                var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.password_camera}");
                 request.Headers.Authorization = new AuthenticationHeaderValue(camAuthMethod, Convert.ToBase64String(byteArray));
             }
             client.Timeout = TimeSpan.FromSeconds(5);
@@ -333,9 +333,9 @@ public class CameraService : ICameraService
             var client = _httpClientFactory.CreateClient();
             var urlFluxStream = camera.url_camera.EndsWith('/') ? camera.url_camera.Substring(0, camera.url_camera.Length - 1) : camera.url_camera;
             var request = new HttpRequestMessage(HttpMethod.Get, urlFluxStream + "/stream");
-            if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.mdp_camera))
+            if (!string.IsNullOrWhiteSpace(camera.user_camera) && !string.IsNullOrWhiteSpace(camera.password_camera))
             {
-                var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.mdp_camera}");
+                var byteArray = Encoding.ASCII.GetBytes($"{camera.user_camera}:{camera.password_camera}");
                 request.Headers.Authorization = new AuthenticationHeaderValue(camAuthMethod, Convert.ToBase64String(byteArray));
             }
             var response = await client.SendAsync(request);

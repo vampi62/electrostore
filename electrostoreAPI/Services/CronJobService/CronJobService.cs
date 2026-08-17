@@ -110,9 +110,9 @@ public class CronJobService : ICronJobService
         {
             cronJobToUpdate.name_cronjob = cronJobDto.name_cronjob;
         }
-        if (cronJobDto.cron_expression is not null)
+        if (cronJobDto.cron_expression_cronjob is not null)
         {
-            cronJobToUpdate.cron_expression = cronJobDto.cron_expression;
+            cronJobToUpdate.cron_expression_cronjob = cronJobDto.cron_expression_cronjob;
         }
         if (cronJobDto.action_cronjob is not null)
         {

@@ -13,7 +13,7 @@ public class ItemsBoxs : BaseEntity
     [ForeignKey("id_item")]
     public Items? Item { get; set; }
 
-    public int qte_item_box { get; set; }
+    public int quantity_item_box { get; set; }
     
-    public int seuil_max_item_item_box { get; set; }
+    public int threshold_max_item_item_box { get; set; }
 }

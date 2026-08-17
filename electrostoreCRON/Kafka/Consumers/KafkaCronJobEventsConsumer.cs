@@ -173,7 +173,7 @@ public class KafkaCronJobEventsConsumer : BackgroundService
 
     private async Task ScheduleOrReplaceJobAsync(IScheduler scheduler, CronJobEventData job, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(job.cron_expression))
+        if (string.IsNullOrWhiteSpace(job.cron_expression_cronjob))
         {
             _logger.LogWarning("CronJob #{Id}: empty cron expression, skipped.", job.id_cronjob);
             return;
@@ -192,7 +192,7 @@ public class KafkaCronJobEventsConsumer : BackgroundService
             .Build();
 
         // Normalize 5-field Unix cron (m h dom mon dow) to 6-field Quartz cron (s m h dom mon dow)
-        var cronExpression = job.cron_expression.Trim();
+        var cronExpression = job.cron_expression_cronjob.Trim();
         if (cronExpression.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length == 5)
         {
             cronExpression = "0 " + cronExpression;
@@ -209,14 +209,14 @@ public class KafkaCronJobEventsConsumer : BackgroundService
         catch (FormatException ex)
         {
             _logger.LogError(ex,
-                "CronJob #{Id}: invalid cron expression '{Expr}' - skipped.", job.id_cronjob, job.cron_expression);
+                "CronJob #{Id}: invalid cron expression '{Expr}' - skipped.", job.id_cronjob, job.cron_expression_cronjob);
             return;
         }
 
         await scheduler.ScheduleJob(jobDetail, trigger, ct);
         _logger.LogInformation(
             "CronJob #{Id} scheduled via event - action={Action}, expr={Expr}",
-            job.id_cronjob, job.action_cronjob, job.cron_expression);
+            job.id_cronjob, job.action_cronjob, job.cron_expression_cronjob);
     }
 
     private async Task RemoveJobAsync(IScheduler scheduler, int idCronjob, CancellationToken ct)

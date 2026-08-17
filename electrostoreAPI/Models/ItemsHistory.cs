@@ -23,14 +23,14 @@ public class ItemsHistory : BaseEntity
     [ForeignKey("id_user")]
     public Users? User { get; set; }
 
-    public ItemHistoryType type { get; set; }
+    public ItemHistoryType type_item_history { get; set; }
 
-    public int? quantity_change { get; set; }
+    public int? quantity_change_item_history { get; set; }
 
-    public int? old_quantity { get; set; }
+    public int? old_quantity_item_history { get; set; }
 
-    public int? new_quantity { get; set; }
+    public int? new_quantity_item_history { get; set; }
 
     [MaxLength(Constants.MaxDescriptionLength)]
-    public string? notes { get; set; }
+    public string? notes_item_history { get; set; }
 }

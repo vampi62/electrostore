@@ -14,11 +14,11 @@ const route = useRoute();
 const userId = ref(route.params.id);
 const preset = ref(route.query.preset || null);
 
-import { useConfigsStore, useUsersStore, useCommandsStore, useProjetsStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useUsersStore, useCommandsStore, useProjectsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
 const usersStore = useUsersStore();
 const commandsStore = useCommandsStore();
-const projetsStore = useProjetsStore();
+const projectsStore = useProjectsStore();
 const authStore = useAuthStore();
 
 const formContainer = ref(null);
@@ -84,17 +84,17 @@ const userSave = async() => {
 			router.push("/users/" + userId.value);
 		} else {
 			const data = { ...usersStore.userEdition[userId.value] };
-			if (!data.mdp_user) {
-				delete data.mdp_user;
+			if (!data.password_user) {
+				delete data.password_user;
 				delete data.confirm_mdp_user;
 			}
 			await usersStore.updateUser(userId.value, data);
 			usersStore.loadToEdition(userId.value);
 			addNotification({ message: t("user.Updated"), type: "success" });
 		}
-		usersStore.userEdition[userId.value].mdp_user = "";
+		usersStore.userEdition[userId.value].password_user = "";
 		usersStore.userEdition[userId.value].confirm_mdp_user = "";
-		usersStore.userEdition[userId.value].current_mdp_user = "";
+		usersStore.userEdition[userId.value].current_password_user = "";
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	} finally {
@@ -128,10 +128,10 @@ const createSchema = () => {
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
-	shape.nom_user = Yup.string()
+	shape.name_user = Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("user.NameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("user.NameRequired"));
-	shape.prenom_user = Yup.string()
+	shape.firstname_user = Yup.string()
 		.max(configsStore.getConfigByKey("max_length_name"), t("user.FirstNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
 		.required(t("user.FirstNameRequired"));
 	shape.email_user = Yup.string()
@@ -139,37 +139,37 @@ const createSchema = () => {
 		.required(t("user.EmailRequired"))
 		.email(t("user.EmailInvalid"));
 	if (edition?._check) {
-		shape.mdp_user = Yup.string()
-			.required(t("user.PasswordRequired")).notOneOf([Yup.ref("current_mdp_user"), null], t("user.PasswordMatch")).matches(
+		shape.password_user = Yup.string()
+			.required(t("user.PasswordRequired")).notOneOf([Yup.ref("current_password_user"), null], t("user.PasswordMatch")).matches(
 				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
 				t("user.PasswordComplexity"),
 			);
 		shape.confirm_mdp_user = Yup.string()
-			.required(t("user.ConfirmPasswordRequired")).oneOf([Yup.ref("mdp_user"), null], t("user.ConfirmPasswordMatch")).matches(
+			.required(t("user.ConfirmPasswordRequired")).oneOf([Yup.ref("password_user"), null], t("user.ConfirmPasswordMatch")).matches(
 				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
 				t("user.PasswordComplexity"),
 			);
 	} else {
-		shape.mdp_user = Yup.string().nullable();
+		shape.password_user = Yup.string().nullable();
 		shape.confirm_mdp_user = Yup.string().nullable();
 	}
-	shape.current_mdp_user = Yup.string()
+	shape.current_password_user = Yup.string()
 		.required(t("user.CurrentPasswordRequired"));
 	return Yup.object().shape(shape);
 };
 
 const labelForm = ref([
-	{ key: "nom_user", label: "user.Name", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
-	{ key: "prenom_user", label: "user.FirstName", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+	{ key: "name_user", label: "user.Name", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
+	{ key: "firstname_user", label: "user.FirstName", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 	{ key: "email_user", label: "user.Email", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 	{ key: "role_user", label: "user.Role", type: "select", options: userTypeRole, enableCondition: "func.hasPermission([2])" },
 	{ key: "_check", label: "user.Check", type: "checkbox", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
-	{ key: "mdp_user", label: "user.Password", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?._check",
+	{ key: "password_user", label: "user.Password", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?._check",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
 	{ key: "confirm_mdp_user", label: "user.ConfirmPassword", type: "password", enableCondition: "(edition?.id_user === session?.id_user || func.hasPermission([2])) && edition?._check",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
-	{ key: "current_mdp_user", label: "user.CurrentPassword", type: "password", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])",
+	{ key: "current_password_user", label: "user.CurrentPassword", type: "password", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])",
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
 ]);
 
@@ -239,7 +239,7 @@ async function checkExistingSubscription() {
 		await usersStore.getPushSubscriptionsByInterval(userId.value, 100, 0, true);
 		const subs = usersStore.pushSubscriptions[userId.value] || {};
 		const match = Object.values(subs).find((s) => s.endpoint === sub.endpoint);
-		pushSubscriptionId.value = match ? match.id_push_subscription : null;
+		pushSubscriptionId.value = match ? match.id_user_push_subscription : null;
 	} catch (e) {
 		pushSubscriptionId.value = null;
 	}
@@ -275,7 +275,7 @@ async function subscribePush() {
 			auth: json.keys.auth,
 			device_name: pushDeviceName.value || undefined,
 		});
-		pushSubscriptionId.value = created.id_push_subscription;
+		pushSubscriptionId.value = created.id_user_push_subscription;
 		addNotification({ message: t("user.PushSubscribed"), type: "success" });
 	} catch (e) {
 		addNotification({ message: t("user.PushSubscribeError"), type: "error" });
@@ -349,7 +349,7 @@ const labelTableauPushSubscriptions = ref([
 		{
 			label: "user.PushDeleteBtn",
 			icon: "fa-solid fa-trash",
-			action: (row) => deletePushSubscriptionFromTable(row.id_push_subscription),
+			action: (row) => deletePushSubscriptionFromTable(row.id_user_push_subscription),
 			class: "bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600",
 			animation: true,
 		},
@@ -378,27 +378,27 @@ onMounted(() => {
 		</div>
 		<CollapsibleSection title="user.Participation" :permission="userId !=='new'">
 			<template #append-row>
-				<CollapsibleSection title="user.CommandsCommentaires" :disable-margin="true"
-					:total-count="Number(usersStore.commandsCommentaireTotalCount[userId] || 0)" :permission="userId !=='new'">
+				<CollapsibleSection title="user.CommandsComments" :disable-margin="true"
+					:total-count="Number(usersStore.commandsCommentTotalCount[userId] || 0)" :permission="userId !=='new'">
 					<template #append-row>
-						<Commentaire :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'contenu_command_commentaire', key: 'id_command_commentaire', canEdit: false, roleRequired: false, expand: ['command'] }"
-							:store-data="[usersStore.commandsCommentaire[userId], usersStore.users]"
+						<Comment :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'content_command_comment', key: 'id_command_comment', canEdit: false, roleRequired: false, expand: ['command'] }"
+							:store-data="[usersStore.commandsComment[userId], usersStore.users]"
 							:store-user="authStore.user" :store-config="configsStore"
-							:loading="usersStore.commandsCommentaireLoading"
-							:total-count="Number(usersStore.commandsCommentaireTotalCount[userId]) || 0"
-							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getCommandCommentaireByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+							:loading="usersStore.commandsCommentLoading"
+							:total-count="Number(usersStore.commandsCommentTotalCount[userId]) || 0"
+							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getCommandCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>
-				<CollapsibleSection title="user.ProjetsCommentaires" :disable-margin="true"
-					:total-count="Number(usersStore.projetsCommentaireTotalCount[userId] || 0)" :permission="userId !=='new'">
+				<CollapsibleSection title="user.ProjectsComments" :disable-margin="true"
+					:total-count="Number(usersStore.projectsCommentTotalCount[userId] || 0)" :permission="userId !=='new'">
 					<template #append-row>
-						<Commentaire :meta="{ link: '/projets/', idRessource: 'id_projet', contenu: 'contenu_projet_commentaire', key: 'id_projet_commentaire', canEdit: false, roleRequired: false, expand: ['projet'] }"
-							:store-data="[usersStore.projetsCommentaire[userId], usersStore.users]"
+						<Comment :meta="{ link: '/projects/', idRessource: 'id_project', contenu: 'content_project_comment', key: 'id_project_comment', canEdit: false, roleRequired: false, expand: ['project'] }"
+							:store-data="[usersStore.projectsComment[userId], usersStore.users]"
 							:store-user="authStore.user" :store-config="configsStore"
-							:loading="usersStore.projetsCommentaireLoading"
-							:total-count="Number(usersStore.projetsCommentaireTotalCount[userId]) || 0"
-							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getProjetCommentaireByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+							:loading="usersStore.projectsCommentLoading"
+							:total-count="Number(usersStore.projectsCommentTotalCount[userId]) || 0"
+							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getProjectCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>
@@ -460,7 +460,7 @@ onMounted(() => {
 						<i class="fa-solid fa-bell mr-1"></i>{{ $t('user.PushSendTestEmail') }}
 					</button>
 				</div>
-				<Tableau :labels="labelTableauPushSubscriptions" :meta="{ key: 'id_push_subscription' }"
+				<Tableau :labels="labelTableauPushSubscriptions" :meta="{ key: 'id_user_push_subscription' }"
 					:store-data="[usersStore.pushSubscriptions[userId]]"
 					:loading="usersStore.pushSubscriptionsLoading"
 					:total-count="Number(usersStore.pushSubscriptionsTotalCount[userId]) || 0"

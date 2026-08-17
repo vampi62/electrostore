@@ -22,7 +22,7 @@ const filter = ref([
 const tableauLabel = ref([
 	{ label: "cronJobs.Name", sortable: true, key: "name_cronjob", valueKey: "name_cronjob", type: "text" },
 	{ label: "cronJobs.Action", sortable: true, key: "action_cronjob", valueKey: "action_cronjob", type: "enum", options: cronJobActionOptions },
-	{ label: "cronJobs.CronExpression", sortable: true, key: "cron_expression", valueKey: "cron_expression", type: "text" },
+	{ label: "cronJobs.CronExpression", sortable: true, key: "cron_expression_cronjob", valueKey: "cron_expression_cronjob", type: "text" },
 	{ label: "cronJobs.IsEnabled", sortable: true, key: "is_enabled", valueKey: "is_enabled", type: "enum", options: { [false]: t("cronJobs.FilterEnabled0"), [true]: t("cronJobs.FilterEnabled1") } },
 	{ label: "cronJobs.LastRun", sortable: true, key: "last_run_at", valueKey: "last_run_at", type: "datetime" },
 	{ label: "cronJobs.NextRun", sortable: true, key: "next_run_at", valueKey: "next_run_at", type: "datetime" },

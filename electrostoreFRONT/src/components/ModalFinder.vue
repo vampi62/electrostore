@@ -19,21 +19,21 @@
 								'bg-red-200': selectedPageFind.camera !== camera && camerasStore.status[camera.id_camera]?.statusCode !== 200,
 								'bg-gray-200': selectedPageFind.camera !== camera && camerasStore.status[camera.id_camera]?.statusCode === 200,
 								'cursor-pointer': camerasStore.status[camera.id_camera]?.statusCode == 200 }">
-							<div>{{ camera.nom_camera }}</div>
+							<div>{{ camera.name_camera }}</div>
 							<span class="h-4 text-xs">{{ camera.url_camera }}</span>
 						</div>
 					</div>
 					<span class="text-lg font-bold">{{ $t('items.FindIAList') }}</span>
 					<div class="max-h-40 overflow-y-auto">
-						<div v-for="ia in iasStore.ias" :key="ia.id_ia" @click="ia.trained_ia ? selectedPageFind.ia = ia : null"
+						<div v-for="ai in iasStore.ais" :key="ai.id_ia" @click="ai.trained_ia ? selectedPageFind.ai = ai : null"
 							class="p-1 border"
 							:class="{
-								'bg-blue-500 text-white': selectedPageFind.ia === ia,
-								'bg-red-200': selectedPageFind.ia !== ia && ia.trained_ia === false,
-								'bg-gray-200': selectedPageFind.ia !== ia && ia.trained_ia === true,
-								'cursor-pointer': ia.trained_ia }">
-							<div>{{ ia.nom_ia }}</div>
-							<span class="h-4 text-xs">{{ formatDateForDatetimeLocal(ia.date_ia) }}</span>
+								'bg-blue-500 text-white': selectedPageFind.ai === ai,
+								'bg-red-200': selectedPageFind.ai !== ai && ai.trained_ia === false,
+								'bg-gray-200': selectedPageFind.ai !== ai && ai.trained_ia === true,
+								'cursor-pointer': ai.trained_ia }">
+							<div>{{ ai.name_ia }}</div>
+							<span class="h-4 text-xs">{{ formatDateForDatetimeLocal(ai.date_ia) }}</span>
 						</div>
 					</div>
 				</div>
@@ -58,7 +58,7 @@
 						<div class="flex flex-col mx-2">
 							<button @click="startDetection()"
 							class="px-3 py-1 rounded text-sm inline-block my-2"
-							:class="selectedPageFind.ia && (selectedPageFind.camera || selectedPageFind.image) ? 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer' : 'bg-blue-200 text-gray-500 cursor-not-allowed'">
+							:class="selectedPageFind.ai && (selectedPageFind.camera || selectedPageFind.image) ? 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer' : 'bg-blue-200 text-gray-500 cursor-not-allowed'">
 								{{ $t('items.Detect') }}
 							</button>
 							<button @click="cameraUpdateLight()"
@@ -117,7 +117,7 @@
 <script>
 import { inject } from "vue";
 import { useI18n } from "vue-i18n";
-import { useConfigsStore, useItemsStore, useIasStore, useCamerasStore } from "@/stores";
+import { useConfigsStore, useItemsStore, useAisStore, useCamerasStore } from "@/stores";
 export default {
 	name: "ModalFinder",
 	methods: {
@@ -143,7 +143,7 @@ export default {
 			this.camerasStore.getStatus(this.selectedPageFind.camera.id_camera);
 		},
 		async startDetection() {
-			if (!this.selectedPageFind.ia) {
+			if (!this.selectedPageFind.ai) {
 				return;
 			}
 			if (this.selectedPageFind.camera) {
@@ -153,14 +153,14 @@ export default {
 					this.addNotification("error", this.t("items.ErrorCapture"));
 					return;
 				}
-				await this.iasStore.detectItem(this.selectedPageFind.ia.id_ia, this.camerasStore.capture[this.selectedPageFind.camera.id_camera]);
+				await this.iasStore.detectItem(this.selectedPageFind.ai.id_ia, this.camerasStore.capture[this.selectedPageFind.camera.id_camera]);
 				if (!this.iasStore.status.detect.predictedLabel) {
 					this.addNotification("error", this.t("items.ErrorDetect"));
 					return;
 				}
 			} else if (this.selectedPageFind.image) {
 				this.iasStore.status.detect = { loading: true };
-				await this.iasStore.detectItem(this.selectedPageFind.ia.id_ia, this.selectedPageFind.image);
+				await this.iasStore.detectItem(this.selectedPageFind.ai.id_ia, this.selectedPageFind.image);
 				if (!this.iasStore.status.detect.predictedLabel) {
 					this.addNotification("error", this.t("items.ErrorDetect"));
 					return;
@@ -206,7 +206,7 @@ export default {
 		},
 		async loadPageFind() {
 			this.showPageFind = true;
-			this.selectedPageFind.ia = null;
+			this.selectedPageFind.ai = null;
 			this.selectedPageFind.camera = null;
 			this.selectedPageFind.image = null;
 			this.iasStore.status.detect = {};
@@ -221,7 +221,7 @@ export default {
 		const { addNotification } = inject("useNotification"); 
 		const { t } = useI18n();
 		const configsStore = useConfigsStore();
-		const iasStore = useIasStore();
+		const iasStore = useAisStore();
 		const itemsStore = useItemsStore();
 		const camerasStore = useCamerasStore();
 		return {
@@ -235,7 +235,7 @@ export default {
 	},
 	data() {
 		return {
-			selectedPageFind: { ia: null, camera: null, image: null, imageBlob: null },
+			selectedPageFind: { ai: null, camera: null, image: null, imageBlob: null },
 			fileInput: null,
 			showPageFind: false,
 			allowedExtensions: this.configsStore.getConfigByKey("allowed_image_extensions") || [],

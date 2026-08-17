@@ -6,8 +6,8 @@ namespace ElectrostoreAPI.Dto;
 public record ReadTagDto
 {
     public int id_tag { get; init; }
-    public required string nom_tag { get; init; }
-    public int poids_tag { get; init; }
+    public required string name_tag { get; init; }
+    public int weight_tag { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
 }
@@ -31,18 +31,18 @@ public record CreateTagDto
 {
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
-    public required string nom_tag { get; init; }
+    public required string name_tag { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public required int poids_tag { get; init; }
+    public required int weight_tag { get; init; }
 }
 public record UpdateTagDto
 {
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
-    public string? nom_tag { get; init; }
+    public string? name_tag { get; init; }
 
     [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
-    public int? poids_tag { get; init; }
+    public int? weight_tag { get; init; }
 }

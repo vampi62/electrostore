@@ -38,20 +38,20 @@ public class JwiService : IJwiService
             id_jwi_access = token.token_id,
             expires_at = token.expire_date_token,
             is_revoked = false,
-            auth_method = reason,
-            created_by_ip = clientIp,
+            auth_method_jwi_access = reason,
+            created_by_ip_jwi_access = clientIp,
             id_user = userId,
-            session_id = (Guid)sessionId,
+            session_id_jwi_access = (Guid)sessionId,
         };
         var jwi_refresh = new JwiRefreshTokens
         {
             id_jwi_refresh = token.refresh_token_id,
             expires_at = token.expire_date_refresh_token,
             is_revoked = false,
-            auth_method = reason,
-            created_by_ip = clientIp,
+            auth_method_jwi_refresh = reason,
+            created_by_ip_jwi_refresh = clientIp,
             id_user = userId,
-            session_id = (Guid)sessionId,
+            session_id_jwi_refresh = (Guid)sessionId,
             id_jwi_access = jwi_access.id_jwi_access
         };
         await _context.JwiRefreshTokens.AddAsync(jwi_refresh);
@@ -124,8 +124,8 @@ public class JwiService : IJwiService
         {
             jwi.is_revoked = true;
             jwi.revoked_at = DateTime.UtcNow;
-            jwi.revoked_by_ip = clientIp;
-            jwi.revoked_reason = reason;
+            jwi.revoked_by_ip_jwi_access = clientIp;
+            jwi.revoked_reason_jwi_access = reason;
         }
         await _context.SaveChangesAsync();
     }
@@ -140,8 +140,8 @@ public class JwiService : IJwiService
         {
             jwi.is_revoked = true;
             jwi.revoked_at = DateTime.UtcNow;
-            jwi.revoked_by_ip = clientIp;
-            jwi.revoked_reason = reason;
+            jwi.revoked_by_ip_jwi_refresh = clientIp;
+            jwi.revoked_reason_jwi_refresh = reason;
         }
         await _context.SaveChangesAsync();
     }
@@ -182,18 +182,18 @@ public class JwiService : IJwiService
             query = query.OrderByDescending(jwi => jwi.created_at);
         }
         var groupedQuery = query
-            .GroupBy(jwi => jwi.session_id)
+            .GroupBy(jwi => jwi.session_id_jwi_refresh)
             .Select(group => new SessionDto
             {
                 session_id = group.Key,
                 expires_at = group.OrderByDescending(jwi => jwi.expires_at).First().expires_at,
                 is_revoked = group.OrderByDescending(jwi => jwi.expires_at).First().is_revoked,
-                auth_method = group.OrderByDescending(jwi => jwi.expires_at).First().auth_method,
+                auth_method = group.OrderByDescending(jwi => jwi.expires_at).First().auth_method_jwi_refresh,
                 created_at = group.OrderByDescending(jwi => jwi.expires_at).First().created_at,
-                created_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().created_by_ip,
+                created_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().created_by_ip_jwi_refresh,
                 revoked_at = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_at,
-                revoked_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_by_ip,
-                revoked_reason = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_reason,
+                revoked_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_by_ip_jwi_refresh,
+                revoked_reason = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_reason_jwi_refresh,
                 id_user = group.OrderByDescending(jwi => jwi.expires_at).First().id_user,
                 first_created_at = group.OrderBy(jwi => jwi.expires_at).First().created_at
             })
@@ -206,9 +206,9 @@ public class JwiService : IJwiService
             {
                 offset = offset,
                 limit = limit,
-                total = await query.Select(jwi => jwi.session_id).Distinct().CountAsync(),
+                total = await query.Select(jwi => jwi.session_id_jwi_refresh).Distinct().CountAsync(),
                 nextOffset = offset + limit,
-                hasMore = await query.Select(jwi => jwi.session_id).Distinct().Skip(offset + limit).AnyAsync()
+                hasMore = await query.Select(jwi => jwi.session_id_jwi_refresh).Distinct().Skip(offset + limit).AnyAsync()
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -225,20 +225,20 @@ public class JwiService : IJwiService
             throw new UnauthorizedAccessException("You are not authorized to view this session.");
         }
         var query = _context.JwiRefreshTokens
-            .Where(jwi => jwi.id_user == userId && jwi.session_id == Guid.Parse(id));
+            .Where(jwi => jwi.id_user == userId && jwi.session_id_jwi_refresh == Guid.Parse(id));
         var groupedQuery = query
-            .GroupBy(jwi => jwi.session_id)
+            .GroupBy(jwi => jwi.session_id_jwi_refresh)
             .Select(group => new SessionDto
             {
                 session_id = group.Key,
                 expires_at = group.OrderByDescending(jwi => jwi.expires_at).First().expires_at,
                 is_revoked = group.OrderByDescending(jwi => jwi.expires_at).First().is_revoked,
-                auth_method = group.OrderByDescending(jwi => jwi.expires_at).First().auth_method,
+                auth_method = group.OrderByDescending(jwi => jwi.expires_at).First().auth_method_jwi_refresh,
                 created_at = group.OrderByDescending(jwi => jwi.expires_at).First().created_at,
-                created_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().created_by_ip,
+                created_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().created_by_ip_jwi_refresh,
                 revoked_at = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_at,
-                revoked_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_by_ip,
-                revoked_reason = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_reason,
+                revoked_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_by_ip_jwi_refresh,
+                revoked_reason = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_reason_jwi_refresh,
                 id_user = group.OrderByDescending(jwi => jwi.expires_at).First().id_user,
                 first_created_at = group.OrderBy(jwi => jwi.expires_at).First().created_at
             });
@@ -256,7 +256,7 @@ public class JwiService : IJwiService
         var session = await _context.JwiRefreshTokens
             .Where(jwi => jwi.id_user == userId && jwi.id_jwi_refresh == Guid.Parse(id))
             .FirstOrDefaultAsync();
-        return session?.session_id ?? Guid.Empty;
+        return session?.session_id_jwi_refresh ?? Guid.Empty;
     }
 
     public async Task<SessionDto> RevokeSessionById(string id, string reason, int userId)
@@ -269,44 +269,44 @@ public class JwiService : IJwiService
         }
         var clientIp = _sessionService.GetClientIp();
         var jwi_refresh = await _context.JwiRefreshTokens
-            .Where(jwi => jwi.id_user == userId && jwi.session_id == Guid.Parse(id) && !jwi.is_revoked && jwi.expires_at > DateTime.UtcNow)
+            .Where(jwi => jwi.id_user == userId && jwi.session_id_jwi_refresh == Guid.Parse(id) && !jwi.is_revoked && jwi.expires_at > DateTime.UtcNow)
             .FirstOrDefaultAsync();
         if (jwi_refresh is not null)
         {
             jwi_refresh.is_revoked = true;
             jwi_refresh.revoked_at = DateTime.UtcNow;
-            jwi_refresh.revoked_by_ip = clientIp;
-            jwi_refresh.revoked_reason = reason;
+            jwi_refresh.revoked_by_ip_jwi_refresh = clientIp;
+            jwi_refresh.revoked_reason_jwi_refresh = reason;
         }
         var jwi_access = await _context.JwiAccessTokens
-            .Where(jwi => jwi.id_user == userId && jwi.session_id == Guid.Parse(id) && !jwi.is_revoked && jwi.expires_at > DateTime.UtcNow)
+            .Where(jwi => jwi.id_user == userId && jwi.session_id_jwi_access == Guid.Parse(id) && !jwi.is_revoked && jwi.expires_at > DateTime.UtcNow)
             .FirstOrDefaultAsync();
         if (jwi_access is not null)
         {
             jwi_access.is_revoked = true;
             jwi_access.revoked_at = DateTime.UtcNow;
-            jwi_access.revoked_by_ip = clientIp;
-            jwi_access.revoked_reason = reason;
+            jwi_access.revoked_by_ip_jwi_access = clientIp;
+            jwi_access.revoked_reason_jwi_access = reason;
         }
         await _context.SaveChangesAsync();
         return await _context.JwiRefreshTokens
-            .Where(jwi => jwi.id_user == userId && jwi.session_id == Guid.Parse(id))
-            .GroupBy(jwi => jwi.session_id)
+            .Where(jwi => jwi.id_user == userId && jwi.session_id_jwi_refresh == Guid.Parse(id))
+            .GroupBy(jwi => jwi.session_id_jwi_refresh)
             .Select(group => new SessionDto
             {
                 session_id = group.Key,
                 expires_at = group.OrderByDescending(jwi => jwi.expires_at).First().expires_at,
                 is_revoked = group.OrderByDescending(jwi => jwi.expires_at).First().is_revoked,
-                auth_method = group.OrderByDescending(jwi => jwi.expires_at).First().auth_method,
+                auth_method = group.OrderByDescending(jwi => jwi.expires_at).First().auth_method_jwi_refresh,
                 created_at = group.OrderByDescending(jwi => jwi.expires_at).First().created_at,
-                created_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().created_by_ip,
+                created_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().created_by_ip_jwi_refresh,
                 revoked_at = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_at,
-                revoked_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_by_ip,
-                revoked_reason = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_reason,
+                revoked_by_ip = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_by_ip_jwi_refresh,
+                revoked_reason = group.OrderByDescending(jwi => jwi.expires_at).First().revoked_reason_jwi_refresh,
                 id_user = group.OrderByDescending(jwi => jwi.expires_at).First().id_user,
                 first_created_at = group.OrderBy(jwi => jwi.expires_at).First().created_at
             })
-            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Session with id '{id}' not found for user '{userId}'");     
+            .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Session with id '{id}' not found for user '{userId}'");
     }
 
     public async Task RevokePairTokenByRefreshToken(string refreshToken, string reason, int? userId = null)
@@ -330,12 +330,12 @@ public class JwiService : IJwiService
         var jwi_access = await _context.JwiAccessTokens.FindAsync(jwi_refresh.id_jwi_access) ?? throw new KeyNotFoundException($"AccessToken with id '{jwi_refresh.id_jwi_access}' not found");
         jwi_refresh.is_revoked = true;
         jwi_refresh.revoked_at = DateTime.UtcNow;
-        jwi_refresh.revoked_by_ip = clientIp;
-        jwi_refresh.revoked_reason = reason;
+        jwi_refresh.revoked_by_ip_jwi_refresh = clientIp;
+        jwi_refresh.revoked_reason_jwi_refresh = reason;
         jwi_access.is_revoked = true;
         jwi_access.revoked_at = DateTime.UtcNow;
-        jwi_access.revoked_by_ip = clientIp;
-        jwi_access.revoked_reason = reason;
+        jwi_access.revoked_by_ip_jwi_access = clientIp;
+        jwi_access.revoked_reason_jwi_access = reason;
         await _context.SaveChangesAsync();
     }
 }

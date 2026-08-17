@@ -23,8 +23,8 @@ namespace ElectrostoreAPI.Controllers
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<PaginatedResponseDto<ReadExtendedItemBoxDto>>> GetItemsBoxsByBoxId([FromRoute] int id_store, [FromRoute] int id_box, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'item', 'box'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
-        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'qte_item_box=gt=1'.")] string? filter = null,
-        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'qte_item_box,asc'.")] string? sort = null)
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'quantity_item_box=gt=1'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'quantity_item_box,asc'.")] string? sort = null)
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
@@ -52,8 +52,8 @@ namespace ElectrostoreAPI.Controllers
             {
                 id_box = id_box,
                 id_item = itemBoxDto.id_item,
-                qte_item_box = itemBoxDto.qte_item_box,
-                seuil_max_item_item_box = itemBoxDto.seuil_max_item_item_box
+                quantity_item_box = itemBoxDto.quantity_item_box,
+                threshold_max_item_item_box = itemBoxDto.threshold_max_item_item_box
             };
             var itemBox = await _itemBoxService.CreateItemBox(itemBoxDtoFull);
             return CreatedAtAction(nameof(GetItemBoxById), new { id_store = id_store, id_box = itemBox.id_box, id_item = itemBox.id_item }, itemBox);

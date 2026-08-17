@@ -25,8 +25,8 @@ namespace ElectrostoreAPI.Controllers
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<PaginatedResponseDto<ReadImgDto>>> GetImgsByItemId([FromRoute] int id_item, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
-        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'nom_img=like=example'.")] string? filter = null,
-        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'nom_img,asc' or 'nom_img,desc'.")] string? sort = null)
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'name_img=like=example'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'name_img,asc' or 'name_img,desc'.")] string? sort = null)
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
@@ -50,7 +50,7 @@ namespace ElectrostoreAPI.Controllers
             {
                 id_item = id_item,
                 img_file = itemImgDto.img_file,
-                nom_img = itemImgDto.nom_img,
+                name_img = itemImgDto.name_img,
                 description_img = itemImgDto.description_img
             };
             var itemImg = await _imgService.CreateImg(itemImgDtoFull);

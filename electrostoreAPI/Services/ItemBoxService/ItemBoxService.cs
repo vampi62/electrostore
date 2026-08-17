@@ -179,31 +179,31 @@ public class ItemBoxService : IItemBoxService
         _context.ItemsBoxs.Add(newItemBox);
         await _context.SaveChangesAsync();
         await _itemHistoryService.LogHistory(newItemBox.id_item, newItemBox.id_box, ItemHistoryType.StockAdded,
-            oldQuantity: null, newQuantity: newItemBox.qte_item_box);
+            oldQuantity: null, newQuantity: newItemBox.quantity_item_box);
         return _mapper.Map<ReadItemBoxDto>(newItemBox);
     }
 
     public async Task<ReadItemBoxDto> UpdateItemBox(int itemId, int boxId, UpdateItemBoxDto itemBoxDto)
     {
         var itemBoxToUpdate = await _context.ItemsBoxs.FindAsync(itemId, boxId) ?? throw new KeyNotFoundException($"ItemBox with id '{itemId}' and boxId '{boxId}' not found");
-        var oldQte = itemBoxToUpdate.qte_item_box;
-        if (itemBoxDto.qte_item_box is not null)
+        var oldQte = itemBoxToUpdate.quantity_item_box;
+        if (itemBoxDto.quantity_item_box is not null)
         {
-            itemBoxToUpdate.qte_item_box = itemBoxDto.qte_item_box.Value;
+            itemBoxToUpdate.quantity_item_box = itemBoxDto.quantity_item_box.Value;
         }
 
-        if (itemBoxDto.seuil_max_item_item_box is not null)
+        if (itemBoxDto.threshold_max_item_item_box is not null)
         {
-            itemBoxToUpdate.seuil_max_item_item_box = itemBoxDto.seuil_max_item_item_box.Value;
+            itemBoxToUpdate.threshold_max_item_item_box = itemBoxDto.threshold_max_item_item_box.Value;
         }
         await _context.SaveChangesAsync();
-        if (itemBoxDto.qte_item_box is not null)
+        if (itemBoxDto.quantity_item_box is not null)
         {
-            var historyType = itemBoxToUpdate.qte_item_box > oldQte ? ItemHistoryType.StockAdded
-                : itemBoxToUpdate.qte_item_box < oldQte ? ItemHistoryType.StockRemoved
+            var historyType = itemBoxToUpdate.quantity_item_box > oldQte ? ItemHistoryType.StockAdded
+                : itemBoxToUpdate.quantity_item_box < oldQte ? ItemHistoryType.StockRemoved
                 : ItemHistoryType.StockUpdated;
             await _itemHistoryService.LogHistory(itemId, boxId, historyType,
-                oldQuantity: oldQte, newQuantity: itemBoxToUpdate.qte_item_box);
+                oldQuantity: oldQte, newQuantity: itemBoxToUpdate.quantity_item_box);
         }
         return _mapper.Map<ReadItemBoxDto>(itemBoxToUpdate);
     }
@@ -212,7 +212,7 @@ public class ItemBoxService : IItemBoxService
     {
         var itemBoxToDelete = await _context.ItemsBoxs.FindAsync(itemId, boxId) ?? throw new KeyNotFoundException($"ItemBox with id '{itemId}' and boxId '{boxId}' not found");
         await _itemHistoryService.LogHistory(itemBoxToDelete.id_item, itemBoxToDelete.id_box, ItemHistoryType.StockRemoved,
-            oldQuantity: itemBoxToDelete.qte_item_box, newQuantity: null);
+            oldQuantity: itemBoxToDelete.quantity_item_box, newQuantity: null);
         _context.ItemsBoxs.Remove(itemBoxToDelete);
         await _context.SaveChangesAsync();
     }

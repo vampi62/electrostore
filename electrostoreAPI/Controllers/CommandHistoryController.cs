@@ -22,8 +22,8 @@ namespace ElectrostoreAPI.Controllers
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<PaginatedResponseDto<ReadCommandHistoryDto>>> GetCommandHistoryByCommandId([FromRoute] int id_command, [FromQuery] int limit = 100, [FromQuery] int offset = 0,
-        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'prix_command_item=gt=100'.")] string? filter = null,
-        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'prix_command_item,asc' or 'prix_command_item,desc'.")] string? sort = null)
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'price_command_item=gt=100'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'price_command_item,asc' or 'price_command_item,desc'.")] string? sort = null)
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);

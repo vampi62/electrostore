@@ -11,7 +11,7 @@ public class Cameras : BaseEntity
     public int id_camera { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public required string nom_camera { get; set; }
+    public required string name_camera { get; set; }
 
     [MaxLength(Constants.MaxUrlLength)]
     public required string url_camera { get; set; }
@@ -20,7 +20,7 @@ public class Cameras : BaseEntity
     public string? user_camera { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
-    public string? mdp_camera { get; set; }
+    public string? password_camera { get; set; }
 
     public DateTime? last_seen_camera { get; set; }
 }

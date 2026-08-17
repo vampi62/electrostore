@@ -36,9 +36,9 @@ public class ValidateStoreService : IValidateStoreService
 
     public async Task UpdateStoreInformations(Stores storeToUpdate, UpdateStoreDto storeDto)
     {
-        if (storeDto.nom_store is not null)
+        if (storeDto.name_store is not null)
         {
-            storeToUpdate.nom_store = storeDto.nom_store;
+            storeToUpdate.name_store = storeDto.name_store;
         }
         if (storeDto.xlength_store is not null)
         {
@@ -92,9 +92,9 @@ public class ValidateStoreService : IValidateStoreService
         {
             ledToUpdate.y_led = ledDto.y_led.Value;
         }
-        if (ledDto.mqtt_led_id is not null)
+        if (ledDto.mqtt_id_led is not null)
         {
-            ledToUpdate.mqtt_led_id = ledDto.mqtt_led_id.Value;
+            ledToUpdate.mqtt_id_led = ledDto.mqtt_id_led.Value;
         }
     }
 

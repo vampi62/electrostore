@@ -38,7 +38,7 @@ public class UsersGrpcService : UsersGrpc.UsersGrpcBase
         var reply = new GetUserPushSubscriptionsReply();
         reply.Subscriptions.AddRange(rows.Select(s => new PushSubscriptionItem
         {
-            Id = s.id_push_subscription,
+            Id = s.id_user_push_subscription,
             Endpoint = s.endpoint,
             P256Dh = s.p256dh,
             Auth = s.auth,

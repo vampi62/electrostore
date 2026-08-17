@@ -7,29 +7,29 @@ namespace ElectrostoreAPI.Dto;
 public record ReadAccessTokenDto
 {
     public Guid id_jwi_access { get; init; }
-    public Guid session_id { get; init; }
+    public Guid session_id_jwi_access { get; init; }
     public DateTime expires_at { get; init; }
-    public required string auth_method { get; init; }
+    public required string auth_method_jwi_access { get; init; }
     public bool is_revoked { get; init; }
     public DateTime created_at { get; init; }
-    public required string created_by_ip { get; init; }
+    public required string created_by_ip_jwi_access { get; init; }
     public DateTime? revoked_at { get; init; }
-    public string? revoked_by_ip { get; init; }
-    public string? revoked_reason { get; init; }
+    public string? revoked_by_ip_jwi_access { get; init; }
+    public string? revoked_reason_jwi_access { get; init; }
     public int id_user { get; init; }
 }
 public record ReadRefreshTokenDto
 {
     public Guid id_jwi_refresh { get; init; }
-    public Guid session_id { get; init; }
+    public Guid session_id_jwi_refresh { get; init; }
     public DateTime expires_at { get; init; }
-    public required string auth_method { get; init; }
+    public required string auth_method_jwi_refresh { get; init; }
     public bool is_revoked { get; init; }
     public DateTime created_at { get; init; }
-    public required string created_by_ip { get; init; }
+    public required string created_by_ip_jwi_refresh { get; init; }
     public DateTime? revoked_at { get; init; }
-    public string? revoked_by_ip { get; init; }
-    public string? revoked_reason { get; init; }
+    public string? revoked_by_ip_jwi_refresh { get; init; }
+    public string? revoked_reason_jwi_refresh { get; init; }
     public Guid id_jwi_access { get; init; }
     public int id_user { get; init; }
 }

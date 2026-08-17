@@ -22,10 +22,10 @@ namespace ElectrostoreAPI.Controllers
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<PaginatedResponseDto<ReadExtendedUserDto>>> GetUsers([FromQuery] int limit = 100, [FromQuery] int offset = 0,
-        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'commands_commentaires'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'project_comments', 'command_comments'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null,
-        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'role_user==1;nom_user=like=John'.")] string? filter = null,
-        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'nom_user,asc' or 'nom_user,desc'.")] string? sort = null)
+        [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'role_user==1;name_user=like=John'.")] string? filter = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'name_user,asc' or 'name_user,desc'.")] string? sort = null)
         {
             var rsqlDto = ParserExtensions.ParseFilter(filter ?? string.Empty);
             var sortDto = ParserExtensions.ParseSort(sort ?? string.Empty);
@@ -36,7 +36,7 @@ namespace ElectrostoreAPI.Controllers
         [HttpGet("{id_user}")]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadExtendedUserDto>> GetUserById([FromRoute] int id_user,
-        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'projets_commentaires', 'commands_commentaires'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'project_comments', 'command_comments'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             var user = await _userService.GetUserById(id_user, expand);
             return Ok(user);

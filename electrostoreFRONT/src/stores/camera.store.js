@@ -54,12 +54,12 @@ export const useCamerasStore = defineStore("cameras",{
 			if (id !== "new" && this.cameras[id]) {
 				this.cameraEdition[id] = {
 					loading: false,
-					nom_camera: this.cameras[id].nom_camera,
+					name_camera: this.cameras[id].name_camera,
 					url_camera: this.cameras[id].url_camera,
 					user_camera: this.cameras[id].user_camera,
-					mdp_camera: this.cameras[id].mdp_camera,
+					password_camera: this.cameras[id].password_camera,
 				};
-				this.cameraEdition[id]._check = (this.cameras[id].user_camera !== "") || (this.cameras[id].mdp_camera !== "");
+				this.cameraEdition[id]._check = (this.cameras[id].user_camera !== "") || (this.cameras[id].password_camera !== "");
 			} else {
 				this.cameraEdition[id] = {
 					loading: false,
