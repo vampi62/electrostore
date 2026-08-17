@@ -444,7 +444,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 
 			<Tableau id="storeItemTable" :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
 				:store-data="[itemsStore.items, storesStore.boxItems[boxId]]"
-				:store-edition="itemsStore.itemBoxEdition"
+				:store-edition="storesStore.boxItemEdition[boxId]"
 				:filters="filterItem"
 				:loading="itemsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"

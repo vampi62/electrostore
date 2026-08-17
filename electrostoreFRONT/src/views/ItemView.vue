@@ -559,7 +559,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<template #append-row>
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box', expand: ['box'] }"
 					:store-data="[itemsStore.itemBoxs[itemId]]"
-					:store-edition="itemsStore.itemBoxEdition"
+					:store-edition="itemsStore.itemBoxEdition[itemId]"
 					:loading="itemsStore.itemBoxsLoading"
 					:schema="schemaBox"
 					:total-count="Number(itemsStore.itemBoxsTotalCount[itemId])"
@@ -577,7 +577,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_item_document' }"
 					:store-data="[itemsStore.documents[itemId]]"
-					:store-edition="itemsStore.documentEdition"
+					:store-edition="itemsStore.documentEdition[itemId]"
 					:schema="schemaEditDocument"
 					:loading="itemsStore.documentsLoading"
 					:total-count="Number(itemsStore.documentsTotalCount[itemId])"

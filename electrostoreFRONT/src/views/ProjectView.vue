@@ -519,7 +519,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_project_document' }"
 					:store-data="[projectsStore.documents[projectId]]"
-					:store-edition="projectsStore.documentEdition"
+					:store-edition="projectsStore.documentEdition[projectId]"
 					:schema="schemaEditDocument"
 					:loading="projectsStore.documentsLoading"
 					:total-count="Number(projectsStore.documentsTotalCount[projectId])"
@@ -537,7 +537,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
 					:store-data="[projectsStore.items[projectId], itemsStore.items]"
-					:store-edition="projectsStore.itemEdition"
+					:store-edition="projectsStore.itemEdition[projectId]"
 					:loading="projectsStore.itemsLoading"
 					:schema="schemaItem"
 					:total-count="Number(projectsStore.itemsTotalCount[projectId] || 0)"
@@ -592,7 +592,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
 				:store-data="[itemsStore.items, projectsStore.items[projectId]]"
-				:store-edition="projectsStore.itemEdition"
+				:store-edition="projectsStore.itemEdition[projectId]"
 				:filters="filterItem"
 				:loading="projectsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"

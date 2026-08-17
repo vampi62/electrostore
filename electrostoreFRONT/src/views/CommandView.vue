@@ -720,7 +720,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_command_document' }"
 					:store-data="[commandsStore.documents[commandId]]"
-					:store-edition="commandsStore.documentEdition"
+					:store-edition="commandsStore.documentEdition[commandId]"
 					:schema="schemaEditDocument"
 					:loading="commandsStore.documentsLoading"
 					:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)"
@@ -738,7 +738,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
 					:store-data="[commandsStore.items[commandId],itemsStore.items]"
-					:store-edition="commandsStore.itemEdition"
+					:store-edition="commandsStore.itemEdition[commandId]"
 					:schema="schemaItem"
 					:loading="commandsStore.itemsLoading"
 					:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)"
@@ -793,7 +793,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
 				:store-data="[itemsStore.items,commandsStore.items[commandId]]"
-				:store-edition="commandsStore.itemEdition"
+				:store-edition="commandsStore.itemEdition[commandId]"
 				:filters="filterItem"
 				:loading="commandsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
