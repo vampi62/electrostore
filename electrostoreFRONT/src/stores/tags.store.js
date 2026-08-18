@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
+import { createMainResource, createNestedResource } from "@/helpers";
 
 import { useStoresStore, useItemsStore } from "@/stores";
 
@@ -55,6 +55,8 @@ const tagStoreResource = createNestedResource({
 	stateKey: "tagsStore",
 	countKey: "tagsStoreTotalCount",
 	loadingKey: "tagsStoreLoading",
+	editionKey: "tagStoreEdition",
+	readyKey: "tagStoreReady",
 	onHydrate: (store, idTag, entity, expand) => {
 		if (expand.includes("store")) {
 			const storesStore = useStoresStore();
@@ -68,6 +70,8 @@ const tagBoxResource = createNestedResource({
 	stateKey: "tagsBox",
 	countKey: "tagsBoxTotalCount",
 	loadingKey: "tagsBoxLoading",
+	editionKey: "tagBoxEdition",
+	readyKey: "tagBoxReady",
 	onHydrate: (store, idTag, entity, expand) => {
 		if (expand.includes("box")) {
 			const storesStore = useStoresStore();
@@ -82,6 +86,8 @@ const tagItemResource = createNestedResource({
 	stateKey: "tagsItem",
 	countKey: "tagsItemTotalCount",
 	loadingKey: "tagsItemLoading",
+	editionKey: "tagItemEdition",
+	readyKey: "tagItemReady",
 	onHydrate: (store, idTag, entity, expand) => {
 		if (expand.includes("item")) {
 			const itemsStore = useItemsStore();
@@ -101,16 +107,19 @@ export const useTagsStore = defineStore("tags",{
 		tagsStoreTotalCount: {},
 		tagsStore: {},
 		tagStoreEdition: {},
+		tagStoreReady: {},
 
 		tagsBoxLoading: false,
 		tagsBoxTotalCount: {},
 		tagsBox: {},
 		tagBoxEdition: {},
+		tagBoxReady: {},
 
 		tagsItemLoading: false,
 		tagsItemTotalCount: {},
 		tagsItem: {},
 		tagItemEdition: {},
+		tagItemReady: {},
 	}),
 	actions: {
 		getTagByList: tagResource.getByList,
@@ -142,8 +151,11 @@ export const useTagsStore = defineStore("tags",{
 				};
 			}
 			this.tagItemEdition[id] = {};
+			this.tagItemReady[id] = {};
 			this.tagStoreEdition[id] = {};
+			this.tagStoreReady[id] = {};
 			this.tagBoxEdition[id] = {};
+			this.tagBoxReady[id] = {};
 		},
 		setLoadingEdition(id, loading) {
 			if (!this.tagEdition[id]) {
@@ -154,8 +166,28 @@ export const useTagsStore = defineStore("tags",{
 		clearEdition(id) {
 			delete this.tagEdition[id];
 			delete this.tagItemEdition[id];
+			delete this.tagItemReady[id];
 			delete this.tagStoreEdition[id];
+			delete this.tagStoreReady[id];
 			delete this.tagBoxEdition[id];
+			delete this.tagBoxReady[id];
+		},
+		async saveAllChanges(id) {
+			let realId = id;
+			if (id === "new") {
+				realId = await this.createTag(this.tagEdition[id]);
+				this.copyTagStoreAllId(id, realId);
+				this.copyTagBoxAllId(id, realId);
+				this.copyTagItemAllId(id, realId);
+			} else {
+				await this.updateTag(id, this.tagEdition[id]);
+			}
+			await Promise.all([
+				this.pushTagStoreChange(realId),
+				this.pushTagBoxChange(realId),
+				this.pushTagItemChange(realId),
+			]);
+			return realId;
 		},
 
 		getTagStoreByInterval: tagStoreResource.getByInterval,
@@ -164,6 +196,11 @@ export const useTagsStore = defineStore("tags",{
 		deleteTagStore: tagStoreResource.remove,
 		createTagStoreBulk: tagStoreResource.createBulk,
 		deleteTagStoreBulk: tagStoreResource.removeBulk,
+		getAvailableNewTagStoreId: tagStoreResource.getAvailableNewId,
+		valideTagStoreEditionById: tagStoreResource.valideEditionById,
+		copyTagStorePerId: tagStoreResource.copyPerId,
+		copyTagStoreAllId: tagStoreResource.copyAllId,
+		pushTagStoreChange: tagStoreResource.pushChange,
 
 		getTagBoxByInterval: tagBoxResource.getByInterval,
 		getTagBoxById: tagBoxResource.getById,
@@ -171,6 +208,11 @@ export const useTagsStore = defineStore("tags",{
 		deleteTagBox: tagBoxResource.remove,
 		createTagBoxBulk: tagBoxResource.createBulk,
 		deleteTagBoxBulk: tagBoxResource.removeBulk,
+		getAvailableNewTagBoxId: tagBoxResource.getAvailableNewId,
+		valideTagBoxEditionById: tagBoxResource.valideEditionById,
+		copyTagBoxPerId: tagBoxResource.copyPerId,
+		copyTagBoxAllId: tagBoxResource.copyAllId,
+		pushTagBoxChange: tagBoxResource.pushChange,
 
 		getTagItemByInterval: tagItemResource.getByInterval,
 		getTagItemById: tagItemResource.getById,
@@ -178,5 +220,10 @@ export const useTagsStore = defineStore("tags",{
 		deleteTagItem: tagItemResource.remove,
 		createTagItemBulk: tagItemResource.createBulk,
 		deleteTagItemBulk: tagItemResource.removeBulk,
+		getAvailableNewTagItemId: tagItemResource.getAvailableNewId,
+		valideTagItemEditionById: tagItemResource.valideEditionById,
+		copyTagItemPerId: tagItemResource.copyPerId,
+		copyTagItemAllId: tagItemResource.copyAllId,
+		pushTagItemChange: tagItemResource.pushChange,
 	},
 });

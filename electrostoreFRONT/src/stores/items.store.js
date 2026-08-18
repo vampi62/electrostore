@@ -1,9 +1,8 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
+import { fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
 
-import { useTagsStore, useStoresStore, useCommandsStore, useProjectsStore, useUsersStore } from "@/stores";
-import { onUpdated } from "vue";
+import { useTagsStore, useStoresStore, useCommandsStore, useProjectsStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -90,6 +89,8 @@ const documentResource = createNestedResource({
 	stateKey: "documents",
 	countKey: "documentsTotalCount",
 	loadingKey: "documentsLoading",
+	editionKey: "documentEdition",
+	readyKey: "documentReady",
 });
 const itemBoxResource = createNestedResource({
 	path: (idItem) => `/item/${idItem}/box`,
@@ -97,6 +98,8 @@ const itemBoxResource = createNestedResource({
 	stateKey: "itemBoxs",
 	countKey: "itemBoxsTotalCount",
 	loadingKey: "itemBoxsLoading",
+	editionKey: "itemBoxEdition",
+	readyKey: "itemBoxReady",
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("box")) {
 			const storeStore = useStoresStore();
@@ -113,6 +116,8 @@ const itemTagResource = createNestedResource({
 	stateKey: "itemTags",
 	countKey: "itemTagsTotalCount",
 	loadingKey: "itemTagsLoading",
+	editionKey: "itemTagEdition",
+	readyKey: "itemTagReady",
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("tag")) {
 			const tagsStore = useTagsStore();
@@ -126,6 +131,8 @@ const itemCommandResource = createNestedResource({
 	stateKey: "itemCommands",
 	countKey: "itemCommandsTotalCount",
 	loadingKey: "itemCommandsLoading",
+	editionKey: "itemCommandEdition",
+	readyKey: "itemCommandReady",
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("command")) {
 			const commandsStore = useCommandsStore();
@@ -139,6 +146,8 @@ const itemProjectResource = createNestedResource({
 	stateKey: "itemProjects",
 	countKey: "itemProjectsTotalCount",
 	loadingKey: "itemProjectsLoading",
+	editionKey: "itemProjectEdition",
+	readyKey: "itemProjectReady",
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("project")) {
 			const projectsStore = useProjectsStore();
@@ -152,6 +161,8 @@ const imageResource = createNestedResource({
 	stateKey: "images",
 	countKey: "imagesTotalCount",
 	loadingKey: "imagesLoading",
+	editionKey: "imageEdition",
+	readyKey: "imageReady",
 	onHydrate: (store, entity, expand, externalParam) => {
 		if (externalParam?.loadImages && !store.imagesURL[entity.id_image]) {
 			store.showImageById(store, externalParam.idItem, entity.id_image);
@@ -190,26 +201,31 @@ export const useItemsStore = defineStore("items",{
 		documentsTotalCount: {},
 		documents: {},
 		documentEdition: {},
+		documentReady: {},
 
 		itemBoxsLoading: false,
 		itemBoxsTotalCount: {},
 		itemBoxs: {},
 		itemBoxEdition: {},
+		itemBoxReady: {},
 
 		itemTagsLoading: false,
 		itemTagsTotalCount: {},
 		itemTags: {},
 		itemTagEdition: {},
+		itemTagReady: {},
 
 		itemCommandsLoading: false,
 		itemCommandsTotalCount: {},
 		itemCommands: {},
 		itemCommandEdition: {},
+		itemCommandReady: {},
 
 		itemProjectsLoading: false,
 		itemProjectsTotalCount: {},
 		itemProjects: {},
 		itemProjectEdition: {},
+		itemProjectReady: {},
 
 		imagesLoading: false,
 		imagesTotalCount: {},
@@ -217,6 +233,7 @@ export const useItemsStore = defineStore("items",{
 		imagesURL: {},
 		thumbnailsURL: {},
 		imageEdition: {},
+		imageReady: {},
 
 		itemHistoryLoading: false,
 		itemHistoryTotalCount: {},
@@ -255,11 +272,17 @@ export const useItemsStore = defineStore("items",{
 				};
 			}
 			this.documentEdition[id] = {};
+			this.documentReady[id] = {};
 			this.itemBoxEdition[id] = {};
+			this.itemBoxReady[id] = {};
 			this.itemTagEdition[id] = {};
+			this.itemTagReady[id] = {};
 			this.itemCommandEdition[id] = {};
+			this.itemCommandReady[id] = {};
 			this.itemProjectEdition[id] = {};
+			this.itemProjectReady[id] = {};
 			this.imageEdition[id] = {};
+			this.imageReady[id] = {};
 		},
 		setLoadingEdition(id, loading) {
 			if (!this.itemEdition[id]) {
@@ -270,11 +293,40 @@ export const useItemsStore = defineStore("items",{
 		clearEdition(id) {
 			delete this.itemEdition[id];
 			delete this.documentEdition[id];
+			delete this.documentReady[id];
 			delete this.itemBoxEdition[id];
+			delete this.itemBoxReady[id];
 			delete this.itemTagEdition[id];
+			delete this.itemTagReady[id];
 			delete this.itemCommandEdition[id];
+			delete this.itemCommandReady[id];
 			delete this.itemProjectEdition[id];
+			delete this.itemProjectReady[id];
 			delete this.imageEdition[id];
+			delete this.imageReady[id];
+		},
+		async saveAllChanges(id) {
+			let realId = id;
+			if (id === "new") {
+				realId = await this.createItem(this.itemEdition[id]);
+				this.copyDocumentAllId(id, realId);
+				this.copyItemBoxAllId(id, realId);
+				this.copyItemTagAllId(id, realId);
+				this.copyItemCommandAllId(id, realId);
+				this.copyItemProjectAllId(id, realId);
+				this.copyImageAllId(id, realId);
+			} else {
+				await this.updateItem(id, this.itemEdition[id]);
+			}
+			await Promise.all([
+				this.pushDocumentChange(realId),
+				this.pushItemBoxChange(realId),
+				this.pushItemTagChange(realId),
+				this.pushItemCommandChange(realId),
+				this.pushItemProjectChange(realId),
+				this.pushImageChange(realId),
+			]);
+			return realId;
 		},
 
 		getDocumentByInterval: documentResource.getByInterval,
@@ -282,6 +334,11 @@ export const useItemsStore = defineStore("items",{
 		createDocument: documentResource.create,
 		updateDocument: documentResource.update,
 		deleteDocument: documentResource.remove,
+		getAvailableNewDocumentId: documentResource.getAvailableNewId,
+		valideDocumentEditionById: documentResource.valideEditionById,
+		copyDocumentPerId: documentResource.copyPerId,
+		copyDocumentAllId: documentResource.copyAllId,
+		pushDocumentChange: documentResource.pushChange,
 		async downloadDocument(idItem, id) {
 			return await fetchWrapper.image({
 				url: `${baseUrl}/item/${idItem}/document/${id}/download`,
@@ -294,6 +351,11 @@ export const useItemsStore = defineStore("items",{
 		createItemBox: itemBoxResource.create,
 		updateItemBox: itemBoxResource.update,
 		deleteItemBox: itemBoxResource.remove,
+		getAvailableNewItemBoxId: itemBoxResource.getAvailableNewId,
+		valideItemBoxEditionById: itemBoxResource.valideEditionById,
+		copyItemBoxPerId: itemBoxResource.copyPerId,
+		copyItemBoxAllId: itemBoxResource.copyAllId,
+		pushItemBoxChange: itemBoxResource.pushChange,
 
 		getItemTagByInterval: itemTagResource.getByInterval,
 		getItemTagById: itemTagResource.getById,
@@ -301,6 +363,11 @@ export const useItemsStore = defineStore("items",{
 		deleteItemTag: itemTagResource.remove,
 		createItemTagBulk: itemTagResource.createBulk,
 		deleteItemTagBulk: itemTagResource.deleteBulk,
+		getAvailableNewItemTagId: itemTagResource.getAvailableNewId,
+		valideItemTagEditionById: itemTagResource.valideEditionById,
+		copyItemTagPerId: itemTagResource.copyPerId,
+		copyItemTagAllId: itemTagResource.copyAllId,
+		pushItemTagChange: itemTagResource.pushChange,
 
 		getItemCommandByInterval: itemCommandResource.getByInterval,
 		getItemCommandById: itemCommandResource.getById,
@@ -308,6 +375,11 @@ export const useItemsStore = defineStore("items",{
 		updateItemCommand: itemCommandResource.update,
 		deleteItemCommand: itemCommandResource.remove,
 		createItemCommandBulk: itemCommandResource.createBulk,
+		getAvailableNewItemCommandId: itemCommandResource.getAvailableNewId,
+		valideItemCommandEditionById: itemCommandResource.valideEditionById,
+		copyItemCommandPerId: itemCommandResource.copyPerId,
+		copyItemCommandAllId: itemCommandResource.copyAllId,
+		pushItemCommandChange: itemCommandResource.pushChange,
 
 		getItemProjectByInterval: itemProjectResource.getByInterval,
 		getItemProjectById: itemProjectResource.getById,
@@ -315,12 +387,22 @@ export const useItemsStore = defineStore("items",{
 		updateItemProject: itemProjectResource.update,
 		deleteItemProject: itemProjectResource.remove,
 		createItemProjectBulk: itemProjectResource.createBulk,
+		getAvailableNewItemProjectId: itemProjectResource.getAvailableNewId,
+		valideItemProjectEditionById: itemProjectResource.valideEditionById,
+		copyItemProjectPerId: itemProjectResource.copyPerId,
+		copyItemProjectAllId: itemProjectResource.copyAllId,
+		pushItemProjectChange: itemProjectResource.pushChange,
 
 		getImageByInterval: imageResource.getByInterval,
 		getImageById: imageResource.getById,
 		createImage: imageResource.create,
 		updateImage: imageResource.update,
 		deleteImage: imageResource.remove,
+		getAvailableNewImageId: imageResource.getAvailableNewId,
+		valideImageEditionById: imageResource.valideEditionById,
+		copyImagePerId: imageResource.copyPerId,
+		copyImageAllId: imageResource.copyAllId,
+		pushImageChange: imageResource.pushChange,
 		async showImageById(id_item, id_img) {
 			if (this.imagesURL[id_img]) {
 				return;

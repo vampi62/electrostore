@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, buildQuery, createMainResource } from "@/helpers";
+import { fetchWrapper, createMainResource } from "@/helpers";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
