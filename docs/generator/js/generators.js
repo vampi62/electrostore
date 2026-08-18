@@ -634,6 +634,38 @@ function generateApiAppsettings(config) {
                 "CarrierListUrl": "https://res.17track.net/asset/carrier/info/apicarrier.all.json"
             };
         }
+
+        if (config.enableLlm) {
+            settings.Llm = {
+                "Enable": true,
+                "ChatBaseUrl": config.llm.chatBaseUrl,
+                "ChatModel": config.llm.chatModel,
+                "ApiKey": config.useVault ? "{{vault:llm_api_key}}" : (config.llm.apiKey || "")
+            };
+        } else {
+            settings.Llm = {
+                "Enable": false,
+                "ChatBaseUrl": "http://ollama:11434/v1",
+                "ChatModel": "llama3.1",
+                "ApiKey": ""
+            };
+        }
+
+        if (config.enableStt) {
+            settings.Stt = {
+                "Enable": true,
+                "BaseUrl": config.stt.baseUrl,
+                "Model": config.stt.model,
+                "ApiKey": config.useVault ? "{{vault:stt_api_key}}" : (config.stt.apiKey || "")
+            };
+        } else {
+            settings.Stt = {
+                "Enable": false,
+                "BaseUrl": "http://whisper:9000/v1",
+                "Model": "whisper-1",
+                "ApiKey": ""
+            };
+        }
     }
 
     settings.Jwt = {
@@ -712,6 +744,10 @@ function generateApiAppsettings(config) {
         "AllowedImageMimeTypes": config.fileValidation.allowedImageMimeTypes,
         "AllowedDocumentMimeTypes": config.fileValidation.allowedDocumentMimeTypes
     };
+    if (!isLegacy) {
+        settings.FileValidation.MaxAudioSizeMB = config.fileValidation.maxAudioSizeMB;
+        settings.FileValidation.AllowedAudioMimeTypes = config.fileValidation.allowedAudioMimeTypes;
+    }
 
     return JSON.stringify(settings, null, 2);
 }

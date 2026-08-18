@@ -141,6 +141,26 @@ function collectConfig(formData) {
         config.track17ApiKey = formData.get('track17ApiKey') || '';
     }
 
+    // LLM chat assistant
+    config.enableLlm = document.getElementById('enableLlm').checked;
+    if (config.enableLlm) {
+        config.llm = {
+            chatBaseUrl: formData.get('llmChatBaseUrl') || 'http://ollama:11434/v1',
+            chatModel: formData.get('llmChatModel') || 'llama3.1',
+            apiKey: formData.get('llmApiKey') || ''
+        };
+    }
+
+    // Speech-to-text
+    config.enableStt = document.getElementById('enableStt').checked;
+    if (config.enableStt) {
+        config.stt = {
+            baseUrl: formData.get('sttBaseUrl') || 'http://whisper:9000/v1',
+            model: formData.get('sttModel') || 'whisper-1',
+            apiKey: formData.get('sttApiKey') || ''
+        };
+    }
+
     // JWT
     config.jwt = {
         key: formData.get('jwtKey') || generateRandomPassword(64),
@@ -168,8 +188,10 @@ function collectConfig(formData) {
     config.fileValidation = {
         maxDocumentSizeMB: parseInt(document.getElementById('maxDocumentSizeMB').value) || 10,
         maxImageSizeMB: parseInt(document.getElementById('maxImageSizeMB').value) || 8,
+        maxAudioSizeMB: parseInt(document.getElementById('maxAudioSizeMB').value) || 25,
         allowedImageMimeTypes: {},
-        allowedDocumentMimeTypes: {}
+        allowedDocumentMimeTypes: {},
+        allowedAudioMimeTypes: {}
     };
     document.querySelectorAll('#allowedImageMimeTypes .mime-type-row').forEach(row => {
         const mime = row.querySelector('.mime-type-input').value.trim();
@@ -182,6 +204,12 @@ function collectConfig(formData) {
         let ext = row.querySelector('.mime-ext-input').value.trim();
         if (ext && !ext.startsWith('.')) ext = '.' + ext;
         if (mime && ext) config.fileValidation.allowedDocumentMimeTypes[mime] = ext;
+    });
+    document.querySelectorAll('#allowedAudioMimeTypes .mime-type-row').forEach(row => {
+        const mime = row.querySelector('.mime-type-input').value.trim();
+        let ext = row.querySelector('.mime-ext-input').value.trim();
+        if (ext && !ext.startsWith('.')) ext = '.' + ext;
+        if (mime && ext) config.fileValidation.allowedAudioMimeTypes[mime] = ext;
     });
     
     if (config.useTraefik) {
