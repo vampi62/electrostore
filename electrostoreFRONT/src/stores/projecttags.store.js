@@ -1,8 +1,9 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
+import { createMainResource, createNestedResource } from "@/helpers";
 
 import { useProjectsStore } from "@/stores";
+import { readonly } from "vue";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -41,6 +42,8 @@ const projectTagProjectResource = createNestedResource({
 	stateKey: "projectTagsProject",
 	countKey: "projectTagsProjectTotalCount",
 	loadingKey: "projectTagsProjectLoading",
+	editionKey: "projectTagProjectEdition",
+	readyKey: "projectTagProjectReady",
 	onHydrate: (store, idProjectTag, entity, expand) => {
 		if (expand.includes("project")) {
 			const projectsStore = useProjectsStore();
@@ -60,6 +63,7 @@ export const useProjectTagsStore = defineStore("projectTags",{
 		projectTagsProjectTotalCount: {},
 		projectTagsProject: {},
 		projectTagProjectEdition: {},
+		projectTagProjectReady: {},
 	}),
 	actions: {
 		getProjectTagByList: projectTagResource.getByList,
@@ -101,6 +105,18 @@ export const useProjectTagsStore = defineStore("projectTags",{
 		clearEdition(id) {
 			delete this.projectTagEdition[id];
 			delete this.projectTagProjectEdition[id];
+			delete this.projectTagProjectReady[id];
+		},
+		async saveAllChanges(id) {
+			let realId = id;
+			if (id === "new") {
+				realId = await this.createProjectTag(this.projectTagEdition[id]);
+				this.copyProjectTagProjectAllId(id, realId);
+			} else {
+				await this.updateProjectTag(realId, this.projectTagEdition[id]);
+			}
+			await this.getProjectTagById(realId, ["project_tags"]);
+			return realId;
 		},
 
 		getProjectTagProjectByInterval: projectTagProjectResource.getByInterval,
@@ -109,5 +125,10 @@ export const useProjectTagsStore = defineStore("projectTags",{
 		deleteProjectTagProject: projectTagProjectResource.remove,
 		createProjectTagProjectBulk: projectTagProjectResource.createBulk,
 		deleteProjectTagProjectBulk: projectTagProjectResource.removeBulk,
+		getAvailableNewProjectTagProjectId: projectTagProjectResource.getAvailableNewId,
+		valideProjectTagProjectEditionById: projectTagProjectResource.valideEditionById,
+		copyProjectTagProjectPerId: projectTagProjectResource.copyPerId,
+		copyProjectTagProjectAllId: projectTagProjectResource.copyAllId,
+		pushProjectTagProjectChange: projectTagProjectResource.pushChange,
 	},
 });

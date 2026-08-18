@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
+import { fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
 
 import { useCommandsStore, useProjectsStore } from "@/stores";
 
@@ -60,6 +60,8 @@ const projectCommentResource = createNestedResource({
 	stateKey: "projectsComment",
 	countKey: "projectsCommentTotalCount",
 	loadingKey: "projectsCommentLoading",
+	editionKey: "projectCommentEdition",
+	readyKey: "projectCommentReady",
 	onHydrate: (store, idUser, entity, expand) => {
 		if (expand.includes("project")) {
 			const projectStore = useProjectsStore();
@@ -73,6 +75,8 @@ const commandCommentResource = createNestedResource({
 	stateKey: "commandsComment",
 	countKey: "commandsCommentTotalCount",
 	loadingKey: "commandsCommentLoading",
+	editionKey: "commandCommentEdition",
+	readyKey: "commandCommentReady",
 	onHydrate: (store, idUser, entity, expand) => {
 		if (expand.includes("command")) {
 			const commandStore = useCommandsStore();
@@ -106,11 +110,13 @@ export const useUsersStore = defineStore("users",{
 		projectsCommentTotalCount: {},
 		projectsComment: {},
 		projectCommentEdition: {},
+		projectCommentReady: {},
 
 		commandsCommentLoading: false,
 		commandsCommentTotalCount: {},
 		commandsComment: {},
 		commandCommentEdition: {},
+		commandCommentReady: {},
 
 		tokensLoading: false,
 		tokensTotalCount: {},
@@ -156,7 +162,9 @@ export const useUsersStore = defineStore("users",{
 				};
 			}
 			this.projectCommentEdition[id] = {};
+			this.projectCommentReady[id] = {};
 			this.commandCommentEdition[id] = {};
+			this.commandCommentReady[id] = {};
 			this.tokensEdition[id] = {};
 			this.pushSubscriptionsEdition[id] = {};
 		},
@@ -169,9 +177,26 @@ export const useUsersStore = defineStore("users",{
 		clearEdition(id) {
 			delete this.userEdition[id];
 			delete this.projectCommentEdition[id];
+			delete this.projectCommentReady[id];
 			delete this.commandCommentEdition[id];
+			delete this.commandCommentReady[id];
 			delete this.tokensEdition[id];
 			delete this.pushSubscriptionsEdition[id];
+		},
+		async saveAllChanges(id) {
+			let realId = id;
+			if (id === "new") {
+				realId = await this.createUser(this.userEdition[id]);
+				this.copyProjectCommentAllId(id, realId);
+				this.copyCommandCommentAllId(id, realId);
+			} else {
+				await this.updateUser(id, this.userEdition[id]);
+			}
+			await Promise.all([
+				this.pushProjectCommentChange(realId),
+				this.pushCommandCommentChange(realId),
+			]);
+			return realId;
 		},
 
 		getProjectCommentByInterval: projectCommentResource.getByInterval,
@@ -179,17 +204,27 @@ export const useUsersStore = defineStore("users",{
 		createProjectComment: projectCommentResource.create,
 		updateProjectComment: projectCommentResource.update,
 		deleteProjectComment: projectCommentResource.remove,
+		getAvailableNewProjectCommentId: projectCommentResource.getAvailableNewId,
+		valideProjectCommentEditionById: projectCommentResource.valideEditionById,
+		copyProjectCommentPerId: projectCommentResource.copyPerId,
+		copyProjectCommentAllId: projectCommentResource.copyAllId,
+		pushProjectCommentChange: projectCommentResource.pushChange,
 
 		getCommandCommentByInterval: commandCommentResource.getByInterval,
 		getCommandCommentById: commandCommentResource.getById,
 		createCommandComment: commandCommentResource.create,
 		updateCommandComment: commandCommentResource.update,
 		deleteCommandComment: commandCommentResource.remove,
+		getAvailableNewCommandCommentId: commandCommentResource.getAvailableNewId,
+		valideCommandCommentEditionById: commandCommentResource.valideEditionById,
+		copyCommandCommentPerId: commandCommentResource.copyPerId,
+		copyCommandCommentAllId: commandCommentResource.copyAllId,
+		pushCommandCommentChange: commandCommentResource.pushChange,
 
 		getTokenByInterval: tokenResource.getByInterval,
 		getTokenById: tokenResource.getById,
 		updateToken: tokenResource.update,
-		
+
 		getPushSubscriptionsByInterval: pushSubscriptionResource.getByInterval,
 		createPushSubscription: pushSubscriptionResource.create,
 		deletePushSubscription: pushSubscriptionResource.remove,
