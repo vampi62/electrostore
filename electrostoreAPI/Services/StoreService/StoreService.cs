@@ -81,7 +81,8 @@ public class StoreService : IStoreService
                 StoresTagsCount = s.StoresTags.Count,
                 Boxs = expand != null && expand.Contains("boxs") ? s.Boxs.Take(20).ToList() : null,
                 Leds = expand != null && expand.Contains("leds") ? s.Leds.Take(20).ToList() : null,
-                StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null
+                StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null,
+                Zone = expand != null && expand.Contains("zone") ? s.Zone : null
             })
             .ToListAsync();
         return new PaginatedResponseDto<ReadExtendedStoreDto>
@@ -96,7 +97,8 @@ public class StoreService : IStoreService
                     stores_tags_count = s.StoresTagsCount,
                     boxs = _mapper.Map<IEnumerable<ReadBoxDto>>(s.Boxs),
                     leds = _mapper.Map<IEnumerable<ReadLedDto>>(s.Leds),
-                    stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(s.StoresTags)
+                    stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(s.StoresTags),
+                    zone = _mapper.Map<ReadZoneDto?>(s.Zone)
                 };
             }).ToList(),
             pagination = new PaginationDto
@@ -125,7 +127,8 @@ public class StoreService : IStoreService
                 StoresTagsCount = s.StoresTags.Count,
                 Boxs = expand != null && expand.Contains("boxs") ? s.Boxs.Take(20).ToList() : null,
                 Leds = expand != null && expand.Contains("leds") ? s.Leds.Take(20).ToList() : null,
-                StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null
+                StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null,
+                Zone = expand != null && expand.Contains("zone") ? s.Zone : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
         var clientRole = _sessionService.GetClientRole();
@@ -147,7 +150,8 @@ public class StoreService : IStoreService
             stores_tags_count = store.StoresTagsCount,
             boxs = _mapper.Map<IEnumerable<ReadBoxDto>>(store.Boxs),
             leds = _mapper.Map<IEnumerable<ReadLedDto>>(store.Leds),
-            stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(store.StoresTags)
+            stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(store.StoresTags),
+            zone = _mapper.Map<ReadZoneDto?>(store.Zone)
         };
     }
 
@@ -158,7 +162,12 @@ public class StoreService : IStoreService
         {
             throw new UnauthorizedAccessException("You do not have permission to create a store");
         }
+        if (storeDto.id_zone is not null && !await _context.Zones.AnyAsync(z => z.id_zone == storeDto.id_zone))
+        {
+            throw new KeyNotFoundException($"Zone with id '{storeDto.id_zone}' not found");
+        }
         var newStore = _mapper.Map<Stores>(storeDto);
+        _validateStoreService.ValidateStorePlanPosition(newStore);
         var mqttPassword = GenerateMqttPasswordForStore();
         var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
         newStore.mqtt_password_store = encryptedPassword.EncryptedData;
@@ -192,6 +201,7 @@ public class StoreService : IStoreService
         var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
         var oldMqttName = storeToUpdate.mqtt_name_store;
         await _validateStoreService.UpdateStoreInformations(storeToUpdate, storeDto);
+        _validateStoreService.ValidateStorePlanPosition(storeToUpdate);
         await _validateStoreService.CheckUpdateStoreOutsideElement(storeToUpdate);
         var mqttPassword = string.Empty;
         if (storeDto.reset_mqtt_password_store == true)
@@ -258,7 +268,12 @@ public class StoreService : IStoreService
         {
             throw new UnauthorizedAccessException("You do not have permission to create a store");
         }
+        if (storeDto.store.id_zone is not null && !await _context.Zones.AnyAsync(z => z.id_zone == storeDto.store.id_zone))
+        {
+            throw new KeyNotFoundException($"Zone with id '{storeDto.store.id_zone}' not found");
+        }
         var newStore = _mapper.Map<Stores>(storeDto.store);
+        _validateStoreService.ValidateStorePlanPosition(newStore);
         await using var transaction = await _context.Database.BeginTransactionAsync();
         _context.Stores.Add(newStore);
         await _context.SaveChangesAsync(); // persist store to get real id_store
@@ -374,6 +389,7 @@ public class StoreService : IStoreService
         await using var transaction = await _context.Database.BeginTransactionAsync();
         var oldMqttName = storeToUpdate.mqtt_name_store;
         await _validateStoreService.UpdateStoreInformations(storeToUpdate, storeDto.store);
+        _validateStoreService.ValidateStorePlanPosition(storeToUpdate);
         // Add leds and boxs, if status field indicate the new status "delete", "modified", "new"
         (var validQueryLed, var errorQueryLed) = await UpdateLedList(storeToUpdate, storeDto.leds ?? []);
         (var validQueryBox, var errorQueryBox) = await UpdateBoxList(storeToUpdate, storeDto.boxs ?? []);

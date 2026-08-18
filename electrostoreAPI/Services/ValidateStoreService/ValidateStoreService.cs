@@ -34,6 +34,23 @@ public class ValidateStoreService : IValidateStoreService
         }
     }
 
+    public void ValidateStorePlanPosition(Stores store)
+    {
+        var hasAnyCoordinate = store.xmin_store is not null || store.ymin_store is not null || store.xmax_store is not null || store.ymax_store is not null;
+        if (!hasAnyCoordinate)
+        {
+            return;
+        }
+        if (store.xmin_store is null || store.ymin_store is null || store.xmax_store is null || store.ymax_store is null)
+        {
+            throw new ArgumentException("xmin_store, ymin_store, xmax_store and ymax_store must all be provided together.");
+        }
+        if (store.xmax_store <= store.xmin_store || store.ymax_store <= store.ymin_store)
+        {
+            throw new ArgumentException($"Store min position ({store.xmin_store}, {store.ymin_store}) must be less than max position ({store.xmax_store}, {store.ymax_store}).");
+        }
+    }
+
     public async Task UpdateStoreInformations(Stores storeToUpdate, UpdateStoreDto storeDto)
     {
         if (storeDto.name_store is not null)
@@ -51,6 +68,41 @@ public class ValidateStoreService : IValidateStoreService
         if (storeDto.mqtt_name_store is not null)
         {
             storeToUpdate.mqtt_name_store = storeDto.mqtt_name_store;
+        }
+        if (storeDto.unset_zone_store == true)
+        {
+            storeToUpdate.id_zone = null;
+            storeToUpdate.xmin_store = null;
+            storeToUpdate.ymin_store = null;
+            storeToUpdate.xmax_store = null;
+            storeToUpdate.ymax_store = null;
+        }
+        else
+        {
+            if (storeDto.id_zone is not null)
+            {
+                if (!await _context.Zones.AnyAsync(z => z.id_zone == storeDto.id_zone))
+                {
+                    throw new KeyNotFoundException($"Zone with id '{storeDto.id_zone}' not found");
+                }
+                storeToUpdate.id_zone = storeDto.id_zone.Value;
+            }
+            if (storeDto.xmin_store is not null)
+            {
+                storeToUpdate.xmin_store = storeDto.xmin_store.Value;
+            }
+            if (storeDto.ymin_store is not null)
+            {
+                storeToUpdate.ymin_store = storeDto.ymin_store.Value;
+            }
+            if (storeDto.xmax_store is not null)
+            {
+                storeToUpdate.xmax_store = storeDto.xmax_store.Value;
+            }
+            if (storeDto.ymax_store is not null)
+            {
+                storeToUpdate.ymax_store = storeDto.ymax_store.Value;
+            }
         }
     }
 
