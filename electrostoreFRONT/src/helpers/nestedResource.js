@@ -2,8 +2,8 @@ import { fetchWrapper, buildQuery } from "@/helpers";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-export function createNestedResource({ path, idField, countKey, stateKey, loadingKey, onHydrate }) {
-	return {
+export function createNestedResource({ path, idField, countKey, stateKey, loadingKey, editionKey, readyKey, onHydrate }) {
+	const resource = {
 		async getByInterval(idParentResource, { limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false, externalParam = [] } = {}) {
 			if (!this[stateKey][String(idParentResource)] || clear) {
 				this[stateKey][String(idParentResource)] = {};
@@ -77,5 +77,58 @@ export function createNestedResource({ path, idField, countKey, stateKey, loadin
 			this[countKey][idParentResource] = (this[countKey][idParentResource] ?? 0) - res.valide.length;
 			this[countKey][idParentResource] = Math.max(this[countKey][idParentResource], 0);
 		},
+		getAvailableNewId(idParentResource) {
+			const edition = this[editionKey][idParentResource] ?? {};
+			let i = 1;
+			while (Object.hasOwn(edition, `new-${i}`)) {
+				i++;
+			}
+			return `new-${i}`;
+		},
+		valideEditionById(idParentResource, id, status = "modified") {
+			this[readyKey][idParentResource] ??= {};
+			const edition = this[editionKey][idParentResource]?.[id] ?? {};
+			this[readyKey][idParentResource][id] = { ...edition, [idField]: id, status };
+		},
+		copyPerId(idParentResource, oldId, newId) {
+			this[editionKey][idParentResource] ??= {};
+			this[readyKey][idParentResource] ??= {};
+			if (this[editionKey][idParentResource][oldId] !== undefined) {
+				this[editionKey][idParentResource][newId] = { ...this[editionKey][idParentResource][oldId], [idField]: newId };
+			}
+			if (this[readyKey][idParentResource][oldId] !== undefined) {
+				this[readyKey][idParentResource][newId] = { ...this[readyKey][idParentResource][oldId], [idField]: newId };
+			}
+		},
+		copyAllId(parentKey, oldIdParentResource, newIdParentResource) {
+			this[editionKey][newIdParentResource] = { ...this[editionKey][oldIdParentResource] };
+			this[readyKey][newIdParentResource] = { ...this[readyKey][oldIdParentResource] };
+			for (const [id, entry] of Object.entries(this[editionKey][newIdParentResource])) {
+				this[editionKey][newIdParentResource][id] = { ...entry, [idField]: id };
+			}
+			for (const [id, entry] of Object.entries(this[readyKey][newIdParentResource])) {
+				this[readyKey][newIdParentResource][id] = { ...entry, [idField]: id };
+			}
+		},
+		async pushChange(idParentResource) {
+			const readyEntries = { ...this[readyKey][idParentResource] };
+			for (const [id, entry] of Object.entries(readyEntries)) {
+				const { status, ...data } = entry;
+				const isNewId = String(id).startsWith("new-");
+				if (data?.pushChange) {
+					continue; // Skip if already pushed
+				}
+				if (status === "created") {
+					delete data[idField];
+					await resource.create.call(this, idParentResource, data);
+				} else if (status === "modified" && !isNewId) {
+					await resource.update.call(this, idParentResource, id, data);
+				} else if (status === "deleted" && !isNewId) {
+					await resource.remove.call(this, idParentResource, id);
+				}
+				entry.pushChange = true;
+			}
+		},
 	};
+	return resource;
 }

@@ -80,6 +80,8 @@ const boxResource = createNestedResource({
 	stateKey: "boxs",
 	countKey: "boxsTotalCount",
 	loadingKey: "boxsLoading",
+	editionKey: "boxEdition",
+	readyKey: "boxReady",
 	onHydrate: (store, idStore, entity, expand) => {
 		hydrateBox(store, idStore, entity.id_box, entity, expand);
 	},
@@ -90,6 +92,8 @@ const ledResource = createNestedResource({
 	stateKey: "leds",
 	countKey: "ledsTotalCount",
 	loadingKey: "ledsLoading",
+	editionKey: "ledEdition",
+	readyKey: "ledReady",
 });
 const storeTagResource = createNestedResource({
 	path: (idStore) => `/store/${idStore}/store_tag`,
@@ -97,6 +101,8 @@ const storeTagResource = createNestedResource({
 	stateKey: "storeTags",
 	countKey: "storeTagsTotalCount",
 	loadingKey: "storeTagsLoading",
+	editionKey: "storeTagEdition",
+	readyKey: "storeTagReady",
 	onHydrate: (store, idStore, entity, expand) => {
 		if (expand.includes("tag")) {
 			const tagsStore = useTagsStore();
@@ -116,26 +122,31 @@ export const useStoresStore = defineStore("stores",{
 		boxsTotalCount: {},
 		boxs: {},
 		boxEdition: {},
+		boxReady: {},
 
 		ledsLoading: false,
 		ledsTotalCount: {},
 		leds: {},
 		ledEdition: {},
+		ledReady: {},
 
 		storeTagsLoading: false,
 		storeTagsTotalCount: {},
 		storeTags: {},
 		storeTagEdition: {},
+		storeTagReady: {},
 
 		boxItemsLoading: false,
 		boxItemsTotalCount: {},
 		boxItems: {},
 		boxItemEdition: {},
+		boxItemReady: {},
 
 		boxTagsLoading: false,
 		boxTagsTotalCount: {},
 		boxTags: {},
 		boxTagEdition: {},
+		boxTagReady: {},
 	}),
 	actions: {
 		getStoreByList: storeResource.getByList,
@@ -183,13 +194,21 @@ export const useStoresStore = defineStore("stores",{
 					mqtt_last_seen_store: this.stores[id].mqtt_last_seen_store,
 				};
 				this.ledEdition[id] = { ...this.leds[id] };
+				this.ledReady[id] = {};
 				this.boxEdition[id] = { ...this.boxs[id] };
+				this.boxReady[id] = {};
+				this.storeTagEdition[id] = { ...this.storeTags[id] };
+				this.storeTagReady[id] = {};
 			} else {
 				this.storeEdition[id] = {
 					loading: false,
 				};
 				this.ledEdition[id] = {};
+				this.ledReady[id] = {};
 				this.boxEdition[id] = {};
+				this.boxReady[id] = {};
+				this.storeTagEdition[id] = {};
+				this.storeTagReady[id] = {};
 			}
 		},
 		setLoadingEdition(id, loading) {
@@ -199,11 +218,29 @@ export const useStoresStore = defineStore("stores",{
 			this.storeEdition[id].loading = loading;
 		},
 		clearEdition(id) {
-			if (this.storeEdition && this.storeEdition[id]) {
-				delete this.storeEdition[id];
-				delete this.ledEdition[id];
-				delete this.boxEdition[id];
+			delete this.storeEdition[id];
+			delete this.ledEdition[id];
+			delete this.ledReady[id];
+			delete this.boxEdition[id];
+			delete this.boxReady[id];
+			delete this.storeTagEdition[id];
+			delete this.storeTagReady[id];
+		},
+		async saveAllChanges(id) {
+			let realId = id;
+			const payload = {
+				store: this.storeEdition[id],
+				leds: Object.values(this.ledEdition[id] ?? {}),
+				boxs: Object.values(this.boxEdition[id] ?? {}),
+			};
+			if (id === "new") {
+				realId = await this.createStoreComplete(id, payload);
+				this.copyTagStoreAllId(id, realId);
+			} else {
+				await this.updateStoreComplete(id, payload);
 			}
+			await this.pushTagStoreChange(realId);
+			return realId;
 		},
 
 		getBoxByInterval: boxResource.getByInterval,
@@ -214,6 +251,11 @@ export const useStoresStore = defineStore("stores",{
 		createBoxBulk: boxResource.createBulk,
 		updateBoxBulk: boxResource.updateBulk,
 		deleteBoxBulk: boxResource.removeBulk,
+		getAvailableNewBoxId: boxResource.getAvailableNewId,
+		valideBoxEditionById: boxResource.valideEditionById,
+		copyBoxPerId: boxResource.copyPerId,
+		copyBoxAllId: boxResource.copyAllId,
+		pushBoxChange: boxResource.pushChange,
 		async showBoxById(idStore, id, params) {
 			await fetchWrapper.post({
 				url: `${baseUrl}/store/${idStore}/box/${id}/show`,
@@ -230,6 +272,11 @@ export const useStoresStore = defineStore("stores",{
 		createLedBulk: ledResource.createBulk,
 		updateLedBulk: ledResource.updateBulk,
 		deleteLedBulk: ledResource.removeBulk,
+		getAvailableNewLedId: ledResource.getAvailableNewId,
+		valideLedEditionById: ledResource.valideEditionById,
+		copyLedPerId: ledResource.copyPerId,
+		copyLedAllId: ledResource.copyAllId,
+		pushLedChange: ledResource.pushChange,
 		async showLedById(idStore, id, params) {
 			await fetchWrapper.post({
 				url: `${baseUrl}/store/${idStore}/led/${id}/show`,
@@ -244,6 +291,11 @@ export const useStoresStore = defineStore("stores",{
 		deleteTagStore: storeTagResource.remove,
 		createTagStoreBulk: storeTagResource.createBulk,
 		deleteTagStoreBulk: storeTagResource.removeBulk,
+		getAvailableNewTagStoreId: storeTagResource.getAvailableNewId,
+		valideTagStoreEditionById: storeTagResource.valideEditionById,
+		copyTagStorePerId: storeTagResource.copyPerId,
+		copyTagStoreAllId: storeTagResource.copyAllId,
+		pushTagStoreChange: storeTagResource.pushChange,
 
 		async getBoxItemByInterval(idStore, idBox, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
 			if (!this.boxItems[idBox] || clear) {

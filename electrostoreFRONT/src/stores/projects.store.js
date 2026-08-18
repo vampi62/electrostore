@@ -69,6 +69,8 @@ const commentResource = createNestedResource({
 	stateKey: "comments",
 	countKey: "commentsTotalCount",
 	loadingKey: "commentsLoading",
+	editionKey: "commentEdition",
+	readyKey: "commentsReady",
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("user")) {
 			const usersStore = useUsersStore();
@@ -82,6 +84,8 @@ const documentResource = createNestedResource({
 	stateKey: "documents",
 	countKey: "documentsTotalCount",
 	loadingKey: "documentsLoading",
+	editionKey: "documentEdition",
+	readyKey: "documentsReady",
 });
 const itemResource = createNestedResource({
 	path: (idProject) => `/project/${idProject}/item`,
@@ -89,6 +93,8 @@ const itemResource = createNestedResource({
 	stateKey: "items",
 	countKey: "itemsTotalCount",
 	loadingKey: "itemsLoading",
+	editionKey: "itemEdition",
+	readyKey: "itemReady",
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("item")) {
 			const itemsStore = useItemsStore();
@@ -102,6 +108,8 @@ const projectTagProjectResource = createNestedResource({
 	stateKey: "projectTagProject",
 	countKey: "projectTagProjectTotalCount",
 	loadingKey: "projectTagProjectLoading",
+	editionKey: "projectTagProjectEdition",
+	readyKey: "projectTagProjectReady",
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("project_tag")) {
 			const projectTagsStore = useProjectTagsStore();
@@ -128,21 +136,25 @@ export const useProjectsStore = defineStore("projects",{
 		commentsTotalCount: {},
 		comments: {},
 		commentEdition: {},
+		commentsReady: {},
 
 		documentsLoading: false,
 		documentsTotalCount: {},
 		documents: {},
 		documentEdition: {},
+		documentReady: {},
 
 		itemsLoading: false,
 		itemsTotalCount: {},
 		items: {},
 		itemEdition: {},
+		itemReady: {},
 
 		projectTagProjectLoading: false,
 		projectTagProjectTotalCount: {},
 		projectTagProject: {},
 		projectTagProjectEdition: {},
+		projectTagProjectReady: {},
 
 		statusHistoryTotalCount: {},
 		statusHistoryLoading: false,
@@ -181,9 +193,13 @@ export const useProjectsStore = defineStore("projects",{
 				};
 			}
 			this.commentEdition[id] = {};
+			this.commentReady[id] = {};
 			this.documentEdition[id] = {};
+			this.documentReady[id] = {};
 			this.itemEdition[id] = {};
+			this.itemReady[id] = {};
 			this.projectTagProjectEdition[id] = {};
+			this.projectTagProjectReady[id] = {};
 		},
 		setLoadingEdition(id, loading) {
 			if (!this.projectEdition[id]) {
@@ -194,9 +210,32 @@ export const useProjectsStore = defineStore("projects",{
 		clearEdition(id) {
 			delete this.projectEdition[id];
 			delete this.commentEdition[id];
+			delete this.commentReady[id];
 			delete this.documentEdition[id];
+			delete this.documentReady[id];
 			delete this.itemEdition[id];
+			delete this.itemReady[id];
 			delete this.projectTagProjectEdition[id];
+			delete this.projectTagProjectReady[id];
+		},
+		async saveAllChanges(id) {
+			let realId = id;
+			if (id === "new") {
+				realId = await this.createProject(this.projectEdition[id]);
+				this.copyCommentAllId(id, realId);
+				this.copyDocumentAllId(id, realId);
+				this.copyItemAllId(id, realId);
+				this.copyProjectTagProjectAllId(id, realId);
+			} else {
+				await this.updateProject(realId, this.projectEdition[id]);
+			}
+			await Promise.all([
+				this.pushCommentChange(realId),
+				this.pushDocumentChange(realId),
+				this.pushItemChange(realId),
+				this.pushProjectTagProjectChange(realId),
+			]);
+			return realId;
 		},
 
 		getCommentByInterval: commentResource.getByInterval,
@@ -204,12 +243,22 @@ export const useProjectsStore = defineStore("projects",{
 		createComment: commentResource.create,
 		updateComment: commentResource.update,
 		deleteComment: commentResource.remove,
+		getAvailableNewCommentId: commentResource.getAvailableNewId,
+		valideCommentEditionById: commentResource.valideEditionById,
+		copyCommentPerId: commentResource.copyPerId,
+		copyCommentAllId: commentResource.copyAllId,
+		pushCommentChange: commentResource.pushChange,
 
 		getDocumentByInterval: documentResource.getByInterval,
 		getDocumentById: documentResource.getById,
 		createDocument: documentResource.create,
 		updateDocument: documentResource.update,
 		deleteDocument: documentResource.remove,
+		getAvailableNewDocumentId: documentResource.getAvailableNewId,
+		valideDocumentEditionById: documentResource.valideEditionById,
+		copyDocumentPerId: documentResource.copyPerId,
+		copyDocumentAllId: documentResource.copyAllId,
+		pushDocumentChange: documentResource.pushChange,
 		async downloadDocument(idProject, id) {
 			return await fetchWrapper.image({
 				url: `${baseUrl}/project/${idProject}/document/${id}/download`,
@@ -223,6 +272,11 @@ export const useProjectsStore = defineStore("projects",{
 		updateItem: itemResource.update,
 		deleteItem: itemResource.remove,
 		createItemBulk: itemResource.createBulk,
+		getAvailableNewItemId: itemResource.getAvailableNewId,
+		valideItemEditionById: itemResource.valideEditionById,
+		copyItemPerId: itemResource.copyPerId,
+		copyItemAllId: itemResource.copyAllId,
+		pushItemChange: itemResource.pushChange,
 		
 		getProjectTagProjectByInterval: projectTagProjectResource.getByInterval,
 		getProjectTagProjectById: projectTagProjectResource.getById,
@@ -230,6 +284,11 @@ export const useProjectsStore = defineStore("projects",{
 		deleteProjectTagProject: projectTagProjectResource.remove,
 		createProjectTagProjectBulk: projectTagProjectResource.createBulk,
 		deleteProjectTagProjectBulk: projectTagProjectResource.removeBulk,
+		getAvailableNewProjectTagProjectId: projectTagProjectResource.getAvailableNewId,
+		valideProjectTagProjectEditionById: projectTagProjectResource.valideEditionById,
+		copyProjectTagProjectPerId: projectTagProjectResource.copyPerId,
+		copyProjectTagProjectAllId: projectTagProjectResource.copyAllId,
+		pushProjectTagProjectChange: projectTagProjectResource.pushChange,
 
 		getStatusHistoryByInterval: statusHistoryResource.getByInterval,
 		getStatusHistoryById: statusHistoryResource.getById,

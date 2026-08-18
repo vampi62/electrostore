@@ -1,8 +1,8 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
+import { fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
 
-import { useUsersStore, useItemsStore, useCarriersStore } from "@/stores";
+import { useUsersStore, useCarriersStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -67,6 +67,8 @@ const commentResource = createNestedResource({
 	stateKey: "comments",
 	countKey: "commentsTotalCount",
 	loadingKey: "commentsLoading",
+	editionKey: "commentEdition",
+	readyKey: "commentReady",
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("user")) {
 			const usersStore = useUsersStore();
@@ -80,6 +82,8 @@ const documentResource = createNestedResource({
 	stateKey: "documents",
 	countKey: "documentsTotalCount",
 	loadingKey: "documentsLoading",
+	editionKey: "documentEdition",
+	readyKey: "documentReady",
 });
 const itemResource = createNestedResource({
 	path: (idCommand) => `/command/${idCommand}/item`,
@@ -87,6 +91,8 @@ const itemResource = createNestedResource({
 	stateKey: "items",
 	countKey: "itemsTotalCount",
 	loadingKey: "itemsLoading",
+	editionKey: "itemEdition",
+	readyKey: "itemReady",
 });
 const historyResource = createNestedResource({
 	path: (idCommand) => `/command/${idCommand}/history`,
@@ -107,16 +113,19 @@ export const useCommandsStore = defineStore("commands",{
 		commentsLoading: false,
 		comments: {},
 		commentEdition: {},
+		commentReady: {},
 
 		documentsTotalCount: {},
 		documentsLoading: false,
 		documents: {},
 		documentEdition: {},
+		documentReady: {},
 
 		itemsTotalCount: {},
 		itemsLoading: false,
 		items: {},
 		itemEdition: {},
+		itemReady: {},
 
 		historyTotalCount: {},
 		historyLoading: false,
@@ -166,8 +175,11 @@ export const useCommandsStore = defineStore("commands",{
 				};
 			}
 			this.commentEdition[id] = {};
+			this.commentReady[id] = {};
 			this.documentEdition[id] = {};
+			this.documentReady[id] = {};
 			this.itemEdition[id] = {};
+			this.itemReady[id] = {};
 		},
 		setLoadingEdition(id, loading) {
 			if (!this.commandEdition[id]) {
@@ -178,8 +190,28 @@ export const useCommandsStore = defineStore("commands",{
 		clearEdition(id) {
 			delete this.commandEdition[id];
 			delete this.commentEdition[id];
+			delete this.commentReady[id];
 			delete this.documentEdition[id];
+			delete this.documentReady[id];
 			delete this.itemEdition[id];
+			delete this.itemReady[id];
+		},
+		async saveAllChanges(id) {
+			let realId = id;
+			if (id === "new") {
+				realId = await this.createCommand(this.commandEdition[id]);
+				this.copyCommentAllId(id, realId);
+				this.copyDocumentAllId(id, realId);
+				this.copyItemAllId(id, realId);
+			} else {
+				await this.updateCommand(id, this.commandEdition[id]);
+			}
+			await Promise.all([
+				this.pushCommentChange(realId),
+				this.pushDocumentChange(realId),
+				this.pushItemChange(realId),
+			]);
+			return realId;
 		},
 
 		getCommentByInterval: commentResource.getByInterval,
@@ -187,12 +219,22 @@ export const useCommandsStore = defineStore("commands",{
 		createComment: commentResource.create,
 		updateComment: commentResource.update,
 		deleteComment: commentResource.remove,
+		getAvailableNewCommentId: commentResource.getAvailableNewId,
+		valideCommentEditionById: commentResource.valideEditionById,
+		copyCommentPerId: commentResource.copyPerId,
+		copyCommentAllId: commentResource.copyAllId,
+		pushCommentChange: commentResource.pushChange,
 
 		getDocumentByInterval: documentResource.getByInterval,
 		getDocumentById: documentResource.getById,
 		createDocument: documentResource.create,
 		updateDocument: documentResource.update,
 		deleteDocument: documentResource.remove,
+		getAvailableNewDocumentId: documentResource.getAvailableNewId,
+		valideDocumentEditionById: documentResource.valideEditionById,
+		copyDocumentPerId: documentResource.copyPerId,
+		copyDocumentAllId: documentResource.copyAllId,
+		pushDocumentChange: documentResource.pushChange,
 		async downloadDocument(idCommand, id) {
 			return await fetchWrapper.image({
 				url: `${baseUrl}/command/${idCommand}/document/${id}/download`,
@@ -206,6 +248,11 @@ export const useCommandsStore = defineStore("commands",{
 		updateItem: itemResource.update,
 		deleteItem: itemResource.remove,
 		createItemBulk: itemResource.createBulk,
+		getAvailableNewItemId: itemResource.getAvailableNewId,
+		valideItemEditionById: itemResource.valideEditionById,
+		copyItemPerId: itemResource.copyPerId,
+		copyItemAllId: itemResource.copyAllId,
+		pushItemChange: itemResource.pushChange,
 
 		getHistoryByInterval: historyResource.getByInterval,
 		getHistoryById: historyResource.getById,
