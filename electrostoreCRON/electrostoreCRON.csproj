@@ -25,6 +25,7 @@
   <ItemGroup>
     <Protobuf Include="Grpc\Protos\config.proto" GrpcServices="Client" />
     <Protobuf Include="Grpc\Protos\cronJobs.proto" GrpcServices="Client" />
+    <Protobuf Include="Grpc\Protos\itemVendorPricing.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>

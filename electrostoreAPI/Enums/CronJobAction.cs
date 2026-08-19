@@ -6,4 +6,5 @@ public enum CronJobAction
     PackageTracking,
     IARetrain,
     StockLowAlert,
+    PriceTracking,
 }

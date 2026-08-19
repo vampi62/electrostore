@@ -15,6 +15,7 @@ enum CronJobAction {
   PACKAGE_TRACKING = 0;
   IA_RETRAIN = 1;
   STOCK_LOW_ALERT = 2;
+  PRICE_TRACKING = 3;
 }
 
 // ---- CronJobs ----

@@ -24,6 +24,8 @@ using ElectrostoreAPI.Services.ItemDocumentService;
 using ElectrostoreAPI.Services.ItemHistoryService;
 using ElectrostoreAPI.Services.ItemService;
 using ElectrostoreAPI.Services.ItemTagService;
+using ElectrostoreAPI.Services.ItemVendorService;
+using ElectrostoreAPI.Services.ItemVendorPriceService;
 using ElectrostoreAPI.Services.JwiService;
 using ElectrostoreAPI.Services.LedService;
 using ElectrostoreAPI.Services.ProjectCommentService;
@@ -227,6 +229,7 @@ public partial class Program
         app.MapGrpcService<ConfigGrpcService>();
         app.MapGrpcService<CronJobsGrpcService>();
         app.MapGrpcService<IaTrainingGrpcService>();
+        app.MapGrpcService<ItemVendorPricingGrpcService>();
         app.MapGrpcService<StoreMqttGrpcService>();
         app.MapGrpcService<UsersGrpcService>();
 
@@ -358,6 +361,8 @@ public partial class Program
         builder.Services.AddScoped<IItemHistoryService, ItemHistoryService>();
         builder.Services.AddScoped<IItemService, ItemService>();
         builder.Services.AddScoped<IItemTagService, ItemTagService>();
+        builder.Services.AddScoped<IItemVendorService, ItemVendorService>();
+        builder.Services.AddScoped<IItemVendorPriceService, ItemVendorPriceService>();
         builder.Services.AddScoped<ILedService, LedService>();
         
         builder.Services.AddScoped<IProjectCommentService, ProjectCommentService>();

@@ -75,6 +75,15 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.box, opt => opt.MapFrom(src => src.Box))
             .ForMember(dest => dest.user, opt => opt.MapFrom(src => src.User));
 
+        CreateMap<CreateItemVendorDto, ItemsVendors>();
+        CreateMap<ItemsVendors, ReadItemVendorDto>();
+        CreateMap<ItemsVendors, ReadExtendedItemVendorDto>()
+            .ForMember(dest => dest.item, opt => opt.MapFrom(src => src.Item));
+
+        CreateMap<ItemVendorPrices, ReadItemVendorPriceDto>();
+        CreateMap<ItemVendorPrices, ReadExtendedItemVendorPriceDto>()
+            .ForMember(dest => dest.item_vendor, opt => opt.MapFrom(src => src.ItemVendor));
+
         CreateMap<CreateItemTagDto, ItemsTags>();
         CreateMap<ItemsTags, ReadItemTagDto>();
         CreateMap<ItemsTags, ReadExtendedItemTagDto>()

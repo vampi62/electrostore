@@ -4,6 +4,7 @@ using ElectrostoreCRON.Kafka.Consumers;
 using ElectrostoreCRON.Kafka.Producer;
 using ElectrostoreCRON.Services.ConfigCacheService;
 using ElectrostoreCRON.Services.CronSchedulerService;
+using ElectrostoreCRON.Services.PriceTrackingService;
 using ElectrostoreCRON.Services.Track17SyncService;
 using Quartz;
 using VaultSharp;
@@ -45,6 +46,11 @@ public partial class Program
             options.Address = new Uri(
                 builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
         });
+        builder.Services.AddGrpcClient<ItemVendorPricingGrpc.ItemVendorPricingGrpcClient>(options =>
+        {
+            options.Address = new Uri(
+                builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
+        });
 
         // Quartz.NET scheduler
         builder.Services.AddQuartz();
@@ -68,6 +74,7 @@ public partial class Program
         builder.Services.AddHttpClient();
         builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
         builder.Services.AddSingleton<ITrack17SyncService, Track17SyncService>();
+        builder.Services.AddSingleton<IPriceTrackingService, PriceTrackingService>();
         builder.Services.AddSingleton<ConfigCacheService>();
         builder.Services.AddSingleton<IConfigCacheService>(sp => sp.GetRequiredService<ConfigCacheService>());
         builder.Services.AddHostedService(sp => sp.GetRequiredService<ConfigCacheService>());

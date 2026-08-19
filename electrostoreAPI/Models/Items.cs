@@ -31,4 +31,5 @@ public class Items : BaseEntity
     public ICollection<ItemsTags> ItemsTags { get; set; } = new List<ItemsTags>();
     public ICollection<ItemsHistory> ItemsHistory { get; set; } = new List<ItemsHistory>();
     public ICollection<ProjectsItems> ProjectsItems { get; set; } = new List<ProjectsItems>();
+    public ICollection<ItemsVendors> ItemsVendors { get; set; } = new List<ItemsVendors>();
 }

@@ -26,6 +26,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<ElectrostoreAPI.Models.ItemsHistory> ItemsHistory { get; set; }
     public DbSet<ElectrostoreAPI.Models.ItemsDocuments> ItemsDocuments { get; set; }
     public DbSet<ElectrostoreAPI.Models.ItemsTags> ItemsTags { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ItemsVendors> ItemsVendors { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ItemVendorPrices> ItemVendorPrices { get; set; }
     public DbSet<ElectrostoreAPI.Models.JwiAccessTokens> JwiAccessTokens { get; set; }
     public DbSet<ElectrostoreAPI.Models.JwiRefreshTokens> JwiRefreshTokens { get; set; }
     public DbSet<ElectrostoreAPI.Models.Leds> Leds { get; set; }

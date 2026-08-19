@@ -60,6 +60,8 @@ public static class Constants
     public const int MaxPushAuthLength = 256;
     public const int MaxTrackingNumberLength = 100;
     public const int MaxCarrierNameLength = 100;
+    public const int MaxVendorSkuLength = 100;
+    public const int MaxCurrencyCodeLength = 3;
     public const int MaxTimezoneLength = 50;
     public const int MaxCoordinateLength = 50;
     public const int MaxPostalCodeLength = 20;

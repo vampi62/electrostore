@@ -46,6 +46,7 @@
     <Protobuf Include="Grpc\Protos\cronJobs.proto" GrpcServices="Server" />
     <Protobuf Include="Grpc\Protos\iaCmd.proto" GrpcServices="Client" />
     <Protobuf Include="Grpc\Protos\iaTraining.proto" GrpcServices="Server" />
+    <Protobuf Include="Grpc\Protos\itemVendorPricing.proto" GrpcServices="Server" />
     <Protobuf Include="Grpc\Protos\storeMqtt.proto" GrpcServices="Server" />
     <Protobuf Include="Grpc\Protos\users.proto" GrpcServices="Server" />
   </ItemGroup>

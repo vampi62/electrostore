@@ -1,5 +1,6 @@
 using ElectrostoreCRON.Grpc;
 using ElectrostoreCRON.Services.CronSchedulerService;
+using ElectrostoreCRON.Services.PriceTrackingService;
 using ElectrostoreCRON.Services.Track17SyncService;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
@@ -12,10 +13,11 @@ namespace ElectrostoreCRON.Tests.Services;
 public class ElectrostoreCronJobTests
 {
     private readonly Mock<ITrack17SyncService> _track17Sync = new();
+    private readonly Mock<IPriceTrackingService> _priceTracking = new();
     private readonly Mock<CronJobsGrpc.CronJobsGrpcClient> _apiClient = new();
     private readonly Mock<ILogger<ElectrostoreCronJob>> _logger = new();
 
-    private ElectrostoreCronJob CreateJob() => new(_track17Sync.Object, _apiClient.Object, _logger.Object);
+    private ElectrostoreCronJob CreateJob() => new(_track17Sync.Object, _priceTracking.Object, _apiClient.Object, _logger.Object);
 
     private static AsyncUnaryCall<TResponse> CreateAsyncUnaryCall<TResponse>(TResponse response)
     {
@@ -75,6 +77,28 @@ public class ElectrostoreCronJobTests
         _track17Sync.Verify(s => s.SyncAllAsync(It.IsAny<CancellationToken>()), Times.Once);
         _apiClient.Verify(c => c.UpdateCronJobRunAsync(
             It.Is<UpdateCronJobRunRequest>(r => r.IdCronjob == 5 && !string.IsNullOrEmpty(r.LastRunAt)),
+            It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Execute_ShouldCallPriceTrackingSync_WhenActionIsPriceTracking()
+    {
+        // Arrange
+        var job = CreateJob();
+        var context = CreateContext(6, CronJobAction.PriceTracking);
+        _priceTracking.Setup(s => s.SyncAllAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _apiClient
+            .Setup(c => c.UpdateCronJobRunAsync(It.IsAny<UpdateCronJobRunRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Returns(CreateAsyncUnaryCall(new UpdateCronJobRunReply { Success = true }));
+
+        // Act
+        await job.Execute(context.Object);
+
+        // Assert
+        _priceTracking.Verify(s => s.SyncAllAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _track17Sync.Verify(s => s.SyncAllAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _apiClient.Verify(c => c.UpdateCronJobRunAsync(
+            It.Is<UpdateCronJobRunRequest>(r => r.IdCronjob == 6 && !string.IsNullOrEmpty(r.LastRunAt)),
             It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 

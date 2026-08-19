@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+option csharp_namespace = "ElectrostoreCRON.Grpc";
+
+package itemVendorPricing;
+
+service ItemVendorPricingGrpc {
+  rpc GetItemVendorsToPrice  (GetItemVendorsToPriceRequest)  returns (GetItemVendorsToPriceReply);
+  rpc RecordItemVendorPrices (RecordItemVendorPricesRequest) returns (RecordItemVendorPricesReply);
+}
+
+// ---- Enums ----
+
+enum VendorType {
+  MOUSER   = 0;
+  OCTOPART = 1;
+}
+
+// ---- Fetch links to price-check ----
+
+message GetItemVendorsToPriceRequest {
+  optional VendorType vendor_type = 1; // omit = all vendors
+  int32 limit = 2;                     // 0 = no limit
+}
+
+message GetItemVendorsToPriceReply {
+  repeated ItemVendorItem item_vendors = 1;
+}
+
+message ItemVendorItem {
+  int32      id_item_vendor          = 1;
+  int32      id_item                 = 2;
+  VendorType vendor_type_item_vendor = 3;
+  string     vendor_sku_item_vendor  = 4;
+  string     url_item_vendor         = 5; // empty if not set
+}
+
+// ---- Push observed prices (batch) ----
+
+message RecordItemVendorPricesRequest {
+  repeated ItemVendorPriceObservation observations = 1;
+}
+
+message ItemVendorPriceObservation {
+  int32  id_item_vendor                 = 1;
+  float  price_item_vendor_price        = 2;
+  string currency_item_vendor_price     = 3;
+  int32  quantity_item_vendor_price     = 4;
+  string price_breaks_item_vendor_price = 5; // JSON string, empty if not captured
+}
+
+message RecordItemVendorPricesReply {
+  repeated ItemVendorPriceResult results = 1;
+}
+
+message ItemVendorPriceResult {
+  int32  id_item_vendor = 1;
+  bool   success         = 2;
+  string error_message   = 3; // empty on success
+}
