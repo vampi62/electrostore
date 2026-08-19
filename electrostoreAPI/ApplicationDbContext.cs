@@ -19,6 +19,13 @@ public class ApplicationDbContext : DbContext
     public DbSet<ElectrostoreAPI.Models.CommandsDocuments> CommandsDocuments { get; set; }
     public DbSet<ElectrostoreAPI.Models.CommandsHistory> CommandsHistory { get; set; }
     public DbSet<ElectrostoreAPI.Models.CommandsItems> CommandsItems { get; set; }
+    public DbSet<ElectrostoreAPI.Models.Equipements> Equipements { get; set; }
+    public DbSet<ElectrostoreAPI.Models.EquipementsBoxs> EquipementsBoxs { get; set; }
+    public DbSet<ElectrostoreAPI.Models.EquipementsComments> EquipementsComments { get; set; }
+    public DbSet<ElectrostoreAPI.Models.EquipementsDocuments> EquipementsDocuments { get; set; }
+    public DbSet<ElectrostoreAPI.Models.EquipementsMaintenances> EquipementsMaintenances { get; set; }
+    public DbSet<ElectrostoreAPI.Models.EquipementsStatus> EquipementsStatus { get; set; }
+    public DbSet<ElectrostoreAPI.Models.EquipementsTags> EquipementsTags { get; set; }
     public DbSet<ElectrostoreAPI.Models.AI> AI { get; set; }
     public DbSet<ElectrostoreAPI.Models.Imgs> Imgs { get; set; }
     public DbSet<ElectrostoreAPI.Models.Items> Items { get; set; }
@@ -80,9 +87,15 @@ public class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<ItemsBoxs>()
             .HasKey(ib => new { ib.id_item, ib.id_box });
-        
+
         modelBuilder.Entity<ItemsTags>()
             .HasKey(it => new { it.id_item, it.id_tag });
+
+        modelBuilder.Entity<EquipementsBoxs>()
+            .HasKey(eb => new { eb.id_equipement, eb.id_box });
+
+        modelBuilder.Entity<EquipementsTags>()
+            .HasKey(et => new { et.id_equipement, et.id_tag });
 
         modelBuilder.Entity<ProjectsItems>()
             .HasKey(pi => new { pi.id_project, pi.id_item });
