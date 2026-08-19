@@ -1,4 +1,5 @@
 using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,9 +15,24 @@ public class ValidateStoreService : IValidateStoreService
         _context = context;
     }
 
+    private static bool IsLedPositionValid(Leds led, Stores store)
+    {
+        if (store.position_mode_store == StorePositionMode.Border)
+        {
+            if (!Enum.IsDefined(typeof(LedBorderSide), led.y_led))
+            {
+                return false;
+            }
+            var side = (LedBorderSide)led.y_led;
+            var maxPosition = side is LedBorderSide.Left or LedBorderSide.Right ? store.ylength_store : store.xlength_store;
+            return led.x_led < maxPosition;
+        }
+        return led.x_led < store.xlength_store && led.y_led < store.ylength_store;
+    }
+
     public void ValidateLedPosition(Leds led, Stores store)
     {
-        if (led.x_led >= store.xlength_store || led.y_led >= store.ylength_store)
+        if (!IsLedPositionValid(led, store))
         {
             throw new ArgumentException("Led position is out of store bounds");
         }
@@ -47,6 +63,10 @@ public class ValidateStoreService : IValidateStoreService
         if (storeDto.ylength_store is not null)
         {
             storeToUpdate.ylength_store = storeDto.ylength_store.Value;
+        }
+        if (storeDto.position_mode_store is not null)
+        {
+            storeToUpdate.position_mode_store = storeDto.position_mode_store.Value;
         }
         if (storeDto.mqtt_name_store is not null)
         {
@@ -105,10 +125,11 @@ public class ValidateStoreService : IValidateStoreService
         {
             throw new ArgumentException("you can't reduce the store size, a box will be out of store bounds");
         }
-        // check if a led in the store is outside of the store size
-        if (await _context.Leds.AnyAsync(l => l.id_store == storeToUpdate.id_store && (l.x_led > storeToUpdate.xlength_store || l.y_led > storeToUpdate.ylength_store)))
+        // check if a led in the store is outside of the store size, or invalid for the (possibly new) position mode
+        var storeLeds = await _context.Leds.Where(l => l.id_store == storeToUpdate.id_store).ToListAsync();
+        if (storeLeds.Any(l => !IsLedPositionValid(l, storeToUpdate)))
         {
-            throw new ArgumentException("you can't reduce the store size, a led will be out of store bounds");
+            throw new ArgumentException("you can't apply this change, a led will be out of store bounds or invalid for the store's position mode");
         }
     }
 
