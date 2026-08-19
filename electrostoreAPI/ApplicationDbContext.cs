@@ -36,6 +36,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<ElectrostoreAPI.Models.ProjectsProjectTags> ProjectsProjectTags { get; set; }
     public DbSet<ElectrostoreAPI.Models.ProjectTags> ProjectTags { get; set; }
     public DbSet<ElectrostoreAPI.Models.ProjectsStatus> ProjectsStatus { get; set; }
+    public DbSet<ElectrostoreAPI.Models.ProjectsSteps> ProjectsSteps { get; set; }
     public DbSet<ElectrostoreAPI.Models.Stores> Stores { get; set; }
     public DbSet<ElectrostoreAPI.Models.StoresTags> StoresTags { get; set; }
     public DbSet<ElectrostoreAPI.Models.Tags> Tags { get; set; }

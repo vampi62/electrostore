@@ -27,4 +27,5 @@ public class Projects : BaseEntity
     public ICollection<ProjectsItems> ProjectsItems { get; set; } = new List<ProjectsItems>();
     public ICollection<ProjectsProjectTags> ProjectsProjectTags { get; set; } = new List<ProjectsProjectTags>();
     public ICollection<ProjectsStatus> ProjectsStatus { get; set; } = new List<ProjectsStatus>();
+    public ICollection<ProjectsSteps> ProjectsSteps { get; set; } = new List<ProjectsSteps>();
 }

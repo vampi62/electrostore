@@ -113,6 +113,11 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.project, opt => opt.MapFrom(src => src.Project));
         CreateMap<CreateProjectStatusDto, ProjectsStatus>();
 
+        CreateMap<CreateProjectStepDto, ProjectsSteps>();
+        CreateMap<ProjectsSteps, ReadProjectStepDto>();
+        CreateMap<ProjectsSteps, ReadExtendedProjectStepDto>()
+            .ForMember(dest => dest.project, opt => opt.MapFrom(src => src.Project));
+
         CreateMap<CreateProjectTagDto, ProjectTags>();
         CreateMap<ProjectTags, ReadProjectTagDto>();
         CreateMap<ProjectTags, ReadExtendedProjectTagDto>();

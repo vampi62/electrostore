@@ -32,6 +32,7 @@ using ElectrostoreAPI.Services.ProjectItemService;
 using ElectrostoreAPI.Services.ProjectProjectTagService;
 using ElectrostoreAPI.Services.ProjectService;
 using ElectrostoreAPI.Services.ProjectStatusService;
+using ElectrostoreAPI.Services.ProjectStepService;
 using ElectrostoreAPI.Services.ProjectTagService;
 using ElectrostoreAPI.Services.SessionService;
 using ElectrostoreAPI.Services.StoreService;
@@ -366,6 +367,7 @@ public partial class Program
         builder.Services.AddScoped<IProjectProjectTagService, ProjectProjectTagService>();
         builder.Services.AddScoped<IProjectService, ProjectService>();
         builder.Services.AddScoped<IProjectStatusService, ProjectStatusService>();
+        builder.Services.AddScoped<IProjectStepService, ProjectStepService>();
         builder.Services.AddScoped<IProjectTagService, ProjectTagService>();
         builder.Services.AddScoped<IStoreService, StoreService>();
         builder.Services.AddScoped<IStoreTagService, StoreTagService>();

@@ -22,7 +22,7 @@ namespace ElectrostoreAPI.Controllers
         [HttpGet]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<PaginatedResponseDto<ReadExtendedProjectDto>>> GetProjects([FromQuery] int limit = 100, [FromQuery] int offset = 0,
-        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'project_comments', 'project_documents', 'project_items', 'project_tags', 'project_status_history'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'project_comments', 'project_documents', 'project_items', 'project_tags', 'project_status_history', 'project_steps'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) Fields to select list of ID to research in the base. Multiple values can be specified by separating them with ','.")] List<int>? idResearch = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) RSQL string to filter results. Example: 'name_project=like=example'.")] string? filter = null,
         [FromQuery, SwaggerParameter(Description = "(Optional) Sort string to order results. Example: 'name_project,asc' or 'name_project,desc'.")] string? sort = null)
@@ -36,7 +36,7 @@ namespace ElectrostoreAPI.Controllers
         [HttpGet("{id_project}")]
         [Authorize(Policy = "AccessToken")]
         public async Task<ActionResult<ReadExtendedProjectDto>> GetProjectById([FromRoute] int id_project,
-        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'project_comments', 'project_documents', 'project_items', 'project_tags', 'project_status_history'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
+        [FromQuery, SwaggerParameter(Description = "(Optional) Fields to expand. Possible values: 'project_comments', 'project_documents', 'project_items', 'project_tags', 'project_status_history', 'project_steps'. Multiple values can be specified by separating them with ','.")] List<string>? expand = null)
         {
             var project = await _projectService.GetProjectById(id_project, expand);
             return Ok(project);

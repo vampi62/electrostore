@@ -70,6 +70,7 @@ public class ProjectService : IProjectService
                 ProjectsItemsCount = p.ProjectsItems.Count,
                 ProjectsProjectTagsCount = p.ProjectsProjectTags.Count,
                 ProjectsStatusHistoryCount = p.ProjectsStatus.Count,
+                ProjectsStepsCount = p.ProjectsSteps.Count,
                 DateStartProject = p.ProjectsStatus
                     .Where(ps => ps.status_project == ProjectStatus.InProgress)
                     .OrderBy(ps => ps.created_at)
@@ -84,7 +85,8 @@ public class ProjectService : IProjectService
                 ProjectsDocuments = expand != null && expand.Contains("project_documents") ? p.ProjectsDocuments.Take(20).ToList() : null,
                 ProjectsItems = expand != null && expand.Contains("project_items") ? p.ProjectsItems.Take(20).ToList() : null,
                 ProjectsProjectTags = expand != null && expand.Contains("project_tags") ? p.ProjectsProjectTags.Take(20).ToList() : null,
-                ProjectsStatus = expand != null && expand.Contains("project_status_history") ? p.ProjectsStatus.Take(20).ToList() : null
+                ProjectsStatus = expand != null && expand.Contains("project_status_history") ? p.ProjectsStatus.Take(20).ToList() : null,
+                ProjectsSteps = expand != null && expand.Contains("project_steps") ? p.ProjectsSteps.OrderBy(ps => ps.order_project_step).Take(20).ToList() : null
             })
             .ToListAsync();
         return new PaginatedResponseDto<ReadExtendedProjectDto>
@@ -99,11 +101,13 @@ public class ProjectService : IProjectService
                     project_items_count = p.ProjectsItemsCount,
                     project_tags_count = p.ProjectsProjectTagsCount,
                     project_status_history_count = p.ProjectsStatusHistoryCount,
+                    project_steps_count = p.ProjectsStepsCount,
                     project_comments = _mapper.Map<IEnumerable<ReadProjectCommentDto>>(p.ProjectsComments),
                     project_documents = _mapper.Map<IEnumerable<ReadProjectDocumentDto>>(p.ProjectsDocuments),
                     project_items = _mapper.Map<IEnumerable<ReadProjectItemDto>>(p.ProjectsItems),
                     project_tags = _mapper.Map<IEnumerable<ReadProjectProjectTagDto>>(p.ProjectsProjectTags),
-                    project_status_history = _mapper.Map<IEnumerable<ReadProjectStatusDto>>(p.ProjectsStatus)
+                    project_status_history = _mapper.Map<IEnumerable<ReadProjectStatusDto>>(p.ProjectsStatus),
+                    project_steps = _mapper.Map<IEnumerable<ReadProjectStepDto>>(p.ProjectsSteps)
                 };
             }).ToList(),
             pagination = new PaginationDto
@@ -132,6 +136,7 @@ public class ProjectService : IProjectService
                 ProjectsItemsCount = p.ProjectsItems.Count,
                 ProjectsProjectsTagsCount = p.ProjectsProjectTags.Count,
                 ProjectsStatusHistoryCount = p.ProjectsStatus.Count,
+                ProjectsStepsCount = p.ProjectsSteps.Count,
                 DateStartProject = p.ProjectsStatus
                     .Where(ps => ps.status_project == ProjectStatus.InProgress)
                     .OrderBy(ps => ps.created_at)
@@ -146,7 +151,8 @@ public class ProjectService : IProjectService
                 ProjectsDocuments = expand != null && expand.Contains("project_documents") ? p.ProjectsDocuments.Take(20).ToList() : null,
                 ProjectsItems = expand != null && expand.Contains("project_items") ? p.ProjectsItems.Take(20).ToList() : null,
                 ProjectsProjectTags = expand != null && expand.Contains("project_tags") ? p.ProjectsProjectTags.Take(20).ToList() : null,
-                ProjectsStatus = expand != null && expand.Contains("project_status_history") ? p.ProjectsStatus.Take(20).ToList() : null
+                ProjectsStatus = expand != null && expand.Contains("project_status_history") ? p.ProjectsStatus.Take(20).ToList() : null,
+                ProjectsSteps = expand != null && expand.Contains("project_steps") ? p.ProjectsSteps.OrderBy(ps => ps.order_project_step).Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Project with id '{id}' not found");
         return _mapper.Map<ReadExtendedProjectDto>(project.Project) with
@@ -158,11 +164,13 @@ public class ProjectService : IProjectService
             project_items_count = project.ProjectsItemsCount,
             project_tags_count = project.ProjectsProjectsTagsCount,
             project_status_history_count = project.ProjectsStatusHistoryCount,
+            project_steps_count = project.ProjectsStepsCount,
             project_comments = _mapper.Map<IEnumerable<ReadProjectCommentDto>>(project.ProjectsComments),
             project_documents = _mapper.Map<IEnumerable<ReadProjectDocumentDto>>(project.ProjectsDocuments),
             project_items = _mapper.Map<IEnumerable<ReadProjectItemDto>>(project.ProjectsItems),
             project_tags = _mapper.Map<IEnumerable<ReadProjectProjectTagDto>>(project.ProjectsProjectTags),
-            project_status_history = _mapper.Map<IEnumerable<ReadProjectStatusDto>>(project.ProjectsStatus)
+            project_status_history = _mapper.Map<IEnumerable<ReadProjectStatusDto>>(project.ProjectsStatus),
+            project_steps = _mapper.Map<IEnumerable<ReadProjectStepDto>>(project.ProjectsSteps)
         };
     }
 

@@ -23,12 +23,14 @@ public record ReadExtendedProjectDto : ReadProjectDto
     public int project_items_count { get; init; }
     public int project_tags_count { get; init; }
     public int project_status_history_count { get; init; }
+    public int project_steps_count { get; init; }
     public IEnumerable<ReadProjectCommentDto>? project_comments { get; init; }
     public IEnumerable<ReadProjectDocumentDto>? project_documents { get; init; }
     public IEnumerable<ReadProjectItemDto>? project_items { get; init; }
     public IEnumerable<ReadProjectProjectTagDto>? project_tags { get; init; }
     public IEnumerable<ReadProjectStatusDto>? project_status_history { get; init; }
-    
+    public IEnumerable<ReadProjectStepDto>? project_steps { get; init; }
+
 }
 public record CreateProjectDto
 {
