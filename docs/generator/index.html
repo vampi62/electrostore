@@ -496,19 +496,19 @@
 
                     <div class="conditional-section" id="section-llm" style="display: none;">
                         <div class="form-group">
-                            <label for="llmChatBaseUrl">Chat API Base URL</label>
-                            <input type="text" id="llmChatBaseUrl" name="llmChatBaseUrl" placeholder="http://ollama:11434/v1" value="http://ollama:11434/v1">
-                            <small class="help-text">OpenAI-compatible <code>/chat/completions</code> base URL. Set in the API service as <code>Llm:ChatBaseUrl</code>.</small>
+                            <label for="llmBaseUrl">Chat API Base URL</label>
+                            <input type="text" id="llmBaseUrl" name="llmBaseUrl" placeholder="http://ollama:11434" value="http://ollama:11434">
+                            <small class="help-text">OpenAI-compatible <code>/chat/completions</code> base URL. Set in the API service as <code>Llm:BaseUrl</code>.</small>
                         </div>
                         <div class="form-group">
-                            <label for="llmChatModel">Chat Model</label>
-                            <input type="text" id="llmChatModel" name="llmChatModel" placeholder="llama3.1" value="llama3.1">
+                            <label for="llmModel">Chat Model</label>
+                            <input type="text" id="llmModel" name="llmModel" placeholder="llama3.1:8b" value="llama3.1:8b">
                             <small class="help-text">Model name to request, e.g. an Ollama-pulled model tag.</small>
                         </div>
                         <div class="form-group">
-                            <label for="llmChatEndpoint">Chat Endpoint</label>
-                            <input type="text" id="llmChatEndpoint" name="llmChatEndpoint" placeholder="api/chat" value="api/chat">
-                            <small class="help-text">OpenAI-compatible chat endpoint. Set in the API service as <code>Llm:ChatEndpoint</code>.</small>
+                            <label for="llmEndpoint">Chat Endpoint</label>
+                            <input type="text" id="llmEndpoint" name="llmEndpoint" placeholder="api/chat" value="api/chat">
+                            <small class="help-text">OpenAI-compatible chat endpoint. Set in the API service as <code>Llm:Endpoint</code>.</small>
                         </div>
                         <div class="form-group">
                             <label for="llmApiKey">Chat API Key</label>
@@ -527,7 +527,7 @@
                     <div class="conditional-section" id="section-stt" style="display: none;">
                         <div class="form-group">
                             <label for="sttBaseUrl">Speech-to-Text API Base URL</label>
-                            <input type="text" id="sttBaseUrl" name="sttBaseUrl" placeholder="http://whisper:9000/v1" value="http://whisper:9000/v1">
+                            <input type="text" id="sttBaseUrl" name="sttBaseUrl" placeholder="http://whisper:9000" value="http://whisper:9000">
                             <small class="help-text">OpenAI-compatible <code>/audio/transcriptions</code> base URL. Set in the API service as <code>Stt:BaseUrl</code>.</small>
                         </div>
                         <div class="form-group">

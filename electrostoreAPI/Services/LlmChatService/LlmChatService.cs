@@ -109,9 +109,9 @@ public class LlmChatService : ILlmChatService
 
     private HttpRequestMessage BuildRequest(List<LlmMessage> messages, List<LlmToolDefinition>? tools, bool stream)
     {
-        var model = _configuration.GetValue<string>("Llm:ChatModel") ?? "llama3.1";
+        var model = _configuration.GetValue<string>("Llm:Model") ?? "llama3.1:8b";
         var apiKey = _configuration.GetValue<string>("Llm:ApiKey");
-        var request = new HttpRequestMessage(HttpMethod.Post, _configuration.GetValue<string>("Llm:ChatEndpoint") ?? "");
+        var request = new HttpRequestMessage(HttpMethod.Post, _configuration.GetValue<string>("Llm:Endpoint") ?? "");
         if (!string.IsNullOrEmpty(apiKey))
         {
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);

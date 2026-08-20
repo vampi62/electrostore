@@ -145,9 +145,9 @@ function collectConfig(formData) {
     config.enableLlm = document.getElementById('enableLlm').checked;
     if (config.enableLlm) {
         config.llm = {
-            chatBaseUrl: formData.get('llmChatBaseUrl') || 'http://ollama:11434/v1',
-            chatModel: formData.get('llmChatModel') || 'llama3.1',
-            chatEndpoint: formData.get('llmChatEndpoint') || 'api/chat',
+            baseUrl: formData.get('llmBaseUrl') || 'http://ollama:11434',
+            model: formData.get('llmModel') || 'llama3.1',
+            endpoint: formData.get('llmEndpoint') || 'api/chat',
             apiKey: formData.get('llmApiKey') || ''
         };
     }
@@ -156,7 +156,7 @@ function collectConfig(formData) {
     config.enableStt = document.getElementById('enableStt').checked;
     if (config.enableStt) {
         config.stt = {
-            baseUrl: formData.get('sttBaseUrl') || 'http://whisper:9000/v1',
+            baseUrl: formData.get('sttBaseUrl') || 'http://whisper:9000',
             model: formData.get('sttModel') || 'whisper-1',
             apiKey: formData.get('sttApiKey') || ''
         };

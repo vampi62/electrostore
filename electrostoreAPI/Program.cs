@@ -184,12 +184,12 @@ public partial class Program
         builder.Services.AddHttpClient(LlmChatService.HttpClientName, client =>
         {
             client.BaseAddress = new Uri(EnsureTrailingSlash(
-                builder.Configuration.GetValue<string>("Llm:ChatBaseUrl") ?? "http://ollama:11434/v1"));
+                builder.Configuration.GetValue<string>("Llm:BaseUrl") ?? "http://ollama:11434"));
         });
         builder.Services.AddHttpClient(SttService.HttpClientName, client =>
         {
             client.BaseAddress = new Uri(EnsureTrailingSlash(
-                builder.Configuration.GetValue<string>("Stt:BaseUrl") ?? "http://whisper:9000/v1"));
+                builder.Configuration.GetValue<string>("Stt:BaseUrl") ?? "http://whisper:9000"));
         });
 
         // gRPC server

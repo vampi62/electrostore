@@ -638,17 +638,17 @@ function generateApiAppsettings(config) {
         if (config.enableLlm) {
             settings.Llm = {
                 "Enable": true,
-                "ChatBaseUrl": config.llm.chatBaseUrl,
-                "ChatModel": config.llm.chatModel,
-                "ChatEndpoint": config.llm.chatEndpoint,
+                "BaseUrl": config.llm.baseUrl,
+                "Model": config.llm.model,
+                "Endpoint": config.llm.endpoint,
                 "ApiKey": config.useVault ? "{{vault:llm_api_key}}" : (config.llm.apiKey || "")
             };
         } else {
             settings.Llm = {
                 "Enable": false,
-                "ChatBaseUrl": "http://ollama:11434/v1",
-                "ChatModel": "llama3.1",
-                "ChatEndpoint": "api/chat",
+                "BaseUrl": "http://ollama:11434",
+                "Model": "llama3.1:8b",
+                "Endpoint": "api/chat",
                 "ApiKey": ""
             };
         }
@@ -657,13 +657,15 @@ function generateApiAppsettings(config) {
             settings.Stt = {
                 "Enable": true,
                 "BaseUrl": config.stt.baseUrl,
+                "Path": config.stt.endpoint || "audio/transcriptions",
                 "Model": config.stt.model,
                 "ApiKey": config.useVault ? "{{vault:stt_api_key}}" : (config.stt.apiKey || "")
             };
         } else {
             settings.Stt = {
                 "Enable": false,
-                "BaseUrl": "http://whisper:9000/v1",
+                "BaseUrl": "http://whisper:9000",
+                "Path": "audio/transcriptions",
                 "Model": "whisper-1",
                 "ApiKey": ""
             };

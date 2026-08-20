@@ -38,7 +38,7 @@ public class SttService : ISttService
         content.Add(streamContent, "file", string.IsNullOrEmpty(audioFile.FileName) ? "audio" : audioFile.FileName);
         content.Add(new StringContent(model), "model");
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, "audio/transcriptions") { Content = content };
+        using var request = new HttpRequestMessage(HttpMethod.Post, _configuration.GetValue<string>("Stt:Endpoint") ?? "audio/transcriptions") { Content = content };
         if (!string.IsNullOrEmpty(apiKey))
         {
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
