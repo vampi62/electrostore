@@ -506,6 +506,11 @@
                             <small class="help-text">Model name to request, e.g. an Ollama-pulled model tag.</small>
                         </div>
                         <div class="form-group">
+                            <label for="llmChatEndpoint">Chat Endpoint</label>
+                            <input type="text" id="llmChatEndpoint" name="llmChatEndpoint" placeholder="api/chat" value="api/chat">
+                            <small class="help-text">OpenAI-compatible chat endpoint. Set in the API service as <code>Llm:ChatEndpoint</code>.</small>
+                        </div>
+                        <div class="form-group">
                             <label for="llmApiKey">Chat API Key</label>
                             <input type="password" id="llmApiKey" name="llmApiKey" placeholder="Leave empty for a local Ollama instance">
                             <small class="help-text">Only needed for hosted OpenAI-compatible providers; a local Ollama instance usually needs none.</small>

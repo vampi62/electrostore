@@ -640,6 +640,7 @@ function generateApiAppsettings(config) {
                 "Enable": true,
                 "ChatBaseUrl": config.llm.chatBaseUrl,
                 "ChatModel": config.llm.chatModel,
+                "ChatEndpoint": config.llm.chatEndpoint,
                 "ApiKey": config.useVault ? "{{vault:llm_api_key}}" : (config.llm.apiKey || "")
             };
         } else {
@@ -647,6 +648,7 @@ function generateApiAppsettings(config) {
                 "Enable": false,
                 "ChatBaseUrl": "http://ollama:11434/v1",
                 "ChatModel": "llama3.1",
+                "ChatEndpoint": "api/chat",
                 "ApiKey": ""
             };
         }

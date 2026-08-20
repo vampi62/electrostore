@@ -147,6 +147,7 @@ function collectConfig(formData) {
         config.llm = {
             chatBaseUrl: formData.get('llmChatBaseUrl') || 'http://ollama:11434/v1',
             chatModel: formData.get('llmChatModel') || 'llama3.1',
+            chatEndpoint: formData.get('llmChatEndpoint') || 'api/chat',
             apiKey: formData.get('llmApiKey') || ''
         };
     }
