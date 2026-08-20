@@ -30,6 +30,7 @@ public class LlmChatService : ILlmChatService
         }
         var client = _httpClientFactory.CreateClient(HttpClientName);
         using var request = BuildRequest(messages, tools, stream: false);
+        _logger.LogDebug("Calling LLM chat completion endpoint {Url}", new Uri(client.BaseAddress!, request.RequestUri!));
         HttpResponseMessage response;
         try
         {
@@ -46,9 +47,32 @@ public class LlmChatService : ILlmChatService
             _logger.LogError("LLM chat completion request failed with status {Status}: {Body}", response.StatusCode, body);
             throw new HttpRequestException($"LLM chat completion request failed with status {(int)response.StatusCode}");
         }
-        var completion = await response.Content.ReadFromJsonAsync<LlmChatCompletionResponse>(cancellationToken: cancellationToken)
-            ?? throw new InvalidOperationException("LLM chat completion response could not be parsed");
-        var choice = completion.choices.FirstOrDefault() ?? throw new InvalidOperationException("LLM chat completion returned no choices");
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        _logger.LogDebug("LLM chat completion response body: {Body}", responseBody);
+        LlmChatCompletionResponse? completion;
+        try
+        {
+            completion = JsonSerializer.Deserialize<LlmChatCompletionResponse>(responseBody);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "LLM chat completion response could not be parsed as JSON. Raw body: {Body}", responseBody);
+            throw new InvalidOperationException("LLM chat completion response could not be parsed", ex);
+        }
+        if (completion is null)
+        {
+            _logger.LogError("LLM chat completion response deserialized to null. Raw body: {Body}", responseBody);
+            throw new InvalidOperationException("LLM chat completion response could not be parsed");
+        }
+        var choice = completion.choices.FirstOrDefault();
+        if (choice is null)
+        {
+            _logger.LogError(
+                "LLM chat completion response contained no choices (endpoint {Endpoint} may not return the OpenAI-compatible " +
+                "'choices' shape, e.g. Ollama's native /api/chat instead of /v1/chat/completions). Raw body: {Body}",
+                request.RequestUri, responseBody);
+            throw new InvalidOperationException("LLM chat completion returned no choices");
+        }
         return new LlmChatResult
         {
             content = choice.message?.content,
@@ -65,6 +89,7 @@ public class LlmChatService : ILlmChatService
         }
         var client = _httpClientFactory.CreateClient(HttpClientName);
         using var request = BuildRequest(messages, tools: null, stream: true);
+        _logger.LogDebug("Calling LLM chat completion stream endpoint {Url}", new Uri(client.BaseAddress!, request.RequestUri!));
         using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
@@ -116,26 +141,14 @@ public class LlmChatService : ILlmChatService
         {
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         }
-        if (tools is { Count: > 0 })
+        object payload = tools is { Count: > 0 }
+            ? new { model, messages, stream, tools, tool_choice = "auto" }
+            : new { model, messages, stream };
+        if (_logger.IsEnabled(LogLevel.Debug))
         {
-            request.Content = JsonContent.Create(new
-            {
-                model,
-                messages,
-                stream,
-                tools,
-                tool_choice = "auto"
-            });
+            _logger.LogDebug("LLM chat completion request body: {Body}", JsonSerializer.Serialize(payload));
         }
-        else
-        {
-            request.Content = JsonContent.Create(new
-            {
-                model,
-                messages,
-                stream
-            });
-        }
+        request.Content = JsonContent.Create(payload);
         return request;
     }
 }
