@@ -13,6 +13,11 @@ public record ReadStoreDto
     public string? mqtt_password_store { get; init; }
     public DateTime? mqtt_last_seen_store { get; init; }
     public bool is_mqtt_connected_store { get; init; }
+    public int? id_zone { get; init; }
+    public int? xmin_store { get; init; }
+    public int? ymin_store { get; init; }
+    public int? xmax_store { get; init; }
+    public int? ymax_store { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
 }
@@ -24,6 +29,7 @@ public record ReadExtendedStoreDto : ReadStoreDto
     public IEnumerable<ReadBoxDto>? boxs { get; init; }
     public IEnumerable<ReadLedDto>? leds { get; init; }
     public IEnumerable<ReadStoreTagDto>? stores_tags { get; init; }
+    public ReadZoneDto? zone { get; init; }
 }
 
 public record CreateStoreDto
@@ -43,6 +49,20 @@ public record CreateStoreDto
     [Required(ErrorMessage = "{0} is required.")]
     [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string mqtt_name_store { get; init; }
+
+    public int? id_zone { get; init; }
+
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public int? xmin_store { get; init; }
+
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public int? ymin_store { get; init; }
+
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public int? xmax_store { get; init; }
+
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public int? ymax_store { get; init; }
 }
 
 public record UpdateStoreDto
@@ -62,6 +82,22 @@ public record UpdateStoreDto
     public string? mqtt_name_store { get; init; }
 
     public bool? reset_mqtt_password_store { get; init; }
+
+    public int? id_zone { get; init; }
+
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public int? xmin_store { get; init; }
+
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public int? ymin_store { get; init; }
+
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public int? xmax_store { get; init; }
+
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
+    public int? ymax_store { get; init; }
+
+    public bool? unset_zone_store { get; init; }
 }
 
 public record ReadStoreCompleteDto

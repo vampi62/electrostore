@@ -41,6 +41,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<ElectrostoreAPI.Models.Tags> Tags { get; set; }
     public DbSet<ElectrostoreAPI.Models.UserPushSubscriptions> UserPushSubscriptions { get; set; }
     public DbSet<ElectrostoreAPI.Models.Users> Users { get; set; }
+    public DbSet<ElectrostoreAPI.Models.Zones> Zones { get; set; }
 
     public override int SaveChanges()
     {

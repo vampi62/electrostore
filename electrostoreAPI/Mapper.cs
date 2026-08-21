@@ -143,5 +143,9 @@ public class MappingProfile : Profile
         CreateMap<CreateUserDto, Users>();
         CreateMap<Users, ReadUserDto>();
         CreateMap<Users, ReadExtendedUserDto>();
+
+        CreateMap<CreateZoneDto, Zones>();
+        CreateMap<Zones, ReadZoneDto>();
+        CreateMap<Zones, ReadExtendedZoneDto>();
     }
 }
