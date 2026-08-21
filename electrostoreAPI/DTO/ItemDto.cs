@@ -64,5 +64,6 @@ public record UpdateItemDto
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? description_item { get; init; }
 
+    public bool? unset_img_item { get; init; }
     public int? id_img { get; init; }
 }

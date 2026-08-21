@@ -199,7 +199,11 @@ public class ItemService : IItemService
         {
             itemToUpdate.description_item = itemDto.description_item;
         }
-        if (itemDto.id_img is not null)
+        if (itemDto.unset_img_item is true)
+        {
+            itemToUpdate.id_img = null;
+        }
+        else if (itemDto.id_img is not null)
         {
             var img = await _context.Imgs.FindAsync(itemDto.id_img);
             if ((img is null) || (id != img.id_item))
