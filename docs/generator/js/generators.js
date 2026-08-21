@@ -183,77 +183,6 @@ services:`;
     restart: unless-stopped
 `;
 
-    // Service IA
-    if (config.appVersion === 'local') {
-        compose += `
-  ia:
-    build:
-      context: ./electrostore/electrostoreIA
-      dockerfile: Dockerfile`;
-    } else {
-        compose += `
-  ia:
-    image: ghcr.io/vampi62/electrostore/ia:\${IA_VERSION:-latest}`;
-    }
-    compose += `
-    container_name: electrostore-ia
-    cap_add:
-      - CHOWN
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp
-    deploy:
-      resources:
-        limits:
-          cpus: '2.0'
-          memory: 2G`;
-    
-    // Build depends_on section for IA service
-    const iaDependencies = [];
-    if (!isLegacy) {
-        iaDependencies.push('kafka:\n        condition: service_healthy');
-        iaDependencies.push('api:\n        condition: service_healthy');
-    } else {
-        iaDependencies.push('api:\n        condition: service_started');
-    }
-    if (config.useMariaDB) {
-        iaDependencies.push('mariadb:\n        condition: service_healthy');
-    }
-    if (config.enableS3 && config.useS3) {
-        iaDependencies.push('garage:\n        condition: service_healthy');
-    }
-    
-    compose += `
-    depends_on:
-      ${iaDependencies.join('\n      ')}`;
-    
-    if (!isLegacy) {
-        compose += `
-    volumes:
-      - ./config/ia/appsettings.json:/app/config/appsettings.json:ro`;
-    } else {
-        compose += `
-    volumes:
-      - ./config/api/appsettings.json:/app/appsettings.json:ro`;
-    }
-    compose += `
-      - ./ia-data:/app/wwwroot`;
-
-    if (!config.enableS3) {
-        compose += `\n      - ia-models:/app/models`;
-    }
-    compose += `
-    networks:
-      electrostore:
-        aliases:
-          - electrostoreIA
-    restart: unless-stopped
-`;
-
     // NOTIF Service (only for modern versions)
     if (!isLegacy) {
         if (config.appVersion === 'local') {
@@ -972,7 +901,6 @@ function generateEnvFile(config) {
     env += `# Docker image versions\n`;
     env += `API_VERSION=${config.appVersion}\n`;
     env += `FRONTEND_VERSION=${config.appVersion}\n`;
-    env += `IA_VERSION=${config.appVersion}\n`;
     
     if (!isLegacy) {
         env += `NOTIF_VERSION=${config.appVersion}\n`;
@@ -1024,13 +952,6 @@ function generateEnvFile(config) {
         env += `S3_SECRET_KEY=${config.s3.secretKey}\n`;
         env += `S3_BUCKET=${config.s3.bucket}\n`;
         env += `S3_REGION=${config.s3.region}\n\n`;
-        if (!isLegacy) {
-            env += `# S3 Garage - IA service (integrated service)\n`;
-            env += `S3_IA_ACCESS_KEY=${config.s3Ia.accessKey}\n`;
-            env += `S3_IA_SECRET_KEY=${config.s3Ia.secretKey}\n`;
-            env += `S3_IA_BUCKET=${config.s3Ia.bucket}\n\n`;
-            env += `S3_IA_REGION=${config.s3Ia.region}\n\n`;
-        }
     }
     
     return env;
@@ -1142,37 +1063,14 @@ docker exec electrostore-garage /garage layout apply --version 1
 
 echo "Creating S3 access keys..."
 GARAGE_API_ACCESS_KEY="${config.s3.accessKey}"
-GARAGE_API_SECRET_KEY="${config.s3.secretKey}"`;
-
-        if (!isLegacy) {
-            script += `
-GARAGE_IA_ACCESS_KEY="${config.s3Ia.accessKey}"
-GARAGE_IA_SECRET_KEY="${config.s3Ia.secretKey}"`;
-        }
-script += `
+GARAGE_API_SECRET_KEY="${config.s3.secretKey}"
 echo "API Access Key: \$GARAGE_API_ACCESS_KEY"
-echo "API Secret Key: \$GARAGE_API_SECRET_KEY"`;
-        if (!isLegacy) {
-            script += `
-echo "IA Access Key: \$GARAGE_IA_ACCESS_KEY"
-echo "IA Secret Key: \$GARAGE_IA_SECRET_KEY"`;
-        }
-
-script += `
-
+echo "API Secret Key: \$GARAGE_API_SECRET_KEY"
 echo "Creating bucket ${config.s3.bucket} for API service..."
 docker exec electrostore-garage /garage key import -n electrostore-key --yes $GARAGE_API_ACCESS_KEY $GARAGE_API_SECRET_KEY
 docker exec electrostore-garage /garage bucket create ${config.s3.bucket}
 docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.bucket} --key electrostore-key
 `;
-        if (!isLegacy) {
-            script += `
-echo "Creating bucket ${config.s3Ia.bucket} for IA service..."
-docker exec electrostore-garage /garage key import -n electrostore-ia-key --yes $GARAGE_IA_ACCESS_KEY $GARAGE_IA_SECRET_KEY
-docker exec electrostore-garage /garage bucket create ${config.s3Ia.bucket}
-docker exec electrostore-garage /garage bucket allow --read --write ${config.s3Ia.bucket} --key electrostore-ia-key
-`;
-        }
 
         if (config.useVault) {
             script += `
@@ -1426,36 +1324,14 @@ docker exec electrostore-garage /garage layout apply --version 1
 
 Write-Host "Creating S3 access keys..."
 $GARAGE_API_ACCESS_KEY = "${config.s3.accessKey}"
-$GARAGE_API_SECRET_KEY = "${config.s3.secretKey}"`;
-
-        if (!isLegacy) {
-            script += `
-$GARAGE_IA_ACCESS_KEY = "${config.s3Ia.accessKey}"
-$GARAGE_IA_SECRET_KEY = "${config.s3Ia.secretKey}"`;
-        }
-script += `
+$GARAGE_API_SECRET_KEY = "${config.s3.secretKey}"
 Write-Host "API Access Key: $GARAGE_API_ACCESS_KEY"
-Write-Host "API Secret Key: $GARAGE_API_SECRET_KEY"`;
-        if (!isLegacy) {
-            script += `
-Write-Host "IA Access Key: $GARAGE_IA_ACCESS_KEY"
-Write-Host "IA Secret Key: $GARAGE_IA_SECRET_KEY"`;
-        }
-script += `
-
+Write-Host "API Secret Key: $GARAGE_API_SECRET_KEY"
 Write-Host "Creating bucket ${config.s3.bucket} for API service..."
 docker exec electrostore-garage /garage key import -n electrostore-key --yes $GARAGE_API_ACCESS_KEY $GARAGE_API_SECRET_KEY
 docker exec electrostore-garage /garage bucket create ${config.s3.bucket}
 docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.bucket} --key electrostore-key
 `;
-        if (!isLegacy) {
-            script += `
-Write-Host "Creating bucket ${config.s3Ia.bucket} for IA service..."
-docker exec electrostore-garage /garage key import -n electrostore-ia-key --yes $GARAGE_IA_ACCESS_KEY $GARAGE_IA_SECRET_KEY
-docker exec electrostore-garage /garage bucket create ${config.s3Ia.bucket}
-docker exec electrostore-garage /garage bucket allow --read --write ${config.s3Ia.bucket} --key electrostore-ia-key
-`;
-        }
 
         if (config.useVault) {
             script += `
@@ -1566,13 +1442,12 @@ This file contains all necessary files to deploy ElectroStore with Docker.
     if (!isLegacy) {
         readmeFile += `
 - \`config/api/appsettings.json\` : API configuration
-- \`config/ia/appsettings.json\` : IA service configuration
 - \`config/notif/appsettings.json\` : Notification service configuration
 - \`config/cron/appsettings.json\` : CRON service configuration
 - \`config/worker/appsettings.json\` : WORKER service configuration`;
     } else {
         readmeFile += `
-- \`config/api/appsettings.json\` : API configuration (includes IA and NOTIF settings)`;
+- \`config/api/appsettings.json\` : API configuration (includes NOTIF settings)`;
     }
 
 readmeFile += `
