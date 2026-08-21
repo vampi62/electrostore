@@ -27,6 +27,19 @@ const DEFAULT_DOCUMENT_MIME_TYPES = [
     { mime: 'image/bmp', ext: '.bmp' },
 ];
 
+const DEFAULT_AUDIO_MIME_TYPES = [
+    { mime: 'audio/mpeg', ext: '.mp3' },
+    { mime: 'audio/mp3', ext: '.mp3' },
+    { mime: 'audio/wav', ext: '.wav' },
+    { mime: 'audio/x-wav', ext: '.wav' },
+    { mime: 'audio/webm', ext: '.webm' },
+    { mime: 'audio/ogg', ext: '.ogg' },
+    { mime: 'audio/mp4', ext: '.m4a' },
+    { mime: 'audio/m4a', ext: '.m4a' },
+];
+
+const DEFAULT_SYSTEM_PROMPT = 'You are the inventory management assistant for electrostore. You can look up items, boxes, stores and tags using the tools made available to you. Any action that modifies the inventory (creating an item, creating a tag, attaching a tag to an item, moving/adjusting stock in a box, attaching a datasheet to an item) MUST be proposed through the corresponding tool. Proposing an action does not apply it - never tell the user an action has been completed, only that it has been proposed for their review.';
+
 // Add a MIME type row to the given list
 function addMimeType(containerId, mime = '', ext = '') {
     const container = document.getElementById(containerId);
@@ -44,6 +57,7 @@ function addMimeType(containerId, mime = '', ext = '') {
 function initMimeTypes() {
     const imageContainer = document.getElementById('allowedImageMimeTypes');
     const docContainer = document.getElementById('allowedDocumentMimeTypes');
+    const audioContainer = document.getElementById('allowedAudioMimeTypes');
     if (imageContainer) {
         imageContainer.innerHTML = '';
         DEFAULT_IMAGE_MIME_TYPES.forEach(({ mime, ext }) => addMimeType('allowedImageMimeTypes', mime, ext));
@@ -51,6 +65,10 @@ function initMimeTypes() {
     if (docContainer) {
         docContainer.innerHTML = '';
         DEFAULT_DOCUMENT_MIME_TYPES.forEach(({ mime, ext }) => addMimeType('allowedDocumentMimeTypes', mime, ext));
+    }
+    if (audioContainer) {
+        audioContainer.innerHTML = '';
+        DEFAULT_AUDIO_MIME_TYPES.forEach(({ mime, ext }) => addMimeType('allowedAudioMimeTypes', mime, ext));
     }
 }
 
@@ -115,6 +133,25 @@ function toggleVapid() {
 function toggleTrack17() {
     const enabled = document.getElementById('enableTrack17').checked;
     document.getElementById('section-track17').style.display = enabled ? 'block' : 'none';
+}
+
+// Toggle LLM chat assistant
+function toggleLlm() {
+    const enabled = document.getElementById('enableLlm').checked;
+    document.getElementById('section-llm').style.display = enabled ? 'block' : 'none';
+}
+
+// Toggle the custom LLM system prompt editor
+function toggleLlmSystemPrompt() {
+    const enabled = document.getElementById('llmCustomSystemPromptEnable').checked;
+    document.getElementById('llmSystemPrompt').value = enabled ? DEFAULT_SYSTEM_PROMPT : '';
+    document.getElementById('section-llm-system-prompt').style.display = enabled ? 'block' : 'none';
+}
+
+// Toggle speech-to-text
+function toggleStt() {
+    const enabled = document.getElementById('enableStt').checked;
+    document.getElementById('section-stt').style.display = enabled ? 'block' : 'none';
 }
 
 // Toggle Traefik TLS
@@ -270,9 +307,12 @@ function handleVersionChange() {
     
     // Hide/show sections based on version
     const parcelSection = document.querySelector('section.form-section:has(#enableTrack17)');
+    const aiAssistantSection = document.querySelector('section.form-section:has(#enableLlm)');
+    const maxAudioSizeField = document.getElementById('section-maxAudioSizeMB');
+    const allowedAudioMimeTypesField = document.getElementById('section-allowedAudioMimeTypes');
     const vapidSubSection = document.querySelector('.sub-section:has(#enableVapid)');
     const iaBucketNameField = document.getElementById('s3IaBucket').closest('.form-group');
-    
+
     if (parcelSection) {
         parcelSection.style.display = isLegacy ? 'none' : 'block';
         if (isLegacy) {
@@ -280,7 +320,25 @@ function handleVersionChange() {
             toggleTrack17();
         }
     }
-    
+
+    if (aiAssistantSection) {
+        aiAssistantSection.style.display = isLegacy ? 'none' : 'block';
+        if (isLegacy) {
+            document.getElementById('enableLlm').checked = false;
+            toggleLlm();
+            document.getElementById('enableStt').checked = false;
+            toggleStt();
+        }
+    }
+
+    if (maxAudioSizeField) {
+        maxAudioSizeField.style.display = isLegacy ? 'none' : '';
+    }
+
+    if (allowedAudioMimeTypesField) {
+        allowedAudioMimeTypesField.style.display = isLegacy ? 'none' : '';
+    }
+
     if (vapidSubSection) {
         vapidSubSection.style.display = isLegacy ? 'none' : 'block';
         if (isLegacy) {
@@ -358,7 +416,7 @@ function generateFiles() {
     document.getElementById('envFile').textContent = envFile;
     document.getElementById('setupScript').textContent = setupScript;
     document.getElementById('setupScriptWindows').textContent = setupScriptWindows;
-    
+
     // Show or hide garage.toml file
     const garageConfigSection = document.getElementById('garageConfigSection');
     if (garageConfig) {

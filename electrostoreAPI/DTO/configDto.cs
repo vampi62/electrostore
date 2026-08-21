@@ -63,8 +63,10 @@ public static class Constants
     public const int MaxTimezoneLength = 50;
     public const int MaxCoordinateLength = 50;
     public const int MaxPostalCodeLength = 20;
+    public const int MaxChatMessageLength = 4000;
     public static int MaxDocumentSizeMB { get; private set; } = 5; // in MB
     public static int MaxImageSizeMB { get; private set; } = 5; // in MB
+    public static int MaxAudioSizeMB { get; private set; } = 25; // in MB
     public static ImmutableDictionary<string, string> AllowedImageMimeTypes { get; private set; } = ImmutableDictionary.CreateRange<string, string>(new[]
     {
         KeyValuePair.Create("image/png", ".png"),
@@ -93,6 +95,17 @@ public static class Constants
         KeyValuePair.Create("image/gif", ".gif"),
         KeyValuePair.Create("image/bmp", ".bmp")
     });
+    public static ImmutableDictionary<string, string> AllowedAudioMimeTypes { get; private set; } = ImmutableDictionary.CreateRange<string, string>(new[]
+    {
+        KeyValuePair.Create("audio/mpeg", ".mp3"),
+        KeyValuePair.Create("audio/mp3", ".mp3"),
+        KeyValuePair.Create("audio/wav", ".wav"),
+        KeyValuePair.Create("audio/x-wav", ".wav"),
+        KeyValuePair.Create("audio/webm", ".webm"),
+        KeyValuePair.Create("audio/ogg", ".ogg"),
+        KeyValuePair.Create("audio/mp4", ".m4a"),
+        KeyValuePair.Create("audio/m4a", ".m4a")
+    });
 
     public static void Initialize(IConfiguration configuration)
     {
@@ -103,5 +116,9 @@ public static class Constants
         var documentMimeTypes = configuration.GetSection("FileValidation:AllowedDocumentMimeTypes").Get<Dictionary<string, string>>();
         if (documentMimeTypes != null && documentMimeTypes.Count > 0)
             AllowedDocumentMimeTypes = ImmutableDictionary.CreateRange(documentMimeTypes);
+        MaxAudioSizeMB = configuration.GetValue<int>("FileValidation:MaxAudioSizeMB", MaxAudioSizeMB);
+        var audioMimeTypes = configuration.GetSection("FileValidation:AllowedAudioMimeTypes").Get<Dictionary<string, string>>();
+        if (audioMimeTypes != null && audioMimeTypes.Count > 0)
+            AllowedAudioMimeTypes = ImmutableDictionary.CreateRange(audioMimeTypes);
     }
 }
