@@ -101,16 +101,18 @@ public class FileTypeAttributeTests
     }
 
     [Fact]
-    public void IsValid_ShouldReturnFalse_WhenValueIsNull()
+    public void IsValid_ShouldReturnTrue_WhenValueIsNull()
     {
         // Arrange
+        // A missing file is valid at this attribute's level; [Required] on the property is
+        // responsible for enforcing that a file was actually provided.
         var attribute = new FileTypeAttribute(ImageMimeTypesProperty);
 
         // Act
         var result = attribute.IsValid(null);
 
         // Assert
-        Assert.False(result);
+        Assert.True(result);
     }
 
     [Fact]
