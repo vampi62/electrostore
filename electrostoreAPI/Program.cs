@@ -47,6 +47,7 @@ using ElectrostoreAPI.Services.StatusService;
 using ElectrostoreAPI.Services.SttService;
 using ElectrostoreAPI.Services.JwtService;
 using ElectrostoreAPI.Services.WebHookService;
+using ElectrostoreAPI.Services.ZoneService;
 using ElectrostoreAPI.Grpc.Services;
 using ElectrostoreAPI.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -395,6 +396,7 @@ public partial class Program
         builder.Services.AddScoped<IJwiService, JwiService>();
         builder.Services.AddScoped<IStatusService, StatusService>();
         builder.Services.AddScoped<IWebHookService, WebHookService>();
+        builder.Services.AddScoped<IZoneService, ZoneService>();
     }
 
     private static string EnsureTrailingSlash(string url)
@@ -423,6 +425,14 @@ public partial class Program
         if (!Directory.Exists("wwwroot/commandDocuments"))
         {
             Directory.CreateDirectory("wwwroot/commandDocuments");
+        }
+        if (!Directory.Exists("wwwroot/zones"))
+        {
+            Directory.CreateDirectory("wwwroot/zones");
+        }
+        if (!Directory.Exists("wwwroot/zonesThumbnails"))
+        {
+            Directory.CreateDirectory("wwwroot/zonesThumbnails");
         }
     }
 

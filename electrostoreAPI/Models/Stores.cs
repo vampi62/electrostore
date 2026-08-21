@@ -35,6 +35,18 @@ public class Stores : BaseEntity
 
     public DateTime? mqtt_last_seen_store { get; set; }
 
+    public int? id_zone { get; set; }
+    [ForeignKey("id_zone")]
+    public Zones? Zone { get; set; }
+
+    public int? xmin_store { get; set; }
+
+    public int? ymin_store { get; set; }
+
+    public int? xmax_store { get; set; }
+
+    public int? ymax_store { get; set; }
+
     public ICollection<Boxs> Boxs { get; set; } = new List<Boxs>();
     public ICollection<Leds> Leds { get; set; } = new List<Leds>();
     public ICollection<StoresTags> StoresTags { get; set; } = new List<StoresTags>();
