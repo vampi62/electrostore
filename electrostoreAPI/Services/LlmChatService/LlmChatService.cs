@@ -144,10 +144,7 @@ public class LlmChatService : ILlmChatService
         object payload = tools is { Count: > 0 }
             ? new { model, messages, stream, tools, tool_choice = "auto" }
             : new { model, messages, stream };
-        if (_logger.IsEnabled(LogLevel.Debug))
-        {
-            _logger.LogDebug("LLM chat completion request body: {Body}", JsonSerializer.Serialize(payload));
-        }
+        _logger.LogDebug("LLM chat completion request body: {Body}", JsonSerializer.Serialize(payload));
         request.Content = JsonContent.Create(payload);
         return request;
     }
