@@ -641,7 +641,8 @@ function generateApiAppsettings(config) {
                 "BaseUrl": config.llm.baseUrl,
                 "Model": config.llm.model,
                 "Endpoint": config.llm.endpoint,
-                "ApiKey": config.useVault ? "{{vault:llm_api_key}}" : (config.llm.apiKey || "")
+                "ApiKey": config.useVault ? "{{vault:llm_api_key}}" : (config.llm.apiKey || ""),
+                "SystemPrompt": config.llm.systemPrompt || DEFAULT_SYSTEM_PROMPT
             };
         } else {
             settings.Llm = {
@@ -649,7 +650,8 @@ function generateApiAppsettings(config) {
                 "BaseUrl": "http://ollama:11434",
                 "Model": "llama3.1:8b",
                 "Endpoint": "api/chat",
-                "ApiKey": ""
+                "ApiKey": "",
+                "SystemPrompt": config.llm.systemPrompt || DEFAULT_SYSTEM_PROMPT
             };
         }
 

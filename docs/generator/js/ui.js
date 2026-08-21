@@ -38,6 +38,8 @@ const DEFAULT_AUDIO_MIME_TYPES = [
     { mime: 'audio/m4a', ext: '.m4a' },
 ];
 
+const DEFAULT_SYSTEM_PROMPT = 'You are the inventory management assistant for electrostore. You can look up items, boxes, stores and tags using the tools made available to you. Any action that modifies the inventory (creating an item, creating a tag, attaching a tag to an item, moving/adjusting stock in a box, attaching a datasheet to an item) MUST be proposed through the corresponding tool. Proposing an action does not apply it - never tell the user an action has been completed, only that it has been proposed for their review.';
+
 // Add a MIME type row to the given list
 function addMimeType(containerId, mime = '', ext = '') {
     const container = document.getElementById(containerId);
@@ -137,6 +139,13 @@ function toggleTrack17() {
 function toggleLlm() {
     const enabled = document.getElementById('enableLlm').checked;
     document.getElementById('section-llm').style.display = enabled ? 'block' : 'none';
+}
+
+// Toggle the custom LLM system prompt editor
+function toggleLlmSystemPrompt() {
+    const enabled = document.getElementById('llmCustomSystemPromptEnable').checked;
+    document.getElementById('llmSystemPrompt').value = enabled ? DEFAULT_SYSTEM_PROMPT : '';
+    document.getElementById('section-llm-system-prompt').style.display = enabled ? 'block' : 'none';
 }
 
 // Toggle speech-to-text

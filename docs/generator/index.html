@@ -516,6 +516,21 @@
                             <small class="help-text">Only needed for hosted OpenAI-compatible providers; a local Ollama instance usually needs none.</small>
                         </div>
 
+                        <div class="form-group checkbox-group">
+                            <label>
+                                <input type="checkbox" id="llmCustomSystemPromptEnable" name="llmCustomSystemPromptEnable" onchange="toggleLlmSystemPrompt()">
+                                <strong>Customize the system prompt</strong> - Otherwise the API's built-in default is used
+                            </label>
+                        </div>
+
+                        <div class="conditional-section" id="section-llm-system-prompt" style="display: none;">
+                            <div class="form-group">
+                                <label for="llmSystemPrompt">System Prompt</label>
+                                <textarea id="llmSystemPrompt" name="llmSystemPrompt" rows="6"></textarea>
+                                <small class="help-text">Set in the API service as <code>Llm:SystemPrompt</code>. Since <code>appsettings.json</code> is hot-reloaded, it can be edited later directly in that file without rebuilding or restarting the API.</small>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <small class="help-text">Example: run Ollama locally, independently of this stack (adjust the image/port/volume as needed, then point <strong>Chat API Base URL</strong> above at <code>http://host.docker.internal:11434</code> on Docker Desktop, or your host's LAN IP on Linux):</small>
                             <pre style="white-space: pre-wrap;">docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama</pre>

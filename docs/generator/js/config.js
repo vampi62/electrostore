@@ -148,7 +148,8 @@ function collectConfig(formData) {
             baseUrl: formData.get('llmBaseUrl') || 'http://ollama:11434',
             model: formData.get('llmModel') || 'llama3.1',
             endpoint: formData.get('llmEndpoint') || 'api/chat',
-            apiKey: formData.get('llmApiKey') || ''
+            apiKey: formData.get('llmApiKey') || '',
+            systemPrompt: formData.get('llmSystemPrompt') || DEFAULT_SYSTEM_PROMPT
         };
     }
 

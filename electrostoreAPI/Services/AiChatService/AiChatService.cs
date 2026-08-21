@@ -13,7 +13,7 @@ public class AiChatService : IAiChatService
     // Cap the tool-calling loop at 5 iterations (InvalidOperationException if exceeded).
     private const int MaxToolIterations = 5;
 
-    private const string SystemPrompt =
+    private const string DefaultSystemPrompt =
         "You are the inventory management assistant for electrostore. You can look up items, boxes, " +
         "stores and tags using the tools made available to you. Any action that modifies the inventory " +
         "(creating an item, creating a tag, attaching a tag to an item, moving/adjusting stock in a box, " +
@@ -24,19 +24,24 @@ public class AiChatService : IAiChatService
     private readonly ILlmChatService _llmChatService;
     private readonly ISttService _sttService;
     private readonly IAiToolExecutorService _aiToolExecutorService;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<AiChatService> _logger;
 
     public AiChatService(
         ILlmChatService llmChatService,
         ISttService sttService,
         IAiToolExecutorService aiToolExecutorService,
+        IConfiguration configuration,
         ILogger<AiChatService> logger)
     {
         _llmChatService = llmChatService;
         _sttService = sttService;
         _aiToolExecutorService = aiToolExecutorService;
+        _configuration = configuration;
         _logger = logger;
     }
+
+    private string SystemPrompt => _configuration.GetValue<string>("Llm:SystemPrompt") ?? DefaultSystemPrompt;
 
     public async Task<SendAiChatMessageResponseDto> SendMessage(CreateAiChatMessageDto messageDto, CancellationToken cancellationToken = default)
     {
@@ -164,7 +169,7 @@ public class AiChatService : IAiChatService
         throw new ArgumentException("Either content_ai_chat_message or audio must be provided");
     }
 
-    private static List<LlmMessage> BuildConversation(CreateAiChatMessageDto messageDto, string userText)
+    private List<LlmMessage> BuildConversation(CreateAiChatMessageDto messageDto, string userText)
     {
         var messages = new List<LlmMessage>
         {
