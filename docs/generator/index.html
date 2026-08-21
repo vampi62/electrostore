@@ -63,7 +63,7 @@
                             <option value="latest">latest (development)</option>
                             <option value="local">local (build from source)</option>
                         </select>
-                        <small class="help-text">Select version for all services (API, Frontend, IA)</small>
+                        <small class="help-text">Select version for all services (API, Frontend, Cron, Worker, Notif)</small>
                     </div>
                 </section>
 
@@ -289,11 +289,6 @@
                                 <input type="text" id="s3Bucket" name="s3Bucket" value="electrostore-api">
                             </div>
 
-                            <div class="form-group">
-                                <label for="s3IaBucket">IA Bucket Name</label>
-                                <input type="text" id="s3IaBucket" name="s3IaBucket" value="electrostore-ia">
-                            </div>
-
                             <div class="form-group" style="display: none;">
                                 <label for="s3Region">Region</label>
                                 <input type="text" id="s3Region" name="s3Region" value="garage">
@@ -332,39 +327,6 @@
                             <div class="form-group checkbox-group">
                                 <label>
                                     <input type="checkbox" id="s3ExternalSecure" name="s3ExternalSecure" checked>
-                                    Use HTTPS
-                                </label>
-                            </div>
-
-                            <h4 style="margin: 1.5rem 0 0.5rem 0; color: #1565c0;">IA Service</h4>
-                            <div class="form-group">
-                                <label for="s3IaExternalEndpoint">Endpoint</label>
-                                <input type="text" id="s3IaExternalEndpoint" name="s3IaExternalEndpoint" placeholder="s3.amazonaws.com or s3.region.amazonaws.com">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="s3IaExternalAccessKey">Access Key</label>
-                                <input type="text" id="s3IaExternalAccessKey" name="s3IaExternalAccessKey">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="s3IaExternalSecretKey">Secret Key</label>
-                                <input type="password" id="s3IaExternalSecretKey" name="s3IaExternalSecretKey">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="s3IaExternalBucket">Bucket</label>
-                                <input type="text" id="s3IaExternalBucket" name="s3IaExternalBucket">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="s3IaExternalRegion">Region</label>
-                                <input type="text" id="s3IaExternalRegion" name="s3IaExternalRegion" placeholder="us-east-1">
-                            </div>
-
-                            <div class="form-group checkbox-group">
-                                <label>
-                                    <input type="checkbox" id="s3IaExternalSecure" name="s3IaExternalSecure" checked>
                                     Use HTTPS
                                 </label>
                             </div>
@@ -739,18 +701,6 @@
                     <button class="btn-download" onclick="downloadFile('appsettings.json', 'apiAppsettingsFile')">Download</button>
                     <p class="help-text" style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107;">
                         <strong>Path:</strong> <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">config/api/appsettings.json</code>
-                    </p>
-                </div>
-
-                <div class="file-output">
-                    <div class="file-header">
-                        <h3>config/ia/appsettings.json</h3>
-                        <button class="btn-copy" onclick="copyToClipboard('iaAppsettingsFile')">Copy</button>
-                    </div>
-                    <pre id="iaAppsettingsFile"></pre>
-                    <button class="btn-download" onclick="downloadFile('appsettings.json', 'iaAppsettingsFile')">Download</button>
-                    <p class="help-text" style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107;">
-                        <strong>Path:</strong> <code style="background: #f5f5f5; padding: 0.2rem 0.5rem;">config/ia/appsettings.json</code>
                     </p>
                 </div>
 

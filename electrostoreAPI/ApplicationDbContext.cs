@@ -11,7 +11,6 @@ public class ApplicationDbContext : DbContext
     }
     public DbSet<ElectrostoreAPI.Models.Boxs> Boxs { get; set; }
     public DbSet<ElectrostoreAPI.Models.BoxsTags> BoxsTags { get; set; }
-    public DbSet<ElectrostoreAPI.Models.Cameras> Cameras { get; set; }
     public DbSet<ElectrostoreAPI.Models.Carriers> Carriers { get; set; }
     public DbSet<ElectrostoreAPI.Models.CronJobs> CronJobs { get; set; }
     public DbSet<ElectrostoreAPI.Models.Commands> Commands { get; set; }
@@ -19,7 +18,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<ElectrostoreAPI.Models.CommandsDocuments> CommandsDocuments { get; set; }
     public DbSet<ElectrostoreAPI.Models.CommandsHistory> CommandsHistory { get; set; }
     public DbSet<ElectrostoreAPI.Models.CommandsItems> CommandsItems { get; set; }
-    public DbSet<ElectrostoreAPI.Models.AI> AI { get; set; }
     public DbSet<ElectrostoreAPI.Models.Imgs> Imgs { get; set; }
     public DbSet<ElectrostoreAPI.Models.Items> Items { get; set; }
     public DbSet<ElectrostoreAPI.Models.ItemsBoxs> ItemsBoxs { get; set; }

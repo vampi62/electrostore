@@ -375,7 +375,6 @@ function generateFiles() {
     
     const dockerCompose = generateDockerCompose(config);
     const apiAppsettings = generateApiAppsettings(config);
-    const iaAppsettings = generateIaAppsettings(config);
     const notifAppsettings = generateNotifAppsettings(config);
     const cronAppsettings = generateCronAppsettings(config);
     const workerAppsettings = generateWorkerAppsettings(config);
@@ -395,7 +394,6 @@ function generateFiles() {
     const notifSection = document.getElementById('notifAppsettingsFile').closest('.file-output');
     const cronSection = document.getElementById('cronAppsettingsFile').closest('.file-output');
     const workerSection = document.getElementById('workerAppsettingsFile').closest('.file-output');
-    const iaSection = document.getElementById('iaAppsettingsFile').closest('.file-output');
     
     if (isLegacy) {
         if (notifSection) notifSection.style.display = 'none';
@@ -410,7 +408,6 @@ function generateFiles() {
         document.getElementById('notifAppsettingsFile').textContent = notifAppsettings;
         document.getElementById('cronAppsettingsFile').textContent = cronAppsettings;
         document.getElementById('workerAppsettingsFile').textContent = workerAppsettings;
-        document.getElementById('iaAppsettingsFile').textContent = iaAppsettings;
     }
     
     document.getElementById('envFile').textContent = envFile;

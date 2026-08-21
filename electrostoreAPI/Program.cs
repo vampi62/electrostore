@@ -8,7 +8,6 @@ using ElectrostoreAPI.Services.AiToolExecutorService;
 using ElectrostoreAPI.Services.AuthService;
 using ElectrostoreAPI.Services.BoxService;
 using ElectrostoreAPI.Services.BoxTagService;
-using ElectrostoreAPI.Services.CameraService;
 using ElectrostoreAPI.Services.CarrierService;
 using ElectrostoreAPI.Services.CommandCommentService;
 using ElectrostoreAPI.Services.CommandDocumentService;
@@ -19,7 +18,6 @@ using ElectrostoreAPI.Services.ConfigService;
 using ElectrostoreAPI.Services.CronJobService;
 using ElectrostoreAPI.Services.EncryptionService;
 using ElectrostoreAPI.Services.FileService;
-using ElectrostoreAPI.Services.AIService;
 using ElectrostoreAPI.Services.ImgService;
 using ElectrostoreAPI.Services.ItemBoxService;
 using ElectrostoreAPI.Services.ItemDocumentService;
@@ -200,13 +198,6 @@ public partial class Program
             options.MaxReceiveMessageSize = 100 * 1024 * 1024; // 100 MB
         });
 
-        // gRPC client for the AI service
-        builder.Services.AddGrpcClient<IaCmdGrpc.IaCmdGrpcClient>(options =>
-        {
-            options.Address = new Uri(
-                builder.Configuration.GetValue<string>("IAServiceGrpcUrl") ?? "http://electrostoreIA:5001");
-        });
-
         builder.Logging.AddFilter("LuckyPennySoftware.AutoMapper.License", LogLevel.None);
 
         AddAuthentication(builder, key);
@@ -242,7 +233,6 @@ public partial class Program
         app.MapGrpcService<CommandsGrpcService>();
         app.MapGrpcService<ConfigGrpcService>();
         app.MapGrpcService<CronJobsGrpcService>();
-        app.MapGrpcService<IaTrainingGrpcService>();
         app.MapGrpcService<StoreMqttGrpcService>();
         app.MapGrpcService<UsersGrpcService>();
 
@@ -359,7 +349,6 @@ public partial class Program
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IBoxService, BoxService>();
         builder.Services.AddScoped<IBoxTagService, BoxTagService>();
-        builder.Services.AddScoped<ICameraService, CameraService>();
         builder.Services.AddScoped<ICarrierService, CarrierService>();
         builder.Services.AddScoped<ICommandCommentService, CommandCommentService>();
         builder.Services.AddScoped<ICommandDocumentService, CommandDocumentService>();
@@ -369,7 +358,6 @@ public partial class Program
         builder.Services.AddScoped<IConfigService, ConfigService>();
         builder.Services.AddScoped<ICronJobService, CronJobService>();
         builder.Services.AddScoped<IEncryptionService, EncryptionService>();
-        builder.Services.AddScoped<IAIService, AIService>();
         builder.Services.AddScoped<IImgService, ImgService>();
         builder.Services.AddScoped<IItemBoxService, ItemBoxService>();
         builder.Services.AddScoped<IItemDocumentService, ItemDocumentService>();
