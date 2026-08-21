@@ -21,6 +21,11 @@ public class FileTypeAttribute : ValidationAttribute
     }
     public override bool IsValid(object? value)
     {
+        // A missing file is valid here; use [Required] on the property to force it.
+        if (value is null)
+        {
+            return true;
+        }
         if (value is IFormFile file && _allowedMimeTypes.Contains(file.ContentType) && _allowedExtensions.Contains(Path.GetExtension(file.FileName).ToLower()))
         {
             return true;

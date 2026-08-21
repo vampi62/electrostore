@@ -3,6 +3,8 @@ using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Grpc;
 using ElectrostoreAPI.Kafka.Producer;
+using ElectrostoreAPI.Services.AiChatService;
+using ElectrostoreAPI.Services.AiToolExecutorService;
 using ElectrostoreAPI.Services.AuthService;
 using ElectrostoreAPI.Services.BoxService;
 using ElectrostoreAPI.Services.BoxTagService;
@@ -26,6 +28,7 @@ using ElectrostoreAPI.Services.ItemService;
 using ElectrostoreAPI.Services.ItemTagService;
 using ElectrostoreAPI.Services.JwiService;
 using ElectrostoreAPI.Services.LedService;
+using ElectrostoreAPI.Services.LlmChatService;
 using ElectrostoreAPI.Services.ProjectCommentService;
 using ElectrostoreAPI.Services.ProjectDocumentService;
 using ElectrostoreAPI.Services.ProjectItemService;
@@ -41,6 +44,7 @@ using ElectrostoreAPI.Services.UserPushSubscriptionService;
 using ElectrostoreAPI.Services.UserService;
 using ElectrostoreAPI.Services.ValidateStoreService;
 using ElectrostoreAPI.Services.StatusService;
+using ElectrostoreAPI.Services.SttService;
 using ElectrostoreAPI.Services.JwtService;
 using ElectrostoreAPI.Services.WebHookService;
 using ElectrostoreAPI.Grpc.Services;
@@ -176,6 +180,17 @@ public partial class Program
 
         builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
         builder.Services.AddHttpClient();
+
+        builder.Services.AddHttpClient(LlmChatService.HttpClientName, client =>
+        {
+            client.BaseAddress = new Uri(EnsureTrailingSlash(
+                builder.Configuration.GetValue<string>("Llm:BaseUrl") ?? "http://ollama:11434"));
+        });
+        builder.Services.AddHttpClient(SttService.HttpClientName, client =>
+        {
+            client.BaseAddress = new Uri(EnsureTrailingSlash(
+                builder.Configuration.GetValue<string>("Stt:BaseUrl") ?? "http://whisper:9000"));
+        });
 
         // gRPC server
         builder.Services.AddGrpc(options =>
@@ -338,6 +353,8 @@ public partial class Program
         builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
         builder.Services.AddSingleton<IJwtService, JwtService>();
         builder.Services.AddSingleton<ISessionService, SessionService>();
+        builder.Services.AddScoped<IAiChatService, AiChatService>();
+        builder.Services.AddScoped<IAiToolExecutorService, AiToolExecutorService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IBoxService, BoxService>();
         builder.Services.AddScoped<IBoxTagService, BoxTagService>();
@@ -359,7 +376,8 @@ public partial class Program
         builder.Services.AddScoped<IItemService, ItemService>();
         builder.Services.AddScoped<IItemTagService, ItemTagService>();
         builder.Services.AddScoped<ILedService, LedService>();
-        
+        builder.Services.AddScoped<ILlmChatService, LlmChatService>();
+
         builder.Services.AddScoped<IProjectCommentService, ProjectCommentService>();
         builder.Services.AddScoped<IProjectDocumentService, ProjectDocumentService>();
         builder.Services.AddScoped<IProjectItemService, ProjectItemService>();
@@ -369,6 +387,7 @@ public partial class Program
         builder.Services.AddScoped<IProjectTagService, ProjectTagService>();
         builder.Services.AddScoped<IStoreService, StoreService>();
         builder.Services.AddScoped<IStoreTagService, StoreTagService>();
+        builder.Services.AddScoped<ISttService, SttService>();
         builder.Services.AddScoped<ITagService, TagService>();
         builder.Services.AddScoped<IUserPushSubscriptionService, UserPushSubscriptionService>();
         builder.Services.AddScoped<IUserService, UserService>();
@@ -376,6 +395,11 @@ public partial class Program
         builder.Services.AddScoped<IJwiService, JwiService>();
         builder.Services.AddScoped<IStatusService, StatusService>();
         builder.Services.AddScoped<IWebHookService, WebHookService>();
+    }
+
+    private static string EnsureTrailingSlash(string url)
+    {
+        return url.EndsWith('/') ? url : url + "/";
     }
 
     private static void CreateRequiredDirectories()
