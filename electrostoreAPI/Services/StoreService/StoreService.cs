@@ -167,7 +167,15 @@ public class StoreService : IStoreService
             throw new KeyNotFoundException($"Zone with id '{storeDto.id_zone}' not found");
         }
         var newStore = _mapper.Map<Stores>(storeDto);
-        _validateStoreService.ValidateStorePlanPosition(newStore);
+        if (storeDto.id_zone is null)
+        {
+            newStore.id_zone = null;
+            newStore.xmin_store = null;
+            newStore.ymin_store = null;
+            newStore.xmax_store = null;
+            newStore.ymax_store = null;
+        }
+        await _validateStoreService.ValidateStorePlanPosition(newStore);
         var mqttPassword = GenerateMqttPasswordForStore();
         var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
         newStore.mqtt_password_store = encryptedPassword.EncryptedData;
@@ -201,7 +209,7 @@ public class StoreService : IStoreService
         var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
         var oldMqttName = storeToUpdate.mqtt_name_store;
         await _validateStoreService.UpdateStoreInformations(storeToUpdate, storeDto);
-        _validateStoreService.ValidateStorePlanPosition(storeToUpdate);
+        await _validateStoreService.ValidateStorePlanPosition(storeToUpdate);
         await _validateStoreService.CheckUpdateStoreOutsideElement(storeToUpdate);
         var mqttPassword = string.Empty;
         if (storeDto.reset_mqtt_password_store == true)
@@ -273,7 +281,14 @@ public class StoreService : IStoreService
             throw new KeyNotFoundException($"Zone with id '{storeDto.store.id_zone}' not found");
         }
         var newStore = _mapper.Map<Stores>(storeDto.store);
-        _validateStoreService.ValidateStorePlanPosition(newStore);
+        await _validateStoreService.ValidateStorePlanPosition(newStore);
+        if (newStore.id_zone is null)
+        {
+            newStore.xmin_store = null;
+            newStore.ymin_store = null;
+            newStore.xmax_store = null;
+            newStore.ymax_store = null;
+        }
         await using var transaction = await _context.Database.BeginTransactionAsync();
         _context.Stores.Add(newStore);
         await _context.SaveChangesAsync(); // persist store to get real id_store
@@ -389,7 +404,7 @@ public class StoreService : IStoreService
         await using var transaction = await _context.Database.BeginTransactionAsync();
         var oldMqttName = storeToUpdate.mqtt_name_store;
         await _validateStoreService.UpdateStoreInformations(storeToUpdate, storeDto.store);
-        _validateStoreService.ValidateStorePlanPosition(storeToUpdate);
+        await _validateStoreService.ValidateStorePlanPosition(storeToUpdate);
         // Add leds and boxs, if status field indicate the new status "delete", "modified", "new"
         (var validQueryLed, var errorQueryLed) = await UpdateLedList(storeToUpdate, storeDto.leds ?? []);
         (var validQueryBox, var errorQueryBox) = await UpdateBoxList(storeToUpdate, storeDto.boxs ?? []);

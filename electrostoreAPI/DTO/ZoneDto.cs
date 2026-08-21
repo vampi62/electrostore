@@ -20,11 +20,6 @@ public record ReadExtendedZoneDto : ReadZoneDto
     public int stores_count { get; init; }
     public IEnumerable<ReadStoreDto>? stores { get; init; }
 }
-public record ReadBulkZoneDto
-{
-    public required List<ReadZoneDto> Valide { get; init; }
-    public required List<ErrorDetail> Error { get; init; }
-}
 public record CreateZoneDto
 {
     [Required(ErrorMessage = "{0} is required.")]

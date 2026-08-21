@@ -34,10 +34,10 @@ public class ValidateStoreService : IValidateStoreService
         }
     }
 
-    public void ValidateStorePlanPosition(Stores store)
+    public async Task ValidateStorePlanPosition(Stores store)
     {
         var hasAnyCoordinate = store.xmin_store is not null || store.ymin_store is not null || store.xmax_store is not null || store.ymax_store is not null;
-        if (!hasAnyCoordinate)
+        if (store.id_zone is null || !hasAnyCoordinate)
         {
             return;
         }
@@ -48,6 +48,11 @@ public class ValidateStoreService : IValidateStoreService
         if (store.xmax_store <= store.xmin_store || store.ymax_store <= store.ymin_store)
         {
             throw new ArgumentException($"Store min position ({store.xmin_store}, {store.ymin_store}) must be less than max position ({store.xmax_store}, {store.ymax_store}).");
+        }
+        var zone = await _context.Zones.FindAsync(store.id_zone) ?? throw new KeyNotFoundException($"Zone with id '{store.id_zone}' not found");
+        if (store.xmax_store > zone.xlength_zone || store.ymax_store > zone.ylength_zone)
+        {
+            throw new ArgumentException($"Store position ({store.xmin_store}, {store.ymin_store}, {store.xmax_store}, {store.ymax_store}) is out of zone bounds.");
         }
     }
 

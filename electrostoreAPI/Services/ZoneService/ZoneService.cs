@@ -144,13 +144,17 @@ public class ZoneService : IZoneService
         {
             zoneToUpdate.description_zone = zoneDto.description_zone;
         }
-        if (zoneDto.xlength_zone is not null)
+        if (zoneDto.xlength_zone is not null || zoneDto.ylength_zone is not null)
         {
-            zoneToUpdate.xlength_zone = zoneDto.xlength_zone.Value;
-        }
-        if (zoneDto.ylength_zone is not null)
-        {
-            zoneToUpdate.ylength_zone = zoneDto.ylength_zone.Value;
+            var newXlength = zoneDto.xlength_zone ?? zoneToUpdate.xlength_zone;
+            var newYlength = zoneDto.ylength_zone ?? zoneToUpdate.ylength_zone;
+            // check that every store already placed on this zone's plan still fits within the new size
+            if (await _context.Stores.AnyAsync(s => s.id_zone == id && ((s.xmax_store != null && s.xmax_store > newXlength) || (s.ymax_store != null && s.ymax_store > newYlength))))
+            {
+                throw new ArgumentException("you can't reduce the zone size, a store will be out of zone bounds");
+            }
+            zoneToUpdate.xlength_zone = newXlength;
+            zoneToUpdate.ylength_zone = newYlength;
         }
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadZoneDto>(zoneToUpdate);

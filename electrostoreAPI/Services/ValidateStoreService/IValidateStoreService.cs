@@ -9,7 +9,7 @@ public interface IValidateStoreService
 
     public void ValidateBoxPosition(Boxs box, Stores store);
 
-    public void ValidateStorePlanPosition(Stores store);
+    public Task ValidateStorePlanPosition(Stores store);
 
     public Task UpdateStoreInformations(Stores storeToUpdate, UpdateStoreDto storeDto);
 
