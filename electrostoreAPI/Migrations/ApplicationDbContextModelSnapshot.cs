@@ -1107,6 +1107,9 @@ namespace ElectrostoreAPI.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
+                    b.Property<int>("position_mode_store")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");
 
