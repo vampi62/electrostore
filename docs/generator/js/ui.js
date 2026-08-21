@@ -407,7 +407,7 @@ function generateFiles() {
     document.getElementById('envFile').textContent = envFile;
     document.getElementById('setupScript').textContent = setupScript;
     document.getElementById('setupScriptWindows').textContent = setupScriptWindows;
-    
+
     // Show or hide garage.toml file
     const garageConfigSection = document.getElementById('garageConfigSection');
     if (garageConfig) {
