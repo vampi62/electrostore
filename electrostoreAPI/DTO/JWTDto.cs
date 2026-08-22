@@ -30,12 +30,12 @@ public class JwtSettings
 
 public record ErrorDetail
 {
-    public required string Reason { get; init; }
-    public required object Data { get; init; }
+    public required string reason { get; init; }
+    public required object data { get; init; }
 }
 
 public record SsoUrlResponse
 {
-    public required string AuthUrl { get; init; }
-    public required string State { get; init; }
+    public required string auth_url { get; init; }
+    public required string state { get; init; }
 }

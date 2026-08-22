@@ -33,13 +33,13 @@ public class ItemDocumentService : IItemDocumentService
         var query = _context.ItemsDocuments.AsQueryable();
         var filterResult = default(Expression<Func<ItemsDocuments, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_item", SearchType = "eq", Value = itemId.ToString() });
+        rsql.Add(new FilterDto { field = "id_item", search_type = "eq", value = itemId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ItemsDocuments>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<ItemsDocuments>(sort);
             if (sortResult.Item1 != null)
@@ -48,7 +48,7 @@ public class ItemDocumentService : IItemDocumentService
             }
             else
             {
-                sort = new SorterDto { Field = "id_item_document", Order = "asc" };
+                sort = new SorterDto { field = "id_item_document", order = "asc" };
                 query = query.OrderBy(id => id.id_item_document);
             }
         }
@@ -66,8 +66,8 @@ public class ItemDocumentService : IItemDocumentService
                 offset = offset,
                 limit = limit,
                 total = await _context.ItemsDocuments.CountAsync(filterResult ?? (id => id.id_item == itemId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.ItemsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (id => id.id_item == itemId))
+                next_offset = offset + limit,
+                has_more = await _context.ItemsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (id => id.id_item == itemId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -97,7 +97,7 @@ public class ItemDocumentService : IItemDocumentService
             id_item = itemDocumentDto.id_item,
             url_item_document = savedFile.path,
             name_item_document = itemDocumentDto.name_item_document,
-            type_item_document = savedFile.mimeType,
+            type_item_document = savedFile.mime_type,
             size_item_document = itemDocumentDto.document.Length
         };
         await _context.ItemsDocuments.AddAsync(itemDocument);

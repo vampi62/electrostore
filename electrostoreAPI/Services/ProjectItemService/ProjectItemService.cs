@@ -29,13 +29,13 @@ public class ProjectItemService : IProjectItemService
         var query = _context.ProjectsItems.AsQueryable();
         var filterResult = default(Expression<Func<ProjectsItems, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_project", SearchType = "eq", Value = projectId.ToString() });
+        rsql.Add(new FilterDto { field = "id_project", search_type = "eq", value = projectId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectsItems>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<ProjectsItems>(sort);
             if (sortResult.Item1 != null)
@@ -44,7 +44,7 @@ public class ProjectItemService : IProjectItemService
             }
             else
             {
-                sort = new SorterDto { Field = "id_item", Order = "asc" };
+                sort = new SorterDto { field = "id_item", order = "asc" };
                 query = query.OrderBy(pi => pi.id_item);
             }
         }
@@ -70,8 +70,8 @@ public class ProjectItemService : IProjectItemService
                 offset = offset,
                 limit = limit,
                 total = await _context.ProjectsItems.CountAsync(filterResult ?? (pi => pi.id_project == projectId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.ProjectsItems.Skip(offset + limit).AnyAsync(filterResult ?? (pi => pi.id_project == projectId))
+                next_offset = offset + limit,
+                has_more = await _context.ProjectsItems.Skip(offset + limit).AnyAsync(filterResult ?? (pi => pi.id_project == projectId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -89,13 +89,13 @@ public class ProjectItemService : IProjectItemService
         var query = _context.ProjectsItems.AsQueryable();
         var filterResult = default(Expression<Func<ProjectsItems, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_item", SearchType = "eq", Value = itemId.ToString() });
+        rsql.Add(new FilterDto { field = "id_item", search_type = "eq", value = itemId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectsItems>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<ProjectsItems>(sort);
             if (sortResult.Item1 != null)
@@ -104,7 +104,7 @@ public class ProjectItemService : IProjectItemService
             }
             else
             {
-                sort = new SorterDto { Field = "id_project", Order = "asc" };
+                sort = new SorterDto { field = "id_project", order = "asc" };
                 query = query.OrderBy(pi => pi.id_project);
             }
         }
@@ -130,8 +130,8 @@ public class ProjectItemService : IProjectItemService
                 offset = offset,
                 limit = limit,
                 total = await _context.ProjectsItems.CountAsync(filterResult ?? (pi => pi.id_item == itemId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.ProjectsItems.Skip(offset + limit).AnyAsync(filterResult ?? (pi => pi.id_item == itemId))
+                next_offset = offset + limit,
+                has_more = await _context.ProjectsItems.Skip(offset + limit).AnyAsync(filterResult ?? (pi => pi.id_item == itemId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -191,15 +191,15 @@ public class ProjectItemService : IProjectItemService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = projectItemDto
+                    reason = e.Message,
+                    data = projectItemDto
                 });
             }
         }
         return new ReadBulkProjectItemDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 

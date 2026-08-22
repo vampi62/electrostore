@@ -27,14 +27,14 @@ public class ProjectStatusService : IProjectStatusService
         }
         var query = _context.ProjectsStatus.AsQueryable();
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_project", SearchType = "eq", Value = projectId.ToString() });
+        rsql.Add(new FilterDto { field = "id_project", search_type = "eq", value = projectId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             var filterResult = RsqlParserExtensions.ToFilterExpression<ProjectsStatus>(rsql);
             query = query.Where(filterResult.Item1);
             rsql = filterResult.Item2;
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<ProjectsStatus>(sort);
             if (sortResult.Item1 != null)
@@ -43,7 +43,7 @@ public class ProjectStatusService : IProjectStatusService
             }
             else
             {
-                sort = new SorterDto { Field = "created_at", Order = "desc" };
+                sort = new SorterDto { field = "created_at", order = "desc" };
                 query = query.OrderByDescending(p => p.created_at);
             }
         }
@@ -61,8 +61,8 @@ public class ProjectStatusService : IProjectStatusService
                 offset = offset,
                 limit = limit,
                 total = await _context.ProjectsStatus.CountAsync(p => p.id_project == projectId),
-                nextOffset = offset + limit,
-                hasMore = await _context.ProjectsStatus.Skip(offset + limit).AnyAsync(p => p.id_project == projectId)
+                next_offset = offset + limit,
+                has_more = await _context.ProjectsStatus.Skip(offset + limit).AnyAsync(p => p.id_project == projectId)
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

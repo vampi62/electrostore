@@ -154,7 +154,7 @@ public class AiToolExecutorService : IAiToolExecutorService
         var rsql = new List<FilterDto>();
         if (!string.IsNullOrWhiteSpace(args.query))
         {
-            rsql.Add(new FilterDto { Field = "friendly_name_item", SearchType = "like", Value = args.query });
+            rsql.Add(new FilterDto { field = "friendly_name_item", search_type = "like", value = args.query });
         }
         var items = await _itemService.GetItems(limit: args.limit ?? 20, rsql: rsql.Count > 0 ? rsql : null);
         return Result(items.data);
@@ -198,7 +198,7 @@ public class AiToolExecutorService : IAiToolExecutorService
         var rsql = new List<FilterDto>();
         if (!string.IsNullOrWhiteSpace(args.query))
         {
-            rsql.Add(new FilterDto { Field = "name_tag", SearchType = "like", Value = args.query });
+            rsql.Add(new FilterDto { field = "name_tag", search_type = "like", value = args.query });
         }
         var tags = await _tagService.GetTags(limit: 50, rsql: rsql.Count > 0 ? rsql : null);
         return Result(tags.data);

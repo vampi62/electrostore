@@ -16,8 +16,8 @@ public record ReadExtendedProjectProjectTagDto : ReadProjectProjectTagDto
 }
 public record ReadBulkProjectProjectTagDto
 {
-    public required List<ReadProjectProjectTagDto> Valide { get; init; }
-    public required List<ErrorDetail> Error { get; init; }
+    public required List<ReadProjectProjectTagDto> valide { get; init; }
+    public required List<ErrorDetail> error { get; init; }
 }
 public record CreateProjectProjectTagByProjectTagDto
 {

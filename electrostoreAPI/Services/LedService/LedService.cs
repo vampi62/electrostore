@@ -42,13 +42,13 @@ public class LedService : ILedService
         var query = _context.Leds.AsQueryable();
         var filterResult = default(Expression<Func<Leds, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_store", SearchType = "eq", Value = storeId.ToString() });
+        rsql.Add(new FilterDto { field = "id_store", search_type = "eq", value = storeId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Leds>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<Leds>(sort);
             if (sortResult.Item1 != null)
@@ -57,7 +57,7 @@ public class LedService : ILedService
             }
             else
             {
-                sort = new SorterDto { Field = "id_led", Order = "asc" };
+                sort = new SorterDto { field = "id_led", order = "asc" };
                 query = query.OrderBy(l => l.id_led);
             }
         }
@@ -75,8 +75,8 @@ public class LedService : ILedService
                 offset = offset,
                 limit = limit,
                 total = await _context.Leds.CountAsync(filterResult ?? (l => l.id_store == storeId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.Leds.Skip(offset + limit).AnyAsync(filterResult ?? (l => l.id_store == storeId))
+                next_offset = offset + limit,
+                has_more = await _context.Leds.Skip(offset + limit).AnyAsync(filterResult ?? (l => l.id_store == storeId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -132,15 +132,15 @@ public class LedService : ILedService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = ledDto
+                    reason = e.Message,
+                    data = ledDto
                 });
             }
         }
         return new ReadBulkLedDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 
@@ -188,15 +188,15 @@ public class LedService : ILedService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = ledDto
+                    reason = e.Message,
+                    data = ledDto
                 });
             }
         }
         return new ReadBulkLedDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 
@@ -239,15 +239,15 @@ public class LedService : ILedService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = new { id }
+                    reason = e.Message,
+                    data = new { id }
                 });
             }
         }
         return new ReadBulkLedDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 

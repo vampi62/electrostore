@@ -44,7 +44,7 @@ public class ItemService : IItemService
                 (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Items>(rsql);
                 query = query.Where(filterResult);
             }
-            if (!string.IsNullOrEmpty(sort?.Field))
+            if (!string.IsNullOrEmpty(sort?.field))
             {
                 var sortResult = RsqlParserExtensions.ToSortExpression<Items>(sort);
                 if (sortResult.Item1 != null)
@@ -53,7 +53,7 @@ public class ItemService : IItemService
                 }
                 else
                 {
-                    sort = new SorterDto { Field = "id_item", Order = "asc" };
+                    sort = new SorterDto { field = "id_item", order = "asc" };
                     query = query.OrderBy(i => i.id_item);
                 }
             }
@@ -105,8 +105,8 @@ public class ItemService : IItemService
                 offset = offset,
                 limit = limit,
                 total = await _context.Items.CountAsync(filterResult ?? (i => true)),
-                nextOffset = offset + limit,
-                hasMore = await _context.Items.Skip(offset + limit).AnyAsync(filterResult ?? (i => true))
+                next_offset = offset + limit,
+                has_more = await _context.Items.Skip(offset + limit).AnyAsync(filterResult ?? (i => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
