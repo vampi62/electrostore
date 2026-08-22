@@ -18,7 +18,6 @@ using ElectrostoreAPI.Services.ConfigService;
 using ElectrostoreAPI.Services.CronJobService;
 using ElectrostoreAPI.Services.EncryptionService;
 using ElectrostoreAPI.Services.FileService;
-using ElectrostoreAPI.Services.ImgService;
 using ElectrostoreAPI.Services.ItemBoxService;
 using ElectrostoreAPI.Services.ItemDocumentService;
 using ElectrostoreAPI.Services.ItemHistoryService;
@@ -358,7 +357,6 @@ public partial class Program
         builder.Services.AddScoped<IConfigService, ConfigService>();
         builder.Services.AddScoped<ICronJobService, CronJobService>();
         builder.Services.AddScoped<IEncryptionService, EncryptionService>();
-        builder.Services.AddScoped<IImgService, ImgService>();
         builder.Services.AddScoped<IItemBoxService, ItemBoxService>();
         builder.Services.AddScoped<IItemDocumentService, ItemDocumentService>();
         builder.Services.AddScoped<IItemHistoryService, ItemHistoryService>();

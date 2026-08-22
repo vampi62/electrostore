@@ -47,9 +47,6 @@ public class MappingProfile : Profile
         CreateMap<CreateCronJobDto, CronJobs>();
         CreateMap<CronJobs, ReadCronJobDto>();
 
-        CreateMap<CreateImgDto, Imgs>();
-        CreateMap<Imgs, ReadImgDto>();
-
         CreateMap<CreateItemBoxDto, ItemsBoxs>();
         CreateMap<ItemsBoxs, ReadItemBoxDto>();
         CreateMap<ItemsBoxs, ReadExtendedItemBoxDto>()

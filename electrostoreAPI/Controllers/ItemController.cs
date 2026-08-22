@@ -1,5 +1,6 @@
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Extensions;
+using ElectrostoreAPI.Services.FileService;
 using ElectrostoreAPI.Services.ItemService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,10 +14,12 @@ namespace ElectrostoreAPI.Controllers
     public class ItemController : ControllerBase
     {
         private readonly IItemService _itemService;
+        private readonly IFileService _fileService;
 
-        public ItemController(IItemService itemService)
+        public ItemController(IItemService itemService, IFileService fileService)
         {
             _itemService = itemService;
+            _fileService = fileService;
         }
 
         [HttpGet]
@@ -44,7 +47,7 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadItemDto>> CreateItem([FromBody] CreateItemDto itemDto)
+        public async Task<ActionResult<ReadItemDto>> CreateItem([FromForm] CreateItemDto itemDto)
         {
             var item = await _itemService.CreateItem(itemDto);
             return CreatedAtAction(nameof(GetItemById), new { id_item = item.id_item }, item);
@@ -52,7 +55,7 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpPut("{id_item}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadItemDto>> UpdateItem([FromRoute] int id_item, [FromBody] UpdateItemDto itemDto)
+        public async Task<ActionResult<ReadItemDto>> UpdateItem([FromRoute] int id_item, [FromForm] UpdateItemDto itemDto)
         {
             var item = await _itemService.UpdateItem(id_item, itemDto);
             return Ok(item);
@@ -64,6 +67,46 @@ namespace ElectrostoreAPI.Controllers
         {
             await _itemService.DeleteItem(id_item);
             return NoContent();
+        }
+
+        [HttpGet("{id_item}/picture")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult> GetItemPicture([FromRoute] int id_item)
+        {
+            var item = await _itemService.GetItemById(id_item);
+            if (string.IsNullOrEmpty(item.url_picture_item))
+            {
+                return NotFound();
+            }
+            var result = await _fileService.GetFile(item.url_picture_item);
+            if (result.Success && result.FileStream != null)
+            {
+                return File(result.FileStream, result.MimeType);
+            }
+            else
+            {
+                return NotFound(result.ErrorMessage);
+            }
+        }
+
+        [HttpGet("{id_item}/thumbnail")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult> GetItemThumbnail([FromRoute] int id_item)
+        {
+            var item = await _itemService.GetItemById(id_item);
+            if (string.IsNullOrEmpty(item.url_thumbnail_item))
+            {
+                return NotFound();
+            }
+            var result = await _fileService.GetFile(item.url_thumbnail_item);
+            if (result.Success && result.FileStream != null)
+            {
+                return File(result.FileStream, result.MimeType);
+            }
+            else
+            {
+                return NotFound(result.ErrorMessage);
+            }
         }
     }
 }
