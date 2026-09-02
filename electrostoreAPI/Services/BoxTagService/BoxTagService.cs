@@ -32,14 +32,14 @@ public class BoxTagService : IBoxTagService
         }
         var query = _context.BoxsTags.AsQueryable();
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_box", SearchType = "eq", Value = boxId.ToString() });
+        rsql.Add(new FilterDto { field = "id_box", search_type = "eq", value = boxId.ToString() });
         var filterResult = default(Expression<Func<BoxsTags, bool>>);
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<BoxsTags>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<BoxsTags>(sort);
             if (sortResult.Item1 != null)
@@ -48,7 +48,7 @@ public class BoxTagService : IBoxTagService
             }
             else
             {
-                sort = new SorterDto { Field = "id_tag", Order = "asc" };
+                sort = new SorterDto { field = "id_tag", order = "asc" };
                 query = query.OrderBy(bt => bt.id_tag);
             }
         }
@@ -74,8 +74,8 @@ public class BoxTagService : IBoxTagService
                 offset = offset,
                 limit = limit,
                 total = await _context.BoxsTags.CountAsync(filterResult ?? (bt => true)),
-                nextOffset = offset + limit,
-                hasMore = await _context.BoxsTags.Skip(offset + limit).AnyAsync(filterResult ?? (bt => true))
+                next_offset = offset + limit,
+                has_more = await _context.BoxsTags.Skip(offset + limit).AnyAsync(filterResult ?? (bt => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -92,14 +92,14 @@ public class BoxTagService : IBoxTagService
         }
         var query = _context.BoxsTags.AsQueryable();
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_tag", SearchType = "eq", Value = tagId.ToString() });
+        rsql.Add(new FilterDto { field = "id_tag", search_type = "eq", value = tagId.ToString() });
         var filterResult = default(Expression<Func<BoxsTags, bool>>);
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<BoxsTags>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<BoxsTags>(sort);
             if (sortResult.Item1 != null)
@@ -108,7 +108,7 @@ public class BoxTagService : IBoxTagService
             }
             else
             {
-                sort = new SorterDto { Field = "id_box", Order = "asc" };
+                sort = new SorterDto { field = "id_box", order = "asc" };
                 query = query.OrderBy(bt => bt.id_box);
             }
         }
@@ -134,8 +134,8 @@ public class BoxTagService : IBoxTagService
                 offset = offset,
                 limit = limit,
                 total = await _context.BoxsTags.CountAsync(filterResult ?? (bt => true)),
-                nextOffset = offset + limit,
-                hasMore = await _context.BoxsTags.Skip(offset + limit).AnyAsync(filterResult ?? (bt => true))
+                next_offset = offset + limit,
+                has_more = await _context.BoxsTags.Skip(offset + limit).AnyAsync(filterResult ?? (bt => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -205,15 +205,15 @@ public class BoxTagService : IBoxTagService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = boxTagDto
+                    reason = e.Message,
+                    data = boxTagDto
                 });
             }
         }
         return new ReadBulkBoxTagDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 
@@ -261,15 +261,15 @@ public class BoxTagService : IBoxTagService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = boxTagDto
+                    reason = e.Message,
+                    data = boxTagDto
                 });
             }
         }
         return new ReadBulkBoxTagDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 }

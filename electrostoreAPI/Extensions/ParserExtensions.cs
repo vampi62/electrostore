@@ -30,7 +30,7 @@ public static class ParserExtensions
 
             if (searchType != null)
             {
-                filters.Add(new FilterDto { Field = field, Value = value, SearchType = searchType });
+                filters.Add(new FilterDto { field = field, value = value, search_type = searchType });
             }
         }
         return filters;
@@ -40,17 +40,17 @@ public static class ParserExtensions
     {
         if (string.IsNullOrEmpty(sort))
         {
-            return new SorterDto { Field = "", Order = "asc" };
+            return new SorterDto { field = "", order = "asc" };
         }
         var parts = sort.Split(',', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length != 2)
         {
-            return new SorterDto { Field = "", Order = "asc" };
+            return new SorterDto { field = "", order = "asc" };
         }
 
         var field = parts[0].Trim();
         var order = parts[1].Trim().ToLower() == "desc" ? "desc" : "asc";
 
-        return new SorterDto { Field = field, Order = order };
+        return new SorterDto { field = field, order = order };
     }
 }

@@ -18,8 +18,8 @@ public record ReadExtendedCommandItemDto : ReadCommandItemDto
 }
 public record ReadBulkCommandItemDto
 {
-    public required List<ReadCommandItemDto> Valide { get; init; }
-    public required List<ErrorDetail> Error { get; init; }
+    public required List<ReadCommandItemDto> valide { get; init; }
+    public required List<ErrorDetail> error { get; init; }
 }
 public record CreateCommandItemByCommandDto
 {

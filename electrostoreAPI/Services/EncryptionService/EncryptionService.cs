@@ -26,9 +26,9 @@ public class EncryptionService : IEncryptionService
 
         return new EncryptDto
         {
-            EncryptedData = ciphertextBytes,
-            IV = iv,
-            Tag = tag
+            encrypted_data = ciphertextBytes,
+            iv = iv,
+            tag = tag
         };
     }
 
@@ -40,11 +40,11 @@ public class EncryptionService : IEncryptionService
             throw new ArgumentException("Key must be 32 bytes (256 bits) long.");
         }
         using AesGcm aesGcm = new AesGcm(key, AesGcm.TagByteSizes.MaxSize);
-        byte[] decryptedBytes = new byte[encryptDto.EncryptedData.Length];
+        byte[] decryptedBytes = new byte[encryptDto.encrypted_data.Length];
 
         try
         {
-            aesGcm.Decrypt(encryptDto.IV, encryptDto.EncryptedData, encryptDto.Tag, decryptedBytes);
+            aesGcm.Decrypt(encryptDto.iv, encryptDto.encrypted_data, encryptDto.tag, decryptedBytes);
             return Encoding.UTF8.GetString(decryptedBytes);
         }
         catch (CryptographicException)

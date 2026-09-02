@@ -10,7 +10,7 @@ public record ReadStatusDto
     public int ai_training_in_progress { get; init; }
     public required string notif_status { get; init; }
     public bool? notif_smtp { get; init; }
-    public bool? notif_webPush { get; init; }
+    public bool? notif_web_push { get; init; }
     public required string cron_status { get; init; }
     public required string worker_status { get; init; }
     public Dictionary<string, string> external_services { get; init; } = new();

@@ -44,7 +44,7 @@ public class ZoneService : IZoneService
                 (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Zones>(rsql);
                 query = query.Where(filterResult);
             }
-            if (!string.IsNullOrEmpty(sort?.Field))
+            if (!string.IsNullOrEmpty(sort?.field))
             {
                 var sortResult = RsqlParserExtensions.ToSortExpression<Zones>(sort);
                 if (sortResult.Item1 != null)
@@ -53,7 +53,7 @@ public class ZoneService : IZoneService
                 }
                 else
                 {
-                    sort = new SorterDto { Field = "id_zone", Order = "asc" };
+                    sort = new SorterDto { field = "id_zone", order = "asc" };
                     query = query.OrderBy(z => z.id_zone);
                 }
             }
@@ -86,8 +86,8 @@ public class ZoneService : IZoneService
                 offset = offset,
                 limit = limit,
                 total = await _context.Zones.CountAsync(filterResult ?? (z => true)),
-                nextOffset = offset + limit,
-                hasMore = await _context.Zones.Skip(offset + limit).AnyAsync(filterResult ?? (z => true))
+                next_offset = offset + limit,
+                has_more = await _context.Zones.Skip(offset + limit).AnyAsync(filterResult ?? (z => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

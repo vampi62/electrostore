@@ -23,8 +23,8 @@ public record ReadExtendedTagDto : ReadTagDto
 
 public record ReadBulkTagDto
 {
-    public required List<ReadTagDto> Valide { get; init; }
-    public required List<ErrorDetail> Error { get; init; }
+    public required List<ReadTagDto> valide { get; init; }
+    public required List<ErrorDetail> error { get; init; }
 }
 
 public record CreateTagDto

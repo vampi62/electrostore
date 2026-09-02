@@ -58,7 +58,7 @@ public class StatusService : IStatusService
             ai_training_in_progress = aiHealth.TryGetValue("training_in_progress", out var trainingElement) && trainingElement.ValueKind == JsonValueKind.Number && trainingElement.TryGetInt32(out var trainingCount) ? trainingCount : 0,
             notif_status = notifHealth.TryGetValue("status", out var notifStatus) && notifStatus.GetString() is string ns ? ns : "unknown",
             notif_smtp = notifHealth.TryGetValue("smtp", out var smtpElement) && (smtpElement.ValueKind == JsonValueKind.True || smtpElement.ValueKind == JsonValueKind.False) ? smtpElement.ValueKind == JsonValueKind.True : (bool?)false,
-            notif_webPush = notifHealth.TryGetValue("webPush", out var wpElement) && (wpElement.ValueKind == JsonValueKind.True || wpElement.ValueKind == JsonValueKind.False) ? wpElement.ValueKind == JsonValueKind.True : (bool?)false,
+            notif_web_push = notifHealth.TryGetValue("webPush", out var wpElement) && (wpElement.ValueKind == JsonValueKind.True || wpElement.ValueKind == JsonValueKind.False) ? wpElement.ValueKind == JsonValueKind.True : (bool?)false,
             cron_status = cronHealth.TryGetValue("status", out var cronStatus) && cronStatus.GetString() is string cs ? cs : "unknown",
             worker_status = workerHealth.TryGetValue("status", out var workerStatus) && workerStatus.GetString() is string workerStr ? workerStr : "unknown",
             external_services = new Dictionary<string, string>

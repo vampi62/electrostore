@@ -33,13 +33,13 @@ public class CommandDocumentService : ICommandDocumentService
         var query = _context.CommandsDocuments.AsQueryable();
         var filterResult = default(Expression<Func<CommandsDocuments, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_command", SearchType = "eq", Value = commandId.ToString() });
+        rsql.Add(new FilterDto { field = "id_command", search_type = "eq", value = commandId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsDocuments>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<CommandsDocuments>(sort);
             if (sortResult.Item1 != null)
@@ -48,7 +48,7 @@ public class CommandDocumentService : ICommandDocumentService
             }
             else
             {
-                sort = new SorterDto { Field = "id_command_document", Order = "asc" };
+                sort = new SorterDto { field = "id_command_document", order = "asc" };
                 query = query.OrderBy(cd => cd.id_command_document);
             }
         }
@@ -66,8 +66,8 @@ public class CommandDocumentService : ICommandDocumentService
                 offset = offset,
                 limit = limit,
                 total = await _context.CommandsDocuments.CountAsync(filterResult ?? (cd => cd.id_command == commandId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.CommandsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (cd => cd.id_command == commandId))
+                next_offset = offset + limit,
+                has_more = await _context.CommandsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (cd => cd.id_command == commandId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -97,7 +97,7 @@ public class CommandDocumentService : ICommandDocumentService
             id_command = commandDocumentDto.id_command,
             url_command_document = savedFile.path,
             name_command_document = commandDocumentDto.name_command_document,
-            type_command_document = savedFile.mimeType,
+            type_command_document = savedFile.mime_type,
             size_command_document = commandDocumentDto.document.Length
         };
         await _context.CommandsDocuments.AddAsync(commandDocument);
