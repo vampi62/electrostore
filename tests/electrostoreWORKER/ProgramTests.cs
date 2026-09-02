@@ -69,7 +69,6 @@ public class ProgramTests
         // (Program.Main wires them separately via AddGrpcClient) - supply mocks so that resolving
         // IHostedService (which activates every registered hosted service) succeeds.
         builder.Services.AddSingleton(new Mock<ConfigGrpc.ConfigGrpcClient>().Object);
-        builder.Services.AddSingleton(new Mock<IaTrainingGrpc.IaTrainingGrpcClient>().Object);
         builder.Services.AddSingleton(new Mock<CommandsGrpc.CommandsGrpcClient>().Object);
         builder.Services.AddSingleton(new Mock<StoresMqttGrpc.StoresMqttGrpcClient>().Object);
         using var provider = builder.Services.BuildServiceProvider();

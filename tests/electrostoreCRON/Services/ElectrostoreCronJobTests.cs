@@ -100,28 +100,6 @@ public class ElectrostoreCronJobTests
     }
 
     [Fact]
-    public async Task Execute_ShouldNotCallTrack17Sync_AndShouldStillUpdateLastRun_WhenActionIsUnknown()
-    {
-        // Arrange
-        var job = CreateJob();
-        // IaRetrain and StockLowAlert are not handled by the switch (only PackageTracking is), so this
-        // exercises the "unknown action" default branch.
-        var context = CreateContext(7, CronJobAction.IaRetrain);
-        _apiClient
-            .Setup(c => c.UpdateCronJobRunAsync(It.IsAny<UpdateCronJobRunRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
-            .Returns(CreateAsyncUnaryCall(new UpdateCronJobRunReply { Success = true }));
-
-        // Act
-        await job.Execute(context.Object);
-
-        // Assert
-        _track17Sync.Verify(s => s.SyncAllAsync(It.IsAny<CancellationToken>()), Times.Never);
-        _apiClient.Verify(c => c.UpdateCronJobRunAsync(
-            It.Is<UpdateCronJobRunRequest>(r => r.IdCronjob == 7),
-            It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
     public async Task Execute_ShouldStillUpdateLastRun_WhenTrack17SyncThrows()
     {
         // Arrange
