@@ -16,8 +16,8 @@ public record ReadExtendedStoreTagDto : ReadStoreTagDto
 }
 public record ReadBulkStoreTagDto
 {
-    public required List<ReadStoreTagDto> Valide { get; init; }
-    public required List<ErrorDetail> Error { get; init; }
+    public required List<ReadStoreTagDto> valide { get; init; }
+    public required List<ErrorDetail> error { get; init; }
 }
 public record CreateStoreTagByTagDto
 {

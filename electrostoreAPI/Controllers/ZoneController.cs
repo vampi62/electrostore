@@ -94,11 +94,11 @@ namespace ElectrostoreAPI.Controllers
                 return NotFound("This zone has no picture");
             }
             var result = await _fileService.GetFile(zone.url_picture_zone);
-            if (result.Success && result.FileStream != null)
+            if (result.success && result.file_stream != null)
             {
-                return File(result.FileStream, result.MimeType);
+                return File(result.file_stream, result.mime_type);
             }
-            return NotFound(result.ErrorMessage);
+            return NotFound(result.error_message);
         }
 
         [HttpGet("{id_zone}/thumbnail")]
@@ -111,11 +111,11 @@ namespace ElectrostoreAPI.Controllers
                 return NotFound("This zone has no picture");
             }
             var result = await _fileService.GetFile(zone.url_thumbnail_zone);
-            if (result.Success && result.FileStream != null)
+            if (result.success && result.file_stream != null)
             {
-                return File(result.FileStream, result.MimeType);
+                return File(result.file_stream, result.mime_type);
             }
-            return NotFound(result.ErrorMessage);
+            return NotFound(result.error_message);
         }
     }
 }

@@ -34,7 +34,7 @@ public class ProjectTagService : IProjectTagService
                 (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectTags>(rsql);
                 query = query.Where(filterResult);
             }
-            if (!string.IsNullOrEmpty(sort?.Field))
+            if (!string.IsNullOrEmpty(sort?.field))
             {
                 var sortResult = RsqlParserExtensions.ToSortExpression<ProjectTags>(sort);
                 if (sortResult.Item1 != null)
@@ -43,7 +43,7 @@ public class ProjectTagService : IProjectTagService
                 }
                 else
                 {
-                    sort = new SorterDto { Field = "id_project_tag", Order = "asc" };
+                    sort = new SorterDto { field = "id_project_tag", order = "asc" };
                     query = query.OrderBy(t => t.id_project_tag);
                 }
             }
@@ -73,8 +73,8 @@ public class ProjectTagService : IProjectTagService
                 offset = offset,
                 limit = limit,
                 total = await _context.ProjectTags.CountAsync(filterResult ?? (t => true)),
-                nextOffset = offset + limit,
-                hasMore = await _context.ProjectTags.Skip(offset + limit).AnyAsync(filterResult ?? (t => true))
+                next_offset = offset + limit,
+                has_more = await _context.ProjectTags.Skip(offset + limit).AnyAsync(filterResult ?? (t => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -127,15 +127,15 @@ public class ProjectTagService : IProjectTagService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = projectTagDto
+                    reason = e.Message,
+                    data = projectTagDto
                 });
             }
         }
         return new ReadBulkProjectTagDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 

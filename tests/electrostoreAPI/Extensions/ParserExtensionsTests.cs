@@ -32,8 +32,8 @@ public class ParserExtensionsTests
 
         // Assert
         var filter = Assert.Single(result);
-        Assert.Equal("field", filter.Field);
-        Assert.Equal(expectedSearchType, filter.SearchType);
+        Assert.Equal("field", filter.field);
+        Assert.Equal(expectedSearchType, filter.search_type);
     }
 
     [Fact]
@@ -44,9 +44,9 @@ public class ParserExtensionsTests
 
         // Assert
         var filter = Assert.Single(result);
-        Assert.Equal("field", filter.Field);
-        Assert.Equal("null", filter.SearchType);
-        Assert.Equal("", filter.Value);
+        Assert.Equal("field", filter.field);
+        Assert.Equal("null", filter.search_type);
+        Assert.Equal("", filter.value);
     }
 
     [Fact]
@@ -57,12 +57,12 @@ public class ParserExtensionsTests
 
         // Assert
         Assert.Equal(2, result.Count);
-        Assert.Equal("a", result[0].Field);
-        Assert.Equal("1", result[0].Value);
-        Assert.Equal("eq", result[0].SearchType);
-        Assert.Equal("b", result[1].Field);
-        Assert.Equal("2", result[1].Value);
-        Assert.Equal("gt", result[1].SearchType);
+        Assert.Equal("a", result[0].field);
+        Assert.Equal("1", result[0].value);
+        Assert.Equal("eq", result[0].search_type);
+        Assert.Equal("b", result[1].field);
+        Assert.Equal("2", result[1].value);
+        Assert.Equal("gt", result[1].search_type);
     }
 
     [Fact]
@@ -93,7 +93,7 @@ public class ParserExtensionsTests
 
         // Assert
         var filter = Assert.Single(result);
-        Assert.Equal("a", filter.Field);
+        Assert.Equal("a", filter.field);
     }
 
     // --- ParseSort ---
@@ -105,8 +105,8 @@ public class ParserExtensionsTests
         var result = ParserExtensions.ParseSort(null!);
 
         // Assert
-        Assert.Equal("", result.Field);
-        Assert.Equal("asc", result.Order);
+        Assert.Equal("", result.field);
+        Assert.Equal("asc", result.order);
     }
 
     [Fact]
@@ -116,8 +116,8 @@ public class ParserExtensionsTests
         var result = ParserExtensions.ParseSort("");
 
         // Assert
-        Assert.Equal("", result.Field);
-        Assert.Equal("asc", result.Order);
+        Assert.Equal("", result.field);
+        Assert.Equal("asc", result.order);
     }
 
     [Fact]
@@ -127,8 +127,8 @@ public class ParserExtensionsTests
         var result = ParserExtensions.ParseSort("fieldonly");
 
         // Assert
-        Assert.Equal("", result.Field);
-        Assert.Equal("asc", result.Order);
+        Assert.Equal("", result.field);
+        Assert.Equal("asc", result.order);
     }
 
     [Theory]
@@ -142,8 +142,8 @@ public class ParserExtensionsTests
         var result = ParserExtensions.ParseSort(input);
 
         // Assert
-        Assert.Equal(expectedField, result.Field);
-        Assert.Equal(expectedOrder, result.Order);
+        Assert.Equal(expectedField, result.field);
+        Assert.Equal(expectedOrder, result.order);
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public class ParserExtensionsTests
         var result = ParserExtensions.ParseSort(" field , desc ");
 
         // Assert
-        Assert.Equal("field", result.Field);
-        Assert.Equal("desc", result.Order);
+        Assert.Equal("field", result.field);
+        Assert.Equal("desc", result.order);
     }
 }

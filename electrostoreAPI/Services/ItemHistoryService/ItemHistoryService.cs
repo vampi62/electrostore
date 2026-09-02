@@ -32,13 +32,13 @@ public class ItemHistoryService : IItemHistoryService
         var query = _context.ItemsHistory.AsQueryable();
         var filterResult = default(Expression<Func<ItemsHistory, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_item", SearchType = "eq", Value = itemId.ToString() });
+        rsql.Add(new FilterDto { field = "id_item", search_type = "eq", value = itemId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ItemsHistory>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<ItemsHistory>(sort);
             if (sortResult.Item1 != null)
@@ -47,7 +47,7 @@ public class ItemHistoryService : IItemHistoryService
             }
             else
             {
-                sort = new SorterDto { Field = "id_item_history", Order = "desc" };
+                sort = new SorterDto { field = "id_item_history", order = "desc" };
                 query = query.OrderByDescending(h => h.id_item_history);
             }
         }
@@ -80,8 +80,8 @@ public class ItemHistoryService : IItemHistoryService
                 offset = offset,
                 limit = limit,
                 total = await _context.ItemsHistory.CountAsync(filterResult ?? (h => h.id_item == itemId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.ItemsHistory.Skip(offset + limit).AnyAsync(filterResult ?? (h => h.id_item == itemId))
+                next_offset = offset + limit,
+                has_more = await _context.ItemsHistory.Skip(offset + limit).AnyAsync(filterResult ?? (h => h.id_item == itemId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -120,7 +120,7 @@ public class ItemHistoryService : IItemHistoryService
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ItemsHistory>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<ItemsHistory>(sort);
             if (sortResult.Item1 != null)
@@ -129,7 +129,7 @@ public class ItemHistoryService : IItemHistoryService
             }
             else
             {
-                sort = new SorterDto { Field = "id_item_history", Order = "desc" };
+                sort = new SorterDto { field = "id_item_history", order = "desc" };
                 query = query.OrderByDescending(h => h.id_item_history);
             }
         }
@@ -162,8 +162,8 @@ public class ItemHistoryService : IItemHistoryService
                 offset = offset,
                 limit = limit,
                 total = await _context.ItemsHistory.CountAsync(filterResult ?? (h => true)),
-                nextOffset = offset + limit,
-                hasMore = await _context.ItemsHistory.Skip(offset + limit).AnyAsync(filterResult ?? (h => true))
+                next_offset = offset + limit,
+                has_more = await _context.ItemsHistory.Skip(offset + limit).AnyAsync(filterResult ?? (h => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

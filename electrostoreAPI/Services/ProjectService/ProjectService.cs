@@ -42,7 +42,7 @@ public class ProjectService : IProjectService
                 (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Projects>(rsql);
                 query = query.Where(filterResult);
             }
-            if (!string.IsNullOrEmpty(sort?.Field))
+            if (!string.IsNullOrEmpty(sort?.field))
             {
                 var sortResult = RsqlParserExtensions.ToSortExpression<Projects>(sort);
                 if (sortResult.Item1 != null)
@@ -51,7 +51,7 @@ public class ProjectService : IProjectService
                 }
                 else
                 {
-                    sort = new SorterDto { Field = "id_project", Order = "asc" };
+                    sort = new SorterDto { field = "id_project", order = "asc" };
                     query = query.OrderBy(p => p.id_project);
                 }
             }
@@ -111,8 +111,8 @@ public class ProjectService : IProjectService
                 offset = offset,
                 limit = limit,
                 total = await _context.Projects.CountAsync(filterResult ?? (p => true)),
-                nextOffset = offset + limit,
-                hasMore = await _context.Projects.Skip(offset + limit).AnyAsync(filterResult ?? (p => true))
+                next_offset = offset + limit,
+                has_more = await _context.Projects.Skip(offset + limit).AnyAsync(filterResult ?? (p => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

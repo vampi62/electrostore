@@ -33,13 +33,13 @@ public class ItemBoxService : IItemBoxService
         var query = _context.ItemsBoxs.AsQueryable();
         var filterResult = default(Expression<Func<ItemsBoxs, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_box", SearchType = "eq", Value = boxId.ToString() });
+        rsql.Add(new FilterDto { field = "id_box", search_type = "eq", value = boxId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ItemsBoxs>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<ItemsBoxs>(sort);
             if (sortResult.Item1 != null)
@@ -48,7 +48,7 @@ public class ItemBoxService : IItemBoxService
             }
             else
             {
-                sort = new SorterDto { Field = "id_item", Order = "asc" };
+                sort = new SorterDto { field = "id_item", order = "asc" };
                 query = query.OrderBy(ib => ib.id_item);
             }
         }
@@ -74,8 +74,8 @@ public class ItemBoxService : IItemBoxService
                 offset = offset,
                 limit = limit,
                 total = await _context.ItemsBoxs.CountAsync(filterResult ?? (ib => ib.id_box == boxId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.ItemsBoxs.Skip(offset + limit).AnyAsync(filterResult ?? (ib => ib.id_box == boxId))
+                next_offset = offset + limit,
+                has_more = await _context.ItemsBoxs.Skip(offset + limit).AnyAsync(filterResult ?? (ib => ib.id_box == boxId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -93,13 +93,13 @@ public class ItemBoxService : IItemBoxService
         var query = _context.ItemsBoxs.AsQueryable();
         var filterResult = default(Expression<Func<ItemsBoxs, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_item", SearchType = "eq", Value = itemId.ToString() });
+        rsql.Add(new FilterDto { field = "id_item", search_type = "eq", value = itemId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ItemsBoxs>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<ItemsBoxs>(sort);
             if (sortResult.Item1 != null)
@@ -108,7 +108,7 @@ public class ItemBoxService : IItemBoxService
             }
             else
             {
-                sort = new SorterDto { Field = "id_box", Order = "asc" };
+                sort = new SorterDto { field = "id_box", order = "asc" };
                 query = query.OrderBy(ib => ib.id_box);
             }
         }
@@ -134,8 +134,8 @@ public class ItemBoxService : IItemBoxService
                 offset = offset,
                 limit = limit,
                 total = await _context.ItemsBoxs.CountAsync(filterResult ?? (ib => ib.id_item == itemId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.ItemsBoxs.Skip(offset + limit).AnyAsync(filterResult ?? (ib => ib.id_item == itemId))
+                next_offset = offset + limit,
+                has_more = await _context.ItemsBoxs.Skip(offset + limit).AnyAsync(filterResult ?? (ib => ib.id_item == itemId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

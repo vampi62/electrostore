@@ -43,7 +43,7 @@ public class CommandService : ICommandService
                 (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Commands>(rsql);
                 query = query.Where(filterResult);
             }
-            if (!string.IsNullOrEmpty(sort?.Field))
+            if (!string.IsNullOrEmpty(sort?.field))
             {
                 var sortResult = RsqlParserExtensions.ToSortExpression<Commands>(sort);
                 if (sortResult.Item1 != null)
@@ -52,7 +52,7 @@ public class CommandService : ICommandService
                 }
                 else
                 {
-                    sort = new SorterDto { Field = "id_command", Order = "asc" };
+                    sort = new SorterDto { field = "id_command", order = "asc" };
                     query = query.OrderBy(c => c.id_command);
                 }
             }
@@ -96,8 +96,8 @@ public class CommandService : ICommandService
                 offset = offset,
                 limit = limit,
                 total = await _context.Commands.CountAsync(filterResult ?? (c => true)),
-                nextOffset = offset + limit,
-                hasMore = await _context.Commands.Skip(offset + limit).AnyAsync(filterResult ?? (c => true))
+                next_offset = offset + limit,
+                has_more = await _context.Commands.Skip(offset + limit).AnyAsync(filterResult ?? (c => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
