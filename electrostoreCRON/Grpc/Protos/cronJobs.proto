@@ -13,8 +13,7 @@ service CronJobsGrpc {
 
 enum CronJobAction {
   PACKAGE_TRACKING = 0;
-  IA_RETRAIN = 1;
-  STOCK_LOW_ALERT = 2;
+  STOCK_LOW_ALERT = 1;
 }
 
 // ---- CronJobs ----

@@ -10,9 +10,11 @@ public class Items : BaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_item { get; set; }
 
-    public int? id_img { get; set; }
-    [ForeignKey("id_img")]
-    public Imgs? Img { get; set; }
+    [MaxLength(Constants.MaxUrlFileLength)]
+    public string? url_picture_item { get; set; }
+
+    [MaxLength(Constants.MaxUrlFileLength)]
+    public string? url_thumbnail_item { get; set; }
 
     [MaxLength(Constants.MaxNameLength)]
     public required string reference_name_item { get; set; }

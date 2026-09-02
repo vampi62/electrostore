@@ -92,9 +92,8 @@ Enable to deploy a containerized Garage S3 instance. Two separate buckets will b
 
 Configure bucket names:
 - **API Bucket Name**: Bucket for API files (default: `electrostore-api`)
-- **IA Bucket Name**: Bucket for AI training data (default: `electrostore-ia`)
 
-When using external S3 service (AWS, MinIO, etc.), configure separately for API and IA services:
+When using external S3 service (AWS, MinIO, etc.), configure separately for API services:
 - **Endpoint**: S3 endpoint URL
 - **Access Key**: S3 access key ID
 - **Secret Key**: S3 secret access key
@@ -178,7 +177,6 @@ The generator creates:
 
 - **docker-compose.yml**: Complete Docker Compose configuration
 - **config/api/appsettings.json**: API service configuration
-- **config/ia/appsettings.json**: AI service configuration
 - **config/notif/appsettings.json**: Notification service configuration
 - **config/cron/appsettings.json**: CRON service configuration
 - **config/worker/appsettings.json**: WORKER service configuration

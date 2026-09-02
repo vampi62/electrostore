@@ -25,9 +25,6 @@ jobs:
           - service_name: API
             source_dir: electrostoreAPI
             sonar_key: electrostore-api
-          - service_name: IA
-            source_dir: electrostoreIA
-            sonar_key: electrostore-ia
           - service_name: NOTIF
             source_dir: electrostoreNOTIF
             sonar_key: electrostore-notif

@@ -11,7 +11,8 @@ public record ReadItemDto
     public int threshold_min_item { get; init; }
     public int quantity_item { get; init; }
     public string? description_item { get; init; }
-    public int? id_img { get; init; }
+    public string? url_picture_item { get; init; }
+    public string? url_thumbnail_item { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
 }
@@ -46,7 +47,10 @@ public record CreateItemDto
     [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? description_item { get; init; }
 
-    public int? id_img { get; init; }
+    [FileSize(nameof(Constants.MaxImageSizeMB), ErrorMessage = "{0} cannot exceed {1} MB in size.")]
+    [FileType(nameof(Constants.AllowedImageMimeTypes),
+        ErrorMessage = "{0} has an invalid file type, allowed types are: [{1}], and extensions are: [{2}].")]
+    public IFormFile? img_file { get; init; }
 }
 public record UpdateItemDto
 {
@@ -65,5 +69,9 @@ public record UpdateItemDto
     public string? description_item { get; init; }
 
     public bool? unset_img_item { get; init; }
-    public int? id_img { get; init; }
+
+    [FileSize(nameof(Constants.MaxImageSizeMB), ErrorMessage = "{0} cannot exceed {1} MB in size.")]
+    [FileType(nameof(Constants.AllowedImageMimeTypes),
+        ErrorMessage = "{0} has an invalid file type, allowed types are: [{1}], and extensions are: [{2}].")]
+    public IFormFile? img_file { get; init; }
 }

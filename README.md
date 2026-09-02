@@ -66,7 +66,6 @@ ElectroStore consists of several services:
 | Service | Role |
 |---|---|
 | **API** | REST + gRPC backend, database management |
-| **IA** | Image recognition (ESP32CAM), ML models |
 | **NOTIF** | Push and email notifications |
 | **CRON** | Scheduled tasks (stock alerts, order tracking) |
 | **WORKER** | MQTT communication with ESP modules |
@@ -105,26 +104,6 @@ For manual installation or detailed information about each service, see the comp
 ---
 
 ## Required Hardware
-
-### ScanBox (ESP32CAM)
-
-The scan case allows visual identification of a component by photography.
-
-<!-- SCREENSHOT or PHOTO: printed and assembled ScanBox case -->
-<!-- ![Assembled ScanBox](docs/assets/photo_scanbox.jpg) -->
-
-3D files and Arduino code are located in the `scanbox/` folder.  
-Print preferably in white for better object detection.
-
-| Quantity | Component |
-|---|---|
-| 1 | ESP32CAM |
-| 1 | WS2812B |
-| 1 | ON/OFF Switch |
-
-Wiring details and configuration procedure: [docs/02_storeLed_and_scanner.md](docs/02_storeLed_and_scanner.md)
-
----
 
 ### LedStorage (ESP-01)
 
