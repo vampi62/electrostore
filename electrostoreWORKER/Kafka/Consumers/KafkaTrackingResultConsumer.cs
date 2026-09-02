@@ -79,7 +79,7 @@ public class KafkaTrackingResultConsumer : BackgroundService
         finally
         {
             consumer.Close();
-            _logger.LogInformation("KafkaIaStatusConsumer stopped");
+            _logger.LogInformation("KafkaTrackingResultConsumer stopped.");
         }
     }
 
