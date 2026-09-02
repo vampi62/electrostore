@@ -42,11 +42,6 @@ public partial class Program
             options.Address = new Uri(
                 builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
         });
-        builder.Services.AddGrpcClient<IaTrainingGrpc.IaTrainingGrpcClient>(options =>
-        {
-            options.Address = new Uri(
-                builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
-        });
         builder.Services.AddGrpcClient<StoresMqttGrpc.StoresMqttGrpcClient>(options =>
         {
             options.Address = new Uri(
@@ -71,7 +66,6 @@ public partial class Program
         builder.Services.AddSingleton<ConfigCacheService>();
         builder.Services.AddSingleton<IConfigCacheService>(sp => sp.GetRequiredService<ConfigCacheService>());
         builder.Services.AddHostedService(sp => sp.GetRequiredService<ConfigCacheService>());
-        builder.Services.AddHostedService<KafkaIaStatusConsumer>();
         builder.Services.AddHostedService<KafkaMqttUserConsumer>();
         builder.Services.AddHostedService<KafkaTrackingResultConsumer>();
         builder.Services.AddHostedService<MqttClientService>();
