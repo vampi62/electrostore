@@ -29,13 +29,13 @@ public class CommandHistoryService : ICommandHistoryService
         var query = _context.CommandsHistory.AsQueryable();
         var filterResult = default(Expression<Func<CommandsHistory, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_command", SearchType = "eq", Value = idCommand.ToString() });
+        rsql.Add(new FilterDto { field = "id_command", search_type = "eq", value = idCommand.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsHistory>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<CommandsHistory>(sort);
             if (sortResult.Item1 != null)
@@ -44,13 +44,13 @@ public class CommandHistoryService : ICommandHistoryService
             }
             else
             {
-                sort = new SorterDto { Field = "created_at", Order = "desc" };
+                sort = new SorterDto { field = "created_at", order = "desc" };
                 query = query.OrderByDescending(ch => ch.created_at);
             }
         }
         else
         {
-            sort = new SorterDto { Field = "created_at", Order = "desc" };
+            sort = new SorterDto { field = "created_at", order = "desc" };
             query = query.OrderByDescending(ch => ch.created_at);
         }
         query = query.Skip(offset).Take(limit);
@@ -63,8 +63,8 @@ public class CommandHistoryService : ICommandHistoryService
                 offset = offset,
                 limit = limit,
                 total = await _context.CommandsHistory.CountAsync(filterResult ?? (ci => ci.id_command == idCommand)),
-                nextOffset = offset + limit,
-                hasMore = await _context.CommandsHistory.Skip(offset + limit).AnyAsync(filterResult ?? (ci => ci.id_command == idCommand))
+                next_offset = offset + limit,
+                has_more = await _context.CommandsHistory.Skip(offset + limit).AnyAsync(filterResult ?? (ci => ci.id_command == idCommand))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

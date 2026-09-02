@@ -33,13 +33,13 @@ public class ProjectCommentService : IProjectCommentService
         var query = _context.ProjectsComments.AsQueryable();
         var filterResult = default(Expression<Func<ProjectsComments, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_project", SearchType = "eq", Value = projectId.ToString() });
+        rsql.Add(new FilterDto { field = "id_project", search_type = "eq", value = projectId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectsComments>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<ProjectsComments>(sort);
             if (sortResult.Item1 != null)
@@ -48,7 +48,7 @@ public class ProjectCommentService : IProjectCommentService
             }
             else
             {
-                sort = new SorterDto { Field = "created_at", Order = "desc" };
+                sort = new SorterDto { field = "created_at", order = "desc" };
                 query = query.OrderByDescending(p => p.created_at);
             }
         }
@@ -74,8 +74,8 @@ public class ProjectCommentService : IProjectCommentService
                 offset = offset,
                 limit = limit,
                 total = await _context.ProjectsComments.CountAsync(filterResult ?? (pc => pc.id_project == projectId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.ProjectsComments.Skip(offset + limit).AnyAsync(filterResult ?? (pc => pc.id_project == projectId))
+                next_offset = offset + limit,
+                has_more = await _context.ProjectsComments.Skip(offset + limit).AnyAsync(filterResult ?? (pc => pc.id_project == projectId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -93,13 +93,13 @@ public class ProjectCommentService : IProjectCommentService
         var query = _context.ProjectsComments.AsQueryable();
         var filterResult = default(Expression<Func<ProjectsComments, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_user", SearchType = "eq", Value = userId.ToString() });
+        rsql.Add(new FilterDto { field = "id_user", search_type = "eq", value = userId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectsComments>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<ProjectsComments>(sort);
             if (sortResult.Item1 != null)
@@ -108,7 +108,7 @@ public class ProjectCommentService : IProjectCommentService
             }
             else
             {
-                sort = new SorterDto { Field = "created_at", Order = "desc" };
+                sort = new SorterDto { field = "created_at", order = "desc" };
                 query = query.OrderByDescending(p => p.created_at);
             }
         }
@@ -134,8 +134,8 @@ public class ProjectCommentService : IProjectCommentService
                 offset = offset,
                 limit = limit,
                 total = await _context.ProjectsComments.CountAsync(filterResult ?? (pc => pc.id_user == userId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.ProjectsComments.Skip(offset + limit).AnyAsync(filterResult ?? (pc => pc.id_user == userId))
+                next_offset = offset + limit,
+                has_more = await _context.ProjectsComments.Skip(offset + limit).AnyAsync(filterResult ?? (pc => pc.id_user == userId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

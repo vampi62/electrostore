@@ -29,13 +29,13 @@ public class CommandItemService : ICommandItemService
         var query = _context.CommandsItems.AsQueryable();
         var filterResult = default(Expression<Func<CommandsItems, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_command", SearchType = "eq", Value = commandId.ToString() });
+        rsql.Add(new FilterDto { field = "id_command", search_type = "eq", value = commandId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsItems>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<CommandsItems>(sort);
             if (sortResult.Item1 != null)
@@ -44,7 +44,7 @@ public class CommandItemService : ICommandItemService
             }
             else
             {
-                sort = new SorterDto { Field = "id_item", Order = "asc" };
+                sort = new SorterDto { field = "id_item", order = "asc" };
                 query = query.OrderBy(ci => ci.id_item);
             }
         }
@@ -70,8 +70,8 @@ public class CommandItemService : ICommandItemService
                 offset = offset,
                 limit = limit,
                 total = await _context.CommandsItems.CountAsync(filterResult ?? (ci => ci.id_command == commandId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.CommandsItems.Skip(offset + limit).AnyAsync(filterResult ?? (ci => ci.id_command == commandId))
+                next_offset = offset + limit,
+                has_more = await _context.CommandsItems.Skip(offset + limit).AnyAsync(filterResult ?? (ci => ci.id_command == commandId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -89,13 +89,13 @@ public class CommandItemService : ICommandItemService
         var query = _context.CommandsItems.AsQueryable();
         var filterResult = default(Expression<Func<CommandsItems, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_item", SearchType = "eq", Value = itemId.ToString() });
+        rsql.Add(new FilterDto { field = "id_item", search_type = "eq", value = itemId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsItems>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<CommandsItems>(sort);
             if (sortResult.Item1 != null)
@@ -104,7 +104,7 @@ public class CommandItemService : ICommandItemService
             }
             else
             {
-                sort = new SorterDto { Field = "id_command", Order = "asc" };
+                sort = new SorterDto { field = "id_command", order = "asc" };
                 query = query.OrderBy(ci => ci.id_command);
             }
         }
@@ -130,8 +130,8 @@ public class CommandItemService : ICommandItemService
                 offset = offset,
                 limit = limit,
                 total = await _context.CommandsItems.CountAsync(filterResult ?? (ci => ci.id_item == itemId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.CommandsItems.Skip(offset + limit).AnyAsync(filterResult ?? (ci => ci.id_item == itemId))
+                next_offset = offset + limit,
+                has_more = await _context.CommandsItems.Skip(offset + limit).AnyAsync(filterResult ?? (ci => ci.id_item == itemId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -191,15 +191,15 @@ public class CommandItemService : ICommandItemService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = commandItemDto
+                    reason = e.Message,
+                    data = commandItemDto
                 });
             }
         }
         return new ReadBulkCommandItemDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 

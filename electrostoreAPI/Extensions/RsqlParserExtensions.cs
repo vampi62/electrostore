@@ -176,9 +176,9 @@ public static class RsqlParserExtensions
         Expression? combined = null;
         foreach (var condition in rsql)
         {
-            var field = condition.Field;
-            var searchType = condition.SearchType;
-            var value = condition.Value;
+            var field = condition.field;
+            var searchType = condition.search_type;
+            var value = condition.value;
 
             Expression? binaryExpression = null;
 
@@ -333,12 +333,12 @@ public static class RsqlParserExtensions
 
     public static (Expression<Func<T, object>>?, string) ToSortExpression<T>(SorterDto sort)
     {
-        if (string.IsNullOrEmpty(sort.Field))
+        if (string.IsNullOrEmpty(sort.field))
         {
             return (null, "asc");
         }
-        var field = sort.Field;
-        var direction = sort.Order?.ToLower() == "desc" ? "desc" : "asc";
+        var field = sort.field;
+        var direction = sort.order?.ToLower() == "desc" ? "desc" : "asc";
 
         ParameterExpression param = Expression.Parameter(typeof(T), "x");
 

@@ -113,7 +113,7 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.Equal(2, result.ai_training_in_progress);
             Assert.Equal("healthy", result.notif_status);
             Assert.True(result.notif_smtp);
-            Assert.False(result.notif_webPush);
+            Assert.False(result.notif_web_push);
             Assert.Equal("healthy", result.cron_status);
             Assert.Equal("healthy", result.worker_status);
         }

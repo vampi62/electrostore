@@ -36,13 +36,13 @@ public class BoxService : IBoxService
         var query = _context.Boxs.AsQueryable();
         var filterResult = default(Expression<Func<Boxs, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_store", SearchType = "eq", Value = storeId.ToString() });
+        rsql.Add(new FilterDto { field = "id_store", search_type = "eq", value = storeId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Boxs>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<Boxs>(sort);
             if (sortResult.Item1 != null)
@@ -51,7 +51,7 @@ public class BoxService : IBoxService
             }
             else
             {
-                sort = new SorterDto { Field = "id_box", Order = "asc" };
+                sort = new SorterDto { field = "id_box", order = "asc" };
                 query = query.OrderBy(b => b.id_box);
             }
         }
@@ -84,8 +84,8 @@ public class BoxService : IBoxService
             pagination = new PaginationDto
             {
                 total = await _context.Boxs.CountAsync(filterResult ?? (b => b.id_store == storeId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.Boxs.Skip(offset + limit).AnyAsync(filterResult ?? (b => b.id_store == storeId))
+                next_offset = offset + limit,
+                has_more = await _context.Boxs.Skip(offset + limit).AnyAsync(filterResult ?? (b => b.id_store == storeId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -159,8 +159,8 @@ public class BoxService : IBoxService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = boxDto
+                    reason = e.Message,
+                    data = boxDto
                 });
             }
         }
@@ -170,8 +170,8 @@ public class BoxService : IBoxService
         }
         return new ReadBulkBoxDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 
@@ -223,8 +223,8 @@ public class BoxService : IBoxService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = boxDto
+                    reason = e.Message,
+                    data = boxDto
                 });
             }
         }
@@ -242,8 +242,8 @@ public class BoxService : IBoxService
                 {
                     errorQuery.Add(new ErrorDetail
                     {
-                        Reason = e.Message,
-                        Data = boxDto
+                        reason = e.Message,
+                        data = boxDto
                     });
                 }
             }
@@ -254,8 +254,8 @@ public class BoxService : IBoxService
         }
         return new ReadBulkBoxDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 
@@ -303,15 +303,15 @@ public class BoxService : IBoxService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = id
+                    reason = e.Message,
+                    data = id
                 });
             }
         }
         return new ReadBulkBoxDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 }

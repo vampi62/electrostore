@@ -33,13 +33,13 @@ public class ProjectProjectTagService : IProjectProjectTagService
         var query = _context.ProjectsProjectTags.AsQueryable();
         var filterResult = default(Expression<Func<ProjectsProjectTags, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_project", SearchType = "eq", Value = projectId.ToString() });
+        rsql.Add(new FilterDto { field = "id_project", search_type = "eq", value = projectId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectsProjectTags>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<ProjectsProjectTags>(sort);
             if (sortResult.Item1 != null)
@@ -48,7 +48,7 @@ public class ProjectProjectTagService : IProjectProjectTagService
             }
             else
             {
-                sort = new SorterDto { Field = "id_project_tag", Order = "asc" };
+                sort = new SorterDto { field = "id_project_tag", order = "asc" };
                 query = query.OrderBy(st => st.id_project_tag);
             }
         }
@@ -74,8 +74,8 @@ public class ProjectProjectTagService : IProjectProjectTagService
                 offset = offset,
                 limit = limit,
                 total = await _context.ProjectsProjectTags.CountAsync(filterResult ?? (st => st.id_project == projectId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.ProjectsProjectTags.Skip(offset + limit).AnyAsync(filterResult ?? (st => st.id_project == projectId))
+                next_offset = offset + limit,
+                has_more = await _context.ProjectsProjectTags.Skip(offset + limit).AnyAsync(filterResult ?? (st => st.id_project == projectId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -93,13 +93,13 @@ public class ProjectProjectTagService : IProjectProjectTagService
         var query = _context.ProjectsProjectTags.AsQueryable();
         var filterResult = default(Expression<Func<ProjectsProjectTags, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_project_tag", SearchType = "eq", Value = projectTagId.ToString() });
+        rsql.Add(new FilterDto { field = "id_project_tag", search_type = "eq", value = projectTagId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectsProjectTags>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<ProjectsProjectTags>(sort);
             if (sortResult.Item1 != null)
@@ -108,7 +108,7 @@ public class ProjectProjectTagService : IProjectProjectTagService
             }
             else
             {
-                sort = new SorterDto { Field = "id_project", Order = "asc" };
+                sort = new SorterDto { field = "id_project", order = "asc" };
                 query = query.OrderBy(st => st.id_project);
             }
         }
@@ -134,8 +134,8 @@ public class ProjectProjectTagService : IProjectProjectTagService
                 offset = offset,
                 limit = limit,
                 total = await _context.ProjectsProjectTags.CountAsync(filterResult ?? (st => st.id_project_tag == projectTagId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.ProjectsProjectTags.Skip(offset + limit).AnyAsync(filterResult ?? (st => st.id_project_tag == projectTagId))
+                next_offset = offset + limit,
+                has_more = await _context.ProjectsProjectTags.Skip(offset + limit).AnyAsync(filterResult ?? (st => st.id_project_tag == projectTagId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -205,15 +205,15 @@ public class ProjectProjectTagService : IProjectProjectTagService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = projectProjectTagDto
+                    reason = e.Message,
+                    data = projectProjectTagDto
                 });
             }
         }
         return new ReadBulkProjectProjectTagDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 
@@ -253,16 +253,16 @@ public class ProjectProjectTagService : IProjectProjectTagService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = projectProjectTagDto
+                    reason = e.Message,
+                    data = projectProjectTagDto
                 });
             }
         }
         await _context.SaveChangesAsync();
         return new ReadBulkProjectProjectTagDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 }

@@ -97,10 +97,10 @@ namespace ElectrostoreAPI.Tests.Services
             var result = await authService.GetSSOAuthUrl("google");
             // Assert
             Assert.NotNull(result);
-            Assert.NotEmpty(result.State);
-            Assert.StartsWith("https://provider.example.com/authorize?", result.AuthUrl);
-            Assert.Contains("client_id=client-id", result.AuthUrl);
-            Assert.Contains("state=", result.AuthUrl);
+            Assert.NotEmpty(result.state);
+            Assert.StartsWith("https://provider.example.com/authorize?", result.auth_url);
+            Assert.Contains("client_id=client-id", result.auth_url);
+            Assert.Contains("state=", result.auth_url);
         }
 
         [Fact]
@@ -114,7 +114,7 @@ namespace ElectrostoreAPI.Tests.Services
             var result = await authService.GetSSOAuthUrl("google_workspace");
             // Assert
             Assert.NotNull(result);
-            Assert.StartsWith("https://provider.example.com/authorize?", result.AuthUrl);
+            Assert.StartsWith("https://provider.example.com/authorize?", result.auth_url);
         }
 
         [Fact]
@@ -140,7 +140,7 @@ namespace ElectrostoreAPI.Tests.Services
             using var context = new ApplicationDbContext(_dbContextOptions);
             var configuration = BuildEmptyConfiguration();
             var authService = CreateService(context, configuration);
-            var request = new SsoLoginRequest { Code = "some-code", State = "invalid-state-" + Guid.NewGuid() };
+            var request = new SsoLoginRequest { code = "some-code", state = "invalid-state-" + Guid.NewGuid() };
             // Act & Assert
             await Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
             {
@@ -245,7 +245,7 @@ namespace ElectrostoreAPI.Tests.Services
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             {
-                await authService.ForgotPassword(new ForgotPasswordRequest { Email = "user@test.com" });
+                await authService.ForgotPassword(new ForgotPasswordRequest { email = "user@test.com" });
             });
         }
 
@@ -259,7 +259,7 @@ namespace ElectrostoreAPI.Tests.Services
             var configuration = BuildEmptyConfiguration();
             var authService = CreateService(context, configuration);
             // Act
-            await authService.ForgotPassword(new ForgotPasswordRequest { Email = "user@test.com" });
+            await authService.ForgotPassword(new ForgotPasswordRequest { email = "user@test.com" });
             // Assert
             var user = await context.Users.FindAsync(1);
             Assert.NotNull(user!.reset_token);
@@ -277,7 +277,7 @@ namespace ElectrostoreAPI.Tests.Services
             // Act
             var exception = await Record.ExceptionAsync(async () =>
             {
-                await authService.ForgotPassword(new ForgotPasswordRequest { Email = "missing@test.com" });
+                await authService.ForgotPassword(new ForgotPasswordRequest { email = "missing@test.com" });
             });
             // Assert
             Assert.Null(exception);
@@ -295,7 +295,7 @@ namespace ElectrostoreAPI.Tests.Services
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             {
-                await authService.ResetPassword(new ResetPasswordRequest { Email = "user@test.com", Token = Guid.NewGuid().ToString(), Password = "NewPassword1!" });
+                await authService.ResetPassword(new ResetPasswordRequest { email = "user@test.com", token = Guid.NewGuid().ToString(), password = "NewPassword1!" });
             });
         }
 
@@ -314,7 +314,7 @@ namespace ElectrostoreAPI.Tests.Services
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             {
-                await authService.ResetPassword(new ResetPasswordRequest { Email = "user@test.com", Token = Guid.NewGuid().ToString(), Password = "NewPassword1!" });
+                await authService.ResetPassword(new ResetPasswordRequest { email = "user@test.com", token = Guid.NewGuid().ToString(), password = "NewPassword1!" });
             });
         }
 
@@ -334,7 +334,7 @@ namespace ElectrostoreAPI.Tests.Services
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             {
-                await authService.ResetPassword(new ResetPasswordRequest { Email = "user@test.com", Token = resetToken.ToString(), Password = "NewPassword1!" });
+                await authService.ResetPassword(new ResetPasswordRequest { email = "user@test.com", token = resetToken.ToString(), password = "NewPassword1!" });
             });
         }
 
@@ -352,7 +352,7 @@ namespace ElectrostoreAPI.Tests.Services
             var configuration = BuildEmptyConfiguration();
             var authService = CreateService(context, configuration);
             // Act
-            await authService.ResetPassword(new ResetPasswordRequest { Email = "user@test.com", Token = resetToken.ToString(), Password = "NewPassword1!" });
+            await authService.ResetPassword(new ResetPasswordRequest { email = "user@test.com", token = resetToken.ToString(), password = "NewPassword1!" });
             // Assert
             var updatedUser = await context.Users.FindAsync(1);
             Assert.True(BCrypt.Net.BCrypt.Verify("NewPassword1!", updatedUser!.password_user));
@@ -381,7 +381,7 @@ namespace ElectrostoreAPI.Tests.Services
             _jwtService.Setup(j => j.GenerateToken(It.IsAny<ReadUserDto>(), "user_password")).ReturnsAsync(jwt);
             var authService = CreateService(context, BuildEmptyConfiguration());
             // Act
-            var result = await authService.LoginWithPassword(new LoginRequest { Email = "user@test.com", Password = "Password1!" });
+            var result = await authService.LoginWithPassword(new LoginRequest { email = "user@test.com", password = "Password1!" });
             // Assert
             Assert.Equal("access-token", result.token);
             Assert.Equal("refresh-token", result.refresh_token);
@@ -398,7 +398,7 @@ namespace ElectrostoreAPI.Tests.Services
             // Act & Assert
             await Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
             {
-                await authService.LoginWithPassword(new LoginRequest { Email = "missing@test.com", Password = "Password1!" });
+                await authService.LoginWithPassword(new LoginRequest { email = "missing@test.com", password = "Password1!" });
             });
         }
 
@@ -413,7 +413,7 @@ namespace ElectrostoreAPI.Tests.Services
             // Act & Assert
             await Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
             {
-                await authService.LoginWithPassword(new LoginRequest { Email = "user@test.com", Password = "WrongPassword1!" });
+                await authService.LoginWithPassword(new LoginRequest { email = "user@test.com", password = "WrongPassword1!" });
             });
         }
 

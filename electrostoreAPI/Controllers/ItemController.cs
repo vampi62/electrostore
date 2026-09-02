@@ -79,13 +79,13 @@ namespace ElectrostoreAPI.Controllers
                 return NotFound();
             }
             var result = await _fileService.GetFile(item.url_picture_item);
-            if (result.Success && result.FileStream != null)
+            if (result.success && result.file_stream != null)
             {
-                return File(result.FileStream, result.MimeType);
+                return File(result.file_stream, result.mime_type);
             }
             else
             {
-                return NotFound(result.ErrorMessage);
+                return NotFound(result.error_message);
             }
         }
 
@@ -99,13 +99,13 @@ namespace ElectrostoreAPI.Controllers
                 return NotFound();
             }
             var result = await _fileService.GetFile(item.url_thumbnail_item);
-            if (result.Success && result.FileStream != null)
+            if (result.success && result.file_stream != null)
             {
-                return File(result.FileStream, result.MimeType);
+                return File(result.file_stream, result.mime_type);
             }
             else
             {
-                return NotFound(result.ErrorMessage);
+                return NotFound(result.error_message);
             }
         }
     }

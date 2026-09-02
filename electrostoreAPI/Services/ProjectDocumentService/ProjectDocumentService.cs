@@ -33,13 +33,13 @@ public class ProjectDocumentService : IProjectDocumentService
         var query = _context.ProjectsDocuments.AsQueryable();
         var filterResult = default(Expression<Func<ProjectsDocuments, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_project", SearchType = "eq", Value = projectId.ToString() });
+        rsql.Add(new FilterDto { field = "id_project", search_type = "eq", value = projectId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectsDocuments>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<ProjectsDocuments>(sort);
             if (sortResult.Item1 != null)
@@ -48,7 +48,7 @@ public class ProjectDocumentService : IProjectDocumentService
             }
             else
             {
-                sort = new SorterDto { Field = "id_project_document", Order = "asc" };
+                sort = new SorterDto { field = "id_project_document", order = "asc" };
                 query = query.OrderBy(pd => pd.id_project_document);
             }
         }
@@ -66,8 +66,8 @@ public class ProjectDocumentService : IProjectDocumentService
                 offset = offset,
                 limit = limit,
                 total = await _context.ProjectsDocuments.CountAsync(filterResult ?? (pd => pd.id_project == projectId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.ProjectsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (pd => pd.id_project == projectId))
+                next_offset = offset + limit,
+                has_more = await _context.ProjectsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (pd => pd.id_project == projectId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -97,7 +97,7 @@ public class ProjectDocumentService : IProjectDocumentService
             id_project = projectDocumentDto.id_project,
             url_project_document = savedFile.path,
             name_project_document = projectDocumentDto.name_project_document,
-            type_project_document = savedFile.mimeType,
+            type_project_document = savedFile.mime_type,
             size_project_document = projectDocumentDto.document.Length
         };
         await _context.ProjectsDocuments.AddAsync(projectDocument);

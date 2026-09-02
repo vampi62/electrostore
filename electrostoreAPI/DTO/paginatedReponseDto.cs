@@ -5,8 +5,8 @@ public record PaginationDto
     public int limit { get; set; }
     public int offset { get; set; }
     public int total { get; set; }
-    public int nextOffset { get; set; }
-    public bool hasMore { get; set; }
+    public int next_offset { get; set; }
+    public bool has_more { get; set; }
 }
 
 public record PaginatedResponseDto<T>

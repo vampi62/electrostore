@@ -158,13 +158,13 @@ public class JwiService : IJwiService
         var query = _context.JwiRefreshTokens.AsQueryable();
         var filterResult = default(Expression<Func<JwiRefreshTokens, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_user", SearchType = "eq", Value = userId.ToString() });
+        rsql.Add(new FilterDto { field = "id_user", search_type = "eq", value = userId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<JwiRefreshTokens>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<JwiRefreshTokens>(sort);
             if (sortResult.Item1 != null)
@@ -173,7 +173,7 @@ public class JwiService : IJwiService
             }
             else
             {
-                sort = new SorterDto { Field = "created_at", Order = "desc" };
+                sort = new SorterDto { field = "created_at", order = "desc" };
                 query = query.OrderByDescending(jwi => jwi.created_at);
             }
         }
@@ -207,8 +207,8 @@ public class JwiService : IJwiService
                 offset = offset,
                 limit = limit,
                 total = await query.Select(jwi => jwi.session_id_jwi_refresh).Distinct().CountAsync(),
-                nextOffset = offset + limit,
-                hasMore = await query.Select(jwi => jwi.session_id_jwi_refresh).Distinct().Skip(offset + limit).AnyAsync()
+                next_offset = offset + limit,
+                has_more = await query.Select(jwi => jwi.session_id_jwi_refresh).Distinct().Skip(offset + limit).AnyAsync()
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

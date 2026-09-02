@@ -33,13 +33,13 @@ public class StoreTagService : IStoreTagService
         var query = _context.StoresTags.AsQueryable();
         var filterResult = default(Expression<Func<StoresTags, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_store", SearchType = "eq", Value = storeId.ToString() });
+        rsql.Add(new FilterDto { field = "id_store", search_type = "eq", value = storeId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<StoresTags>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<StoresTags>(sort);
             if (sortResult.Item1 != null)
@@ -48,7 +48,7 @@ public class StoreTagService : IStoreTagService
             }
             else
             {
-                sort = new SorterDto { Field = "id_tag", Order = "asc" };
+                sort = new SorterDto { field = "id_tag", order = "asc" };
                 query = query.OrderBy(st => st.id_tag);
             }
         }
@@ -74,8 +74,8 @@ public class StoreTagService : IStoreTagService
                 offset = offset,
                 limit = limit,
                 total = await _context.StoresTags.CountAsync(filterResult ?? ( st => st.id_store == storeId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.StoresTags.Skip(offset + limit).AnyAsync(filterResult ?? (st => st.id_store == storeId))
+                next_offset = offset + limit,
+                has_more = await _context.StoresTags.Skip(offset + limit).AnyAsync(filterResult ?? (st => st.id_store == storeId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -93,13 +93,13 @@ public class StoreTagService : IStoreTagService
         var query = _context.StoresTags.AsQueryable();
         var filterResult = default(Expression<Func<StoresTags, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_tag", SearchType = "eq", Value = tagId.ToString() });
+        rsql.Add(new FilterDto { field = "id_tag", search_type = "eq", value = tagId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<StoresTags>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<StoresTags>(sort);
             if (sortResult.Item1 != null)
@@ -108,7 +108,7 @@ public class StoreTagService : IStoreTagService
             }
             else
             {
-                sort = new SorterDto { Field = "id_store", Order = "asc" };
+                sort = new SorterDto { field = "id_store", order = "asc" };
                 query = query.OrderBy(st => st.id_store);
             }
         }
@@ -134,8 +134,8 @@ public class StoreTagService : IStoreTagService
                 offset = offset,
                 limit = limit,
                 total = await _context.StoresTags.CountAsync(filterResult ?? (st => st.id_tag == tagId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.StoresTags.Skip(offset + limit).AnyAsync(filterResult ?? (st => st.id_tag == tagId))
+                next_offset = offset + limit,
+                has_more = await _context.StoresTags.Skip(offset + limit).AnyAsync(filterResult ?? (st => st.id_tag == tagId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -205,15 +205,15 @@ public class StoreTagService : IStoreTagService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = storeTagDto
+                    reason = e.Message,
+                    data = storeTagDto
                 });
             }
         }
         return new ReadBulkStoreTagDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 
@@ -253,16 +253,16 @@ public class StoreTagService : IStoreTagService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = storeTagDto
+                    reason = e.Message,
+                    data = storeTagDto
                 });
             }
         }
         await _context.SaveChangesAsync();
         return new ReadBulkStoreTagDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 }

@@ -117,9 +117,9 @@ namespace ElectrostoreAPI.Tests.Services
             var result = await fileService.GetFile("test-file.txt");
 
             // Assert
-            Assert.True(result.Success);
-            Assert.NotNull(result.FileStream);
-            Assert.Equal("text/plain", result.MimeType);
+            Assert.True(result.success);
+            Assert.NotNull(result.file_stream);
+            Assert.Equal("text/plain", result.mime_type);
         }
 
         [Fact]
@@ -137,8 +137,8 @@ namespace ElectrostoreAPI.Tests.Services
             var result = await fileService.GetFile("non-existent-file.txt");
 
             // Assert
-            Assert.False(result.Success);
-            Assert.Equal("File not found", result.ErrorMessage);
+            Assert.False(result.success);
+            Assert.Equal("File not found", result.error_message);
         }
 
         [Fact]
@@ -157,9 +157,9 @@ namespace ElectrostoreAPI.Tests.Services
             var result = await fileService.GetFile("test-file.txt");
 
             // Assert
-            Assert.True(result.Success);
-            Assert.NotNull(result.FileStream);
-            Assert.Equal("text/plain", result.MimeType);
+            Assert.True(result.success);
+            Assert.NotNull(result.file_stream);
+            Assert.Equal("text/plain", result.mime_type);
 
             // Cleanup
             File.Delete(testFilePath);
@@ -177,8 +177,8 @@ namespace ElectrostoreAPI.Tests.Services
             var result = await fileService.GetFile("non-existent-local-file.txt");
 
             // Assert
-            Assert.False(result.Success);
-            Assert.Equal("File not found", result.ErrorMessage);
+            Assert.False(result.success);
+            Assert.Equal("File not found", result.error_message);
         }
 
         // --- FileExists ---
@@ -284,7 +284,7 @@ namespace ElectrostoreAPI.Tests.Services
             // Assert
             Assert.NotNull(result);
             Assert.Contains("some-path", result.path);
-            Assert.Equal("text/plain", result.mimeType);
+            Assert.Equal("text/plain", result.mime_type);
         }
 
         [Fact]
@@ -308,7 +308,7 @@ namespace ElectrostoreAPI.Tests.Services
             // Assert
             Assert.NotNull(result);
             Assert.Contains("local-path", result.path);
-            Assert.Equal("text/plain", result.mimeType);
+            Assert.Equal("text/plain", result.mime_type);
 
             // Cleanup
             var savedFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", result.path);
@@ -560,7 +560,7 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.NotNull(thumbnailResult);
             Assert.Contains("main", saveResult.path);
             Assert.Contains("thumbnails", thumbnailResult.path);
-            Assert.Equal("image/jpeg", thumbnailResult.mimeType);
+            Assert.Equal("image/jpeg", thumbnailResult.mime_type);
 
             // Cleanup
             var savedThumbnailPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", thumbnailResult.path);

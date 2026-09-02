@@ -48,13 +48,13 @@ namespace ElectrostoreAPI.Controllers
         {
             var itemDocument = await _itemDocumentService.GetItemDocumentById(id_itemDocument, id_item);
             var result = await _fileService.GetFile(itemDocument.url_item_document);
-            if (result.Success && result.FileStream != null)
+            if (result.success && result.file_stream != null)
             {
-                return File(result.FileStream, result.MimeType, itemDocument.name_item_document);
+                return File(result.file_stream, result.mime_type, itemDocument.name_item_document);
             }
             else
             {
-                return NotFound(result.ErrorMessage);
+                return NotFound(result.error_message);
             }
         }
 

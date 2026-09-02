@@ -50,7 +50,7 @@ public class UserService : IUserService
                 (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Users>(rsql);
                 query = query.Where(filterResult);
             }
-            if (!string.IsNullOrEmpty(sort?.Field))
+            if (!string.IsNullOrEmpty(sort?.field))
             {
                 var sortResult = RsqlParserExtensions.ToSortExpression<Users>(sort);
                 if (sortResult.Item1 != null)
@@ -59,7 +59,7 @@ public class UserService : IUserService
                 }
                 else
                 {
-                    sort = new SorterDto { Field = "id_user", Order = "asc" };
+                    sort = new SorterDto { field = "id_user", order = "asc" };
                     query = query.OrderBy(u => u.id_user);
                 }
             }
@@ -96,8 +96,8 @@ public class UserService : IUserService
                 offset = offset,
                 limit = limit,
                 total = await _context.Users.CountAsync(filterResult ?? (u => true)),
-                nextOffset = offset + limit,
-                hasMore = await _context.Users.Skip(offset + limit).AnyAsync(filterResult ?? (u => true))
+                next_offset = offset + limit,
+                has_more = await _context.Users.Skip(offset + limit).AnyAsync(filterResult ?? (u => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

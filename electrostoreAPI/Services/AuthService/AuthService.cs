@@ -70,18 +70,18 @@ public class AuthService : IAuthService
         var authUrl = $"{authority}?{queryParams}";
         return new SsoUrlResponse
         {
-            AuthUrl = authUrl,
-            State = state
+            auth_url = authUrl,
+            state = state
         };
     }
 
     public async Task<LoginResponse> LoginWithSSO(string sso_method, SsoLoginRequest request)
     {
-        if (!_stateStore.TryGetValue(request.State, out DateTime value) || value < DateTime.UtcNow)
+        if (!_stateStore.TryGetValue(request.state, out DateTime value) || value < DateTime.UtcNow)
         {
             throw new UnauthorizedAccessException("Invalid or expired state parameter");
         }
-        _stateStore.Remove(request.State);
+        _stateStore.Remove(request.state);
         var ssoModuleConfig = _configuration.GetSection("OAuth:" + ToPascalCase(sso_method));
         var clientId = ssoModuleConfig["ClientId"];
         var clientSecret = ssoModuleConfig["ClientSecret"];
@@ -93,7 +93,7 @@ public class AuthService : IAuthService
         {
             throw new ArgumentException("SSO method configuration is invalid");
         }
-        var tokenResponse = await ExchangeCodeForToken(request.Code, clientId!, clientSecret!, authority!, redirectUri!);
+        var tokenResponse = await ExchangeCodeForToken(request.code, clientId!, clientSecret!, authority!, redirectUri!);
         var userInfo = await GetUserInfo(tokenResponse.access_token, authority!);
         _logger.LogDebug("SSO user info received: {UserInfo}", JsonSerializer.Serialize(userInfo));
         var user = await GetOrCreateUser(userInfo, groupMappingSection);
@@ -230,7 +230,7 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("SMTP is not enabled");
         }
         // check if user exists
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.Email);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.email);
         if (user is not null)
         {
             // add reset_token
@@ -273,10 +273,10 @@ public class AuthService : IAuthService
         }
         // check if token is valid
         var user = await _context.Users.FirstOrDefaultAsync(
-            u => u.email_user == request.Email && u.reset_token.ToString() == request.Token && u.reset_token_expiration > DateTime.Now
+            u => u.email_user == request.email && u.reset_token.ToString() == request.token && u.reset_token_expiration > DateTime.Now
         ) ?? throw new InvalidOperationException("Invalid token");
         // update password
-        user.password_user = BCrypt.Net.BCrypt.HashPassword(request.Password);
+        user.password_user = BCrypt.Net.BCrypt.HashPassword(request.password);
         user.reset_token = null;
         user.reset_token_expiration = null;
         await _context.SaveChangesAsync();
@@ -307,9 +307,9 @@ public class AuthService : IAuthService
     public async Task<LoginResponse> LoginWithPassword(LoginRequest request)
     {
         // check if user exists
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.Email) ?? throw new UnauthorizedAccessException("Invalid password"); // do not reveal if email exists
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.email_user == request.email) ?? throw new UnauthorizedAccessException("Invalid password"); // do not reveal if email exists
         // check if password is correct
-        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.password_user))
+        if (!BCrypt.Net.BCrypt.Verify(request.password, user.password_user))
         {
             throw new UnauthorizedAccessException("Invalid password");
         }
