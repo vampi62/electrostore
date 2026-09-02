@@ -47,9 +47,9 @@ public class ProgramTests
         // Act
         InvokeAddScopes(builder);
 
-        // Assert - ConfigCacheService (via factory) + the 3 Kafka consumers + the MQTT client
+        // Assert - ConfigCacheService (via factory) + the 2 Kafka consumers + the MQTT client
         var hostedServiceDescriptors = builder.Services.Where(d => d.ServiceType == typeof(IHostedService)).ToList();
-        Assert.Equal(5, hostedServiceDescriptors.Count);
+        Assert.Equal(4, hostedServiceDescriptors.Count);
         Assert.Contains(hostedServiceDescriptors, d => d.ImplementationType == typeof(KafkaMqttUserConsumer));
         Assert.Contains(hostedServiceDescriptors, d => d.ImplementationType == typeof(KafkaTrackingResultConsumer));
         Assert.Contains(hostedServiceDescriptors, d => d.ImplementationType == typeof(MqttClientService));
