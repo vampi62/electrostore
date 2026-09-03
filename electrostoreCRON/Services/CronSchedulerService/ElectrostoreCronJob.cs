@@ -1,4 +1,5 @@
 using ElectrostoreCRON.Grpc;
+using ElectrostoreCRON.Services.CronJobExecutionRegistry;
 using ElectrostoreCRON.Services.Track17SyncService;
 using Grpc.Core;
 using Quartz;
@@ -13,15 +14,18 @@ public class ElectrostoreCronJob : IJob
     public const string KeyId     = "id_cronjob";
 
     private readonly ITrack17SyncService           _track17Sync;
+    private readonly ICronJobExecutionRegistry     _executionRegistry;
     private readonly CronJobsGrpc.CronJobsGrpcClient _apiClient;
     private readonly ILogger<ElectrostoreCronJob>  _logger;
 
     public ElectrostoreCronJob(
         ITrack17SyncService track17Sync,
+        ICronJobExecutionRegistry executionRegistry,
         CronJobsGrpc.CronJobsGrpcClient apiClient,
         ILogger<ElectrostoreCronJob> logger)
     {
         _track17Sync = track17Sync;
+        _executionRegistry = executionRegistry;
         _apiClient   = apiClient;
         _logger      = logger;
     }
@@ -34,25 +38,36 @@ public class ElectrostoreCronJob : IJob
 
         _logger.LogInformation("Running cron job #{Id} - action={Action}", id, action);
 
+        var runToken = _executionRegistry.Register(id, context.CancellationToken);
+        await UpdateStatusAsync(id, CronJobExecutionStatus.Running, null, context.CancellationToken);
+
         try
         {
             switch (action)
             {
                 case (int)CronJobAction.PackageTracking:
-                    await _track17Sync.SyncAllAsync(context.CancellationToken);
+                    await _track17Sync.SyncAllAsync(runToken);
                     break;
 
                 default:
                     _logger.LogWarning("Cron job #{Id}: unknown action '{Action}' - skipped.", id, action);
                     break;
             }
+            await UpdateStatusAsync(id, CronJobExecutionStatus.Success, null, context.CancellationToken);
+        }
+        catch (OperationCanceledException) when (runToken.IsCancellationRequested)
+        {
+            _logger.LogWarning("Cron job #{Id}: execution was force-stopped.", id);
+            await UpdateStatusAsync(id, CronJobExecutionStatus.Stopped, null, context.CancellationToken);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Cron job #{Id}: error executing action '{Action}'.", id, action);
+            await UpdateStatusAsync(id, CronJobExecutionStatus.Failed, ex.Message, context.CancellationToken);
         }
         finally
         {
+            _executionRegistry.Unregister(id);
             await UpdateLastRunAsync(id, context.NextFireTimeUtc, context.CancellationToken);
         }
     }
@@ -71,6 +86,23 @@ public class ElectrostoreCronJob : IJob
         catch (RpcException ex)
         {
             _logger.LogError(ex, "Failed to update last_run_at for cron job #{Id}.", id);
+        }
+    }
+
+    private async Task UpdateStatusAsync(int id, CronJobExecutionStatus status, string? lastError, CancellationToken ct)
+    {
+        try
+        {
+            await _apiClient.UpdateCronJobStatusAsync(new UpdateCronJobStatusRequest
+            {
+                IdCronjob = id,
+                StatusCronjob = status,
+                LastErrorCronjob = lastError ?? string.Empty,
+            }, cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger.LogError(ex, "Failed to update status for cron job #{Id}.", id);
         }
     }
 }
