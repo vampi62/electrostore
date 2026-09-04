@@ -50,10 +50,11 @@ public class StockLowAlertServiceTests
             () => { });
     }
 
-    private void SetupReport(GetLowStockItemsReply reply)
+    private void SetupReport(GetLowStockItemsReply reply, Action<GetLowStockItemsRequest>? capture = null)
     {
         _apiClient
             .Setup(c => c.GetLowStockItemsAsync(It.IsAny<GetLowStockItemsRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Callback<GetLowStockItemsRequest, Metadata, DateTime?, CancellationToken>((req, _, _, _) => capture?.Invoke(req))
             .Returns(CreateAsyncUnaryCall(reply));
     }
 
@@ -95,7 +96,7 @@ public class StockLowAlertServiceTests
         SetupReport(BuildReply(itemCount: 2, recipientCount: 3));
 
         // Act
-        await service.SendAlertAsync(null);
+        await service.SendAlertAsync(null, null);
 
         // Assert
         _kafka.Verify(k => k.PublishAsync(
@@ -115,7 +116,7 @@ public class StockLowAlertServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await service.SendAlertAsync(null);
+        await service.SendAlertAsync(null, null);
 
         // Assert
         Assert.NotNull(published);
@@ -147,7 +148,7 @@ public class StockLowAlertServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await service.SendAlertAsync("{\"language\":\"en\"}");
+        await service.SendAlertAsync("{\"language\":\"en\"}", null);
 
         // Assert
         var message = CapturePublishedMessage(published!);
@@ -167,12 +168,64 @@ public class StockLowAlertServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await service.SendAlertAsync("not-json");
+        await service.SendAlertAsync("not-json", null);
 
         // Assert
         var message = CapturePublishedMessage(published!);
         Assert.Equal("fr", message.GetProperty("Language").GetString());
         Assert.Equal("email", message.GetProperty("Types")[0].GetString());
+    }
+
+    [Fact]
+    public async Task SendAlertAsync_ShouldSendEmptySinceDate_WhenOnlyRecentChangesIsNotSet()
+    {
+        // Arrange - default behaviour: full summary of every item below its threshold.
+        var service = CreateService();
+        GetLowStockItemsRequest? request = null;
+        SetupReport(BuildReply(), req => request = req);
+
+        // Act
+        await service.SendAlertAsync(null, null);
+
+        // Assert
+        Assert.NotNull(request);
+        Assert.Equal(string.Empty, request!.SinceDate);
+    }
+
+    [Fact]
+    public async Task SendAlertAsync_ShouldUseLastRunAt_AsSinceDate_WhenOnlyRecentChangesAndUseLastRunAreSet()
+    {
+        // Arrange
+        var service = CreateService();
+        var lastRunAt = new DateTime(2026, 8, 20, 6, 0, 0, DateTimeKind.Utc);
+        GetLowStockItemsRequest? request = null;
+        SetupReport(BuildReply(), req => request = req);
+
+        // Act
+        await service.SendAlertAsync("{\"only_recent_changes\":true,\"use_last_run\":true}", lastRunAt);
+
+        // Assert
+        Assert.NotNull(request);
+        var sinceDate = DateTime.Parse(request!.SinceDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
+        Assert.Equal(lastRunAt, sinceDate);
+    }
+
+    [Fact]
+    public async Task SendAlertAsync_ShouldFallBackToDays_WhenOnlyRecentChangesIsSetButThereIsNoPreviousRun()
+    {
+        // Arrange - first execution of this cron job: no last_run_at is available yet.
+        var service = CreateService();
+        GetLowStockItemsRequest? request = null;
+        SetupReport(BuildReply(), req => request = req);
+        var before = DateTime.UtcNow;
+
+        // Act
+        await service.SendAlertAsync("{\"only_recent_changes\":true,\"use_last_run\":true,\"days\":3}", null);
+
+        // Assert
+        Assert.NotNull(request);
+        var sinceDate = DateTime.Parse(request!.SinceDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
+        Assert.InRange(sinceDate, before.AddDays(-3).AddSeconds(-5), before.AddDays(-3).AddSeconds(5));
     }
 
     [Fact]
@@ -183,7 +236,7 @@ public class StockLowAlertServiceTests
         SetupReport(BuildReply(itemCount: 0));
 
         // Act
-        await service.SendAlertAsync(null);
+        await service.SendAlertAsync(null, null);
 
         // Assert
         _kafka.Verify(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -197,7 +250,7 @@ public class StockLowAlertServiceTests
         SetupReport(BuildReply(recipientCount: 0));
 
         // Act
-        await service.SendAlertAsync(null);
+        await service.SendAlertAsync(null, null);
 
         // Assert
         _kafka.Verify(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -213,7 +266,7 @@ public class StockLowAlertServiceTests
             .Returns(CreateFailingAsyncUnaryCall<GetLowStockItemsReply>(new RpcException(new Status(StatusCode.Unavailable, "down"))));
 
         // Act
-        var exception = await Record.ExceptionAsync(() => service.SendAlertAsync(null));
+        var exception = await Record.ExceptionAsync(() => service.SendAlertAsync(null, null));
 
         // Assert
         Assert.Null(exception);
@@ -232,7 +285,7 @@ public class StockLowAlertServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var exception = await Record.ExceptionAsync(() => service.SendAlertAsync(null));
+        var exception = await Record.ExceptionAsync(() => service.SendAlertAsync(null, null));
 
         // Assert
         Assert.Null(exception);

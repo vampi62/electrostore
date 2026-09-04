@@ -1,3 +1,4 @@
+using System.Globalization;
 using ElectrostoreCRON.Grpc;
 using ElectrostoreCRON.Services.ItemMovementReportService;
 using ElectrostoreCRON.Services.StockLowAlertService;
@@ -10,9 +11,10 @@ namespace ElectrostoreCRON.Services.CronSchedulerService;
 [DisallowConcurrentExecution]
 public class ElectrostoreCronJob : IJob
 {
-    public const string KeyAction = "action_cronjob";
-    public const string KeyParams = "params_cronjob";
-    public const string KeyId     = "id_cronjob";
+    public const string KeyAction    = "action_cronjob";
+    public const string KeyParams    = "params_cronjob";
+    public const string KeyId        = "id_cronjob";
+    public const string KeyLastRunAt = "last_run_at_cronjob";
 
     private readonly ITrack17SyncService           _track17Sync;
     private readonly IItemMovementReportService    _itemMovementReport;
@@ -40,6 +42,7 @@ public class ElectrostoreCronJob : IJob
         var action = Enum.TryParse<CronJobAction>(map.Get(KeyAction)?.ToString(), out var actionValue) ? (int)actionValue : -1;
         var id     = map.GetInt(KeyId);
         var jobParams = map.GetString(KeyParams);
+        var lastRunAt = ParseLastRunAt(map.GetString(KeyLastRunAt));
 
         _logger.LogInformation("Running cron job #{Id} - action={Action}", id, action);
 
@@ -52,11 +55,11 @@ public class ElectrostoreCronJob : IJob
                     break;
 
                 case (int)CronJobAction.WeeklyItemMovementReport:
-                    await _itemMovementReport.SendReportAsync(jobParams, context.CancellationToken);
+                    await _itemMovementReport.SendReportAsync(jobParams, lastRunAt, context.CancellationToken);
                     break;
 
                 case (int)CronJobAction.StockLowAlert:
-                    await _stockLowAlert.SendAlertAsync(jobParams, context.CancellationToken);
+                    await _stockLowAlert.SendAlertAsync(jobParams, lastRunAt, context.CancellationToken);
                     break;
 
                 default:
@@ -72,6 +75,17 @@ public class ElectrostoreCronJob : IJob
         {
             await UpdateLastRunAsync(id, context.NextFireTimeUtc, context.CancellationToken);
         }
+    }
+
+    private static DateTime? ParseLastRunAt(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+        return DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsed)
+            ? parsed
+            : null;
     }
 
     private async Task UpdateLastRunAsync(int id, DateTimeOffset? nextFireTime, CancellationToken ct)

@@ -60,7 +60,7 @@ public class ItemMovementReportService : IItemMovementReportService
         _logger        = logger;
     }
 
-    public async Task SendReportAsync(string? paramsJson, CancellationToken ct = default)
+    public async Task SendReportAsync(string? paramsJson, DateTime? lastRunAt, CancellationToken ct = default)
     {
         var parameters = ParseParams(paramsJson);
         var language   = parameters.language ?? _configuration["AppLanguage"] ?? "fr";
@@ -68,7 +68,7 @@ public class ItemMovementReportService : IItemMovementReportService
         List<string> types = parameters.types is { Count: > 0 } ? parameters.types : ["email"];
 
         var toDate   = DateTime.UtcNow;
-        var fromDate = toDate.AddDays(-days);
+        var fromDate = parameters.use_last_run && lastRunAt.HasValue ? lastRunAt.Value : toDate.AddDays(-days);
 
         GetItemsMovementReportReply report;
         try
@@ -203,6 +203,14 @@ public class ItemMovementReportService : IItemMovementReportService
 
         /// <summary>Envoyer le rapport même si aucun mouvement n'a eu lieu.</summary>
         public bool send_when_empty { get; init; }
+
+        /// <summary>
+        /// Utiliser la date du dernier lancement du cron job (colonne <c>last_run_at</c>) comme début
+        /// de période plutôt que <c>days</c>. Permet à plusieurs cron jobs de cette même action de
+        /// couvrir chacun leur propre intervalle (basé sur leur propre planification) plutôt qu'une
+        /// fenêtre fixe. Sans exécution précédente (premier lancement), <c>days</c> sert de repli.
+        /// </summary>
+        public bool use_last_run { get; init; }
     }
 
     private sealed record MovementRow

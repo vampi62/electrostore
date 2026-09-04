@@ -1,3 +1,4 @@
+using System.Globalization;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Services.ItemService;
 using ElectrostoreAPI.Services.UserService;
@@ -24,7 +25,8 @@ public class ItemsGrpcService : ItemsGrpc.ItemsGrpcBase
     public override async Task<GetLowStockItemsReply> GetLowStockItems(
         GetLowStockItemsRequest request, ServerCallContext context)
     {
-        var lowStockItems = await _itemService.GetLowStockItemsAsync(context.CancellationToken);
+        var sinceDate = ParseDate(request.SinceDate);
+        var lowStockItems = await _itemService.GetLowStockItemsAsync(sinceDate, context.CancellationToken);
         var admins = await _userService.GetUsersByRoleAsync(UserRole.Admin, context.CancellationToken);
 
         var reply = new GetLowStockItemsReply();
@@ -48,5 +50,18 @@ public class ItemsGrpcService : ItemsGrpc.ItemsGrpcBase
             "GetLowStockItems: {ItemCount} item(s) below threshold for {RecipientCount} recipient(s)",
             reply.Items.Count, reply.Recipients.Count);
         return reply;
+    }
+
+    private static DateTime? ParseDate(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+        if (!DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsed))
+        {
+            throw new RpcException(new Status(StatusCode.InvalidArgument, $"Invalid ISO 8601 date '{value}'"));
+        }
+        return parsed.Kind == DateTimeKind.Local ? parsed.ToUniversalTime() : parsed;
     }
 }

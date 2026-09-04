@@ -10,7 +10,12 @@ service ItemsGrpc {
 
 // ---- Low stock report ----
 
-message GetLowStockItemsRequest {}
+message GetLowStockItemsRequest {
+  // ISO 8601, optional. When set, only items with a quantity-changing ItemsHistory entry
+  // (StockAdded / StockRemoved / StockUpdated) at or after this date are returned. When empty,
+  // all items below their threshold are returned regardless of recent activity.
+  string since_date = 1;
+}
 
 message GetLowStockItemsReply {
   repeated LowStockItemItem items         = 1;

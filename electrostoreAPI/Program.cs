@@ -499,6 +499,10 @@ public partial class Program
                 cron_expression_cronjob = "0 8 ? * MON",
                 is_enabled = true,
                 action_cronjob = Enums.CronJobAction.WeeklyItemMovementReport,
+                // use_last_run: cover the period since this cron job's own previous run rather than
+                // a fixed window, so several such jobs can later run on different schedules and each
+                // report exactly its own interval; "days" is only the first-run fallback (no history yet).
+                params_cronjob = "{\"use_last_run\":true,\"days\":7}",
             };
             cronJobService.CreateCronJob(createCronJobDto).Wait();
         }
@@ -512,6 +516,10 @@ public partial class Program
                 cron_expression_cronjob = "0 9 * * ?",
                 is_enabled = true,
                 action_cronjob = Enums.CronJobAction.StockLowAlert,
+                // only_recent_changes + use_last_run: notify only about items that dropped below
+                // their threshold since the previous run, instead of re-sending the same full list
+                // of low-stock items every day; "days" is only the first-run fallback.
+                params_cronjob = "{\"only_recent_changes\":true,\"use_last_run\":true,\"days\":1}",
             };
             cronJobService.CreateCronJob(createCronJobDto).Wait();
         }

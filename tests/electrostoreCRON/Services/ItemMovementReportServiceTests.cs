@@ -106,7 +106,7 @@ public class ItemMovementReportServiceTests
         SetupReport(BuildReply(movementCount: 2, recipientCount: 3));
 
         // Act
-        await service.SendReportAsync(null);
+        await service.SendReportAsync(null, null);
 
         // Assert
         _kafka.Verify(k => k.PublishAsync(
@@ -126,7 +126,7 @@ public class ItemMovementReportServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await service.SendReportAsync(null);
+        await service.SendReportAsync(null, null);
 
         // Assert
         Assert.NotNull(published);
@@ -159,7 +159,7 @@ public class ItemMovementReportServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await service.SendReportAsync("{\"language\":\"en\"}");
+        await service.SendReportAsync("{\"language\":\"en\"}", null);
 
         // Assert
         var message = CapturePublishedMessage(published!);
@@ -176,10 +176,63 @@ public class ItemMovementReportServiceTests
         SetupReport(BuildReply(), req => request = req);
 
         // Act
-        await service.SendReportAsync("{\"days\":30}");
+        await service.SendReportAsync("{\"days\":30}", null);
 
         // Assert
         Assert.NotNull(request);
+        var from = DateTime.Parse(request!.FromDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
+        var to = DateTime.Parse(request.ToDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
+        Assert.Equal(30, (to - from).Days);
+    }
+
+    [Fact]
+    public async Task SendReportAsync_ShouldUseLastRunAt_AsFromDate_WhenUseLastRunIsSet()
+    {
+        // Arrange
+        var service = CreateService();
+        var lastRunAt = new DateTime(2026, 8, 20, 6, 0, 0, DateTimeKind.Utc);
+        GetItemsMovementReportRequest? request = null;
+        SetupReport(BuildReply(), req => request = req);
+
+        // Act
+        await service.SendReportAsync("{\"use_last_run\":true,\"days\":30}", lastRunAt);
+
+        // Assert
+        Assert.NotNull(request);
+        var from = DateTime.Parse(request!.FromDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
+        Assert.Equal(lastRunAt, from);
+    }
+
+    [Fact]
+    public async Task SendReportAsync_ShouldFallBackToDays_WhenUseLastRunIsSetButThereIsNoPreviousRun()
+    {
+        // Arrange - first execution of this cron job: no last_run_at is available yet.
+        var service = CreateService();
+        GetItemsMovementReportRequest? request = null;
+        SetupReport(BuildReply(), req => request = req);
+
+        // Act
+        await service.SendReportAsync("{\"use_last_run\":true,\"days\":30}", null);
+
+        // Assert
+        var from = DateTime.Parse(request!.FromDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
+        var to = DateTime.Parse(request.ToDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
+        Assert.Equal(30, (to - from).Days);
+    }
+
+    [Fact]
+    public async Task SendReportAsync_ShouldIgnoreLastRunAt_WhenUseLastRunIsNotSet()
+    {
+        // Arrange
+        var service = CreateService();
+        var lastRunAt = new DateTime(2026, 8, 20, 6, 0, 0, DateTimeKind.Utc);
+        GetItemsMovementReportRequest? request = null;
+        SetupReport(BuildReply(), req => request = req);
+
+        // Act
+        await service.SendReportAsync("{\"days\":30}", lastRunAt);
+
+        // Assert
         var from = DateTime.Parse(request!.FromDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
         var to = DateTime.Parse(request.ToDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
         Assert.Equal(30, (to - from).Days);
@@ -194,7 +247,7 @@ public class ItemMovementReportServiceTests
         SetupReport(BuildReply(), req => request = req);
 
         // Act
-        await service.SendReportAsync("not-json");
+        await service.SendReportAsync("not-json", null);
 
         // Assert
         var from = DateTime.Parse(request!.FromDate, null, System.Globalization.DateTimeStyles.RoundtripKind);
@@ -210,7 +263,7 @@ public class ItemMovementReportServiceTests
         SetupReport(BuildReply(movementCount: 0));
 
         // Act
-        await service.SendReportAsync(null);
+        await service.SendReportAsync(null, null);
 
         // Assert
         _kafka.Verify(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -224,7 +277,7 @@ public class ItemMovementReportServiceTests
         SetupReport(BuildReply(movementCount: 0));
 
         // Act
-        await service.SendReportAsync("{\"send_when_empty\":true}");
+        await service.SendReportAsync("{\"send_when_empty\":true}", null);
 
         // Assert
         _kafka.Verify(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -238,7 +291,7 @@ public class ItemMovementReportServiceTests
         SetupReport(BuildReply(recipientCount: 0));
 
         // Act
-        await service.SendReportAsync(null);
+        await service.SendReportAsync(null, null);
 
         // Assert
         _kafka.Verify(k => k.PublishAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -254,7 +307,7 @@ public class ItemMovementReportServiceTests
             .Returns(CreateFailingAsyncUnaryCall<GetItemsMovementReportReply>(new RpcException(new Status(StatusCode.Unavailable, "down"))));
 
         // Act
-        var exception = await Record.ExceptionAsync(() => service.SendReportAsync(null));
+        var exception = await Record.ExceptionAsync(() => service.SendReportAsync(null, null));
 
         // Assert
         Assert.Null(exception);
@@ -273,7 +326,7 @@ public class ItemMovementReportServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var exception = await Record.ExceptionAsync(() => service.SendReportAsync(null));
+        var exception = await Record.ExceptionAsync(() => service.SendReportAsync(null, null));
 
         // Assert
         Assert.Null(exception);

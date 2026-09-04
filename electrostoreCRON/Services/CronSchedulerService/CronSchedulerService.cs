@@ -71,9 +71,10 @@ public class CronSchedulerService : BackgroundService
 
             var jobDetail = JobBuilder.Create<ElectrostoreCronJob>()
                 .WithIdentity(jobKey)
-                .UsingJobData(ElectrostoreCronJob.KeyId,     job.IdCronjob)
-                .UsingJobData(ElectrostoreCronJob.KeyAction,  (int)job.ActionCronjob)
-                .UsingJobData(ElectrostoreCronJob.KeyParams,  job.ParamsCronjob ?? string.Empty)
+                .UsingJobData(ElectrostoreCronJob.KeyId,        job.IdCronjob)
+                .UsingJobData(ElectrostoreCronJob.KeyAction,    (int)job.ActionCronjob)
+                .UsingJobData(ElectrostoreCronJob.KeyParams,    job.ParamsCronjob ?? string.Empty)
+                .UsingJobData(ElectrostoreCronJob.KeyLastRunAt, job.LastRunAt ?? string.Empty)
                 .Build();
 
             // Normalize 5-field Unix cron (m h dom mon dow) to 6-field Quartz cron (s m h dom mon dow)

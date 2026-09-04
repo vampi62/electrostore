@@ -11,6 +11,7 @@ public class StockLowAlertService : IStockLowAlertService
 {
     private const string NotificationTopic = "notification-requests";
     private const string TemplateId = "stock-low-alert";
+    private const int DefaultRecentChangeDays = 1;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -35,16 +36,20 @@ public class StockLowAlertService : IStockLowAlertService
         _logger        = logger;
     }
 
-    public async Task SendAlertAsync(string? paramsJson, CancellationToken ct = default)
+    public async Task SendAlertAsync(string? paramsJson, DateTime? lastRunAt, CancellationToken ct = default)
     {
         var parameters = ParseParams(paramsJson);
         var language   = parameters.language ?? _configuration["AppLanguage"] ?? "fr";
         List<string> types = parameters.types is { Count: > 0 } ? parameters.types : ["email"];
+        var sinceDate  = ResolveSinceDate(parameters, lastRunAt);
 
         GetLowStockItemsReply report;
         try
         {
-            report = await _apiClient.GetLowStockItemsAsync(new GetLowStockItemsRequest(), cancellationToken: ct);
+            report = await _apiClient.GetLowStockItemsAsync(new GetLowStockItemsRequest
+            {
+                SinceDate = sinceDate?.ToString("O") ?? string.Empty,
+            }, cancellationToken: ct);
         }
         catch (RpcException ex)
         {
@@ -83,6 +88,20 @@ public class StockLowAlertService : IStockLowAlertService
     }
 
     // -------------------------------------------------------------------------
+
+    private static DateTime? ResolveSinceDate(StockLowAlertParams parameters, DateTime? lastRunAt)
+    {
+        if (!parameters.only_recent_changes)
+        {
+            return null;
+        }
+        if (parameters.use_last_run && lastRunAt.HasValue)
+        {
+            return lastRunAt.Value;
+        }
+        var days = parameters.days is > 0 ? parameters.days.Value : DefaultRecentChangeDays;
+        return DateTime.UtcNow.AddDays(-days);
+    }
 
     private static StockLowAlertParams ParseParams(string? paramsJson)
     {
@@ -146,6 +165,28 @@ public class StockLowAlertService : IStockLowAlertService
 
         /// <summary>Canaux de notification ("email", "webpush") ; "email" par défaut.</summary>
         public List<string>? types { get; init; }
+
+        /// <summary>
+        /// <see langword="false"/> (par défaut) : résumé de tous les items sous leur seuil minimum.
+        /// <see langword="true"/> : ne retenir que les items ayant eu un changement de quantité
+        /// récent (via ItemsHistory), sur la fenêtre définie par <c>use_last_run</c> / <c>days</c>.
+        /// </summary>
+        public bool only_recent_changes { get; init; }
+
+        /// <summary>
+        /// Lorsque <c>only_recent_changes</c> est actif, utiliser la date du dernier lancement du
+        /// cron job (colonne <c>last_run_at</c>) comme début de la fenêtre "changements récents"
+        /// plutôt que <c>days</c>. Sans exécution précédente (premier lancement), <c>days</c> sert
+        /// de repli.
+        /// </summary>
+        public bool use_last_run { get; init; }
+
+        /// <summary>
+        /// Profondeur de la fenêtre "changements récents", en jours (1 par défaut). Utilisée
+        /// uniquement lorsque <c>only_recent_changes</c> est actif et que <c>use_last_run</c> ne
+        /// s'applique pas (désactivé ou premier lancement).
+        /// </summary>
+        public int? days { get; init; }
     }
 
     private sealed record LowStockItemRow

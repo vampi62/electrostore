@@ -5,6 +5,7 @@ using ElectrostoreAPI.Grpc.Services;
 using ElectrostoreAPI.Services.ItemService;
 using ElectrostoreAPI.Services.UserService;
 using ElectrostoreAPI.Tests.Utils;
+using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -44,7 +45,7 @@ public class ItemsGrpcServiceTests
         // Arrange
         var service = CreateService();
         _itemService
-            .Setup(s => s.GetLowStockItemsAsync(It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetLowStockItemsAsync(It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([BuildLowStockItem()]);
         _userService
             .Setup(s => s.GetUsersByRoleAsync(UserRole.Admin, It.IsAny<CancellationToken>()))
@@ -72,7 +73,7 @@ public class ItemsGrpcServiceTests
         // Arrange
         var service = CreateService();
         _itemService
-            .Setup(s => s.GetLowStockItemsAsync(It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetLowStockItemsAsync(It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
         _userService
             .Setup(s => s.GetUsersByRoleAsync(UserRole.Admin, It.IsAny<CancellationToken>()))
@@ -84,5 +85,64 @@ public class ItemsGrpcServiceTests
         // Assert
         Assert.Empty(reply.Items);
         Assert.Empty(reply.Recipients);
+    }
+
+    [Fact]
+    public async Task GetLowStockItems_ShouldForwardParsedSinceDate_WhenProvided()
+    {
+        // Arrange
+        var service = CreateService();
+        var sinceDate = new DateTime(2026, 8, 28, 0, 0, 0, DateTimeKind.Utc);
+        DateTime? forwarded = null;
+        _itemService
+            .Setup(s => s.GetLowStockItemsAsync(It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Callback<DateTime?, CancellationToken>((d, _) => forwarded = d)
+            .ReturnsAsync([]);
+        _userService
+            .Setup(s => s.GetUsersByRoleAsync(UserRole.Admin, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        // Act
+        await service.GetLowStockItems(
+            new GetLowStockItemsRequest { SinceDate = sinceDate.ToString("o") },
+            TestServerCallContext.Create());
+
+        // Assert
+        Assert.Equal(sinceDate, forwarded);
+    }
+
+    [Fact]
+    public async Task GetLowStockItems_ShouldForwardNullSinceDate_WhenNotProvided()
+    {
+        // Arrange
+        var service = CreateService();
+        var forwarded = (DateTime?)DateTime.UtcNow;
+        _itemService
+            .Setup(s => s.GetLowStockItemsAsync(It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Callback<DateTime?, CancellationToken>((d, _) => forwarded = d)
+            .ReturnsAsync([]);
+        _userService
+            .Setup(s => s.GetUsersByRoleAsync(UserRole.Admin, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        // Act
+        await service.GetLowStockItems(new GetLowStockItemsRequest(), TestServerCallContext.Create());
+
+        // Assert
+        Assert.Null(forwarded);
+    }
+
+    [Fact]
+    public async Task GetLowStockItems_ShouldThrowInvalidArgument_WhenSinceDateIsNotIso8601()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Act
+        var exception = await Assert.ThrowsAsync<RpcException>(() => service.GetLowStockItems(
+            new GetLowStockItemsRequest { SinceDate = "last-monday" }, TestServerCallContext.Create()));
+
+        // Assert
+        Assert.Equal(StatusCode.InvalidArgument, exception.StatusCode);
     }
 }
