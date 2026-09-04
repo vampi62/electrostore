@@ -1,4 +1,5 @@
 using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
 
 namespace ElectrostoreAPI.Services.UserService;
 
@@ -17,4 +18,6 @@ public interface IUserService
     public Task DeleteUser(int id);
 
     public Task<ReadUserDto?> GetUserByIdAsync(int id, CancellationToken cancellationToken = default);
+
+    public Task<IEnumerable<ReadUserDto>> GetUsersByRoleAsync(UserRole role, CancellationToken cancellationToken = default);
 }

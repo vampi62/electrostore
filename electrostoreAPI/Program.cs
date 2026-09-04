@@ -232,6 +232,7 @@ public partial class Program
         app.MapGrpcService<CommandsGrpcService>();
         app.MapGrpcService<ConfigGrpcService>();
         app.MapGrpcService<CronJobsGrpcService>();
+        app.MapGrpcService<ItemsHistoryGrpcService>();
         app.MapGrpcService<StoreMqttGrpcService>();
         app.MapGrpcService<UsersGrpcService>();
 

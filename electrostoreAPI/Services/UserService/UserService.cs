@@ -302,6 +302,15 @@ public class UserService : IUserService
         return _mapper.Map<ReadUserDto>(user);
     }
 
+    public async Task<IEnumerable<ReadUserDto>> GetUsersByRoleAsync(UserRole role, CancellationToken cancellationToken = default)
+    {
+        var users = await _context.Users
+            .Where(u => u.role_user == role)
+            .OrderBy(u => u.id_user)
+            .ToListAsync(cancellationToken);
+        return _mapper.Map<IEnumerable<ReadUserDto>>(users);
+    }
+
     private async Task AlerteUpdateUser(Users userToUpdate, UpdateUserDto userDto, string oldUserEmail)
     {
         if (userDto.email_user is not null && oldUserEmail != userDto.email_user)

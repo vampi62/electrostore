@@ -1,5 +1,6 @@
 using ElectrostoreCRON.Grpc;
 using ElectrostoreCRON.Services.CronSchedulerService;
+using ElectrostoreCRON.Services.ItemMovementReportService;
 using ElectrostoreCRON.Services.Track17SyncService;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
@@ -12,10 +13,11 @@ namespace ElectrostoreCRON.Tests.Services;
 public class ElectrostoreCronJobTests
 {
     private readonly Mock<ITrack17SyncService> _track17Sync = new();
+    private readonly Mock<IItemMovementReportService> _itemMovementReport = new();
     private readonly Mock<CronJobsGrpc.CronJobsGrpcClient> _apiClient = new();
     private readonly Mock<ILogger<ElectrostoreCronJob>> _logger = new();
 
-    private ElectrostoreCronJob CreateJob() => new(_track17Sync.Object, _apiClient.Object, _logger.Object);
+    private ElectrostoreCronJob CreateJob() => new(_track17Sync.Object, _itemMovementReport.Object, _apiClient.Object, _logger.Object);
 
     private static AsyncUnaryCall<TResponse> CreateAsyncUnaryCall<TResponse>(TResponse response)
     {
@@ -37,7 +39,7 @@ public class ElectrostoreCronJobTests
             () => { });
     }
 
-    private static Mock<IJobExecutionContext> CreateContext(int id, CronJobAction? action, DateTimeOffset? nextFireTimeUtc = null)
+    private static Mock<IJobExecutionContext> CreateContext(int id, CronJobAction? action, DateTimeOffset? nextFireTimeUtc = null, string jobParams = "")
     {
         var dataMap = new JobDataMap();
         dataMap.Put(ElectrostoreCronJob.KeyId, id);
@@ -45,7 +47,7 @@ public class ElectrostoreCronJobTests
         {
             dataMap.Put(ElectrostoreCronJob.KeyAction, (int)action.Value);
         }
-        dataMap.Put(ElectrostoreCronJob.KeyParams, string.Empty);
+        dataMap.Put(ElectrostoreCronJob.KeyParams, jobParams);
 
         var jobDetail = new Mock<IJobDetail>();
         jobDetail.SetupGet(d => d.JobDataMap).Returns(dataMap);
@@ -75,6 +77,51 @@ public class ElectrostoreCronJobTests
         _track17Sync.Verify(s => s.SyncAllAsync(It.IsAny<CancellationToken>()), Times.Once);
         _apiClient.Verify(c => c.UpdateCronJobRunAsync(
             It.Is<UpdateCronJobRunRequest>(r => r.IdCronjob == 5 && !string.IsNullOrEmpty(r.LastRunAt)),
+            It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Execute_ShouldCallItemMovementReportWithJobParams_WhenActionIsWeeklyItemMovementReport()
+    {
+        // Arrange
+        var job = CreateJob();
+        var context = CreateContext(7, CronJobAction.WeeklyItemMovementReport, jobParams: "{\"days\":14}");
+        _itemMovementReport.Setup(s => s.SendReportAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _apiClient
+            .Setup(c => c.UpdateCronJobRunAsync(It.IsAny<UpdateCronJobRunRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Returns(CreateAsyncUnaryCall(new UpdateCronJobRunReply { Success = true }));
+
+        // Act
+        await job.Execute(context.Object);
+
+        // Assert
+        _itemMovementReport.Verify(s => s.SendReportAsync("{\"days\":14}", It.IsAny<CancellationToken>()), Times.Once);
+        _track17Sync.Verify(s => s.SyncAllAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _apiClient.Verify(c => c.UpdateCronJobRunAsync(
+            It.Is<UpdateCronJobRunRequest>(r => r.IdCronjob == 7),
+            It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Execute_ShouldStillUpdateLastRun_WhenItemMovementReportThrows()
+    {
+        // Arrange
+        var job = CreateJob();
+        var context = CreateContext(8, CronJobAction.WeeklyItemMovementReport);
+        _itemMovementReport
+            .Setup(s => s.SendReportAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("boom"));
+        _apiClient
+            .Setup(c => c.UpdateCronJobRunAsync(It.IsAny<UpdateCronJobRunRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Returns(CreateAsyncUnaryCall(new UpdateCronJobRunReply { Success = true }));
+
+        // Act
+        var exception = await Record.ExceptionAsync(() => job.Execute(context.Object));
+
+        // Assert
+        Assert.Null(exception);
+        _apiClient.Verify(c => c.UpdateCronJobRunAsync(
+            It.Is<UpdateCronJobRunRequest>(r => r.IdCronjob == 8),
             It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 

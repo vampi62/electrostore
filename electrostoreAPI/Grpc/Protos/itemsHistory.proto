@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+option csharp_namespace = "ElectrostoreAPI.Grpc";
+
+package itemsHistory;
+
+service ItemsHistoryGrpc {
+  rpc GetItemsMovementReport (GetItemsMovementReportRequest) returns (GetItemsMovementReportReply);
+}
+
+// ---- Items movement report ----
+
+message GetItemsMovementReportRequest {
+  string from_date = 1; // ISO 8601, inclusive
+  string to_date   = 2; // ISO 8601, exclusive
+}
+
+message GetItemsMovementReportReply {
+  string from_date                        = 1; // ISO 8601, echoed back from the request
+  string to_date                          = 2; // ISO 8601, echoed back from the request
+  repeated ItemMovementItem movements     = 3;
+  repeated ReportRecipientItem recipients = 4; // administrators to notify
+}
+
+message ItemMovementItem {
+  int32  id_item_history = 1;
+  int32  id_item         = 2; // 0 when the item has been deleted
+  string item_name       = 3;
+  string type            = 4; // ItemHistoryType name
+  int32  quantity_change = 5;
+  int32  old_quantity    = 6;
+  int32  new_quantity    = 7;
+  int32  id_user         = 8; // 0 when the movement has no author
+  string user_name       = 9;
+  string notes           = 10;
+  string created_at      = 11; // ISO 8601
+}
+
+message ReportRecipientItem {
+  int32  id_user   = 1;
+  string email     = 2;
+  string firstname = 3;
+  string name      = 4;
+}

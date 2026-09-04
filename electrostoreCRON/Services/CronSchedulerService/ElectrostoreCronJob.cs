@@ -1,4 +1,5 @@
 using ElectrostoreCRON.Grpc;
+using ElectrostoreCRON.Services.ItemMovementReportService;
 using ElectrostoreCRON.Services.Track17SyncService;
 using Grpc.Core;
 using Quartz;
@@ -13,17 +14,20 @@ public class ElectrostoreCronJob : IJob
     public const string KeyId     = "id_cronjob";
 
     private readonly ITrack17SyncService           _track17Sync;
+    private readonly IItemMovementReportService    _itemMovementReport;
     private readonly CronJobsGrpc.CronJobsGrpcClient _apiClient;
     private readonly ILogger<ElectrostoreCronJob>  _logger;
 
     public ElectrostoreCronJob(
         ITrack17SyncService track17Sync,
+        IItemMovementReportService itemMovementReport,
         CronJobsGrpc.CronJobsGrpcClient apiClient,
         ILogger<ElectrostoreCronJob> logger)
     {
-        _track17Sync = track17Sync;
-        _apiClient   = apiClient;
-        _logger      = logger;
+        _track17Sync        = track17Sync;
+        _itemMovementReport = itemMovementReport;
+        _apiClient          = apiClient;
+        _logger             = logger;
     }
 
     public async Task Execute(IJobExecutionContext context)
@@ -31,6 +35,7 @@ public class ElectrostoreCronJob : IJob
         var map    = context.JobDetail.JobDataMap;
         var action = Enum.TryParse<CronJobAction>(map.Get(KeyAction)?.ToString(), out var actionValue) ? (int)actionValue : -1;
         var id     = map.GetInt(KeyId);
+        var jobParams = map.GetString(KeyParams);
 
         _logger.LogInformation("Running cron job #{Id} - action={Action}", id, action);
 
@@ -40,6 +45,10 @@ public class ElectrostoreCronJob : IJob
             {
                 case (int)CronJobAction.PackageTracking:
                     await _track17Sync.SyncAllAsync(context.CancellationToken);
+                    break;
+
+                case (int)CronJobAction.WeeklyItemMovementReport:
+                    await _itemMovementReport.SendReportAsync(jobParams, context.CancellationToken);
                     break;
 
                 default:

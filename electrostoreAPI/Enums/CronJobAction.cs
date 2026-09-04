@@ -5,4 +5,5 @@ public enum CronJobAction
 {
     PackageTracking,
     StockLowAlert,
+    WeeklyItemMovementReport,
 }
