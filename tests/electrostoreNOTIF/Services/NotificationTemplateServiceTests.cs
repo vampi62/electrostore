@@ -138,6 +138,40 @@ public class NotificationTemplateServiceTests
         Assert.Equal("2", result.Data?["movementCount"]);
     }
 
+    [Theory]
+    [InlineData("fr", "Alerte stock faible : 2 article(s) sous leur seuil minimum")]
+    [InlineData("en", "Low stock alert: 2 item(s) below their minimum threshold")]
+    public void RenderTemplate_ShouldRenderTheLowStockTable_FromRealTemplateFile(string language, string expectedSubject)
+    {
+        // Arrange
+        var service = CreateService();
+        var values = ParseValues("""
+        {
+            "firstName": "Jean",
+            "lastName": "Dupont",
+            "itemCount": 2,
+            "items": [
+                { "item": "Resistor 10k", "reference": "R10K", "quantity": 2, "threshold": 10 },
+                { "item": "Capacitor 100nF", "reference": "C100N", "quantity": 0, "threshold": 5 }
+            ]
+        }
+        """);
+
+        // Act
+        var result = service.RenderTemplate("stock-low-alert", values, language);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(expectedSubject, result!.Subject);
+        Assert.Contains("Jean", result.Body);
+        Assert.Contains("<td>Resistor 10k</td>", result.Body);
+        Assert.Contains("<td>Capacitor 100nF</td>", result.Body);
+        Assert.Contains(">R10K</td>", result.Body);
+        Assert.DoesNotContain("{{", result.Body);
+        Assert.Equal("stock_low_alert", result.Data?["event"]);
+        Assert.Equal("2", result.Data?["itemCount"]);
+    }
+
     [Fact]
     public void RenderTemplate_ShouldFallBackToDefaultLanguage_WhenRequestedLanguageIsUnavailable()
     {

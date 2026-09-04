@@ -21,7 +21,7 @@ const authStore = useAuthStore();
 
 const cronJobActionOptions = {
 	0: t("cronJob.ActionPackageTracking"),
-	1: { label: t("cronJob.ActionStockLowAlert"), disabled: true },
+	1: t("cronJob.ActionStockLowAlert"),
 	2: t("cronJob.ActionWeeklyItemMovementReport"),
 };
 

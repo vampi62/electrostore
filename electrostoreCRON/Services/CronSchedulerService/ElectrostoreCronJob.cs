@@ -1,5 +1,6 @@
 using ElectrostoreCRON.Grpc;
 using ElectrostoreCRON.Services.ItemMovementReportService;
+using ElectrostoreCRON.Services.StockLowAlertService;
 using ElectrostoreCRON.Services.Track17SyncService;
 using Grpc.Core;
 using Quartz;
@@ -15,17 +16,20 @@ public class ElectrostoreCronJob : IJob
 
     private readonly ITrack17SyncService           _track17Sync;
     private readonly IItemMovementReportService    _itemMovementReport;
+    private readonly IStockLowAlertService         _stockLowAlert;
     private readonly CronJobsGrpc.CronJobsGrpcClient _apiClient;
     private readonly ILogger<ElectrostoreCronJob>  _logger;
 
     public ElectrostoreCronJob(
         ITrack17SyncService track17Sync,
         IItemMovementReportService itemMovementReport,
+        IStockLowAlertService stockLowAlert,
         CronJobsGrpc.CronJobsGrpcClient apiClient,
         ILogger<ElectrostoreCronJob> logger)
     {
         _track17Sync        = track17Sync;
         _itemMovementReport = itemMovementReport;
+        _stockLowAlert      = stockLowAlert;
         _apiClient          = apiClient;
         _logger             = logger;
     }
@@ -49,6 +53,10 @@ public class ElectrostoreCronJob : IJob
 
                 case (int)CronJobAction.WeeklyItemMovementReport:
                     await _itemMovementReport.SendReportAsync(jobParams, context.CancellationToken);
+                    break;
+
+                case (int)CronJobAction.StockLowAlert:
+                    await _stockLowAlert.SendAlertAsync(jobParams, context.CancellationToken);
                     break;
 
                 default:

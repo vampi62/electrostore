@@ -14,4 +14,6 @@ public interface IItemService
     public Task<ReadItemDto> UpdateItem(int id, UpdateItemDto itemDto);
 
     public Task DeleteItem(int id);
+
+    public Task<IEnumerable<ReadItemDto>> GetLowStockItemsAsync(CancellationToken cancellationToken = default);
 }

@@ -250,4 +250,18 @@ public class ItemService : IItemService
         await _fileService.DeleteDirectory(Path.Combine(_itemDocumentsPath, id.ToString()));
         await _context.SaveChangesAsync();
     }
+
+    public async Task<IEnumerable<ReadItemDto>> GetLowStockItemsAsync(CancellationToken cancellationToken = default)
+    {
+        var items = await _context.Items
+            .Where(i => i.threshold_min_item > 0)
+            .Select(i => new
+            {
+                Item = i,
+                quantity_item = i.ItemsBoxs.Sum(ib => ib.quantity_item_box)
+            })
+            .Where(x => x.quantity_item < x.Item.threshold_min_item)
+            .ToListAsync(cancellationToken);
+        return items.Select(x => _mapper.Map<ReadItemDto>(x.Item) with { quantity_item = x.quantity_item }).ToList();
+    }
 }

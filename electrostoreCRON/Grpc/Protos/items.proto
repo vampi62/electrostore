@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+option csharp_namespace = "ElectrostoreCRON.Grpc";
+
+package items;
+
+service ItemsGrpc {
+  rpc GetLowStockItems (GetLowStockItemsRequest) returns (GetLowStockItemsReply);
+}
+
+// ---- Low stock report ----
+
+message GetLowStockItemsRequest {}
+
+message GetLowStockItemsReply {
+  repeated LowStockItemItem items         = 1;
+  repeated LowStockRecipientItem recipients = 2; // administrators to notify
+}
+
+message LowStockItemItem {
+  int32  id_item             = 1;
+  string reference_name_item = 2;
+  string friendly_name_item  = 3;
+  int32  quantity_item       = 4;
+  int32  threshold_min_item  = 5;
+}
+
+message LowStockRecipientItem {
+  int32  id_user   = 1;
+  string email     = 2;
+  string firstname = 3;
+  string name      = 4;
+}

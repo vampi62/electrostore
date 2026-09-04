@@ -1,6 +1,7 @@
 using ElectrostoreCRON.Grpc;
 using ElectrostoreCRON.Services.CronSchedulerService;
 using ElectrostoreCRON.Services.ItemMovementReportService;
+using ElectrostoreCRON.Services.StockLowAlertService;
 using ElectrostoreCRON.Services.Track17SyncService;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
@@ -14,10 +15,11 @@ public class ElectrostoreCronJobTests
 {
     private readonly Mock<ITrack17SyncService> _track17Sync = new();
     private readonly Mock<IItemMovementReportService> _itemMovementReport = new();
+    private readonly Mock<IStockLowAlertService> _stockLowAlert = new();
     private readonly Mock<CronJobsGrpc.CronJobsGrpcClient> _apiClient = new();
     private readonly Mock<ILogger<ElectrostoreCronJob>> _logger = new();
 
-    private ElectrostoreCronJob CreateJob() => new(_track17Sync.Object, _itemMovementReport.Object, _apiClient.Object, _logger.Object);
+    private ElectrostoreCronJob CreateJob() => new(_track17Sync.Object, _itemMovementReport.Object, _stockLowAlert.Object, _apiClient.Object, _logger.Object);
 
     private static AsyncUnaryCall<TResponse> CreateAsyncUnaryCall<TResponse>(TResponse response)
     {
@@ -122,6 +124,52 @@ public class ElectrostoreCronJobTests
         Assert.Null(exception);
         _apiClient.Verify(c => c.UpdateCronJobRunAsync(
             It.Is<UpdateCronJobRunRequest>(r => r.IdCronjob == 8),
+            It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Execute_ShouldCallStockLowAlertWithJobParams_WhenActionIsStockLowAlert()
+    {
+        // Arrange
+        var job = CreateJob();
+        var context = CreateContext(6, CronJobAction.StockLowAlert, jobParams: "{\"language\":\"en\"}");
+        _stockLowAlert.Setup(s => s.SendAlertAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _apiClient
+            .Setup(c => c.UpdateCronJobRunAsync(It.IsAny<UpdateCronJobRunRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Returns(CreateAsyncUnaryCall(new UpdateCronJobRunReply { Success = true }));
+
+        // Act
+        await job.Execute(context.Object);
+
+        // Assert
+        _stockLowAlert.Verify(s => s.SendAlertAsync("{\"language\":\"en\"}", It.IsAny<CancellationToken>()), Times.Once);
+        _itemMovementReport.Verify(s => s.SendReportAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _track17Sync.Verify(s => s.SyncAllAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _apiClient.Verify(c => c.UpdateCronJobRunAsync(
+            It.Is<UpdateCronJobRunRequest>(r => r.IdCronjob == 6),
+            It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Execute_ShouldStillUpdateLastRun_WhenStockLowAlertThrows()
+    {
+        // Arrange
+        var job = CreateJob();
+        var context = CreateContext(10, CronJobAction.StockLowAlert);
+        _stockLowAlert
+            .Setup(s => s.SendAlertAsync(It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("boom"));
+        _apiClient
+            .Setup(c => c.UpdateCronJobRunAsync(It.IsAny<UpdateCronJobRunRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Returns(CreateAsyncUnaryCall(new UpdateCronJobRunReply { Success = true }));
+
+        // Act
+        var exception = await Record.ExceptionAsync(() => job.Execute(context.Object));
+
+        // Assert
+        Assert.Null(exception);
+        _apiClient.Verify(c => c.UpdateCronJobRunAsync(
+            It.Is<UpdateCronJobRunRequest>(r => r.IdCronjob == 10),
             It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 

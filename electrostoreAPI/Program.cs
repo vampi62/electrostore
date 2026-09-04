@@ -232,6 +232,7 @@ public partial class Program
         app.MapGrpcService<CommandsGrpcService>();
         app.MapGrpcService<ConfigGrpcService>();
         app.MapGrpcService<CronJobsGrpcService>();
+        app.MapGrpcService<ItemsGrpcService>();
         app.MapGrpcService<ItemsHistoryGrpcService>();
         app.MapGrpcService<StoreMqttGrpcService>();
         app.MapGrpcService<UsersGrpcService>();
@@ -485,6 +486,32 @@ public partial class Program
                 cron_expression_cronjob = "*/15 * * * ?",
                 is_enabled = true,
                 action_cronjob = Enums.CronJobAction.PackageTracking,
+            };
+            cronJobService.CreateCronJob(createCronJobDto).Wait();
+        }
+        // add default cronjob for the weekly item movement report if not exists
+        if (!context.CronJobs.Any(c => c.name_cronjob == "WeeklyItemMovementReport"))
+        {
+            var cronJobService = serviceScope.ServiceProvider.GetRequiredService<ICronJobService>();
+            var createCronJobDto = new CreateCronJobDto
+            {
+                name_cronjob = "WeeklyItemMovementReport",
+                cron_expression_cronjob = "0 8 ? * MON",
+                is_enabled = true,
+                action_cronjob = Enums.CronJobAction.WeeklyItemMovementReport,
+            };
+            cronJobService.CreateCronJob(createCronJobDto).Wait();
+        }
+        // add default cronjob for the stock low alert if not exists
+        if (!context.CronJobs.Any(c => c.name_cronjob == "StockLowAlert"))
+        {
+            var cronJobService = serviceScope.ServiceProvider.GetRequiredService<ICronJobService>();
+            var createCronJobDto = new CreateCronJobDto
+            {
+                name_cronjob = "StockLowAlert",
+                cron_expression_cronjob = "0 9 * * ?",
+                is_enabled = true,
+                action_cronjob = Enums.CronJobAction.StockLowAlert,
             };
             cronJobService.CreateCronJob(createCronJobDto).Wait();
         }
