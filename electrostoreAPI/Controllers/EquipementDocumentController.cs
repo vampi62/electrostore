@@ -48,13 +48,13 @@ namespace ElectrostoreAPI.Controllers
         {
             var equipementDocument = await _equipementDocumentService.GetEquipementDocumentById(id_equipementDocument, id_equipement);
             var result = await _fileService.GetFile(equipementDocument.url_equipement_document);
-            if (result.Success && result.FileStream != null)
+            if (result.success && result.file_stream != null)
             {
-                return File(result.FileStream, result.MimeType, equipementDocument.name_equipement_document);
+                return File(result.file_stream, result.mime_type, equipementDocument.name_equipement_document);
             }
             else
             {
-                return NotFound(result.ErrorMessage);
+                return NotFound(result.error_message);
             }
         }
 

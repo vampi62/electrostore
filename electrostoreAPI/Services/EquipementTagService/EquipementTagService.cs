@@ -191,8 +191,8 @@ public class EquipementTagService : IEquipementTagService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = equipementTagDto
+                    reason = e.Message,
+                    data = equipementTagDto
                 });
             }
         }
@@ -229,8 +229,8 @@ public class EquipementTagService : IEquipementTagService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = equipementTagDto
+                    reason = e.Message,
+                    data = equipementTagDto
                 });
             }
         }

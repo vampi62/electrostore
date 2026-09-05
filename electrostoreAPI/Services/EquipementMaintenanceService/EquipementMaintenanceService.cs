@@ -129,11 +129,11 @@ public class EquipementMaintenanceService : IEquipementMaintenanceService
         }
         if (equipementMaintenanceDto.type_equipement_maintenance is not null)
         {
-            equipementMaintenanceToUpdate.type_equipement_maintenance = equipementMaintenanceDto.type_equipement_maintenance.value;
+            equipementMaintenanceToUpdate.type_equipement_maintenance = equipementMaintenanceDto.type_equipement_maintenance.Value;
         }
         if (equipementMaintenanceDto.date_planned_equipement_maintenance is not null)
         {
-            equipementMaintenanceToUpdate.date_planned_equipement_maintenance = equipementMaintenanceDto.date_planned_equipement_maintenance.value;
+            equipementMaintenanceToUpdate.date_planned_equipement_maintenance = equipementMaintenanceDto.date_planned_equipement_maintenance.Value;
         }
         if (equipementMaintenanceDto.date_done_equipement_maintenance is not null)
         {

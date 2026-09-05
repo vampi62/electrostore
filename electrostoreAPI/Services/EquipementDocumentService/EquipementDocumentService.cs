@@ -97,7 +97,7 @@ public class EquipementDocumentService : IEquipementDocumentService
             id_equipement = equipementDocumentDto.id_equipement,
             url_equipement_document = savedFile.path,
             name_equipement_document = equipementDocumentDto.name_equipement_document,
-            type_equipement_document = savedFile.mimeType,
+            type_equipement_document = savedFile.mime_type,
             size_equipement_document = equipementDocumentDto.document.Length
         };
         await _context.EquipementsDocuments.AddAsync(equipementDocument);
