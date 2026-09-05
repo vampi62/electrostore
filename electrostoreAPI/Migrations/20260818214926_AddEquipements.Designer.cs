@@ -4,16 +4,19 @@ using ElectrostoreAPI;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace ElectrostoreAPI.Migrations
+namespace electrostoreAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260818214926_AddEquipements")]
+    partial class AddEquipements
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,6 +24,41 @@ namespace ElectrostoreAPI.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.AI", b =>
+                {
+                    b.Property<int>("id_ia")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_ia"));
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("date_training_ia")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("description_ia")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("name_ia")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<bool>("trained_ia")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_ia");
+
+                    b.ToTable("AI");
+                });
 
             modelBuilder.Entity("ElectrostoreAPI.Models.Boxs", b =>
                 {
@@ -77,6 +115,46 @@ namespace ElectrostoreAPI.Migrations
                     b.HasIndex("id_tag");
 
                     b.ToTable("BoxsTags");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.Cameras", b =>
+                {
+                    b.Property<int>("id_camera")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_camera"));
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("last_seen_camera")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("name_camera")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("password_camera")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("url_camera")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("varchar(2048)");
+
+                    b.Property<string>("user_camera")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("id_camera");
+
+                    b.ToTable("Cameras");
                 });
 
             modelBuilder.Entity("ElectrostoreAPI.Models.Carriers", b =>
@@ -640,6 +718,50 @@ namespace ElectrostoreAPI.Migrations
                     b.ToTable("EquipementsTags");
                 });
 
+            modelBuilder.Entity("ElectrostoreAPI.Models.Imgs", b =>
+                {
+                    b.Property<int>("id_img")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_img"));
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("description_img")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<int>("id_item")
+                        .HasColumnType("int");
+
+                    b.Property<string>("name_img")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("url_picture_img")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("url_thumbnail_img")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.HasKey("id_img");
+
+                    b.HasIndex("id_item");
+
+                    b.ToTable("Imgs");
+                });
+
             modelBuilder.Entity("ElectrostoreAPI.Models.Items", b =>
                 {
                     b.Property<int>("id_item")
@@ -661,6 +783,9 @@ namespace ElectrostoreAPI.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
+                    b.Property<int?>("id_img")
+                        .HasColumnType("int");
+
                     b.Property<string>("reference_name_item")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -672,15 +797,9 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("url_picture_item")
-                        .HasMaxLength(300)
-                        .HasColumnType("varchar(300)");
-
-                    b.Property<string>("url_thumbnail_item")
-                        .HasMaxLength(300)
-                        .HasColumnType("varchar(300)");
-
                     b.HasKey("id_item");
+
+                    b.HasIndex("id_img");
 
                     b.ToTable("Items");
                 });
@@ -1188,9 +1307,6 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int?>("id_zone")
-                        .HasColumnType("int");
-
                     b.Property<bool>("is_mqtt_connected_store")
                         .HasColumnType("tinyint(1)");
 
@@ -1219,33 +1335,16 @@ namespace ElectrostoreAPI.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<int>("position_mode_store")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("xlength_store")
                         .HasColumnType("int");
 
-                    b.Property<int?>("xmax_store")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("xmin_store")
-                        .HasColumnType("int");
-
                     b.Property<int>("ylength_store")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ymax_store")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ymin_store")
-                        .HasColumnType("int");
-
                     b.HasKey("id_store");
-
-                    b.HasIndex("id_zone");
 
                     b.ToTable("Stores");
                 });
@@ -1389,49 +1488,6 @@ namespace ElectrostoreAPI.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("ElectrostoreAPI.Models.Zones", b =>
-                {
-                    b.Property<int>("id_zone")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_zone"));
-
-                    b.Property<DateTime>("created_at")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("description_zone")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<string>("name_zone")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<DateTime>("updated_at")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("url_picture_zone")
-                        .HasMaxLength(300)
-                        .HasColumnType("varchar(300)");
-
-                    b.Property<string>("url_thumbnail_zone")
-                        .HasMaxLength(300)
-                        .HasColumnType("varchar(300)");
-
-                    b.Property<int>("xlength_zone")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ylength_zone")
-                        .HasColumnType("int");
-
-                    b.HasKey("id_zone");
-
-                    b.ToTable("Zones");
-                });
-
             modelBuilder.Entity("ElectrostoreAPI.Models.Boxs", b =>
                 {
                     b.HasOne("ElectrostoreAPI.Models.Stores", "Store")
@@ -1531,7 +1587,6 @@ namespace ElectrostoreAPI.Migrations
                     b.Navigation("Item");
                 });
 
-
             modelBuilder.Entity("ElectrostoreAPI.Models.EquipementsBoxs", b =>
                 {
                     b.HasOne("ElectrostoreAPI.Models.Boxs", "Box")
@@ -1624,6 +1679,26 @@ namespace ElectrostoreAPI.Migrations
                     b.Navigation("Equipement");
 
                     b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.Imgs", b =>
+                {
+                    b.HasOne("ElectrostoreAPI.Models.Items", "Item")
+                        .WithMany()
+                        .HasForeignKey("id_item")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.Items", b =>
+                {
+                    b.HasOne("ElectrostoreAPI.Models.Imgs", "Img")
+                        .WithMany()
+                        .HasForeignKey("id_img");
+
+                    b.Navigation("Img");
                 });
 
             modelBuilder.Entity("ElectrostoreAPI.Models.ItemsBoxs", b =>
@@ -1817,15 +1892,6 @@ namespace ElectrostoreAPI.Migrations
                     b.Navigation("Project");
                 });
 
-            modelBuilder.Entity("ElectrostoreAPI.Models.Stores", b =>
-                {
-                    b.HasOne("ElectrostoreAPI.Models.Zones", "Zone")
-                        .WithMany("Stores")
-                        .HasForeignKey("id_zone");
-
-                    b.Navigation("Zone");
-                });
-
             modelBuilder.Entity("ElectrostoreAPI.Models.StoresTags", b =>
                 {
                     b.HasOne("ElectrostoreAPI.Models.Stores", "Store")
@@ -1945,11 +2011,6 @@ namespace ElectrostoreAPI.Migrations
                     b.Navigation("CommandsComments");
 
                     b.Navigation("ProjectsComments");
-                });
-
-            modelBuilder.Entity("ElectrostoreAPI.Models.Zones", b =>
-                {
-                    b.Navigation("Stores");
                 });
 #pragma warning restore 612, 618
         }
