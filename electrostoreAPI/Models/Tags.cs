@@ -18,4 +18,5 @@ public class Tags : BaseEntity
     public ICollection<BoxsTags> BoxsTags { get; set; } = new List<BoxsTags>();
     public ICollection<ItemsTags> ItemsTags { get; set; } = new List<ItemsTags>();
     public ICollection<StoresTags> StoresTags { get; set; } = new List<StoresTags>();
+    public ICollection<EquipementsTags> EquipementsTags { get; set; } = new List<EquipementsTags>();
 }
