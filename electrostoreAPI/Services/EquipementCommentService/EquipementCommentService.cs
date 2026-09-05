@@ -33,13 +33,13 @@ public class EquipementCommentService : IEquipementCommentService
         var query = _context.EquipementsComments.AsQueryable();
         var filterResult = default(Expression<Func<EquipementsComments, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_equipement", SearchType = "eq", Value = equipementId.ToString() });
+        rsql.Add(new FilterDto { field = "id_equipement", search_type = "eq", value = equipementId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<EquipementsComments>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsComments>(sort);
             if (sortResult.Item1 != null)
@@ -48,7 +48,7 @@ public class EquipementCommentService : IEquipementCommentService
             }
             else
             {
-                sort = new SorterDto { Field = "created_at", Order = "desc" };
+                sort = new SorterDto { field = "created_at", order = "desc" };
                 query = query.OrderByDescending(ec => ec.created_at);
             }
         }
@@ -74,8 +74,8 @@ public class EquipementCommentService : IEquipementCommentService
                 offset = offset,
                 limit = limit,
                 total = await _context.EquipementsComments.CountAsync(filterResult ?? (ec => ec.id_equipement == equipementId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.EquipementsComments.Skip(offset + limit).AnyAsync(filterResult ?? (ec => ec.id_equipement == equipementId))
+                next_offset = offset + limit,
+                has_more = await _context.EquipementsComments.Skip(offset + limit).AnyAsync(filterResult ?? (ec => ec.id_equipement == equipementId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -93,13 +93,13 @@ public class EquipementCommentService : IEquipementCommentService
         var query = _context.EquipementsComments.AsQueryable();
         var filterResult = default(Expression<Func<EquipementsComments, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_user", SearchType = "eq", Value = userId.ToString() });
+        rsql.Add(new FilterDto { field = "id_user", search_type = "eq", value = userId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<EquipementsComments>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsComments>(sort);
             if (sortResult.Item1 != null)
@@ -108,7 +108,7 @@ public class EquipementCommentService : IEquipementCommentService
             }
             else
             {
-                sort = new SorterDto { Field = "created_at", Order = "desc" };
+                sort = new SorterDto { field = "created_at", order = "desc" };
                 query = query.OrderByDescending(ec => ec.created_at);
             }
         }
@@ -134,8 +134,8 @@ public class EquipementCommentService : IEquipementCommentService
                 offset = offset,
                 limit = limit,
                 total = await _context.EquipementsComments.CountAsync(filterResult ?? (ec => ec.id_user == userId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.EquipementsComments.Skip(offset + limit).AnyAsync(filterResult ?? (ec => ec.id_user == userId))
+                next_offset = offset + limit,
+                has_more = await _context.EquipementsComments.Skip(offset + limit).AnyAsync(filterResult ?? (ec => ec.id_user == userId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

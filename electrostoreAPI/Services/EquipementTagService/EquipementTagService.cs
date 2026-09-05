@@ -29,13 +29,13 @@ public class EquipementTagService : IEquipementTagService
         var query = _context.EquipementsTags.AsQueryable();
         var filterResult = default(Expression<Func<EquipementsTags, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_equipement", SearchType = "eq", Value = equipementId.ToString() });
+        rsql.Add(new FilterDto { field = "id_equipement", search_type = "eq", value = equipementId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<EquipementsTags>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsTags>(sort);
             if (sortResult.Item1 != null)
@@ -44,7 +44,7 @@ public class EquipementTagService : IEquipementTagService
             }
             else
             {
-                sort = new SorterDto { Field = "id_tag", Order = "asc" };
+                sort = new SorterDto { field = "id_tag", order = "asc" };
                 query = query.OrderBy(et => et.id_tag);
             }
         }
@@ -70,8 +70,8 @@ public class EquipementTagService : IEquipementTagService
                 offset = offset,
                 limit = limit,
                 total = await _context.EquipementsTags.CountAsync(filterResult ?? (et => et.id_equipement == equipementId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.EquipementsTags.Skip(offset + limit).AnyAsync(filterResult ?? (et => et.id_equipement == equipementId))
+                next_offset = offset + limit,
+                has_more = await _context.EquipementsTags.Skip(offset + limit).AnyAsync(filterResult ?? (et => et.id_equipement == equipementId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -89,13 +89,13 @@ public class EquipementTagService : IEquipementTagService
         var query = _context.EquipementsTags.AsQueryable();
         var filterResult = default(Expression<Func<EquipementsTags, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_tag", SearchType = "eq", Value = tagId.ToString() });
+        rsql.Add(new FilterDto { field = "id_tag", search_type = "eq", value = tagId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<EquipementsTags>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsTags>(sort);
             if (sortResult.Item1 != null)
@@ -104,7 +104,7 @@ public class EquipementTagService : IEquipementTagService
             }
             else
             {
-                sort = new SorterDto { Field = "id_equipement", Order = "asc" };
+                sort = new SorterDto { field = "id_equipement", order = "asc" };
                 query = query.OrderBy(et => et.id_equipement);
             }
         }
@@ -130,8 +130,8 @@ public class EquipementTagService : IEquipementTagService
                 offset = offset,
                 limit = limit,
                 total = await _context.EquipementsTags.CountAsync(filterResult ?? (et => et.id_tag == tagId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.EquipementsTags.Skip(offset + limit).AnyAsync(filterResult ?? (et => et.id_tag == tagId))
+                next_offset = offset + limit,
+                has_more = await _context.EquipementsTags.Skip(offset + limit).AnyAsync(filterResult ?? (et => et.id_tag == tagId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

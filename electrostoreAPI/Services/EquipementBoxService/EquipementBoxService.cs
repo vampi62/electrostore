@@ -29,13 +29,13 @@ public class EquipementBoxService : IEquipementBoxService
         var query = _context.EquipementsBoxs.AsQueryable();
         var filterResult = default(Expression<Func<EquipementsBoxs, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_box", SearchType = "eq", Value = boxId.ToString() });
+        rsql.Add(new FilterDto { field = "id_box", search_type = "eq", value = boxId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<EquipementsBoxs>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsBoxs>(sort);
             if (sortResult.Item1 != null)
@@ -44,7 +44,7 @@ public class EquipementBoxService : IEquipementBoxService
             }
             else
             {
-                sort = new SorterDto { Field = "id_equipement", Order = "asc" };
+                sort = new SorterDto { field = "id_equipement", order = "asc" };
                 query = query.OrderBy(eb => eb.id_equipement);
             }
         }
@@ -70,8 +70,8 @@ public class EquipementBoxService : IEquipementBoxService
                 offset = offset,
                 limit = limit,
                 total = await _context.EquipementsBoxs.CountAsync(filterResult ?? (eb => eb.id_box == boxId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.EquipementsBoxs.Skip(offset + limit).AnyAsync(filterResult ?? (eb => eb.id_box == boxId))
+                next_offset = offset + limit,
+                has_more = await _context.EquipementsBoxs.Skip(offset + limit).AnyAsync(filterResult ?? (eb => eb.id_box == boxId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -89,13 +89,13 @@ public class EquipementBoxService : IEquipementBoxService
         var query = _context.EquipementsBoxs.AsQueryable();
         var filterResult = default(Expression<Func<EquipementsBoxs, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_equipement", SearchType = "eq", Value = equipementId.ToString() });
+        rsql.Add(new FilterDto { field = "id_equipement", search_type = "eq", value = equipementId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<EquipementsBoxs>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsBoxs>(sort);
             if (sortResult.Item1 != null)
@@ -104,7 +104,7 @@ public class EquipementBoxService : IEquipementBoxService
             }
             else
             {
-                sort = new SorterDto { Field = "id_box", Order = "asc" };
+                sort = new SorterDto { field = "id_box", order = "asc" };
                 query = query.OrderBy(eb => eb.id_box);
             }
         }
@@ -130,8 +130,8 @@ public class EquipementBoxService : IEquipementBoxService
                 offset = offset,
                 limit = limit,
                 total = await _context.EquipementsBoxs.CountAsync(filterResult ?? (eb => eb.id_equipement == equipementId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.EquipementsBoxs.Skip(offset + limit).AnyAsync(filterResult ?? (eb => eb.id_equipement == equipementId))
+                next_offset = offset + limit,
+                has_more = await _context.EquipementsBoxs.Skip(offset + limit).AnyAsync(filterResult ?? (eb => eb.id_equipement == equipementId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

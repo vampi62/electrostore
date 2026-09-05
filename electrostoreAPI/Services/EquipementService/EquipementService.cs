@@ -41,7 +41,7 @@ public class EquipementService : IEquipementService
                 (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Equipements>(rsql);
                 query = query.Where(filterResult);
             }
-            if (!string.IsNullOrEmpty(sort?.Field))
+            if (!string.IsNullOrEmpty(sort?.field))
             {
                 var sortResult = RsqlParserExtensions.ToSortExpression<Equipements>(sort);
                 if (sortResult.Item1 != null)
@@ -50,7 +50,7 @@ public class EquipementService : IEquipementService
                 }
                 else
                 {
-                    sort = new SorterDto { Field = "id_equipement", Order = "asc" };
+                    sort = new SorterDto { field = "id_equipement", order = "asc" };
                     query = query.OrderBy(e => e.id_equipement);
                 }
             }
@@ -102,8 +102,8 @@ public class EquipementService : IEquipementService
                 offset = offset,
                 limit = limit,
                 total = await _context.Equipements.CountAsync(filterResult ?? (e => true)),
-                nextOffset = offset + limit,
-                hasMore = await _context.Equipements.Skip(offset + limit).AnyAsync(filterResult ?? (e => true))
+                next_offset = offset + limit,
+                has_more = await _context.Equipements.Skip(offset + limit).AnyAsync(filterResult ?? (e => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

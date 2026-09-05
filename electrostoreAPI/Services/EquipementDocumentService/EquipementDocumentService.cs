@@ -33,13 +33,13 @@ public class EquipementDocumentService : IEquipementDocumentService
         var query = _context.EquipementsDocuments.AsQueryable();
         var filterResult = default(Expression<Func<EquipementsDocuments, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_equipement", SearchType = "eq", Value = equipementId.ToString() });
+        rsql.Add(new FilterDto { field = "id_equipement", search_type = "eq", value = equipementId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<EquipementsDocuments>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsDocuments>(sort);
             if (sortResult.Item1 != null)
@@ -48,7 +48,7 @@ public class EquipementDocumentService : IEquipementDocumentService
             }
             else
             {
-                sort = new SorterDto { Field = "id_equipement_document", Order = "asc" };
+                sort = new SorterDto { field = "id_equipement_document", order = "asc" };
                 query = query.OrderBy(ed => ed.id_equipement_document);
             }
         }
@@ -66,8 +66,8 @@ public class EquipementDocumentService : IEquipementDocumentService
                 offset = offset,
                 limit = limit,
                 total = await _context.EquipementsDocuments.CountAsync(filterResult ?? (ed => ed.id_equipement == equipementId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.EquipementsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (ed => ed.id_equipement == equipementId))
+                next_offset = offset + limit,
+                has_more = await _context.EquipementsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (ed => ed.id_equipement == equipementId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

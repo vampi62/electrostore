@@ -29,13 +29,13 @@ public class EquipementMaintenanceService : IEquipementMaintenanceService
         var query = _context.EquipementsMaintenances.AsQueryable();
         var filterResult = default(Expression<Func<EquipementsMaintenances, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_equipement", SearchType = "eq", Value = equipementId.ToString() });
+        rsql.Add(new FilterDto { field = "id_equipement", search_type = "eq", value = equipementId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<EquipementsMaintenances>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsMaintenances>(sort);
             if (sortResult.Item1 != null)
@@ -44,7 +44,7 @@ public class EquipementMaintenanceService : IEquipementMaintenanceService
             }
             else
             {
-                sort = new SorterDto { Field = "date_planned_equipement_maintenance", Order = "asc" };
+                sort = new SorterDto { field = "date_planned_equipement_maintenance", order = "asc" };
                 query = query.OrderBy(em => em.date_planned_equipement_maintenance);
             }
         }
@@ -70,8 +70,8 @@ public class EquipementMaintenanceService : IEquipementMaintenanceService
                 offset = offset,
                 limit = limit,
                 total = await _context.EquipementsMaintenances.CountAsync(filterResult ?? (em => em.id_equipement == equipementId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.EquipementsMaintenances.Skip(offset + limit).AnyAsync(filterResult ?? (em => em.id_equipement == equipementId))
+                next_offset = offset + limit,
+                has_more = await _context.EquipementsMaintenances.Skip(offset + limit).AnyAsync(filterResult ?? (em => em.id_equipement == equipementId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -129,11 +129,11 @@ public class EquipementMaintenanceService : IEquipementMaintenanceService
         }
         if (equipementMaintenanceDto.type_equipement_maintenance is not null)
         {
-            equipementMaintenanceToUpdate.type_equipement_maintenance = equipementMaintenanceDto.type_equipement_maintenance.Value;
+            equipementMaintenanceToUpdate.type_equipement_maintenance = equipementMaintenanceDto.type_equipement_maintenance.value;
         }
         if (equipementMaintenanceDto.date_planned_equipement_maintenance is not null)
         {
-            equipementMaintenanceToUpdate.date_planned_equipement_maintenance = equipementMaintenanceDto.date_planned_equipement_maintenance.Value;
+            equipementMaintenanceToUpdate.date_planned_equipement_maintenance = equipementMaintenanceDto.date_planned_equipement_maintenance.value;
         }
         if (equipementMaintenanceDto.date_done_equipement_maintenance is not null)
         {
