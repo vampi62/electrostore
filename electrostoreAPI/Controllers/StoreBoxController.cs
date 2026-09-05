@@ -73,7 +73,7 @@ namespace ElectrostoreAPI.Controllers
                 id_store = id_store
             }).ToList();
             var boxs = await _boxService.CreateBulkBox(boxsDtoFull);
-            if (boxs.Error.Count == 0)
+            if (boxs.error.Count == 0)
             {
                 return Ok(boxs);
             }
@@ -100,7 +100,7 @@ namespace ElectrostoreAPI.Controllers
         public async Task<ActionResult<ReadBulkBoxDto>> UpdateBulkBox([FromRoute] int id_store, [FromBody] List<UpdateBulkBoxByStoreDto> boxsDto)
         {
             var boxs = await _boxService.UpdateBulkBox(boxsDto, id_store);
-            if (boxs.Error.Count == 0)
+            if (boxs.error.Count == 0)
             {
                 return Ok(boxs);
             }

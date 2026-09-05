@@ -13,13 +13,11 @@ jobs:
     outputs:
       api: ${{ steps.filter.outputs.api }}
       cron: ${{ steps.filter.outputs.cron }}
-      ia: ${{ steps.filter.outputs.ia }}
       front: ${{ steps.filter.outputs.front }}
       notif: ${{ steps.filter.outputs.notif }}
       worker: ${{ steps.filter.outputs.worker }}
       testAPI: ${{ steps.filter.outputs.testAPI }}
       testCRON: ${{ steps.filter.outputs.testCRON }}
-      testIA: ${{ steps.filter.outputs.testIA }}
       testFRONT: ${{ steps.filter.outputs.testFRONT }}
       testNOTIF: ${{ steps.filter.outputs.testNOTIF }}
       testWORKER: ${{ steps.filter.outputs.testWORKER }}
@@ -36,13 +34,11 @@ jobs:
           filters: |
             api: 'electrostoreAPI/**'
             cron: 'electrostoreCRON/**'
-            ia: 'electrostoreIA/**'
             front: 'electrostoreFRONT/**'
             notif: 'electrostoreNOTIF/**'
             worker: 'electrostoreWORKER/**'
             testAPI: 'tests/electrostoreAPI/**'
             testCRON: 'tests/electrostoreCRON/**'
-            testIA: 'tests/electrostoreIA/**'
             testFRONT: 'tests/electrostoreFRONT/**'
             testNOTIF: 'tests/electrostoreNOTIF/**'
             testWORKER: 'tests/electrostoreWORKER/**'
@@ -64,18 +60,6 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.cron == 'true' || needs.detect-changes.outputs.testCRON == 'true'
     uses: ./.github/workflows/PRtestsCRON.yml
-    with:
-      branch: ${{ github.head_ref }}
-    permissions:
-      packages: write
-      contents: read
-    secrets: inherit
-  
-  test-ia:
-    name: tests - IA
-    needs: detect-changes
-    if: needs.detect-changes.outputs.ia == 'true' || needs.detect-changes.outputs.testIA == 'true'
-    uses: ./.github/workflows/PRtestsIA.yml
     with:
       branch: ${{ github.head_ref }}
     permissions:

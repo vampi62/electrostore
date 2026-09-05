@@ -80,7 +80,7 @@ public class KafkaMqttUserConsumer : BackgroundService
         finally
         {
             consumer.Close();
-            _logger.LogInformation("KafkaIaStatusConsumer stopped");
+            _logger.LogInformation("KafkaMqttUserConsumer stopped.");
         }
     }
 

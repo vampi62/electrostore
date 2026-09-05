@@ -2,7 +2,7 @@ namespace ElectrostoreAPI.Dto;
 
 public record EncryptDto
 {
-    public required byte[] EncryptedData { get; init; }
-    public required byte[] IV { get; init; }
-    public required byte[] Tag { get; init; }
+    public required byte[] encrypted_data { get; init; }
+    public required byte[] iv { get; init; }
+    public required byte[] tag { get; init; }
 }

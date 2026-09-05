@@ -52,7 +52,7 @@ public class StoreService : IStoreService
                 (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Stores>(rsql);
                 query = query.Where(filterResult);
             }
-            if (!string.IsNullOrEmpty(sort?.Field))
+            if (!string.IsNullOrEmpty(sort?.field))
             {
                 var sortResult = RsqlParserExtensions.ToSortExpression<Stores>(sort);
                 if (sortResult.Item1 != null)
@@ -61,7 +61,7 @@ public class StoreService : IStoreService
                 }
                 else
                 {
-                    sort = new SorterDto { Field = "id_store", Order = "asc" };
+                    sort = new SorterDto { field = "id_store", order = "asc" };
                     query = query.OrderBy(s => s.id_store);
                 }
             }
@@ -81,7 +81,8 @@ public class StoreService : IStoreService
                 StoresTagsCount = s.StoresTags.Count,
                 Boxs = expand != null && expand.Contains("boxs") ? s.Boxs.Take(20).ToList() : null,
                 Leds = expand != null && expand.Contains("leds") ? s.Leds.Take(20).ToList() : null,
-                StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null
+                StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null,
+                Zone = expand != null && expand.Contains("zone") ? s.Zone : null
             })
             .ToListAsync();
         return new PaginatedResponseDto<ReadExtendedStoreDto>
@@ -96,7 +97,8 @@ public class StoreService : IStoreService
                     stores_tags_count = s.StoresTagsCount,
                     boxs = _mapper.Map<IEnumerable<ReadBoxDto>>(s.Boxs),
                     leds = _mapper.Map<IEnumerable<ReadLedDto>>(s.Leds),
-                    stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(s.StoresTags)
+                    stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(s.StoresTags),
+                    zone = _mapper.Map<ReadZoneDto?>(s.Zone)
                 };
             }).ToList(),
             pagination = new PaginationDto
@@ -104,8 +106,8 @@ public class StoreService : IStoreService
                 offset = offset,
                 limit = limit,
                 total = await _context.Stores.CountAsync(filterResult ?? (s => true)),
-                nextOffset = offset + limit,
-                hasMore = await _context.Stores.Skip(offset + limit).AnyAsync(filterResult ?? (s => true))
+                next_offset = offset + limit,
+                has_more = await _context.Stores.Skip(offset + limit).AnyAsync(filterResult ?? (s => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -125,7 +127,8 @@ public class StoreService : IStoreService
                 StoresTagsCount = s.StoresTags.Count,
                 Boxs = expand != null && expand.Contains("boxs") ? s.Boxs.Take(20).ToList() : null,
                 Leds = expand != null && expand.Contains("leds") ? s.Leds.Take(20).ToList() : null,
-                StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null
+                StoresTags = expand != null && expand.Contains("stores_tags") ? s.StoresTags.Take(20).ToList() : null,
+                Zone = expand != null && expand.Contains("zone") ? s.Zone : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
         var clientRole = _sessionService.GetClientRole();
@@ -134,9 +137,9 @@ public class StoreService : IStoreService
         {
             mqttPassword = await _encryptionService.Decrypt(new EncryptDto
             {
-                EncryptedData = store.Store.mqtt_password_store,
-                IV = store.Store.mqtt_password_encryption_iv_store,
-                Tag = store.Store.mqtt_password_encryption_tag_store
+                encrypted_data = store.Store.mqtt_password_store,
+                iv = store.Store.mqtt_password_encryption_iv_store,
+                tag = store.Store.mqtt_password_encryption_tag_store
             }, _encryptionKey);
         }
         return _mapper.Map<ReadExtendedStoreDto>(store.Store) with
@@ -147,7 +150,8 @@ public class StoreService : IStoreService
             stores_tags_count = store.StoresTagsCount,
             boxs = _mapper.Map<IEnumerable<ReadBoxDto>>(store.Boxs),
             leds = _mapper.Map<IEnumerable<ReadLedDto>>(store.Leds),
-            stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(store.StoresTags)
+            stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(store.StoresTags),
+            zone = _mapper.Map<ReadZoneDto?>(store.Zone)
         };
     }
 
@@ -158,12 +162,25 @@ public class StoreService : IStoreService
         {
             throw new UnauthorizedAccessException("You do not have permission to create a store");
         }
+        if (storeDto.id_zone is not null && !await _context.Zones.AnyAsync(z => z.id_zone == storeDto.id_zone))
+        {
+            throw new KeyNotFoundException($"Zone with id '{storeDto.id_zone}' not found");
+        }
         var newStore = _mapper.Map<Stores>(storeDto);
+        if (storeDto.id_zone is null)
+        {
+            newStore.id_zone = null;
+            newStore.xmin_store = null;
+            newStore.ymin_store = null;
+            newStore.xmax_store = null;
+            newStore.ymax_store = null;
+        }
+        await _validateStoreService.ValidateStorePlanPosition(newStore);
         var mqttPassword = GenerateMqttPasswordForStore();
         var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
-        newStore.mqtt_password_store = encryptedPassword.EncryptedData;
-        newStore.mqtt_password_encryption_iv_store = encryptedPassword.IV;
-        newStore.mqtt_password_encryption_tag_store = encryptedPassword.Tag;
+        newStore.mqtt_password_store = encryptedPassword.encrypted_data;
+        newStore.mqtt_password_encryption_iv_store = encryptedPassword.iv;
+        newStore.mqtt_password_encryption_tag_store = encryptedPassword.tag;
         _context.Stores.Add(newStore);
         await _context.SaveChangesAsync();
         await _kafkaProducer.PublishAsync(
@@ -192,15 +209,16 @@ public class StoreService : IStoreService
         var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
         var oldMqttName = storeToUpdate.mqtt_name_store;
         await _validateStoreService.UpdateStoreInformations(storeToUpdate, storeDto);
+        await _validateStoreService.ValidateStorePlanPosition(storeToUpdate);
         await _validateStoreService.CheckUpdateStoreOutsideElement(storeToUpdate);
         var mqttPassword = string.Empty;
         if (storeDto.reset_mqtt_password_store == true)
         {
             mqttPassword = GenerateMqttPasswordForStore();
             var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
-            storeToUpdate.mqtt_password_store = encryptedPassword.EncryptedData;
-            storeToUpdate.mqtt_password_encryption_iv_store = encryptedPassword.IV;
-            storeToUpdate.mqtt_password_encryption_tag_store = encryptedPassword.Tag;
+            storeToUpdate.mqtt_password_store = encryptedPassword.encrypted_data;
+            storeToUpdate.mqtt_password_encryption_iv_store = encryptedPassword.iv;
+            storeToUpdate.mqtt_password_encryption_tag_store = encryptedPassword.tag;
             await _kafkaProducer.PublishAsync(
                 "mqtt-user-events",
                 storeToUpdate.id_store.ToString(),
@@ -218,9 +236,9 @@ public class StoreService : IStoreService
         {
             mqttPassword = await _encryptionService.Decrypt(new EncryptDto
             {
-                EncryptedData = storeToUpdate.mqtt_password_store,
-                IV = storeToUpdate.mqtt_password_encryption_iv_store,
-                Tag = storeToUpdate.mqtt_password_encryption_tag_store
+                encrypted_data = storeToUpdate.mqtt_password_store,
+                iv = storeToUpdate.mqtt_password_encryption_iv_store,
+                tag = storeToUpdate.mqtt_password_encryption_tag_store
             }, _encryptionKey);
         }
         return _mapper.Map<ReadStoreDto>(storeToUpdate) with
@@ -258,7 +276,19 @@ public class StoreService : IStoreService
         {
             throw new UnauthorizedAccessException("You do not have permission to create a store");
         }
+        if (storeDto.store.id_zone is not null && !await _context.Zones.AnyAsync(z => z.id_zone == storeDto.store.id_zone))
+        {
+            throw new KeyNotFoundException($"Zone with id '{storeDto.store.id_zone}' not found");
+        }
         var newStore = _mapper.Map<Stores>(storeDto.store);
+        await _validateStoreService.ValidateStorePlanPosition(newStore);
+        if (newStore.id_zone is null)
+        {
+            newStore.xmin_store = null;
+            newStore.ymin_store = null;
+            newStore.xmax_store = null;
+            newStore.ymax_store = null;
+        }
         await using var transaction = await _context.Database.BeginTransactionAsync();
         _context.Stores.Add(newStore);
         await _context.SaveChangesAsync(); // persist store to get real id_store
@@ -285,8 +315,8 @@ public class StoreService : IStoreService
             {
                 errorQueryLed.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = ledDto
+                    reason = e.Message,
+                    data = ledDto
                 });
             }
         }
@@ -314,16 +344,16 @@ public class StoreService : IStoreService
             {
                 errorQueryBox.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = boxDto
+                    reason = e.Message,
+                    data = boxDto
                 });
             }
         }
         var mqttPassword = GenerateMqttPasswordForStore();
         var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
-        newStore.mqtt_password_store = encryptedPassword.EncryptedData;
-        newStore.mqtt_password_encryption_iv_store = encryptedPassword.IV;
-        newStore.mqtt_password_encryption_tag_store = encryptedPassword.Tag;
+        newStore.mqtt_password_store = encryptedPassword.encrypted_data;
+        newStore.mqtt_password_encryption_iv_store = encryptedPassword.iv;
+        newStore.mqtt_password_encryption_tag_store = encryptedPassword.tag;
         await _context.SaveChangesAsync();
         if (errorQueryLed.Count == 0 && errorQueryBox.Count == 0)
         {
@@ -352,13 +382,13 @@ public class StoreService : IStoreService
             },
             leds = new ReadBulkLedDto
             {
-                Valide = validQueryLed,
-                Error = errorQueryLed
+                valide = validQueryLed,
+                error = errorQueryLed
             },
             boxs = new ReadBulkBoxDto
             {
-                Valide = validQueryBox,
-                Error = errorQueryBox
+                valide = validQueryBox,
+                error = errorQueryBox
             }
         };
     }
@@ -374,6 +404,7 @@ public class StoreService : IStoreService
         await using var transaction = await _context.Database.BeginTransactionAsync();
         var oldMqttName = storeToUpdate.mqtt_name_store;
         await _validateStoreService.UpdateStoreInformations(storeToUpdate, storeDto.store);
+        await _validateStoreService.ValidateStorePlanPosition(storeToUpdate);
         // Add leds and boxs, if status field indicate the new status "delete", "modified", "new"
         (var validQueryLed, var errorQueryLed) = await UpdateLedList(storeToUpdate, storeDto.leds ?? []);
         (var validQueryBox, var errorQueryBox) = await UpdateBoxList(storeToUpdate, storeDto.boxs ?? []);
@@ -395,8 +426,8 @@ public class StoreService : IStoreService
                 {
                     errorQueryBox.Add(new ErrorDetail
                     {
-                        Reason = e.Message,
-                        Data = box
+                        reason = e.Message,
+                        data = box
                     });
                 }
             }
@@ -409,9 +440,9 @@ public class StoreService : IStoreService
             {
                 mqttPassword = GenerateMqttPasswordForStore();
                 var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
-                storeToUpdate.mqtt_password_store = encryptedPassword.EncryptedData;
-                storeToUpdate.mqtt_password_encryption_iv_store = encryptedPassword.IV;
-                storeToUpdate.mqtt_password_encryption_tag_store = encryptedPassword.Tag;
+                storeToUpdate.mqtt_password_store = encryptedPassword.encrypted_data;
+                storeToUpdate.mqtt_password_encryption_iv_store = encryptedPassword.iv;
+                storeToUpdate.mqtt_password_encryption_tag_store = encryptedPassword.tag;
                 await _context.SaveChangesAsync();
                 await _kafkaProducer.PublishAsync(
                     "mqtt-user-events",
@@ -435,9 +466,9 @@ public class StoreService : IStoreService
         {
             mqttPassword = await _encryptionService.Decrypt(new EncryptDto
             {
-                EncryptedData = storeToUpdate.mqtt_password_store,
-                IV = storeToUpdate.mqtt_password_encryption_iv_store,
-                Tag = storeToUpdate.mqtt_password_encryption_tag_store
+                encrypted_data = storeToUpdate.mqtt_password_store,
+                iv = storeToUpdate.mqtt_password_encryption_iv_store,
+                tag = storeToUpdate.mqtt_password_encryption_tag_store
             }, _encryptionKey);
         }
         return new ReadStoreCompleteDto
@@ -448,13 +479,13 @@ public class StoreService : IStoreService
             },
             leds = new ReadBulkLedDto
             {
-                Valide = validQueryLed,
-                Error = errorQueryLed
+                valide = validQueryLed,
+                error = errorQueryLed
             },
             boxs = new ReadBulkBoxDto
             {
-                Valide = validQueryBox,
-                Error = errorQueryBox
+                valide = validQueryBox,
+                error = errorQueryBox
             }
         };
     }
@@ -532,8 +563,8 @@ public class StoreService : IStoreService
             {
                 errorQueryLed.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = led
+                    reason = e.Message,
+                    data = led
                 });
             }
         }
@@ -589,8 +620,8 @@ public class StoreService : IStoreService
             {
                 errorQueryBox.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = box
+                    reason = e.Message,
+                    data = box
                 });
             }
         }

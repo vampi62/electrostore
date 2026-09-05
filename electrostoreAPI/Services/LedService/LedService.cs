@@ -42,13 +42,13 @@ public class LedService : ILedService
         var query = _context.Leds.AsQueryable();
         var filterResult = default(Expression<Func<Leds, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_store", SearchType = "eq", Value = storeId.ToString() });
+        rsql.Add(new FilterDto { field = "id_store", search_type = "eq", value = storeId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Leds>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<Leds>(sort);
             if (sortResult.Item1 != null)
@@ -57,7 +57,7 @@ public class LedService : ILedService
             }
             else
             {
-                sort = new SorterDto { Field = "id_led", Order = "asc" };
+                sort = new SorterDto { field = "id_led", order = "asc" };
                 query = query.OrderBy(l => l.id_led);
             }
         }
@@ -75,8 +75,8 @@ public class LedService : ILedService
                 offset = offset,
                 limit = limit,
                 total = await _context.Leds.CountAsync(filterResult ?? (l => l.id_store == storeId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.Leds.Skip(offset + limit).AnyAsync(filterResult ?? (l => l.id_store == storeId))
+                next_offset = offset + limit,
+                has_more = await _context.Leds.Skip(offset + limit).AnyAsync(filterResult ?? (l => l.id_store == storeId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -132,15 +132,15 @@ public class LedService : ILedService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = ledDto
+                    reason = e.Message,
+                    data = ledDto
                 });
             }
         }
         return new ReadBulkLedDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 
@@ -188,15 +188,15 @@ public class LedService : ILedService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = ledDto
+                    reason = e.Message,
+                    data = ledDto
                 });
             }
         }
         return new ReadBulkLedDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 
@@ -239,15 +239,15 @@ public class LedService : ILedService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = new { id }
+                    reason = e.Message,
+                    data = new { id }
                 });
             }
         }
         return new ReadBulkLedDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 
@@ -287,26 +287,29 @@ public class LedService : ILedService
 
     public async Task ShowLedsByBox(int storeId, int boxId, int redColor, int greenColor, int blueColor, int timeshow, int animation)
     {
-        // check if the store exists
-        if (!await _context.Stores.AnyAsync(s => s.id_store == storeId))
-        {
-            throw new KeyNotFoundException($"Store with id '{storeId}' not found");
-        }
+        var store = await _context.Stores.FindAsync(storeId) ?? throw new KeyNotFoundException($"Store with id '{storeId}' not found");
         // check if the box exists
         if (!await _context.Boxs.AnyAsync(b => b.id_box == boxId && b.id_store == storeId))
         {
             throw new KeyNotFoundException($"Box with id '{boxId}' not found in store with id '{storeId}'");
         }
-        var ledsDB = await _context.Leds
+        var ledsQuery = _context.Leds
             .Join(_context.Boxs,
                 led => new { led.id_store },
                 box => new { box.id_store },
                 (led, box) => new { led, box })
-            .Where(x => x.box.id_box == boxId && x.led.id_store == storeId &&
-                   x.led.x_led >= x.box.xstart_box && x.led.x_led <= x.box.xend_box &&
-                     x.led.y_led >= x.box.ystart_box && x.led.y_led <= x.box.yend_box)
-            .Select(x => x.led)
-            .ToListAsync();
+            .Where(x => x.box.id_box == boxId && x.led.id_store == storeId);
+        ledsQuery = store.position_mode_store == StorePositionMode.Border
+            // border mode: leds sit along a store edge and light up when they share the box's level on that edge's axis
+            ? ledsQuery.Where(x =>
+                ((x.led.y_led == (int)LedBorderSide.Left || x.led.y_led == (int)LedBorderSide.Right) &&
+                    x.led.x_led >= x.box.ystart_box && x.led.x_led <= x.box.yend_box) ||
+                ((x.led.y_led == (int)LedBorderSide.Top || x.led.y_led == (int)LedBorderSide.Bottom) &&
+                    x.led.x_led >= x.box.xstart_box && x.led.x_led <= x.box.xend_box))
+            : ledsQuery.Where(x =>
+                x.led.x_led >= x.box.xstart_box && x.led.x_led <= x.box.xend_box &&
+                x.led.y_led >= x.box.ystart_box && x.led.y_led <= x.box.yend_box);
+        var ledsDB = await ledsQuery.Select(x => x.led).ToListAsync();
         if (ledsDB.Count == 0)
         {
             throw new KeyNotFoundException($"No leds found in store with id '{storeId}' and box with id '{boxId}'");
@@ -315,7 +318,6 @@ public class LedService : ILedService
         {
             throw new NotImplementedException("MQTT client is not connected");
         }
-        var store = await _context.Stores.FindAsync(storeId) ?? throw new KeyNotFoundException($"Store with id '{storeId}' not found");
         var topic = "electrostore/" + store.mqtt_name_store + "/leds";
 
         // sent led 10 per 10

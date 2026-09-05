@@ -34,7 +34,7 @@ public class TagService : ITagService
                 (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Tags>(rsql);
                 query = query.Where(filterResult);
             }
-            if (!string.IsNullOrEmpty(sort?.Field))
+            if (!string.IsNullOrEmpty(sort?.field))
             {
                 var sortResult = RsqlParserExtensions.ToSortExpression<Tags>(sort);
                 if (sortResult.Item1 != null)
@@ -43,7 +43,7 @@ public class TagService : ITagService
                 }
                 else
                 {
-                    sort = new SorterDto { Field = "id_tag", Order = "asc" };
+                    sort = new SorterDto { field = "id_tag", order = "asc" };
                     query = query.OrderBy(t => t.id_tag);
                 }
             }
@@ -87,8 +87,8 @@ public class TagService : ITagService
                 offset = offset,
                 limit = limit,
                 total = await _context.Tags.CountAsync(filterResult ?? (t => true)),
-                nextOffset = offset + limit,
-                hasMore = await _context.Tags.Skip(offset + limit).AnyAsync(filterResult ?? (t => true))
+                next_offset = offset + limit,
+                has_more = await _context.Tags.Skip(offset + limit).AnyAsync(filterResult ?? (t => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -153,15 +153,15 @@ public class TagService : ITagService
             {
                 errorQuery.Add(new ErrorDetail
                 {
-                    Reason = e.Message,
-                    Data = tagDto
+                    reason = e.Message,
+                    data = tagDto
                 });
             }
         }
         return new ReadBulkTagDto
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 

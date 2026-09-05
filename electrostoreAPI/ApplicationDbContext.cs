@@ -11,7 +11,6 @@ public class ApplicationDbContext : DbContext
     }
     public DbSet<ElectrostoreAPI.Models.Boxs> Boxs { get; set; }
     public DbSet<ElectrostoreAPI.Models.BoxsTags> BoxsTags { get; set; }
-    public DbSet<ElectrostoreAPI.Models.Cameras> Cameras { get; set; }
     public DbSet<ElectrostoreAPI.Models.Carriers> Carriers { get; set; }
     public DbSet<ElectrostoreAPI.Models.CronJobs> CronJobs { get; set; }
     public DbSet<ElectrostoreAPI.Models.Commands> Commands { get; set; }
@@ -26,8 +25,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<ElectrostoreAPI.Models.EquipementsMaintenances> EquipementsMaintenances { get; set; }
     public DbSet<ElectrostoreAPI.Models.EquipementsStatus> EquipementsStatus { get; set; }
     public DbSet<ElectrostoreAPI.Models.EquipementsTags> EquipementsTags { get; set; }
-    public DbSet<ElectrostoreAPI.Models.AI> AI { get; set; }
-    public DbSet<ElectrostoreAPI.Models.Imgs> Imgs { get; set; }
     public DbSet<ElectrostoreAPI.Models.Items> Items { get; set; }
     public DbSet<ElectrostoreAPI.Models.ItemsBoxs> ItemsBoxs { get; set; }
     public DbSet<ElectrostoreAPI.Models.ItemsHistory> ItemsHistory { get; set; }
@@ -48,6 +45,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<ElectrostoreAPI.Models.Tags> Tags { get; set; }
     public DbSet<ElectrostoreAPI.Models.UserPushSubscriptions> UserPushSubscriptions { get; set; }
     public DbSet<ElectrostoreAPI.Models.Users> Users { get; set; }
+    public DbSet<ElectrostoreAPI.Models.Zones> Zones { get; set; }
 
     public override int SaveChanges()
     {

@@ -44,7 +44,7 @@ public class ItemService : IItemService
                 (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Items>(rsql);
                 query = query.Where(filterResult);
             }
-            if (!string.IsNullOrEmpty(sort?.Field))
+            if (!string.IsNullOrEmpty(sort?.field))
             {
                 var sortResult = RsqlParserExtensions.ToSortExpression<Items>(sort);
                 if (sortResult.Item1 != null)
@@ -53,7 +53,7 @@ public class ItemService : IItemService
                 }
                 else
                 {
-                    sort = new SorterDto { Field = "id_item", Order = "asc" };
+                    sort = new SorterDto { field = "id_item", order = "asc" };
                     query = query.OrderBy(i => i.id_item);
                 }
             }
@@ -105,8 +105,8 @@ public class ItemService : IItemService
                 offset = offset,
                 limit = limit,
                 total = await _context.Items.CountAsync(filterResult ?? (i => true)),
-                nextOffset = offset + limit,
-                hasMore = await _context.Items.Skip(offset + limit).AnyAsync(filterResult ?? (i => true))
+                next_offset = offset + limit,
+                has_more = await _context.Items.Skip(offset + limit).AnyAsync(filterResult ?? (i => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -154,11 +154,6 @@ public class ItemService : IItemService
 
     public async Task<ReadItemDto> CreateItem(CreateItemDto itemDto)
     {
-        // check if img exists
-        if (itemDto.id_img is not null && !await _context.Imgs.AnyAsync(i => i.id_img == itemDto.id_img))
-        {
-            throw new KeyNotFoundException($"Img with id '{itemDto.id_img}' not found");
-        }
         // check if item already exists
         if (await _context.Items.AnyAsync(i => i.reference_name_item == itemDto.reference_name_item))
         {
@@ -166,17 +161,27 @@ public class ItemService : IItemService
         }
         var item = _mapper.Map<Items>(itemDto);
         _context.Items.Add(item);
+        await _context.SaveChangesAsync();
         await _fileService.CreateDirectory(Path.Combine(_imagesPath, item.id_item.ToString()));
         await _fileService.CreateDirectory(Path.Combine(_imagesThumbnailsPath, item.id_item.ToString()));
         await _fileService.CreateDirectory(Path.Combine(_itemDocumentsPath, item.id_item.ToString()));
-        await _context.SaveChangesAsync();
+        if (itemDto.img_file is not null)
+        {
+            var savedImg = await _fileService.SaveFile(Path.Combine(_imagesPath, item.id_item.ToString()), itemDto.img_file.FileName, itemDto.img_file.ContentType, itemDto.img_file.OpenReadStream());
+            var savedThumbnail = await _fileService.GenerateThumbnail(
+                savedImg.path,
+                Path.Combine(_imagesThumbnailsPath, item.id_item.ToString()),
+                256, 256);
+            item.url_picture_item = savedImg.path;
+            item.url_thumbnail_item = savedThumbnail.path;
+            await _context.SaveChangesAsync();
+        }
         await _itemHistoryService.LogHistory(item.id_item, null, ItemHistoryType.ItemCreated);
         return _mapper.Map<ReadItemDto>(item);
     }
 
     public async Task<ReadItemDto> UpdateItem(int id, UpdateItemDto itemDto)
     {
-        // check if img exists
         var itemToUpdate = await _context.Items.FindAsync(id) ?? throw new KeyNotFoundException($"Item with id '{id}' not found");
         if (itemDto.reference_name_item is not null)
         {
@@ -199,14 +204,36 @@ public class ItemService : IItemService
         {
             itemToUpdate.description_item = itemDto.description_item;
         }
-        if (itemDto.id_img is not null)
+        if (itemDto.unset_img_item is true)
         {
-            var img = await _context.Imgs.FindAsync(itemDto.id_img);
-            if ((img is null) || (id != img.id_item))
+            if (itemToUpdate.url_picture_item is not null)
             {
-                throw new KeyNotFoundException($"Img with id '{itemDto.id_img}' not found");
+                await _fileService.DeleteFile(itemToUpdate.url_picture_item);
             }
-            itemToUpdate.id_img = itemDto.id_img;
+            if (itemToUpdate.url_thumbnail_item is not null)
+            {
+                await _fileService.DeleteFile(itemToUpdate.url_thumbnail_item);
+            }
+            itemToUpdate.url_picture_item = null;
+            itemToUpdate.url_thumbnail_item = null;
+        }
+        else if (itemDto.img_file is not null)
+        {
+            if (itemToUpdate.url_picture_item is not null)
+            {
+                await _fileService.DeleteFile(itemToUpdate.url_picture_item);
+            }
+            if (itemToUpdate.url_thumbnail_item is not null)
+            {
+                await _fileService.DeleteFile(itemToUpdate.url_thumbnail_item);
+            }
+            var savedImg = await _fileService.SaveFile(Path.Combine(_imagesPath, id.ToString()), itemDto.img_file.FileName, itemDto.img_file.ContentType, itemDto.img_file.OpenReadStream());
+            var savedThumbnail = await _fileService.GenerateThumbnail(
+                savedImg.path,
+                Path.Combine(_imagesThumbnailsPath, id.ToString()),
+                256, 256);
+            itemToUpdate.url_picture_item = savedImg.path;
+            itemToUpdate.url_thumbnail_item = savedThumbnail.path;
         }
         await _context.SaveChangesAsync();
         await _itemHistoryService.LogHistory(id, null, ItemHistoryType.ItemUpdated);

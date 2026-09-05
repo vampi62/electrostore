@@ -1,4 +1,5 @@
 using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,9 +15,24 @@ public class ValidateStoreService : IValidateStoreService
         _context = context;
     }
 
+    private static bool IsLedPositionValid(Leds led, Stores store)
+    {
+        if (store.position_mode_store == StorePositionMode.Border)
+        {
+            if (!Enum.IsDefined(typeof(LedBorderSide), led.y_led))
+            {
+                return false;
+            }
+            var side = (LedBorderSide)led.y_led;
+            var maxPosition = side is LedBorderSide.Left or LedBorderSide.Right ? store.ylength_store : store.xlength_store;
+            return led.x_led < maxPosition;
+        }
+        return led.x_led < store.xlength_store && led.y_led < store.ylength_store;
+    }
+
     public void ValidateLedPosition(Leds led, Stores store)
     {
-        if (led.x_led >= store.xlength_store || led.y_led >= store.ylength_store)
+        if (!IsLedPositionValid(led, store))
         {
             throw new ArgumentException("Led position is out of store bounds");
         }
@@ -34,6 +50,28 @@ public class ValidateStoreService : IValidateStoreService
         }
     }
 
+    public async Task ValidateStorePlanPosition(Stores store)
+    {
+        var hasAnyCoordinate = store.xmin_store is not null || store.ymin_store is not null || store.xmax_store is not null || store.ymax_store is not null;
+        if (store.id_zone is null || !hasAnyCoordinate)
+        {
+            return;
+        }
+        if (store.xmin_store is null || store.ymin_store is null || store.xmax_store is null || store.ymax_store is null)
+        {
+            throw new ArgumentException("xmin_store, ymin_store, xmax_store and ymax_store must all be provided together.");
+        }
+        if (store.xmax_store <= store.xmin_store || store.ymax_store <= store.ymin_store)
+        {
+            throw new ArgumentException($"Store min position ({store.xmin_store}, {store.ymin_store}) must be less than max position ({store.xmax_store}, {store.ymax_store}).");
+        }
+        var zone = await _context.Zones.FindAsync(store.id_zone) ?? throw new KeyNotFoundException($"Zone with id '{store.id_zone}' not found");
+        if (store.xmax_store > zone.xlength_zone || store.ymax_store > zone.ylength_zone)
+        {
+            throw new ArgumentException($"Store position ({store.xmin_store}, {store.ymin_store}, {store.xmax_store}, {store.ymax_store}) is out of zone bounds.");
+        }
+    }
+
     public async Task UpdateStoreInformations(Stores storeToUpdate, UpdateStoreDto storeDto)
     {
         if (storeDto.name_store is not null)
@@ -48,9 +86,48 @@ public class ValidateStoreService : IValidateStoreService
         {
             storeToUpdate.ylength_store = storeDto.ylength_store.Value;
         }
+        if (storeDto.position_mode_store is not null)
+        {
+            storeToUpdate.position_mode_store = storeDto.position_mode_store.Value;
+        }
         if (storeDto.mqtt_name_store is not null)
         {
             storeToUpdate.mqtt_name_store = storeDto.mqtt_name_store;
+        }
+        if (storeDto.unset_zone_store == true)
+        {
+            storeToUpdate.id_zone = null;
+            storeToUpdate.xmin_store = null;
+            storeToUpdate.ymin_store = null;
+            storeToUpdate.xmax_store = null;
+            storeToUpdate.ymax_store = null;
+        }
+        else
+        {
+            if (storeDto.id_zone is not null)
+            {
+                if (!await _context.Zones.AnyAsync(z => z.id_zone == storeDto.id_zone))
+                {
+                    throw new KeyNotFoundException($"Zone with id '{storeDto.id_zone}' not found");
+                }
+                storeToUpdate.id_zone = storeDto.id_zone.Value;
+            }
+            if (storeDto.xmin_store is not null)
+            {
+                storeToUpdate.xmin_store = storeDto.xmin_store.Value;
+            }
+            if (storeDto.ymin_store is not null)
+            {
+                storeToUpdate.ymin_store = storeDto.ymin_store.Value;
+            }
+            if (storeDto.xmax_store is not null)
+            {
+                storeToUpdate.xmax_store = storeDto.xmax_store.Value;
+            }
+            if (storeDto.ymax_store is not null)
+            {
+                storeToUpdate.ymax_store = storeDto.ymax_store.Value;
+            }
         }
     }
 
@@ -105,10 +182,11 @@ public class ValidateStoreService : IValidateStoreService
         {
             throw new ArgumentException("you can't reduce the store size, a box will be out of store bounds");
         }
-        // check if a led in the store is outside of the store size
-        if (await _context.Leds.AnyAsync(l => l.id_store == storeToUpdate.id_store && (l.x_led > storeToUpdate.xlength_store || l.y_led > storeToUpdate.ylength_store)))
+        // check if a led in the store is outside of the store size, or invalid for the (possibly new) position mode
+        var storeLeds = await _context.Leds.Where(l => l.id_store == storeToUpdate.id_store).ToListAsync();
+        if (storeLeds.Any(l => !IsLedPositionValid(l, storeToUpdate)))
         {
-            throw new ArgumentException("you can't reduce the store size, a led will be out of store bounds");
+            throw new ArgumentException("you can't apply this change, a led will be out of store bounds or invalid for the store's position mode");
         }
     }
 

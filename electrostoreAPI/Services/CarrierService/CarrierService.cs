@@ -40,7 +40,7 @@ public class CarrierService : ICarrierService
                 (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Carriers>(rsql);
                 query = query.Where(filterResult);
             }
-            if (!string.IsNullOrEmpty(sort?.Field))
+            if (!string.IsNullOrEmpty(sort?.field))
             {
                 var sortResult = RsqlParserExtensions.ToSortExpression<Carriers>(sort);
                 if (sortResult.Item1 != null)
@@ -49,7 +49,7 @@ public class CarrierService : ICarrierService
                 }
                 else
                 {
-                    sort = new SorterDto { Field = "id_carrier", Order = "asc" };
+                    sort = new SorterDto { field = "id_carrier", order = "asc" };
                     query = query.OrderBy(c => c.id_carrier);
                 }
             }
@@ -68,8 +68,8 @@ public class CarrierService : ICarrierService
                 offset = offset,
                 limit = limit,
                 total = await _context.Carriers.CountAsync(filterResult ?? (c => true)),
-                nextOffset = offset + limit,
-                hasMore = await _context.Carriers.Skip(offset + limit).AnyAsync(filterResult ?? (c => true))
+                next_offset = offset + limit,
+                has_more = await _context.Carriers.Skip(offset + limit).AnyAsync(filterResult ?? (c => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

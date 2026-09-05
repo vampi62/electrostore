@@ -20,6 +20,11 @@ public class FileSizeAttribute : ValidationAttribute
 
     public override bool IsValid(object? value)
     {
+        // A missing file is valid here; use [Required] on the property to force it.
+        if (value is null)
+        {
+            return true;
+        }
         if (value is IFormFile file)
         {
             long maxFileSize = _maxSizeInMB * 1024 * 1024;

@@ -33,13 +33,13 @@ public class CommandCommentService : ICommandCommentService
         var query = _context.CommandsComments.AsQueryable();
         var filterResult = default(Expression<Func<CommandsComments, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_command", SearchType = "eq", Value = CommandId.ToString() });
+        rsql.Add(new FilterDto { field = "id_command", search_type = "eq", value = CommandId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsComments>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<CommandsComments>(sort);
             if (sortResult.Item1 != null)
@@ -48,7 +48,7 @@ public class CommandCommentService : ICommandCommentService
             }
             else
             {
-                sort = new SorterDto { Field = "created_at", Order = "desc" };
+                sort = new SorterDto { field = "created_at", order = "desc" };
                 query = query.OrderByDescending(cc => cc.created_at);
             }
         }
@@ -74,8 +74,8 @@ public class CommandCommentService : ICommandCommentService
                 offset = offset,
                 limit = limit,
                 total = await _context.CommandsComments.CountAsync(filterResult ?? (cc => cc.id_command == CommandId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.CommandsComments.Skip(offset + limit).AnyAsync(filterResult ?? (cc => cc.id_command == CommandId))
+                next_offset = offset + limit,
+                has_more = await _context.CommandsComments.Skip(offset + limit).AnyAsync(filterResult ?? (cc => cc.id_command == CommandId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
@@ -93,13 +93,13 @@ public class CommandCommentService : ICommandCommentService
         var query = _context.CommandsComments.AsQueryable();
         var filterResult = default(Expression<Func<CommandsComments, bool>>);
         rsql ??= [];
-        rsql.Add(new FilterDto { Field = "id_user", SearchType = "eq", Value = userId.ToString() });
+        rsql.Add(new FilterDto { field = "id_user", search_type = "eq", value = userId.ToString() });
         if (rsql != null && rsql.Count > 0)
         {
             (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsComments>(rsql);
             query = query.Where(filterResult);
         }
-        if (!string.IsNullOrEmpty(sort?.Field))
+        if (!string.IsNullOrEmpty(sort?.field))
         {
             var sortResult = RsqlParserExtensions.ToSortExpression<CommandsComments>(sort);
             if (sortResult.Item1 != null)
@@ -108,7 +108,7 @@ public class CommandCommentService : ICommandCommentService
             }
             else
             {
-                sort = new SorterDto { Field = "created_at", Order = "desc" };
+                sort = new SorterDto { field = "created_at", order = "desc" };
                 query = query.OrderByDescending(cc => cc.created_at);
             }
         }
@@ -134,8 +134,8 @@ public class CommandCommentService : ICommandCommentService
                 offset = offset,
                 limit = limit,
                 total = await _context.CommandsComments.CountAsync(filterResult ?? (cc => cc.id_user == userId)),
-                nextOffset = offset + limit,
-                hasMore = await _context.CommandsComments.Skip(offset + limit).AnyAsync(filterResult ?? (cc => cc.id_user == userId))
+                next_offset = offset + limit,
+                has_more = await _context.CommandsComments.Skip(offset + limit).AnyAsync(filterResult ?? (cc => cc.id_user == userId))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null

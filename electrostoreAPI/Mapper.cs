@@ -19,9 +19,6 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.box, opt => opt.MapFrom(src => src.Box))
             .ForMember(dest => dest.tag, opt => opt.MapFrom(src => src.Tag));
 
-        CreateMap<CreateCameraDto, Cameras>();
-        CreateMap<Cameras, ReadCameraDto>();
-
         CreateMap<CreateCarrierDto, Carriers>();
         CreateMap<Carriers, ReadCarrierDto>();
 
@@ -85,12 +82,6 @@ public class MappingProfile : Profile
         CreateMap<EquipementsTags, ReadExtendedEquipementTagDto>()
             .ForMember(dest => dest.equipement, opt => opt.MapFrom(src => src.Equipement))
             .ForMember(dest => dest.tag, opt => opt.MapFrom(src => src.Tag));
-
-        CreateMap<CreateAIDto, AI>();
-        CreateMap<AI, ReadAIDto>();
-
-        CreateMap<CreateImgDto, Imgs>();
-        CreateMap<Imgs, ReadImgDto>();
 
         CreateMap<CreateItemBoxDto, ItemsBoxs>();
         CreateMap<ItemsBoxs, ReadItemBoxDto>();
@@ -179,5 +170,9 @@ public class MappingProfile : Profile
         CreateMap<CreateUserDto, Users>();
         CreateMap<Users, ReadUserDto>();
         CreateMap<Users, ReadExtendedUserDto>();
+
+        CreateMap<CreateZoneDto, Zones>();
+        CreateMap<Zones, ReadZoneDto>();
+        CreateMap<Zones, ReadExtendedZoneDto>();
     }
 }

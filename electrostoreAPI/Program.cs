@@ -3,10 +3,11 @@ using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Grpc;
 using ElectrostoreAPI.Kafka.Producer;
+using ElectrostoreAPI.Services.AiChatService;
+using ElectrostoreAPI.Services.AiToolExecutorService;
 using ElectrostoreAPI.Services.AuthService;
 using ElectrostoreAPI.Services.BoxService;
 using ElectrostoreAPI.Services.BoxTagService;
-using ElectrostoreAPI.Services.CameraService;
 using ElectrostoreAPI.Services.CarrierService;
 using ElectrostoreAPI.Services.CommandCommentService;
 using ElectrostoreAPI.Services.CommandDocumentService;
@@ -24,8 +25,6 @@ using ElectrostoreAPI.Services.EquipementService;
 using ElectrostoreAPI.Services.EquipementStatusService;
 using ElectrostoreAPI.Services.EquipementTagService;
 using ElectrostoreAPI.Services.FileService;
-using ElectrostoreAPI.Services.AIService;
-using ElectrostoreAPI.Services.ImgService;
 using ElectrostoreAPI.Services.ItemBoxService;
 using ElectrostoreAPI.Services.ItemDocumentService;
 using ElectrostoreAPI.Services.ItemHistoryService;
@@ -33,6 +32,7 @@ using ElectrostoreAPI.Services.ItemService;
 using ElectrostoreAPI.Services.ItemTagService;
 using ElectrostoreAPI.Services.JwiService;
 using ElectrostoreAPI.Services.LedService;
+using ElectrostoreAPI.Services.LlmChatService;
 using ElectrostoreAPI.Services.ProjectCommentService;
 using ElectrostoreAPI.Services.ProjectDocumentService;
 using ElectrostoreAPI.Services.ProjectItemService;
@@ -48,8 +48,10 @@ using ElectrostoreAPI.Services.UserPushSubscriptionService;
 using ElectrostoreAPI.Services.UserService;
 using ElectrostoreAPI.Services.ValidateStoreService;
 using ElectrostoreAPI.Services.StatusService;
+using ElectrostoreAPI.Services.SttService;
 using ElectrostoreAPI.Services.JwtService;
 using ElectrostoreAPI.Services.WebHookService;
+using ElectrostoreAPI.Services.ZoneService;
 using ElectrostoreAPI.Grpc.Services;
 using ElectrostoreAPI.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -184,18 +186,22 @@ public partial class Program
         builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
         builder.Services.AddHttpClient();
 
+        builder.Services.AddHttpClient(LlmChatService.HttpClientName, client =>
+        {
+            client.BaseAddress = new Uri(EnsureTrailingSlash(
+                builder.Configuration.GetValue<string>("Llm:BaseUrl") ?? "http://ollama:11434"));
+        });
+        builder.Services.AddHttpClient(SttService.HttpClientName, client =>
+        {
+            client.BaseAddress = new Uri(EnsureTrailingSlash(
+                builder.Configuration.GetValue<string>("Stt:BaseUrl") ?? "http://whisper:9000"));
+        });
+
         // gRPC server
         builder.Services.AddGrpc(options =>
         {
             //options.Interceptors.Add<AuthInterceptor>();
             options.MaxReceiveMessageSize = 100 * 1024 * 1024; // 100 MB
-        });
-
-        // gRPC client for the AI service
-        builder.Services.AddGrpcClient<IaCmdGrpc.IaCmdGrpcClient>(options =>
-        {
-            options.Address = new Uri(
-                builder.Configuration.GetValue<string>("IAServiceGrpcUrl") ?? "http://electrostoreIA:5001");
         });
 
         builder.Logging.AddFilter("LuckyPennySoftware.AutoMapper.License", LogLevel.None);
@@ -233,7 +239,6 @@ public partial class Program
         app.MapGrpcService<CommandsGrpcService>();
         app.MapGrpcService<ConfigGrpcService>();
         app.MapGrpcService<CronJobsGrpcService>();
-        app.MapGrpcService<IaTrainingGrpcService>();
         app.MapGrpcService<StoreMqttGrpcService>();
         app.MapGrpcService<UsersGrpcService>();
 
@@ -345,10 +350,11 @@ public partial class Program
         builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
         builder.Services.AddSingleton<IJwtService, JwtService>();
         builder.Services.AddSingleton<ISessionService, SessionService>();
+        builder.Services.AddScoped<IAiChatService, AiChatService>();
+        builder.Services.AddScoped<IAiToolExecutorService, AiToolExecutorService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IBoxService, BoxService>();
         builder.Services.AddScoped<IBoxTagService, BoxTagService>();
-        builder.Services.AddScoped<ICameraService, CameraService>();
         builder.Services.AddScoped<ICarrierService, CarrierService>();
         builder.Services.AddScoped<ICommandCommentService, CommandCommentService>();
         builder.Services.AddScoped<ICommandDocumentService, CommandDocumentService>();
@@ -365,15 +371,14 @@ public partial class Program
         builder.Services.AddScoped<IEquipementService, EquipementService>();
         builder.Services.AddScoped<IEquipementStatusService, EquipementStatusService>();
         builder.Services.AddScoped<IEquipementTagService, EquipementTagService>();
-        builder.Services.AddScoped<IAIService, AIService>();
-        builder.Services.AddScoped<IImgService, ImgService>();
         builder.Services.AddScoped<IItemBoxService, ItemBoxService>();
         builder.Services.AddScoped<IItemDocumentService, ItemDocumentService>();
         builder.Services.AddScoped<IItemHistoryService, ItemHistoryService>();
         builder.Services.AddScoped<IItemService, ItemService>();
         builder.Services.AddScoped<IItemTagService, ItemTagService>();
         builder.Services.AddScoped<ILedService, LedService>();
-        
+        builder.Services.AddScoped<ILlmChatService, LlmChatService>();
+
         builder.Services.AddScoped<IProjectCommentService, ProjectCommentService>();
         builder.Services.AddScoped<IProjectDocumentService, ProjectDocumentService>();
         builder.Services.AddScoped<IProjectItemService, ProjectItemService>();
@@ -383,6 +388,7 @@ public partial class Program
         builder.Services.AddScoped<IProjectTagService, ProjectTagService>();
         builder.Services.AddScoped<IStoreService, StoreService>();
         builder.Services.AddScoped<IStoreTagService, StoreTagService>();
+        builder.Services.AddScoped<ISttService, SttService>();
         builder.Services.AddScoped<ITagService, TagService>();
         builder.Services.AddScoped<IUserPushSubscriptionService, UserPushSubscriptionService>();
         builder.Services.AddScoped<IUserService, UserService>();
@@ -390,6 +396,12 @@ public partial class Program
         builder.Services.AddScoped<IJwiService, JwiService>();
         builder.Services.AddScoped<IStatusService, StatusService>();
         builder.Services.AddScoped<IWebHookService, WebHookService>();
+        builder.Services.AddScoped<IZoneService, ZoneService>();
+    }
+
+    private static string EnsureTrailingSlash(string url)
+    {
+        return url.EndsWith('/') ? url : url + "/";
     }
 
     private static void CreateRequiredDirectories()
@@ -413,6 +425,14 @@ public partial class Program
         if (!Directory.Exists("wwwroot/commandDocuments"))
         {
             Directory.CreateDirectory("wwwroot/commandDocuments");
+        }
+        if (!Directory.Exists("wwwroot/zones"))
+        {
+            Directory.CreateDirectory("wwwroot/zones");
+        }
+        if (!Directory.Exists("wwwroot/zonesThumbnails"))
+        {
+            Directory.CreateDirectory("wwwroot/zonesThumbnails");
         }
     }
 

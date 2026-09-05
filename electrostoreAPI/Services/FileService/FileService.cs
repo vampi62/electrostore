@@ -28,9 +28,9 @@ public class FileService : IFileService
             {
                 return new GetFileResult
                 {
-                    Success = false,
-                    ErrorMessage = "S3 is enabled but MinIO client is not configured",
-                    MimeType = ""
+                    success = false,
+                    error_message = "S3 is enabled but MinIO client is not configured",
+                    mime_type = ""
                 };
             }
             var objectContent = new MemoryStream();
@@ -63,18 +63,18 @@ public class FileService : IFileService
                 };
                 return new GetFileResult
                 {
-                    Success = true,
-                    FileStream = objectContent,
-                    MimeType = mimeType
+                    success = true,
+                    file_stream = objectContent,
+                    mime_type = mimeType
                 };
             }
             catch (Minio.Exceptions.ObjectNotFoundException)
             {
                 return new GetFileResult
                 {
-                    Success = false,
-                    ErrorMessage = "File not found",
-                    MimeType = ""
+                    success = false,
+                    error_message = "File not found",
+                    mime_type = ""
                 };
             }
         }
@@ -110,18 +110,18 @@ public class FileService : IFileService
                 FileStream.Position = 0;
                 return new GetFileResult
                 {
-                    Success = true,
-                    FileStream = FileStream,
-                    MimeType = mimeType
+                    success = true,
+                    file_stream = FileStream,
+                    mime_type = mimeType
                 };
             }
             else
             {
                 return new GetFileResult
                 {
-                    Success = false,
-                    ErrorMessage = "File not found",
-                    MimeType = ""
+                    success = false,
+                    error_message = "File not found",
+                    mime_type = ""
                 };
             }
         }
@@ -234,7 +234,7 @@ public class FileService : IFileService
         return new SaveFileResult
         {
             path = filePath,
-            mimeType = contentType
+            mime_type = contentType
         };
     }
 
@@ -242,15 +242,15 @@ public class FileService : IFileService
     {
         // if S3 is used, get the file from S3, generate the thumbnail and upload it back to S3
         var file = await GetFile(sourceFilePath);
-        if (!file.Success || file.FileStream == null)
+        if (!file.success || file.file_stream == null)
         {
             return new SaveFileResult
             {
                 path = "",
-                mimeType = ""
+                mime_type = ""
             };
         }
-        var image = await Image.LoadAsync(file.FileStream);
+        var image = await Image.LoadAsync(file.file_stream);
         image.Mutate(x => x.Resize(new ResizeOptions
         {
             Size = new Size(width, height),

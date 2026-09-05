@@ -63,7 +63,7 @@
                             <option value="latest">latest (development)</option>
                             <option value="local">local (build from source)</option>
                         </select>
-                        <small class="help-text">Select version for all services (API, Frontend, IA)</small>
+                        <small class="help-text">Select version for all services (API, Frontend, Cron, Worker, Notif)</small>
                     </div>
                 </section>
 
@@ -483,6 +483,96 @@
                     </div>
                 </section>
 
+                <!-- AI Assistant (LLM chat + speech-to-text) -->
+                <section class="form-section">
+                    <h2>AI Assistant</h2>
+
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="enableLlm" name="enableLlm" onchange="toggleLlm()">
+                            <strong>Enable LLM chat assistant</strong> - Natural language inventory assistant backed by an OpenAI-compatible chat API (e.g. Ollama)
+                        </label>
+                    </div>
+
+                    <div class="conditional-section" id="section-llm" style="display: none;">
+                        <div class="form-group">
+                            <label for="llmBaseUrl">Chat API Base URL</label>
+                            <input type="text" id="llmBaseUrl" name="llmBaseUrl" placeholder="http://ollama:11434" value="http://ollama:11434">
+                            <small class="help-text">OpenAI-compatible <code>/chat/completions</code> base URL. Set in the API service as <code>Llm:BaseUrl</code>.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="llmModel">Chat Model</label>
+                            <input type="text" id="llmModel" name="llmModel" placeholder="llama3.1:8b" value="llama3.1:8b">
+                            <small class="help-text">Model name to request, e.g. an Ollama-pulled model tag.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="llmEndpoint">Chat Endpoint</label>
+                            <input type="text" id="llmEndpoint" name="llmEndpoint" placeholder="api/chat" value="api/chat">
+                            <small class="help-text">OpenAI-compatible chat endpoint. Set in the API service as <code>Llm:Endpoint</code>.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="llmApiKey">Chat API Key</label>
+                            <input type="password" id="llmApiKey" name="llmApiKey" placeholder="Leave empty for a local Ollama instance">
+                            <small class="help-text">Only needed for hosted OpenAI-compatible providers; a local Ollama instance usually needs none.</small>
+                        </div>
+
+                        <div class="form-group checkbox-group">
+                            <label>
+                                <input type="checkbox" id="llmCustomSystemPromptEnable" name="llmCustomSystemPromptEnable" onchange="toggleLlmSystemPrompt()">
+                                <strong>Customize the system prompt</strong> - Otherwise the API's built-in default is used
+                            </label>
+                        </div>
+
+                        <div class="conditional-section" id="section-llm-system-prompt" style="display: none;">
+                            <div class="form-group">
+                                <label for="llmSystemPrompt">System Prompt</label>
+                                <textarea id="llmSystemPrompt" name="llmSystemPrompt" rows="6"></textarea>
+                                <small class="help-text">Set in the API service as <code>Llm:SystemPrompt</code>. Since <code>appsettings.json</code> is hot-reloaded, it can be edited later directly in that file without rebuilding or restarting the API.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <small class="help-text">Example: run Ollama locally, independently of this stack (adjust the image/port/volume as needed, then point <strong>Chat API Base URL</strong> above at <code>http://host.docker.internal:11434</code> on Docker Desktop, or your host's LAN IP on Linux):</small>
+                            <pre style="white-space: pre-wrap;">docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama</pre>
+                        </div>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="enableStt" name="enableStt" onchange="toggleStt()">
+                            <strong>Enable speech-to-text</strong> - Transcribe voice prompts sent to the AI assistant via an OpenAI-compatible audio API (e.g. whisper.cpp/faster-whisper)
+                        </label>
+                    </div>
+
+                    <div class="conditional-section" id="section-stt" style="display: none;">
+                        <div class="form-group">
+                            <label for="sttBaseUrl">Speech-to-Text API Base URL</label>
+                            <input type="text" id="sttBaseUrl" name="sttBaseUrl" placeholder="http://whisper:9000" value="http://whisper:9000">
+                            <small class="help-text">OpenAI-compatible <code>/audio/transcriptions</code> base URL. Set in the API service as <code>Stt:BaseUrl</code>.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="sttModel">Speech-to-Text Model</label>
+                            <input type="text" id="sttModel" name="sttModel" placeholder="whisper-1" value="whisper-1">
+                        </div>
+                        <div class="form-group">
+                            <label for="sttApiKey">Speech-to-Text API Key</label>
+                            <input type="password" id="sttApiKey" name="sttApiKey" placeholder="Leave empty for a local instance">
+                            <small class="help-text">Only needed for hosted providers; a local whisper.cpp/faster-whisper instance usually needs none.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <small class="help-text">Example: run a Whisper server locally, independently of this stack (adjust the image/port/volume/key as needed, then point <strong>Speech-to-Text API Base URL</strong> above at <code>http://host.docker.internal:9000</code> on Docker Desktop, or your host's LAN IP on Linux):</small>
+                            <pre style="white-space: pre-wrap;">docker run -d \
+  --name whisper \
+  --restart=always \
+  -v whisper-data:/var/lib/whisper \
+  -p 9000:9000 \
+  -e WHISPER_API_KEY="your-api-key" \
+  hwdsl2/whisper-server</pre>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- File Validation -->
                 <section class="form-section">
                     <h2>File Validation</h2>
@@ -498,6 +588,11 @@
                             <input type="number" id="maxImageSizeMB" name="maxImageSizeMB" value="8" min="1">
                             <small class="help-text">Maximum size for uploaded images</small>
                         </div>
+                        <div class="form-group" id="section-maxAudioSizeMB">
+                            <label for="maxAudioSizeMB">Max Audio Size (MB)</label>
+                            <input type="number" id="maxAudioSizeMB" name="maxAudioSizeMB" value="25" min="1">
+                            <small class="help-text">Maximum size for voice prompts uploaded to the AI assistant</small>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -512,6 +607,13 @@
                         <small class="help-text">MIME type and corresponding file extension accepted for documents</small>
                         <div id="allowedDocumentMimeTypes" class="mime-type-list"></div>
                         <button type="button" style="margin-top:0.5rem" onclick="addMimeType('allowedDocumentMimeTypes')">+ Add MIME type</button>
+                    </div>
+
+                    <div class="form-group" id="section-allowedAudioMimeTypes">
+                        <label>Allowed Audio MIME Types</label>
+                        <small class="help-text">MIME type and corresponding file extension accepted for AI assistant voice prompts</small>
+                        <div id="allowedAudioMimeTypes" class="mime-type-list"></div>
+                        <button type="button" style="margin-top:0.5rem" onclick="addMimeType('allowedAudioMimeTypes')">+ Add MIME type</button>
                     </div>
                 </section>
 

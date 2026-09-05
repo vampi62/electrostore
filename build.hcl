@@ -27,7 +27,6 @@ group "default" {
   targets = [
     "api",
     "front",
-    "ia",
     "notif",
     "worker",
     "cron"
@@ -103,27 +102,14 @@ target "front" {
   )
 }
 
-target "ia" {
-  inherits = ["defaults"]
-  context = "electrostoreIA/"
-  tags = tag("ia")
-  labels = merge(
-    label("url", "https://github.com/${REPO}"),
-    label("title", "Electrostore ia"),
-    label("description", "Electrostore ia image"),
-    label("source", "https://github.com/${REPO}"),
-    label("version", "${VERSION}")
-  )
-}
-
 target "notif" {
   inherits = ["defaults"]
   context = "electrostoreNOTIF/"
   tags = tag("notif")
   labels = merge(
     label("url", "https://github.com/${REPO}"),
-    label("title", "Electrostore ia"),
-    label("description", "Electrostore ia image"),
+    label("title", "Electrostore notif"),
+    label("description", "Electrostore notif image"),
     label("source", "https://github.com/${REPO}"),
     label("version", "${VERSION}")
   )
@@ -135,8 +121,8 @@ target "worker" {
   tags = tag("worker")
   labels = merge(
     label("url", "https://github.com/${REPO}"),
-    label("title", "Electrostore ia"),
-    label("description", "Electrostore ia image"),
+    label("title", "Electrostore worker"),
+    label("description", "Electrostore worker image"),
     label("source", "https://github.com/${REPO}"),
     label("version", "${VERSION}")
   )
@@ -148,8 +134,8 @@ target "cron" {
   tags = tag("cron")
   labels = merge(
     label("url", "https://github.com/${REPO}"),
-    label("title", "Electrostore ia"),
-    label("description", "Electrostore ia image"),
+    label("title", "Electrostore cron"),
+    label("description", "Electrostore cron image"),
     label("source", "https://github.com/${REPO}"),
     label("version", "${VERSION}")
   )
