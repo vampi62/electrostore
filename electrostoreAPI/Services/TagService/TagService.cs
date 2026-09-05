@@ -60,9 +60,11 @@ public class TagService : ITagService
                 StoresTagsCount = t.StoresTags.Count,
                 ItemsTagsCount = t.ItemsTags.Count,
                 BoxsTagsCount = t.BoxsTags.Count,
+                EquipmentTagsCount = t.EquipmentTags.Count,
                 StoresTags = expand != null && expand.Contains("stores_tags") ? t.StoresTags.Take(20).ToList() : null,
                 ItemsTags = expand != null && expand.Contains("items_tags") ? t.ItemsTags.Take(20).ToList() : null,
-                BoxsTags = expand != null && expand.Contains("boxs_tags") ? t.BoxsTags.Take(20).ToList() : null
+                BoxsTags = expand != null && expand.Contains("boxs_tags") ? t.BoxsTags.Take(20).ToList() : null,
+                EquipmentTags = expand != null && expand.Contains("equipment_tags") ? t.EquipmentTags.Take(20).ToList() : null
             })
             .ToListAsync();
         return new PaginatedResponseDto<ReadExtendedTagDto>
@@ -73,9 +75,11 @@ public class TagService : ITagService
                     stores_tags_count = t.StoresTagsCount,
                     items_tags_count = t.ItemsTagsCount,
                     boxs_tags_count = t.BoxsTagsCount,
+                    equipment_tags_count = t.EquipmentTagsCount,
                     stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(t.StoresTags),
                     items_tags = _mapper.Map<IEnumerable<ReadItemTagDto>>(t.ItemsTags),
-                    boxs_tags = _mapper.Map<IEnumerable<ReadBoxTagDto>>(t.BoxsTags)
+                    boxs_tags = _mapper.Map<IEnumerable<ReadBoxTagDto>>(t.BoxsTags),
+                    equipment_tags = _mapper.Map<IEnumerable<ReadEquipmentTagDto>>(t.EquipmentTags)
                 };
             }).ToList(),
             pagination = new PaginationDto
@@ -102,9 +106,11 @@ public class TagService : ITagService
                 StoresTagsCount = t.StoresTags.Count,
                 ItemsTagsCount = t.ItemsTags.Count,
                 BoxsTagsCount = t.BoxsTags.Count,
+                EquipmentTagsCount = t.EquipmentTags.Count,
                 StoresTags = expand != null && expand.Contains("stores_tags") ? t.StoresTags.Take(20).ToList() : null,
                 ItemsTags = expand != null && expand.Contains("items_tags") ? t.ItemsTags.Take(20).ToList() : null,
-                BoxsTags = expand != null && expand.Contains("boxs_tags") ? t.BoxsTags.Take(20).ToList() : null
+                BoxsTags = expand != null && expand.Contains("boxs_tags") ? t.BoxsTags.Take(20).ToList() : null,
+                EquipmentTags = expand != null && expand.Contains("equipment_tags") ? t.EquipmentTags.Take(20).ToList() : null
             })
             .FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"Tag with id '{id}' not found");
         return _mapper.Map<ReadExtendedTagDto>(tag.Tag) with
@@ -112,9 +118,11 @@ public class TagService : ITagService
             stores_tags_count = tag.StoresTagsCount,
             items_tags_count = tag.ItemsTagsCount,
             boxs_tags_count = tag.BoxsTagsCount,
+            equipment_tags_count = tag.EquipmentTagsCount,
             stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(tag.StoresTags),
             items_tags = _mapper.Map<IEnumerable<ReadItemTagDto>>(tag.ItemsTags),
-            boxs_tags = _mapper.Map<IEnumerable<ReadBoxTagDto>>(tag.BoxsTags)
+            boxs_tags = _mapper.Map<IEnumerable<ReadBoxTagDto>>(tag.BoxsTags),
+            equipment_tags = _mapper.Map<IEnumerable<ReadEquipmentTagDto>>(tag.EquipmentTags)
         };
     }
 

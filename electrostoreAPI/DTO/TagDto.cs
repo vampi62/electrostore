@@ -16,9 +16,11 @@ public record ReadExtendedTagDto : ReadTagDto
     public int stores_tags_count { get; init; }
     public int items_tags_count { get; init; }
     public int boxs_tags_count { get; init; }
+    public int equipment_tags_count { get; init; }
     public IEnumerable<ReadStoreTagDto>? stores_tags { get; init; }
     public IEnumerable<ReadItemTagDto>? items_tags { get; init; }
     public IEnumerable<ReadBoxTagDto>? boxs_tags { get; init; }
+    public IEnumerable<ReadEquipmentTagDto>? equipment_tags { get; init; }
 }
 
 public record ReadBulkTagDto
