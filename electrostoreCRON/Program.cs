@@ -4,7 +4,6 @@ using ElectrostoreCRON.Kafka.Consumers;
 using ElectrostoreCRON.Kafka.Producer;
 using ElectrostoreCRON.Services.ConfigCacheService;
 using ElectrostoreCRON.Services.CronSchedulerService;
-using ElectrostoreCRON.Services.Track17SyncService;
 using Quartz;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
@@ -67,7 +66,6 @@ public partial class Program
     {
         builder.Services.AddHttpClient();
         builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
-        builder.Services.AddSingleton<ITrack17SyncService, Track17SyncService>();
         builder.Services.AddSingleton<ConfigCacheService>();
         builder.Services.AddSingleton<IConfigCacheService>(sp => sp.GetRequiredService<ConfigCacheService>());
         builder.Services.AddHostedService(sp => sp.GetRequiredService<ConfigCacheService>());

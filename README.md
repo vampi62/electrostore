@@ -33,12 +33,6 @@ Visualize in real time the mapping of your storage spaces (boxes, drawers, shelv
 <!-- SCREENSHOT: 2D/3D view of storage space -->
 <!-- ![Storage view](docs/assets/screenshot_storage_map.png) -->
 
-#### Replenishment Order Tracking
-Create and track your supplier orders, integrate tracking numbers (via 17Track), and receive alerts at each delivery stage.
-
-<!-- SCREENSHOT: order list view with status -->
-<!-- ![Orders](docs/assets/screenshot_orders.png) -->
-
 #### Stock Notifications and Alerts
 Receive notifications (web push, email) when stock falls below the minimum threshold or during important events (delivery received, component depleted, etc.).
 
@@ -67,7 +61,7 @@ ElectroStore consists of several services:
 |---|---|
 | **API** | REST + gRPC backend, database management |
 | **NOTIF** | Push and email notifications |
-| **CRON** | Scheduled tasks (stock alerts, order tracking) |
+| **CRON** | Scheduled tasks (stock alerts) |
 | **WORKER** | MQTT communication with ESP modules |
 | **FRONT** | Vue.js web interface |
 

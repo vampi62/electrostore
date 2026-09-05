@@ -49,7 +49,7 @@ namespace ElectrostoreAPI.Tests.Services
             return new StatusService(_mqttClient.Object, configuration, _mockHttpClientFactory.Object, context, _kafkaProducerService.Object);
         }
 
-        private static IConfiguration BuildConfiguration(bool demoMode = false, bool track17Enable = false)
+        private static IConfiguration BuildConfiguration(bool demoMode = false)
         {
             var settings = new Dictionary<string, string?>
             {
@@ -58,7 +58,6 @@ namespace ElectrostoreAPI.Tests.Services
                 ["CRONServiceHealthUrl"] = CronUrl,
                 ["WORKERServiceHealthUrl"] = WorkerUrl,
                 ["DemoMode"] = demoMode.ToString(),
-                ["Track17:Enable"] = track17Enable.ToString()
             };
             return new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         }
@@ -161,21 +160,6 @@ namespace ElectrostoreAPI.Tests.Services
             // Assert
             Assert.False(result.mqtt_connected);
             Assert.False(result.kafka_connected);
-        }
-
-        [Theory]
-        [InlineData(true, "enabled")]
-        [InlineData(false, "disabled")]
-        public async Task GetStatus_ShouldReflectTrack17ConfigState(bool track17Enable, string expected)
-        {
-            // Arrange
-            using var context = new ApplicationDbContext(_dbContextOptions);
-            SetupAllHealthy();
-            var service = CreateService(context, BuildConfiguration(track17Enable: track17Enable));
-            // Act
-            var result = await service.GetStatus();
-            // Assert
-            Assert.Equal(expected, result.external_services["17Track"]);
         }
     }
 }

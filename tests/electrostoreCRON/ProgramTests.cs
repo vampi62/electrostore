@@ -4,7 +4,6 @@ using ElectrostoreCRON.Kafka.Consumers;
 using ElectrostoreCRON.Kafka.Producer;
 using ElectrostoreCRON.Services.ConfigCacheService;
 using ElectrostoreCRON.Services.CronSchedulerService;
-using ElectrostoreCRON.Services.Track17SyncService;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -39,7 +38,6 @@ public class ProgramTests
 
         // Assert
         Assert.Contains(builder.Services, d => d.ServiceType == typeof(IKafkaProducerService) && d.ImplementationType == typeof(KafkaProducerService) && d.Lifetime == ServiceLifetime.Singleton);
-        Assert.Contains(builder.Services, d => d.ServiceType == typeof(ITrack17SyncService) && d.ImplementationType == typeof(Track17SyncService) && d.Lifetime == ServiceLifetime.Singleton);
         Assert.Contains(builder.Services, d => d.ServiceType == typeof(ConfigCacheService) && d.Lifetime == ServiceLifetime.Singleton);
         Assert.Contains(builder.Services, d => d.ServiceType == typeof(IConfigCacheService) && d.Lifetime == ServiceLifetime.Singleton);
         Assert.Contains(builder.Services, d => d.ServiceType == typeof(ElectrostoreCronJob) && d.Lifetime == ServiceLifetime.Transient);
