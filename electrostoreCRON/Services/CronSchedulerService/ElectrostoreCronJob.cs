@@ -24,9 +24,6 @@ public class ElectrostoreCronJob : IJob
         ILogger<ElectrostoreCronJob> logger)
     {
         _executionRegistry = executionRegistry;
-        CronJobsGrpc.CronJobsGrpcClient apiClient,
-        ILogger<ElectrostoreCronJob> logger)
-    {
         _apiClient   = apiClient;
         _logger      = logger;
     }
