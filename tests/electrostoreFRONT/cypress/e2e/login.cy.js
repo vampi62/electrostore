@@ -52,7 +52,6 @@ describe("Login Page", () => {
 				"cron_status": "healthy",
 				"worker_status": "healthy",
 				"external_services": {
-					"17Track": "healthy",
 				},
 			},
 		}).as("getStatus")

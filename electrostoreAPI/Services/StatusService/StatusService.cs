@@ -62,9 +62,7 @@ public class StatusService : IStatusService
             cron_status = cronHealth.TryGetValue("status", out var cronStatus) && cronStatus.GetString() is string cs ? cs : "unknown",
             worker_status = workerHealth.TryGetValue("status", out var workerStatus) && workerStatus.GetString() is string workerStr ? workerStr : "unknown",
             external_services = new Dictionary<string, string>
-            {
-                { "17Track", _configuration.GetValue<bool>("Track17:Enable") ? "enabled" : "disabled" }
-            }
+            {}
         };
     }
 

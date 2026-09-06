@@ -412,6 +412,234 @@ namespace ElectrostoreAPI.Migrations
                     b.ToTable("CronJobs");
                 });
 
+            modelBuilder.Entity("ElectrostoreAPI.Models.Equipements", b =>
+                {
+                    b.Property<int>("id_equipement")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_equipement"));
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("description_equipement")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("friendly_name_equipement")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("reference_name_equipement")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<int>("status_equipement")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_equipement");
+
+                    b.ToTable("Equipements");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.EquipementsBoxs", b =>
+                {
+                    b.Property<int>("id_equipement")
+                        .HasColumnType("int");
+
+                    b.Property<int>("id_box")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_equipement", "id_box");
+
+                    b.HasIndex("id_box");
+
+                    b.HasIndex("id_equipement")
+                        .IsUnique();
+
+                    b.ToTable("EquipementsBoxs");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.EquipementsComments", b =>
+                {
+                    b.Property<int>("id_equipement_comment")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_equipement_comment"));
+
+                    b.Property<string>("content_equipement_comment")
+                        .IsRequired()
+                        .HasMaxLength(455)
+                        .HasColumnType("varchar(455)");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("id_equipement")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("id_user")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_equipement_comment");
+
+                    b.HasIndex("id_equipement");
+
+                    b.HasIndex("id_user");
+
+                    b.ToTable("EquipementsComments");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.EquipementsDocuments", b =>
+                {
+                    b.Property<int>("id_equipement_document")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_equipement_document"));
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("id_equipement")
+                        .HasColumnType("int");
+
+                    b.Property<string>("name_equipement_document")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<decimal>("size_equipement_document")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("type_equipement_document")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("url_equipement_document")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.HasKey("id_equipement_document");
+
+                    b.HasIndex("id_equipement");
+
+                    b.ToTable("EquipementsDocuments");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.EquipementsMaintenances", b =>
+                {
+                    b.Property<int>("id_equipement_maintenance")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_equipement_maintenance"));
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("date_done_equipement_maintenance")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("date_planned_equipement_maintenance")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("description_equipement_maintenance")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<int>("id_equipement")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("id_user")
+                        .HasColumnType("int");
+
+                    b.Property<int>("type_equipement_maintenance")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_equipement_maintenance");
+
+                    b.HasIndex("id_equipement");
+
+                    b.HasIndex("id_user");
+
+                    b.ToTable("EquipementsMaintenances");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.EquipementsStatus", b =>
+                {
+                    b.Property<int>("id_equipement_status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_equipement_status"));
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("id_equipement")
+                        .HasColumnType("int");
+
+                    b.Property<int>("status_equipement")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_equipement_status");
+
+                    b.HasIndex("id_equipement");
+
+                    b.ToTable("EquipementsStatus");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.EquipementsTags", b =>
+                {
+                    b.Property<int>("id_equipement")
+                        .HasColumnType("int");
+
+                    b.Property<int>("id_tag")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("id_equipement", "id_tag");
+
+                    b.HasIndex("id_tag");
+
+                    b.ToTable("EquipementsTags");
+                });
+
             modelBuilder.Entity("ElectrostoreAPI.Models.Items", b =>
                 {
                     b.Property<int>("id_item")
@@ -1303,6 +1531,101 @@ namespace ElectrostoreAPI.Migrations
                     b.Navigation("Item");
                 });
 
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.EquipementsBoxs", b =>
+                {
+                    b.HasOne("ElectrostoreAPI.Models.Boxs", "Box")
+                        .WithMany()
+                        .HasForeignKey("id_box")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ElectrostoreAPI.Models.Equipements", "Equipement")
+                        .WithMany("EquipementsBoxs")
+                        .HasForeignKey("id_equipement")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Box");
+
+                    b.Navigation("Equipement");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.EquipementsComments", b =>
+                {
+                    b.HasOne("ElectrostoreAPI.Models.Equipements", "Equipement")
+                        .WithMany("EquipementsComments")
+                        .HasForeignKey("id_equipement")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ElectrostoreAPI.Models.Users", "User")
+                        .WithMany()
+                        .HasForeignKey("id_user");
+
+                    b.Navigation("Equipement");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.EquipementsDocuments", b =>
+                {
+                    b.HasOne("ElectrostoreAPI.Models.Equipements", "Equipement")
+                        .WithMany("EquipementsDocuments")
+                        .HasForeignKey("id_equipement")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Equipement");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.EquipementsMaintenances", b =>
+                {
+                    b.HasOne("ElectrostoreAPI.Models.Equipements", "Equipement")
+                        .WithMany("EquipementsMaintenances")
+                        .HasForeignKey("id_equipement")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ElectrostoreAPI.Models.Users", "User")
+                        .WithMany()
+                        .HasForeignKey("id_user");
+
+                    b.Navigation("Equipement");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.EquipementsStatus", b =>
+                {
+                    b.HasOne("ElectrostoreAPI.Models.Equipements", "Equipement")
+                        .WithMany("EquipementsStatus")
+                        .HasForeignKey("id_equipement")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Equipement");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.EquipementsTags", b =>
+                {
+                    b.HasOne("ElectrostoreAPI.Models.Equipements", "Equipement")
+                        .WithMany("EquipementsTags")
+                        .HasForeignKey("id_equipement")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ElectrostoreAPI.Models.Tags", "Tag")
+                        .WithMany()
+                        .HasForeignKey("id_tag")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Equipement");
+
+                    b.Navigation("Tag");
+                });
+
             modelBuilder.Entity("ElectrostoreAPI.Models.ItemsBoxs", b =>
                 {
                     b.HasOne("ElectrostoreAPI.Models.Boxs", "Box")
@@ -1549,6 +1872,21 @@ namespace ElectrostoreAPI.Migrations
                     b.Navigation("CommandsHistory");
 
                     b.Navigation("CommandsItems");
+                });
+
+            modelBuilder.Entity("ElectrostoreAPI.Models.Equipements", b =>
+                {
+                    b.Navigation("EquipementsBoxs");
+
+                    b.Navigation("EquipementsComments");
+
+                    b.Navigation("EquipementsDocuments");
+
+                    b.Navigation("EquipementsMaintenances");
+
+                    b.Navigation("EquipementsStatus");
+
+                    b.Navigation("EquipementsTags");
                 });
 
             modelBuilder.Entity("ElectrostoreAPI.Models.Items", b =>

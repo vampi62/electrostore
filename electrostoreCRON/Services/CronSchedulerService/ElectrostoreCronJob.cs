@@ -1,6 +1,6 @@
 using ElectrostoreCRON.Grpc;
+
 using ElectrostoreCRON.Services.CronJobExecutionRegistry;
-using ElectrostoreCRON.Services.Track17SyncService;
 using Grpc.Core;
 using Quartz;
 
@@ -13,19 +13,20 @@ public class ElectrostoreCronJob : IJob
     public const string KeyParams = "params_cronjob";
     public const string KeyId     = "id_cronjob";
 
-    private readonly ITrack17SyncService           _track17Sync;
+
     private readonly ICronJobExecutionRegistry     _executionRegistry;
     private readonly CronJobsGrpc.CronJobsGrpcClient _apiClient;
     private readonly ILogger<ElectrostoreCronJob>  _logger;
 
     public ElectrostoreCronJob(
-        ITrack17SyncService track17Sync,
         ICronJobExecutionRegistry executionRegistry,
         CronJobsGrpc.CronJobsGrpcClient apiClient,
         ILogger<ElectrostoreCronJob> logger)
     {
-        _track17Sync = track17Sync;
         _executionRegistry = executionRegistry;
+        CronJobsGrpc.CronJobsGrpcClient apiClient,
+        ILogger<ElectrostoreCronJob> logger)
+    {
         _apiClient   = apiClient;
         _logger      = logger;
     }
@@ -46,7 +47,7 @@ public class ElectrostoreCronJob : IJob
             switch (action)
             {
                 case (int)CronJobAction.PackageTracking:
-                    await _track17Sync.SyncAllAsync(runToken);
+                    // await _track17Sync.SyncAllAsync(context.CancellationToken);
                     break;
 
                 default:

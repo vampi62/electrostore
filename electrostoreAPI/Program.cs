@@ -17,6 +17,13 @@ using ElectrostoreAPI.Services.CommandService;
 using ElectrostoreAPI.Services.ConfigService;
 using ElectrostoreAPI.Services.CronJobService;
 using ElectrostoreAPI.Services.EncryptionService;
+using ElectrostoreAPI.Services.EquipementBoxService;
+using ElectrostoreAPI.Services.EquipementCommentService;
+using ElectrostoreAPI.Services.EquipementDocumentService;
+using ElectrostoreAPI.Services.EquipementMaintenanceService;
+using ElectrostoreAPI.Services.EquipementService;
+using ElectrostoreAPI.Services.EquipementStatusService;
+using ElectrostoreAPI.Services.EquipementTagService;
 using ElectrostoreAPI.Services.FileService;
 using ElectrostoreAPI.Services.ItemBoxService;
 using ElectrostoreAPI.Services.ItemDocumentService;
@@ -43,7 +50,6 @@ using ElectrostoreAPI.Services.ValidateStoreService;
 using ElectrostoreAPI.Services.StatusService;
 using ElectrostoreAPI.Services.SttService;
 using ElectrostoreAPI.Services.JwtService;
-using ElectrostoreAPI.Services.WebHookService;
 using ElectrostoreAPI.Services.ZoneService;
 using ElectrostoreAPI.Grpc.Services;
 using ElectrostoreAPI.Middleware;
@@ -357,6 +363,13 @@ public partial class Program
         builder.Services.AddScoped<IConfigService, ConfigService>();
         builder.Services.AddScoped<ICronJobService, CronJobService>();
         builder.Services.AddScoped<IEncryptionService, EncryptionService>();
+        builder.Services.AddScoped<IEquipementBoxService, EquipementBoxService>();
+        builder.Services.AddScoped<IEquipementCommentService, EquipementCommentService>();
+        builder.Services.AddScoped<IEquipementDocumentService, EquipementDocumentService>();
+        builder.Services.AddScoped<IEquipementMaintenanceService, EquipementMaintenanceService>();
+        builder.Services.AddScoped<IEquipementService, EquipementService>();
+        builder.Services.AddScoped<IEquipementStatusService, EquipementStatusService>();
+        builder.Services.AddScoped<IEquipementTagService, EquipementTagService>();
         builder.Services.AddScoped<IItemBoxService, ItemBoxService>();
         builder.Services.AddScoped<IItemDocumentService, ItemDocumentService>();
         builder.Services.AddScoped<IItemHistoryService, ItemHistoryService>();
@@ -381,7 +394,6 @@ public partial class Program
         builder.Services.AddScoped<IValidateStoreService, ValidateStoreService>();
         builder.Services.AddScoped<IJwiService, JwiService>();
         builder.Services.AddScoped<IStatusService, StatusService>();
-        builder.Services.AddScoped<IWebHookService, WebHookService>();
         builder.Services.AddScoped<IZoneService, ZoneService>();
     }
 
@@ -444,35 +456,6 @@ public partial class Program
                 password_user = "Admin@1234",
                 role_user = UserRole.Admin
             }).Wait();
-        }
-        // check if the database has a list of carriers, if not, fetch the list from the 17track API and populate the database
-        if (!context.Carriers.Any())
-        {
-            var httpClient = new HttpClient();
-            var response = httpClient.GetAsync("https://res.17track.net/asset/carrier/info/apicarrier.all.json").Result;
-            if (response.IsSuccessStatusCode)
-            {
-                var json = response.Content.ReadAsStringAsync().Result;
-                var carriers = System.Text.Json.JsonSerializer.Deserialize<List<JsonCarrierDto>>(json);
-                if (carriers != null)
-                {
-                    var carrierService = serviceScope.ServiceProvider.GetRequiredService<ICarrierService>();
-                    foreach (var carrier in carriers)
-                    {
-                        var createCarrierDto = new CreateCarrierDto
-                        {
-                            key_carrier = carrier.key,
-                            country_carrier = carrier._country,
-                            country_iso_carrier = carrier._country_iso,
-                            email_carrier = carrier._email,
-                            tel_carrier = carrier._tel,
-                            url_carrier = carrier._url,
-                            name_carrier = carrier._name
-                        };
-                        carrierService.CreateFirstCarrier(createCarrierDto).Wait();
-                    }
-                }
-            }
         }
         // add default cronjob for tracking request processing if not exists
         if (!context.CronJobs.Any(c => c.name_cronjob == "ProcessTrackingRequests"))
