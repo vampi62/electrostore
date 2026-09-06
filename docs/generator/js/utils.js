@@ -86,8 +86,6 @@ async function downloadAllAsZip() {
     
     // Only add modern service configs if not legacy
     if (!isLegacy) {
-        zip.folder('config/ia');
-        zip.file('config/ia/appsettings.json', document.getElementById('iaAppsettingsFile').textContent);
         zip.folder('config/notif');
         zip.file('config/notif/appsettings.json', document.getElementById('notifAppsettingsFile').textContent);
         zip.folder('config/cron');

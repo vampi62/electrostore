@@ -133,6 +133,23 @@ function toggleVapid() {
 function toggleTrack17() {
     const enabled = document.getElementById('enableTrack17').checked;
     document.getElementById('section-track17').style.display = enabled ? 'block' : 'none';
+// Toggle LLM chat assistant
+function toggleLlm() {
+    const enabled = document.getElementById('enableLlm').checked;
+    document.getElementById('section-llm').style.display = enabled ? 'block' : 'none';
+}
+
+// Toggle the custom LLM system prompt editor
+function toggleLlmSystemPrompt() {
+    const enabled = document.getElementById('llmCustomSystemPromptEnable').checked;
+    document.getElementById('llmSystemPrompt').value = enabled ? DEFAULT_SYSTEM_PROMPT : '';
+    document.getElementById('section-llm-system-prompt').style.display = enabled ? 'block' : 'none';
+}
+
+// Toggle speech-to-text
+function toggleStt() {
+    const enabled = document.getElementById('enableStt').checked;
+    document.getElementById('section-stt').style.display = enabled ? 'block' : 'none';
 }
 
 // Toggle LLM chat assistant
@@ -375,7 +392,6 @@ function generateFiles() {
     
     const dockerCompose = generateDockerCompose(config);
     const apiAppsettings = generateApiAppsettings(config);
-    const iaAppsettings = generateIaAppsettings(config);
     const notifAppsettings = generateNotifAppsettings(config);
     const cronAppsettings = generateCronAppsettings(config);
     const workerAppsettings = generateWorkerAppsettings(config);
@@ -395,7 +411,6 @@ function generateFiles() {
     const notifSection = document.getElementById('notifAppsettingsFile').closest('.file-output');
     const cronSection = document.getElementById('cronAppsettingsFile').closest('.file-output');
     const workerSection = document.getElementById('workerAppsettingsFile').closest('.file-output');
-    const iaSection = document.getElementById('iaAppsettingsFile').closest('.file-output');
     
     if (isLegacy) {
         if (notifSection) notifSection.style.display = 'none';
@@ -410,7 +425,6 @@ function generateFiles() {
         document.getElementById('notifAppsettingsFile').textContent = notifAppsettings;
         document.getElementById('cronAppsettingsFile').textContent = cronAppsettings;
         document.getElementById('workerAppsettingsFile').textContent = workerAppsettings;
-        document.getElementById('iaAppsettingsFile').textContent = iaAppsettings;
     }
     
     document.getElementById('envFile').textContent = envFile;
