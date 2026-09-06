@@ -40,7 +40,7 @@ public class CronJobService : ICronJobService
                 (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CronJobs>(rsql);
                 query = query.Where(filterResult);
             }
-            if (!string.IsNullOrEmpty(sort?.Field))
+            if (!string.IsNullOrEmpty(sort?.field))
             {
                 var sortResult = RsqlParserExtensions.ToSortExpression<CronJobs>(sort);
                 if (sortResult.Item1 != null)
@@ -68,8 +68,8 @@ public class CronJobService : ICronJobService
                 offset = offset,
                 limit = limit,
                 total = total,
-                nextOffset = offset + limit,
-                hasMore = await _context.CronJobs.Skip(offset + limit).AnyAsync(filterResult ?? (c => true))
+                next_offset = offset + limit,
+                has_more = await _context.CronJobs.Skip(offset + limit).AnyAsync(filterResult ?? (c => true))
             },
             filters = rsql,
             sort = sort != null ? [sort] : null
