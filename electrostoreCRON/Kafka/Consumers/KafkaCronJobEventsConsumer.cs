@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Confluent.Kafka;
 using ElectrostoreCRON.Kafka.Messages;
+using ElectrostoreCRON.Services.CronJobExecutionRegistry;
 using ElectrostoreCRON.Services.CronSchedulerService;
 using Quartz;
 using Quartz.Impl.Matchers;
@@ -16,17 +17,20 @@ public class KafkaCronJobEventsConsumer : BackgroundService
     private const string Topic = "cronjob-events";
 
     private readonly ISchedulerFactory _schedulerFactory;
+    private readonly ICronJobExecutionRegistry _executionRegistry;
     private readonly IConfiguration _configuration;
     private readonly ILogger<KafkaCronJobEventsConsumer> _logger;
 
     public KafkaCronJobEventsConsumer(
         ISchedulerFactory schedulerFactory,
+        ICronJobExecutionRegistry executionRegistry,
         IConfiguration configuration,
         ILogger<KafkaCronJobEventsConsumer> logger)
     {
-        _schedulerFactory = schedulerFactory;
-        _configuration    = configuration;
-        _logger           = logger;
+        _schedulerFactory  = schedulerFactory;
+        _executionRegistry = executionRegistry;
+        _configuration     = configuration;
+        _logger            = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -164,11 +168,49 @@ public class KafkaCronJobEventsConsumer : BackgroundService
                     await RemoveJobAsync(scheduler, evt.data.id_cronjob, ct);
                 }
                 break;
+            case "force_run":
+                if (evt.data is not null)
+                {
+                    await ForceRunJobAsync(scheduler, evt.data.id_cronjob, ct);
+                }
+                break;
+            case "force_stop":
+                if (evt.data is not null)
+                {
+                    ForceStopJob(evt.data.id_cronjob);
+                }
+                break;
             default:
                 _logger.LogWarning("Unknown cronjob-event action: {Action}", evt.action);
                 break;
         }
         return true;
+    }
+
+    private async Task ForceRunJobAsync(IScheduler scheduler, int idCronjob, CancellationToken ct)
+    {
+        var jobKey = new JobKey($"job-{idCronjob}", "electrostore");
+        if (await scheduler.CheckExists(jobKey, ct))
+        {
+            await scheduler.TriggerJob(jobKey, ct);
+            _logger.LogInformation("CronJob #{Id}: force-run triggered.", idCronjob);
+        }
+        else
+        {
+            _logger.LogWarning("CronJob #{Id}: force-run requested but job is not scheduled.", idCronjob);
+        }
+    }
+
+    private void ForceStopJob(int idCronjob)
+    {
+        if (_executionRegistry.RequestStop(idCronjob))
+        {
+            _logger.LogInformation("CronJob #{Id}: force-stop requested.", idCronjob);
+        }
+        else
+        {
+            _logger.LogWarning("CronJob #{Id}: force-stop requested but no running instance was found.", idCronjob);
+        }
     }
 
     private async Task ScheduleOrReplaceJobAsync(IScheduler scheduler, CronJobEventData job, CancellationToken ct)

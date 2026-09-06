@@ -1,5 +1,6 @@
 using ElectrostoreCRON.Grpc;
 using ElectrostoreCRON.Services.CronSchedulerService;
+using ElectrostoreCRON.Services.CronJobExecutionRegistry;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -10,10 +11,11 @@ namespace ElectrostoreCRON.Tests.Services;
 
 public class ElectrostoreCronJobTests
 {
+    private readonly Mock<ICronJobExecutionRegistry> _executionRegistry = new();
     private readonly Mock<CronJobsGrpc.CronJobsGrpcClient> _apiClient = new();
     private readonly Mock<ILogger<ElectrostoreCronJob>> _logger = new();
 
-    private ElectrostoreCronJob CreateJob() => new(_apiClient.Object, _logger.Object);
+    private ElectrostoreCronJob CreateJob() => new(_executionRegistry.Object, _apiClient.Object, _logger.Object);
 
     private static AsyncUnaryCall<TResponse> CreateAsyncUnaryCall<TResponse>(TResponse response)
     {

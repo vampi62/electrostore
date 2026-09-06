@@ -27,4 +27,8 @@ public class CronJobs : BaseEntity
     public DateTime? last_run_at { get; set; }
 
     public DateTime? next_run_at { get; set; }
+
+    public CronJobStatus status_cronjob { get; set; } = CronJobStatus.Idle;
+
+    public string? last_error_cronjob { get; set; }
 }
