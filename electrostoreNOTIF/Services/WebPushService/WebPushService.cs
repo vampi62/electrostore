@@ -47,11 +47,11 @@ public class WebPushService : IWebPushService
                                            ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             _logger.LogWarning(
-                "[WebPushService] Subscription expired or invalid (endpoint={Endpoint}): {ErrorMessage} (StatusCode={StatusCode}) (Exception={Exception})",
+                ex,
+                "[WebPushService] Subscription expired or invalid (endpoint={Endpoint}): {ErrorMessage} (StatusCode={StatusCode})",
                 endpoint,
                 ex.Message,
-                ex.StatusCode,
-                ex);
+                ex.StatusCode);
         }
         catch (Exception ex)
         {

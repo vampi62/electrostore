@@ -300,7 +300,7 @@ public class KafkaNotifConsumer : BackgroundService
         }
     }
 
-    private class NotificationContent
+    private sealed class NotificationContent
     {
         public string? EmailAddress { get; set; }
         public string? EmailSubject { get; set; }

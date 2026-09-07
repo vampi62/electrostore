@@ -550,20 +550,6 @@ function generateApiAppsettings(config) {
         settings.Kafka = {
             "BootstrapServers": "kafka:9092"
         };
-<<<<<<< Updated upstream
-        if (config.enableTrack17) {
-            settings.Track17 = {
-                "Enable": true,
-                "ApiKey": config.useVault ? "{{vault:track17_api_key}}" : (config.track17ApiKey || ""),
-                "CarrierListUrl": "https://res.17track.net/asset/carrier/info/apicarrier.all.json",
-            };
-        } else {
-            settings.Track17 = {
-                "Enable": false,
-                "ApiKey": "",
-                "CarrierListUrl": "https://res.17track.net/asset/carrier/info/apicarrier.all.json"
-=======
-
         if (config.enableLlm) {
             settings.Llm = {
                 "Enable": true,
@@ -599,7 +585,6 @@ function generateApiAppsettings(config) {
                 "Path": "audio/transcriptions",
                 "Model": "whisper-1",
                 "ApiKey": ""
->>>>>>> Stashed changes
             };
         }
 
@@ -701,8 +686,6 @@ function generateApiAppsettings(config) {
 
     
     if (!isLegacy) {
-        settings.IAServiceGrpcUrl = "http://electrostoreIA:5001";
-        settings.IAServiceHealthUrl = "http://electrostoreIA:5000/health";
         settings.NotifServiceHealthUrl = "http://electrostoreNOTIF:5000/health";
         settings.CRONServiceHealthUrl = "http://electrostoreCRON:5000/health";
         settings.WORKERServiceHealthUrl = "http://electrostoreWORKER:5000/health";
