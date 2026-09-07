@@ -142,8 +142,8 @@ namespace ElectrostoreAPI.Tests.Services
             // Act
             var result = await service.GetStatus();
             // Assert
-            Assert.Equal("unreachable", result.llm_status);
-            Assert.Equal("unreachable", result.stt_status);
+            Assert.Equal("unknown", result.llm_status);
+            Assert.Equal("unknown", result.stt_status);
         }
 
         [Fact]
