@@ -53,7 +53,6 @@ namespace ElectrostoreAPI.Tests.Services
         {
             var settings = new Dictionary<string, string?>
             {
-                ["IAServiceHealthUrl"] = IaUrl,
                 ["NotifServiceHealthUrl"] = NotifUrl,
                 ["CRONServiceHealthUrl"] = CronUrl,
                 ["WORKERServiceHealthUrl"] = WorkerUrl,
@@ -108,8 +107,8 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.True(result.db_connected);
             Assert.True(result.mqtt_connected);
             Assert.True(result.kafka_connected);
-            Assert.Equal("healthy", result.ai_status);
-            Assert.Equal(2, result.ai_training_in_progress);
+            Assert.Equal("unknown", result.llm_status);
+            Assert.Equal("unknown", result.stt_status);
             Assert.Equal("healthy", result.notif_status);
             Assert.True(result.notif_smtp);
             Assert.False(result.notif_web_push);
@@ -143,7 +142,8 @@ namespace ElectrostoreAPI.Tests.Services
             // Act
             var result = await service.GetStatus();
             // Assert
-            Assert.Equal("unreachable", result.ai_status);
+            Assert.Equal("unreachable", result.llm_status);
+            Assert.Equal("unreachable", result.stt_status);
         }
 
         [Fact]

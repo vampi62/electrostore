@@ -61,20 +61,20 @@ public static partial class Program
 
     private static void ConfigureGrpcClients(WebApplicationBuilder builder)
     {
+        var apiServiceGrpcUrl = builder.Configuration["ApiServiceGrpcUrl"]
+            ?? throw new InvalidOperationException("ApiServiceGrpcUrl configuration is missing.");
+
         builder.Services.AddGrpcClient<CommandsGrpc.CommandsGrpcClient>(options =>
         {
-            options.Address = new Uri(
-                builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
+            options.Address = new Uri(apiServiceGrpcUrl);
         });
         builder.Services.AddGrpcClient<ConfigGrpc.ConfigGrpcClient>(options =>
         {
-            options.Address = new Uri(
-                builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
+            options.Address = new Uri(apiServiceGrpcUrl);
         });
         builder.Services.AddGrpcClient<StoresMqttGrpc.StoresMqttGrpcClient>(options =>
         {
-            options.Address = new Uri(
-                builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
+            options.Address = new Uri(apiServiceGrpcUrl);
         });
     }
 

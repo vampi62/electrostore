@@ -149,6 +149,10 @@ public class ProgramTests
     public void ConfigureGrpcClients_ShouldRegisterAllGrpcClients()
     {
         var builder = WebApplication.CreateBuilder();
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["ApiServiceGrpcUrl"] = "http://electrostoreAPI:5001"
+        });
 
         InvokePrivateStatic("ConfigureGrpcClients", builder);
 
@@ -158,6 +162,17 @@ public class ProgramTests
         Assert.NotNull(provider.GetService<CronJobsGrpc.CronJobsGrpcClient>());
         Assert.NotNull(provider.GetService<ItemsHistoryGrpc.ItemsHistoryGrpcClient>());
         Assert.NotNull(provider.GetService<ItemsGrpc.ItemsGrpcClient>());
+    }
+
+    [Fact]
+    public void ConfigureGrpcClients_ShouldThrow_WhenApiServiceGrpcUrlMissing()
+    {
+        var builder = WebApplication.CreateBuilder();
+
+        var method = typeof(Program).GetMethod("ConfigureGrpcClients", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var ex = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object[] { builder }));
+
+        Assert.IsType<InvalidOperationException>(ex.InnerException);
     }
 
     // ---------- AddScopes (déjà existant) ----------

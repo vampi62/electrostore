@@ -175,12 +175,12 @@ public partial class Program
         builder.Services.AddHttpClient(LlmChatService.HttpClientName, client =>
         {
             client.BaseAddress = new Uri(EnsureTrailingSlash(
-                builder.Configuration.GetValue<string>("Llm:BaseUrl") ?? "http://ollama:11434"));
+                builder.Configuration.GetValue<string>("Llm:BaseUrl") ?? throw new InvalidOperationException("Llm:BaseUrl configuration is missing.")));
         });
         builder.Services.AddHttpClient(SttService.HttpClientName, client =>
         {
             client.BaseAddress = new Uri(EnsureTrailingSlash(
-                builder.Configuration.GetValue<string>("Stt:BaseUrl") ?? "http://whisper:9000"));
+                builder.Configuration.GetValue<string>("Stt:BaseUrl") ?? throw new InvalidOperationException("Stt:BaseUrl configuration is missing.")));
         });
 
         // gRPC server
