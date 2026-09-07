@@ -74,23 +74,10 @@ public partial class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        builder.Logging.AddSimpleConsole(options =>
-        {
-            options.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
-            options.SingleLine = true;
-        });
-        builder.Configuration.AddJsonFile("config/appsettings.json", optional: false, reloadOnChange: true);
-        if (builder.Environment.IsDevelopment())
-        {
-            builder.Configuration.AddJsonFile("config/appsettings.Development.json", optional: true, reloadOnChange: true);
-        }
-        if (builder.Configuration.GetSection("Vault:Enable").Get<bool>())
-        {
-            var authMethod = new TokenAuthMethodInfo(builder.Configuration.GetSection("Vault:Token").Value);
-            var vaultConfig = new VaultClientSettings(builder.Configuration.GetSection("Vault:Addr").Value, authMethod);
-            builder.Services.AddSingleton<IVaultClient>(new VaultClient(vaultConfig));
-            builder.Configuration.AddVaultConfiguration();
-        }
+
+        ConfigureConfiguration(builder);
+        ConfigureVault(builder);
+        ConfigureLogging(builder);
 
         Constants.Initialize(builder.Configuration);
 
@@ -188,12 +175,12 @@ public partial class Program
         builder.Services.AddHttpClient(LlmChatService.HttpClientName, client =>
         {
             client.BaseAddress = new Uri(EnsureTrailingSlash(
-                builder.Configuration.GetValue<string>("Llm:BaseUrl") ?? "http://ollama:11434"));
+                builder.Configuration.GetValue<string>("Llm:BaseUrl") ?? throw new InvalidOperationException("Llm:BaseUrl configuration is missing.")));
         });
         builder.Services.AddHttpClient(SttService.HttpClientName, client =>
         {
             client.BaseAddress = new Uri(EnsureTrailingSlash(
-                builder.Configuration.GetValue<string>("Stt:BaseUrl") ?? "http://whisper:9000"));
+                builder.Configuration.GetValue<string>("Stt:BaseUrl") ?? throw new InvalidOperationException("Stt:BaseUrl configuration is missing.")));
         });
 
         // gRPC server
@@ -243,17 +230,53 @@ public partial class Program
         app.MapGrpcService<StoreMqttGrpcService>();
         app.MapGrpcService<UsersGrpcService>();
 
-        app.MapGet("/health", (IConfiguration config) =>
-            Results.Ok(new
-            {
-                status = config.GetValue<bool>("DemoMode") ? "demo" : "healthy"
-             })).AllowAnonymous();
+        MapHealthEndpoint(app);
 
         app.MapControllers();
 
         InitializeDatabase(app);
 
         app.Run();
+    }
+
+    private static void ConfigureLogging(WebApplicationBuilder builder)
+    {
+        builder.Logging.AddSimpleConsole(options =>
+        {
+            options.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
+            options.SingleLine = true;
+        });
+    }
+
+    private static void ConfigureConfiguration(WebApplicationBuilder builder)
+    {
+        builder.Configuration.AddJsonFile("config/appsettings.json", optional: false, reloadOnChange: true);
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.Configuration.AddJsonFile("config/appsettings.Development.json", optional: true, reloadOnChange: true);
+        }
+    }
+
+    private static void ConfigureVault(WebApplicationBuilder builder)
+    {
+        if (!builder.Configuration.GetSection("Vault:Enable").Get<bool>())
+        {
+            return;
+        }
+
+        var authMethod = new TokenAuthMethodInfo(builder.Configuration.GetSection("Vault:Token").Value);
+        var vaultConfig = new VaultClientSettings(builder.Configuration.GetSection("Vault:Addr").Value, authMethod);
+        builder.Services.AddSingleton<IVaultClient>(new VaultClient(vaultConfig));
+        builder.Configuration.AddVaultConfiguration();
+    }
+
+    private static void MapHealthEndpoint(WebApplication app)
+    {
+        app.MapGet("/health", (IConfiguration config) =>
+            Results.Ok(new
+            {
+                status = config.GetValue<bool>("DemoMode") ? "demo" : "healthy"
+            })).AllowAnonymous();
     }
 
     private static void AddAuthentication(WebApplicationBuilder builder, byte[] key)

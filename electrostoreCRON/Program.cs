@@ -14,50 +14,16 @@ using VaultSharp.V1.AuthMethods.Token;
 
 namespace ElectrostoreCRON;
 
-public partial class Program
+public static partial class Program
 {
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        builder.Logging.AddSimpleConsole(options =>
-        {
-            options.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
-            options.SingleLine = true;
-        });
-        builder.Configuration.AddJsonFile("config/appsettings.json", optional: false, reloadOnChange: true);
-        if (builder.Environment.IsDevelopment())
-        {
-            builder.Configuration.AddJsonFile("config/appsettings.Development.json", optional: true, reloadOnChange: true);
-        }
-        if (builder.Configuration.GetSection("Vault:Enable").Get<bool>())
-        {
-            var authMethod = new TokenAuthMethodInfo(builder.Configuration.GetSection("Vault:Token").Value);
-            var vaultConfig = new VaultClientSettings(builder.Configuration.GetSection("Vault:Addr").Value, authMethod);
-            builder.Services.AddSingleton<IVaultClient>(new VaultClient(vaultConfig));
-            builder.Configuration.AddVaultConfiguration();
-        }
 
-        // gRPC client to the API
-        builder.Services.AddGrpcClient<ConfigGrpc.ConfigGrpcClient>(options =>
-        {
-            options.Address = new Uri(
-                builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
-        });
-        builder.Services.AddGrpcClient<CronJobsGrpc.CronJobsGrpcClient>(options =>
-        {
-            options.Address = new Uri(
-                builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
-        });
-        builder.Services.AddGrpcClient<ItemsHistoryGrpc.ItemsHistoryGrpcClient>(options =>
-        {
-            options.Address = new Uri(
-                builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
-        });
-        builder.Services.AddGrpcClient<ItemsGrpc.ItemsGrpcClient>(options =>
-        {
-            options.Address = new Uri(
-                builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
-        });
+        ConfigureConfiguration(builder);
+        ConfigureVault(builder);
+        ConfigureLogging(builder);
+        ConfigureGrpcClients(builder);
 
         // Quartz.NET scheduler
         builder.Services.AddQuartz();
@@ -67,13 +33,63 @@ public partial class Program
 
         var app = builder.Build();
 
-        app.MapGet("/health", (ConfigCacheService configCache) =>
-            Results.Ok(new
-            {
-                status = configCache.DemoMode ? "demo" : "healthy"
-            }));
+        MapHealthEndpoint(app);
 
         app.Run();
+    }
+
+    private static void ConfigureLogging(WebApplicationBuilder builder)
+    {
+        builder.Logging.AddSimpleConsole(options =>
+        {
+            options.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
+            options.SingleLine = true;
+        });
+    }
+
+    private static void ConfigureConfiguration(WebApplicationBuilder builder)
+    {
+        builder.Configuration.AddJsonFile("config/appsettings.json", optional: false, reloadOnChange: true);
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.Configuration.AddJsonFile("config/appsettings.Development.json", optional: true, reloadOnChange: true);
+        }
+    }
+
+    private static void ConfigureVault(WebApplicationBuilder builder)
+    {
+        if (!builder.Configuration.GetSection("Vault:Enable").Get<bool>())
+        {
+            return;
+        }
+
+        var authMethod = new TokenAuthMethodInfo(builder.Configuration.GetSection("Vault:Token").Value);
+        var vaultConfig = new VaultClientSettings(builder.Configuration.GetSection("Vault:Addr").Value, authMethod);
+        builder.Services.AddSingleton<IVaultClient>(new VaultClient(vaultConfig));
+        builder.Configuration.AddVaultConfiguration();
+    }
+
+    private static void ConfigureGrpcClients(WebApplicationBuilder builder)
+    {
+        var apiServiceGrpcUrl = builder.Configuration["ApiServiceGrpcUrl"]
+            ?? throw new InvalidOperationException("ApiServiceGrpcUrl configuration is missing.");
+
+        builder.Services.AddGrpcClient<ConfigGrpc.ConfigGrpcClient>(options =>
+        {
+            options.Address = new Uri(apiServiceGrpcUrl);
+        });
+        builder.Services.AddGrpcClient<CronJobsGrpc.CronJobsGrpcClient>(options =>
+        {
+            options.Address = new Uri(apiServiceGrpcUrl);
+        });
+        builder.Services.AddGrpcClient<ItemsHistoryGrpc.ItemsHistoryGrpcClient>(options =>
+        {
+            options.Address = new Uri(apiServiceGrpcUrl);
+        });
+        builder.Services.AddGrpcClient<ItemsGrpc.ItemsGrpcClient>(options =>
+        {
+            options.Address = new Uri(apiServiceGrpcUrl);
+        });
     }
 
     private static void AddScopes(WebApplicationBuilder builder)
@@ -89,5 +105,14 @@ public partial class Program
         builder.Services.AddHostedService<CronSchedulerService>();
         builder.Services.AddHostedService<KafkaCronJobEventsConsumer>();
         builder.Services.AddTransient<ElectrostoreCronJob>();
+    }
+
+    private static void MapHealthEndpoint(WebApplication app)
+    {
+        app.MapGet("/health", (IConfigCacheService configCache) =>
+            Results.Ok(new
+            {
+                status = configCache.DemoMode ? "demo" : "healthy"
+            }));
     }
 }
