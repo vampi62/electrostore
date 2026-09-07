@@ -10,8 +10,8 @@ const authStore = useAuthStore();
 
 const cronJobActionOptions = {
 	0: t("cronJobs.ActionPackageTracking"),
-	1: t("cronJobs.ActionIARetrain"),
-	2: t("cronJobs.ActionStockLowAlert"),
+	1: t("cronJobs.ActionStockLowAlert"),
+	2: t("cronJobs.ActionWeeklyItemMovementReport"),
 };
 
 const filter = ref([

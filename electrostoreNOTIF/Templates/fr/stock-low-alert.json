@@ -1,0 +1,9 @@
+{
+  "subject": "Alerte stock faible : {{itemCount}} article(s) sous leur seuil minimum",
+  "body": "<p>Bonjour {{firstName}} {{lastName}},</p><p><strong>{{itemCount}}</strong> article(s) sont passés sous leur seuil minimum de stock.</p><table border=\"1\" cellpadding=\"6\" cellspacing=\"0\" style=\"border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px\"><thead><tr><th align=\"left\">Référence</th><th align=\"left\">Article</th><th align=\"right\">Quantité actuelle</th><th align=\"right\">Seuil minimum</th></tr></thead><tbody>{{#each items}}<tr><td>{{reference}}</td><td>{{item}}</td><td align=\"right\">{{quantity}}</td><td align=\"right\">{{threshold}}</td></tr>{{/each}}</tbody></table><p>Merci,<br/>L'équipe ElectroStore</p>",
+  "title": "Stock faible : {{itemCount}} article(s)",
+  "data": {
+    "event": "stock_low_alert",
+    "itemCount": "{{itemCount}}"
+  }
+}

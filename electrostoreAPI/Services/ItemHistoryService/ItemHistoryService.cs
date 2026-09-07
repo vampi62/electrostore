@@ -170,6 +170,26 @@ public class ItemHistoryService : IItemHistoryService
         };
     }
 
+    public async Task<IEnumerable<ReadExtendedItemHistoryDto>> GetItemsHistoryByPeriodAsync(DateTime fromDate, DateTime toDate,
+        CancellationToken cancellationToken = default)
+    {
+        var history = await _context.ItemsHistory
+            .Where(h => h.created_at >= fromDate && h.created_at < toDate)
+            .OrderBy(h => h.created_at)
+            .Select(h => new
+            {
+                ItemHistory = h,
+                Item = h.Item,
+                User = h.User
+            })
+            .ToListAsync(cancellationToken);
+        return history.Select(h => _mapper.Map<ReadExtendedItemHistoryDto>(h.ItemHistory) with
+        {
+            item = _mapper.Map<ReadExtendedItemDto>(h.Item),
+            user = _mapper.Map<ReadUserDto>(h.User),
+        }).ToList();
+    }
+
     public async Task LogHistory(int? itemId, int? boxId, ItemHistoryType type,
         int? oldQuantity = null, int? newQuantity = null, string? notes = null)
     {

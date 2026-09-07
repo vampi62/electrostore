@@ -13,6 +13,9 @@ public interface IItemHistoryService
     Task<PaginatedResponseDto<ReadExtendedItemHistoryDto>> GetItemsHistory(int limit = 100, int offset = 0,
         List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null);
 
+    Task<IEnumerable<ReadExtendedItemHistoryDto>> GetItemsHistoryByPeriodAsync(DateTime fromDate, DateTime toDate,
+        CancellationToken cancellationToken = default);
+
     Task LogHistory(int? itemId, int? boxId, ItemHistoryType type,
         int? oldQuantity = null, int? newQuantity = null, string? notes = null);
 }

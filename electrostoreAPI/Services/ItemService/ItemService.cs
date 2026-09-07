@@ -20,6 +20,13 @@ public class ItemService : IItemService
     private readonly string _imagesPath = "images";
     private readonly string _imagesThumbnailsPath = "imagesThumbnails";
 
+    private static readonly ItemHistoryType[] QuantityChangeHistoryTypes =
+    [
+        ItemHistoryType.StockAdded,
+        ItemHistoryType.StockRemoved,
+        ItemHistoryType.StockUpdated
+    ];
+
     public ItemService(IMapper mapper, ApplicationDbContext context, IFileService fileService, IItemHistoryService itemHistoryService)
     {
         _mapper = mapper;
@@ -249,5 +256,24 @@ public class ItemService : IItemService
         await _fileService.DeleteDirectory(Path.Combine(_imagesThumbnailsPath, id.ToString()));
         await _fileService.DeleteDirectory(Path.Combine(_itemDocumentsPath, id.ToString()));
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<ReadItemDto>> GetLowStockItemsAsync(DateTime? sinceDate = null, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Items.Where(i => i.threshold_min_item > 0);
+        if (sinceDate.HasValue)
+        {
+            query = query.Where(i => i.ItemsHistory.Any(h =>
+                h.created_at >= sinceDate.Value && QuantityChangeHistoryTypes.Contains(h.type_item_history)));
+        }
+        var items = await query
+            .Select(i => new
+            {
+                Item = i,
+                quantity_item = i.ItemsBoxs.Sum(ib => ib.quantity_item_box)
+            })
+            .Where(x => x.quantity_item < x.Item.threshold_min_item)
+            .ToListAsync(cancellationToken);
+        return items.Select(x => _mapper.Map<ReadItemDto>(x.Item) with { quantity_item = x.quantity_item }).ToList();
     }
 }

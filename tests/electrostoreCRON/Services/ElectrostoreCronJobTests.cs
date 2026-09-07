@@ -1,5 +1,8 @@
 using ElectrostoreCRON.Grpc;
 using ElectrostoreCRON.Services.CronSchedulerService;
+
+using ElectrostoreCRON.Services.ItemMovementReportService;
+using ElectrostoreCRON.Services.StockLowAlertService;
 using ElectrostoreCRON.Services.CronJobExecutionRegistry;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
@@ -11,11 +14,13 @@ namespace ElectrostoreCRON.Tests.Services;
 
 public class ElectrostoreCronJobTests
 {
+    private readonly Mock<IItemMovementReportService> _itemMovementReport = new();
+    private readonly Mock<IStockLowAlertService> _stockLowAlert = new();
     private readonly Mock<ICronJobExecutionRegistry> _executionRegistry = new();
     private readonly Mock<CronJobsGrpc.CronJobsGrpcClient> _apiClient = new();
     private readonly Mock<ILogger<ElectrostoreCronJob>> _logger = new();
 
-    private ElectrostoreCronJob CreateJob() => new(_executionRegistry.Object, _apiClient.Object, _logger.Object);
+    private ElectrostoreCronJob CreateJob() => new(_itemMovementReport.Object, _stockLowAlert.Object, _executionRegistry.Object, _apiClient.Object, _logger.Object);
 
     private static AsyncUnaryCall<TResponse> CreateAsyncUnaryCall<TResponse>(TResponse response)
     {
@@ -37,7 +42,7 @@ public class ElectrostoreCronJobTests
             () => { });
     }
 
-    private static Mock<IJobExecutionContext> CreateContext(int id, CronJobAction? action, DateTimeOffset? nextFireTimeUtc = null)
+    private static Mock<IJobExecutionContext> CreateContext(int id, CronJobAction? action, DateTimeOffset? nextFireTimeUtc = null, string jobParams = "", string lastRunAt = "")
     {
         var dataMap = new JobDataMap();
         dataMap.Put(ElectrostoreCronJob.KeyId, id);
@@ -45,7 +50,8 @@ public class ElectrostoreCronJobTests
         {
             dataMap.Put(ElectrostoreCronJob.KeyAction, (int)action.Value);
         }
-        dataMap.Put(ElectrostoreCronJob.KeyParams, string.Empty);
+        dataMap.Put(ElectrostoreCronJob.KeyParams, jobParams);
+        dataMap.Put(ElectrostoreCronJob.KeyLastRunAt, lastRunAt);
 
         var jobDetail = new Mock<IJobDetail>();
         jobDetail.SetupGet(d => d.JobDataMap).Returns(dataMap);
