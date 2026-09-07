@@ -16,7 +16,6 @@ enum CronJobAction {
   PACKAGE_TRACKING = 0;
   STOCK_LOW_ALERT = 1;
   WEEKLY_ITEM_MOVEMENT_REPORT = 2;
-  STOCK_LOW_ALERT = 3;
 }
 
 enum CronJobExecutionStatus {
