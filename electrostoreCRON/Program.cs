@@ -5,6 +5,9 @@ using ElectrostoreCRON.Kafka.Producer;
 using ElectrostoreCRON.Services.ConfigCacheService;
 using ElectrostoreCRON.Services.CronJobExecutionRegistry;
 using ElectrostoreCRON.Services.CronSchedulerService;
+
+using ElectrostoreCRON.Services.ItemMovementReportService;
+using ElectrostoreCRON.Services.StockLowAlertService;
 using Quartz;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
@@ -45,6 +48,16 @@ public partial class Program
             options.Address = new Uri(
                 builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
         });
+        builder.Services.AddGrpcClient<ItemsHistoryGrpc.ItemsHistoryGrpcClient>(options =>
+        {
+            options.Address = new Uri(
+                builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
+        });
+        builder.Services.AddGrpcClient<ItemsGrpc.ItemsGrpcClient>(options =>
+        {
+            options.Address = new Uri(
+                builder.Configuration["ApiServiceGrpcUrl"] ?? "http://electrostoreAPI:5001");
+        });
 
         // Quartz.NET scheduler
         builder.Services.AddQuartz();
@@ -67,6 +80,8 @@ public partial class Program
     {
         builder.Services.AddHttpClient();
         builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
+        builder.Services.AddSingleton<IItemMovementReportService, ItemMovementReportService>();
+        builder.Services.AddSingleton<IStockLowAlertService, StockLowAlertService>();
         builder.Services.AddSingleton<ICronJobExecutionRegistry, CronJobExecutionRegistry>();
         builder.Services.AddSingleton<ConfigCacheService>();
         builder.Services.AddSingleton<IConfigCacheService>(sp => sp.GetRequiredService<ConfigCacheService>());

@@ -13,7 +13,7 @@
 	"LastRun": "Dernière exécution",
 	"NextRun": "Prochaine exécution",
 	"ActionPackageTracking": "Suivi de colis",
-	"ActionIARetrain": "Réentraînement IA",
 	"ActionStockLowAlert": "Alerte stock faible",
+	"ActionWeeklyItemMovementReport": "Rapport hebdomadaire des mouvements de stock",
 	"Loading": "Chargement"
 }

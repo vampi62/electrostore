@@ -1,0 +1,9 @@
+{
+  "subject": "Low stock alert: {{itemCount}} item(s) below their minimum threshold",
+  "body": "<p>Hello {{firstName}} {{lastName}},</p><p><strong>{{itemCount}}</strong> item(s) have dropped below their minimum stock threshold.</p><table border=\"1\" cellpadding=\"6\" cellspacing=\"0\" style=\"border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px\"><thead><tr><th align=\"left\">Reference</th><th align=\"left\">Item</th><th align=\"right\">Current quantity</th><th align=\"right\">Minimum threshold</th></tr></thead><tbody>{{#each items}}<tr><td>{{reference}}</td><td>{{item}}</td><td align=\"right\">{{quantity}}</td><td align=\"right\">{{threshold}}</td></tr>{{/each}}</tbody></table><p>Thank you,<br/>The ElectroStore team</p>",
+  "title": "Low stock: {{itemCount}} item(s)",
+  "data": {
+    "event": "stock_low_alert",
+    "itemCount": "{{itemCount}}"
+  }
+}

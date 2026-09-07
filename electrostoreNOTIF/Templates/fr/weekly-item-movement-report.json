@@ -1,0 +1,9 @@
+{
+  "subject": "Rapport des mouvements de stock du {{fromDate}} au {{toDate}}",
+  "body": "<p>Bonjour {{firstName}} {{lastName}},</p><p>Voici les <strong>{{movementCount}}</strong> mouvement(s) d'articles enregistré(s) entre le {{fromDate}} et le {{toDate}}.</p><table border=\"1\" cellpadding=\"6\" cellspacing=\"0\" style=\"border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px\"><thead><tr><th align=\"left\">Date</th><th align=\"left\">Article</th><th align=\"left\">Type</th><th align=\"right\">Variation</th><th align=\"right\">Avant</th><th align=\"right\">Après</th><th align=\"left\">Utilisateur</th><th align=\"left\">Notes</th></tr></thead><tbody>{{#each movements}}<tr><td>{{date}}</td><td>{{item}}</td><td>{{type}}</td><td align=\"right\">{{quantityChange}}</td><td align=\"right\">{{oldQuantity}}</td><td align=\"right\">{{newQuantity}}</td><td>{{user}}</td><td>{{notes}}</td></tr>{{/each}}</tbody></table><p>Merci,<br/>L'équipe ElectroStore</p>",
+  "title": "Mouvements de stock : {{movementCount}} sur la période",
+  "data": {
+    "event": "weekly_item_movement_report",
+    "movementCount": "{{movementCount}}"
+  }
+}

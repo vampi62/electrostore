@@ -82,6 +82,96 @@ public class NotificationTemplateServiceTests
         Assert.Equal("account_created", result.Data?["event"]);
     }
 
+    [Theory]
+    [InlineData("fr", "Rapport des mouvements de stock du 2026-08-28 au 2026-09-04", "Stock ajouté")]
+    [InlineData("en", "Stock movement report from 2026-08-28 to 2026-09-04", "Stock added")]
+    public void RenderTemplate_ShouldRenderTheMovementTable_FromRealTemplateFile(string language, string expectedSubject, string expectedType)
+    {
+        // Arrange
+        var service = CreateService();
+        var values = ParseValues($$"""
+        {
+            "firstName": "Jean",
+            "lastName": "Dupont",
+            "fromDate": "2026-08-28",
+            "toDate": "2026-09-04",
+            "movementCount": 2,
+            "movements": [
+                {
+                    "date": "2026-09-01 08:30",
+                    "item": "Resistor 10k",
+                    "type": "{{expectedType}}",
+                    "quantityChange": "+5",
+                    "oldQuantity": 10,
+                    "newQuantity": 15,
+                    "user": "John Doe",
+                    "notes": "restock"
+                },
+                {
+                    "date": "2026-09-02 09:00",
+                    "item": "Capacitor 100nF",
+                    "type": "{{expectedType}}",
+                    "quantityChange": "-3",
+                    "oldQuantity": 20,
+                    "newQuantity": 17,
+                    "user": "-",
+                    "notes": ""
+                }
+            ]
+        }
+        """);
+
+        // Act
+        var result = service.RenderTemplate("weekly-item-movement-report", values, language);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(expectedSubject, result!.Subject);
+        Assert.Contains("Jean", result.Body);
+        Assert.Contains("<td>Resistor 10k</td>", result.Body);
+        Assert.Contains("<td>Capacitor 100nF</td>", result.Body);
+        Assert.Contains($"<td>{expectedType}</td>", result.Body);
+        Assert.Contains(">+5</td>", result.Body);
+        Assert.Contains(">17</td>", result.Body);
+        Assert.DoesNotContain("{{", result.Body);
+        Assert.Equal("weekly_item_movement_report", result.Data?["event"]);
+        Assert.Equal("2", result.Data?["movementCount"]);
+    }
+
+    [Theory]
+    [InlineData("fr", "Alerte stock faible : 2 article(s) sous leur seuil minimum")]
+    [InlineData("en", "Low stock alert: 2 item(s) below their minimum threshold")]
+    public void RenderTemplate_ShouldRenderTheLowStockTable_FromRealTemplateFile(string language, string expectedSubject)
+    {
+        // Arrange
+        var service = CreateService();
+        var values = ParseValues("""
+        {
+            "firstName": "Jean",
+            "lastName": "Dupont",
+            "itemCount": 2,
+            "items": [
+                { "item": "Resistor 10k", "reference": "R10K", "quantity": 2, "threshold": 10 },
+                { "item": "Capacitor 100nF", "reference": "C100N", "quantity": 0, "threshold": 5 }
+            ]
+        }
+        """);
+
+        // Act
+        var result = service.RenderTemplate("stock-low-alert", values, language);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(expectedSubject, result!.Subject);
+        Assert.Contains("Jean", result.Body);
+        Assert.Contains("<td>Resistor 10k</td>", result.Body);
+        Assert.Contains("<td>Capacitor 100nF</td>", result.Body);
+        Assert.Contains(">R10K</td>", result.Body);
+        Assert.DoesNotContain("{{", result.Body);
+        Assert.Equal("stock_low_alert", result.Data?["event"]);
+        Assert.Equal("2", result.Data?["itemCount"]);
+    }
+
     [Fact]
     public void RenderTemplate_ShouldFallBackToDefaultLanguage_WhenRequestedLanguageIsUnavailable()
     {

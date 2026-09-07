@@ -13,7 +13,7 @@
 	"LastRun": "Last Run",
 	"NextRun": "Next Run",
 	"ActionPackageTracking": "Package Tracking",
-	"ActionIARetrain": "IA Retrain",
 	"ActionStockLowAlert": "Stock Low Alert",
+	"ActionWeeklyItemMovementReport": "Weekly Stock Movement Report",
 	"Loading": "Loading"
 }

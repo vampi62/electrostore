@@ -42,7 +42,7 @@ public record CreateCronJobDto
     public required string cron_expression_cronjob { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    [Range(0, (int)CronJobAction.StockLowAlert, ErrorMessage = "{0} must be a valid action, between {1} and {2}.")]
+    [Range(0, (int)CronJobAction.WeeklyItemMovementReport, ErrorMessage = "{0} must be a valid action, between {1} and {2}.")]
     public CronJobAction action_cronjob { get; init; }
 
     public string? params_cronjob { get; init; }
@@ -60,7 +60,7 @@ public record UpdateCronJobDto
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? cron_expression_cronjob { get; init; }
 
-    [Range(0, (int)CronJobAction.StockLowAlert, ErrorMessage = "{0} must be a valid action, between {1} and {2}.")]
+    [Range(0, (int)CronJobAction.WeeklyItemMovementReport, ErrorMessage = "{0} must be a valid action, between {1} and {2}.")]
     public CronJobAction? action_cronjob { get; init; }
 
     public string? params_cronjob { get; init; }

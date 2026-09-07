@@ -1,5 +1,8 @@
+using System.Globalization;
 using ElectrostoreCRON.Grpc;
 
+using ElectrostoreCRON.Services.ItemMovementReportService;
+using ElectrostoreCRON.Services.StockLowAlertService;
 using ElectrostoreCRON.Services.CronJobExecutionRegistry;
 using Grpc.Core;
 using Quartz;
@@ -9,23 +12,30 @@ namespace ElectrostoreCRON.Services.CronSchedulerService;
 [DisallowConcurrentExecution]
 public class ElectrostoreCronJob : IJob
 {
-    public const string KeyAction = "action_cronjob";
-    public const string KeyParams = "params_cronjob";
-    public const string KeyId     = "id_cronjob";
+    public const string KeyAction    = "action_cronjob";
+    public const string KeyParams    = "params_cronjob";
+    public const string KeyId        = "id_cronjob";
+    public const string KeyLastRunAt = "last_run_at_cronjob";
 
 
+    private readonly IItemMovementReportService    _itemMovementReport;
+    private readonly IStockLowAlertService         _stockLowAlert;
     private readonly ICronJobExecutionRegistry     _executionRegistry;
     private readonly CronJobsGrpc.CronJobsGrpcClient _apiClient;
     private readonly ILogger<ElectrostoreCronJob>  _logger;
 
     public ElectrostoreCronJob(
+        IItemMovementReportService itemMovementReport,
+        IStockLowAlertService stockLowAlert,
         ICronJobExecutionRegistry executionRegistry,
         CronJobsGrpc.CronJobsGrpcClient apiClient,
         ILogger<ElectrostoreCronJob> logger)
     {
+        _itemMovementReport = itemMovementReport;
+        _stockLowAlert      = stockLowAlert;
         _executionRegistry = executionRegistry;
-        _apiClient   = apiClient;
-        _logger      = logger;
+        _apiClient          = apiClient;
+        _logger             = logger;
     }
 
     public async Task Execute(IJobExecutionContext context)
@@ -33,6 +43,8 @@ public class ElectrostoreCronJob : IJob
         var map    = context.JobDetail.JobDataMap;
         var action = Enum.TryParse<CronJobAction>(map.Get(KeyAction)?.ToString(), out var actionValue) ? (int)actionValue : -1;
         var id     = map.GetInt(KeyId);
+        var jobParams = map.GetString(KeyParams);
+        var lastRunAt = ParseLastRunAt(map.GetString(KeyLastRunAt));
 
         _logger.LogInformation("Running cron job #{Id} - action={Action}", id, action);
 
@@ -45,6 +57,14 @@ public class ElectrostoreCronJob : IJob
             {
                 case (int)CronJobAction.PackageTracking:
                     // await _track17Sync.SyncAllAsync(context.CancellationToken);
+                    break;
+
+                case (int)CronJobAction.WeeklyItemMovementReport:
+                    await _itemMovementReport.SendReportAsync(jobParams, lastRunAt, context.CancellationToken);
+                    break;
+
+                case (int)CronJobAction.StockLowAlert:
+                    await _stockLowAlert.SendAlertAsync(jobParams, lastRunAt, context.CancellationToken);
                     break;
 
                 default:
@@ -68,6 +88,17 @@ public class ElectrostoreCronJob : IJob
             _executionRegistry.Unregister(id);
             await UpdateLastRunAsync(id, context.NextFireTimeUtc, context.CancellationToken);
         }
+    }
+
+    private static DateTime? ParseLastRunAt(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+        return DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsed)
+            ? parsed
+            : null;
     }
 
     private async Task UpdateLastRunAsync(int id, DateTimeOffset? nextFireTime, CancellationToken ct)
