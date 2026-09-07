@@ -3,6 +3,7 @@ using ElectrostoreCRON.Grpc;
 using ElectrostoreCRON.Kafka.Consumers;
 using ElectrostoreCRON.Kafka.Producer;
 using ElectrostoreCRON.Services.ConfigCacheService;
+using ElectrostoreCRON.Services.CronJobExecutionRegistry;
 using ElectrostoreCRON.Services.CronSchedulerService;
 using Quartz;
 using VaultSharp;
@@ -66,6 +67,7 @@ public partial class Program
     {
         builder.Services.AddHttpClient();
         builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
+        builder.Services.AddSingleton<ICronJobExecutionRegistry, CronJobExecutionRegistry>();
         builder.Services.AddSingleton<ConfigCacheService>();
         builder.Services.AddSingleton<IConfigCacheService>(sp => sp.GetRequiredService<ConfigCacheService>());
         builder.Services.AddHostedService(sp => sp.GetRequiredService<ConfigCacheService>());

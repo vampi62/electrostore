@@ -1,3 +1,4 @@
+using System.Globalization;
 using ElectrostoreCRON.Grpc;
 using Grpc.Core;
 using Quartz;
@@ -103,6 +104,31 @@ public class CronSchedulerService : BackgroundService
             _logger.LogInformation(
                 "Cron job #{Id} ({Name}) scheduled - action={Action}, expr={Expr}",
                 job.IdCronjob, job.NameCronjob, job.ActionCronjob, job.CronExpressionCronjob);
+
+            if (IsOverdue(job.NextRunAt))
+            {
+                _logger.LogInformation(
+                    "Cron job #{Id} ({Name}) is overdue (next_run_at={NextRunAt}) - triggering immediately.",
+                    job.IdCronjob, job.NameCronjob, job.NextRunAt);
+                await scheduler.TriggerJob(jobKey, ct);
+            }
         }
+    }
+
+    // A job is overdue when its previously computed next run time already passed, meaning it was missed (e.g. downtime).
+    private static bool IsOverdue(string? nextRunAtIso)
+    {
+        if (string.IsNullOrWhiteSpace(nextRunAtIso))
+        {
+            return false;
+        }
+
+        if (!DateTime.TryParse(nextRunAtIso, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var nextRunAt))
+        {
+            return false;
+        }
+
+        // Consider a job overdue if its next run time is more than 1 minute in the past. to avoid triggering jobs that are planned for the near future.
+        return nextRunAt.ToUniversalTime() < DateTime.UtcNow + TimeSpan.FromMinutes(1);
     }
 }

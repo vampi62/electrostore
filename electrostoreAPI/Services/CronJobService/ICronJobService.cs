@@ -1,4 +1,5 @@
 using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
 
 namespace ElectrostoreAPI.Services.CronJobService;
 
@@ -17,4 +18,12 @@ public interface ICronJobService
     public Task<IEnumerable<ReadCronJobDto>> GetEnabledCronJobsAsync(CancellationToken cancellationToken);
 
     public Task UpdateCronJobRunAsync(int id, DateTime? lastRunAt, DateTime? nextRunAt, CancellationToken cancellationToken);
+
+    public Task UpdateCronJobStatusAsync(int id, CronJobStatus status, string? lastError, CancellationToken cancellationToken);
+
+    public Task<ReadCronJobStatusDto> GetCronJobStatus(int id);
+
+    public Task ForceRunCronJob(int id);
+
+    public Task ForceStopCronJob(int id);
 }

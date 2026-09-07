@@ -5,15 +5,25 @@ option csharp_namespace = "ElectrostoreAPI.Grpc";
 package cronJobs;
 
 service CronJobsGrpc {
-  rpc GetEnabledCronJobs (GetEnabledCronJobsRequest) returns (GetEnabledCronJobsReply);
-  rpc UpdateCronJobRun   (UpdateCronJobRunRequest)   returns (UpdateCronJobRunReply);
+  rpc GetEnabledCronJobs  (GetEnabledCronJobsRequest)  returns (GetEnabledCronJobsReply);
+  rpc UpdateCronJobRun    (UpdateCronJobRunRequest)    returns (UpdateCronJobRunReply);
+  rpc UpdateCronJobStatus (UpdateCronJobStatusRequest) returns (UpdateCronJobStatusReply);
 }
 
 // ---- Enums ----
 
 enum CronJobAction {
   PACKAGE_TRACKING = 0;
-  STOCK_LOW_ALERT = 1;
+  IA_RETRAIN = 1;
+  STOCK_LOW_ALERT = 2;
+}
+
+enum CronJobExecutionStatus {
+  IDLE = 0;
+  RUNNING = 1;
+  SUCCESS = 2;
+  FAILED = 3;
+  STOPPED = 4;
 }
 
 // ---- CronJobs ----
@@ -43,5 +53,17 @@ message UpdateCronJobRunRequest {
 }
 
 message UpdateCronJobRunReply {
+  bool success = 1;
+}
+
+// ---- Update CronJob Status ----
+
+message UpdateCronJobStatusRequest {
+  int32  id_cronjob         = 1;
+  CronJobExecutionStatus status_cronjob = 2;
+  string last_error_cronjob = 3; // optional, empty when none
+}
+
+message UpdateCronJobStatusReply {
   bool success = 1;
 }
