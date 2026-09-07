@@ -14,8 +14,19 @@ public record ReadCronJobDto
     public bool is_enabled { get; init; }
     public DateTime? last_run_at { get; init; }
     public DateTime? next_run_at { get; init; }
+    public CronJobStatus status_cronjob { get; init; }
+    public string? last_error_cronjob { get; init; }
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
+}
+
+public record ReadCronJobStatusDto
+{
+    public int id_cronjob { get; init; }
+    public CronJobStatus status_cronjob { get; init; }
+    public string? last_error_cronjob { get; init; }
+    public DateTime? last_run_at { get; init; }
+    public DateTime? next_run_at { get; init; }
 }
 
 public record CreateCronJobDto

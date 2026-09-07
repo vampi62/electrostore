@@ -64,5 +64,29 @@ namespace ElectrostoreAPI.Controllers
             await _cronJobService.DeleteCronJob(id_cronjob);
             return NoContent();
         }
+
+        [HttpGet("{id_cronjob}/status")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult<ReadCronJobStatusDto>> GetCronJobStatus([FromRoute] int id_cronjob)
+        {
+            var status = await _cronJobService.GetCronJobStatus(id_cronjob);
+            return Ok(status);
+        }
+
+        [HttpPost("{id_cronjob}/force-run")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult> ForceRunCronJob([FromRoute] int id_cronjob)
+        {
+            await _cronJobService.ForceRunCronJob(id_cronjob);
+            return Accepted();
+        }
+
+        [HttpPost("{id_cronjob}/force-stop")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult> ForceStopCronJob([FromRoute] int id_cronjob)
+        {
+            await _cronJobService.ForceStopCronJob(id_cronjob);
+            return Accepted();
+        }
     }
 }

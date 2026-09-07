@@ -183,77 +183,6 @@ services:`;
     restart: unless-stopped
 `;
 
-    // Service IA
-    if (config.appVersion === 'local') {
-        compose += `
-  ia:
-    build:
-      context: ./electrostore/electrostoreIA
-      dockerfile: Dockerfile`;
-    } else {
-        compose += `
-  ia:
-    image: ghcr.io/vampi62/electrostore/ia:\${IA_VERSION:-latest}`;
-    }
-    compose += `
-    container_name: electrostore-ia
-    cap_add:
-      - CHOWN
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp
-    deploy:
-      resources:
-        limits:
-          cpus: '2.0'
-          memory: 2G`;
-    
-    // Build depends_on section for IA service
-    const iaDependencies = [];
-    if (!isLegacy) {
-        iaDependencies.push('kafka:\n        condition: service_healthy');
-        iaDependencies.push('api:\n        condition: service_healthy');
-    } else {
-        iaDependencies.push('api:\n        condition: service_started');
-    }
-    if (config.useMariaDB) {
-        iaDependencies.push('mariadb:\n        condition: service_healthy');
-    }
-    if (config.enableS3 && config.useS3) {
-        iaDependencies.push('garage:\n        condition: service_healthy');
-    }
-    
-    compose += `
-    depends_on:
-      ${iaDependencies.join('\n      ')}`;
-    
-    if (!isLegacy) {
-        compose += `
-    volumes:
-      - ./config/ia/appsettings.json:/app/config/appsettings.json:ro`;
-    } else {
-        compose += `
-    volumes:
-      - ./config/api/appsettings.json:/app/appsettings.json:ro`;
-    }
-    compose += `
-      - ./ia-data:/app/wwwroot`;
-
-    if (!config.enableS3) {
-        compose += `\n      - ia-models:/app/models`;
-    }
-    compose += `
-    networks:
-      electrostore:
-        aliases:
-          - electrostoreIA
-    restart: unless-stopped
-`;
-
     // NOTIF Service (only for modern versions)
     if (!isLegacy) {
         if (config.appVersion === 'local') {
@@ -621,6 +550,7 @@ function generateApiAppsettings(config) {
         settings.Kafka = {
             "BootstrapServers": "kafka:9092"
         };
+<<<<<<< Updated upstream
         if (config.enableTrack17) {
             settings.Track17 = {
                 "Enable": true,
@@ -632,6 +562,44 @@ function generateApiAppsettings(config) {
                 "Enable": false,
                 "ApiKey": "",
                 "CarrierListUrl": "https://res.17track.net/asset/carrier/info/apicarrier.all.json"
+=======
+
+        if (config.enableLlm) {
+            settings.Llm = {
+                "Enable": true,
+                "BaseUrl": config.llm.baseUrl,
+                "Model": config.llm.model,
+                "Endpoint": config.llm.endpoint,
+                "ApiKey": config.useVault ? "{{vault:llm_api_key}}" : (config.llm.apiKey || ""),
+                "SystemPrompt": config.llm.systemPrompt || DEFAULT_SYSTEM_PROMPT
+            };
+        } else {
+            settings.Llm = {
+                "Enable": false,
+                "BaseUrl": "http://ollama:11434",
+                "Model": "llama3.1:8b",
+                "Endpoint": "api/chat",
+                "ApiKey": "",
+                "SystemPrompt": config.llm.systemPrompt || DEFAULT_SYSTEM_PROMPT
+            };
+        }
+
+        if (config.enableStt) {
+            settings.Stt = {
+                "Enable": true,
+                "BaseUrl": config.stt.baseUrl,
+                "Path": config.stt.endpoint || "audio/transcriptions",
+                "Model": config.stt.model,
+                "ApiKey": config.useVault ? "{{vault:stt_api_key}}" : (config.stt.apiKey || "")
+            };
+        } else {
+            settings.Stt = {
+                "Enable": false,
+                "BaseUrl": "http://whisper:9000",
+                "Path": "audio/transcriptions",
+                "Model": "whisper-1",
+                "ApiKey": ""
+>>>>>>> Stashed changes
             };
         }
 
@@ -758,89 +726,6 @@ function generateApiAppsettings(config) {
     return JSON.stringify(settings, null, 2);
 }
 
-// Generate appsettings.json for IA service
-function generateIaAppsettings(config) {
-    const isLegacy = isLegacyVersion(config.appVersion);
-    
-    const settings = {
-        "Logging": {
-            "LogLevel": {
-                "Default": "Information",
-                "Microsoft.AspNetCore": "Warning",
-                "Microsoft.ML": "Warning"
-            }
-        },
-        "Kestrel": {
-            "Endpoints": {
-                "Grpc": {
-                    "Url": "http://0.0.0.0:5001",
-                    "Protocols": "Http2"
-                },
-                "Http": {
-                    "Url": "http://0.0.0.0:5000",
-                    "Protocols": "Http1"
-                }
-            }
-        }
-    };
-
-    if (!isLegacy) {
-        settings.Kafka = {
-            "BootstrapServers": "kafka:9092",
-            "ConsumerGroupId": "ia-service"
-        };
-    }
-
-    settings.ApiServiceGrpcUrl = "http://electrostoreAPI:5001";
-
-    if (config.useVault) {
-        settings.Vault = {
-            "Enable": true,
-            "Addr": config.vault.addr,
-            "Token": config.vault.token,
-            "Path": config.vault.path,
-            "MountPoint": config.vault.mountPoint
-        };
-    } else {
-        settings.Vault = {
-            "Enable": false
-        };
-    }
-
-    if (config.enableS3) {
-        if (config.useS3) {
-            settings.S3 = {
-                "Enable": true,
-                "Endpoint": "garage:3900",
-                "AccessKey": config.useVault ? "{{vault:s3_ia_access_key}}" : config.s3Ia.accessKey,
-                "SecretKey": config.useVault ? "{{vault:s3_ia_secret_key}}" : config.s3Ia.secretKey,
-                "BucketName": config.s3Ia.bucket,
-                "Region": config.s3Ia.region,
-                "Secure": false
-            };
-        } else if (config.s3IaExternal) {
-            settings.S3 = {
-                "Enable": true,
-                "Endpoint": config.s3IaExternal.endpoint,
-                "AccessKey": config.useVault ? "{{vault:s3_ia_access_key}}" : config.s3IaExternal.accessKey,
-                "SecretKey": config.useVault ? "{{vault:s3_ia_secret_key}}" : config.s3IaExternal.secretKey,
-                "BucketName": config.s3IaExternal.bucket,
-                "Region": config.s3IaExternal.region,
-                "Secure": config.s3IaExternal.secure
-            };
-        }
-    } else {
-        settings.S3 = {
-            "Enable": false
-        };
-    }
-
-    settings.DefaultEpochs = 10;
-    settings.DefaultBatchSize = 32;
-
-    return JSON.stringify(settings, null, 2);
-}
-
 // Generate appsettings.json for NOTIF service
 function generateNotifAppsettings(config) {
     const settings = {
@@ -941,23 +826,9 @@ function generateCronAppsettings(config) {
         "CronConsumerGroupId": "cron-service-events"
     };
 
-    if (config.enableTrack17) {
-        settings.Track17 = {
-            "Enable": true,
-            "ApiKey": config.useVault ? "{{vault:track17_api_key}}" : (config.track17ApiKey || ""),
-            "BaseUrl": "https://api.17track.net/track/v2.4",
-            "BatchSize": 40,
-            "ConsumeTimeoutMs": 300
-        };
-    } else {
-        settings.Track17 = {
-            "Enable": false,
-            "ApiKey": ""
-        };
-    }
-
     settings.ApiServiceGrpcUrl = "http://electrostoreAPI:5001";
     settings.CronRefreshIntervalMinutes = 60;
+    settings.AppLanguage = config.appLanguage;
 
     if (config.useVault) {
         settings.Vault = {
@@ -1055,7 +926,6 @@ function generateEnvFile(config) {
     env += `# Docker image versions\n`;
     env += `API_VERSION=${config.appVersion}\n`;
     env += `FRONTEND_VERSION=${config.appVersion}\n`;
-    env += `IA_VERSION=${config.appVersion}\n`;
     
     if (!isLegacy) {
         env += `NOTIF_VERSION=${config.appVersion}\n`;
@@ -1107,13 +977,6 @@ function generateEnvFile(config) {
         env += `S3_SECRET_KEY=${config.s3.secretKey}\n`;
         env += `S3_BUCKET=${config.s3.bucket}\n`;
         env += `S3_REGION=${config.s3.region}\n\n`;
-        if (!isLegacy) {
-            env += `# S3 Garage - IA service (integrated service)\n`;
-            env += `S3_IA_ACCESS_KEY=${config.s3Ia.accessKey}\n`;
-            env += `S3_IA_SECRET_KEY=${config.s3Ia.secretKey}\n`;
-            env += `S3_IA_BUCKET=${config.s3Ia.bucket}\n\n`;
-            env += `S3_IA_REGION=${config.s3Ia.region}\n\n`;
-        }
     }
     
     return env;
@@ -1225,37 +1088,14 @@ docker exec electrostore-garage /garage layout apply --version 1
 
 echo "Creating S3 access keys..."
 GARAGE_API_ACCESS_KEY="${config.s3.accessKey}"
-GARAGE_API_SECRET_KEY="${config.s3.secretKey}"`;
-
-        if (!isLegacy) {
-            script += `
-GARAGE_IA_ACCESS_KEY="${config.s3Ia.accessKey}"
-GARAGE_IA_SECRET_KEY="${config.s3Ia.secretKey}"`;
-        }
-script += `
+GARAGE_API_SECRET_KEY="${config.s3.secretKey}"
 echo "API Access Key: \$GARAGE_API_ACCESS_KEY"
-echo "API Secret Key: \$GARAGE_API_SECRET_KEY"`;
-        if (!isLegacy) {
-            script += `
-echo "IA Access Key: \$GARAGE_IA_ACCESS_KEY"
-echo "IA Secret Key: \$GARAGE_IA_SECRET_KEY"`;
-        }
-
-script += `
-
+echo "API Secret Key: \$GARAGE_API_SECRET_KEY"
 echo "Creating bucket ${config.s3.bucket} for API service..."
 docker exec electrostore-garage /garage key import -n electrostore-key --yes $GARAGE_API_ACCESS_KEY $GARAGE_API_SECRET_KEY
 docker exec electrostore-garage /garage bucket create ${config.s3.bucket}
 docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.bucket} --key electrostore-key
 `;
-        if (!isLegacy) {
-            script += `
-echo "Creating bucket ${config.s3Ia.bucket} for IA service..."
-docker exec electrostore-garage /garage key import -n electrostore-ia-key --yes $GARAGE_IA_ACCESS_KEY $GARAGE_IA_SECRET_KEY
-docker exec electrostore-garage /garage bucket create ${config.s3Ia.bucket}
-docker exec electrostore-garage /garage bucket allow --read --write ${config.s3Ia.bucket} --key electrostore-ia-key
-`;
-        }
 
         if (config.useVault) {
             script += `
@@ -1303,14 +1143,6 @@ echo "Configuring Kafka topics..."
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic notification-requests --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'notification-requests' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic cronjob-events --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'cronjob-events' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic mqtt-user-events --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'mqtt-user-events' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic ia-requests --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'ia-requests' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-add --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-request-add' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-change --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-request-change' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-stop --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-request-stop' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-resume --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-request-resume' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-delete --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-request-delete' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-result --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'tracking-result' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic ia-status --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'ia-status' already exists"
 `;
     }
 
@@ -1509,36 +1341,14 @@ docker exec electrostore-garage /garage layout apply --version 1
 
 Write-Host "Creating S3 access keys..."
 $GARAGE_API_ACCESS_KEY = "${config.s3.accessKey}"
-$GARAGE_API_SECRET_KEY = "${config.s3.secretKey}"`;
-
-        if (!isLegacy) {
-            script += `
-$GARAGE_IA_ACCESS_KEY = "${config.s3Ia.accessKey}"
-$GARAGE_IA_SECRET_KEY = "${config.s3Ia.secretKey}"`;
-        }
-script += `
+$GARAGE_API_SECRET_KEY = "${config.s3.secretKey}"
 Write-Host "API Access Key: $GARAGE_API_ACCESS_KEY"
-Write-Host "API Secret Key: $GARAGE_API_SECRET_KEY"`;
-        if (!isLegacy) {
-            script += `
-Write-Host "IA Access Key: $GARAGE_IA_ACCESS_KEY"
-Write-Host "IA Secret Key: $GARAGE_IA_SECRET_KEY"`;
-        }
-script += `
-
+Write-Host "API Secret Key: $GARAGE_API_SECRET_KEY"
 Write-Host "Creating bucket ${config.s3.bucket} for API service..."
 docker exec electrostore-garage /garage key import -n electrostore-key --yes $GARAGE_API_ACCESS_KEY $GARAGE_API_SECRET_KEY
 docker exec electrostore-garage /garage bucket create ${config.s3.bucket}
 docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.bucket} --key electrostore-key
 `;
-        if (!isLegacy) {
-            script += `
-Write-Host "Creating bucket ${config.s3Ia.bucket} for IA service..."
-docker exec electrostore-garage /garage key import -n electrostore-ia-key --yes $GARAGE_IA_ACCESS_KEY $GARAGE_IA_SECRET_KEY
-docker exec electrostore-garage /garage bucket create ${config.s3Ia.bucket}
-docker exec electrostore-garage /garage bucket allow --read --write ${config.s3Ia.bucket} --key electrostore-ia-key
-`;
-        }
 
         if (config.useVault) {
             script += `
@@ -1585,14 +1395,6 @@ Write-Host "Configuring Kafka topics..."
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic notification-requests --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'notification-requests' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic cronjob-events --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'cronjob-events' already exists"
 docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic mqtt-user-events --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || echo "Topic 'mqtt-user-events' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic ia-requests --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'ia-requests' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-add --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-request-add' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-change --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-request-change' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-stop --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-request-stop' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-resume --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-request-resume' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-request-delete --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-request-delete' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic tracking-result --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'tracking-result' already exists"
-docker exec electrostore-kafka /opt/kafka/bin/kafka-topics.sh --create --topic ia-status --bootstrap-server localhost:9092 --replication-factor 1 --partitions 3 || Write-Host "Topic 'ia-status' already exists"
 `;
     }
 
@@ -1649,13 +1451,12 @@ This file contains all necessary files to deploy ElectroStore with Docker.
     if (!isLegacy) {
         readmeFile += `
 - \`config/api/appsettings.json\` : API configuration
-- \`config/ia/appsettings.json\` : IA service configuration
 - \`config/notif/appsettings.json\` : Notification service configuration
 - \`config/cron/appsettings.json\` : CRON service configuration
 - \`config/worker/appsettings.json\` : WORKER service configuration`;
     } else {
         readmeFile += `
-- \`config/api/appsettings.json\` : API configuration (includes IA and NOTIF settings)`;
+- \`config/api/appsettings.json\` : API configuration (includes NOTIF settings)`;
     }
 
 readmeFile += `

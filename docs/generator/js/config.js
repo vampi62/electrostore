@@ -77,12 +77,6 @@ function collectConfig(formData) {
                 bucket: formData.get('s3Bucket') || 'electrostore-api',
                 region: formData.get('s3Region') || 'garage'
             };
-            config.s3Ia = {
-                accessKey: 'GK' + generateRandomHexaKey(24),
-                secretKey: generateRandomHexaKey(64),
-                bucket: formData.get('s3IaBucket') || 'electrostore-ia',
-                region: config.s3.region
-            };
         } else {
             config.s3External = {
                 endpoint: formData.get('s3ExternalEndpoint'),
@@ -91,14 +85,6 @@ function collectConfig(formData) {
                 bucket: formData.get('s3ExternalBucket'),
                 region: formData.get('s3ExternalRegion') || 'us-east-1',
                 secure: document.getElementById('s3ExternalSecure') ? document.getElementById('s3ExternalSecure').checked : true
-            };
-            config.s3IaExternal = {
-                endpoint: formData.get('s3IaExternalEndpoint'),
-                accessKey: formData.get('s3IaExternalAccessKey'),
-                secretKey: formData.get('s3IaExternalSecretKey'),
-                bucket: formData.get('s3IaExternalBucket'),
-                region: formData.get('s3IaExternalRegion') || 'us-east-1',
-                secure: document.getElementById('s3IaExternalSecure') ? document.getElementById('s3IaExternalSecure').checked : true
             };
         }
     }
@@ -133,12 +119,6 @@ function collectConfig(formData) {
             mountPoint: formData.get('vaultMountPoint') || 'secret',
             containerName: formData.get('vaultContainerName') || 'vault'
         };
-    }
-    
-    // 17track
-    config.enableTrack17 = document.getElementById('enableTrack17').checked;
-    if (config.enableTrack17) {
-        config.track17ApiKey = formData.get('track17ApiKey') || '';
     }
 
     // LLM chat assistant
