@@ -5,6 +5,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
@@ -17,6 +19,8 @@ using Xunit;
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Json;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -207,6 +211,162 @@ namespace ElectrostoreAPI.Tests
 
             // Assert
             Assert.True(operation.Responses.TryGetValue("200", out var resp) && !resp.Headers.ContainsKey("X-Total-Count"));
+        }
+
+        // Program.Main() itself requires a real "config/appsettings.json" file and live infrastructure
+        // (database, MQTT, S3, gRPC) once the app starts, so it isn't exercised directly.
+        // ConfigureLogging/ConfigureConfiguration/ConfigureVault/MapHealthEndpoint are the private
+        // static methods that own that setup and can be tested in isolation.
+        private static void InvokePrivateStatic(string methodName, object arg)
+        {
+            var method = typeof(Program).GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static)
+                ?? throw new InvalidOperationException($"{methodName} method not found");
+            method.Invoke(null, new[] { arg });
+        }
+
+        // ---------- ConfigureLogging ----------
+
+        [Fact]
+        public void ConfigureLogging_ShouldConfigureSimpleConsoleFormatter()
+        {
+            var builder = WebApplication.CreateBuilder();
+
+            InvokePrivateStatic("ConfigureLogging", builder);
+
+            using var provider = builder.Services.BuildServiceProvider();
+            var options = provider.GetRequiredService<IOptionsMonitor<SimpleConsoleFormatterOptions>>().CurrentValue;
+
+            Assert.Equal("yyyy-MM-dd HH:mm:ss ", options.TimestampFormat);
+            Assert.True(options.SingleLine);
+        }
+
+        // ---------- ConfigureConfiguration ----------
+
+        [Fact]
+        public void ConfigureConfiguration_ShouldLoadDevelopmentOverride_WhenEnvironmentIsDevelopment()
+        {
+            var previousDirectory = Directory.GetCurrentDirectory();
+            var tempRoot = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            var configDir = Path.Combine(tempRoot, "config");
+            Directory.CreateDirectory(configDir);
+            File.WriteAllText(Path.Combine(configDir, "appsettings.json"), "{\"Foo\":\"Base\"}");
+            File.WriteAllText(Path.Combine(configDir, "appsettings.Development.json"), "{\"Foo\":\"Dev\"}");
+
+            try
+            {
+                Directory.SetCurrentDirectory(tempRoot);
+                var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+                {
+                    EnvironmentName = Environments.Development
+                });
+
+                InvokePrivateStatic("ConfigureConfiguration", builder);
+
+                Assert.Equal("Dev", builder.Configuration["Foo"]);
+            }
+            finally
+            {
+                Directory.SetCurrentDirectory(previousDirectory);
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+
+        [Fact]
+        public void ConfigureConfiguration_ShouldNotLoadDevelopmentOverride_WhenEnvironmentIsProduction()
+        {
+            var previousDirectory = Directory.GetCurrentDirectory();
+            var tempRoot = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            var configDir = Path.Combine(tempRoot, "config");
+            Directory.CreateDirectory(configDir);
+            File.WriteAllText(Path.Combine(configDir, "appsettings.json"), "{\"Foo\":\"Base\"}");
+            File.WriteAllText(Path.Combine(configDir, "appsettings.Development.json"), "{\"Foo\":\"Dev\"}");
+
+            try
+            {
+                Directory.SetCurrentDirectory(tempRoot);
+                var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+                {
+                    EnvironmentName = Environments.Production
+                });
+
+                InvokePrivateStatic("ConfigureConfiguration", builder);
+
+                Assert.Equal("Base", builder.Configuration["Foo"]);
+            }
+            finally
+            {
+                Directory.SetCurrentDirectory(previousDirectory);
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+
+        // ---------- ConfigureVault ----------
+
+        [Fact]
+        public void ConfigureVault_ShouldRegisterVaultClient_WhenVaultEnabled()
+        {
+            var builder = WebApplication.CreateBuilder();
+            builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Vault:Enable"] = "true",
+                ["Vault:Token"] = "fake-token",
+                ["Vault:Addr"] = "http://localhost:8200",
+                ["Vault:Path"] = "fake-path",
+                ["Vault:MountPoint"] = "fake-mount-point"
+            });
+
+            InvokePrivateStatic("ConfigureVault", builder);
+
+            Assert.Contains(builder.Services, d => d.ServiceType == typeof(VaultSharp.IVaultClient));
+        }
+
+        [Fact]
+        public void ConfigureVault_ShouldNotRegisterVaultClient_WhenVaultDisabled()
+        {
+            var builder = WebApplication.CreateBuilder();
+            builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Vault:Enable"] = "false"
+            });
+
+            InvokePrivateStatic("ConfigureVault", builder);
+
+            Assert.DoesNotContain(builder.Services, d => d.ServiceType == typeof(VaultSharp.IVaultClient));
+        }
+
+        // ---------- MapHealthEndpoint ----------
+
+        [Theory]
+        [InlineData(false, "healthy")]
+        [InlineData(true, "demo")]
+        public async Task HealthEndpoint_ShouldReturnExpectedStatus(bool demoMode, string expectedStatus)
+        {
+            var builder = WebApplication.CreateBuilder();
+            builder.WebHost.UseTestServer();
+            builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["DemoMode"] = demoMode.ToString()
+            });
+
+            var app = builder.Build();
+
+            InvokePrivateStatic("MapHealthEndpoint", app);
+
+            await app.StartAsync();
+            try
+            {
+                using var client = app.GetTestClient();
+                var response = await client.GetAsync("/health");
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+                Assert.Equal(expectedStatus, json.GetProperty("status").GetString());
+            }
+            finally
+            {
+                await app.StopAsync();
+            }
         }
     }
 

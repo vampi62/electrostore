@@ -129,7 +129,9 @@ public class ProgramTests
         {
             ["Vault:Enable"] = "true",
             ["Vault:Token"] = "fake-token",
-            ["Vault:Addr"] = "http://localhost:8200"
+            ["Vault:Addr"] = "http://localhost:8200",
+            ["Vault:Path"] = "fake-path",
+            ["Vault:MountPoint"] = "fake-mount-point"
         });
 
         InvokePrivateStatic("ConfigureVault", builder);
