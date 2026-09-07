@@ -2,6 +2,7 @@ using System.Reflection;
 using Confluent.Kafka;
 using ElectrostoreCRON.Kafka.Consumers;
 using ElectrostoreCRON.Kafka.Messages;
+using ElectrostoreCRON.Services.CronJobExecutionRegistry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -14,6 +15,7 @@ public class KafkaCronJobEventsConsumerTests
 {
     private readonly Mock<ISchedulerFactory> _schedulerFactory = new();
     private readonly Mock<IScheduler> _scheduler = new();
+    private readonly Mock<ICronJobExecutionRegistry> _cronJobExecutionRegistry = new();
     private readonly Mock<ILogger<KafkaCronJobEventsConsumer>> _logger = new();
 
     public KafkaCronJobEventsConsumerTests()
@@ -25,7 +27,7 @@ public class KafkaCronJobEventsConsumerTests
     private KafkaCronJobEventsConsumer CreateConsumer()
     {
         var configuration = new ConfigurationBuilder().Build();
-        return new KafkaCronJobEventsConsumer(_schedulerFactory.Object, configuration, _logger.Object);
+        return new KafkaCronJobEventsConsumer(_schedulerFactory.Object, _cronJobExecutionRegistry.Object, configuration, _logger.Object);
     }
 
     private static Task<bool> HandleEventAsync(KafkaCronJobEventsConsumer consumer, CronJobEvent? evt, CancellationToken ct = default)

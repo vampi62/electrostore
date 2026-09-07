@@ -47,6 +47,42 @@ public class MappingProfile : Profile
         CreateMap<CreateCronJobDto, CronJobs>();
         CreateMap<CronJobs, ReadCronJobDto>();
 
+        CreateMap<CreateEquipementDto, Equipements>();
+        CreateMap<Equipements, ReadEquipementDto>();
+        CreateMap<Equipements, ReadExtendedEquipementDto>();
+
+        CreateMap<CreateEquipementBoxDto, EquipementsBoxs>();
+        CreateMap<EquipementsBoxs, ReadEquipementBoxDto>();
+        CreateMap<EquipementsBoxs, ReadExtendedEquipementBoxDto>()
+            .ForMember(dest => dest.box, opt => opt.MapFrom(src => src.Box))
+            .ForMember(dest => dest.equipement, opt => opt.MapFrom(src => src.Equipement));
+
+        CreateMap<CreateEquipementCommentDto, EquipementsComments>();
+        CreateMap<EquipementsComments, ReadEquipementCommentDto>();
+        CreateMap<EquipementsComments, ReadExtendedEquipementCommentDto>()
+            .ForMember(dest => dest.equipement, opt => opt.MapFrom(src => src.Equipement))
+            .ForMember(dest => dest.user, opt => opt.MapFrom(src => src.User));
+
+        CreateMap<CreateEquipementDocumentDto, EquipementsDocuments>();
+        CreateMap<EquipementsDocuments, ReadEquipementDocumentDto>();
+
+        CreateMap<CreateEquipementMaintenanceDto, EquipementsMaintenances>();
+        CreateMap<EquipementsMaintenances, ReadEquipementMaintenanceDto>();
+        CreateMap<EquipementsMaintenances, ReadExtendedEquipementMaintenanceDto>()
+            .ForMember(dest => dest.equipement, opt => opt.MapFrom(src => src.Equipement))
+            .ForMember(dest => dest.user, opt => opt.MapFrom(src => src.User));
+
+        CreateMap<EquipementsStatus, ReadEquipementStatusDto>();
+        CreateMap<EquipementsStatus, ReadExtendedEquipementStatusDto>()
+            .ForMember(dest => dest.equipement, opt => opt.MapFrom(src => src.Equipement));
+        CreateMap<CreateEquipementStatusDto, EquipementsStatus>();
+
+        CreateMap<CreateEquipementTagDto, EquipementsTags>();
+        CreateMap<EquipementsTags, ReadEquipementTagDto>();
+        CreateMap<EquipementsTags, ReadExtendedEquipementTagDto>()
+            .ForMember(dest => dest.equipement, opt => opt.MapFrom(src => src.Equipement))
+            .ForMember(dest => dest.tag, opt => opt.MapFrom(src => src.Tag));
+
         CreateMap<CreateItemBoxDto, ItemsBoxs>();
         CreateMap<ItemsBoxs, ReadItemBoxDto>();
         CreateMap<ItemsBoxs, ReadExtendedItemBoxDto>()

@@ -127,14 +127,6 @@ Configure:
 - **VAPID Public Key**: Public key from `web-push` output (also set as `VITE_VAPID_PUBLIC_KEY` in frontend)
 - **VAPID Private Key**: Private key (keep secret, server-side only)
 
-### Parcel Tracking
-
-**Enable 17track parcel tracking**  
-Enable automatic delivery status updates via the 17track API.
-
-Configure:
-- **17track API Key**: API key from [17track developer portal](https://www.17track.net/en/api)
-
 ### Secrets Management (HashiCorp Vault)
 
 **Use HashiCorp Vault**  

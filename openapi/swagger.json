@@ -13161,31 +13161,6 @@
           }
         }
       }
-    },
-    "/api/webhook/17track": {
-      "post": {
-        "tags": [
-          "WebHook"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": { }
-            },
-            "text/json": {
-              "schema": { }
-            },
-            "application/*+json": {
-              "schema": { }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
     }
   },
   "components": {

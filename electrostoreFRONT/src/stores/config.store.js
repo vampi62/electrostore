@@ -92,7 +92,6 @@ export const useConfigsStore = defineStore("configs",{
 			"cron_status": "unknown",
 			"worker_status": "unknown",
 			"external_services": {
-				"17Track": "unknown",
 			},
 		},
 	}),

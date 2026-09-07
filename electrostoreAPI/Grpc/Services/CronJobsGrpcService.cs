@@ -55,4 +55,25 @@ public class CronJobsGrpcService : CronJobsGrpc.CronJobsGrpcBase
             return new UpdateCronJobRunReply { Success = false };
         }
     }
+
+    public override async Task<UpdateCronJobStatusReply> UpdateCronJobStatus(
+        UpdateCronJobStatusRequest request, ServerCallContext context)
+    {
+        try
+        {
+            await _cronJobService.UpdateCronJobStatusAsync(
+                request.IdCronjob,
+                (Enums.CronJobStatus)(int)request.StatusCronjob,
+                string.IsNullOrWhiteSpace(request.LastErrorCronjob) ? null : request.LastErrorCronjob,
+                context.CancellationToken);
+            _logger.LogInformation("UpdateCronJobStatus: cronjob={Id} status={Status}",
+                request.IdCronjob, request.StatusCronjob);
+            return new UpdateCronJobStatusReply { Success = true };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "UpdateCronJobStatus: error for cronjob={Id}", request.IdCronjob);
+            return new UpdateCronJobStatusReply { Success = false };
+        }
+    }
 }

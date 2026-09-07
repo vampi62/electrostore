@@ -1,5 +1,6 @@
 using AutoMapper;
 using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Kafka.Messages;
 using ElectrostoreAPI.Kafka.Producer;
@@ -187,5 +188,64 @@ public class CronJobService : ICronJobService
             cronJob.next_run_at = nextRunAt.Value;
         }
         await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task UpdateCronJobStatusAsync(int id, CronJobStatus status, string? lastError, CancellationToken cancellationToken)
+    {
+        var cronJob = await _context.CronJobs.FindAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException($"CronJob with id '{id}' not found");
+        cronJob.status_cronjob = status;
+        cronJob.last_error_cronjob = lastError;
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<ReadCronJobStatusDto> GetCronJobStatus(int id)
+    {
+        var cronJob = await _context.CronJobs.FindAsync(id)
+            ?? throw new KeyNotFoundException($"CronJob with id '{id}' not found");
+        return new ReadCronJobStatusDto
+        {
+            id_cronjob = cronJob.id_cronjob,
+            status_cronjob = cronJob.status_cronjob,
+            last_error_cronjob = cronJob.last_error_cronjob,
+            last_run_at = cronJob.last_run_at,
+            next_run_at = cronJob.next_run_at
+        };
+    }
+
+    public async Task ForceRunCronJob(int id)
+    {
+        var cronJob = await _context.CronJobs.FindAsync(id)
+            ?? throw new KeyNotFoundException($"CronJob with id '{id}' not found");
+        if (!cronJob.is_enabled)
+        {
+            throw new InvalidOperationException($"CronJob with id '{id}' is disabled and cannot be force-run");
+        }
+        var cronJobMessage = new CronJobMessage
+        {
+            action = "force_run",
+            data = _mapper.Map<ReadCronJobDto>(cronJob)
+        };
+        await _kafkaProducer.PublishAsync(
+            "cronjob-events",
+            cronJob.id_cronjob.ToString(),
+            JsonSerializer.Serialize(cronJobMessage)
+        );
+    }
+
+    public async Task ForceStopCronJob(int id)
+    {
+        var cronJob = await _context.CronJobs.FindAsync(id)
+            ?? throw new KeyNotFoundException($"CronJob with id '{id}' not found");
+        var cronJobMessage = new CronJobMessage
+        {
+            action = "force_stop",
+            data = _mapper.Map<ReadCronJobDto>(cronJob)
+        };
+        await _kafkaProducer.PublishAsync(
+            "cronjob-events",
+            cronJob.id_cronjob.ToString(),
+            JsonSerializer.Serialize(cronJobMessage)
+        );
     }
 }
