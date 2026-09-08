@@ -248,18 +248,21 @@ public class MqttClientServiceTests
     {
         // Arrange - IsConnected stays false, so the inner loop never runs and cancellation is
         // observed while waiting on the outer retry delay, which is not caught inside the method.
+        // The cancellation timer is started from SubscribeAsync's callback - the last mock call
+        // before that delay - rather than before Act, so it can't fire before the loop even starts
+        // on a slow/loaded CI runner (that raced the fixed startup work against a flat 30 ms budget).
         var configuration = new ConfigurationBuilder().Build();
         var mqttClient = new Mock<IMqttClient>();
+        using var cts = new CancellationTokenSource();
         mqttClient
             .Setup(c => c.ConnectAsync(It.IsAny<MqttClientOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new MqttClientConnectResult());
         mqttClient
             .Setup(c => c.SubscribeAsync(It.IsAny<MqttClientSubscribeOptions>(), It.IsAny<CancellationToken>()))
+            .Callback(() => cts.CancelAfter(TimeSpan.FromMilliseconds(30)))
             .ReturnsAsync(CreateSubscribeResult());
         mqttClient.SetupGet(c => c.IsConnected).Returns(false);
         var service = new TestableMqttClientService(configuration, _logger.Object, _grpcClient.Object, mqttClient.Object);
-        using var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeSpan.FromMilliseconds(30));
 
         // Act
         var exception = await Record.ExceptionAsync(() => service.RunExecuteAsync(cts.Token));
@@ -273,16 +276,21 @@ public class MqttClientServiceTests
     [Fact]
     public async Task ExecuteAsync_ShouldLogAndRetry_WhenConnectThrowsGenericException()
     {
-        // Arrange
+        // Arrange - the cancellation timer is started from ConnectAsync's callback, once the
+        // generic-exception path is definitely about to be hit, rather than before Act. Starting it
+        // earlier raced fixed test/host startup work against a flat 30 ms budget: on a slow or loaded
+        // CI runner the token could already be cancelled before the retry loop's first iteration even
+        // began, so the outer Task.Delay that is supposed to observe the cancellation never ran and
+        // ExecuteAsync returned without throwing.
         var configuration = new ConfigurationBuilder().Build();
         var mqttClient = new Mock<IMqttClient>();
+        using var cts = new CancellationTokenSource();
         mqttClient
             .Setup(c => c.ConnectAsync(It.IsAny<MqttClientOptions>(), It.IsAny<CancellationToken>()))
+            .Callback(() => cts.CancelAfter(TimeSpan.FromMilliseconds(30)))
             .ThrowsAsync(new InvalidOperationException("connection refused"));
         mqttClient.SetupGet(c => c.IsConnected).Returns(false);
         var service = new TestableMqttClientService(configuration, _logger.Object, _grpcClient.Object, mqttClient.Object);
-        using var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeSpan.FromMilliseconds(30));
 
         // Act
         var exception = await Record.ExceptionAsync(() => service.RunExecuteAsync(cts.Token));

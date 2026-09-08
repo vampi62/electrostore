@@ -2,7 +2,7 @@ using Confluent.Kafka;
 
 namespace ElectrostoreAPI.Kafka.Producer;
 
-public class KafkaProducerService : IKafkaProducerService
+public sealed class KafkaProducerService : IKafkaProducerService
 {
     private readonly IProducer<string, string> _producer;
     private readonly ILogger<KafkaProducerService> _logger;
