@@ -31,7 +31,6 @@ public sealed class KafkaProducerService : IKafkaProducerService
                 ex,
                 "Error publishing message to {Topic} | Code: {Code} | Reason: {Reason}",
                 topic, ex.Error.Code, ex.Error.Reason);
-            throw;
         }
     }
 

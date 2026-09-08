@@ -25,8 +25,10 @@ public sealed class KafkaProducerService : IKafkaProducerService
         }
         catch (ProduceException<string, string> ex)
         {
-            _logger.LogError(ex, "Failed to publish message to {Topic}", topic);
-            throw;
+            _logger.LogError(
+                ex,
+                "Error publishing message to {Topic} | Code: {Code} | Reason: {Reason}",
+                topic, ex.Error.Code, ex.Error.Reason);
         }
     }
 

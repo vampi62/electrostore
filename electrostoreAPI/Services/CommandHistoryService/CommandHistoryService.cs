@@ -75,13 +75,13 @@ public class CommandHistoryService : ICommandHistoryService
     {
         var query = _context.CommandsHistory.AsQueryable();
         query = query.Where(pth => pth.id_command_history == id && pth.id_command == idCommand);
-        var commandHistory = await query.FirstOrDefaultAsync()?? throw new KeyNotFoundException($"CommandHistory with id '{id}' not found for Command with id '{idCommand}'");
+        var commandHistory = await query.FirstOrDefaultAsync() ?? throw new KeyNotFoundException($"CommandHistory with id '{id}' not found for Command with id '{idCommand}'");
         return _mapper.Map<ReadCommandHistoryDto>(commandHistory);
     }
 
     public async Task<ReadCommandHistoryDto> CreateCommandHistory(CreateCommandHistoryDto commandHistoryDto)
     {
-        var command = await _context.Commands.FirstOrDefaultAsync(c => c.id_command == commandHistoryDto.id_command) ?? throw new KeyNotFoundException($"Command with id '{commandHistoryDto.id_command}' not found");
+        _ = await _context.Commands.FindAsync(commandHistoryDto.id_command) ?? throw new KeyNotFoundException($"Command with id '{commandHistoryDto.id_command}' not found");
         var newCommandHistory = _mapper.Map<CommandsHistory>(commandHistoryDto);
         _context.CommandsHistory.Add(newCommandHistory);
         await _context.SaveChangesAsync();

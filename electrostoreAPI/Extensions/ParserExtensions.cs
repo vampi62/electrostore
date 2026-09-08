@@ -16,17 +16,7 @@ public static class ParserExtensions
             var field = parts[0];
             var value = parts[1];
 
-            var searchType = condition.Contains("==") ? "eq" :
-                             condition.Contains("!=") ? "ne" :
-                             condition.Contains("=gt=") ? "gt" :
-                             condition.Contains("=lt=") ? "lt" :
-                             condition.Contains("=ge=") ? "ge" :
-                             condition.Contains("=le=") ? "le" :
-                             condition.Contains("=like=") ? "like" :
-                             condition.Contains("=null=") ? "null" :
-                             condition.Contains("!=null=") ? "notnull" :
-                             condition.Contains("=any=") ? "any" :
-                             null;
+            var searchType = GetSearchType(condition);
 
             if (searchType != null)
             {
@@ -34,6 +24,21 @@ public static class ParserExtensions
             }
         }
         return filters;
+    }
+
+    private static string? GetSearchType(string condition)
+    {
+        if (condition.Contains("==")) return "eq";
+        if (condition.Contains("!=")) return "ne";
+        if (condition.Contains("=gt=")) return "gt";
+        if (condition.Contains("=lt=")) return "lt";
+        if (condition.Contains("=ge=")) return "ge";
+        if (condition.Contains("=le=")) return "le";
+        if (condition.Contains("=like=")) return "like";
+        if (condition.Contains("=null=")) return "null";
+        if (condition.Contains("!=null=")) return "notnull";
+        if (condition.Contains("=any=")) return "any";
+        return null;
     }
 
     public static SorterDto ParseSort(string sort)
