@@ -147,44 +147,70 @@ public class KafkaCronJobEventsConsumer : BackgroundService
         switch (evt.action)
         {
             case "created":
-                if (evt.data is not null && evt.data.is_enabled)
-                {
-                    await ScheduleOrReplaceJobAsync(scheduler, evt.data, ct);
-                }
+                await HandleCreatedEventAsync(scheduler, evt.data, ct);
                 break;
             case "updated":
-                if (evt.data is not null)
-                {
-                    await RemoveJobAsync(scheduler, evt.data.id_cronjob, ct);
-                    if (evt.data.is_enabled)
-                    {
-                        await ScheduleOrReplaceJobAsync(scheduler, evt.data, ct);
-                    }
-                }
+                await HandleUpdatedEventAsync(scheduler, evt.data, ct);
                 break;
             case "deleted":
-                if (evt.data is not null)
-                {
-                    await RemoveJobAsync(scheduler, evt.data.id_cronjob, ct);
-                }
+                await HandleDeletedEventAsync(scheduler, evt.data, ct);
                 break;
             case "force_run":
-                if (evt.data is not null)
-                {
-                    await ForceRunJobAsync(scheduler, evt.data.id_cronjob, ct);
-                }
+                await HandleForceRunEventAsync(scheduler, evt.data, ct);
                 break;
             case "force_stop":
-                if (evt.data is not null)
-                {
-                    ForceStopJob(evt.data.id_cronjob);
-                }
+                HandleForceStopEvent(evt.data);
                 break;
             default:
                 _logger.LogWarning("Unknown cronjob-event action: {Action}", evt.action);
                 break;
         }
         return true;
+    }
+
+    private async Task HandleCreatedEventAsync(IScheduler scheduler, CronJobEventData? data, CancellationToken ct)
+    {
+        if (data is not null && data.is_enabled)
+        {
+            await ScheduleOrReplaceJobAsync(scheduler, data, ct);
+        }
+    }
+
+    private async Task HandleUpdatedEventAsync(IScheduler scheduler, CronJobEventData? data, CancellationToken ct)
+    {
+        if (data is null)
+        {
+            return;
+        }
+        await RemoveJobAsync(scheduler, data.id_cronjob, ct);
+        if (data.is_enabled)
+        {
+            await ScheduleOrReplaceJobAsync(scheduler, data, ct);
+        }
+    }
+
+    private async Task HandleDeletedEventAsync(IScheduler scheduler, CronJobEventData? data, CancellationToken ct)
+    {
+        if (data is not null)
+        {
+            await RemoveJobAsync(scheduler, data.id_cronjob, ct);
+        }
+    }
+
+    private async Task HandleForceRunEventAsync(IScheduler scheduler, CronJobEventData? data, CancellationToken ct)
+    {
+        if (data is not null)
+        {
+            await ForceRunJobAsync(scheduler, data.id_cronjob, ct);
+        }
+    }
+
+    private void HandleForceStopEvent(CronJobEventData? data)
+    {
+        if (data is not null)
+        {
+            ForceStopJob(data.id_cronjob);
+        }
     }
 
     private async Task ForceRunJobAsync(IScheduler scheduler, int idCronjob, CancellationToken ct)

@@ -31,8 +31,7 @@ public class MqttClientService : BackgroundService
 
         if (!int.TryParse(portStr, out var port)) port = 1883;
 
-        var factory = new MqttClientFactory();
-        using var client = factory.CreateMqttClient();
+        using var client = CreateMqttClient();
 
         client.ApplicationMessageReceivedAsync += OnMessageReceivedAsync;
 
@@ -82,6 +81,9 @@ public class MqttClientService : BackgroundService
         if (client.IsConnected)
             await client.DisconnectAsync(cancellationToken: stoppingToken);
     }
+
+    // Virtual so unit tests can substitute a mocked IMqttClient instead of a real network connection.
+    protected virtual IMqttClient CreateMqttClient() => new MqttClientFactory().CreateMqttClient();
 
     private Task OnMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs e)
     {
