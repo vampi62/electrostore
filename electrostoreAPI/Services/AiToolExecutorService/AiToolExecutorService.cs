@@ -294,52 +294,52 @@ public class AiToolExecutorService : IAiToolExecutorService
         };
     }
 
-    private class SearchItemsArgs
+    private sealed class SearchItemsArgs
     {
-        public string? query { get; set; }
-        public int? limit { get; set; }
+        public string? query { get; set; } = null;
+        public int? limit { get; set; } = null;
     }
 
-    private class ItemStockLocationArgs
+    private sealed class ItemStockLocationArgs
     {
-        public int id_item { get; set; }
+        public int id_item { get; set; } = 0;
     }
 
-    private class ListBoxesArgs
+    private sealed class ListBoxesArgs
     {
-        public int? id_store { get; set; }
+        public int? id_store { get; set; } = null;
     }
 
-    private class ListTagsArgs
+    private sealed class ListTagsArgs
     {
-        public string? query { get; set; }
+        public string? query { get; set; } = null;
     }
 
-    private class CreateItemArgs
+    private sealed class CreateItemArgs
     {
         public string reference_name_item { get; set; } = string.Empty;
         public string friendly_name_item { get; set; } = string.Empty;
-        public int threshold_min_item { get; set; }
-        public string? description_item { get; set; }
+        public int threshold_min_item { get; set; } = 0;
+        public string? description_item { get; set; } = null;
     }
 
-    private class CreateTagArgs
+    private sealed class CreateTagArgs
     {
         public string name_tag { get; set; } = string.Empty;
-        public int? weight_tag { get; set; }
+        public int? weight_tag { get; set; } = null;
     }
 
-    private class AttachTagArgs
+    private sealed class AttachTagArgs
     {
-        public int id_item { get; set; }
-        public int id_tag { get; set; }
+        public int id_item { get; set; } = 0;
+        public int id_tag { get; set; } = 0;
     }
 
-    private class MoveItemStockArgs
+    private sealed class MoveItemStockArgs
     {
-        public int id_item { get; set; }
-        public int id_box { get; set; }
-        public int quantity_item_box { get; set; }
-        public int? threshold_max_item_item_box { get; set; }
+        public int id_item { get; set; } = 0;
+        public int id_box { get; set; } = 0;
+        public int quantity_item_box { get; set; } = 0;
+        public int? threshold_max_item_item_box { get; set; } = null;
     }
 }
