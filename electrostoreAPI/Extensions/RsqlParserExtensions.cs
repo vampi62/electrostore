@@ -8,7 +8,7 @@ namespace ElectrostoreAPI.Extensions;
 public static class RsqlParserExtensions
 {
     private static readonly Regex AggregateRegex =
-        new(@"^(SUM|MAX|MIN|AVG|COUNT)\((.+)\)$", RegexOptions.IgnoreCase | RegexOptions.Compile, TimeSpan.FromMilliseconds(500));
+        new(@"^(SUM|MAX|MIN|AVG|COUNT)\((.+)\)$", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromMilliseconds(500));
 
     private static bool IsCollectionType(Type type)
     {
