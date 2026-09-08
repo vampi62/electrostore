@@ -56,7 +56,6 @@ public class ElectrostoreCronJob : IJob
             switch (action)
             {
                 case (int)CronJobAction.PackageTracking:
-                    // await _track17Sync.SyncAllAsync(context.CancellationToken);
                     break;
 
                 case (int)CronJobAction.WeeklyItemMovementReport:
@@ -73,9 +72,9 @@ public class ElectrostoreCronJob : IJob
             }
             await UpdateStatusAsync(id, CronJobExecutionStatus.Success, null, context.CancellationToken);
         }
-        catch (OperationCanceledException) when (runToken.IsCancellationRequested)
+        catch (OperationCanceledException ex) when (runToken.IsCancellationRequested)
         {
-            _logger.LogWarning("Cron job #{Id}: execution was force-stopped.", id);
+            _logger.LogWarning(ex, "Cron job #{Id}: execution was force-stopped.", id);
             await UpdateStatusAsync(id, CronJobExecutionStatus.Stopped, null, context.CancellationToken);
         }
         catch (Exception ex)

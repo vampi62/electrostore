@@ -15,6 +15,7 @@ public class KafkaCronJobEventsConsumer : BackgroundService
         PropertyNameCaseInsensitive = true
     };
     private const string Topic = "cronjob-events";
+    private const string SchedulerGroup = "electrostore";
 
     private readonly ISchedulerFactory _schedulerFactory;
     private readonly ICronJobExecutionRegistry _executionRegistry;
@@ -215,7 +216,7 @@ public class KafkaCronJobEventsConsumer : BackgroundService
 
     private async Task ForceRunJobAsync(IScheduler scheduler, int idCronjob, CancellationToken ct)
     {
-        var jobKey = new JobKey($"job-{idCronjob}", "electrostore");
+        var jobKey = new JobKey($"job-{idCronjob}", SchedulerGroup);
         if (await scheduler.CheckExists(jobKey, ct))
         {
             await scheduler.TriggerJob(jobKey, ct);
@@ -247,7 +248,7 @@ public class KafkaCronJobEventsConsumer : BackgroundService
             return;
         }
 
-        var jobKey = new JobKey($"job-{job.id_cronjob}", "electrostore");
+        var jobKey = new JobKey($"job-{job.id_cronjob}", SchedulerGroup);
 
         // Supprimer l'ancienne version si elle existe
         await RemoveJobAsync(scheduler, job.id_cronjob, ct);
@@ -270,7 +271,7 @@ public class KafkaCronJobEventsConsumer : BackgroundService
         try
         {
             trigger = TriggerBuilder.Create()
-                .WithIdentity($"trigger-{job.id_cronjob}", "electrostore")
+                .WithIdentity($"trigger-{job.id_cronjob}", SchedulerGroup)
                 .WithCronSchedule(cronExpression)
                 .Build();
         }
@@ -289,7 +290,7 @@ public class KafkaCronJobEventsConsumer : BackgroundService
 
     private async Task RemoveJobAsync(IScheduler scheduler, int idCronjob, CancellationToken ct)
     {
-        var jobKey = new JobKey($"job-{idCronjob}", "electrostore");
+        var jobKey = new JobKey($"job-{idCronjob}", SchedulerGroup);
         if (await scheduler.CheckExists(jobKey, ct))
         {
             await scheduler.DeleteJob(jobKey, ct);

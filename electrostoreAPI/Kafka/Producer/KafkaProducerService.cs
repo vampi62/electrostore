@@ -2,7 +2,7 @@ using Confluent.Kafka;
 
 namespace ElectrostoreAPI.Kafka.Producer;
 
-public class KafkaProducerService : IDisposable, IKafkaProducerService
+public class KafkaProducerService : IKafkaProducerService
 {
     private readonly IProducer<string, string> _producer;
     private readonly ILogger<KafkaProducerService> _logger;
@@ -54,5 +54,6 @@ public class KafkaProducerService : IDisposable, IKafkaProducerService
     {
         _producer.Flush(TimeSpan.FromSeconds(5));
         _producer.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
