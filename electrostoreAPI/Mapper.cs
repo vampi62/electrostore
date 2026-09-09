@@ -67,7 +67,8 @@ public class MappingProfile : Profile
         CreateMap<CreateEquipementDocumentDto, EquipementsDocuments>();
         CreateMap<EquipementsDocuments, ReadEquipementDocumentDto>();
 
-        CreateMap<CreateEquipementMaintenanceDto, EquipementsMaintenances>();
+        CreateMap<CreateEquipementMaintenanceDto, EquipementsMaintenances>()
+            .ForMember(dest => dest.description_equipement_maintenance, opt => opt.NullSubstitute(string.Empty));
         CreateMap<EquipementsMaintenances, ReadEquipementMaintenanceDto>();
         CreateMap<EquipementsMaintenances, ReadExtendedEquipementMaintenanceDto>()
             .ForMember(dest => dest.equipement, opt => opt.MapFrom(src => src.Equipement))
