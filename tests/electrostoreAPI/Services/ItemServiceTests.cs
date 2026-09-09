@@ -1,4 +1,5 @@
 using ElectrostoreAPI;
+using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.FileService;
@@ -7,6 +8,8 @@ using ElectrostoreAPI.Services.ItemService;
 using ElectrostoreAPI.Tests.Utils;
 using Microsoft.EntityFrameworkCore;
 using Moq;
+using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace ElectrostoreAPI.Tests.Services
@@ -142,6 +145,172 @@ namespace ElectrostoreAPI.Tests.Services
 
             // Assert
             Assert.Empty(result);
+        }
+
+        // --- GetItems ---
+
+        [Fact]
+        public async Task GetItems_ShouldReturnAllItems_WhenNoFilterApplied()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Items.AddRange(BuildItem("a", 10), BuildItem("b", 10));
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            // Act
+            var result = await service.GetItems();
+
+            // Assert
+            Assert.Equal(2, result.pagination.total);
+            Assert.Equal(2, result.data.Count());
+        }
+
+        // --- GetItemById ---
+
+        [Fact]
+        public async Task GetItemById_ShouldReturnItem_WhenItExists()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var item = BuildItem("a", 10);
+            context.Items.Add(item);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            // Act
+            var result = await service.GetItemById(item.id_item);
+
+            // Assert
+            Assert.Equal(item.id_item, result.id_item);
+            Assert.Equal("a", result.reference_name_item);
+        }
+
+        [Fact]
+        public async Task GetItemById_ShouldThrowKeyNotFoundException_WhenItemDoesNotExist()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.GetItemById(999));
+        }
+
+        // --- CreateItem ---
+
+        [Fact]
+        public async Task CreateItem_ShouldPersistItem_AndCreateDirectories()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+            var dto = new CreateItemDto { reference_name_item = "new-item", friendly_name_item = "New item", threshold_min_item = 5 };
+
+            // Act
+            var result = await service.CreateItem(dto);
+
+            // Assert
+            Assert.Equal("new-item", result.reference_name_item);
+            Assert.Equal(1, await context.Items.CountAsync());
+            _fileService.Verify(f => f.CreateDirectory(It.IsAny<string>()), Times.Exactly(3));
+            _itemHistoryService.Verify(h => h.LogHistory(result.id_item, null, ItemHistoryType.ItemCreated, null, null, null), Times.Once);
+        }
+
+        [Fact]
+        public async Task CreateItem_ShouldThrowInvalidOperationException_WhenReferenceNameAlreadyExists()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            context.Items.Add(BuildItem("dup", 10));
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+            var dto = new CreateItemDto { reference_name_item = "dup", friendly_name_item = "Dup item", threshold_min_item = 5 };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateItem(dto));
+        }
+
+        // --- UpdateItem ---
+
+        [Fact]
+        public async Task UpdateItem_ShouldUpdateProvidedFields()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var item = BuildItem("a", 10);
+            context.Items.Add(item);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+            var dto = new UpdateItemDto { friendly_name_item = "renamed", threshold_min_item = 20 };
+
+            // Act
+            var result = await service.UpdateItem(item.id_item, dto);
+
+            // Assert
+            Assert.Equal("renamed", result.friendly_name_item);
+            Assert.Equal(20, result.threshold_min_item);
+            Assert.Equal("a", result.reference_name_item);
+            _itemHistoryService.Verify(h => h.LogHistory(item.id_item, null, ItemHistoryType.ItemUpdated, null, null, null), Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateItem_ShouldThrowInvalidOperationException_WhenNewReferenceNameAlreadyUsedByAnotherItem()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var item1 = BuildItem("a", 10);
+            var item2 = BuildItem("b", 10);
+            context.Items.AddRange(item1, item2);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+            var dto = new UpdateItemDto { reference_name_item = "b" };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.UpdateItem(item1.id_item, dto));
+        }
+
+        [Fact]
+        public async Task UpdateItem_ShouldThrowKeyNotFoundException_WhenItemDoesNotExist()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.UpdateItem(999, new UpdateItemDto()));
+        }
+
+        // --- DeleteItem ---
+
+        [Fact]
+        public async Task DeleteItem_ShouldRemoveItem_AndDeleteDirectories()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var item = BuildItem("a", 10);
+            context.Items.Add(item);
+            await context.SaveChangesAsync();
+            var service = CreateService(context);
+
+            // Act
+            await service.DeleteItem(item.id_item);
+
+            // Assert
+            Assert.Equal(0, await context.Items.CountAsync());
+            _fileService.Verify(f => f.DeleteDirectory(It.IsAny<string>()), Times.Exactly(3));
+            _itemHistoryService.Verify(h => h.LogHistory(item.id_item, null, ItemHistoryType.ItemDeleted, null, null, null), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteItem_ShouldThrowKeyNotFoundException_WhenItemDoesNotExist()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_dbContextOptions);
+            var service = CreateService(context);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteItem(999));
         }
     }
 }
