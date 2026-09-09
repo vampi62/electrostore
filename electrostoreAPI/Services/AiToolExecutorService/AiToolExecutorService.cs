@@ -19,6 +19,13 @@ public class AiToolExecutorService : IAiToolExecutorService
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    private static readonly string[] SearchItemsRequired = ["query"];
+    private static readonly string[] GetItemStockLocationRequired = ["id_item"];
+    private static readonly string[] CreateItemRequired = ["reference_name_item", "friendly_name_item", "threshold_min_item"];
+    private static readonly string[] CreateTagRequired = ["name_tag"];
+    private static readonly string[] AttachTagRequired = ["id_item", "id_tag"];
+    private static readonly string[] MoveItemStockRequired = ["id_item", "id_box", "quantity_item_box"];
+
     public AiToolExecutorService(
         IItemService itemService,
         IItemBoxService itemBoxService,
@@ -45,7 +52,7 @@ public class AiToolExecutorService : IAiToolExecutorService
                     query = new { type = "string", description = "Free-text search on the item name." },
                     limit = new { type = "integer", description = "Max number of results (default 20)." }
                 },
-                required = new[] { "query" }
+                required = SearchItemsRequired
             }),
             Def("get_item_stock_location", "Get the boxes (and quantities) an item is currently stored in.", new
             {
@@ -54,7 +61,7 @@ public class AiToolExecutorService : IAiToolExecutorService
                 {
                     id_item = new { type = "integer", description = "The item id." }
                 },
-                required = new[] { "id_item" }
+                required = GetItemStockLocationRequired
             }),
             Def("list_boxes", "List boxes, optionally filtered by store.", new
             {
@@ -87,7 +94,7 @@ public class AiToolExecutorService : IAiToolExecutorService
                     threshold_min_item = new { type = "integer" },
                     description_item = new { type = "string" }
                 },
-                required = new[] { "reference_name_item", "friendly_name_item", "threshold_min_item" }
+                required = CreateItemRequired
             }),
             Def("create_tag", "Propose creating a new tag. This does not create anything: it only returns the proposed data for the user to validate.", new
             {
@@ -97,7 +104,7 @@ public class AiToolExecutorService : IAiToolExecutorService
                     name_tag = new { type = "string" },
                     weight_tag = new { type = "integer" }
                 },
-                required = new[] { "name_tag" }
+                required = CreateTagRequired
             }),
             Def("attach_tag", "Propose attaching an existing tag to an existing item. This does not attach anything: it only returns the proposed data for the user to validate.", new
             {
@@ -107,7 +114,7 @@ public class AiToolExecutorService : IAiToolExecutorService
                     id_item = new { type = "integer" },
                     id_tag = new { type = "integer" }
                 },
-                required = new[] { "id_item", "id_tag" }
+                required = AttachTagRequired
             }),
             Def("move_item_stock", "Propose storing/moving/adjusting an item's quantity in a box. This does not change any quantity: it only returns the proposed data for the user to validate.", new
             {
@@ -119,7 +126,7 @@ public class AiToolExecutorService : IAiToolExecutorService
                     quantity_item_box = new { type = "integer", description = "The resulting quantity of the item in that box." },
                     threshold_max_item_item_box = new { type = "integer" }
                 },
-                required = new[] { "id_item", "id_box", "quantity_item_box" }
+                required = MoveItemStockRequired
             })
         ];
     }
@@ -204,7 +211,7 @@ public class AiToolExecutorService : IAiToolExecutorService
         return Result(tags.data);
     }
 
-    private AiToolExecutionResult ProposeCreateItem(string argumentsJson)
+    private static AiToolExecutionResult ProposeCreateItem(string argumentsJson)
     {
         var args = Parse<CreateItemArgs>(argumentsJson);
         var payload = new CreateItemDto
@@ -217,7 +224,7 @@ public class AiToolExecutorService : IAiToolExecutorService
         return ProposedResult("create_item", payload);
     }
 
-    private AiToolExecutionResult ProposeCreateTag(string argumentsJson)
+    private static AiToolExecutionResult ProposeCreateTag(string argumentsJson)
     {
         var args = Parse<CreateTagArgs>(argumentsJson);
         var payload = new CreateTagDto
@@ -228,7 +235,7 @@ public class AiToolExecutorService : IAiToolExecutorService
         return ProposedResult("create_tag", payload);
     }
 
-    private AiToolExecutionResult ProposeAttachTag(string argumentsJson)
+    private static AiToolExecutionResult ProposeAttachTag(string argumentsJson)
     {
         var args = Parse<AttachTagArgs>(argumentsJson);
         var payload = new CreateItemTagDto
@@ -239,7 +246,7 @@ public class AiToolExecutorService : IAiToolExecutorService
         return ProposedResult("attach_tag", payload);
     }
 
-    private AiToolExecutionResult ProposeMoveItemStock(string argumentsJson)
+    private static AiToolExecutionResult ProposeMoveItemStock(string argumentsJson)
     {
         var args = Parse<MoveItemStockArgs>(argumentsJson);
         var payload = new CreateItemBoxDto
