@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Enums;
 
 namespace ElectrostoreAPI.Models;
@@ -11,13 +11,13 @@ public class Projects : BaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_project { get; set; }
 
-    [MaxLength(Constants.MaxNameLength)]
+    [MaxLength(FieldLengths.MaxNameLength)]
     public required string name_project { get; set; }
 
-    [MaxLength(Constants.MaxDescriptionLength)]
+    [MaxLength(FieldLengths.MaxDescriptionLength)]
     public string description_project { get; set; } = string.Empty;
 
-    [MaxLength(Constants.MaxUrlLength)]
+    [MaxLength(FieldLengths.MaxUrlLength)]
     public string url_project { get; set; } = string.Empty;
 
     public ProjectStatus status_project { get; set; } = ProjectStatus.NotStarted;

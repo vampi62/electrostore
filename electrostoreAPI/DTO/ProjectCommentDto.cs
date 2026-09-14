@@ -1,3 +1,4 @@
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Validators;
 using System.ComponentModel.DataAnnotations;
 
@@ -23,13 +24,13 @@ public record CreateProjectCommentByUserDto
     public required int id_project { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string content_project_comment { get; init; }
 }
 public record CreateProjectCommentByProjectDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string content_project_comment { get; init; }
 }
 public record CreateProjectCommentDto
@@ -41,12 +42,12 @@ public record CreateProjectCommentDto
     public required int id_user { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string content_project_comment { get; init; }
 }
 public record UpdateProjectCommentDto
 {
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
-    [MaxLength(Constants.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? content_project_comment { get; init; }
 }

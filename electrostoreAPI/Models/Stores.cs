@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Enums;
 
 namespace ElectrostoreAPI.Models;
@@ -11,7 +11,7 @@ public class Stores : BaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_store { get; set; }
 
-    [MaxLength(Constants.MaxNameLength)]
+    [MaxLength(FieldLengths.MaxNameLength)]
     public required string name_store { get; set; }
 
     public int xlength_store { get; set; }
@@ -20,7 +20,7 @@ public class Stores : BaseEntity
 
     public StorePositionMode position_mode_store { get; set; } = StorePositionMode.Grid;
 
-    [MaxLength(Constants.MaxNameLength)]
+    [MaxLength(FieldLengths.MaxNameLength)]
     public required string mqtt_name_store { get; set; }
 
     [Required]

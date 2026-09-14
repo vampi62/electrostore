@@ -1,3 +1,4 @@
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Validators;
 using System.ComponentModel.DataAnnotations;
 
@@ -20,7 +21,7 @@ public record ReadExtendedCommandCommentDto : ReadCommandCommentDto
 public record CreateCommandCommentByCommandDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string content_command_comment { get; init; }
 }
 public record CreateCommandCommentByUserDto
@@ -29,7 +30,7 @@ public record CreateCommandCommentByUserDto
     public required int id_command { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string content_command_comment { get; init; }
 }
 public record CreateCommandCommentDto
@@ -41,12 +42,12 @@ public record CreateCommandCommentDto
     public required int id_user { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string content_command_comment { get; init; }
 }
 public record UpdateCommandCommentDto
 {
-    [MaxLength(Constants.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? content_command_comment { get; init; }
 }

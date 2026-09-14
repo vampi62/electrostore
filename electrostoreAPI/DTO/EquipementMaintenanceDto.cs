@@ -1,3 +1,4 @@
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Validators;
 using System.ComponentModel.DataAnnotations;
@@ -32,7 +33,7 @@ public record CreateEquipementMaintenanceByEquipementDto
     [Required(ErrorMessage = "{0} is required.")]
     public required DateTime date_planned_equipement_maintenance { get; init; }
 
-    [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? description_equipement_maintenance { get; init; }
 }
 public record CreateEquipementMaintenanceDto
@@ -49,7 +50,7 @@ public record CreateEquipementMaintenanceDto
     [Required(ErrorMessage = "{0} is required.")]
     public required DateTime date_planned_equipement_maintenance { get; init; }
 
-    [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? description_equipement_maintenance { get; init; }
 }
 public record UpdateEquipementMaintenanceDto
@@ -63,7 +64,7 @@ public record UpdateEquipementMaintenanceDto
 
     public DateTime? date_done_equipement_maintenance { get; init; }
 
-    [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? description_equipement_maintenance { get; init; }
 }

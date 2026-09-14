@@ -1,3 +1,4 @@
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Validators;
 using System.ComponentModel.DataAnnotations;
@@ -32,12 +33,12 @@ public record ReadCronJobStatusDto
 public record CreateCronJobDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public required string name_cronjob { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxCronExpressionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxCronExpressionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public required string cron_expression_cronjob { get; init; }
 
@@ -52,11 +53,11 @@ public record CreateCronJobDto
 
 public record UpdateCronJobDto
 {
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? name_cronjob { get; init; }
 
-    [MaxLength(Constants.MaxCronExpressionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxCronExpressionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? cron_expression_cronjob { get; init; }
 

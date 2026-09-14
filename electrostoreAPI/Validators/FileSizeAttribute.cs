@@ -1,4 +1,4 @@
-using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Constants;
 using System.ComponentModel.DataAnnotations;
 
 namespace ElectrostoreAPI.Validators;
@@ -10,10 +10,10 @@ public class FileSizeAttribute : ValidationAttribute
 
     public FileSizeAttribute(string maxSizePropertyName)
     {
-        var maxSizeProperty = typeof(Constants).GetProperty(
+        var maxSizeProperty = typeof(FieldLengths).GetProperty(
             maxSizePropertyName,
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
-        ) ?? throw new InvalidOperationException($"Field '{maxSizePropertyName}' not found in Constants class.");
+        ) ?? throw new InvalidOperationException($"Field '{maxSizePropertyName}' not found in FieldLengths class.");
 
         _maxSizeInMB = (long)Convert.ToInt64(maxSizeProperty.GetValue(null)!);
     }

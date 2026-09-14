@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Enums;
 
 namespace ElectrostoreAPI.Models;
@@ -11,14 +11,14 @@ public class Users : BaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_user { get; set; }
 
-    [MaxLength(Constants.MaxNameLength)]
+    [MaxLength(FieldLengths.MaxNameLength)]
     public required string name_user { get; set; }
 
-    [MaxLength(Constants.MaxNameLength)]
+    [MaxLength(FieldLengths.MaxNameLength)]
     public required string firstname_user { get; set; }
 
     [EmailAddress]
-    [MaxLength(Constants.MaxEmailLength)]
+    [MaxLength(FieldLengths.MaxEmailLength)]
     public required string email_user { get; set; }
 
     [MaxLength(255)]
