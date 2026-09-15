@@ -348,10 +348,6 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="tag.Boxs"
 			:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)" :permission="tagId !=='new'">
 			<template #append-row>
-				<!-- <button type="button" @click="boxOpenAddModal"
-					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
-					{{ $t('tag.AddBox') }}
-				</button> -->
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box', expand: ['box'] }"
 					:store-data="[tagsStore.tagsBox[tagId],storesStore.boxs]"
 					:loading="tagsStore.tagsBoxLoading"

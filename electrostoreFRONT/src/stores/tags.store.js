@@ -4,8 +4,6 @@ import { createMainResource, createNestedResource } from "@/helpers";
 
 import { useStoresStore, useItemsStore } from "@/stores";
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
-
 const EXPAND_HANDLERS = {
 	stores_tags: (store, idTag, tag) => {
 		store.tagsStore[idTag] = {};

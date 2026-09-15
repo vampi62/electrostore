@@ -299,8 +299,7 @@ export default {
 				box.status = "modified";
 			}
 			let boxHtml = this.$refs["BOX" + box.id_box][0];
-			boxHtml.classList.add("selectedElement");
-			boxHtml.classList.add("diagonal-hatch");
+			boxHtml.classList.add("selectedElement","diagonal-hatch");
 		},
 		selectBorder(border, direction) {
 			if (this.selectedElement.key === border) {
@@ -320,8 +319,7 @@ export default {
 				border.status = "modified";
 			}
 			let boxHtml = this.$refs["BOX" + border.id_box][0];
-			boxHtml.classList.add("selectedElement");
-			boxHtml.classList.add("diagonal-hatch");
+			boxHtml.classList.add("selectedElement","diagonal-hatch");
 		},
 		deleteElement() {
 			if (this.selectedElement.type === "led") {

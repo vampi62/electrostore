@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
+import { fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
 
 import { useUsersStore, useItemsStore, useProjectTagsStore } from "@/stores";
 

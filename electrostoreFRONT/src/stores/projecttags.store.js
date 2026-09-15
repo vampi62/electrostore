@@ -3,9 +3,6 @@ import { defineStore } from "pinia";
 import { createMainResource, createNestedResource } from "@/helpers";
 
 import { useProjectsStore } from "@/stores";
-import { readonly } from "vue";
-
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 const EXPAND_HANDLERS = {
 	project_tags: (store, idProjectTag, projectTag) => {

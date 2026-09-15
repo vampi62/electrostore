@@ -66,7 +66,7 @@ export default {
 					if (typeof val === "string") {
 						return val;
 					} else if (Array.isArray(val)) {
-						return val.map((e) => String(e)).join("\n");
+						return val.map(String).join("\n");
 					} else {
 						return String(val);
 					}
