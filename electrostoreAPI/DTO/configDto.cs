@@ -38,7 +38,3 @@ public record SsoAvailableProvider
     public required string display_name { get; init; }
     public required string icon_url { get; init; }
 }
-
-public static class Constants
-{
-}
