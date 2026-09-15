@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Constants;
 
 namespace ElectrostoreAPI.Models;
 
@@ -18,6 +18,6 @@ public class ProjectsComments : BaseEntity
     [ForeignKey("id_project")]
     public Projects? Project { get; set; }
 
-    [MaxLength(Constants.MaxCommentLength)]
+    [MaxLength(FieldLengths.MaxCommentLength)]
     public required string content_project_comment { get; set; }
 }

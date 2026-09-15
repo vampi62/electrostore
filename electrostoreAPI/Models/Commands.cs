@@ -1,4 +1,4 @@
-using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -14,7 +14,7 @@ public class Commands : BaseEntity
 
     public float? price_command { get; set; }
 
-    [MaxLength(Constants.MaxUrlLength)]
+    [MaxLength(FieldLengths.MaxUrlLength)]
     public string url_command { get; set; } = string.Empty;
 
     public CommandStatus status_command { get; set; } = CommandStatus.Created;
@@ -23,7 +23,7 @@ public class Commands : BaseEntity
 
     public DateTime? date_delivery_command { get; set; }
 
-    [MaxLength(Constants.MaxTrackingNumberLength)]
+    [MaxLength(FieldLengths.MaxTrackingNumberLength)]
     public string tracking_number_command { get; set; } = string.Empty;
 
     public int id_carrier { get; set; }

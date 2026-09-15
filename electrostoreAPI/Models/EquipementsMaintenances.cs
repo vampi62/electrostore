@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Enums;
 
 namespace ElectrostoreAPI.Models;
@@ -25,6 +25,6 @@ public class EquipementsMaintenances : BaseEntity
 
     public DateTime? date_done_equipement_maintenance { get; set; }
 
-    [MaxLength(Constants.MaxDescriptionLength)]
+    [MaxLength(FieldLengths.MaxDescriptionLength)]
     public string description_equipement_maintenance { get; set; } = string.Empty;
 }

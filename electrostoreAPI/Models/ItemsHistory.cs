@@ -1,4 +1,4 @@
-using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -31,6 +31,6 @@ public class ItemsHistory : BaseEntity
 
     public int? new_quantity_item_history { get; set; }
 
-    [MaxLength(Constants.MaxDescriptionLength)]
+    [MaxLength(FieldLengths.MaxDescriptionLength)]
     public string? notes_item_history { get; set; }
 }

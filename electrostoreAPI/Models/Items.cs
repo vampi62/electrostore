@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Constants;
 
 namespace ElectrostoreAPI.Models;
 
@@ -10,21 +10,21 @@ public class Items : BaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_item { get; set; }
 
-    [MaxLength(Constants.MaxUrlFileLength)]
+    [MaxLength(FieldLengths.MaxUrlFileLength)]
     public string? url_picture_item { get; set; }
 
-    [MaxLength(Constants.MaxUrlFileLength)]
+    [MaxLength(FieldLengths.MaxUrlFileLength)]
     public string? url_thumbnail_item { get; set; }
 
-    [MaxLength(Constants.MaxNameLength)]
+    [MaxLength(FieldLengths.MaxNameLength)]
     public required string reference_name_item { get; set; }
 
-    [MaxLength(Constants.MaxNameLength)]
+    [MaxLength(FieldLengths.MaxNameLength)]
     public required string friendly_name_item { get; set; }
 
     public int threshold_min_item { get; set; }
 
-    [MaxLength(Constants.MaxDescriptionLength)]
+    [MaxLength(FieldLengths.MaxDescriptionLength)]
     public string description_item { get; set; } = string.Empty;
 
     public ICollection<CommandsItems> CommandsItems { get; set; } = new List<CommandsItems>();

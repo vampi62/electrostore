@@ -1,3 +1,4 @@
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Validators;
 using System.ComponentModel.DataAnnotations;
 
@@ -26,7 +27,7 @@ public record ReadBulkProjectTagDto
 public record CreateProjectTagDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string name_project_tag { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
@@ -35,7 +36,7 @@ public record CreateProjectTagDto
 }
 public record UpdateProjectTagDto
 {
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? name_project_tag { get; init; }
 

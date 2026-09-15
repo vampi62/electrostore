@@ -1,8 +1,7 @@
-using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Validators;
 using Microsoft.AspNetCore.Http;
 using Moq;
-using System;
 using Xunit;
 
 namespace ElectrostoreAPI.Tests.Validators;

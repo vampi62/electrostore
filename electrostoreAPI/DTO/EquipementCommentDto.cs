@@ -1,3 +1,4 @@
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Validators;
 using System.ComponentModel.DataAnnotations;
 
@@ -20,7 +21,7 @@ public record ReadExtendedEquipementCommentDto : ReadEquipementCommentDto
 public record CreateEquipementCommentByEquipementDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string content_equipement_comment { get; init; }
 }
 public record CreateEquipementCommentByUserDto
@@ -29,7 +30,7 @@ public record CreateEquipementCommentByUserDto
     public required int id_equipement { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string content_equipement_comment { get; init; }
 }
 public record CreateEquipementCommentDto
@@ -41,12 +42,12 @@ public record CreateEquipementCommentDto
     public required int id_user { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string content_equipement_comment { get; init; }
 }
 public record UpdateEquipementCommentDto
 {
-    [MaxLength(Constants.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxCommentLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? content_equipement_comment { get; init; }
 }

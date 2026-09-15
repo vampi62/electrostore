@@ -1,3 +1,4 @@
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Dto;
 
 namespace ElectrostoreAPI.Services.ConfigService;
@@ -18,28 +19,28 @@ public class ConfigService : IConfigService
             demo_mode = GetDemoMode(),
             app_language = GetAppLanguage(),
             // get the max length of the url
-            max_length_url = Constants.MaxUrlLength,
+            max_length_url = FieldLengths.MaxUrlLength,
             // get the max length
-            max_length_comment = Constants.MaxCommentLength,
-            max_length_description = Constants.MaxDescriptionLength,
-            max_length_name = Constants.MaxNameLength,
-            max_length_type = Constants.MaxTypeLength,
-            max_length_email = Constants.MaxEmailLength,
-            max_length_location = Constants.MaxLocationLength,
-            max_length_cron_expression = Constants.MaxCronExpressionLength,
-            max_length_ip = Constants.MaxIpLength,
-            max_length_reason = Constants.MaxReasonLength,
-            max_length_status = Constants.MaxStatusLength,
-            max_length_device_name = Constants.MaxDeviceNameLength,
-            max_length_push_key = Constants.MaxPushKeyLength,
-            max_length_push_auth = Constants.MaxPushAuthLength,
-            max_length_tracking_number = Constants.MaxTrackingNumberLength,
-            max_length_carrier_name = Constants.MaxCarrierNameLength,
-            max_length_timezone = Constants.MaxTimezoneLength,
-            max_length_coordinate = Constants.MaxCoordinateLength,
-            max_length_postal_code = Constants.MaxPostalCodeLength,
-            max_size_document_in_mb = Constants.MaxDocumentSizeMB,
-            max_size_image_in_mb = Constants.MaxImageSizeMB,
+            max_length_comment = FieldLengths.MaxCommentLength,
+            max_length_description = FieldLengths.MaxDescriptionLength,
+            max_length_name = FieldLengths.MaxNameLength,
+            max_length_type = FieldLengths.MaxTypeLength,
+            max_length_email = FieldLengths.MaxEmailLength,
+            max_length_location = FieldLengths.MaxLocationLength,
+            max_length_cron_expression = FieldLengths.MaxCronExpressionLength,
+            max_length_ip = FieldLengths.MaxIpLength,
+            max_length_reason = FieldLengths.MaxReasonLength,
+            max_length_status = FieldLengths.MaxStatusLength,
+            max_length_device_name = FieldLengths.MaxDeviceNameLength,
+            max_length_push_key = FieldLengths.MaxPushKeyLength,
+            max_length_push_auth = FieldLengths.MaxPushAuthLength,
+            max_length_tracking_number = FieldLengths.MaxTrackingNumberLength,
+            max_length_carrier_name = FieldLengths.MaxCarrierNameLength,
+            max_length_timezone = FieldLengths.MaxTimezoneLength,
+            max_length_coordinate = FieldLengths.MaxCoordinateLength,
+            max_length_postal_code = FieldLengths.MaxPostalCodeLength,
+            max_size_document_in_mb = FieldLengths.MaxDocumentSizeMB,
+            max_size_image_in_mb = FieldLengths.MaxImageSizeMB,
             sso_available_providers = GetSSOProviders(),
             allowed_image_mime_types = GetAllowedImageMimeTypes(),
             allowed_image_extensions = GetAllowedImageExtensions(),
@@ -52,13 +53,13 @@ public class ConfigService : IConfigService
 
     public string GetAppLanguage() => _configuration.GetValue<string>("AppLanguage") ?? "fr";
 
-    public string[] GetAllowedImageExtensions() => [.. Constants.AllowedImageMimeTypes.Values];
+    public string[] GetAllowedImageExtensions() => [.. FieldLengths.AllowedImageMimeTypes.Values];
 
-    private static string[] GetAllowedImageMimeTypes() => [.. Constants.AllowedImageMimeTypes.Keys];
+    private static string[] GetAllowedImageMimeTypes() => [.. FieldLengths.AllowedImageMimeTypes.Keys];
 
-    private static string[] GetAllowedDocumentExtensions() => [.. Constants.AllowedDocumentMimeTypes.Values];
+    private static string[] GetAllowedDocumentExtensions() => [.. FieldLengths.AllowedDocumentMimeTypes.Values];
 
-    private static string[] GetAllowedDocumentMimeTypes() => [.. Constants.AllowedDocumentMimeTypes.Keys];
+    private static string[] GetAllowedDocumentMimeTypes() => [.. FieldLengths.AllowedDocumentMimeTypes.Keys];
 
     private List<SsoAvailableProvider> GetSSOProviders() =>
         [.. _configuration.GetSection("OAuth").GetChildren().Select(provider => new SsoAvailableProvider

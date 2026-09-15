@@ -1,8 +1,7 @@
-using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Validators;
 using Microsoft.AspNetCore.Http;
 using Moq;
-using System;
 using Xunit;
 
 namespace ElectrostoreAPI.Tests.Validators;
@@ -48,7 +47,7 @@ public class FileSizeAttributeTests
     {
         // Arrange
         var attribute = new FileSizeAttribute(ImageMaxSizeProperty);
-        var maxSize = Constants.MaxImageSizeMB * 1024L * 1024L;
+        var maxSize = FieldLengths.MaxImageSizeMB * 1024L * 1024L;
         var file = BuildFormFile(maxSize);
 
         // Act
@@ -63,7 +62,7 @@ public class FileSizeAttributeTests
     {
         // Arrange
         var attribute = new FileSizeAttribute(ImageMaxSizeProperty);
-        var tooBig = (Constants.MaxImageSizeMB * 1024L * 1024L) + 1;
+        var tooBig = (FieldLengths.MaxImageSizeMB * 1024L * 1024L) + 1;
         var file = BuildFormFile(tooBig);
 
         // Act
@@ -92,7 +91,7 @@ public class FileSizeAttributeTests
     {
         // Arrange
         var attribute = new FileSizeAttribute(DocumentMaxSizeProperty);
-        var tooBig = (Constants.MaxDocumentSizeMB * 1024L * 1024L) + 1;
+        var tooBig = (FieldLengths.MaxDocumentSizeMB * 1024L * 1024L) + 1;
         var file = BuildFormFile(tooBig);
 
         // Act
@@ -144,6 +143,6 @@ public class FileSizeAttributeTests
 
         // Assert
         Assert.Contains("file_field", message);
-        Assert.Contains(Constants.MaxImageSizeMB.ToString(), message);
+        Assert.Contains(FieldLengths.MaxImageSizeMB.ToString(), message);
     }
 }
