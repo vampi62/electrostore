@@ -14,7 +14,6 @@ public class CarrierService : ICarrierService
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
-    private const string DemoModeKey = "DemoMode";
 
     public CarrierService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService)
     {

@@ -82,7 +82,10 @@ public class StockLowAlertService : IStockLowAlertService
 
         foreach (var recipient in report.Recipients)
         {
-            if (ct.IsCancellationRequested) break;
+            if (ct.IsCancellationRequested)
+            {
+                break;
+            }
             await PublishNotificationAsync(recipient, items, language, types, ct);
         }
     }
@@ -103,7 +106,7 @@ public class StockLowAlertService : IStockLowAlertService
         return DateTime.UtcNow.AddDays(-days);
     }
 
-    private static StockLowAlertParams ParseParams(string? paramsJson)
+    private StockLowAlertParams ParseParams(string? paramsJson)
     {
         if (string.IsNullOrWhiteSpace(paramsJson))
         {
@@ -113,8 +116,9 @@ public class StockLowAlertService : IStockLowAlertService
         {
             return JsonSerializer.Deserialize<StockLowAlertParams>(paramsJson, JsonOptions) ?? new StockLowAlertParams();
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
+            _logger.LogWarning(ex, "Stock low alert: invalid params_cronjob JSON - falling back to defaults.");
             return new StockLowAlertParams();
         }
     }
@@ -158,36 +162,30 @@ public class StockLowAlertService : IStockLowAlertService
     // ---- Modèles ------------------------------------------------------------
 
     /// <summary>Contenu attendu de <c>params_cronjob</c> pour l'action StockLowAlert.</summary>
-    private sealed record StockLowAlertParams
-    {
-        /// <summary>Langue des templates ("fr" / "en") ; à défaut, AppLanguage.</summary>
-        public string? language { get; init; }
-
-        /// <summary>Canaux de notification ("email", "webpush") ; "email" par défaut.</summary>
-        public List<string>? types { get; init; }
-
-        /// <summary>
-        /// <see langword="false"/> (par défaut) : résumé de tous les items sous leur seuil minimum.
-        /// <see langword="true"/> : ne retenir que les items ayant eu un changement de quantité
-        /// récent (via ItemsHistory), sur la fenêtre définie par <c>use_last_run</c> / <c>days</c>.
-        /// </summary>
-        public bool only_recent_changes { get; init; }
-
-        /// <summary>
-        /// Lorsque <c>only_recent_changes</c> est actif, utiliser la date du dernier lancement du
-        /// cron job (colonne <c>last_run_at</c>) comme début de la fenêtre "changements récents"
-        /// plutôt que <c>days</c>. Sans exécution précédente (premier lancement), <c>days</c> sert
-        /// de repli.
-        /// </summary>
-        public bool use_last_run { get; init; }
-
-        /// <summary>
-        /// Profondeur de la fenêtre "changements récents", en jours (1 par défaut). Utilisée
-        /// uniquement lorsque <c>only_recent_changes</c> est actif et que <c>use_last_run</c> ne
-        /// s'applique pas (désactivé ou premier lancement).
-        /// </summary>
-        public int? days { get; init; }
-    }
+    /// <param name="language">Langue des templates ("fr" / "en") ; à défaut, AppLanguage.</param>
+    /// <param name="types">Canaux de notification ("email", "webpush") ; "email" par défaut.</param>
+    /// <param name="only_recent_changes">
+    /// <see langword="false"/> (par défaut) : résumé de tous les items sous leur seuil minimum.
+    /// <see langword="true"/> : ne retenir que les items ayant eu un changement de quantité
+    /// récent (via ItemsHistory), sur la fenêtre définie par <c>use_last_run</c> / <c>days</c>.
+    /// </param>
+    /// <param name="use_last_run">
+    /// Lorsque <c>only_recent_changes</c> est actif, utiliser la date du dernier lancement du
+    /// cron job (colonne <c>last_run_at</c>) comme début de la fenêtre "changements récents"
+    /// plutôt que <c>days</c>. Sans exécution précédente (premier lancement), <c>days</c> sert
+    /// de repli.
+    /// </param>
+    /// <param name="days">
+    /// Profondeur de la fenêtre "changements récents", en jours (1 par défaut). Utilisée
+    /// uniquement lorsque <c>only_recent_changes</c> est actif et que <c>use_last_run</c> ne
+    /// s'applique pas (désactivé ou premier lancement).
+    /// </param>
+    private sealed record StockLowAlertParams(
+        string? language = null,
+        List<string>? types = null,
+        bool only_recent_changes = false,
+        bool use_last_run = false,
+        int? days = null);
 
     private sealed record LowStockItemRow
     {

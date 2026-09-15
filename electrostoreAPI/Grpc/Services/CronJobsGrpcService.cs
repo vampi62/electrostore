@@ -1,5 +1,6 @@
 using Grpc.Core;
 using ElectrostoreAPI.Services.CronJobService;
+using System.Globalization;
 
 namespace ElectrostoreAPI.Grpc.Services;
 
@@ -42,8 +43,8 @@ public class CronJobsGrpcService : CronJobsGrpc.CronJobsGrpcBase
         {
             await _cronJobService.UpdateCronJobRunAsync(
                 request.IdCronjob,
-                string.IsNullOrWhiteSpace(request.LastRunAt) ? null : DateTime.Parse(request.LastRunAt, null, System.Globalization.DateTimeStyles.RoundtripKind),
-                string.IsNullOrWhiteSpace(request.NextRunAt) ? null : DateTime.Parse(request.NextRunAt, null, System.Globalization.DateTimeStyles.RoundtripKind),
+                string.IsNullOrWhiteSpace(request.LastRunAt) ? null : DateTime.Parse(request.LastRunAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
+                string.IsNullOrWhiteSpace(request.NextRunAt) ? null : DateTime.Parse(request.NextRunAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
                 context.CancellationToken);
             _logger.LogInformation("UpdateCronJobRun: cronjob={Id} lastRunAt={LastRunAt} nextRunAt={NextRunAt}",
                 request.IdCronjob, request.LastRunAt, request.NextRunAt);

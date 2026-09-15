@@ -192,7 +192,7 @@ public class CommandService : ICommandService
         }
         if (commandDto.id_carrier is not null)
         {
-            var carrier = await _context.Carriers.FindAsync(commandDto.id_carrier.Value) ?? throw new KeyNotFoundException($"Carrier with id '{commandDto.id_carrier}' not found");
+            _ = await _context.Carriers.FindAsync(commandDto.id_carrier.Value) ?? throw new KeyNotFoundException($"Carrier with id '{commandDto.id_carrier}' not found");
             commandToUpdate.id_carrier = commandDto.id_carrier.Value;
         }
         if (commandDto.is_tracking_requested is not null)

@@ -21,6 +21,13 @@ public class AiToolExecutorService : IAiToolExecutorService
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    private static readonly string[] SearchItemsRequired = ["query"];
+    private static readonly string[] GetItemStockLocationRequired = ["id_item"];
+    private static readonly string[] CreateItemRequired = ["reference_name_item", "friendly_name_item", "threshold_min_item"];
+    private static readonly string[] CreateTagRequired = ["name_tag"];
+    private static readonly string[] AttachTagRequired = ["id_item", "id_tag"];
+    private static readonly string[] MoveItemStockRequired = ["id_item", "id_box", "quantity_item_box"];
+
     public AiToolExecutorService(
         IItemService itemService,
         IItemBoxService itemBoxService,
@@ -47,7 +54,7 @@ public class AiToolExecutorService : IAiToolExecutorService
                     query = new { type = "string", description = "Free-text search on the item name." },
                     limit = new { type = "integer", description = "Max number of results (default 20)." }
                 },
-                required = new[] { "query" }
+                required = SearchItemsRequired
             }),
             Def("get_item_stock_location", "Get the boxes (and quantities) an item is currently stored in.", new
             {
@@ -56,7 +63,7 @@ public class AiToolExecutorService : IAiToolExecutorService
                 {
                     id_item = new { type = "integer", description = "The item id." }
                 },
-                required = new[] { "id_item" }
+                required = GetItemStockLocationRequired
             }),
             Def("list_boxes", "List boxes, optionally filtered by store.", new
             {
@@ -168,7 +175,7 @@ public class AiToolExecutorService : IAiToolExecutorService
         return Result(tags.data);
     }
 
-    private AiToolExecutionResult ProposeCreateItem(string argumentsJson)
+    private static AiToolExecutionResult ProposeCreateItem(string argumentsJson)
     {
         return ProposedResult("create_item", ParseDto<CreateItemDto>(argumentsJson));
     }
@@ -178,17 +185,17 @@ public class AiToolExecutorService : IAiToolExecutorService
         return ProposedResult("create_box", ParseDto<CreateBoxDto>(argumentsJson));
     }
 
-    private AiToolExecutionResult ProposeCreateTag(string argumentsJson)
+    private static AiToolExecutionResult ProposeCreateTag(string argumentsJson)
     {
         return ProposedResult("create_tag", ParseDto<CreateTagDto>(argumentsJson));
     }
 
-    private AiToolExecutionResult ProposeAttachTag(string argumentsJson)
+    private static AiToolExecutionResult ProposeAttachTag(string argumentsJson)
     {
         return ProposedResult("attach_tag", ParseDto<CreateItemTagDto>(argumentsJson));
     }
 
-    private AiToolExecutionResult ProposeMoveItemStock(string argumentsJson)
+    private static AiToolExecutionResult ProposeMoveItemStock(string argumentsJson)
     {
         return ProposedResult("move_item_stock", ParseDto<CreateItemBoxDto>(argumentsJson));
     }
@@ -299,22 +306,22 @@ public class AiToolExecutorService : IAiToolExecutorService
 
     private class SearchItemsArgs
     {
-        public string? query { get; set; }
-        public int? limit { get; set; }
+        public string? query { get; set; } = null;
+        public int? limit { get; set; } = null;
     }
 
-    private class ItemStockLocationArgs
+    private sealed class ItemStockLocationArgs
     {
-        public int id_item { get; set; }
+        public int id_item { get; set; } = 0;
     }
 
-    private class ListBoxesArgs
+    private sealed class ListBoxesArgs
     {
-        public int? id_store { get; set; }
+        public int? id_store { get; set; } = null;
     }
 
-    private class ListTagsArgs
+    private sealed class ListTagsArgs
     {
-        public string? query { get; set; }
+        public string? query { get; set; } = null;
     }
 }

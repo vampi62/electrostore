@@ -47,6 +47,7 @@ public class AiChatService : IAiChatService
     {
         if (!_llmChatService.IsEnabled)
         {
+            _logger.LogWarning("Rejected SendMessage request because the LLM chat integration is disabled");
             throw new InvalidOperationException("LLM chat integration is disabled");
         }
         var userText = await ResolveUserText(messageDto, cancellationToken);
@@ -59,16 +60,21 @@ public class AiChatService : IAiChatService
             result = await _llmChatService.GetChatCompletionAsync(messages, toolDefs, cancellationToken);
             if (result.tool_calls is not { Count: > 0 })
             {
+                _logger.LogDebug("SendMessage resolved after {Iteration} iteration(s) with no further tool calls", i + 1);
                 break;
             }
+            _logger.LogDebug("SendMessage iteration {Iteration}/{MaxIterations}: LLM requested {ToolCallCount} tool call(s)",
+                i + 1, MaxToolIterations, result.tool_calls.Count);
             proposedActions.AddRange(await AppendToolResultsAsync(messages, result, cancellationToken));
             result = null;
         }
         if (result is null)
         {
+            _logger.LogError("SendMessage tool-calling loop exceeded the maximum of {MaxIterations} iterations", MaxToolIterations);
             throw new InvalidOperationException("The assistant tool-calling loop exceeded the maximum number of iterations");
         }
 
+        _logger.LogInformation("SendMessage completed with {ProposedActionCount} proposed action(s)", proposedActions.Count);
         return new SendAiChatMessageResponseDto
         {
             message = new ReadAiChatMessageDto { role = "assistant", content = result.content ?? string.Empty },
@@ -80,6 +86,7 @@ public class AiChatService : IAiChatService
     {
         if (!_llmChatService.IsEnabled)
         {
+            _logger.LogWarning("Rejected StreamMessage request because the LLM chat integration is disabled");
             throw new InvalidOperationException("LLM chat integration is disabled");
         }
         var userText = await ResolveUserText(messageDto, cancellationToken);
@@ -92,13 +99,17 @@ public class AiChatService : IAiChatService
             var result = await _llmChatService.GetChatCompletionAsync(messages, toolDefs, cancellationToken);
             if (result.tool_calls is not { Count: > 0 })
             {
+                _logger.LogDebug("StreamMessage resolved after {Iteration} iteration(s) with no further tool calls", i + 1);
                 resolved = true;
                 break;
             }
+            _logger.LogDebug("StreamMessage iteration {Iteration}/{MaxIterations}: LLM requested {ToolCallCount} tool call(s)",
+                i + 1, MaxToolIterations, result.tool_calls.Count);
             proposedActions.AddRange(await AppendToolResultsAsync(messages, result, cancellationToken));
         }
         if (!resolved)
         {
+            _logger.LogError("StreamMessage tool-calling loop exceeded the maximum of {MaxIterations} iterations", MaxToolIterations);
             throw new InvalidOperationException("The assistant tool-calling loop exceeded the maximum number of iterations");
         }
 
@@ -106,6 +117,7 @@ public class AiChatService : IAiChatService
         httpResponse.Headers.CacheControl = "no-cache";
         httpResponse.Headers["X-Accel-Buffering"] = "no";
 
+        _logger.LogDebug("StreamMessage starting delta stream with {ProposedActionCount} proposed action(s)", proposedActions.Count);
         var contentBuilder = new StringBuilder();
         await foreach (var delta in _llmChatService.StreamChatCompletionAsync(messages, cancellationToken))
         {
@@ -121,6 +133,8 @@ public class AiChatService : IAiChatService
         });
         await httpResponse.WriteAsync($"event: done\ndata: {donePayload}\n\n", cancellationToken);
         await httpResponse.Body.FlushAsync(cancellationToken);
+        _logger.LogInformation("StreamMessage completed, streamed {Length} character(s) with {ProposedActionCount} proposed action(s)",
+            contentBuilder.Length, proposedActions.Count);
     }
 
     // ---- shared helpers ----
@@ -131,9 +145,11 @@ public class AiChatService : IAiChatService
         messages.Add(new LlmMessage { role = "assistant", content = result.content, tool_calls = result.tool_calls });
         foreach (var toolCall in result.tool_calls!)
         {
+            _logger.LogDebug("Executing tool {ToolName} (call id {ToolCallId})", toolCall.function.name, toolCall.id);
             var execResult = await _aiToolExecutorService.ExecuteToolAsync(toolCall.function.name, toolCall.function.arguments, cancellationToken);
             if (execResult.ProposedAction is not null)
             {
+                _logger.LogDebug("Tool {ToolName} produced a proposed action of type {ActionType}", toolCall.function.name, execResult.ProposedAction.action_type);
                 proposedActions.Add(execResult.ProposedAction);
             }
             messages.Add(new LlmMessage
@@ -157,15 +173,20 @@ public class AiChatService : IAiChatService
         {
             if (!_sttService.IsEnabled)
             {
+                _logger.LogWarning("Rejected chat message with audio because the STT integration is disabled");
                 throw new InvalidOperationException("STT integration is disabled");
             }
+            _logger.LogDebug("Transcribing audio message via STT");
             var transcribed = await _sttService.TranscribeAsync(messageDto.audio, cancellationToken);
             if (string.IsNullOrWhiteSpace(transcribed))
             {
+                _logger.LogWarning("Audio transcription returned no text");
                 throw new InvalidOperationException("Audio transcription returned no text");
             }
+            _logger.LogDebug("Audio transcription succeeded, {Length} character(s)", transcribed.Length);
             return transcribed;
         }
+        _logger.LogWarning("Rejected chat message with neither text content nor audio");
         throw new ArgumentException("Either content_ai_chat_message or audio must be provided");
     }
 

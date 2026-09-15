@@ -29,11 +29,7 @@ public class UserPushSubscriptionService : IUserPushSubscriptionService
     public async Task<PaginatedResponseDto<ReadUserPushSubscriptionDto>> GetPushSubscriptionsByUserId(int userId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null)
     {
-        var user = await _context.Users.FindAsync(userId);
-        if (user is null)
-        {
-            throw new KeyNotFoundException($"User with id {userId} not found");
-        }
+        _ = await _context.Users.FindAsync(userId) ?? throw new KeyNotFoundException($"User with id {userId} not found");
         var query = _context.UserPushSubscriptions.AsQueryable();
         var filterResult = default(Expression<Func<UserPushSubscriptions, bool>>);
         rsql ??= [];
@@ -135,7 +131,7 @@ public class UserPushSubscriptionService : IUserPushSubscriptionService
 
     public async Task<List<ReadUserPushSubscriptionDto>> GetPushSubscriptionsByUserIdAsync(int userId, CancellationToken cancellationToken = default)
     {
-        var user = await _context.Users.FindAsync(new object[] { userId }, cancellationToken) ?? throw new KeyNotFoundException($"User with id {userId} not found");
+        _ = await _context.Users.FindAsync(new object[] { userId }, cancellationToken) ?? throw new KeyNotFoundException($"User with id {userId} not found");
         var subscriptions = await _context.UserPushSubscriptions
             .Where(s => s.id_user == userId)
             .ToListAsync(cancellationToken);

@@ -104,14 +104,17 @@ public class ItemMovementReportService : IItemMovementReportService
 
         foreach (var recipient in report.Recipients)
         {
-            if (ct.IsCancellationRequested) break;
+            if (ct.IsCancellationRequested)
+            {
+                break;
+            }
             await PublishNotificationAsync(recipient, movements, report, language, types, ct);
         }
     }
 
     // -------------------------------------------------------------------------
 
-    private static WeeklyReportParams ParseParams(string? paramsJson)
+    private WeeklyReportParams ParseParams(string? paramsJson)
     {
         if (string.IsNullOrWhiteSpace(paramsJson))
         {
@@ -121,8 +124,9 @@ public class ItemMovementReportService : IItemMovementReportService
         {
             return JsonSerializer.Deserialize<WeeklyReportParams>(paramsJson, JsonOptions) ?? new WeeklyReportParams();
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
+            _logger.LogWarning(ex, "Item movement report: invalid params_cronjob JSON - falling back to defaults.");
             return new WeeklyReportParams();
         }
     }
@@ -190,28 +194,22 @@ public class ItemMovementReportService : IItemMovementReportService
     // ---- Modèles ----------------------------------------------------------------
 
     /// <summary>Contenu attendu de <c>params_cronjob</c> pour l'action WeeklyItemMovementReport.</summary>
-    private sealed record WeeklyReportParams
-    {
-        /// <summary>Profondeur de la période, en jours (7 par défaut).</summary>
-        public int? days { get; init; }
-
-        /// <summary>Langue des templates ("fr" / "en") ; à défaut, AppLanguage.</summary>
-        public string? language { get; init; }
-
-        /// <summary>Canaux de notification ("email", "webpush") ; "email" par défaut.</summary>
-        public List<string>? types { get; init; }
-
-        /// <summary>Envoyer le rapport même si aucun mouvement n'a eu lieu.</summary>
-        public bool send_when_empty { get; init; }
-
-        /// <summary>
-        /// Utiliser la date du dernier lancement du cron job (colonne <c>last_run_at</c>) comme début
-        /// de période plutôt que <c>days</c>. Permet à plusieurs cron jobs de cette même action de
-        /// couvrir chacun leur propre intervalle (basé sur leur propre planification) plutôt qu'une
-        /// fenêtre fixe. Sans exécution précédente (premier lancement), <c>days</c> sert de repli.
-        /// </summary>
-        public bool use_last_run { get; init; }
-    }
+    /// <param name="days">Profondeur de la période, en jours (7 par défaut).</param>
+    /// <param name="language">Langue des templates ("fr" / "en") ; à défaut, AppLanguage.</param>
+    /// <param name="types">Canaux de notification ("email", "webpush") ; "email" par défaut.</param>
+    /// <param name="send_when_empty">Envoyer le rapport même si aucun mouvement n'a eu lieu.</param>
+    /// <param name="use_last_run">
+    /// Utiliser la date du dernier lancement du cron job (colonne <c>last_run_at</c>) comme début
+    /// de période plutôt que <c>days</c>. Permet à plusieurs cron jobs de cette même action de
+    /// couvrir chacun leur propre intervalle (basé sur leur propre planification) plutôt qu'une
+    /// fenêtre fixe. Sans exécution précédente (premier lancement), <c>days</c> sert de repli.
+    /// </param>
+    private sealed record WeeklyReportParams(
+        int? days = null,
+        string? language = null,
+        List<string>? types = null,
+        bool send_when_empty = false,
+        bool use_last_run = false);
 
     private sealed record MovementRow
     {

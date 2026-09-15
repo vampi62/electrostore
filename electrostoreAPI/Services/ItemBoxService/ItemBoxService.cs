@@ -199,9 +199,19 @@ public class ItemBoxService : IItemBoxService
         await _context.SaveChangesAsync();
         if (itemBoxDto.quantity_item_box is not null)
         {
-            var historyType = itemBoxToUpdate.quantity_item_box > oldQte ? ItemHistoryType.StockAdded
-                : itemBoxToUpdate.quantity_item_box < oldQte ? ItemHistoryType.StockRemoved
-                : ItemHistoryType.StockUpdated;
+            ItemHistoryType historyType;
+            if (itemBoxToUpdate.quantity_item_box > oldQte)
+            {
+                historyType = ItemHistoryType.StockAdded;
+            }
+            else if (itemBoxToUpdate.quantity_item_box < oldQte)
+            {
+                historyType = ItemHistoryType.StockRemoved;
+            }
+            else
+            {
+                historyType = ItemHistoryType.StockUpdated;
+            }
             await _itemHistoryService.LogHistory(itemId, boxId, historyType,
                 oldQuantity: oldQte, newQuantity: itemBoxToUpdate.quantity_item_box);
         }
