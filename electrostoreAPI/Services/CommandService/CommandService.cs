@@ -18,6 +18,11 @@ public class CommandService : ICommandService
     private readonly IFileService _fileService;
     private readonly IKafkaProducerService _kafkaProducerService;
     private readonly string _commandDocumentsPath = "commandDocuments";
+    private readonly string KafkaCommandAddTopic = "tracking-request-add";
+    private readonly string KafkaCommandChangeTopic = "tracking-request-change";
+    private readonly string KafkaCommandStopTopic = "tracking-request-stop";
+    private readonly string KafkaCommandResumeTopic = "tracking-request-resume";
+    private readonly string KafkaCommandDeleteTopic = "tracking-request-delete";
 
     public CommandService(IMapper mapper, ApplicationDbContext context, IFileService fileService, IKafkaProducerService kafkaProducerService)
     {
@@ -156,7 +161,7 @@ public class CommandService : ICommandService
                 carrier = carrierKey
             };
             var messageJson = JsonSerializer.Serialize(message);
-            await _kafkaProducerService.PublishAsync("tracking-request-add", kafkaKey, messageJson);
+            await _kafkaProducerService.PublishAsync(KafkaCommandAddTopic, kafkaKey, messageJson);
         }
         return _mapper.Map<ReadCommandDto>(newCommand);
     }
@@ -214,7 +219,7 @@ public class CommandService : ICommandService
                 carrier = carrierKey
             };
             var messageJson = JsonSerializer.Serialize(message);
-            await _kafkaProducerService.PublishAsync("tracking-request-add", kafkaKey, messageJson);
+            await _kafkaProducerService.PublishAsync(KafkaCommandAddTopic, kafkaKey, messageJson);
         }
         //tracking-request-change si is_tracking_validated && id_carrier !=
         if (commandDto.id_carrier is not null && commandToUpdate.id_carrier != 0 && commandToUpdate.is_tracking_validated && commandDto.id_carrier.Value != oldCarrierId)
@@ -231,7 +236,7 @@ public class CommandService : ICommandService
                 carrier_old = oldCarrierKey
             };
             var messageJson = JsonSerializer.Serialize(message);
-            await _kafkaProducerService.PublishAsync("tracking-request-change", kafkaKey, messageJson);
+            await _kafkaProducerService.PublishAsync(KafkaCommandChangeTopic, kafkaKey, messageJson);
         }
         //tracking-request-stop si !is_tracking_requested && is_tracking_validated && is_active
         //tracking-request-resume si is_tracking_requested && is_tracking_validated && !is_active
@@ -246,7 +251,7 @@ public class CommandService : ICommandService
                 carrier = carrierKey
             };
             var messageJson = JsonSerializer.Serialize(message);
-            await _kafkaProducerService.PublishAsync("tracking-request-stop", kafkaKey, messageJson);
+            await _kafkaProducerService.PublishAsync(KafkaCommandStopTopic, kafkaKey, messageJson);
         }
         if (commandDto.is_tracking_requested is not null && commandToUpdate.is_tracking_validated && !commandToUpdate.is_active && commandDto.is_tracking_requested.Value)
         {
@@ -259,7 +264,7 @@ public class CommandService : ICommandService
                 carrier = carrierKey
             };
             var messageJson = JsonSerializer.Serialize(message);
-            await _kafkaProducerService.PublishAsync("tracking-request-resume", kafkaKey, messageJson);
+            await _kafkaProducerService.PublishAsync(KafkaCommandResumeTopic, kafkaKey, messageJson);
         }
         //tracking-request-delete si tracking_number !=
         if (commandDto.tracking_number_command is not null && commandToUpdate.is_tracking_validated && !string.IsNullOrEmpty(oldTrackingNumber) && commandDto.tracking_number_command != oldTrackingNumber)
@@ -273,7 +278,7 @@ public class CommandService : ICommandService
                 carrier = carrierKey
             };
             var messageJson = JsonSerializer.Serialize(message);
-            await _kafkaProducerService.PublishAsync("tracking-request-delete", kafkaKey, messageJson);
+            await _kafkaProducerService.PublishAsync(KafkaCommandDeleteTopic, kafkaKey, messageJson);
         }
         return _mapper.Map<ReadCommandDto>(commandToUpdate);
     }
@@ -294,7 +299,7 @@ public class CommandService : ICommandService
                 carrier = carrierKey
             };
             var messageJson = JsonSerializer.Serialize(message);
-            await _kafkaProducerService.PublishAsync("tracking-request-delete", kafkaKey, messageJson);
+            await _kafkaProducerService.PublishAsync(KafkaCommandDeleteTopic, kafkaKey, messageJson);
         }
         await _context.SaveChangesAsync();
     }
