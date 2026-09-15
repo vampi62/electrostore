@@ -1,4 +1,4 @@
-using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Constants;
 using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
@@ -12,10 +12,10 @@ public class FileTypeAttribute : ValidationAttribute
     private readonly string[] _allowedExtensions;
     public FileTypeAttribute(string mimeTypesPropertyName)
     {
-        var _mimeTypesProperty = (typeof(Constants).GetProperty(
+        var _mimeTypesProperty = (typeof(FieldLengths).GetProperty(
                 mimeTypesPropertyName,
                 BindingFlags.Public | BindingFlags.Static
-            ) ?? null) ?? throw new InvalidOperationException($"Field '{mimeTypesPropertyName}' not found in Constants class.");
+            ) ?? null) ?? throw new InvalidOperationException($"Field '{mimeTypesPropertyName}' not found in FieldLengths class.");
         _allowedMimeTypes = ((ImmutableDictionary<string, string>)_mimeTypesProperty.GetValue(null)!).Keys.ToArray();
         _allowedExtensions = ((ImmutableDictionary<string, string>)_mimeTypesProperty.GetValue(null)!).Values.ToArray();
     }

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Enums;
 
 namespace ElectrostoreAPI.Models;
@@ -11,13 +11,13 @@ public class Equipements : BaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_equipement { get; set; }
 
-    [MaxLength(Constants.MaxNameLength)]
+    [MaxLength(FieldLengths.MaxNameLength)]
     public required string reference_name_equipement { get; set; }
 
-    [MaxLength(Constants.MaxNameLength)]
+    [MaxLength(FieldLengths.MaxNameLength)]
     public required string friendly_name_equipement { get; set; }
 
-    [MaxLength(Constants.MaxDescriptionLength)]
+    [MaxLength(FieldLengths.MaxDescriptionLength)]
     public string description_equipement { get; set; } = string.Empty;
 
     public EquipementStatus status_equipement { get; set; } = EquipementStatus.Operational;
