@@ -234,7 +234,12 @@ public partial class Program
 
         app.MapControllers();
 
-        InitializeDatabase(app);
+        // Skipped when generating the OpenAPI doc via the Swashbuckle CLI (dotnet swagger tofile),
+        // which executes Main() up to app.Run() for real and would otherwise require a live database.
+        if (!builder.Configuration.GetValue<bool>("SwaggerGeneration"))
+        {
+            InitializeDatabase(app);
+        }
 
         app.Run();
     }

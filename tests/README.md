@@ -6,11 +6,23 @@ This directory contains unit tests for the Electrostore project. The tests are o
 
 C# unit tests for the ASP.NET Core API. These tests use xUnit and Moq for testing.
 
-### Running the tests
+### Running the tests for all backend modules
+
+```bash
+cd electrostore<API / CRON / NOTIF / WORKER>
+dotnet test ../tests/electrostore<API / CRON / NOTIF / WORKER>
+```
+
+### Generate openAPI documentation for electrostoreAPI
 
 ```bash
 cd electrostoreAPI
-dotnet test ../tests/electrostoreAPI
+
+set SwaggerGeneration=true
+# or
+export SwaggerGeneration=true
+
+dotnet swagger tofile --output ../docs/openapi.json bin/Debug/net7.0/electrostoreAPI.dll v1
 ```
 
 ## electrostoreFRONT
