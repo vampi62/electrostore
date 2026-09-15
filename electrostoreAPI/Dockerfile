@@ -5,6 +5,7 @@ WORKDIR /app
 COPY electrostoreAPI.csproj .
 RUN dotnet restore
 
+COPY Constants/ Constants/
 COPY Controllers/ Controllers/
 COPY DTO/ DTO/
 COPY Enums/ Enums/
