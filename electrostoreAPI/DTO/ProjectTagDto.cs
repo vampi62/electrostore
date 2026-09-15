@@ -18,12 +18,6 @@ public record ReadExtendedProjectTagDto : ReadProjectTagDto
     public IEnumerable<ReadProjectProjectTagDto>? project_tags { get; init; }
 }
 
-public record ReadBulkProjectTagDto
-{
-    public required List<ReadProjectTagDto> valide { get; init; }
-    public required List<ErrorDetail> error { get; init; }
-}
-
 public record CreateProjectTagDto
 {
     [Required(ErrorMessage = "{0} is required.")]

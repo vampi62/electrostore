@@ -113,7 +113,7 @@ public class LedService : ILedService
         return _mapper.Map<ReadLedDto>(newLed);
     }
 
-    public async Task<ReadBulkLedDto> CreateBulkLed(List<CreateLedDto> ledsDto)
+    public async Task<ReadBulkDto<ReadLedDto>> CreateBulkLed(List<CreateLedDto> ledsDto)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
@@ -137,7 +137,7 @@ public class LedService : ILedService
                 });
             }
         }
-        return new ReadBulkLedDto
+        return new ReadBulkDto<ReadLedDto>
         {
             valide = validQuery,
             error = errorQuery
@@ -163,7 +163,7 @@ public class LedService : ILedService
         return _mapper.Map<ReadLedDto>(ledToUpdate);
     }
 
-    public async Task<ReadBulkLedDto> UpdateBulkLed(List<UpdateBulkLedByStoreDto> ledsDto, int storeId)
+    public async Task<ReadBulkDto<ReadLedDto>> UpdateBulkLed(List<UpdateBulkLedByStoreDto> ledsDto, int storeId)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
@@ -193,7 +193,7 @@ public class LedService : ILedService
                 });
             }
         }
-        return new ReadBulkLedDto
+        return new ReadBulkDto<ReadLedDto>
         {
             valide = validQuery,
             error = errorQuery
@@ -216,7 +216,7 @@ public class LedService : ILedService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<ReadBulkLedDto> DeleteBulkLed(List<int> ids, int storeId)
+    public async Task<ReadBulkDto<ReadLedDto>> DeleteBulkLed(List<int> ids, int storeId)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
@@ -244,7 +244,7 @@ public class LedService : ILedService
                 });
             }
         }
-        return new ReadBulkLedDto
+        return new ReadBulkDto<ReadLedDto>
         {
             valide = validQuery,
             error = errorQuery

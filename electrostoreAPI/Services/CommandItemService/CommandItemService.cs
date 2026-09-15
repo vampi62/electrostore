@@ -177,7 +177,7 @@ public class CommandItemService : ICommandItemService
         return _mapper.Map<ReadCommandItemDto>(newCommandItem);
     }
 
-    public async Task<ReadBulkCommandItemDto> CreateBulkCommandItem(List<CreateCommandItemDto> commandItemBulkDto)
+    public async Task<ReadBulkDto<ReadCommandItemDto>> CreateBulkCommandItem(List<CreateCommandItemDto> commandItemBulkDto)
     {
         var validQuery = new List<ReadCommandItemDto>();
         var errorQuery = new List<ErrorDetail>();
@@ -196,7 +196,7 @@ public class CommandItemService : ICommandItemService
                 });
             }
         }
-        return new ReadBulkCommandItemDto
+        return new ReadBulkDto<ReadCommandItemDto>
         {
             valide = validQuery,
             error = errorQuery

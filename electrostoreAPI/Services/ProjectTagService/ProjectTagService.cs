@@ -113,7 +113,7 @@ public class ProjectTagService : IProjectTagService
         return _mapper.Map<ReadProjectTagDto>(newProjectTag);
     }
 
-    public async Task<ReadBulkProjectTagDto> CreateBulkProjectTag(List<CreateProjectTagDto> projectTagBulkDto)
+    public async Task<ReadBulkDto<ReadProjectTagDto>> CreateBulkProjectTag(List<CreateProjectTagDto> projectTagBulkDto)
     {
         var validQuery = new List<ReadProjectTagDto>();
         var errorQuery = new List<ErrorDetail>();
@@ -132,7 +132,7 @@ public class ProjectTagService : IProjectTagService
                 });
             }
         }
-        return new ReadBulkProjectTagDto
+        return new ReadBulkDto<ReadProjectTagDto>
         {
             valide = validQuery,
             error = errorQuery

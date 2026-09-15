@@ -14,11 +14,6 @@ public record ReadExtendedBoxTagDto : ReadBoxTagDto
     public ReadTagDto? tag { get; init; }
     public ReadBoxDto? box { get; init; }
 }
-public record ReadBulkBoxTagDto
-{
-    public required List<ReadBoxTagDto> valide { get; init; }
-    public required List<ErrorDetail> error { get; init; }
-}
 public record CreateBoxTagByTagDto
 {
     [Required(ErrorMessage = "{0} is required.")]
