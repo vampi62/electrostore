@@ -177,7 +177,7 @@ public class ProjectItemService : IProjectItemService
         return _mapper.Map<ReadProjectItemDto>(newProjectItem);
     }
 
-    public async Task<ReadBulkProjectItemDto> CreateBulkProjectItem(List<CreateProjectItemDto> projectItemBulkDto)
+    public async Task<ReadBulkDto<ReadProjectItemDto>> CreateBulkProjectItem(List<CreateProjectItemDto> projectItemBulkDto)
     {
         var validQuery = new List<ReadProjectItemDto>();
         var errorQuery = new List<ErrorDetail>();
@@ -196,7 +196,7 @@ public class ProjectItemService : IProjectItemService
                 });
             }
         }
-        return new ReadBulkProjectItemDto
+        return new ReadBulkDto<ReadProjectItemDto>
         {
             valide = validQuery,
             error = errorQuery

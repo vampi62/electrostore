@@ -14,11 +14,6 @@ public record ReadExtendedEquipementTagDto : ReadEquipementTagDto
     public ReadEquipementDto? equipement { get; init; }
     public ReadTagDto? tag { get; init; }
 }
-public record ReadBulkEquipementTagDto
-{
-    public required List<ReadEquipementTagDto> Valide { get; init; }
-    public required List<ErrorDetail> Error { get; init; }
-}
 public record CreateEquipementTagByTagDto
 {
     [Required(ErrorMessage = "{0} is required.")]

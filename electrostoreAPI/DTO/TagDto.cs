@@ -22,13 +22,6 @@ public record ReadExtendedTagDto : ReadTagDto
     public IEnumerable<ReadBoxTagDto>? boxs_tags { get; init; }
     public IEnumerable<ReadEquipementTagDto>? equipement_tags { get; init; }
 }
-
-public record ReadBulkTagDto
-{
-    public required List<ReadTagDto> valide { get; init; }
-    public required List<ErrorDetail> error { get; init; }
-}
-
 public record CreateTagDto
 {
     [Required(ErrorMessage = "{0} is required.")]

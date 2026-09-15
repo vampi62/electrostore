@@ -52,7 +52,7 @@ namespace ElectrostoreAPI.Controllers
         
         [HttpPost("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkTagDto>> CreateBulkTag([FromBody] List<CreateTagDto> tag)
+        public async Task<ActionResult<ReadBulkDto<ReadTagDto>>> CreateBulkTag([FromBody] List<CreateTagDto> tag)
         {
             var newTag = await _tagService.CreateBulkTag(tag);
             return Ok(newTag);

@@ -12,7 +12,7 @@ public interface ICommandItemService
 
     public Task<ReadCommandItemDto> CreateCommandItem(CreateCommandItemDto commandItemDto);
 
-    public Task<ReadBulkCommandItemDto> CreateBulkCommandItem(List<CreateCommandItemDto> commandItemBulkDto);
+    public Task<ReadBulkDto<ReadCommandItemDto>> CreateBulkCommandItem(List<CreateCommandItemDto> commandItemBulkDto);
 
     public Task<ReadCommandItemDto> UpdateCommandItem(int commandId, int itemId, UpdateCommandItemDto commandItemDto);
 

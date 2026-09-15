@@ -12,11 +12,11 @@ public interface IBoxTagService
 
     public Task<ReadBoxTagDto> CreateBoxTag(CreateBoxTagDto boxTagDto);
 
-    public Task<ReadBulkBoxTagDto> CreateBulkBoxTag(List<CreateBoxTagDto> boxTagBulkDto);
+    public Task<ReadBulkDto<ReadBoxTagDto>> CreateBulkBoxTag(List<CreateBoxTagDto> boxTagBulkDto);
 
     public Task DeleteBoxTag(int boxId, int tagId);
 
     public Task CheckIfStoreExists(int storeId, int boxId);
 
-    public Task<ReadBulkBoxTagDto> DeleteBulkBoxTag(List<CreateBoxTagDto> boxTagBulkDto);
+    public Task<ReadBulkDto<ReadBoxTagDto>> DeleteBulkBoxTag(List<CreateBoxTagDto> boxTagBulkDto);
 }

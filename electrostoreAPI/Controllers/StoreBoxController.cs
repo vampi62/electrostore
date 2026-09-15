@@ -62,7 +62,7 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpPost("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkBoxDto>> CreateBulkBox([FromRoute] int id_store, [FromBody] List<CreateBoxByStoreDto> boxsDto)
+        public async Task<ActionResult<ReadBulkDto<ReadBoxDto>>> CreateBulkBox([FromRoute] int id_store, [FromBody] List<CreateBoxByStoreDto> boxsDto)
         {
             var boxsDtoFull = boxsDto.Select(boxDto => new CreateBoxDto
             {
@@ -97,7 +97,7 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpPut("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkBoxDto>> UpdateBulkBox([FromRoute] int id_store, [FromBody] List<UpdateBulkBoxByStoreDto> boxsDto)
+        public async Task<ActionResult<ReadBulkDto<ReadBoxDto>>> UpdateBulkBox([FromRoute] int id_store, [FromBody] List<UpdateBulkBoxByStoreDto> boxsDto)
         {
             var boxs = await _boxService.UpdateBulkBox(boxsDto, id_store);
             if (boxs.error.Count == 0)
@@ -117,7 +117,7 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpDelete("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkBoxDto>> DeleteBulkBox([FromRoute] int id_store, [FromBody] List<int> ids)
+        public async Task<ActionResult<ReadBulkDto<ReadBoxDto>>> DeleteBulkBox([FromRoute] int id_store, [FromBody] List<int> ids)
         {
             var boxs = await _boxService.DeleteBulkBox(ids, id_store);
             return Ok(boxs);

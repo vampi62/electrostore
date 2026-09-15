@@ -12,9 +12,9 @@ public interface IEquipementTagService
 
     public Task<ReadEquipementTagDto> CreateEquipementTag(CreateEquipementTagDto equipementTagDto);
 
-    public Task<ReadBulkEquipementTagDto> CreateBulkEquipementTag(List<CreateEquipementTagDto> equipementTagBulkDto);
+    public Task<ReadBulkDto<ReadEquipementTagDto>> CreateBulkEquipementTag(List<CreateEquipementTagDto> equipementTagBulkDto);
 
     public Task DeleteEquipementTag(int equipementId, int tagId);
 
-    public Task<ReadBulkEquipementTagDto> DeleteBulkEquipementTag(List<CreateEquipementTagDto> equipementTagBulkDto);
+    public Task<ReadBulkDto<ReadEquipementTagDto>> DeleteBulkEquipementTag(List<CreateEquipementTagDto> equipementTagBulkDto);
 }
