@@ -169,14 +169,7 @@ export const useProjectsStore = defineStore("projects",{
 		deleteProject: projectResource.remove,
 		loadToEdition(id, preset = null) {
 			this.projectEdition[id] = {};
-			if (preset) {
-				preset.split(";").forEach((pair) => {
-					const [key, value] = pair.split(":");
-					if (key && value) {
-						this.projectEdition[id][key] = value;
-					}
-				});
-			}
+			projectResource.loadEditionPreset(id, preset);
 			if (id !== "new" && this.projects[id]) {
 				this.projectEdition[id] = {
 					loading: false,

@@ -75,14 +75,7 @@ export const useProjectTagsStore = defineStore("projectTags",{
 		createProjectTagBulk: projectTagResource.createBulk,
 		loadToEdition(id, preset = null) {
 			this.projectTagEdition[id] = {};
-			if (preset) {
-				preset.split(";").forEach((pair) => {
-					const [key, value] = pair.split(":");
-					if (key && value) {
-						this.projectTagEdition[id][key] = value;
-					}
-				});
-			}
+			projectTagResource.loadEditionPreset(id, preset);
 			if (id !== "new" && this.projectTags[id]) {
 				this.projectTagEdition[id] = {
 					loading: false,

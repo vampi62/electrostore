@@ -131,14 +131,7 @@ export const useTagsStore = defineStore("tags",{
 		createTagBulk: tagResource.createBulk,
 		loadToEdition(id, preset = null) {
 			this.tagEdition[id] = {};
-			if (preset) {
-				preset.split(";").forEach((pair) => {
-					const [key, value] = pair.split(":");
-					if (key && value) {
-						this.tagEdition[id][key] = value;
-					}
-				});
-			}
+			tagResource.loadEditionPreset(id, preset);
 			if (id !== "new" && this.tags[id]) {
 				this.tagEdition[id] = {
 					name_tag: this.tags[id].name_tag,

@@ -189,29 +189,29 @@ export default {
 		},
 		getLastBoxId() {
 			let max = 0;
-			Object.keys(this.boxEdition).forEach((box) => {
+			for (const box of Object.keys(this.boxEdition)) {
 				if (this.boxEdition[box].id_box > max) {
 					max = this.boxEdition[box].id_box;
 				}
-			});
+			}
 			return max;
 		},
 		getLastLedId() {
 			let max = 0;
-			Object.keys(this.ledEdition).forEach((led) => {
+			for (const led of Object.keys(this.ledEdition)) {
 				if (this.ledEdition[led].id_led > max) {
 					max = this.ledEdition[led].id_led;
 				}
-			});
+			}
 			return max;
 		},
 		getLastLedMqttId() {
 			let max = 0;
-			Object.keys(this.ledEdition).forEach((led) => {
+			for (const led of Object.keys(this.ledEdition)) {
 				if (this.ledEdition[led].mqtt_id_led > max) {
 					max = this.ledEdition[led].mqtt_id_led;
 				}
-			});
+			}
 			return max;
 		},
 		isNumber(value) {
@@ -325,7 +325,7 @@ export default {
 		},
 		deleteElement() {
 			if (this.selectedElement.type === "led") {
-				Object.keys(this.ledEdition).forEach((index) => {
+				for (const index of Object.keys(this.ledEdition)) {
 					if (this.ledEdition[index] === this.selectedElement.key) {
 						if (this.ledEdition[index].status === "new") {
 							delete this.ledEdition[index];
@@ -333,9 +333,9 @@ export default {
 							this.ledEdition[index].status = "delete";
 						}
 					}
-				});
+				}
 			} else if (this.selectedElement.type === "box") {
-				Object.keys(this.boxEdition).forEach((index) => {
+				for (const index of Object.keys(this.boxEdition)) {
 					if (this.boxEdition[index] === this.selectedElement.key) {
 						if (this.boxEdition[index].status === "new") {
 							delete this.boxEdition[index];
@@ -343,7 +343,7 @@ export default {
 							this.boxEdition[index].status = "delete";
 						}
 					}
-				});
+				}
 			}
 			this.showMenu = false;
 			this.stopSelecting();
@@ -446,11 +446,11 @@ export default {
 			}
 		},
 		checkBoxConflict(validate = false) {
-			Object.values(this.boxEdition).forEach((box) => {
+			for (const box of Object.values(this.boxEdition)) {
 				this.$refs["BOX" + box.id_box][0].classList.remove("conflict");
-			});
-			Object.values(this.boxEdition).forEach((box1) => {
-				Object.values(this.boxEdition).forEach((box2) => {
+			}
+			for (const box1 of Object.values(this.boxEdition)) {
+				for (const box2 of Object.values(this.boxEdition)) {
 					if (box1.id_box !== box2.id_box) {
 						if ((box1.xstart_box < box2.xend_box) &&
 						(box1.xend_box > box2.xstart_box) &&
@@ -460,17 +460,17 @@ export default {
 							this.$refs["BOX" + box2.id_box][0].classList.add("conflict");
 						}
 					}
-				});
-			});
+				}
+			}
 			if (validate) {
 				let BreakException = {};
 				try {
-					Object.values(this.boxEdition).forEach((box) => {
+					for (const box of Object.values(this.boxEdition)) {
 						if (this.$refs["BOX" + box.id_box][0].classList.contains("conflict")) {
 							this.addNotification({ message: this.t("store.BoxConflict"), type: "error" });
 							throw BreakException;
 						}
-					});
+					}
 					return true;
 				} catch (e) {
 					return false;
@@ -479,25 +479,25 @@ export default {
 		},
 		checkOutOfGrid() {
 			let errorLed = false;
-			Object.keys(this.ledEdition).forEach((led) => {
+			for (const led of Object.keys(this.ledEdition)) {
 				if ((this.ledEdition[led].x_led >= this.storeData.xlength_store) || (this.ledEdition[led].y_led >= this.storeData.ylength_store)) {
 					if (this.ledEdition[led]?.status !== "delete") {
 						errorLed = true;
 					}
 				}
-			});
+			}
 			if (errorLed) {
 				this.addNotification({ message: this.t("store.LedOutOfGrid"), type: "error" });
 				return false;
 			}
 			let errorBox = false;
-			Object.keys(this.boxEdition).forEach((box) => {
+			for (const box of Object.keys(this.boxEdition)) {
 				if ((this.boxEdition[box].xend_box > this.storeData.xlength_store) || (this.boxEdition[box].yend_box > this.storeData.ylength_store)) {
 					if (this.boxEdition[box]?.status !== "delete") {
 						errorBox = true;
 					}
 				}
-			});
+			}
 			if (errorBox) {
 				this.addNotification({ message: this.t("store.BoxOutOfGrid"), type: "error" });
 				return false;
