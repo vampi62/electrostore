@@ -17,6 +17,7 @@ public class UserPushSubscriptionService : IUserPushSubscriptionService
     private readonly IMapper _mapper;
     private readonly IConfiguration _configuration;
     private readonly IKafkaProducerService _kafkaProducerService;
+    private readonly string KafkaNotificationTopic = "notification-requests";
 
     public UserPushSubscriptionService(ApplicationDbContext context, IMapper mapper, IConfiguration configuration, IKafkaProducerService kafkaProducerService)
     {
@@ -153,7 +154,7 @@ public class UserPushSubscriptionService : IUserPushSubscriptionService
             Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
         };
         await _kafkaProducerService.PublishAsync(
-            "notification-requests",
+            KafkaNotificationTopic,
             $"user-{userId}-push-test",
             JsonSerializer.Serialize(notification)
         );
@@ -174,7 +175,7 @@ public class UserPushSubscriptionService : IUserPushSubscriptionService
             Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
         };
         await _kafkaProducerService.PublishAsync(
-            "notification-requests",
+            KafkaNotificationTopic,
             $"user-{userId}-email-test",
             JsonSerializer.Serialize(notification)
         );

@@ -158,8 +158,8 @@ export default {
 		addFiles(files) {
 			this.errorMessage = "";
 			const maxSizeInBytes = this.maxSizeInMb * 1024 * 1024;
-			
-			files.forEach((file) => {
+
+			for (const file of files) {
 				if (file.size > maxSizeInBytes) {
 					this.errorMessage = this.$t("components.VModalMultipleFilesErrorSize", { 
 						fileName: file.name, 
@@ -180,7 +180,7 @@ export default {
 					name: file.name.replace(/\.[^/.]+$/, ""),
 					document: file,
 				});
-			});
+			}
 		},
 		removeFile(index) {
 			this.filesList.splice(index, 1);

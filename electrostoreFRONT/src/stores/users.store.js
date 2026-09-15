@@ -136,14 +136,7 @@ export const useUsersStore = defineStore("users",{
 		deleteUser: userResource.remove,
 		loadToEdition(id, preset = null) {
 			this.userEdition[id] = {};
-			if (preset) {
-				preset.split(";").forEach((pair) => {
-					const [key, value] = pair.split(":");
-					if (key && value) {
-						this.userEdition[id][key] = value;
-					}
-				});
-			}
+			userResource.loadEditionPreset(id, preset);
 			if (id !== "new" && this.users[id]) {
 				this.userEdition[id] = {
 					loading: false,

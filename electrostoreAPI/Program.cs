@@ -116,12 +116,12 @@ public partial class Program
                             .Where(e => e.Contains("JSON deserialization", StringComparison.OrdinalIgnoreCase))
                             .SelectMany(e =>
                             {
-                                var parts = e.Split(':', ';');
+                                var parts = e.Split([':', ';']);
                                 if (parts.Length > 1)
                                 {
                                     return parts.Skip(1).Select(p => p.Trim());
                                 }
-                                return Array.Empty<string>();
+                                return [];
                             })
                             .ToList();
                         var errorMessage = "Malformed JSON request body.";

@@ -140,14 +140,7 @@ export const useCommandsStore = defineStore("commands",{
 		deleteCommand: commandResource.remove,
 		loadToEdition(id, preset = null) {
 			this.commandEdition[id] = {};
-			if (preset) {
-				preset.split(";").forEach((pair) => {
-					const [key, value] = pair.split(":");
-					if (key && value) {
-						this.commandEdition[id][key] = value;
-					}
-				});
-			}
+			commandResource.loadEditionPreset(id, preset);
 			if (id !== "new" && this.commands[id]) {
 				this.commandEdition[id] = {
 					price_command: this.commands[id].price_command,

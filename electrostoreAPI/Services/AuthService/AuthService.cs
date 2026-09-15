@@ -24,6 +24,7 @@ public class AuthService : IAuthService
     private readonly IJwtService _jwtService;
     private readonly IJwiService _jwiService;
     private readonly ILogger<AuthService> _logger;
+    private readonly string KafkaNotificationTopic = "notification-requests";
     private static readonly Dictionary<string, DateTime> _stateStore = new();
     private static readonly char[] separator = new char[] { '_', '-' };
     private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
@@ -109,7 +110,7 @@ public class AuthService : IAuthService
                 Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
             };
             await _kafkaProducerService.PublishAsync(
-                "notification-requests",
+                KafkaNotificationTopic,
                 user.email_user + "-sso-login",
                 JsonSerializer.Serialize(notification)
             );
@@ -252,7 +253,7 @@ public class AuthService : IAuthService
                     }
                 };
                 await _kafkaProducerService.PublishAsync(
-                    "notification-requests",
+                    KafkaNotificationTopic,
                     user.email_user + "-password-reset",
                     JsonSerializer.Serialize(notification)
                 );
@@ -293,7 +294,7 @@ public class AuthService : IAuthService
                 Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
             };
             await _kafkaProducerService.PublishAsync(
-                "notification-requests",
+                KafkaNotificationTopic,
                 user.email_user + "-password-changed",
                 JsonSerializer.Serialize(notification)
             );
@@ -327,7 +328,7 @@ public class AuthService : IAuthService
                 Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
             };
             await _kafkaProducerService.PublishAsync(
-                "notification-requests",
+                KafkaNotificationTopic,
                 user.email_user + "-login-detected",
                 JsonSerializer.Serialize(notification)
             );

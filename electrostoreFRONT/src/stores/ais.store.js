@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, buildQuery, createMainResource } from "@/helpers";
+import { fetchWrapper, createMainResource } from "@/helpers";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -29,14 +29,7 @@ export const useAisStore = defineStore("ais", {
 		deleteIa: iaResource.remove,
 		loadToEdition(id, preset = null) {
 			this.iaEdition[id] = {};
-			if (preset) {
-				preset.split(";").forEach((pair) => {
-					const [key, value] = pair.split(":");
-					if (key && value) {
-						this.iaEdition[id][key] = value;
-					}
-				});
-			}
+			iaResource.loadEditionPreset(id, preset);
 			if (id !== "new" && this.ais[id]) {
 				this.iaEdition[id] = {
 					loading: false,

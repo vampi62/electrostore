@@ -287,9 +287,9 @@ export default {
 			await this.refetchListData(intervalOffset, this.nextOffset);
 		},
 		async refetchListData(minOffset, maxOffset) {
-			for (let index = 0; index < this.listFetchFunction.length; index++) {
-				if (this.listFetchFunction[index]) {
-					await this.listFetchFunction[index](minOffset, maxOffset);
+			for (const fetchFunction of this.listFetchFunction) {
+				if (fetchFunction) {
+					await fetchFunction(minOffset, maxOffset);
 				}
 			}
 		},

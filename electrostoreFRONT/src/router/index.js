@@ -48,7 +48,7 @@ router.onError((error, to) => {
 		// Avoid infinite loop
 		const lastReload = sessionStorage.getItem("lastChunkReload");
 		const now = Date.now();
-		if (!lastReload || (now - parseInt(lastReload)) > 10000) {
+		if (!lastReload || (now - Number.parseInt(lastReload)) > 10000) {
 			sessionStorage.setItem("lastChunkReload", now.toString());
 			window.location.href = to.fullPath;
 		} else {
