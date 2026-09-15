@@ -16,3 +16,9 @@ public record PaginatedResponseDto<T>
     public required IEnumerable<FilterDto>? filters { get; set; }
     public required IEnumerable<SorterDto>? sort { get; set; }
 }
+
+public record ReadBulkDto<T>
+{
+    public required List<T> valide { get; init; }
+    public required List<ErrorDetail> error { get; init; }
+}

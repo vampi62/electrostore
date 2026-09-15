@@ -177,7 +177,7 @@ public class ItemTagService : IItemTagService
         return _mapper.Map<ReadItemTagDto>(itemTag);
     }
 
-    public async Task<ReadBulkItemTagDto> CreateBulkItemTag(List<CreateItemTagDto> itemTagBulkDto)
+    public async Task<ReadBulkDto<ReadItemTagDto>> CreateBulkItemTag(List<CreateItemTagDto> itemTagBulkDto)
     {
         var validQuery = new List<ReadItemTagDto>();
         var errorQuery = new List<ErrorDetail>();
@@ -196,7 +196,7 @@ public class ItemTagService : IItemTagService
                 });
             }
         }
-        return new ReadBulkItemTagDto
+        return new ReadBulkDto<ReadItemTagDto>
         {
             valide = validQuery,
             error = errorQuery
@@ -210,7 +210,7 @@ public class ItemTagService : IItemTagService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<ReadBulkItemTagDto> DeleteBulkItemTag(List<CreateItemTagDto> itemTagBulkDto)
+    public async Task<ReadBulkDto<ReadItemTagDto>> DeleteBulkItemTag(List<CreateItemTagDto> itemTagBulkDto)
     {
         var validQuery = new List<ReadItemTagDto>();
         var errorQuery = new List<ErrorDetail>();
@@ -234,7 +234,7 @@ public class ItemTagService : IItemTagService
                 });
             }
         }
-        return new ReadBulkItemTagDto
+        return new ReadBulkDto<ReadItemTagDto>
         {
             valide = validQuery,
             error = errorQuery

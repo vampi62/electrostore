@@ -10,7 +10,7 @@ public interface ITagService
 
     public Task<ReadTagDto> CreateTag(CreateTagDto tagDto);
 
-    public Task<ReadBulkTagDto> CreateBulkTag(List<CreateTagDto> tagBulkDto);
+    public Task<ReadBulkDto<ReadTagDto>> CreateBulkTag(List<CreateTagDto> tagBulkDto);
 
     public Task<ReadTagDto> UpdateTag(int id, UpdateTagDto tagDto);
 

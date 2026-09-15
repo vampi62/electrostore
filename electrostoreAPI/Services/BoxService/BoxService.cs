@@ -134,7 +134,7 @@ public class BoxService : IBoxService
         return _mapper.Map<ReadBoxDto>(newBox);
     }
 
-    public async Task<ReadBulkBoxDto> CreateBulkBox(List<CreateBoxDto> boxsDto)
+    public async Task<ReadBulkDto<ReadBoxDto>> CreateBulkBox(List<CreateBoxDto> boxsDto)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
@@ -168,7 +168,7 @@ public class BoxService : IBoxService
         {
             await _context.SaveChangesAsync();
         }
-        return new ReadBulkBoxDto
+        return new ReadBulkDto<ReadBoxDto>
         {
             valide = validQuery,
             error = errorQuery
@@ -195,7 +195,7 @@ public class BoxService : IBoxService
         return _mapper.Map<ReadBoxDto>(boxToUpdate);
     }
 
-    public async Task<ReadBulkBoxDto> UpdateBulkBox(List<UpdateBulkBoxByStoreDto> boxsDto, int? storeId = null)
+    public async Task<ReadBulkDto<ReadBoxDto>> UpdateBulkBox(List<UpdateBulkBoxByStoreDto> boxsDto, int? storeId = null)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
@@ -252,7 +252,7 @@ public class BoxService : IBoxService
         {
             await _context.SaveChangesAsync();
         }
-        return new ReadBulkBoxDto
+        return new ReadBulkDto<ReadBoxDto>
         {
             valide = validQuery,
             error = errorQuery
@@ -280,7 +280,7 @@ public class BoxService : IBoxService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<ReadBulkBoxDto> DeleteBulkBox(List<int> ids, int storeId)
+    public async Task<ReadBulkDto<ReadBoxDto>> DeleteBulkBox(List<int> ids, int storeId)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
@@ -308,7 +308,7 @@ public class BoxService : IBoxService
                 });
             }
         }
-        return new ReadBulkBoxDto
+        return new ReadBulkDto<ReadBoxDto>
         {
             valide = validQuery,
             error = errorQuery

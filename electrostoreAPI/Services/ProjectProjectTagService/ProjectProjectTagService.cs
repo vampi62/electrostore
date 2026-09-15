@@ -186,7 +186,7 @@ public class ProjectProjectTagService : IProjectProjectTagService
         return _mapper.Map<ReadProjectProjectTagDto>(newProjectProjectTag);
     }
 
-    public async Task<ReadBulkProjectProjectTagDto> CreateBulkProjectProjectTag(List<CreateProjectProjectTagDto> projectProjectTagBulkDto)
+    public async Task<ReadBulkDto<ReadProjectProjectTagDto>> CreateBulkProjectProjectTag(List<CreateProjectProjectTagDto> projectProjectTagBulkDto)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
@@ -210,7 +210,7 @@ public class ProjectProjectTagService : IProjectProjectTagService
                 });
             }
         }
-        return new ReadBulkProjectProjectTagDto
+        return new ReadBulkDto<ReadProjectProjectTagDto>
         {
             valide = validQuery,
             error = errorQuery
@@ -229,7 +229,7 @@ public class ProjectProjectTagService : IProjectProjectTagService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<ReadBulkProjectProjectTagDto> DeleteBulkProjectProjectTag(List<CreateProjectProjectTagDto> projectProjectTagBulkDto)
+    public async Task<ReadBulkDto<ReadProjectProjectTagDto>> DeleteBulkProjectProjectTag(List<CreateProjectProjectTagDto> projectProjectTagBulkDto)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
@@ -259,7 +259,7 @@ public class ProjectProjectTagService : IProjectProjectTagService
             }
         }
         await _context.SaveChangesAsync();
-        return new ReadBulkProjectProjectTagDto
+        return new ReadBulkDto<ReadProjectProjectTagDto>
         {
             valide = validQuery,
             error = errorQuery

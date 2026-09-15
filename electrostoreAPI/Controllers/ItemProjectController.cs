@@ -57,7 +57,7 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpPost("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkProjectItemDto>> CreateBulkProjectItem([FromRoute] int id_item, [FromBody] List<CreateProjectItemByItemDto> projectItemDto)
+        public async Task<ActionResult<ReadBulkDto<ReadProjectItemDto>>> CreateBulkProjectItem([FromRoute] int id_item, [FromBody] List<CreateProjectItemByItemDto> projectItemDto)
         {
             var projectItemDtoFull = projectItemDto.Select(x => new CreateProjectItemDto
             {

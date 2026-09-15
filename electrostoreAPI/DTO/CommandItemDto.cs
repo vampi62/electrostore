@@ -16,11 +16,6 @@ public record ReadExtendedCommandItemDto : ReadCommandItemDto
     public ReadItemDto? item { get; init; }
     public ReadCommandDto? command { get; init; }
 }
-public record ReadBulkCommandItemDto
-{
-    public required List<ReadCommandItemDto> valide { get; init; }
-    public required List<ErrorDetail> error { get; init; }
-}
 public record CreateCommandItemByCommandDto
 {
     [Required(ErrorMessage = "{0} is required.")]

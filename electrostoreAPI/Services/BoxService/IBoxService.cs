@@ -10,13 +10,13 @@ public interface IBoxService
 
     public Task<ReadBoxDto> CreateBox(CreateBoxDto boxDto);
 
-    public Task<ReadBulkBoxDto> CreateBulkBox(List<CreateBoxDto> boxsDto);
+    public Task<ReadBulkDto<ReadBoxDto>> CreateBulkBox(List<CreateBoxDto> boxsDto);
 
     public Task<ReadBoxDto> UpdateBox(int id, UpdateBoxDto boxDto, int? storeId = null);
 
-    public Task<ReadBulkBoxDto> UpdateBulkBox(List<UpdateBulkBoxByStoreDto> boxsDto, int? storeId = null);
+    public Task<ReadBulkDto<ReadBoxDto>> UpdateBulkBox(List<UpdateBulkBoxByStoreDto> boxsDto, int? storeId = null);
 
     public Task DeleteBox(int id, int? storeId = null);
 
-    public Task<ReadBulkBoxDto> DeleteBulkBox(List<int> ids, int storeId);
+    public Task<ReadBulkDto<ReadBoxDto>> DeleteBulkBox(List<int> ids, int storeId);
 }

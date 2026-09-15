@@ -12,7 +12,7 @@ public interface IProjectItemService
 
     public Task<ReadProjectItemDto> CreateProjectItem(CreateProjectItemDto projectItemDto);
 
-    public Task<ReadBulkProjectItemDto> CreateBulkProjectItem(List<CreateProjectItemDto> projectItemBulkDto);
+    public Task<ReadBulkDto<ReadProjectItemDto>> CreateBulkProjectItem(List<CreateProjectItemDto> projectItemBulkDto);
 
     public Task<ReadProjectItemDto> UpdateProjectItem(int projectId, int itemId, UpdateProjectItemDto projectItemDto);
 

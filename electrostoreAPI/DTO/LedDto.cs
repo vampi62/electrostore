@@ -12,11 +12,6 @@ public record ReadLedDto
     public DateTime created_at { get; init; }
     public DateTime updated_at { get; init; }
 }
-public record ReadBulkLedDto
-{
-    public required List<ReadLedDto> valide { get; init; }
-    public required List<ErrorDetail> error { get; init; }
-}
 public record CreateLedByStoreDto
 {
     [Required(ErrorMessage = "{0} is required.")]

@@ -10,15 +10,15 @@ public interface ILedService
 
     public Task<ReadLedDto> CreateLed(CreateLedDto ledDto);
 
-    public Task<ReadBulkLedDto> CreateBulkLed(List<CreateLedDto> ledsDto);
+    public Task<ReadBulkDto<ReadLedDto>> CreateBulkLed(List<CreateLedDto> ledsDto);
 
     public Task<ReadLedDto> UpdateLed(int id, UpdateLedDto ledDto, int? storeId = null);
 
-    public Task<ReadBulkLedDto> UpdateBulkLed(List<UpdateBulkLedByStoreDto> ledsDto, int storeId);
+    public Task<ReadBulkDto<ReadLedDto>> UpdateBulkLed(List<UpdateBulkLedByStoreDto> ledsDto, int storeId);
 
     public Task DeleteLed(int id, int? storeId = null);
 
-    public Task<ReadBulkLedDto> DeleteBulkLed(List<int> ids, int storeId);
+    public Task<ReadBulkDto<ReadLedDto>> DeleteBulkLed(List<int> ids, int storeId);
     
     public Task ShowLedById(int storeId, int id, int redColor, int greenColor, int blueColor, int timeshow, int animation);
     

@@ -14,11 +14,6 @@ public record ReadExtendedItemTagDto : ReadItemTagDto
     public ReadItemDto? item { get; init; }
     public ReadTagDto? tag { get; init; }
 }
-public record ReadBulkItemTagDto
-{
-    public required List<ReadItemTagDto> valide { get; init; }
-    public required List<ErrorDetail> error { get; init; }
-}
 public record CreateItemTagByTagDto
 {
     [Required(ErrorMessage = "{0} is required.")]

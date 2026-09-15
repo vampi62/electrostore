@@ -56,7 +56,7 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpPost("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkLedDto>> CreateBulkLed([FromRoute] int id_store, [FromBody] List<CreateLedByStoreDto> ledsDto)
+        public async Task<ActionResult<ReadBulkDto<ReadLedDto>>> CreateBulkLed([FromRoute] int id_store, [FromBody] List<CreateLedByStoreDto> ledsDto)
         {
             var ledsDtoFull = ledsDto.Select(ledDto => new CreateLedDto
             {
@@ -85,7 +85,7 @@ namespace ElectrostoreAPI.Controllers
         
         [HttpPut("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkLedDto>> UpdateBulkLed([FromRoute] int id_store, [FromBody] List<UpdateBulkLedByStoreDto> ledsDto)
+        public async Task<ActionResult<ReadBulkDto<ReadLedDto>>> UpdateBulkLed([FromRoute] int id_store, [FromBody] List<UpdateBulkLedByStoreDto> ledsDto)
         {
             var leds = await _ledService.UpdateBulkLed(ledsDto, id_store);
             return Ok(leds);
@@ -101,7 +101,7 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpDelete("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkLedDto>> DeleteBulkLed([FromRoute] int id_store, [FromBody] List<int> ids)
+        public async Task<ActionResult<ReadBulkDto<ReadLedDto>>> DeleteBulkLed([FromRoute] int id_store, [FromBody] List<int> ids)
         {
             var leds = await _ledService.DeleteBulkLed(ids, id_store);
             return Ok(leds);

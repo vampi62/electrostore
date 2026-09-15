@@ -177,7 +177,7 @@ public class EquipementTagService : IEquipementTagService
         return _mapper.Map<ReadEquipementTagDto>(equipementTag);
     }
 
-    public async Task<ReadBulkEquipementTagDto> CreateBulkEquipementTag(List<CreateEquipementTagDto> equipementTagBulkDto)
+    public async Task<ReadBulkDto<ReadEquipementTagDto>> CreateBulkEquipementTag(List<CreateEquipementTagDto> equipementTagBulkDto)
     {
         var validQuery = new List<ReadEquipementTagDto>();
         var errorQuery = new List<ErrorDetail>();
@@ -196,10 +196,10 @@ public class EquipementTagService : IEquipementTagService
                 });
             }
         }
-        return new ReadBulkEquipementTagDto
+        return new ReadBulkDto<ReadEquipementTagDto>
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 
@@ -210,7 +210,7 @@ public class EquipementTagService : IEquipementTagService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<ReadBulkEquipementTagDto> DeleteBulkEquipementTag(List<CreateEquipementTagDto> equipementTagBulkDto)
+    public async Task<ReadBulkDto<ReadEquipementTagDto>> DeleteBulkEquipementTag(List<CreateEquipementTagDto> equipementTagBulkDto)
     {
         var validQuery = new List<ReadEquipementTagDto>();
         var errorQuery = new List<ErrorDetail>();
@@ -234,10 +234,10 @@ public class EquipementTagService : IEquipementTagService
                 });
             }
         }
-        return new ReadBulkEquipementTagDto
+        return new ReadBulkDto<ReadEquipementTagDto>
         {
-            Valide = validQuery,
-            Error = errorQuery
+            valide = validQuery,
+            error = errorQuery
         };
     }
 }

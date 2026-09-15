@@ -186,7 +186,7 @@ public class BoxTagService : IBoxTagService
         return _mapper.Map<ReadBoxTagDto>(newBoxTag);
     }
 
-    public async Task<ReadBulkBoxTagDto> CreateBulkBoxTag(List<CreateBoxTagDto> boxTagBulkDto)
+    public async Task<ReadBulkDto<ReadBoxTagDto>> CreateBulkBoxTag(List<CreateBoxTagDto> boxTagBulkDto)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
@@ -210,7 +210,7 @@ public class BoxTagService : IBoxTagService
                 });
             }
         }
-        return new ReadBulkBoxTagDto
+        return new ReadBulkDto<ReadBoxTagDto>
         {
             valide = validQuery,
             error = errorQuery
@@ -237,7 +237,7 @@ public class BoxTagService : IBoxTagService
         }
     }
 
-    public async Task<ReadBulkBoxTagDto> DeleteBulkBoxTag(List<CreateBoxTagDto> boxTagBulkDto)
+    public async Task<ReadBulkDto<ReadBoxTagDto>> DeleteBulkBoxTag(List<CreateBoxTagDto> boxTagBulkDto)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
@@ -266,7 +266,7 @@ public class BoxTagService : IBoxTagService
                 });
             }
         }
-        return new ReadBulkBoxTagDto
+        return new ReadBulkDto<ReadBoxTagDto>
         {
             valide = validQuery,
             error = errorQuery

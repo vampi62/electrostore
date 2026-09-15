@@ -56,7 +56,7 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpPost("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkStoreTagDto>> CreateBulkStoreTag([FromRoute] int id_tag, [FromBody] List<CreateStoreTagByTagDto> storeTagsDto)
+        public async Task<ActionResult<ReadBulkDto<ReadStoreTagDto>>> CreateBulkStoreTag([FromRoute] int id_tag, [FromBody] List<CreateStoreTagByTagDto> storeTagsDto)
         {
             var storeTagsDtoFull = storeTagsDto.Select(storeTagDto => new CreateStoreTagDto
             {
@@ -77,7 +77,7 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpDelete("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkStoreTagDto>> DeleteBulkStoreTag([FromRoute] int id_tag, [FromBody] List<int> id_stores)
+        public async Task<ActionResult<ReadBulkDto<ReadStoreTagDto>>> DeleteBulkStoreTag([FromRoute] int id_tag, [FromBody] List<int> id_stores)
         {
             var storeTagsDtoFull = id_stores.Select(id_store => new CreateStoreTagDto
             {

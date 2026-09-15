@@ -112,8 +112,8 @@ public record UpdateStoreDto
 public record ReadStoreCompleteDto
 {
     public required ReadStoreDto store { get; init; }
-    public ReadBulkLedDto? leds { get; init; }
-    public ReadBulkBoxDto? boxs { get; init; }
+    public ReadBulkDto<ReadLedDto>? leds { get; init; }
+    public ReadBulkDto<ReadBoxDto>? boxs { get; init; }
 }
 public record CreateStoreCompleteDto
 {

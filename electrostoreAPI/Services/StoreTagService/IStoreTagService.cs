@@ -11,9 +11,9 @@ public interface IStoreTagService
 
     public Task<ReadStoreTagDto> CreateStoreTag(CreateStoreTagDto storeTagDto);
 
-    public Task<ReadBulkStoreTagDto> CreateBulkStoreTag(List<CreateStoreTagDto> storeTagBulkDto);
+    public Task<ReadBulkDto<ReadStoreTagDto>> CreateBulkStoreTag(List<CreateStoreTagDto> storeTagBulkDto);
 
     public Task DeleteStoreTag(int storeId, int tagId);
 
-    public Task<ReadBulkStoreTagDto> DeleteBulkStoreTag(List<CreateStoreTagDto> storeTagBulkDto);
+    public Task<ReadBulkDto<ReadStoreTagDto>> DeleteBulkStoreTag(List<CreateStoreTagDto> storeTagBulkDto);
 }

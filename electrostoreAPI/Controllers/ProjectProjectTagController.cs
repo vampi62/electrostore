@@ -56,7 +56,7 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpPost("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkProjectProjectTagDto>> CreateBulkProjectProjectTag([FromRoute] int id_project, [FromBody] List<CreateProjectProjectTagByProjectDto> projectProjectTagsDto)
+        public async Task<ActionResult<ReadBulkDto<ReadProjectProjectTagDto>>> CreateBulkProjectProjectTag([FromRoute] int id_project, [FromBody] List<CreateProjectProjectTagByProjectDto> projectProjectTagsDto)
         {
             var projectProjectTagsDtoFull = projectProjectTagsDto.Select(projectProjectTagDto => new CreateProjectProjectTagDto
             {
@@ -77,7 +77,7 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpDelete("bulk")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadBulkProjectProjectTagDto>> DeleteBulkProjectProjectTag([FromRoute] int id_project, [FromBody] List<int> id_project_tags)
+        public async Task<ActionResult<ReadBulkDto<ReadProjectProjectTagDto>>> DeleteBulkProjectProjectTag([FromRoute] int id_project, [FromBody] List<int> id_project_tags)
         {
             var projectProjectTagsDtoFull = id_project_tags.Select(id_project_tag => new CreateProjectProjectTagDto
             {

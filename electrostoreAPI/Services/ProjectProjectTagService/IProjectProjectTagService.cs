@@ -12,9 +12,9 @@ public interface IProjectProjectTagService
 
     public Task<ReadProjectProjectTagDto> CreateProjectProjectTag(CreateProjectProjectTagDto projectProjectTagDto);
 
-    public Task<ReadBulkProjectProjectTagDto> CreateBulkProjectProjectTag(List<CreateProjectProjectTagDto> projectProjectTagBulkDto);
+    public Task<ReadBulkDto<ReadProjectProjectTagDto>> CreateBulkProjectProjectTag(List<CreateProjectProjectTagDto> projectProjectTagBulkDto);
 
     public Task DeleteProjectProjectTag(int projectId, int projectTagId);
 
-    public Task<ReadBulkProjectProjectTagDto> DeleteBulkProjectProjectTag(List<CreateProjectProjectTagDto> projectProjectTagBulkDto);
+    public Task<ReadBulkDto<ReadProjectProjectTagDto>> DeleteBulkProjectProjectTag(List<CreateProjectProjectTagDto> projectProjectTagBulkDto);
 }

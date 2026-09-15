@@ -186,7 +186,7 @@ public class StoreTagService : IStoreTagService
         return _mapper.Map<ReadStoreTagDto>(newStoreTag);
     }
 
-    public async Task<ReadBulkStoreTagDto> CreateBulkStoreTag(List<CreateStoreTagDto> storeTagBulkDto)
+    public async Task<ReadBulkDto<ReadStoreTagDto>> CreateBulkStoreTag(List<CreateStoreTagDto> storeTagBulkDto)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
@@ -210,7 +210,7 @@ public class StoreTagService : IStoreTagService
                 });
             }
         }
-        return new ReadBulkStoreTagDto
+        return new ReadBulkDto<ReadStoreTagDto>
         {
             valide = validQuery,
             error = errorQuery
@@ -229,7 +229,7 @@ public class StoreTagService : IStoreTagService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<ReadBulkStoreTagDto> DeleteBulkStoreTag(List<CreateStoreTagDto> storeTagBulkDto)
+    public async Task<ReadBulkDto<ReadStoreTagDto>> DeleteBulkStoreTag(List<CreateStoreTagDto> storeTagBulkDto)
     {
         var clientRole = _sessionService.GetClientRole();
         if (clientRole < UserRole.Admin)
@@ -259,7 +259,7 @@ public class StoreTagService : IStoreTagService
             }
         }
         await _context.SaveChangesAsync();
-        return new ReadBulkStoreTagDto
+        return new ReadBulkDto<ReadStoreTagDto>
         {
             valide = validQuery,
             error = errorQuery
