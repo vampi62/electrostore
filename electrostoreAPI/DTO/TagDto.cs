@@ -1,3 +1,4 @@
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Validators;
 using System.ComponentModel.DataAnnotations;
 
@@ -22,17 +23,10 @@ public record ReadExtendedTagDto : ReadTagDto
     public IEnumerable<ReadBoxTagDto>? boxs_tags { get; init; }
     public IEnumerable<ReadEquipementTagDto>? equipement_tags { get; init; }
 }
-
-public record ReadBulkTagDto
-{
-    public required List<ReadTagDto> valide { get; init; }
-    public required List<ErrorDetail> error { get; init; }
-}
-
 public record CreateTagDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string name_tag { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
@@ -41,7 +35,7 @@ public record CreateTagDto
 }
 public record UpdateTagDto
 {
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? name_tag { get; init; }
 

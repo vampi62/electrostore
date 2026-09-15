@@ -139,7 +139,7 @@ public class TagService : ITagService
         return _mapper.Map<ReadTagDto>(newTag);
     }
 
-    public async Task<ReadBulkTagDto> CreateBulkTag(List<CreateTagDto> tagBulkDto)
+    public async Task<ReadBulkDto<ReadTagDto>> CreateBulkTag(List<CreateTagDto> tagBulkDto)
     {
         var validQuery = new List<ReadTagDto>();
         var errorQuery = new List<ErrorDetail>();
@@ -158,7 +158,7 @@ public class TagService : ITagService
                 });
             }
         }
-        return new ReadBulkTagDto
+        return new ReadBulkDto<ReadTagDto>
         {
             valide = validQuery,
             error = errorQuery

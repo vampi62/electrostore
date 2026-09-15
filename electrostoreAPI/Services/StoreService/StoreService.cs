@@ -380,12 +380,12 @@ public class StoreService : IStoreService
             {
                 mqtt_password_store = mqttPassword
             },
-            leds = new ReadBulkLedDto
+            leds = new ReadBulkDto<ReadLedDto>
             {
                 valide = validQueryLed,
                 error = errorQueryLed
             },
-            boxs = new ReadBulkBoxDto
+            boxs = new ReadBulkDto<ReadBoxDto>
             {
                 valide = validQueryBox,
                 error = errorQueryBox
@@ -477,12 +477,12 @@ public class StoreService : IStoreService
             {
                 mqtt_password_store = mqttPassword
             },
-            leds = new ReadBulkLedDto
+            leds = new ReadBulkDto<ReadLedDto>
             {
                 valide = validQueryLed,
                 error = errorQueryLed
             },
-            boxs = new ReadBulkBoxDto
+            boxs = new ReadBulkDto<ReadBoxDto>
             {
                 valide = validQueryBox,
                 error = errorQueryBox

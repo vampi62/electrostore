@@ -5,6 +5,8 @@ using ElectrostoreAPI.Services.ItemService;
 using ElectrostoreAPI.Services.LlmChatService;
 using ElectrostoreAPI.Services.StoreService;
 using ElectrostoreAPI.Services.TagService;
+using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 using System.Text.Json;
 
 namespace ElectrostoreAPI.Services.AiToolExecutorService;
@@ -84,50 +86,11 @@ public class AiToolExecutorService : IAiToolExecutorService
                     query = new { type = "string", description = "Optional free-text search on the tag name." }
                 }
             }),
-            Def("create_item", "Propose creating a new item. This does not create anything: it only returns the proposed data for the user to validate.", new
-            {
-                type = "object",
-                properties = new
-                {
-                    reference_name_item = new { type = "string" },
-                    friendly_name_item = new { type = "string" },
-                    threshold_min_item = new { type = "integer" },
-                    description_item = new { type = "string" }
-                },
-                required = CreateItemRequired
-            }),
-            Def("create_tag", "Propose creating a new tag. This does not create anything: it only returns the proposed data for the user to validate.", new
-            {
-                type = "object",
-                properties = new
-                {
-                    name_tag = new { type = "string" },
-                    weight_tag = new { type = "integer" }
-                },
-                required = CreateTagRequired
-            }),
-            Def("attach_tag", "Propose attaching an existing tag to an existing item. This does not attach anything: it only returns the proposed data for the user to validate.", new
-            {
-                type = "object",
-                properties = new
-                {
-                    id_item = new { type = "integer" },
-                    id_tag = new { type = "integer" }
-                },
-                required = AttachTagRequired
-            }),
-            Def("move_item_stock", "Propose storing/moving/adjusting an item's quantity in a box. This does not change any quantity: it only returns the proposed data for the user to validate.", new
-            {
-                type = "object",
-                properties = new
-                {
-                    id_item = new { type = "integer" },
-                    id_box = new { type = "integer" },
-                    quantity_item_box = new { type = "integer", description = "The resulting quantity of the item in that box." },
-                    threshold_max_item_item_box = new { type = "integer" }
-                },
-                required = MoveItemStockRequired
-            })
+            Def("create_item", "Propose creating a new item. This does not create anything: it only returns the proposed data for the user to validate.", BuildDtoSchema<CreateItemDto>()),
+            Def("create_box", "Propose creating a new box in a store. This does not create anything: it only returns the proposed data for the user to validate.", BuildDtoSchema<CreateBoxDto>()),
+            Def("create_tag", "Propose creating a new tag. This does not create anything: it only returns the proposed data for the user to validate.", BuildDtoSchema<CreateTagDto>()),
+            Def("attach_tag", "Propose attaching an existing tag to an existing item. This does not attach anything: it only returns the proposed data for the user to validate.", BuildDtoSchema<CreateItemTagDto>()),
+            Def("move_item_stock", "Propose storing/moving/adjusting an item's quantity in a box. This does not change any quantity: it only returns the proposed data for the user to validate.", BuildDtoSchema<CreateItemBoxDto>())
         ];
     }
 
@@ -143,6 +106,7 @@ public class AiToolExecutorService : IAiToolExecutorService
                 "list_stores" => await ListStores(),
                 "list_tags" => await ListTags(argumentsJson),
                 "create_item" => ProposeCreateItem(argumentsJson),
+                "create_box" => ProposeCreateBox(argumentsJson),
                 "create_tag" => ProposeCreateTag(argumentsJson),
                 "attach_tag" => ProposeAttachTag(argumentsJson),
                 "move_item_stock" => ProposeMoveItemStock(argumentsJson),
@@ -213,50 +177,27 @@ public class AiToolExecutorService : IAiToolExecutorService
 
     private static AiToolExecutionResult ProposeCreateItem(string argumentsJson)
     {
-        var args = Parse<CreateItemArgs>(argumentsJson);
-        var payload = new CreateItemDto
-        {
-            reference_name_item = args.reference_name_item,
-            friendly_name_item = args.friendly_name_item,
-            threshold_min_item = args.threshold_min_item,
-            description_item = args.description_item
-        };
-        return ProposedResult("create_item", payload);
+        return ProposedResult("create_item", ParseDto<CreateItemDto>(argumentsJson));
+    }
+
+    private AiToolExecutionResult ProposeCreateBox(string argumentsJson)
+    {
+        return ProposedResult("create_box", ParseDto<CreateBoxDto>(argumentsJson));
     }
 
     private static AiToolExecutionResult ProposeCreateTag(string argumentsJson)
     {
-        var args = Parse<CreateTagArgs>(argumentsJson);
-        var payload = new CreateTagDto
-        {
-            name_tag = args.name_tag,
-            weight_tag = args.weight_tag ?? 0
-        };
-        return ProposedResult("create_tag", payload);
+        return ProposedResult("create_tag", ParseDto<CreateTagDto>(argumentsJson));
     }
 
     private static AiToolExecutionResult ProposeAttachTag(string argumentsJson)
     {
-        var args = Parse<AttachTagArgs>(argumentsJson);
-        var payload = new CreateItemTagDto
-        {
-            id_item = args.id_item,
-            id_tag = args.id_tag
-        };
-        return ProposedResult("attach_tag", payload);
+        return ProposedResult("attach_tag", ParseDto<CreateItemTagDto>(argumentsJson));
     }
 
     private static AiToolExecutionResult ProposeMoveItemStock(string argumentsJson)
     {
-        var args = Parse<MoveItemStockArgs>(argumentsJson);
-        var payload = new CreateItemBoxDto
-        {
-            id_item = args.id_item,
-            id_box = args.id_box,
-            quantity_item_box = args.quantity_item_box,
-            threshold_max_item_item_box = args.threshold_max_item_item_box ?? 0
-        };
-        return ProposedResult("move_item_stock", payload);
+        return ProposedResult("move_item_stock", ParseDto<CreateItemBoxDto>(argumentsJson));
     }
 
     private static AiToolExecutionResult ProposedResult(string actionType, object payload)
@@ -283,6 +224,20 @@ public class AiToolExecutorService : IAiToolExecutorService
         return JsonSerializer.Deserialize<T>(argumentsJson, JsonOptions) ?? new T();
     }
 
+    /// <summary>
+    /// Deserializes tool-call arguments directly into an API create* DTO, so required fields
+    /// and validation stay driven by the DTO rather than a hand-maintained mirror class.
+    /// </summary>
+    private static T ParseDto<T>(string argumentsJson)
+    {
+        if (string.IsNullOrWhiteSpace(argumentsJson))
+        {
+            throw new JsonException($"Missing arguments for '{typeof(T).Name}'.");
+        }
+        return JsonSerializer.Deserialize<T>(argumentsJson, JsonOptions)
+            ?? throw new JsonException($"Invalid arguments for '{typeof(T).Name}'.");
+    }
+
     private static AiToolExecutionResult Result<T>(T value)
     {
         return new AiToolExecutionResult { ResultJson = JsonSerializer.Serialize(value, JsonOptions) };
@@ -301,7 +256,55 @@ public class AiToolExecutorService : IAiToolExecutorService
         };
     }
 
-    private sealed class SearchItemsArgs
+    /// <summary>
+    /// Builds a JSON-schema "object" description straight from a create* DTO's public properties
+    /// and DataAnnotations, so the tool definition sent to the LLM stays in sync with the API DTOs.
+    /// </summary>
+    private static Dictionary<string, object> BuildDtoSchema<T>()
+    {
+        var properties = new Dictionary<string, object>();
+        var required = new List<string>();
+        foreach (var prop in typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            // File uploads are not representable as LLM tool-call arguments.
+            if (prop.PropertyType == typeof(IFormFile))
+            {
+                continue;
+            }
+            var schema = new Dictionary<string, object> { ["type"] = JsonSchemaType(prop.PropertyType) };
+            if (prop.GetCustomAttribute<RangeAttribute>() is { } range)
+            {
+                schema["minimum"] = Convert.ToDouble(range.Minimum);
+                schema["maximum"] = Convert.ToDouble(range.Maximum);
+            }
+            if (prop.GetCustomAttribute<MaxLengthAttribute>() is { } maxLength)
+            {
+                schema["maxLength"] = maxLength.Length;
+            }
+            properties[prop.Name] = schema;
+            if (prop.GetCustomAttribute<RequiredAttribute>() is not null)
+            {
+                required.Add(prop.Name);
+            }
+        }
+        return new Dictionary<string, object>
+        {
+            ["type"] = "object",
+            ["properties"] = properties,
+            ["required"] = required
+        };
+    }
+
+    private static string JsonSchemaType(Type type)
+    {
+        var underlying = Nullable.GetUnderlyingType(type) ?? type;
+        if (underlying == typeof(bool)) return "boolean";
+        if (underlying == typeof(int) || underlying == typeof(long) || underlying == typeof(short)) return "integer";
+        if (underlying == typeof(double) || underlying == typeof(float) || underlying == typeof(decimal)) return "number";
+        return "string";
+    }
+
+    private class SearchItemsArgs
     {
         public string? query { get; set; } = null;
         public int? limit { get; set; } = null;
@@ -320,33 +323,5 @@ public class AiToolExecutorService : IAiToolExecutorService
     private sealed class ListTagsArgs
     {
         public string? query { get; set; } = null;
-    }
-
-    private sealed class CreateItemArgs
-    {
-        public string reference_name_item { get; set; } = string.Empty;
-        public string friendly_name_item { get; set; } = string.Empty;
-        public int threshold_min_item { get; set; } = 0;
-        public string? description_item { get; set; } = null;
-    }
-
-    private sealed class CreateTagArgs
-    {
-        public string name_tag { get; set; } = string.Empty;
-        public int? weight_tag { get; set; } = null;
-    }
-
-    private sealed class AttachTagArgs
-    {
-        public int id_item { get; set; } = 0;
-        public int id_tag { get; set; } = 0;
-    }
-
-    private sealed class MoveItemStockArgs
-    {
-        public int id_item { get; set; } = 0;
-        public int id_box { get; set; } = 0;
-        public int quantity_item_box { get; set; } = 0;
-        public int? threshold_max_item_item_box { get; set; } = null;
     }
 }

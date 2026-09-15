@@ -21,11 +21,6 @@ public record ReadExtendedBoxDto : ReadBoxDto
     public IEnumerable<ReadBoxTagDto>? box_tags { get; init; }
     public IEnumerable<ReadItemBoxDto>? item_boxs { get; init; }
 }
-public record ReadBulkBoxDto
-{
-    public required List<ReadBoxDto> valide { get; init; }
-    public required List<ErrorDetail> error { get; init; }
-}
 public record CreateBoxByStoreDto
 {
     [Required(ErrorMessage = "{0} is required.")]

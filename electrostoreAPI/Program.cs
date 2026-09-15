@@ -1,7 +1,7 @@
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Extensions;
-using ElectrostoreAPI.Grpc;
 using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Services.AiChatService;
 using ElectrostoreAPI.Services.AiToolExecutorService;
@@ -79,7 +79,7 @@ public partial class Program
         ConfigureVault(builder);
         ConfigureLogging(builder);
 
-        Constants.Initialize(builder.Configuration);
+        FieldLengths.Initialize(builder.Configuration);
 
         var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>() ?? new JwtSettings
         {
@@ -234,7 +234,12 @@ public partial class Program
 
         app.MapControllers();
 
-        InitializeDatabase(app);
+        // Skipped when generating the OpenAPI doc via the Swashbuckle CLI (dotnet swagger tofile),
+        // which executes Main() up to app.Run() for real and would otherwise require a live database.
+        if (!builder.Configuration.GetValue<bool>("SwaggerGeneration"))
+        {
+            InitializeDatabase(app);
+        }
 
         app.Run();
     }

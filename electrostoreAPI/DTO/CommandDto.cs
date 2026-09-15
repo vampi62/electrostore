@@ -1,3 +1,4 @@
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Validators;
 using System.ComponentModel.DataAnnotations;
@@ -43,7 +44,7 @@ public record CreateCommandDto
     [Range(0.0, float.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public float? price_command { get; init; }
 
-    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalUrl(ErrorMessage = "{0} must be a valid URL.")]
     public string? url_command { get; init; }
 
@@ -56,7 +57,7 @@ public record CreateCommandDto
 
     public DateTime? date_delivery_command { get; init; }
 
-    [MaxLength(Constants.MaxTrackingNumberLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxTrackingNumberLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? tracking_number_command { get; init; }
 
     public int? id_carrier { get; init; }
@@ -68,7 +69,7 @@ public record UpdateCommandDto
     [Range(0.0, float.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public float? price_command { get; init; }
 
-    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalUrl(ErrorMessage = "{0} must be a valid URL.")]
     public string? url_command { get; init; }
 
@@ -79,7 +80,7 @@ public record UpdateCommandDto
 
     public DateTime? date_delivery_command { get; init; }
 
-    [MaxLength(Constants.MaxTrackingNumberLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxTrackingNumberLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? tracking_number_command { get; init; }
 
     public int? id_carrier { get; init; }

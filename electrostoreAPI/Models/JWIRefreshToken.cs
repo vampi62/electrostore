@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using ElectrostoreAPI.Dto;
-
+using ElectrostoreAPI.Constants;
 
 namespace ElectrostoreAPI.Models;
 
@@ -19,15 +18,15 @@ public class JwiRefreshTokens : BaseEntity
     public required string auth_method_jwi_refresh { get; set; }
 
 
-    [MaxLength(Constants.MaxIpLength)]
+    [MaxLength(FieldLengths.MaxIpLength)]
     public required string created_by_ip_jwi_refresh { get; set; }
 
     public DateTime? revoked_at { get; set; }
 
-    [MaxLength(Constants.MaxIpLength)]
+    [MaxLength(FieldLengths.MaxIpLength)]
     public string? revoked_by_ip_jwi_refresh { get; set; }
 
-    [MaxLength(Constants.MaxReasonLength)]
+    [MaxLength(FieldLengths.MaxReasonLength)]
     public string? revoked_reason_jwi_refresh { get; set; }
 
     public int id_user { get; set; }

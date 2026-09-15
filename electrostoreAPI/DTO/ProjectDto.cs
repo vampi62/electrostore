@@ -1,3 +1,4 @@
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Validators;
 using System.ComponentModel.DataAnnotations;
@@ -33,13 +34,13 @@ public record ReadExtendedProjectDto : ReadProjectDto
 public record CreateProjectDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string name_project { get; init; }
 
-    [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public string? description_project { get; init; }
 
-    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalUrl(ErrorMessage = "{0} must be a valid URL.")]
     public string? url_project { get; init; }
 
@@ -49,15 +50,15 @@ public record CreateProjectDto
 }
 public record UpdateProjectDto
 {
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? name_project { get; init; }
 
-    [MaxLength(Constants.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxDescriptionLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? description_project { get; init; }
 
-    [MaxLength(Constants.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxUrlLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalUrl(ErrorMessage = "{0} must be a valid URL.")]
     public string? url_project { get; init; }
 

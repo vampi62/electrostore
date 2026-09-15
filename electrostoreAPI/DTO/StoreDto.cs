@@ -1,3 +1,4 @@
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Validators;
 using System.ComponentModel.DataAnnotations;
@@ -37,7 +38,7 @@ public record ReadExtendedStoreDto : ReadStoreDto
 public record CreateStoreDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [MaxLength(FieldLengths.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     public required string name_store { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
@@ -52,7 +53,7 @@ public record CreateStoreDto
     public StorePositionMode position_mode_store { get; init; } = StorePositionMode.Grid;
 
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     public required string mqtt_name_store { get; init; }
 
     public int? id_zone { get; init; }
@@ -72,7 +73,7 @@ public record CreateStoreDto
 
 public record UpdateStoreDto
 {
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? name_store { get; init; }
 
@@ -85,7 +86,7 @@ public record UpdateStoreDto
     [Range(0, (int)StorePositionMode.Border, ErrorMessage = "{0} must be a valid position mode, between {1} and {2}.")]
     public StorePositionMode? position_mode_store { get; init; }
 
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
+    [MaxLength(FieldLengths.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters.")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? mqtt_name_store { get; init; }
 
@@ -111,8 +112,8 @@ public record UpdateStoreDto
 public record ReadStoreCompleteDto
 {
     public required ReadStoreDto store { get; init; }
-    public ReadBulkLedDto? leds { get; init; }
-    public ReadBulkBoxDto? boxs { get; init; }
+    public ReadBulkDto<ReadLedDto>? leds { get; init; }
+    public ReadBulkDto<ReadBoxDto>? boxs { get; init; }
 }
 public record CreateStoreCompleteDto
 {

@@ -1,16 +1,13 @@
-using Microsoft.EntityFrameworkCore;
 using MQTTnet;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using Moq.Protected;
 using Xunit;
-using ElectrostoreAPI;
 using ElectrostoreAPI.Dto;
-using ElectrostoreAPI.Models;
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Services.ConfigService;
 using ElectrostoreAPI.Tests.Utils;
 using System.Net;
-using System.Net.Http;
 
 namespace ElectrostoreAPI.Tests.Services
 {
@@ -83,15 +80,15 @@ namespace ElectrostoreAPI.Tests.Services
             Assert.NotNull(result);
             Assert.IsType<ReadConfig>(result);
             Assert.Equal(_configuration.GetValue<bool>("DemoMode"), result.demo_mode);
-            Assert.Equal(Constants.MaxUrlLength, result.max_length_url);
-            Assert.Equal(Constants.MaxCommentLength, result.max_length_comment);
-            Assert.Equal(Constants.MaxDescriptionLength, result.max_length_description);
-            Assert.Equal(Constants.MaxNameLength,  result.max_length_name);
-            Assert.Equal(Constants.MaxTypeLength, result.max_length_type);
-            Assert.Equal(Constants.MaxEmailLength, result.max_length_email);
-            Assert.Equal(Constants.MaxIpLength, result.max_length_ip);
-            Assert.Equal(Constants.MaxReasonLength, result.max_length_reason);
-            Assert.Equal(Constants.MaxDocumentSizeMB, result.max_size_document_in_mb);
+            Assert.Equal(FieldLengths.MaxUrlLength, result.max_length_url);
+            Assert.Equal(FieldLengths.MaxCommentLength, result.max_length_comment);
+            Assert.Equal(FieldLengths.MaxDescriptionLength, result.max_length_description);
+            Assert.Equal(FieldLengths.MaxNameLength,  result.max_length_name);
+            Assert.Equal(FieldLengths.MaxTypeLength, result.max_length_type);
+            Assert.Equal(FieldLengths.MaxEmailLength, result.max_length_email);
+            Assert.Equal(FieldLengths.MaxIpLength, result.max_length_ip);
+            Assert.Equal(FieldLengths.MaxReasonLength, result.max_length_reason);
+            Assert.Equal(FieldLengths.MaxDocumentSizeMB, result.max_size_document_in_mb);
             var ssoProviders = _configuration.GetSection("OAuth").GetChildren().Select(provider => new SsoAvailableProvider
             {
                 provider = provider.Key,

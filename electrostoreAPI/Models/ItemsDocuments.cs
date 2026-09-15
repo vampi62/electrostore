@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using ElectrostoreAPI.Dto;
-using System.Numerics;
+using ElectrostoreAPI.Constants;
 
 namespace ElectrostoreAPI.Models;
 
@@ -11,13 +10,13 @@ public class ItemsDocuments : BaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_item_document { get; set; }
 
-    [MaxLength(Constants.MaxUrlFileLength)]
+    [MaxLength(FieldLengths.MaxUrlFileLength)]
     public required string url_item_document { get; set; }
 
-    [MaxLength(Constants.MaxNameLength)]
+    [MaxLength(FieldLengths.MaxNameLength)]
     public required string name_item_document { get; set; }
 
-    [MaxLength(Constants.MaxTypeLength)]
+    [MaxLength(FieldLengths.MaxTypeLength)]
     public required string type_item_document { get; set; }
 
     public decimal size_item_document { get; set; }

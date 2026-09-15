@@ -12,9 +12,9 @@ public interface IItemTagService
 
     public Task<ReadItemTagDto> CreateItemTag(CreateItemTagDto itemTagDto);
 
-    public Task<ReadBulkItemTagDto> CreateBulkItemTag(List<CreateItemTagDto> itemTagBulkDto);
+    public Task<ReadBulkDto<ReadItemTagDto>> CreateBulkItemTag(List<CreateItemTagDto> itemTagBulkDto);
 
     public Task DeleteItemTag(int itemId, int tagId);
 
-    public Task<ReadBulkItemTagDto> DeleteBulkItemTag(List<CreateItemTagDto> itemTagBulkDto);
+    public Task<ReadBulkDto<ReadItemTagDto>> DeleteBulkItemTag(List<CreateItemTagDto> itemTagBulkDto);
 }

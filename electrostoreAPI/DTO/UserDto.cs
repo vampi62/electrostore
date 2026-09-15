@@ -1,3 +1,4 @@
+using ElectrostoreAPI.Constants;
 using ElectrostoreAPI.Enums;
 using ElectrostoreAPI.Validators;
 using System.ComponentModel.DataAnnotations;
@@ -24,15 +25,15 @@ public record ReadExtendedUserDto : ReadUserDto
 public record CreateUserDto
 {
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [MaxLength(FieldLengths.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     public required string name_user { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [MaxLength(FieldLengths.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     public required string firstname_user { get; init; }
 
     [Required(ErrorMessage = "{0} is required.")]
-    [MaxLength(Constants.MaxEmailLength, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [MaxLength(FieldLengths.MaxEmailLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     [EmailAddress(ErrorMessage = "{0} must be a valid email address.")]
     public required string email_user { get; init; }
 
@@ -47,15 +48,15 @@ public record CreateUserDto
 }
 public record UpdateUserDto
 {
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [MaxLength(FieldLengths.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? name_user { get; init; }
 
-    [MaxLength(Constants.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [MaxLength(FieldLengths.MaxNameLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     public string? firstname_user { get; init; }
 
-    [MaxLength(Constants.MaxEmailLength, ErrorMessage = "{0} cannot exceed {1} characters")]
+    [MaxLength(FieldLengths.MaxEmailLength, ErrorMessage = "{0} cannot exceed {1} characters")]
     [OptionalNotEmpty(ErrorMessage = "{0} cannot be empty or whitespace.")]
     [EmailAddress(ErrorMessage = "{0} must be a valid email address.")]
     public string? email_user { get; init; }

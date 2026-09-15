@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using ElectrostoreAPI.Dto;
+using ElectrostoreAPI.Constants;
 
 namespace ElectrostoreAPI.Models;
 
@@ -10,7 +10,7 @@ public class Tags : BaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_tag { get; set; }
 
-    [MaxLength(Constants.MaxNameLength)]
+    [MaxLength(FieldLengths.MaxNameLength)]
     public required string name_tag { get; set; }
 
     public int weight_tag { get; set; } = 0;
