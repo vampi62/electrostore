@@ -28,4 +28,8 @@
     <Protobuf Include="Grpc\Protos\storeMqtt.proto" GrpcServices="Client" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="electrostoreWORKER.Tests" />
+  </ItemGroup>
+
 </Project>

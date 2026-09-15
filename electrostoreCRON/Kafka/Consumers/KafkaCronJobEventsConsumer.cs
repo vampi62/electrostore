@@ -15,6 +15,7 @@ public class KafkaCronJobEventsConsumer : BackgroundService
         PropertyNameCaseInsensitive = true
     };
     private const string Topic = "cronjob-events";
+    private const string SchedulerGroup = "electrostore";
 
     private readonly ISchedulerFactory _schedulerFactory;
     private readonly ICronJobExecutionRegistry _executionRegistry;
@@ -147,38 +148,19 @@ public class KafkaCronJobEventsConsumer : BackgroundService
         switch (evt.action)
         {
             case "created":
-                if (evt.data is not null && evt.data.is_enabled)
-                {
-                    await ScheduleOrReplaceJobAsync(scheduler, evt.data, ct);
-                }
+                await HandleCreatedEventAsync(scheduler, evt.data, ct);
                 break;
             case "updated":
-                if (evt.data is not null)
-                {
-                    await RemoveJobAsync(scheduler, evt.data.id_cronjob, ct);
-                    if (evt.data.is_enabled)
-                    {
-                        await ScheduleOrReplaceJobAsync(scheduler, evt.data, ct);
-                    }
-                }
+                await HandleUpdatedEventAsync(scheduler, evt.data, ct);
                 break;
             case "deleted":
-                if (evt.data is not null)
-                {
-                    await RemoveJobAsync(scheduler, evt.data.id_cronjob, ct);
-                }
+                await HandleDeletedEventAsync(scheduler, evt.data, ct);
                 break;
             case "force_run":
-                if (evt.data is not null)
-                {
-                    await ForceRunJobAsync(scheduler, evt.data.id_cronjob, ct);
-                }
+                await HandleForceRunEventAsync(scheduler, evt.data, ct);
                 break;
             case "force_stop":
-                if (evt.data is not null)
-                {
-                    ForceStopJob(evt.data.id_cronjob);
-                }
+                HandleForceStopEvent(evt.data);
                 break;
             default:
                 _logger.LogWarning("Unknown cronjob-event action: {Action}", evt.action);
@@ -187,9 +169,54 @@ public class KafkaCronJobEventsConsumer : BackgroundService
         return true;
     }
 
+    private async Task HandleCreatedEventAsync(IScheduler scheduler, CronJobEventData? data, CancellationToken ct)
+    {
+        if (data is not null && data.is_enabled)
+        {
+            await ScheduleOrReplaceJobAsync(scheduler, data, ct);
+        }
+    }
+
+    private async Task HandleUpdatedEventAsync(IScheduler scheduler, CronJobEventData? data, CancellationToken ct)
+    {
+        if (data is null)
+        {
+            return;
+        }
+        await RemoveJobAsync(scheduler, data.id_cronjob, ct);
+        if (data.is_enabled)
+        {
+            await ScheduleOrReplaceJobAsync(scheduler, data, ct);
+        }
+    }
+
+    private async Task HandleDeletedEventAsync(IScheduler scheduler, CronJobEventData? data, CancellationToken ct)
+    {
+        if (data is not null)
+        {
+            await RemoveJobAsync(scheduler, data.id_cronjob, ct);
+        }
+    }
+
+    private async Task HandleForceRunEventAsync(IScheduler scheduler, CronJobEventData? data, CancellationToken ct)
+    {
+        if (data is not null)
+        {
+            await ForceRunJobAsync(scheduler, data.id_cronjob, ct);
+        }
+    }
+
+    private void HandleForceStopEvent(CronJobEventData? data)
+    {
+        if (data is not null)
+        {
+            ForceStopJob(data.id_cronjob);
+        }
+    }
+
     private async Task ForceRunJobAsync(IScheduler scheduler, int idCronjob, CancellationToken ct)
     {
-        var jobKey = new JobKey($"job-{idCronjob}", "electrostore");
+        var jobKey = new JobKey($"job-{idCronjob}", SchedulerGroup);
         if (await scheduler.CheckExists(jobKey, ct))
         {
             await scheduler.TriggerJob(jobKey, ct);
@@ -221,7 +248,7 @@ public class KafkaCronJobEventsConsumer : BackgroundService
             return;
         }
 
-        var jobKey = new JobKey($"job-{job.id_cronjob}", "electrostore");
+        var jobKey = new JobKey($"job-{job.id_cronjob}", SchedulerGroup);
 
         // Supprimer l'ancienne version si elle existe
         await RemoveJobAsync(scheduler, job.id_cronjob, ct);
@@ -244,7 +271,7 @@ public class KafkaCronJobEventsConsumer : BackgroundService
         try
         {
             trigger = TriggerBuilder.Create()
-                .WithIdentity($"trigger-{job.id_cronjob}", "electrostore")
+                .WithIdentity($"trigger-{job.id_cronjob}", SchedulerGroup)
                 .WithCronSchedule(cronExpression)
                 .Build();
         }
@@ -263,7 +290,7 @@ public class KafkaCronJobEventsConsumer : BackgroundService
 
     private async Task RemoveJobAsync(IScheduler scheduler, int idCronjob, CancellationToken ct)
     {
-        var jobKey = new JobKey($"job-{idCronjob}", "electrostore");
+        var jobKey = new JobKey($"job-{idCronjob}", SchedulerGroup);
         if (await scheduler.CheckExists(jobKey, ct))
         {
             await scheduler.DeleteJob(jobKey, ct);

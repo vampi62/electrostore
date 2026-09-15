@@ -146,7 +146,7 @@ public class JwiService : IJwiService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<PaginatedResponseDto<SessionDto>> GetTokenSessionsByUserId(int userId, int limit, int offset,
+    public async Task<PaginatedResponseDto<SessionDto>> GetTokenSessionsByUserId(int userId, int limit = 100, int offset = 0,
     List<FilterDto>? rsql = null, SorterDto? sort = null)
     {
         var clientId = _sessionService.GetClientId();

@@ -2,7 +2,7 @@ using Confluent.Kafka;
 
 namespace ElectrostoreAPI.Kafka.Producer;
 
-public class KafkaProducerService : IDisposable, IKafkaProducerService
+public sealed class KafkaProducerService : IKafkaProducerService
 {
     private readonly IProducer<string, string> _producer;
     private readonly ILogger<KafkaProducerService> _logger;
@@ -25,8 +25,10 @@ public class KafkaProducerService : IDisposable, IKafkaProducerService
         }
         catch (ProduceException<string, string> ex)
         {
-            _logger.LogError(ex, "Failed to publish message to {Topic}", topic);
-            throw;
+            _logger.LogError(
+                ex,
+                "Error publishing message to {Topic} | Code: {Code} | Reason: {Reason}",
+                topic, ex.Error.Code, ex.Error.Reason);
         }
     }
 
@@ -54,5 +56,6 @@ public class KafkaProducerService : IDisposable, IKafkaProducerService
     {
         _producer.Flush(TimeSpan.FromSeconds(5));
         _producer.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

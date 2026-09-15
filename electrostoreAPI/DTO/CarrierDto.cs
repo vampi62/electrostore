@@ -1,4 +1,4 @@
-using ElectrostoreAPI.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace ElectrostoreAPI.Dto;
@@ -19,7 +19,9 @@ public record ReadCarrierDto
 
 public record CreateCarrierDto
 {
-    public int key_carrier { get; init; }
+    [Required(ErrorMessage = "{0} is required.")]
+    [Range(0, int.MaxValue, ErrorMessage = "{0} must be between {1} and {2}.")]
+    public required int key_carrier { get; init; }
     public int? country_carrier { get; init; }
     public string? country_iso_carrier { get; init; }
     public string? email_carrier { get; init; }

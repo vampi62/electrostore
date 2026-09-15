@@ -2,7 +2,7 @@ using Confluent.Kafka;
 
 namespace ElectrostoreCRON.Kafka.Producer;
 
-public class KafkaProducerService : IDisposable, IKafkaProducerService
+public sealed class KafkaProducerService : IKafkaProducerService
 {
     private readonly IProducer<string, string> _producer;
     private readonly ILogger<KafkaProducerService> _logger;
@@ -31,7 +31,6 @@ public class KafkaProducerService : IDisposable, IKafkaProducerService
                 ex,
                 "Error publishing message to {Topic} | Code: {Code} | Reason: {Reason}",
                 topic, ex.Error.Code, ex.Error.Reason);
-            throw new Exception($"Error publishing message to {topic}: {ex.Error.Reason}", ex);
         }
     }
 
@@ -39,5 +38,6 @@ public class KafkaProducerService : IDisposable, IKafkaProducerService
     {
         _producer.Flush(TimeSpan.FromSeconds(5));
         _producer.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

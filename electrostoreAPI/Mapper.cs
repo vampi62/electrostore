@@ -47,7 +47,8 @@ public class MappingProfile : Profile
         CreateMap<CreateCronJobDto, CronJobs>();
         CreateMap<CronJobs, ReadCronJobDto>();
 
-        CreateMap<CreateEquipementDto, Equipements>();
+        CreateMap<CreateEquipementDto, Equipements>()
+            .ForMember(dest => dest.description_equipement, opt => opt.NullSubstitute(string.Empty));
         CreateMap<Equipements, ReadEquipementDto>();
         CreateMap<Equipements, ReadExtendedEquipementDto>();
 
@@ -66,7 +67,8 @@ public class MappingProfile : Profile
         CreateMap<CreateEquipementDocumentDto, EquipementsDocuments>();
         CreateMap<EquipementsDocuments, ReadEquipementDocumentDto>();
 
-        CreateMap<CreateEquipementMaintenanceDto, EquipementsMaintenances>();
+        CreateMap<CreateEquipementMaintenanceDto, EquipementsMaintenances>()
+            .ForMember(dest => dest.description_equipement_maintenance, opt => opt.NullSubstitute(string.Empty));
         CreateMap<EquipementsMaintenances, ReadEquipementMaintenanceDto>();
         CreateMap<EquipementsMaintenances, ReadExtendedEquipementMaintenanceDto>()
             .ForMember(dest => dest.equipement, opt => opt.MapFrom(src => src.Equipement))
@@ -92,7 +94,8 @@ public class MappingProfile : Profile
         CreateMap<CreateItemDocumentDto, ItemsDocuments>();
         CreateMap<ItemsDocuments, ReadItemDocumentDto>();
 
-        CreateMap<CreateItemDto, Items>();
+        CreateMap<CreateItemDto, Items>()
+            .ForMember(dest => dest.description_item, opt => opt.NullSubstitute(string.Empty));
         CreateMap<Items, ReadItemDto>();
         CreateMap<Items, ReadExtendedItemDto>();
 
@@ -171,7 +174,8 @@ public class MappingProfile : Profile
         CreateMap<Users, ReadUserDto>();
         CreateMap<Users, ReadExtendedUserDto>();
 
-        CreateMap<CreateZoneDto, Zones>();
+        CreateMap<CreateZoneDto, Zones>()
+            .ForMember(dest => dest.description_zone, opt => opt.NullSubstitute(string.Empty));
         CreateMap<Zones, ReadZoneDto>();
         CreateMap<Zones, ReadExtendedZoneDto>();
     }

@@ -16,17 +16,27 @@ public class KafkaMqttUserConsumer : BackgroundService
     private readonly IConfiguration _configuration;
     private readonly ILogger<KafkaMqttUserConsumer> _logger;
 
-    private readonly DockerClient _dockerClient;
+    private readonly IDockerClient _dockerClient;
     private readonly string _mosquittoContainerName;
     private const string PasswdFilePath = "/mosquitto/config/mosquitto.passwd";
 
     public KafkaMqttUserConsumer(
         IConfiguration configuration,
         ILogger<KafkaMqttUserConsumer> logger)
+        : this(configuration, logger, new DockerClientConfiguration().CreateClient())
+    {
+    }
+
+    // Enables injecting a mockable IDockerClient from unit tests, since Docker.DotNet's
+    // real client isn't otherwise reachable without a live Docker daemon.
+    internal KafkaMqttUserConsumer(
+        IConfiguration configuration,
+        ILogger<KafkaMqttUserConsumer> logger,
+        IDockerClient dockerClient)
     {
         _configuration = configuration;
         _logger        = logger;
-        _dockerClient  = new DockerClientConfiguration().CreateClient();
+        _dockerClient  = dockerClient;
         _mosquittoContainerName = configuration.GetSection("MQTT:ContainerName").Value ?? "electrostore-mqtt";
     }
 
@@ -46,20 +56,7 @@ public class KafkaMqttUserConsumer : BackgroundService
             HeartbeatIntervalMs = 15_000,
         };
 
-        using var consumer = new ConsumerBuilder<string, string>(config)
-            .SetErrorHandler((_, e) =>
-                _logger.LogError(
-                    "[Kafka] Broker error | Code: {Code} | Reason: {Reason} | Fatal: {Fatal}",
-                    e.Code, e.Reason, e.IsFatal))
-            .SetPartitionsAssignedHandler((_, partitions) =>
-                _logger.LogInformation(
-                    "[Kafka] Partitions assigned → {Parts}",
-                    string.Join(", ", partitions.Select(p => $"{p.Topic}[{p.Partition}]"))))
-            .SetPartitionsRevokedHandler((_, partitions) =>
-                _logger.LogWarning(
-                    "[Kafka] Partitions revoked → {Parts}",
-                    string.Join(", ", partitions.Select(p => $"{p.Topic}[{p.Partition}]"))))
-            .Build();
+        using var consumer = BuildConsumer(config);
         consumer.Subscribe(Topic);
 
         _logger.LogInformation(
@@ -82,6 +79,26 @@ public class KafkaMqttUserConsumer : BackgroundService
             consumer.Close();
             _logger.LogInformation("KafkaMqttUserConsumer stopped.");
         }
+    }
+
+    // Virtual so unit tests can substitute a mocked IConsumer instead of building a real
+    // Kafka connection.
+    protected virtual IConsumer<string, string> BuildConsumer(ConsumerConfig config)
+    {
+        return new ConsumerBuilder<string, string>(config)
+            .SetErrorHandler((_, e) =>
+                _logger.LogError(
+                    "[Kafka] Broker error | Code: {Code} | Reason: {Reason} | Fatal: {Fatal}",
+                    e.Code, e.Reason, e.IsFatal))
+            .SetPartitionsAssignedHandler((_, partitions) =>
+                _logger.LogInformation(
+                    "[Kafka] Partitions assigned → {Parts}",
+                    string.Join(", ", partitions.Select(p => $"{p.Topic}[{p.Partition}]"))))
+            .SetPartitionsRevokedHandler((_, partitions) =>
+                _logger.LogWarning(
+                    "[Kafka] Partitions revoked → {Parts}",
+                    string.Join(", ", partitions.Select(p => $"{p.Topic}[{p.Partition}]"))))
+            .Build();
     }
 
     private async Task<ConsumeResult<string, string>?> ConsumeMessageAsync(
