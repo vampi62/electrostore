@@ -20,7 +20,6 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from "vue";
 export default {
 	name: "NotificationAppUpdate",
 	data() {
@@ -58,7 +57,6 @@ export default {
 		async fetchVersion() {
 			// block fetch if where in development mode to avoid caching issues
 			if (import.meta.env.DEV) {
-				//return { version: `dev-${Date.now()}` };
 				return { version: "dev" };
 			}
 			try {

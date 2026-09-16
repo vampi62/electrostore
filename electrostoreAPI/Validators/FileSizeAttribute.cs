@@ -15,7 +15,7 @@ public class FileSizeAttribute : ValidationAttribute
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
         ) ?? throw new InvalidOperationException($"Field '{maxSizePropertyName}' not found in FieldLengths class.");
 
-        _maxSizeInMB = (long)Convert.ToInt64(maxSizeProperty.GetValue(null)!);
+        _maxSizeInMB = Convert.ToInt64(maxSizeProperty.GetValue(null));
     }
 
     public override bool IsValid(object? value)

@@ -173,15 +173,7 @@ export const useStoresStore = defineStore("stores",{
 		},
 		loadToEdition(id, preset = null) {
 			this.storeEdition[id] = {};
-			if (preset) {
-				this.storeEdition[id] = {};
-				preset.split(";").forEach((pair) => {
-					const [key, value] = pair.split(":");
-					if (key && value) {
-						this.storeEdition[id][key] = value;
-					}
-				});
-			}
+			storeResource.loadEditionPreset(id, preset);
 			if (id !== "new" && this.stores[id]) {
 				this.storeEdition[id] = {
 					loading: false,

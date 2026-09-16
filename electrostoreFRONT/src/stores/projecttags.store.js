@@ -3,9 +3,6 @@ import { defineStore } from "pinia";
 import { createMainResource, createNestedResource } from "@/helpers";
 
 import { useProjectsStore } from "@/stores";
-import { readonly } from "vue";
-
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 const EXPAND_HANDLERS = {
 	project_tags: (store, idProjectTag, projectTag) => {
@@ -75,14 +72,7 @@ export const useProjectTagsStore = defineStore("projectTags",{
 		createProjectTagBulk: projectTagResource.createBulk,
 		loadToEdition(id, preset = null) {
 			this.projectTagEdition[id] = {};
-			if (preset) {
-				preset.split(";").forEach((pair) => {
-					const [key, value] = pair.split(":");
-					if (key && value) {
-						this.projectTagEdition[id][key] = value;
-					}
-				});
-			}
+			projectTagResource.loadEditionPreset(id, preset);
 			if (id !== "new" && this.projectTags[id]) {
 				this.projectTagEdition[id] = {
 					loading: false,

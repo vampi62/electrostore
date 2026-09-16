@@ -145,7 +145,7 @@ const commandCurrentStep = computed(() => {
 		return 0;
 	}
 	const idx = commandRoadmapSteps.findIndex((s) => s.id === Number(status));
-	return idx >= 0 ? idx : 0;
+	return Math.max(idx, 0);
 });
 
 // roadmap tracking
@@ -179,7 +179,7 @@ const trackingCurrentStep = computed(() => {
 		return 0;
 	}
 	const idx = trackingRoadmapSteps.findIndex((s) => s.id === Number(status));
-	return idx >= 0 ? idx : 0;
+	return Math.max(idx, 0);
 });
 const trackingHistory = computed(() => {
 	const result = {};

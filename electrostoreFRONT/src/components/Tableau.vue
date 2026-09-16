@@ -359,7 +359,7 @@ export default {
 			if (label.type === "link-list") {
 				return Object.values(this.storeData[label.storeLinkId]?.[row[label.sourceKey]] || {}).map((linkedItem) => {
 					let printedRessource = "";
-					label.ressourcePrint.forEach((print) => {
+					for (const print of label.ressourcePrint) {
 						if (print.from === "ressource") {
 							printedRessource += this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
 						} else if (print.from === "link") {
@@ -367,7 +367,7 @@ export default {
 						} else if (print.from === "text") {
 							printedRessource += print.text || "";
 						}
-					});
+					}
 					return printedRessource;
 				});
 			} else if (label.type === "image") {
@@ -437,7 +437,7 @@ export default {
 			this.nextOffset = 0;
 			this.hasMore = true;
 			let intervalOffset = this.nextOffset;
-			[this.nextOffset, this.hasMore] = await this.fetchFunction(100, 0, this.meta?.expand || [], buildRSQLFilter(this.filters), buildRSQLSort(this.sort), this.meta?.preventClear ? false : true);
+			[this.nextOffset, this.hasMore] = await this.fetchFunction(100, 0, this.meta?.expand || [], buildRSQLFilter(this.filters), buildRSQLSort(this.sort), !this.meta?.preventClear);
 			await this.refetchListData(intervalOffset, this.nextOffset);
 		},
 		async refetchListData(minOffset, maxOffset) {

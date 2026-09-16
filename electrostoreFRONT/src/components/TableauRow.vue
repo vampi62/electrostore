@@ -184,7 +184,7 @@ export default {
 		getDataLinkListValue(row, label) {
 			return Object.values(this.storeData[label.storeLinkId]?.[row[label.sourceKey]] || {}).map((linkedItem) => {
 				let printedRessource = "";
-				label.ressourcePrint.forEach((print) => {
+				for (const print of label.ressourcePrint) {
 					if (print.from === "ressource") {
 						printedRessource += this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
 					} else if (print.from === "link") {
@@ -192,14 +192,14 @@ export default {
 					} else if (print.from === "text") {
 						printedRessource += print.text || "";
 					}
-				});
+				}
 				return printedRessource;
 			});
 		},
 		getDataLinkValue(row, label) {
 			const linkedItem = this.storeData[label.storeLinkId]?.[row[label.sourceKey]];
 			let printedRessource = "";
-			label.ressourcePrint.forEach((print) => {
+			for (const print of label.ressourcePrint) {
 				if (print.from === "ressource") {
 					printedRessource += this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
 				} else if (print.from === "link") {
@@ -207,7 +207,7 @@ export default {
 				} else if (print.from === "text") {
 					printedRessource += print.text || "";
 				}
-			});
+			}
 			return printedRessource;
 		},
 		getDataValue(row, label) {

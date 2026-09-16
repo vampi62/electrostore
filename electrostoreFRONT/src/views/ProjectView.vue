@@ -54,10 +54,10 @@ onBeforeUnmount(() => {
 });
 const dateDebut = computed(() => {
 	// don't return the GMT offset to avoid timezone issues
-	return projectsStore.projectEdition[projectId.value].date_start_project ? new Date(projectsStore.projectEdition[projectId.value].date_start_project).toISOString().replace(/.\d+Z$/, "").replace("T", " ") : null;
+	return projectsStore.projectEdition[projectId.value].date_start_project ? new Date(projectsStore.projectEdition[projectId.value].date_start_project).toISOString().replace(/\.\d+Z$/, "").replace("T", " ") : null;
 });
 const dateFin = computed(() => {
-	return projectsStore.projectEdition[projectId.value].date_end_project ? new Date(projectsStore.projectEdition[projectId.value].date_end_project).toISOString().replace(/.\d+Z$/, "").replace("T", " ") : null;
+	return projectsStore.projectEdition[projectId.value].date_end_project ? new Date(projectsStore.projectEdition[projectId.value].date_end_project).toISOString().replace(/\.\d+Z$/, "").replace("T", " ") : null;
 });
 
 // tag
@@ -102,7 +102,7 @@ const projectCurrentStep = computed(() => {
 		return 0;
 	}
 	const idx = projectRoadmapSteps.findIndex((s) => s.id === Number(status));
-	return idx >= 0 ? idx : 0;
+	return Math.max(idx, 0);
 });
 const projectSave = async() => {
 	try {

@@ -3,7 +3,7 @@ import { fetchWrapper, buildQuery } from "@/helpers";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
-export function createMainResource({ path, idField, countKey, stateKey, loadingKey, onHydrate }) {
+export function createMainResource({ path, idField, countKey, stateKey, loadingKey, editionKey, onHydrate }) {
 	return {
 		async getByList(idResearch = [], expand = [], clear = false, externalParam = []) {
 			if (!this[stateKey] || clear) {
@@ -95,6 +95,21 @@ export function createMainResource({ path, idField, countKey, stateKey, loadingK
 			}
 			this[countKey] = (this[countKey] ?? 0) - res.valide.length;
 			this[countKey] = Math.max(this[countKey], 0);
+		},
+		loadEditionPreset(id, preset = null) {
+			if (!preset) {
+				return;
+			}
+			this[editionKey] ??= {};
+			if (!this[editionKey][id]) {
+				this[editionKey][id] = {};
+			}
+			for (const pair of preset.split(";")) {
+				const [key, value] = pair.split(":");
+				if (key && value) {
+					this[editionKey][id][key] = value;
+				}
+			}
 		},
 	};
 }

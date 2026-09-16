@@ -22,6 +22,7 @@ public class UserService : IUserService
     private readonly ISessionService _sessionService;
     private readonly IJwiService _jwiService;
     private readonly ILogger<UserService> _logger;
+    private readonly string KafkaNotificationTopic = "notification-requests";
 
     public UserService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, IKafkaProducerService kafkaNotificationService, ISessionService sessionService, IJwiService jwiService, ILogger<UserService> logger)
     {
@@ -147,7 +148,7 @@ public class UserService : IUserService
                 }
             };
             await _kafkaProducerService.PublishAsync(
-                "notification-requests",
+                KafkaNotificationTopic,
                 newUser.email_user + "-account-created",
                 JsonSerializer.Serialize(notification)
             );
@@ -280,7 +281,7 @@ public class UserService : IUserService
                 Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
             };
             await _kafkaProducerService.PublishAsync(
-                "notification-requests",
+                KafkaNotificationTopic,
                 userToDelete.email_user + "-account-deleted",
                 JsonSerializer.Serialize(notification)
             );
@@ -333,7 +334,7 @@ public class UserService : IUserService
                     TemplateValues = values
                 };
                 await _kafkaProducerService.PublishAsync(
-                    "notification-requests",
+                    KafkaNotificationTopic,
                     userToUpdate.email_user + "-email-changed",
                     JsonSerializer.Serialize(notificationNew)
                 );
@@ -346,7 +347,7 @@ public class UserService : IUserService
                     TemplateValues = values
                 };
                 await _kafkaProducerService.PublishAsync(
-                    "notification-requests",
+                    KafkaNotificationTopic,
                     oldUserEmail + "-email-changed",
                     JsonSerializer.Serialize(notificationOld)
                 );
@@ -368,7 +369,7 @@ public class UserService : IUserService
                     Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
                 };
                 await _kafkaProducerService.PublishAsync(
-                    "notification-requests",
+                    KafkaNotificationTopic,
                     userToUpdate.email_user + "-password-changed",
                     JsonSerializer.Serialize(notification)
                 );
@@ -390,7 +391,7 @@ public class UserService : IUserService
                     Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
                 };
                 await _kafkaProducerService.PublishAsync(
-                    "notification-requests",
+                    KafkaNotificationTopic,
                     userToUpdate.email_user + "-account-updated",
                     JsonSerializer.Serialize(notification)
                 );

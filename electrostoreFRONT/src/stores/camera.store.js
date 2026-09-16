@@ -43,14 +43,7 @@ export const useCamerasStore = defineStore("cameras",{
 		deleteCamera: cameraResource.remove,
 		loadToEdition(id, preset = null) {
 			this.cameraEdition[id] = {};
-			if (preset) {
-				preset.split(";").forEach((pair) => {
-					const [key, value] = pair.split(":");
-					if (key && value) {
-						this.cameraEdition[id][key] = value;
-					}
-				});
-			}
+			cameraResource.loadEditionPreset(id, preset);
 			if (id !== "new" && this.cameras[id]) {
 				this.cameraEdition[id] = {
 					loading: false,

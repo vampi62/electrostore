@@ -86,7 +86,7 @@ function image(method) {
 		};
 		const response = await fetch(url, requestOptions);
 		if (!response.ok) {
-			return Promise.reject(new Error(response.statusText));
+			throw new Error(response.statusText);
 		}
 		return await response.blob();
 	};

@@ -22,9 +22,10 @@ public class StoreService : IStoreService
     private readonly ISessionService _sessionService;
     private readonly IEncryptionService _encryptionService;
     private readonly IValidateStoreService _validateStoreService;
-    private readonly IKafkaProducerService _kafkaProducer;
+    private readonly IKafkaProducerService _kafkaProducerService;
+    private readonly string KafkaMqttUserTopic = "mqtt-user-events";
 
-    public StoreService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, IEncryptionService encryptionService, ISessionService sessionService, IValidateStoreService validateStoreService, IKafkaProducerService kafkaProducer)
+    public StoreService(IMapper mapper, ApplicationDbContext context, IConfiguration configuration, IEncryptionService encryptionService, ISessionService sessionService, IValidateStoreService validateStoreService, IKafkaProducerService kafkaProducerService)
     {
         _mapper = mapper;
         _context = context;
@@ -32,7 +33,7 @@ public class StoreService : IStoreService
         _sessionService = sessionService;
         _encryptionService = encryptionService;
         _validateStoreService = validateStoreService;
-        _kafkaProducer = kafkaProducer;
+        _kafkaProducerService = kafkaProducerService;
     }
 
     // limit the number of store to 100 and add offset and search parameters
@@ -183,8 +184,8 @@ public class StoreService : IStoreService
         newStore.mqtt_password_encryption_tag_store = encryptedPassword.tag;
         _context.Stores.Add(newStore);
         await _context.SaveChangesAsync();
-        await _kafkaProducer.PublishAsync(
-            "mqtt-user-events",
+        await _kafkaProducerService.PublishAsync(
+            KafkaMqttUserTopic,
             newStore.id_store.ToString(),
             JsonSerializer.Serialize(new MqttUserMessage
             {
@@ -219,8 +220,8 @@ public class StoreService : IStoreService
             storeToUpdate.mqtt_password_store = encryptedPassword.encrypted_data;
             storeToUpdate.mqtt_password_encryption_iv_store = encryptedPassword.iv;
             storeToUpdate.mqtt_password_encryption_tag_store = encryptedPassword.tag;
-            await _kafkaProducer.PublishAsync(
-                "mqtt-user-events",
+            await _kafkaProducerService.PublishAsync(
+                KafkaMqttUserTopic,
                 storeToUpdate.id_store.ToString(),
                 JsonSerializer.Serialize(new MqttUserMessage
                 {
@@ -256,8 +257,8 @@ public class StoreService : IStoreService
         }
         var storeToDelete = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
         _context.Stores.Remove(storeToDelete);
-        await _kafkaProducer.PublishAsync(
-            "mqtt-user-events",
+        await _kafkaProducerService.PublishAsync(
+            KafkaMqttUserTopic,
             storeToDelete.id_store.ToString(),
             JsonSerializer.Serialize(new MqttUserMessage
             {
@@ -359,8 +360,8 @@ public class StoreService : IStoreService
         {
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
-            await _kafkaProducer.PublishAsync(
-                "mqtt-user-events",
+            await _kafkaProducerService.PublishAsync(
+                KafkaMqttUserTopic,
                 newStore.id_store.ToString(),
                 JsonSerializer.Serialize(new MqttUserMessage
                 {
@@ -444,8 +445,8 @@ public class StoreService : IStoreService
                 storeToUpdate.mqtt_password_encryption_iv_store = encryptedPassword.iv;
                 storeToUpdate.mqtt_password_encryption_tag_store = encryptedPassword.tag;
                 await _context.SaveChangesAsync();
-                await _kafkaProducer.PublishAsync(
-                    "mqtt-user-events",
+                await _kafkaProducerService.PublishAsync(
+                    KafkaMqttUserTopic,
                     storeToUpdate.id_store.ToString(),
                     JsonSerializer.Serialize(new MqttUserMessage
                     {

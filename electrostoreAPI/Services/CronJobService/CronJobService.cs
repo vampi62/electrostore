@@ -15,13 +15,14 @@ public class CronJobService : ICronJobService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
-    private readonly IKafkaProducerService _kafkaProducer;
+    private readonly IKafkaProducerService _kafkaProducerService;
+    private readonly string KafkaCronJobTopic = "cronjob-events";
 
-    public CronJobService(IMapper mapper, ApplicationDbContext context, IKafkaProducerService kafkaProducer)
+    public CronJobService(IMapper mapper, ApplicationDbContext context, IKafkaProducerService kafkaProducerService)
     {
         _mapper = mapper;
         _context = context;
-        _kafkaProducer = kafkaProducer;
+        _kafkaProducerService = kafkaProducerService;
     }
 
     public async Task<PaginatedResponseDto<ReadCronJobDto>> GetCronJobs(int limit = 100, int offset = 0,
@@ -94,8 +95,8 @@ public class CronJobService : ICronJobService
             action = "created",
             data = result
         };
-        await _kafkaProducer.PublishAsync(
-            "cronjob-events",
+        await _kafkaProducerService.PublishAsync(
+            KafkaCronJobTopic,
             newCronJob.id_cronjob.ToString(),
             JsonSerializer.Serialize(cronJobMessage)
         );
@@ -143,8 +144,8 @@ public class CronJobService : ICronJobService
             action = "updated",
             data = result
         };
-        await _kafkaProducer.PublishAsync(
-            "cronjob-events",
+        await _kafkaProducerService.PublishAsync(
+            KafkaCronJobTopic,
             cronJobToUpdate.id_cronjob.ToString(),
             JsonSerializer.Serialize(cronJobMessage)
         );
@@ -162,8 +163,8 @@ public class CronJobService : ICronJobService
         };
         _context.CronJobs.Remove(cronJobToDelete);
         await _context.SaveChangesAsync();
-        await _kafkaProducer.PublishAsync(
-            "cronjob-events",
+        await _kafkaProducerService.PublishAsync(
+            KafkaCronJobTopic,
             id.ToString(),
             JsonSerializer.Serialize(cronJobMessage)
          );
@@ -177,7 +178,7 @@ public class CronJobService : ICronJobService
 
     public async Task UpdateCronJobRunAsync(int id, DateTime? lastRunAt, DateTime? nextRunAt, CancellationToken cancellationToken)
     {
-        var cronJob = await _context.CronJobs.FindAsync(id, cancellationToken)
+        var cronJob = await _context.CronJobs.FindAsync([id], cancellationToken)
             ?? throw new KeyNotFoundException($"CronJob with id '{id}' not found");
         if (lastRunAt.HasValue)
         {
@@ -192,7 +193,7 @@ public class CronJobService : ICronJobService
 
     public async Task UpdateCronJobStatusAsync(int id, CronJobStatus status, string? lastError, CancellationToken cancellationToken)
     {
-        var cronJob = await _context.CronJobs.FindAsync(id, cancellationToken)
+        var cronJob = await _context.CronJobs.FindAsync([id], cancellationToken)
             ?? throw new KeyNotFoundException($"CronJob with id '{id}' not found");
         cronJob.status_cronjob = status;
         cronJob.last_error_cronjob = lastError;
@@ -226,8 +227,8 @@ public class CronJobService : ICronJobService
             action = "force_run",
             data = _mapper.Map<ReadCronJobDto>(cronJob)
         };
-        await _kafkaProducer.PublishAsync(
-            "cronjob-events",
+        await _kafkaProducerService.PublishAsync(
+            KafkaCronJobTopic,
             cronJob.id_cronjob.ToString(),
             JsonSerializer.Serialize(cronJobMessage)
         );
@@ -242,8 +243,8 @@ public class CronJobService : ICronJobService
             action = "force_stop",
             data = _mapper.Map<ReadCronJobDto>(cronJob)
         };
-        await _kafkaProducer.PublishAsync(
-            "cronjob-events",
+        await _kafkaProducerService.PublishAsync(
+            KafkaCronJobTopic,
             cronJob.id_cronjob.ToString(),
             JsonSerializer.Serialize(cronJobMessage)
         );
