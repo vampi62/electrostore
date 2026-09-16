@@ -248,14 +248,7 @@ export const useItemsStore = defineStore("items",{
 		deleteItem: itemResource.remove,
 		loadToEdition(id, preset = null) {
 			this.itemEdition[id] = {};
-			if (preset) {
-				preset.split(";").forEach((pair) => {
-					const [key, value] = pair.split(":");
-					if (key && value) {
-						this.itemEdition[id][key] = value;
-					}
-				});
-			}
+			itemResource.loadEditionPreset(id, preset);
 			if (id !== "new" && this.items[id]) {
 				this.itemEdition[id] = {
 					loading: false,

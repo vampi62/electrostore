@@ -87,7 +87,7 @@ export default {
 				for (const filter of this.filters) {
 					if (filter.key in savedValues) {
 						//prevent malformed saved values from breaking the component
-						if (typeof savedValues[filter.key].value === "undefined" || typeof savedValues[filter.key].value === "object") {
+						if (savedValues[filter.key].value === undefined || typeof savedValues[filter.key].value === "object") {
 							continue;
 						}
 						if (savedValues[filter.key].value === null || savedValues[filter.key].value === "undefined") {

@@ -367,8 +367,8 @@ export default {
 			};
 		},
 		handleScrollResize() {
-			// Mettre à jour les positions de tous les dropdowns ouverts
-			Object.keys(this.dropdownOpen).forEach((key) => {
+			// update the positions of all open dropdowns
+			for (const key of Object.keys(this.dropdownOpen)) {
 				if (this.dropdownOpen[key]) {
 					const buttonRef = `dropdown-button-${key}`;
 					const button = this.$refs[buttonRef];
@@ -376,9 +376,9 @@ export default {
 						this.updateDropdownPosition(key, Array.isArray(button) ? button[0] : button);
 					}
 				}
-			});
-			// Mettre à jour les positions des fetch-select ouverts
-			Object.keys(this.fetchSelectState).forEach((key) => {
+			}
+			// update the positions of all open fetch-selects
+			for (const key of Object.keys(this.fetchSelectState)) {
 				if (this.fetchSelectState[key]?.isOpen) {
 					const inputRef = `fetch-select-input-${key}`;
 					const input = this.$refs[inputRef];
@@ -386,11 +386,11 @@ export default {
 						this.updateFetchSelectPosition(key, Array.isArray(input) ? input[0] : input);
 					}
 				}
-			});
+			}
 		},
 		handleClickOutside(event) {
-			// Fermer les dropdowns si on clique en dehors
-			Object.keys(this.dropdownOpen).forEach((key) => {
+			// Close dropdowns if clicking outside
+			for (const key of Object.keys(this.dropdownOpen)) {
 				if (this.dropdownOpen[key]) {
 					const buttonRef = `dropdown-button-${key}`;
 					const menuRef = `dropdown-menu-${key}`;
@@ -407,7 +407,7 @@ export default {
 						this.closeDropdown(key);
 					}
 				}
-			});
+			}
 		},
 		getSelectedOptions(field) {
 			if (!this.storeData[field.key] || !Array.isArray(this.storeData[field.key])) {

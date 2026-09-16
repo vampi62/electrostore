@@ -23,10 +23,6 @@ public class AiToolExecutorService : IAiToolExecutorService
 
     private static readonly string[] SearchItemsRequired = ["query"];
     private static readonly string[] GetItemStockLocationRequired = ["id_item"];
-    private static readonly string[] CreateItemRequired = ["reference_name_item", "friendly_name_item", "threshold_min_item"];
-    private static readonly string[] CreateTagRequired = ["name_tag"];
-    private static readonly string[] AttachTagRequired = ["id_item", "id_tag"];
-    private static readonly string[] MoveItemStockRequired = ["id_item", "id_box", "quantity_item_box"];
 
     public AiToolExecutorService(
         IItemService itemService,
@@ -180,7 +176,7 @@ public class AiToolExecutorService : IAiToolExecutorService
         return ProposedResult("create_item", ParseDto<CreateItemDto>(argumentsJson));
     }
 
-    private AiToolExecutionResult ProposeCreateBox(string argumentsJson)
+    private static AiToolExecutionResult ProposeCreateBox(string argumentsJson)
     {
         return ProposedResult("create_box", ParseDto<CreateBoxDto>(argumentsJson));
     }
@@ -304,7 +300,7 @@ public class AiToolExecutorService : IAiToolExecutorService
         return "string";
     }
 
-    private class SearchItemsArgs
+    private sealed class SearchItemsArgs
     {
         public string? query { get; set; } = null;
         public int? limit { get; set; } = null;

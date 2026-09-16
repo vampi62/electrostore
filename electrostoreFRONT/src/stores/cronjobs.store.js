@@ -26,14 +26,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		deleteCronJob: cronJobResource.remove,
 		loadToEdition(id, preset = null) {
 			this.cronJobEdition[id] = {};
-			if (preset) {
-				preset.split(";").forEach((pair) => {
-					const [key, value] = pair.split(":");
-					if (key && value) {
-						this.cronJobEdition[id][key] = value;
-					}
-				});
-			}
+			cronJobResource.loadEditionPreset(id, preset);
 			if (id !== "new" && this.cronJobs[id]) {
 				this.cronJobEdition[id] = {
 					loading: false,

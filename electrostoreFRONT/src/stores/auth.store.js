@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, buildQuery } from "@/helpers";
+import { fetchWrapper } from "@/helpers";
 import router from "@/router";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
@@ -48,7 +48,7 @@ export const useAuthStore = defineStore("auth",{
 		},
 		TokenIsExpired() {
 			// if date expire is less than current date + 5 minutes
-			if (new Date(this.accessToken.date_expire).getTime() < new Date().getTime() + 5 * 60000) {
+			if (new Date(this.accessToken.date_expire).getTime() < new Date().now() + 5 * 60000) {
 				console.log("Token is expired");
 				return true;
 			}
@@ -56,7 +56,7 @@ export const useAuthStore = defineStore("auth",{
 		},
 		RefreshTokenIsExpired() {
 			// if date expire is less than current date
-			if (new Date(this.refreshToken.date_expire).getTime() < new Date().getTime()) {
+			if (new Date(this.refreshToken.date_expire).getTime() < new Date().now()) {
 				console.log("Refresh Token is expired");
 				return true;
 			}
