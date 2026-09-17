@@ -1,5 +1,3 @@
-import camera from "./camera.json";
-import cameras from "./cameras.json";
 import command from "./command.json";
 import commands from "./commands.json";
 import common from "./common.json";
@@ -7,8 +5,6 @@ import components from "./components.json";
 import cronJob from "./cronJob.json";
 import cronJobs from "./cronJobs.json";
 import health from "./health.json";
-import ai from "./AI.json";
-import ais from "./AIs.json";
 import item from "./item.json";
 import items from "./items.json";
 import project from "./project.json";
@@ -23,8 +19,6 @@ import user from "./user.json";
 import users from "./users.json";
 
 export default {
-	camera,
-	cameras,
 	command,
 	commands,
 	common,
@@ -32,8 +26,6 @@ export default {
 	cronJob,
 	cronJobs,
 	health,
-	ai,
-	ais,
 	item,
 	items,
 	project,

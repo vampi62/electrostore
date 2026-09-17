@@ -23,8 +23,6 @@ import user from "./user.json";
 import users from "./users.json";
 
 export default {
-	camera,
-	cameras,
 	command,
 	commands,
 	common,
@@ -32,8 +30,6 @@ export default {
 	cronJob,
 	cronJobs,
 	health,
-	ai,
-	ais,
 	item,
 	items,
 	project,

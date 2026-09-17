@@ -1,12 +1,8 @@
-export { default as CamerasView } from "./CamerasView.vue";
-export { default as CameraView } from "./CameraView.vue";
 export { default as CommandsView } from "./CommandsView.vue";
 export { default as CommandView } from "./CommandView.vue";
 export { default as ForgotPasswordView } from "./ForgotPasswordView.vue";
 export { default as HealthView } from "./HealthView.vue";
 export { default as HomeView } from "./HomeView.vue";
-export { default as AIsView } from "./AIsView.vue";
-export { default as AIView } from "./AIView.vue";
 export { default as InventoryView } from "./InventoryView.vue";
 export { default as ItemView } from "./ItemView.vue";
 export { default as LoginView } from "./LoginView.vue";

@@ -37,12 +37,6 @@ const EXPAND_HANDLERS = {
 			store.itemProjects[idItem][itemProject.id_project] = itemProject;
 		}
 	},
-	images: (store, idItem, data) => {
-		store.images[idItem] = {};
-		for (const image of data) {
-			store.images[idItem][image.id_img] = image;
-		}
-	},
 	item_history: (store, idItem, data) => {
 		store.itemHistory[idItem] = {};
 		for (const itemHistory of data) {
@@ -155,33 +149,6 @@ const itemProjectResource = createNestedResource({
 		}
 	},
 });
-const imageResource = createNestedResource({
-	path: (idItem) => `/item/${idItem}/img`,
-	idField: "id_image",
-	stateKey: "images",
-	countKey: "imagesTotalCount",
-	loadingKey: "imagesLoading",
-	editionKey: "imageEdition",
-	readyKey: "imageReady",
-	onHydrate: (store, entity, expand, externalParam) => {
-		if (externalParam?.loadImages && !store.imagesURL[entity.id_image]) {
-			store.showImageById(store, externalParam.idItem, entity.id_image);
-		}
-		if (externalParam?.loadThumbnails && !store.thumbnailsURL[entity.id_image]) {
-			store.showThumbnailById(store, externalParam.idItem, entity.id_image);
-		}
-	},
-	/* onRemove: (store, idImage) => {
-		if (store.imagesURL[idImage]) {
-			URL.revokeObjectURL(store.imagesURL[idImage]);
-			delete store.imagesURL[idImage];
-		}
-		if (store.thumbnailsURL[idImage]) {
-			URL.revokeObjectURL(store.thumbnailsURL[idImage]);
-			delete store.thumbnailsURL[idImage];
-		}
-	}, */
-});
 const itemHistoryResource = createNestedResource({
 	path: (idItem) => `/item/${idItem}/history`,
 	idField: "id_item_history",
@@ -227,9 +194,6 @@ export const useItemsStore = defineStore("items",{
 		itemProjectEdition: {},
 		itemProjectReady: {},
 
-		imagesLoading: false,
-		imagesTotalCount: {},
-		images: {},
 		imagesURL: {},
 		thumbnailsURL: {},
 		imageEdition: {},
@@ -386,37 +350,27 @@ export const useItemsStore = defineStore("items",{
 		copyItemProjectAllId: itemProjectResource.copyAllId,
 		pushItemProjectChange: itemProjectResource.pushChange,
 
-		getImageByInterval: imageResource.getByInterval,
-		getImageById: imageResource.getById,
-		createImage: imageResource.create,
-		updateImage: imageResource.update,
-		deleteImage: imageResource.remove,
-		getAvailableNewImageId: imageResource.getAvailableNewId,
-		valideImageEditionById: imageResource.valideEditionById,
-		copyImagePerId: imageResource.copyPerId,
-		copyImageAllId: imageResource.copyAllId,
-		pushImageChange: imageResource.pushChange,
-		async showImageById(id_item, id_img) {
-			if (this.imagesURL[id_img]) {
+		async showImageById(id_item) {
+			if (this.imagesURL[id_item]) {
 				return;
 			}
 			const response = await fetchWrapper.image({
-				url: `${baseUrl}/item/${id_item}/img/${id_img}/picture`,
+				url: `${baseUrl}/item/${id_item}/picture`,
 				useToken: "access",
 			});
 			const url = URL.createObjectURL(response);
-			this.imagesURL[id_img] = url;
+			this.imagesURL[id_item] = url;
 		},
-		async showThumbnailById(id_item, id_img) {
-			if (this.thumbnailsURL[id_img]) {
+		async showThumbnailById(id_item) {
+			if (this.thumbnailsURL[id_item]) {
 				return;
 			}
 			const response = await fetchWrapper.image({
-				url: `${baseUrl}/item/${id_item}/img/${id_img}/thumbnail`,
+				url: `${baseUrl}/item/${id_item}/thumbnail`,
 				useToken: "access",
 			});
 			const url = URL.createObjectURL(response);
-			this.thumbnailsURL[id_img] = url;
+			this.thumbnailsURL[id_item] = url;
 		},
 
 		getItemHistoryByInterval: itemHistoryResource.getByInterval,
