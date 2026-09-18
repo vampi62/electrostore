@@ -390,6 +390,9 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<bool>("is_enabled")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("last_error_cronjob")
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime?>("last_run_at")
                         .HasColumnType("datetime(6)");
 
@@ -403,6 +406,9 @@ namespace ElectrostoreAPI.Migrations
 
                     b.Property<string>("params_cronjob")
                         .HasColumnType("longtext");
+
+                    b.Property<int>("status_cronjob")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");
@@ -466,9 +472,6 @@ namespace ElectrostoreAPI.Migrations
                     b.HasKey("id_equipement", "id_box");
 
                     b.HasIndex("id_box");
-
-                    b.HasIndex("id_equipement")
-                        .IsUnique();
 
                     b.ToTable("EquipementsBoxs");
                 });
@@ -1531,7 +1534,6 @@ namespace ElectrostoreAPI.Migrations
                     b.Navigation("Item");
                 });
 
-
             modelBuilder.Entity("ElectrostoreAPI.Models.EquipementsBoxs", b =>
                 {
                     b.HasOne("ElectrostoreAPI.Models.Boxs", "Box")
@@ -1616,7 +1618,7 @@ namespace ElectrostoreAPI.Migrations
                         .IsRequired();
 
                     b.HasOne("ElectrostoreAPI.Models.Tags", "Tag")
-                        .WithMany()
+                        .WithMany("EquipementsTags")
                         .HasForeignKey("id_tag")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1934,6 +1936,8 @@ namespace ElectrostoreAPI.Migrations
             modelBuilder.Entity("ElectrostoreAPI.Models.Tags", b =>
                 {
                     b.Navigation("BoxsTags");
+
+                    b.Navigation("EquipementsTags");
 
                     b.Navigation("ItemsTags");
 
