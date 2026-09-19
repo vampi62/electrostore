@@ -100,7 +100,7 @@ export function createNestedResource({ path, idField, countKey, stateKey, loadin
 				this[readyKey][idParentResource][newId] = { ...this[readyKey][idParentResource][oldId], [idField]: newId };
 			}
 		},
-		copyAllId(parentKey, oldIdParentResource, newIdParentResource) {
+		copyAllId(oldIdParentResource, newIdParentResource) {
 			this[editionKey][newIdParentResource] = { ...this[editionKey][oldIdParentResource] };
 			this[readyKey][newIdParentResource] = { ...this[readyKey][oldIdParentResource] };
 			for (const [id, entry] of Object.entries(this[editionKey][newIdParentResource])) {

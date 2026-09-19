@@ -61,7 +61,6 @@ const projectCommentResource = createNestedResource({
 	countKey: "projectsCommentTotalCount",
 	loadingKey: "projectsCommentLoading",
 	editionKey: "projectCommentEdition",
-	readyKey: "projectCommentReady",
 	onHydrate: (store, idUser, entity, expand) => {
 		if (expand.includes("project")) {
 			const projectStore = useProjectsStore();
@@ -76,7 +75,6 @@ const commandCommentResource = createNestedResource({
 	countKey: "commandsCommentTotalCount",
 	loadingKey: "commandsCommentLoading",
 	editionKey: "commandCommentEdition",
-	readyKey: "commandCommentReady",
 	onHydrate: (store, idUser, entity, expand) => {
 		if (expand.includes("command")) {
 			const commandStore = useCommandsStore();
@@ -105,7 +103,6 @@ const equipementCommentResource = createNestedResource({
 	countKey: "equipementsCommentTotalCount",
 	loadingKey: "equipementsCommentLoading",
 	editionKey: "equipementCommentEdition",
-	readyKey: "equipementCommentReady",
 	onHydrate: (store, idUser, entity, expand) => {
 		if (expand.includes("equipement")) {
 			const equipementsStore = useEquipementsStore();
@@ -125,13 +122,11 @@ export const useUsersStore = defineStore("users",{
 		projectsCommentTotalCount: {},
 		projectsComment: {},
 		projectCommentEdition: {},
-		projectCommentReady: {},
 
 		commandsCommentLoading: false,
 		commandsCommentTotalCount: {},
 		commandsComment: {},
 		commandCommentEdition: {},
-		commandCommentReady: {},
 
 		tokensLoading: false,
 		tokensTotalCount: {},
@@ -146,7 +141,6 @@ export const useUsersStore = defineStore("users",{
 		equipementsCommentTotalCount: {},
 		equipementsComment: {},
 		equipementCommentEdition: {},
-		equipementCommentReady: {},
 	}),
 	actions: {
 		getUserByList: userResource.getByList,
@@ -176,9 +170,7 @@ export const useUsersStore = defineStore("users",{
 				};
 			}
 			this.projectCommentEdition[id] = {};
-			this.projectCommentReady[id] = {};
 			this.commandCommentEdition[id] = {};
-			this.commandCommentReady[id] = {};
 			this.tokensEdition[id] = {};
 		},
 		setLoadingEdition(id, loading) {
@@ -190,9 +182,7 @@ export const useUsersStore = defineStore("users",{
 		clearEdition(id) {
 			delete this.userEdition[id];
 			delete this.projectCommentEdition[id];
-			delete this.projectCommentReady[id];
 			delete this.commandCommentEdition[id];
-			delete this.commandCommentReady[id];
 			delete this.tokensEdition[id];
 		},
 		async saveAllChanges(id) {

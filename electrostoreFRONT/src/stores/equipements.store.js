@@ -115,7 +115,6 @@ const equipementCommentResource = createNestedResource({
 	countKey: "equipementCommentsTotalCount",
 	loadingKey: "equipementCommentsLoading",
 	editionKey: "equipementCommentEdition",
-	readyKey: "equipementCommentReady",
 	onHydrate: (store, idEquipement, entity, expand) => {
 		if (expand.includes("user") && entity.user) {
 			const usersStore = useUsersStore();
@@ -167,7 +166,6 @@ export const useEquipementsStore = defineStore("equipements", {
 		equipementCommentsTotalCount: {},
 		equipementComments: {},
 		equipementCommentEdition: {},
-		equipementCommentReady: {},
 
 		equipementStatusHistoryLoading: false,
 		equipementStatusHistoryTotalCount: {},

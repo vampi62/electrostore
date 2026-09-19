@@ -186,7 +186,6 @@ export const useProjectsStore = defineStore("projects",{
 				};
 			}
 			this.commentEdition[id] = {};
-			this.commentReady[id] = {};
 			this.documentEdition[id] = {};
 			this.documentReady[id] = {};
 			this.itemEdition[id] = {};
@@ -203,7 +202,6 @@ export const useProjectsStore = defineStore("projects",{
 		clearEdition(id) {
 			delete this.projectEdition[id];
 			delete this.commentEdition[id];
-			delete this.commentReady[id];
 			delete this.documentEdition[id];
 			delete this.documentReady[id];
 			delete this.itemEdition[id];

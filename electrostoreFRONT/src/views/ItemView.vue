@@ -194,7 +194,7 @@ const documentEdit = async(row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		await itemsStore.updateDocument(itemId.value, row.id_item_document, row);
-		delete itemsStore.documentEdition[row.id_item_document];
+		delete itemsStore.documentEdition[itemId.value][row.id_item_document];
 		addNotification({ message: t("item.DocumentUpdated"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -374,7 +374,7 @@ const labelTableauDocument = ref([
 			icon: "fa-solid fa-edit",
 			showCondition: "!edition?.id_item_document",
 			action: (row) => {
-				itemsStore.documentEdition[row.id_item_document] = { ...row };
+				itemsStore.documentEdition[itemId.value][row.id_item_document] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -383,7 +383,7 @@ const labelTableauDocument = ref([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_item_document",
 			action: (row) => {
-				delete itemsStore.documentEdition[row.id_item_document];
+				delete itemsStore.documentEdition[itemId.value][row.id_item_document];
 			},
 			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
 		},
@@ -391,7 +391,7 @@ const labelTableauDocument = ref([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_item_document",
-			action: (row) => documentEdit(itemsStore.documentEdition[row.id_item_document]),
+			action: (row) => documentEdit(itemsStore.documentEdition[itemId.value][row.id_item_document]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
