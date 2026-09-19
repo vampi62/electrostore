@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
+import { StorePositionMode } from "@/enums";
 
 import { useTagsStore, useItemsStore } from "@/stores";
 
@@ -182,8 +183,14 @@ export const useStoresStore = defineStore("stores",{
 					mqtt_name_store: this.stores[id].mqtt_name_store,
 					xlength_store: this.stores[id].xlength_store,
 					ylength_store: this.stores[id].ylength_store,
+					position_mode_store: this.stores[id].position_mode_store,
 					is_mqtt_connected_store: this.stores[id].is_mqtt_connected_store,
 					mqtt_last_seen_store: this.stores[id].mqtt_last_seen_store,
+					id_zone: this.stores[id].id_zone ?? 0,
+					xmin_store: this.stores[id].xmin_store,
+					ymin_store: this.stores[id].ymin_store,
+					xmax_store: this.stores[id].xmax_store,
+					ymax_store: this.stores[id].ymax_store,
 				};
 				this.ledEdition[id] = { ...this.leds[id] };
 				this.ledReady[id] = {};
@@ -194,6 +201,8 @@ export const useStoresStore = defineStore("stores",{
 			} else {
 				this.storeEdition[id] = {
 					loading: false,
+					position_mode_store: StorePositionMode.Grid,
+					id_zone: 0,
 				};
 				this.ledEdition[id] = {};
 				this.ledReady[id] = {};

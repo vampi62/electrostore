@@ -34,7 +34,7 @@
 						</div>
 					</span>
 				</template>
-				<template v-else-if="!column.storeLinkId && effectiveRow?.[column.sourceKey]">
+				<template v-else-if="!column.storeLinkId && effectiveRow?.[column.sourceKey] && column.fieldUrl && storeData[column.storeRessourceId]?.[effectiveRow[column.sourceKey]]">
 					<img v-if="storeData[column.storeRessourceId]?.[effectiveRow[column.sourceKey]]"
 						:src="storeData[column.storeRessourceId]?.[effectiveRow[column.sourceKey]]"
 						class="w-16 h-16 object-cover rounded" :alt="`Id ${effectiveRow[column.key]}`" />

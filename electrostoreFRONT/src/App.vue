@@ -19,10 +19,9 @@ const listNav = ref([
 	{ name: "common.VAppInventory", path: "/inventory", faIcon: "fa-solid fa-box" },
 	{ name: "common.VAppProject", path: "/projects", faIcon: "fa-solid fa-project-diagram" },
 	{ name: "common.VAppCommand", path: "/commands", faIcon: "fa-solid fa-shopping-cart" },
-	{ name: "common.VAppCam", path: "/cameras", faIcon: "fa-solid fa-camera" },
-	{ name: "common.VAppAi", path: "/ai", faIcon: "fa-solid fa-microchip" },
 	{ name: "common.VAppTags", path: "/tags", faIcon: "fa-solid fa-tags" },
 	{ name: "common.VAppStores", path: "/stores", faIcon: "fa-solid fa-store" },
+	{ name: "common.VAppZones", path: "/zones", faIcon: "fa-solid fa-map" },
 	{ name: "common.VAppCronJobs", path: "/cronjobs", faIcon: "fa-solid fa-clock" },
 ]);
 
@@ -33,20 +32,18 @@ const containerClasses = computed(() => [
 	authStore.user && !isIframe.value ? "top-16" : "top-0",
 	route.meta.overflowYScroll ? "" : "overflow-y-auto",
 ]);
-const modalFinderRef = ref(null);
 
 const showAboutModal = ref(false);
 </script>
 
 <template>
 	<div v-show="authStore.user && !isIframe">
-		<NavBar :list-nav="listNav" :load-page-find="modalFinderRef?.loadPageFind || (() => {})"
+		<NavBar :list-nav="listNav"
 			@update:reduce-left-side-bar="reduceLeftSideBar = $event" @show-about-modal="showAboutModal = true" />
 	</div>
 	<div id="view" :class="containerClasses">
 		<RouterView />
 	</div>
-	<ModalFinder ref="modalFinderRef" />
 	<NotificationContainer />
 	<NotificationAppUpdate />
 	<div v-if="showAboutModal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-20" @click="showAboutModal = false">

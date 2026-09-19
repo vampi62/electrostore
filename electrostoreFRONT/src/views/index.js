@@ -16,3 +16,5 @@ export { default as TagsView } from "./TagsView.vue";
 export { default as TagView } from "./TagView.vue";
 export { default as UsersView } from "./UsersView.vue";
 export { default as UserView } from "./UserView.vue";
+export { default as ZonesView } from "./ZonesView.vue";
+export { default as ZoneView } from "./ZoneView.vue";

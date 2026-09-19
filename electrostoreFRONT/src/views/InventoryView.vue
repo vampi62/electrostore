@@ -40,8 +40,8 @@ const tableauLabel = ref([
 		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_item", storeLinkKeyJoinRessource: "id_tag",
 		ressourcePrint: [{ from: "ressource", valueKey: "name_tag" }] },
 
-	{ label: "items.Img", sortable: false, key: "id_img", sourceKey: "id_img", type: "image", 
-		storeRessourceId: 3, valueKey: "id_img" },
+	{ label: "items.Img", sortable: false, key: "id_item", sourceKey: "id_item", type: "image", fieldUrl: "url_thumbnail_item",
+		storeRessourceId: 3 },
 
 	{ label: "items.Quantity", sortable: true, key: "SUM(ItemsBoxs.quantity_item_box)", valueKey: "quantity_item", type: "number" },
 ]);

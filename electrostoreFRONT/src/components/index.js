@@ -4,7 +4,6 @@ export { default as Filter } from "./Filter.vue";
 export { default as FilterContainer } from "./FilterContainer.vue";
 export { default as FormContainer } from "./FormContainer.vue";
 export { default as ModalDeleteConfirm } from "./ModalDeleteConfirm.vue";
-export { default as ModalFinder } from "./ModalFinder.vue";
 export { default as ModalMultipleFiles } from "./ModalMultipleFiles.vue";
 export { default as NavBar } from "./NavBar.vue";
 export { default as Notification } from "./Notification.vue";

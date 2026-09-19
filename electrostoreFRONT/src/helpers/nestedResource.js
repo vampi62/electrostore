@@ -45,7 +45,7 @@ export function createNestedResource({ path, idField, countKey, stateKey, loadin
 		},
 		async update(idParentResource, id, params, externalParam = []) {
 			this[stateKey][idParentResource] ??= {};
-			this[stateKey][idParentResource][id] = await fetchWrapper.put({ url: `${baseUrl}${path(idParentResource)}/${id}`, useToken: "access", body: params });
+			this[stateKey][idParentResource][id] = await fetchWrapper.put({ url: `${baseUrl}${path(idParentResource)}/${id}`, useToken: "access", body: params, contentFile: params instanceof FormData });
 		},
 		async remove(idParentResource, id, externalParam = []) {
 			await fetchWrapper.delete({ url: `${baseUrl}${path(idParentResource)}/${id}`, useToken: "access" });

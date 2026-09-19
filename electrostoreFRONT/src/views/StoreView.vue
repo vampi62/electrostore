@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, inject } from "vue";
+import { computed, onMounted, onBeforeUnmount, ref, inject } from "vue";
 import router from "@/router";
 
 const { addNotification } = inject("useNotification");
@@ -14,16 +14,32 @@ const route = useRoute();
 const storeId = ref(route.params.id);
 const preset = ref(route.query.preset || null);
 
-import { useConfigsStore, useStoresStore, useTagsStore, useItemsStore, useAuthStore } from "@/stores";
+import { StorePositionMode } from "@/enums";
+
+import { useConfigsStore, useStoresStore, useTagsStore, useItemsStore, useZonesStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
 const storesStore = useStoresStore();
 const tagsStore = useTagsStore();
 const itemsStore = useItemsStore();
+const zonesStore = useZonesStore();
 const authStore = useAuthStore();
+
+const storePositionModeOptions = {
+	[StorePositionMode.Grid]: t("store.PositionModeGrid"),
+	[StorePositionMode.Border]: t("store.PositionModeBorder"),
+};
+const zoneSelectOptions = computed(() => {
+	const options = { 0: t("store.NoZone") };
+	for (const zone of Object.values(zonesStore.zones)) {
+		options[zone.id_zone] = zone.name_zone;
+	}
+	return options;
+});
 
 const formContainer = ref(null);
 
 async function fetchAllData() {
+	zonesStore.getZoneByInterval(100, 0);
 	if (storeId.value === "new") {
 		storesStore.loadToEdition(storeId.value, preset.value);
 	} else {
@@ -50,6 +66,22 @@ onBeforeUnmount(() => {
 // store
 const storeGrid = ref(null);
 const storeDeleteModalShow = ref(false);
+const buildStorePayload = () => {
+	const edition = storesStore.storeEdition[storeId.value];
+	const payload = { ...edition };
+	delete payload.loading;
+	if (!payload.id_zone) {
+		delete payload.id_zone;
+		delete payload.xmin_store;
+		delete payload.ymin_store;
+		delete payload.xmax_store;
+		delete payload.ymax_store;
+		if (storeId.value !== "new") {
+			payload.unset_zone_store = true;
+		}
+	}
+	return payload;
+};
 const storeSave = async() => {
 	try {
 		const validationResults = await Promise.all([
@@ -70,8 +102,8 @@ const storeSave = async() => {
 			return;
 		}
 		if (storeId.value === "new") {
-			const newId = await storesStore.createStoreComplete(storeId.value, { 
-				store: storesStore.storeEdition[storeId.value],
+			const newId = await storesStore.createStoreComplete(storeId.value, {
+				store: buildStorePayload(),
 				leds: Object.values(storesStore.ledEdition[storeId.value]),
 				boxs: Object.values(storesStore.boxEdition[storeId.value]),
 			});
@@ -83,31 +115,16 @@ const storeSave = async() => {
 			await storesStore.getStoreById(storeId.value, ["boxs", "leds"]);
 			storesStore.ledEdition[storeId.value] = { ...storesStore.leds[storeId.value] };
 			storesStore.boxEdition[storeId.value] = { ...storesStore.boxs[storeId.value] };
-			storesStore.storeEdition[storeId.value] = {
-				loading: false,
-				id_store: storesStore.stores[storeId.value].id_store,
-				name_store: storesStore.stores[storeId.value].name_store,
-				mqtt_name_store: storesStore.stores[storeId.value].mqtt_name_store,
-				xlength_store: storesStore.stores[storeId.value].xlength_store,
-				ylength_store: storesStore.stores[storeId.value].ylength_store,
-			};
+			storesStore.loadToEdition(storeId.value);
 		} else {
-			await storesStore.updateStoreComplete(storeId.value, { 
-				store: storesStore.storeEdition[storeId.value],
+			await storesStore.updateStoreComplete(storeId.value, {
+				store: buildStorePayload(),
 				leds: Object.values(storesStore.ledEdition[storeId.value]),
 				boxs: Object.values(storesStore.boxEdition[storeId.value]),
 			});
-			storesStore.loadToEdition(storeId.value);
 			addNotification({ message: t("store.Updated"), type: "success" });
 			await storesStore.getStoreById(storeId.value, ["boxs", "leds"]);
-			storesStore.storeEdition[storeId.value] = {
-				loading: false,
-				id_store: storesStore.stores[storeId.value].id_store,
-				name_store: storesStore.stores[storeId.value].name_store,
-				mqtt_name_store: storesStore.stores[storeId.value].mqtt_name_store,
-				xlength_store: storesStore.stores[storeId.value].xlength_store,
-				ylength_store: storesStore.stores[storeId.value].ylength_store,
-			};
+			storesStore.loadToEdition(storeId.value);
 			storesStore.ledEdition[storeId.value] = { ...storesStore.leds[storeId.value] };
 			storesStore.boxEdition[storeId.value] = { ...storesStore.boxs[storeId.value] };
 		}
@@ -148,6 +165,17 @@ const createSchema = () => {
 		.min(1, t("store.YLengthMin"))
 		.typeError(t("store.YLengthType"))
 		.required(t("store.YLengthRequired"));
+	const isZoneSelected = (val) => !!val;
+	shape.xmin_store = Yup.number().nullable().typeError(t("store.ZoneCoordType"))
+		.when("id_zone", { is: isZoneSelected, then: (fieldSchema) => fieldSchema.required(t("store.ZoneCoordRequired")) });
+	shape.ymin_store = Yup.number().nullable().typeError(t("store.ZoneCoordType"))
+		.when("id_zone", { is: isZoneSelected, then: (fieldSchema) => fieldSchema.required(t("store.ZoneCoordRequired")) });
+	shape.xmax_store = Yup.number().nullable().typeError(t("store.ZoneCoordType"))
+		.when("id_zone", { is: isZoneSelected, then: (fieldSchema) => fieldSchema.required(t("store.ZoneCoordRequired")) })
+		.when("xmin_store", ([xmin], fieldSchema) => (xmin === undefined || xmin === null) ? fieldSchema : fieldSchema.moreThan(xmin, t("store.ZoneXMaxGreater")));
+	shape.ymax_store = Yup.number().nullable().typeError(t("store.ZoneCoordType"))
+		.when("id_zone", { is: isZoneSelected, then: (fieldSchema) => fieldSchema.required(t("store.ZoneCoordRequired")) })
+		.when("ymin_store", ([ymin], fieldSchema) => (ymin === undefined || ymin === null) ? fieldSchema : fieldSchema.moreThan(ymin, t("store.ZoneYMaxGreater")));
 	return Yup.object().shape(shape);
 };
 
@@ -176,8 +204,8 @@ const showBoxContent = async(idBox) => {
 			offset += limit;
 		} while (offset < storesStore.boxItemsTotalCount[idBox]);
 		for (const item of Object.values(itemsStore.items)) {
-			if (item.id_img) {
-				await itemsStore.showThumbnailById(item.id_item, item.id_img);
+			if (item.url_thumbnail_item) {
+				await itemsStore.showThumbnailById(item.id_item);
 			}
 		}
 	} catch (e) {
@@ -248,8 +276,8 @@ const labelTableauBoxItem = ref([
 		storeRessourceId: 1,  valueKey: "reference_name_item" },
 	{ label: "store.ItemQuantity", sortable: true, key: "quantity_item_box", valueKey: "quantity_item_box", type: "number" },
 	{ label: "store.ItemMaxThreshold", sortable: true, key: "threshold_max_item_item_box", valueKey: "threshold_max_item_item_box", type: "number" },
-	{ label: "store.ItemImg", sortable: false, key: "Item.Img.id_img", sourceKey: "id_item", type: "image",
-		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_item", storeLinkKeyJoinRessource: "id_img", valueKey: "id_img" },
+	{ label: "store.ItemImg", sortable: false, key: "id_item", sourceKey: "id_item", type: "image",
+		storeRessourceId: 2 },
 ]);
 const metaTableauBoxItem = ref({
 	key: "id_item",
@@ -309,10 +337,16 @@ const labelTableauModalItem = ref([
 	] },
 ]);
 const labelForm = ref([
-	{ key: "name_store", label: "store.Name", tledEditionype: "text", enableCondition: "func.hasPermission([2])" },
+	{ key: "name_store", label: "store.Name", type: "text", enableCondition: "func.hasPermission([2])" },
 	{ key: "mqtt_name_store", label: "store.MQTTName", type: "text", enableCondition: "func.hasPermission([2])" },
 	{ key: "xlength_store", label: "store.XLength", type: "number", enableCondition: "func.hasPermission([2])" },
 	{ key: "ylength_store", label: "store.YLength", type: "number", enableCondition: "func.hasPermission([2])" },
+	{ key: "position_mode_store", label: "store.PositionMode", type: "select", options: storePositionModeOptions, typeData: "number", enableCondition: "func.hasPermission([2])" },
+	{ key: "id_zone", label: "store.Zone", type: "select", options: zoneSelectOptions, typeData: "number", enableCondition: "func.hasPermission([2])" },
+	{ key: "xmin_store", label: "store.ZoneXMin", type: "number", enableCondition: "func.hasPermission([2])", showCondition: "edition?.id_zone" },
+	{ key: "ymin_store", label: "store.ZoneYMin", type: "number", enableCondition: "func.hasPermission([2])", showCondition: "edition?.id_zone" },
+	{ key: "xmax_store", label: "store.ZoneXMax", type: "number", enableCondition: "func.hasPermission([2])", showCondition: "edition?.id_zone" },
+	{ key: "ymax_store", label: "store.ZoneYMax", type: "number", enableCondition: "func.hasPermission([2])", showCondition: "edition?.id_zone" },
 	{ key: "is_mqtt_connected_store", label: "store.MqttConnected", type: "checkbox", enableCondition: "false" },
 	{ key: "mqtt_last_seen_store", label: "store.MqttLastSeen", type: "datetime", enableCondition: "false" },
 ]);

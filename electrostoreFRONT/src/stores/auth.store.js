@@ -48,7 +48,7 @@ export const useAuthStore = defineStore("auth",{
 		},
 		TokenIsExpired() {
 			// if date expire is less than current date + 5 minutes
-			if (new Date(this.accessToken.date_expire).getTime() < new Date().now() + 5 * 60000) {
+			if (new Date(this.accessToken.date_expire).getTime() < Date.now() + 5 * 60000) {
 				console.log("Token is expired");
 				return true;
 			}
@@ -56,7 +56,7 @@ export const useAuthStore = defineStore("auth",{
 		},
 		RefreshTokenIsExpired() {
 			// if date expire is less than current date
-			if (new Date(this.refreshToken.date_expire).getTime() < new Date().now()) {
+			if (new Date(this.refreshToken.date_expire).getTime() < Date.now()) {
 				console.log("Refresh Token is expired");
 				return true;
 			}
@@ -82,7 +82,7 @@ export const useAuthStore = defineStore("auth",{
 			this.selectedProvider = provider;
 			localStorage.setItem("selectedProvider", JSON.stringify(provider));
 			// open small window to the url
-			window.open(request.authUrl, "SSO Login", "width=600,height=600");
+			window.open(request.auth_url, "SSO Login", "width=600,height=600");
 		},
 		async handleSSOCallback() {
 			const params = new URLSearchParams(window.location.search);

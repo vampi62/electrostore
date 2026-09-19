@@ -30,6 +30,8 @@ const router = createRouter({
 		{ path: "/tags/:id", component: () => import("@/views/TagView.vue") },
 		{ path: "/users", component: () => import("@/views/UsersView.vue") },
 		{ path: "/users/:id", component: () => import("@/views/UserView.vue") },
+		{ path: "/zones", component: () => import("@/views/ZonesView.vue") },
+		{ path: "/zones/:id", component: () => import("@/views/ZoneView.vue") },
 	],
 });
 

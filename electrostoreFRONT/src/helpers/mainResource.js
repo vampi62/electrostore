@@ -64,7 +64,7 @@ export function createMainResource({ path, idField, countKey, stateKey, loadingK
 		},
 		async update(id, params, externalParam = []) {
 			this[stateKey] ??= {};
-			this[stateKey][id] = await fetchWrapper.put({ url: `${baseUrl}${path()}/${id}`, useToken: "access", body: params });
+			this[stateKey][id] = await fetchWrapper.put({ url: `${baseUrl}${path()}/${id}`, useToken: "access", body: params, contentFile: params instanceof FormData });
 		},
 		async remove(id, externalParam = []) {
 			await fetchWrapper.delete({ url: `${baseUrl}${path()}/${id}`, useToken: "access" });

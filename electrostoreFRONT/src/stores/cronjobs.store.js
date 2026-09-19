@@ -1,6 +1,8 @@
 import { defineStore } from "pinia";
 
-import { createMainResource } from "@/helpers";
+import { fetchWrapper, createMainResource } from "@/helpers";
+
+const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 const cronJobResource = createMainResource({
 	path: () => "/cronjob",
@@ -37,6 +39,8 @@ export const useCronJobsStore = defineStore("cronJobs", {
 					is_enabled: this.cronJobs[id].is_enabled,
 					last_run_at: this.cronJobs[id].last_run_at,
 					next_run_at: this.cronJobs[id].next_run_at,
+					status_cronjob: this.cronJobs[id].status_cronjob,
+					last_error_cronjob: this.cronJobs[id].last_error_cronjob,
 				};
 			} else {
 				this.cronJobEdition[id] = {
@@ -53,6 +57,23 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		},
 		clearEdition(id) {
 			delete this.cronJobEdition[id];
+		},
+
+		async getCronJobStatus(id) {
+			const status = await fetchWrapper.get({ url: `${baseUrl}/cronjob/${id}/status`, useToken: "access" });
+			if (this.cronJobs[id]) {
+				this.cronJobs[id].status_cronjob = status.status_cronjob;
+				this.cronJobs[id].last_error_cronjob = status.last_error_cronjob;
+				this.cronJobs[id].last_run_at = status.last_run_at;
+				this.cronJobs[id].next_run_at = status.next_run_at;
+			}
+			return status;
+		},
+		async forceRunCronJob(id) {
+			await fetchWrapper.post({ url: `${baseUrl}/cronjob/${id}/force-run`, useToken: "access" });
+		},
+		async forceStopCronJob(id) {
+			await fetchWrapper.post({ url: `${baseUrl}/cronjob/${id}/force-stop`, useToken: "access" });
 		},
 	},
 });

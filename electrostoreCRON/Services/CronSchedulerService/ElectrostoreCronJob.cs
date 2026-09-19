@@ -85,8 +85,27 @@ public class ElectrostoreCronJob : IJob
         finally
         {
             _executionRegistry.Unregister(id);
-            await UpdateLastRunAsync(id, context.NextFireTimeUtc, context.CancellationToken);
+            var nextFireTime = await GetNextFireTimeAsync(context);
+            await UpdateLastRunAsync(id, nextFireTime, context.CancellationToken);
         }
+    }
+
+    // Force-run (TriggerJob) fires the job through a one-shot manual trigger, whose own
+    // NextFireTimeUtc is null since it never repeats. context.NextFireTimeUtc reflects that
+    // manual trigger rather than the job's real recurring schedule, so look up the persistent
+    // trigger(s) instead to report the actual next scheduled run.
+    private static async Task<DateTimeOffset?> GetNextFireTimeAsync(IJobExecutionContext context)
+    {
+        if (context.NextFireTimeUtc.HasValue)
+        {
+            return context.NextFireTimeUtc;
+        }
+        var triggers = await context.Scheduler.GetTriggersOfJob(context.JobDetail.Key, context.CancellationToken);
+        return triggers
+            .Select(t => t.GetNextFireTimeUtc())
+            .Where(t => t.HasValue)
+            .OrderBy(t => t!.Value)
+            .FirstOrDefault();
     }
 
     private static DateTime? ParseLastRunAt(string? value)

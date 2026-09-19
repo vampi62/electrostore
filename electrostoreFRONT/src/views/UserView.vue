@@ -68,6 +68,8 @@ const userSave = async() => {
 		]);
 		const allValid = validationResults.every((result) => result && result.valid);
 		if (!allValid) {
+			console.log("Form validation failed");
+			console.log(validationResults);
 			const nbErrors = validationResults.reduce((sum, result) => sum + (result ? Object.keys(result.errors).length : 0), 0);
 			addNotification({
 				message: t("user.FormValidationError", { count: nbErrors }),
@@ -153,8 +155,10 @@ const createSchema = () => {
 		shape.password_user = Yup.string().nullable();
 		shape.confirm_mdp_user = Yup.string().nullable();
 	}
-	shape.current_password_user = Yup.string()
-		.required(t("user.CurrentPasswordRequired"));
+	if (authStore.session?.isSSOUser === false) {
+		shape.current_password_user = Yup.string()
+			.required(t("user.CurrentPasswordRequired"));
+	}
 	return Yup.object().shape(shape);
 };
 

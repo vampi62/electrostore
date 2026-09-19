@@ -46,8 +46,8 @@ const EXPAND_HANDLERS = {
 };
 
 function hydrateItem(store, idItem, item, expand = []) {
-	if (item.id_img && !this.thumbnailsURL[item.id_img]) {
-		this.showThumbnailById(item.id_item, item.id_img);
+	if (item.url_thumbnail_item && !store.thumbnailsURL[idItem]) {
+		store.showThumbnailById(idItem);
 	}
 	store.documentsTotalCount[idItem] = item["item_documents_count"];
 	store.itemBoxsTotalCount[idItem] = item["item_boxs_count"];
@@ -70,11 +70,6 @@ const itemResource = createMainResource({
 	onHydrate: (store, entity, expand) => {
 		hydrateItem(store, entity.id_item, entity, expand);
 	},
-	/* onUpdate: (store, entity) => {
-		if (store.items[entity.id_item].id_img) {
-			store.showImageById(store.items[entity.id_item].id_item, store.items[entity.id_item].id_img);
-		}
-	}, */
 });
 
 const documentResource = createNestedResource({
@@ -196,8 +191,6 @@ export const useItemsStore = defineStore("items",{
 
 		imagesURL: {},
 		thumbnailsURL: {},
-		imageEdition: {},
-		imageReady: {},
 
 		itemHistoryLoading: false,
 		itemHistoryTotalCount: {},
@@ -221,7 +214,7 @@ export const useItemsStore = defineStore("items",{
 					friendly_name_item: this.items[id].friendly_name_item,
 					description_item: this.items[id].description_item,
 					threshold_min_item: this.items[id].threshold_min_item,
-					id_img: this.items[id].id_img,
+					url_thumbnail_item: this.items[id].url_thumbnail_item,
 				};
 			} else {
 				this.itemEdition[id] = {
@@ -238,8 +231,6 @@ export const useItemsStore = defineStore("items",{
 			this.itemCommandReady[id] = {};
 			this.itemProjectEdition[id] = {};
 			this.itemProjectReady[id] = {};
-			this.imageEdition[id] = {};
-			this.imageReady[id] = {};
 		},
 		setLoadingEdition(id, loading) {
 			if (!this.itemEdition[id]) {
@@ -259,8 +250,6 @@ export const useItemsStore = defineStore("items",{
 			delete this.itemCommandReady[id];
 			delete this.itemProjectEdition[id];
 			delete this.itemProjectReady[id];
-			delete this.imageEdition[id];
-			delete this.imageReady[id];
 		},
 		async saveAllChanges(id) {
 			let realId = id;
@@ -271,7 +260,6 @@ export const useItemsStore = defineStore("items",{
 				this.copyItemTagAllId(id, realId);
 				this.copyItemCommandAllId(id, realId);
 				this.copyItemProjectAllId(id, realId);
-				this.copyImageAllId(id, realId);
 			} else {
 				await this.updateItem(id, this.itemEdition[id]);
 			}
@@ -281,7 +269,6 @@ export const useItemsStore = defineStore("items",{
 				this.pushItemTagChange(realId),
 				this.pushItemCommandChange(realId),
 				this.pushItemProjectChange(realId),
-				this.pushImageChange(realId),
 			]);
 			return realId;
 		},

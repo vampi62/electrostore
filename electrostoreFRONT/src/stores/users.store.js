@@ -159,7 +159,6 @@ export const useUsersStore = defineStore("users",{
 			this.commandCommentEdition[id] = {};
 			this.commandCommentReady[id] = {};
 			this.tokensEdition[id] = {};
-			this.pushSubscriptionsEdition[id] = {};
 		},
 		setLoadingEdition(id, loading) {
 			if (!this.userEdition[id]) {
@@ -174,7 +173,6 @@ export const useUsersStore = defineStore("users",{
 			delete this.commandCommentEdition[id];
 			delete this.commandCommentReady[id];
 			delete this.tokensEdition[id];
-			delete this.pushSubscriptionsEdition[id];
 		},
 		async saveAllChanges(id) {
 			let realId = id;

@@ -17,6 +17,8 @@ import tag from "./tag.json";
 import tags from "./tags.json";
 import user from "./user.json";
 import users from "./users.json";
+import zone from "./zone.json";
+import zones from "./zones.json";
 
 export default {
 	command,
@@ -38,4 +40,6 @@ export default {
 	tags,
 	user,
 	users,
+	zone,
+	zones,
 };
