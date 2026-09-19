@@ -434,33 +434,49 @@ public partial class Program
 
     private static void CreateRequiredDirectories()
     {
-        if (!Directory.Exists("wwwroot/images"))
-        {
-            Directory.CreateDirectory("wwwroot/images");
-        }
-        if (!Directory.Exists("wwwroot/imagesThumbnails"))
-        {
-            Directory.CreateDirectory("wwwroot/imagesThumbnails");
-        }
-        if (!Directory.Exists("wwwroot/projectDocuments"))
-        {
-            Directory.CreateDirectory("wwwroot/projectDocuments");
-        }
-        if (!Directory.Exists("wwwroot/itemDocuments"))
-        {
-            Directory.CreateDirectory("wwwroot/itemDocuments");
-        }
         if (!Directory.Exists("wwwroot/commandDocuments"))
         {
             Directory.CreateDirectory("wwwroot/commandDocuments");
         }
-        if (!Directory.Exists("wwwroot/zones"))
+
+        if (!Directory.Exists("wwwroot/equipementDocuments"))
         {
-            Directory.CreateDirectory("wwwroot/zones");
+            Directory.CreateDirectory("wwwroot/equipementDocuments");
         }
-        if (!Directory.Exists("wwwroot/zonesThumbnails"))
+        if (!Directory.Exists("wwwroot/equipementImages"))
         {
-            Directory.CreateDirectory("wwwroot/zonesThumbnails");
+            Directory.CreateDirectory("wwwroot/equipementImages");
+        }
+        if (!Directory.Exists("wwwroot/equipementImagesThumbnails"))
+        {
+            Directory.CreateDirectory("wwwroot/equipementImagesThumbnails");
+        }
+
+        if (!Directory.Exists("wwwroot/itemDocuments"))
+        {
+            Directory.CreateDirectory("wwwroot/itemDocuments");
+        }
+        if (!Directory.Exists("wwwroot/itemImages"))
+        {
+            Directory.CreateDirectory("wwwroot/itemImages");
+        }
+        if (!Directory.Exists("wwwroot/itemImagesThumbnails"))
+        {
+            Directory.CreateDirectory("wwwroot/itemImagesThumbnails");
+        }
+
+        if (!Directory.Exists("wwwroot/projectDocuments"))
+        {
+            Directory.CreateDirectory("wwwroot/projectDocuments");
+        }
+
+        if (!Directory.Exists("wwwroot/zoneImages"))
+        {
+            Directory.CreateDirectory("wwwroot/zoneImages");
+        }
+        if (!Directory.Exists("wwwroot/zoneImagesThumbnails"))
+        {
+            Directory.CreateDirectory("wwwroot/zoneImagesThumbnails");
         }
     }
 

@@ -15,7 +15,7 @@ import {
 	faTrash, faDownload, faFile, faFilter, faPenToSquare, faEye,
 	faTruckLoading, faTruckMoving, faTruckRampBox,
 	faSort, faSortUp, faSortDown, faPlus, faMinus, faSave, faSpinner, faClock,
-	faRotateLeft, faRotateRight, faSearch, faCheck, faXmark, faBan,
+	faRotateLeft, faRotateRight, faSearch, faCheck, faXmark, faBan, faMap, faScrewdriverWrench,
 } from "@fortawesome/free-solid-svg-icons";
 import "./assets/tailwind.css";
 
@@ -28,7 +28,7 @@ library.add(
 	faTrash, faDownload, faFile, faFilter, faPenToSquare, faEye,
 	faTruckLoading, faTruckMoving, faTruckRampBox,
 	faSort, faSortUp, faSortDown, faPlus, faMinus, faSave, faSpinner, faClock,
-	faRotateLeft, faRotateRight, faSearch, faCheck, faXmark, faBan,
+	faRotateLeft, faRotateRight, faSearch, faCheck, faXmark, faBan, faMap, faScrewdriverWrench,
 );
 
 app.component("font-awesome-icon", FontAwesomeIcon);

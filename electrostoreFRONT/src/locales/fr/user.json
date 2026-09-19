@@ -37,6 +37,7 @@
 	"Participation": "Participation",
 	"CommandsComments": "Commentaires des commandes de l'utilisateur",
 	"ProjectsComments": "Commentaires des projets de l'utilisateur",
+	"EquipementsComments": "Commentaires des équipements de l'utilisateur",
 	"Tokens": "Jetons d'utilisateur",
 	"ShowExpiredAndRevokedTokens": "Afficher les jetons expirés et révoqués",
 	"TokenCreatedDate": "Date de connexion",

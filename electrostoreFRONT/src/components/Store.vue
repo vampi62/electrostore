@@ -222,13 +222,23 @@ export default {
 		isNumber(value) {
 			return typeof value === "number" && !Number.isNaN(value);
 		},
-		nearestSide(x, y) {
+		nearestSide(x, y, currentSide = null) {
 			const distances = [
 				{ side: LedBorderSide.Left, dist: x, index: y },
 				{ side: LedBorderSide.Right, dist: (this.storeData.xlength_store - 1) - x, index: y },
 				{ side: LedBorderSide.Bottom, dist: y, index: x },
 				{ side: LedBorderSide.Top, dist: (this.storeData.ylength_store - 1) - y, index: x },
 			];
+			const minDist = Math.min(...distances.map((d) => d.dist));
+			// on a tie (corner cell), keep the side the LED is already on instead of
+			// always resolving to the same side, otherwise the first/last index of
+			// the Top/Bottom sides can never be reached while dragging
+			if (currentSide !== null) {
+				const current = distances.find((d) => d.side === currentSide);
+				if (current && current.dist === minDist) {
+					return { side: current.side, index: current.index };
+				}
+			}
 			distances.sort((a, b) => a.dist - b.dist);
 			return { side: distances[0].side, index: distances[0].index };
 		},
@@ -451,7 +461,7 @@ export default {
 			}
 			if (this.selectedElement.type === "led") {
 				if (this.isBorderMode) {
-					const { side, index } = this.nearestSide(x, y);
+					const { side, index } = this.nearestSide(x, y, this.selectedElement.key.y_led);
 					this.selectedElement.key.y_led = side;
 					this.selectedElement.key.x_led = index;
 				} else {

@@ -1,5 +1,7 @@
 export { default as CommandsView } from "./CommandsView.vue";
 export { default as CommandView } from "./CommandView.vue";
+export { default as EquipementsView } from "./EquipementsView.vue";
+export { default as EquipementView } from "./EquipementView.vue";
 export { default as ForgotPasswordView } from "./ForgotPasswordView.vue";
 export { default as HealthView } from "./HealthView.vue";
 export { default as HomeView } from "./HomeView.vue";

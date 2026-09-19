@@ -3,6 +3,7 @@ export * from "./carriers.store";
 export * from "./commands.store";
 export * from "./config.store";
 export * from "./cronjobs.store";
+export * from "./equipements.store";
 export * from "./items.store";
 export * from "./projects.store";
 export * from "./projecttags.store";

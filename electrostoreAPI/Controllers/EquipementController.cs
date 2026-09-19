@@ -1,6 +1,7 @@
 using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Services.EquipementService;
+using ElectrostoreAPI.Services.FileService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -13,10 +14,12 @@ namespace ElectrostoreAPI.Controllers
     public class EquipementController : ControllerBase
     {
         private readonly IEquipementService _equipementService;
+        private readonly IFileService _fileService;
 
-        public EquipementController(IEquipementService equipementService)
+        public EquipementController(IEquipementService equipementService, IFileService fileService)
         {
             _equipementService = equipementService;
+            _fileService = fileService;
         }
 
         [HttpGet]
@@ -44,7 +47,7 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadEquipementDto>> CreateEquipement([FromBody] CreateEquipementDto equipementDto)
+        public async Task<ActionResult<ReadEquipementDto>> CreateEquipement([FromForm] CreateEquipementDto equipementDto)
         {
             var equipement = await _equipementService.CreateEquipement(equipementDto);
             return CreatedAtAction(nameof(GetEquipementById), new { id_equipement = equipement.id_equipement }, equipement);
@@ -52,7 +55,7 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpPut("{id_equipement}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadEquipementDto>> UpdateEquipement([FromRoute] int id_equipement, [FromBody] UpdateEquipementDto equipementDto)
+        public async Task<ActionResult<ReadEquipementDto>> UpdateEquipement([FromRoute] int id_equipement, [FromForm] UpdateEquipementDto equipementDto)
         {
             var equipement = await _equipementService.UpdateEquipement(id_equipement, equipementDto);
             return Ok(equipement);
@@ -64,6 +67,40 @@ namespace ElectrostoreAPI.Controllers
         {
             await _equipementService.DeleteEquipement(id_equipement);
             return NoContent();
+        }
+
+        [HttpGet("{id_equipement}/picture")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult> GetEquipementPicture([FromRoute] int id_equipement)
+        {
+            var equipement = await _equipementService.GetEquipementById(id_equipement);
+            if (string.IsNullOrEmpty(equipement.url_picture_equipement))
+            {
+                return NotFound();
+            }
+            var result = await _fileService.GetFile(equipement.url_picture_equipement);
+            if (result.success && result.file_stream != null)
+            {
+                return File(result.file_stream, result.mime_type);
+            }
+            return NotFound(result.error_message);
+        }
+
+        [HttpGet("{id_equipement}/thumbnail")]
+        [Authorize(Policy = "AccessToken")]
+        public async Task<ActionResult> GetEquipementThumbnail([FromRoute] int id_equipement)
+        {
+            var equipement = await _equipementService.GetEquipementById(id_equipement);
+            if (string.IsNullOrEmpty(equipement.url_thumbnail_equipement))
+            {
+                return NotFound();
+            }
+            var result = await _fileService.GetFile(equipement.url_thumbnail_equipement);
+            if (result.success && result.file_stream != null)
+            {
+                return File(result.file_stream, result.mime_type);
+            }
+            return NotFound(result.error_message);
         }
     }
 }

@@ -3,7 +3,7 @@ import { defineStore } from "pinia";
 import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
 import { StorePositionMode } from "@/enums";
 
-import { useTagsStore, useItemsStore } from "@/stores";
+import { useTagsStore, useItemsStore, useEquipementsStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -142,6 +142,10 @@ export const useStoresStore = defineStore("stores",{
 		boxItems: {},
 		boxItemEdition: {},
 		boxItemReady: {},
+
+		boxEquipementsLoading: false,
+		boxEquipementsTotalCount: {},
+		boxEquipements: {},
 
 		boxTagsLoading: false,
 		boxTagsTotalCount: {},
@@ -367,6 +371,49 @@ export const useStoresStore = defineStore("stores",{
 				useToken: "access",
 			});
 			delete this.boxItems[idBox][id];
+		},
+
+		async getBoxEquipementByInterval(idStore, idBox, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.boxEquipements[idBox] || clear) {
+				this.boxEquipements[idBox] = {};
+			}
+			this.boxEquipementsLoading = true;
+			const equipementsStore = useEquipementsStore();
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
+			const newEquipementList = await fetchWrapper.get({
+				url: `${baseUrl}/store/${idStore}/box/${idBox}/equipement?${paramString}`,
+				useToken: "access",
+			});
+			for (const equipement of newEquipementList["data"]) {
+				this.boxEquipements[idBox][equipement.id_equipement] = equipement;
+				if (expand.includes("equipement")) {
+					equipementsStore.equipements[equipement.id_equipement] = equipement.equipement;
+				}
+			}
+			this.boxEquipementsTotalCount[idBox] = newEquipementList["pagination"]?.["total"] || 0;
+			this.boxEquipementsLoading = false;
+			return [newEquipementList["pagination"]?.["nextOffset"] || 0, newEquipementList["pagination"]?.["hasMore"] || false];
+		},
+		async createBoxEquipement(idStore, idBox, params) {
+			if (!this.boxEquipements[idBox]) {
+				this.boxEquipements[idBox] = {};
+			}
+			const boxEquipement = await fetchWrapper.post({
+				url: `${baseUrl}/store/${idStore}/box/${idBox}/equipement`,
+				useToken: "access",
+				body: params,
+			});
+			this.boxEquipements[idBox][boxEquipement.id_equipement] = boxEquipement;
+		},
+		async deleteBoxEquipement(idStore, idBox, id) {
+			if (!this.boxEquipements[idBox]) {
+				this.boxEquipements[idBox] = {};
+			}
+			await fetchWrapper.delete({
+				url: `${baseUrl}/store/${idStore}/box/${idBox}/equipement/${id}`,
+				useToken: "access",
+			});
+			delete this.boxEquipements[idBox][id];
 		},
 
 		async getBoxTagByInterval(idStore, idBox, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {

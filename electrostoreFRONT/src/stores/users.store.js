@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 
 import { fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
 
-import { useCommandsStore, useProjectsStore } from "@/stores";
+import { useCommandsStore, useProjectsStore, useEquipementsStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -98,6 +98,21 @@ const pushSubscriptionResource = createNestedResource({
 	countKey: "pushSubscriptionsTotalCount",
 	loadingKey: "pushSubscriptionsLoading",
 });
+const equipementCommentResource = createNestedResource({
+	path: (idUser) => `/user/${idUser}/equipement_comment`,
+	idField: "id_equipement_comment",
+	stateKey: "equipementsComment",
+	countKey: "equipementsCommentTotalCount",
+	loadingKey: "equipementsCommentLoading",
+	editionKey: "equipementCommentEdition",
+	readyKey: "equipementCommentReady",
+	onHydrate: (store, idUser, entity, expand) => {
+		if (expand.includes("equipement")) {
+			const equipementsStore = useEquipementsStore();
+			equipementsStore.equipements[entity.equipement.id_equipement] = entity.equipement;
+		}
+	},
+});
 
 export const useUsersStore = defineStore("users",{
 	state: () => ({
@@ -126,6 +141,12 @@ export const useUsersStore = defineStore("users",{
 		pushSubscriptionsLoading: false,
 		pushSubscriptionsTotalCount: {},
 		pushSubscriptions: {},
+
+		equipementsCommentLoading: false,
+		equipementsCommentTotalCount: {},
+		equipementsComment: {},
+		equipementCommentEdition: {},
+		equipementCommentReady: {},
 	}),
 	actions: {
 		getUserByList: userResource.getByList,
@@ -231,5 +252,8 @@ export const useUsersStore = defineStore("users",{
 				useToken: "access",
 			});
 		},
+
+		getEquipementCommentByInterval: equipementCommentResource.getByInterval,
+		getEquipementCommentById: equipementCommentResource.getById,
 	},
 });

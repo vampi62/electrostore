@@ -66,6 +66,7 @@
 	"VAppTags": "Tags",
 	"VAppStores": "Storage",
 	"VAppZones": "Zones",
+	"VAppEquipements": "Equipments",
 	"VAppCronJobs": "Cron Jobs",
 	"VAppHome": "Home",
 	"VAppInstall": "Install",

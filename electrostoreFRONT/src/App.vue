@@ -22,6 +22,7 @@ const listNav = ref([
 	{ name: "common.VAppTags", path: "/tags", faIcon: "fa-solid fa-tags" },
 	{ name: "common.VAppStores", path: "/stores", faIcon: "fa-solid fa-store" },
 	{ name: "common.VAppZones", path: "/zones", faIcon: "fa-solid fa-map" },
+	{ name: "common.VAppEquipements", path: "/equipements", faIcon: "fa-solid fa-screwdriver-wrench" },
 	{ name: "common.VAppCronJobs", path: "/cronjobs", faIcon: "fa-solid fa-clock" },
 ]);
 

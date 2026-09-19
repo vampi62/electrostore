@@ -14,11 +14,12 @@ const route = useRoute();
 const userId = ref(route.params.id);
 const preset = ref(route.query.preset || null);
 
-import { useConfigsStore, useUsersStore, useCommandsStore, useProjectsStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useUsersStore, useCommandsStore, useProjectsStore, useEquipementsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
 const usersStore = useUsersStore();
 const commandsStore = useCommandsStore();
 const projectsStore = useProjectsStore();
+const equipementsStore = useEquipementsStore();
 const authStore = useAuthStore();
 
 const formContainer = ref(null);
@@ -403,6 +404,18 @@ onMounted(() => {
 							:loading="usersStore.projectsCommentLoading"
 							:total-count="Number(usersStore.projectsCommentTotalCount[userId]) || 0"
 							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getProjectCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+						/>
+					</template>
+				</CollapsibleSection>
+				<CollapsibleSection title="user.EquipementsComments" :disable-margin="true"
+					:total-count="Number(usersStore.equipementsCommentTotalCount[userId] || 0)" :permission="userId !=='new'">
+					<template #append-row>
+						<Comment :meta="{ link: '/equipements/', idRessource: 'id_equipement', contenu: 'content_equipement_comment', key: 'id_equipement_comment', canEdit: false, roleRequired: false, expand: ['equipement'] }"
+							:store-data="[usersStore.equipementsComment[userId], equipementsStore.equipements]"
+							:store-user="authStore.user" :store-config="configsStore"
+							:loading="usersStore.equipementsCommentLoading"
+							:total-count="Number(usersStore.equipementsCommentTotalCount[userId]) || 0"
+							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getEquipementCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>

@@ -16,12 +16,13 @@ const preset = ref(route.query.preset || null);
 
 import { StorePositionMode } from "@/enums";
 
-import { useConfigsStore, useStoresStore, useTagsStore, useItemsStore, useZonesStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useStoresStore, useTagsStore, useItemsStore, useZonesStore, useEquipementsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
 const storesStore = useStoresStore();
 const tagsStore = useTagsStore();
 const itemsStore = useItemsStore();
 const zonesStore = useZonesStore();
+const equipementsStore = useEquipementsStore();
 const authStore = useAuthStore();
 
 const storePositionModeOptions = {
@@ -193,6 +194,7 @@ const schemaItem = Yup.object().shape({
 // box & item
 const storeBoxEditModalShow = ref(false);
 const storeItemAddModalShow = ref(false);
+const storeEquipementAddModalShow = ref(false);
 const boxId = ref(null);
 const showBoxContent = async(idBox) => {
 	boxId.value = idBox;
@@ -208,11 +210,35 @@ const showBoxContent = async(idBox) => {
 				await itemsStore.showThumbnailById(item.id_item);
 			}
 		}
+		offset = 0;
+		do {
+			await storesStore.getBoxEquipementByInterval(storeId.value, idBox, limit, offset, ["equipement"]);
+			offset += limit;
+		} while (offset < storesStore.boxEquipementsTotalCount[idBox]);
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
 	storeBoxEditModalShow.value = true;
 };
+const equipementSave = async(equipement) => {
+	try {
+		await storesStore.createBoxEquipement(storeId.value, boxId.value, equipement);
+		addNotification({ message: t("store.EquipementAdded"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+};
+const equipementDelete = async(equipement) => {
+	try {
+		await storesStore.deleteBoxEquipement(storeId.value, boxId.value, equipement.id_equipement);
+		addNotification({ message: t("store.EquipementDeleted"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+};
+const filterEquipement = ref([
+	{ key: "reference_name_equipement", value: "", type: "text", label: "", placeholder: t("store.EquipementFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
+]);
 const itemSave = async(item) => {
 	if (storesStore.boxItems[boxId.value][item.id_item]) {
 		try {
@@ -336,6 +362,45 @@ const labelTableauModalItem = ref([
 		},
 	] },
 ]);
+const labelTableauBoxEquipement = ref([
+	{ label: "store.EquipementName", sortable: false, key: "Equipement.reference_name_equipement", sourceKey: "id_equipement", type: "text",
+		storeRessourceId: 1, valueKey: "reference_name_equipement" },
+	{ label: "store.EquipementActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			action: (row) => equipementDelete(row),
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+			animation: true,
+		},
+	] },
+]);
+const metaTableauBoxEquipement = ref({
+	key: "id_equipement",
+	path: "/equipements/",
+	expand: ["equipement"],
+});
+const labelTableauModalEquipement = ref([
+	{ label: "store.EquipementName", sortable: true, key: "reference_name_equipement", valueKey: "reference_name_equipement", type: "text" },
+	{ label: "store.EquipementActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-save",
+			showCondition: "!store[1]?.[rowData.id_equipement]",
+			action: (row) => equipementSave(row),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			showCondition: "store[1]?.[rowData.id_equipement]",
+			action: (row) => equipementDelete(row),
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+			animation: true,
+		},
+	] },
+]);
 const labelForm = ref([
 	{ key: "name_store", label: "store.Name", type: "text", enableCondition: "func.hasPermission([2])" },
 	{ key: "mqtt_name_store", label: "store.MQTTName", type: "text", enableCondition: "func.hasPermission([2])" },
@@ -431,6 +496,22 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 							</tr>
 						</template>
 					</Tableau>
+					<Tableau v-if="boxId != null" :labels="labelTableauBoxEquipement" :meta="metaTableauBoxEquipement"
+						:store-data="[storesStore.boxEquipements[boxId],equipementsStore.equipements]"
+						:loading="storesStore.boxEquipementsLoading"
+						:total-count="Number(storesStore.boxEquipementsTotalCount[boxId] || 0)"
+						:fetch-function="storeId !== 'new' && boxId != null ? (limit, offset, expand, filter, sort, clear) => storesStore.getBoxEquipementByInterval(storeId, boxId, limit, offset, expand, filter, sort, clear) : undefined"
+						:tableau-css="{ component: 'max-h-80', tr: 'transition duration-150 ease-in-out cursor-pointer hover:bg-gray-300 even:bg-gray-100' }"
+					>
+						<template #append-row>
+							<tr @click="storeEquipementAddModalShow = true"
+								class="transition duration-150 ease-in-out hover:bg-gray-300 cursor-pointer">
+								<td colspan="2" class="text-center">
+									{{ $t('store.AddEquipement') }}
+								</td>
+							</tr>
+						</template>
+					</Tableau>
 				</div>
 			</div>
 		</div>
@@ -483,6 +564,28 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:loading="itemsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
 				:fetch-function="storeId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+			/>
+		</div>
+	</div>
+
+	<div v-if="storeEquipementAddModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
+		@click="storeEquipementAddModalShow = false">
+		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
+			<div class="flex justify-between items-center border-b pb-3">
+				<h2 class="text-2xl font-semibold">{{ $t('store.EquipementTitle') }}</h2>
+				<button type="button" @click="storeEquipementAddModalShow = false"
+					class="text-gray-500 hover:text-gray-700">&times;</button>
+			</div>
+
+			<FilterContainer class="my-4 flex gap-4" :filters="filterEquipement" :store-data="equipementsStore.equipements" />
+
+			<Tableau :labels="labelTableauModalEquipement" :meta="{ key: 'id_equipement' }"
+				:store-data="[equipementsStore.equipements, storesStore.boxEquipements[boxId]]"
+				:filters="filterEquipement"
+				:loading="equipementsStore.equipementsLoading"
+				:total-count="Number(equipementsStore.equipementsTotalCount || 0)"
+				:fetch-function="storeId !== 'new' ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

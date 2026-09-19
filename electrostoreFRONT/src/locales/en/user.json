@@ -37,6 +37,7 @@
 	"Participation": "Participation",
 	"CommandsComments": "User commands comments",
 	"ProjectsComments": "User projects comments",
+	"EquipementsComments": "User equipment comments",
 	"Tokens": "User tokens",
 	"ShowExpiredAndRevokedTokens": "Show expired and revoked tokens",
 	"TokenCreatedDate": "Login date",
