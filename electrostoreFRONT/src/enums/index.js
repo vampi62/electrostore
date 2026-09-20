@@ -1,7 +1,12 @@
 export { default as CommandStatus } from "./CommandStatus.js";
 export { default as CronJobAction } from "./CronJobAction.js";
+export { default as CronJobStatus } from "./CronJobStatus.js";
+export { default as EquipementMaintenanceType } from "./EquipementMaintenanceType.js";
+export { default as EquipementStatus } from "./EquipementStatus.js";
 export { default as ItemHistoryType } from "./ItemHistoryType.js";
+export { default as LedBorderSide } from "./LedBorderSide.js";
 export { default as ProjectStatus } from "./ProjectStatus.js";
+export { default as StorePositionMode } from "./StorePositionMode.js";
 export { default as TrackingStatus } from "./TrackingStatus.js";
 export { default as TrackingSubStatus } from "./TrackingSubStatus.js";
 export { default as UserRole } from "./UserRole.js";

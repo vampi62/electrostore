@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 
 import { fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
 
-import { useCommandsStore, useProjectsStore } from "@/stores";
+import { useCommandsStore, useProjectsStore, useEquipementsStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -61,7 +61,6 @@ const projectCommentResource = createNestedResource({
 	countKey: "projectsCommentTotalCount",
 	loadingKey: "projectsCommentLoading",
 	editionKey: "projectCommentEdition",
-	readyKey: "projectCommentReady",
 	onHydrate: (store, idUser, entity, expand) => {
 		if (expand.includes("project")) {
 			const projectStore = useProjectsStore();
@@ -76,7 +75,6 @@ const commandCommentResource = createNestedResource({
 	countKey: "commandsCommentTotalCount",
 	loadingKey: "commandsCommentLoading",
 	editionKey: "commandCommentEdition",
-	readyKey: "commandCommentReady",
 	onHydrate: (store, idUser, entity, expand) => {
 		if (expand.includes("command")) {
 			const commandStore = useCommandsStore();
@@ -98,6 +96,20 @@ const pushSubscriptionResource = createNestedResource({
 	countKey: "pushSubscriptionsTotalCount",
 	loadingKey: "pushSubscriptionsLoading",
 });
+const equipementCommentResource = createNestedResource({
+	path: (idUser) => `/user/${idUser}/equipement_comment`,
+	idField: "id_equipement_comment",
+	stateKey: "equipementsComment",
+	countKey: "equipementsCommentTotalCount",
+	loadingKey: "equipementsCommentLoading",
+	editionKey: "equipementCommentEdition",
+	onHydrate: (store, idUser, entity, expand) => {
+		if (expand.includes("equipement")) {
+			const equipementsStore = useEquipementsStore();
+			equipementsStore.equipements[entity.equipement.id_equipement] = entity.equipement;
+		}
+	},
+});
 
 export const useUsersStore = defineStore("users",{
 	state: () => ({
@@ -110,13 +122,11 @@ export const useUsersStore = defineStore("users",{
 		projectsCommentTotalCount: {},
 		projectsComment: {},
 		projectCommentEdition: {},
-		projectCommentReady: {},
 
 		commandsCommentLoading: false,
 		commandsCommentTotalCount: {},
 		commandsComment: {},
 		commandCommentEdition: {},
-		commandCommentReady: {},
 
 		tokensLoading: false,
 		tokensTotalCount: {},
@@ -126,6 +136,11 @@ export const useUsersStore = defineStore("users",{
 		pushSubscriptionsLoading: false,
 		pushSubscriptionsTotalCount: {},
 		pushSubscriptions: {},
+
+		equipementsCommentLoading: false,
+		equipementsCommentTotalCount: {},
+		equipementsComment: {},
+		equipementCommentEdition: {},
 	}),
 	actions: {
 		getUserByList: userResource.getByList,
@@ -155,11 +170,8 @@ export const useUsersStore = defineStore("users",{
 				};
 			}
 			this.projectCommentEdition[id] = {};
-			this.projectCommentReady[id] = {};
 			this.commandCommentEdition[id] = {};
-			this.commandCommentReady[id] = {};
 			this.tokensEdition[id] = {};
-			this.pushSubscriptionsEdition[id] = {};
 		},
 		setLoadingEdition(id, loading) {
 			if (!this.userEdition[id]) {
@@ -170,11 +182,8 @@ export const useUsersStore = defineStore("users",{
 		clearEdition(id) {
 			delete this.userEdition[id];
 			delete this.projectCommentEdition[id];
-			delete this.projectCommentReady[id];
 			delete this.commandCommentEdition[id];
-			delete this.commandCommentReady[id];
 			delete this.tokensEdition[id];
-			delete this.pushSubscriptionsEdition[id];
 		},
 		async saveAllChanges(id) {
 			let realId = id;
@@ -233,5 +242,8 @@ export const useUsersStore = defineStore("users",{
 				useToken: "access",
 			});
 		},
+
+		getEquipementCommentByInterval: equipementCommentResource.getByInterval,
+		getEquipementCommentById: equipementCommentResource.getById,
 	},
 });
