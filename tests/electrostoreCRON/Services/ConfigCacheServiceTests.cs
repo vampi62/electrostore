@@ -1,5 +1,6 @@
 using ElectrostoreCRON.Grpc;
 using Grpc.Core;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -37,6 +38,13 @@ public class ConfigCacheServiceTests
             () => new Metadata(),
             () => { });
     }
+
+    private static IConfiguration CreateFastRetryConfiguration(int maxAttempts) =>
+        new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Startup:MaxRetryAttempts"] = maxAttempts.ToString(),
+            ["Startup:RetryDelaySeconds"] = "0"
+        }).Build();
 
     [Fact]
     public async Task StartAsync_ShouldSetDemoModeFromApiReply()
@@ -77,13 +85,33 @@ public class ConfigCacheServiceTests
         _configGrpcClient
             .Setup(c => c.GetConfigAsync(It.IsAny<GetConfigRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .Returns(CreateFailingAsyncUnaryCall<GetConfigReply>(new RpcException(new Status(StatusCode.Unavailable, "down"))));
-        var service = new ConfigCacheServiceImpl(_configGrpcClient.Object, _logger.Object);
+        var service = new ConfigCacheServiceImpl(_configGrpcClient.Object, _logger.Object, CreateFastRetryConfiguration(maxAttempts: 1));
 
         // Act
         await service.StartAsync(CancellationToken.None);
 
         // Assert
         Assert.False(service.DemoMode);
+        _configGrpcClient.Verify(c => c.GetConfigAsync(It.IsAny<GetConfigRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task StartAsync_ShouldRetryAndSucceed_WhenEarlierAttemptsFail()
+    {
+        // Arrange
+        _configGrpcClient
+            .SetupSequence(c => c.GetConfigAsync(It.IsAny<GetConfigRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Returns(CreateFailingAsyncUnaryCall<GetConfigReply>(new RpcException(new Status(StatusCode.Unavailable, "down"))))
+            .Returns(CreateFailingAsyncUnaryCall<GetConfigReply>(new RpcException(new Status(StatusCode.Unavailable, "down"))))
+            .Returns(CreateAsyncUnaryCall(new GetConfigReply { DemoMode = true }));
+        var service = new ConfigCacheServiceImpl(_configGrpcClient.Object, _logger.Object, CreateFastRetryConfiguration(maxAttempts: 3));
+
+        // Act
+        await service.StartAsync(CancellationToken.None);
+
+        // Assert
+        Assert.True(service.DemoMode);
+        _configGrpcClient.Verify(c => c.GetConfigAsync(It.IsAny<GetConfigRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
     }
 
     [Fact]

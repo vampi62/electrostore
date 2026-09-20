@@ -151,7 +151,7 @@ public class UserPushSubscriptionService : IUserPushSubscriptionService
             RecipientUserId = userId,
             Title = "Test notification",
             Body = "This is a test push notification",
-            Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
+            Language = _configuration.GetValue<string>("AppLanguage") ?? "en"
         };
         await _kafkaProducerService.PublishAsync(
             KafkaNotificationTopic,
@@ -172,7 +172,7 @@ public class UserPushSubscriptionService : IUserPushSubscriptionService
             RecipientUserId = userId,
             Title = "Test notification",
             Body = "This is a test email notification",
-            Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
+            Language = _configuration.GetValue<string>("AppLanguage") ?? "en"
         };
         await _kafkaProducerService.PublishAsync(
             KafkaNotificationTopic,

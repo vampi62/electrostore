@@ -159,26 +159,25 @@ public class StockLowAlertService : IStockLowAlertService
         }
     }
 
-    // ---- Modèles ------------------------------------------------------------
+    // ---- Models ---------------------------------------------------------------
 
-    /// <summary>Contenu attendu de <c>params_cronjob</c> pour l'action StockLowAlert.</summary>
-    /// <param name="language">Langue des templates ("fr" / "en") ; à défaut, AppLanguage.</param>
-    /// <param name="types">Canaux de notification ("email", "webpush") ; "email" par défaut.</param>
+    /// <summary>Expected content of <c>params_cronjob</c> for the StockLowAlert action.</summary>
+    /// <param name="language">Template language ("fr" / "en"); defaults to AppLanguage.</param>
+    /// <param name="types">Notification channels ("email", "webpush"); defaults to "email".</param>
     /// <param name="only_recent_changes">
-    /// <see langword="false"/> (par défaut) : résumé de tous les items sous leur seuil minimum.
-    /// <see langword="true"/> : ne retenir que les items ayant eu un changement de quantité
-    /// récent (via ItemsHistory), sur la fenêtre définie par <c>use_last_run</c> / <c>days</c>.
+    /// <see langword="false"/> (default): summary of all items below their minimum threshold.
+    /// <see langword="true"/>: only keep items that had a recent quantity change (via
+    /// ItemsHistory), over the window defined by <c>use_last_run</c> / <c>days</c>.
     /// </param>
     /// <param name="use_last_run">
-    /// Lorsque <c>only_recent_changes</c> est actif, utiliser la date du dernier lancement du
-    /// cron job (colonne <c>last_run_at</c>) comme début de la fenêtre "changements récents"
-    /// plutôt que <c>days</c>. Sans exécution précédente (premier lancement), <c>days</c> sert
-    /// de repli.
+    /// When <c>only_recent_changes</c> is active, use the cron job's last run date
+    /// (<c>last_run_at</c> column) as the start of the "recent changes" window rather than
+    /// <c>days</c>. Without a previous run (first launch), <c>days</c> is used as a fallback.
     /// </param>
     /// <param name="days">
-    /// Profondeur de la fenêtre "changements récents", en jours (1 par défaut). Utilisée
-    /// uniquement lorsque <c>only_recent_changes</c> est actif et que <c>use_last_run</c> ne
-    /// s'applique pas (désactivé ou premier lancement).
+    /// Depth of the "recent changes" window, in days (1 by default). Used only when
+    /// <c>only_recent_changes</c> is active and <c>use_last_run</c> does not apply (disabled or
+    /// first launch).
     /// </param>
     private sealed record StockLowAlertParams(
         string? language = null,

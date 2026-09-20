@@ -412,10 +412,12 @@ function generateFiles() {
         if (notifSection) notifSection.style.display = 'none';
         if (cronSection) cronSection.style.display = 'none';
         if (workerSection) workerSection.style.display = 'none';
+        if (iaSection) iaSection.style.display = 'none';
     } else {
         if (notifSection) notifSection.style.display = 'block';
         if (cronSection) cronSection.style.display = 'block';
         if (workerSection) workerSection.style.display = 'block';
+        if (iaSection) iaSection.style.display = 'block';
         document.getElementById('notifAppsettingsFile').textContent = notifAppsettings;
         document.getElementById('cronAppsettingsFile').textContent = cronAppsettings;
         document.getElementById('workerAppsettingsFile').textContent = workerAppsettings;

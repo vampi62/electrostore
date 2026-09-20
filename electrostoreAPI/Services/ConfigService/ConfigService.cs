@@ -51,7 +51,7 @@ public class ConfigService : IConfigService
 
     public bool GetDemoMode() => _configuration.GetValue<bool>("DemoMode");
 
-    public string GetAppLanguage() => _configuration.GetValue<string>("AppLanguage") ?? "fr";
+    public string GetAppLanguage() => _configuration.GetValue<string>("AppLanguage") ?? "en";
 
     public string[] GetAllowedImageExtensions() => [.. FieldLengths.AllowedImageMimeTypes.Values];
 

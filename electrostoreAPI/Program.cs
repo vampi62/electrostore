@@ -238,6 +238,7 @@ public partial class Program
         // which executes Main() up to app.Run() for real and would otherwise require a live database.
         if (!builder.Configuration.GetValue<bool>("SwaggerGeneration"))
         {
+            InitializeExternalConnections(app);
             InitializeDatabase(app);
         }
 
@@ -344,22 +345,24 @@ public partial class Program
     {
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
-                new MySqlServerVersion(new Version(11, 4, 7))
+                new MySqlServerVersion(new Version(11, 4, 7)),
+                mySqlOptions => mySqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 10,
+                    maxRetryDelay: TimeSpan.FromSeconds(10),
+                    errorNumbersToAdd: null)
             )
         );
         builder.Services.AddSingleton<IMqttClient>(sp =>
         {
             var factory = new MqttClientFactory();
-            var mqttClient = factory.CreateMqttClient();
-            var options = new MqttClientOptionsBuilder()
-                .WithClientId(builder.Configuration.GetSection("MQTT:ClientId").Value)
-                .WithTcpServer(builder.Configuration.GetSection("MQTT:Server").Value, builder.Configuration.GetSection("MQTT:Port").Get<int>())
-                .WithCredentials(builder.Configuration.GetSection("MQTT:Username").Value, builder.Configuration.GetSection("MQTT:Password").Value)
-                .WithCleanSession()
-                .Build();
-            mqttClient.ConnectAsync(options);
-            return mqttClient;
+            return factory.CreateMqttClient();
         });
+        builder.Services.AddSingleton(sp => new MqttClientOptionsBuilder()
+            .WithClientId(builder.Configuration.GetSection("MQTT:ClientId").Value)
+            .WithTcpServer(builder.Configuration.GetSection("MQTT:Server").Value, builder.Configuration.GetSection("MQTT:Port").Get<int>())
+            .WithCredentials(builder.Configuration.GetSection("MQTT:Username").Value, builder.Configuration.GetSection("MQTT:Password").Value)
+            .WithCleanSession()
+            .Build());
         if (builder.Configuration.GetSection("S3:Enable").Get<bool>())
         {
             builder.Services.AddSingleton<IMinioClient>(sp =>
@@ -434,33 +437,104 @@ public partial class Program
 
     private static void CreateRequiredDirectories()
     {
-        if (!Directory.Exists("wwwroot/images"))
-        {
-            Directory.CreateDirectory("wwwroot/images");
-        }
-        if (!Directory.Exists("wwwroot/imagesThumbnails"))
-        {
-            Directory.CreateDirectory("wwwroot/imagesThumbnails");
-        }
-        if (!Directory.Exists("wwwroot/projectDocuments"))
-        {
-            Directory.CreateDirectory("wwwroot/projectDocuments");
-        }
-        if (!Directory.Exists("wwwroot/itemDocuments"))
-        {
-            Directory.CreateDirectory("wwwroot/itemDocuments");
-        }
         if (!Directory.Exists("wwwroot/commandDocuments"))
         {
             Directory.CreateDirectory("wwwroot/commandDocuments");
         }
-        if (!Directory.Exists("wwwroot/zones"))
+
+        if (!Directory.Exists("wwwroot/equipementDocuments"))
         {
-            Directory.CreateDirectory("wwwroot/zones");
+            Directory.CreateDirectory("wwwroot/equipementDocuments");
         }
-        if (!Directory.Exists("wwwroot/zonesThumbnails"))
+        if (!Directory.Exists("wwwroot/equipementImages"))
         {
-            Directory.CreateDirectory("wwwroot/zonesThumbnails");
+            Directory.CreateDirectory("wwwroot/equipementImages");
+        }
+        if (!Directory.Exists("wwwroot/equipementImagesThumbnails"))
+        {
+            Directory.CreateDirectory("wwwroot/equipementImagesThumbnails");
+        }
+
+        if (!Directory.Exists("wwwroot/itemDocuments"))
+        {
+            Directory.CreateDirectory("wwwroot/itemDocuments");
+        }
+        if (!Directory.Exists("wwwroot/itemImages"))
+        {
+            Directory.CreateDirectory("wwwroot/itemImages");
+        }
+        if (!Directory.Exists("wwwroot/itemImagesThumbnails"))
+        {
+            Directory.CreateDirectory("wwwroot/itemImagesThumbnails");
+        }
+
+        if (!Directory.Exists("wwwroot/projectDocuments"))
+        {
+            Directory.CreateDirectory("wwwroot/projectDocuments");
+        }
+
+        if (!Directory.Exists("wwwroot/zoneImages"))
+        {
+            Directory.CreateDirectory("wwwroot/zoneImages");
+        }
+        if (!Directory.Exists("wwwroot/zoneImagesThumbnails"))
+        {
+            Directory.CreateDirectory("wwwroot/zoneImagesThumbnails");
+        }
+    }
+
+    private static void InitializeExternalConnections(WebApplication app)
+    {
+        using var serviceScope = app.Services.CreateScope();
+        var logger = serviceScope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        var maxAttempts = app.Configuration.GetValue<int?>("Startup:MaxRetryAttempts") ?? 10;
+        var retryDelay = TimeSpan.FromSeconds(app.Configuration.GetValue<int?>("Startup:RetryDelaySeconds") ?? 5);
+
+        var context = serviceScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        RetryStartup("MariaDB", logger, maxAttempts, retryDelay, () =>
+        {
+            if (!context.Database.CanConnect())
+            {
+                throw new InvalidOperationException("Database is not reachable yet.");
+            }
+        });
+
+        var mqttClient = serviceScope.ServiceProvider.GetRequiredService<IMqttClient>();
+        var mqttOptions = serviceScope.ServiceProvider.GetRequiredService<MqttClientOptions>();
+        RetryStartup("MQTT broker", logger, maxAttempts, retryDelay, () =>
+        {
+            mqttClient.ConnectAsync(mqttOptions).GetAwaiter().GetResult();
+        });
+
+        if (app.Configuration.GetSection("S3:Enable").Get<bool>())
+        {
+            var minioClient = serviceScope.ServiceProvider.GetRequiredService<IMinioClient>();
+            RetryStartup("S3 storage", logger, maxAttempts, retryDelay, () =>
+            {
+                minioClient.ListBucketsAsync().GetAwaiter().GetResult();
+            });
+        }
+    }
+
+    private static void RetryStartup(string dependencyName, ILogger logger, int maxAttempts, TimeSpan delay, Action action)
+    {
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                action();
+                return;
+            }
+            catch (Exception ex)
+            {
+                if (attempt == maxAttempts)
+                {
+                    logger.LogError(ex, "Could not reach {Dependency} after {Attempts} attempt(s). Giving up.", dependencyName, attempt);
+                    throw;
+                }
+                logger.LogWarning(ex, "Could not reach {Dependency} (attempt {Attempt}/{MaxAttempts}). Retrying in {Delay}s...", dependencyName, attempt, maxAttempts, delay.TotalSeconds);
+                Thread.Sleep(delay);
+            }
         }
     }
 
@@ -496,7 +570,7 @@ public partial class Program
                 name_cronjob = "ProcessTrackingRequests",
                 cron_expression_cronjob = "*/15 * * * ?",
                 is_enabled = true,
-                action_cronjob = Enums.CronJobAction.PackageTracking,
+                action_cronjob = CronJobAction.PackageTracking,
             };
             cronJobService.CreateCronJob(createCronJobDto).Wait();
         }
@@ -509,7 +583,7 @@ public partial class Program
                 name_cronjob = "WeeklyItemMovementReport",
                 cron_expression_cronjob = "0 8 ? * MON",
                 is_enabled = true,
-                action_cronjob = Enums.CronJobAction.WeeklyItemMovementReport,
+                action_cronjob = CronJobAction.WeeklyItemMovementReport,
                 // use_last_run: cover the period since this cron job's own previous run rather than
                 // a fixed window, so several such jobs can later run on different schedules and each
                 // report exactly its own interval; "days" is only the first-run fallback (no history yet).
@@ -526,7 +600,7 @@ public partial class Program
                 name_cronjob = "StockLowAlert",
                 cron_expression_cronjob = "0 9 * * ?",
                 is_enabled = true,
-                action_cronjob = Enums.CronJobAction.StockLowAlert,
+                action_cronjob = CronJobAction.StockLowAlert,
                 // only_recent_changes + use_last_run: notify only about items that dropped below
                 // their threshold since the previous run, instead of re-sending the same full list
                 // of low-stock items every day; "days" is only the first-run fallback.

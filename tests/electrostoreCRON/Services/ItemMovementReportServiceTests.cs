@@ -18,10 +18,7 @@ public class ItemMovementReportServiceTests
 
     private ItemMovementReportService CreateService(Dictionary<string, string?>? extraConfig = null)
     {
-        var values = new Dictionary<string, string?>
-        {
-            ["AppLanguage"] = "fr"
-        };
+        var values = new Dictionary<string, string?>();
         if (extraConfig is not null)
         {
             foreach (var kvp in extraConfig) values[kvp.Key] = kvp.Value;
