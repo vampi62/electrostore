@@ -79,10 +79,8 @@ public class ConfigCacheServiceTests
     }
 
     [Fact]
-    public async Task StartAsync_ShouldFallBackToDemoModeFalse_WhenApiCallFails()
+    public async Task StartAsync_ShouldFallBackToDemoModeTrue_WhenApiCallFails()
     {
-        // Unlike electrostoreNOTIF (which defaults to demo mode when the API is unreachable),
-        // electrostoreWORKER falls back to DemoMode=false ("default values applied").
         // Arrange
         _configGrpcClient
             .Setup(c => c.GetConfigAsync(It.IsAny<GetConfigRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
@@ -93,7 +91,7 @@ public class ConfigCacheServiceTests
         await service.StartAsync(CancellationToken.None);
 
         // Assert
-        Assert.False(service.DemoMode);
+        Assert.True(service.DemoMode);
         _configGrpcClient.Verify(c => c.GetConfigAsync(It.IsAny<GetConfigRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 

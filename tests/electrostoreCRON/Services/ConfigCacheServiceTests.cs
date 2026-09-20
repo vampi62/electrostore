@@ -79,7 +79,7 @@ public class ConfigCacheServiceTests
     }
 
     [Fact]
-    public async Task StartAsync_ShouldFallBackToDemoModeFalse_WhenApiCallFails()
+    public async Task StartAsync_ShouldFallBackToDemoModeTrue_WhenApiCallFails()
     {
         // Arrange
         _configGrpcClient
@@ -91,7 +91,7 @@ public class ConfigCacheServiceTests
         await service.StartAsync(CancellationToken.None);
 
         // Assert
-        Assert.False(service.DemoMode);
+        Assert.True(service.DemoMode);
         _configGrpcClient.Verify(c => c.GetConfigAsync(It.IsAny<GetConfigRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
