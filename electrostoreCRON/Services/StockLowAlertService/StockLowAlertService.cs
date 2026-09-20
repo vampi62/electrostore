@@ -39,7 +39,7 @@ public class StockLowAlertService : IStockLowAlertService
     public async Task SendAlertAsync(string? paramsJson, DateTime? lastRunAt, CancellationToken ct = default)
     {
         var parameters = ParseParams(paramsJson);
-        var language   = parameters.language ?? _configuration["AppLanguage"] ?? "fr";
+        var language   = parameters.language ?? _configuration["AppLanguage"] ?? "en";
         List<string> types = parameters.types is { Count: > 0 } ? parameters.types : ["email"];
         var sinceDate  = ResolveSinceDate(parameters, lastRunAt);
 

@@ -139,7 +139,7 @@ public class ItemMovementReportServiceTests
         var row = movements[0];
         Assert.Equal("Resistor 10k", row.GetProperty("item").GetString());
         Assert.Equal("+5", row.GetProperty("quantityChange").GetString());
-        Assert.Equal("Stock ajouté", row.GetProperty("type").GetString());
+        Assert.Equal("Stock added", row.GetProperty("type").GetString());
         Assert.Equal("2026-09-01 08:30", row.GetProperty("date").GetString());
     }
 
