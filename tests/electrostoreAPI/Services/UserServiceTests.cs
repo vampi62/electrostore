@@ -154,6 +154,7 @@ namespace ElectrostoreAPI.Tests.Services
             context.Users.Add(user);
             await context.SaveChangesAsync();
             _sessionService.Setup(s => s.GetClientId()).Returns(user.id_user);
+            _sessionService.Setup(s => s.GetTokenAuthMethod()).Returns("SSO");
             var service = CreateService(context);
             var dto = new UpdateUserDto { name_user = "Renamed" };
 
@@ -172,6 +173,7 @@ namespace ElectrostoreAPI.Tests.Services
             context.Users.AddRange(user1, user2);
             await context.SaveChangesAsync();
             _sessionService.Setup(s => s.GetClientId()).Returns(user1.id_user);
+            _sessionService.Setup(s => s.GetTokenAuthMethod()).Returns("SSO");
             var service = CreateService(context);
             var dto = new UpdateUserDto { email_user = "b@test.com" };
 
@@ -186,6 +188,7 @@ namespace ElectrostoreAPI.Tests.Services
             context.Users.Add(admin);
             await context.SaveChangesAsync();
             _sessionService.Setup(s => s.GetClientId()).Returns(admin.id_user);
+            _sessionService.Setup(s => s.GetTokenAuthMethod()).Returns("SSO");
             var service = CreateService(context);
             var dto = new UpdateUserDto { role_user = UserRole.User };
 
@@ -211,6 +214,7 @@ namespace ElectrostoreAPI.Tests.Services
         {
             using var context = new ApplicationDbContext(_dbContextOptions);
             _sessionService.Setup(s => s.GetClientId()).Returns(1);
+            _sessionService.Setup(s => s.GetTokenAuthMethod()).Returns("SSO");
             var service = CreateService(context);
 
             await Assert.ThrowsAsync<KeyNotFoundException>(() => service.UpdateUser(999, new UpdateUserDto()));

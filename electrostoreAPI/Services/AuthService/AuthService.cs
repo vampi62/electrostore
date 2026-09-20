@@ -107,7 +107,7 @@ public class AuthService : IAuthService
                 Types = ["email"],
                 RecipientEmail = user.email_user,
                 TemplateId = "login-detected",
-                Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
+                Language = _configuration.GetValue<string>("AppLanguage") ?? "en"
             };
             await _kafkaProducerService.PublishAsync(
                 KafkaNotificationTopic,
@@ -246,7 +246,7 @@ public class AuthService : IAuthService
                     Types = ["email"],
                     RecipientEmail = user.email_user,
                     TemplateId = "password-reset",
-                    Language = _configuration.GetValue<string>("AppLanguage") ?? "fr",
+                    Language = _configuration.GetValue<string>("AppLanguage") ?? "en",
                     TemplateValues = new Dictionary<string, string>
                     {
                         ["resetLink"] = _configuration["FrontendUrl"] + "/reset-password?token=" + user.reset_token.ToString() + "&email=" + user.email_user
@@ -291,7 +291,7 @@ public class AuthService : IAuthService
                 Types = ["email"],
                 RecipientEmail = user.email_user,
                 TemplateId = "password-changed",
-                Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
+                Language = _configuration.GetValue<string>("AppLanguage") ?? "en"
             };
             await _kafkaProducerService.PublishAsync(
                 KafkaNotificationTopic,
@@ -325,7 +325,7 @@ public class AuthService : IAuthService
                 Types = ["email"],
                 RecipientEmail = user.email_user,
                 TemplateId = "login-detected",
-                Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
+                Language = _configuration.GetValue<string>("AppLanguage") ?? "en"
             };
             await _kafkaProducerService.PublishAsync(
                 KafkaNotificationTopic,

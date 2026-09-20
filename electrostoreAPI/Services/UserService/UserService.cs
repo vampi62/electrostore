@@ -139,7 +139,7 @@ public class UserService : IUserService
                 Types = ["email"],
                 RecipientEmail = newUser.email_user,
                 TemplateId = "account-created",
-                Language = _configuration.GetValue<string>("AppLanguage") ?? "fr",
+                Language = _configuration.GetValue<string>("AppLanguage") ?? "en",
                 TemplateValues = new Dictionary<string, string>
                 {
                     ["firstName"] = newUser.firstname_user,
@@ -212,6 +212,18 @@ public class UserService : IUserService
         {
             throw new UnauthorizedAccessException("You are not allowed to update this user");
         }
+        var authMethod = _sessionService.GetTokenAuthMethod();
+        if (authMethod != "SSO")
+        {
+            if (userDto.current_password_user is null)
+            {
+                throw new InvalidOperationException("Non-SSO users must provide their current password to update an account");
+            }
+            if (!BCrypt.Net.BCrypt.Verify(userDto.current_password_user, (await _context.Users.FindAsync(clientId))!.password_user))
+            {
+                throw new InvalidOperationException("Your current password is incorrect");
+            }
+        }
         var userToUpdate = await _context.Users.FindAsync(id) ?? throw new KeyNotFoundException($"User with id '{id}' not found");
         if (userDto.name_user is not null)
         {
@@ -278,7 +290,7 @@ public class UserService : IUserService
                 Types = ["email"],
                 RecipientEmail = userToDelete.email_user,
                 TemplateId = "account-deleted",
-                Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
+                Language = _configuration.GetValue<string>("AppLanguage") ?? "en"
             };
             await _kafkaProducerService.PublishAsync(
                 KafkaNotificationTopic,
@@ -319,7 +331,7 @@ public class UserService : IUserService
         {
             try
             {
-                var lang = _configuration.GetValue<string>("AppLanguage") ?? "fr";
+                var lang = _configuration.GetValue<string>("AppLanguage") ?? "en";
                 var values = new Dictionary<string, string>
                 {
                     ["oldEmail"] = oldUserEmail,
@@ -366,7 +378,7 @@ public class UserService : IUserService
                     Types = ["email"],
                     RecipientEmail = userToUpdate.email_user,
                     TemplateId = "password-changed",
-                    Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
+                    Language = _configuration.GetValue<string>("AppLanguage") ?? "en"
                 };
                 await _kafkaProducerService.PublishAsync(
                     KafkaNotificationTopic,
@@ -388,7 +400,7 @@ public class UserService : IUserService
                     Types = ["email"],
                     RecipientEmail = userToUpdate.email_user,
                     TemplateId = "account-updated",
-                    Language = _configuration.GetValue<string>("AppLanguage") ?? "fr"
+                    Language = _configuration.GetValue<string>("AppLanguage") ?? "en"
                 };
                 await _kafkaProducerService.PublishAsync(
                     KafkaNotificationTopic,
