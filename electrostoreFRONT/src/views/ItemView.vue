@@ -168,21 +168,15 @@ const boxSave = async(box) => {
 
 // document
 const documentAddModalShow = ref(false);
-const documentDeleteModalShow = ref(false);
-const documentModalData = ref({ id_item_document: null, name_item_document: "", document: null });
-const documentDeleteOpenModal = (doc) => {
-	documentModalData.value = doc;
-	documentDeleteModalShow.value = true;
-};
 const documentAdd = async(files) => {
 	for (const file of files) {
-		documentModalData.value = { name_item_document: file.name, document: file.document };
+		const documentModalData = { name_item_document: file.name, document: file.document };
+		const newId = itemsStore.getAvailableNewDocumentId(itemId.value);
+		itemsStore.documentEdition[itemId.value][newId] = documentModalData;
 		try {
-			schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
-			const formData = new FormData();
-			formData.append("name_item_document", documentModalData.value.name_item_document);
-			formData.append("document", documentModalData.value.document);
-			await itemsStore.createDocument(itemId.value, formData);
+			schemaAddDocument.validateSync(documentModalData, { abortEarly: false });
+			itemsStore.valideDocumentEditionById(itemId.value, newId, "created", true);
+			delete itemsStore.documentEdition[itemId.value][newId];
 			addNotification({ message: t("item.DocumentAdded"), type: "success" });
 		} catch (e) {
 			addNotification({ message: e, type: "error" });
@@ -190,10 +184,10 @@ const documentAdd = async(files) => {
 	}
 	documentAddModalShow.value = false;
 };
-const documentEdit = async(row) => {
+const documentEdit = (row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
-		await itemsStore.updateDocument(itemId.value, row.id_item_document, row);
+		itemsStore.valideDocumentEditionById(itemId.value, row.id_item_document, "modified");
 		delete itemsStore.documentEdition[itemId.value][row.id_item_document];
 		addNotification({ message: t("item.DocumentUpdated"), type: "success" });
 	} catch (e) {
@@ -201,15 +195,28 @@ const documentEdit = async(row) => {
 		return;
 	}
 };
-const documentDelete = async() => {
+const documentDelete = (row) => {
 	try {
-		await itemsStore.deleteDocument(itemId.value, documentModalData.value.id_item_document);
+		itemsStore.valideDocumentEditionById(itemId.value, row.id_item_document, "deleted");
 		addNotification({ message: t("item.DocumentDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
-	documentDeleteModalShow.value = false;
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const documentDownload = async(fileContent) => {
 	const file = await itemsStore.downloadDocument(itemId.value, fileContent.id_item_document);
 	downloadFile(file, { keyName: fileContent.name_item_document, keyType: fileContent.type_item_document });
@@ -375,6 +382,7 @@ const labelTableauDocument = ref([
 			showCondition: "!edition?.id_item_document",
 			action: (row) => {
 				itemsStore.documentEdition[itemId.value][row.id_item_document] = { ...row };
+				console.log(itemsStore.documentEdition[itemId.value][row.id_item_document]);
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -412,7 +420,7 @@ const labelTableauDocument = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
-			action: (row) => documentDeleteOpenModal(row),
+			action: (row) => documentDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
@@ -541,7 +549,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 		</div>
 		<CollapsibleSection title="item.Boxs"
-			:total-count="Number(itemsStore.itemBoxsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
+			:total-count="Number(itemsStore.itemBoxsTotalCount[itemId] || 0)">
 			<template #append-row>
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box', expand: ['box'] }"
 					:store-data="[itemsStore.itemBoxs[itemId]]"
@@ -555,7 +563,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.Documents"
-			:total-count="Number(itemsStore.documentsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
+			:total-count="Number(itemsStore.documentsTotalCount[itemId] || 0)">
 			<template #append-row>
 				<button type="button" @click="documentAddModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -564,6 +572,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_item_document' }"
 					:store-data="[itemsStore.documents[itemId]]"
 					:store-edition="itemsStore.documentEdition[itemId]"
+					:store-ready="itemsStore.documentReady[itemId]"
 					:schema="schemaEditDocument"
 					:loading="itemsStore.documentsLoading"
 					:total-count="Number(itemsStore.documentsTotalCount[itemId])"
@@ -573,7 +582,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.Commands"
-			:total-count="Number(itemsStore.itemCommandsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
+			:total-count="Number(itemsStore.itemCommandsTotalCount[itemId] || 0)">
 			<template #append-row>
 				<Tableau :labels="labelTableauCommand" :meta="{ key: 'id_item', path: '/commands/', expand: ['command'] }"
 					:store-data="[itemsStore.itemCommands[itemId],commandsStore.commands]"
@@ -585,7 +594,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.Projects"
-			:total-count="Number(itemsStore.itemProjectsTotalCount[itemId] || 0)" :permission="itemId !=='new'">
+			:total-count="Number(itemsStore.itemProjectsTotalCount[itemId] || 0)">
 			<template #append-row>
 				<Tableau :labels="labelTableauProject" :meta="{ key: 'id_project', path: '/projects/', expand: ['project'] }"
 					:store-data="[itemsStore.itemProjects[itemId],projectsStore.projects]"
@@ -597,7 +606,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.History"
-			:total-count="Number(itemsStore.itemHistoryTotalCount[itemId] || 0)" :permission="itemId !=='new'">
+			:total-count="Number(itemsStore.itemHistoryTotalCount[itemId] || 0)">
 			<template #append-row>
 				<Tableau :labels="labelTableauHistory" :meta="{ key: 'id_item_history', expand: ['user'] }"
 					:store-data="[itemsStore.itemHistory[itemId], usersStore.users]"
@@ -612,7 +621,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 	<div v-else>
 		<div>{{ $t('item.Loading') }}</div>
 	</div>
-	
+
 	<ModalDeleteConfirm :show-modal="itemDeleteModalShow" @close-modal="itemDeleteModalShow = false"
 		:delete-action="itemDelete" :text-title="'item.DeleteTitle'"
 		:text-p="'item.DeleteText'"/>
@@ -623,8 +632,4 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		@files-saved="documentAdd"
 		file-type="document"
 	/>
-
-	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
-		:delete-action="documentDelete" :text-title="'item.DocumentDeleteTitle'"
-		:text-p="'item.DocumentDeleteText'"/>
 </template>

@@ -85,10 +85,21 @@ export function createNestedResource({ path, idField, countKey, stateKey, loadin
 			}
 			return `new-${i}`;
 		},
-		valideEditionById(idParentResource, id, status = "modified") {
+		valideEditionById(idParentResource, id, status = "modified", isFormData = false) {
+			console.log(`Validating edition for ${idParentResource} - ${id} with status ${status}`);
 			this[readyKey][idParentResource] ??= {};
 			const edition = this[editionKey][idParentResource]?.[id] ?? {};
-			this[readyKey][idParentResource][id] = { ...edition, [idField]: id, status };
+			// compare this[stateKey][idParentResource]?.[id] with the edition to determine if changes exist
+			if (JSON.stringify(this[stateKey][idParentResource]?.[id] ?? {}) === JSON.stringify(edition)) {
+				delete this[readyKey][idParentResource][id];
+				return;
+			}
+			// check if this[readyKey][idParentResource][id] already exists with status "new" and if the new changes has the status "deleted"
+			if (this[readyKey][idParentResource][id]?.status === "new" && status === "deleted") {
+				delete this[readyKey][idParentResource][id];
+				return;
+			}
+			this[readyKey][idParentResource][id] = { ...edition, [idField]: id, status, isFormData };
 		},
 		copyPerId(idParentResource, oldId, newId) {
 			this[editionKey][idParentResource] ??= {};
@@ -113,16 +124,16 @@ export function createNestedResource({ path, idField, countKey, stateKey, loadin
 		async pushChange(idParentResource) {
 			const readyEntries = { ...this[readyKey][idParentResource] };
 			for (const [id, entry] of Object.entries(readyEntries)) {
-				const { status, ...data } = entry;
+				const { status, isFormData, ...data } = entry;
 				const isNewId = String(id).startsWith("new-");
 				if (data?.pushChange) {
 					continue; // Skip if already pushed
 				}
 				if (status === "created") {
 					delete data[idField];
-					await resource.create.call(this, idParentResource, data);
+					await resource.create.call(this, idParentResource, isFormData ? new FormData(Object.entries(data)) : data);
 				} else if (status === "modified" && !isNewId) {
-					await resource.update.call(this, idParentResource, id, data);
+					await resource.update.call(this, idParentResource, id, isFormData ? new FormData(Object.entries(data)) : data);
 				} else if (status === "deleted" && !isNewId) {
 					await resource.remove.call(this, idParentResource, id);
 				}

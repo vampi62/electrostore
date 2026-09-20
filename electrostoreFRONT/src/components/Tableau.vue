@@ -32,14 +32,6 @@
 					@click="meta?.path && $router.push(meta.path + row[meta.key])">
 					<TableauRow :labels="labelsShown" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" :store-edition="storeEdition[row[meta.key]]" :store-ready="storeReady[row[meta.key]]" />
 				</tr>
-				<tr v-for="row in filterMissingEdition" :key="'edition-' + row[meta.key]"
-					:class="[mergedCss.tr, 'bg-yellow-100']">
-					<TableauRow :labels="labelsShown" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" :store-edition="storeEdition[row[meta.key]]" :store-ready="storeReady[row[meta.key]]" />
-				</tr>
-				<tr v-for="row in filterMissingReady" :key="'ready-' + row[meta.key]"
-					:class="[mergedCss.tr, 'bg-red-100']">
-					<TableauRow :labels="labelsShown" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" :store-edition="storeEdition[row[meta.key]]" :store-ready="storeReady[row[meta.key]]" />
-				</tr>
 				<slot name="append-row"></slot>
 				<template v-if="loading">
 					<tr>
@@ -123,7 +115,7 @@ export default {
 		},
 		fetchFunction: {
 			type: Function,
-			default: (limit, offset, expand, filter, sort, clear) => { 
+			default: (limit, offset, expand, filter, sort, clear) => {
 				return [0, false];
 			},
 			// fetchFunction is a function that will be called to fetch the data for the table, it should accept the parameters limit, offset, expand, filter, sort, and clear
@@ -170,48 +162,16 @@ export default {
 			return this.filters.map((f) => f.value);
 		},
 		filteredData() {
-			if (!this.storeData[0]) {
-				return [];
-			}
-			if (!this.filters || this.filters.length === 0) {
-				return Object.values(this.storeData[0]);
-			}
-			return Object.values(this.storeData[0]).filter((element) => {
-				return this.filters.every((f) => {
-					if (f.value === "" || f.value === null || f.value === undefined || f.disableLocalFilter) {
-						return true;
-					}
-					const elementValue = this.getDataValue(element, f.key);
-					switch (f.compareMethod) {
-					case "==":
-						switch (f?.typeData || f.type) {
-						case "bool":
-							return elementValue === (f.value === "true");
-						case "number":
-							return Number.parseInt(elementValue) === Number.parseInt(f.value);
-						case "string":
-							if (Array.isArray(elementValue)) {
-								return elementValue.some((item) => 
-									toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(f.value)),
-								);
-							}
-							return toLowerCaseWithoutAccents(elementValue) === toLowerCaseWithoutAccents(f.value);
-						}
-						return elementValue === f.value;
-					case "=ge=":
-						return elementValue >= f.value;
-					case "=le=":
-						return elementValue <= f.value;
-					case "=like=":
-						if (Array.isArray(elementValue)) {
-							return elementValue.some((item) => 
-								toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(f.value)),
-							);
-						}
-						return toLowerCaseWithoutAccents(elementValue).includes(toLowerCaseWithoutAccents(f.value));
-					}
-				});
-			});
+			// Merge storeData[0] (saved data), storeReady (validated but not yet saved changes) and
+			// storeEdition (in-progress, unvalidated drafts) into a single list without duplicate ids.
+			// Filters are only ever evaluated against storeData[0]/storeReady values: rows that only
+			// exist in storeEdition are unvalidated drafts and are always shown regardless of filters.
+			const seen = new Set();
+			const rows = [];
+			this.collectSavedRows(seen, rows);
+			this.collectReadyOnlyRows(seen, rows);
+			this.collectEditionOnlyRows(seen, rows);
+			return rows;
 		},
 		sortedData() {
 			if (!this.sort.key) {
@@ -227,7 +187,7 @@ export default {
 				.sort((a, b) => {
 					const aValue = a.value;
 					const bValue = b.value;
-					
+
 					// Gérer les valeurs undefined
 					if (aValue === undefined && bValue === undefined) {
 						return 0;
@@ -238,7 +198,7 @@ export default {
 					if (bValue === undefined) {
 						return -1;
 					}
-					
+
 					// Comparaison typée appropriée
 					let comparison = 0;
 					if (typeof aValue === "string" && typeof bValue === "string") {
@@ -248,7 +208,7 @@ export default {
 					} else {
 						comparison = aValue > bValue ? 1 : (aValue < bValue ? -1 : 0);
 					}
-					
+
 					return comparison * sortOrder;
 				})
 				.map((decorated) => decorated.item);
@@ -264,26 +224,6 @@ export default {
 				tr: this.tableauCss?.tr || "transition duration-150 ease-in-out cursor-pointer hover:bg-gray-200 even:bg-gray-100",
 				td: this.tableauCss?.td || "border-b px-2 py-1 md:px-4 md:py-2",
 			};
-		},
-		filterMissingEdition() {
-			if (!this.storeEdition) {
-				return [];
-			}
-			return Object.values(this.storeEdition).filter((edition) => {
-				return !this.storeData[0] || !this.storeData[0][edition[this.meta.key]];
-			});
-		},
-		filterMissingReady() {
-			if (!this.storeReady) {
-				return [];
-			}
-			return Object.values(this.storeReady).filter((ready) => {
-				if (!this.storeData[0]) {
-					return true;
-				}
-				return Object.values(this.storeData[0]).some((data) => data[this.meta.linkEditionKey || this.meta.key] === ready.data[this.meta.key]);
-			})
-				.map((ready) => ready.data);
 		},
 	},
 	data() {
@@ -350,6 +290,91 @@ export default {
 		_saveState(updates) {
 			const current = JSON.parse(sessionStorage.getItem(this._sessionStateKey()) || "{}");
 			sessionStorage.setItem(this._sessionStateKey(), JSON.stringify({ ...current, ...updates }));
+		},
+		extractReadyFields(readyEntry) {
+			// storeReady entries carry bookkeeping fields (status, isFormData, pushChange) alongside
+			// the actual resource fields, only the resource fields are relevant for display/filtering.
+			const { status, isFormData, pushChange, ...data } = readyEntry;
+			return data;
+		},
+		collectSavedRows(seen, rows) {
+			if (!this.storeData[0]) {
+				return;
+			}
+			for (const [id, row] of Object.entries(this.storeData[0])) {
+				seen.add(id);
+				const readyEntry = this.storeReady?.[id];
+				const merged = readyEntry ? { ...row, ...this.extractReadyFields(readyEntry) } : row;
+				if (this.matchesFilters(merged)) {
+					rows.push(merged);
+				}
+			}
+		},
+		collectReadyOnlyRows(seen, rows) {
+			if (!this.storeReady) {
+				return;
+			}
+			for (const [id, readyEntry] of Object.entries(this.storeReady)) {
+				if (seen.has(id)) {
+					continue;
+				}
+				seen.add(id);
+				const merged = { [this.meta.key]: id, ...this.extractReadyFields(readyEntry) };
+				if (this.matchesFilters(merged)) {
+					rows.push(merged);
+				}
+			}
+		},
+		collectEditionOnlyRows(seen, rows) {
+			if (!this.storeEdition) {
+				return;
+			}
+			for (const [id, edition] of Object.entries(this.storeEdition)) {
+				if (seen.has(id)) {
+					continue;
+				}
+				seen.add(id);
+				rows.push({ [this.meta.key]: id, ...edition });
+			}
+		},
+		matchesFilters(element) {
+			if (!this.filters || this.filters.length === 0) {
+				return true;
+			}
+			return this.filters.every((f) => {
+				if (f.value === "" || f.value === null || f.value === undefined || f.disableLocalFilter) {
+					return true;
+				}
+				const elementValue = this.getDataValue(element, f.key);
+				switch (f.compareMethod) {
+				case "==":
+					switch (f?.typeData || f.type) {
+					case "bool":
+						return elementValue === (f.value === "true");
+					case "number":
+						return Number.parseInt(elementValue) === Number.parseInt(f.value);
+					case "string":
+						if (Array.isArray(elementValue)) {
+							return elementValue.some((item) =>
+								toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(f.value)),
+							);
+						}
+						return toLowerCaseWithoutAccents(elementValue) === toLowerCaseWithoutAccents(f.value);
+					}
+					return elementValue === f.value;
+				case "=ge=":
+					return elementValue >= f.value;
+				case "=le=":
+					return elementValue <= f.value;
+				case "=like=":
+					if (Array.isArray(elementValue)) {
+						return elementValue.some((item) =>
+							toLowerCaseWithoutAccents(String(item)).includes(toLowerCaseWithoutAccents(f.value)),
+						);
+					}
+					return toLowerCaseWithoutAccents(elementValue).includes(toLowerCaseWithoutAccents(f.value));
+				}
+			});
 		},
 		getDataValue(row, labelKey) {
 			const label = this.labels.find((l) => l.key === labelKey);

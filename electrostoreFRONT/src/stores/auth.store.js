@@ -34,9 +34,11 @@ export const useAuthStore = defineStore("auth",{
 			this.refreshToken = refreshToken;
 			this.user = user;
 			this.user.isSSOUser = isSSOUser;
+			this.isSSOUser = isSSOUser;
 			localStorage.setItem("accessToken", JSON.stringify(accessToken));
 			localStorage.setItem("refreshToken", JSON.stringify(refreshToken));
 			localStorage.setItem("user", JSON.stringify(user));
+			localStorage.setItem("isSSOUser", JSON.stringify(isSSOUser));
 		},
 		clearToken() {
 			this.accessToken = null;
