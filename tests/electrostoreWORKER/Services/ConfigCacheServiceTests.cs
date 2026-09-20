@@ -1,5 +1,6 @@
 using ElectrostoreWORKER.Grpc;
 using Grpc.Core;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -38,6 +39,13 @@ public class ConfigCacheServiceTests
             () => { });
     }
 
+    private static IConfiguration CreateFastRetryConfiguration(int maxAttempts) =>
+        new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Startup:MaxRetryAttempts"] = maxAttempts.ToString(),
+            ["Startup:RetryDelaySeconds"] = "0"
+        }).Build();
+
     [Fact]
     public async Task StartAsync_ShouldSetDemoModeFromApiReply()
     {
@@ -71,21 +79,39 @@ public class ConfigCacheServiceTests
     }
 
     [Fact]
-    public async Task StartAsync_ShouldFallBackToDemoModeFalse_WhenApiCallFails()
+    public async Task StartAsync_ShouldFallBackToDemoModeTrue_WhenApiCallFails()
     {
-        // Unlike electrostoreNOTIF (which defaults to demo mode when the API is unreachable),
-        // electrostoreWORKER falls back to DemoMode=false ("default values applied").
         // Arrange
         _configGrpcClient
             .Setup(c => c.GetConfigAsync(It.IsAny<GetConfigRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .Returns(CreateFailingAsyncUnaryCall<GetConfigReply>(new RpcException(new Status(StatusCode.Unavailable, "down"))));
-        var service = new ConfigCacheServiceImpl(_configGrpcClient.Object, _logger.Object);
+        var service = new ConfigCacheServiceImpl(_configGrpcClient.Object, _logger.Object, CreateFastRetryConfiguration(maxAttempts: 1));
 
         // Act
         await service.StartAsync(CancellationToken.None);
 
         // Assert
-        Assert.False(service.DemoMode);
+        Assert.True(service.DemoMode);
+        _configGrpcClient.Verify(c => c.GetConfigAsync(It.IsAny<GetConfigRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task StartAsync_ShouldRetryAndSucceed_WhenEarlierAttemptsFail()
+    {
+        // Arrange
+        _configGrpcClient
+            .SetupSequence(c => c.GetConfigAsync(It.IsAny<GetConfigRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
+            .Returns(CreateFailingAsyncUnaryCall<GetConfigReply>(new RpcException(new Status(StatusCode.Unavailable, "down"))))
+            .Returns(CreateFailingAsyncUnaryCall<GetConfigReply>(new RpcException(new Status(StatusCode.Unavailable, "down"))))
+            .Returns(CreateAsyncUnaryCall(new GetConfigReply { DemoMode = true }));
+        var service = new ConfigCacheServiceImpl(_configGrpcClient.Object, _logger.Object, CreateFastRetryConfiguration(maxAttempts: 3));
+
+        // Act
+        await service.StartAsync(CancellationToken.None);
+
+        // Assert
+        Assert.True(service.DemoMode);
+        _configGrpcClient.Verify(c => c.GetConfigAsync(It.IsAny<GetConfigRequest>(), It.IsAny<Metadata>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
     }
 
     [Fact]

@@ -482,7 +482,11 @@ function generateApiAppsettings(config) {
                 }
             }
         },
-        "AllowedHosts": "*"
+        "AllowedHosts": "*",
+        "Startup": {
+            "MaxRetryAttempts": 10,
+            "RetryDelaySeconds": 5
+        }
     };
 
     let connectionString;
@@ -684,12 +688,9 @@ function generateApiAppsettings(config) {
         };
     }
 
-    
-    if (!isLegacy) {
-        settings.NotifServiceHealthUrl = "http://electrostoreNOTIF:5000/health";
-        settings.CRONServiceHealthUrl = "http://electrostoreCRON:5000/health";
-        settings.WORKERServiceHealthUrl = "http://electrostoreWORKER:5000/health";
-    }
+    settings.NotifServiceHealthUrl = "http://electrostoreNOTIF:5000/health";
+    settings.CRONServiceHealthUrl = "http://electrostoreCRON:5000/health";
+    settings.WORKERServiceHealthUrl = "http://electrostoreWORKER:5000/health";
     
     settings.DemoMode = false;
     settings.FrontendUrl = config.frontUrl;
@@ -701,10 +702,8 @@ function generateApiAppsettings(config) {
         "AllowedImageMimeTypes": config.fileValidation.allowedImageMimeTypes,
         "AllowedDocumentMimeTypes": config.fileValidation.allowedDocumentMimeTypes
     };
-    if (!isLegacy) {
-        settings.FileValidation.MaxAudioSizeMB = config.fileValidation.maxAudioSizeMB;
-        settings.FileValidation.AllowedAudioMimeTypes = config.fileValidation.allowedAudioMimeTypes;
-    }
+    settings.FileValidation.MaxAudioSizeMB = config.fileValidation.maxAudioSizeMB;
+    settings.FileValidation.AllowedAudioMimeTypes = config.fileValidation.allowedAudioMimeTypes;
 
     return JSON.stringify(settings, null, 2);
 }
@@ -725,6 +724,10 @@ function generateNotifAppsettings(config) {
                     "Protocols": "Http1"
                 }
             }
+        },
+        "Startup": {
+            "MaxRetryAttempts": 10,
+            "RetryDelaySeconds": 5
         }
     };
 
@@ -801,6 +804,10 @@ function generateCronAppsettings(config) {
                     "Protocols": "Http1"
                 }
             }
+        },
+        "Startup": {
+            "MaxRetryAttempts": 10,
+            "RetryDelaySeconds": 5
         }
     };
 
@@ -846,6 +853,10 @@ function generateWorkerAppsettings(config) {
                     "Protocols": "Http1"
                 }
             }
+        },
+        "Startup": {
+            "MaxRetryAttempts": 10,
+            "RetryDelaySeconds": 5
         }
     };
 
@@ -899,7 +910,8 @@ function generateEnvFile(config) {
     const isLegacy = isLegacyVersion(config.appVersion);
     
     let env = `# .env file for ElectroStore\n`;
-    env += `# Generated on ${new Date().toLocaleDateString('en-US')}\n`;
+
+    env += `# Generated on ${new Date().toLocaleDateString()}\n`;
     env += `# This file contains environment variables used by docker-compose.yml\n\n`;
     
     env += `# General configuration\n`;
@@ -910,12 +922,10 @@ function generateEnvFile(config) {
     env += `API_VERSION=${config.appVersion}\n`;
     env += `FRONTEND_VERSION=${config.appVersion}\n`;
     
-    if (!isLegacy) {
-        env += `NOTIF_VERSION=${config.appVersion}\n`;
-        env += `CRON_VERSION=${config.appVersion}\n`;
-        env += `WORKER_VERSION=${config.appVersion}\n`;
-        env += `KAFKA_VERSION=4.2.1\n`;
-    }
+    env += `NOTIF_VERSION=${config.appVersion}\n`;
+    env += `CRON_VERSION=${config.appVersion}\n`;
+    env += `WORKER_VERSION=${config.appVersion}\n`;
+    env += `KAFKA_VERSION=4.2.1\n`;
     
     if (config.useMariaDB) {
         env += `MARIADB_VERSION=11.7.2\n`;
@@ -928,7 +938,7 @@ function generateEnvFile(config) {
     }
     env += `\n`;
 
-    if (!isLegacy && config.enableVapid && config.vapid) {
+    if (config.enableVapid && config.vapid) {
         env += `# VAPID (Web Push Notifications)\n`;
         env += `VAPID_PUBLIC_KEY=${config.vapid.publicKey}\n`;
         env += `VAPID_PRIVATE_KEY=${config.vapid.privateKey}\n\n`;
@@ -970,7 +980,7 @@ function generateSetupScript(config) {
     const isLegacy = isLegacyVersion(config.appVersion);
     let script = `#!/bin/bash
 # ElectroStore Configuration Script
-# Generated on ${new Date().toLocaleDateString('en-US')}
+# Generated on ${new Date().toLocaleDateString()}
 
 set -e
 
@@ -1225,7 +1235,7 @@ function generateMosquittoPasswd(config) {
 function generateSetupScriptWindows(config) {
     const isLegacy = isLegacyVersion(config.appVersion);
     let script = `# ElectroStore Configuration Script (Windows)
-# Generated on ${new Date().toLocaleDateString('en-US')}
+# Generated on ${new Date().toLocaleDateString()}
 
 $ErrorActionPreference = "Stop"
 

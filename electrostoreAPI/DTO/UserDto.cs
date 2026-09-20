@@ -69,6 +69,5 @@ public record UpdateUserDto
     [Range(0, (int)UserRole.Admin, ErrorMessage = "{0} must be a valid role, between {1} and {2}.")]
     public UserRole? role_user { get; init; }
 
-    [Required(ErrorMessage = "{0} is required.")]
     public string? current_password_user { get; init; }
 }

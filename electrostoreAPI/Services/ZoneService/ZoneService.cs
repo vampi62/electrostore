@@ -5,7 +5,6 @@ using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.FileService;
 using ElectrostoreAPI.Services.SessionService;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -17,8 +16,8 @@ public class ZoneService : IZoneService
     private readonly ApplicationDbContext _context;
     private readonly ISessionService _sessionService;
     private readonly IFileService _fileService;
-    private readonly string _picturesPath = "zones";
-    private readonly string _thumbnailsPath = "zonesThumbnails";
+    private readonly string _zoneImagesPath = "zoneImages";
+    private readonly string _zoneImagesThumbnailsPath = "zoneImagesThumbnails";
 
     public ZoneService(IMapper mapper, ApplicationDbContext context, ISessionService sessionService, IFileService fileService)
     {
@@ -123,8 +122,8 @@ public class ZoneService : IZoneService
         var newZone = _mapper.Map<Zones>(zoneDto);
         _context.Zones.Add(newZone);
         await _context.SaveChangesAsync();
-        await _fileService.CreateDirectory(Path.Combine(_picturesPath, newZone.id_zone.ToString()));
-        await _fileService.CreateDirectory(Path.Combine(_thumbnailsPath, newZone.id_zone.ToString()));
+        await _fileService.CreateDirectory(Path.Combine(_zoneImagesPath, newZone.id_zone.ToString()));
+        await _fileService.CreateDirectory(Path.Combine(_zoneImagesThumbnailsPath, newZone.id_zone.ToString()));
         return _mapper.Map<ReadZoneDto>(newZone);
     }
 
@@ -170,8 +169,8 @@ public class ZoneService : IZoneService
         var zoneToDelete = await _context.Zones.FindAsync(id) ?? throw new KeyNotFoundException($"Zone with id '{id}' not found");
         _context.Zones.Remove(zoneToDelete);
         await _context.SaveChangesAsync();
-        await _fileService.DeleteDirectory(Path.Combine(_picturesPath, id.ToString()));
-        await _fileService.DeleteDirectory(Path.Combine(_thumbnailsPath, id.ToString()));
+        await _fileService.DeleteDirectory(Path.Combine(_zoneImagesPath, id.ToString()));
+        await _fileService.DeleteDirectory(Path.Combine(_zoneImagesThumbnailsPath, id.ToString()));
     }
 
     public async Task<ReadZoneDto> UploadZonePicture(int id, IFormFile file)
@@ -190,10 +189,10 @@ public class ZoneService : IZoneService
         {
             await _fileService.DeleteFile(zoneToUpdate.url_thumbnail_zone);
         }
-        var savedPicture = await _fileService.SaveFile(Path.Combine(_picturesPath, id.ToString()), file.FileName, file.ContentType, file.OpenReadStream());
+        var savedPicture = await _fileService.SaveFile(Path.Combine(_zoneImagesPath, id.ToString()), file.FileName, file.ContentType, file.OpenReadStream());
         var savedThumbnail = await _fileService.GenerateThumbnail(
             savedPicture.path,
-            Path.Combine(_thumbnailsPath, id.ToString()),
+            Path.Combine(_zoneImagesThumbnailsPath, id.ToString()),
             256, 256);
         zoneToUpdate.url_picture_zone = savedPicture.path;
         zoneToUpdate.url_thumbnail_zone = savedThumbnail.path;

@@ -11,6 +11,12 @@ public class Equipements : BaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int id_equipement { get; set; }
 
+    [MaxLength(FieldLengths.MaxUrlFileLength)]
+    public string? url_picture_equipement { get; set; }
+
+    [MaxLength(FieldLengths.MaxUrlFileLength)]
+    public string? url_thumbnail_equipement { get; set; }
+
     [MaxLength(FieldLengths.MaxNameLength)]
     public required string reference_name_equipement { get; set; }
 

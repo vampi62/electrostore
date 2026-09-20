@@ -16,6 +16,8 @@ public class EquipementService : IEquipementService
     private readonly IFileService _fileService;
     private readonly IEquipementStatusService _equipementStatusService;
     private readonly string _equipementDocumentsPath = "equipementDocuments";
+    private readonly string _equipementImagesPath = "equipementImages";
+    private readonly string _equipementImagesThumbnailsPath = "equipementImagesThumbnails";
 
     public EquipementService(IMapper mapper, ApplicationDbContext context, IFileService fileService, IEquipementStatusService equipementStatusService)
     {
@@ -158,8 +160,21 @@ public class EquipementService : IEquipementService
         }
         var equipement = _mapper.Map<Equipements>(equipementDto);
         _context.Equipements.Add(equipement);
-        await _fileService.CreateDirectory(Path.Combine(_equipementDocumentsPath, equipement.id_equipement.ToString()));
         await _context.SaveChangesAsync();
+        await _fileService.CreateDirectory(Path.Combine(_equipementDocumentsPath, equipement.id_equipement.ToString()));
+        await _fileService.CreateDirectory(Path.Combine(_equipementImagesPath, equipement.id_equipement.ToString()));
+        await _fileService.CreateDirectory(Path.Combine(_equipementImagesThumbnailsPath, equipement.id_equipement.ToString()));
+        if (equipementDto.img_file is not null)
+        {
+            var savedImg = await _fileService.SaveFile(Path.Combine(_equipementImagesPath, equipement.id_equipement.ToString()), equipementDto.img_file.FileName, equipementDto.img_file.ContentType, equipementDto.img_file.OpenReadStream());
+            var savedThumbnail = await _fileService.GenerateThumbnail(
+                savedImg.path,
+                Path.Combine(_equipementImagesThumbnailsPath, equipement.id_equipement.ToString()),
+                256, 256);
+            equipement.url_picture_equipement = savedImg.path;
+            equipement.url_thumbnail_equipement = savedThumbnail.path;
+            await _context.SaveChangesAsync();
+        }
         await _equipementStatusService.CreateEquipementStatus(new CreateEquipementStatusDto
         {
             id_equipement = equipement.id_equipement,
@@ -193,6 +208,37 @@ public class EquipementService : IEquipementService
         {
             equipementToUpdate.status_equipement = equipementDto.status_equipement.Value;
         }
+        if (equipementDto.unset_img_equipement is true)
+        {
+            if (equipementToUpdate.url_picture_equipement is not null)
+            {
+                await _fileService.DeleteFile(equipementToUpdate.url_picture_equipement);
+            }
+            if (equipementToUpdate.url_thumbnail_equipement is not null)
+            {
+                await _fileService.DeleteFile(equipementToUpdate.url_thumbnail_equipement);
+            }
+            equipementToUpdate.url_picture_equipement = null;
+            equipementToUpdate.url_thumbnail_equipement = null;
+        }
+        else if (equipementDto.img_file is not null)
+        {
+            if (equipementToUpdate.url_picture_equipement is not null)
+            {
+                await _fileService.DeleteFile(equipementToUpdate.url_picture_equipement);
+            }
+            if (equipementToUpdate.url_thumbnail_equipement is not null)
+            {
+                await _fileService.DeleteFile(equipementToUpdate.url_thumbnail_equipement);
+            }
+            var savedImg = await _fileService.SaveFile(Path.Combine(_equipementImagesPath, id.ToString()), equipementDto.img_file.FileName, equipementDto.img_file.ContentType, equipementDto.img_file.OpenReadStream());
+            var savedThumbnail = await _fileService.GenerateThumbnail(
+                savedImg.path,
+                Path.Combine(_equipementImagesThumbnailsPath, id.ToString()),
+                256, 256);
+            equipementToUpdate.url_picture_equipement = savedImg.path;
+            equipementToUpdate.url_thumbnail_equipement = savedThumbnail.path;
+        }
         await _context.SaveChangesAsync();
         if (statusChanged)
         {
@@ -210,6 +256,8 @@ public class EquipementService : IEquipementService
         var equipementToDelete = await _context.Equipements.FindAsync(id) ?? throw new KeyNotFoundException($"Equipement with id '{id}' not found");
         _context.Equipements.Remove(equipementToDelete);
         await _fileService.DeleteDirectory(Path.Combine(_equipementDocumentsPath, id.ToString()));
+        await _fileService.DeleteDirectory(Path.Combine(_equipementImagesPath, id.ToString()));
+        await _fileService.DeleteDirectory(Path.Combine(_equipementImagesThumbnailsPath, id.ToString()));
         await _context.SaveChangesAsync();
     }
 }

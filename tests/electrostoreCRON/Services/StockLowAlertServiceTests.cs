@@ -18,10 +18,7 @@ public class StockLowAlertServiceTests
 
     private StockLowAlertService CreateService(Dictionary<string, string?>? extraConfig = null)
     {
-        var values = new Dictionary<string, string?>
-        {
-            ["AppLanguage"] = "fr"
-        };
+        var values = new Dictionary<string, string?>();
         if (extraConfig is not null)
         {
             foreach (var kvp in extraConfig) values[kvp.Key] = kvp.Value;
@@ -123,7 +120,7 @@ public class StockLowAlertServiceTests
         var message = CapturePublishedMessage(published!);
         Assert.Equal("stock-low-alert", message.GetProperty("TemplateId").GetString());
         Assert.Equal("admin0@example.com", message.GetProperty("RecipientEmail").GetString());
-        Assert.Equal("fr", message.GetProperty("Language").GetString());
+        Assert.Equal("en", message.GetProperty("Language").GetString());
         var values = message.GetProperty("TemplateValues");
         Assert.Equal(1, values.GetProperty("itemCount").GetInt32());
         var items = values.GetProperty("items");
@@ -172,7 +169,7 @@ public class StockLowAlertServiceTests
 
         // Assert
         var message = CapturePublishedMessage(published!);
-        Assert.Equal("fr", message.GetProperty("Language").GetString());
+        Assert.Equal("en", message.GetProperty("Language").GetString());
         Assert.Equal("email", message.GetProperty("Types")[0].GetString());
     }
 

@@ -66,13 +66,21 @@ public class ElectrostoreCronJobTests
         dataMap.Put(ElectrostoreCronJob.KeyParams, jobParams);
         dataMap.Put(ElectrostoreCronJob.KeyLastRunAt, lastRunAt);
 
+        var jobKey = new JobKey($"job-{id}");
         var jobDetail = new Mock<IJobDetail>();
         jobDetail.SetupGet(d => d.JobDataMap).Returns(dataMap);
+        jobDetail.SetupGet(d => d.Key).Returns(jobKey);
+
+        var scheduler = new Mock<IScheduler>();
+        scheduler
+            .Setup(s => s.GetTriggersOfJob(jobKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyCollection<ITrigger>)Array.Empty<ITrigger>());
 
         var context = new Mock<IJobExecutionContext>();
         context.SetupGet(c => c.JobDetail).Returns(jobDetail.Object);
         context.SetupGet(c => c.NextFireTimeUtc).Returns(nextFireTimeUtc);
         context.SetupGet(c => c.CancellationToken).Returns(CancellationToken.None);
+        context.SetupGet(c => c.Scheduler).Returns(scheduler.Object);
         return context;
     }
 

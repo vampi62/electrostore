@@ -450,6 +450,14 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("url_picture_equipement")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("url_thumbnail_equipement")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
                     b.HasKey("id_equipement");
 
                     b.ToTable("Equipements");

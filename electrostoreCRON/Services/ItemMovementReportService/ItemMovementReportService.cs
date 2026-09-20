@@ -20,7 +20,6 @@ public class ItemMovementReportService : IItemMovementReportService
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
-    /// <summary>Libellés des ItemHistoryType par langue, l'anglais servant de repli.</summary>
     private static readonly Dictionary<string, Dictionary<string, string>> TypeLabels = new(StringComparer.OrdinalIgnoreCase)
     {
         ["en"] = new(StringComparer.OrdinalIgnoreCase)
@@ -63,7 +62,7 @@ public class ItemMovementReportService : IItemMovementReportService
     public async Task SendReportAsync(string? paramsJson, DateTime? lastRunAt, CancellationToken ct = default)
     {
         var parameters = ParseParams(paramsJson);
-        var language   = parameters.language ?? _configuration["AppLanguage"] ?? "fr";
+        var language   = parameters.language ?? _configuration["AppLanguage"] ?? "en";
         var days       = parameters.days is > 0 ? parameters.days.Value : DefaultPeriodDays;
         List<string> types = parameters.types is { Count: > 0 } ? parameters.types : ["email"];
 
@@ -191,18 +190,18 @@ public class ItemMovementReportService : IItemMovementReportService
             ? parsed.ToUniversalTime().ToString(format, CultureInfo.InvariantCulture)
             : isoDate;
 
-    // ---- Modèles ----------------------------------------------------------------
+    // ---- Models -------------------------------------------------------------------
 
-    /// <summary>Contenu attendu de <c>params_cronjob</c> pour l'action WeeklyItemMovementReport.</summary>
-    /// <param name="days">Profondeur de la période, en jours (7 par défaut).</param>
-    /// <param name="language">Langue des templates ("fr" / "en") ; à défaut, AppLanguage.</param>
-    /// <param name="types">Canaux de notification ("email", "webpush") ; "email" par défaut.</param>
-    /// <param name="send_when_empty">Envoyer le rapport même si aucun mouvement n'a eu lieu.</param>
+    /// <summary>Expected content of <c>params_cronjob</c> for the WeeklyItemMovementReport action.</summary>
+    /// <param name="days">Depth of the period, in days (7 by default).</param>
+    /// <param name="language">Template language ("fr" / "en"); defaults to AppLanguage.</param>
+    /// <param name="types">Notification channels ("email", "webpush"); defaults to "email".</param>
+    /// <param name="send_when_empty">Send the report even if no movement occurred.</param>
     /// <param name="use_last_run">
-    /// Utiliser la date du dernier lancement du cron job (colonne <c>last_run_at</c>) comme début
-    /// de période plutôt que <c>days</c>. Permet à plusieurs cron jobs de cette même action de
-    /// couvrir chacun leur propre intervalle (basé sur leur propre planification) plutôt qu'une
-    /// fenêtre fixe. Sans exécution précédente (premier lancement), <c>days</c> sert de repli.
+    /// Use the cron job's last run date (<c>last_run_at</c> column) as the start of the period
+    /// rather than <c>days</c>. Allows several cron jobs of this same action to each cover their
+    /// own interval (based on their own schedule) rather than a fixed window. Without a previous
+    /// run (first launch), <c>days</c> is used as a fallback.
     /// </param>
     private sealed record WeeklyReportParams(
         int? days = null,

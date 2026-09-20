@@ -17,8 +17,8 @@ public class ItemService : IItemService
     private readonly IFileService _fileService;
     private readonly IItemHistoryService _itemHistoryService;
     private readonly string _itemDocumentsPath = "itemDocuments";
-    private readonly string _imagesPath = "images";
-    private readonly string _imagesThumbnailsPath = "imagesThumbnails";
+    private readonly string _itemImagesPath = "itemImages";
+    private readonly string _itemImagesThumbnailsPath = "itemImagesThumbnails";
 
     private static readonly ItemHistoryType[] QuantityChangeHistoryTypes =
     [
@@ -169,15 +169,15 @@ public class ItemService : IItemService
         var item = _mapper.Map<Items>(itemDto);
         _context.Items.Add(item);
         await _context.SaveChangesAsync();
-        await _fileService.CreateDirectory(Path.Combine(_imagesPath, item.id_item.ToString()));
-        await _fileService.CreateDirectory(Path.Combine(_imagesThumbnailsPath, item.id_item.ToString()));
+        await _fileService.CreateDirectory(Path.Combine(_itemImagesPath, item.id_item.ToString()));
+        await _fileService.CreateDirectory(Path.Combine(_itemImagesThumbnailsPath, item.id_item.ToString()));
         await _fileService.CreateDirectory(Path.Combine(_itemDocumentsPath, item.id_item.ToString()));
         if (itemDto.img_file is not null)
         {
-            var savedImg = await _fileService.SaveFile(Path.Combine(_imagesPath, item.id_item.ToString()), itemDto.img_file.FileName, itemDto.img_file.ContentType, itemDto.img_file.OpenReadStream());
+            var savedImg = await _fileService.SaveFile(Path.Combine(_itemImagesPath, item.id_item.ToString()), itemDto.img_file.FileName, itemDto.img_file.ContentType, itemDto.img_file.OpenReadStream());
             var savedThumbnail = await _fileService.GenerateThumbnail(
                 savedImg.path,
-                Path.Combine(_imagesThumbnailsPath, item.id_item.ToString()),
+                Path.Combine(_itemImagesThumbnailsPath, item.id_item.ToString()),
                 256, 256);
             item.url_picture_item = savedImg.path;
             item.url_thumbnail_item = savedThumbnail.path;
@@ -234,10 +234,10 @@ public class ItemService : IItemService
             {
                 await _fileService.DeleteFile(itemToUpdate.url_thumbnail_item);
             }
-            var savedImg = await _fileService.SaveFile(Path.Combine(_imagesPath, id.ToString()), itemDto.img_file.FileName, itemDto.img_file.ContentType, itemDto.img_file.OpenReadStream());
+            var savedImg = await _fileService.SaveFile(Path.Combine(_itemImagesPath, id.ToString()), itemDto.img_file.FileName, itemDto.img_file.ContentType, itemDto.img_file.OpenReadStream());
             var savedThumbnail = await _fileService.GenerateThumbnail(
                 savedImg.path,
-                Path.Combine(_imagesThumbnailsPath, id.ToString()),
+                Path.Combine(_itemImagesThumbnailsPath, id.ToString()),
                 256, 256);
             itemToUpdate.url_picture_item = savedImg.path;
             itemToUpdate.url_thumbnail_item = savedThumbnail.path;
@@ -252,8 +252,8 @@ public class ItemService : IItemService
         var itemToDelete = await _context.Items.FindAsync(id) ?? throw new KeyNotFoundException($"Item with id '{id}' not found");
         await _itemHistoryService.LogHistory(id, null, ItemHistoryType.ItemDeleted);
         _context.Items.Remove(itemToDelete);
-        await _fileService.DeleteDirectory(Path.Combine(_imagesPath, id.ToString()));
-        await _fileService.DeleteDirectory(Path.Combine(_imagesThumbnailsPath, id.ToString()));
+        await _fileService.DeleteDirectory(Path.Combine(_itemImagesPath, id.ToString()));
+        await _fileService.DeleteDirectory(Path.Combine(_itemImagesThumbnailsPath, id.ToString()));
         await _fileService.DeleteDirectory(Path.Combine(_itemDocumentsPath, id.ToString()));
         await _context.SaveChangesAsync();
     }

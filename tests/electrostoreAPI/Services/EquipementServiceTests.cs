@@ -90,7 +90,7 @@ namespace ElectrostoreAPI.Tests.Services
 
             Assert.Equal("new-eq", result.reference_name_equipement);
             Assert.Equal(1, await context.Equipements.CountAsync());
-            _fileService.Verify(f => f.CreateDirectory(It.IsAny<string>()), Times.Once);
+            _fileService.Verify(f => f.CreateDirectory(It.IsAny<string>()), Times.Exactly(3));
             _equipementStatusService.Verify(s => s.CreateEquipementStatus(It.Is<CreateEquipementStatusDto>(
                 d => d.id_equipement == result.id_equipement && d.status_equipement == EquipementStatus.Operational)), Times.Once);
         }
@@ -184,7 +184,7 @@ namespace ElectrostoreAPI.Tests.Services
             await service.DeleteEquipement(equipement.id_equipement);
 
             Assert.Equal(0, await context.Equipements.CountAsync());
-            _fileService.Verify(f => f.DeleteDirectory(It.IsAny<string>()), Times.Once);
+            _fileService.Verify(f => f.DeleteDirectory(It.IsAny<string>()), Times.Exactly(3));
         }
 
         [Fact]

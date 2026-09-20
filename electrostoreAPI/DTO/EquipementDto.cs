@@ -8,6 +8,8 @@ namespace ElectrostoreAPI.Dto;
 public record ReadEquipementDto
 {
     public int id_equipement { get; init; }
+    public string? url_picture_equipement { get; init; }
+    public string? url_thumbnail_equipement { get; init; }
     public required string reference_name_equipement { get; init; }
     public required string friendly_name_equipement { get; init; }
     public string? description_equipement { get; init; }
@@ -46,6 +48,11 @@ public record CreateEquipementDto
     [Required(ErrorMessage = "{0} is required.")]
     [Range(0, (int)EquipementStatus.Retired, ErrorMessage = "{0} must be a valid EquipementStatus value, between {1} and {2}.")]
     public required EquipementStatus status_equipement { get; init; }
+
+    [FileSize(nameof(FieldLengths.MaxImageSizeMB), ErrorMessage = "{0} cannot exceed {1} MB in size.")]
+    [FileType(nameof(FieldLengths.AllowedImageMimeTypes),
+        ErrorMessage = "{0} has an invalid file type, allowed types are: [{1}], and extensions are: [{2}].")]
+    public IFormFile? img_file { get; init; }
 }
 public record UpdateEquipementDto
 {
@@ -62,4 +69,11 @@ public record UpdateEquipementDto
 
     [Range(0, (int)EquipementStatus.Retired, ErrorMessage = "{0} must be a valid EquipementStatus value, between {1} and {2}.")]
     public EquipementStatus? status_equipement { get; init; }
+
+    public bool? unset_img_equipement { get; init; }
+
+    [FileSize(nameof(FieldLengths.MaxImageSizeMB), ErrorMessage = "{0} cannot exceed {1} MB in size.")]
+    [FileType(nameof(FieldLengths.AllowedImageMimeTypes),
+        ErrorMessage = "{0} has an invalid file type, allowed types are: [{1}], and extensions are: [{2}].")]
+    public IFormFile? img_file { get; init; }
 }
