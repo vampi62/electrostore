@@ -13,8 +13,6 @@
 	"ServiceDb": "Database",
 	"ServiceMqtt": "MQTT",
 	"ServiceKafka": "Kafka",
-	"ServiceAi": "AI",
-	"ServiceAiTrain": "AI Training",
 	"ServiceNotif": "Notifications",
 	"ServiceCron": "Scheduler (CRON)",
 	"ServiceWorker": "Worker",

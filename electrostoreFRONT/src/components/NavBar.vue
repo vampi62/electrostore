@@ -2,10 +2,6 @@
 	<nav class="flex justify-between p-5 bg-gray-800 border-b-2 border-blue-400 fixed w-full top-0 h-16">
 		<div class="flex items-center space-x-4">
 			<RouterLink to="/" class="text-white hover:text-blue-400">{{ $t('common.VAppHome') }}</RouterLink>
-			<button @click="loadPageFind()"
-				class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded cursor-pointer inline-block">
-				{{ $t('common.VAppFind') }}
-			</button>
 		</div>
 		<div v-if="configsStore.getConfigByKey('demo_mode') === true" class="text-red-500 text-center">
 			{{ $t('common.VAppDemoMode') }}
@@ -156,10 +152,6 @@ export default {
 	props: {
 		listNav: {
 			type: Array,
-			required: true,
-		},
-		loadPageFind: {
-			type: Function,
 			required: true,
 		},
 	},

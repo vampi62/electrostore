@@ -8,16 +8,14 @@ const router = createRouter({
 	routes: [
 		{ path: "/", component: () => import("@/views/HomeView.vue") },
 		{ path: "/auth/callback", component: () => import("@/views/CallbackView.vue") },
-		{ path: "/cameras", component: () => import("@/views/CamerasView.vue") },
-		{ path: "/cameras/:id", component: () => import("@/views/CameraView.vue") },
 		{ path: "/cronjobs", component: () => import("@/views/CronJobsView.vue") },
 		{ path: "/cronjobs/:id", component: () => import("@/views/CronJobView.vue") },
+		{ path: "/equipements", component: () => import("@/views/EquipementsView.vue") },
+		{ path: "/equipements/:id", component: () => import("@/views/EquipementView.vue") },
 		{ path: "/commands", component: () => import("@/views/CommandsView.vue") },
 		{ path: "/commands/:id", component: () => import("@/views/CommandView.vue") },
 		{ path: "/forgot-password", component: () => import("@/views/ForgotPasswordView.vue") },
 		{ path: "/health", component: () => import("@/views/HealthView.vue") },
-		{ path: "/ai", component: () => import("@/views/AIsView.vue") },
-		{ path: "/ai/:id", component: () => import("@/views/AIView.vue") },
 		{ path: "/inventory", component: () => import("@/views/InventoryView.vue") },
 		{ path: "/inventory/:id", component: () => import("@/views/ItemView.vue") },
 		{ path: "/login", component: () => import("@/views/LoginView.vue") },
@@ -34,6 +32,8 @@ const router = createRouter({
 		{ path: "/tags/:id", component: () => import("@/views/TagView.vue") },
 		{ path: "/users", component: () => import("@/views/UsersView.vue") },
 		{ path: "/users/:id", component: () => import("@/views/UserView.vue") },
+		{ path: "/zones", component: () => import("@/views/ZonesView.vue") },
+		{ path: "/zones/:id", component: () => import("@/views/ZoneView.vue") },
 	],
 });
 
