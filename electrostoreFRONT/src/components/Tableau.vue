@@ -28,7 +28,7 @@
 			</thead>
 			<tbody :class="mergedCss.tbody">
 				<tr v-for="row in sortedData" :key="row[meta.key]" v-memo="[row, storeEdition[row[meta.key]], storeReady[row[meta.key]]]"
-					:class="[mergedCss.tr, rowStatusClass(row)]"
+					:class="trClass(row)"
 					@click="meta?.path && $router.push(meta.path + row[meta.key])">
 					<TableauRow :labels="labelsShown" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" :store-edition="storeEdition[row[meta.key]]" :store-ready="storeReady[row[meta.key]]" />
 				</tr>
@@ -314,6 +314,17 @@ export default {
 				return "bg-green-100 text-green-800 hover:bg-green-200";
 			}
 			return "";
+		},
+		trClass(row) {
+			const statusClass = this.rowStatusClass(row);
+			if (!statusClass) {
+				return this.mergedCss.tr;
+			}
+			const baseWithoutBackground = this.mergedCss.tr
+				.split(/\s+/)
+				.filter((cls) => cls && !cls.includes("bg-"))
+				.join(" ");
+			return `${baseWithoutBackground} ${statusClass}`.trim();
 		},
 		extractReadyFields(readyEntry) {
 			// storeReady entries carry bookkeeping fields (status, isFormData, pushChange) alongside
