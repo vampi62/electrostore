@@ -9,9 +9,7 @@
 			</div>
 			<div v-for="led in ledEdition" :key="led.id_led" class="absolute z-[20] w-[10px] h-[10px] bg-yellow-300 rounded-full -translate-x-1/2 -translate-y-1/2"
 				:ref="'LED' + led.id_led"
-				:style="{
-					left: (led.x_led * gridSize.cellSizeX) + gridSize.cellSizeX / 2 + 'px',
-					top: (((storeData.ylength_store - 1) - led.y_led) * gridSize.cellSizeY) + gridSize.cellSizeY / 2 + 'px'}"
+				:style="ledPixelStyle(led)"
 				:class="{ 'hidden': led?.status == 'delete' }"
 				@mousedown.left="startDragging(led, 'led')"
 				@contextmenu.prevent="(event) => selectLed(led, event)"
@@ -19,9 +17,7 @@
 			</div>
 			<template v-if="showLedId">
 				<div v-for="led in ledEdition" :key="led.id_led" class="absolute z-[20] select-none"
-					:style="{
-						left: (led.x_led * gridSize.cellSizeX) + gridSize.cellSizeX / 2 + 10 + 'px',
-						top: (((storeData.ylength_store - 1) - led.y_led) * gridSize.cellSizeY) + gridSize.cellSizeY / 2 + 8 + 'px'}"
+					:style="ledPixelStyle(led, true)"
 					:class="{ 'hidden': led?.status == 'delete' }">
 					{{ led.mqtt_id_led }}
 				</div>
@@ -133,6 +129,7 @@
 <script>
 import { inject } from "vue";
 import { useI18n } from "vue-i18n";
+import { StorePositionMode, LedBorderSide } from "@/enums";
 export default {
 	name: "Tableau",
 	mounted() {
@@ -167,13 +164,21 @@ export default {
 	},
 	methods: {
 		addLed() {
-			this.ledEdition[this.getLastLedId() + 1] = {
-				id_led: this.getLastLedId() + 1,
-				x_led: this.mouseClick.X,
-				y_led: this.mouseClick.Y,
+			const newId = this.getLastLedId() + 1;
+			const newLed = {
+				id_led: newId,
 				mqtt_id_led: this.getLastLedMqttId() + 1,
 				status: "new",
 			};
+			if (this.isBorderMode) {
+				const { side, index } = this.nearestSide(this.mouseClick.X, this.mouseClick.Y);
+				newLed.x_led = index;
+				newLed.y_led = side;
+			} else {
+				newLed.x_led = this.mouseClick.X;
+				newLed.y_led = this.mouseClick.Y;
+			}
+			this.ledEdition[newId] = newLed;
 			this.showMenu = false;
 		},
 		addBox() {
@@ -216,6 +221,51 @@ export default {
 		},
 		isNumber(value) {
 			return typeof value === "number" && !Number.isNaN(value);
+		},
+		nearestSide(x, y, currentSide = null) {
+			const distances = [
+				{ side: LedBorderSide.Left, dist: x, index: y },
+				{ side: LedBorderSide.Right, dist: (this.storeData.xlength_store - 1) - x, index: y },
+				{ side: LedBorderSide.Bottom, dist: y, index: x },
+				{ side: LedBorderSide.Top, dist: (this.storeData.ylength_store - 1) - y, index: x },
+			];
+			const minDist = Math.min(...distances.map((d) => d.dist));
+			// on a tie (corner cell), keep the side the LED is already on instead of
+			// always resolving to the same side, otherwise the first/last index of
+			// the Top/Bottom sides can never be reached while dragging
+			if (currentSide !== null) {
+				const current = distances.find((d) => d.side === currentSide);
+				if (current && current.dist === minDist) {
+					return { side: current.side, index: current.index };
+				}
+			}
+			distances.sort((a, b) => a.dist - b.dist);
+			return { side: distances[0].side, index: distances[0].index };
+		},
+		ledPixelStyle(led, isLabel = false) {
+			const cellX = this.gridSize.cellSizeX;
+			const cellY = this.gridSize.cellSizeY;
+			const offsetLabelX = isLabel ? 10 : 0;
+			const offsetLabelY = isLabel ? 8 : 0;
+			const borderOffset = 10;
+			if (this.isBorderMode) {
+				const side = led.y_led;
+				const index = led.x_led;
+				if (side === LedBorderSide.Left) {
+					return { left: (-borderOffset + offsetLabelX) + "px", top: ((((this.storeData.ylength_store - 1) - index) * cellY) + (cellY / 2) + offsetLabelY) + "px" };
+				} else if (side === LedBorderSide.Right) {
+					return { left: ((this.storeData.xlength_store * cellX) + borderOffset + offsetLabelX) + "px", top: ((((this.storeData.ylength_store - 1) - index) * cellY) + (cellY / 2) + offsetLabelY) + "px" };
+				} else if (side === LedBorderSide.Top) {
+					return { left: ((index * cellX) + (cellX / 2) + offsetLabelX) + "px", top: (-borderOffset + offsetLabelY) + "px" };
+				} else if (side === LedBorderSide.Bottom) {
+					return { left: ((index * cellX) + (cellX / 2) + offsetLabelX) + "px", top: ((this.storeData.ylength_store * cellY) + borderOffset + offsetLabelY) + "px" };
+				}
+				return { left: "0px", top: "0px" };
+			}
+			return {
+				left: ((led.x_led * cellX) + (cellX / 2) + offsetLabelX) + "px",
+				top: ((((this.storeData.ylength_store - 1) - led.y_led) * cellY) + (cellY / 2) + offsetLabelY) + "px",
+			};
 		},
 		showMenuModal(event, isNewElement = false) {
 			if (isNewElement && !this.canEdit) {
@@ -410,8 +460,14 @@ export default {
 				return;
 			}
 			if (this.selectedElement.type === "led") {
-				this.selectedElement.key.x_led = x;
-				this.selectedElement.key.y_led = y;
+				if (this.isBorderMode) {
+					const { side, index } = this.nearestSide(x, y, this.selectedElement.key.y_led);
+					this.selectedElement.key.y_led = side;
+					this.selectedElement.key.x_led = index;
+				} else {
+					this.selectedElement.key.x_led = x;
+					this.selectedElement.key.y_led = y;
+				}
 			} else if (this.selectedElement.type === "box") {
 				let dx = x - this.mouseClick.X;
 				let dy = y - this.mouseClick.Y;
@@ -478,10 +534,17 @@ export default {
 		checkOutOfGrid() {
 			let errorLed = false;
 			for (const led of Object.keys(this.ledEdition)) {
-				if ((this.ledEdition[led].x_led >= this.storeData.xlength_store) || (this.ledEdition[led].y_led >= this.storeData.ylength_store)) {
-					if (this.ledEdition[led]?.status !== "delete") {
+				const ledData = this.ledEdition[led];
+				if (ledData?.status === "delete") {
+					continue;
+				}
+				if (this.isBorderMode) {
+					const maxPosition = (ledData.y_led === LedBorderSide.Left || ledData.y_led === LedBorderSide.Right) ? this.storeData.ylength_store : this.storeData.xlength_store;
+					if (ledData.x_led >= maxPosition) {
 						errorLed = true;
 					}
+				} else if ((ledData.x_led >= this.storeData.xlength_store) || (ledData.y_led >= this.storeData.ylength_store)) {
+					errorLed = true;
 				}
 			}
 			if (errorLed) {
@@ -513,6 +576,9 @@ export default {
 					height: ${this.storeData.ylength_store * this.gridSize.cellSizeY}px;
 					width: ${this.storeData.xlength_store * this.gridSize.cellSizeX}px;
 					`;
+		},
+		isBorderMode() {
+			return this.storeData.position_mode_store === StorePositionMode.Border;
 		},
 	},
 	setup() {

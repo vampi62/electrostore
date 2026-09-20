@@ -17,8 +17,6 @@ const services = computed(() => [
 	{ key: "db_connected", label: t("health.ServiceDb"), type: "bool" },
 	{ key: "mqtt_connected", label: t("health.ServiceMqtt"), type: "bool" },
 	{ key: "kafka_connected", label: t("health.ServiceKafka"), type: "bool" },
-	{ key: "ai_status", label: t("health.ServiceAi"), type: "string" },
-	{ key: "ai_training_in_progress", label: t("health.ServiceAiTrain"), type: "int" },
 	{ key: "notif_status", label: t("health.ServiceNotif"), type: "string" },
 	{ key: "cron_status", label: t("health.ServiceCron"), type: "string" },
 	{ key: "worker_status", label: t("health.ServiceWorker"), type: "string" },

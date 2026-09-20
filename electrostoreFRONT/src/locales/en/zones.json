@@ -1,0 +1,11 @@
+{
+	"Title": "Zones",
+	"Add": "Create Zone",
+	"FilterName": "Name",
+	"Name": "Name",
+	"Description": "Description",
+	"XLength": "Width",
+	"YLength": "Height",
+	"Img": "Image",
+	"StoresCount": "Stores"
+}

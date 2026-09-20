@@ -49,7 +49,7 @@ function request(method) {
 			} else if (response.status === 403 && authStore.user) {
 				throw new Error("Access forbidden.");
 			}
-			const error = data?.errors || response.statusText;
+			const error = data?.details || response.statusText;
 			throw new Error(error);
 		}
 		return data;

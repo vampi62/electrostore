@@ -44,21 +44,16 @@ async function fetchAllData() {
 			return;
 		}
 		itemsStore.getItemTagByInterval(itemId.value, 100, 0, ["tag"]);
-		itemsStore.getImageByInterval(itemId.value, 100, 0);
 		itemsStore.loadToEdition(itemId.value);
 	}
 }
 onMounted(() => {
 	fetchAllData();
-	window.addEventListener("click", handleClickOutside);
 });
 onBeforeUnmount(() => {
 	itemsStore.clearEdition(itemId.value);
-	window.removeEventListener("click", handleClickOutside);
+	resetImageSelection();
 });
-const handleClickOutside = () => {
-	selectedImageId.value = null;
-};
 
 const toggleBoxLed = async(boxId) => {
 	let storeId = itemsStore.itemBoxs[itemId.value][boxId]["box"].id_store;
@@ -87,23 +82,41 @@ const itemSave = async() => {
 			itemsStore.setLoadingEdition(itemId.value, false);
 			return;
 		}
+		const edition = itemsStore.itemEdition[itemId.value];
+		const formData = new FormData();
+		formData.append("reference_name_item", edition.reference_name_item);
+		formData.append("friendly_name_item", edition.friendly_name_item);
+		if (edition.description_item) {
+			formData.append("description_item", edition.description_item);
+		}
+		formData.append("threshold_min_item", edition.threshold_min_item);
+		if (edition.img_file) {
+			formData.append("img_file", edition.img_file);
+		}
+		const imageChanged = !!edition.img_file || !!edition.unset_img_item;
 		if (itemId.value === "new") {
-			const newId = await itemsStore.createItem({ ...itemsStore.itemEdition[itemId.value] });
+			const newId = await itemsStore.createItem(formData);
 			itemsStore.loadToEdition(newId);
-			if (itemsStore.items[newId].id_img) {
-				itemsStore.showImageById(itemsStore.items[newId].id_item, itemsStore.items[newId].id_img);
+			if (imageChanged) {
+				delete itemsStore.thumbnailsURL[newId];
+				itemsStore.showThumbnailById(newId);
 			}
 			addNotification({ message: t("item.Created"), type: "success" });
 			itemId.value = String(newId);
 			router.push("/inventory/" + itemId.value);
 		} else {
-			await itemsStore.updateItem(itemId.value, { ...itemsStore.itemEdition[itemId.value] });
+			if (edition.unset_img_item) {
+				formData.append("unset_img_item", "true");
+			}
+			await itemsStore.updateItem(itemId.value, formData);
 			itemsStore.loadToEdition(itemId.value);
-			if (itemsStore.items[itemId.value].id_img) {
-				itemsStore.showImageById(itemsStore.items[itemId.value].id_item, itemsStore.items[itemId.value].id_img);
+			if (imageChanged) {
+				delete itemsStore.thumbnailsURL[itemId.value];
+				itemsStore.showThumbnailById(itemId.value);
 			}
 			addNotification({ message: t("item.Updated"), type: "success" });
 		}
+		resetImageSelection();
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	} finally {
@@ -181,7 +194,7 @@ const documentEdit = async(row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		await itemsStore.updateDocument(itemId.value, row.id_item_document, row);
-		delete itemsStore.documentEdition[row.id_item_document];
+		delete itemsStore.documentEdition[itemId.value][row.id_item_document];
 		addNotification({ message: t("item.DocumentUpdated"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -211,66 +224,40 @@ const documentView = async(fileContent) => {
 };
 
 // image
-const imageSelectModalShow = ref(false);
-const imageAddModalShow = ref(false);
-const imageDeleteModalShow = ref(false);
-const selectedImageId = ref(null);
-const imageModalData = ref({ id_img: null, name_img: "", description_img: "undefined", image: null });
-const imageSelectOpenModal = () => {
-	if (itemId.value === "new") {
+const imageInputRef = ref(null);
+const localImagePreviewUrl = ref(null);
+const triggerImageInput = () => {
+	if (itemsStore.itemEdition[itemId.value]?.loading) {
 		return;
 	}
-	if (Object.keys(itemsStore.images[itemId.value]).length === 0) {
-		addNotification({ message: t("item.ImageEmpty"), type: "error" });
+	imageInputRef.value?.click();
+};
+const onImageFileChange = (event) => {
+	const file = event.target.files?.[0];
+	event.target.value = "";
+	if (!file) {
 		return;
 	}
-	if (itemsStore.images[itemId.value]) {
-		imageSelectModalShow.value = true;
+	if (localImagePreviewUrl.value) {
+		URL.revokeObjectURL(localImagePreviewUrl.value);
 	}
+	localImagePreviewUrl.value = URL.createObjectURL(file);
+	itemsStore.itemEdition[itemId.value].img_file = file;
+	itemsStore.itemEdition[itemId.value].unset_img_item = false;
 };
-const imageDeleteOpenModal = (doc) => {
-	imageModalData.value = doc;
-	imageDeleteModalShow.value = true;
+const removeImage = () => {
+	if (localImagePreviewUrl.value) {
+		URL.revokeObjectURL(localImagePreviewUrl.value);
+		localImagePreviewUrl.value = null;
+	}
+	itemsStore.itemEdition[itemId.value].img_file = null;
+	itemsStore.itemEdition[itemId.value].unset_img_item = true;
 };
-const imageAdd = async(files) => {
-	for (const file of files) {
-		imageModalData.value = { name_img: file.name, description_img: "undefined", image: file.document };
-		try {
-			schemaAddImage.validateSync(imageModalData.value, { abortEarly: false });
-			const formData = new FormData();
-			formData.append("name_img", imageModalData.value.name_img);
-			formData.append("description_img", imageModalData.value.description_img);
-			formData.append("image", imageModalData.value.image);
-			await itemsStore.createImage(itemId.value, formData);
-			addNotification({ message: t("item.ImageAdded"), type: "success" });
-		} catch (e) {
-			// logs all errors for debugging
-			for (const err of e.inner || []) {
-				console.error("Validation error:", err.path, err.message);
-			}
-			addNotification({ message: e, type: "error" });
-		}
+const resetImageSelection = () => {
+	if (localImagePreviewUrl.value) {
+		URL.revokeObjectURL(localImagePreviewUrl.value);
 	}
-	imageAddModalShow.value = false;
-};
-const imageDelete = async() => {
-	try {
-		await itemsStore.deleteImage(itemId.value, imageModalData.value.id_img);
-		addNotification({ message: t("item.ImageDeleted"), type: "success" });
-	} catch (e) {
-		addNotification({ message: e, type: "error" });
-	}
-	imageDeleteModalShow.value = false;
-};
-const imageDownload = async(imageContent) => {
-	if (!itemsStore.imagesURL[imageContent.id_img]) {
-		await itemsStore.showImageById(itemId.value, imageContent.id_img);
-	}
-	if (!itemsStore.imagesURL[imageContent.id_img]) {
-		addNotification({ message: t("item.ImageDownloadError"), type: "error" });
-		return;
-	}
-	downloadFile(itemsStore.imagesURL[imageContent.id_img], { keyName: imageContent.name_img, keyType: "image/png" });
+	localImagePreviewUrl.value = null;
 };
 
 // tag
@@ -330,8 +317,9 @@ const createSchema = () => {
 		.min(0, t("item.SeuilMinMin"))
 		.typeError(t("item.SeuilMinType"))
 		.required(t("item.SeuilMinRequired"));
-	shape.id_img = Yup.string()
-		.nullable();
+	shape.img_file = Yup.mixed()
+		.nullable()
+		.test("fileSize", t("item.ImageSize") + " " + configsStore.getConfigByKey("max_size_image_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_image_in_mb"))) * 1024 * 1024);
 	return Yup.object().shape(shape);
 };
 
@@ -349,22 +337,13 @@ const schemaEditDocument = Yup.object().shape({
 		.required(t("item.DocumentNameRequired")),
 });
 
-const schemaAddImage = Yup.object().shape({
-	name_img: Yup.string()
-		.max(configsStore.getConfigByKey("max_length_name"), t("item.ImageNameMaxLength", { count: configsStore.getConfigByKey("max_length_name") }))
-		.required(t("item.ImageNameRequired")),
-	image: Yup.mixed()
-		.required(t("item.ImageRequired"))
-		.test("fileSize", t("item.ImageSize") + " " + configsStore.getConfigByKey("max_size_image_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_image_in_mb"))) * 1024 * 1024),
-});
-
 const labelForm = [
 	{ key: "reference_name_item", label: "item.Name", type: "text" },
 	{ key: "friendly_name_item", label: "item.FriendlyName", type: "text" },
 	{ key: "description_item", label: "item.Description", type: "textarea" },
 	{ key: "threshold_min_item", label: "item.SeuilMin", type: "number" },
 	{ key: "quantity", label: "item.TotalQuantity", type: "computed", value: getTotalQuantity },
-	{ key: "id_img", label: "item.Image", type: "custom" },
+	{ key: "img_file", label: "item.Image", type: "custom" },
 ];
 const labelTableauModalTag = ref([
 	{ label: "item.TagName", sortable: true, key: "name_tag", valueKey: "name_tag", type: "text" },
@@ -395,7 +374,7 @@ const labelTableauDocument = ref([
 			icon: "fa-solid fa-edit",
 			showCondition: "!edition?.id_item_document",
 			action: (row) => {
-				itemsStore.documentEdition[row.id_item_document] = { ...row };
+				itemsStore.documentEdition[itemId.value][row.id_item_document] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -404,7 +383,7 @@ const labelTableauDocument = ref([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_item_document",
 			action: (row) => {
-				delete itemsStore.documentEdition[row.id_item_document];
+				delete itemsStore.documentEdition[itemId.value][row.id_item_document];
 			},
 			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
 		},
@@ -412,7 +391,7 @@ const labelTableauDocument = ref([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_item_document",
-			action: (row) => documentEdit(itemsStore.documentEdition[row.id_item_document]),
+			action: (row) => documentEdit(itemsStore.documentEdition[itemId.value][row.id_item_document]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -526,22 +505,29 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 	<div v-if="itemsStore.items[itemId] || itemId == 'new'" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="itemsStore.itemEdition[itemId]">
-				<template #id_img>
-					<div class="flex justify-center items-center"
-						:class="{ 'cursor-pointer': !itemsStore.itemEdition[itemId]?.loading && itemId != 'new', 'cursor-not-allowed': itemId == 'new' }"
-						@click="imageSelectOpenModal">
-						<template v-if="itemsStore.itemEdition[itemId].id_img">
-							<img v-if="itemsStore.thumbnailsURL[itemsStore.itemEdition[itemId].id_img]"
-								:src="itemsStore.thumbnailsURL[itemsStore.itemEdition[itemId].id_img]" alt="Main"
+				<template #img_file>
+					<div class="flex flex-col items-center gap-2">
+						<div class="flex justify-center items-center cursor-pointer"
+							:class="{ 'opacity-50 cursor-not-allowed': itemsStore.itemEdition[itemId]?.loading }"
+							@click="triggerImageInput">
+							<img v-if="localImagePreviewUrl" :src="localImagePreviewUrl" alt="Preview"
 								class="w-48 h-48 object-cover rounded" />
-							<span v-else class="w-48 h-48 object-cover rounded">
-								{{ $t('item.VInventoryLoading') }}
+							<img v-else-if="!itemsStore.itemEdition[itemId]?.unset_img_item && itemsStore.itemEdition[itemId]?.url_thumbnail_item && itemsStore.thumbnailsURL[itemId]"
+								:src="itemsStore.thumbnailsURL[itemId]" alt="Main"
+								class="w-48 h-48 object-cover rounded" />
+							<span v-else-if="!itemsStore.itemEdition[itemId]?.unset_img_item && itemsStore.itemEdition[itemId]?.url_thumbnail_item"
+								class="w-48 h-48 object-cover rounded flex items-center justify-center">
+								{{ $t('item.Loading') }}
 							</span>
-						</template>
-						<template v-else>
-							<img src="../assets/nopicture.webp" alt="Not Found"
+							<img v-else src="../assets/nopicture.webp" alt="Not Found"
 								class="w-48 h-48 object-cover rounded" />
-						</template>
+						</div>
+						<button v-if="localImagePreviewUrl || (!itemsStore.itemEdition[itemId]?.unset_img_item && itemsStore.itemEdition[itemId]?.url_thumbnail_item)"
+							type="button" @click="removeImage"
+							class="text-sm text-red-500 hover:text-red-600">
+							{{ $t('item.ImageRemove') }}
+						</button>
+						<input ref="imageInputRef" type="file" accept="image/*" class="hidden" @change="onImageFileChange" />
 					</div>
 				</template>
 			</FormContainer>
@@ -584,43 +570,6 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getDocumentByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
-			</template>
-		</CollapsibleSection>
-		<CollapsibleSection title="item.Images"
-			:total-count="Number(itemsStore.imagesTotalCount[itemId] || 0)" :permission="itemId !=='new'">
-			<template #append-row>
-				<button type="button" @click="imageAddModalShow = true"
-					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
-					{{ $t('item.AddImage') }}
-				</button>
-				<div class="flex flex-wrap relative">
-					<template v-if="itemsStore.images[itemId]">
-						<div v-for="image in itemsStore.images[itemId]" :key="image.id_img" @click.stop
-							class="w-48 h-48 bg-gray-200 rounded m-2 flex items-center relative">
-							<template v-if="itemsStore.thumbnailsURL[image.id_img]">
-								<img :src="itemsStore.thumbnailsURL[image.id_img]"
-									class="w-48 h-48 object-cover rounded" :alt="image.name_img"
-									@click="selectedImageId === image.id_img ? selectedImageId = null : selectedImageId = image.id_img" />
-							</template>
-							<template v-else>
-								{{ $t('item.ImageLoading') }}
-							</template>
-							<div v-if="selectedImageId === image.id_img"
-								class="absolute inset-0 flex flex-col justify-center items-center bg-black bg-opacity-75 text-white p-2 rounded">
-								<p class="w-full break-words">{{ image.name_img }}</p>
-								<p class="w-full break-words">{{ image.date_img ? new Date(image.date_img).toLocaleString() : '' }}</p>
-								<div class="flex space-x-2">
-									<font-awesome-icon icon="fa-solid fa-download"
-										@click="imageDownload(image)"
-										class="text-yellow-500 cursor-pointer hover:text-yellow-600" />
-									<font-awesome-icon icon="fa-solid fa-trash"
-										@click="imageDeleteOpenModal(image)"
-										class="text-red-500 cursor-pointer hover:text-red-600" />
-								</div>
-							</div>
-						</div>
-					</template>
-				</div>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="item.Commands"
@@ -668,35 +617,6 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		:delete-action="itemDelete" :text-title="'item.DeleteTitle'"
 		:text-p="'item.DeleteText'"/>
 
-	<div v-if="imageSelectModalShow" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-		@click="imageSelectModalShow = false">
-		<div class="bg-white p-6 rounded shadow-lg w-96" @click.stop>
-			<div class="flex justify-between items-center mb-2">
-				<h2 class="text-xl">{{ $t('item.ImageSelectTitle') }}</h2>
-				<div class="flex space-x-2 items-center cursor-pointer bg-gray-200 p-2 rounded" @click="imageSelectModalShow = false">
-					<font-awesome-icon icon="fa-solid fa-times"
-					class="cursor-pointer" />
-				</div>
-			</div>
-			<div class="flex flex-wrap">
-				<template v-if="itemsStore.images[itemId]">
-					<div v-for="image in itemsStore.images[itemId]" :key="image.id_img"
-						class="w-24 h-24 bg-gray-200 rounded m-2 flex items-center justify-center cursor-pointer">
-						<template v-if="itemsStore.thumbnailsURL[image.id_img]">
-							<img :src="itemsStore.thumbnailsURL[image.id_img]" :alt="image.name_img"
-								:class="itemsStore.itemEdition[itemId].id_img == image.id_img ? 'border-2 border-blue-500' : 'border-2 border-transparent'"
-								class="w-24 h-24 object-cover rounded"
-								@click="itemsStore.itemEdition[itemId].id_img = image.id_img" />
-						</template>
-						<template v-else>
-							{{ $t('item.ImageLoading') }}
-						</template>
-					</div>
-				</template>
-			</div>
-		</div>
-	</div>
-
 	<ModalMultipleFiles
 		:show-modal="documentAddModalShow"
 		@close-modal="documentAddModalShow = false"
@@ -707,15 +627,4 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
 		:delete-action="documentDelete" :text-title="'item.DocumentDeleteTitle'"
 		:text-p="'item.DocumentDeleteText'"/>
-
-	<ModalMultipleFiles
-		:show-modal="imageAddModalShow"
-		@close-modal="imageAddModalShow = false"
-		@files-saved="imageAdd"
-		file-type="image"
-	/>
-
-	<ModalDeleteConfirm :show-modal="imageDeleteModalShow" @close-modal="imageDeleteModalShow = false"
-		:delete-action="imageDelete" :text-title="'item.ImageDeleteTitle'"
-		:text-p="'item.ImageDeleteText'"/>
 </template>

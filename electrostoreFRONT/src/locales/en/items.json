@@ -5,8 +5,6 @@
 	"FilterSeuilMax": "Max Threshold",
 	"FilterQteTotal": "Min Total Quantity",
 	"FilterTag": "Tag",
-	"ErrorCapture": "Error capturing image",
-	"ErrorDetect": "Error detecting image",
 	"Title": "Inventory",
 	"Add": "Create Item",
 	"Name": "Name",
@@ -15,16 +13,5 @@
 	"Description": "Description",
 	"Tags": "Tags",
 	"Img": "Image",
-	"Quantity": "Quantity",
-	"FindTitle": "Find an item",
-	"FindCameraList": "Available camera",
-	"FindIAList": "Available IA",
-	"NoCameraOrUploadAnImage": "No video stream available, select a camera or upload an image",
-	"Detect": "Detect",
-	"Light": "Change light",
-	"NoItem": "No item found",
-	"Item": "Item",
-	"Score": "Score",
-	"NoDetection": "No detection",
-	"GoToItem": "Go to item"
+	"Quantity": "Quantity"
 }

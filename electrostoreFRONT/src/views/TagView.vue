@@ -14,11 +14,12 @@ const route = useRoute();
 const tagId = ref(route.params.id);
 const preset = ref(route.query.preset || null);
 
-import { useConfigsStore, useTagsStore, useStoresStore, useItemsStore, useAuthStore } from "@/stores";
+import { useConfigsStore, useTagsStore, useStoresStore, useItemsStore, useEquipementsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
 const tagsStore = useTagsStore();
 const storesStore = useStoresStore();
 const itemsStore = useItemsStore();
+const equipementsStore = useEquipementsStore();
 const authStore = useAuthStore();
 
 const formContainer = ref(null);
@@ -190,6 +191,46 @@ const boxDelete = async(box) => {
 	}
 };
 
+// Equipements
+const equipementModalShow = ref(false);
+const equipementLoaded = ref(false);
+const equipementOpenAddModal = () => {
+	equipementModalShow.value = true;
+	if (!equipementLoaded.value) {
+		fetchAllEquipements();
+	}
+};
+async function fetchAllEquipements() {
+	let offset = 0;
+	const limit = 100;
+	do {
+		await equipementsStore.getEquipementByInterval(limit, offset);
+		offset += limit;
+	} while (offset < equipementsStore.equipementsTotalCount);
+	equipementLoaded.value = true;
+}
+const equipementSave = async(equipement) => {
+	try {
+		await tagsStore.createTagEquipement(tagId.value, equipement);
+		addNotification({ message: t("tag.EquipementAdded"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+		return;
+	}
+};
+const equipementDelete = async(equipement) => {
+	try {
+		await tagsStore.deleteTagEquipement(tagId.value, equipement.id_equipement);
+		addNotification({ message: t("tag.EquipementDeleted"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+};
+
+const filterEquipement = ref([
+	{ key: "reference_name_equipement", value: "", type: "text", label: "", placeholder: t("tag.EquipementFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
+]);
+
 const createSchema = () => {
 	const edition = tagsStore.tagEdition[tagId.value];
 	const shape = {};
@@ -253,6 +294,41 @@ const labelTableauBox = ref([
 	] },
 ]);
 
+const labelTableauEquipement = ref([
+	{ label: "tag.EquipementName", sortable: true, key: "Equipement.reference_name_equipement", sourceKey: "id_equipement", type: "text",
+		storeRessourceId: 1, valueKey: "reference_name_equipement" },
+
+	{ label: "tag.EquipementActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			action: (row) => equipementDelete(row),
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+			animation: true,
+		},
+	] },
+]);
+const labelTableauModalEquipement = ref([
+	{ label: "tag.EquipementName", sortable: true, key: "reference_name_equipement", valueKey: "reference_name_equipement", type: "text" },
+	{ label: "tag.EquipementActions", sortable: false, key: "", type: "buttons", buttons: [
+		{
+			label: "",
+			icon: "fa-solid fa-save",
+			showCondition: "!store[1]?.[rowData.id_equipement]",
+			action: (row) => equipementSave(row),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
+		},
+		{
+			label: "",
+			icon: "fa-solid fa-trash",
+			showCondition: "store[1]?.[rowData.id_equipement]",
+			action: (row) => equipementDelete(row),
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
+			animation: true,
+		},
+	] },
+]);
 const labelTableauModalItem = ref([
 	{ label: "tag.ItemName", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
 	{ label: "tag.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
@@ -357,6 +433,22 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 			</template>
 		</CollapsibleSection>
+		<CollapsibleSection title="tag.Equipements"
+			:total-count="Number(tagsStore.tagsEquipementTotalCount[tagId] || 0)" :permission="tagId !=='new'">
+			<template #append-row>
+				<button type="button" @click="equipementOpenAddModal"
+					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
+					{{ $t('tag.AddEquipement') }}
+				</button>
+				<Tableau :labels="labelTableauEquipement" :meta="{ key: 'id_equipement', expand: ['equipement'] }"
+					:store-data="[tagsStore.tagsEquipement[tagId],equipementsStore.equipements]"
+					:loading="tagsStore.tagsEquipementLoading"
+					:total-count="Number(tagsStore.tagsEquipementTotalCount[tagId] || 0)"
+					:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagEquipementByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
+					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+				/>
+			</template>
+		</CollapsibleSection>
 	</div>
 	<div v-else>
 		<div>{{ $t('tag.Loading') }}</div>
@@ -408,6 +500,30 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:loading="tagsStore.tagsStoreLoading"
 				:total-count="Number(storesStore.storesTotalCount || 0)"
 				:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => storesStore.getStoreByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
+			/>
+		</div>
+	</div>
+
+	<div v-if="equipementModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
+		@click="equipementModalShow = false">
+		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
+			<div class="flex justify-between items-center border-b pb-3">
+				<h2 class="text-2xl font-semibold">{{ $t('tag.EquipementTitle') }}</h2>
+				<button type="button" @click="equipementModalShow = false"
+					class="text-gray-500 hover:text-gray-700">&times;</button>
+			</div>
+
+			<!-- Filtres -->
+			<FilterContainer class="my-4 flex gap-4" :filters="filterEquipement" :store-data="equipementsStore.equipements" />
+
+			<!-- Tableau Equipements -->
+			<Tableau :labels="labelTableauModalEquipement" :meta="{ key: 'id_equipement', preventClear: true }"
+				:store-data="[equipementsStore.equipements, tagsStore.tagsEquipement[tagId]]"
+				:filters="filterEquipement"
+				:loading="tagsStore.tagsEquipementLoading"
+				:total-count="Number(equipementsStore.equipementsTotalCount || 0)"
+				:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

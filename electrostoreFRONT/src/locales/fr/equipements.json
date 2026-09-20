@@ -1,0 +1,16 @@
+{
+	"Title": "Équipements",
+	"Add": "Créer un équipement",
+	"FilterName": "Nom",
+	"FilterFriendlyName": "Nom convivial",
+	"FilterStatus": "Statut",
+	"Name": "Nom",
+	"FriendlyName": "Nom convivial",
+	"Description": "Description",
+	"Status": "Statut",
+	"Img": "Image",
+	"StatusOperational": "Opérationnel",
+	"StatusInMaintenance": "En maintenance",
+	"StatusOutOfService": "Hors service",
+	"StatusRetired": "Retiré"
+}

@@ -1,8 +1,9 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
+import { StorePositionMode } from "@/enums";
 
-import { useTagsStore, useItemsStore } from "@/stores";
+import { useTagsStore, useItemsStore, useEquipementsStore } from "@/stores";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -142,6 +143,10 @@ export const useStoresStore = defineStore("stores",{
 		boxItemEdition: {},
 		boxItemReady: {},
 
+		boxEquipementsLoading: false,
+		boxEquipementsTotalCount: {},
+		boxEquipements: {},
+
 		boxTagsLoading: false,
 		boxTagsTotalCount: {},
 		boxTags: {},
@@ -182,8 +187,14 @@ export const useStoresStore = defineStore("stores",{
 					mqtt_name_store: this.stores[id].mqtt_name_store,
 					xlength_store: this.stores[id].xlength_store,
 					ylength_store: this.stores[id].ylength_store,
+					position_mode_store: this.stores[id].position_mode_store,
 					is_mqtt_connected_store: this.stores[id].is_mqtt_connected_store,
 					mqtt_last_seen_store: this.stores[id].mqtt_last_seen_store,
+					id_zone: this.stores[id].id_zone ?? 0,
+					xmin_store: this.stores[id].xmin_store,
+					ymin_store: this.stores[id].ymin_store,
+					xmax_store: this.stores[id].xmax_store,
+					ymax_store: this.stores[id].ymax_store,
 				};
 				this.ledEdition[id] = { ...this.leds[id] };
 				this.ledReady[id] = {};
@@ -194,6 +205,8 @@ export const useStoresStore = defineStore("stores",{
 			} else {
 				this.storeEdition[id] = {
 					loading: false,
+					position_mode_store: StorePositionMode.Grid,
+					id_zone: 0,
 				};
 				this.ledEdition[id] = {};
 				this.ledReady[id] = {};
@@ -358,6 +371,49 @@ export const useStoresStore = defineStore("stores",{
 				useToken: "access",
 			});
 			delete this.boxItems[idBox][id];
+		},
+
+		async getBoxEquipementByInterval(idStore, idBox, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {
+			if (!this.boxEquipements[idBox] || clear) {
+				this.boxEquipements[idBox] = {};
+			}
+			this.boxEquipementsLoading = true;
+			const equipementsStore = useEquipementsStore();
+			const paramString = buildQuery({ limit, offset, expand, filter, sort });
+			const newEquipementList = await fetchWrapper.get({
+				url: `${baseUrl}/store/${idStore}/box/${idBox}/equipement?${paramString}`,
+				useToken: "access",
+			});
+			for (const equipement of newEquipementList["data"]) {
+				this.boxEquipements[idBox][equipement.id_equipement] = equipement;
+				if (expand.includes("equipement")) {
+					equipementsStore.equipements[equipement.id_equipement] = equipement.equipement;
+				}
+			}
+			this.boxEquipementsTotalCount[idBox] = newEquipementList["pagination"]?.["total"] || 0;
+			this.boxEquipementsLoading = false;
+			return [newEquipementList["pagination"]?.["nextOffset"] || 0, newEquipementList["pagination"]?.["hasMore"] || false];
+		},
+		async createBoxEquipement(idStore, idBox, params) {
+			if (!this.boxEquipements[idBox]) {
+				this.boxEquipements[idBox] = {};
+			}
+			const boxEquipement = await fetchWrapper.post({
+				url: `${baseUrl}/store/${idStore}/box/${idBox}/equipement`,
+				useToken: "access",
+				body: params,
+			});
+			this.boxEquipements[idBox][boxEquipement.id_equipement] = boxEquipement;
+		},
+		async deleteBoxEquipement(idStore, idBox, id) {
+			if (!this.boxEquipements[idBox]) {
+				this.boxEquipements[idBox] = {};
+			}
+			await fetchWrapper.delete({
+				url: `${baseUrl}/store/${idStore}/box/${idBox}/equipement/${id}`,
+				useToken: "access",
+			});
+			delete this.boxEquipements[idBox][id];
 		},
 
 		async getBoxTagByInterval(idStore, idBox, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false) {

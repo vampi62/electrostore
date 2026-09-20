@@ -54,10 +54,10 @@ onBeforeUnmount(() => {
 });
 const dateDebut = computed(() => {
 	// don't return the GMT offset to avoid timezone issues
-	return projectsStore.projectEdition[projectId.value].date_start_project ? new Date(projectsStore.projectEdition[projectId.value].date_start_project).toISOString().replace(/\.\d+Z$/, "").replace("T", " ") : null;
+	return projectsStore.projectEdition[projectId.value]?.date_start_project ? new Date(projectsStore.projectEdition[projectId.value].date_start_project).toISOString().replace(/\.\d+Z$/, "").replace("T", " ") : null;
 });
 const dateFin = computed(() => {
-	return projectsStore.projectEdition[projectId.value].date_end_project ? new Date(projectsStore.projectEdition[projectId.value].date_end_project).toISOString().replace(/\.\d+Z$/, "").replace("T", " ") : null;
+	return projectsStore.projectEdition[projectId.value]?.date_end_project ? new Date(projectsStore.projectEdition[projectId.value].date_end_project).toISOString().replace(/\.\d+Z$/, "").replace("T", " ") : null;
 });
 
 // tag
@@ -175,7 +175,7 @@ const documentEdit = async(row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		await projectsStore.updateDocument(projectId.value, row.id_project_document, row);
-		delete projectsStore.documentEdition[row.id_project_document];
+		delete projectsStore.documentEdition[projectId.value][row.id_project_document];
 		addNotification({ message: t("project.DocumentUpdated"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -308,7 +308,7 @@ const labelTableauDocument = ref([
 			icon: "fa-solid fa-edit",
 			showCondition: "!edition?.id_project_document",
 			action: (row) => {
-				projectsStore.documentEdition[row.id_project_document] = { ...row };
+				projectsStore.documentEdition[projectId.value][row.id_project_document] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -317,7 +317,7 @@ const labelTableauDocument = ref([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_project_document",
 			action: (row) => {
-				delete projectsStore.documentEdition[row.id_project_document];
+				delete projectsStore.documentEdition[projectId.value][row.id_project_document];
 			},
 			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
 		},
@@ -325,7 +325,7 @@ const labelTableauDocument = ref([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_project_document",
-			action: (row) => documentEdit(projectsStore.documentEdition[row.id_project_document]),
+			action: (row) => documentEdit(projectsStore.documentEdition[projectId.value][row.id_project_document]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},

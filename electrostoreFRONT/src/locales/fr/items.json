@@ -5,8 +5,6 @@
 	"FilterSeuilMax": "Seuil Max",
 	"FilterQteTotal": "Quantité Totale Min",
 	"FilterTag": "Tag",
-	"ErrorCapture": "Erreur lors de la capture de l'image",
-	"ErrorDetect": "Erreur lors de la détection de l'image",
 	"Title": "Inventaire",
 	"Add": "Créer un article",
 	"Name": "Nom",
@@ -15,16 +13,5 @@
 	"Description": "Description",
 	"Tags": "Tags",
 	"Img": "Image",
-	"Quantity": "Quantité",
-	"FindTitle": "Trouver un article",
-	"FindCameraList": "Caméra disponible",
-	"FindIAList": "IA disponible",
-	"NoCameraOrUploadAnImage": "Aucun Flux Vidéo Disponible, Sélectionner une camera ou télécharger une image",
-	"Detect": "Détecter",
-	"Light": "Changer la lumière",
-	"NoItem": "Aucun article trouvé",
-	"Item": "Article",
-	"Score": "Score",
-	"NoDetection": "Aucune détection",
-	"GoToItem": "Aller à l'article"
+	"Quantity": "Quantité"
 }

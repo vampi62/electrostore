@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, inject } from "vue";
+import { onMounted, onBeforeUnmount, ref, computed, inject } from "vue";
 import router from "@/router";
 
 const { addNotification } = inject("useNotification");
@@ -14,6 +14,8 @@ const route = useRoute();
 const cronJobId = ref(route.params.id);
 const preset = ref(route.query.preset || null);
 
+import { CronJobStatus } from "@/enums";
+
 import { useConfigsStore, useCronJobsStore, useAuthStore } from "@/stores";
 const configsStore = useConfigsStore();
 const cronJobsStore = useCronJobsStore();
@@ -24,6 +26,14 @@ const cronJobActionOptions = {
 	1: t("cronJob.ActionStockLowAlert"),
 	2: t("cronJob.ActionWeeklyItemMovementReport"),
 };
+const cronJobStatusOptions = {
+	[CronJobStatus.Idle]: t("cronJob.StatusIdle"),
+	[CronJobStatus.Running]: t("cronJob.StatusRunning"),
+	[CronJobStatus.Success]: t("cronJob.StatusSuccess"),
+	[CronJobStatus.Failed]: t("cronJob.StatusFailed"),
+	[CronJobStatus.Stopped]: t("cronJob.StatusStopped"),
+};
+const cronJobStatusLabel = computed(() => cronJobStatusOptions[cronJobsStore.cronJobEdition[cronJobId.value]?.status_cronjob] ?? "");
 
 const formContainer = ref(null);
 
@@ -93,6 +103,26 @@ const cronJobDelete = async() => {
 	}
 	cronJobDeleteModalShow.value = false;
 };
+const cronJobForceRun = async() => {
+	try {
+		await cronJobsStore.forceRunCronJob(cronJobId.value);
+		addNotification({ message: t("cronJob.ForceRunSuccess"), type: "success" });
+		await cronJobsStore.getCronJobStatus(cronJobId.value);
+		cronJobsStore.loadToEdition(cronJobId.value);
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+};
+const cronJobForceStop = async() => {
+	try {
+		await cronJobsStore.forceStopCronJob(cronJobId.value);
+		addNotification({ message: t("cronJob.ForceStopSuccess"), type: "success" });
+		await cronJobsStore.getCronJobStatus(cronJobId.value);
+		cronJobsStore.loadToEdition(cronJobId.value);
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+};
 const createSchema = () => {
 	const edition = cronJobsStore.cronJobEdition[cronJobId.value];
 	const shape = {};
@@ -115,14 +145,26 @@ const createSchema = () => {
 		.required(t("cronJob.ActionRequired"));
 	return Yup.object().shape(shape);
 };
+const cronJobLastRun = computed(() => {
+	const value = cronJobsStore.cronJobEdition[cronJobId.value]?.last_run_at;
+	return value ? new Date(value).toLocaleString() : "";
+});
+const cronJobNextRun = computed(() => {
+	const value = cronJobsStore.cronJobEdition[cronJobId.value]?.next_run_at;
+	return value ? new Date(value).toLocaleString() : "";
+});
+const cronJobLastError = computed(() => cronJobsStore.cronJobEdition[cronJobId.value]?.last_error_cronjob || "");
+
 const labelForm = [
 	{ key: "name_cronjob", label: "cronJob.Name", type: "text", enableCondition: "func.hasPermission([2])" },
 	{ key: "cron_expression_cronjob", label: "cronJob.CronExpression", type: "text", enableCondition: "func.hasPermission([2])", placeholder: "cronJob.CronExpressionPlaceholder" },
 	{ key: "action_cronjob", label: "cronJob.Action", type: "select", options: cronJobActionOptions, enableCondition: "func.hasPermission([2])" },
 	{ key: "params_cronjob", label: "cronJob.Params", type: "textarea", rows: 4, enableCondition: "func.hasPermission([2])" },
 	{ key: "is_enabled", label: "cronJob.IsEnabled", type: "checkbox", enableCondition: "func.hasPermission([2])" },
-	{ key: "last_run_at", label: "cronJob.LastRun", type: "computed" },
-	{ key: "next_run_at", label: "cronJob.NextRun", type: "computed" },
+	{ key: "last_run_at", label: "cronJob.LastRun", type: "computed", value: cronJobLastRun },
+	{ key: "next_run_at", label: "cronJob.NextRun", type: "computed", value: cronJobNextRun },
+	{ key: "status_cronjob", label: "cronJob.Status", type: "computed", value: cronJobStatusLabel, showCondition: "edition?.status_cronjob !== undefined" },
+	{ key: "last_error_cronjob", label: "cronJob.LastError", type: "computed", value: cronJobLastError, showCondition: "edition?.last_error_cronjob" },
 ];
 document.querySelector("#view").classList.add("overflow-y-scroll");
 </script>
@@ -141,6 +183,16 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 	<div v-if="cronJobsStore.cronJobs[cronJobId] || cronJobId == 'new'" class="w-full">
 		<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="cronJobsStore.cronJobEdition[cronJobId]" :store-user="authStore.user"
 			:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
+		<div v-if="cronJobId !== 'new' && authStore.hasPermission([2])" class="flex space-x-2 mt-4">
+			<button type="button" @click="cronJobForceRun"
+				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+				{{ $t('cronJob.ForceRun') }}
+			</button>
+			<button type="button" @click="cronJobForceStop"
+				class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+				{{ $t('cronJob.ForceStop') }}
+			</button>
+		</div>
 	</div>
 	<div v-else>
 		<div>{{ $t('cronJob.Loading') }}</div>

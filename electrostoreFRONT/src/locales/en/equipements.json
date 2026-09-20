@@ -1,0 +1,16 @@
+{
+	"Title": "Equipments",
+	"Add": "Create Equipment",
+	"FilterName": "Name",
+	"FilterFriendlyName": "Friendly Name",
+	"FilterStatus": "Status",
+	"Name": "Name",
+	"FriendlyName": "Friendly name",
+	"Description": "Description",
+	"Status": "Status",
+	"Img": "Image",
+	"StatusOperational": "Operational",
+	"StatusInMaintenance": "In maintenance",
+	"StatusOutOfService": "Out of service",
+	"StatusRetired": "Retired"
+}
