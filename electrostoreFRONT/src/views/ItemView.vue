@@ -142,27 +142,32 @@ const getTotalQuantity = computed(() => {
 });
 
 // box
-const boxSave = async(box) => {
-	if (itemsStore.itemBoxs[itemId.value][box.id_box]) {
-		try {
-			schemaBox.validateSync(box.tmp, { abortEarly: false });
-			await itemsStore.updateItemBox(itemId.value, box.tmp.id_box, box.tmp);
-			addNotification({ message: t("item.BoxUpdated"), type: "success" });
-			box.tmp = null;
-		} catch (e) {
-			addNotification({ message: e, type: "error" });
-			return;
-		}
-	} else {
-		try {
-			createSchema().validateSync(box.tmp, { abortEarly: false });
-			await itemsStore.createItemBox(itemId.value, box.tmp);
-			addNotification({ message: t("item.BoxAdded"), type: "success" });
-			box.tmp = null;
-		} catch (e) {
-			addNotification({ message: e, type: "error" });
-			return;
-		}
+const boxEdit = (box) => {
+	try {
+		schemaBox.validateSync(box, { abortEarly: false });
+		itemsStore.valideItemBoxEditionById(itemId.value, box.id_box, "modified");
+		delete itemsStore.itemBoxEdition[itemId.value][box.id_box];
+		addNotification({ message: t("item.BoxUpdated"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+		return;
+	}
+};
+const boxRestore = (row) => {
+	try {
+		delete itemsStore.itemBoxReady[itemId.value][row.id_box];
+		addNotification({ message: t("item.BoxRestored"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+};
+const boxDelete = (row) => {
+	try {
+		itemsStore.valideItemBoxEditionById(itemId.value, row.id_box, "deleted");
+		delete itemsStore.itemBoxEdition[itemId.value][row.id_box];
+		addNotification({ message: t("item.BoxDeleted"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
 	}
 };
 
@@ -213,19 +218,6 @@ const documentDelete = (row) => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 const documentDownload = async(fileContent) => {
 	const file = await itemsStore.downloadDocument(itemId.value, fileContent.id_item_document);
@@ -283,7 +275,15 @@ const filterTag = ref([
 ]);
 function tagSave(id_tag) {
 	try {
-		itemsStore.createItemTag(itemId.value,  { id_tag: id_tag });
+		// re-adding a tag that is only pending deletion locally just cancels that pending deletion
+		if (itemsStore.itemTagReady[itemId.value]?.[id_tag]?.status === "deleted") {
+			delete itemsStore.itemTagReady[itemId.value][id_tag];
+			addNotification({ message: t("item.TagRestored"), type: "success" });
+			return;
+		}
+		itemsStore.itemTagEdition[itemId.value][id_tag] = { id_tag };
+		itemsStore.valideItemTagEditionById(itemId.value, id_tag, "created");
+		delete itemsStore.itemTagEdition[itemId.value][id_tag];
 		addNotification({ message: t("item.TagAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -291,8 +291,21 @@ function tagSave(id_tag) {
 }
 function tagDelete(id_tag) {
 	try {
-		itemsStore.deleteItemTag(itemId.value, id_tag);
+		// a tag that was only staged as a pending creation is simply dropped, nothing to push
+		if (itemsStore.itemTagReady[itemId.value]?.[id_tag]?.status === "created") {
+			delete itemsStore.itemTagReady[itemId.value][id_tag];
+		} else {
+			itemsStore.valideItemTagEditionById(itemId.value, id_tag, "deleted");
+		}
 		addNotification({ message: t("item.TagDeleted"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+}
+function tagRestore(id_tag) {
+	try {
+		delete itemsStore.itemTagReady[itemId.value][id_tag];
+		addNotification({ message: t("item.TagRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
@@ -367,15 +380,22 @@ const labelTableauModalTag = ref([
 	{ label: "item.TagActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
-			icon: "fa-solid fa-save",
-			showCondition: "!store[1]?.[rowData.id_tag]",
+			icon: "fa-solid fa-plus",
+			showCondition: "!ready?.status && !store[1]?.[rowData.id_tag]",
 			action: (row) => tagSave(row.id_tag),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 		},
 		{
 			label: "",
+			icon: "fa-solid fa-rotate-left",
+			showCondition: "ready?.status === 'deleted'",
+			action: (row) => tagRestore(row.id_tag),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+		},
+		{
+			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "store[1]?.[rowData.id_tag]",
+			showCondition: "ready?.status && ready?.status !== 'deleted'",
 			action: (row) => tagDelete(row.id_tag),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
@@ -460,9 +480,9 @@ const labelTableauBox = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "!edition?.id_box",
+			showCondition: "!edition?.id_box && ready?.status !== 'deleted'",
 			action: (row) => {
-				itemsStore.itemBoxEdition[row.id_box] = { ...row };
+				itemsStore.itemBoxEdition[itemId.value][row.id_box] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -471,7 +491,7 @@ const labelTableauBox = ref([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_box",
 			action: (row) => {
-				delete itemsStore.itemBoxEdition[row.id_box];
+				delete itemsStore.itemBoxEdition[itemId.value][row.id_box];
 			},
 			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
 		},
@@ -479,7 +499,7 @@ const labelTableauBox = ref([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_box",
-			action: (row) => boxSave(row),
+			action: (row) => boxEdit(itemsStore.itemBoxEdition[itemId.value][row.id_box]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -489,6 +509,20 @@ const labelTableauBox = ref([
 			action: (row) => toggleBoxLed(row.id_box),
 			class: "px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600",
 			animation: true,
+		},
+		{
+			label: "",
+			showCondition: "ready?.status === 'deleted'",
+			icon: "fa-solid fa-rotate-left",
+			action: (row) => boxRestore(row),
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			showCondition: "ready?.status !== 'deleted'",
+			icon: "fa-solid fa-trash",
+			action: (row) => boxDelete(row),
+			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
 ]);
@@ -556,8 +590,9 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					</div>
 				</template>
 			</FormContainer>
-			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="itemId !== 'new' && authStore.hasPermission([1, 2])"
+			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :ready-store="itemsStore.itemTagReady[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="itemId !== 'new' && authStore.hasPermission([1, 2])"
 				:delete-function="(value) => tagDelete(value)"
+				:restore-function="(value) => tagRestore(value)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'loading': tagsStore.tagsLoading, 'fetchFunction': (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
@@ -571,6 +606,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box', expand: ['box'] }"
 					:store-data="[itemsStore.itemBoxs[itemId]]"
 					:store-edition="itemsStore.itemBoxEdition[itemId]"
+					:store-ready="itemsStore.itemBoxReady[itemId]"
 					:loading="itemsStore.itemBoxsLoading"
 					:schema="schemaBox"
 					:total-count="Number(itemsStore.itemBoxsTotalCount[itemId])"

@@ -292,16 +292,26 @@ export default {
 			sessionStorage.setItem(this._sessionStateKey(), JSON.stringify({ ...current, ...updates }));
 		},
 		rowStatusClass(row) {
+			// Colors are driven by the ready entry's own status rather than by "is this id also in
+			// storeData[0]": some tables (e.g. a picker browsing a full catalog) always have the id in
+			// storeData[0] regardless of whether it's actually linked/pending, so presence alone can't
+			// tell "unchanged" from "pending change" there - the status value can.
 			const id = row[this.meta.key];
-			const inStoreData = Object.hasOwn(this.storeData[0] || {}, id);
 			const readyEntry = this.storeReady?.[id];
-			if (readyEntry && inStoreData) {
-				return readyEntry.status === "deleted" ? "bg-red-100 text-red-800 hover:bg-red-200" : "bg-amber-100 text-amber-800 hover:bg-amber-200";
-			} else if (inStoreData && inStoreData.deleted_at !== null && inStoreData.deleted_at !== undefined) {
+			if (readyEntry) {
+				switch (readyEntry.status) {
+				case "deleted": return "bg-red-100 text-red-800 hover:bg-red-200";
+				case "created": return "bg-green-100 text-green-800 hover:bg-green-200";
+				case "modified": return "bg-amber-100 text-amber-800 hover:bg-amber-200";
+				}
+				return "";
+			}
+			if (row?.deleted_at !== null && row?.deleted_at !== undefined) {
 				return "bg-red-100 text-red-800 hover:bg-red-200";
 			}
-			if (!inStoreData && (readyEntry || this.storeEdition?.[id])) {
-				return "bg-green-100 text-green-800";
+			const inStoreData = Object.hasOwn(this.storeData[0] || {}, id);
+			if (!inStoreData && this.storeEdition?.[id]) {
+				return "bg-green-100 text-green-800 hover:bg-green-200";
 			}
 			return "";
 		},
