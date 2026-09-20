@@ -1,7 +1,7 @@
 <template>
 	<td v-for="(column,index) in labels"
 		:key="index"
-		:class="[css, column.type == 'text' ? 'text-left' : 'text-center', rowColorClass]"
+		:class="[css, column.type == 'text' ? 'text-left' : 'text-center']"
 	>
 		<template v-if="column.type == 'bool'">
 			<template v-if="evaluateCondition(column.condition, effectiveRow)">
@@ -141,21 +141,6 @@ export default {
 					Object.entries(this.storeReady.data).filter(([, v]) => v !== undefined && v !== null),
 				),
 			};
-		},
-		rowColorClass() {
-			// Vérifier d'abord si la ligne a un deleted_at
-			if (this.effectiveRow?.deleted_at !== null && this.effectiveRow?.deleted_at !== undefined) {
-				return "bg-red-100 text-red-800";
-			}
-			if (!this.storeReady?.status) {
-				return "";
-			}
-			switch (this.storeReady.status) {
-			case "delete": return "bg-red-100 text-red-800";
-			case "modified": return "bg-amber-100 text-amber-800";
-			case "new": return "bg-green-100 text-green-800";
-			default: return "";
-			}
 		},
 	},
 	methods: {

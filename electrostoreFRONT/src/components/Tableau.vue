@@ -28,7 +28,7 @@
 			</thead>
 			<tbody :class="mergedCss.tbody">
 				<tr v-for="row in sortedData" :key="row[meta.key]" v-memo="[row, storeEdition[row[meta.key]], storeReady[row[meta.key]]]"
-					:class="mergedCss.tr"
+					:class="[mergedCss.tr, rowStatusClass(row)]"
 					@click="meta?.path && $router.push(meta.path + row[meta.key])">
 					<TableauRow :labels="labelsShown" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" :store-edition="storeEdition[row[meta.key]]" :store-ready="storeReady[row[meta.key]]" />
 				</tr>
@@ -290,6 +290,20 @@ export default {
 		_saveState(updates) {
 			const current = JSON.parse(sessionStorage.getItem(this._sessionStateKey()) || "{}");
 			sessionStorage.setItem(this._sessionStateKey(), JSON.stringify({ ...current, ...updates }));
+		},
+		rowStatusClass(row) {
+			const id = row[this.meta.key];
+			const inStoreData = Object.hasOwn(this.storeData[0] || {}, id);
+			const readyEntry = this.storeReady?.[id];
+			if (readyEntry && inStoreData) {
+				return readyEntry.status === "deleted" ? "bg-red-100 text-red-800 hover:bg-red-200" : "bg-amber-100 text-amber-800 hover:bg-amber-200";
+			} else if (inStoreData && inStoreData.deleted_at !== null && inStoreData.deleted_at !== undefined) {
+				return "bg-red-100 text-red-800 hover:bg-red-200";
+			}
+			if (!inStoreData && (readyEntry || this.storeEdition?.[id])) {
+				return "bg-green-100 text-green-800";
+			}
+			return "";
 		},
 		extractReadyFields(readyEntry) {
 			// storeReady entries carry bookkeeping fields (status, isFormData, pushChange) alongside

@@ -187,7 +187,8 @@ const documentAdd = async(files) => {
 const documentEdit = (row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
-		itemsStore.valideDocumentEditionById(itemId.value, row.id_item_document, "modified");
+		itemsStore.valideDocumentEditionById(itemId.value, row.id_item_document, 
+			itemsStore.documentEdition[itemId.value][row.id_item_document]?.status === "created" ? "created" : "modified");
 		delete itemsStore.documentEdition[itemId.value][row.id_item_document];
 		addNotification({ message: t("item.DocumentUpdated"), type: "success" });
 	} catch (e) {
@@ -195,9 +196,18 @@ const documentEdit = (row) => {
 		return;
 	}
 };
+const documentRestore = (row) => {
+	try {
+		delete itemsStore.documentReady[itemId.value][row.id_item_document];
+		addNotification({ message: t("item.DocumentRestored"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+};
 const documentDelete = (row) => {
 	try {
 		itemsStore.valideDocumentEditionById(itemId.value, row.id_item_document, "deleted");
+		delete itemsStore.documentEdition[itemId.value][row.id_item_document];
 		addNotification({ message: t("item.DocumentDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -379,10 +389,9 @@ const labelTableauDocument = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "!edition?.id_item_document",
+			showCondition: "!edition?.id_item_document && ready?.status !== 'deleted'",
 			action: (row) => {
 				itemsStore.documentEdition[itemId.value][row.id_item_document] = { ...row };
-				console.log(itemsStore.documentEdition[itemId.value][row.id_item_document]);
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -419,6 +428,14 @@ const labelTableauDocument = ref([
 		},
 		{
 			label: "",
+			showCondition: "ready?.status === 'deleted'",
+			icon: "fa-solid fa-rotate-left",
+			action: (row) => documentRestore(row),
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
 			action: (row) => documentDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
