@@ -86,11 +86,10 @@ export function createNestedResource({ path, idField, countKey, stateKey, loadin
 			return `new-${i}`;
 		},
 		valideEditionById(idParentResource, id, status = "modified", isFormData = false) {
-			console.log(`Validating edition for ${idParentResource} - ${id} with status ${status}`);
 			this[readyKey][idParentResource] ??= {};
 			const edition = this[editionKey][idParentResource]?.[id] ?? {};
 			// compare this[stateKey][idParentResource]?.[id] with the edition to determine if changes exist
-			if (JSON.stringify(this[stateKey][idParentResource]?.[id] ?? {}) === JSON.stringify(edition)) {
+			if (JSON.stringify(this[stateKey][idParentResource]?.[id] ?? {}) === JSON.stringify(edition) && status !== "deleted") {
 				delete this[readyKey][idParentResource][id];
 				return;
 			}
