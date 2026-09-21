@@ -216,15 +216,13 @@ const commandSave = async() => {
 			commandsStore.setLoadingEdition(commandId.value, false);
 			return;
 		}
+		const id = await commandsStore.saveAllChanges(commandId.value);
+		commandsStore.loadToEdition(id);
 		if (commandId.value === "new") {
-			const newId = await commandsStore.createCommand({ ...commandsStore.commandEdition[commandId.value] });
-			commandsStore.loadToEdition(newId);
 			addNotification({ message: t("command.Created"), type: "success" });
-			commandId.value = String(newId);
+			commandId.value = String(id);
 			router.push("/commands/" + commandId.value);
 		} else {
-			await commandsStore.updateCommand(commandId.value, { ...commandsStore.commandEdition[commandId.value] });
-			commandsStore.loadToEdition(commandId.value);
 			addNotification({ message: t("command.Updated"), type: "success" });
 		}
 	} catch (e) {
@@ -360,21 +358,15 @@ const trackingOptionalConfig = computed(() => {
 
 // document
 const documentAddModalShow = ref(false);
-const documentDeleteModalShow = ref(false);
-const documentModalData = ref({ id_command_document: null, name_command_document: "", document: null });
-const documentDeleteOpenModal = (doc) => {
-	documentModalData.value = doc;
-	documentDeleteModalShow.value = true;
-};
 const documentAdd = async(files) => {
 	for (const file of files) {
-		documentModalData.value = { name_command_document: file.name, document: file.document };
+		const documentModalData = { name_command_document: file.name, document: file.document };
+		const newId = commandsStore.getAvailableNewDocumentId(commandId.value);
+		commandsStore.documentEdition[commandId.value][newId] = documentModalData;
 		try {
-			schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
-			const formData = new FormData();
-			formData.append("name_command_document", documentModalData.value.name_command_document);
-			formData.append("document", documentModalData.value.document);
-			await commandsStore.createDocument(commandId.value, formData);
+			schemaAddDocument.validateSync(documentModalData, { abortEarly: false });
+			commandsStore.valideDocumentEditionById(commandId.value, newId, "created", true);
+			delete commandsStore.documentEdition[commandId.value][newId];
 			addNotification({ message: t("command.DocumentAdded"), type: "success" });
 		} catch (e) {
 			addNotification({ message: e, type: "error" });
@@ -382,24 +374,32 @@ const documentAdd = async(files) => {
 	}
 	documentAddModalShow.value = false;
 };
-const documentEdit = async(row) => {
+const documentEdit = (row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
-		await commandsStore.updateDocument(commandId.value, row.id_command_document, row);
-		delete commandsStore.documentEdition[row.id_command_document];
+		commandsStore.valideDocumentEditionById(commandId.value, row.id_command_document,
+			commandsStore.documentEdition[commandId.value][row.id_command_document]?.status === "created" ? "created" : "modified");
+		delete commandsStore.documentEdition[commandId.value][row.id_command_document];
 		addNotification({ message: t("command.DocumentUpdated"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const documentDelete = async() => {
+const documentRestore = (row) => {
 	try {
-		await commandsStore.deleteDocument(commandId.value, documentModalData.value.id_command_document);
+		delete commandsStore.documentReady[commandId.value][row.id_command_document];
+		addNotification({ message: t("command.DocumentRestored"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+};
+const documentDelete = (row) => {
+	try {
+		commandsStore.valideDocumentEditionById(commandId.value, row.id_command_document, "deleted");
 		addNotification({ message: t("command.DocumentDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
-	documentDeleteModalShow.value = false;
 };
 const documentDownload = async(fileContent) => {
 	const file = await commandsStore.downloadDocument(commandId.value, fileContent.id_command_document);
@@ -416,33 +416,33 @@ const documentView = async(fileContent) => {
 
 // item
 const itemModalShow = ref(false);
-const itemSave = async(item) => {
-	if (commandsStore.items[commandId.value][item.id_item]) {
-		try {
-			schemaItem.validateSync(item.tmp, { abortEarly: false });
-			await commandsStore.updateItem(commandId.value, item.tmp.id_item, item.tmp);
-			item.tmp = null;
-			addNotification({ message: t("command.ItemUpdated"), type: "success" });
-		} catch (e) {
-			addNotification({ message: e, type: "error" });
-			return;
-		}
-	} else {
-		try {
-			schemaItem.validateSync(item.tmp, { abortEarly: false });
-			await commandsStore.createItem(commandId.value, item.tmp);
-			item.tmp = null;
-			addNotification({ message: t("command.ItemAdded"), type: "success" });
-		} catch (e) {
-			addNotification({ message: e, type: "error" });
-			return;
-		}
+const itemSave = (row) => {
+	try {
+		schemaItem.validateSync(row, { abortEarly: false });
+		commandsStore.valideItemEditionById(commandId.value, row.id_item,
+			commandsStore.items[commandId.value]?.[row.id_item] ? "modified" : "created");
+		delete commandsStore.itemEdition[commandId.value][row.id_item];
+		addNotification({ message: t("command.ItemUpdated"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
 	}
 };
-const itemDelete = async(item) => {
+const itemDelete = (row) => {
 	try {
-		await commandsStore.deleteItem(commandId.value, item.id_item);
+		if (commandsStore.itemReady[commandId.value]?.[row.id_item]?.status === "created") {
+			delete commandsStore.itemReady[commandId.value][row.id_item];
+		} else {
+			commandsStore.valideItemEditionById(commandId.value, row.id_item, "deleted");
+		}
 		addNotification({ message: t("command.ItemDeleted"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+};
+const itemRestore = (row) => {
+	try {
+		delete commandsStore.itemReady[commandId.value][row.id_item];
+		addNotification({ message: t("command.ItemRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
@@ -533,9 +533,9 @@ const labelTableauDocument = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "!edition?.id_command_document",
+			showCondition: "!edition?.id_command_document && ready?.status !== 'deleted'",
 			action: (row) => {
-				commandsStore.documentEdition[row.id_command_document] = { ...row };
+				commandsStore.documentEdition[commandId.value][row.id_command_document] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -544,7 +544,7 @@ const labelTableauDocument = ref([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_command_document",
 			action: (row) => {
-				delete commandsStore.documentEdition[row.id_command_document];
+				delete commandsStore.documentEdition[commandId.value][row.id_command_document];
 			},
 			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
 		},
@@ -552,7 +552,7 @@ const labelTableauDocument = ref([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_command_document",
-			action: (row) => documentEdit(commandsStore.documentEdition[row.id_command_document]),
+			action: (row) => documentEdit(commandsStore.documentEdition[commandId.value][row.id_command_document]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -572,14 +572,22 @@ const labelTableauDocument = ref([
 		},
 		{
 			label: "",
+			showCondition: "ready?.status === 'deleted'",
+			icon: "fa-solid fa-rotate-left",
+			action: (row) => documentRestore(row),
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
-			action: (row) => documentDeleteOpenModal(row),
+			action: (row) => documentDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
 ]);
 const labelTableauItem = ref([
-	{ label: "command.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text", 
+	{ label: "command.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text",
 		storeRessourceId: 1, valueKey: "reference_name_item" },
 
 	{ label: "command.ItemQuantity", sortable: true, key: "quantity_command_item", valueKey: "quantity_command_item", type: "number", canEdit: true },
@@ -588,9 +596,9 @@ const labelTableauItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "!edition?.id_item",
+			showCondition: "!edition?.id_item && ready?.status !== 'deleted'",
 			action: (row) => {
-				commandsStore.itemEdition[row.id_item] = { ...row };
+				commandsStore.itemEdition[commandId.value][row.id_item] = { ...row };
 			},
 			type: "button",
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
@@ -599,7 +607,7 @@ const labelTableauItem = ref([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_item",
-			action: (row) => itemSave(commandsStore.itemEdition[row.id_item]),
+			action: (row) => itemSave(commandsStore.itemEdition[commandId.value][row.id_item]),
 			type: "button",
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
@@ -609,13 +617,22 @@ const labelTableauItem = ref([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_item",
 			action: (row) => {
-				delete commandsStore.itemEdition[row.id_item];
+				delete commandsStore.itemEdition[commandId.value][row.id_item];
 			},
 			type: "button",
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
 		},
 		{
 			label: "",
+			showCondition: "ready?.status === 'deleted'",
+			icon: "fa-solid fa-rotate-left",
+			action: (row) => itemRestore(row),
+			type: "button",
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
 			action: (row) => itemDelete(row),
 			type: "button",
@@ -627,28 +644,28 @@ const labelTableauItem = ref([
 const labelTableauModalItem = ref([
 	{ label: "command.ItemName", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
 
-	{ label: "command.ItemQuantity", sortable: true, key: "Item.quantity_command_item", sourceKey: "id_item", type: "text", 
+	{ label: "command.ItemQuantity", sortable: true, key: "Item.quantity_command_item", sourceKey: "id_item", type: "text",
 		storeRessourceId: 1, valueKey: "quantity_command_item", canEdit: true },
 
-	{ label: "command.ItemPrice", sortable: true, key: "Item.price_command_item", sourceKey: "id_item", type: "text", 
+	{ label: "command.ItemPrice", sortable: true, key: "Item.price_command_item", sourceKey: "id_item", type: "text",
 		storeRessourceId: 1, valueKey: "price_command_item", canEdit: true },
 
 	{ label: "command.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
-			showCondition: "store[1]?.[rowData.id_item] === undefined && !edition?.id_item",
+			showCondition: "!ready?.status && store[1]?.[rowData.id_item] === undefined && !edition?.id_item",
 			action: (row) => {
-				commandsStore.itemEdition[row.id_item] = { price_command_item: 1, quantity_command_item: 1, id_item: row.id_item };
+				commandsStore.itemEdition[commandId.value][row.id_item] = { price_command_item: 1, quantity_command_item: 1, id_item: row.id_item };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "store[1]?.[rowData.id_item] && !edition?.id_item",
+			showCondition: "!ready?.status && store[1]?.[rowData.id_item] && !edition?.id_item",
 			action: (row) => {
-				commandsStore.itemEdition[row.id_item] = { ...row };
+				commandsStore.itemEdition[commandId.value][row.id_item] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -656,7 +673,7 @@ const labelTableauModalItem = ref([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_item",
-			action: (row) => itemSave(commandsStore.itemEdition[row.id_item]),
+			action: (row) => itemSave(commandsStore.itemEdition[commandId.value][row.id_item]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -665,14 +682,21 @@ const labelTableauModalItem = ref([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_item",
 			action: (row) => {
-				delete commandsStore.itemEdition[row.id_item];
+				delete commandsStore.itemEdition[commandId.value][row.id_item];
 			},
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
 		},
 		{
 			label: "",
+			icon: "fa-solid fa-rotate-left",
+			showCondition: "ready?.status === 'deleted'",
+			action: (row) => itemRestore(row),
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "store[1]?.[rowData.id_item]",
+			showCondition: "(store[1]?.[rowData.id_item] || ready?.status === 'created') && ready?.status !== 'deleted'",
 			action: (row) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
@@ -712,7 +736,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			/>
 		</div>
 		<CollapsibleSection title="command.Documents"
-			:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)" :permission="commandId !=='new'">
+			:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)">
 			<template #append-row>
 				<button type="button" @click="documentAddModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -721,6 +745,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_command_document' }"
 					:store-data="[commandsStore.documents[commandId]]"
 					:store-edition="commandsStore.documentEdition[commandId]"
+					:store-ready="commandsStore.documentReady[commandId]"
 					:schema="schemaEditDocument"
 					:loading="commandsStore.documentsLoading"
 					:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)"
@@ -730,7 +755,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="command.Items"
-			:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)" :permission="commandId !=='new'">
+			:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)">
 			<template #append-row>
 				<button type="button" @click="itemModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -739,6 +764,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
 					:store-data="[commandsStore.items[commandId],itemsStore.items]"
 					:store-edition="commandsStore.itemEdition[commandId]"
+					:store-ready="commandsStore.itemReady[commandId]"
 					:schema="schemaItem"
 					:loading="commandsStore.itemsLoading"
 					:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)"
@@ -748,7 +774,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="command.Comments"
-			:total-count="Number(commandsStore.commentsTotalCount[commandId] || 0)" :permission="commandId !=='new'">
+			:total-count="Number(commandsStore.commentsTotalCount[commandId] || 0)" :permission="commandId !== 'new'">
 			<template #append-row>
 				<Comment :meta="{ contenu: 'content_command_comment', key: 'id_command_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[commandsStore.comments[commandId], usersStore.users]"
@@ -776,10 +802,6 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		file-type="document"
 	/>
 
-	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
-		:delete-action="documentDelete" :text-title="'command.DocumentDeleteTitle'"
-		:text-p="'command.DocumentDeleteText'"/>
-
 	<div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
 		@click="itemModalShow = false">
 		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
@@ -794,6 +816,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
 				:store-data="[itemsStore.items,commandsStore.items[commandId]]"
 				:store-edition="commandsStore.itemEdition[commandId]"
+				:store-ready="commandsStore.itemReady[commandId]"
 				:filters="filterItem"
 				:loading="commandsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"

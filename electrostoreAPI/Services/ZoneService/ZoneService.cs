@@ -124,6 +124,17 @@ public class ZoneService : IZoneService
         await _context.SaveChangesAsync();
         await _fileService.CreateDirectory(Path.Combine(_zoneImagesPath, newZone.id_zone.ToString()));
         await _fileService.CreateDirectory(Path.Combine(_zoneImagesThumbnailsPath, newZone.id_zone.ToString()));
+        if (zoneDto.img_file is not null)
+        {
+            var savedImg = await _fileService.SaveFile(Path.Combine(_zoneImagesPath, newZone.id_zone.ToString()), zoneDto.img_file.FileName, zoneDto.img_file.ContentType, zoneDto.img_file.OpenReadStream());
+            var savedThumbnail = await _fileService.GenerateThumbnail(
+                savedImg.path,
+                Path.Combine(_zoneImagesThumbnailsPath, newZone.id_zone.ToString()),
+                256, 256);
+            newZone.url_picture_zone = savedImg.path;
+            newZone.url_thumbnail_zone = savedThumbnail.path;
+            await _context.SaveChangesAsync();
+        }
         return _mapper.Map<ReadZoneDto>(newZone);
     }
 
@@ -155,6 +166,37 @@ public class ZoneService : IZoneService
             zoneToUpdate.xlength_zone = newXlength;
             zoneToUpdate.ylength_zone = newYlength;
         }
+        if (zoneDto.unset_img_zone is true)
+        {
+            if (zoneToUpdate.url_picture_zone is not null)
+            {
+                await _fileService.DeleteFile(zoneToUpdate.url_picture_zone);
+            }
+            if (zoneToUpdate.url_thumbnail_zone is not null)
+            {
+                await _fileService.DeleteFile(zoneToUpdate.url_thumbnail_zone);
+            }
+            zoneToUpdate.url_picture_zone = null;
+            zoneToUpdate.url_thumbnail_zone = null;
+        }
+        else if (zoneDto.img_file is not null)
+        {
+            if (zoneToUpdate.url_picture_zone is not null)
+            {
+                await _fileService.DeleteFile(zoneToUpdate.url_picture_zone);
+            }
+            if (zoneToUpdate.url_thumbnail_zone is not null)
+            {
+                await _fileService.DeleteFile(zoneToUpdate.url_thumbnail_zone);
+            }
+            var savedImg = await _fileService.SaveFile(Path.Combine(_zoneImagesPath, id.ToString()), zoneDto.img_file.FileName, zoneDto.img_file.ContentType, zoneDto.img_file.OpenReadStream());
+            var savedThumbnail = await _fileService.GenerateThumbnail(
+                savedImg.path,
+                Path.Combine(_zoneImagesThumbnailsPath, id.ToString()),
+                256, 256);
+            zoneToUpdate.url_picture_zone = savedImg.path;
+            zoneToUpdate.url_thumbnail_zone = savedThumbnail.path;
+        }
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadZoneDto>(zoneToUpdate);
     }
@@ -171,54 +213,5 @@ public class ZoneService : IZoneService
         await _context.SaveChangesAsync();
         await _fileService.DeleteDirectory(Path.Combine(_zoneImagesPath, id.ToString()));
         await _fileService.DeleteDirectory(Path.Combine(_zoneImagesThumbnailsPath, id.ToString()));
-    }
-
-    public async Task<ReadZoneDto> UploadZonePicture(int id, IFormFile file)
-    {
-        var clientRole = _sessionService.GetClientRole();
-        if (clientRole < UserRole.Admin)
-        {
-            throw new UnauthorizedAccessException("You do not have permission to update a zone");
-        }
-        var zoneToUpdate = await _context.Zones.FindAsync(id) ?? throw new KeyNotFoundException($"Zone with id '{id}' not found");
-        if (zoneToUpdate.url_picture_zone is not null)
-        {
-            await _fileService.DeleteFile(zoneToUpdate.url_picture_zone);
-        }
-        if (zoneToUpdate.url_thumbnail_zone is not null)
-        {
-            await _fileService.DeleteFile(zoneToUpdate.url_thumbnail_zone);
-        }
-        var savedPicture = await _fileService.SaveFile(Path.Combine(_zoneImagesPath, id.ToString()), file.FileName, file.ContentType, file.OpenReadStream());
-        var savedThumbnail = await _fileService.GenerateThumbnail(
-            savedPicture.path,
-            Path.Combine(_zoneImagesThumbnailsPath, id.ToString()),
-            256, 256);
-        zoneToUpdate.url_picture_zone = savedPicture.path;
-        zoneToUpdate.url_thumbnail_zone = savedThumbnail.path;
-        await _context.SaveChangesAsync();
-        return _mapper.Map<ReadZoneDto>(zoneToUpdate);
-    }
-
-    public async Task<ReadZoneDto> DeleteZonePicture(int id)
-    {
-        var clientRole = _sessionService.GetClientRole();
-        if (clientRole < UserRole.Admin)
-        {
-            throw new UnauthorizedAccessException("You do not have permission to update a zone");
-        }
-        var zoneToUpdate = await _context.Zones.FindAsync(id) ?? throw new KeyNotFoundException($"Zone with id '{id}' not found");
-        if (zoneToUpdate.url_picture_zone is not null)
-        {
-            await _fileService.DeleteFile(zoneToUpdate.url_picture_zone);
-        }
-        if (zoneToUpdate.url_thumbnail_zone is not null)
-        {
-            await _fileService.DeleteFile(zoneToUpdate.url_thumbnail_zone);
-        }
-        zoneToUpdate.url_picture_zone = null;
-        zoneToUpdate.url_thumbnail_zone = null;
-        await _context.SaveChangesAsync();
-        return _mapper.Map<ReadZoneDto>(zoneToUpdate);
     }
 }

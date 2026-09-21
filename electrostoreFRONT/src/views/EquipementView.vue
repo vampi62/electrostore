@@ -106,38 +106,14 @@ const equipementSave = async() => {
 			equipementsStore.setLoadingEdition(equipementId.value, false);
 			return;
 		}
-		const edition = equipementsStore.equipementEdition[equipementId.value];
-		const formData = new FormData();
-		formData.append("reference_name_equipement", edition.reference_name_equipement);
-		formData.append("friendly_name_equipement", edition.friendly_name_equipement);
-		if (edition.description_equipement) {
-			formData.append("description_equipement", edition.description_equipement);
-		}
-		formData.append("status_equipement", edition.status_equipement);
-		if (edition.img_file) {
-			formData.append("img_file", edition.img_file);
-		}
-		const imageChanged = !!edition.img_file || !!edition.unset_img_equipement;
+		equipementsStore.equipementEdition[equipementId.value].isFormData = true;
+		const id = await equipementsStore.saveAllChanges(equipementId.value);
+		equipementsStore.loadToEdition(id);
 		if (equipementId.value === "new") {
-			const newId = await equipementsStore.createEquipement(formData);
-			equipementsStore.loadToEdition(newId);
-			if (imageChanged) {
-				delete equipementsStore.thumbnailsURL[newId];
-				equipementsStore.showThumbnailById(newId);
-			}
 			addNotification({ message: t("equipement.Created"), type: "success" });
-			equipementId.value = String(newId);
+			equipementId.value = String(id);
 			router.push("/equipements/" + equipementId.value);
 		} else {
-			if (edition.unset_img_equipement) {
-				formData.append("unset_img_equipement", "true");
-			}
-			await equipementsStore.updateEquipement(equipementId.value, formData);
-			equipementsStore.loadToEdition(equipementId.value);
-			if (imageChanged) {
-				delete equipementsStore.thumbnailsURL[equipementId.value];
-				equipementsStore.showThumbnailById(equipementId.value);
-			}
 			addNotification({ message: t("equipement.Updated"), type: "success" });
 		}
 		resetImageSelection();
@@ -188,7 +164,15 @@ const filterTag = ref([
 ]);
 function tagSave(id_tag) {
 	try {
-		equipementsStore.createEquipementTag(equipementId.value, { id_tag: id_tag });
+		// re-adding a tag that is only pending deletion locally just cancels that pending deletion
+		if (equipementsStore.equipementTagReady[equipementId.value]?.[id_tag]?.status === "deleted") {
+			delete equipementsStore.equipementTagReady[equipementId.value][id_tag];
+			addNotification({ message: t("equipement.TagRestored"), type: "success" });
+			return;
+		}
+		equipementsStore.equipementTagEdition[equipementId.value][id_tag] = { id_tag };
+		equipementsStore.valideEquipementTagEditionById(equipementId.value, id_tag, "created");
+		delete equipementsStore.equipementTagEdition[equipementId.value][id_tag];
 		addNotification({ message: t("equipement.TagAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -196,18 +180,39 @@ function tagSave(id_tag) {
 }
 function tagDelete(id_tag) {
 	try {
-		equipementsStore.deleteEquipementTag(equipementId.value, id_tag);
+		// a tag that was only staged as a pending creation is simply dropped, nothing to push
+		if (equipementsStore.equipementTagReady[equipementId.value]?.[id_tag]?.status === "created") {
+			delete equipementsStore.equipementTagReady[equipementId.value][id_tag];
+		} else {
+			equipementsStore.valideEquipementTagEditionById(equipementId.value, id_tag, "deleted");
+		}
 		addNotification({ message: t("equipement.TagDeleted"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+}
+function tagRestore(id_tag) {
+	try {
+		delete equipementsStore.equipementTagReady[equipementId.value][id_tag];
+		addNotification({ message: t("equipement.TagRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
 }
 
 // box
-const boxUnlink = async(idBox) => {
+const boxDelete = (row) => {
 	try {
-		await equipementsStore.deleteEquipementBox(equipementId.value, idBox);
+		equipementsStore.valideEquipementBoxEditionById(equipementId.value, row.id_box, "deleted");
 		addNotification({ message: t("equipement.BoxUnlinked"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+};
+const boxRestore = (row) => {
+	try {
+		delete equipementsStore.equipementBoxReady[equipementId.value][row.id_box];
+		addNotification({ message: t("equipement.BoxRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
@@ -215,21 +220,15 @@ const boxUnlink = async(idBox) => {
 
 // document
 const documentAddModalShow = ref(false);
-const documentDeleteModalShow = ref(false);
-const documentModalData = ref({ id_equipement_document: null, name_equipement_document: "", document: null });
-const documentDeleteOpenModal = (doc) => {
-	documentModalData.value = doc;
-	documentDeleteModalShow.value = true;
-};
 const documentAdd = async(files) => {
 	for (const file of files) {
-		documentModalData.value = { name_equipement_document: file.name, document: file.document };
+		const documentModalData = { name_equipement_document: file.name, document: file.document };
+		const newId = equipementsStore.getAvailableNewEquipementDocumentId(equipementId.value);
+		equipementsStore.equipementDocumentEdition[equipementId.value][newId] = documentModalData;
 		try {
-			schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
-			const formData = new FormData();
-			formData.append("name_equipement_document", documentModalData.value.name_equipement_document);
-			formData.append("document", documentModalData.value.document);
-			await equipementsStore.createEquipementDocument(equipementId.value, formData);
+			schemaAddDocument.validateSync(documentModalData, { abortEarly: false });
+			equipementsStore.valideEquipementDocumentEditionById(equipementId.value, newId, "created", true);
+			delete equipementsStore.equipementDocumentEdition[equipementId.value][newId];
 			addNotification({ message: t("equipement.DocumentAdded"), type: "success" });
 		} catch (e) {
 			addNotification({ message: e, type: "error" });
@@ -237,10 +236,11 @@ const documentAdd = async(files) => {
 	}
 	documentAddModalShow.value = false;
 };
-const documentEdit = async(row) => {
+const documentEdit = (row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
-		await equipementsStore.updateEquipementDocument(equipementId.value, row.id_equipement_document, row);
+		equipementsStore.valideEquipementDocumentEditionById(equipementId.value, row.id_equipement_document,
+			equipementsStore.equipementDocumentEdition[equipementId.value][row.id_equipement_document]?.status === "created" ? "created" : "modified");
 		delete equipementsStore.equipementDocumentEdition[equipementId.value][row.id_equipement_document];
 		addNotification({ message: t("equipement.DocumentUpdated"), type: "success" });
 	} catch (e) {
@@ -248,14 +248,21 @@ const documentEdit = async(row) => {
 		return;
 	}
 };
-const documentDelete = async() => {
+const documentRestore = (row) => {
 	try {
-		await equipementsStore.deleteEquipementDocument(equipementId.value, documentModalData.value.id_equipement_document);
+		delete equipementsStore.equipementDocumentReady[equipementId.value][row.id_equipement_document];
+		addNotification({ message: t("equipement.DocumentRestored"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+};
+const documentDelete = (row) => {
+	try {
+		equipementsStore.valideEquipementDocumentEditionById(equipementId.value, row.id_equipement_document, "deleted");
 		addNotification({ message: t("equipement.DocumentDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
-	documentDeleteModalShow.value = false;
 };
 const documentDownload = async(fileContent) => {
 	const file = await equipementsStore.downloadEquipementDocument(equipementId.value, fileContent.id_equipement_document);
@@ -345,15 +352,22 @@ const labelTableauModalTag = ref([
 	{ label: "equipement.TagActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
-			icon: "fa-solid fa-save",
-			showCondition: "!store[1]?.[rowData.id_tag]",
+			icon: "fa-solid fa-plus",
+			showCondition: "!ready?.status && !store[1]?.[rowData.id_tag]",
 			action: (row) => tagSave(row.id_tag),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 		},
 		{
 			label: "",
+			icon: "fa-solid fa-rotate-left",
+			showCondition: "ready?.status === 'deleted'",
+			action: (row) => tagRestore(row.id_tag),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+		},
+		{
+			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "store[1]?.[rowData.id_tag]",
+			showCondition: "ready?.status && ready?.status !== 'deleted'",
 			action: (row) => tagDelete(row.id_tag),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
@@ -366,8 +380,16 @@ const labelTableauBox = ref([
 	{ label: "equipement.BoxActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
+			showCondition: "ready?.status === 'deleted'",
+			icon: "fa-solid fa-rotate-left",
+			action: (row) => boxRestore(row),
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
-			action: (row) => boxUnlink(row.id_box),
+			action: (row) => boxDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
@@ -380,7 +402,7 @@ const labelTableauDocument = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "!edition?.id_equipement_document",
+			showCondition: "!edition?.id_equipement_document && ready?.status !== 'deleted'",
 			action: (row) => {
 				equipementsStore.equipementDocumentEdition[equipementId.value][row.id_equipement_document] = { ...row };
 			},
@@ -419,8 +441,16 @@ const labelTableauDocument = ref([
 		},
 		{
 			label: "",
+			showCondition: "ready?.status === 'deleted'",
+			icon: "fa-solid fa-rotate-left",
+			action: (row) => documentRestore(row),
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
-			action: (row) => documentDeleteOpenModal(row),
+			action: (row) => documentDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
@@ -494,8 +524,9 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					</div>
 				</template>
 			</FormContainer>
-			<Tags :current-tags="equipementsStore.equipementTags[equipementId] || {}" :tags-store="tagsStore.tags" :can-edit="equipementId !== 'new' && authStore.hasPermission([1, 2])"
+			<Tags :current-tags="equipementsStore.equipementTags[equipementId] || {}" :ready-store="equipementsStore.equipementTagReady[equipementId] || {}" :tags-store="tagsStore.tags" :can-edit="equipementId !== 'new' && authStore.hasPermission([1, 2])"
 				:delete-function="(value) => tagDelete(value)"
+				:restore-function="(value) => tagRestore(value)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'loading': tagsStore.tagsLoading, 'fetchFunction': (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
@@ -504,11 +535,12 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 		</div>
 		<CollapsibleSection title="equipement.Boxs"
-			:total-count="Number(equipementsStore.equipementBoxsTotalCount[equipementId] || 0)" :permission="equipementId !=='new'">
+			:total-count="Number(equipementsStore.equipementBoxsTotalCount[equipementId] || 0)">
 			<template #append-row>
 				<p class="text-sm text-gray-600 mb-2">{{ $t('equipement.BoxHint') }}</p>
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box' }"
 					:store-data="[equipementsStore.equipementBoxs[equipementId], storesStore.stores]"
+					:store-ready="equipementsStore.equipementBoxReady[equipementId]"
 					:loading="equipementsStore.equipementBoxsLoading"
 					:total-count="Number(equipementsStore.equipementBoxsTotalCount[equipementId])"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
@@ -516,7 +548,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="equipement.Documents"
-			:total-count="Number(equipementsStore.equipementDocumentsTotalCount[equipementId] || 0)" :permission="equipementId !=='new'">
+			:total-count="Number(equipementsStore.equipementDocumentsTotalCount[equipementId] || 0)">
 			<template #append-row>
 				<button type="button" @click="documentAddModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -525,6 +557,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_equipement_document' }"
 					:store-data="[equipementsStore.equipementDocuments[equipementId]]"
 					:store-edition="equipementsStore.equipementDocumentEdition[equipementId]"
+					:store-ready="equipementsStore.equipementDocumentReady[equipementId]"
 					:schema="schemaEditDocument"
 					:loading="equipementsStore.equipementDocumentsLoading"
 					:total-count="Number(equipementsStore.equipementDocumentsTotalCount[equipementId])"
@@ -534,7 +567,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="equipement.Maintenances"
-			:total-count="Number(equipementsStore.equipementMaintenancesTotalCount[equipementId] || 0)" :permission="equipementId !=='new'">
+			:total-count="Number(equipementsStore.equipementMaintenancesTotalCount[equipementId] || 0)">
 			<template #append-row>
 				<div class="flex flex-wrap items-end gap-2 mb-4">
 					<div class="flex flex-col">
@@ -565,7 +598,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="equipement.Comments"
-			:total-count="Number(equipementsStore.equipementCommentsTotalCount[equipementId] || 0)" :permission="equipementId !=='new'">
+			:total-count="Number(equipementsStore.equipementCommentsTotalCount[equipementId] || 0)" :permission="equipementId !== 'new'">
 			<template #append-row>
 				<Comment :meta="{ key: 'id_equipement_comment', contenu: 'content_equipement_comment', canEdit: true, roleRequired: authStore.hasPermission([2]), expand: ['user'] }"
 					:store-data="[equipementsStore.equipementComments[equipementId], usersStore.users]"
@@ -583,7 +616,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="equipement.StatusHistory"
-			:total-count="Number(equipementsStore.equipementStatusHistoryTotalCount[equipementId] || 0)" :permission="equipementId !=='new'">
+			:total-count="Number(equipementsStore.equipementStatusHistoryTotalCount[equipementId] || 0)">
 			<template #append-row>
 				<Tableau :labels="labelTableauStatusHistory" :meta="{ key: 'id_equipement_status' }"
 					:store-data="[equipementsStore.equipementStatusHistory[equipementId]]"
@@ -609,8 +642,4 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		@files-saved="documentAdd"
 		file-type="document"
 	/>
-
-	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
-		:delete-action="documentDelete" :text-title="'equipement.DocumentDeleteTitle'"
-		:text-p="'equipement.DocumentDeleteText'"/>
 </template>

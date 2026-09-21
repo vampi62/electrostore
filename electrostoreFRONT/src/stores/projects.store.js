@@ -70,7 +70,6 @@ const commentResource = createNestedResource({
 	countKey: "commentsTotalCount",
 	loadingKey: "commentsLoading",
 	editionKey: "commentEdition",
-	readyKey: "commentsReady",
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("user")) {
 			const usersStore = useUsersStore();
@@ -136,7 +135,6 @@ export const useProjectsStore = defineStore("projects",{
 		commentsTotalCount: {},
 		comments: {},
 		commentEdition: {},
-		commentsReady: {},
 
 		documentsLoading: false,
 		documentsTotalCount: {},
@@ -213,7 +211,6 @@ export const useProjectsStore = defineStore("projects",{
 			let realId = id;
 			if (id === "new") {
 				realId = await this.createProject(this.projectEdition[id]);
-				this.copyCommentAllId(id, realId);
 				this.copyDocumentAllId(id, realId);
 				this.copyItemAllId(id, realId);
 				this.copyProjectTagProjectAllId(id, realId);
@@ -221,7 +218,6 @@ export const useProjectsStore = defineStore("projects",{
 				await this.updateProject(realId, this.projectEdition[id]);
 			}
 			await Promise.all([
-				this.pushCommentChange(realId),
 				this.pushDocumentChange(realId),
 				this.pushItemChange(realId),
 				this.pushProjectTagProjectChange(realId),
@@ -234,11 +230,6 @@ export const useProjectsStore = defineStore("projects",{
 		createComment: commentResource.create,
 		updateComment: commentResource.update,
 		deleteComment: commentResource.remove,
-		getAvailableNewCommentId: commentResource.getAvailableNewId,
-		valideCommentEditionById: commentResource.valideEditionById,
-		copyCommentPerId: commentResource.copyPerId,
-		copyCommentAllId: commentResource.copyAllId,
-		pushCommentChange: commentResource.pushChange,
 
 		getDocumentByInterval: documentResource.getByInterval,
 		getDocumentById: documentResource.getById,

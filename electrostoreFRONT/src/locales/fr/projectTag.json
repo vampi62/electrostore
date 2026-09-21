@@ -6,6 +6,7 @@
 	"Deleted": "Tag de projet supprimé avec succès",
 	"ProjectAdded": "Projet ajouté au tag avec succès",
 	"ProjectDeleted": "Projet supprimé du tag avec succès",
+	"ProjectRestored": "Projet restauré",
 	"ProjectFilterPlaceholder": "Rechercher des projets à ajouter...",
 	"NameMaxLength": "Le nom du tag doit comporter au maximum {count} caractères",
 	"NameRequired": "Le nom du tag est requis",

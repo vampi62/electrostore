@@ -281,85 +281,99 @@ public class StoreService : IStoreService
         {
             throw new KeyNotFoundException($"Zone with id '{storeDto.store.id_zone}' not found");
         }
-        var newStore = _mapper.Map<Stores>(storeDto.store);
-        await _validateStoreService.ValidateStorePlanPosition(newStore);
-        if (newStore.id_zone is null)
+        var strategy = _context.Database.CreateExecutionStrategy();
+        var (newStore, validQueryLed, errorQueryLed, validQueryBox, errorQueryBox, mqttPassword, committed) = await strategy.ExecuteAsync(async () =>
         {
-            newStore.xmin_store = null;
-            newStore.ymin_store = null;
-            newStore.xmax_store = null;
-            newStore.ymax_store = null;
-        }
-        await using var transaction = await _context.Database.BeginTransactionAsync();
-        _context.Stores.Add(newStore);
-        await _context.SaveChangesAsync(); // persist store to get real id_store
-        // Add leds and boxs if provided
-        var validQueryLed = new List<ReadLedDto>();
-        var errorQueryLed = new List<ErrorDetail>();
-        foreach (var ledDto in storeDto.leds ?? Enumerable.Empty<CreateLedByStoreDto>())
-        {
-            try
+            var newStore = _mapper.Map<Stores>(storeDto.store);
+            await _validateStoreService.ValidateStorePlanPosition(newStore);
+            if (newStore.id_zone is null)
             {
-                var ledDtoFull = new CreateLedDto
-                {
-                    x_led = ledDto.x_led,
-                    y_led = ledDto.y_led,
-                    id_store = newStore.id_store,
-                    mqtt_id_led = ledDto.mqtt_id_led
-                };
-                var newLed = _mapper.Map<Leds>(ledDtoFull);
-                _validateStoreService.ValidateLedPosition(newLed, newStore);
-                _context.Leds.Add(newLed);
-                validQueryLed.Add(_mapper.Map<ReadLedDto>(newLed));
+                newStore.xmin_store = null;
+                newStore.ymin_store = null;
+                newStore.xmax_store = null;
+                newStore.ymax_store = null;
             }
-            catch (Exception e)
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            _context.Stores.Add(newStore);
+            await _context.SaveChangesAsync(); // persist store to get real id_store
+            // Add leds and boxs if provided
+            var validQueryLed = new List<ReadLedDto>();
+            var errorQueryLed = new List<ErrorDetail>();
+            foreach (var ledDto in storeDto.leds ?? Enumerable.Empty<CreateLedByStoreDto>())
             {
-                errorQueryLed.Add(new ErrorDetail
+                try
                 {
-                    reason = e.Message,
-                    data = ledDto
-                });
+                    var ledDtoFull = new CreateLedDto
+                    {
+                        x_led = ledDto.x_led,
+                        y_led = ledDto.y_led,
+                        id_store = newStore.id_store,
+                        mqtt_id_led = ledDto.mqtt_id_led
+                    };
+                    var newLed = _mapper.Map<Leds>(ledDtoFull);
+                    _validateStoreService.ValidateLedPosition(newLed, newStore);
+                    _context.Leds.Add(newLed);
+                    validQueryLed.Add(_mapper.Map<ReadLedDto>(newLed));
+                }
+                catch (Exception e)
+                {
+                    errorQueryLed.Add(new ErrorDetail
+                    {
+                        reason = e.Message,
+                        data = ledDto
+                    });
+                }
             }
-        }
-        var validQueryBox = new List<ReadBoxDto>();
-        var errorQueryBox = new List<ErrorDetail>();
-        foreach (var boxDto in storeDto.boxs ?? Enumerable.Empty<CreateBoxByStoreDto>())
-        {
-            try
+            var validQueryBox = new List<ReadBoxDto>();
+            var errorQueryBox = new List<ErrorDetail>();
+            foreach (var boxDto in storeDto.boxs ?? Enumerable.Empty<CreateBoxByStoreDto>())
             {
-                var boxDtoFull = new CreateBoxDto
+                try
                 {
-                    xstart_box = boxDto.xstart_box,
-                    ystart_box = boxDto.ystart_box,
-                    xend_box = boxDto.xend_box,
-                    yend_box = boxDto.yend_box,
-                    id_store = newStore.id_store
-                };
-                await _validateStoreService.CheckCreateBoxPositionOverlap(boxDtoFull);
-                var newBox = _mapper.Map<Boxs>(boxDtoFull);
-                _validateStoreService.ValidateBoxPosition(newBox, newStore);
-                _context.Boxs.Add(newBox);
-                validQueryBox.Add(_mapper.Map<ReadBoxDto>(newBox));
-            }
-            catch (Exception e)
-            {
-                errorQueryBox.Add(new ErrorDetail
+                    var boxDtoFull = new CreateBoxDto
+                    {
+                        xstart_box = boxDto.xstart_box,
+                        ystart_box = boxDto.ystart_box,
+                        xend_box = boxDto.xend_box,
+                        yend_box = boxDto.yend_box,
+                        id_store = newStore.id_store
+                    };
+                    await _validateStoreService.CheckCreateBoxPositionOverlap(boxDtoFull);
+                    var newBox = _mapper.Map<Boxs>(boxDtoFull);
+                    _validateStoreService.ValidateBoxPosition(newBox, newStore);
+                    _context.Boxs.Add(newBox);
+                    validQueryBox.Add(_mapper.Map<ReadBoxDto>(newBox));
+                }
+                catch (Exception e)
                 {
-                    reason = e.Message,
-                    data = boxDto
-                });
+                    errorQueryBox.Add(new ErrorDetail
+                    {
+                        reason = e.Message,
+                        data = boxDto
+                    });
+                }
             }
-        }
-        var mqttPassword = GenerateMqttPasswordForStore();
-        var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
-        newStore.mqtt_password_store = encryptedPassword.encrypted_data;
-        newStore.mqtt_password_encryption_iv_store = encryptedPassword.iv;
-        newStore.mqtt_password_encryption_tag_store = encryptedPassword.tag;
-        await _context.SaveChangesAsync();
-        if (errorQueryLed.Count == 0 && errorQueryBox.Count == 0)
-        {
+            var mqttPassword = GenerateMqttPasswordForStore();
+            var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
+            newStore.mqtt_password_store = encryptedPassword.encrypted_data;
+            newStore.mqtt_password_encryption_iv_store = encryptedPassword.iv;
+            newStore.mqtt_password_encryption_tag_store = encryptedPassword.tag;
             await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
+            var committed = false;
+            if (errorQueryLed.Count == 0 && errorQueryBox.Count == 0)
+            {
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                committed = true;
+            }
+            else
+            {
+                await transaction.RollbackAsync();
+            }
+            return (newStore, validQueryLed, errorQueryLed, validQueryBox, errorQueryBox, mqttPassword, committed);
+        });
+        if (committed)
+        {
             await _kafkaProducerService.PublishAsync(
                 KafkaMqttUserTopic,
                 newStore.id_store.ToString(),
@@ -370,10 +384,6 @@ public class StoreService : IStoreService
                     delete = false
                 })
             );
-        }
-        else
-        {
-            await transaction.RollbackAsync();
         }
         return new ReadStoreCompleteDto
         {
@@ -402,66 +412,78 @@ public class StoreService : IStoreService
             throw new UnauthorizedAccessException("You do not have permission to update a store");
         }
         var storeToUpdate = await _context.Stores.FindAsync(id) ?? throw new KeyNotFoundException($"Store with id '{id}' not found");
-        await using var transaction = await _context.Database.BeginTransactionAsync();
         var oldMqttName = storeToUpdate.mqtt_name_store;
-        await _validateStoreService.UpdateStoreInformations(storeToUpdate, storeDto.store);
-        await _validateStoreService.ValidateStorePlanPosition(storeToUpdate);
-        // Add leds and boxs, if status field indicate the new status "delete", "modified", "new"
-        (var validQueryLed, var errorQueryLed) = await UpdateLedList(storeToUpdate, storeDto.leds ?? []);
-        (var validQueryBox, var errorQueryBox) = await UpdateBoxList(storeToUpdate, storeDto.boxs ?? []);
-        await _validateStoreService.CheckUpdateStoreOutsideElement(storeToUpdate);
-        if (errorQueryBox.Count == 0)
+        var strategy = _context.Database.CreateExecutionStrategy();
+        var (validQueryLed, errorQueryLed, validQueryBox, errorQueryBox, mqttPassword, passwordReset, committed) = await strategy.ExecuteAsync(async () =>
         {
-            // Check for overlapping boxs after all modifications
-            foreach (var box in storeDto.boxs ?? [])
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            await _validateStoreService.UpdateStoreInformations(storeToUpdate, storeDto.store);
+            await _validateStoreService.ValidateStorePlanPosition(storeToUpdate);
+            // Add leds and boxs, if status field indicate the new status "delete", "modified", "new"
+            (var validQueryLed, var errorQueryLed) = await UpdateLedList(storeToUpdate, storeDto.leds ?? []);
+            (var validQueryBox, var errorQueryBox) = await UpdateBoxList(storeToUpdate, storeDto.boxs ?? []);
+            await _validateStoreService.CheckUpdateStoreOutsideElement(storeToUpdate);
+            if (errorQueryBox.Count == 0)
             {
-                try
+                // Check for overlapping boxs after all modifications
+                foreach (var box in storeDto.boxs ?? [])
                 {
-                    if (box.status == "new" || box.status == "modified")
+                    try
                     {
-                        var boxToUpdate = await _context.Boxs.FindAsync(box.id_box) ?? throw new KeyNotFoundException($"Box with id '{box.id_box}' not found");
-                        await _validateStoreService.CheckUpdateBoxPositionOverlap(boxToUpdate);
+                        if (box.status == "new" || box.status == "modified")
+                        {
+                            var boxToUpdate = await _context.Boxs.FindAsync(box.id_box) ?? throw new KeyNotFoundException($"Box with id '{box.id_box}' not found");
+                            await _validateStoreService.CheckUpdateBoxPositionOverlap(boxToUpdate);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        errorQueryBox.Add(new ErrorDetail
+                        {
+                            reason = e.Message,
+                            data = box
+                        });
                     }
                 }
-                catch (Exception e)
-                {
-                    errorQueryBox.Add(new ErrorDetail
-                    {
-                        reason = e.Message,
-                        data = box
-                    });
-                }
             }
-        }
-        var mqttPassword = string.Empty;
-        if (errorQueryLed.Count == 0 && errorQueryBox.Count == 0)
-        {
-            await _context.SaveChangesAsync();
-            if (storeDto.store.reset_mqtt_password_store == true)
+            var mqttPassword = string.Empty;
+            var passwordReset = false;
+            var committed = false;
+            if (errorQueryLed.Count == 0 && errorQueryBox.Count == 0)
             {
-                mqttPassword = GenerateMqttPasswordForStore();
-                var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
-                storeToUpdate.mqtt_password_store = encryptedPassword.encrypted_data;
-                storeToUpdate.mqtt_password_encryption_iv_store = encryptedPassword.iv;
-                storeToUpdate.mqtt_password_encryption_tag_store = encryptedPassword.tag;
                 await _context.SaveChangesAsync();
-                await _kafkaProducerService.PublishAsync(
-                    KafkaMqttUserTopic,
-                    storeToUpdate.id_store.ToString(),
-                    JsonSerializer.Serialize(new MqttUserMessage
-                    {
-                        user = storeToUpdate.mqtt_name_store,
-                        old_user = oldMqttName,
-                        password = mqttPassword,
-                        delete = false
-                    })
-                );
+                if (storeDto.store.reset_mqtt_password_store == true)
+                {
+                    mqttPassword = GenerateMqttPasswordForStore();
+                    var encryptedPassword = await _encryptionService.Encrypt(mqttPassword, _encryptionKey);
+                    storeToUpdate.mqtt_password_store = encryptedPassword.encrypted_data;
+                    storeToUpdate.mqtt_password_encryption_iv_store = encryptedPassword.iv;
+                    storeToUpdate.mqtt_password_encryption_tag_store = encryptedPassword.tag;
+                    await _context.SaveChangesAsync();
+                    passwordReset = true;
+                }
+                await transaction.CommitAsync();
+                committed = true;
             }
-            await transaction.CommitAsync();
-        }
-        else
+            else
+            {
+                await transaction.RollbackAsync();
+            }
+            return (validQueryLed, errorQueryLed, validQueryBox, errorQueryBox, mqttPassword, passwordReset, committed);
+        });
+        if (committed && passwordReset)
         {
-            await transaction.RollbackAsync();
+            await _kafkaProducerService.PublishAsync(
+                KafkaMqttUserTopic,
+                storeToUpdate.id_store.ToString(),
+                JsonSerializer.Serialize(new MqttUserMessage
+                {
+                    user = storeToUpdate.mqtt_name_store,
+                    old_user = oldMqttName,
+                    password = mqttPassword,
+                    delete = false
+                })
+            );
         }
         if (mqttPassword == string.Empty)
         {

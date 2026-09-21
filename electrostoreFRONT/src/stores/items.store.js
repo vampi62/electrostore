@@ -253,15 +253,17 @@ export const useItemsStore = defineStore("items",{
 		},
 		async saveAllChanges(id) {
 			let realId = id;
+			const { isFormData, ...data } = this.itemEdition[id];
+			const imageChanged = !!data.img_file || !!data.unset_img_item;
 			if (id === "new") {
-				realId = await this.createItem(this.itemEdition[id]);
+				realId = await this.createItem(isFormData ? new FormData(Object.entries(data)) : data);
 				this.copyDocumentAllId(id, realId);
 				this.copyItemBoxAllId(id, realId);
 				this.copyItemTagAllId(id, realId);
 				this.copyItemCommandAllId(id, realId);
 				this.copyItemProjectAllId(id, realId);
 			} else {
-				await this.updateItem(id, this.itemEdition[id]);
+				await this.updateItem(id, isFormData ? new FormData(Object.entries(data)) : data);
 			}
 			await Promise.all([
 				this.pushDocumentChange(realId),
@@ -270,6 +272,12 @@ export const useItemsStore = defineStore("items",{
 				this.pushItemCommandChange(realId),
 				this.pushItemProjectChange(realId),
 			]);
+			if (imageChanged) {
+				delete this.thumbnailsURL[realId];
+				delete this.imagesURL[realId];
+				this.showThumbnailById(realId);
+				this.showImageById(realId);
+			}
 			return realId;
 		},
 

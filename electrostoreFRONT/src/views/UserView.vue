@@ -80,7 +80,11 @@ const userSave = async() => {
 			return;
 		}
 		if (userId.value === "new") {
-			const newId = await usersStore.createUser({ ...usersStore.userEdition[userId.value] });
+			const data = { ...usersStore.userEdition[userId.value] };
+			if (authStore.user?.isSSOUser) {
+				delete data.current_password_user;
+			}
+			const newId = await usersStore.createUser(data);
 			usersStore.loadToEdition(newId);
 			addNotification({ message: t("user.Created"), type: "success" });
 			userId.value = String(newId);
@@ -90,6 +94,9 @@ const userSave = async() => {
 			if (!data.password_user) {
 				delete data.password_user;
 				delete data.confirm_mdp_user;
+			}
+			if (authStore.user?.isSSOUser) {
+				delete data.current_password_user;
 			}
 			await usersStore.updateUser(userId.value, data);
 			usersStore.loadToEdition(userId.value);
@@ -156,7 +163,7 @@ const createSchema = () => {
 		shape.password_user = Yup.string().nullable();
 		shape.confirm_mdp_user = Yup.string().nullable();
 	}
-	if (authStore.session?.isSSOUser === false) {
+	if (authStore.user?.isSSOUser === false) {
 		shape.current_password_user = Yup.string()
 			.required(t("user.CurrentPasswordRequired"));
 	}
