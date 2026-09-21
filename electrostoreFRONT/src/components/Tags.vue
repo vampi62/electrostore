@@ -1,9 +1,13 @@
 <template>
 	<div class="flex-1 min-h-96 bg-gray-200 px-2 py-2 rounded">
-		<span v-for="(value, key) in sortedTags" :key="key"
-			class="bg-gray-300 p-1 rounded mr-2 mb-1">
-			{{ this.tagsStore[value][this.meta["keyName"]] }} ({{ this.tagsStore[value][this.meta["keyPoids"]] }})
-			<span @click="deleteFunction(value)"
+		<span v-for="key in sortedTags" :key="key"
+			class="p-1 rounded mr-2 mb-1" :class="tagPillClass(key)">
+			{{ this.tagsStore[key]?.[this.meta["keyName"]] }} ({{ this.tagsStore[key]?.[this.meta["keyPoids"]] }})
+			<span v-if="tagStatus(key) === 'deleted'" @click="restoreFunction(key)"
+				class="text-blue-500 cursor-pointer hover:text-blue-600">
+				<font-awesome-icon icon="fa-solid fa-rotate-left" />
+			</span>
+			<span v-else @click="deleteFunction(key)"
 				class="text-red-500 cursor-pointer hover:text-red-600">
 				<font-awesome-icon icon="fa-solid fa-times" />
 			</span>
@@ -31,6 +35,7 @@
 				<!-- Tableau Items -->
 				<Tableau :labels="tableauModal['label']" :meta="tableauModal['meta']"
 					:store-data="[tagsStore, currentTags, ...otherStore]"
+					:store-ready="effectiveTags"
 					:filters="filterModal"
 					:loading="tableauModal['loading']"
 					:fetch-function="tableauModal['fetchFunction']"
@@ -50,17 +55,28 @@ export default {
 			type: Object,
 			required: true,
 			default: null,
-			// 
+			//
 		},
 		currentTags: {
 			type: Object,
 			required: true,
 			default: null,
-			// 
+			//
+		},
+		readyStore: {
+			type: Object,
+			required: false,
+			default: () => ({}),
+			// readyStore is an object containing the tags pending addition/deletion, keyed by id_tag, e.g. { [id_tag]: { status: 'created' | 'deleted', ... } }
 		},
 		deleteFunction: {
 			type: Function,
 			default: () => {},
+		},
+		restoreFunction: {
+			type: Function,
+			default: () => {},
+			// restoreFunction cancels a pending deletion staged in readyStore
 		},
 		fetchFunction: {
 			type: Function,
@@ -92,9 +108,22 @@ export default {
 		},
 	},
 	computed:{
+		// merges currentTags (saved) with readyStore (pending, unsaved) without duplicate ids
+		effectiveTags() {
+			const merged = {};
+			for (const key of Object.keys(this.currentTags || {})) {
+				merged[key] = { status: this.readyStore?.[key]?.status || null };
+			}
+			for (const key of Object.keys(this.readyStore || {})) {
+				if (!merged[key]) {
+					merged[key] = { status: this.readyStore[key].status };
+				}
+			}
+			return merged;
+		},
 		sortedTags() {
-			return Object.keys(this.currentTags || {})
-				.sort((a, b) => this.tagsStore[b][this.meta["keyPoids"]] - this.tagsStore[a][this.meta["keyPoids"]]);
+			return Object.keys(this.effectiveTags)
+				.sort((a, b) => this.tagsStore[b]?.[this.meta["keyPoids"]] - this.tagsStore[a]?.[this.meta["keyPoids"]]);
 		},
 	},
 	data() {
@@ -102,6 +131,19 @@ export default {
 			tagModalShow: false,
 			tagLoad: false,
 		};
+	},
+	methods: {
+		tagStatus(key) {
+			return this.effectiveTags[key]?.status || null;
+		},
+		tagPillClass(key) {
+			switch (this.tagStatus(key)) {
+			case "created": return "bg-green-100 text-green-800";
+			case "deleted": return "bg-red-100 text-red-800";
+			case "modified": return "bg-amber-100 text-amber-800";
+			default: return "bg-gray-300";
+			}
+		},
 	},
 };
 </script>

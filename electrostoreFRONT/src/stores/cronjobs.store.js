@@ -58,6 +58,15 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		clearEdition(id) {
 			delete this.cronJobEdition[id];
 		},
+		async saveAllChanges(id) {
+			let realId = id;
+			if (id === "new") {
+				realId = await this.createCronJob(this.cronJobEdition[id]);
+			} else {
+				await this.updateCronJob(id, this.cronJobEdition[id]);
+			}
+			return realId;
+		},
 
 		async getCronJobStatus(id) {
 			const status = await fetchWrapper.get({ url: `${baseUrl}/cronjob/${id}/status`, useToken: "access" });

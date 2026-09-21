@@ -223,17 +223,27 @@ export const useEquipementsStore = defineStore("equipements", {
 		},
 		async saveAllChanges(id) {
 			let realId = id;
+			const { isFormData, ...data } = this.equipementEdition[id];
+			const imageChanged = !!data.img_file || !!data.unset_img_equipement;
 			if (id === "new") {
-				realId = await this.createEquipement(this.equipementEdition[id]);
+				realId = await this.createEquipement(isFormData ? new FormData(Object.entries(data)) : data);
 				this.copyEquipementTagAllId(id, realId);
 				this.copyEquipementBoxAllId(id, realId);
+				this.copyEquipementDocumentAllId(id, realId);
 			} else {
-				await this.updateEquipement(id, this.equipementEdition[id]);
+				await this.updateEquipement(id, isFormData ? new FormData(Object.entries(data)) : data);
 			}
 			await Promise.all([
 				this.pushEquipementTagChange(realId),
 				this.pushEquipementBoxChange(realId),
+				this.pushEquipementDocumentChange(realId),
 			]);
+			if (imageChanged) {
+				delete this.thumbnailsURL[realId];
+				delete this.imagesURL[realId];
+				this.showThumbnailById(realId);
+				this.showImageById(realId);
+			}
 			return realId;
 		},
 
@@ -264,6 +274,11 @@ export const useEquipementsStore = defineStore("equipements", {
 		createEquipementDocument: equipementDocumentResource.create,
 		updateEquipementDocument: equipementDocumentResource.update,
 		deleteEquipementDocument: equipementDocumentResource.remove,
+		getAvailableNewEquipementDocumentId: equipementDocumentResource.getAvailableNewId,
+		valideEquipementDocumentEditionById: equipementDocumentResource.valideEditionById,
+		copyEquipementDocumentPerId: equipementDocumentResource.copyPerId,
+		copyEquipementDocumentAllId: equipementDocumentResource.copyAllId,
+		pushEquipementDocumentChange: equipementDocumentResource.pushChange,
 		async downloadEquipementDocument(idEquipement, id) {
 			return await fetchWrapper.image({
 				url: `${baseUrl}/equipement/${idEquipement}/document/${id}/download`,

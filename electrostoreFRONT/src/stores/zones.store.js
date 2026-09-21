@@ -8,7 +8,7 @@ const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 function hydrateZone(store, idZone, zone, expand = []) {
 	if (zone.url_thumbnail_zone && !store.thumbnailsURL[idZone]) {
-		store.showZoneThumbnailById(idZone);
+		store.showThumbnailById(idZone);
 	}
 	store.zoneStoresTotalCount[idZone] = zone.stores_count;
 	if (expand.includes("stores") && zone.stores) {
@@ -79,25 +79,32 @@ export const useZonesStore = defineStore("zones", {
 		clearEdition(id) {
 			delete this.zoneEdition[id];
 		},
+		async saveAllChanges(id) {
+			let realId = id;
+			const { isFormData, ...data } = this.zoneEdition[id];
+			const imageChanged = !!data.img_file || !!data.unset_img_zone;
+			if (id === "new") {
+				realId = await this.createZone(isFormData ? new FormData(Object.entries(data)) : data);
+			} else {
+				await this.updateZone(id, isFormData ? new FormData(Object.entries(data)) : data);
+			}
+			if (imageChanged) {
+				delete this.thumbnailsURL[realId];
+				delete this.imagesURL[realId];
+				this.showThumbnailById(realId);
+				this.showImageById(realId);
+			}
+			return realId;
+		},
 
-		async uploadZonePicture(id, formData) {
-			this.zones[id] = await fetchWrapper.post({ url: `${baseUrl}/zone/${id}/picture`, useToken: "access", body: formData, contentFile: true });
-			delete this.thumbnailsURL[id];
-			delete this.imagesURL[id];
-		},
-		async deleteZonePicture(id) {
-			this.zones[id] = await fetchWrapper.delete({ url: `${baseUrl}/zone/${id}/picture`, useToken: "access" });
-			delete this.thumbnailsURL[id];
-			delete this.imagesURL[id];
-		},
-		async showZoneImageById(id_zone) {
+		async showImageById(id_zone) {
 			if (this.imagesURL[id_zone]) {
 				return;
 			}
 			const response = await fetchWrapper.image({ url: `${baseUrl}/zone/${id_zone}/picture`, useToken: "access" });
 			this.imagesURL[id_zone] = URL.createObjectURL(response);
 		},
-		async showZoneThumbnailById(id_zone) {
+		async showThumbnailById(id_zone) {
 			if (this.thumbnailsURL[id_zone]) {
 				return;
 			}

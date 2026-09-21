@@ -63,15 +63,13 @@ const tagSave = async() => {
 			tagsStore.setLoadingEdition(tagId.value, false);
 			return;
 		}
+		const id = await tagsStore.saveAllChanges(tagId.value);
+		tagsStore.loadToEdition(id);
 		if (tagId.value === "new") {
-			const newId = await tagsStore.createTag({ ...tagsStore.tagEdition[tagId.value] });
-			tagsStore.loadToEdition(String(newId));
 			addNotification({ message: t("tag.Created"), type: "success" });
-			tagId.value = String(newId);
+			tagId.value = String(id);
 			router.push("/tags/" + tagId.value);
 		} else {
-			await tagsStore.updateTag(tagId.value, { ...tagsStore.tagEdition[tagId.value] });
-			tagsStore.loadToEdition(tagId.value);
 			addNotification({ message: t("tag.Updated"), type: "success" });
 		}
 	} catch (e) {
@@ -109,23 +107,41 @@ async function fetchAllItems() {
 	} while (offset < itemsStore.itemsTotalCount);
 	itemLoaded.value = true;
 }
-const itemSave = async(item) => {
+function itemSave(row) {
 	try {
-		await tagsStore.createTagItem(tagId.value, item);
+		if (tagsStore.tagItemReady[tagId.value]?.[row.id_item]?.status === "deleted") {
+			delete tagsStore.tagItemReady[tagId.value][row.id_item];
+			addNotification({ message: t("tag.ItemRestored"), type: "success" });
+			return;
+		}
+		tagsStore.tagItemEdition[tagId.value][row.id_item] = { id_item: row.id_item };
+		tagsStore.valideTagItemEditionById(tagId.value, row.id_item, "created");
+		delete tagsStore.tagItemEdition[tagId.value][row.id_item];
 		addNotification({ message: t("tag.ItemAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
-		return;
 	}
-};
-const itemDelete = async(item) => {
+}
+function itemDelete(item) {
 	try {
-		await tagsStore.deleteTagItem(tagId.value, item.id_item);
+		if (tagsStore.tagItemReady[tagId.value]?.[item.id_item]?.status === "created") {
+			delete tagsStore.tagItemReady[tagId.value][item.id_item];
+		} else {
+			tagsStore.valideTagItemEditionById(tagId.value, item.id_item, "deleted");
+		}
 		addNotification({ message: t("tag.ItemDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
-};
+}
+function itemRestore(item) {
+	try {
+		delete tagsStore.tagItemReady[tagId.value][item.id_item];
+		addNotification({ message: t("tag.ItemRestored"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+}
 
 const filterItem = ref([
 	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("tag.ItemFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
@@ -149,23 +165,41 @@ async function fetchAllStores() {
 	} while (offset < storesStore.storesTotalCount);
 	storeitemLoaded.value = true;
 }
-const storeSave = async(store) => {
+function storeSave(row) {
 	try {
-		await tagsStore.createTagStore(tagId.value, store);
+		if (tagsStore.tagStoreReady[tagId.value]?.[row.id_store]?.status === "deleted") {
+			delete tagsStore.tagStoreReady[tagId.value][row.id_store];
+			addNotification({ message: t("tag.StoreRestored"), type: "success" });
+			return;
+		}
+		tagsStore.tagStoreEdition[tagId.value][row.id_store] = { id_store: row.id_store };
+		tagsStore.valideTagStoreEditionById(tagId.value, row.id_store, "created");
+		delete tagsStore.tagStoreEdition[tagId.value][row.id_store];
 		addNotification({ message: t("tag.StoreAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
-		return;
 	}
-};
-const storeDelete = async(store) => {
+}
+function storeDelete(store) {
 	try {
-		await tagsStore.deleteTagStore(tagId.value, store.id_store);
+		if (tagsStore.tagStoreReady[tagId.value]?.[store.id_store]?.status === "created") {
+			delete tagsStore.tagStoreReady[tagId.value][store.id_store];
+		} else {
+			tagsStore.valideTagStoreEditionById(tagId.value, store.id_store, "deleted");
+		}
 		addNotification({ message: t("tag.StoreDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
-};
+}
+function storeRestore(store) {
+	try {
+		delete tagsStore.tagStoreReady[tagId.value][store.id_store];
+		addNotification({ message: t("tag.StoreRestored"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+}
 
 const filterStore = ref([
 	{ key: "name_store", value: "", type: "text", label: "", placeholder: t("tag.StoreFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
@@ -182,10 +216,18 @@ const boxSave = async(box) => {
 		return;
 	}
 };
-const boxDelete = async(box) => {
+const boxDelete = (box) => {
 	try {
-		await tagsStore.deleteTagBox(tagId.value, box.id_box);
+		tagsStore.valideTagBoxEditionById(tagId.value, box.id_box, "deleted");
 		addNotification({ message: t("tag.BoxDeleted"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+};
+const boxRestore = (box) => {
+	try {
+		delete tagsStore.tagBoxReady[tagId.value][box.id_box];
+		addNotification({ message: t("tag.BoxRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
@@ -209,23 +251,41 @@ async function fetchAllEquipements() {
 	} while (offset < equipementsStore.equipementsTotalCount);
 	equipementLoaded.value = true;
 }
-const equipementSave = async(equipement) => {
+function equipementSave(row) {
 	try {
-		await tagsStore.createTagEquipement(tagId.value, equipement);
+		if (tagsStore.tagEquipementReady[tagId.value]?.[row.id_equipement]?.status === "deleted") {
+			delete tagsStore.tagEquipementReady[tagId.value][row.id_equipement];
+			addNotification({ message: t("tag.EquipementRestored"), type: "success" });
+			return;
+		}
+		tagsStore.tagEquipementEdition[tagId.value][row.id_equipement] = { id_equipement: row.id_equipement };
+		tagsStore.valideTagEquipementEditionById(tagId.value, row.id_equipement, "created");
+		delete tagsStore.tagEquipementEdition[tagId.value][row.id_equipement];
 		addNotification({ message: t("tag.EquipementAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
-		return;
 	}
-};
-const equipementDelete = async(equipement) => {
+}
+function equipementDelete(equipement) {
 	try {
-		await tagsStore.deleteTagEquipement(tagId.value, equipement.id_equipement);
+		if (tagsStore.tagEquipementReady[tagId.value]?.[equipement.id_equipement]?.status === "created") {
+			delete tagsStore.tagEquipementReady[tagId.value][equipement.id_equipement];
+		} else {
+			tagsStore.valideTagEquipementEditionById(tagId.value, equipement.id_equipement, "deleted");
+		}
 		addNotification({ message: t("tag.EquipementDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
-};
+}
+function equipementRestore(equipement) {
+	try {
+		delete tagsStore.tagEquipementReady[tagId.value][equipement.id_equipement];
+		addNotification({ message: t("tag.EquipementRestored"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+}
 
 const filterEquipement = ref([
 	{ key: "reference_name_equipement", value: "", type: "text", label: "", placeholder: t("tag.EquipementFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
@@ -252,12 +312,20 @@ const labelForm = [
 	{ key: "weight_tag", label: "tag.Poids", type: "number" },
 ];
 const labelTableauItem = ref([
-	{ label: "tag.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text", 
+	{ label: "tag.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text",
 		storeRessourceId: 1, valueKey: "reference_name_item" },
 
 	{ label: "tag.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
+			showCondition: "ready?.status === 'deleted'",
+			icon: "fa-solid fa-rotate-left",
+			action: (row) => itemRestore(row),
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
 			action: (row) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
@@ -266,12 +334,20 @@ const labelTableauItem = ref([
 	] },
 ]);
 const labelTableauStore = ref([
-	{ label: "tag.StoreName", sortable: true, key: "Store.name_store", sourceKey: "id_store", type: "text", 
+	{ label: "tag.StoreName", sortable: true, key: "Store.name_store", sourceKey: "id_store", type: "text",
 		storeRessourceId: 1, valueKey: "name_store" },
 
 	{ label: "tag.StoreActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
+			showCondition: "ready?.status === 'deleted'",
+			icon: "fa-solid fa-rotate-left",
+			action: (row) => storeRestore(row),
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
 			action: (row) => storeDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
@@ -280,12 +356,20 @@ const labelTableauStore = ref([
 	] },
 ]);
 const labelTableauBox = ref([
-	{ label: "tag.BoxId", sortable: true, key: "Box.id_box", sourceKey: "id_box", type: "number", 
+	{ label: "tag.BoxId", sortable: true, key: "Box.id_box", sourceKey: "id_box", type: "number",
 		storeRessourceId: 1, valueKey: "id_box" },
 
 	{ label: "tag.BoxActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
+			showCondition: "ready?.status === 'deleted'",
+			icon: "fa-solid fa-rotate-left",
+			action: (row) => boxRestore(row),
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
 			action: (row) => boxDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
@@ -301,6 +385,14 @@ const labelTableauEquipement = ref([
 	{ label: "tag.EquipementActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
+			showCondition: "ready?.status === 'deleted'",
+			icon: "fa-solid fa-rotate-left",
+			action: (row) => equipementRestore(row),
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
 			action: (row) => equipementDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
@@ -313,16 +405,24 @@ const labelTableauModalEquipement = ref([
 	{ label: "tag.EquipementActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
-			icon: "fa-solid fa-save",
-			showCondition: "!store[1]?.[rowData.id_equipement]",
+			icon: "fa-solid fa-plus",
+			showCondition: "!ready?.status && !store[1]?.[rowData.id_equipement]",
 			action: (row) => equipementSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
+			icon: "fa-solid fa-rotate-left",
+			showCondition: "ready?.status === 'deleted'",
+			action: (row) => equipementRestore(row),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
+		},
+		{
+			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "store[1]?.[rowData.id_equipement]",
+			showCondition: "ready?.status && ready?.status !== 'deleted'",
 			action: (row) => equipementDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
@@ -334,16 +434,24 @@ const labelTableauModalItem = ref([
 	{ label: "tag.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
-			icon: "fa-solid fa-save",
-			showCondition: "!store[1]?.[rowData.id_item]",
+			icon: "fa-solid fa-plus",
+			showCondition: "!ready?.status && !store[1]?.[rowData.id_item]",
 			action: (row) => itemSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
+			icon: "fa-solid fa-rotate-left",
+			showCondition: "ready?.status === 'deleted'",
+			action: (row) => itemRestore(row),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
+		},
+		{
+			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "store[1]?.[rowData.id_item]",
+			showCondition: "ready?.status && ready?.status !== 'deleted'",
 			action: (row) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
@@ -355,16 +463,24 @@ const labelTableauModalStore = ref([
 	{ label: "tag.StoreActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
-			icon: "fa-solid fa-save",
-			showCondition: "!store[1]?.[rowData.id_store]",
+			icon: "fa-solid fa-plus",
+			showCondition: "!ready?.status && !store[1]?.[rowData.id_store]",
 			action: (row) => storeSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
+			icon: "fa-solid fa-rotate-left",
+			showCondition: "ready?.status === 'deleted'",
+			action: (row) => storeRestore(row),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
+		},
+		{
+			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "store[1]?.[rowData.id_store]",
+			showCondition: "ready?.status && ready?.status !== 'deleted'",
 			action: (row) => storeDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
@@ -390,7 +506,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="tagsStore.tagEdition[tagId]"/>
 		</div>
 		<CollapsibleSection title="tag.Items"
-			:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)" :permission="tagId !=='new'">
+			:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)">
 			<template #append-row>
 				<button type="button" @click="itemOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -398,6 +514,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
 					:store-data="[tagsStore.tagsItem[tagId],itemsStore.items]"
+					:store-ready="tagsStore.tagItemReady[tagId]"
 					:loading="tagsStore.tagsItemLoading"
 					:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)"
 					:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagItemByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
@@ -406,7 +523,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="tag.Stores"
-			:total-count="Number(tagsStore.tagsStoreTotalCount[tagId] || 0)" :permission="tagId !=='new'">
+			:total-count="Number(tagsStore.tagsStoreTotalCount[tagId] || 0)">
 			<template #append-row>
 				<button type="button" @click="storeOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -414,6 +531,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauStore" :meta="{ key: 'id_store', expand: ['store'] }"
 					:store-data="[tagsStore.tagsStore[tagId],storesStore.stores]"
+					:store-ready="tagsStore.tagStoreReady[tagId]"
 					:loading="tagsStore.tagsStoreLoading"
 					:total-count="Number(tagsStore.tagsStoreTotalCount[tagId] || 0)"
 					:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagStoreByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
@@ -422,10 +540,11 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="tag.Boxs"
-			:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)" :permission="tagId !=='new'">
+			:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)">
 			<template #append-row>
 				<Tableau :labels="labelTableauBox" :meta="{ key: 'id_box', expand: ['box'] }"
 					:store-data="[tagsStore.tagsBox[tagId],storesStore.boxs]"
+					:store-ready="tagsStore.tagBoxReady[tagId]"
 					:loading="tagsStore.tagsBoxLoading"
 					:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)"
 					:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagBoxByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
@@ -434,7 +553,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="tag.Equipements"
-			:total-count="Number(tagsStore.tagsEquipementTotalCount[tagId] || 0)" :permission="tagId !=='new'">
+			:total-count="Number(tagsStore.tagsEquipementTotalCount[tagId] || 0)">
 			<template #append-row>
 				<button type="button" @click="equipementOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -442,6 +561,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauEquipement" :meta="{ key: 'id_equipement', expand: ['equipement'] }"
 					:store-data="[tagsStore.tagsEquipement[tagId],equipementsStore.equipements]"
+					:store-ready="tagsStore.tagEquipementReady[tagId]"
 					:loading="tagsStore.tagsEquipementLoading"
 					:total-count="Number(tagsStore.tagsEquipementTotalCount[tagId] || 0)"
 					:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagEquipementByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
@@ -472,6 +592,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<!-- Tableau Items -->
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item', preventClear: true }"
 				:store-data="[itemsStore.items, tagsStore.tagsItem[tagId]]"
+				:store-ready="tagsStore.tagItemReady[tagId]"
 				:filters="filterItem"
 				:loading="tagsStore.tagsItemLoading"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
@@ -496,6 +617,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<!-- Tableau Stores -->
 			<Tableau :labels="labelTableauModalStore" :meta="{ key: 'id_store', preventClear: true }"
 				:store-data="[storesStore.stores, tagsStore.tagsStore[tagId]]"
+				:store-ready="tagsStore.tagStoreReady[tagId]"
 				:filters="filterStore"
 				:loading="tagsStore.tagsStoreLoading"
 				:total-count="Number(storesStore.storesTotalCount || 0)"
@@ -520,6 +642,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<!-- Tableau Equipements -->
 			<Tableau :labels="labelTableauModalEquipement" :meta="{ key: 'id_equipement', preventClear: true }"
 				:store-data="[equipementsStore.equipements, tagsStore.tagsEquipement[tagId]]"
+				:store-ready="tagsStore.tagEquipementReady[tagId]"
 				:filters="filterEquipement"
 				:loading="tagsStore.tagsEquipementLoading"
 				:total-count="Number(equipementsStore.equipementsTotalCount || 0)"

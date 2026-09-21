@@ -89,5 +89,6 @@
 	"TagName": "Nom",
 	"TagActions": "Actions",
 	"TagAdded": "Tag ajouté au rangement",
-	"TagDeleted": "Tag supprimé du rangement"
+	"TagDeleted": "Tag supprimé du rangement",
+	"TagRestored": "Tag restauré"
 }

@@ -189,14 +189,12 @@ export const useCommandsStore = defineStore("commands",{
 			let realId = id;
 			if (id === "new") {
 				realId = await this.createCommand(this.commandEdition[id]);
-				this.copyCommentAllId(id, realId);
 				this.copyDocumentAllId(id, realId);
 				this.copyItemAllId(id, realId);
 			} else {
 				await this.updateCommand(id, this.commandEdition[id]);
 			}
 			await Promise.all([
-				this.pushCommentChange(realId),
 				this.pushDocumentChange(realId),
 				this.pushItemChange(realId),
 			]);
@@ -208,11 +206,6 @@ export const useCommandsStore = defineStore("commands",{
 		createComment: commentResource.create,
 		updateComment: commentResource.update,
 		deleteComment: commentResource.remove,
-		getAvailableNewCommentId: commentResource.getAvailableNewId,
-		valideCommentEditionById: commentResource.valideEditionById,
-		copyCommentPerId: commentResource.copyPerId,
-		copyCommentAllId: commentResource.copyAllId,
-		pushCommentChange: commentResource.pushChange,
 
 		getDocumentByInterval: documentResource.getByInterval,
 		getDocumentById: documentResource.getById,

@@ -89,5 +89,6 @@
 	"TagName": "Name",
 	"TagActions": "Actions",
 	"TagAdded": "Tag added to store",
-	"TagDeleted": "Tag removed from store"
+	"TagDeleted": "Tag removed from store",
+	"TagRestored": "Tag restored"
 }
