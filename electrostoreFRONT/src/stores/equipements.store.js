@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
+import { buildFormData, fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
 
 import { useTagsStore, useStoresStore, useUsersStore } from "@/stores";
 
@@ -226,12 +226,12 @@ export const useEquipementsStore = defineStore("equipements", {
 			const { isFormData, ...data } = this.equipementEdition[id];
 			const imageChanged = !!data.img_file || !!data.unset_img_equipement;
 			if (id === "new") {
-				realId = await this.createEquipement(isFormData ? new FormData(Object.entries(data)) : data);
+				realId = await this.createEquipement(isFormData ? buildFormData(data) : data);
 				this.copyEquipementTagAllId(id, realId);
 				this.copyEquipementBoxAllId(id, realId);
 				this.copyEquipementDocumentAllId(id, realId);
 			} else {
-				await this.updateEquipement(id, isFormData ? new FormData(Object.entries(data)) : data);
+				await this.updateEquipement(id, isFormData ? buildFormData(data) : data);
 			}
 			await Promise.all([
 				this.pushEquipementTagChange(realId),

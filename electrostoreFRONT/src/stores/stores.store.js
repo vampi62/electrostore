@@ -97,7 +97,7 @@ const ledResource = createNestedResource({
 	readyKey: "ledReady",
 });
 const storeTagResource = createNestedResource({
-	path: (idStore) => `/store/${idStore}/store_tag`,
+	path: (idStore) => `/store/${idStore}/tag`,
 	idField: "id_tag",
 	stateKey: "storeTags",
 	countKey: "storeTagsTotalCount",
