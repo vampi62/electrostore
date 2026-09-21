@@ -83,8 +83,8 @@ const boxResource = createNestedResource({
 	loadingKey: "boxsLoading",
 	editionKey: "boxEdition",
 	readyKey: "boxReady",
-	onHydrate: (store, idStore, entity, expand) => {
-		hydrateBox(store, idStore, entity.id_box, entity, expand);
+	onHydrate: (store, entity, expand) => {
+		hydrateBox(store, entity.id_store, entity.id_box, entity, expand);
 	},
 });
 const ledResource = createNestedResource({

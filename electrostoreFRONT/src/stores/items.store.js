@@ -83,7 +83,7 @@ const documentResource = createNestedResource({
 });
 const itemBoxResource = createNestedResource({
 	path: (idItem) => `/item/${idItem}/box`,
-	idField: "id_item_box",
+	idField: "id_box",
 	stateKey: "itemBoxs",
 	countKey: "itemBoxsTotalCount",
 	loadingKey: "itemBoxsLoading",
@@ -101,7 +101,7 @@ const itemBoxResource = createNestedResource({
 });
 const itemTagResource = createNestedResource({
 	path: (idItem) => `/item/${idItem}/tag`,
-	idField: "id_item_tag",
+	idField: "id_tag",
 	stateKey: "itemTags",
 	countKey: "itemTagsTotalCount",
 	loadingKey: "itemTagsLoading",
