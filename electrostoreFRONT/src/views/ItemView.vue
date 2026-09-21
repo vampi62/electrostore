@@ -637,7 +637,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="item.History"
 			:total-count="Number(itemsStore.itemHistoryTotalCount[itemId] || 0)">
 			<template #append-row>
-				<Tableau :labels="labelTableauHistory" :meta="{ key: 'id_item_history', expand: ['user'] }"
+				<Tableau :labels="labelTableauHistory" :meta="{ key: 'id_item_history', expand: ['user'], sort: ['created_at'], sortOrder: 'desc' }"
 					:store-data="[itemsStore.itemHistory[itemId], usersStore.users]"
 					:loading="itemsStore.itemHistoryLoading"
 					:total-count="Number(itemsStore.itemHistoryTotalCount[itemId])"

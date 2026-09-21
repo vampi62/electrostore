@@ -201,6 +201,7 @@ const storeEquipementAddModalShow = ref(false);
 const boxId = ref(null);
 const showBoxContent = async(idBox) => {
 	boxId.value = idBox;
+	storesStore.boxItemEdition[boxId.value] = storesStore.boxItemEdition[boxId.value] || {};
 	try {
 		let offset = 0;
 		const limit = 100;
@@ -245,20 +246,20 @@ const filterEquipement = ref([
 const itemSave = async(item) => {
 	if (storesStore.boxItems[boxId.value][item.id_item]) {
 		try {
-			schemaItem.validateSync(item.tmp, { abortEarly: false });
-			await storesStore.updateBoxItem(storeId.value, boxId.value, item.tmp.id_item, item.tmp);
+			schemaItem.validateSync(storesStore.boxItemEdition[boxId.value][item.id_item], { abortEarly: false });
+			await storesStore.updateBoxItem(storeId.value, boxId.value, item.id_item, storesStore.boxItemEdition[boxId.value][item.id_item]);
 			addNotification({ message: t("store.ItemUpdated"), type: "success" });
-			item.tmp = null;
+			delete storesStore.boxItemEdition[boxId.value][item.id_item];
 		} catch (e) {
 			addNotification({ message: e, type: "error" });
 			return;
 		}
 	} else {
 		try {
-			schemaItem.validateSync(item.tmp, { abortEarly: false });
-			await storesStore.createBoxItem(storeId.value, boxId.value, item.tmp);
+			schemaItem.validateSync(storesStore.boxItemEdition[boxId.value][item.id_item], { abortEarly: false });
+			await storesStore.createBoxItem(storeId.value, boxId.value, storesStore.boxItemEdition[boxId.value][item.id_item]);
 			addNotification({ message: t("store.ItemAdded"), type: "success" });
-			item.tmp = null;
+			delete storesStore.boxItemEdition[boxId.value][item.id_item];
 		} catch (e) {
 			addNotification({ message: e, type: "error" });
 			return;
@@ -345,7 +346,7 @@ const labelTableauModalItem = ref([
 			icon: "fa-solid fa-plus",
 			showCondition: "store[1]?.[rowData.id_item] === undefined && !edition?.id_item",
 			action: (row) => {
-				itemsStore.itemBoxEdition[row.id_item] = { quantity_item_box: 0, threshold_max_item_item_box: 1, id_item: row.id_item };
+				storesStore.boxItemEdition[boxId.value][row.id_item] = { quantity_item_box: 0, threshold_max_item_item_box: 1, id_item: row.id_item };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -354,7 +355,7 @@ const labelTableauModalItem = ref([
 			icon: "fa-solid fa-edit",
 			showCondition: "store[1]?.[rowData.id_item] && !edition?.id_item",
 			action: (row) => {
-				itemsStore.itemBoxEdition[row.id_item] = { ...row };
+				storesStore.boxItemEdition[boxId.value][row.id_item] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -371,7 +372,7 @@ const labelTableauModalItem = ref([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_item",
 			action: (row) => {
-				delete itemsStore.itemBoxEdition[row.id_item];
+				delete storesStore.boxItemEdition[boxId.value][row.id_item];
 			},
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
 		},
