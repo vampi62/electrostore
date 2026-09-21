@@ -566,7 +566,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					</div>
 				</template>
 			</FormContainer>
-			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :ready-store="itemsStore.itemTagReady[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="itemId !== 'new' && authStore.hasPermission([1, 2])"
+			<Tags :current-tags="itemsStore.itemTags[itemId] || {}" :ready-store="itemsStore.itemTagReady[itemId] || {}" :tags-store="tagsStore.tags" :can-edit="authStore.hasPermission([1, 2])"
 				:delete-function="(value) => tagDelete(value)"
 				:restore-function="(value) => tagRestore(value)"
 				:filter-modal="filterTag"

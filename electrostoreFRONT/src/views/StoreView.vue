@@ -485,7 +485,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="storesStore.storeEdition[storeId] || {}" :store-user="authStore.user"
 				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
-			<Tags :current-tags="storesStore.storeTags[storeId] || {}" :ready-store="storesStore.storeTagReady[storeId] || {}" :tags-store="tagsStore.tags" :can-edit="storeId !== 'new' && authStore.hasPermission([1, 2])"
+			<Tags :current-tags="storesStore.storeTags[storeId] || {}" :ready-store="storesStore.storeTagReady[storeId] || {}" :tags-store="tagsStore.tags" :can-edit="authStore.hasPermission([1, 2])"
 				:delete-function="(value) => tagDelete(value)"
 				:restore-function="(value) => tagRestore(value)"
 				:filter-modal="filterTag"

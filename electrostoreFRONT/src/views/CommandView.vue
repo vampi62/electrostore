@@ -774,7 +774,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="command.Comments"
-			:total-count="Number(commandsStore.commentsTotalCount[commandId] || 0)">
+			:total-count="Number(commandsStore.commentsTotalCount[commandId] || 0)" :permission="commandId !== 'new'">
 			<template #append-row>
 				<Comment :meta="{ contenu: 'content_command_comment', key: 'id_command_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[commandsStore.comments[commandId], usersStore.users]"

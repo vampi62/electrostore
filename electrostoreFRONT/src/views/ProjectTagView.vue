@@ -61,15 +61,13 @@ const projectTagSave = async() => {
 			projectTagsStore.setLoadingEdition(projectTagId.value, false);
 			return;
 		}
+		const id = await projectTagsStore.saveAllChanges(projectTagId.value);
+		projectTagsStore.loadToEdition(id);
 		if (projectTagId.value === "new") {
-			const newId = await projectTagsStore.createProjectTag({ ...projectTagsStore.projectTagEdition[projectTagId.value] });
-			projectTagsStore.loadToEdition(newId);
 			addNotification({ message: t("projectTag.Created"), type: "success" });
-			projectTagId.value = String(newId);
+			projectTagId.value = String(id);
 			router.push("/project-tags/" + projectTagId.value);
 		} else {
-			await projectTagsStore.updateProjectTag(projectTagId.value, { ...projectTagsStore.projectTagEdition[projectTagId.value] });
-			projectTagsStore.loadToEdition(projectTagId.value);
 			addNotification({ message: t("projectTag.Updated"), type: "success" });
 		}
 	} catch (e) {
@@ -107,23 +105,41 @@ async function fetchAllProjects() {
 	} while (offset < projectsStore.projectsTotalCount);
 	projectLoaded.value = true;
 }
-const projectSave = async(project) => {
+function projectSave(row) {
 	try {
-		await projectTagsStore.createProjectTagProject(projectTagId.value, project);
+		if (projectTagsStore.projectTagProjectReady[projectTagId.value]?.[row.id_project]?.status === "deleted") {
+			delete projectTagsStore.projectTagProjectReady[projectTagId.value][row.id_project];
+			addNotification({ message: t("projectTag.ProjectRestored"), type: "success" });
+			return;
+		}
+		projectTagsStore.projectTagProjectEdition[projectTagId.value][row.id_project] = { id_project: row.id_project };
+		projectTagsStore.valideProjectTagProjectEditionById(projectTagId.value, row.id_project, "created");
+		delete projectTagsStore.projectTagProjectEdition[projectTagId.value][row.id_project];
 		addNotification({ message: t("projectTag.ProjectAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
-		return;
 	}
-};
-const projectDelete = async(project) => {
+}
+function projectDelete(project) {
 	try {
-		await projectTagsStore.deleteProjectTagProject(projectTagId.value, project.id_project);
+		if (projectTagsStore.projectTagProjectReady[projectTagId.value]?.[project.id_project]?.status === "created") {
+			delete projectTagsStore.projectTagProjectReady[projectTagId.value][project.id_project];
+		} else {
+			projectTagsStore.valideProjectTagProjectEditionById(projectTagId.value, project.id_project, "deleted");
+		}
 		addNotification({ message: t("projectTag.ProjectDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
-};
+}
+function projectRestore(project) {
+	try {
+		delete projectTagsStore.projectTagProjectReady[projectTagId.value][project.id_project];
+		addNotification({ message: t("projectTag.ProjectRestored"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+}
 
 const filterProject = ref([
 	{ key: "name_project", value: "", type: "text", label: "", placeholder: t("projectTag.ProjectFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
@@ -150,12 +166,20 @@ const labelForm = [
 	{ key: "weight_project_tag", label: "projectTag.Poids", type: "number" },
 ];
 const labelTableauProject = ref([
-	{ label: "projectTag.ProjectName", sortable: true, key: "Project.name_project", sourceKey: "id_project", type: "text", 
+	{ label: "projectTag.ProjectName", sortable: true, key: "Project.name_project", sourceKey: "id_project", type: "text",
 		storeRessourceId: 1, valueKey: "name_project" },
-		
+
 	{ label: "projectTag.ProjectActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
+			showCondition: "ready?.status === 'deleted'",
+			icon: "fa-solid fa-rotate-left",
+			action: (row) => projectRestore(row),
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
 			action: (row) => projectDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
@@ -169,16 +193,24 @@ const labelTableauModalProject = ref([
 	{ label: "projectTag.ProjectActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
-			icon: "fa-solid fa-save",
-			showCondition: "!store[1]?.[rowData.id_project]",
+			icon: "fa-solid fa-plus",
+			showCondition: "!ready?.status && !store[1]?.[rowData.id_project]",
 			action: (row) => projectSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
+			icon: "fa-solid fa-rotate-left",
+			showCondition: "ready?.status === 'deleted'",
+			action: (row) => projectRestore(row),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
+		},
+		{
+			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "store[1]?.[rowData.id_project]",
+			showCondition: "ready?.status && ready?.status !== 'deleted'",
 			action: (row) => projectDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
@@ -212,6 +244,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</button>
 				<Tableau :labels="labelTableauProject" :meta="{ key: 'id_project', expand: ['project'] }"
 					:store-data="[projectTagsStore.projectTagsProject[projectTagId],projectsStore.projects]"
+					:store-ready="projectTagsStore.projectTagProjectReady[projectTagId]"
 					:loading="projectTagsStore.projectTagsProjectLoading"
 					:total-count="Number(projectTagsStore.projectTagsProjectTotalCount[projectTagId] || 0)"
 					:fetch-function="projectTagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => projectTagsStore.getProjectTagProjectByInterval(projectTagId, limit, offset, expand, filter, sort, clear) : undefined"
@@ -242,6 +275,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<!-- Tableau Projects -->
 			<Tableau :labels="labelTableauModalProject" :meta="{ key: 'id_project' }"
 				:store-data="[projectsStore.projects, projectTagsStore.projectTagsProject[projectTagId]]"
+				:store-ready="projectTagsStore.projectTagProjectReady[projectTagId]"
 				:filters="filterProject"
 				:loading="projectTagsStore.projectTagsProjectLoading"
 				:total-count="Number(projectsStore.projectsTotalCount || 0)"

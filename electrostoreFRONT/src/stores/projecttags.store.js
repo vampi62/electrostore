@@ -85,6 +85,7 @@ export const useProjectTagsStore = defineStore("projectTags",{
 				};
 			}
 			this.projectTagProjectEdition[id] = {};
+			this.projectTagProjectReady[id] = {};
 		},
 		setLoadingEdition(id, loading) {
 			if (!this.projectTagEdition[id]) {

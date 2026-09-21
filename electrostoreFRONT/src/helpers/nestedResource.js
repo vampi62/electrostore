@@ -129,7 +129,6 @@ export function createNestedResource({ path, idField, countKey, stateKey, loadin
 					continue; // Skip if already pushed
 				}
 				if (status === "created") {
-					delete data[idField];
 					await resource.create.call(this, idParentResource, isFormData ? new FormData(Object.entries(data)) : data);
 				} else if (status === "modified" && !isNewId) {
 					await resource.update.call(this, idParentResource, id, isFormData ? new FormData(Object.entries(data)) : data);

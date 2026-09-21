@@ -76,15 +76,13 @@ const cronJobSave = async() => {
 			cronJobsStore.setLoadingEdition(cronJobId.value, false);
 			return;
 		}
+		const id = await cronJobsStore.saveAllChanges(cronJobId.value);
+		cronJobsStore.loadToEdition(id);
 		if (cronJobId.value === "new") {
-			const newId = await cronJobsStore.createCronJob({ ...cronJobsStore.cronJobEdition[cronJobId.value] });
-			cronJobsStore.loadToEdition(newId);
 			addNotification({ message: t("cronJob.Created"), type: "success" });
-			cronJobId.value = String(newId);
+			cronJobId.value = String(id);
 			router.push("/cronjobs/" + cronJobId.value);
 		} else {
-			await cronJobsStore.updateCronJob(cronJobId.value, { ...cronJobsStore.cronJobEdition[cronJobId.value] });
-			cronJobsStore.loadToEdition(cronJobId.value);
 			addNotification({ message: t("cronJob.Updated"), type: "success" });
 		}
 	} catch (e) {
