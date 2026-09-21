@@ -105,6 +105,9 @@ export const useProjectTagsStore = defineStore("projectTags",{
 			} else {
 				await this.updateProjectTag(realId, this.projectTagEdition[id]);
 			}
+			await Promise.all([
+				this.pushProjectTagProjectChange(realId),
+			]);
 			await this.getProjectTagById(realId, ["project_tags"]);
 			return realId;
 		},

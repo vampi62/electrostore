@@ -82,38 +82,14 @@ const itemSave = async() => {
 			itemsStore.setLoadingEdition(itemId.value, false);
 			return;
 		}
-		const edition = itemsStore.itemEdition[itemId.value];
-		const formData = new FormData();
-		formData.append("reference_name_item", edition.reference_name_item);
-		formData.append("friendly_name_item", edition.friendly_name_item);
-		if (edition.description_item) {
-			formData.append("description_item", edition.description_item);
-		}
-		formData.append("threshold_min_item", edition.threshold_min_item);
-		if (edition.img_file) {
-			formData.append("img_file", edition.img_file);
-		}
-		const imageChanged = !!edition.img_file || !!edition.unset_img_item;
+		itemsStore.itemEdition[itemId.value].isFormData = true;
+		const id = await itemsStore.saveAllChanges(itemId.value);
+		itemsStore.loadToEdition(id);
 		if (itemId.value === "new") {
-			const newId = await itemsStore.createItem(formData);
-			itemsStore.loadToEdition(newId);
-			if (imageChanged) {
-				delete itemsStore.thumbnailsURL[newId];
-				itemsStore.showThumbnailById(newId);
-			}
 			addNotification({ message: t("item.Created"), type: "success" });
-			itemId.value = String(newId);
+			itemId.value = String(id);
 			router.push("/inventory/" + itemId.value);
 		} else {
-			if (edition.unset_img_item) {
-				formData.append("unset_img_item", "true");
-			}
-			await itemsStore.updateItem(itemId.value, formData);
-			itemsStore.loadToEdition(itemId.value);
-			if (imageChanged) {
-				delete itemsStore.thumbnailsURL[itemId.value];
-				itemsStore.showThumbnailById(itemId.value);
-			}
 			addNotification({ message: t("item.Updated"), type: "success" });
 		}
 		resetImageSelection();

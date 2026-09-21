@@ -223,17 +223,25 @@ export const useEquipementsStore = defineStore("equipements", {
 		},
 		async saveAllChanges(id) {
 			let realId = id;
+			const { isFormData, ...data } = this.equipementEdition[id];
+			const imageChanged = !!data.img_file || !!data.unset_img_equipement;
 			if (id === "new") {
-				realId = await this.createEquipement(this.equipementEdition[id]);
+				realId = await this.createEquipement(isFormData ? new FormData(Object.entries(data)) : data);
 				this.copyEquipementTagAllId(id, realId);
 				this.copyEquipementBoxAllId(id, realId);
 			} else {
-				await this.updateEquipement(id, this.equipementEdition[id]);
+				await this.updateEquipement(id, isFormData ? new FormData(Object.entries(data)) : data);
 			}
 			await Promise.all([
 				this.pushEquipementTagChange(realId),
 				this.pushEquipementBoxChange(realId),
 			]);
+			if (imageChanged) {
+				delete this.thumbnailsURL[realId];
+				delete this.imagesURL[realId];
+				this.showThumbnailById(realId);
+				this.showImageById(realId);
+			}
 			return realId;
 		},
 

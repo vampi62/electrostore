@@ -65,7 +65,7 @@ const onImageFileChange = (event) => {
 	}
 	localImagePreviewUrl.value = URL.createObjectURL(file);
 	zonesStore.zoneEdition[zoneId.value].img_file = file;
-	zonesStore.zoneEdition[zoneId.value].remove_img_zone = false;
+	zonesStore.zoneEdition[zoneId.value].unset_img_zone = false;
 };
 const removeImage = () => {
 	if (localImagePreviewUrl.value) {
@@ -73,7 +73,7 @@ const removeImage = () => {
 		localImagePreviewUrl.value = null;
 	}
 	zonesStore.zoneEdition[zoneId.value].img_file = null;
-	zonesStore.zoneEdition[zoneId.value].remove_img_zone = true;
+	zonesStore.zoneEdition[zoneId.value].unset_img_zone = true;
 };
 const resetImageSelection = () => {
 	if (localImagePreviewUrl.value) {
@@ -100,27 +100,12 @@ const zoneSave = async() => {
 			return;
 		}
 		const edition = zonesStore.zoneEdition[zoneId.value];
-		const payload = {
-			name_zone: edition.name_zone,
-			description_zone: edition.description_zone,
-			xlength_zone: edition.xlength_zone,
-			ylength_zone: edition.ylength_zone,
-		};
-		let realId = zoneId.value;
-		if (zoneId.value === "new") {
-			realId = await zonesStore.createZone(payload);
-		} else {
-			await zonesStore.updateZone(zoneId.value, payload);
-		}
-		if (edition.img_file) {
-			const formData = new FormData();
-			formData.append("img_file", edition.img_file);
-			await zonesStore.uploadZonePicture(realId, formData);
-		} else if (edition.remove_img_zone) {
-			await zonesStore.deleteZonePicture(realId);
-		}
-		resetImageSelection();
+		const imageChanged = !!edition.img_file || !!edition.unset_img_zone;
+		const realId = await zonesStore.saveAllChanges(zoneId.value);
 		zonesStore.loadToEdition(realId);
+		if (imageChanged) {
+			zonesStore.showThumbnailById(realId);
+		}
 		if (zoneId.value === "new") {
 			addNotification({ message: t("zone.Created"), type: "success" });
 			zoneId.value = String(realId);
@@ -128,6 +113,7 @@ const zoneSave = async() => {
 		} else {
 			addNotification({ message: t("zone.Updated"), type: "success" });
 		}
+		resetImageSelection();
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	} finally {
@@ -211,17 +197,17 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 						@click="triggerImageInput">
 						<img v-if="localImagePreviewUrl" :src="localImagePreviewUrl" alt="Preview"
 							class="w-48 h-48 object-cover rounded" />
-						<img v-else-if="!zonesStore.zoneEdition[zoneId]?.remove_img_zone && zonesStore.zoneEdition[zoneId]?.url_thumbnail_zone && zonesStore.thumbnailsURL[zoneId]"
+						<img v-else-if="!zonesStore.zoneEdition[zoneId]?.unset_img_zone && zonesStore.zoneEdition[zoneId]?.url_thumbnail_zone && zonesStore.thumbnailsURL[zoneId]"
 							:src="zonesStore.thumbnailsURL[zoneId]" alt="Main"
 							class="w-48 h-48 object-cover rounded" />
-						<span v-else-if="!zonesStore.zoneEdition[zoneId]?.remove_img_zone && zonesStore.zoneEdition[zoneId]?.url_thumbnail_zone"
+						<span v-else-if="!zonesStore.zoneEdition[zoneId]?.unset_img_zone && zonesStore.zoneEdition[zoneId]?.url_thumbnail_zone"
 							class="w-48 h-48 object-cover rounded flex items-center justify-center">
 							{{ $t('zone.Loading') }}
 						</span>
 						<img v-else src="../assets/nopicture.webp" alt="Not Found"
 							class="w-48 h-48 object-cover rounded" />
 					</div>
-					<button v-if="localImagePreviewUrl || (!zonesStore.zoneEdition[zoneId]?.remove_img_zone && zonesStore.zoneEdition[zoneId]?.url_thumbnail_zone)"
+					<button v-if="localImagePreviewUrl || (!zonesStore.zoneEdition[zoneId]?.unset_img_zone && zonesStore.zoneEdition[zoneId]?.url_thumbnail_zone)"
 						type="button" @click="removeImage"
 						class="text-sm text-red-500 hover:text-red-600">
 						{{ $t('zone.ImageRemove') }}

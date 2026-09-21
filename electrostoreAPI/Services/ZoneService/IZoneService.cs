@@ -1,5 +1,4 @@
 using ElectrostoreAPI.Dto;
-using Microsoft.AspNetCore.Http;
 
 namespace ElectrostoreAPI.Services.ZoneService;
 
@@ -14,8 +13,4 @@ public interface IZoneService
     public Task<ReadZoneDto> UpdateZone(int id, UpdateZoneDto zoneDto);
 
     public Task DeleteZone(int id);
-
-    public Task<ReadZoneDto> UploadZonePicture(int id, IFormFile file);
-
-    public Task<ReadZoneDto> DeleteZonePicture(int id);
 }

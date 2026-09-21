@@ -46,7 +46,7 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpPost]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadZoneDto>> CreateZone([FromBody] CreateZoneDto zone)
+        public async Task<ActionResult<ReadZoneDto>> CreateZone([FromForm] CreateZoneDto zone)
         {
             var newZone = await _zoneService.CreateZone(zone);
             return CreatedAtAction(nameof(GetZoneById), new { id_zone = newZone.id_zone }, newZone);
@@ -54,7 +54,7 @@ namespace ElectrostoreAPI.Controllers
 
         [HttpPut("{id_zone}")]
         [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadZoneDto>> UpdateZone([FromRoute] int id_zone, [FromBody] UpdateZoneDto zone)
+        public async Task<ActionResult<ReadZoneDto>> UpdateZone([FromRoute] int id_zone, [FromForm] UpdateZoneDto zone)
         {
             var zoneToUpdate = await _zoneService.UpdateZone(id_zone, zone);
             return Ok(zoneToUpdate);
@@ -66,22 +66,6 @@ namespace ElectrostoreAPI.Controllers
         {
             await _zoneService.DeleteZone(id_zone);
             return NoContent();
-        }
-
-        [HttpPost("{id_zone}/picture")]
-        [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadZoneDto>> UploadZonePicture([FromRoute] int id_zone, [FromForm] CreateZonePictureDto picture)
-        {
-            var zone = await _zoneService.UploadZonePicture(id_zone, picture.img_file);
-            return Ok(zone);
-        }
-
-        [HttpDelete("{id_zone}/picture")]
-        [Authorize(Policy = "AccessToken")]
-        public async Task<ActionResult<ReadZoneDto>> DeleteZonePicture([FromRoute] int id_zone)
-        {
-            var zone = await _zoneService.DeleteZonePicture(id_zone);
-            return Ok(zone);
         }
 
         [HttpGet("{id_zone}/picture")]

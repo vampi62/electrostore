@@ -37,6 +37,11 @@ public record CreateZoneDto
     [Required(ErrorMessage = "{0} is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public required int ylength_zone { get; init; }
+
+    [FileSize(nameof(FieldLengths.MaxImageSizeMB), ErrorMessage = "{0} cannot exceed {1} MB in size.")]
+    [FileType(nameof(FieldLengths.AllowedImageMimeTypes),
+        ErrorMessage = "{0} has an invalid file type, allowed types are: [{1}], and extensions are: [{2}].")]
+    public IFormFile? img_file { get; init; }
 }
 public record UpdateZoneDto
 {
@@ -52,12 +57,11 @@ public record UpdateZoneDto
 
     [Range(1, int.MaxValue, ErrorMessage = "{0} must be greater than or equal to {1}, and less than or equal to {2}.")]
     public int? ylength_zone { get; init; }
-}
-public record CreateZonePictureDto
-{
-    [Required(ErrorMessage = "{0} is required.")]
+
+    public bool? unset_img_zone { get; init; }
+
     [FileSize(nameof(FieldLengths.MaxImageSizeMB), ErrorMessage = "{0} cannot exceed {1} MB in size.")]
     [FileType(nameof(FieldLengths.AllowedImageMimeTypes),
         ErrorMessage = "{0} has an invalid file type, allowed types are: [{1}], and extensions are: [{2}].")]
-    public required IFormFile img_file { get; init; }
+    public IFormFile? img_file { get; init; }
 }
