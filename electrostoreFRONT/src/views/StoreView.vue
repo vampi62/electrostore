@@ -219,6 +219,11 @@ const showBoxContent = async(idBox) => {
 			await storesStore.getBoxEquipementByInterval(storeId.value, idBox, limit, offset, ["equipement"]);
 			offset += limit;
 		} while (offset < storesStore.boxEquipementsTotalCount[idBox]);
+		for (const equipement of Object.values(equipementsStore.equipements)) {
+			if (equipement.url_thumbnail_equipement) {
+				await equipementsStore.showThumbnailById(equipement.id_equipement);
+			}
+		}
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
@@ -326,7 +331,7 @@ const labelTableauBoxItem = ref([
 		storeRessourceId: 1,  valueKey: "reference_name_item" },
 	{ label: "store.ItemQuantity", sortable: true, key: "quantity_item_box", valueKey: "quantity_item_box", type: "number" },
 	{ label: "store.ItemMaxThreshold", sortable: true, key: "threshold_max_item_item_box", valueKey: "threshold_max_item_item_box", type: "number" },
-	{ label: "store.ItemImg", sortable: false, key: "id_item", sourceKey: "id_item", type: "image",
+	{ label: "store.ItemImg", sortable: false, key: "id_item", sourceKey: "id_item", type: "image", fieldUrl: "url_thumbnail_item", 
 		storeRessourceId: 2 },
 ]);
 const metaTableauBoxItem = ref({
@@ -336,6 +341,8 @@ const metaTableauBoxItem = ref({
 });
 const labelTableauModalItem = ref([
 	{ label: "store.ItemName", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
+	{ label: "store.ItemImg", sortable: false, key: "id_item", sourceKey: "id_item", type: "image", fieldUrl: "url_thumbnail_item", 
+		storeRessourceId: 2 },
 	{ label: "store.ItemQuantity", sortable: true, key: "ItemsBoxs.quantity_item_box", sourceKey: "id_item", type: "number", canEdit: true, 
 		storeRessourceId: 1, valueKey: "quantity_item_box" },
 	{ label: "store.ItemMaxThreshold", sortable: true, key: "ItemsBoxs.threshold_max_item_item_box", sourceKey: "id_item", type: "number", canEdit: true, 
@@ -389,6 +396,8 @@ const labelTableauModalItem = ref([
 const labelTableauBoxEquipement = ref([
 	{ label: "store.EquipementName", sortable: false, key: "Equipement.reference_name_equipement", sourceKey: "id_equipement", type: "text",
 		storeRessourceId: 1, valueKey: "reference_name_equipement" },
+	{ label: "store.EquipementImg", sortable: false, key: "id_item", sourceKey: "id_equipement", type: "image", fieldUrl: "url_thumbnail_equipement",
+		storeRessourceId: 2 },
 	{ label: "store.EquipementActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -406,6 +415,8 @@ const metaTableauBoxEquipement = ref({
 });
 const labelTableauModalEquipement = ref([
 	{ label: "store.EquipementName", sortable: true, key: "reference_name_equipement", valueKey: "reference_name_equipement", type: "text" },
+	{ label: "store.EquipementImg", sortable: false, key: "id_item", sourceKey: "id_equipement", type: "image", fieldUrl: "url_thumbnail_equipement",
+		storeRessourceId: 2 },
 	{ label: "store.EquipementActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -530,7 +541,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 						</template>
 					</Tableau>
 					<Tableau v-if="boxId != null" :labels="labelTableauBoxEquipement" :meta="metaTableauBoxEquipement"
-						:store-data="[storesStore.boxEquipements[boxId],equipementsStore.equipements]"
+						:store-data="[storesStore.boxEquipements[boxId],equipementsStore.equipements, equipementsStore.thumbnailsURL]"
 						:loading="storesStore.boxEquipementsLoading"
 						:total-count="Number(storesStore.boxEquipementsTotalCount[boxId] || 0)"
 						:fetch-function="storeId !== 'new' && boxId != null ? (limit, offset, expand, filter, sort, clear) => storesStore.getBoxEquipementByInterval(storeId, boxId, limit, offset, expand, filter, sort, clear) : undefined"
@@ -569,7 +580,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" />
 
 			<Tableau id="storeItemTable" :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
-				:store-data="[itemsStore.items, storesStore.boxItems[boxId]]"
+				:store-data="[itemsStore.items, storesStore.boxItems[boxId], itemsStore.thumbnailsURL]"
 				:store-edition="storesStore.boxItemEdition[boxId]"
 				:filters="filterItem"
 				:loading="itemsStore.itemsLoading" :schema="schemaItem"
@@ -592,7 +603,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FilterContainer class="my-4 flex gap-4" :filters="filterEquipement" :store-data="equipementsStore.equipements" />
 
 			<Tableau :labels="labelTableauModalEquipement" :meta="{ key: 'id_equipement' }"
-				:store-data="[equipementsStore.equipements, storesStore.boxEquipements[boxId]]"
+				:store-data="[equipementsStore.equipements, storesStore.boxEquipements[boxId], equipementsStore.thumbnailsURL]"
 				:filters="filterEquipement"
 				:loading="equipementsStore.equipementsLoading"
 				:total-count="Number(equipementsStore.equipementsTotalCount || 0)"

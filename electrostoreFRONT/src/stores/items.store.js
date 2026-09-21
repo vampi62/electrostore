@@ -353,8 +353,7 @@ export const useItemsStore = defineStore("items",{
 				url: `${baseUrl}/item/${id_item}/picture`,
 				useToken: "access",
 			});
-			const url = URL.createObjectURL(response);
-			this.imagesURL[id_item] = url;
+			this.imagesURL[id_item] = URL.createObjectURL(response);
 		},
 		async showThumbnailById(id_item) {
 			if (this.thumbnailsURL[id_item]) {
@@ -364,8 +363,7 @@ export const useItemsStore = defineStore("items",{
 				url: `${baseUrl}/item/${id_item}/thumbnail`,
 				useToken: "access",
 			});
-			const url = URL.createObjectURL(response);
-			this.thumbnailsURL[id_item] = url;
+			this.thumbnailsURL[id_item] = URL.createObjectURL(response);
 		},
 
 		getItemHistoryByInterval: itemHistoryResource.getByInterval,
