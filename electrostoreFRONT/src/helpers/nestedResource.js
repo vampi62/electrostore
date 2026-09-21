@@ -4,7 +4,7 @@ const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export function createNestedResource({ path, idField, countKey, stateKey, loadingKey, editionKey, readyKey, onHydrate }) {
 	const resource = {
-		async getByInterval(idParentResource, { limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false, externalParam = [] } = {}) {
+		async getByInterval(idParentResource, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false, externalParam = []) {
 			if (!this[stateKey][String(idParentResource)] || clear) {
 				this[stateKey][String(idParentResource)] = {};
 			}

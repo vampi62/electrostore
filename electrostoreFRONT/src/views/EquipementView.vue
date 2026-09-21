@@ -367,7 +367,7 @@ const labelTableauModalTag = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "ready?.status && ready?.status !== 'deleted'",
+			showCondition: "(ready?.status && ready?.status !== 'deleted') || (store[1]?.[rowData.id_tag] && !ready?.status)",
 			action: (row) => tagDelete(row.id_tag),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
@@ -524,7 +524,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					</div>
 				</template>
 			</FormContainer>
-			<Tags :current-tags="equipementsStore.equipementTags[equipementId] || {}" :ready-store="equipementsStore.equipementTagReady[equipementId] || {}" :tags-store="tagsStore.tags" :can-edit="equipementId !== 'new' && authStore.hasPermission([1, 2])"
+			<Tags :current-tags="equipementsStore.equipementTags[equipementId] || {}" :ready-store="equipementsStore.equipementTagReady[equipementId] || {}" :tags-store="tagsStore.tags" :can-edit="authStore.hasPermission([1, 2])"
 				:delete-function="(value) => tagDelete(value)"
 				:restore-function="(value) => tagRestore(value)"
 				:filter-modal="filterTag"

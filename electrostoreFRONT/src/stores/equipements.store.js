@@ -57,7 +57,7 @@ const equipementTagResource = createNestedResource({
 	loadingKey: "equipementTagsLoading",
 	editionKey: "equipementTagEdition",
 	readyKey: "equipementTagReady",
-	onHydrate: (store, idEquipement, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("tag")) {
 			const tagsStore = useTagsStore();
 			tagsStore.tags[entity.id_tag] = entity.tag;
@@ -73,7 +73,7 @@ const equipementBoxResource = createNestedResource({
 	loadingKey: "equipementBoxsLoading",
 	editionKey: "equipementBoxEdition",
 	readyKey: "equipementBoxReady",
-	onHydrate: (store, idEquipement, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("box") && entity.box) {
 			const storesStore = useStoresStore();
 			storesStore.boxs[entity.box.id_store] ??= {};
@@ -100,7 +100,7 @@ const equipementMaintenanceResource = createNestedResource({
 	loadingKey: "equipementMaintenancesLoading",
 	editionKey: "equipementMaintenanceEdition",
 	readyKey: "equipementMaintenanceReady",
-	onHydrate: (store, idEquipement, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("user") && entity.user) {
 			const usersStore = useUsersStore();
 			usersStore.users[entity.id_user] = entity.user;
@@ -115,7 +115,7 @@ const equipementCommentResource = createNestedResource({
 	countKey: "equipementCommentsTotalCount",
 	loadingKey: "equipementCommentsLoading",
 	editionKey: "equipementCommentEdition",
-	onHydrate: (store, idEquipement, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("user") && entity.user) {
 			const usersStore = useUsersStore();
 			usersStore.users[entity.id_user] = entity.user;

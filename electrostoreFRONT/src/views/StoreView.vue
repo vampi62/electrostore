@@ -279,7 +279,6 @@ const filterItem = ref([
 ]);
 
 // tag
-const tagModalShow = ref(false);
 const filterTag = ref([
 	{ key: "name_tag", value: "", type: "text", label: "", placeholder: t("store.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
@@ -461,7 +460,7 @@ const labelTableauModalTag = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "ready?.status && ready?.status !== 'deleted'",
+			showCondition: "(ready?.status && ready?.status !== 'deleted') || (store[1]?.[rowData.id_tag] && !ready?.status)",
 			action: (row) => tagDelete(row.id_tag),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
@@ -556,28 +555,6 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 	<ModalDeleteConfirm :show-modal="storeDeleteModalShow" @close-modal="storeDeleteModalShow = false"
 		:delete-action="storeDelete" :text-title="'store.DeleteTitle'"
 		:text-p="'store.DeleteText'"/>
-
-	<div v-if="tagModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
-		@click="tagModalShow = false">
-		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
-			<div class="flex justify-between items-center border-b pb-3">
-				<h2 class="text-2xl font-semibold">{{ $t('store.AddTag') }}</h2>
-				<button type="button" @click="tagModalShow = false"
-					class="text-gray-500 hover:text-gray-700">&times;</button>
-			</div>
-
-			<FilterContainer class="my-4 flex gap-4" :filters="filterTag" :store-data="tagsStore.tags" />
-
-			<Tableau :labels="labelTableauModalTag" :meta="{ key: 'id_tag' }"
-				:store-data="[tagsStore.tags,storesStore.storeTags[storeId]]"
-				:filters="filterTag"
-				:loading="tagsStore.tagsLoading"
-				:total-count="Number(tagsStore.tagsTotalCount || 0)"
-				:fetch-function="storeId !== 'new' ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear) : undefined"
-				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
-			/>
-		</div>
-	</div>
 
 	<div v-if="storeItemAddModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
 		@click="storeItemAddModalShow = false">

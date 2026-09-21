@@ -371,7 +371,7 @@ const labelTableauModalTag = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "ready?.status && ready?.status !== 'deleted'",
+			showCondition: "(ready?.status && ready?.status !== 'deleted') || (store[1]?.[rowData.id_tag] && !ready?.status)",
 			action: (row) => tagDelete(row.id_tag),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},

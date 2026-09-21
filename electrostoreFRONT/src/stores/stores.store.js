@@ -104,7 +104,7 @@ const storeTagResource = createNestedResource({
 	loadingKey: "storeTagsLoading",
 	editionKey: "storeTagEdition",
 	readyKey: "storeTagReady",
-	onHydrate: (store, idStore, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("tag")) {
 			const tagsStore = useTagsStore();
 			tagsStore.tags[entity.id_tag] = entity.tag;
