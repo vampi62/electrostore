@@ -360,7 +360,7 @@ const trackingOptionalConfig = computed(() => {
 const documentAddModalShow = ref(false);
 const documentAdd = async(files) => {
 	for (const file of files) {
-		const documentModalData = { name_command_document: file.name, document: file.document };
+		const documentModalData = { name_command_document: file.name, document: file.document, type_command_document: file.document.type, created_at: new Date() };
 		const newId = commandsStore.getAvailableNewDocumentId(commandId.value);
 		commandsStore.documentEdition[commandId.value][newId] = documentModalData;
 		try {

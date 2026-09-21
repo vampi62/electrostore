@@ -205,6 +205,8 @@ export const useEquipementsStore = defineStore("equipements", {
 			this.equipementBoxReady[id] = {};
 			this.equipementDocumentEdition[id] = {};
 			this.equipementDocumentReady[id] = {};
+			this.equipementMaintenanceEdition[id] = {};
+			this.equipementMaintenanceReady[id] = {};
 		},
 		setLoadingEdition(id, loading) {
 			if (!this.equipementEdition[id]) {
@@ -220,6 +222,8 @@ export const useEquipementsStore = defineStore("equipements", {
 			delete this.equipementBoxReady[id];
 			delete this.equipementDocumentEdition[id];
 			delete this.equipementDocumentReady[id];
+			delete this.equipementMaintenanceEdition[id];
+			delete this.equipementMaintenanceReady[id];
 		},
 		async saveAllChanges(id) {
 			let realId = id;
@@ -230,6 +234,7 @@ export const useEquipementsStore = defineStore("equipements", {
 				this.copyEquipementTagAllId(id, realId);
 				this.copyEquipementBoxAllId(id, realId);
 				this.copyEquipementDocumentAllId(id, realId);
+				this.copyEquipementMaintenanceAllId(id, realId);
 			} else {
 				await this.updateEquipement(id, isFormData ? buildFormData(data) : data);
 			}
@@ -237,6 +242,7 @@ export const useEquipementsStore = defineStore("equipements", {
 				this.pushEquipementTagChange(realId),
 				this.pushEquipementBoxChange(realId),
 				this.pushEquipementDocumentChange(realId),
+				this.pushEquipementMaintenanceChange(realId),
 			]);
 			if (imageChanged) {
 				delete this.thumbnailsURL[realId];
@@ -291,6 +297,11 @@ export const useEquipementsStore = defineStore("equipements", {
 		createEquipementMaintenance: equipementMaintenanceResource.create,
 		updateEquipementMaintenance: equipementMaintenanceResource.update,
 		deleteEquipementMaintenance: equipementMaintenanceResource.remove,
+		getAvailableNewEquipementMaintenanceId: equipementMaintenanceResource.getAvailableNewId,
+		valideEquipementMaintenanceEditionById: equipementMaintenanceResource.valideEditionById,
+		copyEquipementMaintenancePerId: equipementMaintenanceResource.copyPerId,
+		copyEquipementMaintenanceAllId: equipementMaintenanceResource.copyAllId,
+		pushEquipementMaintenanceChange: equipementMaintenanceResource.pushChange,
 
 		getEquipementCommentByInterval: equipementCommentResource.getByInterval,
 		getEquipementCommentById: equipementCommentResource.getById,

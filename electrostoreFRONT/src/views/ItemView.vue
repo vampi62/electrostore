@@ -151,7 +151,7 @@ const boxDelete = (row) => {
 const documentAddModalShow = ref(false);
 const documentAdd = async(files) => {
 	for (const file of files) {
-		const documentModalData = { name_item_document: file.name, document: file.document };
+		const documentModalData = { name_item_document: file.name, document: file.document, type_item_document: file.document.type, created_at: new Date() };
 		const newId = itemsStore.getAvailableNewDocumentId(itemId.value);
 		itemsStore.documentEdition[itemId.value][newId] = documentModalData;
 		try {

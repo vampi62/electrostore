@@ -31,7 +31,9 @@ public class MappingProfile : Profile
         CreateMap<CreateCommandDocumentDto, CommandsDocuments>();
         CreateMap<CommandsDocuments, ReadCommandDocumentDto>();
 
-        CreateMap<CreateCommandDto, Commands>();
+        CreateMap<CreateCommandDto, Commands>()
+            .ForMember(dest => dest.url_command, opt => opt.NullSubstitute(string.Empty))
+            .ForMember(dest => dest.tracking_number_command, opt => opt.NullSubstitute(string.Empty));
         CreateMap<Commands, ReadCommandDto>();
         CreateMap<Commands, ReadExtendedCommandDto>();
 
@@ -128,7 +130,9 @@ public class MappingProfile : Profile
         CreateMap<CreateProjectDocumentDto, ProjectsDocuments>();
         CreateMap<ProjectsDocuments, ReadProjectDocumentDto>();
 
-        CreateMap<CreateProjectDto, Projects>();
+        CreateMap<CreateProjectDto, Projects>()
+            .ForMember(dest => dest.url_project, opt => opt.NullSubstitute(string.Empty))
+            .ForMember(dest => dest.description_project, opt => opt.NullSubstitute(string.Empty));
         CreateMap<Projects, ReadProjectDto>();
         CreateMap<Projects, ReadExtendedProjectDto>();
 

@@ -222,7 +222,7 @@ const boxRestore = (row) => {
 const documentAddModalShow = ref(false);
 const documentAdd = async(files) => {
 	for (const file of files) {
-		const documentModalData = { name_equipement_document: file.name, document: file.document };
+		const documentModalData = { name_equipement_document: file.name, document: file.document, type_equipement_document: file.document.type, created_at: new Date() };
 		const newId = equipementsStore.getAvailableNewEquipementDocumentId(equipementId.value);
 		equipementsStore.equipementDocumentEdition[equipementId.value][newId] = documentModalData;
 		try {
@@ -288,31 +288,44 @@ const schemaMaintenance = Yup.object().shape({
 	type_equipement_maintenance: Yup.number().required(t("equipement.MaintenanceTypeRequired")),
 	date_planned_equipement_maintenance: Yup.string().required(t("equipement.MaintenanceDateRequired")),
 });
-const maintenanceAdd = async() => {
+const maintenanceAdd = () => {
 	try {
 		schemaMaintenance.validateSync(maintenanceForm.value, { abortEarly: false });
-		await equipementsStore.createEquipementMaintenance(equipementId.value, {
+		const newId = equipementsStore.getAvailableNewEquipementMaintenanceId(equipementId.value);
+		equipementsStore.equipementMaintenanceEdition[equipementId.value][newId] = {
 			type_equipement_maintenance: Number(maintenanceForm.value.type_equipement_maintenance),
 			date_planned_equipement_maintenance: new Date(maintenanceForm.value.date_planned_equipement_maintenance).toISOString(),
 			description_equipement_maintenance: maintenanceForm.value.description_equipement_maintenance || null,
-		});
+		};
+		equipementsStore.valideEquipementMaintenanceEditionById(equipementId.value, newId, "created");
+		delete equipementsStore.equipementMaintenanceEdition[equipementId.value][newId];
 		addNotification({ message: t("equipement.MaintenanceAdded"), type: "success" });
 		maintenanceForm.value = { type_equipement_maintenance: EquipementMaintenanceType.Preventive, date_planned_equipement_maintenance: "", description_equipement_maintenance: "" };
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const maintenanceMarkDone = async(row) => {
+const maintenanceMarkDone = (row) => {
 	try {
-		await equipementsStore.updateEquipementMaintenance(equipementId.value, row.id_equipement_maintenance, { date_done_equipement_maintenance: new Date().toISOString() });
+		equipementsStore.equipementMaintenanceEdition[equipementId.value][row.id_equipement_maintenance] = { ...row, date_done_equipement_maintenance: new Date().toISOString() };
+		equipementsStore.valideEquipementMaintenanceEditionById(equipementId.value, row.id_equipement_maintenance, "modified");
+		delete equipementsStore.equipementMaintenanceEdition[equipementId.value][row.id_equipement_maintenance];
 		addNotification({ message: t("equipement.MaintenanceDone"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const maintenanceDelete = async(row) => {
+const maintenanceRestore = (row) => {
 	try {
-		await equipementsStore.deleteEquipementMaintenance(equipementId.value, row.id_equipement_maintenance);
+		delete equipementsStore.equipementMaintenanceReady[equipementId.value][row.id_equipement_maintenance];
+		addNotification({ message: t("equipement.MaintenanceRestored"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+};
+const maintenanceDelete = (row) => {
+	try {
+		equipementsStore.valideEquipementMaintenanceEditionById(equipementId.value, row.id_equipement_maintenance, "deleted");
 		addNotification({ message: t("equipement.MaintenanceDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -464,13 +477,21 @@ const labelTableauMaintenance = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-check",
-			showCondition: "!rowData.date_done_equipement_maintenance",
+			showCondition: "!rowData.date_done_equipement_maintenance && ready?.status !== 'deleted'",
 			action: (row) => maintenanceMarkDone(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
+			showCondition: "ready?.status === 'deleted'",
+			icon: "fa-solid fa-rotate-left",
+			action: (row) => maintenanceRestore(row),
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
 			action: (row) => maintenanceDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
@@ -590,6 +611,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				</div>
 				<Tableau :labels="labelTableauMaintenance" :meta="{ key: 'id_equipement_maintenance' }"
 					:store-data="[equipementsStore.equipementMaintenances[equipementId]]"
+					:store-ready="equipementsStore.equipementMaintenanceReady[equipementId]"
 					:loading="equipementsStore.equipementMaintenancesLoading"
 					:total-count="Number(equipementsStore.equipementMaintenancesTotalCount[equipementId])"
 					:fetch-function="equipementId !== 'new' ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementMaintenanceByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"

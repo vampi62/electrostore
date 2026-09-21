@@ -170,7 +170,7 @@ const projectDelete = async() => {
 const documentAddModalShow = ref(false);
 const documentAdd = async(files) => {
 	for (const file of files) {
-		const documentModalData = { name_project_document: file.name, document: file.document };
+		const documentModalData = { name_project_document: file.name, document: file.document, type_project_document: file.document.type, created_at: new Date() };
 		const newId = projectsStore.getAvailableNewDocumentId(projectId.value);
 		projectsStore.documentEdition[projectId.value][newId] = documentModalData;
 		try {
