@@ -108,6 +108,8 @@ const storeSave = async() => {
 				leds: Object.values(storesStore.ledEdition[storeId.value]),
 				boxs: Object.values(storesStore.boxEdition[storeId.value]),
 			});
+			storesStore.copyTagStoreAllId(storeId.value, newId);
+			await storesStore.pushTagStoreChange(newId);
 			storesStore.loadToEdition(newId);
 			addNotification({ message: t("store.Created"), type: "success" });
 			storeId.value = String(newId);
@@ -123,6 +125,7 @@ const storeSave = async() => {
 				leds: Object.values(storesStore.ledEdition[storeId.value]),
 				boxs: Object.values(storesStore.boxEdition[storeId.value]),
 			});
+			await storesStore.pushTagStoreChange(storeId.value);
 			addNotification({ message: t("store.Updated"), type: "success" });
 			await storesStore.getStoreById(storeId.value, ["boxs", "leds"]);
 			storesStore.loadToEdition(storeId.value);
@@ -282,7 +285,15 @@ const filterTag = ref([
 ]);
 function tagSave(id_tag) {
 	try {
-		storesStore.createTagStore(storeId.value,  { id_tag: id_tag });
+		// re-adding a tag that is only pending deletion locally just cancels that pending deletion
+		if (storesStore.storeTagReady[storeId.value]?.[id_tag]?.status === "deleted") {
+			delete storesStore.storeTagReady[storeId.value][id_tag];
+			addNotification({ message: t("store.TagRestored"), type: "success" });
+			return;
+		}
+		storesStore.storeTagEdition[storeId.value][id_tag] = { id_tag };
+		storesStore.valideTagStoreEditionById(storeId.value, id_tag, "created");
+		delete storesStore.storeTagEdition[storeId.value][id_tag];
 		addNotification({ message: t("store.TagAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -290,8 +301,21 @@ function tagSave(id_tag) {
 }
 function tagDelete(id_tag) {
 	try {
-		storesStore.deleteTagStore(storeId.value, id_tag);
+		// a tag that was only staged as a pending creation is simply dropped, nothing to push
+		if (storesStore.storeTagReady[storeId.value]?.[id_tag]?.status === "created") {
+			delete storesStore.storeTagReady[storeId.value][id_tag];
+		} else {
+			storesStore.valideTagStoreEditionById(storeId.value, id_tag, "deleted");
+		}
 		addNotification({ message: t("store.TagDeleted"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+}
+function tagRestore(id_tag) {
+	try {
+		delete storesStore.storeTagReady[storeId.value][id_tag];
+		addNotification({ message: t("store.TagRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
@@ -420,16 +444,24 @@ const labelTableauModalTag = ref([
 	{ label: "store.TagActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
-			icon: "fa-solid fa-save",
-			showCondition: "!store[1]?.[rowData.id_tag]",
+			icon: "fa-solid fa-plus",
+			showCondition: "!ready?.status && !store[1]?.[rowData.id_tag]",
 			action: (row) => tagSave(row.id_tag),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
+			icon: "fa-solid fa-rotate-left",
+			showCondition: "ready?.status === 'deleted'",
+			action: (row) => tagRestore(row.id_tag),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+			animation: true,
+		},
+		{
+			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "store[1]?.[rowData.id_tag]",
+			showCondition: "ready?.status && ready?.status !== 'deleted'",
 			action: (row) => tagDelete(row.id_tag),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
@@ -453,8 +485,9 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="storesStore.storeEdition[storeId] || {}" :store-user="authStore.user"
 				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
-			<Tags :current-tags="storesStore.storeTags[storeId] || {}" :tags-store="tagsStore.tags" :can-edit="storeId !== 'new' && authStore.hasPermission([1, 2])"
+			<Tags :current-tags="storesStore.storeTags[storeId] || {}" :ready-store="storesStore.storeTagReady[storeId] || {}" :tags-store="tagsStore.tags" :can-edit="storeId !== 'new' && authStore.hasPermission([1, 2])"
 				:delete-function="(value) => tagDelete(value)"
+				:restore-function="(value) => tagRestore(value)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'loading': tagsStore.tagsLoading, 'fetchFunction': (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)

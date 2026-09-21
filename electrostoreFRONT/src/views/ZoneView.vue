@@ -217,7 +217,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</FormContainer>
 		<CollapsibleSection title="zone.Stores"
-			:total-count="Number(zonesStore.zoneStoresTotalCount[zoneId] || 0)" :permission="zoneId !== 'new'">
+			:total-count="Number(zonesStore.zoneStoresTotalCount[zoneId] || 0)">
 			<template #append-row>
 				<Tableau :labels="labelTableauStore" :meta="{ key: 'id_store', path: '/stores/' }"
 					:store-data="[zonesStore.zoneStores[zoneId]]"

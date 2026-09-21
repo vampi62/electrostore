@@ -68,6 +68,7 @@ const commentResource = createNestedResource({
 	countKey: "commentsTotalCount",
 	loadingKey: "commentsLoading",
 	editionKey: "commentEdition",
+	readyKey: "commentReady",
 	onHydrate: (store, entity, expand) => {
 		if (expand.includes("user")) {
 			const usersStore = useUsersStore();
@@ -112,6 +113,7 @@ export const useCommandsStore = defineStore("commands",{
 		commentsLoading: false,
 		comments: {},
 		commentEdition: {},
+		commentReady: {},
 
 		documentsTotalCount: {},
 		documentsLoading: false,
@@ -166,6 +168,7 @@ export const useCommandsStore = defineStore("commands",{
 				};
 			}
 			this.commentEdition[id] = {};
+			this.commentReady[id] = {};
 			this.documentEdition[id] = {};
 			this.documentReady[id] = {};
 			this.itemEdition[id] = {};
@@ -180,6 +183,7 @@ export const useCommandsStore = defineStore("commands",{
 		clearEdition(id) {
 			delete this.commandEdition[id];
 			delete this.commentEdition[id];
+			delete this.commentReady[id];
 			delete this.documentEdition[id];
 			delete this.documentReady[id];
 			delete this.itemEdition[id];

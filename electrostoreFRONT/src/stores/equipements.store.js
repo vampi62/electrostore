@@ -229,12 +229,14 @@ export const useEquipementsStore = defineStore("equipements", {
 				realId = await this.createEquipement(isFormData ? new FormData(Object.entries(data)) : data);
 				this.copyEquipementTagAllId(id, realId);
 				this.copyEquipementBoxAllId(id, realId);
+				this.copyEquipementDocumentAllId(id, realId);
 			} else {
 				await this.updateEquipement(id, isFormData ? new FormData(Object.entries(data)) : data);
 			}
 			await Promise.all([
 				this.pushEquipementTagChange(realId),
 				this.pushEquipementBoxChange(realId),
+				this.pushEquipementDocumentChange(realId),
 			]);
 			if (imageChanged) {
 				delete this.thumbnailsURL[realId];
@@ -272,6 +274,11 @@ export const useEquipementsStore = defineStore("equipements", {
 		createEquipementDocument: equipementDocumentResource.create,
 		updateEquipementDocument: equipementDocumentResource.update,
 		deleteEquipementDocument: equipementDocumentResource.remove,
+		getAvailableNewEquipementDocumentId: equipementDocumentResource.getAvailableNewId,
+		valideEquipementDocumentEditionById: equipementDocumentResource.valideEditionById,
+		copyEquipementDocumentPerId: equipementDocumentResource.copyPerId,
+		copyEquipementDocumentAllId: equipementDocumentResource.copyAllId,
+		pushEquipementDocumentChange: equipementDocumentResource.pushChange,
 		async downloadEquipementDocument(idEquipement, id) {
 			return await fetchWrapper.image({
 				url: `${baseUrl}/equipement/${idEquipement}/document/${id}/download`,

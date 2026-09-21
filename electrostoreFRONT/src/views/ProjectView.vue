@@ -66,7 +66,15 @@ const filterTag = ref([
 ]);
 function tagSave(id_tag) {
 	try {
-		projectsStore.createProjectTagProject(projectId.value,  { id_project_tag: id_tag });
+		// re-adding a tag that is only pending deletion locally just cancels that pending deletion
+		if (projectsStore.projectTagProjectReady[projectId.value]?.[id_tag]?.status === "deleted") {
+			delete projectsStore.projectTagProjectReady[projectId.value][id_tag];
+			addNotification({ message: t("project.TagRestored"), type: "success" });
+			return;
+		}
+		projectsStore.projectTagProjectEdition[projectId.value][id_tag] = { id_project_tag: id_tag };
+		projectsStore.valideProjectTagProjectEditionById(projectId.value, id_tag, "created");
+		delete projectsStore.projectTagProjectEdition[projectId.value][id_tag];
 		addNotification({ message: t("project.TagAdded"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
@@ -74,8 +82,21 @@ function tagSave(id_tag) {
 }
 function tagDelete(id_tag) {
 	try {
-		projectsStore.deleteProjectTagProject(projectId.value, id_tag);
+		// a tag that was only staged as a pending creation is simply dropped, nothing to push
+		if (projectsStore.projectTagProjectReady[projectId.value]?.[id_tag]?.status === "created") {
+			delete projectsStore.projectTagProjectReady[projectId.value][id_tag];
+		} else {
+			projectsStore.valideProjectTagProjectEditionById(projectId.value, id_tag, "deleted");
+		}
 		addNotification({ message: t("project.TagDeleted"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+}
+function tagRestore(id_tag) {
+	try {
+		delete projectsStore.projectTagProjectReady[projectId.value][id_tag];
+		addNotification({ message: t("project.TagRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
@@ -119,15 +140,13 @@ const projectSave = async() => {
 			projectsStore.setLoadingEdition(projectId.value, false);
 			return;
 		}
+		const id = await projectsStore.saveAllChanges(projectId.value);
+		projectsStore.loadToEdition(id);
 		if (projectId.value === "new") {
-			const newId = await projectsStore.createProject({ ...projectsStore.projectEdition[projectId.value] });
-			projectsStore.loadToEdition(newId);
 			addNotification({ message: t("project.Created"), type: "success" });
-			projectId.value = String(newId);
+			projectId.value = String(id);
 			router.push("/projects/" + projectId.value);
 		} else {
-			await projectsStore.updateProject(projectId.value, { ...projectsStore.projectEdition[projectId.value] });
-			projectsStore.loadToEdition(projectId.value);
 			addNotification({ message: t("project.Updated"), type: "success" });
 		}
 	} catch (e) {
@@ -149,21 +168,15 @@ const projectDelete = async() => {
 
 // document
 const documentAddModalShow = ref(false);
-const documentDeleteModalShow = ref(false);
-const documentModalData = ref({ id_project_document: null, name_project_document: "", document: null });
-const documentDeleteOpenModal = (doc) => {
-	documentModalData.value = doc;
-	documentDeleteModalShow.value = true;
-};
 const documentAdd = async(files) => {
 	for (const file of files) {
-		documentModalData.value = { name_project_document: file.name, document: file.document };
+		const documentModalData = { name_project_document: file.name, document: file.document };
+		const newId = projectsStore.getAvailableNewDocumentId(projectId.value);
+		projectsStore.documentEdition[projectId.value][newId] = documentModalData;
 		try {
-			schemaAddDocument.validateSync(documentModalData.value, { abortEarly: false });
-			const formData = new FormData();
-			formData.append("name_project_document", documentModalData.value.name_project_document);
-			formData.append("document", documentModalData.value.document);
-			await projectsStore.createDocument(projectId.value, formData);
+			schemaAddDocument.validateSync(documentModalData, { abortEarly: false });
+			projectsStore.valideDocumentEditionById(projectId.value, newId, "created", true);
+			delete projectsStore.documentEdition[projectId.value][newId];
 			addNotification({ message: t("project.DocumentAdded"), type: "success" });
 		} catch (e) {
 			addNotification({ message: e, type: "error" });
@@ -171,10 +184,11 @@ const documentAdd = async(files) => {
 	}
 	documentAddModalShow.value = false;
 };
-const documentEdit = async(row) => {
+const documentEdit = (row) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
-		await projectsStore.updateDocument(projectId.value, row.id_project_document, row);
+		projectsStore.valideDocumentEditionById(projectId.value, row.id_project_document,
+			projectsStore.documentEdition[projectId.value][row.id_project_document]?.status === "created" ? "created" : "modified");
 		delete projectsStore.documentEdition[projectId.value][row.id_project_document];
 		addNotification({ message: t("project.DocumentUpdated"), type: "success" });
 	} catch (e) {
@@ -182,14 +196,21 @@ const documentEdit = async(row) => {
 		return;
 	}
 };
-const documentDelete = async() => {
+const documentRestore = (row) => {
 	try {
-		await projectsStore.deleteDocument(projectId.value, documentModalData.value.id_project_document);
+		delete projectsStore.documentReady[projectId.value][row.id_project_document];
+		addNotification({ message: t("project.DocumentRestored"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+};
+const documentDelete = (row) => {
+	try {
+		projectsStore.valideDocumentEditionById(projectId.value, row.id_project_document, "deleted");
 		addNotification({ message: t("project.DocumentDeleted"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
-	documentDeleteModalShow.value = false;
 };
 const documentDownload = async(fileContent) => {
 	const file = await projectsStore.downloadDocument(projectId.value, fileContent.id_project_document);
@@ -206,33 +227,33 @@ const documentView = async(fileContent) => {
 
 // item
 const itemModalShow = ref(false);
-const itemSave = async(item) => {
-	if (projectsStore.items[projectId.value][item.id_item]) {
-		try {
-			schemaItem.validateSync(item.tmp, { abortEarly: false });
-			await projectsStore.updateItem(projectId.value, item.tmp.id_item, item.tmp);
-			addNotification({ message: t("project.ItemUpdated"), type: "success" });
-			item.tmp = null;
-		} catch (e) {
-			addNotification({ message: e, type: "error" });
-			return;
-		}
-	} else {
-		try {
-			schemaItem.validateSync(item.tmp, { abortEarly: false });
-			await projectsStore.createItem(projectId.value, item.tmp);
-			addNotification({ message: t("project.ItemAdded"), type: "success" });
-			item.tmp = null;
-		} catch (e) {
-			addNotification({ message: e, type: "error" });
-			return;
-		}
+const itemSave = (row) => {
+	try {
+		schemaItem.validateSync(row, { abortEarly: false });
+		projectsStore.valideItemEditionById(projectId.value, row.id_item,
+			projectsStore.items[projectId.value]?.[row.id_item] ? "modified" : "created");
+		delete projectsStore.itemEdition[projectId.value][row.id_item];
+		addNotification({ message: t("project.ItemUpdated"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
 	}
 };
-const itemDelete = async(item) => {
+const itemDelete = (row) => {
 	try {
-		await projectsStore.deleteItem(projectId.value, item.id_item);
+		if (projectsStore.itemReady[projectId.value]?.[row.id_item]?.status === "created") {
+			delete projectsStore.itemReady[projectId.value][row.id_item];
+		} else {
+			projectsStore.valideItemEditionById(projectId.value, row.id_item, "deleted");
+		}
 		addNotification({ message: t("project.ItemDeleted"), type: "success" });
+	} catch (e) {
+		addNotification({ message: e, type: "error" });
+	}
+};
+const itemRestore = (row) => {
+	try {
+		delete projectsStore.itemReady[projectId.value][row.id_item];
+		addNotification({ message: t("project.ItemRestored"), type: "success" });
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
@@ -306,7 +327,7 @@ const labelTableauDocument = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "!edition?.id_project_document",
+			showCondition: "!edition?.id_project_document && ready?.status !== 'deleted'",
 			action: (row) => {
 				projectsStore.documentEdition[projectId.value][row.id_project_document] = { ...row };
 			},
@@ -345,14 +366,22 @@ const labelTableauDocument = ref([
 		},
 		{
 			label: "",
+			showCondition: "ready?.status === 'deleted'",
+			icon: "fa-solid fa-rotate-left",
+			action: (row) => documentRestore(row),
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
-			action: (row) => documentDeleteOpenModal(row),
+			action: (row) => documentDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
 ]);
 const labelTableauItem = ref([
-	{ label: "project.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text", 
+	{ label: "project.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text",
 		storeRessourceId: 1, valueKey: "reference_name_item" },
 
 	{ label: "project.ItemQuantity", sortable: true, key: "quantity_project_item", valueKey: "quantity_project_item", type: "number", canEdit: true },
@@ -360,9 +389,9 @@ const labelTableauItem = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "!edition?.id_item",
+			showCondition: "!edition?.id_item && ready?.status !== 'deleted'",
 			action: (row) => {
-				projectsStore.itemEdition[row.id_item] = { ...row };
+				projectsStore.itemEdition[projectId.value][row.id_item] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -370,7 +399,7 @@ const labelTableauItem = ref([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_item",
-			action: (row) => itemSave(projectsStore.itemEdition[row.id_item]),
+			action: (row) => itemSave(projectsStore.itemEdition[projectId.value][row.id_item]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -379,12 +408,20 @@ const labelTableauItem = ref([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_item",
 			action: (row) => {
-				delete projectsStore.itemEdition[row.id_item];
+				delete projectsStore.itemEdition[projectId.value][row.id_item];
 			},
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
 		},
 		{
 			label: "",
+			showCondition: "ready?.status === 'deleted'",
+			icon: "fa-solid fa-rotate-left",
+			action: (row) => itemRestore(row),
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
+			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
 			action: (row) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
@@ -397,15 +434,22 @@ const labelTableauModalTag = ref([
 	{ label: "project.TagActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
-			icon: "fa-solid fa-save",
-			showCondition: "!store[1]?.[rowData.id_project_tag]",
+			icon: "fa-solid fa-plus",
+			showCondition: "!ready?.status && !store[1]?.[rowData.id_project_tag]",
 			action: (row) => tagSave(row.id_project_tag),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 		},
 		{
 			label: "",
+			icon: "fa-solid fa-rotate-left",
+			showCondition: "ready?.status === 'deleted'",
+			action: (row) => tagRestore(row.id_project_tag),
+			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
+		},
+		{
+			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "store[1]?.[rowData.id_project_tag]",
+			showCondition: "ready?.status && ready?.status !== 'deleted'",
 			action: (row) => tagDelete(row.id_project_tag),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
@@ -413,26 +457,26 @@ const labelTableauModalTag = ref([
 ]);
 const labelTableauModalItem = ref([
 	{ label: "project.ItemName", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
-	
-	{ label: "project.ItemQuantity", sortable: true, key: "ProjectsItems.quantity_project_item", sourceKey: "id_project", type: "number", 
+
+	{ label: "project.ItemQuantity", sortable: true, key: "ProjectsItems.quantity_project_item", sourceKey: "id_project", type: "number",
 		storeRessourceId: 1, valueKey: "quantity_project_item", canEdit: true },
 
 	{ label: "project.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
-			showCondition: "store[1]?.[rowData.id_item] === undefined && !edition?.id_item",
+			showCondition: "!ready?.status && store[1]?.[rowData.id_item] === undefined && !edition?.id_item",
 			action: (row) => {
-				projectsStore.itemEdition[row.id_item] = { quantity_project_item: 1, id_item: row.id_item };
+				projectsStore.itemEdition[projectId.value][row.id_item] = { quantity_project_item: 1, id_item: row.id_item };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-edit",
-			showCondition: "store[1]?.[rowData.id_item] && !edition?.id_item",
+			showCondition: "!ready?.status && store[1]?.[rowData.id_item] && !edition?.id_item",
 			action: (row) => {
-				projectsStore.itemEdition[row.id_item] = { ...row };
+				projectsStore.itemEdition[projectId.value][row.id_item] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -440,7 +484,7 @@ const labelTableauModalItem = ref([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_item",
-			action: (row) => itemSave(projectsStore.itemEdition[row.id_item]),
+			action: (row) => itemSave(projectsStore.itemEdition[projectId.value][row.id_item]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -449,14 +493,21 @@ const labelTableauModalItem = ref([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_item",
 			action: (row) => {
-				delete projectsStore.itemEdition[row.id_item];
+				delete projectsStore.itemEdition[projectId.value][row.id_item];
 			},
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
 		},
 		{
 			label: "",
+			icon: "fa-solid fa-rotate-left",
+			showCondition: "ready?.status === 'deleted'",
+			action: (row) => itemRestore(row),
+			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
+		},
+		{
+			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "store[1]?.[rowData.id_item]",
+			showCondition: "(store[1]?.[rowData.id_item] || ready?.status === 'created') && ready?.status !== 'deleted'",
 			action: (row) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
@@ -489,8 +540,9 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		/>
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="projectsStore.projectEdition[projectId]"/>
-			<Tags :current-tags="projectsStore.projectTagProject[projectId] || {}" :tags-store="projectTagsStore.projectTags" :can-edit="projectId !== 'new' && authStore.hasPermission([2])"
+			<Tags :current-tags="projectsStore.projectTagProject[projectId] || {}" :ready-store="projectsStore.projectTagProjectReady[projectId] || {}" :tags-store="projectTagsStore.projectTags" :can-edit="projectId !== 'new' && authStore.hasPermission([2])"
 				:delete-function="(value) => tagDelete(value)"
+				:restore-function="(value) => tagRestore(value)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_project_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
 								, 'loading': projectTagsStore.projectTagsLoading, 'fetchFunction': (limit, offset, expand, filter, sort, clear) => projectTagsStore.getProjectTagByInterval(limit, offset, expand, filter, sort, clear)
@@ -499,7 +551,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				/>
 		</div>
 		<CollapsibleSection title="project.HistoryStatus"
-			:total-count="Number(projectsStore.statusHistoryTotalCount[projectId] || 0)" :permission="projectId !=='new'">
+			:total-count="Number(projectsStore.statusHistoryTotalCount[projectId] || 0)">
 			<template #append-row>
 				<Tableau :labels="labelTableauHistoryStatus" :meta="{ key: 'id_project_status' }"
 					:store-data="[projectsStore.statusHistory[projectId]]"
@@ -511,7 +563,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="project.Documents"
-			:total-count="Number(projectsStore.documentsTotalCount[projectId] || 0)" :permission="projectId !=='new'">
+			:total-count="Number(projectsStore.documentsTotalCount[projectId] || 0)">
 			<template #append-row>
 				<button type="button" @click="documentAddModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -520,6 +572,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				<Tableau :labels="labelTableauDocument" :meta="{ key: 'id_project_document' }"
 					:store-data="[projectsStore.documents[projectId]]"
 					:store-edition="projectsStore.documentEdition[projectId]"
+					:store-ready="projectsStore.documentReady[projectId]"
 					:schema="schemaEditDocument"
 					:loading="projectsStore.documentsLoading"
 					:total-count="Number(projectsStore.documentsTotalCount[projectId])"
@@ -529,7 +582,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="project.Items"
-			:total-count="Number(projectsStore.itemsTotalCount[projectId] || 0)" :permission="projectId !=='new'">
+			:total-count="Number(projectsStore.itemsTotalCount[projectId] || 0)">
 			<template #append-row>
 				<button type="button" @click="itemModalShow = true"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -538,6 +591,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				<Tableau :labels="labelTableauItem" :meta="{ key: 'id_item', expand: ['item'] }"
 					:store-data="[projectsStore.items[projectId], itemsStore.items]"
 					:store-edition="projectsStore.itemEdition[projectId]"
+					:store-ready="projectsStore.itemReady[projectId]"
 					:loading="projectsStore.itemsLoading"
 					:schema="schemaItem"
 					:total-count="Number(projectsStore.itemsTotalCount[projectId] || 0)"
@@ -547,7 +601,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="project.Comments"
-			:total-count="Number(projectsStore.commentsTotalCount[projectId] || 0)" :permission="projectId !=='new'">
+			:total-count="Number(projectsStore.commentsTotalCount[projectId] || 0)">
 			<template #append-row>
 				<Comment :meta="{ contenu: 'content_project_comment', key: 'id_project_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[projectsStore.comments[projectId], usersStore.users]"
@@ -575,10 +629,6 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		file-type="document"
 	/>
 
-	<ModalDeleteConfirm :show-modal="documentDeleteModalShow" @close-modal="documentDeleteModalShow = false"
-		:delete-action="documentDelete" :text-title="'project.DocumentDeleteTitle'"
-		:text-p="'project.DocumentDeleteText'"/>
-
 	<div v-if="itemModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
 		@click="itemModalShow = false">
 		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
@@ -593,6 +643,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<Tableau :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
 				:store-data="[itemsStore.items, projectsStore.items[projectId]]"
 				:store-edition="projectsStore.itemEdition[projectId]"
+				:store-ready="projectsStore.itemReady[projectId]"
 				:filters="filterItem"
 				:loading="projectsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
