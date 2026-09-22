@@ -2411,19 +2411,52 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/CreateEquipementDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateEquipementDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateEquipementDto"
+                "required": [
+                  "friendly_name_equipement",
+                  "reference_name_equipement",
+                  "status_equipement"
+                ],
+                "type": "object",
+                "properties": {
+                  "reference_name_equipement": {
+                    "maxLength": 50,
+                    "type": "string"
+                  },
+                  "friendly_name_equipement": {
+                    "maxLength": 50,
+                    "type": "string"
+                  },
+                  "description_equipement": {
+                    "maxLength": 500,
+                    "type": "string"
+                  },
+                  "status_equipement": {
+                    "$ref": "#/components/schemas/EquipementStatus"
+                  },
+                  "img_file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "reference_name_equipement": {
+                  "style": "form"
+                },
+                "friendly_name_equipement": {
+                  "style": "form"
+                },
+                "description_equipement": {
+                  "style": "form"
+                },
+                "status_equipement": {
+                  "style": "form"
+                },
+                "img_file": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -2519,19 +2552,53 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateEquipementDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateEquipementDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateEquipementDto"
+                "type": "object",
+                "properties": {
+                  "reference_name_equipement": {
+                    "maxLength": 50,
+                    "type": "string"
+                  },
+                  "friendly_name_equipement": {
+                    "maxLength": 50,
+                    "type": "string"
+                  },
+                  "description_equipement": {
+                    "maxLength": 500,
+                    "type": "string"
+                  },
+                  "status_equipement": {
+                    "$ref": "#/components/schemas/EquipementStatus"
+                  },
+                  "unset_img_equipement": {
+                    "type": "boolean"
+                  },
+                  "img_file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "reference_name_equipement": {
+                  "style": "form"
+                },
+                "friendly_name_equipement": {
+                  "style": "form"
+                },
+                "description_equipement": {
+                  "style": "form"
+                },
+                "status_equipement": {
+                  "style": "form"
+                },
+                "unset_img_equipement": {
+                  "style": "form"
+                },
+                "img_file": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -2560,6 +2627,52 @@
         }
       },
       "delete": {
+        "tags": [
+          "Equipement"
+        ],
+        "parameters": [
+          {
+            "name": "id_equipement",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/equipement/{id_equipement}/picture": {
+      "get": {
+        "tags": [
+          "Equipement"
+        ],
+        "parameters": [
+          {
+            "name": "id_equipement",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/equipement/{id_equipement}/thumbnail": {
+      "get": {
         "tags": [
           "Equipement"
         ],
@@ -15198,19 +15311,57 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/CreateZoneDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateZoneDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateZoneDto"
+                "required": [
+                  "name_zone",
+                  "xlength_zone",
+                  "ylength_zone"
+                ],
+                "type": "object",
+                "properties": {
+                  "name_zone": {
+                    "maxLength": 50,
+                    "type": "string"
+                  },
+                  "description_zone": {
+                    "maxLength": 500,
+                    "type": "string"
+                  },
+                  "xlength_zone": {
+                    "maximum": 2147483647,
+                    "minimum": 1,
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "ylength_zone": {
+                    "maximum": 2147483647,
+                    "minimum": 1,
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "img_file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "name_zone": {
+                  "style": "form"
+                },
+                "description_zone": {
+                  "style": "form"
+                },
+                "xlength_zone": {
+                  "style": "form"
+                },
+                "ylength_zone": {
+                  "style": "form"
+                },
+                "img_file": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -15306,19 +15457,58 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateZoneDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateZoneDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateZoneDto"
+                "type": "object",
+                "properties": {
+                  "name_zone": {
+                    "maxLength": 50,
+                    "type": "string"
+                  },
+                  "description_zone": {
+                    "maxLength": 500,
+                    "type": "string"
+                  },
+                  "xlength_zone": {
+                    "maximum": 2147483647,
+                    "minimum": 1,
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "ylength_zone": {
+                    "maximum": 2147483647,
+                    "minimum": 1,
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "unset_img_zone": {
+                    "type": "boolean"
+                  },
+                  "img_file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "name_zone": {
+                  "style": "form"
+                },
+                "description_zone": {
+                  "style": "form"
+                },
+                "xlength_zone": {
+                  "style": "form"
+                },
+                "ylength_zone": {
+                  "style": "form"
+                },
+                "unset_img_zone": {
+                  "style": "form"
+                },
+                "img_file": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -15369,105 +15559,6 @@
       }
     },
     "/api/zone/{id_zone}/picture": {
-      "post": {
-        "tags": [
-          "Zone"
-        ],
-        "parameters": [
-          {
-            "name": "id_zone",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "required": [
-                  "img_file"
-                ],
-                "type": "object",
-                "properties": {
-                  "img_file": {
-                    "type": "string",
-                    "format": "binary"
-                  }
-                }
-              },
-              "encoding": {
-                "img_file": {
-                  "style": "form"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadZoneDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadZoneDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadZoneDto"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Zone"
-        ],
-        "parameters": [
-          {
-            "name": "id_zone",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadZoneDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadZoneDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadZoneDto"
-                }
-              }
-            }
-          }
-        }
-      },
       "get": {
         "tags": [
           "Zone"
@@ -15613,9 +15704,14 @@
         "additionalProperties": false
       },
       "CreateCarrierDto": {
+        "required": [
+          "key_carrier"
+        ],
         "type": "object",
         "properties": {
           "key_carrier": {
+            "maximum": 2147483647,
+            "minimum": 0,
             "type": "integer",
             "format": "int32"
           },
@@ -15827,35 +15923,6 @@
             "maxLength": 455,
             "minLength": 1,
             "type": "string"
-          }
-        },
-        "additionalProperties": false
-      },
-      "CreateEquipementDto": {
-        "required": [
-          "friendly_name_equipement",
-          "reference_name_equipement",
-          "status_equipement"
-        ],
-        "type": "object",
-        "properties": {
-          "reference_name_equipement": {
-            "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
-          },
-          "friendly_name_equipement": {
-            "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
-          },
-          "description_equipement": {
-            "maxLength": 500,
-            "type": "string",
-            "nullable": true
-          },
-          "status_equipement": {
-            "$ref": "#/components/schemas/EquipementStatus"
           }
         },
         "additionalProperties": false
@@ -16358,39 +16425,6 @@
             "maxLength": 255,
             "type": "string",
             "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "CreateZoneDto": {
-        "required": [
-          "name_zone",
-          "xlength_zone",
-          "ylength_zone"
-        ],
-        "type": "object",
-        "properties": {
-          "name_zone": {
-            "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
-          },
-          "description_zone": {
-            "maxLength": 500,
-            "type": "string",
-            "nullable": true
-          },
-          "xlength_zone": {
-            "maximum": 2147483647,
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "ylength_zone": {
-            "maximum": 2147483647,
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -16960,7 +16994,8 @@
           },
           "id_carrier": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "carrier_name": {
             "type": "string",
@@ -17565,6 +17600,14 @@
             "type": "integer",
             "format": "int32"
           },
+          "url_picture_equipement": {
+            "type": "string",
+            "nullable": true
+          },
+          "url_thumbnail_equipement": {
+            "type": "string",
+            "nullable": true
+          },
           "reference_name_equipement": {
             "type": "string",
             "nullable": true
@@ -17981,7 +18024,8 @@
           },
           "id_carrier": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "carrier_name": {
             "type": "string",
@@ -18330,6 +18374,14 @@
           "id_equipement": {
             "type": "integer",
             "format": "int32"
+          },
+          "url_picture_equipement": {
+            "type": "string",
+            "nullable": true
+          },
+          "url_thumbnail_equipement": {
+            "type": "string",
+            "nullable": true
           },
           "reference_name_equipement": {
             "type": "string",
@@ -21707,30 +21759,6 @@
         },
         "additionalProperties": false
       },
-      "UpdateEquipementDto": {
-        "type": "object",
-        "properties": {
-          "reference_name_equipement": {
-            "maxLength": 50,
-            "type": "string",
-            "nullable": true
-          },
-          "friendly_name_equipement": {
-            "maxLength": 50,
-            "type": "string",
-            "nullable": true
-          },
-          "description_equipement": {
-            "maxLength": 500,
-            "type": "string",
-            "nullable": true
-          },
-          "status_equipement": {
-            "$ref": "#/components/schemas/EquipementStatus"
-          }
-        },
-        "additionalProperties": false
-      },
       "UpdateEquipementMaintenanceDto": {
         "type": "object",
         "properties": {
@@ -22014,9 +22042,6 @@
         "additionalProperties": false
       },
       "UpdateUserDto": {
-        "required": [
-          "current_password_user"
-        ],
         "type": "object",
         "properties": {
           "name_user": {
@@ -22044,37 +22069,7 @@
             "$ref": "#/components/schemas/UserRole"
           },
           "current_password_user": {
-            "minLength": 1,
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
-      },
-      "UpdateZoneDto": {
-        "type": "object",
-        "properties": {
-          "name_zone": {
-            "maxLength": 50,
             "type": "string",
-            "nullable": true
-          },
-          "description_zone": {
-            "maxLength": 500,
-            "type": "string",
-            "nullable": true
-          },
-          "xlength_zone": {
-            "maximum": 2147483647,
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "ylength_zone": {
-            "maximum": 2147483647,
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32",
             "nullable": true
           }
         },
