@@ -44,11 +44,9 @@ describe("Login Page", () => {
 				"db_connected": true,
 				"mqtt_connected": true,
 				"kafka_connected": true,
-				"ai_status": "healthy",
-				"ai_training_in_progress": 0,
 				"notif_status": "healthy",
 				"notif_smtp": true,
-				"notif_webPush": true,
+				"notif_web_push": true,
 				"cron_status": "healthy",
 				"worker_status": "healthy",
 				"external_services": {

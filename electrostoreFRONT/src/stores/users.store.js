@@ -61,7 +61,7 @@ const projectCommentResource = createNestedResource({
 	countKey: "projectsCommentTotalCount",
 	loadingKey: "projectsCommentLoading",
 	editionKey: "projectCommentEdition",
-	onHydrate: (store, idUser, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("project")) {
 			const projectStore = useProjectsStore();
 			projectStore.projects[entity.project.id_project] = entity.project;
@@ -75,7 +75,7 @@ const commandCommentResource = createNestedResource({
 	countKey: "commandsCommentTotalCount",
 	loadingKey: "commandsCommentLoading",
 	editionKey: "commandCommentEdition",
-	onHydrate: (store, idUser, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("command")) {
 			const commandStore = useCommandsStore();
 			commandStore.commands[entity.command.id_command] = entity.command;
@@ -103,7 +103,7 @@ const equipementCommentResource = createNestedResource({
 	countKey: "equipementsCommentTotalCount",
 	loadingKey: "equipementsCommentLoading",
 	editionKey: "equipementCommentEdition",
-	onHydrate: (store, idUser, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("equipement")) {
 			const equipementsStore = useEquipementsStore();
 			equipementsStore.equipements[entity.equipement.id_equipement] = entity.equipement;

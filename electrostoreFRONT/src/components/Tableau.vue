@@ -434,10 +434,16 @@ export default {
 				if (label.storeLinkId && label.storeRessourceId) {
 					const linkedItem = this.storeData[label.storeLinkId]?.[row[label.sourceKey]];
 					if (linkedItem) {
-						return this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]]?.[label.valueKey];
+						if (label.valueKey) {
+							return this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]]?.[label.valueKey];
+						}
+						return this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]];
 					}
 				}
-				return this.storeData[label.storeRessourceId]?.[row[label.sourceKey]]?.[label.valueKey];
+				if (label.valueKey) {
+					return this.storeData[label.storeRessourceId]?.[row[label.sourceKey]]?.[label.valueKey];
+				}
+				return this.storeData[label.storeRessourceId]?.[row[label.sourceKey]];
 			} else if (label.type === "buttons") {
 				return label.buttons.map((button) => {
 					return {

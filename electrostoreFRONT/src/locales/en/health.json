@@ -14,6 +14,8 @@
 	"ServiceMqtt": "MQTT",
 	"ServiceKafka": "Kafka",
 	"ServiceNotif": "Notifications",
+	"ServiceNotifSmtp": "SMTP Notifications",
+	"ServiceNotifWebPush": "Web Push Notifications",
 	"ServiceCron": "Scheduler (CRON)",
 	"ServiceWorker": "Worker",
 	"ConfigGroupGeneral": "General",

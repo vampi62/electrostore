@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
+import { buildFormData, fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
 
 import { useTagsStore, useStoresStore, useUsersStore } from "@/stores";
 
@@ -57,7 +57,7 @@ const equipementTagResource = createNestedResource({
 	loadingKey: "equipementTagsLoading",
 	editionKey: "equipementTagEdition",
 	readyKey: "equipementTagReady",
-	onHydrate: (store, idEquipement, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("tag")) {
 			const tagsStore = useTagsStore();
 			tagsStore.tags[entity.id_tag] = entity.tag;
@@ -73,7 +73,7 @@ const equipementBoxResource = createNestedResource({
 	loadingKey: "equipementBoxsLoading",
 	editionKey: "equipementBoxEdition",
 	readyKey: "equipementBoxReady",
-	onHydrate: (store, idEquipement, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("box") && entity.box) {
 			const storesStore = useStoresStore();
 			storesStore.boxs[entity.box.id_store] ??= {};
@@ -100,7 +100,7 @@ const equipementMaintenanceResource = createNestedResource({
 	loadingKey: "equipementMaintenancesLoading",
 	editionKey: "equipementMaintenanceEdition",
 	readyKey: "equipementMaintenanceReady",
-	onHydrate: (store, idEquipement, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("user") && entity.user) {
 			const usersStore = useUsersStore();
 			usersStore.users[entity.id_user] = entity.user;
@@ -115,7 +115,7 @@ const equipementCommentResource = createNestedResource({
 	countKey: "equipementCommentsTotalCount",
 	loadingKey: "equipementCommentsLoading",
 	editionKey: "equipementCommentEdition",
-	onHydrate: (store, idEquipement, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("user") && entity.user) {
 			const usersStore = useUsersStore();
 			usersStore.users[entity.id_user] = entity.user;
@@ -205,6 +205,8 @@ export const useEquipementsStore = defineStore("equipements", {
 			this.equipementBoxReady[id] = {};
 			this.equipementDocumentEdition[id] = {};
 			this.equipementDocumentReady[id] = {};
+			this.equipementMaintenanceEdition[id] = {};
+			this.equipementMaintenanceReady[id] = {};
 		},
 		setLoadingEdition(id, loading) {
 			if (!this.equipementEdition[id]) {
@@ -220,23 +222,27 @@ export const useEquipementsStore = defineStore("equipements", {
 			delete this.equipementBoxReady[id];
 			delete this.equipementDocumentEdition[id];
 			delete this.equipementDocumentReady[id];
+			delete this.equipementMaintenanceEdition[id];
+			delete this.equipementMaintenanceReady[id];
 		},
 		async saveAllChanges(id) {
 			let realId = id;
 			const { isFormData, ...data } = this.equipementEdition[id];
 			const imageChanged = !!data.img_file || !!data.unset_img_equipement;
 			if (id === "new") {
-				realId = await this.createEquipement(isFormData ? new FormData(Object.entries(data)) : data);
+				realId = await this.createEquipement(isFormData ? buildFormData(data) : data);
 				this.copyEquipementTagAllId(id, realId);
 				this.copyEquipementBoxAllId(id, realId);
 				this.copyEquipementDocumentAllId(id, realId);
+				this.copyEquipementMaintenanceAllId(id, realId);
 			} else {
-				await this.updateEquipement(id, isFormData ? new FormData(Object.entries(data)) : data);
+				await this.updateEquipement(id, isFormData ? buildFormData(data) : data);
 			}
 			await Promise.all([
 				this.pushEquipementTagChange(realId),
 				this.pushEquipementBoxChange(realId),
 				this.pushEquipementDocumentChange(realId),
+				this.pushEquipementMaintenanceChange(realId),
 			]);
 			if (imageChanged) {
 				delete this.thumbnailsURL[realId];
@@ -291,6 +297,11 @@ export const useEquipementsStore = defineStore("equipements", {
 		createEquipementMaintenance: equipementMaintenanceResource.create,
 		updateEquipementMaintenance: equipementMaintenanceResource.update,
 		deleteEquipementMaintenance: equipementMaintenanceResource.remove,
+		getAvailableNewEquipementMaintenanceId: equipementMaintenanceResource.getAvailableNewId,
+		valideEquipementMaintenanceEditionById: equipementMaintenanceResource.valideEditionById,
+		copyEquipementMaintenancePerId: equipementMaintenanceResource.copyPerId,
+		copyEquipementMaintenanceAllId: equipementMaintenanceResource.copyAllId,
+		pushEquipementMaintenanceChange: equipementMaintenanceResource.pushChange,
 
 		getEquipementCommentByInterval: equipementCommentResource.getByInterval,
 		getEquipementCommentById: equipementCommentResource.getById,

@@ -36,6 +36,7 @@
 	"MaintenanceAdded": "Maintenance ajoutée",
 	"MaintenanceDone": "Maintenance marquée comme terminée",
 	"MaintenanceDeleted": "Maintenance supprimée",
+	"MaintenanceRestored": "Maintenance restaurée",
 	"StatusOperational": "Opérationnel",
 	"StatusInMaintenance": "En maintenance",
 	"StatusOutOfService": "Hors service",

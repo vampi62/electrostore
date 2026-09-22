@@ -83,8 +83,8 @@ const boxResource = createNestedResource({
 	loadingKey: "boxsLoading",
 	editionKey: "boxEdition",
 	readyKey: "boxReady",
-	onHydrate: (store, idStore, entity, expand) => {
-		hydrateBox(store, idStore, entity.id_box, entity, expand);
+	onHydrate: (store, entity, expand) => {
+		hydrateBox(store, entity.id_store, entity.id_box, entity, expand);
 	},
 });
 const ledResource = createNestedResource({
@@ -97,14 +97,14 @@ const ledResource = createNestedResource({
 	readyKey: "ledReady",
 });
 const storeTagResource = createNestedResource({
-	path: (idStore) => `/store/${idStore}/store_tag`,
+	path: (idStore) => `/store/${idStore}/tag`,
 	idField: "id_tag",
 	stateKey: "storeTags",
 	countKey: "storeTagsTotalCount",
 	loadingKey: "storeTagsLoading",
 	editionKey: "storeTagEdition",
 	readyKey: "storeTagReady",
-	onHydrate: (store, idStore, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("tag")) {
 			const tagsStore = useTagsStore();
 			tagsStore.tags[entity.id_tag] = entity.tag;

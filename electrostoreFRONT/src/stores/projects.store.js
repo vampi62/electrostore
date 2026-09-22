@@ -84,7 +84,7 @@ const documentResource = createNestedResource({
 	countKey: "documentsTotalCount",
 	loadingKey: "documentsLoading",
 	editionKey: "documentEdition",
-	readyKey: "documentsReady",
+	readyKey: "documentReady",
 });
 const itemResource = createNestedResource({
 	path: (idProject) => `/project/${idProject}/item`,

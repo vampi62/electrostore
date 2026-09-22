@@ -62,7 +62,7 @@ const tagStoreResource = createNestedResource({
 	loadingKey: "tagsStoreLoading",
 	editionKey: "tagStoreEdition",
 	readyKey: "tagStoreReady",
-	onHydrate: (store, idTag, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("store")) {
 			const storesStore = useStoresStore();
 			storesStore.stores[entity.id_store] = entity.store;
@@ -77,7 +77,7 @@ const tagBoxResource = createNestedResource({
 	loadingKey: "tagsBoxLoading",
 	editionKey: "tagBoxEdition",
 	readyKey: "tagBoxReady",
-	onHydrate: (store, idTag, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("box")) {
 			const storesStore = useStoresStore();
 			storesStore.boxs[entity.id_box] = entity.box;
@@ -93,7 +93,7 @@ const tagItemResource = createNestedResource({
 	loadingKey: "tagsItemLoading",
 	editionKey: "tagItemEdition",
 	readyKey: "tagItemReady",
-	onHydrate: (store, idTag, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("item")) {
 			const itemsStore = useItemsStore();
 			itemsStore.items[entity.id_item] = entity.item;
@@ -109,7 +109,7 @@ const tagEquipementResource = createNestedResource({
 	loadingKey: "tagsEquipementLoading",
 	editionKey: "tagEquipementEdition",
 	readyKey: "tagEquipementReady",
-	onHydrate: (store, idTag, entity, expand) => {
+	onHydrate: (store, entity, expand) => {
 		if (expand.includes("equipement")) {
 			const equipementsStore = useEquipementsStore();
 			equipementsStore.equipements[entity.id_equipement] = entity.equipement;

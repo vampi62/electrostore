@@ -190,6 +190,7 @@ public class ItemService : IItemService
     public async Task<ReadItemDto> UpdateItem(int id, UpdateItemDto itemDto)
     {
         var itemToUpdate = await _context.Items.FindAsync(id) ?? throw new KeyNotFoundException($"Item with id '{id}' not found");
+        var hasChanges = false;
         if (itemDto.reference_name_item is not null)
         {
             // check if another item with the name already exists
@@ -197,29 +198,38 @@ public class ItemService : IItemService
             {
                 throw new InvalidOperationException($"Item with name '{itemDto.reference_name_item}' already exists");
             }
-            itemToUpdate.reference_name_item = itemDto.reference_name_item;
+            if (itemToUpdate.reference_name_item != itemDto.reference_name_item)
+            {
+                itemToUpdate.reference_name_item = itemDto.reference_name_item;
+                hasChanges = true;
+            }
         }
-        if (itemDto.friendly_name_item is not null)
+        if (itemDto.friendly_name_item is not null && itemToUpdate.friendly_name_item != itemDto.friendly_name_item)
         {
             itemToUpdate.friendly_name_item = itemDto.friendly_name_item;
+            hasChanges = true;
         }
-        if (itemDto.threshold_min_item is not null)
+        if (itemDto.threshold_min_item is not null && itemToUpdate.threshold_min_item != itemDto.threshold_min_item.Value)
         {
             itemToUpdate.threshold_min_item = itemDto.threshold_min_item.Value;
+            hasChanges = true;
         }
-        if (itemDto.description_item is not null)
+        if (itemDto.description_item is not null && itemToUpdate.description_item != itemDto.description_item)
         {
             itemToUpdate.description_item = itemDto.description_item;
+            hasChanges = true;
         }
         if (itemDto.unset_img_item is true)
         {
             if (itemToUpdate.url_picture_item is not null)
             {
                 await _fileService.DeleteFile(itemToUpdate.url_picture_item);
+                hasChanges = true;
             }
             if (itemToUpdate.url_thumbnail_item is not null)
             {
                 await _fileService.DeleteFile(itemToUpdate.url_thumbnail_item);
+                hasChanges = true;
             }
             itemToUpdate.url_picture_item = null;
             itemToUpdate.url_thumbnail_item = null;
@@ -241,9 +251,13 @@ public class ItemService : IItemService
                 256, 256);
             itemToUpdate.url_picture_item = savedImg.path;
             itemToUpdate.url_thumbnail_item = savedThumbnail.path;
+            hasChanges = true;
         }
         await _context.SaveChangesAsync();
-        await _itemHistoryService.LogHistory(id, null, ItemHistoryType.ItemUpdated);
+        if (hasChanges)
+        {
+            await _itemHistoryService.LogHistory(id, null, ItemHistoryType.ItemUpdated);
+        }
         return _mapper.Map<ReadItemDto>(itemToUpdate);
     }
 

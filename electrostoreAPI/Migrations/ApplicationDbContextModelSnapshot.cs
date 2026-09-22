@@ -138,7 +138,7 @@ namespace ElectrostoreAPI.Migrations
                     b.Property<DateTime?>("date_delivery_command")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("id_carrier")
+                    b.Property<int?>("id_carrier")
                         .HasColumnType("int");
 
                     b.Property<bool>("is_active")
@@ -1477,9 +1477,7 @@ namespace ElectrostoreAPI.Migrations
                 {
                     b.HasOne("ElectrostoreAPI.Models.Carriers", "Carrier")
                         .WithMany()
-                        .HasForeignKey("id_carrier")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("id_carrier");
 
                     b.Navigation("Carrier");
                 });

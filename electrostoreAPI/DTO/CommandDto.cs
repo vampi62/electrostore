@@ -14,7 +14,7 @@ public record ReadCommandDto
     public DateTime date_command { get; init; }
     public DateTime? date_delivery_command { get; init; }
     public required string tracking_number_command { get; init; }
-    public int id_carrier { get; init; }
+    public int? id_carrier { get; init; }
     public string? carrier_name { get; init; }
     public bool is_tracking_requested { get; init; }
     public bool is_tracking_validated { get; init; }

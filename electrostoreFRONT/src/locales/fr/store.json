@@ -61,6 +61,7 @@
 	"ItemMaxThreshold": "Seuil maximal",
 	"ItemImg": "Image",
 	"EquipementName": "Nom",
+	"EquipementImg": "Image",
 	"EquipementActions": "Actions",
 	"EquipementTitle": "Équipement",
 	"EquipementFilterPlaceholder": "Rechercher un équipement",
