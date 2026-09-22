@@ -1,10 +1,10 @@
-import { fetchWrapper, buildQuery } from "@/helpers";
+import { buildFormData, fetchWrapper, buildQuery } from "@/helpers";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export function createNestedResource({ path, idField, countKey, stateKey, loadingKey, editionKey, readyKey, onHydrate }) {
 	const resource = {
-		async getByInterval(idParentResource, { limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false, externalParam = [] } = {}) {
+		async getByInterval(idParentResource, limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false, externalParam = []) {
 			if (!this[stateKey][String(idParentResource)] || clear) {
 				this[stateKey][String(idParentResource)] = {};
 			}
@@ -93,8 +93,8 @@ export function createNestedResource({ path, idField, countKey, stateKey, loadin
 				delete this[readyKey][idParentResource][id];
 				return;
 			}
-			// check if this[readyKey][idParentResource][id] already exists with status "new" and if the new changes has the status "deleted"
-			if (this[readyKey][idParentResource][id]?.status === "new" && status === "deleted") {
+			// check if this[readyKey][idParentResource][id] already exists with status "created" and if the new changes has the status "deleted"
+			if (this[readyKey][idParentResource][id]?.status === "created" && status === "deleted") {
 				delete this[readyKey][idParentResource][id];
 				return;
 			}
@@ -129,9 +129,9 @@ export function createNestedResource({ path, idField, countKey, stateKey, loadin
 					continue; // Skip if already pushed
 				}
 				if (status === "created") {
-					await resource.create.call(this, idParentResource, isFormData ? new FormData(Object.entries(data)) : data);
+					await resource.create.call(this, idParentResource, isFormData ? buildFormData(data) : data);
 				} else if (status === "modified" && !isNewId) {
-					await resource.update.call(this, idParentResource, id, isFormData ? new FormData(Object.entries(data)) : data);
+					await resource.update.call(this, idParentResource, id, isFormData ? buildFormData(data) : data);
 				} else if (status === "deleted" && !isNewId) {
 					await resource.remove.call(this, idParentResource, id);
 				}

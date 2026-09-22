@@ -151,7 +151,7 @@ const boxDelete = (row) => {
 const documentAddModalShow = ref(false);
 const documentAdd = async(files) => {
 	for (const file of files) {
-		const documentModalData = { name_item_document: file.name, document: file.document };
+		const documentModalData = { name_item_document: file.name, document: file.document, type_item_document: file.document.type, created_at: new Date() };
 		const newId = itemsStore.getAvailableNewDocumentId(itemId.value);
 		itemsStore.documentEdition[itemId.value][newId] = documentModalData;
 		try {
@@ -371,7 +371,7 @@ const labelTableauModalTag = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "ready?.status && ready?.status !== 'deleted'",
+			showCondition: "(ready?.status && ready?.status !== 'deleted') || (store[1]?.[rowData.id_tag] && !ready?.status)",
 			action: (row) => tagDelete(row.id_tag),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
@@ -637,7 +637,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<CollapsibleSection title="item.History"
 			:total-count="Number(itemsStore.itemHistoryTotalCount[itemId] || 0)">
 			<template #append-row>
-				<Tableau :labels="labelTableauHistory" :meta="{ key: 'id_item_history', expand: ['user'] }"
+				<Tableau :labels="labelTableauHistory" :meta="{ key: 'id_item_history', expand: ['user'], sort: ['created_at'], sortOrder: 'desc' }"
 					:store-data="[itemsStore.itemHistory[itemId], usersStore.users]"
 					:loading="itemsStore.itemHistoryLoading"
 					:total-count="Number(itemsStore.itemHistoryTotalCount[itemId])"

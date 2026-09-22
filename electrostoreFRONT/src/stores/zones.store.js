@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, createMainResource } from "@/helpers";
+import { buildFormData, fetchWrapper, createMainResource } from "@/helpers";
 
 import { useStoresStore } from "@/stores";
 
@@ -84,9 +84,9 @@ export const useZonesStore = defineStore("zones", {
 			const { isFormData, ...data } = this.zoneEdition[id];
 			const imageChanged = !!data.img_file || !!data.unset_img_zone;
 			if (id === "new") {
-				realId = await this.createZone(isFormData ? new FormData(Object.entries(data)) : data);
+				realId = await this.createZone(isFormData ? buildFormData(data) : data);
 			} else {
-				await this.updateZone(id, isFormData ? new FormData(Object.entries(data)) : data);
+				await this.updateZone(id, isFormData ? buildFormData(data) : data);
 			}
 			if (imageChanged) {
 				delete this.thumbnailsURL[realId];

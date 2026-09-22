@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
+import { buildFormData, fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
 
 import { useTagsStore, useStoresStore, useCommandsStore, useProjectsStore } from "@/stores";
 
@@ -83,7 +83,7 @@ const documentResource = createNestedResource({
 });
 const itemBoxResource = createNestedResource({
 	path: (idItem) => `/item/${idItem}/box`,
-	idField: "id_item_box",
+	idField: "id_box",
 	stateKey: "itemBoxs",
 	countKey: "itemBoxsTotalCount",
 	loadingKey: "itemBoxsLoading",
@@ -101,7 +101,7 @@ const itemBoxResource = createNestedResource({
 });
 const itemTagResource = createNestedResource({
 	path: (idItem) => `/item/${idItem}/tag`,
-	idField: "id_item_tag",
+	idField: "id_tag",
 	stateKey: "itemTags",
 	countKey: "itemTagsTotalCount",
 	loadingKey: "itemTagsLoading",
@@ -256,14 +256,14 @@ export const useItemsStore = defineStore("items",{
 			const { isFormData, ...data } = this.itemEdition[id];
 			const imageChanged = !!data.img_file || !!data.unset_img_item;
 			if (id === "new") {
-				realId = await this.createItem(isFormData ? new FormData(Object.entries(data)) : data);
+				realId = await this.createItem(isFormData ? buildFormData(data) : data);
 				this.copyDocumentAllId(id, realId);
 				this.copyItemBoxAllId(id, realId);
 				this.copyItemTagAllId(id, realId);
 				this.copyItemCommandAllId(id, realId);
 				this.copyItemProjectAllId(id, realId);
 			} else {
-				await this.updateItem(id, isFormData ? new FormData(Object.entries(data)) : data);
+				await this.updateItem(id, isFormData ? buildFormData(data) : data);
 			}
 			await Promise.all([
 				this.pushDocumentChange(realId),
@@ -353,8 +353,7 @@ export const useItemsStore = defineStore("items",{
 				url: `${baseUrl}/item/${id_item}/picture`,
 				useToken: "access",
 			});
-			const url = URL.createObjectURL(response);
-			this.imagesURL[id_item] = url;
+			this.imagesURL[id_item] = URL.createObjectURL(response);
 		},
 		async showThumbnailById(id_item) {
 			if (this.thumbnailsURL[id_item]) {
@@ -364,8 +363,7 @@ export const useItemsStore = defineStore("items",{
 				url: `${baseUrl}/item/${id_item}/thumbnail`,
 				useToken: "access",
 			});
-			const url = URL.createObjectURL(response);
-			this.thumbnailsURL[id_item] = url;
+			this.thumbnailsURL[id_item] = URL.createObjectURL(response);
 		},
 
 		getItemHistoryByInterval: itemHistoryResource.getByInterval,

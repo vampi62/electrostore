@@ -26,7 +26,7 @@ public class Commands : BaseEntity
     [MaxLength(FieldLengths.MaxTrackingNumberLength)]
     public string tracking_number_command { get; set; } = string.Empty;
 
-    public int id_carrier { get; set; }
+    public int? id_carrier { get; set; }
     [ForeignKey("id_carrier")]
     public Carriers? Carrier { get; set; }
 

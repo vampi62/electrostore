@@ -18,6 +18,8 @@ const services = computed(() => [
 	{ key: "mqtt_connected", label: t("health.ServiceMqtt"), type: "bool" },
 	{ key: "kafka_connected", label: t("health.ServiceKafka"), type: "bool" },
 	{ key: "notif_status", label: t("health.ServiceNotif"), type: "string" },
+	{ key: "notif_smtp", label: t("health.ServiceNotifSmtp"), type: "bool" },
+	{ key: "notif_web_push", label: t("health.ServiceNotifWebPush"), type: "bool" },
 	{ key: "cron_status", label: t("health.ServiceCron"), type: "string" },
 	{ key: "worker_status", label: t("health.ServiceWorker"), type: "string" },
 ]);

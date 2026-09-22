@@ -444,7 +444,7 @@ onMounted(() => {
 		</CollapsibleSection>
 		<CollapsibleSection title="user.PushNotifications"
 			:total-count="Number(usersStore.pushSubscriptionsTotalCount[userId] || 0)" :permission="userId !== 'new'"
-			v-if="configsStore.getStatusByKey('notif_webPush')">
+			v-if="configsStore.getStatusByKey('notif_web_push')">
 			<template #append-row>
 				<div v-if="notificationPermission === 'denied'" class="flex items-center gap-2 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 mb-2">
 					<i class="fa-solid fa-ban"></i>

@@ -201,6 +201,7 @@ const storeEquipementAddModalShow = ref(false);
 const boxId = ref(null);
 const showBoxContent = async(idBox) => {
 	boxId.value = idBox;
+	storesStore.boxItemEdition[boxId.value] = storesStore.boxItemEdition[boxId.value] || {};
 	try {
 		let offset = 0;
 		const limit = 100;
@@ -218,6 +219,11 @@ const showBoxContent = async(idBox) => {
 			await storesStore.getBoxEquipementByInterval(storeId.value, idBox, limit, offset, ["equipement"]);
 			offset += limit;
 		} while (offset < storesStore.boxEquipementsTotalCount[idBox]);
+		for (const equipement of Object.values(equipementsStore.equipements)) {
+			if (equipement.url_thumbnail_equipement) {
+				await equipementsStore.showThumbnailById(equipement.id_equipement);
+			}
+		}
 	} catch (e) {
 		addNotification({ message: e, type: "error" });
 	}
@@ -245,20 +251,20 @@ const filterEquipement = ref([
 const itemSave = async(item) => {
 	if (storesStore.boxItems[boxId.value][item.id_item]) {
 		try {
-			schemaItem.validateSync(item.tmp, { abortEarly: false });
-			await storesStore.updateBoxItem(storeId.value, boxId.value, item.tmp.id_item, item.tmp);
+			schemaItem.validateSync(storesStore.boxItemEdition[boxId.value][item.id_item], { abortEarly: false });
+			await storesStore.updateBoxItem(storeId.value, boxId.value, item.id_item, storesStore.boxItemEdition[boxId.value][item.id_item]);
 			addNotification({ message: t("store.ItemUpdated"), type: "success" });
-			item.tmp = null;
+			delete storesStore.boxItemEdition[boxId.value][item.id_item];
 		} catch (e) {
 			addNotification({ message: e, type: "error" });
 			return;
 		}
 	} else {
 		try {
-			schemaItem.validateSync(item.tmp, { abortEarly: false });
-			await storesStore.createBoxItem(storeId.value, boxId.value, item.tmp);
+			schemaItem.validateSync(storesStore.boxItemEdition[boxId.value][item.id_item], { abortEarly: false });
+			await storesStore.createBoxItem(storeId.value, boxId.value, storesStore.boxItemEdition[boxId.value][item.id_item]);
 			addNotification({ message: t("store.ItemAdded"), type: "success" });
-			item.tmp = null;
+			delete storesStore.boxItemEdition[boxId.value][item.id_item];
 		} catch (e) {
 			addNotification({ message: e, type: "error" });
 			return;
@@ -279,7 +285,6 @@ const filterItem = ref([
 ]);
 
 // tag
-const tagModalShow = ref(false);
 const filterTag = ref([
 	{ key: "name_tag", value: "", type: "text", label: "", placeholder: t("store.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
@@ -326,7 +331,7 @@ const labelTableauBoxItem = ref([
 		storeRessourceId: 1,  valueKey: "reference_name_item" },
 	{ label: "store.ItemQuantity", sortable: true, key: "quantity_item_box", valueKey: "quantity_item_box", type: "number" },
 	{ label: "store.ItemMaxThreshold", sortable: true, key: "threshold_max_item_item_box", valueKey: "threshold_max_item_item_box", type: "number" },
-	{ label: "store.ItemImg", sortable: false, key: "id_item", sourceKey: "id_item", type: "image",
+	{ label: "store.ItemImg", sortable: false, key: "id_item", sourceKey: "id_item", type: "image", fieldUrl: "url_thumbnail_item", 
 		storeRessourceId: 2 },
 ]);
 const metaTableauBoxItem = ref({
@@ -336,6 +341,8 @@ const metaTableauBoxItem = ref({
 });
 const labelTableauModalItem = ref([
 	{ label: "store.ItemName", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
+	{ label: "store.ItemImg", sortable: false, key: "id_item", sourceKey: "id_item", type: "image", fieldUrl: "url_thumbnail_item", 
+		storeRessourceId: 2 },
 	{ label: "store.ItemQuantity", sortable: true, key: "ItemsBoxs.quantity_item_box", sourceKey: "id_item", type: "number", canEdit: true, 
 		storeRessourceId: 1, valueKey: "quantity_item_box" },
 	{ label: "store.ItemMaxThreshold", sortable: true, key: "ItemsBoxs.threshold_max_item_item_box", sourceKey: "id_item", type: "number", canEdit: true, 
@@ -346,7 +353,7 @@ const labelTableauModalItem = ref([
 			icon: "fa-solid fa-plus",
 			showCondition: "store[1]?.[rowData.id_item] === undefined && !edition?.id_item",
 			action: (row) => {
-				itemsStore.itemBoxEdition[row.id_item] = { quantity_item_box: 0, threshold_max_item_item_box: 1, id_item: row.id_item };
+				storesStore.boxItemEdition[boxId.value][row.id_item] = { quantity_item_box: 0, threshold_max_item_item_box: 1, id_item: row.id_item };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -355,7 +362,7 @@ const labelTableauModalItem = ref([
 			icon: "fa-solid fa-edit",
 			showCondition: "store[1]?.[rowData.id_item] && !edition?.id_item",
 			action: (row) => {
-				itemsStore.itemBoxEdition[row.id_item] = { ...row };
+				storesStore.boxItemEdition[boxId.value][row.id_item] = { ...storesStore.boxItems[boxId.value][row.id_item] };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
@@ -372,7 +379,7 @@ const labelTableauModalItem = ref([
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_item",
 			action: (row) => {
-				delete itemsStore.itemBoxEdition[row.id_item];
+				delete storesStore.boxItemEdition[boxId.value][row.id_item];
 			},
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
 		},
@@ -389,6 +396,8 @@ const labelTableauModalItem = ref([
 const labelTableauBoxEquipement = ref([
 	{ label: "store.EquipementName", sortable: false, key: "Equipement.reference_name_equipement", sourceKey: "id_equipement", type: "text",
 		storeRessourceId: 1, valueKey: "reference_name_equipement" },
+	{ label: "store.EquipementImg", sortable: false, key: "id_item", sourceKey: "id_equipement", type: "image", fieldUrl: "url_thumbnail_equipement",
+		storeRessourceId: 2 },
 	{ label: "store.EquipementActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -406,6 +415,8 @@ const metaTableauBoxEquipement = ref({
 });
 const labelTableauModalEquipement = ref([
 	{ label: "store.EquipementName", sortable: true, key: "reference_name_equipement", valueKey: "reference_name_equipement", type: "text" },
+	{ label: "store.EquipementImg", sortable: false, key: "id_item", sourceKey: "id_equipement", type: "image", fieldUrl: "url_thumbnail_equipement",
+		storeRessourceId: 2 },
 	{ label: "store.EquipementActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
@@ -461,7 +472,7 @@ const labelTableauModalTag = ref([
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
-			showCondition: "ready?.status && ready?.status !== 'deleted'",
+			showCondition: "(ready?.status && ready?.status !== 'deleted') || (store[1]?.[rowData.id_tag] && !ready?.status)",
 			action: (row) => tagDelete(row.id_tag),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
@@ -530,7 +541,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 						</template>
 					</Tableau>
 					<Tableau v-if="boxId != null" :labels="labelTableauBoxEquipement" :meta="metaTableauBoxEquipement"
-						:store-data="[storesStore.boxEquipements[boxId],equipementsStore.equipements]"
+						:store-data="[storesStore.boxEquipements[boxId],equipementsStore.equipements, equipementsStore.thumbnailsURL]"
 						:loading="storesStore.boxEquipementsLoading"
 						:total-count="Number(storesStore.boxEquipementsTotalCount[boxId] || 0)"
 						:fetch-function="storeId !== 'new' && boxId != null ? (limit, offset, expand, filter, sort, clear) => storesStore.getBoxEquipementByInterval(storeId, boxId, limit, offset, expand, filter, sort, clear) : undefined"
@@ -557,28 +568,6 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		:delete-action="storeDelete" :text-title="'store.DeleteTitle'"
 		:text-p="'store.DeleteText'"/>
 
-	<div v-if="tagModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
-		@click="tagModalShow = false">
-		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
-			<div class="flex justify-between items-center border-b pb-3">
-				<h2 class="text-2xl font-semibold">{{ $t('store.AddTag') }}</h2>
-				<button type="button" @click="tagModalShow = false"
-					class="text-gray-500 hover:text-gray-700">&times;</button>
-			</div>
-
-			<FilterContainer class="my-4 flex gap-4" :filters="filterTag" :store-data="tagsStore.tags" />
-
-			<Tableau :labels="labelTableauModalTag" :meta="{ key: 'id_tag' }"
-				:store-data="[tagsStore.tags,storesStore.storeTags[storeId]]"
-				:filters="filterTag"
-				:loading="tagsStore.tagsLoading"
-				:total-count="Number(tagsStore.tagsTotalCount || 0)"
-				:fetch-function="storeId !== 'new' ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear) : undefined"
-				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
-			/>
-		</div>
-	</div>
-
 	<div v-if="storeItemAddModalShow" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50"
 		@click="storeItemAddModalShow = false">
 		<div class="flex flex-col bg-white rounded-lg shadow-lg w-3/4 h-3/4 overflow-y-hidden p-6" @click.stop>
@@ -591,7 +580,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FilterContainer class="my-4 flex gap-4" :filters="filterItem" :store-data="itemsStore.items" />
 
 			<Tableau id="storeItemTable" :labels="labelTableauModalItem" :meta="{ key: 'id_item' }"
-				:store-data="[itemsStore.items, storesStore.boxItems[boxId]]"
+				:store-data="[itemsStore.items, storesStore.boxItems[boxId], itemsStore.thumbnailsURL]"
 				:store-edition="storesStore.boxItemEdition[boxId]"
 				:filters="filterItem"
 				:loading="itemsStore.itemsLoading" :schema="schemaItem"
@@ -614,7 +603,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 			<FilterContainer class="my-4 flex gap-4" :filters="filterEquipement" :store-data="equipementsStore.equipements" />
 
 			<Tableau :labels="labelTableauModalEquipement" :meta="{ key: 'id_equipement' }"
-				:store-data="[equipementsStore.equipements, storesStore.boxEquipements[boxId]]"
+				:store-data="[equipementsStore.equipements, storesStore.boxEquipements[boxId], equipementsStore.thumbnailsURL]"
 				:filters="filterEquipement"
 				:loading="equipementsStore.equipementsLoading"
 				:total-count="Number(equipementsStore.equipementsTotalCount || 0)"

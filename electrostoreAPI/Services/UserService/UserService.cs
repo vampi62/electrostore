@@ -213,7 +213,7 @@ public class UserService : IUserService
             throw new UnauthorizedAccessException("You are not allowed to update this user");
         }
         var authMethod = _sessionService.GetTokenAuthMethod();
-        if (authMethod != "SSO")
+        if (!authMethod.StartsWith("sso_"))
         {
             if (userDto.current_password_user is null)
             {

@@ -23,7 +23,7 @@ export function createMainResource({ path, idField, countKey, stateKey, loadingK
 				this[loadingKey] = false;
 			}
 		},
-		async getByInterval({ limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false, externalParam = [] } = {}) {
+		async getByInterval(limit = 100, offset = 0, expand = [], filter = "", sort = "", clear = false, externalParam = []) {
 			if (!this[stateKey] || clear) {
 				this[stateKey] = {};
 			}

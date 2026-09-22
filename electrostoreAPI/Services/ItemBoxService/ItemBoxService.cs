@@ -197,21 +197,11 @@ public class ItemBoxService : IItemBoxService
             itemBoxToUpdate.threshold_max_item_item_box = itemBoxDto.threshold_max_item_item_box.Value;
         }
         await _context.SaveChangesAsync();
-        if (itemBoxDto.quantity_item_box is not null)
+        if (itemBoxToUpdate.quantity_item_box != oldQte)
         {
-            ItemHistoryType historyType;
-            if (itemBoxToUpdate.quantity_item_box > oldQte)
-            {
-                historyType = ItemHistoryType.StockAdded;
-            }
-            else if (itemBoxToUpdate.quantity_item_box < oldQte)
-            {
-                historyType = ItemHistoryType.StockRemoved;
-            }
-            else
-            {
-                historyType = ItemHistoryType.StockUpdated;
-            }
+            var historyType = itemBoxToUpdate.quantity_item_box > oldQte
+                ? ItemHistoryType.StockAdded
+                : ItemHistoryType.StockRemoved;
             await _itemHistoryService.LogHistory(itemId, boxId, historyType,
                 oldQuantity: oldQte, newQuantity: itemBoxToUpdate.quantity_item_box);
         }
