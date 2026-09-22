@@ -362,7 +362,7 @@ const labelTableauModalItem = ref([
 			icon: "fa-solid fa-edit",
 			showCondition: "store[1]?.[rowData.id_item] && !edition?.id_item",
 			action: (row) => {
-				storesStore.boxItemEdition[boxId.value][row.id_item] = { ...row };
+				storesStore.boxItemEdition[boxId.value][row.id_item] = { ...storesStore.boxItems[boxId.value][row.id_item] };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
