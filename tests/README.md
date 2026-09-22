@@ -22,7 +22,7 @@ set SwaggerGeneration=true
 # or
 export SwaggerGeneration=true
 
-dotnet swagger tofile --output ../docs/openapi.json bin/Debug/net7.0/electrostoreAPI.dll v1
+dotnet swagger tofile --output ../docs/openapi.json bin/Debug/net9.0/electrostoreAPI.dll v1
 ```
 
 ## electrostoreFRONT
@@ -36,3 +36,5 @@ cd tests/electrostoreFRONT
 npm run test:unit
 npm run cypress:run # before start the serveur with `npm run dev` in the electrostoreFRONT directory
 ```
+
+For functional/end-to-end scenarios (as opposed to the unit tests here), see [recette/](../recette/README.md).

@@ -451,7 +451,7 @@ volumes:`;
   kafka-secrets:`;
     }
 
-    if (!config.enableS3) compose += `\n  api-wwwroot:\n  ia-models:`;
+    if (!config.enableS3) compose += `\n  api-wwwroot:`;
     if (config.useMariaDB) compose += `\n  mariadb-data:`;
     if (config.useMQTT) compose += `\n  mqtt-data:\n  mqtt-logs:`;
     if (config.enableS3 && config.useS3) compose += `\n  garage-data:\n  garage-meta:`;
@@ -1093,7 +1093,7 @@ docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.
         if (config.useVault) {
             script += `
 echo "Storing S3 keys in Vault..."
-docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} s3_access_key="$GARAGE_API_ACCESS_KEY" s3_secret_key="$GARAGE_API_SECRET_KEY" s3_ia_access_key="$GARAGE_IA_ACCESS_KEY" s3_ia_secret_key="$GARAGE_IA_SECRET_KEY"
+docker exec -e VAULT_TOKEN="$VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} s3_access_key="$GARAGE_API_ACCESS_KEY" s3_secret_key="$GARAGE_API_SECRET_KEY"
 `;
         }
 
@@ -1346,7 +1346,7 @@ docker exec electrostore-garage /garage bucket allow --read --write ${config.s3.
         if (config.useVault) {
             script += `
 Write-Host "Storing S3 keys in Vault..."
-docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} s3_access_key="$GARAGE_API_ACCESS_KEY" s3_secret_key="$GARAGE_API_SECRET_KEY" s3_ia_access_key="$GARAGE_IA_ACCESS_KEY" s3_ia_secret_key="$GARAGE_IA_SECRET_KEY"
+docker exec -e VAULT_TOKEN="$env:VAULT_TOKEN" ${config.vault.containerName} vault kv patch ${config.vault.mountPoint}/${config.vault.path} s3_access_key="$GARAGE_API_ACCESS_KEY" s3_secret_key="$GARAGE_API_SECRET_KEY"
 `;
         }
 
