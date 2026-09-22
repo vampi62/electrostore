@@ -151,7 +151,7 @@ public class CommandService : ICommandService
         _context.Commands.Add(newCommand);
         await _fileService.CreateDirectory(Path.Combine(_commandDocumentsPath, newCommand.id_command.ToString()));
         await _context.SaveChangesAsync();
-        if (!string.IsNullOrEmpty(newCommand.tracking_number_command) && newCommand.id_carrier != 0 && newCommand.is_tracking_requested)
+        /* if (!string.IsNullOrEmpty(newCommand.tracking_number_command) && newCommand.id_carrier != 0 && newCommand.is_tracking_requested)
         {
             var carrierKey = carrier?.key_carrier ?? 0;
             var kafkaKey = $"{newCommand.tracking_number_command}_{carrierKey}";
@@ -162,7 +162,7 @@ public class CommandService : ICommandService
             };
             var messageJson = JsonSerializer.Serialize(message);
             await _kafkaProducerService.PublishAsync(KafkaCommandAddTopic, kafkaKey, messageJson);
-        }
+        } */
         return _mapper.Map<ReadCommandDto>(newCommand);
     }
 
@@ -206,7 +206,7 @@ public class CommandService : ICommandService
         }
         await _context.SaveChangesAsync();
         //tracking-request-add si is_tracking_requested && !is_tracking_validated
-        if (!string.IsNullOrEmpty(commandToUpdate.tracking_number_command) && commandToUpdate.id_carrier != 0 &&
+        /* if (!string.IsNullOrEmpty(commandToUpdate.tracking_number_command) && commandToUpdate.id_carrier != 0 &&
             ((commandDto.is_tracking_requested is not null && !commandToUpdate.is_tracking_validated && commandDto.is_tracking_requested.Value) ||
             (!string.IsNullOrEmpty(commandDto.tracking_number_command) && commandDto.tracking_number_command != oldTrackingNumber)))
         {
@@ -279,7 +279,7 @@ public class CommandService : ICommandService
             };
             var messageJson = JsonSerializer.Serialize(message);
             await _kafkaProducerService.PublishAsync(KafkaCommandDeleteTopic, kafkaKey, messageJson);
-        }
+        } */
         return _mapper.Map<ReadCommandDto>(commandToUpdate);
     }
 
@@ -288,7 +288,7 @@ public class CommandService : ICommandService
         var commandToDelete = await _context.Commands.FindAsync(id) ?? throw new KeyNotFoundException($"Command with id '{id}' not found");
         _context.Commands.Remove(commandToDelete);
         await _fileService.DeleteDirectory(Path.Combine(_commandDocumentsPath, id.ToString()));
-        if (!string.IsNullOrEmpty(commandToDelete.tracking_number_command) && commandToDelete.id_carrier != 0 && commandToDelete.is_tracking_validated && commandToDelete.is_active)
+        /* if (!string.IsNullOrEmpty(commandToDelete.tracking_number_command) && commandToDelete.id_carrier != 0 && commandToDelete.is_tracking_validated && commandToDelete.is_active)
         {
             var carrierEntity = await _context.Carriers.FindAsync(commandToDelete.id_carrier);
             var carrierKey = carrierEntity?.key_carrier ?? 0;
@@ -300,7 +300,7 @@ public class CommandService : ICommandService
             };
             var messageJson = JsonSerializer.Serialize(message);
             await _kafkaProducerService.PublishAsync(KafkaCommandDeleteTopic, kafkaKey, messageJson);
-        }
+        } */
         await _context.SaveChangesAsync();
     }
 

@@ -15,12 +15,6 @@ Manage your storage space inventory: reference your components, define minimum q
 <!-- SCREENSHOT: component list view with quantities -->
 <!-- ![Inventory](docs/assets/screenshot_inventory.png) -->
 
-#### Visual Camera Search (ScanBox)
-A case equipped with an ESP32CAM camera allows you to photograph a component and automatically identify it using an integrated artificial intelligence module.
-
-<!-- SCREENSHOT: scan interface and recognition result -->
-<!-- ![ScanBox](docs/assets/screenshot_scanbox.png) -->
-
 #### Location LEDs (LedStorage)
 WS2812B LED strips mounted on your storage spaces light up to visually indicate the location or destination of a component during a search or pickup.
 
@@ -67,6 +61,9 @@ ElectroStore consists of several services:
 
 API Documentation:  
 [https://vampi62.github.io/electrostore/openapi/](https://vampi62.github.io/electrostore/openapi/)
+
+Detailed service diagram, protocols (REST/gRPC/Kafka/MQTT), and data model:  
+[docs/reference/architecture.md](docs/reference/architecture.md) · [docs/reference/data-model.md](docs/reference/data-model.md)
 
 ---
 
@@ -116,7 +113,7 @@ https://www.lidl.fr/p/parkside-casiers-a-tiroirs/p100377898
 | X | WS2812B |
 | 1 | WS2812 LED controller for ESP01 |
 
-Wiring details and configuration procedure: [docs/02_storeLed_and_scanner.md](docs/02_storeLed_and_scanner.md)
+Wiring details and configuration procedure: [docs/02_storeLed.md](docs/02_storeLed.md)
 
 ---
 
@@ -144,10 +141,15 @@ For detailed step-by-step instructions for the dev version: [docs/01_installatio
 | Link | Description |
 |---|---|
 | [Complete installation](docs/01_installation.md) | Detailed installation guide (release, dev, test) |
-| [LedStorage and ScanBox](docs/02_storeLed_and_scanner.md) | ESP modules wiring and configuration |
+| [LedStorage](docs/02_storeLed.md) | ESP modules wiring and configuration |
 | [Web interface](docs/03_frontend_usage.md) | Frontend user guide |
 | [API](docs/04_api_usage.md) | REST API documentation |
 | [OpenAPI / Swagger](https://vampi62.github.io/electrostore/openapi/) | Interactive API reference |
+| [Architecture](docs/reference/architecture.md) | Services, protocols, and how they talk to each other |
+| [Data model](docs/reference/data-model.md) | Entity-relationship diagram (MCD) |
+| [Glossary](docs/reference/glossary.md) | Domain terms (Store/Zone/Box, Item/Equipement, Command, …) |
+| [Contributing](CONTRIBUTING.md) | Dev workflow, tests, PR checklist |
+| [Recette](recette/README.md) | Functional/end-to-end test scenarios per service |
 
 ## Getting Started
 
