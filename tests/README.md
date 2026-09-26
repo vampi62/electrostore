@@ -22,7 +22,7 @@ set SwaggerGeneration=true
 # or
 export SwaggerGeneration=true
 
-dotnet swagger tofile --output ../docs/openapi.json bin/Debug/net9.0/electrostoreAPI.dll v1
+dotnet swagger tofile --output ../docs/openapi.json bin/Debug/net10.0/electrostoreAPI.dll v1
 ```
 
 ## electrostoreFRONT
