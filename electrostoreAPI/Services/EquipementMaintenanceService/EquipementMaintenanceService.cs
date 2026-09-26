@@ -3,7 +3,6 @@ using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.EquipementMaintenanceService;
 
@@ -27,32 +26,8 @@ public class EquipementMaintenanceService : IEquipementMaintenanceService
             throw new KeyNotFoundException($"Equipement with id '{equipementId}' not found");
         }
         var query = _context.EquipementsMaintenances.AsQueryable();
-        var filterResult = default(Expression<Func<EquipementsMaintenances, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_equipement", search_type = "eq", value = equipementId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<EquipementsMaintenances>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsMaintenances>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "date_planned_equipement_maintenance", order = "asc" };
-                query = query.OrderBy(em => em.date_planned_equipement_maintenance);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(em => em.date_planned_equipement_maintenance);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("equipement"))
         {
             query = query.Include(em => em.Equipement);
@@ -61,21 +36,9 @@ public class EquipementMaintenanceService : IEquipementMaintenanceService
         {
             query = query.Include(em => em.User);
         }
-        var equipementMaintenance = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedEquipementMaintenanceDto>
-        {
-            data = _mapper.Map<List<ReadExtendedEquipementMaintenanceDto>>(equipementMaintenance),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.EquipementsMaintenances.CountAsync(filterResult ?? (em => em.id_equipement == equipementId)),
-                next_offset = offset + limit,
-                has_more = await _context.EquipementsMaintenances.Skip(offset + limit).AnyAsync(filterResult ?? (em => em.id_equipement == equipementId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "date_planned_equipement_maintenance", order = "asc" })
+            .ToResponseAsync(equipementMaintenance => _mapper.Map<List<ReadExtendedEquipementMaintenanceDto>>(equipementMaintenance));
     }
 
     public async Task<ReadExtendedEquipementMaintenanceDto> GetEquipementMaintenanceById(int id, int? equipementId = null, List<string>? expand = null)

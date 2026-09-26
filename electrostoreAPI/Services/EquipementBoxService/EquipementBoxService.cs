@@ -3,7 +3,6 @@ using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.EquipementBoxService;
 
@@ -27,32 +26,8 @@ public class EquipementBoxService : IEquipementBoxService
             throw new KeyNotFoundException($"Box with id '{boxId}' not found");
         }
         var query = _context.EquipementsBoxs.AsQueryable();
-        var filterResult = default(Expression<Func<EquipementsBoxs, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_box", search_type = "eq", value = boxId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<EquipementsBoxs>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsBoxs>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_equipement", order = "asc" };
-                query = query.OrderBy(eb => eb.id_equipement);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(eb => eb.id_equipement);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("equipement"))
         {
             query = query.Include(eb => eb.Equipement);
@@ -61,21 +36,9 @@ public class EquipementBoxService : IEquipementBoxService
         {
             query = query.Include(eb => eb.Box);
         }
-        var equipementBox = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedEquipementBoxDto>
-        {
-            data = _mapper.Map<List<ReadExtendedEquipementBoxDto>>(equipementBox),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.EquipementsBoxs.CountAsync(filterResult ?? (eb => eb.id_box == boxId)),
-                next_offset = offset + limit,
-                has_more = await _context.EquipementsBoxs.Skip(offset + limit).AnyAsync(filterResult ?? (eb => eb.id_box == boxId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_equipement", order = "asc" })
+            .ToResponseAsync(equipementBox => _mapper.Map<List<ReadExtendedEquipementBoxDto>>(equipementBox));
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedEquipementBoxDto>> GetEquipementsBoxsByEquipementId(int equipementId, int limit = 100, int offset = 0,
@@ -87,32 +50,8 @@ public class EquipementBoxService : IEquipementBoxService
             throw new KeyNotFoundException($"Equipement with id '{equipementId}' not found");
         }
         var query = _context.EquipementsBoxs.AsQueryable();
-        var filterResult = default(Expression<Func<EquipementsBoxs, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_equipement", search_type = "eq", value = equipementId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<EquipementsBoxs>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsBoxs>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_box", order = "asc" };
-                query = query.OrderBy(eb => eb.id_box);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(eb => eb.id_box);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("equipement"))
         {
             query = query.Include(eb => eb.Equipement);
@@ -121,21 +60,9 @@ public class EquipementBoxService : IEquipementBoxService
         {
             query = query.Include(eb => eb.Box);
         }
-        var equipementBox = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedEquipementBoxDto>
-        {
-            data = _mapper.Map<List<ReadExtendedEquipementBoxDto>>(equipementBox),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.EquipementsBoxs.CountAsync(filterResult ?? (eb => eb.id_equipement == equipementId)),
-                next_offset = offset + limit,
-                has_more = await _context.EquipementsBoxs.Skip(offset + limit).AnyAsync(filterResult ?? (eb => eb.id_equipement == equipementId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_box", order = "asc" })
+            .ToResponseAsync(equipementBox => _mapper.Map<List<ReadExtendedEquipementBoxDto>>(equipementBox));
     }
 
     public async Task<ReadExtendedEquipementBoxDto> GetEquipementBoxById(int equipementId, int boxId, List<string>? expand = null)

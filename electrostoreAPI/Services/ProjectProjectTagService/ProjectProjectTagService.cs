@@ -5,7 +5,6 @@ using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.SessionService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.ProjectProjectTagService;
 
@@ -31,32 +30,8 @@ public class ProjectProjectTagService : IProjectProjectTagService
             throw new KeyNotFoundException($"Project with id '{projectId}' not found");
         }
         var query = _context.ProjectsProjectTags.AsQueryable();
-        var filterResult = default(Expression<Func<ProjectsProjectTags, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_project", search_type = "eq", value = projectId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectsProjectTags>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<ProjectsProjectTags>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_project_tag", order = "asc" };
-                query = query.OrderBy(st => st.id_project_tag);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(st => st.id_project_tag);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("project"))
         {
             query = query.Include(st => st.Project);
@@ -65,21 +40,9 @@ public class ProjectProjectTagService : IProjectProjectTagService
         {
             query = query.Include(st => st.ProjectTag);
         }
-        var projectProjectTag = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedProjectProjectTagDto>
-        {
-            data = _mapper.Map<List<ReadExtendedProjectProjectTagDto>>(projectProjectTag),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.ProjectsProjectTags.CountAsync(filterResult ?? (st => st.id_project == projectId)),
-                next_offset = offset + limit,
-                has_more = await _context.ProjectsProjectTags.Skip(offset + limit).AnyAsync(filterResult ?? (st => st.id_project == projectId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_project_tag", order = "asc" })
+            .ToResponseAsync(projectProjectTag => _mapper.Map<List<ReadExtendedProjectProjectTagDto>>(projectProjectTag));
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedProjectProjectTagDto>> GetProjectsProjectTagsByprojectTagId(int projectTagId, int limit = 100, int offset = 0,
@@ -91,32 +54,8 @@ public class ProjectProjectTagService : IProjectProjectTagService
             throw new KeyNotFoundException($"ProjectTag with id '{projectTagId}' not found");
         }
         var query = _context.ProjectsProjectTags.AsQueryable();
-        var filterResult = default(Expression<Func<ProjectsProjectTags, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_project_tag", search_type = "eq", value = projectTagId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectsProjectTags>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<ProjectsProjectTags>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_project", order = "asc" };
-                query = query.OrderBy(st => st.id_project);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(st => st.id_project);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("project_tag"))
         {
             query = query.Include(st => st.ProjectTag);
@@ -125,21 +64,9 @@ public class ProjectProjectTagService : IProjectProjectTagService
         {
             query = query.Include(st => st.Project);
         }
-        var projectProjectTag = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedProjectProjectTagDto>
-        {
-            data = _mapper.Map<List<ReadExtendedProjectProjectTagDto>>(projectProjectTag),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.ProjectsProjectTags.CountAsync(filterResult ?? (st => st.id_project_tag == projectTagId)),
-                next_offset = offset + limit,
-                has_more = await _context.ProjectsProjectTags.Skip(offset + limit).AnyAsync(filterResult ?? (st => st.id_project_tag == projectTagId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_project", order = "asc" })
+            .ToResponseAsync(projectProjectTag => _mapper.Map<List<ReadExtendedProjectProjectTagDto>>(projectProjectTag));
     }
 
     public async Task<ReadExtendedProjectProjectTagDto> GetProjectProjectTagById(int projectId, int projectTagId, List<string>? expand = null)

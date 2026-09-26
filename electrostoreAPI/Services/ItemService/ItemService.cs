@@ -6,7 +6,6 @@ using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.FileService;
 using ElectrostoreAPI.Services.ItemHistoryService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.ItemService;
 
@@ -20,7 +19,8 @@ public class ItemService : IItemService
     private readonly string _itemImagesPath = "itemImages";
     private readonly string _itemImagesThumbnailsPath = "itemImagesThumbnails";
 
-    private static readonly ItemHistoryType[] QuantityChangeHistoryTypes =
+    // List (not array): with C# 14 an array .Contains() in a LINQ query binds to MemoryExtensions.Contains(Span), which EF Core 9 cannot translate
+    private static readonly List<ItemHistoryType> QuantityChangeHistoryTypes =
     [
         ItemHistoryType.StockAdded,
         ItemHistoryType.StockRemoved,
@@ -39,85 +39,48 @@ public class ItemService : IItemService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Items.AsQueryable();
-        var filterResult = default(Expression<Func<Items, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(i => idResearch.Contains(i.id_item));
+            rsql = null;
+            sort = null;
         }
-        else
-        {
-            if (rsql != null && rsql.Count > 0)
-            {
-                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Items>(rsql);
-                query = query.Where(filterResult);
-            }
-            if (!string.IsNullOrEmpty(sort?.field))
-            {
-                var sortResult = RsqlParserExtensions.ToSortExpression<Items>(sort);
-                if (sortResult.Item1 != null)
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_item", order = "asc" })
+            .ToProjectedResponseAsync(
+                i => new
                 {
-                    query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-                }
-                else
-                {
-                    sort = new SorterDto { field = "id_item", order = "asc" };
-                    query = query.OrderBy(i => i.id_item);
-                }
-            }
-            else
-            {
-                query = query.OrderBy(i => i.id_item);
-            }
-        }
-        query = query.Skip(offset).Take(limit);
-        var item = await query
-            .Select(i => new
-            {
-                Item = i,
-                ItemsTagsCount = i.ItemsTags.Count,
-                ItemsBoxsCount = i.ItemsBoxs.Count,
-                CommandsItemsCount = i.CommandsItems.Count,
-                ProjectsItemsCount = i.ProjectsItems.Count,
-                ItemsDocumentsCount = i.ItemsDocuments.Count,
-                ItemsTags = expand != null && expand.Contains("item_tags") ? i.ItemsTags.Take(20).ToList() : null,
-                ItemsBoxs = expand != null && expand.Contains("item_boxs") ? i.ItemsBoxs.Take(20).ToList() : null,
-                CommandsItems = expand != null && expand.Contains("command_items") ? i.CommandsItems.Take(20).ToList() : null,
-                ProjectsItems = expand != null && expand.Contains("project_items") ? i.ProjectsItems.Take(20).ToList() : null,
-                ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null,
-                ItemsHistory = expand != null && expand.Contains("item_history") ? i.ItemsHistory.OrderByDescending(h => h.created_at).Take(20).ToList() : null,
-                quantity_item = i.ItemsBoxs.Sum(ib => ib.quantity_item_box)
-            })
-            .ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedItemDto>
-        {
-            data = item.Select(i => {
-                return _mapper.Map<ReadExtendedItemDto>(i.Item) with
-                {
-                    item_tags_count = i.ItemsTagsCount,
-                    item_boxs_count = i.ItemsBoxsCount,
-                    command_items_count = i.CommandsItemsCount,
-                    project_items_count = i.ProjectsItemsCount,
-                    item_documents_count = i.ItemsDocumentsCount,
-                    item_tags = _mapper.Map<IEnumerable<ReadItemTagDto>>(i.ItemsTags),
-                    item_boxs = _mapper.Map<IEnumerable<ReadItemBoxDto>>(i.ItemsBoxs),
-                    command_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(i.CommandsItems),
-                    project_items = _mapper.Map<IEnumerable<ReadProjectItemDto>>(i.ProjectsItems),
-                    item_documents = _mapper.Map<IEnumerable<ReadItemDocumentDto>>(i.ItemsDocuments),
-                    item_history = _mapper.Map<IEnumerable<ReadItemHistoryDto>>(i.ItemsHistory),
-                    quantity_item = i.quantity_item
-                };
-            }).ToList(),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.Items.CountAsync(filterResult ?? (i => true)),
-                next_offset = offset + limit,
-                has_more = await _context.Items.Skip(offset + limit).AnyAsync(filterResult ?? (i => true))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+                    Item = i,
+                    ItemsTagsCount = i.ItemsTags.Count,
+                    ItemsBoxsCount = i.ItemsBoxs.Count,
+                    CommandsItemsCount = i.CommandsItems.Count,
+                    ProjectsItemsCount = i.ProjectsItems.Count,
+                    ItemsDocumentsCount = i.ItemsDocuments.Count,
+                    ItemsTags = expand != null && expand.Contains("item_tags") ? i.ItemsTags.Take(20).ToList() : null,
+                    ItemsBoxs = expand != null && expand.Contains("item_boxs") ? i.ItemsBoxs.Take(20).ToList() : null,
+                    CommandsItems = expand != null && expand.Contains("command_items") ? i.CommandsItems.Take(20).ToList() : null,
+                    ProjectsItems = expand != null && expand.Contains("project_items") ? i.ProjectsItems.Take(20).ToList() : null,
+                    ItemsDocuments = expand != null && expand.Contains("item_documents") ? i.ItemsDocuments.Take(20).ToList() : null,
+                    ItemsHistory = expand != null && expand.Contains("item_history") ? i.ItemsHistory.OrderByDescending(h => h.created_at).Take(20).ToList() : null,
+                    quantity_item = i.ItemsBoxs.Sum(ib => ib.quantity_item_box)
+                },
+                item => item.Select(i => {
+                    return _mapper.Map<ReadExtendedItemDto>(i.Item) with
+                    {
+                        item_tags_count = i.ItemsTagsCount,
+                        item_boxs_count = i.ItemsBoxsCount,
+                        command_items_count = i.CommandsItemsCount,
+                        project_items_count = i.ProjectsItemsCount,
+                        item_documents_count = i.ItemsDocumentsCount,
+                        item_tags = _mapper.Map<IEnumerable<ReadItemTagDto>>(i.ItemsTags),
+                        item_boxs = _mapper.Map<IEnumerable<ReadItemBoxDto>>(i.ItemsBoxs),
+                        command_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(i.CommandsItems),
+                        project_items = _mapper.Map<IEnumerable<ReadProjectItemDto>>(i.ProjectsItems),
+                        item_documents = _mapper.Map<IEnumerable<ReadItemDocumentDto>>(i.ItemsDocuments),
+                        item_history = _mapper.Map<IEnumerable<ReadItemHistoryDto>>(i.ItemsHistory),
+                        quantity_item = i.quantity_item
+                    };
+                }).ToList());
     }
 
     public async Task<ReadExtendedItemDto> GetItemById(int id, List<string>? expand = null)

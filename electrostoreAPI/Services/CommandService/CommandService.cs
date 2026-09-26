@@ -6,7 +6,6 @@ using ElectrostoreAPI.Kafka.Producer;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.FileService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 using System.Text.Json;
 
 namespace ElectrostoreAPI.Services.CommandService;
@@ -36,77 +35,40 @@ public class CommandService : ICommandService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Commands.AsQueryable();
-        var filterResult = default(Expression<Func<Commands, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(c => idResearch.Contains(c.id_command));
+            rsql = null;
+            sort = null;
         }
-        else
-        {
-            if (rsql != null && rsql.Count > 0)
-            {
-                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Commands>(rsql);
-                query = query.Where(filterResult);
-            }
-            if (!string.IsNullOrEmpty(sort?.field))
-            {
-                var sortResult = RsqlParserExtensions.ToSortExpression<Commands>(sort);
-                if (sortResult.Item1 != null)
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_command", order = "asc" })
+            .ToProjectedResponseAsync(
+                c => new
                 {
-                    query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-                }
-                else
-                {
-                    sort = new SorterDto { field = "id_command", order = "asc" };
-                    query = query.OrderBy(c => c.id_command);
-                }
-            }
-            else
-            {
-                query = query.OrderBy(c => c.id_command);
-            }
-        }
-        query = query.Skip(offset).Take(limit);
-        var command = await query
-            .Select(c => new
-            {
-                Command = c,
-                CommandsCommentsCount = c.CommandsComments.Count,
-                CommandsDocumentsCount = c.CommandsDocuments.Count,
-                CommandsItemsCount = c.CommandsItems.Count,
-                CommandsComments = expand != null && expand.Contains("command_comments") ? c.CommandsComments.Take(20).ToList() : null,
-                CommandsDocuments = expand != null && expand.Contains("commands_documents") ? c.CommandsDocuments.Take(20).ToList() : null,
-                CommandsHistory = expand != null && expand.Contains("commands_history") ? c.CommandsHistory.Take(20).ToList() : null,
-                CommandsItems = expand != null && expand.Contains("commands_items") ? c.CommandsItems.Take(20).ToList() : null,
-                Carrier = expand != null && expand.Contains("carrier") ? c.Carrier : null
-            })
-            .ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedCommandDto>
-        {
-            data = command.Select(c => {
-                return _mapper.Map<ReadExtendedCommandDto>(c.Command) with
-                {
-                    command_comments_count = c.CommandsCommentsCount,
-                    commands_documents_count = c.CommandsDocumentsCount,
-                    commands_items_count = c.CommandsItemsCount,
-                    command_comments = _mapper.Map<IEnumerable<ReadCommandCommentDto>>(c.CommandsComments),
-                    commands_documents = _mapper.Map<IEnumerable<ReadCommandDocumentDto>>(c.CommandsDocuments),
-                    commands_history = _mapper.Map<IEnumerable<ReadCommandHistoryDto>>(c.CommandsHistory),
-                    commands_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(c.CommandsItems),
-                    carrier = c.Command.Carrier != null ? _mapper.Map<ReadCarrierDto>(c.Command.Carrier) : null
-                };
-            }).ToList(),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.Commands.CountAsync(filterResult ?? (c => true)),
-                next_offset = offset + limit,
-                has_more = await _context.Commands.Skip(offset + limit).AnyAsync(filterResult ?? (c => true))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+                    Command = c,
+                    CommandsCommentsCount = c.CommandsComments.Count,
+                    CommandsDocumentsCount = c.CommandsDocuments.Count,
+                    CommandsItemsCount = c.CommandsItems.Count,
+                    CommandsComments = expand != null && expand.Contains("command_comments") ? c.CommandsComments.Take(20).ToList() : null,
+                    CommandsDocuments = expand != null && expand.Contains("commands_documents") ? c.CommandsDocuments.Take(20).ToList() : null,
+                    CommandsHistory = expand != null && expand.Contains("commands_history") ? c.CommandsHistory.Take(20).ToList() : null,
+                    CommandsItems = expand != null && expand.Contains("commands_items") ? c.CommandsItems.Take(20).ToList() : null,
+                    Carrier = expand != null && expand.Contains("carrier") ? c.Carrier : null
+                },
+                command => command.Select(c => {
+                    return _mapper.Map<ReadExtendedCommandDto>(c.Command) with
+                    {
+                        command_comments_count = c.CommandsCommentsCount,
+                        commands_documents_count = c.CommandsDocumentsCount,
+                        commands_items_count = c.CommandsItemsCount,
+                        command_comments = _mapper.Map<IEnumerable<ReadCommandCommentDto>>(c.CommandsComments),
+                        commands_documents = _mapper.Map<IEnumerable<ReadCommandDocumentDto>>(c.CommandsDocuments),
+                        commands_history = _mapper.Map<IEnumerable<ReadCommandHistoryDto>>(c.CommandsHistory),
+                        commands_items = _mapper.Map<IEnumerable<ReadCommandItemDto>>(c.CommandsItems),
+                        carrier = c.Command.Carrier != null ? _mapper.Map<ReadCarrierDto>(c.Command.Carrier) : null
+                    };
+                }).ToList());
     }
 
     public async Task<ReadExtendedCommandDto> GetCommandById(int id, List<string>? expand = null)

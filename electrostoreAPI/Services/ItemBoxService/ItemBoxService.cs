@@ -5,7 +5,6 @@ using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.ItemHistoryService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.ItemBoxService;
 
@@ -31,32 +30,8 @@ public class ItemBoxService : IItemBoxService
             throw new KeyNotFoundException($"Box with id '{boxId}' not found");
         }
         var query = _context.ItemsBoxs.AsQueryable();
-        var filterResult = default(Expression<Func<ItemsBoxs, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_box", search_type = "eq", value = boxId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ItemsBoxs>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<ItemsBoxs>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_item", order = "asc" };
-                query = query.OrderBy(ib => ib.id_item);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(ib => ib.id_item);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("item"))
         {
             query = query.Include(ib => ib.Item);
@@ -65,21 +40,9 @@ public class ItemBoxService : IItemBoxService
         {
             query = query.Include(ib => ib.Box);
         }
-        var itemBox = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedItemBoxDto>
-        {
-            data = _mapper.Map<List<ReadExtendedItemBoxDto>>(itemBox),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.ItemsBoxs.CountAsync(filterResult ?? (ib => ib.id_box == boxId)),
-                next_offset = offset + limit,
-                has_more = await _context.ItemsBoxs.Skip(offset + limit).AnyAsync(filterResult ?? (ib => ib.id_box == boxId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_item", order = "asc" })
+            .ToResponseAsync(itemBox => _mapper.Map<List<ReadExtendedItemBoxDto>>(itemBox));
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedItemBoxDto>> GetItemsBoxsByItemId(int itemId, int limit = 100, int offset = 0,
@@ -91,32 +54,8 @@ public class ItemBoxService : IItemBoxService
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.ItemsBoxs.AsQueryable();
-        var filterResult = default(Expression<Func<ItemsBoxs, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_item", search_type = "eq", value = itemId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ItemsBoxs>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<ItemsBoxs>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_box", order = "asc" };
-                query = query.OrderBy(ib => ib.id_box);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(ib => ib.id_box);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("item"))
         {
             query = query.Include(ib => ib.Item);
@@ -125,21 +64,9 @@ public class ItemBoxService : IItemBoxService
         {
             query = query.Include(ib => ib.Box);
         }
-        var itemBox = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedItemBoxDto>
-        {
-            data = _mapper.Map<List<ReadExtendedItemBoxDto>>(itemBox),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.ItemsBoxs.CountAsync(filterResult ?? (ib => ib.id_item == itemId)),
-                next_offset = offset + limit,
-                has_more = await _context.ItemsBoxs.Skip(offset + limit).AnyAsync(filterResult ?? (ib => ib.id_item == itemId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_box", order = "asc" })
+            .ToResponseAsync(itemBox => _mapper.Map<List<ReadExtendedItemBoxDto>>(itemBox));
     }
 
     public async Task<ReadExtendedItemBoxDto> GetItemBoxById(int itemId, int boxId, List<string>? expand = null)

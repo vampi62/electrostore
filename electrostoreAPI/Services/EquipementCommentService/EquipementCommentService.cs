@@ -5,7 +5,6 @@ using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.SessionService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.EquipementCommentService;
 
@@ -31,32 +30,8 @@ public class EquipementCommentService : IEquipementCommentService
             throw new KeyNotFoundException($"Equipement with id '{equipementId}' not found");
         }
         var query = _context.EquipementsComments.AsQueryable();
-        var filterResult = default(Expression<Func<EquipementsComments, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_equipement", search_type = "eq", value = equipementId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<EquipementsComments>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsComments>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "created_at", order = "desc" };
-                query = query.OrderByDescending(ec => ec.created_at);
-            }
-        }
-        else
-        {
-            query = query.OrderByDescending(ec => ec.created_at);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("equipement"))
         {
             query = query.Include(ec => ec.Equipement);
@@ -65,21 +40,9 @@ public class EquipementCommentService : IEquipementCommentService
         {
             query = query.Include(ec => ec.User);
         }
-        var equipementComment = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedEquipementCommentDto>
-        {
-            data = _mapper.Map<IEnumerable<ReadExtendedEquipementCommentDto>>(equipementComment),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.EquipementsComments.CountAsync(filterResult ?? (ec => ec.id_equipement == equipementId)),
-                next_offset = offset + limit,
-                has_more = await _context.EquipementsComments.Skip(offset + limit).AnyAsync(filterResult ?? (ec => ec.id_equipement == equipementId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "created_at", order = "desc" })
+            .ToResponseAsync(equipementComment => _mapper.Map<IEnumerable<ReadExtendedEquipementCommentDto>>(equipementComment));
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedEquipementCommentDto>> GetEquipementsCommentsByUserId(int userId, int limit = 100, int offset = 0,
@@ -91,32 +54,8 @@ public class EquipementCommentService : IEquipementCommentService
             throw new KeyNotFoundException($"User with id '{userId}' not found");
         }
         var query = _context.EquipementsComments.AsQueryable();
-        var filterResult = default(Expression<Func<EquipementsComments, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_user", search_type = "eq", value = userId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<EquipementsComments>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<EquipementsComments>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "created_at", order = "desc" };
-                query = query.OrderByDescending(ec => ec.created_at);
-            }
-        }
-        else
-        {
-            query = query.OrderByDescending(ec => ec.created_at);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("equipement"))
         {
             query = query.Include(ec => ec.Equipement);
@@ -125,21 +64,9 @@ public class EquipementCommentService : IEquipementCommentService
         {
             query = query.Include(ec => ec.User);
         }
-        var equipementComment = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedEquipementCommentDto>
-        {
-            data = _mapper.Map<IEnumerable<ReadExtendedEquipementCommentDto>>(equipementComment),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.EquipementsComments.CountAsync(filterResult ?? (ec => ec.id_user == userId)),
-                next_offset = offset + limit,
-                has_more = await _context.EquipementsComments.Skip(offset + limit).AnyAsync(filterResult ?? (ec => ec.id_user == userId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "created_at", order = "desc" })
+            .ToResponseAsync(equipementComment => _mapper.Map<IEnumerable<ReadExtendedEquipementCommentDto>>(equipementComment));
     }
 
     public async Task<ReadExtendedEquipementCommentDto> GetEquipementCommentById(int id, int? userId = null, int? equipementId = null, List<string>? expand = null)

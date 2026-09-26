@@ -6,7 +6,6 @@ using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.FileService;
 using ElectrostoreAPI.Services.SessionService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.ZoneService;
 
@@ -31,66 +30,29 @@ public class ZoneService : IZoneService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Zones.AsQueryable();
-        var filterResult = default(Expression<Func<Zones, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(z => idResearch.Contains(z.id_zone));
+            rsql = null;
+            sort = null;
         }
-        else
-        {
-            if (rsql != null && rsql.Count > 0)
-            {
-                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Zones>(rsql);
-                query = query.Where(filterResult);
-            }
-            if (!string.IsNullOrEmpty(sort?.field))
-            {
-                var sortResult = RsqlParserExtensions.ToSortExpression<Zones>(sort);
-                if (sortResult.Item1 != null)
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_zone", order = "asc" })
+            .ToProjectedResponseAsync(
+                z => new
                 {
-                    query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-                }
-                else
+                    Zone = z,
+                    StoresCount = z.Stores.Count,
+                    Stores = expand != null && expand.Contains("stores") ? z.Stores.Take(20).ToList() : null
+                },
+                zones => zones.Select(z =>
                 {
-                    sort = new SorterDto { field = "id_zone", order = "asc" };
-                    query = query.OrderBy(z => z.id_zone);
-                }
-            }
-            else
-            {
-                query = query.OrderBy(z => z.id_zone);
-            }
-        }
-        query = query.Skip(offset).Take(limit);
-        var zones = await query
-            .Select(z => new
-            {
-                Zone = z,
-                StoresCount = z.Stores.Count,
-                Stores = expand != null && expand.Contains("stores") ? z.Stores.Take(20).ToList() : null
-            })
-            .ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedZoneDto>
-        {
-            data = zones.Select(z =>
-            {
-                return _mapper.Map<ReadExtendedZoneDto>(z.Zone) with
-                {
-                    stores_count = z.StoresCount,
-                    stores = _mapper.Map<IEnumerable<ReadStoreDto>>(z.Stores)
-                };
-            }).ToList(),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.Zones.CountAsync(filterResult ?? (z => true)),
-                next_offset = offset + limit,
-                has_more = await _context.Zones.Skip(offset + limit).AnyAsync(filterResult ?? (z => true))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+                    return _mapper.Map<ReadExtendedZoneDto>(z.Zone) with
+                    {
+                        stores_count = z.StoresCount,
+                        stores = _mapper.Map<IEnumerable<ReadStoreDto>>(z.Stores)
+                    };
+                }).ToList());
     }
 
     public async Task<ReadExtendedZoneDto> GetZoneById(int id, List<string>? expand = null)

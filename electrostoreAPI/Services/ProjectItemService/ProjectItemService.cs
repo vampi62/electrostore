@@ -3,7 +3,6 @@ using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.ProjectItemService;
 
@@ -27,32 +26,8 @@ public class ProjectItemService : IProjectItemService
             throw new KeyNotFoundException($"Project with id '{projectId}' not found");
         }
         var query = _context.ProjectsItems.AsQueryable();
-        var filterResult = default(Expression<Func<ProjectsItems, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_project", search_type = "eq", value = projectId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectsItems>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<ProjectsItems>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_item", order = "asc" };
-                query = query.OrderBy(pi => pi.id_item);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(pi => pi.id_item);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("item"))
         {
             query = query.Include(pi => pi.Item);
@@ -61,21 +36,9 @@ public class ProjectItemService : IProjectItemService
         {
             query = query.Include(pi => pi.Project);
         }
-        var projectItem = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedProjectItemDto>
-        {
-            data = _mapper.Map<List<ReadExtendedProjectItemDto>>(projectItem),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.ProjectsItems.CountAsync(filterResult ?? (pi => pi.id_project == projectId)),
-                next_offset = offset + limit,
-                has_more = await _context.ProjectsItems.Skip(offset + limit).AnyAsync(filterResult ?? (pi => pi.id_project == projectId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_item", order = "asc" })
+            .ToResponseAsync(projectItem => _mapper.Map<List<ReadExtendedProjectItemDto>>(projectItem));
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedProjectItemDto>> GetProjectItemsByItemId(int itemId, int limit = 100, int offset = 0,
@@ -87,32 +50,8 @@ public class ProjectItemService : IProjectItemService
             throw new KeyNotFoundException($"Item with id '{itemId}' not found");
         }
         var query = _context.ProjectsItems.AsQueryable();
-        var filterResult = default(Expression<Func<ProjectsItems, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_item", search_type = "eq", value = itemId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectsItems>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<ProjectsItems>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_project", order = "asc" };
-                query = query.OrderBy(pi => pi.id_project);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(pi => pi.id_project);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("item"))
         {
             query = query.Include(pi => pi.Item);
@@ -121,21 +60,9 @@ public class ProjectItemService : IProjectItemService
         {
             query = query.Include(pi => pi.Project);
         }
-        var projectItem = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedProjectItemDto>
-        {
-            data = _mapper.Map<List<ReadExtendedProjectItemDto>>(projectItem),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.ProjectsItems.CountAsync(filterResult ?? (pi => pi.id_item == itemId)),
-                next_offset = offset + limit,
-                has_more = await _context.ProjectsItems.Skip(offset + limit).AnyAsync(filterResult ?? (pi => pi.id_item == itemId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_project", order = "asc" })
+            .ToResponseAsync(projectItem => _mapper.Map<List<ReadExtendedProjectItemDto>>(projectItem));
     }
 
     public async Task<ReadExtendedProjectItemDto> GetProjectItemById(int projectId, int itemId, List<string>? expand = null)

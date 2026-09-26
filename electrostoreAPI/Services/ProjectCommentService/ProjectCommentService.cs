@@ -5,7 +5,6 @@ using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.SessionService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.ProjectCommentService;
 
@@ -31,32 +30,8 @@ public class ProjectCommentService : IProjectCommentService
             throw new KeyNotFoundException($"Project with id '{projectId}' not found");
         }
         var query = _context.ProjectsComments.AsQueryable();
-        var filterResult = default(Expression<Func<ProjectsComments, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_project", search_type = "eq", value = projectId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectsComments>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<ProjectsComments>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "created_at", order = "desc" };
-                query = query.OrderByDescending(p => p.created_at);
-            }
-        }
-        else
-        {
-            query = query.OrderByDescending(p => p.created_at);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("project"))
         {
             query = query.Include(p => p.Project);
@@ -65,21 +40,9 @@ public class ProjectCommentService : IProjectCommentService
         {
             query = query.Include(p => p.User);
         }
-        var projectComment = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedProjectCommentDto>
-        {
-            data = _mapper.Map<List<ReadExtendedProjectCommentDto>>(projectComment),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.ProjectsComments.CountAsync(filterResult ?? (pc => pc.id_project == projectId)),
-                next_offset = offset + limit,
-                has_more = await _context.ProjectsComments.Skip(offset + limit).AnyAsync(filterResult ?? (pc => pc.id_project == projectId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "created_at", order = "desc" })
+            .ToResponseAsync(projectComment => _mapper.Map<List<ReadExtendedProjectCommentDto>>(projectComment));
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedProjectCommentDto>> GetProjectCommentsByUserId(int userId, int limit = 100, int offset = 0,
@@ -91,32 +54,8 @@ public class ProjectCommentService : IProjectCommentService
             throw new KeyNotFoundException($"User with id '{userId}' not found");
         }
         var query = _context.ProjectsComments.AsQueryable();
-        var filterResult = default(Expression<Func<ProjectsComments, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_user", search_type = "eq", value = userId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<ProjectsComments>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<ProjectsComments>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "created_at", order = "desc" };
-                query = query.OrderByDescending(p => p.created_at);
-            }
-        }
-        else
-        {
-            query = query.OrderByDescending(p => p.created_at);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("project"))
         {
             query = query.Include(pc => pc.Project);
@@ -125,21 +64,9 @@ public class ProjectCommentService : IProjectCommentService
         {
             query = query.Include(pc => pc.User);
         }
-        var projectComment = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedProjectCommentDto>
-        {
-            data = _mapper.Map<List<ReadExtendedProjectCommentDto>>(projectComment),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.ProjectsComments.CountAsync(filterResult ?? (pc => pc.id_user == userId)),
-                next_offset = offset + limit,
-                has_more = await _context.ProjectsComments.Skip(offset + limit).AnyAsync(filterResult ?? (pc => pc.id_user == userId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "created_at", order = "desc" })
+            .ToResponseAsync(projectComment => _mapper.Map<List<ReadExtendedProjectCommentDto>>(projectComment));
     }
 
     public async Task<ReadExtendedProjectCommentDto> GetProjectCommentsById(int id, int? userId = null, int? projectId = null, List<string>? expand = null)

@@ -6,7 +6,6 @@ using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.FileService;
 using ElectrostoreAPI.Services.ProjectStatusService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.ProjectService;
 
@@ -30,93 +29,56 @@ public class ProjectService : IProjectService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Projects.AsQueryable();
-        var filterResult = default(Expression<Func<Projects, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(p => idResearch.Contains(p.id_project));
+            rsql = null;
+            sort = null;
         }
-        else
-        {
-            if (rsql != null && rsql.Count > 0)
-            {
-                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Projects>(rsql);
-                query = query.Where(filterResult);
-            }
-            if (!string.IsNullOrEmpty(sort?.field))
-            {
-                var sortResult = RsqlParserExtensions.ToSortExpression<Projects>(sort);
-                if (sortResult.Item1 != null)
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_project", order = "asc" })
+            .ToProjectedResponseAsync(
+                p => new
                 {
-                    query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-                }
-                else
-                {
-                    sort = new SorterDto { field = "id_project", order = "asc" };
-                    query = query.OrderBy(p => p.id_project);
-                }
-            }
-            else
-            {
-                query = query.OrderBy(p => p.id_project);
-            }
-        }
-        query = query.Skip(offset).Take(limit);
-        var project = await query
-            .Select(p => new
-            {
-                Project = p,
-                ProjectsCommentsCount = p.ProjectsComments.Count,
-                ProjectsDocumentsCount = p.ProjectsDocuments.Count,
-                ProjectsItemsCount = p.ProjectsItems.Count,
-                ProjectsProjectTagsCount = p.ProjectsProjectTags.Count,
-                ProjectsStatusHistoryCount = p.ProjectsStatus.Count,
-                DateStartProject = p.ProjectsStatus
-                    .Where(ps => ps.status_project == ProjectStatus.InProgress)
-                    .OrderBy(ps => ps.created_at)
-                    .Select(ps => (DateTime?)ps.created_at)
-                    .FirstOrDefault(),
-                DateEndProject = p.ProjectsStatus
-                    .Where(ps => ps.status_project == ProjectStatus.Completed)
-                    .OrderByDescending(ps => ps.created_at)
-                    .Select(ps => (DateTime?)ps.created_at)
-                    .FirstOrDefault(),
-                ProjectsComments = expand != null && expand.Contains("project_comments") ? p.ProjectsComments.Take(20).ToList() : null,
-                ProjectsDocuments = expand != null && expand.Contains("project_documents") ? p.ProjectsDocuments.Take(20).ToList() : null,
-                ProjectsItems = expand != null && expand.Contains("project_items") ? p.ProjectsItems.Take(20).ToList() : null,
-                ProjectsProjectTags = expand != null && expand.Contains("project_tags") ? p.ProjectsProjectTags.Take(20).ToList() : null,
-                ProjectsStatus = expand != null && expand.Contains("project_status_history") ? p.ProjectsStatus.Take(20).ToList() : null
-            })
-            .ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedProjectDto>
-        {
-            data = project.Select(p => {
-                return _mapper.Map<ReadExtendedProjectDto>(p.Project) with
-                {
-                    date_start_project = p.DateStartProject,
-                    date_end_project = p.DateEndProject,
-                    project_comments_count = p.ProjectsCommentsCount,
-                    project_documents_count = p.ProjectsDocumentsCount,
-                    project_items_count = p.ProjectsItemsCount,
-                    project_tags_count = p.ProjectsProjectTagsCount,
-                    project_status_history_count = p.ProjectsStatusHistoryCount,
-                    project_comments = _mapper.Map<IEnumerable<ReadProjectCommentDto>>(p.ProjectsComments),
-                    project_documents = _mapper.Map<IEnumerable<ReadProjectDocumentDto>>(p.ProjectsDocuments),
-                    project_items = _mapper.Map<IEnumerable<ReadProjectItemDto>>(p.ProjectsItems),
-                    project_tags = _mapper.Map<IEnumerable<ReadProjectProjectTagDto>>(p.ProjectsProjectTags),
-                    project_status_history = _mapper.Map<IEnumerable<ReadProjectStatusDto>>(p.ProjectsStatus)
-                };
-            }).ToList(),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.Projects.CountAsync(filterResult ?? (p => true)),
-                next_offset = offset + limit,
-                has_more = await _context.Projects.Skip(offset + limit).AnyAsync(filterResult ?? (p => true))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+                    Project = p,
+                    ProjectsCommentsCount = p.ProjectsComments.Count,
+                    ProjectsDocumentsCount = p.ProjectsDocuments.Count,
+                    ProjectsItemsCount = p.ProjectsItems.Count,
+                    ProjectsProjectTagsCount = p.ProjectsProjectTags.Count,
+                    ProjectsStatusHistoryCount = p.ProjectsStatus.Count,
+                    DateStartProject = p.ProjectsStatus
+                        .Where(ps => ps.status_project == ProjectStatus.InProgress)
+                        .OrderBy(ps => ps.created_at)
+                        .Select(ps => (DateTime?)ps.created_at)
+                        .FirstOrDefault(),
+                    DateEndProject = p.ProjectsStatus
+                        .Where(ps => ps.status_project == ProjectStatus.Completed)
+                        .OrderByDescending(ps => ps.created_at)
+                        .Select(ps => (DateTime?)ps.created_at)
+                        .FirstOrDefault(),
+                    ProjectsComments = expand != null && expand.Contains("project_comments") ? p.ProjectsComments.Take(20).ToList() : null,
+                    ProjectsDocuments = expand != null && expand.Contains("project_documents") ? p.ProjectsDocuments.Take(20).ToList() : null,
+                    ProjectsItems = expand != null && expand.Contains("project_items") ? p.ProjectsItems.Take(20).ToList() : null,
+                    ProjectsProjectTags = expand != null && expand.Contains("project_tags") ? p.ProjectsProjectTags.Take(20).ToList() : null,
+                    ProjectsStatus = expand != null && expand.Contains("project_status_history") ? p.ProjectsStatus.Take(20).ToList() : null
+                },
+                project => project.Select(p => {
+                    return _mapper.Map<ReadExtendedProjectDto>(p.Project) with
+                    {
+                        date_start_project = p.DateStartProject,
+                        date_end_project = p.DateEndProject,
+                        project_comments_count = p.ProjectsCommentsCount,
+                        project_documents_count = p.ProjectsDocumentsCount,
+                        project_items_count = p.ProjectsItemsCount,
+                        project_tags_count = p.ProjectsProjectTagsCount,
+                        project_status_history_count = p.ProjectsStatusHistoryCount,
+                        project_comments = _mapper.Map<IEnumerable<ReadProjectCommentDto>>(p.ProjectsComments),
+                        project_documents = _mapper.Map<IEnumerable<ReadProjectDocumentDto>>(p.ProjectsDocuments),
+                        project_items = _mapper.Map<IEnumerable<ReadProjectItemDto>>(p.ProjectsItems),
+                        project_tags = _mapper.Map<IEnumerable<ReadProjectProjectTagDto>>(p.ProjectsProjectTags),
+                        project_status_history = _mapper.Map<IEnumerable<ReadProjectStatusDto>>(p.ProjectsStatus)
+                    };
+                }).ToList());
     }
 
     public async Task<ReadExtendedProjectDto> GetProjectById(int id, List<string>? expand = null)

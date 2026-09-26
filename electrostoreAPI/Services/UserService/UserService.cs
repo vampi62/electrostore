@@ -8,7 +8,6 @@ using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.JwiService;
 using ElectrostoreAPI.Services.SessionService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 using System.Text.Json;
 
 namespace ElectrostoreAPI.Services.UserService;
@@ -39,70 +38,33 @@ public class UserService : IUserService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Users.AsQueryable();
-        var filterResult = default(Expression<Func<Users, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(u => idResearch.Contains(u.id_user));
+            rsql = null;
+            sort = null;
         }
-        else
-        {
-            if (rsql != null && rsql.Count > 0)
-            {
-                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Users>(rsql);
-                query = query.Where(filterResult);
-            }
-            if (!string.IsNullOrEmpty(sort?.field))
-            {
-                var sortResult = RsqlParserExtensions.ToSortExpression<Users>(sort);
-                if (sortResult.Item1 != null)
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_user", order = "asc" })
+            .ToProjectedResponseAsync(
+                u => new
                 {
-                    query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-                }
-                else
+                    User = u,
+                    ProjectsCommentsCount = u.ProjectsComments.Count,
+                    CommandsCommentsCount = u.CommandsComments.Count,
+                    ProjectsComments = expand != null && expand.Contains("project_comments") ? u.ProjectsComments.Take(20).ToList() : null,
+                    CommandsComments = expand != null && expand.Contains("command_comments") ? u.CommandsComments.Take(20).ToList() : null
+                },
+                user => user.Select(u =>
                 {
-                    sort = new SorterDto { field = "id_user", order = "asc" };
-                    query = query.OrderBy(u => u.id_user);
-                }
-            }
-            else
-            {
-                query = query.OrderBy(u => u.id_user);
-            }
-        }
-        query = query.Skip(offset).Take(limit);
-        var user = await query
-            .Select(u => new
-            {
-                User = u,
-                ProjectsCommentsCount = u.ProjectsComments.Count,
-                CommandsCommentsCount = u.CommandsComments.Count,
-                ProjectsComments = expand != null && expand.Contains("project_comments") ? u.ProjectsComments.Take(20).ToList() : null,
-                CommandsComments = expand != null && expand.Contains("command_comments") ? u.CommandsComments.Take(20).ToList() : null
-            })
-            .ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedUserDto>
-        {
-            data = user.Select(u =>
-            {
-                return _mapper.Map<ReadExtendedUserDto>(u.User) with
-                {
-                    project_comments_count = u.ProjectsCommentsCount,
-                    command_comments_count = u.CommandsCommentsCount,
-                    project_comments = _mapper.Map<IEnumerable<ReadProjectCommentDto>>(u.ProjectsComments),
-                    command_comments = _mapper.Map<IEnumerable<ReadCommandCommentDto>>(u.CommandsComments)
-                };
-            }).ToList(),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.Users.CountAsync(filterResult ?? (u => true)),
-                next_offset = offset + limit,
-                has_more = await _context.Users.Skip(offset + limit).AnyAsync(filterResult ?? (u => true))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+                    return _mapper.Map<ReadExtendedUserDto>(u.User) with
+                    {
+                        project_comments_count = u.ProjectsCommentsCount,
+                        command_comments_count = u.CommandsCommentsCount,
+                        project_comments = _mapper.Map<IEnumerable<ReadProjectCommentDto>>(u.ProjectsComments),
+                        command_comments = _mapper.Map<IEnumerable<ReadCommandCommentDto>>(u.CommandsComments)
+                    };
+                }).ToList());
     }
 
     public async Task<ReadUserDto> CreateUser(CreateUserDto userDto, bool avoidRoleVerification = false)

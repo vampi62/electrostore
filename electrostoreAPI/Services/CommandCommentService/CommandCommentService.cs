@@ -5,7 +5,6 @@ using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.SessionService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.CommandCommentService;
 
@@ -31,32 +30,8 @@ public class CommandCommentService : ICommandCommentService
             throw new KeyNotFoundException($"Command with id '{CommandId}' not found");
         }
         var query = _context.CommandsComments.AsQueryable();
-        var filterResult = default(Expression<Func<CommandsComments, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_command", search_type = "eq", value = CommandId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsComments>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<CommandsComments>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "created_at", order = "desc" };
-                query = query.OrderByDescending(cc => cc.created_at);
-            }
-        }
-        else
-        {
-            query = query.OrderByDescending(cc => cc.created_at);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("command")) // check if the command is included in the expand list
         {
             query = query.Include(cc => cc.Command);
@@ -65,21 +40,9 @@ public class CommandCommentService : ICommandCommentService
         {
             query = query.Include(cc => cc.User);
         }
-        var commandComment = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedCommandCommentDto>
-        {
-            data = _mapper.Map<IEnumerable<ReadExtendedCommandCommentDto>>(commandComment),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.CommandsComments.CountAsync(filterResult ?? (cc => cc.id_command == CommandId)),
-                next_offset = offset + limit,
-                has_more = await _context.CommandsComments.Skip(offset + limit).AnyAsync(filterResult ?? (cc => cc.id_command == CommandId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "created_at", order = "desc" })
+            .ToResponseAsync(commandComment => _mapper.Map<IEnumerable<ReadExtendedCommandCommentDto>>(commandComment));
     }
 
     public async Task<PaginatedResponseDto<ReadExtendedCommandCommentDto>> GetCommandsCommentsByUserId(int userId, int limit = 100, int offset = 0,
@@ -91,32 +54,8 @@ public class CommandCommentService : ICommandCommentService
             throw new KeyNotFoundException($"User with id '{userId}' not found");
         }
         var query = _context.CommandsComments.AsQueryable();
-        var filterResult = default(Expression<Func<CommandsComments, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_user", search_type = "eq", value = userId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsComments>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<CommandsComments>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "created_at", order = "desc" };
-                query = query.OrderByDescending(cc => cc.created_at);
-            }
-        }
-        else
-        {
-            query = query.OrderByDescending(cc => cc.created_at);
-        }
-        query = query.Skip(offset).Take(limit);
         if (expand != null && expand.Contains("command")) // check if the command is included in the expand list
         {
             query = query.Include(cc => cc.Command);
@@ -125,21 +64,9 @@ public class CommandCommentService : ICommandCommentService
         {
             query = query.Include(cc => cc.User);
         }
-        var commandComment = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedCommandCommentDto>
-        {
-            data = _mapper.Map<IEnumerable<ReadExtendedCommandCommentDto>>(commandComment),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.CommandsComments.CountAsync(filterResult ?? (cc => cc.id_user == userId)),
-                next_offset = offset + limit,
-                has_more = await _context.CommandsComments.Skip(offset + limit).AnyAsync(filterResult ?? (cc => cc.id_user == userId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "created_at", order = "desc" })
+            .ToResponseAsync(commandComment => _mapper.Map<IEnumerable<ReadExtendedCommandCommentDto>>(commandComment));
     }
 
     public async Task<ReadExtendedCommandCommentDto> GetCommandsCommentById(int id, int? userId = null, int? CommandId = null, List<string>? expand = null)
