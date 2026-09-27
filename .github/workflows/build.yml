@@ -106,12 +106,18 @@ jobs:
       id: uuid
       run: |
         echo uuid=$RANDOM >> $GITHUB_OUTPUT
+    - name: Get build timestamp
+      id: meta
+      run: |
+        echo created=$(date -u +%Y-%m-%dT%H:%M:%SZ) >> $GITHUB_OUTPUT
     - name: Build docker image with retry
       env:
         ARCH: linux/arm64/v8
         BUILDER: ${{ steps.uuid.outputs.uuid }}
         VERSION: ${{ inputs.version }}-arm64
         REPO: ${{ steps.repo.outputs.lowercase }}
+        REVISION: ${{ github.sha }}
+        CREATED: ${{ steps.meta.outputs.created }}
         BUILDX_NO_DEFAULT_ATTESTATIONS: 1
       uses: nick-fields/retry@v4
       with:
@@ -169,12 +175,18 @@ jobs:
       id: uuid
       run: |
         echo uuid=$RANDOM >> $GITHUB_OUTPUT
+    - name: Get build timestamp
+      id: meta
+      run: |
+        echo created=$(date -u +%Y-%m-%dT%H:%M:%SZ) >> $GITHUB_OUTPUT
     - name: Build docker image with retry
       env:
         ARCH: linux/amd64
         BUILDER: ${{ steps.uuid.outputs.uuid }}
         VERSION: ${{ inputs.version }}-amd64
         REPO: ${{ steps.repo.outputs.lowercase }}
+        REVISION: ${{ github.sha }}
+        CREATED: ${{ steps.meta.outputs.created }}
         BUILDX_NO_DEFAULT_ATTESTATIONS: 1
       uses: nick-fields/retry@v4
       with:
@@ -195,8 +207,8 @@ jobs:
           --set *.platform=${{ env.ARCH }} ${{ matrix.target }} \
           ; /usr/bin/docker buildx rm builder-${{ env.BUILDER }}
 
-  deploy-images:
-    name: Deploy images on ghcr.io
+  publish-manifests:
+    name: Publish multi-arch manifests on ghcr.io
     runs-on: ubuntu-latest
     needs:
       - target
@@ -234,7 +246,16 @@ jobs:
       shell: bash
       run: |
         IMAGE="ghcr.io/${{ steps.repo.outputs.lowercase }}/${{ matrix.target }}"
-        TAGS="--tag ${IMAGE}:${{ inputs.branch }} --tag ${IMAGE}:${{ inputs.version }}"
+        VERSION="${{ inputs.version }}"
+        BRANCH="${{ inputs.branch }}"
+        TAGS="--tag ${IMAGE}:${VERSION}"
+        if [ "${BRANCH}" != "${VERSION}" ]; then
+          TAGS="${TAGS} --tag ${IMAGE}:${BRANCH}"
+        fi
+        # Release tag (vX.Y.Z): also roll the vX and vX.Y tags forward to this build.
+        if [[ "${VERSION}" =~ ^v([0-9]+)\.([0-9]+)\.[0-9]+$ ]]; then
+          TAGS="${TAGS} --tag ${IMAGE}:v${BASH_REMATCH[1]} --tag ${IMAGE}:v${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+        fi
         if [ "${{ inputs.latest }}" == "true" ]; then
           TAGS="${TAGS} --tag ${IMAGE}:latest"
         fi

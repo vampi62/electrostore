@@ -18,6 +18,12 @@ variable "REPO" {
 variable "VERSION" {
   default = "local"
 }
+variable "REVISION" {
+  default = ""
+}
+variable "CREATED" {
+  default = ""
+}
 
 #-----------------------------------------------------------------------------------------
 # Grouping of targets to build. All these images are built when using:
@@ -45,6 +51,9 @@ target "defaults" {
     "org.opencontainers.image.description" = "Electrostore Local Image"
     "org.opencontainers.image.source" = "https://github.com/${REPO}"
     "org.opencontainers.image.version" = "${VERSION}"
+    "org.opencontainers.image.revision" = "${REVISION}"
+    "org.opencontainers.image.created" = "${CREATED}"
+    "org.opencontainers.image.licenses" = "AGPL-3.0-or-later"
   }
 }
 
@@ -52,11 +61,16 @@ target "defaults" {
 # User defined functions
 #------------------------------------------------------------------------------------------
 # Derive all tags
+# NOTE: only ${VERSION} is tagged here. This is used for the per-arch build
+# (VERSION is suffixed with -amd64/-arm64 in CI). Final tags such as the
+# release version, branch, vX and latest are applied to the merged
+# multi-arch manifest by the "publish-manifests" job in build.yml, not here
+# - tagging "latest" (or any other shared tag) per-arch would make each
+# push race the other arch and immediately untag the loser's digest.
 function "tag" {
   params = [image_name]
   result = [
-    "ghcr.io/${REPO}/${image_name}:${VERSION}",
-    "ghcr.io/${REPO}/${image_name}:latest"
+    "ghcr.io/${REPO}/${image_name}:${VERSION}"
   ]
 }
 
@@ -85,7 +99,10 @@ target "api" {
     label("title", "Electrostore api"),
     label("description", "Electrostore api image"),
     label("source", "https://github.com/${REPO}"),
-    label("version", "${VERSION}")
+    label("version", "${VERSION}"),
+    label("revision", "${REVISION}"),
+    label("created", "${CREATED}"),
+    label("licenses", "AGPL-3.0-or-later")
   )
 }
 
@@ -98,7 +115,10 @@ target "front" {
     label("title", "Electrostore front"),
     label("description", "Electrostore front image"),
     label("source", "https://github.com/${REPO}"),
-    label("version", "${VERSION}")
+    label("version", "${VERSION}"),
+    label("revision", "${REVISION}"),
+    label("created", "${CREATED}"),
+    label("licenses", "AGPL-3.0-or-later")
   )
 }
 
@@ -111,7 +131,10 @@ target "notif" {
     label("title", "Electrostore notif"),
     label("description", "Electrostore notif image"),
     label("source", "https://github.com/${REPO}"),
-    label("version", "${VERSION}")
+    label("version", "${VERSION}"),
+    label("revision", "${REVISION}"),
+    label("created", "${CREATED}"),
+    label("licenses", "AGPL-3.0-or-later")
   )
 }
 
@@ -124,7 +147,10 @@ target "worker" {
     label("title", "Electrostore worker"),
     label("description", "Electrostore worker image"),
     label("source", "https://github.com/${REPO}"),
-    label("version", "${VERSION}")
+    label("version", "${VERSION}"),
+    label("revision", "${REVISION}"),
+    label("created", "${CREATED}"),
+    label("licenses", "AGPL-3.0-or-later")
   )
 }
 
@@ -137,6 +163,9 @@ target "cron" {
     label("title", "Electrostore cron"),
     label("description", "Electrostore cron image"),
     label("source", "https://github.com/${REPO}"),
-    label("version", "${VERSION}")
+    label("version", "${VERSION}"),
+    label("revision", "${REVISION}"),
+    label("created", "${CREATED}"),
+    label("licenses", "AGPL-3.0-or-later")
   )
 }

@@ -5,7 +5,7 @@
 > TODO: insert the service diagram here once available (e.g. `docs/assets/architecture.svg` or `.png`).
 >
 > ```markdown
-> ![Architecture](../assets/architecture.svg)
+> ![Architecture](../assets/architecture.png)
 > ```
 
 ## Services
