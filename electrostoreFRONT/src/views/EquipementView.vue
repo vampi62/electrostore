@@ -1,6 +1,10 @@
 <script setup>
+import { useViewScroll } from "@/composables";
+import { downloadFile, viewFile, isNewId } from "@/utils";
 import { onMounted, onBeforeUnmount, ref, inject } from "vue";
-import router from "@/router";
+import { useRoute, useRouter } from "vue-router";
+const router = useRouter();
+const route = useRoute();
 
 const { addNotification } = inject("useNotification");
 
@@ -9,12 +13,8 @@ import * as Yup from "yup";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
-import { useRoute } from "vue-router";
-const route = useRoute();
 const equipementId = ref(route.params.id);
 const preset = ref(route.query.preset || null);
-
-import { downloadFile, viewFile } from "@/utils";
 
 import { EquipementStatus, EquipementMaintenanceType } from "@/enums";
 
@@ -26,10 +26,14 @@ const storesStore = useStoresStore();
 const usersStore = useUsersStore();
 const authStore = useAuthStore();
 
+if (isNewId(equipementId.value)) {
+	equipementId.value = equipementsStore.getAvailableNewEquipementId();
+}
+
 const formContainer = ref(null);
 
 async function fetchAllData() {
-	if (equipementId.value === "new") {
+	if (isNewId(equipementId.value)) {
 		equipementsStore.loadToEdition(equipementId.value, preset.value);
 	} else {
 		equipementsStore.setLoadingEdition(equipementId.value, true);
@@ -109,9 +113,11 @@ const equipementSave = async() => {
 		equipementsStore.equipementEdition[equipementId.value].isFormData = true;
 		const id = await equipementsStore.saveAllChanges(equipementId.value);
 		equipementsStore.loadToEdition(id);
-		if (equipementId.value === "new") {
+		if (isNewId(equipementId.value)) {
 			addNotification({ message: t("equipement.Created"), type: "success" });
+			const tempId = equipementId.value;
 			equipementId.value = String(id);
+			equipementsStore.clearEdition(tempId);
 			router.push("/equipements/" + equipementId.value);
 		} else {
 			addNotification({ message: t("equipement.Updated"), type: "success" });
@@ -502,7 +508,7 @@ const labelTableauStatusHistory = ref([
 	{ label: "equipement.HistoryDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
 	{ label: "equipement.HistoryStatus", sortable: true, key: "status_equipement", valueKey: "status_equipement", type: "enum", options: equipementStatusOptions },
 ]);
-document.querySelector("#view").classList.add("overflow-y-scroll");
+useViewScroll(true);
 </script>
 
 <template>
@@ -510,13 +516,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('equipement.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/equipements',
-				create: { showCondition: equipementId === 'new' && authStore.hasPermission([1, 2]), loading: equipementsStore.equipementEdition[equipementId]?.loading },
-				update: { showCondition: equipementId !== 'new' && authStore.hasPermission([1, 2]), loading: equipementsStore.equipementEdition[equipementId]?.loading },
-				delete: { showCondition: equipementId !== 'new' && authStore.hasPermission([1, 2]) }
+				create: { showCondition: isNewId(equipementId) && authStore.hasPermission([1, 2]), loading: equipementsStore.equipementEdition[equipementId]?.loading },
+				update: { showCondition: !isNewId(equipementId) && authStore.hasPermission([1, 2]), loading: equipementsStore.equipementEdition[equipementId]?.loading },
+				delete: { showCondition: !isNewId(equipementId) && authStore.hasPermission([1, 2]) }
 			}"
 			@button-create="equipementSave" @button-update="equipementSave" @button-delete="equipementDeleteModalShow = true"/>
 	</div>
-	<div v-if="equipementsStore.equipements[equipementId] || equipementId == 'new'" class="w-full">
+	<div v-if="equipementsStore.equipements[equipementId] || isNewId(equipementId)" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="equipementsStore.equipementEdition[equipementId]">
 				<template #img_file>
@@ -582,7 +588,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:schema="schemaEditDocument"
 					:loading="equipementsStore.equipementDocumentsLoading"
 					:total-count="Number(equipementsStore.equipementDocumentsTotalCount[equipementId])"
-					:fetch-function="equipementId !== 'new' ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementDocumentByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(equipementId) ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementDocumentByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -614,13 +620,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-ready="equipementsStore.equipementMaintenanceReady[equipementId]"
 					:loading="equipementsStore.equipementMaintenancesLoading"
 					:total-count="Number(equipementsStore.equipementMaintenancesTotalCount[equipementId])"
-					:fetch-function="equipementId !== 'new' ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementMaintenanceByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(equipementId) ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementMaintenanceByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="equipement.Comments"
-			:total-count="Number(equipementsStore.equipementCommentsTotalCount[equipementId] || 0)" :permission="equipementId !== 'new'">
+			:total-count="Number(equipementsStore.equipementCommentsTotalCount[equipementId] || 0)" :permission="!isNewId(equipementId)">
 			<template #append-row>
 				<Comment :meta="{ key: 'id_equipement_comment', contenu: 'content_equipement_comment', canEdit: true, roleRequired: authStore.hasPermission([2]), expand: ['user'] }"
 					:store-data="[equipementsStore.equipementComments[equipementId], usersStore.users]"
@@ -632,7 +638,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					}"
 					:loading="equipementsStore.equipementCommentsLoading"
 					:total-count="Number(equipementsStore.equipementCommentsTotalCount[equipementId]) || 0"
-					:fetch-function="equipementId !== 'new' ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementCommentByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(equipementId) ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementCommentByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
 					:texte-modal-delete="{ textTitle: 'equipement.CommentDeleteTitle', textP: 'equipement.CommentDeleteText' }"
 				/>
 			</template>
@@ -644,7 +650,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[equipementsStore.equipementStatusHistory[equipementId]]"
 					:loading="equipementsStore.equipementStatusHistoryLoading"
 					:total-count="Number(equipementsStore.equipementStatusHistoryTotalCount[equipementId])"
-					:fetch-function="equipementId !== 'new' ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementStatusHistoryByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(equipementId) ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementStatusHistoryByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>

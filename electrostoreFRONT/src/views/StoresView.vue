@@ -1,4 +1,5 @@
 <script setup>
+import { useViewScroll } from "@/composables";
 import { ref } from "vue";
 
 import { useStoresStore, useTagsStore, useAuthStore } from "@/stores";
@@ -51,7 +52,7 @@ const tableauMeta = ref({
 	stateKey: "storesTableState",
 });
 const filterReady = ref(false);
-document.querySelector("#view").classList.remove("overflow-y-scroll");
+useViewScroll(false);
 </script>
 
 <template>

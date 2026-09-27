@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { buildFormData, fetchWrapper, createMainResource } from "@/helpers";
+import { isNewId } from "@/utils";
 
 import { useStoresStore } from "@/stores";
 
@@ -27,6 +28,7 @@ const zoneResource = createMainResource({
 	stateKey: "zones",
 	countKey: "zonesTotalCount",
 	loadingKey: "zonesLoading",
+	editionKey: "zoneEdition",
 	onHydrate: (store, entity, expand) => {
 		hydrateZone(store, entity.id_zone, entity, expand);
 	},
@@ -50,12 +52,11 @@ export const useZonesStore = defineStore("zones", {
 		getZoneByInterval: zoneResource.getByInterval,
 		getZoneById: zoneResource.getById,
 		createZone: zoneResource.create,
+		getAvailableNewZoneId: zoneResource.getAvailableNewId,
 		updateZone: zoneResource.update,
 		deleteZone: zoneResource.remove,
 		loadToEdition(id, preset = null) {
-			this.zoneEdition[id] = {};
-			zoneResource.loadEditionPreset(id, preset);
-			if (id !== "new" && this.zones[id]) {
+			if (!isNewId(id) && this.zones[id]) {
 				this.zoneEdition[id] = {
 					loading: false,
 					name_zone: this.zones[id].name_zone,
@@ -68,6 +69,7 @@ export const useZonesStore = defineStore("zones", {
 				this.zoneEdition[id] = {
 					loading: false,
 				};
+				zoneResource.loadEditionPreset.call(this, id, preset);
 			}
 		},
 		setLoadingEdition(id, loading) {
@@ -83,7 +85,7 @@ export const useZonesStore = defineStore("zones", {
 			let realId = id;
 			const { isFormData, ...data } = this.zoneEdition[id];
 			const imageChanged = !!data.img_file || !!data.unset_img_zone;
-			if (id === "new") {
+			if (isNewId(id)) {
 				realId = await this.createZone(isFormData ? buildFormData(data) : data);
 			} else {
 				await this.updateZone(id, isFormData ? buildFormData(data) : data);

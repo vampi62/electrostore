@@ -78,12 +78,14 @@ export function createNestedResource({ path, idField, countKey, stateKey, loadin
 			this[countKey][idParentResource] = Math.max(this[countKey][idParentResource], 0);
 		},
 		getAvailableNewId(idParentResource) {
-			const edition = this[editionKey][idParentResource] ?? {};
+			this[editionKey][idParentResource] ??= {};
 			let i = 1;
-			while (Object.hasOwn(edition, `new-${i}`)) {
+			while (Object.hasOwn(this[editionKey][idParentResource], `new-${i}`)) {
 				i++;
 			}
-			return `new-${i}`;
+			const id = `new-${i}`;
+			this[editionKey][idParentResource][id] = {};
+			return id;
 		},
 		valideEditionById(idParentResource, id, status = "modified", isFormData = false) {
 			this[readyKey][idParentResource] ??= {};

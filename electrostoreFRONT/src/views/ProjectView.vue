@@ -1,6 +1,10 @@
 <script setup>
+import { useViewScroll } from "@/composables";
+import { downloadFile, viewFile, isNewId } from "@/utils";
 import { onMounted, onBeforeUnmount, computed, ref, inject } from "vue";
-import router from "@/router";
+import { useRoute, useRouter } from "vue-router";
+const router = useRouter();
+const route = useRoute();
 
 const { addNotification } = inject("useNotification");
 
@@ -9,12 +13,8 @@ import * as Yup from "yup";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
-import { useRoute } from "vue-router";
-const route = useRoute();
 const projectId = ref(route.params.id);
 const preset = ref(route.query.preset || null);
-
-import { downloadFile, viewFile } from "@/utils";
 
 import { ProjectStatus } from "@/enums";
 
@@ -26,10 +26,14 @@ const itemsStore = useItemsStore();
 const projectTagsStore = useProjectTagsStore();
 const authStore = useAuthStore();
 
+if (isNewId(projectId.value)) {
+	projectId.value = projectsStore.getAvailableNewProjectId();
+}
+
 const formContainer = ref(null);
 
 async function fetchAllData() {
-	if (projectId.value === "new") {
+	if (isNewId(projectId.value)) {
 		projectsStore.loadToEdition(projectId.value, preset.value);
 	} else {
 		projectsStore.setLoadingEdition(projectId.value, true);
@@ -142,9 +146,11 @@ const projectSave = async() => {
 		}
 		const id = await projectsStore.saveAllChanges(projectId.value);
 		projectsStore.loadToEdition(id);
-		if (projectId.value === "new") {
+		if (isNewId(projectId.value)) {
 			addNotification({ message: t("project.Created"), type: "success" });
+			const tempId = projectId.value;
 			projectId.value = String(id);
+			projectsStore.clearEdition(tempId);
 			router.push("/projects/" + projectId.value);
 		} else {
 			addNotification({ message: t("project.Updated"), type: "success" });
@@ -514,7 +520,7 @@ const labelTableauModalItem = ref([
 		},
 	] },
 ]);
-document.querySelector("#view").classList.add("overflow-y-scroll");
+useViewScroll(true);
 </script>
 
 <template>
@@ -526,14 +532,14 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		</RouterLink>
 		<TopButtonEditElement
 			:main-config="{ path: '/projects',
-				create: { showCondition: projectId === 'new' && authStore.hasPermission([0, 1, 2]), loading: projectsStore.projectEdition[projectId]?.loading },
-				update: { showCondition: projectId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: projectsStore.projectEdition[projectId]?.loading },
-				delete: { showCondition: projectId !== 'new' && authStore.hasPermission([0, 1, 2]) }
+				create: { showCondition: isNewId(projectId) && authStore.hasPermission([0, 1, 2]), loading: projectsStore.projectEdition[projectId]?.loading },
+				update: { showCondition: !isNewId(projectId) && authStore.hasPermission([0, 1, 2]), loading: projectsStore.projectEdition[projectId]?.loading },
+				delete: { showCondition: !isNewId(projectId) && authStore.hasPermission([0, 1, 2]) }
 			}"
 			@button-create="projectSave" @button-update="projectSave" @button-delete="projectDeleteModalShow = true"/>
 	</div>
-	<div v-if="projectsStore.projects[projectId] || projectId == 'new'" class="w-full">
-		<RoadMap v-if="projectId !== 'new'"
+	<div v-if="projectsStore.projects[projectId] || isNewId(projectId)" class="w-full">
+		<RoadMap v-if="!isNewId(projectId)"
 			:steps="projectRoadmapSteps"
 			:current-step="projectCurrentStep"
 			mode="horizontal-bottom"
@@ -557,7 +563,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[projectsStore.statusHistory[projectId]]"
 					:loading="projectsStore.statusHistoryLoading"
 					:total-count="Number(projectsStore.statusHistoryTotalCount[projectId])"
-					:fetch-function="projectId !== 'new' ? (limit, offset, expand, filter, sort, clear) => projectsStore.getStatusHistoryByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(projectId) ? (limit, offset, expand, filter, sort, clear) => projectsStore.getStatusHistoryByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
@@ -576,7 +582,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:schema="schemaEditDocument"
 					:loading="projectsStore.documentsLoading"
 					:total-count="Number(projectsStore.documentsTotalCount[projectId])"
-					:fetch-function="projectId !== 'new' ? (limit, offset, expand, filter, sort, clear) => projectsStore.getDocumentByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(projectId) ? (limit, offset, expand, filter, sort, clear) => projectsStore.getDocumentByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -595,13 +601,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:loading="projectsStore.itemsLoading"
 					:schema="schemaItem"
 					:total-count="Number(projectsStore.itemsTotalCount[projectId] || 0)"
-					:fetch-function="projectId !== 'new' ? (limit, offset, expand, filter, sort, clear) => projectsStore.getItemByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(projectId) ? (limit, offset, expand, filter, sort, clear) => projectsStore.getItemByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="project.Comments"
-			:total-count="Number(projectsStore.commentsTotalCount[projectId] || 0)" :permission="projectId !== 'new'">
+			:total-count="Number(projectsStore.commentsTotalCount[projectId] || 0)" :permission="!isNewId(projectId)">
 			<template #append-row>
 				<Comment :meta="{ contenu: 'content_project_comment', key: 'id_project_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[projectsStore.comments[projectId], usersStore.users]"
@@ -609,7 +615,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-function="{ create: (data) => projectsStore.createComment(projectId, data), update: (id, data) => projectsStore.updateComment(projectId, id, data), delete: (id) => projectsStore.deleteComment(projectId, id) }"
 					:loading="projectsStore.commentsLoading" :texte-modal-delete="{ textTitle: 'project.CommentDeleteTitle', textP: 'project.CommentDeleteText' }"
 					:total-count="Number(projectsStore.commentsTotalCount[projectId])"
-					:fetch-function="projectId !== 'new' ? (limit, offset, expand, filter, sort, clear) => projectsStore.getCommentByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(projectId) ? (limit, offset, expand, filter, sort, clear) => projectsStore.getCommentByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
 				/>
 			</template>
 		</CollapsibleSection>
@@ -647,7 +653,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:filters="filterItem"
 				:loading="projectsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
-				:fetch-function="projectId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:fetch-function="!isNewId(projectId) ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

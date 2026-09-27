@@ -11,3 +11,4 @@ export * from "./stores.store";
 export * from "./tags.store";
 export * from "./users.store";
 export * from "./zones.store";
+export * from "./tabs.store";

@@ -1,6 +1,10 @@
 <script setup>
+import { useViewScroll } from "@/composables";
+import { isNewId } from "@/utils";
 import { onMounted, onBeforeUnmount, ref, inject } from "vue";
-import router from "@/router";
+import { useRoute, useRouter } from "vue-router";
+const router = useRouter();
+const route = useRoute();
 
 const { addNotification } = inject("useNotification");
 
@@ -9,8 +13,6 @@ const { t } = useI18n();
 
 import * as Yup from "yup";
 
-import { useRoute } from "vue-router";
-const route = useRoute();
 const tagId = ref(route.params.id);
 const preset = ref(route.query.preset || null);
 
@@ -22,10 +24,14 @@ const itemsStore = useItemsStore();
 const equipementsStore = useEquipementsStore();
 const authStore = useAuthStore();
 
+if (isNewId(tagId.value)) {
+	tagId.value = tagsStore.getAvailableNewTagId();
+}
+
 const formContainer = ref(null);
 
 async function fetchAllData() {
-	if (tagId.value === "new") {
+	if (isNewId(tagId.value)) {
 		tagsStore.loadToEdition(tagId.value, preset.value);
 	} else {
 		tagsStore.setLoadingEdition(tagId.value, true);
@@ -65,9 +71,11 @@ const tagSave = async() => {
 		}
 		const id = await tagsStore.saveAllChanges(tagId.value);
 		tagsStore.loadToEdition(id);
-		if (tagId.value === "new") {
+		if (isNewId(tagId.value)) {
 			addNotification({ message: t("tag.Created"), type: "success" });
+			const tempId = tagId.value;
 			tagId.value = String(id);
+			tagsStore.clearEdition(tempId);
 			router.push("/tags/" + tagId.value);
 		} else {
 			addNotification({ message: t("tag.Updated"), type: "success" });
@@ -487,7 +495,7 @@ const labelTableauModalStore = ref([
 		},
 	] },
 ]);
-document.querySelector("#view").classList.add("overflow-y-scroll");
+useViewScroll(true);
 </script>
 
 <template>
@@ -495,13 +503,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('tag.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/tags',
-				create: { showCondition: tagId === 'new' && authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition[tagId]?.loading },
-				update: { showCondition: tagId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition[tagId]?.loading },
-				delete: { showCondition: tagId !== 'new' && authStore.hasPermission([0, 1, 2]) }
+				create: { showCondition: isNewId(tagId) && authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition[tagId]?.loading },
+				update: { showCondition: !isNewId(tagId) && authStore.hasPermission([0, 1, 2]), loading: tagsStore.tagEdition[tagId]?.loading },
+				delete: { showCondition: !isNewId(tagId) && authStore.hasPermission([0, 1, 2]) }
 			}"
 			@button-create="tagSave" @button-update="tagSave" @button-delete="tagDeleteModalShow = true"/>
 	</div>
-	<div v-if="tagsStore.tags[tagId] || tagId == 'new'" class="w-full">
+	<div v-if="tagsStore.tags[tagId] || isNewId(tagId)" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="tagsStore.tagEdition[tagId]"/>
 		</div>
@@ -517,7 +525,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-ready="tagsStore.tagItemReady[tagId]"
 					:loading="tagsStore.tagsItemLoading"
 					:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)"
-					:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagItemByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(tagId) ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagItemByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -534,7 +542,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-ready="tagsStore.tagStoreReady[tagId]"
 					:loading="tagsStore.tagsStoreLoading"
 					:total-count="Number(tagsStore.tagsStoreTotalCount[tagId] || 0)"
-					:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagStoreByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(tagId) ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagStoreByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -547,7 +555,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-ready="tagsStore.tagBoxReady[tagId]"
 					:loading="tagsStore.tagsBoxLoading"
 					:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)"
-					:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagBoxByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(tagId) ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagBoxByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -564,7 +572,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-ready="tagsStore.tagEquipementReady[tagId]"
 					:loading="tagsStore.tagsEquipementLoading"
 					:total-count="Number(tagsStore.tagsEquipementTotalCount[tagId] || 0)"
-					:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagEquipementByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(tagId) ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagEquipementByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -596,7 +604,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:filters="filterItem"
 				:loading="tagsStore.tagsItemLoading"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
-				:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:fetch-function="!isNewId(tagId) ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
@@ -621,7 +629,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:filters="filterStore"
 				:loading="tagsStore.tagsStoreLoading"
 				:total-count="Number(storesStore.storesTotalCount || 0)"
-				:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => storesStore.getStoreByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:fetch-function="!isNewId(tagId) ? (limit, offset, expand, filter, sort, clear) => storesStore.getStoreByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
@@ -646,7 +654,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:filters="filterEquipement"
 				:loading="tagsStore.tagsEquipementLoading"
 				:total-count="Number(equipementsStore.equipementsTotalCount || 0)"
-				:fetch-function="tagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:fetch-function="!isNewId(tagId) ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

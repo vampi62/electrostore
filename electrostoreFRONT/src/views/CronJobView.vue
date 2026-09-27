@@ -1,6 +1,10 @@
 <script setup>
+import { useViewScroll } from "@/composables";
+import { isNewId } from "@/utils";
 import { onMounted, onBeforeUnmount, ref, computed, inject } from "vue";
-import router from "@/router";
+import { useRoute, useRouter } from "vue-router";
+const router = useRouter();
+const route = useRoute();
 
 const { addNotification } = inject("useNotification");
 
@@ -9,8 +13,6 @@ import * as Yup from "yup";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
-import { useRoute } from "vue-router";
-const route = useRoute();
 const cronJobId = ref(route.params.id);
 const preset = ref(route.query.preset || null);
 
@@ -35,10 +37,14 @@ const cronJobStatusOptions = {
 };
 const cronJobStatusLabel = computed(() => cronJobStatusOptions[cronJobsStore.cronJobEdition[cronJobId.value]?.status_cronjob] ?? "");
 
+if (isNewId(cronJobId.value)) {
+	cronJobId.value = cronJobsStore.getAvailableNewCronJobId();
+}
+
 const formContainer = ref(null);
 
 async function fetchAllData() {
-	if (cronJobId.value === "new") {
+	if (isNewId(cronJobId.value)) {
 		cronJobsStore.loadToEdition(cronJobId.value, preset.value);
 	} else {
 		cronJobsStore.setLoadingEdition(cronJobId.value, true);
@@ -78,9 +84,11 @@ const cronJobSave = async() => {
 		}
 		const id = await cronJobsStore.saveAllChanges(cronJobId.value);
 		cronJobsStore.loadToEdition(id);
-		if (cronJobId.value === "new") {
+		if (isNewId(cronJobId.value)) {
 			addNotification({ message: t("cronJob.Created"), type: "success" });
+			const tempId = cronJobId.value;
 			cronJobId.value = String(id);
+			cronJobsStore.clearEdition(tempId);
 			router.push("/cronjobs/" + cronJobId.value);
 		} else {
 			addNotification({ message: t("cronJob.Updated"), type: "success" });
@@ -164,7 +172,7 @@ const labelForm = [
 	{ key: "status_cronjob", label: "cronJob.Status", type: "computed", value: cronJobStatusLabel, showCondition: "edition?.status_cronjob !== undefined" },
 	{ key: "last_error_cronjob", label: "cronJob.LastError", type: "computed", value: cronJobLastError, showCondition: "edition?.last_error_cronjob" },
 ];
-document.querySelector("#view").classList.add("overflow-y-scroll");
+useViewScroll(true);
 </script>
 
 <template>
@@ -172,16 +180,16 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('cronJob.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/cronjobs',
-				create: { showCondition: cronJobId === 'new' && authStore.hasPermission([2]), loading: cronJobsStore.cronJobEdition[cronJobId]?.loading },
-				update: { showCondition: cronJobId !== 'new' && authStore.hasPermission([2]), loading: cronJobsStore.cronJobEdition[cronJobId]?.loading },
-				delete: { showCondition: cronJobId !== 'new' && authStore.hasPermission([2]) }
+				create: { showCondition: isNewId(cronJobId) && authStore.hasPermission([2]), loading: cronJobsStore.cronJobEdition[cronJobId]?.loading },
+				update: { showCondition: !isNewId(cronJobId) && authStore.hasPermission([2]), loading: cronJobsStore.cronJobEdition[cronJobId]?.loading },
+				delete: { showCondition: !isNewId(cronJobId) && authStore.hasPermission([2]) }
 			}"
 			@button-create="cronJobSave" @button-update="cronJobSave" @button-delete="cronJobDeleteModalShow = true"/>
 	</div>
-	<div v-if="cronJobsStore.cronJobs[cronJobId] || cronJobId == 'new'" class="w-full">
+	<div v-if="cronJobsStore.cronJobs[cronJobId] || isNewId(cronJobId)" class="w-full">
 		<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="cronJobsStore.cronJobEdition[cronJobId]" :store-user="authStore.user"
 			:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
-		<div v-if="cronJobId !== 'new' && authStore.hasPermission([2])" class="flex space-x-2 mt-4">
+		<div v-if="!isNewId(cronJobId) && authStore.hasPermission([2])" class="flex space-x-2 mt-4">
 			<button type="button" @click="cronJobForceRun"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
 				{{ $t('cronJob.ForceRun') }}

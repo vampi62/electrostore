@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
+import { isNewId } from "@/utils";
 
 import { useCommandsStore, useProjectsStore, useEquipementsStore } from "@/stores";
 
@@ -49,6 +50,7 @@ const userResource = createMainResource({
 	stateKey: "users",
 	countKey: "usersTotalCount",
 	loadingKey: "usersLoading",
+	editionKey: "userEdition",
 	onHydrate: (store, entity, expand) => {
 		hydrateUser(store, entity.id_user, entity, expand);
 	},
@@ -147,12 +149,11 @@ export const useUsersStore = defineStore("users",{
 		getUserByInterval: userResource.getByInterval,
 		getUserById: userResource.getById,
 		createUser: userResource.create,
+		getAvailableNewUserId: userResource.getAvailableNewId,
 		updateUser: userResource.update,
 		deleteUser: userResource.remove,
 		loadToEdition(id, preset = null) {
-			this.userEdition[id] = {};
-			userResource.loadEditionPreset(id, preset);
-			if (id !== "new" && this.users[id]) {
+			if (!isNewId(id) && this.users[id]) {
 				this.userEdition[id] = {
 					loading: false,
 					id_user: this.users[id].id_user,
@@ -168,6 +169,7 @@ export const useUsersStore = defineStore("users",{
 				this.userEdition[id] = {
 					loading: false,
 				};
+				userResource.loadEditionPreset.call(this, id, preset);
 			}
 			this.projectCommentEdition[id] = {};
 			this.commandCommentEdition[id] = {};
@@ -187,7 +189,7 @@ export const useUsersStore = defineStore("users",{
 		},
 		async saveAllChanges(id) {
 			let realId = id;
-			if (id === "new") {
+			if (isNewId(id)) {
 				realId = await this.createUser(this.userEdition[id]);
 				this.copyProjectCommentAllId(id, realId);
 				this.copyCommandCommentAllId(id, realId);

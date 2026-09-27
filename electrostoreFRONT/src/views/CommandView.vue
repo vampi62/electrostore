@@ -1,6 +1,10 @@
 <script setup>
+import { useViewScroll } from "@/composables";
+import { downloadFile, viewFile, isNewId } from "@/utils";
 import { onMounted, onBeforeUnmount, ref, inject, computed } from "vue";
-import router from "@/router";
+import { useRoute, useRouter } from "vue-router";
+const router = useRouter();
+const route = useRoute();
 
 const { addNotification } = inject("useNotification");
 
@@ -9,12 +13,8 @@ import * as Yup from "yup";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
-import { useRoute } from "vue-router";
-const route = useRoute();
 const commandId = ref(route.params.id);
 const preset = ref(route.query.preset || null);
-
-import { downloadFile, viewFile } from "@/utils";
 
 import CommandStatus from "@/enums/CommandStatus";
 import TrackingStatus from "@/enums/TrackingStatus";
@@ -28,10 +28,14 @@ const itemsStore = useItemsStore();
 const carriersStore = useCarriersStore();
 const authStore = useAuthStore();
 
+if (isNewId(commandId.value)) {
+	commandId.value = commandsStore.getAvailableNewCommandId();
+}
+
 const formContainer = ref(null);
 
 async function fetchAllData() {
-	if (commandId.value === "new") {
+	if (isNewId(commandId.value)) {
 		if (Object.keys(carriersStore.carriers).length === 0) {
 			carriersStore.getCarrierByInterval(200, 0, "", "", false);
 		}
@@ -218,9 +222,11 @@ const commandSave = async() => {
 		}
 		const id = await commandsStore.saveAllChanges(commandId.value);
 		commandsStore.loadToEdition(id);
-		if (commandId.value === "new") {
+		if (isNewId(commandId.value)) {
 			addNotification({ message: t("command.Created"), type: "success" });
+			const tempId = commandId.value;
 			commandId.value = String(id);
+			commandsStore.clearEdition(tempId);
 			router.push("/commands/" + commandId.value);
 		} else {
 			addNotification({ message: t("command.Updated"), type: "success" });
@@ -311,7 +317,7 @@ const trackingRefresh = async() => {
 };
 const trackingOptionalConfig = computed(() => {
 	const ed = commandsStore.commandEdition[commandId.value];
-	const base = commandId.value !== "new" && !!ed?.tracking_number_command && !!ed?.id_carrier;
+	const base = !isNewId(commandId.value) && !!ed?.tracking_number_command && !!ed?.id_carrier;
 	return [
 		{
 			label: "command.TrackingActivate",
@@ -703,22 +709,22 @@ const labelTableauModalItem = ref([
 		},
 	] },
 ]);
-document.querySelector("#view").classList.add("overflow-y-scroll");
+useViewScroll(true);
 </script>
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('command.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/commands',
-				create: { showCondition: commandId === 'new' && authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition[commandId]?.loading },
-				update: { showCondition: commandId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition[commandId]?.loading },
-				delete: { showCondition: commandId !== 'new' && authStore.hasPermission([0, 1, 2]) }
+				create: { showCondition: isNewId(commandId) && authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition[commandId]?.loading },
+				update: { showCondition: !isNewId(commandId) && authStore.hasPermission([0, 1, 2]), loading: commandsStore.commandEdition[commandId]?.loading },
+				delete: { showCondition: !isNewId(commandId) && authStore.hasPermission([0, 1, 2]) }
 			}"
 			:optional-config="trackingOptionalConfig"
 			@button-create="commandSave" @button-update="commandSave" @button-delete="commandDeleteModalShow = true"/>
 	</div>
-	<div v-if="commandsStore.commands[commandId] || commandId == 'new'" class="w-full">
-		<RoadMap v-if="commandId !== 'new'"
+	<div v-if="commandsStore.commands[commandId] || isNewId(commandId)" class="w-full">
+		<RoadMap v-if="!isNewId(commandId)"
 			:steps="commandRoadmapSteps"
 			:current-step="commandCurrentStep"
 			:step-colors="commandRoadmapStepColors"
@@ -727,7 +733,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="commandsStore.commandEdition[commandId]" />
 			<RoadMap
-				v-if="commandId !== 'new' && commandsStore.commandEdition[commandId]?.last_status_command !== null && commandsStore.commandEdition[commandId]?.last_status_command !== undefined"
+				v-if="!isNewId(commandId) && commandsStore.commandEdition[commandId]?.last_status_command !== null && commandsStore.commandEdition[commandId]?.last_status_command !== undefined"
 				:steps="trackingRoadmapSteps"
 				:current-step="trackingCurrentStep"
 				:step-colors="trackingRoadmapStepColors"
@@ -749,7 +755,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:schema="schemaEditDocument"
 					:loading="commandsStore.documentsLoading"
 					:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)"
-					:fetch-function="commandId !== 'new' ? (limit, offset, expand, filter, sort, clear) => commandsStore.getDocumentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(commandId) ? (limit, offset, expand, filter, sort, clear) => commandsStore.getDocumentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -768,13 +774,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:schema="schemaItem"
 					:loading="commandsStore.itemsLoading"
 					:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)"
-					:fetch-function="commandId !== 'new' ? (limit, offset, expand, filter, sort, clear) => commandsStore.getItemByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(commandId) ? (limit, offset, expand, filter, sort, clear) => commandsStore.getItemByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="command.Comments"
-			:total-count="Number(commandsStore.commentsTotalCount[commandId] || 0)" :permission="commandId !== 'new'">
+			:total-count="Number(commandsStore.commentsTotalCount[commandId] || 0)" :permission="!isNewId(commandId)">
 			<template #append-row>
 				<Comment :meta="{ contenu: 'content_command_comment', key: 'id_command_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[commandsStore.comments[commandId], usersStore.users]"
@@ -782,7 +788,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-function="{ create: (data) => commandsStore.createComment(commandId, data), update: (id, data) => commandsStore.updateComment(commandId, id, data), delete: (id) => commandsStore.deleteComment(commandId, id) }"
 					:loading="commandsStore.commentsLoading" :texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"
 					:total-count="Number(commandsStore.commentsTotalCount[commandId] || 0)"
-					:fetch-function="commandId !== 'new' ? (limit, offset, expand, filter, sort, clear) => commandsStore.getCommentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(commandId) ? (limit, offset, expand, filter, sort, clear) => commandsStore.getCommentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
 				/>
 			</template>
 		</CollapsibleSection>
@@ -820,7 +826,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:filters="filterItem"
 				:loading="commandsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
-				:fetch-function="commandId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:fetch-function="!isNewId(commandId) ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

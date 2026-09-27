@@ -1,6 +1,10 @@
 <script setup>
+import { useViewScroll } from "@/composables";
+import { downloadFile, viewFile, isNewId } from "@/utils";
 import { onMounted, onBeforeUnmount, ref, computed, inject } from "vue";
-import router from "@/router";
+import { useRoute, useRouter } from "vue-router";
+const router = useRouter();
+const route = useRoute();
 
 const { addNotification } = inject("useNotification");
 
@@ -9,12 +13,8 @@ import * as Yup from "yup";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
-import { useRoute } from "vue-router";
-const route = useRoute();
 const itemId = ref(route.params.id);
 const preset = ref(route.query.preset || null);
-
-import { downloadFile, viewFile } from "@/utils";
 
 import { ItemHistoryType } from "@/enums";
 
@@ -28,10 +28,14 @@ const projectsStore = useProjectsStore();
 const authStore = useAuthStore();
 const usersStore = useUsersStore();
 
+if (isNewId(itemId.value)) {
+	itemId.value = itemsStore.getAvailableNewItemId();
+}
+
 const formContainer = ref(null);
 
 async function fetchAllData() {
-	if (itemId.value === "new") {
+	if (isNewId(itemId.value)) {
 		itemsStore.loadToEdition(itemId.value, preset.value);
 	} else {
 		itemsStore.setLoadingEdition(itemId.value, true);
@@ -85,9 +89,11 @@ const itemSave = async() => {
 		itemsStore.itemEdition[itemId.value].isFormData = true;
 		const id = await itemsStore.saveAllChanges(itemId.value);
 		itemsStore.loadToEdition(id);
-		if (itemId.value === "new") {
+		if (isNewId(itemId.value)) {
 			addNotification({ message: t("item.Created"), type: "success" });
+			const tempId = itemId.value;
 			itemId.value = String(id);
+			itemsStore.clearEdition(tempId);
 			router.push("/inventory/" + itemId.value);
 		} else {
 			addNotification({ message: t("item.Updated"), type: "success" });
@@ -111,7 +117,7 @@ const itemDelete = async() => {
 };
 
 const getTotalQuantity = computed(() => {
-	if (itemId.value === "new") {
+	if (isNewId(itemId.value)) {
 		return 0;
 	}
 	return itemsStore.itemBoxs[itemId.value] ? Object.values(itemsStore.itemBoxs[itemId.value]).reduce((acc, box) => acc + box.quantity_item_box, 0) : 0;
@@ -523,7 +529,7 @@ const labelTableauProject = ref([
 
 	{ label: "item.ProjectQuantity", sortable: true, key: "quantity_project_item", valueKey: "quantity_project_item", type: "number" },
 ]);
-document.querySelector("#view").classList.add("overflow-y-scroll");
+useViewScroll(true);
 </script>
 
 <template>
@@ -531,13 +537,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('item.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/inventory',
-				create: { showCondition: itemId === 'new' && authStore.hasPermission([0, 1, 2]), loading: itemsStore.itemEdition[itemId]?.loading },
-				update: { showCondition: itemId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: itemsStore.itemEdition[itemId]?.loading },
-				delete: { showCondition: itemId !== 'new' && authStore.hasPermission([0, 1, 2]) }
+				create: { showCondition: isNewId(itemId) && authStore.hasPermission([0, 1, 2]), loading: itemsStore.itemEdition[itemId]?.loading },
+				update: { showCondition: !isNewId(itemId) && authStore.hasPermission([0, 1, 2]), loading: itemsStore.itemEdition[itemId]?.loading },
+				delete: { showCondition: !isNewId(itemId) && authStore.hasPermission([0, 1, 2]) }
 			}"
 			@button-create="itemSave" @button-update="itemSave" @button-delete="itemDeleteModalShow = true"/>
 	</div>
-	<div v-if="itemsStore.items[itemId] || itemId == 'new'" class="w-full">
+	<div v-if="itemsStore.items[itemId] || isNewId(itemId)" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="itemsStore.itemEdition[itemId]">
 				<template #img_file>
@@ -586,7 +592,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:loading="itemsStore.itemBoxsLoading"
 					:schema="schemaBox"
 					:total-count="Number(itemsStore.itemBoxsTotalCount[itemId])"
-					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemBoxByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(itemId) ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemBoxByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -605,7 +611,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:schema="schemaEditDocument"
 					:loading="itemsStore.documentsLoading"
 					:total-count="Number(itemsStore.documentsTotalCount[itemId])"
-					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getDocumentByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(itemId) ? (limit, offset, expand, filter, sort, clear) => itemsStore.getDocumentByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -617,7 +623,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[itemsStore.itemCommands[itemId],commandsStore.commands]"
 					:loading="itemsStore.itemCommandsLoading"
 					:total-count="Number(itemsStore.itemCommandsTotalCount[itemId])"
-					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemCommandByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(itemId) ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemCommandByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
@@ -629,7 +635,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[itemsStore.itemProjects[itemId],projectsStore.projects]"
 					:loading="itemsStore.itemProjectsLoading"
 					:total-count="Number(itemsStore.itemProjectsTotalCount[itemId])"
-					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemProjectByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(itemId) ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemProjectByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
@@ -641,7 +647,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-data="[itemsStore.itemHistory[itemId], usersStore.users]"
 					:loading="itemsStore.itemHistoryLoading"
 					:total-count="Number(itemsStore.itemHistoryTotalCount[itemId])"
-					:fetch-function="itemId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemHistoryByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(itemId) ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemHistoryByInterval(itemId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>

@@ -1,6 +1,8 @@
 <script setup>
+import { useViewScroll } from "@/composables";
 import { ref, inject } from "vue";
-import router from "@/router";
+import { useRouter } from "vue-router";
+const router = useRouter();
 
 const { addNotification } = inject("useNotification");
 
@@ -39,7 +41,7 @@ const tableauMeta = ref({
 	stateKey: "usersTableState",
 });
 const filterReady = ref(false);
-document.querySelector("#view").classList.remove("overflow-y-scroll");
+useViewScroll(false);
 </script>
 
 <template>

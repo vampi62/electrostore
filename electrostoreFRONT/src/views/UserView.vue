@@ -1,6 +1,10 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, inject, watch } from "vue";
-import router from "@/router";
+import { useViewScroll } from "@/composables";
+import { isNewId } from "@/utils";
+import { onMounted, onBeforeUnmount, ref, inject } from "vue";
+import { useRoute, useRouter } from "vue-router";
+const router = useRouter();
+const route = useRoute();
 
 const { addNotification } = inject("useNotification");
 
@@ -9,8 +13,6 @@ const { t } = useI18n();
 
 import * as Yup from "yup";
 
-import { useRoute } from "vue-router";
-const route = useRoute();
 const userId = ref(route.params.id);
 const preset = ref(route.query.preset || null);
 
@@ -22,13 +24,17 @@ const projectsStore = useProjectsStore();
 const equipementsStore = useEquipementsStore();
 const authStore = useAuthStore();
 
+if (isNewId(userId.value)) {
+	userId.value = usersStore.getAvailableNewUserId();
+}
+
 const formContainer = ref(null);
 
 import { UserRole } from "@/enums";
 
 if ((!authStore.hasPermission([1, 2])) && authStore.user?.id_user !== Number(userId.value)) {
 	addNotification({ message: t("user.noAccess"), type: "error" });
-	if (window.history.length > 1) {
+	if (router.options.history.state?.back) {
 		router.back();
 	} else {
 		router.push("/");
@@ -36,7 +42,7 @@ if ((!authStore.hasPermission([1, 2])) && authStore.user?.id_user !== Number(use
 }
 
 async function fetchAllData() {
-	if (userId.value === "new") {
+	if (isNewId(userId.value)) {
 		usersStore.loadToEdition(userId.value, preset.value);
 	} else {
 		usersStore.setLoadingEdition(userId.value, true);
@@ -45,7 +51,7 @@ async function fetchAllData() {
 		} catch {
 			delete usersStore.users[userId.value];
 			addNotification({ message: t("user.NotFound"), type: "error" });
-			if (window.history.length > 1) {
+			if (router.options.history.state?.back) {
 				router.back();
 			} else {
 				router.push("/");
@@ -79,7 +85,7 @@ const userSave = async() => {
 			usersStore.setLoadingEdition(userId.value, false);
 			return;
 		}
-		if (userId.value === "new") {
+		if (isNewId(userId.value)) {
 			const data = { ...usersStore.userEdition[userId.value] };
 			if (authStore.user?.isSSOUser) {
 				delete data.current_password_user;
@@ -87,7 +93,9 @@ const userSave = async() => {
 			const newId = await usersStore.createUser(data);
 			usersStore.loadToEdition(newId);
 			addNotification({ message: t("user.Created"), type: "success" });
+			const tempId = userId.value;
 			userId.value = String(newId);
+			usersStore.clearEdition(tempId);
 			router.push("/users/" + userId.value);
 		} else {
 			const data = { ...usersStore.userEdition[userId.value] };
@@ -210,7 +218,7 @@ const labelTableauSession = ref([
 		},
 	] },
 ]);
-document.querySelector("#view").classList.add("overflow-y-scroll");
+useViewScroll(true);
 
 // --- Push Notifications ---
 const pushSupported = typeof window !== "undefined" && "PushManager" in window && "serviceWorker" in navigator && typeof Notification !== "undefined";
@@ -231,7 +239,7 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 async function checkExistingSubscription() {
-	if (!pushSupported || userId.value === "new") {
+	if (!pushSupported || isNewId(userId.value)) {
 		pushSubscriptionId.value = null;
 		return;
 	}
@@ -377,59 +385,59 @@ onMounted(() => {
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('user.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/users',
-				create: { sameUserId: true, showCondition: userId === 'new' && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
-				update: { sameUserId: true, showCondition: userId !== 'new' && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
-				delete: { sameUserId: true, showCondition: userId !== 'new' && authStore.hasPermission([1, 2]) }
+				create: { sameUserId: true, showCondition: isNewId(userId) && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
+				update: { sameUserId: true, showCondition: !isNewId(userId) && authStore.hasPermission([1, 2]), loading: usersStore.userEdition[userId]?.loading },
+				delete: { sameUserId: true, showCondition: !isNewId(userId) && authStore.hasPermission([1, 2]) }
 			}"
 			@button-create="userSave" @button-update="userSave" @button-delete="userDeleteModalShow = true"/>
 	</div>
-	<div v-if="usersStore.users[userId] || userId == 'new'" class="w-full">
+	<div v-if="usersStore.users[userId] || isNewId(userId)" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="usersStore.userEdition[userId]" :store-user="authStore.user"
 				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
 		</div>
-		<CollapsibleSection title="user.Participation" :permission="userId !=='new'">
+		<CollapsibleSection title="user.Participation" :permission="!isNewId(userId)">
 			<template #append-row>
 				<CollapsibleSection title="user.CommandsComments" :disable-margin="true"
-					:total-count="Number(usersStore.commandsCommentTotalCount[userId] || 0)" :permission="userId !=='new'">
+					:total-count="Number(usersStore.commandsCommentTotalCount[userId] || 0)" :permission="!isNewId(userId)">
 					<template #append-row>
 						<Comment :meta="{ link: '/commands/', idRessource: 'id_command', contenu: 'content_command_comment', key: 'id_command_comment', canEdit: false, roleRequired: false, expand: ['command'] }"
 							:store-data="[usersStore.commandsComment[userId], usersStore.users]"
 							:store-user="authStore.user" :store-config="configsStore"
 							:loading="usersStore.commandsCommentLoading"
 							:total-count="Number(usersStore.commandsCommentTotalCount[userId]) || 0"
-							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getCommandCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+							:fetch-function="!isNewId(userId) ? (limit, offset, expand, filter, sort, clear) => usersStore.getCommandCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>
 				<CollapsibleSection title="user.ProjectsComments" :disable-margin="true"
-					:total-count="Number(usersStore.projectsCommentTotalCount[userId] || 0)" :permission="userId !=='new'">
+					:total-count="Number(usersStore.projectsCommentTotalCount[userId] || 0)" :permission="!isNewId(userId)">
 					<template #append-row>
 						<Comment :meta="{ link: '/projects/', idRessource: 'id_project', contenu: 'content_project_comment', key: 'id_project_comment', canEdit: false, roleRequired: false, expand: ['project'] }"
 							:store-data="[usersStore.projectsComment[userId], usersStore.users]"
 							:store-user="authStore.user" :store-config="configsStore"
 							:loading="usersStore.projectsCommentLoading"
 							:total-count="Number(usersStore.projectsCommentTotalCount[userId]) || 0"
-							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getProjectCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+							:fetch-function="!isNewId(userId) ? (limit, offset, expand, filter, sort, clear) => usersStore.getProjectCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>
 				<CollapsibleSection title="user.EquipementsComments" :disable-margin="true"
-					:total-count="Number(usersStore.equipementsCommentTotalCount[userId] || 0)" :permission="userId !=='new'">
+					:total-count="Number(usersStore.equipementsCommentTotalCount[userId] || 0)" :permission="!isNewId(userId)">
 					<template #append-row>
 						<Comment :meta="{ link: '/equipements/', idRessource: 'id_equipement', contenu: 'content_equipement_comment', key: 'id_equipement_comment', canEdit: false, roleRequired: false, expand: ['equipement'] }"
 							:store-data="[usersStore.equipementsComment[userId], equipementsStore.equipements]"
 							:store-user="authStore.user" :store-config="configsStore"
 							:loading="usersStore.equipementsCommentLoading"
 							:total-count="Number(usersStore.equipementsCommentTotalCount[userId]) || 0"
-							:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getEquipementCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+							:fetch-function="!isNewId(userId) ? (limit, offset, expand, filter, sort, clear) => usersStore.getEquipementCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="user.Tokens"
-			:total-count="Number(usersStore.tokensTotalCount[userId] || 0)" :permission="userId !=='new'">
+			:total-count="Number(usersStore.tokensTotalCount[userId] || 0)" :permission="!isNewId(userId)">
 			<template #append-row>
 				<FilterContainer class="my-4 flex gap-4" :filters="filterSession" :store-data="usersStore.tokens[userId]" />
 				<Tableau :labels="labelTableauSession" :meta="{ key: 'session_id' }"
@@ -437,13 +445,13 @@ onMounted(() => {
 					:filters="filterSession"
 					:loading="usersStore.tokensLoading"
 					:total-count="Number(usersStore.tokensTotalCount[userId]) || 0"
-					:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getTokenByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(userId) ? (limit, offset, expand, filter, sort, clear) => usersStore.getTokenByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'min-h-64 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
 		</CollapsibleSection>
 		<CollapsibleSection title="user.PushNotifications"
-			:total-count="Number(usersStore.pushSubscriptionsTotalCount[userId] || 0)" :permission="userId !== 'new'"
+			:total-count="Number(usersStore.pushSubscriptionsTotalCount[userId] || 0)" :permission="!isNewId(userId)"
 			v-if="configsStore.getStatusByKey('notif_web_push')">
 			<template #append-row>
 				<div v-if="notificationPermission === 'denied'" class="flex items-center gap-2 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 mb-2">
@@ -488,7 +496,7 @@ onMounted(() => {
 					:store-data="[usersStore.pushSubscriptions[userId]]"
 					:loading="usersStore.pushSubscriptionsLoading"
 					:total-count="Number(usersStore.pushSubscriptionsTotalCount[userId]) || 0"
-					:fetch-function="userId !== 'new' ? (limit, offset, expand, filter, sort, clear) => usersStore.getPushSubscriptionsByInterval(userId, limit, offset, clear) : undefined"
+					:fetch-function="!isNewId(userId) ? (limit, offset, expand, filter, sort, clear) => usersStore.getPushSubscriptionsByInterval(userId, limit, offset, clear) : undefined"
 					:tableau-css="{ component: 'min-h-32 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>

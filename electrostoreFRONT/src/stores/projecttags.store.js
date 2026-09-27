@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { createMainResource, createNestedResource } from "@/helpers";
+import { isNewId } from "@/utils";
 
 import { useProjectsStore } from "@/stores";
 
@@ -28,6 +29,7 @@ const projectTagResource = createMainResource({
 	stateKey: "projectTags",
 	countKey: "projectTagsTotalCount",
 	loadingKey: "projectTagsLoading",
+	editionKey: "projectTagEdition",
 	onHydrate: (store, entity, expand) => {
 		hydrateProjectTag(store, entity.id_project_tag, entity, expand);
 	},
@@ -67,13 +69,12 @@ export const useProjectTagsStore = defineStore("projectTags",{
 		getProjectTagByInterval: projectTagResource.getByInterval,
 		getProjectTagById: projectTagResource.getById,
 		createProjectTag: projectTagResource.create,
+		getAvailableNewProjectTagId: projectTagResource.getAvailableNewId,
 		updateProjectTag: projectTagResource.update,
 		deleteProjectTag: projectTagResource.remove,
 		createProjectTagBulk: projectTagResource.createBulk,
 		loadToEdition(id, preset = null) {
-			this.projectTagEdition[id] = {};
-			projectTagResource.loadEditionPreset(id, preset);
-			if (id !== "new" && this.projectTags[id]) {
+			if (!isNewId(id) && this.projectTags[id]) {
 				this.projectTagEdition[id] = {
 					loading: false,
 					name_project_tag: this.projectTags[id].name_project_tag,
@@ -83,6 +84,7 @@ export const useProjectTagsStore = defineStore("projectTags",{
 				this.projectTagEdition[id] = {
 					loading: false,
 				};
+				projectTagResource.loadEditionPreset.call(this, id, preset);
 			}
 			this.projectTagProjectEdition[id] = {};
 			this.projectTagProjectReady[id] = {};
@@ -100,7 +102,7 @@ export const useProjectTagsStore = defineStore("projectTags",{
 		},
 		async saveAllChanges(id) {
 			let realId = id;
-			if (id === "new") {
+			if (isNewId(id)) {
 				realId = await this.createProjectTag(this.projectTagEdition[id]);
 				this.copyProjectTagProjectAllId(id, realId);
 			} else {

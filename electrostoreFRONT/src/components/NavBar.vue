@@ -1,20 +1,15 @@
 <template>
-	<nav class="flex justify-between p-5 bg-gray-800 border-b-2 border-blue-400 fixed w-full top-0 h-16">
-		<div class="flex items-center space-x-4">
-			<RouterLink to="/" class="text-white hover:text-blue-400">{{ $t('common.VAppHome') }}</RouterLink>
+	<nav class="flex items-center justify-between gap-4 px-5 bg-gray-800 border-b-2 border-blue-400 fixed w-full top-0 h-16 z-10">
+		<div class="flex items-center space-x-4 flex-shrink-0">
+			<a href="/" class="text-white hover:text-blue-400" @click.prevent="openView($event, '/')"
+				@auxclick.middle.prevent="openView($event, '/')">{{ $t('common.VAppHome') }}</a>
 		</div>
-		<div v-if="configsStore.getConfigByKey('demo_mode') === true" class="text-red-500 text-center">
+		<NavTabs />
+		<div v-if="configsStore.getConfigByKey('demo_mode') === true" class="hidden sm:block text-red-500 text-center flex-shrink-0">
 			{{ $t('common.VAppDemoMode') }}
 		</div>
-		<a href="https://github.com/vampi62/electrostore" class="block sm:hidden text-white hover:text-blue-400"
-			target="_blank" rel="noopener noreferrer"><!-- for mobile -->
-			<p class="space-x-4">
-				<font-awesome-icon icon="fa-brands fa-github" size="lg" />
-				<span>ElectroStore</span>
-			</p>
-		</a>
 		<button @click="showTopBar = !showTopBar"
-			class="block sm:hidden text-white hover:text-blue-400"><!-- for mobile -->
+			class="block sm:hidden flex-shrink-0 text-white hover:text-blue-400"><!-- for mobile -->
 			<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
 				xmlns="http://www.w3.org/2000/svg">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -22,7 +17,7 @@
 				</path>
 			</svg>
 		</button>
-		<div class="hidden sm:flex"><!-- for desktop -->
+		<div class="hidden sm:flex flex-shrink-0"><!-- for desktop -->
 			<div class="flex space-x-4 justify-end">
 				<div class="flex items-center space-x-4">
 					<button
@@ -34,13 +29,16 @@
 						<span>{{ $t('common.VAppInstall') }}</span>
 					</button>
 				</div>
-				<RouterLink :to="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400">
+				<a :href="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400"
+					@click.prevent="openView($event, '/users/' + authStore.user?.id_user)"
+					@auxclick.middle.prevent="openView($event, '/users/' + authStore.user?.id_user)">
 					{{ $t('common.VAppProfile') }}
-				</RouterLink>
-				<RouterLink v-if="authStore.hasPermission([1, 2])" to="/users"
-					class="text-white hover:text-blue-400">
+				</a>
+				<a v-if="authStore.hasPermission([1, 2])" href="/users"
+					class="text-white hover:text-blue-400" @click.prevent="openView($event, '/users')"
+					@auxclick.middle.prevent="openView($event, '/users')">
 					{{ $t('common.VAppAdmin') }}
-				</RouterLink>
+				</a>
 				<button v-if="authStore.user" @click="authStore.logout()"
 					class="cursor-pointer text-white hover:text-blue-400">
 					{{ $t('common.VAppLogout') }}
@@ -64,13 +62,14 @@
 					<span>{{ $t('common.VAppInstall') }}</span>
 				</button>
 			</div>
-			<RouterLink :to="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400">
+			<a :href="'/users/' + authStore.user?.id_user" class="text-white hover:text-blue-400"
+				@click.prevent="openView($event, '/users/' + authStore.user?.id_user)">
 				{{ $t('common.VAppProfile') }}
-			</RouterLink>
-			<RouterLink v-if="authStore.hasPermission([1, 2])" to="/users"
-				class="text-white hover:text-blue-400">
+			</a>
+			<a v-if="authStore.hasPermission([1, 2])" href="/users"
+				class="text-white hover:text-blue-400" @click.prevent="openView($event, '/users')">
 				{{ $t('common.VAppAdmin') }}
-			</RouterLink>
+			</a>
 			<button v-if="authStore.user" @click="authStore.logout()"
 				class="cursor-pointer text-white hover:text-blue-400 text-left">
 				{{ $t('common.VAppLogout') }}
@@ -83,11 +82,11 @@
 			<ul class="mt-6 space-y-4">
 				<li v-for="nav in listNavShown" :key="nav.name">
 					<template v-if="!nav.enableCondition || eval(nav.enableCondition)">
-						<RouterLink :to="nav.path" :class="['flex items-center space-x-4 hover:text-blue-400',
-							route.path.includes(nav.path) ? 'text-blue-400' : 'text-white']">
+						<a :href="nav.path" :class="['flex items-center space-x-4 hover:text-blue-400',
+							isActive(nav.path) ? 'text-blue-400' : 'text-white']" @click.prevent="openView($event, nav.path)">
 							<font-awesome-icon :icon="nav.faIcon" />
 							<span>{{ $t(nav.name) }}</span>
-						</RouterLink>
+						</a>
 					</template>
 					<template v-else>
 						<div class="flex items-center space-x-4 text-gray-500 cursor-not-allowed">
@@ -97,6 +96,16 @@
 					</template>
 				</li>
 			</ul>
+			<div v-if="configsStore.getConfigByKey('demo_mode') === true" class="text-red-500 text-center">
+				{{ $t('common.VAppDemoMode') }}
+			</div>
+			<a href="https://github.com/vampi62/electrostore" class="text-white hover:text-blue-400"
+				target="_blank" rel="noopener noreferrer">
+				<p class="space-x-4">
+					<font-awesome-icon icon="fa-brands fa-github" size="lg" />
+					<span>ElectroStore</span>
+				</p>
+			</a>
 		</div>
 	</div>
 	<div :class="['hidden sm:flex flex-col justify-between p-4 bg-gray-800 fixed left-0 top-16 bottom-12',
@@ -105,13 +114,14 @@
 			<ul class="mt-2 space-y-4">
 				<li v-for="nav in listNavShown" :key="nav.name" class="min-h-6">
 					<template v-if="!nav.enableCondition || eval(nav.enableCondition)">
-						<RouterLink :to="nav.path" :class="['flex items-center space-x-4 hover:text-blue-400',
-							route.path.includes(nav.path) ? 'text-blue-400' : 'text-white']">
+						<a :href="nav.path" :class="['flex items-center space-x-4 hover:text-blue-400',
+							isActive(nav.path) ? 'text-blue-400' : 'text-white']" @click.prevent="openView($event, nav.path)"
+							@auxclick.middle.prevent="openView($event, nav.path)">
 							<div class="flex items-center justify-center w-8 h-8">
 								<font-awesome-icon :icon="nav.faIcon" size="lg" />
 							</div>
 							<span v-if="!reduceLeftSideBar" class="whitespace-nowrap">{{ $t(nav.name) }}</span>
-						</RouterLink>
+						</a>
 					</template>
 					<template v-else>
 						<div class="flex items-center space-x-4 text-gray-500 cursor-not-allowed">
@@ -145,8 +155,7 @@
 </template>
 
 <script>
-import { useRoute } from "vue-router";
-import { useAuthStore, useConfigsStore } from "@/stores";
+import { useAuthStore, useConfigsStore, useTabsStore } from "@/stores";
 export default {
 	name: "NavBar",
 	props: {
@@ -174,10 +183,10 @@ export default {
 		};
 	},
 	setup() {
-		const route = useRoute();
 		const authStore = useAuthStore();
 		const configsStore = useConfigsStore();
-		return { route, authStore, configsStore };
+		const tabsStore = useTabsStore();
+		return { authStore, configsStore, tabsStore };
 	},
 	emits: ["update:reduceLeftSideBar", "showAboutModal"],
 	mounted() {
@@ -189,6 +198,19 @@ export default {
 		window.removeEventListener("appinstalled", this.onAppInstalled);
 	},
 	methods: {
+		// the view of a menu entry is displayed in the selected tab, or in a new tab with ctrl/middle click
+		openView(event, path) {
+			if (event.ctrlKey || event.metaKey || event.button === 1) {
+				this.tabsStore.open(path);
+			} else {
+				this.tabsStore.navigate(path);
+			}
+			this.showTopBar = false;
+		},
+		isActive(path) {
+			const activePath = (this.tabsStore.activeTab?.fullPath || "").split("?")[0];
+			return activePath === path || activePath.startsWith(path + "/");
+		},
 		onBeforeInstallPrompt(e) {
 			e.preventDefault();
 			this.installEvent = e;

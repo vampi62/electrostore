@@ -1,4 +1,5 @@
 <script setup>
+import { useViewScroll } from "@/composables";
 import { ref } from "vue";
 
 import { useProjectTagsStore } from "@/stores";
@@ -21,7 +22,7 @@ const tableauMeta = ref({
 	stateKey: "projectTagsTableState",
 });
 const filterReady = ref(false);
-document.querySelector("#view").classList.remove("overflow-y-scroll");
+useViewScroll(false);
 </script>
 
 <template>

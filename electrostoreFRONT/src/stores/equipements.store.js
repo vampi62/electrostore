@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { buildFormData, fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
+import { isNewId } from "@/utils";
 
 import { useTagsStore, useStoresStore, useUsersStore } from "@/stores";
 
@@ -44,6 +45,7 @@ const equipementResource = createMainResource({
 	stateKey: "equipements",
 	countKey: "equipementsTotalCount",
 	loadingKey: "equipementsLoading",
+	editionKey: "equipementEdition",
 	onHydrate: (store, entity, expand) => {
 		hydrateEquipement(store, entity.id_equipement, entity, expand);
 	},
@@ -179,12 +181,11 @@ export const useEquipementsStore = defineStore("equipements", {
 		getEquipementByInterval: equipementResource.getByInterval,
 		getEquipementById: equipementResource.getById,
 		createEquipement: equipementResource.create,
+		getAvailableNewEquipementId: equipementResource.getAvailableNewId,
 		updateEquipement: equipementResource.update,
 		deleteEquipement: equipementResource.remove,
 		loadToEdition(id, preset = null) {
-			this.equipementEdition[id] = {};
-			equipementResource.loadEditionPreset(id, preset);
-			if (id !== "new" && this.equipements[id]) {
+			if (!isNewId(id) && this.equipements[id]) {
 				this.equipementEdition[id] = {
 					loading: false,
 					reference_name_equipement: this.equipements[id].reference_name_equipement,
@@ -198,6 +199,7 @@ export const useEquipementsStore = defineStore("equipements", {
 					loading: false,
 					status_equipement: 0,
 				};
+				equipementResource.loadEditionPreset.call(this, id, preset);
 			}
 			this.equipementTagEdition[id] = {};
 			this.equipementTagReady[id] = {};
@@ -229,7 +231,7 @@ export const useEquipementsStore = defineStore("equipements", {
 			let realId = id;
 			const { isFormData, ...data } = this.equipementEdition[id];
 			const imageChanged = !!data.img_file || !!data.unset_img_equipement;
-			if (id === "new") {
+			if (isNewId(id)) {
 				realId = await this.createEquipement(isFormData ? buildFormData(data) : data);
 				this.copyEquipementTagAllId(id, realId);
 				this.copyEquipementBoxAllId(id, realId);

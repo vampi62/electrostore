@@ -1,64 +1,27 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 import { useAuthStore } from "@/stores";
+import { publicPages, handleRouterError } from "./routes";
 
+// The global router only handles the public pages (login, register...) and the browser url.
+// Every authenticated page is displayed inside a tab, each tab owns its own router (see tabs.store.js),
+// so every path that is not a public page matches the "app" route.
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
 	linkActiveClass: "active",
 	routes: [
-		{ path: "/", component: () => import("@/views/HomeView.vue") },
 		{ path: "/auth/callback", component: () => import("@/views/CallbackView.vue") },
-		{ path: "/cronjobs", component: () => import("@/views/CronJobsView.vue") },
-		{ path: "/cronjobs/:id", component: () => import("@/views/CronJobView.vue") },
-		{ path: "/equipements", component: () => import("@/views/EquipementsView.vue") },
-		{ path: "/equipements/:id", component: () => import("@/views/EquipementView.vue") },
-		{ path: "/commands", component: () => import("@/views/CommandsView.vue") },
-		{ path: "/commands/:id", component: () => import("@/views/CommandView.vue") },
 		{ path: "/forgot-password", component: () => import("@/views/ForgotPasswordView.vue") },
-		{ path: "/health", component: () => import("@/views/HealthView.vue") },
-		{ path: "/inventory", component: () => import("@/views/InventoryView.vue") },
-		{ path: "/inventory/:id", component: () => import("@/views/ItemView.vue") },
 		{ path: "/login", component: () => import("@/views/LoginView.vue") },
-		{ path: "/profile", component: () => import("@/views/HomeView.vue") },
-		{ path: "/project-tags", component: () => import("@/views/ProjectTagsView.vue") },
-		{ path: "/project-tags/:id", component: () => import("@/views/ProjectTagView.vue") },
-		{ path: "/projects", component: () => import("@/views/ProjectsView.vue") },
-		{ path: "/projects/:id", component: () => import("@/views/ProjectView.vue") },
 		{ path: "/reset-password", component: () => import("@/views/ResetPasswordView.vue") },
 		{ path: "/register", component: () => import("@/views/RegisterView.vue") },
-		{ path: "/stores", component: () => import("@/views/StoresView.vue") },
-		{ path: "/stores/:id", component: () => import("@/views/StoreView.vue") },
-		{ path: "/tags", component: () => import("@/views/TagsView.vue") },
-		{ path: "/tags/:id", component: () => import("@/views/TagView.vue") },
-		{ path: "/users", component: () => import("@/views/UsersView.vue") },
-		{ path: "/users/:id", component: () => import("@/views/UserView.vue") },
-		{ path: "/zones", component: () => import("@/views/ZonesView.vue") },
-		{ path: "/zones/:id", component: () => import("@/views/ZoneView.vue") },
+		{ path: "/:pathMatch(.*)*", component: { render: () => null }, meta: { app: true } },
 	],
 });
 
-router.onError((error, to) => {
-	const isChunkError = 
-		error.message.includes("Failed to fetch dynamically imported module") ||
-		error.message.includes("Importing a module script failed") ||
-		error.message.includes("Unable to preload CSS");
-
-	if (isChunkError) {
-		console.warn("Chunk load error detected, attempting to reload the page:", error);
-		// Avoid infinite loop
-		const lastReload = sessionStorage.getItem("lastChunkReload");
-		const now = Date.now();
-		if (!lastReload || (now - Number.parseInt(lastReload)) > 10000) {
-			sessionStorage.setItem("lastChunkReload", now.toString());
-			window.location.href = to.fullPath;
-		} else {
-			console.error("Persistent error after reload, check your connection or contact support.");
-		}
-	}
-});
+router.onError(handleRouterError);
 
 router.beforeEach(async(to) => {
-	const publicPages = ["/login", "/auth/callback", "/register", "/forgot-password", "/reset-password"];
 	const authRequired = !publicPages.includes(to.path);
 	const auth = useAuthStore();
 
@@ -76,13 +39,7 @@ router.beforeEach(async(to) => {
 			return "/";
 		case "/reset-password":
 			return "/";
-		case "/":
-			return "/inventory";
 		}
-	}
-	// if page not exist redirect to home
-	if (!to.matched.length) {
-		return "/";
 	}
 });
 export default router;
