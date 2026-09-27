@@ -1,24 +1,19 @@
 <script setup>
-import { useViewScroll } from "@/composables";
-import { downloadFile, viewFile, isNewId } from "@/utils";
 import { onMounted, onBeforeUnmount, computed, ref, inject } from "vue";
 import { useRoute, useRouter } from "vue-router";
-const router = useRouter();
-const route = useRoute();
-
-const { addNotification } = inject("useNotification");
-
+import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
-import { useI18n } from "vue-i18n";
-const { t } = useI18n();
-
-const projectId = ref(route.params.id);
-const preset = ref(route.query.preset || null);
-
+import { useViewScroll } from "@/composables";
+import { downloadFile, viewFile, isNewId } from "@/utils";
 import { ProjectStatus } from "@/enums";
-
 import { useConfigsStore, useProjectsStore, useUsersStore, useItemsStore, useProjectTagsStore, useAuthStore } from "@/stores";
+
+const { addNotification } = inject("useNotification");
+const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
+
 const configsStore = useConfigsStore();
 const projectsStore = useProjectsStore();
 const usersStore = useUsersStore();
@@ -26,6 +21,10 @@ const itemsStore = useItemsStore();
 const projectTagsStore = useProjectTagsStore();
 const authStore = useAuthStore();
 
+const projectId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
+
+// every new element has its own edition space in the store, so several tabs can create an element at the same time
 if (isNewId(projectId.value)) {
 	projectId.value = projectsStore.getAvailableNewProjectId();
 }

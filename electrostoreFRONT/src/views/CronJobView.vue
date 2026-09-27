@@ -1,27 +1,25 @@
 <script setup>
-import { useViewScroll } from "@/composables";
-import { isNewId } from "@/utils";
 import { onMounted, onBeforeUnmount, ref, computed, inject } from "vue";
 import { useRoute, useRouter } from "vue-router";
-const router = useRouter();
-const route = useRoute();
-
-const { addNotification } = inject("useNotification");
-
+import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
-import { useI18n } from "vue-i18n";
-const { t } = useI18n();
-
-const cronJobId = ref(route.params.id);
-const preset = ref(route.query.preset || null);
-
+import { useViewScroll } from "@/composables";
+import { isNewId } from "@/utils";
 import { CronJobStatus } from "@/enums";
-
 import { useConfigsStore, useCronJobsStore, useAuthStore } from "@/stores";
+
+const { addNotification } = inject("useNotification");
+const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
+
 const configsStore = useConfigsStore();
 const cronJobsStore = useCronJobsStore();
 const authStore = useAuthStore();
+
+const cronJobId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
 
 const cronJobActionOptions = {
 	0: t("cronJob.ActionPackageTracking"),
@@ -37,6 +35,7 @@ const cronJobStatusOptions = {
 };
 const cronJobStatusLabel = computed(() => cronJobStatusOptions[cronJobsStore.cronJobEdition[cronJobId.value]?.status_cronjob] ?? "");
 
+// every new element has its own edition space in the store, so several tabs can create an element at the same time
 if (isNewId(cronJobId.value)) {
 	cronJobId.value = cronJobsStore.getAvailableNewCronJobId();
 }

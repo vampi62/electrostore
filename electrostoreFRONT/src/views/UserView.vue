@@ -1,22 +1,19 @@
 <script setup>
-import { useViewScroll } from "@/composables";
-import { isNewId } from "@/utils";
 import { onMounted, onBeforeUnmount, ref, inject } from "vue";
 import { useRoute, useRouter } from "vue-router";
-const router = useRouter();
-const route = useRoute();
-
-const { addNotification } = inject("useNotification");
-
 import { useI18n } from "vue-i18n";
-const { t } = useI18n();
-
 import * as Yup from "yup";
 
-const userId = ref(route.params.id);
-const preset = ref(route.query.preset || null);
-
+import { useViewScroll } from "@/composables";
+import { isNewId } from "@/utils";
+import { UserRole } from "@/enums";
 import { useConfigsStore, useUsersStore, useCommandsStore, useProjectsStore, useEquipementsStore, useAuthStore } from "@/stores";
+
+const { addNotification } = inject("useNotification");
+const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
+
 const configsStore = useConfigsStore();
 const usersStore = useUsersStore();
 const commandsStore = useCommandsStore();
@@ -24,13 +21,15 @@ const projectsStore = useProjectsStore();
 const equipementsStore = useEquipementsStore();
 const authStore = useAuthStore();
 
+const userId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
+
+// every new element has its own edition space in the store, so several tabs can create an element at the same time
 if (isNewId(userId.value)) {
 	userId.value = usersStore.getAvailableNewUserId();
 }
 
 const formContainer = ref(null);
-
-import { UserRole } from "@/enums";
 
 if ((!authStore.hasPermission([1, 2])) && authStore.user?.id_user !== Number(userId.value)) {
 	addNotification({ message: t("user.noAccess"), type: "error" });

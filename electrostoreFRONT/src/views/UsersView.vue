@@ -1,19 +1,18 @@
 <script setup>
-import { useViewScroll } from "@/composables";
 import { ref, inject } from "vue";
 import { useRouter } from "vue-router";
-const router = useRouter();
+import { useI18n } from "vue-i18n";
+
+import { useViewScroll } from "@/composables";
+import { UserRole } from "@/enums";
+import { useUsersStore, useAuthStore } from "@/stores";
 
 const { addNotification } = inject("useNotification");
-
-import { useI18n } from "vue-i18n";
 const { t } = useI18n();
+const router = useRouter();
 
-import { useUsersStore, useAuthStore } from "@/stores";
 const usersStore = useUsersStore();
 const authStore = useAuthStore();
-
-import { UserRole } from "@/enums";
 
 if (!authStore.hasPermission([1, 2])) {
 	addNotification({ message: t("users.noAccess"), type: "error" });

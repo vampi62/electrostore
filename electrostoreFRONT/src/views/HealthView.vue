@@ -1,10 +1,10 @@
 <script setup>
 import { onMounted, computed } from "vue";
-
 import { useI18n } from "vue-i18n";
-const { t } = useI18n();
 
 import { useConfigsStore } from "@/stores";
+
+const { t } = useI18n();
 const configsStore = useConfigsStore();
 
 onMounted(() => {

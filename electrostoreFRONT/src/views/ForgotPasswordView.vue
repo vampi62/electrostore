@@ -1,11 +1,11 @@
 <script setup>
 import { Form, Field } from "vee-validate";
+import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
-import { useI18n } from "vue-i18n";
-const { t } = useI18n();
-
 import { useAuthStore, useConfigsStore } from "@/stores";
+
+const { t } = useI18n();
 const configsStore = useConfigsStore();
 const authStore = useAuthStore();
 

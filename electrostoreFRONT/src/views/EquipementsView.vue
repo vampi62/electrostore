@@ -1,13 +1,12 @@
 <script setup>
-import { useViewScroll } from "@/composables";
 import { ref } from "vue";
-
 import { useI18n } from "vue-i18n";
-const { t } = useI18n();
 
+import { useViewScroll } from "@/composables";
 import { EquipementStatus } from "@/enums";
-
 import { useEquipementsStore } from "@/stores";
+
+const { t } = useI18n();
 const equipementsStore = useEquipementsStore();
 
 const equipementStatusOptions = {

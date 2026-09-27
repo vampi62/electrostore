@@ -1,13 +1,12 @@
 <script setup>
-import { useViewScroll } from "@/composables";
 import { ref } from "vue";
-
 import { useI18n } from "vue-i18n";
-const { t } = useI18n();
 
+import { useViewScroll } from "@/composables";
 import CommandStatus from "@/enums/CommandStatus";
-
 import { useCommandsStore, useItemsStore } from "@/stores";
+
+const { t } = useI18n();
 const commandsStore = useCommandsStore();
 const itemsStore = useItemsStore();
 

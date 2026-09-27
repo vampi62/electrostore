@@ -1,16 +1,15 @@
 <script setup>
-import { useViewScroll } from "@/composables";
 import { ref } from "vue";
-
 import { useI18n } from "vue-i18n";
-const { t } = useI18n();
 
+import { useViewScroll } from "@/composables";
+import { ProjectStatus } from "@/enums";
 import { useProjectsStore, useItemsStore, useProjectTagsStore } from "@/stores";
+
+const { t } = useI18n();
 const projectsStore = useProjectsStore();
 const itemsStore = useItemsStore();
 const projectTagsStore = useProjectTagsStore();
-
-import { ProjectStatus } from "@/enums";
 
 async function fetchItemData(minOffset, maxOffset) {
 	let itemsNotFound = [];

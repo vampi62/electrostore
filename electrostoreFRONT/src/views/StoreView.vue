@@ -1,24 +1,19 @@
 <script setup>
-import { useViewScroll } from "@/composables";
-import { isNewId } from "@/utils";
 import { computed, onMounted, onBeforeUnmount, ref, inject } from "vue";
 import { useRoute, useRouter } from "vue-router";
-const router = useRouter();
-const route = useRoute();
-
-const { addNotification } = inject("useNotification");
-
+import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
-import { useI18n } from "vue-i18n";
-const { t } = useI18n();
-
-const storeId = ref(route.params.id);
-const preset = ref(route.query.preset || null);
-
+import { useViewScroll } from "@/composables";
+import { isNewId } from "@/utils";
 import { StorePositionMode } from "@/enums";
-
 import { useConfigsStore, useStoresStore, useTagsStore, useItemsStore, useZonesStore, useEquipementsStore, useAuthStore } from "@/stores";
+
+const { addNotification } = inject("useNotification");
+const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
+
 const configsStore = useConfigsStore();
 const storesStore = useStoresStore();
 const tagsStore = useTagsStore();
@@ -26,6 +21,9 @@ const itemsStore = useItemsStore();
 const zonesStore = useZonesStore();
 const equipementsStore = useEquipementsStore();
 const authStore = useAuthStore();
+
+const storeId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
 
 const storePositionModeOptions = {
 	[StorePositionMode.Grid]: t("store.PositionModeGrid"),
@@ -39,6 +37,7 @@ const zoneSelectOptions = computed(() => {
 	return options;
 });
 
+// every new element has its own edition space in the store, so several tabs can create an element at the same time
 if (isNewId(storeId.value)) {
 	storeId.value = storesStore.getAvailableNewStoreId();
 }
