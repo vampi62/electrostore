@@ -29,7 +29,7 @@
 			<tbody :class="mergedCss.tbody">
 				<tr v-for="row in sortedData" :key="row[meta.key]" v-memo="[row, storeEdition[row[meta.key]], storeReady[row[meta.key]]]"
 					:class="trClass(row)"
-					@click="meta?.path && $router.push(meta.path + row[meta.key])">
+					@click="meta?.path && router.push(meta.path + row[meta.key])">
 					<TableauRow :labels="labelsShown" :row="row" :css="mergedCss.td" :schema="schema" :store-data="storeData" :store-edition="storeEdition[row[meta.key]]" :store-ready="storeReady[row[meta.key]]" />
 				</tr>
 				<slot name="append-row"></slot>
@@ -47,10 +47,16 @@
 
 <script>
 import { defineAsyncComponent } from "vue";
+import { useRouter } from "vue-router";
 import { debounce } from "lodash-es";
 import { buildRSQLFilter, buildRSQLSort, toLowerCaseWithoutAccents } from "@/utils";
 export default {
 	name: "Tableau",
+	setup() {
+		// router of the tab displaying the table
+		const router = useRouter();
+		return { router };
+	},
 	props: {
 		labels: {
 			type: Array,

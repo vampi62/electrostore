@@ -96,6 +96,16 @@ export function createMainResource({ path, idField, countKey, stateKey, loadingK
 			this[countKey] = (this[countKey] ?? 0) - res.valide.length;
 			this[countKey] = Math.max(this[countKey], 0);
 		},
+		getAvailableNewId() {
+			this[editionKey] ??= {};
+			let i = 1;
+			while (Object.hasOwn(this[editionKey], `new-${i}`)) {
+				i++;
+			}
+			const id = `new-${i}`;
+			this[editionKey][id] = {};
+			return id;
+		},
 		loadEditionPreset(id, preset = null) {
 			if (!preset) {
 				return;

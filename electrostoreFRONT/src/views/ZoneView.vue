@@ -1,28 +1,34 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref, inject } from "vue";
-import router from "@/router";
-
-const { addNotification } = inject("useNotification");
-
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
-import { useI18n } from "vue-i18n";
-const { t } = useI18n();
-
-import { useRoute } from "vue-router";
-const route = useRoute();
-const zoneId = ref(route.params.id);
-const preset = ref(route.query.preset || null);
-
+import { useViewScroll } from "@/composables";
+import { isNewId } from "@/utils";
 import { useConfigsStore, useZonesStore, useAuthStore } from "@/stores";
+
+const { addNotification } = inject("useNotification");
+const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
+
 const configsStore = useConfigsStore();
 const zonesStore = useZonesStore();
 const authStore = useAuthStore();
 
+const zoneId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
+
+// every new element has its own edition space in the store, so several tabs can create an element at the same time
+if (isNewId(zoneId.value)) {
+	zoneId.value = zonesStore.getAvailableNewZoneId();
+}
+
 const formContainer = ref(null);
 
 async function fetchAllData() {
-	if (zoneId.value === "new") {
+	if (isNewId(zoneId.value)) {
 		zonesStore.loadToEdition(zoneId.value, preset.value);
 	} else {
 		zonesStore.setLoadingEdition(zoneId.value, true);
@@ -106,9 +112,11 @@ const zoneSave = async() => {
 		if (imageChanged) {
 			zonesStore.showThumbnailById(realId);
 		}
-		if (zoneId.value === "new") {
+		if (isNewId(zoneId.value)) {
 			addNotification({ message: t("zone.Created"), type: "success" });
+			const tempId = zoneId.value;
 			zoneId.value = String(realId);
+			zonesStore.clearEdition(tempId);
 			router.push("/zones/" + zoneId.value);
 		} else {
 			addNotification({ message: t("zone.Updated"), type: "success" });
@@ -173,7 +181,7 @@ const labelTableauStore = ref([
 	{ label: "zone.StoreXMax", sortable: false, key: "xmax_store", valueKey: "xmax_store", type: "number" },
 	{ label: "zone.StoreYMax", sortable: false, key: "ymax_store", valueKey: "ymax_store", type: "number" },
 ]);
-document.querySelector("#view").classList.add("overflow-y-scroll");
+useViewScroll(true);
 </script>
 
 <template>
@@ -181,13 +189,13 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('zone.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/zones',
-				create: { showCondition: zoneId === 'new' && authStore.hasPermission([2]), loading: zonesStore.zoneEdition[zoneId]?.loading },
-				update: { showCondition: zoneId !== 'new' && authStore.hasPermission([2]), loading: zonesStore.zoneEdition[zoneId]?.loading },
-				delete: { showCondition: zoneId !== 'new' && authStore.hasPermission([2]) }
+				create: { showCondition: isNewId(zoneId) && authStore.hasPermission([2]), loading: zonesStore.zoneEdition[zoneId]?.loading },
+				update: { showCondition: !isNewId(zoneId) && authStore.hasPermission([2]), loading: zonesStore.zoneEdition[zoneId]?.loading },
+				delete: { showCondition: !isNewId(zoneId) && authStore.hasPermission([2]) }
 			}"
 			@button-create="zoneSave" @button-update="zoneSave" @button-delete="zoneDeleteModalShow = true"/>
 	</div>
-	<div v-if="zonesStore.zones[zoneId] || zoneId == 'new'" class="w-full">
+	<div v-if="zonesStore.zones[zoneId] || isNewId(zoneId)" class="w-full">
 		<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="zonesStore.zoneEdition[zoneId]" :store-user="authStore.user"
 			:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }">
 			<template #img_file>

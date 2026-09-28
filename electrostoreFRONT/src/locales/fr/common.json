@@ -75,6 +75,12 @@
 	"VAppAbout": "À propos",
 	"VAppAdmin": "Admin",
 	"VAppDemoMode": "Mode démo activé",
+	"VAppHealth": "Santé",
+	"VAppTabNew": "Nouveau",
+	"VAppTabAdd": "Nouvel onglet",
+	"VAppTabClose": "Fermer l'onglet",
+	"VAppTabList": "Liste des onglets",
+	"VAppTabBlankHint": "Choisissez une vue dans le menu pour l'afficher dans cet onglet",
 	"VAllCaracters": "caractères",
 	"VALLMissingTranslateLink": "Traduction manquante"
 }

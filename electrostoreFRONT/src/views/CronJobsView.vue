@@ -1,12 +1,12 @@
 <script setup>
 import { ref } from "vue";
-
 import { useI18n } from "vue-i18n";
-const { t } = useI18n();
 
+import { useViewScroll } from "@/composables";
 import { CronJobStatus } from "@/enums";
-
 import { useCronJobsStore, useAuthStore } from "@/stores";
+
+const { t } = useI18n();
 const cronJobsStore = useCronJobsStore();
 const authStore = useAuthStore();
 
@@ -44,7 +44,7 @@ const tableauMeta = ref({
 	stateKey: "cronJobsTableState",
 });
 const filterReady = ref(false);
-document.querySelector("#view").classList.remove("overflow-y-scroll");
+useViewScroll(false);
 </script>
 
 <template>

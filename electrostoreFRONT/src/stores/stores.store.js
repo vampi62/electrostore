@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper, buildQuery, createMainResource, createNestedResource } from "@/helpers";
+import { isNewId } from "@/utils";
 import { StorePositionMode } from "@/enums";
 
 import { useTagsStore, useItemsStore, useEquipementsStore } from "@/stores";
@@ -70,6 +71,7 @@ const storeResource = createMainResource({
 	stateKey: "stores",
 	countKey: "storesTotalCount",
 	loadingKey: "storesLoading",
+	editionKey: "storeEdition",
 	onHydrate: (store, entity, expand) => {
 		hydrateStore(store, entity.id_store, entity, expand);
 	},
@@ -158,6 +160,7 @@ export const useStoresStore = defineStore("stores",{
 		getStoreByInterval: storeResource.getByInterval,
 		getStoreById: storeResource.getById,
 		createStore: storeResource.create,
+		getAvailableNewStoreId: storeResource.getAvailableNewId,
 		updateStore: storeResource.update,
 		deleteStore: storeResource.remove,
 		async createStoreComplete(id, params) {
@@ -177,9 +180,7 @@ export const useStoresStore = defineStore("stores",{
 			});
 		},
 		loadToEdition(id, preset = null) {
-			this.storeEdition[id] = {};
-			storeResource.loadEditionPreset(id, preset);
-			if (id !== "new" && this.stores[id]) {
+			if (!isNewId(id) && this.stores[id]) {
 				this.storeEdition[id] = {
 					loading: false,
 					id_store: this.stores[id].id_store,
@@ -208,6 +209,7 @@ export const useStoresStore = defineStore("stores",{
 					position_mode_store: StorePositionMode.Grid,
 					id_zone: 0,
 				};
+				storeResource.loadEditionPreset.call(this, id, preset);
 				this.ledEdition[id] = {};
 				this.ledReady[id] = {};
 				this.boxEdition[id] = {};
@@ -238,7 +240,7 @@ export const useStoresStore = defineStore("stores",{
 				leds: Object.values(this.ledEdition[id] ?? {}),
 				boxs: Object.values(this.boxEdition[id] ?? {}),
 			};
-			if (id === "new") {
+			if (isNewId(id)) {
 				realId = await this.createStoreComplete(id, payload);
 				this.copyTagStoreAllId(id, realId);
 			} else {

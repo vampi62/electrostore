@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { createMainResource, createNestedResource } from "@/helpers";
+import { isNewId } from "@/utils";
 
 import { useStoresStore, useItemsStore, useEquipementsStore } from "@/stores";
 
@@ -49,6 +50,7 @@ const tagResource = createMainResource({
 	stateKey: "tags",
 	countKey: "tagsTotalCount",
 	loadingKey: "tagsLoading",
+	editionKey: "tagEdition",
 	onHydrate: (store, entity, expand) => {
 		hydrateTag(store, entity.id_tag, entity, expand);
 	},
@@ -153,13 +155,12 @@ export const useTagsStore = defineStore("tags",{
 		getTagByInterval: tagResource.getByInterval,
 		getTagById: tagResource.getById,
 		createTag: tagResource.create,
+		getAvailableNewTagId: tagResource.getAvailableNewId,
 		updateTag: tagResource.update,
 		deleteTag: tagResource.remove,
 		createTagBulk: tagResource.createBulk,
 		loadToEdition(id, preset = null) {
-			this.tagEdition[id] = {};
-			tagResource.loadEditionPreset(id, preset);
-			if (id !== "new" && this.tags[id]) {
+			if (!isNewId(id) && this.tags[id]) {
 				this.tagEdition[id] = {
 					name_tag: this.tags[id].name_tag,
 					weight_tag: this.tags[id].weight_tag,
@@ -169,6 +170,7 @@ export const useTagsStore = defineStore("tags",{
 				this.tagEdition[id] = {
 					loading: false,
 				};
+				tagResource.loadEditionPreset.call(this, id, preset);
 			}
 			this.tagItemEdition[id] = {};
 			this.tagItemReady[id] = {};
@@ -198,7 +200,7 @@ export const useTagsStore = defineStore("tags",{
 		},
 		async saveAllChanges(id) {
 			let realId = id;
-			if (id === "new") {
+			if (isNewId(id)) {
 				realId = await this.createTag(this.tagEdition[id]);
 				this.copyTagStoreAllId(id, realId);
 				this.copyTagBoxAllId(id, realId);

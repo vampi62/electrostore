@@ -1,29 +1,35 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref, inject } from "vue";
-import router from "@/router";
-
-const { addNotification } = inject("useNotification");
-
+import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-const { t } = useI18n();
-
 import * as Yup from "yup";
 
-import { useRoute } from "vue-router";
-const route = useRoute();
-const projectTagId = ref(route.params.id);
-const preset = ref(route.query.preset || null);
-
+import { useViewScroll } from "@/composables";
+import { isNewId } from "@/utils";
 import { useConfigsStore, useProjectTagsStore, useProjectsStore, useAuthStore } from "@/stores";
+
+const { addNotification } = inject("useNotification");
+const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
+
 const configsStore = useConfigsStore();
 const projectTagsStore = useProjectTagsStore();
 const projectsStore = useProjectsStore();
 const authStore = useAuthStore();
 
+const projectTagId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
+
+// every new element has its own edition space in the store, so several tabs can create an element at the same time
+if (isNewId(projectTagId.value)) {
+	projectTagId.value = projectTagsStore.getAvailableNewProjectTagId();
+}
+
 const formContainer = ref(null);
 
 async function fetchAllData() {
-	if (projectTagId.value === "new") {
+	if (isNewId(projectTagId.value)) {
 		projectTagsStore.loadToEdition(projectTagId.value, preset.value);
 	} else {
 		projectTagsStore.setLoadingEdition(projectTagId.value, true);
@@ -63,9 +69,11 @@ const projectTagSave = async() => {
 		}
 		const id = await projectTagsStore.saveAllChanges(projectTagId.value);
 		projectTagsStore.loadToEdition(id);
-		if (projectTagId.value === "new") {
+		if (isNewId(projectTagId.value)) {
 			addNotification({ message: t("projectTag.Created"), type: "success" });
+			const tempId = projectTagId.value;
 			projectTagId.value = String(id);
+			projectTagsStore.clearEdition(tempId);
 			router.push("/project-tags/" + projectTagId.value);
 		} else {
 			addNotification({ message: t("projectTag.Updated"), type: "success" });
@@ -217,7 +225,7 @@ const labelTableauModalProject = ref([
 		},
 	] },
 ]);
-document.querySelector("#view").classList.add("overflow-y-scroll");
+useViewScroll(true);
 </script>
 
 <template>
@@ -225,18 +233,18 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('projectTag.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/project-tags',
-				create: { showCondition: projectTagId === 'new' && authStore.hasPermission([0, 1, 2]), loading: projectTagsStore.projectTagEdition[projectTagId]?.loading },
-				update: { showCondition: projectTagId !== 'new' && authStore.hasPermission([0, 1, 2]), loading: projectTagsStore.projectTagEdition[projectTagId]?.loading },
-				delete: { showCondition: projectTagId !== 'new' && authStore.hasPermission([0, 1, 2]) }
+				create: { showCondition: isNewId(projectTagId) && authStore.hasPermission([0, 1, 2]), loading: projectTagsStore.projectTagEdition[projectTagId]?.loading },
+				update: { showCondition: !isNewId(projectTagId) && authStore.hasPermission([0, 1, 2]), loading: projectTagsStore.projectTagEdition[projectTagId]?.loading },
+				delete: { showCondition: !isNewId(projectTagId) && authStore.hasPermission([0, 1, 2]) }
 			}"
 			@button-create="projectTagSave" @button-update="projectTagSave" @button-delete="projectTagDeleteModalShow = true"/>
 	</div>
-	<div v-if="projectTagsStore.projectTags[projectTagId] || projectTagId == 'new'" class="w-full">
+	<div v-if="projectTagsStore.projectTags[projectTagId] || isNewId(projectTagId)" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="projectTagsStore.projectTagEdition[projectTagId]"/>
 		</div>
 		<CollapsibleSection title="projectTag.Projects"
-			:total-count="Number(projectTagsStore.projectTagsProjectTotalCount[projectTagId] || 0)" :permission="projectTagId !=='new'">
+			:total-count="Number(projectTagsStore.projectTagsProjectTotalCount[projectTagId] || 0)" :permission="!isNewId(projectTagId)">
 			<template #append-row>
 				<button type="button" @click="projectOpenAddModal"
 					class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600">
@@ -247,7 +255,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 					:store-ready="projectTagsStore.projectTagProjectReady[projectTagId]"
 					:loading="projectTagsStore.projectTagsProjectLoading"
 					:total-count="Number(projectTagsStore.projectTagsProjectTotalCount[projectTagId] || 0)"
-					:fetch-function="projectTagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => projectTagsStore.getProjectTagProjectByInterval(projectTagId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(projectTagId) ? (limit, offset, expand, filter, sort, clear) => projectTagsStore.getProjectTagProjectByInterval(projectTagId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -279,7 +287,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:filters="filterProject"
 				:loading="projectTagsStore.projectTagsProjectLoading"
 				:total-count="Number(projectsStore.projectsTotalCount || 0)"
-				:fetch-function="projectTagId !== 'new' ? (limit, offset, expand, filter, sort, clear) => projectsStore.getProjectByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:fetch-function="!isNewId(projectTagId) ? (limit, offset, expand, filter, sort, clear) => projectsStore.getProjectByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

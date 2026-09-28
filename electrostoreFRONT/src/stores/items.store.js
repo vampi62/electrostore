@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { buildFormData, fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
+import { isNewId } from "@/utils";
 
 import { useTagsStore, useStoresStore, useCommandsStore, useProjectsStore } from "@/stores";
 
@@ -67,6 +68,7 @@ const itemResource = createMainResource({
 	stateKey: "items",
 	countKey: "itemsTotalCount",
 	loadingKey: "itemsLoading",
+	editionKey: "itemEdition",
 	onHydrate: (store, entity, expand) => {
 		hydrateItem(store, entity.id_item, entity, expand);
 	},
@@ -201,12 +203,11 @@ export const useItemsStore = defineStore("items",{
 		getItemByInterval: itemResource.getByInterval,
 		getItemById: itemResource.getById,
 		createItem: itemResource.create,
+		getAvailableNewItemId: itemResource.getAvailableNewId,
 		updateItem: itemResource.update,
 		deleteItem: itemResource.remove,
 		loadToEdition(id, preset = null) {
-			this.itemEdition[id] = {};
-			itemResource.loadEditionPreset(id, preset);
-			if (id !== "new" && this.items[id]) {
+			if (!isNewId(id) && this.items[id]) {
 				this.itemEdition[id] = {
 					loading: false,
 					id_item: this.items[id].id_item,
@@ -220,6 +221,7 @@ export const useItemsStore = defineStore("items",{
 				this.itemEdition[id] = {
 					loading: false,
 				};
+				itemResource.loadEditionPreset.call(this, id, preset);
 			}
 			this.documentEdition[id] = {};
 			this.documentReady[id] = {};
@@ -255,7 +257,7 @@ export const useItemsStore = defineStore("items",{
 			let realId = id;
 			const { isFormData, ...data } = this.itemEdition[id];
 			const imageChanged = !!data.img_file || !!data.unset_img_item;
-			if (id === "new") {
+			if (isNewId(id)) {
 				realId = await this.createItem(isFormData ? buildFormData(data) : data);
 				this.copyDocumentAllId(id, realId);
 				this.copyItemBoxAllId(id, realId);

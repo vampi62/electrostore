@@ -1,15 +1,14 @@
 <script setup>
 import { ref } from "vue";
+import { useRoute } from "vue-router";
 import { Form, Field } from "vee-validate";
+import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
-import { useI18n } from "vue-i18n";
-const { t } = useI18n();
-
-import { useRoute } from "vue-router";
-const route = useRoute();
-
 import { useAuthStore, useConfigsStore } from "@/stores";
+
+const { t } = useI18n();
+const route = useRoute();
 const configsStore = useConfigsStore();
 const authStore = useAuthStore();
 

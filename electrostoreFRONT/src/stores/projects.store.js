@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
+import { isNewId } from "@/utils";
 
 import { useUsersStore, useItemsStore, useProjectTagsStore } from "@/stores";
 
@@ -58,6 +59,7 @@ const projectResource = createMainResource({
 	stateKey: "projects",
 	countKey: "projectsTotalCount",
 	loadingKey: "projectsLoading",
+	editionKey: "projectEdition",
 	onHydrate: (store, entity, expand) => {
 		hydrateProject(store, entity.id_project, entity, expand);
 	},
@@ -163,12 +165,11 @@ export const useProjectsStore = defineStore("projects",{
 		getProjectByInterval: projectResource.getByInterval,
 		getProjectById: projectResource.getById,
 		createProject: projectResource.create,
+		getAvailableNewProjectId: projectResource.getAvailableNewId,
 		updateProject: projectResource.update,
 		deleteProject: projectResource.remove,
 		loadToEdition(id, preset = null) {
-			this.projectEdition[id] = {};
-			projectResource.loadEditionPreset(id, preset);
-			if (id !== "new" && this.projects[id]) {
+			if (!isNewId(id) && this.projects[id]) {
 				this.projectEdition[id] = {
 					loading: false,
 					name_project: this.projects[id].name_project,
@@ -182,6 +183,7 @@ export const useProjectsStore = defineStore("projects",{
 				this.projectEdition[id] = {
 					loading: false,
 				};
+				projectResource.loadEditionPreset.call(this, id, preset);
 			}
 			this.commentEdition[id] = {};
 			this.documentEdition[id] = {};
@@ -209,7 +211,7 @@ export const useProjectsStore = defineStore("projects",{
 		},
 		async saveAllChanges(id) {
 			let realId = id;
-			if (id === "new") {
+			if (isNewId(id)) {
 				realId = await this.createProject(this.projectEdition[id]);
 				this.copyDocumentAllId(id, realId);
 				this.copyItemAllId(id, realId);
