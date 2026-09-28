@@ -53,7 +53,7 @@
 				<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
 			</div>
 		</div>
-		<button @click="hasHistory() ? (previousPageIsNew() ? $router.push({ path: mainConfig.path }) : $router.go(-1)) : $router.push({ path: mainConfig.path })"
+		<button @click="goBack()"
 			class="bg-gray-300 text-gray-800 hover:bg-gray-400 px-4 py-2 rounded flex items-center">
 			{{ $t('components.VModalTopButtonBack') }}
 		</button>
@@ -124,7 +124,7 @@
 				mainConfig.delete.enableCondition === false ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600']">
 				{{ $t('components.VModalTopButtonDelete') }}
 			</button>
-			<button @click="hasHistory() ? (previousPageIsNew() ? $router.push({ path: mainConfig.path }) : $router.go(-1)) : $router.push({ path: mainConfig.path })"
+			<button @click="goBack()"
 				class="relative flex items-center justify-center w-full text-left px-4 py-2 bg-white text-sm text-gray-700 hover:bg-gray-100">
 				{{ $t('components.VModalTopButtonBack') }}
 			</button>
@@ -133,6 +133,7 @@
 </template>
 
 <script>
+import { useRouter } from "vue-router";
 export default {
 	name: "TopButtonEditElement",
 	props: {
@@ -163,13 +164,25 @@ export default {
 			default: () => [],
 		},
 	},
+	setup() {
+		// router of the tab displaying the element
+		const router = useRouter();
+		return { router };
+	},
 	methods: {
 		hasHistory() {
-			return window.history.length > 2;
+			return !!this.router.options.history.state?.back;
 		},
 		previousPageIsNew() {
-			const previousPage = window.history.state?.back;
+			const previousPage = this.router.options.history.state?.back;
 			return previousPage && previousPage.endsWith("/new");
+		},
+		goBack() {
+			if (this.hasHistory() && !this.previousPageIsNew()) {
+				this.router.go(-1);
+			} else {
+				this.router.push({ path: this.mainConfig.path });
+			}
 		},
 	},
 	emits: [

@@ -1,22 +1,19 @@
 <script setup>
 import { computed, onMounted, onBeforeUnmount, ref, inject } from "vue";
-import router from "@/router";
-
-const { addNotification } = inject("useNotification");
-
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
-import { useI18n } from "vue-i18n";
-const { t } = useI18n();
-
-import { useRoute } from "vue-router";
-const route = useRoute();
-const storeId = ref(route.params.id);
-const preset = ref(route.query.preset || null);
-
+import { useViewScroll } from "@/composables";
+import { isNewId } from "@/utils";
 import { StorePositionMode } from "@/enums";
-
 import { useConfigsStore, useStoresStore, useTagsStore, useItemsStore, useZonesStore, useEquipementsStore, useAuthStore } from "@/stores";
+
+const { addNotification } = inject("useNotification");
+const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
+
 const configsStore = useConfigsStore();
 const storesStore = useStoresStore();
 const tagsStore = useTagsStore();
@@ -24,6 +21,9 @@ const itemsStore = useItemsStore();
 const zonesStore = useZonesStore();
 const equipementsStore = useEquipementsStore();
 const authStore = useAuthStore();
+
+const storeId = ref(route.params.id);
+const preset = ref(route.query.preset || null);
 
 const storePositionModeOptions = {
 	[StorePositionMode.Grid]: t("store.PositionModeGrid"),
@@ -37,11 +37,16 @@ const zoneSelectOptions = computed(() => {
 	return options;
 });
 
+// every new element has its own edition space in the store, so several tabs can create an element at the same time
+if (isNewId(storeId.value)) {
+	storeId.value = storesStore.getAvailableNewStoreId();
+}
+
 const formContainer = ref(null);
 
 async function fetchAllData() {
 	zonesStore.getZoneByInterval(100, 0);
-	if (storeId.value === "new") {
+	if (isNewId(storeId.value)) {
 		storesStore.loadToEdition(storeId.value, preset.value);
 	} else {
 		storesStore.setLoadingEdition(storeId.value, true);
@@ -77,7 +82,7 @@ const buildStorePayload = () => {
 		delete payload.ymin_store;
 		delete payload.xmax_store;
 		delete payload.ymax_store;
-		if (storeId.value !== "new") {
+		if (!isNewId(storeId.value)) {
 			payload.unset_zone_store = true;
 		}
 	}
@@ -102,7 +107,7 @@ const storeSave = async() => {
 			storesStore.setLoadingEdition(storeId.value, false);
 			return;
 		}
-		if (storeId.value === "new") {
+		if (isNewId(storeId.value)) {
 			const newId = await storesStore.createStoreComplete(storeId.value, {
 				store: buildStorePayload(),
 				leds: Object.values(storesStore.ledEdition[storeId.value]),
@@ -112,7 +117,9 @@ const storeSave = async() => {
 			await storesStore.pushTagStoreChange(newId);
 			storesStore.loadToEdition(newId);
 			addNotification({ message: t("store.Created"), type: "success" });
+			const tempId = storeId.value;
 			storeId.value = String(newId);
+			storesStore.clearEdition(tempId);
 			router.push("/stores/" + storeId.value);
 			// reload the store data
 			await storesStore.getStoreById(storeId.value, ["boxs", "leds"]);
@@ -479,20 +486,20 @@ const labelTableauModalTag = ref([
 		},
 	] },
 ]);
-document.querySelector("#view").classList.add("overflow-y-scroll");
+useViewScroll(true);
 </script>
 <template>
 	<div class="flex items-center justify-between mb-4">
 		<h2 class="text-2xl font-bold mb-4 mr-2">{{ $t('store.Title') }}</h2>
 		<TopButtonEditElement
 			:main-config="{ path: '/stores',
-				create: { showCondition: storeId === 'new' && authStore.hasPermission([2]), loading: storesStore.storeEdition[storeId]?.loading },
-				update: { showCondition: storeId !== 'new' && authStore.hasPermission([2]), loading: storesStore.storeEdition[storeId]?.loading },
-				delete: { showCondition: storeId !== 'new' && authStore.hasPermission([2]) }
+				create: { showCondition: isNewId(storeId) && authStore.hasPermission([2]), loading: storesStore.storeEdition[storeId]?.loading },
+				update: { showCondition: !isNewId(storeId) && authStore.hasPermission([2]), loading: storesStore.storeEdition[storeId]?.loading },
+				delete: { showCondition: !isNewId(storeId) && authStore.hasPermission([2]) }
 			}"
 			@button-create="storeSave" @button-update="storeSave" @button-delete="storeDeleteModalShow = true"/>
 	</div>
-	<div v-if="storesStore.stores[storeId] || storeId == 'new'" class="w-full">
+	<div v-if="storesStore.stores[storeId] || isNewId(storeId)" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="storesStore.storeEdition[storeId] || {}" :store-user="authStore.user"
 				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
@@ -528,7 +535,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 						:store-data="[storesStore.boxItems[boxId],itemsStore.items,itemsStore.thumbnailsURL]"
 						:loading="storesStore.boxItemsLoading"
 						:total-count="Number(storesStore.boxItemsTotalCount[boxId] || 0)"
-						:fetch-function="storeId !== 'new' && boxId != null ? (limit, offset, expand, filter, sort, clear) => storesStore.getBoxItemByInterval(storeId, boxId, limit, offset, expand, filter, sort, clear) : undefined"
+						:fetch-function="!isNewId(storeId) && boxId != null ? (limit, offset, expand, filter, sort, clear) => storesStore.getBoxItemByInterval(storeId, boxId, limit, offset, expand, filter, sort, clear) : undefined"
 						:tableau-css="{ component: 'max-h-80', tr: 'transition duration-150 ease-in-out cursor-pointer hover:bg-gray-300 even:bg-gray-100' }"
 					>
 						<template #append-row>
@@ -544,7 +551,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 						:store-data="[storesStore.boxEquipements[boxId],equipementsStore.equipements, equipementsStore.thumbnailsURL]"
 						:loading="storesStore.boxEquipementsLoading"
 						:total-count="Number(storesStore.boxEquipementsTotalCount[boxId] || 0)"
-						:fetch-function="storeId !== 'new' && boxId != null ? (limit, offset, expand, filter, sort, clear) => storesStore.getBoxEquipementByInterval(storeId, boxId, limit, offset, expand, filter, sort, clear) : undefined"
+						:fetch-function="!isNewId(storeId) && boxId != null ? (limit, offset, expand, filter, sort, clear) => storesStore.getBoxEquipementByInterval(storeId, boxId, limit, offset, expand, filter, sort, clear) : undefined"
 						:tableau-css="{ component: 'max-h-80', tr: 'transition duration-150 ease-in-out cursor-pointer hover:bg-gray-300 even:bg-gray-100' }"
 					>
 						<template #append-row>
@@ -585,7 +592,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:filters="filterItem"
 				:loading="itemsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
-				:fetch-function="storeId !== 'new' ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:fetch-function="!isNewId(storeId) ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
@@ -607,7 +614,7 @@ document.querySelector("#view").classList.add("overflow-y-scroll");
 				:filters="filterEquipement"
 				:loading="equipementsStore.equipementsLoading"
 				:total-count="Number(equipementsStore.equipementsTotalCount || 0)"
-				:fetch-function="storeId !== 'new' ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:fetch-function="!isNewId(storeId) ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

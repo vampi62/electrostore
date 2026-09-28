@@ -1,12 +1,12 @@
 <script setup>
 import { ref } from "vue";
-
 import { useI18n } from "vue-i18n";
-const { t } = useI18n();
 
+import { useViewScroll } from "@/composables";
 import { EquipementStatus } from "@/enums";
-
 import { useEquipementsStore } from "@/stores";
+
+const { t } = useI18n();
 const equipementsStore = useEquipementsStore();
 
 const equipementStatusOptions = {
@@ -36,7 +36,7 @@ const tableauMeta = ref({
 	stateKey: "equipementsTableState",
 });
 const filterReady = ref(false);
-document.querySelector("#view").classList.remove("overflow-y-scroll");
+useViewScroll(false);
 </script>
 
 <template>

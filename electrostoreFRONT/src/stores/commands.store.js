@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper, createMainResource, createNestedResource } from "@/helpers";
+import { isNewId } from "@/utils";
 
 import { useUsersStore, useCarriersStore } from "@/stores";
 
@@ -56,6 +57,7 @@ const commandResource = createMainResource({
 	stateKey: "commands",
 	countKey: "commandsTotalCount",
 	loadingKey: "commandsLoading",
+	editionKey: "commandEdition",
 	onHydrate: (store, entity, expand) => {
 		hydrateCommand(store, entity.id_command, entity, expand);
 	},
@@ -134,12 +136,11 @@ export const useCommandsStore = defineStore("commands",{
 		getCommandByInterval: commandResource.getByInterval,
 		getCommandById: commandResource.getById,
 		createCommand: commandResource.create,
+		getAvailableNewCommandId: commandResource.getAvailableNewId,
 		updateCommand: commandResource.update,
 		deleteCommand: commandResource.remove,
 		loadToEdition(id, preset = null) {
-			this.commandEdition[id] = {};
-			commandResource.loadEditionPreset(id, preset);
-			if (id !== "new" && this.commands[id]) {
+			if (!isNewId(id) && this.commands[id]) {
 				this.commandEdition[id] = {
 					price_command: this.commands[id].price_command,
 					url_command: this.commands[id].url_command,
@@ -164,6 +165,7 @@ export const useCommandsStore = defineStore("commands",{
 					is_active: true,
 					tracking_number_command: "",
 				};
+				commandResource.loadEditionPreset.call(this, id, preset);
 			}
 			this.commentEdition[id] = {};
 			this.documentEdition[id] = {};
@@ -187,7 +189,7 @@ export const useCommandsStore = defineStore("commands",{
 		},
 		async saveAllChanges(id) {
 			let realId = id;
-			if (id === "new") {
+			if (isNewId(id)) {
 				realId = await this.createCommand(this.commandEdition[id]);
 				this.copyDocumentAllId(id, realId);
 				this.copyItemAllId(id, realId);

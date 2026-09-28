@@ -75,6 +75,12 @@
 	"VAppAbout": "About",
 	"VAppAdmin": "Admin",
 	"VAppDemoMode": "Demo mode enabled",
+	"VAppHealth": "Health",
+	"VAppTabNew": "New",
+	"VAppTabAdd": "New tab",
+	"VAppTabClose": "Close tab",
+	"VAppTabList": "Tab list",
+	"VAppTabBlankHint": "Choose a view in the menu to display it in this tab",
 	"VAllCaracters": "characters",
 	"VALLMissingTranslateLink": "Missing translation"
 }

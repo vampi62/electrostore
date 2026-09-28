@@ -1,18 +1,49 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 
-import { RouterView, useRoute } from "vue-router";
+import { RouterView, useRoute, useRouter } from "vue-router";
 const route = useRoute();
+const router = useRouter();
 
-import { useAuthStore, useConfigsStore } from "@/stores";
+import { useAuthStore, useConfigsStore, useTabsStore } from "@/stores";
 
 const configsStore = useConfigsStore();
 const authStore = useAuthStore();
+const tabsStore = useTabsStore();
 
 configsStore.getConfig();
 configsStore.getHealth();
 
 const isIframe = computed(() => route.query.iframe !== undefined);
+// authenticated pages are displayed in tabs, the global router only handles the public pages
+const isTabsView = computed(() => route.meta.app === true);
+
+// the browser url follows the selected tab
+watch(() => [isTabsView.value, tabsStore.activeTab?.fullPath], ([tabsView, fullPath]) => {
+	if (tabsView && fullPath && route.fullPath !== fullPath) {
+		router.replace(fullPath);
+	}
+});
+// an url opened from outside (bookmark, link, login...) is displayed in a tab
+watch(() => [isTabsView.value, route.fullPath], ([tabsView, fullPath]) => {
+	if (!tabsView) {
+		return;
+	}
+	if (route.query.iframe !== undefined && !tabsStore.ephemeral) {
+		tabsStore.ephemeral = true;
+		tabsStore.reset(fullPath);
+	} else if (fullPath === "/") {
+		router.replace(tabsStore.activeTab.fullPath);
+	} else if (fullPath !== tabsStore.activeTab?.fullPath) {
+		tabsStore.open(fullPath);
+	}
+}, { immediate: true });
+// tabs are not kept from a user to another
+watch(() => authStore.user, (user) => {
+	if (!user) {
+		tabsStore.reset();
+	}
+});
 
 const reduceLeftSideBar = ref(false);
 const listNav = ref([
@@ -27,11 +58,12 @@ const listNav = ref([
 ]);
 
 const containerClasses = computed(() => [
-	"px-4 pt-4 fixed bottom-0 right-0 left-0 flex flex-col",
+	"fixed bottom-0 right-0 left-0 flex flex-col",
+	isTabsView.value ? "overflow-hidden" : "px-4 pt-4",
 	reduceLeftSideBar.value && authStore.user && !isIframe.value ? "sm:ml-16" : "",
 	!reduceLeftSideBar.value && authStore.user && !isIframe.value ? "sm:ml-64" : "",
 	authStore.user && !isIframe.value ? "top-16" : "top-0",
-	route.meta.overflowYScroll ? "" : "overflow-y-auto",
+	!isTabsView.value && !route.meta.overflowYScroll ? "overflow-y-auto" : "",
 ]);
 
 const showAboutModal = ref(false);
@@ -43,7 +75,8 @@ const showAboutModal = ref(false);
 			@update:reduce-left-side-bar="reduceLeftSideBar = $event" @show-about-modal="showAboutModal = true" />
 	</div>
 	<div id="view" :class="containerClasses">
-		<RouterView />
+		<TabViews v-if="isTabsView" />
+		<RouterView v-else />
 	</div>
 	<NotificationContainer />
 	<NotificationAppUpdate />

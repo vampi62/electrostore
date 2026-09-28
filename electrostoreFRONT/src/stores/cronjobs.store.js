@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
 import { fetchWrapper, createMainResource } from "@/helpers";
+import { isNewId } from "@/utils";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -10,6 +11,7 @@ const cronJobResource = createMainResource({
 	stateKey: "cronJobs",
 	countKey: "cronJobsTotalCount",
 	loadingKey: "cronJobsLoading",
+	editionKey: "cronJobEdition",
 });
 
 export const useCronJobsStore = defineStore("cronJobs", {
@@ -24,12 +26,11 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		getCronJobByInterval: cronJobResource.getByInterval,
 		getCronJobById: cronJobResource.getById,
 		createCronJob: cronJobResource.create,
+		getAvailableNewCronJobId: cronJobResource.getAvailableNewId,
 		updateCronJob: cronJobResource.update,
 		deleteCronJob: cronJobResource.remove,
 		loadToEdition(id, preset = null) {
-			this.cronJobEdition[id] = {};
-			cronJobResource.loadEditionPreset(id, preset);
-			if (id !== "new" && this.cronJobs[id]) {
+			if (!isNewId(id) && this.cronJobs[id]) {
 				this.cronJobEdition[id] = {
 					loading: false,
 					name_cronjob: this.cronJobs[id].name_cronjob,
@@ -47,6 +48,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 					loading: false,
 					is_enabled: true,
 				};
+				cronJobResource.loadEditionPreset.call(this, id, preset);
 			}
 		},
 		setLoadingEdition(id, loading) {
@@ -60,7 +62,7 @@ export const useCronJobsStore = defineStore("cronJobs", {
 		},
 		async saveAllChanges(id) {
 			let realId = id;
-			if (id === "new") {
+			if (isNewId(id)) {
 				realId = await this.createCronJob(this.cronJobEdition[id]);
 			} else {
 				await this.updateCronJob(id, this.cronJobEdition[id]);
