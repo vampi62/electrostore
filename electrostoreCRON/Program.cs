@@ -20,6 +20,7 @@ public static partial class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        LoadKafkaNativeLibrary();
         ConfigureConfiguration(builder);
         ConfigureVault(builder);
         ConfigureLogging(builder);
@@ -36,6 +37,16 @@ public static partial class Program
         MapHealthEndpoint(app);
 
         app.Run();
+    }
+
+    private static void LoadKafkaNativeLibrary()
+    {
+        // Load the native librdkafka library for Confluent.Kafka on Alpine Linux; not present outside that container (e.g. CI test runs)
+        const string alpineLibrdkafkaPath = "/usr/lib/librdkafka.so.1";
+        if (File.Exists(alpineLibrdkafkaPath))
+        {
+            Confluent.Kafka.Library.Load(alpineLibrdkafkaPath);
+        }
     }
 
     private static void ConfigureLogging(WebApplicationBuilder builder)
@@ -94,8 +105,6 @@ public static partial class Program
 
     private static void AddScopes(WebApplicationBuilder builder)
     {
-        // Load the native librdkafka library for Confluent.Kafka on Alpine Linux
-        Confluent.Kafka.Library.Load("/usr/lib/librdkafka.so.1");
         builder.Services.AddHttpClient();
         builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
         builder.Services.AddSingleton<IItemMovementReportService, ItemMovementReportService>();

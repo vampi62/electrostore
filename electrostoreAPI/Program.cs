@@ -75,6 +75,7 @@ public partial class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        LoadKafkaNativeLibrary();
         ConfigureConfiguration(builder);
         ConfigureVault(builder);
         ConfigureLogging(builder);
@@ -245,6 +246,16 @@ public partial class Program
         app.Run();
     }
 
+    private static void LoadKafkaNativeLibrary()
+    {
+        // Load the native librdkafka library for Confluent.Kafka on Alpine Linux; not present outside that container (e.g. CI test runs)
+        const string alpineLibrdkafkaPath = "/usr/lib/librdkafka.so.1";
+        if (File.Exists(alpineLibrdkafkaPath))
+        {
+            Confluent.Kafka.Library.Load(alpineLibrdkafkaPath);
+        }
+    }
+
     private static void ConfigureLogging(WebApplicationBuilder builder)
     {
         builder.Logging.AddSimpleConsole(options =>
@@ -343,8 +354,6 @@ public partial class Program
 
     private static void AddScopes(WebApplicationBuilder builder)
     {
-        // Load the native librdkafka library for Confluent.Kafka on Alpine Linux
-        Confluent.Kafka.Library.Load("/usr/lib/librdkafka.so.1");
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
                 new MySqlServerVersion(new Version(11, 4, 7)),
