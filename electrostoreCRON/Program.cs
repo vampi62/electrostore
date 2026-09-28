@@ -94,6 +94,8 @@ public static partial class Program
 
     private static void AddScopes(WebApplicationBuilder builder)
     {
+        // Load the native librdkafka library for Confluent.Kafka on Alpine Linux
+        Confluent.Kafka.Library.Load("/usr/lib/librdkafka.so.1");
         builder.Services.AddHttpClient();
         builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
         builder.Services.AddSingleton<IItemMovementReportService, ItemMovementReportService>();
