@@ -77,6 +77,8 @@ public static partial class Program
 
     private static void AddScopes(WebApplicationBuilder builder)
     {
+        // Load the native librdkafka library for Confluent.Kafka on Alpine Linux
+        Confluent.Kafka.Library.Load("/usr/lib/librdkafka.so.1");
         builder.Services.AddSingleton<IEmailSenderService, EmailSenderService>();
         builder.Services.AddSingleton<IWebPushService, WebPushService>();
         builder.Services.AddSingleton<INotificationTemplateService, NotificationTemplateService>();

@@ -20,7 +20,7 @@ public class ItemService : IItemService
     private readonly string _itemImagesPath = "itemImages";
     private readonly string _itemImagesThumbnailsPath = "itemImagesThumbnails";
 
-    private static readonly ItemHistoryType[] QuantityChangeHistoryTypes =
+    private static readonly List<ItemHistoryType> QuantityChangeHistoryTypes =
     [
         ItemHistoryType.StockAdded,
         ItemHistoryType.StockRemoved,
