@@ -343,6 +343,8 @@ public partial class Program
 
     private static void AddScopes(WebApplicationBuilder builder)
     {
+        // Load the native librdkafka library for Confluent.Kafka on Alpine Linux
+        Confluent.Kafka.Library.Load("/usr/lib/librdkafka.so.1");
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
                 new MySqlServerVersion(new Version(11, 4, 7)),

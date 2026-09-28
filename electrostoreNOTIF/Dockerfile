@@ -14,11 +14,12 @@ COPY Program.cs ./
 
 RUN dotnet publish -c Release -o out
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
 
 WORKDIR /app
 
-RUN apt-get update && apt-get --no-install-recommends install -y curl && rm -rf /var/lib/apt/lists/*
+#RUN apt-get update && apt-get --no-install-recommends install -y curl && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache curl libc6-compat librdkafka
 
 COPY --from=build /app/out .
 
