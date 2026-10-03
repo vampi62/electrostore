@@ -6,8 +6,9 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 import { inject, defineAsyncComponent } from "vue";
+import type { useNotification } from "@/composables";
 
 export default {
 	name: "NotificationContainer",
@@ -15,7 +16,7 @@ export default {
 		Notification: defineAsyncComponent(() => import("@/components/Notification.vue")),
 	},
 	setup() {
-		const { notifications, removeNotification } = inject("useNotification");
+		const { notifications, removeNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 		return { notifications, removeNotification };
 	},
 };

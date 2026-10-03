@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 
@@ -6,12 +6,16 @@ import { useViewScroll } from "@/composables";
 import CommandStatus from "@/enums/CommandStatus";
 import { useCommandsStore, useItemsStore } from "@/stores";
 
+import type { FilterLabel } from "@/types/filter";
+import type { TableauLabel, TableauMeta } from "@/types/tableau";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+
 const { t } = useI18n();
 const commandsStore = useCommandsStore();
 const itemsStore = useItemsStore();
 
-async function fetchItemData(minOffset, maxOffset) {
-	let itemsNotFound = [];
+async function fetchItemData(minOffset: number, maxOffset: number) {
+	let itemsNotFound: string[] = [];
 	for (let id = minOffset; id < maxOffset; id++) {
 		for (const item in commandsStore.items[id]) {
 			if (!itemsStore.items[item]) {
@@ -35,7 +39,7 @@ const commandStatusOptions = {
 	[CommandStatus.Unknown]: t("commands.FilterStatus7"),
 	[CommandStatus.Archived]: t("commands.FilterStatus8"),
 };
-const filter = ref([
+const filter = ref<FilterLabel[]>([
 	{ key: "status_command", value: undefined, type: "datalist", options: commandStatusOptions, label: "commands.FilterStatus", compareMethod: "==" },
 	{ key: "date_command", value: "", type: "date", label: "commands.FilterDate", compareMethod: "=ge=" },
 	{ key: "url_command", value: "", type: "text", label: "commands.FilterURL", compareMethod: "=like=" },
@@ -44,22 +48,22 @@ const filter = ref([
 	{ key: "date_delivery_command", value: "", type: "date", label: "commands.FilterDateL", compareMethod: "=ge=" },
 	{ key: "tracking_number_command", value: "", type: "text", label: "commands.FilterTrackingNumber", compareMethod: "=like=" },
 	{ key: "is_active", value: undefined, type: "datalist", typeData: "bool", options: { ["false"]: t("commands.FilterActive0"), ["true"]: t("commands.FilterActive1") }, label: "commands.FilterActive", compareMethod: "==" },
-	{ key: "CommandsItems.Item.reference_name_item", value: "", type: "text", label: "commands.FilterItem", compareMethod: "=like=" },
+	//{ key: "CommandsItems.Item.reference_name_item", value: "", type: "text", label: "commands.FilterItem", compareMethod: "=like=" },
 ]);
-const tableauLabel = ref([
+const tableauLabel = ref<TableauLabel[]>([
 	{ label: "commands.Status", sortable: true, key: "status_command", valueKey: "status_command", type: "enum", options: commandStatusOptions },
 	{ label: "commands.Date", sortable: true, key: "date_command", valueKey: "date_command", type: "date" },
 	{ label: "commands.URL", sortable: true, key: "url_command", valueKey: "url_command", type: "text" },
 	{ label: "commands.Prix", sortable: true, key: "price_command", valueKey: "price_command", type: "text" },
 	{ label: "commands.TrackingNumber", sortable: true, key: "tracking_number_command", valueKey: "tracking_number_command", type: "text" },
-	{ label: "commands.IsActive", sortable: true, key: "is_active", valueKey: "is_active", type: "enum", options: { [false]: t("commands.FilterActive0"), [true]: t("commands.FilterActive1") } },
+	{ label: "commands.IsActive", sortable: true, key: "is_active", valueKey: "is_active", type: "enum", options: { ["false"]: t("commands.FilterActive0"), ["true"]: t("commands.FilterActive1") } },
 	{ label: "commands.ItemList", sortable: false, key: "commands.ItemList", sourceKey: "id_command", type: "link-list", 
 		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_command", storeLinkKeyJoinRessource: "id_item", valueKey: "reference_name_item",
 		ressourcePrint: [{ from: "link", valueKey: "quantity_command_item" }, { from: "text", text: " - " }, { from: "ressource", valueKey: "reference_name_item" }] },
 
 	{ label: "commands.DateL", sortable: true, key: "date_delivery_command", valueKey: "date_delivery_command", type: "date" },
 ]);
-const tableauMeta = ref({
+const tableauMeta = ref<TableauMeta>({
 	key: "id_command",
 	path: "/commands/",
 	expand: ["commands_items"],
@@ -88,8 +92,8 @@ useViewScroll(false);
 		:filters="filter"
 		:loading="commandsStore.commandsLoading"
 		:total-count="Number(commandsStore.commandsTotalCount) || 0"
-		:fetch-function="(limit, offset, expand, filter, sort, clear) => commandsStore.getCommandByInterval(limit, offset, expand, filter, sort, clear)"
-		:list-fetch-function="[(minOffset, maxOffset) => fetchItemData(minOffset, maxOffset)]"
+		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => commandsStore.getCommandByInterval(limit, offset, expand, filter, sort, clear)"
+		:list-fetch-function="[(minOffset: number, maxOffset: number) => fetchItemData(minOffset, maxOffset)]"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

@@ -132,8 +132,9 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 import { useRouter } from "vue-router";
+import type { PropType } from "vue";
 export default {
 	name: "TopButtonEditElement",
 	props: {
@@ -155,7 +156,7 @@ export default {
 			}),
 		},
 		optionalConfig: {
-			type: Array,
+			type: Array as PropType<any[]>,
 			required: false,
 			// array of optional buttons with properties: label, action, showCondition, enableCondition, bgColor, hoverColor, loading
 			// Example: [{ label: 'components.VModalTopButtonCustom', action: customFucntionCall, showCondition: false, enableCondition: true, bgColor: 'bg-green-500', hoverColor: 'hover:bg-green-600', loading: false }]
@@ -175,7 +176,7 @@ export default {
 		},
 		previousPageIsNew() {
 			const previousPage = this.router.options.history.state?.back;
-			return previousPage && previousPage.endsWith("/new");
+			return typeof previousPage === "string" && previousPage.endsWith("/new");
 		},
 		goBack() {
 			if (this.hasHistory() && !this.previousPageIsNew()) {

@@ -1,10 +1,14 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 
 import { useViewScroll } from "@/composables";
 import { EquipementStatus } from "@/enums";
 import { useEquipementsStore } from "@/stores";
+
+import type { FilterLabel } from "@/types/filter";
+import type { TableauLabel, TableauMeta } from "@/types/tableau";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 
 const { t } = useI18n();
 const equipementsStore = useEquipementsStore();
@@ -16,12 +20,12 @@ const equipementStatusOptions = {
 	[EquipementStatus.Retired]: t("equipements.StatusRetired"),
 };
 
-const filter = ref([
+const filter = ref<FilterLabel[]>([
 	{ key: "reference_name_equipement", value: "", type: "text", label: "equipements.FilterName", compareMethod: "=like=" },
 	{ key: "friendly_name_equipement", value: "", type: "text", label: "equipements.FilterFriendlyName", compareMethod: "=like=" },
 	{ key: "status_equipement", value: undefined, type: "datalist", options: equipementStatusOptions, label: "equipements.FilterStatus", compareMethod: "==" },
 ]);
-const tableauLabel = ref([
+const tableauLabel = ref<TableauLabel[]>([
 	{ label: "equipements.Name", sortable: true, key: "reference_name_equipement", valueKey: "reference_name_equipement", type: "text" },
 	{ label: "equipements.FriendlyName", sortable: true, key: "friendly_name_equipement", valueKey: "friendly_name_equipement", type: "text" },
 	{ label: "equipements.Description", sortable: false, key: "description_equipement", valueKey: "description_equipement", type: "text" },
@@ -29,7 +33,7 @@ const tableauLabel = ref([
 	{ label: "equipements.Img", sortable: false, key: "id_equipement", sourceKey: "id_equipement", type: "image",
 		storeRessourceId: 1 },
 ]);
-const tableauMeta = ref({
+const tableauMeta = ref<TableauMeta>({
 	key: "id_equipement",
 	path: "/equipements/",
 	saveState: true,
@@ -57,7 +61,7 @@ useViewScroll(false);
 		:filters="filter"
 		:loading="equipementsStore.equipementsLoading"
 		:total-count="Number(equipementsStore.equipementsTotalCount) || 0"
-		:fetch-function="(limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear)"
+		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

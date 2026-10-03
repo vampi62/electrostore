@@ -4,7 +4,7 @@
 		:class="[css, column.type == 'text' ? 'text-left' : 'text-center']"
 	>
 		<template v-if="column.type == 'bool'">
-			<template v-if="evaluateCondition(column.condition, effectiveRow)">
+			<template v-if="evaluateCondition(column.condition ?? 'false', effectiveRow)">
 				<font-awesome-icon icon="fa-solid fa-check" class="text-green-500" />
 			</template>
 			<template v-else>
@@ -24,9 +24,9 @@
 		</template>
 		<template v-else-if="column.type == 'image'">
 			<div class="flex justify-center items-center">
-				<template v-if="column.storeLinkId && storeData[column.storeLinkId]?.[effectiveRow[column.sourceKey]]?.[column.storeLinkKeyJoinRessource] !== null">
-					<img v-if="storeData[column.storeRessourceId]?.[storeData[column.storeLinkId]?.[effectiveRow[column.sourceKey]]?.[column.storeLinkKeyJoinRessource]]"
-						:src="storeData[column.storeRessourceId]?.[storeData[column.storeLinkId]?.[effectiveRow[column.sourceKey]]?.[column.storeLinkKeyJoinRessource]]"
+				<template v-if="column.storeLinkId && getImageLinkId(effectiveRow, column) !== null">
+					<img v-if="getImageSrc(effectiveRow, column)"
+						:src="getImageSrc(effectiveRow, column)"
 						class="w-16 h-16 object-cover rounded" :alt="`Id ${effectiveRow[column.key]}`" />
 					<span v-else class="w-16 h-16 object-cover rounded">
 						<div class="loading-spinner">
@@ -34,15 +34,9 @@
 						</div>
 					</span>
 				</template>
-				<template v-else-if="!column.storeLinkId && effectiveRow?.[column.sourceKey] && column.fieldUrl && storeData[column.storeRessourceId]?.[effectiveRow[column.sourceKey]]">
-					<img v-if="storeData[column.storeRessourceId]?.[effectiveRow[column.sourceKey]]"
-						:src="storeData[column.storeRessourceId]?.[effectiveRow[column.sourceKey]]"
+				<template v-else-if="!column.storeLinkId && column.sourceKey && effectiveRow?.[column.sourceKey] && column.fieldUrl && getImageSrc(effectiveRow, column)">
+					<img :src="getImageSrc(effectiveRow, column)"
 						class="w-16 h-16 object-cover rounded" :alt="`Id ${effectiveRow[column.key]}`" />
-					<span v-else class="w-16 h-16 object-cover rounded">
-						<div class="loading-spinner">
-							<div class="w-16 h-16 spinner-ring"></div>
-						</div>
-					</span>
 				</template>
 				<template v-else>
 					<img src="../assets/nopicture.webp" alt="Unavailable" class="w-16 h-16 object-cover rounded" />
@@ -53,12 +47,16 @@
 			<div class="flex justify-center items-center">
 				<template v-for="(button, buttonIndex) in column.buttons" :key="buttonIndex">
 					<template v-if="!button?.showCondition || evaluateCondition(button.showCondition, effectiveRow)">
-						<TableauActionButton :button="button" :row="effectiveRow" :disabled="button?.enableCondition && !evaluateCondition(button.enableCondition)" />
+						<TableauActionButton
+							:button="button"
+							:row="effectiveRow"
+							:disabled="Boolean(button?.enableCondition) && !evaluateCondition(String(button?.enableCondition ?? ''), effectiveRow)"
+						/>
 					</template>
 				</template>
 			</div>
 		</template>
-		<template v-else-if="column.canEdit && storeEdition?.[column.valueKey] !== undefined">
+		<template v-else-if="column.canEdit && column.valueKey && storeEdition?.[column.valueKey] !== undefined">
 			<Form :validation-schema="schema" v-slot="{ errors }">
 				<Field
 					:name="column.valueKey"
@@ -77,17 +75,18 @@
 	</td>
 </template>
 
-<script>
+<script lang="ts">
 import { defineAsyncComponent } from "vue";
+import type { PropType } from "vue";
 import { Form, Field } from "vee-validate";
+import type { TableauLabel } from "@/types/tableau";
 export default {
 	name: "TableauRow",
 	props: {
 		labels: {
-			type: Array,
+			type: Array as PropType<TableauLabel[]>,
 			required: true,
 			// labels for the columns, each object should have a key and type property
-			default: () => [],
 		},
 		row: {
 			type: Object,
@@ -144,15 +143,15 @@ export default {
 		},
 	},
 	methods: {
-		evaluateCondition(condition,rowData) {
+		evaluateCondition(condition: string, rowData: Record<string, any>) {
 			try {
-				return new Function(["store", "edition", "ready", "rowData"], `return ${condition}`)(this.storeData, this.storeEdition, this.storeReady, rowData);
+				return new Function("store", "edition", "ready", "rowData", `return ${condition}`)(this.storeData, this.storeEdition, this.storeReady, rowData);
 			} catch (error) {
 				console.error("Erreur lors de l'évaluation de la condition :", error);
 				return false;
 			}
 		},
-		formatCellValue(column, data) {
+		formatCellValue(column: any, data: any) {
 			switch (column.type) {
 			case "text":
 				return data;
@@ -166,28 +165,31 @@ export default {
 				return data;
 			}
 		},
-		getDataLinkListValue(row, label) {
-			return Object.values(this.storeData[label.storeLinkId]?.[row[label.sourceKey]] || {}).map((linkedItem) => {
-				let printedRessource = "";
-				for (const print of label.ressourcePrint) {
-					if (print.from === "ressource") {
-						printedRessource += this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
-					} else if (print.from === "link") {
-						printedRessource += linkedItem?.[print.valueKey] || "";
-					} else if (print.from === "text") {
-						printedRessource += print.text || "";
-					}
-				}
-				return printedRessource;
-			});
+		getImageLinkId(row: Record<string, any>, label: TableauLabel) {
+			const { storeLinkId, sourceKey, storeLinkKeyJoinRessource } = label;
+			if (!storeLinkId || !sourceKey || !storeLinkKeyJoinRessource) {
+				return undefined;
+			}
+			return this.storeData[storeLinkId]?.[row[sourceKey]]?.[storeLinkKeyJoinRessource];
 		},
-		getDataLinkValue(row, label) {
-			const linkedItem = this.storeData[label.storeLinkId]?.[row[label.sourceKey]];
+		getImageSrc(row: Record<string, any>, label: TableauLabel) {
+			const { storeRessourceId, storeLinkId, sourceKey } = label;
+			if (!storeRessourceId || !sourceKey) {
+				return undefined;
+			}
+			const key = storeLinkId ? this.getImageLinkId(row, label) : row[sourceKey];
+			if (key === undefined || key === null) {
+				return undefined;
+			}
+			return this.storeData[storeRessourceId]?.[key];
+		},
+		printRessource(label: TableauLabel, linkedItem: Record<string, any> | undefined) {
+			const { storeRessourceId, storeLinkKeyJoinRessource } = label;
 			let printedRessource = "";
-			for (const print of label.ressourcePrint) {
-				if (print.from === "ressource") {
-					printedRessource += this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
-				} else if (print.from === "link") {
+			for (const print of label.ressourcePrint ?? []) {
+				if (print.from === "ressource" && storeRessourceId && storeLinkKeyJoinRessource && print.valueKey) {
+					printedRessource += this.storeData[storeRessourceId]?.[linkedItem?.[storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
+				} else if (print.from === "link" && print.valueKey) {
 					printedRessource += linkedItem?.[print.valueKey] || "";
 				} else if (print.from === "text") {
 					printedRessource += print.text || "";
@@ -195,15 +197,38 @@ export default {
 			}
 			return printedRessource;
 		},
-		getDataValue(row, label) {
-			if (label.storeRessourceId && label.storeLinkId) {
-				const linkedItem = this.storeData[label.storeLinkId]?.[row[label.sourceKey]];
-				return this.storeData[label.storeRessourceId]?.[linkedItem?.[label.storeLinkKeyJoinRessource]]?.[label.valueKey];
-			} else if (label.storeRessourceId && !label.storeLinkId) {
-				return this.storeData[label.storeRessourceId]?.[row[label.sourceKey]]?.[label.valueKey];
-			} else {
-				return row?.[label.valueKey];
+		getDataLinkListValue(row: Record<string, any>, label: TableauLabel) {
+			const { storeLinkId, sourceKey } = label;
+			if (!storeLinkId || !sourceKey) {
+				return [];
 			}
+			return (Object.values(this.storeData[storeLinkId]?.[row[sourceKey]] || {}) as Record<string, any>[]).map((linkedItem) => this.printRessource(label, linkedItem));
+		},
+		getDataLinkValue(row: Record<string, any>, label: TableauLabel) {
+			const { storeLinkId, sourceKey } = label;
+			if (!storeLinkId || !sourceKey) {
+				return "";
+			}
+			return this.printRessource(label, this.storeData[storeLinkId]?.[row[sourceKey]]);
+		},
+		getDataValue(row: Record<string, any>, label: TableauLabel) {
+			const { storeRessourceId, storeLinkId, sourceKey, valueKey, storeLinkKeyJoinRessource } = label;
+			if (!valueKey) {
+				return undefined;
+			}
+			if (storeRessourceId && storeLinkId) {
+				if (!sourceKey || !storeLinkKeyJoinRessource) {
+					return undefined;
+				}
+				const linkedItem = this.storeData[storeLinkId]?.[row[sourceKey]];
+				return this.storeData[storeRessourceId]?.[linkedItem?.[storeLinkKeyJoinRessource]]?.[valueKey];
+			} else if (storeRessourceId) {
+				if (!sourceKey) {
+					return undefined;
+				}
+				return this.storeData[storeRessourceId]?.[row[sourceKey]]?.[valueKey];
+			}
+			return row?.[valueKey];
 		},
 	},
 };

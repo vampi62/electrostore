@@ -98,15 +98,17 @@
 		:text-p="texteModalDelete?.textP"/>
 </template>
 
-<script>
+<script lang="ts">
 import { inject, defineAsyncComponent } from "vue";
+import type { PropType } from "vue";
 import { Form, Field } from "vee-validate";
 import * as Yup from "yup";
+import type { useNotification } from "@/composables";
 export default {
 	name: "Comment",
 	props: {
 		storeData: {
-			type: Array,
+			type: Array as PropType<any[]>,
 			required: true,
 			// This should be an array containing:
 			// [0] - store with all comments
@@ -168,7 +170,7 @@ export default {
 			},
 		},
 		listFetchFunction: {
-			type: Array,
+			type: Array as PropType<any[]>,
 			default: () => [],
 			// This should be an array of functions to refetch related lists when a comment is created, updated, or deleted
 		},
@@ -193,7 +195,7 @@ export default {
 		await this.refetchData();
 	},
 	setup() {
-		const { addNotification } = inject("useNotification"); 
+		const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 		return {
 			addNotification,
 		};
@@ -201,7 +203,7 @@ export default {
 	data() {
 		return {
 			commentFormNew: "",
-			selectedComment: null,
+			selectedComment: null as any,
 			deleteModalShow: false,
 			createLoading: false,
 			nextOffset: 0,
@@ -219,7 +221,7 @@ export default {
 		},
 	},
 	methods: {
-		async commentCreate(comment) {
+		async commentCreate(comment: string) {
 			this.createLoading = true;
 			try {
 				this.schemaComment.validateSync({ [this.meta.contenu]: comment }, { abortEarly: false });
@@ -232,12 +234,13 @@ export default {
 				});
 				this.commentFormNew = "";
 			} catch (e) {
-				this.addNotification({ message: e, type: "error" });
+				const errorMessage = e instanceof Error ? e.message : String(e);
+				this.addNotification({ message: errorMessage, type: "error" });
 			} finally {
 				this.createLoading = false;
 			}
 		},
-		async commentUpdate(comment) {
+		async commentUpdate(comment: Record<string, any>) {
 			comment.loading = true;
 			try {
 				this.schemaComment.validateSync(comment, { abortEarly: false });
@@ -248,9 +251,10 @@ export default {
 					type: "success",
 					message: this.$t("components.VModalCommentUpdateSuccess"),
 				});
-				comment = null;
+				comment.loading = false;
 			} catch (e) {
-				this.addNotification({ message: e, type: "error" });
+				const errorMessage = e instanceof Error ? e.message : String(e);
+				this.addNotification({ message: errorMessage, type: "error" });
 				return;
 			}
 		},
@@ -262,16 +266,21 @@ export default {
 						message: this.$t("components.VModalCommentDeleteSuccess"),
 					});
 				})
-				.catch((e) => {
-					this.addNotification({ message: e, type: "error" });
+				.catch((e: Error) => {
+					const errorMessage = e instanceof Error ? e.message : String(e);
+					this.addNotification({ message: errorMessage, type: "error" });
 				});
 			this.deleteModalShow = false;
 		},
-		async loadNext(e) {
+		async loadNext(e: Event) {
 			if (this.totalCount === 0 || this.loading || !this.hasMore) {
 				return;
 			}
-			if (e.target.scrollTop + e.target.clientHeight >= e.target.scrollHeight - 10) {
+			const target = e.target as HTMLElement | null;
+			if (!target) {
+				return;
+			}
+			if (target.scrollTop + target.clientHeight >= target.scrollHeight - 10) {
 				if (this.totalCount === this.nextOffset) {
 					return;
 				}
@@ -286,7 +295,7 @@ export default {
 			[this.nextOffset, this.hasMore] = await this.fetchFunction(100, 0, this.meta?.expand || []);
 			await this.refetchListData(intervalOffset, this.nextOffset);
 		},
-		async refetchListData(minOffset, maxOffset) {
+		async refetchListData(minOffset: number, maxOffset: number) {
 			for (const fetchFunction of this.listFetchFunction) {
 				if (fetchFunction) {
 					await fetchFunction(minOffset, maxOffset);

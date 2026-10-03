@@ -1,14 +1,18 @@
-<script setup>
+<script setup lang="ts">
 import { useViewScroll } from "@/composables";
 import { ref } from "vue";
 
 import { useZonesStore } from "@/stores";
+
+import type { FilterLabel } from "@/types/filter";
+import type { TableauLabel, TableauMeta } from "@/types/tableau";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 const zonesStore = useZonesStore();
 
-const filter = ref([
+const filter = ref<FilterLabel[]>([
 	{ key: "name_zone", value: "", type: "text", label: "zones.FilterName", compareMethod: "=like=" },
 ]);
-const tableauLabel = ref([
+const tableauLabel = ref<TableauLabel[]>([
 	{ label: "zones.Name", sortable: true, key: "name_zone", valueKey: "name_zone", type: "text" },
 	{ label: "zones.Description", sortable: false, key: "description_zone", valueKey: "description_zone", type: "text" },
 	{ label: "zones.XLength", sortable: true, key: "xlength_zone", valueKey: "xlength_zone", type: "number" },
@@ -17,7 +21,7 @@ const tableauLabel = ref([
 		storeRessourceId: 1 },
 	{ label: "zones.StoresCount", sortable: false, key: "stores_count", valueKey: "stores_count", type: "number" },
 ]);
-const tableauMeta = ref({
+const tableauMeta = ref<TableauMeta>({
 	key: "id_zone",
 	path: "/zones/",
 	saveState: true,
@@ -45,7 +49,7 @@ useViewScroll(false);
 		:filters="filter"
 		:loading="zonesStore.zonesLoading"
 		:total-count="Number(zonesStore.zonesTotalCount) || 0"
-		:fetch-function="(limit, offset, expand, filter, sort, clear) => zonesStore.getZoneByInterval(limit, offset, filter, sort, clear)"
+		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => zonesStore.getZoneByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

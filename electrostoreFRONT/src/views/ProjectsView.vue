@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 
@@ -6,13 +6,17 @@ import { useViewScroll } from "@/composables";
 import { ProjectStatus } from "@/enums";
 import { useProjectsStore, useItemsStore, useProjectTagsStore } from "@/stores";
 
+import type { FilterLabel } from "@/types/filter";
+import type { TableauLabel, TableauMeta } from "@/types/tableau";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+
 const { t } = useI18n();
 const projectsStore = useProjectsStore();
 const itemsStore = useItemsStore();
 const projectTagsStore = useProjectTagsStore();
 
-async function fetchItemData(minOffset, maxOffset) {
-	let itemsNotFound = [];
+async function fetchItemData(minOffset: number, maxOffset: number) {
+	let itemsNotFound: string[] = [];
 	for (let id = minOffset; id < maxOffset; id++) {
 		for (const item in projectsStore.items[id]) {
 			if (!itemsStore.items[item]) {
@@ -24,8 +28,8 @@ async function fetchItemData(minOffset, maxOffset) {
 		await itemsStore.getItemByList(itemsNotFound);
 	}
 }
-async function fetchTagData(minOffset, maxOffset) {
-	let tagsNotFound = [];
+async function fetchTagData(minOffset: number, maxOffset: number) {
+	let tagsNotFound: string[] = [];
 	for (let id = minOffset; id < maxOffset; id++) {
 		for (const tag in projectsStore.projectTagProject[id]) {
 			if (!projectTagsStore.projectTags[tag]) {
@@ -42,16 +46,16 @@ const projectTypeStatus = ref({ [ProjectStatus.NotStarted]: t("projects.Status0"
 	[ProjectStatus.Completed]: t("projects.Status2"), [ProjectStatus.OnHold]: t("projects.Status3"),
 	[ProjectStatus.Cancelled]: t("projects.Status4"), [ProjectStatus.Archived]: t("projects.Status5") });
 
-const filter = ref([
+const filter = ref<FilterLabel[]>([
 	{ key: "status_project", value: "", type: "datalist", typeData: "number", options: projectTypeStatus, label: "projects.FilterStatus", compareMethod: "==" },
 	{ key: "name_project", value: "", type: "text", label: "projects.FilterNom", compareMethod: "=like=" },
 	{ key: "url_project", value: "", type: "text", label: "projects.FilterUrl", compareMethod: "=like=" },
 	{ key: "date_start_project", value: "", type: "date", label: "projects.FilterDate", compareMethod: "=ge=" },
 	{ key: "date_end_project", value: "", type: "date", label: "projects.FilterDateEnd", compareMethod: "=ge=" },
-	{ key: "ProjectsItems.Item.reference_name_item", value: "", type: "text", label: "projects.FilterItem", compareMethod: "=like=" },
-	{ key: "ProjectsProjectTags.ProjectTag.name_project_tag", value: "", type: "text", label: "projects.FilterTag", compareMethod: "=like=" },
+	//{ key: "ProjectsItems.Item.reference_name_item", value: "", type: "text", label: "projects.FilterItem", compareMethod: "=like=" },
+	//{ key: "ProjectsProjectTags.ProjectTag.name_project_tag", value: "", type: "text", label: "projects.FilterTag", compareMethod: "=like=" },
 ]);
-const tableauLabel = ref([
+const tableauLabel = ref<TableauLabel[]>([
 	{ label: "projects.Name", sortable: true, key: "name_project", valueKey: "name_project", type: "text" },
 	{ label: "projects.Description", sortable: false, key: "description_project", valueKey: "description_project", type: "text" },
 	{ label: "projects.Url", sortable: true, key: "url_project", valueKey: "url_project", type: "text" },
@@ -68,7 +72,7 @@ const tableauLabel = ref([
 	{ label: "projects.DateStart", sortable: true, key: "date_start_project", valueKey: "date_start_project", type: "date" },
 	{ label: "projects.DateEnd", sortable: true, key: "date_end_project", valueKey: "date_end_project", type: "date" },
 ]);
-const tableauMeta = ref({
+const tableauMeta = ref<TableauMeta>({
 	key: "id_project",
 	path: "/projects/",
 	expand: ["project_items", "project_tags"],
@@ -97,8 +101,8 @@ useViewScroll(false);
 		:filters="filter"
 		:loading="projectsStore.projectsLoading"
 		:total-count="Number(projectsStore.projectsTotalCount) || 0"
-		:fetch-function="(limit, offset, expand, filter, sort, clear) => projectsStore.getProjectByInterval(limit, offset, expand, filter, sort, clear)"
-		:list-fetch-function="[(minOffset, maxOffset) => fetchTagData(minOffset, maxOffset), (minOffset, maxOffset) => fetchItemData(minOffset, maxOffset)]"
+		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectsStore.getProjectByInterval(limit, offset, expand, filter, sort, clear)"
+		:list-fetch-function="[(minOffset: number, maxOffset: number) => fetchTagData(minOffset, maxOffset), (minOffset: number, maxOffset: number) => fetchItemData(minOffset, maxOffset)]"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

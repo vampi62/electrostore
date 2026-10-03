@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { reactive, watch } from "vue";
 
 import { useTabsStore } from "@/stores";
@@ -6,7 +6,7 @@ import { useTabsStore } from "@/stores";
 const tabsStore = useTabsStore();
 
 // the views of a tab are loaded the first time the tab is selected then kept alive
-const loadedTabs = reactive(new Set());
+const loadedTabs = reactive(new Set<string>());
 watch(() => tabsStore.activeId, (id) => loadedTabs.add(id), { immediate: true });
 </script>
 

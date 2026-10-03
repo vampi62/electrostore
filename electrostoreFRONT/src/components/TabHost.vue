@@ -1,6 +1,7 @@
-<script setup>
+<script setup lang="ts">
 import { ref, provide, shallowReactive } from "vue";
 import { RouterView, START_LOCATION, routerKey, routeLocationKey, routerViewLocationKey } from "vue-router";
+import type { RouteLocationNormalizedLoaded } from "vue-router";
 
 import { useTabsStore } from "@/stores";
 
@@ -18,10 +19,13 @@ const props = defineProps({
 // every tab owns a router, the views displayed in the tab (useRouter, useRoute, RouterLink...) use it
 // instead of the global one, this is what install() of vue-router does for the whole app
 const router = useTabsStore().getRouter(props.tabId);
-const reactiveRoute = {};
+if (!router) {
+	throw new Error(`No router found for tabId: ${props.tabId}`);
+}
+const reactiveRoute = {} as RouteLocationNormalizedLoaded;
 for (const key in START_LOCATION) {
 	Object.defineProperty(reactiveRoute, key, {
-		get: () => router.currentRoute.value[key],
+		get: () => router.currentRoute.value[key as keyof RouteLocationNormalizedLoaded],
 		enumerable: true,
 	});
 }

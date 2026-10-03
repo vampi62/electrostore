@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from "vue";
 import { useRoute } from "vue-router";
 import { Form, Field } from "vee-validate";
@@ -25,12 +25,12 @@ const schema = Yup.object().shape({
 	password: Yup.string()
 		.matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, t("common.VResetPasswordPasswordRequirements"))
 		.required(t("common.VResetPasswordPasswordRequired")),
-	confirmPassword: Yup.string().oneOf([Yup.ref("password"), null], t("common.VResetPasswordPasswordMatch"))
+	confirmPassword: Yup.string().oneOf([Yup.ref("password")], t("common.VResetPasswordPasswordMatch"))
 		.matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, t("common.VResetPasswordPasswordRequirements"))
 		.required(t("common.VResetPasswordPasswordConfirmRequired")),
 });
 
-function onSubmit(values, { setErrors }) {
+function onSubmit(values: Record<string, any>, { setErrors }: { setErrors: (errors: Record<string, string | undefined>) => void }) {
 	const { email, token, password } = values;
 	return authStore.resetPassword(email, token, password)
 		.catch((error) => setErrors({ apiError: error }))

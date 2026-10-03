@@ -1,15 +1,20 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, inject } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
 import { useViewScroll } from "@/composables";
+import type { useNotification } from "@/composables";
 import { downloadFile, viewFile, isNewId } from "@/utils";
 import { EquipementStatus, EquipementMaintenanceType } from "@/enums";
 import { useConfigsStore, useEquipementsStore, useTagsStore, useStoresStore, useUsersStore, useAuthStore } from "@/stores";
 
-const { addNotification } = inject("useNotification");
+import type { FilterLabel } from "@/types/filter";
+import type { TableauLabel, TableauRowData } from "@/types/tableau";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+
+const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
@@ -21,7 +26,7 @@ const storesStore = useStoresStore();
 const usersStore = useUsersStore();
 const authStore = useAuthStore();
 
-const equipementId = ref(route.params.id);
+const equipementId = ref(route.params.id as string);
 const preset = ref(route.query.preset || null);
 
 // every new element has its own edition space in the store, so several tabs can create an element at the same time
@@ -29,11 +34,11 @@ if (isNewId(equipementId.value)) {
 	equipementId.value = equipementsStore.getAvailableNewEquipementId();
 }
 
-const formContainer = ref(null);
+const formContainer = ref<any>(null);
 
 async function fetchAllData() {
 	if (isNewId(equipementId.value)) {
-		equipementsStore.loadToEdition(equipementId.value, preset.value);
+		equipementsStore.loadToEdition(equipementId.value, preset.value as any);
 	} else {
 		equipementsStore.setLoadingEdition(equipementId.value, true);
 		try {
@@ -56,17 +61,18 @@ onBeforeUnmount(() => {
 });
 
 // image
-const imageInputRef = ref(null);
-const localImagePreviewUrl = ref(null);
+const imageInputRef = ref<HTMLInputElement | null>(null);
+const localImagePreviewUrl = ref<string | null>(null);
 const triggerImageInput = () => {
 	if (equipementsStore.equipementEdition[equipementId.value]?.loading) {
 		return;
 	}
 	imageInputRef.value?.click();
 };
-const onImageFileChange = (event) => {
-	const file = event.target.files?.[0];
-	event.target.value = "";
+const onImageFileChange = (event: Event) => {
+	const input = event.target as HTMLInputElement;
+	const file = input.files?.[0];
+	input.value = "";
 	if (!file) {
 		return;
 	}
@@ -141,7 +147,7 @@ const equipementDelete = async() => {
 
 const createSchema = () => {
 	const edition = equipementsStore.equipementEdition[equipementId.value];
-	const shape = {};
+	const shape: any = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
@@ -159,15 +165,15 @@ const createSchema = () => {
 		.required(t("equipement.StatusRequired"));
 	shape.img_file = Yup.mixed()
 		.nullable()
-		.test("fileSize", t("equipement.ImageSize") + " " + configsStore.getConfigByKey("max_size_image_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_image_in_mb"))) * 1024 * 1024);
+		.test("fileSize", t("equipement.ImageSize") + " " + configsStore.getConfigByKey("max_size_image_in_mb") + "Mo", (value: any) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_image_in_mb"))) * 1024 * 1024);
 	return Yup.object().shape(shape);
 };
 
 // tag
-const filterTag = ref([
+const filterTag = ref<FilterLabel[]>([
 	{ key: "name_tag", value: "", type: "text", label: "", placeholder: t("equipement.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
-function tagSave(id_tag) {
+function tagSave(id_tag: string | number) {
 	try {
 		// re-adding a tag that is only pending deletion locally just cancels that pending deletion
 		if (equipementsStore.equipementTagReady[equipementId.value]?.[id_tag]?.status === "deleted") {
@@ -183,7 +189,7 @@ function tagSave(id_tag) {
 		addNotification({ message: e, type: "error" });
 	}
 }
-function tagDelete(id_tag) {
+function tagDelete(id_tag: string | number) {
 	try {
 		// a tag that was only staged as a pending creation is simply dropped, nothing to push
 		if (equipementsStore.equipementTagReady[equipementId.value]?.[id_tag]?.status === "created") {
@@ -196,7 +202,7 @@ function tagDelete(id_tag) {
 		addNotification({ message: e, type: "error" });
 	}
 }
-function tagRestore(id_tag) {
+function tagRestore(id_tag: string | number) {
 	try {
 		delete equipementsStore.equipementTagReady[equipementId.value][id_tag];
 		addNotification({ message: t("equipement.TagRestored"), type: "success" });
@@ -206,7 +212,7 @@ function tagRestore(id_tag) {
 }
 
 // box
-const boxDelete = (row) => {
+const boxDelete = (row: TableauRowData) => {
 	try {
 		equipementsStore.valideEquipementBoxEditionById(equipementId.value, row.id_box, "deleted");
 		addNotification({ message: t("equipement.BoxUnlinked"), type: "success" });
@@ -214,7 +220,7 @@ const boxDelete = (row) => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const boxRestore = (row) => {
+const boxRestore = (row: TableauRowData) => {
 	try {
 		delete equipementsStore.equipementBoxReady[equipementId.value][row.id_box];
 		addNotification({ message: t("equipement.BoxRestored"), type: "success" });
@@ -225,7 +231,7 @@ const boxRestore = (row) => {
 
 // document
 const documentAddModalShow = ref(false);
-const documentAdd = async(files) => {
+const documentAdd = async(files: { name: string; document: File }[]) => {
 	for (const file of files) {
 		const documentModalData = { name_equipement_document: file.name, document: file.document, type_equipement_document: file.document.type, created_at: new Date() };
 		const newId = equipementsStore.getAvailableNewEquipementDocumentId(equipementId.value);
@@ -241,7 +247,7 @@ const documentAdd = async(files) => {
 	}
 	documentAddModalShow.value = false;
 };
-const documentEdit = (row) => {
+const documentEdit = (row: TableauRowData) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		equipementsStore.valideEquipementDocumentEditionById(equipementId.value, row.id_equipement_document,
@@ -253,7 +259,7 @@ const documentEdit = (row) => {
 		return;
 	}
 };
-const documentRestore = (row) => {
+const documentRestore = (row: TableauRowData) => {
 	try {
 		delete equipementsStore.equipementDocumentReady[equipementId.value][row.id_equipement_document];
 		addNotification({ message: t("equipement.DocumentRestored"), type: "success" });
@@ -261,7 +267,7 @@ const documentRestore = (row) => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const documentDelete = (row) => {
+const documentDelete = (row: TableauRowData) => {
 	try {
 		equipementsStore.valideEquipementDocumentEditionById(equipementId.value, row.id_equipement_document, "deleted");
 		addNotification({ message: t("equipement.DocumentDeleted"), type: "success" });
@@ -269,11 +275,11 @@ const documentDelete = (row) => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const documentDownload = async(fileContent) => {
+const documentDownload = async(fileContent: TableauRowData) => {
 	const file = await equipementsStore.downloadEquipementDocument(equipementId.value, fileContent.id_equipement_document);
 	downloadFile(file, { keyName: fileContent.name_equipement_document, keyType: fileContent.type_equipement_document });
 };
-const documentView = async(fileContent) => {
+const documentView = async(fileContent: TableauRowData) => {
 	const file = await equipementsStore.downloadEquipementDocument(equipementId.value, fileContent.id_equipement_document);
 	if (viewFile(file, { keyName: fileContent.name_equipement_document, keyType: fileContent.type_equipement_document })) {
 		addNotification({ message: t("equipement.DocumentOpenInNewTab"), type: "success" });
@@ -310,7 +316,7 @@ const maintenanceAdd = () => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const maintenanceMarkDone = (row) => {
+const maintenanceMarkDone = (row: TableauRowData) => {
 	try {
 		equipementsStore.equipementMaintenanceEdition[equipementId.value][row.id_equipement_maintenance] = { ...row, date_done_equipement_maintenance: new Date().toISOString() };
 		equipementsStore.valideEquipementMaintenanceEditionById(equipementId.value, row.id_equipement_maintenance, "modified");
@@ -320,7 +326,7 @@ const maintenanceMarkDone = (row) => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const maintenanceRestore = (row) => {
+const maintenanceRestore = (row: TableauRowData) => {
 	try {
 		delete equipementsStore.equipementMaintenanceReady[equipementId.value][row.id_equipement_maintenance];
 		addNotification({ message: t("equipement.MaintenanceRestored"), type: "success" });
@@ -328,7 +334,7 @@ const maintenanceRestore = (row) => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const maintenanceDelete = (row) => {
+const maintenanceDelete = (row: TableauRowData) => {
 	try {
 		equipementsStore.valideEquipementMaintenanceEditionById(equipementId.value, row.id_equipement_maintenance, "deleted");
 		addNotification({ message: t("equipement.MaintenanceDeleted"), type: "success" });
@@ -343,7 +349,7 @@ const schemaAddDocument = Yup.object().shape({
 		.required(t("equipement.DocumentNameRequired")),
 	document: Yup.mixed()
 		.required(t("equipement.DocumentRequired"))
-		.test("fileSize", t("equipement.DocumentSize", { count: configsStore.getConfigByKey("max_size_document_in_mb") }), (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
+		.test("fileSize", t("equipement.DocumentSize", { count: configsStore.getConfigByKey("max_size_document_in_mb") }), (value: any) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 const schemaEditDocument = Yup.object().shape({
 	name_equipement_document: Yup.string()
@@ -365,33 +371,33 @@ const labelForm = [
 	{ key: "status_equipement", label: "equipement.Status", type: "select", options: equipementStatusOptions, typeData: "number" },
 	{ key: "img_file", label: "equipement.Image", type: "custom" },
 ];
-const labelTableauModalTag = ref([
+const labelTableauModalTag = ref<TableauLabel[]>([
 	{ label: "equipement.TagName", sortable: true, key: "name_tag", valueKey: "name_tag", type: "text" },
 	{ label: "equipement.TagActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
 			showCondition: "!ready?.status && !store[1]?.[rowData.id_tag]",
-			action: (row) => tagSave(row.id_tag),
+			action: (row: TableauRowData) => tagSave(row.id_tag),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-rotate-left",
 			showCondition: "ready?.status === 'deleted'",
-			action: (row) => tagRestore(row.id_tag),
+			action: (row: TableauRowData) => tagRestore(row.id_tag),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
 			showCondition: "(ready?.status && ready?.status !== 'deleted') || (store[1]?.[rowData.id_tag] && !ready?.status)",
-			action: (row) => tagDelete(row.id_tag),
+			action: (row: TableauRowData) => tagDelete(row.id_tag),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
 ]);
-const labelTableauBox = ref([
+const labelTableauBox = ref<TableauLabel[]>([
 	{ label: "equipement.BoxId", sortable: false, key: "id_box", valueKey: "id_box", type: "number" },
 	{ label: "equipement.BoxStoreId", sortable: false, key: "box.id_store", sourceKey: "id_box", type: "number",
 		storeRessourceId: 1, valueKey: "id_store" },
@@ -400,19 +406,19 @@ const labelTableauBox = ref([
 			label: "",
 			showCondition: "ready?.status === 'deleted'",
 			icon: "fa-solid fa-rotate-left",
-			action: (row) => boxRestore(row),
+			action: (row: TableauRowData) => boxRestore(row),
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
-			action: (row) => boxDelete(row),
+			action: (row: TableauRowData) => boxDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
 ]);
-const labelTableauDocument = ref([
+const labelTableauDocument = ref<TableauLabel[]>([
 	{ label: "equipement.DocumentName", sortable: true, key: "name_equipement_document", valueKey: "name_equipement_document", type: "text", canEdit: true },
 	{ label: "equipement.DocumentType", sortable: true, key: "type_equipement_document", valueKey: "type_equipement_document", type: "text" },
 	{ label: "equipement.DocumentDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
@@ -421,7 +427,7 @@ const labelTableauDocument = ref([
 			label: "",
 			icon: "fa-solid fa-edit",
 			showCondition: "!edition?.id_equipement_document && ready?.status !== 'deleted'",
-			action: (row) => {
+			action: (row: TableauRowData) => {
 				equipementsStore.equipementDocumentEdition[equipementId.value][row.id_equipement_document] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
@@ -430,7 +436,7 @@ const labelTableauDocument = ref([
 			label: "",
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_equipement_document",
-			action: (row) => {
+			action: (row: TableauRowData) => {
 				delete equipementsStore.equipementDocumentEdition[equipementId.value][row.id_equipement_document];
 			},
 			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
@@ -439,21 +445,21 @@ const labelTableauDocument = ref([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_equipement_document",
-			action: (row) => documentEdit(equipementsStore.equipementDocumentEdition[equipementId.value][row.id_equipement_document]),
+			action: (row: TableauRowData) => documentEdit(equipementsStore.equipementDocumentEdition[equipementId.value][row.id_equipement_document]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-eye",
-			action: (row) => documentView(row),
+			action: (row: TableauRowData) => documentView(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-download",
-			action: (row) => documentDownload(row),
+			action: (row: TableauRowData) => documentDownload(row),
 			class: "px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600",
 			animation: true,
 		},
@@ -461,19 +467,19 @@ const labelTableauDocument = ref([
 			label: "",
 			showCondition: "ready?.status === 'deleted'",
 			icon: "fa-solid fa-rotate-left",
-			action: (row) => documentRestore(row),
+			action: (row: TableauRowData) => documentRestore(row),
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
-			action: (row) => documentDelete(row),
+			action: (row: TableauRowData) => documentDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
 ]);
-const labelTableauMaintenance = ref([
+const labelTableauMaintenance = ref<TableauLabel[]>([
 	{ label: "equipement.MaintenanceType", sortable: true, key: "type_equipement_maintenance", valueKey: "type_equipement_maintenance", type: "enum", options: maintenanceTypeOptions },
 	{ label: "equipement.MaintenanceDatePlanned", sortable: true, key: "date_planned_equipement_maintenance", valueKey: "date_planned_equipement_maintenance", type: "datetime" },
 	{ label: "equipement.MaintenanceDateDone", sortable: true, key: "date_done_equipement_maintenance", valueKey: "date_done_equipement_maintenance", type: "datetime" },
@@ -483,7 +489,7 @@ const labelTableauMaintenance = ref([
 			label: "",
 			icon: "fa-solid fa-check",
 			showCondition: "!rowData.date_done_equipement_maintenance && ready?.status !== 'deleted'",
-			action: (row) => maintenanceMarkDone(row),
+			action: (row: TableauRowData) => maintenanceMarkDone(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -491,19 +497,19 @@ const labelTableauMaintenance = ref([
 			label: "",
 			showCondition: "ready?.status === 'deleted'",
 			icon: "fa-solid fa-rotate-left",
-			action: (row) => maintenanceRestore(row),
+			action: (row: TableauRowData) => maintenanceRestore(row),
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
-			action: (row) => maintenanceDelete(row),
+			action: (row: TableauRowData) => maintenanceDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
 ]);
-const labelTableauStatusHistory = ref([
+const labelTableauStatusHistory = ref<TableauLabel[]>([
 	{ label: "equipement.HistoryDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
 	{ label: "equipement.HistoryStatus", sortable: true, key: "status_equipement", valueKey: "status_equipement", type: "enum", options: equipementStatusOptions },
 ]);
@@ -551,11 +557,11 @@ useViewScroll(true);
 				</template>
 			</FormContainer>
 			<Tags :current-tags="equipementsStore.equipementTags[equipementId] || {}" :ready-store="equipementsStore.equipementTagReady[equipementId] || {}" :tags-store="tagsStore.tags" :can-edit="authStore.hasPermission([1, 2])"
-				:delete-function="(value) => tagDelete(value)"
-				:restore-function="(value) => tagRestore(value)"
+				:delete-function="(value: string | number) => tagDelete(value)"
+				:restore-function="(value: string | number) => tagRestore(value)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
-								, 'loading': tagsStore.tagsLoading, 'fetchFunction': (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
+								, 'loading': tagsStore.tagsLoading, 'fetchFunction': (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)
 								, 'totalCount': Number(tagsStore.tagsTotalCount || 0) }"
 				:meta ="{ 'keyPoids': 'weight_tag', 'keyName': 'name_tag' }"
 				/>
@@ -587,7 +593,7 @@ useViewScroll(true);
 					:schema="schemaEditDocument"
 					:loading="equipementsStore.equipementDocumentsLoading"
 					:total-count="Number(equipementsStore.equipementDocumentsTotalCount[equipementId])"
-					:fetch-function="!isNewId(equipementId) ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementDocumentByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementDocumentByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -619,7 +625,7 @@ useViewScroll(true);
 					:store-ready="equipementsStore.equipementMaintenanceReady[equipementId]"
 					:loading="equipementsStore.equipementMaintenancesLoading"
 					:total-count="Number(equipementsStore.equipementMaintenancesTotalCount[equipementId])"
-					:fetch-function="!isNewId(equipementId) ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementMaintenanceByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementMaintenanceByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -631,13 +637,13 @@ useViewScroll(true);
 					:store-data="[equipementsStore.equipementComments[equipementId], usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
 					:store-function="{
-						create: (data) => equipementsStore.createEquipementComment(equipementId, data),
-						update: (id, data) => equipementsStore.updateEquipementComment(equipementId, id, data),
-						delete: (id) => equipementsStore.deleteEquipementComment(equipementId, id),
+						create: (data: Record<string, any>) => equipementsStore.createEquipementComment(equipementId, data),
+						update: (id: string | number, data: Record<string, any>) => equipementsStore.updateEquipementComment(equipementId, id, data),
+						delete: (id: string | number) => equipementsStore.deleteEquipementComment(equipementId, id),
 					}"
 					:loading="equipementsStore.equipementCommentsLoading"
 					:total-count="Number(equipementsStore.equipementCommentsTotalCount[equipementId]) || 0"
-					:fetch-function="!isNewId(equipementId) ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementCommentByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementCommentByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
 					:texte-modal-delete="{ textTitle: 'equipement.CommentDeleteTitle', textP: 'equipement.CommentDeleteText' }"
 				/>
 			</template>
@@ -649,7 +655,7 @@ useViewScroll(true);
 					:store-data="[equipementsStore.equipementStatusHistory[equipementId]]"
 					:loading="equipementsStore.equipementStatusHistoryLoading"
 					:total-count="Number(equipementsStore.equipementStatusHistoryTotalCount[equipementId])"
-					:fetch-function="!isNewId(equipementId) ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementStatusHistoryByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(equipementId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementStatusHistoryByInterval(equipementId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>

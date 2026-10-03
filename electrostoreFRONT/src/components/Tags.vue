@@ -2,7 +2,7 @@
 	<div class="flex-1 min-h-96 bg-gray-200 px-2 py-2 rounded">
 		<span v-for="key in sortedTags" :key="key"
 			class="p-1 rounded mr-2 mb-1" :class="tagPillClass(key)">
-			{{ this.tagsStore[key]?.[this.meta["keyName"]] }} ({{ this.tagsStore[key]?.[this.meta["keyPoids"]] }})
+			{{ tagsStore[key]?.[meta["keyName"]] }} ({{ tagsStore[key]?.[meta["keyPoids"]] }})
 			<span v-if="tagStatus(key) === 'deleted'" @click="restoreFunction(key)"
 				class="text-blue-500 cursor-pointer hover:text-blue-600">
 				<font-awesome-icon icon="fa-solid fa-rotate-left" />
@@ -47,7 +47,7 @@
 	</teleport>
 </template>
 
-<script>
+<script lang="ts">
 export default {
 	name: "Tags",
 	props: {
@@ -110,7 +110,7 @@ export default {
 	computed:{
 		// merges currentTags (saved) with readyStore (pending, unsaved) without duplicate ids
 		effectiveTags() {
-			const merged = {};
+			const merged: Record<string, { status: string | null }> = {};
 			for (const key of Object.keys(this.currentTags || {})) {
 				merged[key] = { status: this.readyStore?.[key]?.status || null };
 			}
@@ -133,10 +133,10 @@ export default {
 		};
 	},
 	methods: {
-		tagStatus(key) {
+		tagStatus(key: string) {
 			return this.effectiveTags[key]?.status || null;
 		},
-		tagPillClass(key) {
+		tagPillClass(key: string) {
 			switch (this.tagStatus(key)) {
 			case "created": return "bg-green-100 text-green-800";
 			case "deleted": return "bg-red-100 text-red-800";

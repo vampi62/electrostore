@@ -1,15 +1,21 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, inject } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
 import { useViewScroll } from "@/composables";
+import type { useNotification } from "@/composables";
 import { isNewId } from "@/utils";
 import { UserRole } from "@/enums";
 import { useConfigsStore, useUsersStore, useCommandsStore, useProjectsStore, useEquipementsStore, useAuthStore } from "@/stores";
 
-const { addNotification } = inject("useNotification");
+import type { FilterLabel } from "@/types/filter";
+import type { FormLabel } from "@/types/form";
+import type { TableauLabel, TableauRowData } from "@/types/tableau";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+
+const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
@@ -21,7 +27,7 @@ const projectsStore = useProjectsStore();
 const equipementsStore = useEquipementsStore();
 const authStore = useAuthStore();
 
-const userId = ref(route.params.id);
+const userId = ref(route.params.id as string || authStore.user?.id_user);
 const preset = ref(route.query.preset || null);
 
 // every new element has its own edition space in the store, so several tabs can create an element at the same time
@@ -29,7 +35,7 @@ if (isNewId(userId.value)) {
 	userId.value = usersStore.getAvailableNewUserId();
 }
 
-const formContainer = ref(null);
+const formContainer = ref<any>(null);
 
 if ((!authStore.hasPermission([1, 2])) && authStore.user?.id_user !== Number(userId.value)) {
 	addNotification({ message: t("user.noAccess"), type: "error" });
@@ -42,7 +48,7 @@ if ((!authStore.hasPermission([1, 2])) && authStore.user?.id_user !== Number(use
 
 async function fetchAllData() {
 	if (isNewId(userId.value)) {
-		usersStore.loadToEdition(userId.value, preset.value);
+		usersStore.loadToEdition(userId.value, preset.value as any);
 	} else {
 		usersStore.setLoadingEdition(userId.value, true);
 		try {
@@ -129,7 +135,7 @@ const userDelete = async() => {
 	userDeleteModalShow.value = false;
 };
 
-const revokeToken = async(tokenId) => {
+const revokeToken = async(tokenId: string | number) => {
 	try {
 		await usersStore.updateToken(userId.value, tokenId, { "revoked_reason": "Revoked by user" });
 		usersStore.getTokenById(userId.value, tokenId);
@@ -141,7 +147,7 @@ const revokeToken = async(tokenId) => {
 
 const createSchema = () => {
 	const edition = usersStore.userEdition[userId.value];
-	const shape = {};
+	const shape: any = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
@@ -162,7 +168,7 @@ const createSchema = () => {
 				t("user.PasswordComplexity"),
 			);
 		shape.confirm_mdp_user = Yup.string()
-			.required(t("user.ConfirmPasswordRequired")).oneOf([Yup.ref("password_user"), null], t("user.ConfirmPasswordMatch")).matches(
+			.required(t("user.ConfirmPasswordRequired")).oneOf([Yup.ref("password_user")], t("user.ConfirmPasswordMatch")).matches(
 				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
 				t("user.PasswordComplexity"),
 			);
@@ -177,7 +183,7 @@ const createSchema = () => {
 	return Yup.object().shape(shape);
 };
 
-const labelForm = ref([
+const labelForm = ref<FormLabel[]>([
 	{ key: "name_user", label: "user.Name", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 	{ key: "firstname_user", label: "user.FirstName", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
 	{ key: "email_user", label: "user.Email", type: "text", enableCondition: "edition?.id_user === session?.id_user || func.hasPermission([2])" },
@@ -192,11 +198,11 @@ const labelForm = ref([
 		showCondition: "!session?.isSSOUser && (edition?.id_user === session?.id_user || func.hasPermission([2]))" },
 ]);
 
-const filterSession = ref([
+const filterSession = ref<FilterLabel[]>([
 	{ key: "is_revoked", disableLocalFilter: true, value: "", typeData: "bool", valueIfTrue: "true", valueIfFalse: "", preset: false,
 		type: "checkbox", label: "user.ShowExpiredAndRevokedTokens", compareMethod: "==" },
 ]);
-const labelTableauSession = ref([
+const labelTableauSession = ref<TableauLabel[]>([
 	{ label: "user.TokenCreatedDate", sortable: true, key: "first_created_at", valueKey: "first_created_at", type: "datetime" },
 	{ label: "user.TokenLastLoginDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
 	{ label: "user.TokenCreatedIP", sortable: true, key: "created_by_ip", valueKey: "created_by_ip", type: "text" },
@@ -211,7 +217,7 @@ const labelTableauSession = ref([
 			label: "user.TokenRevoke",
 			icon: "fa-solid fa-ban",
 			showCondition: "!rowData?.is_revoked",
-			action: (row) => revokeToken(row.session_id),
+			action: (row: TableauRowData) => revokeToken(row.session_id),
 			class: "bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600",
 			animation: true,
 		},
@@ -221,18 +227,18 @@ useViewScroll(true);
 
 // --- Push Notifications ---
 const pushSupported = typeof window !== "undefined" && "PushManager" in window && "serviceWorker" in navigator && typeof Notification !== "undefined";
-const pushSubscriptionId = ref(null); // id de l'abonnement actuel dans l'API
+const pushSubscriptionId = ref<number | null>(null); // id de l'abonnement actuel dans l'API
 const pushLoading = ref(false);
 const pushDeviceName = ref("");
 const notificationPermission = ref(typeof Notification !== "undefined" ? Notification.permission : "default");
 
-function urlBase64ToUint8Array(base64String) {
+function urlBase64ToUint8Array(base64String: string) {
 	const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
 	const base64 = (base64String + padding).replaceAll(/-/g, "+").replaceAll(/_/g, "/");
 	const rawData = window.atob(base64);
 	const outputArray = new Uint8Array(rawData.length);
 	for (let i = 0; i < rawData.length; ++i) {
-		outputArray[i] = rawData.codePointAt(i);
+		outputArray[i] = rawData.codePointAt(i) || 0;
 	}
 	return outputArray;
 }
@@ -255,9 +261,9 @@ async function checkExistingSubscription() {
 			return;
 		}
 		// Cherche si cet endpoint est déjà enregistré côté API pour cet utilisateur
-		await usersStore.getPushSubscriptionsByInterval(userId.value, 100, 0, true);
+		await usersStore.getPushSubscriptionsByInterval(userId.value, 100, 0, [], "", "", true);
 		const subs = usersStore.pushSubscriptions[userId.value] || {};
-		const match = Object.values(subs).find((s) => s.endpoint === sub.endpoint);
+		const match: any = Object.values(subs).find((s: any) => s.endpoint === sub.endpoint);
 		pushSubscriptionId.value = match ? match.id_user_push_subscription : null;
 	} catch (e) {
 		pushSubscriptionId.value = null;
@@ -288,6 +294,10 @@ async function subscribePush() {
 			applicationServerKey: urlBase64ToUint8Array(vapidKey),
 		});
 		const json = sub.toJSON();
+		if (!json.endpoint || !json.keys || !json.keys.p256dh || !json.keys.auth) {
+			addNotification({ message: t("user.PushSubscribeError"), type: "error" });
+			return;
+		}
 		const created = await usersStore.createPushSubscription(userId.value, {
 			endpoint: json.endpoint,
 			p256dh: json.keys.p256dh,
@@ -341,7 +351,7 @@ const sendTestEmailNotification = async() => {
 	}
 };
 
-const deletePushSubscriptionFromTable = async(subscriptionId) => {
+const deletePushSubscriptionFromTable = async(subscriptionId: number) => {
 	try {
 		if (subscriptionId === pushSubscriptionId.value) {
 			if (pushSupported) {
@@ -360,7 +370,7 @@ const deletePushSubscriptionFromTable = async(subscriptionId) => {
 	}
 };
 
-const labelTableauPushSubscriptions = ref([
+const labelTableauPushSubscriptions = ref<TableauLabel[]>([
 	{ label: "user.PushDeviceName", sortable: false, key: "device_name", valueKey: "device_name", type: "text" },
 	{ label: "user.PushEndpoint", sortable: false, key: "endpoint", valueKey: "endpoint", type: "text" },
 	{ label: "user.PushCreatedAt", sortable: false, key: "created_at", valueKey: "created_at", type: "datetime" },
@@ -368,7 +378,7 @@ const labelTableauPushSubscriptions = ref([
 		{
 			label: "user.PushDeleteBtn",
 			icon: "fa-solid fa-trash",
-			action: (row) => deletePushSubscriptionFromTable(row.id_user_push_subscription),
+			action: (row: TableauRowData) => deletePushSubscriptionFromTable(row.id_user_push_subscription),
 			class: "bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600",
 			animation: true,
 		},
@@ -393,7 +403,7 @@ onMounted(() => {
 	<div v-if="usersStore.users[userId] || isNewId(userId)" class="w-full">
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="usersStore.userEdition[userId]" :store-user="authStore.user"
-				:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
+				:store-function="{ hasPermission: (validPerm: number[]) => authStore.hasPermission(validPerm) }"/>
 		</div>
 		<CollapsibleSection title="user.Participation" :permission="!isNewId(userId)">
 			<template #append-row>
@@ -405,7 +415,7 @@ onMounted(() => {
 							:store-user="authStore.user" :store-config="configsStore"
 							:loading="usersStore.commandsCommentLoading"
 							:total-count="Number(usersStore.commandsCommentTotalCount[userId]) || 0"
-							:fetch-function="!isNewId(userId) ? (limit, offset, expand, filter, sort, clear) => usersStore.getCommandCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+							:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => usersStore.getCommandCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>
@@ -417,7 +427,7 @@ onMounted(() => {
 							:store-user="authStore.user" :store-config="configsStore"
 							:loading="usersStore.projectsCommentLoading"
 							:total-count="Number(usersStore.projectsCommentTotalCount[userId]) || 0"
-							:fetch-function="!isNewId(userId) ? (limit, offset, expand, filter, sort, clear) => usersStore.getProjectCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+							:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => usersStore.getProjectCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>
@@ -429,7 +439,7 @@ onMounted(() => {
 							:store-user="authStore.user" :store-config="configsStore"
 							:loading="usersStore.equipementsCommentLoading"
 							:total-count="Number(usersStore.equipementsCommentTotalCount[userId]) || 0"
-							:fetch-function="!isNewId(userId) ? (limit, offset, expand, filter, sort, clear) => usersStore.getEquipementCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+							:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => usersStore.getEquipementCommentByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 						/>
 					</template>
 				</CollapsibleSection>
@@ -444,7 +454,7 @@ onMounted(() => {
 					:filters="filterSession"
 					:loading="usersStore.tokensLoading"
 					:total-count="Number(usersStore.tokensTotalCount[userId]) || 0"
-					:fetch-function="!isNewId(userId) ? (limit, offset, expand, filter, sort, clear) => usersStore.getTokenByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => usersStore.getTokenByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'min-h-64 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -495,7 +505,7 @@ onMounted(() => {
 					:store-data="[usersStore.pushSubscriptions[userId]]"
 					:loading="usersStore.pushSubscriptionsLoading"
 					:total-count="Number(usersStore.pushSubscriptionsTotalCount[userId]) || 0"
-					:fetch-function="!isNewId(userId) ? (limit, offset, expand, filter, sort, clear) => usersStore.getPushSubscriptionsByInterval(userId, limit, offset, clear) : undefined"
+					:fetch-function="!isNewId(userId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => usersStore.getPushSubscriptionsByInterval(userId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'min-h-32 max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>

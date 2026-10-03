@@ -1,14 +1,17 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, inject } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
 import { useViewScroll } from "@/composables";
+import type { useNotification } from "@/composables";
 import { isNewId } from "@/utils";
 import { useConfigsStore, useZonesStore, useAuthStore } from "@/stores";
 
-const { addNotification } = inject("useNotification");
+import type { TableauLabel } from "@/types/tableau";
+
+const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
@@ -17,7 +20,7 @@ const configsStore = useConfigsStore();
 const zonesStore = useZonesStore();
 const authStore = useAuthStore();
 
-const zoneId = ref(route.params.id);
+const zoneId = ref(route.params.id as string);
 const preset = ref(route.query.preset || null);
 
 // every new element has its own edition space in the store, so several tabs can create an element at the same time
@@ -25,11 +28,11 @@ if (isNewId(zoneId.value)) {
 	zoneId.value = zonesStore.getAvailableNewZoneId();
 }
 
-const formContainer = ref(null);
+const formContainer = ref<any>(null);
 
 async function fetchAllData() {
 	if (isNewId(zoneId.value)) {
-		zonesStore.loadToEdition(zoneId.value, preset.value);
+		zonesStore.loadToEdition(zoneId.value, preset.value as any);
 	} else {
 		zonesStore.setLoadingEdition(zoneId.value, true);
 		try {
@@ -52,17 +55,18 @@ onBeforeUnmount(() => {
 });
 
 // image
-const imageInputRef = ref(null);
-const localImagePreviewUrl = ref(null);
+const imageInputRef = ref<HTMLInputElement | null>(null);
+const localImagePreviewUrl = ref<string | null>(null);
 const triggerImageInput = () => {
 	if (zonesStore.zoneEdition[zoneId.value]?.loading) {
 		return;
 	}
 	imageInputRef.value?.click();
 };
-const onImageFileChange = (event) => {
-	const file = event.target.files?.[0];
-	event.target.value = "";
+const onImageFileChange = (event: Event) => {
+	const input = event.target as HTMLInputElement;
+	const file = input.files?.[0];
+	input.value = "";
 	if (!file) {
 		return;
 	}
@@ -141,7 +145,7 @@ const zoneDelete = async() => {
 
 const createSchema = () => {
 	const edition = zonesStore.zoneEdition[zoneId.value];
-	const shape = {};
+	const shape: any = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
@@ -162,7 +166,7 @@ const createSchema = () => {
 		.required(t("zone.YLengthRequired"));
 	shape.img_file = Yup.mixed()
 		.nullable()
-		.test("fileSize", t("zone.ImageSize") + " " + configsStore.getConfigByKey("max_size_image_in_mb") + "Mo", (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_image_in_mb"))) * 1024 * 1024);
+		.test("fileSize", t("zone.ImageSize") + " " + configsStore.getConfigByKey("max_size_image_in_mb") + "Mo", (value: any) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_image_in_mb"))) * 1024 * 1024);
 	return Yup.object().shape(shape);
 };
 
@@ -174,7 +178,7 @@ const labelForm = [
 	{ key: "img_file", label: "zone.Image", type: "custom" },
 ];
 
-const labelTableauStore = ref([
+const labelTableauStore = ref<TableauLabel[]>([
 	{ label: "zone.StoreName", sortable: false, key: "name_store", valueKey: "name_store", type: "text" },
 	{ label: "zone.StoreXMin", sortable: false, key: "xmin_store", valueKey: "xmin_store", type: "number" },
 	{ label: "zone.StoreYMin", sortable: false, key: "ymin_store", valueKey: "ymin_store", type: "number" },
@@ -197,7 +201,7 @@ useViewScroll(true);
 	</div>
 	<div v-if="zonesStore.zones[zoneId] || isNewId(zoneId)" class="w-full">
 		<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="zonesStore.zoneEdition[zoneId]" :store-user="authStore.user"
-			:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }">
+			:store-function="{ hasPermission: (validPerm: number[]) => authStore.hasPermission(validPerm) }">
 			<template #img_file>
 				<div class="flex flex-col items-center gap-2">
 					<div class="flex justify-center items-center cursor-pointer"

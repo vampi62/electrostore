@@ -1,14 +1,19 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, inject } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
 import { useViewScroll } from "@/composables";
+import type { useNotification } from "@/composables";
 import { isNewId } from "@/utils";
 import { useConfigsStore, useTagsStore, useStoresStore, useItemsStore, useEquipementsStore, useAuthStore } from "@/stores";
 
-const { addNotification } = inject("useNotification");
+import type { FilterLabel } from "@/types/filter";
+import type { TableauLabel, TableauRowData } from "@/types/tableau";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+
+const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
@@ -20,7 +25,7 @@ const itemsStore = useItemsStore();
 const equipementsStore = useEquipementsStore();
 const authStore = useAuthStore();
 
-const tagId = ref(route.params.id);
+const tagId = ref(route.params.id as string);
 const preset = ref(route.query.preset || null);
 
 // every new element has its own edition space in the store, so several tabs can create an element at the same time
@@ -28,11 +33,11 @@ if (isNewId(tagId.value)) {
 	tagId.value = tagsStore.getAvailableNewTagId();
 }
 
-const formContainer = ref(null);
+const formContainer = ref<any>(null);
 
 async function fetchAllData() {
 	if (isNewId(tagId.value)) {
-		tagsStore.loadToEdition(tagId.value, preset.value);
+		tagsStore.loadToEdition(tagId.value, preset.value as any);
 	} else {
 		tagsStore.setLoadingEdition(tagId.value, true);
 		try {
@@ -115,7 +120,7 @@ async function fetchAllItems() {
 	} while (offset < itemsStore.itemsTotalCount);
 	itemLoaded.value = true;
 }
-function itemSave(row) {
+function itemSave(row: TableauRowData) {
 	try {
 		if (tagsStore.tagItemReady[tagId.value]?.[row.id_item]?.status === "deleted") {
 			delete tagsStore.tagItemReady[tagId.value][row.id_item];
@@ -130,7 +135,7 @@ function itemSave(row) {
 		addNotification({ message: e, type: "error" });
 	}
 }
-function itemDelete(item) {
+function itemDelete(item: TableauRowData) {
 	try {
 		if (tagsStore.tagItemReady[tagId.value]?.[item.id_item]?.status === "created") {
 			delete tagsStore.tagItemReady[tagId.value][item.id_item];
@@ -142,7 +147,7 @@ function itemDelete(item) {
 		addNotification({ message: e, type: "error" });
 	}
 }
-function itemRestore(item) {
+function itemRestore(item: TableauRowData) {
 	try {
 		delete tagsStore.tagItemReady[tagId.value][item.id_item];
 		addNotification({ message: t("tag.ItemRestored"), type: "success" });
@@ -151,7 +156,7 @@ function itemRestore(item) {
 	}
 }
 
-const filterItem = ref([
+const filterItem = ref<FilterLabel[]>([
 	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("tag.ItemFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
@@ -173,7 +178,7 @@ async function fetchAllStores() {
 	} while (offset < storesStore.storesTotalCount);
 	storeitemLoaded.value = true;
 }
-function storeSave(row) {
+function storeSave(row: TableauRowData) {
 	try {
 		if (tagsStore.tagStoreReady[tagId.value]?.[row.id_store]?.status === "deleted") {
 			delete tagsStore.tagStoreReady[tagId.value][row.id_store];
@@ -188,7 +193,7 @@ function storeSave(row) {
 		addNotification({ message: e, type: "error" });
 	}
 }
-function storeDelete(store) {
+function storeDelete(store: TableauRowData) {
 	try {
 		if (tagsStore.tagStoreReady[tagId.value]?.[store.id_store]?.status === "created") {
 			delete tagsStore.tagStoreReady[tagId.value][store.id_store];
@@ -200,7 +205,7 @@ function storeDelete(store) {
 		addNotification({ message: e, type: "error" });
 	}
 }
-function storeRestore(store) {
+function storeRestore(store: TableauRowData) {
 	try {
 		delete tagsStore.tagStoreReady[tagId.value][store.id_store];
 		addNotification({ message: t("tag.StoreRestored"), type: "success" });
@@ -209,13 +214,13 @@ function storeRestore(store) {
 	}
 }
 
-const filterStore = ref([
+const filterStore = ref<FilterLabel[]>([
 	{ key: "name_store", value: "", type: "text", label: "", placeholder: t("tag.StoreFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 // Boxs
 const boxModalShow = ref(false);
-const boxSave = async(box) => {
+const boxSave = async(box: TableauRowData) => {
 	try {
 		await tagsStore.createTagBox(tagId.value, box);
 		addNotification({ message: t("tag.BoxAdded"), type: "success" });
@@ -224,7 +229,7 @@ const boxSave = async(box) => {
 		return;
 	}
 };
-const boxDelete = (box) => {
+const boxDelete = (box: TableauRowData) => {
 	try {
 		tagsStore.valideTagBoxEditionById(tagId.value, box.id_box, "deleted");
 		addNotification({ message: t("tag.BoxDeleted"), type: "success" });
@@ -232,7 +237,7 @@ const boxDelete = (box) => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const boxRestore = (box) => {
+const boxRestore = (box: TableauRowData) => {
 	try {
 		delete tagsStore.tagBoxReady[tagId.value][box.id_box];
 		addNotification({ message: t("tag.BoxRestored"), type: "success" });
@@ -259,7 +264,7 @@ async function fetchAllEquipements() {
 	} while (offset < equipementsStore.equipementsTotalCount);
 	equipementLoaded.value = true;
 }
-function equipementSave(row) {
+function equipementSave(row: TableauRowData) {
 	try {
 		if (tagsStore.tagEquipementReady[tagId.value]?.[row.id_equipement]?.status === "deleted") {
 			delete tagsStore.tagEquipementReady[tagId.value][row.id_equipement];
@@ -274,7 +279,7 @@ function equipementSave(row) {
 		addNotification({ message: e, type: "error" });
 	}
 }
-function equipementDelete(equipement) {
+function equipementDelete(equipement: TableauRowData) {
 	try {
 		if (tagsStore.tagEquipementReady[tagId.value]?.[equipement.id_equipement]?.status === "created") {
 			delete tagsStore.tagEquipementReady[tagId.value][equipement.id_equipement];
@@ -286,7 +291,7 @@ function equipementDelete(equipement) {
 		addNotification({ message: e, type: "error" });
 	}
 }
-function equipementRestore(equipement) {
+function equipementRestore(equipement: TableauRowData) {
 	try {
 		delete tagsStore.tagEquipementReady[tagId.value][equipement.id_equipement];
 		addNotification({ message: t("tag.EquipementRestored"), type: "success" });
@@ -295,13 +300,13 @@ function equipementRestore(equipement) {
 	}
 }
 
-const filterEquipement = ref([
+const filterEquipement = ref<FilterLabel[]>([
 	{ key: "reference_name_equipement", value: "", type: "text", label: "", placeholder: t("tag.EquipementFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 const createSchema = () => {
 	const edition = tagsStore.tagEdition[tagId.value];
-	const shape = {};
+	const shape: any = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
@@ -319,7 +324,7 @@ const labelForm = [
 	{ key: "name_tag", label: "tag.Name", type: "text" },
 	{ key: "weight_tag", label: "tag.Poids", type: "number" },
 ];
-const labelTableauItem = ref([
+const labelTableauItem = ref<TableauLabel[]>([
 	{ label: "tag.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text",
 		storeRessourceId: 1, valueKey: "reference_name_item" },
 
@@ -328,20 +333,20 @@ const labelTableauItem = ref([
 			label: "",
 			showCondition: "ready?.status === 'deleted'",
 			icon: "fa-solid fa-rotate-left",
-			action: (row) => itemRestore(row),
+			action: (row: TableauRowData) => itemRestore(row),
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
-			action: (row) => itemDelete(row),
+			action: (row: TableauRowData) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
 		},
 	] },
 ]);
-const labelTableauStore = ref([
+const labelTableauStore = ref<TableauLabel[]>([
 	{ label: "tag.StoreName", sortable: true, key: "Store.name_store", sourceKey: "id_store", type: "text",
 		storeRessourceId: 1, valueKey: "name_store" },
 
@@ -350,20 +355,20 @@ const labelTableauStore = ref([
 			label: "",
 			showCondition: "ready?.status === 'deleted'",
 			icon: "fa-solid fa-rotate-left",
-			action: (row) => storeRestore(row),
+			action: (row: TableauRowData) => storeRestore(row),
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
-			action: (row) => storeDelete(row),
+			action: (row: TableauRowData) => storeDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
 		},
 	] },
 ]);
-const labelTableauBox = ref([
+const labelTableauBox = ref<TableauLabel[]>([
 	{ label: "tag.BoxId", sortable: true, key: "Box.id_box", sourceKey: "id_box", type: "number",
 		storeRessourceId: 1, valueKey: "id_box" },
 
@@ -372,21 +377,21 @@ const labelTableauBox = ref([
 			label: "",
 			showCondition: "ready?.status === 'deleted'",
 			icon: "fa-solid fa-rotate-left",
-			action: (row) => boxRestore(row),
+			action: (row: TableauRowData) => boxRestore(row),
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
-			action: (row) => boxDelete(row),
+			action: (row: TableauRowData) => boxDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
 		},
 	] },
 ]);
 
-const labelTableauEquipement = ref([
+const labelTableauEquipement = ref<TableauLabel[]>([
 	{ label: "tag.EquipementName", sortable: true, key: "Equipement.reference_name_equipement", sourceKey: "id_equipement", type: "text",
 		storeRessourceId: 1, valueKey: "reference_name_equipement" },
 
@@ -395,27 +400,27 @@ const labelTableauEquipement = ref([
 			label: "",
 			showCondition: "ready?.status === 'deleted'",
 			icon: "fa-solid fa-rotate-left",
-			action: (row) => equipementRestore(row),
+			action: (row: TableauRowData) => equipementRestore(row),
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
-			action: (row) => equipementDelete(row),
+			action: (row: TableauRowData) => equipementDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
 		},
 	] },
 ]);
-const labelTableauModalEquipement = ref([
+const labelTableauModalEquipement = ref<TableauLabel[]>([
 	{ label: "tag.EquipementName", sortable: true, key: "reference_name_equipement", valueKey: "reference_name_equipement", type: "text" },
 	{ label: "tag.EquipementActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
 			showCondition: "!ready?.status && !store[1]?.[rowData.id_equipement]",
-			action: (row) => equipementSave(row),
+			action: (row: TableauRowData) => equipementSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -423,7 +428,7 @@ const labelTableauModalEquipement = ref([
 			label: "",
 			icon: "fa-solid fa-rotate-left",
 			showCondition: "ready?.status === 'deleted'",
-			action: (row) => equipementRestore(row),
+			action: (row: TableauRowData) => equipementRestore(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -431,20 +436,20 @@ const labelTableauModalEquipement = ref([
 			label: "",
 			icon: "fa-solid fa-trash",
 			showCondition: "ready?.status && ready?.status !== 'deleted'",
-			action: (row) => equipementDelete(row),
+			action: (row: TableauRowData) => equipementDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
 		},
 	] },
 ]);
-const labelTableauModalItem = ref([
+const labelTableauModalItem = ref<TableauLabel[]>([
 	{ label: "tag.ItemName", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
 	{ label: "tag.ItemActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
 			showCondition: "!ready?.status && !store[1]?.[rowData.id_item]",
-			action: (row) => itemSave(row),
+			action: (row: TableauRowData) => itemSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -452,7 +457,7 @@ const labelTableauModalItem = ref([
 			label: "",
 			icon: "fa-solid fa-rotate-left",
 			showCondition: "ready?.status === 'deleted'",
-			action: (row) => itemRestore(row),
+			action: (row: TableauRowData) => itemRestore(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -460,20 +465,20 @@ const labelTableauModalItem = ref([
 			label: "",
 			icon: "fa-solid fa-trash",
 			showCondition: "ready?.status && ready?.status !== 'deleted'",
-			action: (row) => itemDelete(row),
+			action: (row: TableauRowData) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
 		},
 	] },
 ]);
-const labelTableauModalStore = ref([
+const labelTableauModalStore = ref<TableauLabel[]>([
 	{ label: "tag.StoreName", sortable: true, key: "name_store", valueKey: "name_store", type: "text" },
 	{ label: "tag.StoreActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
 			showCondition: "!ready?.status && !store[1]?.[rowData.id_store]",
-			action: (row) => storeSave(row),
+			action: (row: TableauRowData) => storeSave(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -481,7 +486,7 @@ const labelTableauModalStore = ref([
 			label: "",
 			icon: "fa-solid fa-rotate-left",
 			showCondition: "ready?.status === 'deleted'",
-			action: (row) => storeRestore(row),
+			action: (row: TableauRowData) => storeRestore(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -489,7 +494,7 @@ const labelTableauModalStore = ref([
 			label: "",
 			icon: "fa-solid fa-trash",
 			showCondition: "ready?.status && ready?.status !== 'deleted'",
-			action: (row) => storeDelete(row),
+			action: (row: TableauRowData) => storeDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
 		},
@@ -525,7 +530,7 @@ useViewScroll(true);
 					:store-ready="tagsStore.tagItemReady[tagId]"
 					:loading="tagsStore.tagsItemLoading"
 					:total-count="Number(tagsStore.tagsItemTotalCount[tagId] || 0)"
-					:fetch-function="!isNewId(tagId) ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagItemByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagItemByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -542,7 +547,7 @@ useViewScroll(true);
 					:store-ready="tagsStore.tagStoreReady[tagId]"
 					:loading="tagsStore.tagsStoreLoading"
 					:total-count="Number(tagsStore.tagsStoreTotalCount[tagId] || 0)"
-					:fetch-function="!isNewId(tagId) ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagStoreByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagStoreByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -555,7 +560,7 @@ useViewScroll(true);
 					:store-ready="tagsStore.tagBoxReady[tagId]"
 					:loading="tagsStore.tagsBoxLoading"
 					:total-count="Number(tagsStore.tagsBoxTotalCount[tagId] || 0)"
-					:fetch-function="!isNewId(tagId) ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagBoxByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagBoxByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -572,7 +577,7 @@ useViewScroll(true);
 					:store-ready="tagsStore.tagEquipementReady[tagId]"
 					:loading="tagsStore.tagsEquipementLoading"
 					:total-count="Number(tagsStore.tagsEquipementTotalCount[tagId] || 0)"
-					:fetch-function="!isNewId(tagId) ? (limit, offset, expand, filter, sort, clear) => tagsStore.getTagEquipementByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagEquipementByInterval(tagId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -604,7 +609,7 @@ useViewScroll(true);
 				:filters="filterItem"
 				:loading="tagsStore.tagsItemLoading"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
-				:fetch-function="!isNewId(tagId) ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
@@ -629,7 +634,7 @@ useViewScroll(true);
 				:filters="filterStore"
 				:loading="tagsStore.tagsStoreLoading"
 				:total-count="Number(storesStore.storesTotalCount || 0)"
-				:fetch-function="!isNewId(tagId) ? (limit, offset, expand, filter, sort, clear) => storesStore.getStoreByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => storesStore.getStoreByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>
@@ -654,7 +659,7 @@ useViewScroll(true);
 				:filters="filterEquipement"
 				:loading="tagsStore.tagsEquipementLoading"
 				:total-count="Number(equipementsStore.equipementsTotalCount || 0)"
-				:fetch-function="!isNewId(tagId) ? (limit, offset, expand, filter, sort, clear) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:fetch-function="!isNewId(tagId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => equipementsStore.getEquipementByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

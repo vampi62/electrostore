@@ -33,7 +33,7 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 export default {
 	name: "Notification",
 	props: {
@@ -53,7 +53,7 @@ export default {
 	emits: ["remove"],
 	data() {
 		return {
-			timer: null,
+			timer: null as number | null,
 		};
 	},
 	computed: {
@@ -85,7 +85,7 @@ export default {
 			this.timer = setTimeout(() => {
 				this.$emit("remove", this.id);
 			}, 400); // 0.4s (anim close)
-			this.$refs.notification.classList.add("fade-out");
+			(this.$refs.notification as HTMLElement).classList.add("fade-out");
 		},
 		startTimer() {
 			let duration = 0;

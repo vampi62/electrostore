@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { Form, Field } from "vee-validate";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
@@ -20,12 +20,12 @@ const schema = Yup.object().shape({
 	password: Yup.string()
 		.matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, t("common.VRegisterPasswordRequirements"))
 		.required(t("common.VRegisterPasswordRequired")),
-	confirmPassword: Yup.string().oneOf([Yup.ref("password"), null], t("common.VRegisterPasswordMatch"))
+	confirmPassword: Yup.string().oneOf([Yup.ref("password")], t("common.VRegisterPasswordMatch"))
 		.matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, t("common.VRegisterPasswordRequirements"))
 		.required(t("common.VRegisterConfirmPasswordRequired")),
 });
 
-function onSubmit(values, { setErrors }) {
+function onSubmit(values: Record<string, any>, { setErrors }: { setErrors: (errors: Record<string, string | undefined>) => void }) {
 	const { email, firstName, lastName, password } = values;
 	return authStore.register(email, password, firstName, lastName)
 		.catch((errors) => setErrors({ apiError: errors }))

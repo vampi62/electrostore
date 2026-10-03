@@ -45,11 +45,15 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 import { defineAsyncComponent } from "vue";
+import type { PropType } from "vue";
 import { useRouter } from "vue-router";
 import { debounce } from "lodash-es";
-import { buildRSQLFilter, buildRSQLSort, toLowerCaseWithoutAccents } from "@/utils";
+import { toLowerCaseWithoutAccents } from "@/utils";
+import type { TableauLabel, TableauMeta, TableauCss } from "@/types/tableau";
+import type { FilterLabel } from "@/types/filter";
+
 export default {
 	name: "Tableau",
 	setup() {
@@ -59,7 +63,7 @@ export default {
 	},
 	props: {
 		labels: {
-			type: Array,
+			type: Array as PropType<TableauLabel[]>,
 			required: true,
 			// labels for the columns, each object should have a key and label property
 			// e.g. [{ key: 'name', label: 'Name', sortable: true, type: "text" }, { key: 'price', label: 'Price', sortable: true, type: "number" }]
@@ -71,7 +75,7 @@ export default {
 			// this print a list of tags for each item, using the idStoreLink to get the tags from the storeData[1] and the idStoreRessource to get the item from the storeData[2], and ressourcePrint is an array of objects to print the tags, each object should have a type and key property
 		},
 		meta: {
-			type: Object,
+			type: Object as PropType<TableauMeta>,
 			required: true,
 			// meta object containing additional information like path for RouterLink
 			// e.g. { path: '/product/', key: 'id', sort: 'name', sortOrder: 'asc', preventClear: false, expand: ['category'], saveState: false, stateKey: 'productTable' }
@@ -86,25 +90,25 @@ export default {
 			// linkEditionKey is a string to identify the key to link edition and ready stores to the main store, if not provided it will use the main key
 		},
 		storeData: {
-			type: Array,
+			type: Array as PropType<Record<number, any>[]>,
 			required: true,
 			// storeData is an array of objects, each object should contain the data for a row
 			// storeData[0] is the main data array
 		},
 		storeEdition: {
-			type: Object,
+			type: Object as PropType<Record<string, any>>,
 			required: false,
 			default: () => ({}),
 			// storeEdition is an object containing the store to edit a resource
 		},
 		storeReady: {
-			type: Object,
+			type: Object as PropType<Record<string, any>>,
 			required: false,
 			default: () => ({}),
 			// storeReady is an object containing the ready state of the store for editing a resource
 		},
 		filters: {
-			type: Array,
+			type: Array as PropType<FilterLabel[]>,
 			required: false,
 			// filters is an array of filter objects, each object should have a key, value, type, typeData, compareMethod, placeholder, class, and options properties
 			// e.g. { key: 'name', value: '', type: 'text', typeData: 'string', compareMethod: 'contain', placeholder: 'Search by name', class: 'mb-2' }
@@ -121,18 +125,18 @@ export default {
 		},
 		fetchFunction: {
 			type: Function,
-			default: (limit, offset, expand, filter, sort, clear) => {
+			default: (limit: number, offset: number, expand: string[], filter: Record<string, any>, sort: Record<string, any>, clear: boolean) => {
 				return [0, false];
 			},
 			// fetchFunction is a function that will be called to fetch the data for the table, it should accept the parameters limit, offset, expand, filter, sort, and clear
 			// e.g. (limit, offset, expand, filter, sort, clear) => { store.fetchData(limit, offset, expand, filter, sort, clear) }
 		},
 		listFetchFunction: {
-			type: Array,
+			type: Array as PropType<any[]>,
 			default: () => [],
 		},
 		tableauCss: {
-			type: Object,
+			type: Object as PropType<TableauCss>,
 			required: false,
 			// tableauCss is an object containing tailwind CSS classes for the table, thead, th, tbody, tr, and td
 			default: () => ({
@@ -172,8 +176,8 @@ export default {
 			// storeEdition (in-progress, unvalidated drafts) into a single list without duplicate ids.
 			// Filters are only ever evaluated against storeData[0]/storeReady values: rows that only
 			// exist in storeEdition are unvalidated drafts and are always shown regardless of filters.
-			const seen = new Set();
-			const rows = [];
+			const seen: Set<string> = new Set();
+			const rows: any[] = [];
 			this.collectSavedRows(seen, rows);
 			this.collectReadyOnlyRows(seen, rows);
 			this.collectEditionOnlyRows(seen, rows);
@@ -188,7 +192,7 @@ export default {
 			return this.filteredData
 				.map((item) => ({
 					item,
-					value: this.getDataValue(item, this.sort.key),
+					value: this.getDataValue(item, this.sort.key ?? ""),
 				}))
 				.sort((a, b) => {
 					const aValue = a.value;
@@ -235,12 +239,13 @@ export default {
 	data() {
 		return {
 			sort: {
-				key: null,
-				order: "asc",
+				key: null as string | null,
+				order: "asc" as "asc" | "desc",
 			},
 			nextOffset: 0,
 			hasMore: true,
 			isInitializing: true,
+			debouncedRefetchData: null as (() => void) | null,
 		};
 	},
 	created() {
@@ -264,7 +269,7 @@ export default {
 			}
 		}
 		let intervalOffset = this.nextOffset;
-		[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], buildRSQLFilter(this.filters), buildRSQLSort(this.sort));
+		[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], this.filters, { key: this.sort.key ?? undefined, order: this.sort.order });
 		await this.refetchListData(intervalOffset, this.nextOffset);
 		this.isInitializing = false;
 		if (this.meta?.saveState && savedScrollTop > 0) {
@@ -276,14 +281,14 @@ export default {
 		filterValues: {
 			handler() {
 				if (!this.isInitializing) {
-					this.debouncedRefetchData();
+					this.debouncedRefetchData?.();
 				}
 			},
 		},
 		sort: {
 			handler() {
 				if (!this.isInitializing) {
-					this.debouncedRefetchData();
+					this.debouncedRefetchData?.();
 				}
 			},
 			deep: true,
@@ -293,11 +298,11 @@ export default {
 		_sessionStateKey() {
 			return `tableau_state_${this.$route?.path}_${this.meta?.stateKey || this.meta?.path + this.meta?.key || "default"}`;
 		},
-		_saveState(updates) {
+		_saveState(updates: Record<string, any>) {
 			const current = JSON.parse(sessionStorage.getItem(this._sessionStateKey()) || "{}");
 			sessionStorage.setItem(this._sessionStateKey(), JSON.stringify({ ...current, ...updates }));
 		},
-		rowStatusClass(row) {
+		rowStatusClass(row: Record<string, any>) {
 			// Colors are driven by the ready entry's own status rather than by "is this id also in
 			// storeData[0]": some tables (e.g. a picker browsing a full catalog) always have the id in
 			// storeData[0] regardless of whether it's actually linked/pending, so presence alone can't
@@ -321,37 +326,37 @@ export default {
 			}
 			return "";
 		},
-		trClass(row) {
+		trClass(row: Record<string, any>) {
 			const statusClass = this.rowStatusClass(row);
 			if (!statusClass) {
 				return this.mergedCss.tr;
 			}
 			const baseWithoutBackground = this.mergedCss.tr
 				.split(/\s+/)
-				.filter((cls) => cls && !cls.includes("bg-"))
+				.filter((cls: string) => cls && !cls.includes("bg-"))
 				.join(" ");
 			return `${baseWithoutBackground} ${statusClass}`.trim();
 		},
-		extractReadyFields(readyEntry) {
+		extractReadyFields(readyEntry: Record<string, any>) {
 			// storeReady entries carry bookkeeping fields (status, isFormData, pushChange) alongside
 			// the actual resource fields, only the resource fields are relevant for display/filtering.
 			const { status, isFormData, pushChange, ...data } = readyEntry;
 			return data;
 		},
-		collectSavedRows(seen, rows) {
+		collectSavedRows(seen: Set<string>, rows: Record<string, any>[]) {
 			if (!this.storeData[0]) {
 				return;
 			}
 			for (const [id, row] of Object.entries(this.storeData[0])) {
 				seen.add(id);
 				const readyEntry = this.storeReady?.[id];
-				const merged = readyEntry ? { ...row, ...this.extractReadyFields(readyEntry) } : row;
+				const merged = readyEntry ? { ...(row as any), ...this.extractReadyFields(readyEntry) } : row;
 				if (this.matchesFilters(merged)) {
 					rows.push(merged);
 				}
 			}
 		},
-		collectReadyOnlyRows(seen, rows) {
+		collectReadyOnlyRows(seen: Set<string>, rows: Record<string, any>[]) {
 			if (!this.storeReady) {
 				return;
 			}
@@ -366,7 +371,7 @@ export default {
 				}
 			}
 		},
-		collectEditionOnlyRows(seen, rows) {
+		collectEditionOnlyRows(seen: Set<string>, rows: Record<string, any>[]) {
 			if (!this.storeEdition) {
 				return;
 			}
@@ -375,10 +380,10 @@ export default {
 					continue;
 				}
 				seen.add(id);
-				rows.push({ [this.meta.key]: id, ...edition });
+				rows.push({ [this.meta.key]: id, ...(edition as any) });
 			}
 		},
-		matchesFilters(element) {
+		matchesFilters(element: Record<string, any>) {
 			if (!this.filters || this.filters.length === 0) {
 				return true;
 			}
@@ -417,18 +422,25 @@ export default {
 				}
 			});
 		},
-		getDataValue(row, labelKey) {
+		getDataValue(row: Record<string, any>, labelKey: string) {
 			const label = this.labels.find((l) => l.key === labelKey);
 			if (!label) {
 				return row?.[labelKey];
 			}
+			const { storeLinkId, storeRessourceId, sourceKey, valueKey, storeLinkKeyJoinRessource } = label;
 			if (label.type === "link-list") {
-				return Object.values(this.storeData[label.storeLinkId]?.[row[label.sourceKey]] || {}).map((linkedItem) => {
+				if (storeLinkId === undefined || sourceKey === undefined) {
+					return [];
+				}
+				return (Object.values(this.storeData[storeLinkId]?.[row[sourceKey]] || {}) as Record<string, any>[]).map((linkedItem) => {
 					let printedRessource = "";
+					if (!label.ressourcePrint || label.ressourcePrint.length === 0) {
+						return "";
+					}
 					for (const print of label.ressourcePrint) {
-						if (print.from === "ressource") {
-							printedRessource += this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
-						} else if (print.from === "link") {
+						if (print.from === "ressource" && storeRessourceId && storeLinkKeyJoinRessource && print.valueKey) {
+							printedRessource += this.storeData[storeRessourceId]?.[linkedItem[storeLinkKeyJoinRessource]]?.[print.valueKey] || "";
+						} else if (print.from === "link" && print.valueKey) {
 							printedRessource += linkedItem?.[print.valueKey] || "";
 						} else if (print.from === "text") {
 							printedRessource += print.text || "";
@@ -437,21 +449,24 @@ export default {
 					return printedRessource;
 				});
 			} else if (label.type === "image") {
-				if (label.storeLinkId && label.storeRessourceId) {
-					const linkedItem = this.storeData[label.storeLinkId]?.[row[label.sourceKey]];
+				if (storeRessourceId === undefined || sourceKey === undefined) {
+					return undefined;
+				}
+				if (storeLinkId && storeLinkKeyJoinRessource) {
+					const linkedItem = this.storeData[storeLinkId]?.[row[sourceKey]];
 					if (linkedItem) {
-						if (label.valueKey) {
-							return this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]]?.[label.valueKey];
+						if (valueKey) {
+							return this.storeData[storeRessourceId]?.[linkedItem[storeLinkKeyJoinRessource]]?.[valueKey];
 						}
-						return this.storeData[label.storeRessourceId]?.[linkedItem[label.storeLinkKeyJoinRessource]];
+						return this.storeData[storeRessourceId]?.[linkedItem[storeLinkKeyJoinRessource]];
 					}
 				}
-				if (label.valueKey) {
-					return this.storeData[label.storeRessourceId]?.[row[label.sourceKey]]?.[label.valueKey];
+				if (valueKey) {
+					return this.storeData[storeRessourceId]?.[row[sourceKey]]?.[valueKey];
 				}
-				return this.storeData[label.storeRessourceId]?.[row[label.sourceKey]];
+				return this.storeData[storeRessourceId]?.[row[sourceKey]];
 			} else if (label.type === "buttons") {
-				return label.buttons.map((button) => {
+				return (label.buttons ?? []).map((button) => {
 					return {
 						...button,
 						show: button?.showCondition ? this.evaluateCondition(button.showCondition, row) : true,
@@ -459,25 +474,34 @@ export default {
 					};
 				});
 			} else if (label.type === "bool") {
-				return this.evaluateCondition(label.condition, row) || false;
-			} else if (label.storeRessourceId && label.storeLinkId) {
-				const linkedItem = this.storeData[label.storeLinkId]?.[row[label.sourceKey]];
-				return this.storeData[label.storeRessourceId]?.[linkedItem?.[label.storeLinkKeyJoinRessource]]?.[label.valueKey];
-			} else if (label.storeRessourceId && !label.storeLinkId) {
-				return this.storeData[label.storeRessourceId]?.[row[label.sourceKey]]?.[label.valueKey];
+				return this.evaluateCondition(label.condition ?? "false", row) || false;
+			} else if (storeRessourceId && storeLinkId) {
+				if (sourceKey === undefined || storeLinkKeyJoinRessource === undefined || valueKey === undefined) {
+					return undefined;
+				}
+				const linkedItem = this.storeData[storeLinkId]?.[row[sourceKey]];
+				return this.storeData[storeRessourceId]?.[linkedItem?.[storeLinkKeyJoinRessource]]?.[valueKey];
+			} else if (storeRessourceId && !storeLinkId) {
+				if (sourceKey === undefined || valueKey === undefined) {
+					return undefined;
+				}
+				return this.storeData[storeRessourceId]?.[row[sourceKey]]?.[valueKey];
 			} else {
-				return row?.[label.valueKey];
+				if (valueKey === undefined) {
+					return undefined;
+				}
+				return row?.[valueKey];
 			}
 		},
-		evaluateCondition(condition,rowData) {
+		evaluateCondition(condition: string, rowData: Record<string, any>) {
 			try {
-				return new Function(["store","rowData"], `return ${condition}`)(this.storeData,rowData);
+				return new Function("store", "rowData", `return ${condition}`)(this.storeData,rowData);
 			} catch (error) {
 				console.error("Erreur lors de l'évaluation de la condition :", error);
 				return false;
 			}
 		},
-		changeSort(key) {
+		changeSort(key: string) {
 			if (this.sort.key === key) {
 				this.sort.order = this.sort.order === "asc" ? "desc" : "asc";
 			} else {
@@ -488,19 +512,20 @@ export default {
 				this._saveState({ sort: { key: this.sort.key, order: this.sort.order }, scrollTop: 0 });
 			}
 		},
-		async loadNext(e) {
+		async loadNext(e: Event) {
+			const target = e.target as HTMLElement;
 			if (this.meta?.saveState) {
-				this._saveState({ scrollTop: e.target.scrollTop });
+				this._saveState({ scrollTop: target.scrollTop });
 			}
 			if (this.totalCount === 0 || this.loading || !this.hasMore) {
 				return;
 			}
-			if (e.target.scrollTop + e.target.clientHeight >= e.target.scrollHeight - 10) {
+			if (target.scrollTop + target.clientHeight >= target.scrollHeight - 10) {
 				if (this.totalCount === this.nextOffset) {
 					return;
 				}
 				let intervalOffset = this.nextOffset;
-				[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], buildRSQLFilter(this.filters), buildRSQLSort(this.sort));
+				[this.nextOffset, this.hasMore] = await this.fetchFunction(100, this.nextOffset, this.meta?.expand || [], this.filters, { key: this.sort.key ?? undefined, order: this.sort.order });
 				await this.refetchListData(intervalOffset, this.nextOffset);
 			}
 		},
@@ -509,10 +534,10 @@ export default {
 			this.nextOffset = 0;
 			this.hasMore = true;
 			let intervalOffset = this.nextOffset;
-			[this.nextOffset, this.hasMore] = await this.fetchFunction(100, 0, this.meta?.expand || [], buildRSQLFilter(this.filters), buildRSQLSort(this.sort), !this.meta?.preventClear);
+			[this.nextOffset, this.hasMore] = await this.fetchFunction(100, 0, this.meta?.expand || [], this.filters, { key: this.sort.key ?? undefined, order: this.sort.order }, !this.meta?.preventClear);
 			await this.refetchListData(intervalOffset, this.nextOffset);
 		},
-		async refetchListData(minOffset, maxOffset) {
+		async refetchListData(minOffset: number, maxOffset: number) {
 			for (const fetchFn of this.listFetchFunction) {
 				if (fetchFn) {
 					await fetchFn(minOffset, maxOffset);

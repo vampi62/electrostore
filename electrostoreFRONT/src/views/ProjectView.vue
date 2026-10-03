@@ -1,15 +1,21 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, onBeforeUnmount, computed, ref, inject } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
 import { useViewScroll } from "@/composables";
+import type { useNotification } from "@/composables";
 import { downloadFile, viewFile, isNewId } from "@/utils";
 import { ProjectStatus } from "@/enums";
 import { useConfigsStore, useProjectsStore, useUsersStore, useItemsStore, useProjectTagsStore, useAuthStore } from "@/stores";
 
-const { addNotification } = inject("useNotification");
+import type { FilterLabel } from "@/types/filter";
+import type { FormLabel } from "@/types/form";
+import type { TableauLabel, TableauRowData } from "@/types/tableau";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+
+const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
@@ -21,7 +27,7 @@ const itemsStore = useItemsStore();
 const projectTagsStore = useProjectTagsStore();
 const authStore = useAuthStore();
 
-const projectId = ref(route.params.id);
+const projectId = ref(route.params.id as string);
 const preset = ref(route.query.preset || null);
 
 // every new element has its own edition space in the store, so several tabs can create an element at the same time
@@ -29,11 +35,11 @@ if (isNewId(projectId.value)) {
 	projectId.value = projectsStore.getAvailableNewProjectId();
 }
 
-const formContainer = ref(null);
+const formContainer = ref<any>(null);
 
 async function fetchAllData() {
 	if (isNewId(projectId.value)) {
-		projectsStore.loadToEdition(projectId.value, preset.value);
+		projectsStore.loadToEdition(projectId.value, preset.value as any);
 	} else {
 		projectsStore.setLoadingEdition(projectId.value, true);
 		try {
@@ -64,10 +70,10 @@ const dateFin = computed(() => {
 });
 
 // tag
-const filterTag = ref([
+const filterTag = ref<FilterLabel[]>([
 	{ key: "name_project_tag", value: "", type: "text", label: "", placeholder: t("project.TagFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
-function tagSave(id_tag) {
+function tagSave(id_tag: string | number) {
 	try {
 		// re-adding a tag that is only pending deletion locally just cancels that pending deletion
 		if (projectsStore.projectTagProjectReady[projectId.value]?.[id_tag]?.status === "deleted") {
@@ -83,7 +89,7 @@ function tagSave(id_tag) {
 		addNotification({ message: e, type: "error" });
 	}
 }
-function tagDelete(id_tag) {
+function tagDelete(id_tag: string | number) {
 	try {
 		// a tag that was only staged as a pending creation is simply dropped, nothing to push
 		if (projectsStore.projectTagProjectReady[projectId.value]?.[id_tag]?.status === "created") {
@@ -96,7 +102,7 @@ function tagDelete(id_tag) {
 		addNotification({ message: e, type: "error" });
 	}
 }
-function tagRestore(id_tag) {
+function tagRestore(id_tag: string | number) {
 	try {
 		delete projectsStore.projectTagProjectReady[projectId.value][id_tag];
 		addNotification({ message: t("project.TagRestored"), type: "success" });
@@ -173,7 +179,7 @@ const projectDelete = async() => {
 
 // document
 const documentAddModalShow = ref(false);
-const documentAdd = async(files) => {
+const documentAdd = async(files: { name: string; document: File }[]) => {
 	for (const file of files) {
 		const documentModalData = { name_project_document: file.name, document: file.document, type_project_document: file.document.type, created_at: new Date() };
 		const newId = projectsStore.getAvailableNewDocumentId(projectId.value);
@@ -189,7 +195,7 @@ const documentAdd = async(files) => {
 	}
 	documentAddModalShow.value = false;
 };
-const documentEdit = (row) => {
+const documentEdit = (row: TableauRowData) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		projectsStore.valideDocumentEditionById(projectId.value, row.id_project_document,
@@ -201,7 +207,7 @@ const documentEdit = (row) => {
 		return;
 	}
 };
-const documentRestore = (row) => {
+const documentRestore = (row: TableauRowData) => {
 	try {
 		delete projectsStore.documentReady[projectId.value][row.id_project_document];
 		addNotification({ message: t("project.DocumentRestored"), type: "success" });
@@ -209,7 +215,7 @@ const documentRestore = (row) => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const documentDelete = (row) => {
+const documentDelete = (row: TableauRowData) => {
 	try {
 		projectsStore.valideDocumentEditionById(projectId.value, row.id_project_document, "deleted");
 		addNotification({ message: t("project.DocumentDeleted"), type: "success" });
@@ -217,11 +223,11 @@ const documentDelete = (row) => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const documentDownload = async(fileContent) => {
+const documentDownload = async(fileContent: TableauRowData) => {
 	const file = await projectsStore.downloadDocument(projectId.value, fileContent.id_project_document);
 	downloadFile(file, { keyName: fileContent.name_project_document, keyType: fileContent.type_project_document });
 };
-const documentView = async(fileContent) => {
+const documentView = async(fileContent: TableauRowData) => {
 	const file = await projectsStore.downloadDocument(projectId.value, fileContent.id_project_document);
 	if (viewFile(file, { keyName: fileContent.name_project_document, keyType: fileContent.type_project_document })) {
 		addNotification({ message: t("project.DocumentOpenInNewTab"), type: "success" });
@@ -232,7 +238,7 @@ const documentView = async(fileContent) => {
 
 // item
 const itemModalShow = ref(false);
-const itemSave = (row) => {
+const itemSave = (row: TableauRowData) => {
 	try {
 		schemaItem.validateSync(row, { abortEarly: false });
 		projectsStore.valideItemEditionById(projectId.value, row.id_item,
@@ -243,7 +249,7 @@ const itemSave = (row) => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const itemDelete = (row) => {
+const itemDelete = (row: TableauRowData) => {
 	try {
 		if (projectsStore.itemReady[projectId.value]?.[row.id_item]?.status === "created") {
 			delete projectsStore.itemReady[projectId.value][row.id_item];
@@ -255,7 +261,7 @@ const itemDelete = (row) => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const itemRestore = (row) => {
+const itemRestore = (row: TableauRowData) => {
 	try {
 		delete projectsStore.itemReady[projectId.value][row.id_item];
 		addNotification({ message: t("project.ItemRestored"), type: "success" });
@@ -264,13 +270,13 @@ const itemRestore = (row) => {
 	}
 };
 
-const filterItem = ref([
+const filterItem = ref<FilterLabel[]>([
 	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("command.ItemFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 const createSchema = () => {
 	const edition = projectsStore.projectEdition[projectId.value];
-	const shape = {};
+	const shape: any = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
@@ -297,7 +303,7 @@ const schemaAddDocument = Yup.object().shape({
 		.required(t("project.DocumentNameRequired")),
 	document: Yup.mixed()
 		.required(t("project.DocumentRequired"))
-		.test("fileSize", t("project.DocumentSize", { count: configsStore.getConfigByKey("max_size_document_in_mb") }), (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
+		.test("fileSize", t("project.DocumentSize", { count: configsStore.getConfigByKey("max_size_document_in_mb") }), (value: any) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 const schemaEditDocument = Yup.object().shape({
 	name_project_document: Yup.string()
@@ -312,7 +318,7 @@ const schemaItem = Yup.object().shape({
 		.required(t("project.ItemQuantityRequired")),
 });
 
-const labelForm = ref([
+const labelForm = ref<FormLabel[]>([
 	{ key: "name_project", label: "project.Name", type: "text" },
 	{ key: "description_project", label: "project.Description", type: "textarea", rows: 4 },
 	{ key: "url_project", label: "project.Url", type: "text" },
@@ -320,11 +326,11 @@ const labelForm = ref([
 	{ key: "date_start_project", label: "project.StartDate", type: "computed", value: dateDebut },
 	{ key: "date_end_project", label: "project.EndDate", type: "computed", value: dateFin },
 ]);
-const labelTableauHistoryStatus = ref([
+const labelTableauHistoryStatus = ref<TableauLabel[]>([
 	{ label: "project.StatusType", sortable: false, key: "status_project", valueKey: "status_project", type: "enum", options: projectTypeStatus },
 	{ label: "project.StatusDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
 ]);
-const labelTableauDocument = ref([
+const labelTableauDocument = ref<TableauLabel[]>([
 	{ label: "project.DocumentName", sortable: true, key: "name_project_document", valueKey: "name_project_document", type: "text", canEdit: true },
 	{ label: "project.DocumentType", sortable: true, key: "type_project_document", valueKey: "type_project_document", type: "text" },
 	{ label: "project.DocumentDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
@@ -333,7 +339,7 @@ const labelTableauDocument = ref([
 			label: "",
 			icon: "fa-solid fa-edit",
 			showCondition: "!edition?.id_project_document && ready?.status !== 'deleted'",
-			action: (row) => {
+			action: (row: TableauRowData) => {
 				projectsStore.documentEdition[projectId.value][row.id_project_document] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
@@ -342,7 +348,7 @@ const labelTableauDocument = ref([
 			label: "",
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_project_document",
-			action: (row) => {
+			action: (row: TableauRowData) => {
 				delete projectsStore.documentEdition[projectId.value][row.id_project_document];
 			},
 			class: "px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600",
@@ -351,21 +357,21 @@ const labelTableauDocument = ref([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_project_document",
-			action: (row) => documentEdit(projectsStore.documentEdition[projectId.value][row.id_project_document]),
+			action: (row: TableauRowData) => documentEdit(projectsStore.documentEdition[projectId.value][row.id_project_document]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-eye",
-			action: (row) => documentView(row),
+			action: (row: TableauRowData) => documentView(row),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-download",
-			action: (row) => documentDownload(row),
+			action: (row: TableauRowData) => documentDownload(row),
 			class: "px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600",
 			animation: true,
 		},
@@ -373,19 +379,19 @@ const labelTableauDocument = ref([
 			label: "",
 			showCondition: "ready?.status === 'deleted'",
 			icon: "fa-solid fa-rotate-left",
-			action: (row) => documentRestore(row),
+			action: (row: TableauRowData) => documentRestore(row),
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
-			action: (row) => documentDelete(row),
+			action: (row: TableauRowData) => documentDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
 ]);
-const labelTableauItem = ref([
+const labelTableauItem = ref<TableauLabel[]>([
 	{ label: "project.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text",
 		storeRessourceId: 1, valueKey: "reference_name_item" },
 
@@ -395,7 +401,7 @@ const labelTableauItem = ref([
 			label: "",
 			icon: "fa-solid fa-edit",
 			showCondition: "!edition?.id_item && ready?.status !== 'deleted'",
-			action: (row) => {
+			action: (row: TableauRowData) => {
 				projectsStore.itemEdition[projectId.value][row.id_item] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
@@ -404,7 +410,7 @@ const labelTableauItem = ref([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_item",
-			action: (row) => itemSave(projectsStore.itemEdition[projectId.value][row.id_item]),
+			action: (row: TableauRowData) => itemSave(projectsStore.itemEdition[projectId.value][row.id_item]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -412,7 +418,7 @@ const labelTableauItem = ref([
 			label: "",
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_item",
-			action: (row) => {
+			action: (row: TableauRowData) => {
 				delete projectsStore.itemEdition[projectId.value][row.id_item];
 			},
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
@@ -421,46 +427,46 @@ const labelTableauItem = ref([
 			label: "",
 			showCondition: "ready?.status === 'deleted'",
 			icon: "fa-solid fa-rotate-left",
-			action: (row) => itemRestore(row),
+			action: (row: TableauRowData) => itemRestore(row),
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			showCondition: "ready?.status !== 'deleted'",
 			icon: "fa-solid fa-trash",
-			action: (row) => itemDelete(row),
+			action: (row: TableauRowData) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
 		},
 	] },
 ]);
-const labelTableauModalTag = ref([
+const labelTableauModalTag = ref<TableauLabel[]>([
 	{ label: "project.TagName", sortable: true, key: "name_project_tag", valueKey: "name_project_tag", type: "text" },
 	{ label: "project.TagActions", sortable: false, key: "", type: "buttons", buttons: [
 		{
 			label: "",
 			icon: "fa-solid fa-plus",
 			showCondition: "!ready?.status && !store[1]?.[rowData.id_project_tag]",
-			action: (row) => tagSave(row.id_project_tag),
+			action: (row: TableauRowData) => tagSave(row.id_project_tag),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-rotate-left",
 			showCondition: "ready?.status === 'deleted'",
-			action: (row) => tagRestore(row.id_project_tag),
+			action: (row: TableauRowData) => tagRestore(row.id_project_tag),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
 			showCondition: "ready?.status && ready?.status !== 'deleted'",
-			action: (row) => tagDelete(row.id_project_tag),
+			action: (row: TableauRowData) => tagDelete(row.id_project_tag),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 		},
 	] },
 ]);
-const labelTableauModalItem = ref([
+const labelTableauModalItem = ref<TableauLabel[]>([
 	{ label: "project.ItemName", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
 
 	{ label: "project.ItemQuantity", sortable: true, key: "ProjectsItems.quantity_project_item", sourceKey: "id_project", type: "number",
@@ -471,7 +477,7 @@ const labelTableauModalItem = ref([
 			label: "",
 			icon: "fa-solid fa-plus",
 			showCondition: "!ready?.status && store[1]?.[rowData.id_item] === undefined && !edition?.id_item",
-			action: (row) => {
+			action: (row: TableauRowData) => {
 				projectsStore.itemEdition[projectId.value][row.id_item] = { quantity_project_item: 1, id_item: row.id_item };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
@@ -480,7 +486,7 @@ const labelTableauModalItem = ref([
 			label: "",
 			icon: "fa-solid fa-edit",
 			showCondition: "!ready?.status && store[1]?.[rowData.id_item] && !edition?.id_item",
-			action: (row) => {
+			action: (row: TableauRowData) => {
 				projectsStore.itemEdition[projectId.value][row.id_item] = { ...row };
 			},
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
@@ -489,7 +495,7 @@ const labelTableauModalItem = ref([
 			label: "",
 			icon: "fa-solid fa-save",
 			showCondition: "edition?.id_item",
-			action: (row) => itemSave(projectsStore.itemEdition[projectId.value][row.id_item]),
+			action: (row: TableauRowData) => itemSave(projectsStore.itemEdition[projectId.value][row.id_item]),
 			class: "px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600",
 			animation: true,
 		},
@@ -497,7 +503,7 @@ const labelTableauModalItem = ref([
 			label: "",
 			icon: "fa-solid fa-times",
 			showCondition: "edition?.id_item",
-			action: (row) => {
+			action: (row: TableauRowData) => {
 				delete projectsStore.itemEdition[projectId.value][row.id_item];
 			},
 			class: "px-3 py-1 bg-gray-400 text-white rounded-lg hover:bg-gray-500",
@@ -506,14 +512,14 @@ const labelTableauModalItem = ref([
 			label: "",
 			icon: "fa-solid fa-rotate-left",
 			showCondition: "ready?.status === 'deleted'",
-			action: (row) => itemRestore(row),
+			action: (row: TableauRowData) => itemRestore(row),
 			class: "px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600",
 		},
 		{
 			label: "",
 			icon: "fa-solid fa-trash",
 			showCondition: "(store[1]?.[rowData.id_item] || ready?.status === 'created') && ready?.status !== 'deleted'",
-			action: (row) => itemDelete(row),
+			action: (row: TableauRowData) => itemDelete(row),
 			class: "px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600",
 			animation: true,
 		},
@@ -546,11 +552,11 @@ useViewScroll(true);
 		<div class="mb-6 flex justify-between flex-wrap w-full space-y-4 sm:space-y-0 sm:space-x-4">
 			<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="projectsStore.projectEdition[projectId]"/>
 			<Tags :current-tags="projectsStore.projectTagProject[projectId] || {}" :ready-store="projectsStore.projectTagProjectReady[projectId] || {}" :tags-store="projectTagsStore.projectTags" :can-edit="authStore.hasPermission([2])"
-				:delete-function="(value) => tagDelete(value)"
-				:restore-function="(value) => tagRestore(value)"
+				:delete-function="(value: string | number) => tagDelete(value)"
+				:restore-function="(value: string | number) => tagRestore(value)"
 				:filter-modal="filterTag"
 				:tableau-modal="{ 'label': labelTableauModalTag, 'meta': { key: 'id_project_tag', preventClear: true }, 'css': { component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }
-								, 'loading': projectTagsStore.projectTagsLoading, 'fetchFunction': (limit, offset, expand, filter, sort, clear) => projectTagsStore.getProjectTagByInterval(limit, offset, expand, filter, sort, clear)
+								, 'loading': projectTagsStore.projectTagsLoading, 'fetchFunction': (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectTagsStore.getProjectTagByInterval(limit, offset, expand, filter, sort, clear)
 								, 'totalCount': Number(projectTagsStore.projectTagsTotalCount || 0) }"
 				:meta ="{ 'keyPoids': 'weight_project_tag', 'keyName': 'name_project_tag' }"
 				/>
@@ -562,7 +568,7 @@ useViewScroll(true);
 					:store-data="[projectsStore.statusHistory[projectId]]"
 					:loading="projectsStore.statusHistoryLoading"
 					:total-count="Number(projectsStore.statusHistoryTotalCount[projectId])"
-					:fetch-function="!isNewId(projectId) ? (limit, offset, expand, filter, sort, clear) => projectsStore.getStatusHistoryByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectsStore.getStatusHistoryByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64' }"
 				/>
 			</template>
@@ -581,7 +587,7 @@ useViewScroll(true);
 					:schema="schemaEditDocument"
 					:loading="projectsStore.documentsLoading"
 					:total-count="Number(projectsStore.documentsTotalCount[projectId])"
-					:fetch-function="!isNewId(projectId) ? (limit, offset, expand, filter, sort, clear) => projectsStore.getDocumentByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectsStore.getDocumentByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -600,7 +606,7 @@ useViewScroll(true);
 					:loading="projectsStore.itemsLoading"
 					:schema="schemaItem"
 					:total-count="Number(projectsStore.itemsTotalCount[projectId] || 0)"
-					:fetch-function="!isNewId(projectId) ? (limit, offset, expand, filter, sort, clear) => projectsStore.getItemByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectsStore.getItemByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -611,10 +617,10 @@ useViewScroll(true);
 				<Comment :meta="{ contenu: 'content_project_comment', key: 'id_project_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[projectsStore.comments[projectId], usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
-					:store-function="{ create: (data) => projectsStore.createComment(projectId, data), update: (id, data) => projectsStore.updateComment(projectId, id, data), delete: (id) => projectsStore.deleteComment(projectId, id) }"
+					:store-function="{ create: (data: Record<string, any>) => projectsStore.createComment(projectId, data), update: (id: string | number, data: Record<string, any>) => projectsStore.updateComment(projectId, id, data), delete: (id: string | number) => projectsStore.deleteComment(projectId, id) }"
 					:loading="projectsStore.commentsLoading" :texte-modal-delete="{ textTitle: 'project.CommentDeleteTitle', textP: 'project.CommentDeleteText' }"
 					:total-count="Number(projectsStore.commentsTotalCount[projectId])"
-					:fetch-function="!isNewId(projectId) ? (limit, offset, expand, filter, sort, clear) => projectsStore.getCommentByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => projectsStore.getCommentByInterval(projectId, limit, offset, expand, filter, sort, clear) : undefined"
 				/>
 			</template>
 		</CollapsibleSection>
@@ -652,7 +658,7 @@ useViewScroll(true);
 				:filters="filterItem"
 				:loading="projectsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
-				:fetch-function="!isNewId(projectId) ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:fetch-function="!isNewId(projectId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

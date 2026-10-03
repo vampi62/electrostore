@@ -1,17 +1,23 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, inject, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
 import { useViewScroll } from "@/composables";
+import type { useNotification } from "@/composables";
 import { downloadFile, viewFile, isNewId } from "@/utils";
 import CommandStatus from "@/enums/CommandStatus";
 import TrackingStatus from "@/enums/TrackingStatus";
 import TrackingSubStatus from "@/enums/TrackingSubStatus";
 import { useConfigsStore, useCommandsStore, useUsersStore, useItemsStore, useCarriersStore, useAuthStore } from "@/stores";
 
-const { addNotification } = inject("useNotification");
+import type { FilterLabel } from "@/types/filter";
+import type { FormLabel } from "@/types/form";
+import type { TableauLabel, TableauRowData } from "@/types/tableau";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+
+const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
@@ -23,7 +29,7 @@ const itemsStore = useItemsStore();
 const carriersStore = useCarriersStore();
 const authStore = useAuthStore();
 
-const commandId = ref(route.params.id);
+const commandId = ref(route.params.id as string);
 const preset = ref(route.query.preset || null);
 
 // every new element has its own edition space in the store, so several tabs can create an element at the same time
@@ -31,14 +37,14 @@ if (isNewId(commandId.value)) {
 	commandId.value = commandsStore.getAvailableNewCommandId();
 }
 
-const formContainer = ref(null);
+const formContainer = ref<any>(null);
 
 async function fetchAllData() {
 	if (isNewId(commandId.value)) {
 		if (Object.keys(carriersStore.carriers).length === 0) {
-			carriersStore.getCarrierByInterval(200, 0, "", "", false);
+			carriersStore.getCarrierByInterval(200, 0, [], [], {});
 		}
-		commandsStore.loadToEdition(commandId.value, preset.value);
+		commandsStore.loadToEdition(commandId.value, preset.value as any);
 	} else {
 		commandsStore.setLoadingEdition(commandId.value, true);
 		try {
@@ -185,12 +191,12 @@ const trackingCurrentStep = computed(() => {
 	return Math.max(idx, 0);
 });
 const trackingHistory = computed(() => {
-	const result = {};
+	const result: Record<string, any[]> = {};
 	const historyData = commandsStore.history[commandId.value];
 	if (!historyData) {
 		return result;
 	}
-	for (const entry of Object.values(historyData)) {
+	for (const entry of Object.values(historyData) as any[]) {
 		if (entry.status !== null && entry.status !== undefined) {
 			if (!result[entry.status]) {
 				result[entry.status] = [];
@@ -363,7 +369,7 @@ const trackingOptionalConfig = computed(() => {
 
 // document
 const documentAddModalShow = ref(false);
-const documentAdd = async(files) => {
+const documentAdd = async(files: { name: string; document: File }[]) => {
 	for (const file of files) {
 		const documentModalData = { name_command_document: file.name, document: file.document, type_command_document: file.document.type, created_at: new Date() };
 		const newId = commandsStore.getAvailableNewDocumentId(commandId.value);
@@ -379,7 +385,7 @@ const documentAdd = async(files) => {
 	}
 	documentAddModalShow.value = false;
 };
-const documentEdit = (row) => {
+const documentEdit = (row: TableauRowData) => {
 	try {
 		schemaEditDocument.validateSync(row, { abortEarly: false });
 		commandsStore.valideDocumentEditionById(commandId.value, row.id_command_document,
@@ -390,7 +396,7 @@ const documentEdit = (row) => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const documentRestore = (row) => {
+const documentRestore = (row: TableauRowData) => {
 	try {
 		delete commandsStore.documentReady[commandId.value][row.id_command_document];
 		addNotification({ message: t("command.DocumentRestored"), type: "success" });
@@ -398,7 +404,7 @@ const documentRestore = (row) => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const documentDelete = (row) => {
+const documentDelete = (row: TableauRowData) => {
 	try {
 		commandsStore.valideDocumentEditionById(commandId.value, row.id_command_document, "deleted");
 		addNotification({ message: t("command.DocumentDeleted"), type: "success" });
@@ -406,11 +412,11 @@ const documentDelete = (row) => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const documentDownload = async(fileContent) => {
+const documentDownload = async(fileContent: TableauRowData) => {
 	const file = await commandsStore.downloadDocument(commandId.value, fileContent.id_command_document);
 	downloadFile(file, { keyName: fileContent.name_command_document, keyType: fileContent.type_command_document });
 };
-const documentView = async(fileContent) => {
+const documentView = async(fileContent: TableauRowData) => {
 	const file = await commandsStore.downloadDocument(commandId.value, fileContent.id_command_document);
 	if (viewFile(file, { keyName: fileContent.name_command_document, keyType: fileContent.type_command_document })) {
 		addNotification({ message: t("command.DocumentOpenInNewTab"), type: "success" });
@@ -421,7 +427,7 @@ const documentView = async(fileContent) => {
 
 // item
 const itemModalShow = ref(false);
-const itemSave = (row) => {
+const itemSave = (row: TableauRowData) => {
 	try {
 		schemaItem.validateSync(row, { abortEarly: false });
 		commandsStore.valideItemEditionById(commandId.value, row.id_item,
@@ -432,7 +438,7 @@ const itemSave = (row) => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const itemDelete = (row) => {
+const itemDelete = (row: TableauRowData) => {
 	try {
 		if (commandsStore.itemReady[commandId.value]?.[row.id_item]?.status === "created") {
 			delete commandsStore.itemReady[commandId.value][row.id_item];
@@ -444,7 +450,7 @@ const itemDelete = (row) => {
 		addNotification({ message: e, type: "error" });
 	}
 };
-const itemRestore = (row) => {
+const itemRestore = (row: TableauRowData) => {
 	try {
 		delete commandsStore.itemReady[commandId.value][row.id_item];
 		addNotification({ message: t("command.ItemRestored"), type: "success" });
@@ -453,13 +459,13 @@ const itemRestore = (row) => {
 	}
 };
 
-const filterItem = ref([
+const filterItem = ref<FilterLabel[]>([
 	{ key: "reference_name_item", value: "", type: "text", label: "", placeholder: t("command.ItemFilterPlaceholder"), compareMethod: "=like=", class: "w-full" },
 ]);
 
 const createSchema = () => {
 	const edition = commandsStore.commandEdition[commandId.value];
-	const shape = {};
+	const shape: any = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
@@ -494,7 +500,7 @@ const schemaAddDocument = Yup.object().shape({
 		.required(t("command.DocumentNameRequired")),
 	document: Yup.mixed()
 		.required(t("command.DocumentRequired"))
-		.test("fileSize", t("command.DocumentSize", { count: configsStore.getConfigByKey("max_size_document_in_mb") }), (value) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
+		.test("fileSize", t("command.DocumentSize", { count: configsStore.getConfigByKey("max_size_document_in_mb") }), (value: any) => !value || value?.size <= (Number(configsStore.getConfigByKey("max_size_document_in_mb"))) * 1024 * 1024),
 });
 const schemaEditDocument = Yup.object().shape({
 	name_command_document: Yup.string()
@@ -512,15 +518,15 @@ const schemaItem = Yup.object().shape({
 		.min(1, t("command.ItemPriceMin")),
 });
 
-const labelForm = computed(() => [
+const labelForm = computed<FormLabel[]>(() => [
 	{ key: "price_command", label: "command.Price", type: "number" },
 	{ key: "url_command", label: "command.Url", type: "text" },
 	{ key: "date_command", label: "command.Date", type: "datetime-local" },
 	{ key: "status_command", label: "command.Status", type: "select", typeData: "number", options: commandStatusOptions },
 	{ key: "date_delivery_command", label: "command.DeliveryDate", type: "datetime-local" },
 	{ key: "tracking_number_command", label: "command.TrackingNumber", type: "text" },
-	{ key: "id_carrier", label: "command.Carrier", type: "fetch-select", fetchFunction: (limit, offset, expand, filter, sort, clear) => 
-		carriersStore.getCarrierByInterval(limit, offset, filter, sort, clear),
+	{ key: "id_carrier", label: "command.Carrier", type: "fetch-select", fetchFunction: (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) =>
+		carriersStore.getCarrierByInterval(limit, offset, expand, filter, sort, clear),
 	fetchStore: carriersStore.carriers, fetchValueKey: "id_carrier", fetchStoreKey: "name",
 	},
 	{ key: "is_tracking_requested", label: "command.IsTrackingRequested", type: "checkbox", enableCondition: "false" },
@@ -530,7 +536,7 @@ const labelForm = computed(() => [
 	{ key: "recipient_address_command", label: "command.RecipientAddress", type: "readonly" },
 	{ key: "last_status_command", label: "command.LastStatus", type: "readonly" },
 ]);
-const labelTableauDocument = ref([
+const labelTableauDocument = ref<TableauLabel[]>([
 	{ label: "command.DocumentName", sortable: true, key: "name_command_document", valueKey: "name_command_document", type: "text", canEdit: true },
 	{ label: "command.DocumentType", sortable: true, key: "type_command_document", valueKey: "type_command_document", type: "text" },
 	{ label: "command.DocumentDate", sortable: true, key: "created_at", valueKey: "created_at", type: "datetime" },
@@ -591,7 +597,7 @@ const labelTableauDocument = ref([
 		},
 	] },
 ]);
-const labelTableauItem = ref([
+const labelTableauItem = ref<TableauLabel[]>([
 	{ label: "command.ItemName", sortable: true, key: "Item.reference_name_item", sourceKey: "id_item", type: "text",
 		storeRessourceId: 1, valueKey: "reference_name_item" },
 
@@ -646,7 +652,7 @@ const labelTableauItem = ref([
 		},
 	] },
 ]);
-const labelTableauModalItem = ref([
+const labelTableauModalItem = ref<TableauLabel[]>([
 	{ label: "command.ItemName", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
 
 	{ label: "command.ItemQuantity", sortable: true, key: "Item.quantity_command_item", sourceKey: "id_item", type: "text",
@@ -754,7 +760,7 @@ useViewScroll(true);
 					:schema="schemaEditDocument"
 					:loading="commandsStore.documentsLoading"
 					:total-count="Number(commandsStore.documentsTotalCount[commandId] || 0)"
-					:fetch-function="!isNewId(commandId) ? (limit, offset, expand, filter, sort, clear) => commandsStore.getDocumentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => commandsStore.getDocumentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -773,7 +779,7 @@ useViewScroll(true);
 					:schema="schemaItem"
 					:loading="commandsStore.itemsLoading"
 					:total-count="Number(commandsStore.itemsTotalCount[commandId] || 0)"
-					:fetch-function="!isNewId(commandId) ? (limit, offset, expand, filter, sort, clear) => commandsStore.getItemByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => commandsStore.getItemByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
 					:tableau-css="{ component: 'max-h-64', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 				/>
 			</template>
@@ -784,10 +790,10 @@ useViewScroll(true);
 				<Comment :meta="{ contenu: 'content_command_comment', key: 'id_command_comment', canEdit: true, roleRequired: authStore.hasPermission([1, 2]), expand: ['user'] }"
 					:store-data="[commandsStore.comments[commandId], usersStore.users]"
 					:store-user="authStore.user" :store-config="configsStore"
-					:store-function="{ create: (data) => commandsStore.createComment(commandId, data), update: (id, data) => commandsStore.updateComment(commandId, id, data), delete: (id) => commandsStore.deleteComment(commandId, id) }"
+					:store-function="{ create: (data: Record<string, any>) => commandsStore.createComment(commandId, data), update: (id: string | number, data: Record<string, any>) => commandsStore.updateComment(commandId, id, data), delete: (id: string | number) => commandsStore.deleteComment(commandId, id) }"
 					:loading="commandsStore.commentsLoading" :texte-modal-delete="{ textTitle: 'command.CommentDeleteTitle', textP: 'command.CommentDeleteText' }"
 					:total-count="Number(commandsStore.commentsTotalCount[commandId] || 0)"
-					:fetch-function="!isNewId(commandId) ? (limit, offset, expand, filter, sort, clear) => commandsStore.getCommentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
+					:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => commandsStore.getCommentByInterval(commandId, limit, offset, expand, filter, sort, clear) : undefined"
 				/>
 			</template>
 		</CollapsibleSection>
@@ -825,7 +831,7 @@ useViewScroll(true);
 				:filters="filterItem"
 				:loading="commandsStore.itemsLoading" :schema="schemaItem"
 				:total-count="Number(itemsStore.itemsTotalCount || 0)"
-				:fetch-function="!isNewId(commandId) ? (limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
+				:fetch-function="!isNewId(commandId) ? (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear) : undefined"
 				:tableau-css="{ component: 'flex-1 overflow-y-auto', tr: 'transition duration-150 ease-in-out hover:bg-gray-200 even:bg-gray-10' }"
 			/>
 		</div>

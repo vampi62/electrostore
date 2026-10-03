@@ -1,11 +1,11 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { useAuthStore } from "@/stores";
 
 const authStore = useAuthStore();
 
 const loading = ref(true);
-const error = ref(null);
+const error = ref<any>(null);
 
 onMounted(async() => {
 	try {

@@ -19,20 +19,20 @@
 	</Transition>
 </template>
 
-<script>
+<script lang="ts">
 export default {
 	name: "NotificationAppUpdate",
 	data() {
 		return {
 			showBanner: false,
 			UPDATE_CHECK_INTERVAL: 30 * 60 * 1000, // 30 minutes
-			currentVersion: null,
-			availableVersion: null,
-			intervalId: null,
+			currentVersion: null as string | null,
+			availableVersion: null as string | null,
+			intervalId: null as number | null,
 		};
 	},
 	async mounted() {
-		this.startPolling((newVersion) => {
+		this.startPolling((newVersion: any) => {
 			this.showBanner = true;
 		});
 	},
@@ -43,7 +43,7 @@ export default {
 		_sessionStateKey() {
 			return "versionManager";
 		},
-		_saveState(updates) {
+		_saveState(updates: Record<string, any>) {
 			const current = JSON.parse(sessionStorage.getItem(this._sessionStateKey()) || "{}");
 			sessionStorage.setItem(this._sessionStateKey(), JSON.stringify({ ...current, ...updates }));
 		},
@@ -90,14 +90,14 @@ export default {
 				}
 			}
 		},
-		async checkForUpdate(onUpdateAvailable) {
+		async checkForUpdate(onUpdateAvailable: (newVersion: any) => void) {
 			const data = await this.fetchVersion();
 			if (data && this.currentVersion && data.version !== this.currentVersion) {
 				this._saveState({ availableVersion: data.version });
 				onUpdateAvailable(data);
 			}
 		},
-		startPolling(onUpdateAvailable) {
+		startPolling(onUpdateAvailable: (newVersion: any) => void) {
 			this.initVersion();
 			this.intervalId = setInterval(() => {
 				this.checkForUpdate(onUpdateAvailable);
