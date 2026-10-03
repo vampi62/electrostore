@@ -1,10 +1,14 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 
 import { useViewScroll } from "@/composables";
 import { CronJobStatus } from "@/enums";
 import { useCronJobsStore, useAuthStore } from "@/stores";
+
+import type { FilterLabel } from "@/types/filter";
+import type { TableauLabel, TableauMeta } from "@/types/tableau";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 
 const { t } = useI18n();
 const cronJobsStore = useCronJobsStore();
@@ -23,21 +27,21 @@ const cronJobStatusOptions = {
 	[CronJobStatus.Stopped]: t("cronJobs.StatusStopped"),
 };
 
-const filter = ref([
+const filter = ref<FilterLabel[]>([
 	{ key: "name_cronjob", value: "", type: "text", label: "cronJobs.FilterName", compareMethod: "=like=" },
 	{ key: "action_cronjob", value: undefined, type: "datalist", options: cronJobActionOptions, label: "cronJobs.FilterAction", compareMethod: "==" },
 	{ key: "is_enabled", value: undefined, type: "datalist", typeData: "bool", options: { ["false"]: t("cronJobs.FilterEnabled0"), ["true"]: t("cronJobs.FilterEnabled1") }, label: "cronJobs.FilterEnabled", compareMethod: "==" },
 ]);
-const tableauLabel = ref([
+const tableauLabel = ref<TableauLabel[]>([
 	{ label: "cronJobs.Name", sortable: true, key: "name_cronjob", valueKey: "name_cronjob", type: "text" },
 	{ label: "cronJobs.Action", sortable: true, key: "action_cronjob", valueKey: "action_cronjob", type: "enum", options: cronJobActionOptions },
 	{ label: "cronJobs.CronExpression", sortable: true, key: "cron_expression_cronjob", valueKey: "cron_expression_cronjob", type: "text" },
 	{ label: "cronJobs.Status", sortable: true, key: "status_cronjob", valueKey: "status_cronjob", type: "enum", options: cronJobStatusOptions },
-	{ label: "cronJobs.IsEnabled", sortable: true, key: "is_enabled", valueKey: "is_enabled", type: "enum", options: { [false]: t("cronJobs.FilterEnabled0"), [true]: t("cronJobs.FilterEnabled1") } },
+	{ label: "cronJobs.IsEnabled", sortable: true, key: "is_enabled", valueKey: "is_enabled", type: "enum", options: { ["false"]: t("cronJobs.FilterEnabled0"), ["true"]: t("cronJobs.FilterEnabled1") } },
 	{ label: "cronJobs.LastRun", sortable: true, key: "last_run_at", valueKey: "last_run_at", type: "datetime" },
 	{ label: "cronJobs.NextRun", sortable: true, key: "next_run_at", valueKey: "next_run_at", type: "datetime" },
 ]);
-const tableauMeta = ref({
+const tableauMeta = ref<TableauMeta>({
 	key: "id_cronjob",
 	path: "/cronjobs/",
 	saveState: true,
@@ -71,7 +75,7 @@ useViewScroll(false);
 		:filters="filter"
 		:loading="cronJobsStore.cronJobsLoading"
 		:total-count="Number(cronJobsStore.cronJobsTotalCount) || 0"
-		:fetch-function="(limit, offset, expand, filter, sort, clear) => cronJobsStore.getCronJobByInterval(limit, offset, filter, sort, clear)"
+		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => cronJobsStore.getCronJobByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

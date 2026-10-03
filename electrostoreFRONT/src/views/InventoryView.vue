@@ -1,13 +1,17 @@
-<script setup>
+<script setup lang="ts">
 import { useViewScroll } from "@/composables";
 import { ref } from "vue";
 
 import { useItemsStore, useTagsStore } from "@/stores";
+
+import type { FilterLabel } from "@/types/filter";
+import type { TableauLabel, TableauMeta } from "@/types/tableau";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 const itemsStore = useItemsStore();
 const tagsStore = useTagsStore();
 
-async function fetchTagData(minOffset, maxOffset) {
-	let tagsNotFound = [];
+async function fetchTagData(minOffset: number, maxOffset: number) {
+	let tagsNotFound: string[] = [];
 	for (let id = minOffset; id < maxOffset; id++) {
 		for (const tag in itemsStore.itemTags[id]) {
 			if (!tagsStore.tags[tag]) {
@@ -20,18 +24,18 @@ async function fetchTagData(minOffset, maxOffset) {
 	}
 }
 
-const filter = ref([
+const filter = ref<FilterLabel[]>([
 	{ key: "reference_name_item", value: "", type: "text", label: "items.FilterName", compareMethod: "=like=" },
 	{ key: "friendly_name_item", value: "", type: "text", label: "items.FilterFriendlyName", compareMethod: "=like=" },
 	{ key: "threshold_min_item", value: "", type: "number", label: "items.FilterSeuilMin", compareMethod: "=ge=" },
 	{ key: "threshold_min_item", value: "", type: "number", label: "items.FilterSeuilMax", compareMethod: "=le=" },
 	{ key: "SUM(ItemsBoxs.quantity_item_box)", value: "", type: "number", label: "items.FilterQteTotal", compareMethod: "=ge=" },
 	{ key: "ItemsTags.Tag.name_tag", value: "", type: "datalist", label: "items.FilterTag", compareMethod: "=like=",
-		fetchOptions: (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear),
+		fetchOptions: (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear),
 		storeData: tagsStore.tags, storeKey: "name_tag",
 	},
 ]);
-const tableauLabel = ref([
+const tableauLabel = ref<TableauLabel[]>([
 	{ label: "items.Name", sortable: true, key: "reference_name_item", valueKey: "reference_name_item", type: "text" },
 	{ label: "items.FriendlyName", sortable: true, key: "friendly_name_item", valueKey: "friendly_name_item", type: "text" },
 	{ label: "items.Seuil", sortable: true, key: "threshold_min_item", valueKey: "threshold_min_item", type: "number" },
@@ -46,7 +50,7 @@ const tableauLabel = ref([
 
 	{ label: "items.Quantity", sortable: true, key: "SUM(ItemsBoxs.quantity_item_box)", valueKey: "quantity_item", type: "number" },
 ]);
-const tableauMeta = ref({
+const tableauMeta = ref<TableauMeta>({
 	key: "id_item",
 	path: "/inventory/",
 	expand: ["item_boxs", "item_tags"],
@@ -75,8 +79,8 @@ useViewScroll(false);
 		:filters="filter"
 		:loading="itemsStore.itemsLoading"
 		:total-count="Number(itemsStore.itemsTotalCount) || 0"
-		:fetch-function="(limit, offset, expand, filter, sort, clear) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
-		:list-fetch-function="[(minOffset, maxOffset) => fetchTagData(minOffset, maxOffset)]"
+		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => itemsStore.getItemByInterval(limit, offset, expand, filter, sort, clear)"
+		:list-fetch-function="[(minOffset: number, maxOffset: number) => fetchTagData(minOffset, maxOffset)]"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

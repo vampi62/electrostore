@@ -84,7 +84,7 @@
 						<button v-if="canEdit" @click="deleteElement" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600">
 							{{ $t('store.DeleteLed') }}
 						</button>
-						<button v-if="ledEdition[selectedElement.key.id_led].status != 'new'" @click="toggleLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
+						<button v-if="ledEdition[selectedElement.key.id_led].status != 'new'" @click="toggleLed(selectedElement.key.id_led)" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
 							{{ $t('store.ToggleLed') }}
 						</button>
 						<div class="flex space-x-4">
@@ -100,7 +100,7 @@
 						<button v-if="boxEdition[selectedElement.key.id_box].status != 'new'" @click="$emit('openBoxContent', selectedElement.key.id_box)" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
 							{{ $t('store.ShowBoxContent') }}
 						</button>
-						<button v-if="boxEdition[selectedElement.key.id_box].status != 'new'" @click="toggleBoxLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
+						<button v-if="boxEdition[selectedElement.key.id_box].status != 'new'" @click="toggleBoxLed(selectedElement.key.id_box)" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
 							{{ $t('store.ToggleBoxLed') }}
 						</button>
 						<button v-if="canEdit" @click="addLed" class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
@@ -126,31 +126,33 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 import { inject } from "vue";
 import { useI18n } from "vue-i18n";
 import { StorePositionMode, LedBorderSide } from "@/enums";
+import type { PropType } from "vue";
+import type { useNotification } from "@/composables";
 export default {
 	name: "Tableau",
 	mounted() {
-		document.addEventListener("click", (event) => this.hideMenu(event));
-		document.addEventListener("mouseup", (event) => this.stopDragging(event));
+		document.addEventListener("click", this.hideMenu);
+		document.addEventListener("mouseup", this.stopDragging);
 	},
 	beforeUnmount() {
-		document.removeEventListener("click", (event) => this.this.hideMenu(event));
-		document.removeEventListener("mouseup", (event) => this.stopDragging(event));
+		document.removeEventListener("click", this.hideMenu);
+		document.removeEventListener("mouseup", this.stopDragging);
 	},
 	props: {
 		storeData: {
-			type: Object,
+			type: Object as PropType<Record<string, any>>,
 			required: true,
 		},
 		ledEdition: {
-			type: Object,
+			type: Object as PropType<Record<string, any>>,
 			required: true,
 		},
 		boxEdition: {
-			type: Object,
+			type: Object as PropType<Record<string, any>>,
 			required: true,
 		},
 		canEdit: {
@@ -158,14 +160,14 @@ export default {
 			required: true,
 		},
 		storeFunc: {
-			type: Object,
+			type: Object as PropType<Record<string, any>>,
 			required: true,
 		},
 	},
 	methods: {
 		addLed() {
 			const newId = this.getLastLedId() + 1;
-			const newLed = {
+			const newLed: any = {
 				id_led: newId,
 				mqtt_id_led: this.getLastLedMqttId() + 1,
 				status: "new",
@@ -219,10 +221,10 @@ export default {
 			}
 			return max;
 		},
-		isNumber(value) {
+		isNumber(value: any) {
 			return typeof value === "number" && !Number.isNaN(value);
 		},
-		nearestSide(x, y, currentSide = null) {
+		nearestSide(x: number, y: number, currentSide: number | null = null) {
 			const distances = [
 				{ side: LedBorderSide.Left, dist: x, index: y },
 				{ side: LedBorderSide.Right, dist: (this.storeData.xlength_store - 1) - x, index: y },
@@ -242,7 +244,7 @@ export default {
 			distances.sort((a, b) => a.dist - b.dist);
 			return { side: distances[0].side, index: distances[0].index };
 		},
-		ledPixelStyle(led, isLabel = false) {
+		ledPixelStyle(led: Record<string, any>, isLabel = false) {
 			const cellX = this.gridSize.cellSizeX;
 			const cellY = this.gridSize.cellSizeY;
 			const offsetLabelX = isLabel ? 10 : 0;
@@ -267,7 +269,7 @@ export default {
 				top: ((((this.storeData.ylength_store - 1) - led.y_led) * cellY) + (cellY / 2) + offsetLabelY) + "px",
 			};
 		},
-		showMenuModal(event, isNewElement = false) {
+		showMenuModal(event: MouseEvent & { layerX: number; layerY: number }, isNewElement = false) {
 			if (isNewElement && !this.canEdit) {
 				return;
 			}
@@ -277,12 +279,14 @@ export default {
 				this.menuPos.Xpx = event.layerX;
 				this.menuPos.Ypx = event.layerY;
 			} else {
-				this.menuPos.Xpx = event.layerX + event.target.offsetLeft;
-				this.menuPos.Ypx = event.layerY + event.target.offsetTop;
+				const target = event.target as HTMLElement;
+				this.menuPos.Xpx = event.layerX + target.offsetLeft;
+				this.menuPos.Ypx = event.layerY + target.offsetTop;
 			}
 		},
-		hideMenu(event) {
-			if (this.$refs.menuModal?.contains(event.target)) {
+		hideMenu(event: Event) {
+			const target = event.target;
+			if ((this.$refs.menuModal as HTMLElement | undefined)?.contains(target as Node)) {
 				return;
 			}
 			this.showMenu = false;
@@ -292,8 +296,8 @@ export default {
 			this.mouseClick.X = this.mousePos.X;
 			this.mouseClick.Y = this.mousePos.Y;
 		},
-		stopSelecting(event = null) {
-			if (event !== null && this.$refs.menuModal?.contains(event.target)) {
+		stopSelecting(event: Event | null = null) {
+			if (event !== null && (this.$refs.menuModal as HTMLElement | undefined)?.contains(event.target as Node)) {
 				return;
 			}
 			document.querySelector(".selectedElement")?.classList.remove("selectedElement");
@@ -309,9 +313,9 @@ export default {
 				document.querySelector(".grid")?.classList.remove("cursor-s-resize");
 				document.querySelector(".grid")?.classList.remove("cursor-w-resize");
 			}
-			this.selectedElement = { type: null, key: null, temp: {} };
+			this.selectedElement = { type: null, key: null, temp: {}, status: null };
 		},
-		selectLed(led, event = null) {
+		selectLed(led: Record<string, any>, event: MouseEvent | null = null) {
 			if (event) {
 				this.showMenuModal(event);
 			} // if right click show the menu
@@ -325,10 +329,10 @@ export default {
 			if (led?.status !== "new") {
 				led.status = "modified";
 			}
-			let ledHtml = this.$refs["LED" + led.id_led][0];
+			const ledHtml = (this.$refs["LED" + led.id_led] as HTMLElement[])[0];
 			ledHtml.classList.add("selectedElement");
 		},
-		selectBox(box, event = null) {
+		selectBox(box: Record<string, any>, event: MouseEvent | null = null) {
 			if (event) {
 				this.showMenuModal(event);
 			} // if right click show the menu
@@ -348,10 +352,10 @@ export default {
 			if (box?.status !== "new") {
 				box.status = "modified";
 			}
-			let boxHtml = this.$refs["BOX" + box.id_box][0];
+			const boxHtml = (this.$refs["BOX" + box.id_box] as HTMLElement[])[0];
 			boxHtml.classList.add("selectedElement","diagonal-hatch");
 		},
-		selectBorder(border, direction) {
+		selectBorder(border: any, direction: string | null) {
 			if (this.selectedElement.key === border) {
 				this.stopSelecting(); // unselect if click on the selectedElement element
 				return;
@@ -368,7 +372,7 @@ export default {
 			if (border?.status !== "new") {
 				border.status = "modified";
 			}
-			let boxHtml = this.$refs["BOX" + border.id_box][0];
+			const boxHtml = (this.$refs["BOX" + border.id_box] as HTMLElement[])[0];
 			boxHtml.classList.add("selectedElement","diagonal-hatch");
 		},
 		deleteElement() {
@@ -396,7 +400,7 @@ export default {
 			this.showMenu = false;
 			this.stopSelecting();
 		},
-		async toggleLed(ledId) {
+		async toggleLed(ledId: string) {
 			try {
 				await this.storeFunc.showLedById(ledId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
 				this.addNotification({ message: this.t("store.LedShowSuccess"), type: "success" });
@@ -404,7 +408,7 @@ export default {
 				this.addNotification({ message: e, type: "error" });
 			}
 		},
-		async toggleBoxLed(boxId) {
+		async toggleBoxLed(boxId: string) {
 			try {
 				await this.storeFunc.showBoxById(boxId, { "red": 255, "green": 255, "blue": 255, "timeshow": 30, "animation": 4 });
 				this.addNotification({ message: this.t("store.BoxShowSuccess"), type: "success" });
@@ -412,7 +416,7 @@ export default {
 				this.addNotification({ message: e, type: "error" });
 			}
 		},
-		startDragging(element, type, direction = null) {
+		startDragging(element: any, type: string, direction: string | null = null) {
 			if (!this.canEdit) {
 				return;
 			}
@@ -442,8 +446,12 @@ export default {
 			}
 			this.hasDragElement = false;
 		},
-		moveMouse(event) {
-			let gridBoxPos = document.querySelector(".grid").getBoundingClientRect();
+		moveMouse(event: MouseEvent) {
+			const grid = document.querySelector(".grid");
+			if (!grid) {
+				return;
+			}
+			let gridBoxPos = grid.getBoundingClientRect();
 			let left = gridBoxPos.left + window.scrollX;
 			let top = gridBoxPos.top + window.scrollY;
 			this.gridSize.cellSizeX = Math.floor(gridBoxPos.width / this.storeData.xlength_store);
@@ -500,18 +508,18 @@ export default {
 			}
 		},
 		checkBoxConflict(validate = false) {
-			for (const box of Object.values(this.boxEdition)) {
-				this.$refs["BOX" + box.id_box][0].classList.remove("conflict");
+			for (const box of Object.values(this.boxEdition) as any[]) {
+				(this.$refs["BOX" + box.id_box] as HTMLElement[])[0].classList.remove("conflict");
 			}
-			for (const box1 of Object.values(this.boxEdition)) {
-				for (const box2 of Object.values(this.boxEdition)) {
+			for (const box1 of Object.values(this.boxEdition) as any[]) {
+				for (const box2 of Object.values(this.boxEdition) as any[]) {
 					if (box1.id_box !== box2.id_box) {
 						if ((box1.xstart_box < box2.xend_box) &&
 						(box1.xend_box > box2.xstart_box) &&
 						(box1.ystart_box < box2.yend_box) &&
 						(box1.yend_box > box2.ystart_box)) {
-							this.$refs["BOX" + box1.id_box][0].classList.add("conflict");
-							this.$refs["BOX" + box2.id_box][0].classList.add("conflict");
+							(this.$refs["BOX" + box1.id_box] as HTMLElement[])[0].classList.add("conflict");
+							(this.$refs["BOX" + box2.id_box] as HTMLElement[])[0].classList.add("conflict");
 						}
 					}
 				}
@@ -519,8 +527,8 @@ export default {
 			if (validate) {
 				let BreakException = {};
 				try {
-					for (const box of Object.values(this.boxEdition)) {
-						if (this.$refs["BOX" + box.id_box][0].classList.contains("conflict")) {
+					for (const box of Object.values(this.boxEdition) as any[]) {
+						if ((this.$refs["BOX" + box.id_box] as HTMLElement[])[0].classList.contains("conflict")) {
 							this.addNotification({ message: this.t("store.BoxConflict"), type: "error" });
 							throw BreakException;
 						}
@@ -582,7 +590,7 @@ export default {
 		},
 	},
 	setup() {
-		const { addNotification } = inject("useNotification");
+		const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 		const { t } = useI18n();
 		return {
 			addNotification,
@@ -597,7 +605,7 @@ export default {
 			mouseClick: { X: 0, Y: 0 },
 			gridSize: { cellSizeX: 40, cellSizeY: 40 },
 			showLedId: true,
-			selectedElement: { type: null, key: null, temp: {} },
+			selectedElement: { type: null as string | null, key: null as any, temp: {} as any, status: null as string | null },
 			hasDragElement: false,
 		};
 	},

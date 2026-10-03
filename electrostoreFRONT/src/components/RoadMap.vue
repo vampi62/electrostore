@@ -154,12 +154,13 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
+import type { PropType } from "vue";
 export default {
 	name: "RoadMap",
 	props: {
 		steps: {
-			type: Array,
+			type: Array as PropType<any[]>,
 			required: true,
 			// Format: [{ id: 1, name: 'NotStarted' }, { id: 2, name: 'InProgress' }, ...]
 		},
@@ -171,7 +172,7 @@ export default {
 		mode: {
 			type: String,
 			default: "horizontal-bottom",
-			validator: (value) => ["horizontal-top", "horizontal-bottom", "horizontal-left", "horizontal-right", "vertical-top", "vertical-bottom", "vertical-left", "vertical-right"].includes(value),
+			validator: (value: any) => ["horizontal-top", "horizontal-bottom", "horizontal-left", "horizontal-right", "vertical-top", "vertical-bottom", "vertical-left", "vertical-right"].includes(value),
 		},
 		history: {
 			type: Object,
@@ -241,8 +242,8 @@ export default {
 	},
 	data() {
 		return {
-			hoveredStep: null,
-			expandedStep: null,
+			hoveredStep: null as number | null,
+			expandedStep: null as number | null,
 			historyGap: 8,
 		};
 	},
@@ -255,7 +256,7 @@ export default {
 		},
 	},
 	methods: {
-		showHistory(step, index) {
+		showHistory(step: any, index: number) {
 			this.hoveredStep = index;
 			window.addEventListener("scroll", this.updatePosition, true);
 			window.addEventListener("resize", this.updatePosition);
@@ -263,7 +264,7 @@ export default {
 				this.updatePosition();
 			});
 		},
-		hideHistory(event, index) {
+		hideHistory(event: MouseEvent | null, index: number) {
 			const pointerX = event?.clientX;
 			const pointerY = event?.clientY;
 			const stepElement = this.resolveRefElement(this.$refs?.[`step-${index}`]);
@@ -291,12 +292,15 @@ export default {
 			window.removeEventListener("scroll", this.updatePosition, true);
 			window.removeEventListener("resize", this.updatePosition);
 		},
-		isPointInsideElementWithMargin(targetX, targetY, element, marginTop = 0, marginBottom = 0, marginLeft = 0, marginRight = 0) {
+		isPointInsideElementWithMargin(targetX: number | undefined, targetY: number | undefined, element: HTMLElement | null, marginTop = 0, marginBottom = 0, marginLeft = 0, marginRight = 0) {
 			if (!element) {
 				return false;
 			}
 
 			const rect = element.getBoundingClientRect();
+			if (targetX === undefined || targetY === undefined) {
+				return false;
+			}
 			return (
 				targetX >= rect.left - marginLeft &&
 				targetX <= rect.right + marginRight &&
@@ -304,7 +308,7 @@ export default {
 				targetY <= rect.bottom + marginBottom
 			);
 		},
-		resolveRefElement(refValue) {
+		resolveRefElement(refValue: any) {
 			if (!refValue) {
 				return null;
 			}
@@ -354,7 +358,7 @@ export default {
 			const currentStepName = this.steps[this.currentStep]?.name;
 			return this.stepColors[currentStepName];
 		},
-		getSegmentClass(index) {
+		getSegmentClass(index: number) {
 			const colors = this.getCurrentStepColors();
 			if (index < this.currentStep) {
 				return colors.completed;
@@ -364,7 +368,7 @@ export default {
 				return colors.pending;
 			}
 		},
-		getSegmentTextClass(index) {
+		getSegmentTextClass(index: number) {
 			const colors = this.getCurrentStepColors();
 			if (index < this.currentStep) {
 				return colors.completed.includes("text-white") ? "text-white" : "";
@@ -387,13 +391,13 @@ export default {
 			return this.getCurrentStepColors().text;
 		},
 
-		getStepHistory(step) { // pinia store with history or history array table
+		getStepHistory(step: any) { // pinia store with history or history array table
 			return this.history[step.id] || null;
 		},
-		toggleHistory(index) {
+		toggleHistory(index: number) {
 			this.expandedStep = this.expandedStep === index ? null : index;
 		},
-		formatDate(date) {
+		formatDate(date: string | Date | null) {
 			if (!date) {
 				return "";
 			}

@@ -81,7 +81,7 @@
 			<div class="border-t-2 border-blue-400"></div>
 			<ul class="mt-6 space-y-4">
 				<li v-for="nav in listNavShown" :key="nav.name">
-					<template v-if="!nav.enableCondition || eval(nav.enableCondition)">
+					<template v-if="!nav.enableCondition || evalCondition(nav.enableCondition)">
 						<a :href="nav.path" :class="['flex items-center space-x-4 hover:text-blue-400',
 							isActive(nav.path) ? 'text-blue-400' : 'text-white']" @click.prevent="openView($event, nav.path)">
 							<font-awesome-icon :icon="nav.faIcon" />
@@ -113,7 +113,7 @@
 		<div class="flex flex-col space-y-4 overflow-x-auto no-scrollbar">
 			<ul class="mt-2 space-y-4">
 				<li v-for="nav in listNavShown" :key="nav.name" class="min-h-6">
-					<template v-if="!nav.enableCondition || eval(nav.enableCondition)">
+					<template v-if="!nav.enableCondition || evalCondition(nav.enableCondition)">
 						<a :href="nav.path" :class="['flex items-center space-x-4 hover:text-blue-400',
 							isActive(nav.path) ? 'text-blue-400' : 'text-white']" @click.prevent="openView($event, nav.path)"
 							@auxclick.middle.prevent="openView($event, nav.path)">
@@ -154,13 +154,14 @@
 	</button>
 </template>
 
-<script>
+<script lang="ts">
 import { useAuthStore, useConfigsStore, useTabsStore } from "@/stores";
+import type { PropType } from "vue";
 export default {
 	name: "NavBar",
 	props: {
 		listNav: {
-			type: Array,
+			type: Array as PropType<any[]>,
 			required: true,
 		},
 	},
@@ -178,7 +179,7 @@ export default {
 		return {
 			showTopBar: false,
 			reduceLeftSideBar: false,
-			installEvent: null,
+			installEvent: null as any,
 			showPwaPrompt: false,
 		};
 	},
@@ -198,8 +199,12 @@ export default {
 		window.removeEventListener("appinstalled", this.onAppInstalled);
 	},
 	methods: {
+		// bare eval() in a template resolves to the (nonexistent) this.eval, not the global eval — must go through a method
+		evalCondition(condition: string) {
+			return eval(condition);
+		},
 		// the view of a menu entry is displayed in the selected tab, or in a new tab with ctrl/middle click
-		openView(event, path) {
+		openView(event: MouseEvent, path: string) {
 			if (event.ctrlKey || event.metaKey || event.button === 1) {
 				this.tabsStore.open(path);
 			} else {
@@ -207,11 +212,11 @@ export default {
 			}
 			this.showTopBar = false;
 		},
-		isActive(path) {
+		isActive(path: string) {
 			const activePath = (this.tabsStore.activeTab?.fullPath || "").split("?")[0];
 			return activePath === path || activePath.startsWith(path + "/");
 		},
-		onBeforeInstallPrompt(e) {
+		onBeforeInstallPrompt(e: Event) {
 			e.preventDefault();
 			this.installEvent = e;
 			this.showPwaPrompt = true;

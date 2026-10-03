@@ -33,4 +33,19 @@ module.exports = {
 		ecmaVersion: 2022,
 		sourceType: "module",
 	},
+	overrides: [
+		{
+			files: ["*.ts"],
+			parser: "@typescript-eslint/parser",
+			plugins: ["@typescript-eslint"],
+			extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+		},
+		{
+			files: ["*.vue"],
+			parserOptions: {
+				parser: "@typescript-eslint/parser",
+			},
+			plugins: ["@typescript-eslint"],
+		},
+	],
 };

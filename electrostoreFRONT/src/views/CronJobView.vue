@@ -1,15 +1,16 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, computed, inject } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
 
 import { useViewScroll } from "@/composables";
+import type { useNotification } from "@/composables";
 import { isNewId } from "@/utils";
 import { CronJobStatus } from "@/enums";
 import { useConfigsStore, useCronJobsStore, useAuthStore } from "@/stores";
 
-const { addNotification } = inject("useNotification");
+const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
@@ -18,7 +19,7 @@ const configsStore = useConfigsStore();
 const cronJobsStore = useCronJobsStore();
 const authStore = useAuthStore();
 
-const cronJobId = ref(route.params.id);
+const cronJobId = ref(route.params.id as string);
 const preset = ref(route.query.preset || null);
 
 const cronJobActionOptions = {
@@ -26,7 +27,7 @@ const cronJobActionOptions = {
 	1: t("cronJob.ActionStockLowAlert"),
 	2: t("cronJob.ActionWeeklyItemMovementReport"),
 };
-const cronJobStatusOptions = {
+const cronJobStatusOptions: Record<number, string> = {
 	[CronJobStatus.Idle]: t("cronJob.StatusIdle"),
 	[CronJobStatus.Running]: t("cronJob.StatusRunning"),
 	[CronJobStatus.Success]: t("cronJob.StatusSuccess"),
@@ -40,11 +41,11 @@ if (isNewId(cronJobId.value)) {
 	cronJobId.value = cronJobsStore.getAvailableNewCronJobId();
 }
 
-const formContainer = ref(null);
+const formContainer = ref<any>(null);
 
 async function fetchAllData() {
 	if (isNewId(cronJobId.value)) {
-		cronJobsStore.loadToEdition(cronJobId.value, preset.value);
+		cronJobsStore.loadToEdition(cronJobId.value, preset.value as any);
 	} else {
 		cronJobsStore.setLoadingEdition(cronJobId.value, true);
 		try {
@@ -130,7 +131,7 @@ const cronJobForceStop = async() => {
 };
 const createSchema = () => {
 	const edition = cronJobsStore.cronJobEdition[cronJobId.value];
-	const shape = {};
+	const shape: any = {};
 	if (!edition) {
 		return Yup.object().shape(shape);
 	}
@@ -187,7 +188,7 @@ useViewScroll(true);
 	</div>
 	<div v-if="cronJobsStore.cronJobs[cronJobId] || isNewId(cronJobId)" class="w-full">
 		<FormContainer ref="formContainer" :schema-builder="createSchema" :labels="labelForm" :store-data="cronJobsStore.cronJobEdition[cronJobId]" :store-user="authStore.user"
-			:store-function="{ hasPermission: (validPerm) => authStore.hasPermission(validPerm) }"/>
+			:store-function="{ hasPermission: (validPerm: number[]) => authStore.hasPermission(validPerm) }"/>
 		<div v-if="!isNewId(cronJobId) && authStore.hasPermission([2])" class="flex space-x-2 mt-4">
 			<button type="button" @click="cronJobForceRun"
 				class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">

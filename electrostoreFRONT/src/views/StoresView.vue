@@ -1,14 +1,18 @@
-<script setup>
+<script setup lang="ts">
 import { useViewScroll } from "@/composables";
 import { ref } from "vue";
 
 import { useStoresStore, useTagsStore, useAuthStore } from "@/stores";
+
+import type { FilterLabel } from "@/types/filter";
+import type { TableauLabel, TableauMeta } from "@/types/tableau";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 const storesStore = useStoresStore();
 const tagsStore = useTagsStore();
 const authStore = useAuthStore();
 
-async function fetchTagData(minOffset, maxOffset) {
-	let tagsNotFound = [];
+async function fetchTagData(minOffset: number, maxOffset: number) {
+	let tagsNotFound: string[] = [];
 	for (let id = minOffset; id < maxOffset; id++) {
 		for (const tag in storesStore.storeTags[id]) {
 			if (!tagsStore.tags[tag]) {
@@ -21,19 +25,19 @@ async function fetchTagData(minOffset, maxOffset) {
 	}
 }
 
-const filter = ref([
+const filter = ref<FilterLabel[]>([
 	{ key: "name_store", value: "", type: "text", label: "stores.FilterName", compareMethod: "=like=" },
 	{ key: "mqtt_name_store", value: "", type: "text", label: "stores.FilterMqttName", compareMethod: "=like=" },
 	{ key: "xlength_store", value: "", type: "number", label: "stores.FilterXLength", compareMethod: "=le=" },
 	{ key: "ylength_store", value: "", type: "number", label: "stores.FilterYLength", compareMethod: "=le=" },
 	{ key: "is_mqtt_connected_store", value: "", type: "boolean", label: "stores.FilterMqttConnected", compareMethod: "=" },
 	{ key: "mqtt_last_seen_store", value: "", type: "date", label: "stores.FilterMqttLastSeen", compareMethod: "=le=" },
-	{ key: "StoresTags.Tag.name_tag", value: "", type: "datalist", label: "stores.FilterTag", compareMethod: "=like=",
-		fetchOptions: (limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear),
+	/* { key: "StoresTags.Tag.name_tag", value: "", type: "datalist", label: "stores.FilterTag", compareMethod: "=like=",
+		fetchOptions: (limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear),
 		storeData: tagsStore.tags, storeKey: "name_tag",
-	},
+	}, */
 ]);
-const tableauLabel = ref([
+const tableauLabel = ref<TableauLabel[]>([
 	{ label: "stores.Name", sortable: true, key: "name_store", valueKey: "name_store", type: "text" },
 	{ label: "stores.XLength", sortable: true, key: "xlength_store", valueKey: "xlength_store", type: "number" },
 	{ label: "stores.YLength", sortable: true, key: "ylength_store", valueKey: "ylength_store", type: "number" },
@@ -44,7 +48,7 @@ const tableauLabel = ref([
 		storeLinkId: 1, storeRessourceId: 2, storeLinkKeyJoinSource: "id_store", storeLinkKeyJoinRessource: "id_tag",
 		ressourcePrint: [{ from: "ressource", valueKey: "name_tag" }] },
 ]);
-const tableauMeta = ref({
+const tableauMeta = ref<TableauMeta>({
 	key: "id_store",
 	path: "/stores/",
 	expand: ["stores_tags"],
@@ -79,8 +83,8 @@ useViewScroll(false);
 		:filters="filter"
 		:loading="storesStore.storesLoading"
 		:total-count="Number(storesStore.storesTotalCount) || 0"
-		:fetch-function="(limit, offset, expand, filter, sort, clear) => storesStore.getStoreByInterval(limit, offset, expand, filter, sort, clear)"
-		:list-fetch-function="[(minOffset, maxOffset) => fetchTagData(minOffset, maxOffset)]"
+		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => storesStore.getStoreByInterval(limit, offset, expand, filter, sort, clear)"
+		:list-fetch-function="[(minOffset: number, maxOffset: number) => fetchTagData(minOffset, maxOffset)]"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

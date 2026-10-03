@@ -22,6 +22,7 @@ Each service also has its own PR test workflow (`.github/workflows/PRtests<SERVI
 - If you introduced a new domain concept, add it to [docs/reference/glossary.md](docs/reference/glossary.md).
 - Add or update the relevant scenario in [recette/](recette/README.md) if the change affects user-facing or cross-service behavior.
 - If you touched any configuration parameter, see [Keeping the generator in sync](#keeping-the-generator-in-sync) below.
+- If you added, removed, or changed the shape of an `electrostoreAPI` endpoint or DTO, see [Keeping the OpenAPI spec in sync](#keeping-the-openapi-spec-in-sync) below.
 
 There is no `CHANGELOG.md` to maintain by hand: release notes are auto-generated from commit history by `.github/workflows/release.yml` and published to [GitHub Releases](https://github.com/vampi62/electrostore/releases) — this is why commit messages should stay descriptive (see below).
 
@@ -40,6 +41,43 @@ If your change adds, renames, or removes any of the following, update `docs/gene
 | A new configurable option (form field) | `js/config.js` (`collectConfig`) + the corresponding input in `index.html` |
 
 If you add a Kafka topic, also update its message-shape table in [docs/reference/architecture.md](docs/reference/architecture.md#message-shapes) — that's what keeps the `NotificationMessage`-style drift (same field, different type in each service) from creeping back in.
+
+## Keeping the OpenAPI spec in sync
+
+`openapi/swagger.json` is the REST contract for `electrostoreAPI` (see [docs/reference/architecture.md](docs/reference/architecture.md#rest)). `electrostoreFRONT/src/types/api.d.ts` is generated from it, and is what gives the frontend's stores/helpers (`electrostoreFRONT/src/stores/`, `electrostoreFRONT/src/helpers/`, all TypeScript) compile-time types matching the real API shape. Neither file updates itself: if you add, remove, or change an endpoint or DTO in `electrostoreAPI`, regenerate both in the same PR, in this order.
+
+1. Regenerate `openapi/swagger.json` from the built API:
+
+   **Windows (cmd)**
+
+   ```cmd
+   cd electrostoreAPI
+   dotnet build
+   set SwaggerGeneration=true
+   "%USERPROFILE%\.dotnet\tools\swagger.exe" tofile --output ../openapi/swagger.json bin/Debug/net10.0/electrostoreAPI.dll v1
+   set SwaggerGeneration=
+   ```
+
+   **Linux / macOS**
+
+   ```bash
+   cd electrostoreAPI
+   dotnet build
+   export SwaggerGeneration=true
+   ~/.dotnet/tools/swagger tofile --output ../openapi/swagger.json bin/Debug/net10.0/electrostoreAPI.dll v1
+   unset SwaggerGeneration
+   ```
+
+   (`swagger` here is the `Swashbuckle.AspNetCore.Cli` global tool: `dotnet tool install -g Swashbuckle.AspNetCore.Cli` if it's not installed yet.)
+
+2. Regenerate the frontend's typed API client from the updated spec:
+
+   ```bash
+   cd electrostoreFRONT
+   npm run gen:api-types
+   ```
+
+Commit both regenerated files alongside your `electrostoreAPI` change.
 
 ## Commit messages
 

@@ -4,11 +4,11 @@
 			:key="index"
 			:label="filter.label"
 			:type="filter.type"
-			:disabled="filter?.enableCondition !== undefined && !eval(filter.enableCondition)"
+			:disabled="filter?.enableCondition !== undefined && !evalCondition(filter.enableCondition)"
 			:preset="filter?.preset"
 			:placeholder="filter?.placeholder"
 			:class-css="filter?.class"
-			:options="filter?.options ? Object.keys(filter.options).map((key) => ({ id: key, value: filter.options[key] })) : null"
+			:options="filter?.options ? Object.keys(filter.options).map((key) => ({ id: key, value: filter.options![key] })) : undefined"
 			:sort-options="filter?.sortOptions"
 			:fetch-options="filter?.fetchOptions"
 			:store-data="filter?.storeData"
@@ -19,29 +19,16 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 import { defineAsyncComponent } from "vue";
+import type { PropType } from "vue";
+import type { FilterLabel } from "@/types/filter";
 export default {
 	name: "FilterContainer",
 	props: {
 		filters: {
-			type: Array,
+			type: Array as PropType<FilterLabel[]>,
 			required: true,
-			// This should be an array of filter objects, each containing:
-			// - key: string (the key in the storeData to filter on)
-			// - label: string (translation key for the label)
-			// - type: string (input type, e.g., 'text', 'number', 'select')
-			// - typeData: string (type of data, e.g., 'number', 'float', 'string', 'bool') required if type is 'select'
-			// - compareMethod: string (comparison method, e.g., '==', '=ge=', '=le=', '=like=')
-			// - value: any (the value to filter by, can be empty)
-			// - placeholder: string (translation key for the placeholder, optional)
-			// - class: string (tailwind CSS class for styling, optional)
-			// - options: array (for select inputs, optional, required if type is 'select')
-			// - sortOptions: boolean (optional, if true, options will be sorted alphabetically by their value)
-			// - fetchOptions: function (optional, required if type is 'select' or 'datalist' and options is not provided) that returns a promise resolving to an array of options
-			// - storeData: pinia store (optional, required if fetchOptions is provided) the store whose data will be received by the fetchOptions function
-			// - storeKey: string (optional, required if fetchOptions is provided) the key in storeData to pass to fetchOptions function
-			default: () => [],
 		},
 		saveState: {
 			type: Boolean,
@@ -109,15 +96,19 @@ export default {
 		this.$emit("ready");
 	},
 	methods: {
+		// bare eval() in a template resolves to the (nonexistent) this.eval, not the global eval — must go through a method
+		evalCondition(condition: string) {
+			return eval(condition);
+		},
 		_filterStateKey() {
 			return `filter_state_${this.$route?.path || ""}_${this.stateKey || "default"}`;
 		},
 		_persistFilters() {
-			const values = {};
+			const values: Record<string, { value: any; preset: any; strictModeEnabled: boolean }> = {};
 			for (const filter of this.filters) {
 				if (filter.key !== undefined) {
 					if (filter.strictMode) {
-						values[filter._originalKey] = { value: filter.value, preset: filter.preset, strictModeEnabled: filter.strictModeEnabled || false };
+						values[filter._originalKey ?? filter.key] = { value: filter.value, preset: filter.preset, strictModeEnabled: filter.strictModeEnabled || false };
 					} else {
 						values[filter.key] = { value: filter.value, preset: filter.preset, strictModeEnabled: false };
 					}
@@ -125,7 +116,7 @@ export default {
 			}
 			sessionStorage.setItem(this._filterStateKey(), JSON.stringify(values));
 		},
-		_validateValue(filter, value) {
+		_validateValue(filter: any, value: any) {
 			switch (filter.type) {
 			case "number":
 				value = Number.parseFloat(value);
@@ -163,7 +154,7 @@ export default {
 			}
 			filter.value = value;
 		},
-		updateText(key, value, mode = "text") {
+		updateText(key: string | number, value: any[], mode = "text") {
 			for (const [index, filter] of this.filters.entries()) {
 				if (index === key) {
 					if (mode === "select") {
@@ -178,8 +169,8 @@ export default {
 					if (mode === "text" || (mode === "select" && !filter?.strictModeEnabled)) {
 						if (filter.strictModeEnabled) {
 							filter.strictModeEnabled = false;
-							filter.key = filter._originalKey;
-							filter.compareMethod = filter._originalCompareMethod;
+							filter.key = filter._originalKey ?? filter.key;
+							filter.compareMethod = filter._originalCompareMethod ?? filter.compareMethod;
 							if (filter._originalTypeData) {
 								filter.typeData = filter._originalTypeData;
 							} else {

@@ -28,7 +28,7 @@
 						class="hidden" />
 					<button
 						type="button"
-						@click="$refs.fileInput.click()"
+						@click="triggerFileInput"
 						class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
 						{{ $t('components.VModalMultipleFilesSelectFiles') }}
 					</button>
@@ -98,7 +98,7 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 import { useConfigsStore } from "@/stores";
 
 export default {
@@ -131,31 +131,40 @@ export default {
 		return {
 			loading: false,
 			isDragging: false,
-			filesList: [],
+			filesList: [] as { name: string; document: File }[],
 			errorMessage: "",
-			allowedExtensions: this.configsStore.getConfigByKey(
+			allowedExtensions: (this as any).configsStore.getConfigByKey(
 				this.fileType === "image" ? "allowed_image_extensions" : "allowed_document_extensions") || [],
-			maxSizeInMb: this.configsStore.getConfigByKey("max_size_" + this.fileType + "_in_mb") || 5,
+			maxSizeInMb: (this as any).configsStore.getConfigByKey("max_size_" + this.fileType + "_in_mb") || 5,
 		};
 	},
 	methods: {
-		onDragOver(event) {
+		triggerFileInput() {
+			(this.$refs.fileInput as HTMLInputElement).click();
+		},
+		onDragOver(event: DragEvent) {
 			this.isDragging = true;
 		},
-		onDragLeave(event) {
+		onDragLeave(event: DragEvent) {
 			this.isDragging = false;
 		},
-		onDrop(event) {
+		onDrop(event: DragEvent) {
 			this.isDragging = false;
-			const files = Array.from(event.dataTransfer.files);
+			if (!event.dataTransfer) {
+				return;
+			}
+			const files = Array.from(event.dataTransfer.files) as File[];
 			this.addFiles(files);
 		},
-		onFileSelect(event) {
-			const files = Array.from(event.target.files);
+		onFileSelect(event: Event) {
+			if (!event.target || !(event.target instanceof HTMLInputElement) || !event.target.files) {
+				return;
+			}
+			const files = Array.from(event.target.files) as File[];
 			this.addFiles(files);
 			event.target.value = "";
 		},
-		addFiles(files) {
+		addFiles(files: File[]) {
 			this.errorMessage = "";
 			const maxSizeInBytes = this.maxSizeInMb * 1024 * 1024;
 
@@ -168,7 +177,7 @@ export default {
 					return;
 				}
 				if (this.allowedExtensions.length > 0) {
-					const fileExt = "." + file.name.split(".").pop().toLowerCase();
+					const fileExt = "." + file.name.split(".").pop()!.toLowerCase();
 					if (!this.allowedExtensions.includes(fileExt)) {
 						this.errorMessage = this.$t("components.VModalMultipleFilesErrorExtension", { 
 							fileName: file.name,
@@ -182,7 +191,7 @@ export default {
 				});
 			}
 		},
-		removeFile(index) {
+		removeFile(index: number) {
 			this.filesList.splice(index, 1);
 		},
 		async saveFiles() {
@@ -211,7 +220,7 @@ export default {
 				this.loading = false;
 			}
 		},
-		formatFileSize(bytes) {
+		formatFileSize(bytes: number) {
 			if (bytes === 0) {
 				return "0 octet";
 			}
