@@ -1,17 +1,18 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 
 import { useTabsStore, resolveTab } from "@/stores";
+import type { Tab } from "@/stores/tabs.store";
 
 const { t } = useI18n();
 const tabsStore = useTabsStore();
 
 const showTabList = ref(false);
 
-function tabInfo(tab) {
+function tabInfo(tab: Tab) {
 	const resolved = resolveTab(tab.fullPath);
-	let title = resolved.meta.title ? t(resolved.meta.title) : resolved.path;
+	let title = resolved.meta.title ? t(resolved.meta.title as string) : resolved.path;
 	const id = resolved.params.id;
 	if (id !== undefined) {
 		title += " · " + (id === "new" ? t("common.VAppTabNew") : "#" + id);
@@ -19,7 +20,7 @@ function tabInfo(tab) {
 	return { title, icon: resolved.meta.icon };
 }
 
-function selectTab(tabId) {
+function selectTab(tabId: string) {
 	tabsStore.activate(tabId);
 	showTabList.value = false;
 }

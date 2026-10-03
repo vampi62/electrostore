@@ -15,7 +15,7 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 export default {
 	name: "CollapsibleSection",
 	props: {
@@ -56,26 +56,28 @@ export default {
 				this.showSection = !this.showSection;
 			}
 		},
-		beforeEnter(el) {
-			el.style.height = "0";
+		beforeEnter(el: Element) {
+			(el as HTMLElement).style.height = "0";
 		},
-		afterEnter(el) {
-			el.style.height = "auto";
+		afterEnter(el: Element) {
+			(el as HTMLElement).style.height = "auto";
 		},
-		enter(el) {
-			el.style.height = "auto";
-			const height = getComputedStyle(el).height;
-			el.style.height = "0";
+		enter(el: Element) {
+			const htmlEl = el as HTMLElement;
+			htmlEl.style.height = "auto";
+			const height = getComputedStyle(htmlEl).height;
+			htmlEl.style.height = "0";
 			requestAnimationFrame(() => {
-				el.style.transition = "height 0.3s ease-in-out";
-				el.style.height = height;
+				htmlEl.style.transition = "height 0.3s ease-in-out";
+				htmlEl.style.height = height;
 			});
 		},
-		leave(el) {
-			el.style.height = getComputedStyle(el).height;
+		leave(el: Element) {
+			const htmlEl = el as HTMLElement;
+			htmlEl.style.height = getComputedStyle(htmlEl).height;
 			requestAnimationFrame(() => {
-				el.style.transition = "height 0.3s ease-in-out";
-				el.style.height = "0";
+				htmlEl.style.transition = "height 0.3s ease-in-out";
+				htmlEl.style.height = "0";
 			});
 		},
 	},

@@ -1,23 +1,27 @@
-<script setup>
+<script setup lang="ts">
 import { useViewScroll } from "@/composables";
 import { ref } from "vue";
 
 import { useTagsStore } from "@/stores";
+
+import type { FilterLabel } from "@/types/filter";
+import type { TableauLabel, TableauMeta } from "@/types/tableau";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql";
 const tagsStore = useTagsStore();
 
-const filter = ref([
+const filter = ref<FilterLabel[]>([
 	{ key: "name_tag", value: "", type: "text", label: "tags.FilterName", compareMethod: "=like=" },
 	{ key: "weight_tag", value: "", type: "number", label: "tags.FilterWeightMin", compareMethod: "=ge=" },
 	{ key: "weight_tag", value: "", type: "number", label: "tags.FilterWeightMax", compareMethod: "=le=" },
 ]);
-const tableauLabel = ref([
+const tableauLabel = ref<TableauLabel[]>([
 	{ label: "tags.Name", sortable: true, key: "name_tag", valueKey: "name_tag", type: "text" },
 	{ label: "tags.Weight", sortable: true, key: "weight_tag", valueKey: "weight_tag", type: "number" },
 	{ label: "tags.ItemsCount", sortable: true, key: "ItemsTags.Count", valueKey: "items_tags_count", type: "number" },
 	{ label: "tags.StoresCount", sortable: true, key: "StoresTags.Count", valueKey: "stores_tags_count", type: "number" },
 	{ label: "tags.BoxsCount", sortable: true, key: "BoxsTags.Count", valueKey: "boxs_tags_count", type: "number" },
 ]);
-const tableauMeta = ref({
+const tableauMeta = ref<TableauMeta>({
 	key: "id_tag",
 	path: "/tags/",
 	saveState: true,
@@ -45,7 +49,7 @@ useViewScroll(false);
 		:filters="filter"
 		:loading="tagsStore.tagsLoading"
 		:total-count="Number(tagsStore.tagsTotalCount) || 0"
-		:fetch-function="(limit, offset, expand, filter, sort, clear) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)"
+		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => tagsStore.getTagByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>

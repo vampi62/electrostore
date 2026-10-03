@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { Form, Field } from "vee-validate";
 import { useI18n } from "vue-i18n";
 import * as Yup from "yup";
@@ -15,8 +15,8 @@ const schema = Yup.object().shape({
 		.required(t("common.VForgotPasswordEmailRequired")),
 });
 
-function onSubmit(values, { setErrors }) {
-	const { email } = values;
+function onSubmit(values: Record<string, any>, { setErrors }: { setErrors: (errors: Record<string, string | undefined>) => void }) {
+	const email = values.email as string;
 	return authStore.forgotPassword(email)
 		.catch((error) => setErrors({ apiError: error }))
 		.then(() => setErrors({ apiConfirm: t("common.VForgotPasswordEmailSent") }));

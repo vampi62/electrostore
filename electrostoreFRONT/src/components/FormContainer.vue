@@ -11,19 +11,19 @@
 						<!-- Les champs suivants seront sur une nouvelle ligne -->
 					</template>
 					<template v-else-if="field.type === 'fixed'">
-						<span v-if="field.label" class="font-semibold sm:min-w-[150px]" :for="`form-input-${this.$.uid}-${field.key}`">{{ $t(field.label) }}</span>
-						<span v-else class="font-semibold sm:min-w-[150px]" :for="`form-input-${this.$.uid}-${field.key}`">{{ field.text }}</span>
+						<span v-if="field.label" class="font-semibold sm:min-w-[150px]" :for="`form-input-${$.uid}-${field.key}`">{{ $t(field.label) }}</span>
+						<span v-else class="font-semibold sm:min-w-[150px]" :for="`form-input-${$.uid}-${field.key}`">{{ field.text }}</span>
 					</template>
 					<template v-else-if="field.type === 'readonly'">
-						<span v-if="field.label" class="font-semibold sm:min-w-[150px]" :for="`form-input-${this.$.uid}-${field.key}`">{{ $t(field.label) }}</span>
-						<span v-else class="font-semibold sm:min-w-[150px]" :for="`form-input-${this.$.uid}-${field.key}`">{{ storeData[field.key] }}</span>
+						<span v-if="field.label" class="font-semibold sm:min-w-[150px]" :for="`form-input-${$.uid}-${field.key}`">{{ $t(field.label) }}</span>
+						<span v-else class="font-semibold sm:min-w-[150px]" :for="`form-input-${$.uid}-${field.key}`">{{ storeData[field.key] }}</span>
 					</template>
 					<template v-else>
-						<label v-if="field.label" class="font-semibold sm:min-w-[150px]" :for="`form-input-${this.$.uid}-${field.key}`">{{ $t(field.label) }}</label>
-						<label v-else class="font-semibold sm:min-w-[150px]" :for="`form-input-${this.$.uid}-${field.key}`">{{ field.text }}</label>
+						<label v-if="field.label" class="font-semibold sm:min-w-[150px]" :for="`form-input-${$.uid}-${field.key}`">{{ $t(field.label) }}</label>
+						<label v-else class="font-semibold sm:min-w-[150px]" :for="`form-input-${$.uid}-${field.key}`">{{ field.text }}</label>
 						<div class="flex flex-col flex-1 w-full relative">
 							<template v-if="field.type === 'checkbox'">
-								<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" v-slot="{ is_checked_custom }">
+								<Field :id="`form-input-${$.uid}-${field.key}`" :name="field.key" v-slot="{ is_checked_custom }: any">
 									<input
 										v-model="storeData[field.key]"
 										v-bind="is_checked_custom"
@@ -37,7 +37,7 @@
 							<template v-else-if="field.type === 'multi-checkbox'">
 								<div class="flex flex-col space-y-2">
 									<!-- Field caché pour la validation vee-validate -->
-									<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" v-model="storeData[field.key]" type="hidden" />
+									<Field :id="`form-input-${$.uid}-${field.key}`" :name="field.key" v-model="storeData[field.key]" type="hidden" />
 									<div v-if="getSelectedOptions(field).length > 0" class="flex flex-wrap gap-1 p-2 bg-gray-50 border border-gray-300 rounded min-h-[32px]">
 										<span 
 											v-for="[index, label] in getSelectedOptions(field)" 
@@ -62,7 +62,7 @@
 											type="button"
 											@click="toggleDropdown(field.key, $event)"
 											:ref="`dropdown-button-${field.key}`"
-											:id="`dropdown-button-${this.$.uid}-${field.key}`"
+											:id="`dropdown-button-${$.uid}-${field.key}`"
 											class="w-full border border-gray-300 rounded px-3 py-2 text-left bg-white focus:outline-none focus:ring focus:ring-blue-300 flex items-center justify-between"
 											:class="{ 'border-red-500': errors[field.key], 'bg-gray-100 cursor-not-allowed': (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading }"
 											:disabled="(!permission) || (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading"
@@ -105,7 +105,7 @@
 								<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
 							</template>
 							<template v-else-if="field.type === 'select'">
-								<Field v-if="field?.typeData === 'number'" :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" as="select" v-model.number="storeData[field.key]"
+								<Field v-if="field?.typeData === 'number'" :id="`form-input-${$.uid}-${field.key}`" :name="field.key" as="select" v-model.number="storeData[field.key]"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors[field.key] }"
 									:disabled="(!permission) || (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading">
@@ -113,7 +113,7 @@
 										<option :value="index" :disabled="disabled" v-show="!hidden">{{ option }}</option>
 									</template>
 								</Field>
-								<Field v-else-if="field?.typeData === 'bool'" :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" as="select"
+								<Field v-else-if="field?.typeData === 'bool'" :id="`form-input-${$.uid}-${field.key}`" :name="field.key" as="select"
 									:model-value="storeData[field.key]"
 									@update:model-value="storeData[field.key] = $event === 'true' || $event === true"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
@@ -123,7 +123,7 @@
 										<option :value="index" :disabled="disabled" v-show="!hidden">{{ option }}</option>
 									</template>
 								</Field>
-								<Field v-else :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" as="select" v-model="storeData[field.key]"
+								<Field v-else :id="`form-input-${$.uid}-${field.key}`" :name="field.key" as="select" v-model="storeData[field.key]"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors[field.key] }"
 									:disabled="(!permission) || (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading">
@@ -137,7 +137,7 @@
 								<Field :name="field.key" v-model="storeData[field.key]" type="hidden" />
 								<div class="relative">
 									<input
-										:id="`form-input-${this.$.uid}-${field.key}`"
+										:id="`form-input-${$.uid}-${field.key}`"
 										:ref="`fetch-select-input-${field.key}`"
 										type="text"
 										:value="getFetchSelectInputText(field)"
@@ -178,7 +178,7 @@
 								<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
 							</template>
 							<template v-else-if="field.type === 'textarea'">
-								<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" as="textarea" v-model="storeData[field.key]" :rows="field.rows || 3"
+								<Field :id="`form-input-${$.uid}-${field.key}`" :name="field.key" as="textarea" v-model="storeData[field.key]" :rows="field.rows || 3"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors[field.key] }"
 									:placeholder="field.placeholder ? $t(field.placeholder) : ''"
@@ -191,13 +191,13 @@
 								</div>
 							</template>
 							<template v-else-if="field.type === 'custom'">
-								<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" v-model="storeData[field.key]" type="hidden" />
+								<Field :id="`form-input-${$.uid}-${field.key}`" :name="field.key" v-model="storeData[field.key]" type="hidden" />
 								<slot :name="field.key"></slot>
 								<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
 							</template>
 							<template v-else-if="field.type === 'password'">
 								<div class="relative">
-									<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" :type="showPassword ? 'text' : 'password'" v-model="storeData[field.key]"
+									<Field :id="`form-input-${$.uid}-${field.key}`" :name="field.key" :type="showPassword ? 'text' : 'password'" v-model="storeData[field.key]"
 										class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 										:class="{ 'border-red-500': errors[field.key] }"
 										:disabled="(!permission) || (field?.enableCondition && !evaluateCondition(field.enableCondition)) || field?.loading" />
@@ -213,7 +213,7 @@
 								<span class="text-red-500 h-5 w-full text-sm">{{ errors[field.key] || ' ' }}</span>
 							</template>
 							<template v-else>
-								<Field :id="`form-input-${this.$.uid}-${field.key}`" :name="field.key" :type="field.type" v-model="storeData[field.key]"
+								<Field :id="`form-input-${$.uid}-${field.key}`" :name="field.key" :type="field.type" v-model="storeData[field.key]"
 									class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring focus:ring-blue-300"
 									:class="{ 'border-red-500': errors[field.key] }"
 									:placeholder="field.placeholder ? $t(field.placeholder) : ''"
@@ -238,10 +238,11 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 import { Form, Field } from "vee-validate";
+import type { PropType } from "vue";
 import { debounce } from "lodash-es";
-import { buildRSQLFilter, buildRSQLSort } from "@/utils";
+import type { FormLabel } from "@/types/form";
 export default {
 	name: "FormContainer",
 	props: {
@@ -251,29 +252,21 @@ export default {
 			// This function should return a Yup validation schema based on the form fields
 		},
 		labels: {
-			type: Array,
+			type: Array as PropType<FormLabel[]>,
 			required: true,
-			// This should be an array of field objects, each containing:
-			// - key: string (the key in the storeData for the field)
-			// - label: string (translation key for the label)
-			// - type: string (input type, e.g., 'text', 'number', 'select', 'checkbox', 'password', 'textarea', 'computed', 'custom')
-			// - enableCondition: string (optional, a JavaScript expression to evaluate whether to enable the field)
-			// - showCondition: string (optional, a JavaScript expression to evaluate whether to show the field)
-			// - options: array (for select inputs, optional, required if type is 'select')
-			// - rows: number (for textarea inputs, optional)
 		},
 		storeData: {
-			type: Object,
+			type: Object as PropType<Record<string, any>>,
 			default: () => ({}),
 			// This should be an object containing the data for the form fields
 		},
 		storeUser: {
-			type: Object,
+			type: Object as PropType<Record<string, any>>,
 			default: () => ({}),
 			// This should be an object containing the user session data
 		},
 		storeFunction: {
-			type: Object,
+			type: Object as PropType<Record<string, any>>,
 			default: () => ({}),
 			// This should be an object containing any helper functions that might be needed in conditions
 		},
@@ -291,7 +284,7 @@ export default {
 		},
 	},
 	created() {
-		this._fetchSelectDebouncers = {};
+		this.fetchSelectDebouncers = {};
 	},
 	components: {
 		Form,
@@ -302,24 +295,24 @@ export default {
 			if (!this.$refs.formRef) {
 				return { valid: false, errors: {} };
 			}
-			const result = await this.$refs.formRef.validate();
+			const result = await (this.$refs.formRef as any).validate();
 			return result;
 		},
-		evaluateCondition(condition) {
+		evaluateCondition(condition: string): boolean {
 			try {
-				return new Function(["session","edition","form","func"], `return ${condition}`)(this.storeUser, this.storeData, this.labels, this.storeFunction);
+				return new Function("session", "edition", "form", "func", `return ${condition}`)(this.storeUser, this.storeData, this.labels, this.storeFunction);
 			} catch (error) {
 				console.error("Erreur lors de l'évaluation de la condition :", error);
 				return false;
 			}
 		},
-		ensureArray(key) {
+		ensureArray(key: string): any[] {
 			if (!Array.isArray(this.storeData[key])) {
 				this.storeData[key] = [];
 			}
 			return this.storeData[key];
 		},
-		toggleMultiCheckbox(key, value) {
+		toggleMultiCheckbox(key: string, value: any) {
 			if (!Array.isArray(this.storeData[key])) {
 				this.storeData[key] = [];
 			}
@@ -331,18 +324,19 @@ export default {
 				this.storeData[key].push(value);
 			}
 		},
-		toggleDropdown(key, event) {
+		toggleDropdown(key: string, event?: Event) {
 			this.dropdownOpen[key] = !this.dropdownOpen[key];
-			if (this.dropdownOpen[key] && event) {
+			if (this.dropdownOpen[key] && event && event.currentTarget instanceof HTMLElement) {
+				const target = event.currentTarget;
 				this.$nextTick(() => {
-					this.updateDropdownPosition(key, event.currentTarget);
+					this.updateDropdownPosition(key, target);
 				});
 			}
 		},
-		closeDropdown(key) {
+		closeDropdown(key: string) {
 			this.dropdownOpen[key] = false;
 		},
-		updateDropdownPosition(key, button) {
+		updateDropdownPosition(key: string, button: HTMLElement) {
 			if (!button) {
 				return;
 			}
@@ -354,7 +348,14 @@ export default {
 				width: rect.width,
 			};
 		},
-		getDropdownStyle(key) {
+		recalculateDropdownPosition(key: any) {
+			const buttonRef = `dropdown-button-${key}`;
+			const button = this.$refs[buttonRef];
+			if (button) {
+				this.updateDropdownPosition(key, Array.isArray(button) ? button[0] : button);
+			}
+		},
+		getDropdownStyle(key: string) {
 			const pos = this.dropdownPositions[key];
 			if (!pos) {
 				return {};
@@ -388,7 +389,7 @@ export default {
 				}
 			}
 		},
-		handleClickOutside(event) {
+		handleClickOutside(event: MouseEvent) {
 			// Close dropdowns if clicking outside
 			for (const key of Object.keys(this.dropdownOpen)) {
 				if (this.dropdownOpen[key]) {
@@ -409,7 +410,7 @@ export default {
 				}
 			}
 		},
-		getSelectedOptions(field) {
+		getSelectedOptions(field: any) {
 			if (!this.storeData[field.key] || !Array.isArray(this.storeData[field.key])) {
 				return [];
 			}
@@ -419,7 +420,7 @@ export default {
 				.filter(([index]) => selectedValues.includes(index))
 				.map(([index, label]) => [index, label]);
 		},
-		removeSelection(key, value) {
+		removeSelection(key: string, value: any) {
 			if (!Array.isArray(this.storeData[key])) {
 				return;
 			}
@@ -431,27 +432,32 @@ export default {
 				this.recalculateDropdownPosition(key);
 			}
 		},
-		initFetchSelectState(field) {
+		initFetchSelectState(field: FormLabel) {
 			const key = field.key;
 			if (!this.fetchSelectState[key]) {
 				let initialText = "";
 				if (this.storeData[key] !== undefined && this.storeData[key] !== null && this.storeData[key] !== "" && field.fetchStore) {
-					const fetchValueKey = field.fetchValueKey || field.fetchStoreKey;
-					const found = Object.values(field.fetchStore).find((item) => String(item[fetchValueKey]) === String(this.storeData[key]));
+					const fetchValueKey = field.fetchValueKey || (field.fetchStoreKey ?? "");
+					const found = Object.values(field.fetchStore).find((item: Record<string, any>) => String(item[fetchValueKey]) === String(this.storeData[key]));
 					if (found) {
-						initialText = found[field.fetchStoreKey];
+						initialText = found[field.fetchStoreKey ?? ""];
 					}
 				}
 				this.fetchSelectState[key] = { inputText: initialText, isOpen: false, position: null };
 			}
 		},
-		getFetchSelectInputText(field) {
-			return Object.values(field.fetchStore).find((item) => String(item[field.fetchValueKey || field.fetchStoreKey]) === String(this.storeData[field.key]))?.[field.fetchStoreKey] || "";
+		getFetchSelectInputText(field: FormLabel): string {
+			if (!field.fetchStore) {
+				return "";
+			}
+			const fetchValueKey = field.fetchValueKey || (field.fetchStoreKey ?? "");
+			const found = Object.values(field.fetchStore).find((item: Record<string, any>) => String(item[fetchValueKey]) === String(this.storeData[field.key]));
+			return found?.[field.fetchStoreKey ?? ""] || "";
 		},
-		isFetchSelectOpen(key) {
+		isFetchSelectOpen(key: string): boolean {
 			return this.fetchSelectState[key]?.isOpen || false;
 		},
-		getFetchSelectStyle(key) {
+		getFetchSelectStyle(key: string): Record<string, string> {
 			const pos = this.fetchSelectState[key]?.position;
 			if (!pos) {
 				return {};
@@ -462,7 +468,7 @@ export default {
 				width: `${pos.width}px`,
 			};
 		},
-		updateFetchSelectPosition(key, inputEl) {
+		updateFetchSelectPosition(key: string, inputEl?: Element | null) {
 			if (!inputEl) {
 				return;
 			}
@@ -473,37 +479,40 @@ export default {
 				width: rect.width,
 			};
 		},
-		async openFetchSelect(field, event) {
+		async openFetchSelect(field: FormLabel, event: Event) {
 			this.initFetchSelectState(field);
 			this.fetchSelectState[field.key].isOpen = true;
 			this.fetchSelectState[field.key].inputText = "";
 			await this.doFetchSelectSearch(field);
 			this.$nextTick(() => {
-				this.updateFetchSelectPosition(field.key, event.target);
+				if (event.target instanceof Element) {
+					this.updateFetchSelectPosition(field.key, event.target);
+				}
 			});
 		},
-		closeFetchSelect(key) {
+		closeFetchSelect(key: string) {
 			if (this.fetchSelectState[key]) {
 				this.fetchSelectState[key].isOpen = false;
 			}
 		},
-		selectFetchOption(field, value, label) {
+		selectFetchOption(field: FormLabel, value: any, label: string) {
 			this.storeData[field.key] = value;
 			this.fetchSelectState[field.key].inputText = label;
 			this.fetchSelectState[field.key].isOpen = false;
 			this.$nextTick(() => {
-				const input = this.$refs[`fetch-select-input-${field.key}`];
+				const input = this.$refs[`fetch-select-input-${field.key}`] as any;
 				if (input) {
-					input[0].blur();
+					(Array.isArray(input) ? input[0] : input).blur();
 				}
 			});
 		},
-		handleFetchSelectInput(field, event) {
+		handleFetchSelectInput(field: FormLabel, event: Event) {
 			this.initFetchSelectState(field);
-			this.fetchSelectState[field.key].inputText = event.target.value;
+			const target = event.target as HTMLInputElement;
+			this.fetchSelectState[field.key].inputText = target.value;
 			this.fetchSelectState[field.key].isOpen = true;
-			if (!this._fetchSelectDebouncers[field.key]) {
-				this._fetchSelectDebouncers[field.key] = debounce(async(f) => {
+			if (!this.fetchSelectDebouncers[field.key]) {
+				this.fetchSelectDebouncers[field.key] = debounce(async(f) => {
 					await this.doFetchSelectSearch(f);
 					this.$nextTick(() => {
 						const inputRef = `fetch-select-input-${f.key}`;
@@ -514,33 +523,33 @@ export default {
 					});
 				}, 300);
 			}
-			this._fetchSelectDebouncers[field.key](field);
+			this.fetchSelectDebouncers[field.key](field);
 		},
-		async doFetchSelectSearch(field) {
+		async doFetchSelectSearch(field: FormLabel) {
 			if (!field.fetchFunction) {
 				return;
 			}
 			const inputText = this.fetchSelectState[field.key]?.inputText || "";
-			const filter = [{ key: field.fetchStoreKey, compareMethod: "=like=", value: inputText }];
-			const sort = { key: field.fetchStoreKey, order: "asc" };
-			await field.fetchFunction(10, 0, [], buildRSQLFilter(filter), buildRSQLSort(sort), false);
+			const filter = [{ key: field.fetchStoreKey ?? "", compareMethod: "=like=", value: inputText }];
+			const sort = { key: field.fetchStoreKey ?? "", order: "asc" as const };
+			await field.fetchFunction(10, 0, [], filter, sort, false);
 		},
-		getFetchSelectOptions(field) {
+		getFetchSelectOptions(field: FormLabel) {
 			if (!field.fetchStore) {
 				return [];
 			}
-			const fetchValueKey = field.fetchValueKey || field.fetchStoreKey;
+			const fetchValueKey = field.fetchValueKey || (field.fetchStoreKey ?? "");
 			return Object.values(field.fetchStore).filter((item) => {
 				const inputText = this.fetchSelectState[field.key]?.inputText || "";
-				return String(item[field.fetchStoreKey]).toLowerCase().includes(inputText.toLowerCase());
-			}).map((item) => [item[fetchValueKey], item[field.fetchStoreKey]]);
+				return String(item[field.fetchStoreKey ?? ""]).toLowerCase().includes(inputText.toLowerCase());
+			}).map((item) => [item[fetchValueKey], item[field.fetchStoreKey ?? ""]]);
 		},
-		getSortedOptions(field) {
+		getSortedOptions(field: FormLabel) {
 			if (!field.options) {
 				return [];
 			}
 			
-			const entries = Object.entries(field.options).map(([key, value]) => {
+			const entries = Object.entries(field.options).map(([key, value]: [string, any]) => {
 				// Supporter les deux formats
 				if (typeof value === "object" && value !== null) {
 					return [key, value.label || "", value.disabled || false, value.hidden || false];
@@ -569,9 +578,10 @@ export default {
 	data() {
 		return {
 			showPassword: false,
-			dropdownOpen: {},
-			dropdownPositions: {},
-			fetchSelectState: {},
+			dropdownOpen: {} as Record<string, boolean>,
+			dropdownPositions: {} as Record<string, { top: number; left: number; width: number }>,
+			fetchSelectState: {} as Record<string, { inputText: string; isOpen: boolean; position: { top: number; left: number; width: number } | null }>,
+			fetchSelectDebouncers: {} as Record<string, (...args: any[]) => void>,
 		};
 	},
 	mounted() {

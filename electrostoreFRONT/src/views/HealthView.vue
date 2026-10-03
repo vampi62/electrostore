@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, computed } from "vue";
 import { useI18n } from "vue-i18n";
 
@@ -62,7 +62,7 @@ const configGroups = computed(() => [
 	},
 ]);
 
-function statusBadge(key, type) {
+function statusBadge(key: string, type: string) {
 	const value = configsStore.getStatusByKey(key);
 	if (type === "bool") {
 		return value ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
@@ -80,7 +80,7 @@ function statusBadge(key, type) {
 	return "bg-red-100 text-red-800";
 }
 
-function statusLabel(key, type) {
+function statusLabel(key: string, type: string) {
 	const value = configsStore.getStatusByKey(key);
 	if (type === "bool") {
 		return value ? t("health.StatusTrue") : t("health.StatusFalse");
@@ -91,7 +91,7 @@ function statusLabel(key, type) {
 	return value || t("health.StatusUnknown");
 }
 
-function configValue(key, type, unit) {
+function configValue(key: string, type: string, unit: string | null = null) {
 	const value = configsStore.getConfigByKey(key);
 	if (type === "bool") {
 		return null;
@@ -105,7 +105,7 @@ function configValue(key, type, unit) {
 	return unit ? `${value} ${unit}` : value;
 }
 
-function configBool(key) {
+function configBool(key: string) {
 	return configsStore.getConfigByKey(key);
 }
 

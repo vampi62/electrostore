@@ -1,14 +1,14 @@
 <template>
 	<div v-if="type !== 'hidden'">
-		<label v-if="label.length > 0" :for="`filter-input-${this.$.uid}`" class="text-sm text-gray-700 mr-2">{{ $t(label) }}</label>
+		<label v-if="label.length > 0" :for="`filter-input-${$.uid}`" class="text-sm text-gray-700 mr-2">{{ $t(label) }}</label>
 		<div>
 		<template v-if="type === 'select'">
 			<select
-				:id="`filter-input-${this.$.uid}`"
+				:id="`filter-input-${$.uid}`"
 				class="border border-gray-300 rounded px-2 py-1"
 				:class="[classCss, label.length > 0 ? 'mr-2' : '']"
 				:disabled="disabled"
-				@change="$emit('updateText', $event.target.value)">
+				@change="$emit('updateText', ($event.target as HTMLSelectElement).value)">
 				<option value=""></option>
 				<template v-if="options">
 					<option v-for="option in filterOption" :key="option.id" :value="option.id" :selected="preset === option.id">{{ option.value }}
@@ -19,7 +19,7 @@
 		<template v-else-if="type === 'datalist'">
 			<div class="relative max-w-xs mx-auto">
 				<input
-					:id="`filter-input-${this.$.uid}`"
+					:id="`filter-input-${$.uid}`"
 					ref="filterInput"
 					type="text"
 					class="border border-gray-300 rounded px-2 py-1"
@@ -27,7 +27,7 @@
 					:placeholder="placeholder"
 					:disabled="disabled"
 					v-model="inputText"
-					@input="storeData && storeKey ? debouncedRefetchData() : null"
+					@input="storeData && storeKey ? debouncedRefetchData?.() : null"
 					@focus="isOpen = true; inputText='', startEventUpdatePosition()"
 					@blur="isOpen = false; validateInput(); endEventUpdatePosition()" />
 				<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
@@ -68,17 +68,17 @@
 		</template>
 		<template v-else-if="type === 'checkbox'">
 			<input
-				:id="`filter-input-${this.$.uid}`"
+				:id="`filter-input-${$.uid}`"
 				type="checkbox"
 				class="form-checkbox h-5 w-5 text-blue-600"
 				:class="[classCss, label.length > 0 ? 'mr-2' : '']"
 				:disabled="disabled"
 				v-model="inputText"
-				@change="$emit('updateText', [$event.target.checked, $event.target.checked])" />
+				@change="$emit('updateText', [($event.target as HTMLInputElement).checked, ($event.target as HTMLInputElement).checked])" />
 		</template>
 		<template v-else>
 			<input
-				:id="`filter-input-${this.$.uid}`"
+				:id="`filter-input-${$.uid}`"
 				:type="type"
 				:placeholder="placeholder"
 				:value="preset"
@@ -86,16 +86,17 @@
 				class="border border-gray-300 rounded px-2 py-1"
 				:class="[classCss, label.length > 0 ? 'mr-2' : '']"
 				:disabled="disabled"
-				@input="$emit('updateText', [$event.target.value, $event.target.value])" />
+				@input="$emit('updateText', [($event.target as HTMLInputElement).value, ($event.target as HTMLInputElement).value])" />
 		</template>
 		</div>
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 import { nextTick } from "vue";
+import type { PropType } from "vue";
 import { debounce } from "lodash-es";
-import { buildRSQLFilter, buildRSQLSort, toLowerCaseWithoutAccents } from "@/utils";
+import { toLowerCaseWithoutAccents } from "@/utils";
 export default {
 	name: "Filter",
 	props: {
@@ -138,7 +139,7 @@ export default {
 			default: "",
 		},
 		options: {
-			type: Array,
+			type: Array as PropType<any[]>,
 			required: false,
 			// This should be an array of options for select/datalist input
 			// e.g., [{id: 'id1', value: 'Option 1'}, {id: 'id2', value: 'Option 2'}]
@@ -157,7 +158,7 @@ export default {
 			required: false,
 			// This should be a function that returns a promise resolving to an array of options
 			// e.g., () => fetch('/api/options').then(res => res.json())
-			default: (limit, offset, expand, filter, sort, clear) => { 
+			default: (limit: number, offset: number, expand: any, filter: any, sort: any, clear: boolean) => { 
 				return [0, false];
 			},
 		},
@@ -185,11 +186,13 @@ export default {
 		return {
 			isOpen: false,
 			inputText: this.preset,
+			debouncedRefetchData: null as (() => void) | null,
+			justSelected: false,
 		};
 	},
 	created() {
 		this.debouncedRefetchData = debounce(this.refetchData, 500);
-		this._justSelected = false;
+		this.justSelected = false;
 	},
 	async mounted() {
 		if (this.type === "datalist" && this.preset) {
@@ -223,7 +226,7 @@ export default {
 			}
 			let result = this.options.filter((option) => {
 				if (this.inputText !== null && this.inputText !== "") {
-					return toLowerCaseWithoutAccents(String(option.value)).includes(toLowerCaseWithoutAccents(this.inputText));
+					return toLowerCaseWithoutAccents(String(option.value)).includes(toLowerCaseWithoutAccents(String(this.inputText)));
 				}
 				return true;
 			});
@@ -242,7 +245,7 @@ export default {
 			}
 			let result = Object.entries(this.storeData).filter(([index, element]) => {
 				if (this.inputText !== null && this.inputText !== "") {
-					return toLowerCaseWithoutAccents(element[this.storeKey]).includes(toLowerCaseWithoutAccents(this.inputText));
+					return toLowerCaseWithoutAccents(element[this.storeKey]).includes(toLowerCaseWithoutAccents(String(this.inputText)));
 				}
 				return true;
 			}).map(([index, element]) => {
@@ -260,25 +263,25 @@ export default {
 		},
 	},
 	methods: {
-		selectOption(index, option){
+		selectOption(index: number, option: any){
 			this.inputText = option;
 			this.isOpen = false;
 			if (this.strictMode) {
-				this._justSelected = true;
+				this.justSelected = true;
 				this.$emit("updateText", [index, option], "select");
 			} else {
 				this.$emit("updateText", [index, option], "text");
 			}
-			this.$refs.filterInput.blur();
+			(this.$refs.filterInput as HTMLInputElement).blur();
 		},
 		validateInput(){
-			if (this._justSelected) {
-				this._justSelected = false;
+			if (this.justSelected) {
+				this.justSelected = false;
 				return;
 			}
 			if (this.options && this.options.length > 0 && !this.storeData) {
 				const result = this.options.find((option) => {
-					return toLowerCaseWithoutAccents(String(option.value)) === toLowerCaseWithoutAccents(this.inputText);
+					return toLowerCaseWithoutAccents(String(option.value)) === toLowerCaseWithoutAccents(String(this.inputText));
 				});
 				if (result) {
 					this.inputText = result.value;
@@ -306,8 +309,8 @@ export default {
 			if (!this.isOpen) {
 				return;
 			}
-			let inputElement = this.$refs.filterInput;
-			let listElement = this.$refs.filterList;
+			let inputElement = this.$refs.filterInput as HTMLInputElement | undefined;
+			let listElement = this.$refs.filterList as HTMLElement | undefined;
 			if (inputElement && listElement) {
 				let rect = inputElement.getBoundingClientRect();
 				listElement.style.top = `${rect.bottom + window.scrollY}px`;
@@ -323,9 +326,9 @@ export default {
 			}];
 			const sort = {
 				key: this.storeKey,
-				order: "asc",
+				order: "asc" as const,
 			};
-			await this.fetchOptions(10, 0, [], buildRSQLFilter(filter), buildRSQLSort(sort), false);
+			await this.fetchOptions(10, 0, [], filter, sort, false);
 		},
 	},
 };

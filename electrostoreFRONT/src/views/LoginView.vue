@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from "vue";
 import { Form, Field } from "vee-validate";
 import { useI18n } from "vue-i18n";
@@ -20,8 +20,8 @@ const schema = Yup.object().shape({
 		.required(t("common.VLoginPasswordRequired")),
 });
 
-function onSubmit(values, { setErrors }) {
-	const { email, password } = values;
+function onSubmit(values: Record<string, any>, { setErrors }: { setErrors: (errors: Record<string, string>) => void }) {
+	const { email, password } = values as { email: string; password: string };
 	return authStore.login(email, password)
 		.catch((error) => setErrors({ apiError: t("common.VLoginError") }));
 }

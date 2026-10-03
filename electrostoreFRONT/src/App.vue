@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from "vue";
 
 import { RouterView, useRoute, useRouter } from "vue-router";
@@ -19,13 +19,13 @@ const isIframe = computed(() => route.query.iframe !== undefined);
 const isTabsView = computed(() => route.meta.app === true);
 
 // the browser url follows the selected tab
-watch(() => [isTabsView.value, tabsStore.activeTab?.fullPath], ([tabsView, fullPath]) => {
+watch((): [boolean, string | undefined] => [isTabsView.value, tabsStore.activeTab?.fullPath], ([tabsView, fullPath]) => {
 	if (tabsView && fullPath && route.fullPath !== fullPath) {
 		router.replace(fullPath);
 	}
 });
 // an url opened from outside (bookmark, link, login...) is displayed in a tab
-watch(() => [isTabsView.value, route.fullPath], ([tabsView, fullPath]) => {
+watch((): [boolean, string] => [isTabsView.value, route.fullPath], ([tabsView, fullPath]) => {
 	if (!tabsView) {
 		return;
 	}

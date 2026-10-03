@@ -1,13 +1,18 @@
-<script setup>
+<script setup lang="ts">
 import { ref, inject } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import { useViewScroll } from "@/composables";
+import type { useNotification } from "@/composables";
 import { UserRole } from "@/enums";
 import { useUsersStore, useAuthStore } from "@/stores";
 
-const { addNotification } = inject("useNotification");
+import type { FilterLabel } from "@/types/filter";
+import type { TableauLabel, TableauMeta } from "@/types/tableau";
+import type { RSQLFilter, RSQLSort } from "@/types/rsql";
+
+const { addNotification } = inject("useNotification") as ReturnType<typeof useNotification>;
 const { t } = useI18n();
 const router = useRouter();
 
@@ -21,19 +26,19 @@ if (!authStore.hasPermission([1, 2])) {
 
 const userTypeRole = ref({ [UserRole.User]: t("users.FilterRole0"), [UserRole.Moderator]: t("users.FilterRole1"), [UserRole.Admin]: t("users.FilterRole2") });
 
-const filter = ref([
+const filter = ref<FilterLabel[]>([
 	{ key: "name_user", value: "", type: "text", label: "users.FilterName", compareMethod: "=like=" },
 	{ key: "firstname_user", value: "", type: "text", label: "users.FilterFirstName", compareMethod: "=like=" },
 	{ key: "email_user", value: "", type: "text", label: "users.FilterEmail", compareMethod: "=like=" },
 	{ key: "role_user", value: "", type: "datalist", typeData: "number", options: userTypeRole, sortOptions: "asc", label: "users.FilterRole", compareMethod: "==" },
 ]);
-const tableauLabel = ref([
+const tableauLabel = ref<TableauLabel[]>([
 	{ label: "users.Name", sortable: true, key: "name_user", valueKey: "name_user", type: "text" },
 	{ label: "users.FirstName", sortable: true, key: "firstname_user", valueKey: "firstname_user", type: "text" },
 	{ label: "users.Email", sortable: true, key: "email_user", valueKey: "email_user", type: "text" },
 	{ label: "users.Role", sortable: true, key: "role_user", valueKey: "role_user", type: "enum", options: userTypeRole },
 ]);
-const tableauMeta = ref({
+const tableauMeta = ref<TableauMeta>({
 	key: "id_user",
 	path: "/users/",
 	saveState: true,
@@ -67,7 +72,7 @@ useViewScroll(false);
 		:filters="filter"
 		:loading="usersStore.usersLoading"
 		:total-count="Number(usersStore.usersTotalCount) || 0"
-		:fetch-function="(limit, offset, expand, filter, sort, clear) => usersStore.getUserByInterval(limit, offset, expand, filter, sort, clear)"
+		:fetch-function="(limit: number, offset: number, expand: string[], filter: RSQLFilter[], sort: RSQLSort, clear: boolean) => usersStore.getUserByInterval(limit, offset, expand, filter, sort, clear)"
 		:tableau-css="{ component: 'flex-1 overflow-y-auto'}"
 	/>
 </template>
