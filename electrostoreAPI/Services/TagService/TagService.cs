@@ -3,7 +3,6 @@ using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.TagService;
 
@@ -22,77 +21,40 @@ public class TagService : ITagService
     List<FilterDto>? rsql = null, SorterDto? sort = null, List<string>? expand = null, List<int>? idResearch = null)
     {
         var query = _context.Tags.AsQueryable();
-        var filterResult = default(Expression<Func<Tags, bool>>);
         if (idResearch is not null && idResearch.Count > 0)
         {
             query = query.Where(t => idResearch.Contains(t.id_tag));
+            rsql = null;
+            sort = null;
         }
-        else
-        {
-            if (rsql != null && rsql.Count > 0)
-            {
-                (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Tags>(rsql);
-                query = query.Where(filterResult);
-            }
-            if (!string.IsNullOrEmpty(sort?.field))
-            {
-                var sortResult = RsqlParserExtensions.ToSortExpression<Tags>(sort);
-                if (sortResult.Item1 != null)
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_tag", order = "asc" })
+            .ToProjectedResponseAsync(
+                t => new
                 {
-                    query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-                }
-                else
-                {
-                    sort = new SorterDto { field = "id_tag", order = "asc" };
-                    query = query.OrderBy(t => t.id_tag);
-                }
-            }
-            else
-            {
-                query = query.OrderBy(t => t.id_tag);
-            }
-        }
-        query = query.Skip(offset).Take(limit);
-        var tags = await query
-            .Select(t => new
-            {
-                Tag = t,
-                StoresTagsCount = t.StoresTags.Count,
-                ItemsTagsCount = t.ItemsTags.Count,
-                BoxsTagsCount = t.BoxsTags.Count,
-                EquipementsTagsCount = t.EquipementsTags.Count,
-                StoresTags = expand != null && expand.Contains("stores_tags") ? t.StoresTags.Take(20).ToList() : null,
-                ItemsTags = expand != null && expand.Contains("items_tags") ? t.ItemsTags.Take(20).ToList() : null,
-                BoxsTags = expand != null && expand.Contains("boxs_tags") ? t.BoxsTags.Take(20).ToList() : null,
-                EquipementsTags = expand != null && expand.Contains("equipement_tags") ? t.EquipementsTags.Take(20).ToList() : null
-            })
-            .ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedTagDto>
-        {
-            data = tags.Select(t => {
-                return _mapper.Map<ReadExtendedTagDto>(t.Tag) with
-                {
-                    stores_tags_count = t.StoresTagsCount,
-                    items_tags_count = t.ItemsTagsCount,
-                    boxs_tags_count = t.BoxsTagsCount,
-                    equipement_tags_count = t.EquipementsTagsCount,
-                    stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(t.StoresTags),
-                    items_tags = _mapper.Map<IEnumerable<ReadItemTagDto>>(t.ItemsTags),
-                    boxs_tags = _mapper.Map<IEnumerable<ReadBoxTagDto>>(t.BoxsTags),
-                    equipement_tags = _mapper.Map<IEnumerable<ReadEquipementTagDto>>(t.EquipementsTags)
-                };
-            }).ToList(),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.Tags.CountAsync(filterResult ?? (t => true)),
-                next_offset = offset + limit,
-                has_more = await _context.Tags.Skip(offset + limit).AnyAsync(filterResult ?? (t => true))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+                    Tag = t,
+                    StoresTagsCount = t.StoresTags.Count,
+                    ItemsTagsCount = t.ItemsTags.Count,
+                    BoxsTagsCount = t.BoxsTags.Count,
+                    EquipementsTagsCount = t.EquipementsTags.Count,
+                    StoresTags = expand != null && expand.Contains("stores_tags") ? t.StoresTags.Take(20).ToList() : null,
+                    ItemsTags = expand != null && expand.Contains("items_tags") ? t.ItemsTags.Take(20).ToList() : null,
+                    BoxsTags = expand != null && expand.Contains("boxs_tags") ? t.BoxsTags.Take(20).ToList() : null,
+                    EquipementsTags = expand != null && expand.Contains("equipement_tags") ? t.EquipementsTags.Take(20).ToList() : null
+                },
+                tags => tags.Select(t => {
+                    return _mapper.Map<ReadExtendedTagDto>(t.Tag) with
+                    {
+                        stores_tags_count = t.StoresTagsCount,
+                        items_tags_count = t.ItemsTagsCount,
+                        boxs_tags_count = t.BoxsTagsCount,
+                        equipement_tags_count = t.EquipementsTagsCount,
+                        stores_tags = _mapper.Map<IEnumerable<ReadStoreTagDto>>(t.StoresTags),
+                        items_tags = _mapper.Map<IEnumerable<ReadItemTagDto>>(t.ItemsTags),
+                        boxs_tags = _mapper.Map<IEnumerable<ReadBoxTagDto>>(t.BoxsTags),
+                        equipement_tags = _mapper.Map<IEnumerable<ReadEquipementTagDto>>(t.EquipementsTags)
+                    };
+                }).ToList());
     }
 
     public async Task<ReadExtendedTagDto> GetTagById(int id, List<string>? expand = null)

@@ -4,7 +4,6 @@ using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.FileService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.CommandDocumentService;
 
@@ -31,47 +30,11 @@ public class CommandDocumentService : ICommandDocumentService
             throw new KeyNotFoundException($"Command with id '{commandId}' not found");
         }
         var query = _context.CommandsDocuments.AsQueryable();
-        var filterResult = default(Expression<Func<CommandsDocuments, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_command", search_type = "eq", value = commandId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsDocuments>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<CommandsDocuments>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_command_document", order = "asc" };
-                query = query.OrderBy(cd => cd.id_command_document);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(cd => cd.id_command_document);
-        }
-        query = query.Skip(offset).Take(limit);
-        var commandDocument = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadCommandDocumentDto>
-        {
-            data = _mapper.Map<IEnumerable<ReadCommandDocumentDto>>(commandDocument),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.CommandsDocuments.CountAsync(filterResult ?? (cd => cd.id_command == commandId)),
-                next_offset = offset + limit,
-                has_more = await _context.CommandsDocuments.Skip(offset + limit).AnyAsync(filterResult ?? (cd => cd.id_command == commandId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_command_document", order = "asc" })
+            .ToResponseAsync(commandDocument => _mapper.Map<IEnumerable<ReadCommandDocumentDto>>(commandDocument));
     }
 
     public async Task<ReadCommandDocumentDto> GetCommandDocumentById(int id, int? commandId = null)

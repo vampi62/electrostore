@@ -3,7 +3,6 @@ using ElectrostoreAPI.Dto;
 using ElectrostoreAPI.Extensions;
 using ElectrostoreAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.CommandHistoryService;
 
@@ -27,48 +26,11 @@ public class CommandHistoryService : ICommandHistoryService
             throw new KeyNotFoundException($"Command with id '{idCommand}' not found");
         }
         var query = _context.CommandsHistory.AsQueryable();
-        var filterResult = default(Expression<Func<CommandsHistory, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_command", search_type = "eq", value = idCommand.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<CommandsHistory>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<CommandsHistory>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "created_at", order = "desc" };
-                query = query.OrderByDescending(ch => ch.created_at);
-            }
-        }
-        else
-        {
-            sort = new SorterDto { field = "created_at", order = "desc" };
-            query = query.OrderByDescending(ch => ch.created_at);
-        }
-        query = query.Skip(offset).Take(limit);
-        var commandHistory = await query.ToListAsync();
-        return new PaginatedResponseDto<ReadCommandHistoryDto>
-        {
-            data = _mapper.Map<List<ReadCommandHistoryDto>>(commandHistory),
-            pagination = new PaginationDto
-            {
-                offset = offset,
-                limit = limit,
-                total = await _context.CommandsHistory.CountAsync(filterResult ?? (ci => ci.id_command == idCommand)),
-                next_offset = offset + limit,
-                has_more = await _context.CommandsHistory.Skip(offset + limit).AnyAsync(filterResult ?? (ci => ci.id_command == idCommand))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await query
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "created_at", order = "desc" })
+            .ToResponseAsync(commandHistory => _mapper.Map<List<ReadCommandHistoryDto>>(commandHistory));
     }
 
     public async Task<ReadCommandHistoryDto> GetCommandHistoryById(int id, int idCommand)

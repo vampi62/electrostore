@@ -6,7 +6,6 @@ using ElectrostoreAPI.Models;
 using ElectrostoreAPI.Services.SessionService;
 using ElectrostoreAPI.Services.ValidateStoreService;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace ElectrostoreAPI.Services.BoxService;
 
@@ -33,63 +32,28 @@ public class BoxService : IBoxService
         {
             throw new KeyNotFoundException($"Store with id '{storeId}' not found");
         }
-        var query = _context.Boxs.AsQueryable();
-        var filterResult = default(Expression<Func<Boxs, bool>>);
         rsql ??= [];
         rsql.Add(new FilterDto { field = "id_store", search_type = "eq", value = storeId.ToString() });
-        if (rsql != null && rsql.Count > 0)
-        {
-            (filterResult, rsql) = RsqlParserExtensions.ToFilterExpression<Boxs>(rsql);
-            query = query.Where(filterResult);
-        }
-        if (!string.IsNullOrEmpty(sort?.field))
-        {
-            var sortResult = RsqlParserExtensions.ToSortExpression<Boxs>(sort);
-            if (sortResult.Item1 != null)
-            {
-                query = sortResult.Item2 == "asc" ? query.OrderBy(sortResult.Item1) : query.OrderByDescending(sortResult.Item1);
-            }
-            else
-            {
-                sort = new SorterDto { field = "id_box", order = "asc" };
-                query = query.OrderBy(b => b.id_box);
-            }
-        }
-        else
-        {
-            query = query.OrderBy(b => b.id_box);
-        }
-        query = query.Skip(offset).Take(limit);
-        var box = await query
-            .Select(b => new
-            {
-                Box = b,
-                BoxsTagsCount = b.BoxsTags.Count,
-                ItemsBoxsCount = b.ItemsBoxs.Count,
-                Store = expand != null && expand.Contains("store") ? b.Store : null,
-                BoxsTags = expand != null && expand.Contains("box_tags") ? b.BoxsTags.Take(20).ToList() : null,
-                ItemsBoxs = expand != null && expand.Contains("item_boxs") ? b.ItemsBoxs.Take(20).ToList() : null
-            })
-            .ToListAsync();
-        return new PaginatedResponseDto<ReadExtendedBoxDto>
-        {
-            data = box.Select(b => _mapper.Map<ReadExtendedBoxDto>(b.Box) with
-            {
-                box_tags_count = b.BoxsTagsCount,
-                item_boxs_count = b.ItemsBoxsCount,
-                store = _mapper.Map<ReadStoreDto>(b.Store),
-                box_tags = _mapper.Map<IEnumerable<ReadBoxTagDto>>(b.BoxsTags),
-                item_boxs = _mapper.Map<IEnumerable<ReadItemBoxDto>>(b.ItemsBoxs)
-            }),
-            pagination = new PaginationDto
-            {
-                total = await _context.Boxs.CountAsync(filterResult ?? (b => b.id_store == storeId)),
-                next_offset = offset + limit,
-                has_more = await _context.Boxs.Skip(offset + limit).AnyAsync(filterResult ?? (b => b.id_store == storeId))
-            },
-            filters = rsql,
-            sort = sort != null ? [sort] : null
-        };
+        return await _context.Boxs
+            .ToPagedQuery(limit, offset, rsql, sort, new SorterDto { field = "id_box", order = "asc" })
+            .ToProjectedResponseAsync(
+                b => new
+                {
+                    Box = b,
+                    BoxsTagsCount = b.BoxsTags.Count,
+                    ItemsBoxsCount = b.ItemsBoxs.Count,
+                    Store = expand != null && expand.Contains("store") ? b.Store : null,
+                    BoxsTags = expand != null && expand.Contains("box_tags") ? b.BoxsTags.Take(20).ToList() : null,
+                    ItemsBoxs = expand != null && expand.Contains("item_boxs") ? b.ItemsBoxs.Take(20).ToList() : null
+                },
+                boxes => boxes.Select(b => _mapper.Map<ReadExtendedBoxDto>(b.Box) with
+                {
+                    box_tags_count = b.BoxsTagsCount,
+                    item_boxs_count = b.ItemsBoxsCount,
+                    store = _mapper.Map<ReadStoreDto>(b.Store),
+                    box_tags = _mapper.Map<IEnumerable<ReadBoxTagDto>>(b.BoxsTags),
+                    item_boxs = _mapper.Map<IEnumerable<ReadItemBoxDto>>(b.ItemsBoxs)
+                }));
     }
 
     public async Task<ReadExtendedBoxDto> GetBoxById(int id, int? storeId = null, List<string>? expand = null)
