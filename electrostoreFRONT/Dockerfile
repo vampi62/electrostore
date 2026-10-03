@@ -8,7 +8,7 @@ RUN npm install --ignore-scripts
 
 COPY src/ ./src/
 COPY public/ ./public/
-COPY [ ".env", ".eslintrc.cjs", "index.html", "postcss.config.mjs", "tailwind.config.mjs", "vite.config.mjs", "./" ]
+COPY [ ".env", ".eslintrc.cjs", "index.html", "postcss.config.mjs", "tailwind.config.mjs", "vite.config.mjs", "tsconfig.json", "tsconfig.worker.json", "./" ]
 
 RUN npm run build
 
